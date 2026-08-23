@@ -24,6 +24,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle } from '../../lib/shopify.js';
 import { slugFromMetaPath } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { positionalArg } from '../../lib/positional-arg.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -57,8 +58,11 @@ const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 const args = process.argv.slice(2);
 // Normalized because callers have passed a meta.json path here where a bare slug
 // was expected, and the mismatch surfaced only as "No article found matching slug".
+// positionalArg (not args.find) so `--limit 10` is not read as the slug "10" —
+// see lib/positional-arg.js. Every flag that takes a value must be listed here.
+const VALUE_FLAGS = ['--limit'];
 const slugArg = (() => {
-  const raw = args.find((a) => !a.startsWith('--'));
+  const raw = positionalArg(args, VALUE_FLAGS);
   return raw ? slugFromMetaPath(raw, null) : raw;
 })();
 const limitIdx = args.indexOf('--limit');
