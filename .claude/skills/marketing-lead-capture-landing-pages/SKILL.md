@@ -1,46 +1,46 @@
 ---
 name: marketing-lead-capture-landing-pages
-description: Building and matching the opt-in page an ad clicks into.
+description: Building and wiring the opt-in / entry page an ad points at — layout simplicity, message match, the second ask, and the destination URL.
 ---
 
 # Lead Capture Landing Pages
 
-## Build a simple lead-capture landing page from one of a few fixed templates — focus only on the words and the image, keep it simple so it is easy to test, and just ship it rather than delaying for years.
+## Build a deliberately simple landing page for the opt-in — one headline, one image, one form, off a template — and ship it rather than agonizing over it.
 
-**Why it works:** A page with few elements has few variables, so you can attribute a change in opt-in rate to the one thing you changed; complexity buys nothing and delays the whole funnel.
+**Why it works:** A page with few variables is easier to test and diagnose, and the words and image carry nearly all the outcome; complexity adds build time and confounds testing without adding conversion.
 
-**Evidence offered:** Assertion plus personal anecdote (four years scared of it, finished before lunch).
+**Evidence offered:** Personal anecdote — the author avoided building a landing page for four years, then finished one before lunch.
 
-**Fit here (8/10):** The traffic gate is open and a Meta campaign is being stood up to drive soap-giveaway entries, so the entry page is a live artifact this week. A one-page Shopify page or form is within reach with no designer. No existing skill covers building the page an ad clicks into — conversion-friction-audit covers PDPs and checkout, campaign-structure only mentions the page exists.
+**Fit here (8/10):** Durable principle and immediately live: a Meta campaign is being stood up to drive entries to a soap giveaway, which needs exactly this page, and a solo operator can build it in Shopify or a drag-and-drop tool in an afternoon. No existing skill covers the lead-capture page as an artifact — the friction-audit skill covers PDPs and checkout.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
-## Make the landing page match the ad in look and language — the benefit promised in the ad must be what the page delivers, so the visitor gets a continuous experience from click to close instead of a Frankenstein one.
+## Make the landing page match the ad — same look, same language, same promise — so the click-to-close experience is continuous rather than a Frankenstein of mismatched pieces.
 
-**Why it works:** Clicks are bought on a specific promise; if the destination looks or reads differently the visitor re-evaluates from scratch and bounces, and the ad spend is wasted.
+**Why it works:** People click because a specific benefit was promised; if the destination does not visibly restate that promise, the visitor re-evaluates from scratch and bounces, so ad spend is wasted at the handoff rather than at the ad.
 
-**Evidence offered:** Assertion plus the observation that people waste money until they remember this.
+**Evidence offered:** Assertion, with the observation that advertisers 'waste money until they remember it'.
 
-**Fit here (9/10):** Highest-value item for the situation on the ground: $30/day of hand-run Meta spend pointing at a soap-giveaway entry page, where every mismatched click is real money against ~$2,700/mo revenue. Costs nothing to implement, no team required, durable rather than platform-dated.
+**Fit here (9/10):** Durable principle and the single highest-leverage item in this excerpt for the live situation: $30/day is being spent driving cold Meta traffic to a soap giveaway, and a promise mismatch at the entry page silently burns the whole budget. Free to fix, one person, no volume threshold required.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
-## Bridge the second ask to the first using the consistency principle — remind the visitor of the action they just took and frame the next action as following from it ('now that you did A, you need to do B to get the most out of A').
+## Bridge the second ask to the action just taken using the consistency principle — 'now that you've done A, do B to get the most out of A' — to move more people from click to giving contact information.
 
-**Why it works:** Cialdini's consistency: people want to act consistently with what they have already done, so an explicit callback to the prior micro-commitment raises completion of the next step.
+**Why it works:** Cialdini's consistency principle: people want to behave consistently with an action they just took, so framing the opt-in as the natural continuation of the click raises step-through rather than treating the second ask as a fresh decision.
 
 **Evidence offered:** Cites Robert Cialdini's Influence.
 
-**Fit here (7/10):** One line of copy to implement. Directly applicable to the giveaway entry page (clicked the ad → now enter), and reusable on the cart, the post-purchase upsell page and the insert-card opt-in destination. Distinct from the existing email claim about bridging a CTA to what the reader just read, which is within-asset relevance rather than carrying a prior action forward.
+**Fit here (7/10):** Durable persuasion principle, concretely applicable to the giveaway entry page and the Shopify opt-in popup — one line of copy, no cost — and retention is the binding constraint so growing the sub-1,000 list with people who actually opted in matters. Scored below message match because the lift is smaller and harder to verify at 54 orders/month.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
-## Make the destination address short and memorable wherever the audience has to read, remember, or type it.
+## Make the CTA destination itself frictionless — a short, memorable, typeable URL (acquisition.com/training, not a long parameterized path) — because the audience can only act on what they can easily execute.
 
-**Why it works:** Every extra character is a chance to mistype or forget, and the drop-off happens between hearing the CTA and arriving at the page.
+**Why it works:** Every character of friction between motivation and action loses people, and motivation from an ad is high but very short-lived, so the destination must be executable instantly.
 
-**Evidence offered:** Assertion plus the author's own $370k domain purchase, which he concedes may bias him.
+**Evidence offered:** Assertion plus the author's own $370k single-word domain purchase, which he admits may bias him.
 
-**Fit here (5/10):** Small. Clickable Meta ads make this near-irrelevant; it matters only where a URL is read rather than clicked — the packaging insert card, an Amazon insert, a market table sign. Worth one line. The $370k-domain half has no honest translation at ~$2,700/mo and is dropped.
+**Fit here (6/10):** Durable principle; scales down honestly to creating a clean /giveaway or /free-soap path on the existing Shopify domain and using it on package inserts, QR codes and any spoken or printed mention. Low ceiling — most Meta traffic clicks a button — but free and relevant to the printed insert, the only owned surface for Amazon buyers. No recommendation to buy an expensive domain.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*

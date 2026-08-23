@@ -6,2168 +6,2056 @@
 
 
 
-Found 218 tactics: 137 adopted, 81 rejected.
+Found 197 tactics: 139 adopted, 58 rejected (12 of the adopted parked behind a stage gate).
 
 ## Adopted
 
-### Make the landing page match the ad in look and language — the benefit promised in the ad must be what the page delivers, so the visitor gets a continuous experience from click to close instead of a Frankenstein one. — 9/10
+### Make the landing page match the ad — same look, same language, same promise — so the click-to-close experience is continuous rather than a Frankenstein of mismatched pieces. — 9/10
 
-**Why it works:** Clicks are bought on a specific promise; if the destination looks or reads differently the visitor re-evaluates from scratch and bounces, and the ad spend is wasted.
+**Why it works:** People click because a specific benefit was promised; if the destination does not visibly restate that promise, the visitor re-evaluates from scratch and bounces, so ad spend is wasted at the handoff rather than at the ad.
 
-**Evidence:** Assertion plus the observation that people waste money until they remember this.
+**Evidence:** Assertion, with the observation that advertisers 'waste money until they remember it'.
 
-**Fit:** Highest-value item for the situation on the ground: $30/day of hand-run Meta spend pointing at a soap-giveaway entry page, where every mismatched click is real money against ~$2,700/mo revenue. Costs nothing to implement, no team required, durable rather than platform-dated.
+**Fit:** Durable principle and the single highest-leverage item in this excerpt for the live situation: $30/day is being spent driving cold Meta traffic to a soap giveaway, and a promise mismatch at the entry page silently burns the whole budget. Free to fix, one person, no volume threshold required.
 
-**Target skill:** `marketing-lead-capture-landing-pages` (create)
+**Target skill:** `marketing-lead-capture-landing-pages` (edit)
 
-**Merged from:** part 9 of 16
+**Merged from:** (part 9 of 16)
 
-### Pick the lead magnet's problem with the problem-solution cycle: choose a narrow problem, solve it completely and for free, and verify that the next problem it reveals is exactly the one your paid offer sells against. — 8/10
+### For consumables, the correct lead magnet is a limited-use sample or trial of the core product itself — a single-serving or 'fun sized' unit — because consumables solve recurring problems only with recurring use. — 8/10
 
-**Why it works:** Every solved problem exposes the next one. If the exposed problem is the one your core offer charges to fix, the free solution manufactures demand for the paid one and you have already earned trust; if it exposes an unrelated problem, you collect leads who will never convert.
+**Why it works:** A consumable sample delivers the full experience but runs out, and the problem it solved returns on a schedule. The product itself creates the repurchase pull, so the free unit both qualifies interest and demonstrates the exact thing that must be rebought.
 
-**Evidence:** Worked example (home-sellers: valuation, photos, cleaning, staging as narrow problems ahead of 'sell my home'), plus the book itself as a self-referential example.
+**Evidence:** Assertion plus the Costco sampling example and the food/cosmetics/medicine category list.
 
-**Fit:** This is the selection test the live soap giveaway should be run through: soap solves 'clean skin' and the next problem it exposes is odor and dry skin — deodorant, lip balm, body care, which is the 12-SKU catalog. It also disqualifies generic 'win a gift card' entries that reveal no downstream problem. Directly actionable and it sharpens the Meta entries the $900/mo budget buys.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 2 of 16
-
-### For consumable products, the strongest lead magnet is a single-serving or 'fun-sized' physical sample of the core product, because consumables solve a recurring problem and only recurring use keeps solving it. — 8/10
-
-**Why it works:** A sample gives full but brief access to the actual solution, so the buyer experiences the result rather than reading a claim about it. Because the problem recurs, the sample running out is itself the sales argument — Costco's sampling model.
-
-**Evidence:** Named examples (food, cosmetics, medicine) and the Costco claim that sampling makes it outsell other grocers.
-
-**Fit:** Unusually direct match: natural deodorant, lip balm and body care are exactly the consumables class named, and the failure mode here is retention at 18-22.5%, which a sample-then-refill structure attacks. Runnable now as a travel-size entry SKU, a sample in the giveaway consolation offer, or a sachet in the box for an untried SKU. Distinct from the existing splinter-and-discount claim, which is price surgery on a component.
+**Fit:** Real Skin Care's entire 12-SKU catalog is consumables, and retention — not traffic — is the binding constraint at 18-22.5% repeat. A trial-size deodorant as the Meta front-end offer (or giveaway prize) is directly runnable by a solo operator at $30/day: it filters for people who actually want deodorant rather than sweepstakes entrants, and the product running out is the reorder trigger. More specific than the generic three-lead-magnet-types claim.
 
 **Target skill:** `marketing-offer-construction` (edit)
 
-**Merged from:** part 2 of 16
+**Merged from:** (part 2 of 16)
 
-### Probe a quiet list with Dean Jackson's nine-word email — 'Are you still looking to [four-word desire]?' — with no images, no links and no frills, then treat everyone who replies as your top-priority follow-up. — 8/10
+### Probe a quiet list with Dean Jackson's nine-word email — 'Are you still looking to [four-word desire]?' — plain text, no images, no links, nothing else, and treat every reply as a top-priority lead. — 8/10
 
-**Why it works:** A bare question reads as a personal message rather than a broadcast, so it gets replies instead of clicks; the replies segment the dormant list into people who still have the desire, and those are the only ones worth spending one-to-one time on.
+**Why it works:** A single short question with no sales apparatus reads as a personal note rather than a broadcast, so it gets replies where a designed campaign gets ignored; the replies segment the list into engaged leads worth one-to-one follow-up.
 
-**Evidence:** Assertion plus five swipe examples and the claim it is among the first things he does when investing in a new business.
+**Evidence:** Attributed to Dean Jackson as a 'timeless' template; author says it is among the first things he does when investing in a new business.
 
-**Fit:** Costs one Klaviyo send against a sub-1,000 list, needs no design, no team and no ad spend, and attacks the retention constraint directly by surfacing which lapsed buyers still want the outcome before any discount is spent on them. Distinct from the recorded win-back credit-back offer, which is an offer rather than a segmentation probe.
+**Fit:** Durable principle and the best fit in this excerpt. Sub-1,000 list, retention is the binding constraint, and repeat customers already carry 45-52% of revenue — a zero-cost plain-text probe to lapsed buyers is exactly the kind of send a solo operator can run this week in Klaviyo. Complements the existing win-back credit claim without duplicating it: this segments, that one offers.
 
 **Target skill:** `marketing-email-list-health` (edit)
 
-**Merged from:** part 4 of 16
+**Merged from:** (part 4 of 16)
 
-### Build headlines from a checklist of seven news-derived interest components — recency, relevancy, celebrity, proximity, conflict, unusual, ongoing — and include at least two in every headline. — 8/10
+### Put the paid offer on the thank-you page that follows the lead-magnet opt-in, with a short video or explanation of how it works. — 8/10
 
-**Why it works:** A meta-analysis of news headlines found these components drive attention; the reader uses the headline to weigh the likely reward of consuming your content against every alternative, so stacking two or more raises the share who choose yours.
+**Why it works:** The moment right after someone gives their email is the highest-intent moment in the funnel and the page is otherwise wasted on a 'check your inbox' message; presenting the paid offer there converts a share of leads immediately instead of waiting for the email sequence.
 
-**Evidence:** Cited as a meta-analysis of news, with a worked example per component (Bezos's breakfast for celebrity, neighbour's house fire for proximity).
+**Evidence:** Assertion, described as the author's own standing setup.
 
-**Fit:** Applies immediately and cheaply to email subject lines, Amazon titles, social captions, and the Meta primary text and headline slots in the live $30/day giveaway campaign. A different axis from the verbalization-transform checklist already in marketing-conversion-copy-angles — that varies how a fixed claim is stated, this varies what makes it newsworthy.
-
-**Target skill:** `marketing-copy-hooks-and-formats` (edit)
-
-**Merged from:** part 5 of 16
-
-### Send lead-magnet opt-ins to a thank-you page that immediately presents the paid offer with a short video explaining how it works, and make the lead magnet topically relevant to the content that advertised it. — 8/10
-
-**Why it works:** The moment right after opt-in is peak intent and zero cost to use; a page that only says 'check your email' wastes it. A relevant lead magnet also pre-qualifies the lead, so the thank-you-page pitch lands on someone already interested in that specific problem.
-
-**Evidence:** Assertion only, described as the author's own funnel structure.
-
-**Fit:** Meta spend at $30/day is being pointed at a soap giveaway, so a giveaway entry confirmation page is about to exist and is currently the highest-leverage unbuilt surface in the funnel. No existing claim covers the post-opt-in (pre-purchase) thank-you page — upsell-offer-design covers the post-purchase one only. A solo operator can build the page and a phone-shot explainer clip without a team.
+**Fit:** Directly applicable to a live surface: $30/day of Meta spend is pointed at soap-giveaway entries, and the entry confirmation page is currently the cheapest place to make a first sale against an AOV of $50.46. One page, one person, no budget — buildable in Shopify today, and it partially offsets paid CAC before the email flow even fires.
 
 **Target skill:** `marketing-upsell-offer-design` (edit)
 
-**Merged from:** part 6 of 16
+**Merged from:** (part 6 of 16)
 
-### Make free content good enough for existing customers, because buyers are more likely than strangers to consume it and they fold its quality into the ROI they assign to the paid product. — 8/10
+### Treat free content as a retention asset and route it to existing customers, because buyers are the most likely people to consume it and they fold its quality into their judgment of what they paid for. — 8/10
 
-**Why it works:** Perceived value of the purchase is computed from everything received from the brand, not only from the item shipped; ongoing free value after purchase raises that total and lengthens the relationship, while bad free content makes the paid product feel worse.
+**Why it works:** Perceived ROI on the purchase is calculated across everything the customer receives from you, not just the product; good free content inflates that numerator and lengthens loyalty, while bad free content deflates the paid product retroactively.
 
-**Evidence:** Assertion, framed as a counterintuitive observation about who actually consumes free content.
+**Evidence:** Assertion, stated as a counterintuitive observation ('somebody who buys your stuff is more likely to consume your free content').
 
-**Fit:** Retention is the stated binding constraint — repeat rate 18-22.5%, repeat buyers ~45-52% of revenue. This says a share of the content calendar should target people who already bought (usage routines, transition troubleshooting, what to pair with what) and gives the reason. Distinct from the recorded pre-arrival education series, which is a fixed post-purchase flow; this is ongoing public content read by existing customers.
+**Fit:** Hits the stated binding constraint directly: repeat rate is 18-22.5% and repeat buyers are ~45-52% of revenue, so anything that raises perceived value after purchase is worth more than another visitor. Runnable today — the same posts already being made can be linked into post-purchase emails and the packaging insert destination.
 
-**Target skill:** `marketing-post-purchase-onboarding` (edit)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 6 of 16
+**Merged from:** (part 6 of 16)
 
-### Ask for a review by framing it as a free, 60-second gift to a stranger who is like the reader used to be, then give the exact click-path for each place they might be reading, plus a QR-code fallback. — 8/10
+### Ask for a review by framing it as costless altruistic help for a stranger like the reader, stating the exact time cost, and giving literal per-platform instructions plus a QR-code fallback. — 8/10
 
-**Why it works:** Altruistic framing removes the sense that the ask serves you, and stating the tiny time and zero money cost pre-empts the 'not now' objection. Spelling out the literal taps per platform removes the friction that kills most review requests, and the fallback catches anyone whose interface has changed.
+**Why it works:** Removing the self-interest from the ask ('help someone you've never met, you get no credit') sidesteps the reciprocity objection, quantifying the effort ('less than 60 seconds') collapses the perceived cost, and spelling out the taps on each platform removes the last friction that turns willingness into abandonment.
 
-**Evidence:** Assertion, demonstrated by the author performing the ask in the book itself.
+**Evidence:** The ask itself is the demonstration; the author reports it as his standard mechanism for review volume.
 
-**Fit:** Immediately executable across surfaces this business already has — Amazon review requests, Shopify post-purchase email, and the packaging insert QR code already recorded as the owned surface for marketplace buyers. Reviews are the cheapest proof for a 12-SKU catalog with tiny order volume. Adds to the recorded review-request claim, which covers wording the question so the answer is usable but not getting the person to act at all.
+**Fit:** Durable persuasion structure (the platform-specific tap instructions are the fast-decaying part and need re-checking against today's review UIs). Highly applicable: reviews are the cheapest proof asset for a 12-SKU catalog on Amazon at ~$1,800/mo, and this is a rewrite of an existing review-request email plus the insert QR destination — one person, zero budget, today. Complements the existing 'shape the request so it returns a usable sentence' claim.
 
 **Target skill:** `marketing-review-mining` (edit)
 
-**Merged from:** part 6 of 16
+**Merged from:** (part 6 of 16)
 
-### Give every customer a transferable gift — a gift card worth roughly a third of the purchase price, redeemable only by a friend, expiring in 7-14 days and personalized with the friend's name, or simply the product itself to pass along. — 8/10
+### Generate ad variations by crossing a matrix instead of hunting for new concepts: every value element (What) × whose perspective experiences it (Who — the buyer, their partner, their coworkers) × the time horizon it lands over (When — today, this week, this year). — 8/10
 
-**Why it works:** Reframing the incentive from 'here's a discount code' to 'here's a gift I have and don't want to waste' changes the referrer's social position from salesperson to benefactor — giving something valuable to another person makes the giver more valuable to them — and the short expiry forces the handoff to happen now.
+**Why it works:** Combinatorics: a small fixed set of offer facts produces dozens of distinct, non-repetitive, concrete claims when systematically crossed, so the copy can answer the prospect's question at the moment they think it, in their own words, instead of restating one abstract benefit.
 
-**Evidence:** Worked example combining several referral methods, plus the PS variant of selling the gift cards at 90% off to friends of customers; the pass-along framing offered as a 'fun fact' in the book's postscript.
+**Evidence:** Presented as the author's standing production method built on the value equation; Ogilvy's 'the customer isn't a moron, she's your wife' cited as supporting authority.
 
-**Fit:** The single most executable referral play here: this business already ships physical parcels and the post-purchase skill already prescribes a packaging insert with a scannable destination — the gift card is that insert with a better mechanic. At $50.46 AOV a third is ~$17, which needs a margin check before shipping, but the structure is sound at any size.
+**Fit:** Durable generative framework and the exact bottleneck for a solo operator who must fill a 3-2-2 flexible ad and keep a standing experimental slot supplied on $30/day. Costs nothing but an hour with a spreadsheet. It manufactures copy lines rather than scoring an offer, so it does not restate the value-equation audit, and it complements the verbalization-transform checklist, which varies how one claim is stated rather than which angle is chosen.
 
-**Target skill:** `marketing-customer-referral-program` (create)
+**Target skill:** `marketing-conversion-copy-angles` (edit)
 
-**Merged from:** part 6 of 16; part 12 of 16
+**Merged from:** (part 8 of 16); (part 9 of 16)
 
-### Write each benefit a second time from the perspective of the people who confer status on the buyer — list them explicitly (spouse, kids, parents, colleagues, boss, friends, rivals) and show how each of them treats the customer differently after the purchase, expanding every value element across who experiences it. — 8/10
+### Write the benefit from the perspective of the people who confer status on the buyer — spouse, kids, parents, colleagues, boss, friends, rivals — showing how each of them treats the buyer differently after the purchase, and how they treat them if nothing changes. — 8/10
 
-**Why it works:** Status is granted by other people, so a benefit described only from the buyer's own point of view leaves out most of what the buyer actually wants; each named observer multiplies the number of concrete benefit stories available, and third-party observers often carry more emotional weight than the buyer's own perception.
+**Why it works:** Humans are status-driven and status is conferred by other people, so a benefit narrated through a third party's reaction carries more motivational weight than the same benefit stated from the buyer's own point of view — and each new perspective produces a fresh, non-repetitive angle.
 
-**Evidence:** Assertion plus worked examples (spouse won't nag about a risk-free purchase, competitors notice, golf buddies comment); presented as the 'Who' axis of a who/when expansion grid.
+**Evidence:** Assertion plus worked examples (spouse not nagging, competitors noticing, kids noticing less stress).
 
-**Fit:** Unusually apt: deodorant, oral care and body care are almost entirely other-people products — the partner who notices, the person you sit next to, the kid who asks what you're using. Gives the solo operator a mechanical way to produce many angles for Meta giveaway creative and PDP copy with no new research. Adjacent to the 'role the buyer gets to display' claim, which names the axis; this supplies the generative list.
+**Fit:** Durable positioning/psychology principle. Very concrete for this catalog: a partner who stops noticing the smell, a coworker at close range, a kid copying the routine. Existing skills cover 'a role the buyer gets to display' at a high level but nothing enumerates third-party observers as an angle-generation list. Zero-cost, solo work feeding Meta primary text, PDP copy and subject lines.
 
-**Target skill:** `marketing-problem-solution-inventory` (edit)
+**Target skill:** `marketing-conversion-copy-angles` (edit)
 
-**Merged from:** part 8 of 16; part 9 of 16
+**Merged from:** (part 9 of 16)
 
-### Generate ad angles by writing each of the four value drivers (dream outcome, perceived likelihood of achievement, speed, ease) AND its negative mirror (nightmare, risk of not acting, how slow their current trajectory is, the effort and sacrifice of going without) — eight distinct angles per product. — 8/10
+### Run the same benefit or pain through the prospect's past, present and future — what their decisions already cost them, what it costs them today, and what it will look like months from now — instead of writing only about the present moment. — 8/10
 
-**Why it works:** Buyers are moved both toward a reward and away from a loss; covering both poles of each value term produces eight independent reasons to act instead of one benefit statement, and each angle is a separate asset you can lead with.
+**Why it works:** Buyers default to evaluating a decision in the here-and-now; making them visualize the consequence of indecision along their own timeline raises the felt cost of doing nothing, and each timeline slot multiplies with each perspective to produce more distinct angles.
 
-**Evidence:** Assertion only, illustrated with weight-loss and business examples.
+**Evidence:** Assertion plus worked weight-loss timeline examples (teased as a kid, jeans today, another belt loop later).
 
-**Fit:** Directly usable across 12 SKUs on a solo budget: for natural deodorant the nightmare/effort mirrors (reapplying all day, the mid-afternoon check, shirt stains, the switch that failed last time) are angles the current copy almost certainly does not run. Adjacent to the four-term value-equation claim in conversion-friction-audit, but that evaluates an offer; this generates eight copy angles from it, including four negatives that claim never mentions.
+**Fit:** Durable principle mapping cleanly onto natural deodorant and oral care, where the buyer's past (every natural brand they already tried and abandoned) is the single richest untapped copy vein and the future (a transition period that ends) is the retention story. Free, solo-runnable, directly usable in the giveaway campaign's ad copy and the post-purchase emails.
 
-**Target skill:** `marketing-problem-solution-inventory` (edit)
+**Target skill:** `marketing-conversion-copy-angles` (edit)
 
-**Merged from:** part 9 of 16
+**Merged from:** (part 9 of 16)
 
-### Build a simple lead-capture landing page from one of a few fixed templates — focus only on the words and the image, keep it simple so it is easy to test, and just ship it rather than delaying for years. — 8/10
+### Build a deliberately simple landing page for the opt-in — one headline, one image, one form, off a template — and ship it rather than agonizing over it. — 8/10
 
-**Why it works:** A page with few elements has few variables, so you can attribute a change in opt-in rate to the one thing you changed; complexity buys nothing and delays the whole funnel.
+**Why it works:** A page with few variables is easier to test and diagnose, and the words and image carry nearly all the outcome; complexity adds build time and confounds testing without adding conversion.
 
-**Evidence:** Assertion plus personal anecdote (four years scared of it, finished before lunch).
+**Evidence:** Personal anecdote — the author avoided building a landing page for four years, then finished one before lunch.
 
-**Fit:** The traffic gate is open and a Meta campaign is being stood up to drive soap-giveaway entries, so the entry page is a live artifact this week. A one-page Shopify page or form is within reach with no designer. No existing skill covers building the page an ad clicks into — conversion-friction-audit covers PDPs and checkout, campaign-structure only mentions the page exists.
+**Fit:** Durable principle and immediately live: a Meta campaign is being stood up to drive entries to a soap giveaway, which needs exactly this page, and a solo operator can build it in Shopify or a drag-and-drop tool in an afternoon. No existing skill covers the lead-capture page as an artifact — the friction-audit skill covers PDPs and checkout.
 
 **Target skill:** `marketing-lead-capture-landing-pages` (create)
 
-**Merged from:** part 9 of 16
+**Merged from:** (part 9 of 16)
 
-### Budget exactly 2x the cash you collect from a customer in the first 30 days to test a new ad before shutting it off — and if it produces no leads at all, kill it at 1x that number. — 8/10
+### Find what your lowest-churning, best-outcome customers have in common, then re-point your advertising call-outs at only that narrower profile — even if it is currently a minority of revenue. — 8/10
 
-**Why it works:** It gives a pre-committed kill threshold in dollars, which prevents both failure modes: letting a dead ad run because you are hoping, and killing a live ad before it had a chance.
+**Why it works:** Customers the product actually fits get more value, accumulate more goodwill, stay longer and refer; targeting them also makes messaging more specific, which lowers acquisition cost.
 
-**Evidence:** Personal experience — wasted money on both sides before settling on this rule.
+**Evidence:** Portfolio PR company case: lowest-churn customers were all one niche raising investor funding at 15% of revenue; re-targeting broke a multi-year plateau, cut ad costs and started referrals 'like clockwork'.
 
-**Fit:** Produces a real number here: at $50.46 AOV, 30-day cash is roughly one order, so the test ceiling per ad is around $100 and the no-leads kill is around $50 — two to three days at $30/day. A stopping rule a solo operator can hold to instead of eyeballing it. No volume gate for a single-ad kill threshold.
+**Fit:** Durable and directly aimed at the binding constraint: retention, with repeat buyers already 45-52% of revenue. A solo operator can read a year of Shopify orders to find what the 18-22% who came back have in common (SKU bought first, scent, deodorant-switcher vs gift buyer), then use that as the Meta call-out on the live $30/day campaign. Distinct from the motive-splinter claim because the splinter here is derived from retention data; at 54 orders/month the read is directional.
 
-**Target skill:** `marketing-paid-media-measurement` (edit)
+**Target skill:** `marketing-awareness-level-messaging` (edit)
 
-**Merged from:** part 9 of 16
+**Merged from:** (part 11 of 16)
 
-### Measure paid efficiency as lifetime gross profit to customer acquisition cost (LTGP:CAC) — using gross profit, not revenue or 'LTV', and folding all costs of getting a customer including labour into CAC — and treat below 3:1 as the reason a business cannot scale. — 8/10
+### Survey and interview the customers who got the best results, find the actions they had in common, then force every new customer to repeat those actions in onboarding — and set your guarantee's conditions to the same actions. — 8/10
 
-**Why it works:** Gross profit is the only money actually available to buy customers and pay overhead, so a ratio built on revenue overstates headroom; expressing it as a lifetime ratio rather than a per-order ROAS means a channel that loses money on order one can still be correctly funded, and 3:1 is the observed threshold below which acquisition cannot outrun costs.
+**Why it works:** Average customer results rise toward best-customer results when the behaviours that produce them are prescribed rather than left to chance; tying the guarantee to those behaviours makes customers actually perform them.
 
-**Evidence:** Pattern observed across the author's portfolio companies, plus worked arithmetic ($100k payroll / 1,000 leads = $100 per lead, 10% close = $1,000 CAC against $4,000 LTGP) and his own Acquisition.com content figures ($100k/mo payroll, 30,000 engaged leads, $3.33/lead).
+**Evidence:** Gym Launch: tracked activities, found gyms that ran an ad and made a sale in the first seven days tripled LTGP, then forced that on everyone — average results, testimonials and referrals rose.
 
-**Fit:** Computable today from known numbers: $50.46 AOV, 18-22.5% repeat, known COGS — which yields a hard CAC ceiling for the $30/day Meta campaign before a dollar is judged. It also names retention explicitly as the LTGP lever, which is the binding constraint. Distinct from the existing breakeven-on-first-purchase claim (a 30-day cash rule) and from the allowable-cost-per-lead claim, because neither states the 3:1 floor or the instruction to fold non-ad labour into CAC.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 9 of 16; part 13 of 16
-
-### Diagnose whether the ads or the business model is the problem by comparing your CAC to your industry average: if your CAC is within about 3x the industry average, stop trying to lower it and put the work on lifetime gross profit instead. — 8/10
-
-**Why it works:** Competitors in the same category pay far more similar acquisition costs than people assume, and acquisition cost is bounded by auction prices you don't control while LTGP has no ceiling — so a CAC near the category norm means further CAC optimization has almost no headroom left.
-
-**Evidence:** Pattern from talking to hundreds of entrepreneurs monthly; explicitly labelled a personal observation, cross-referenced to his paid ads chapter.
-
-**Fit:** Points at the stated binding constraint: retention at 18-22.5% means LTGP, not CAC, is where the headroom is, so this licenses spending scarce hours on repeat purchase rather than endless creative tweaking and gives an explicit stopping rule for tinkering with the new $30/day campaign. Needs only a rough category CAC estimate. Complements the existing Varos benchmarking claim, which covers CPM and CTR, not CAC. Caveat: at ~54 orders/month read CAC over quarters, not weeks.
-
-**Target skill:** `marketing-paid-media-measurement` (edit)
-
-**Merged from:** part 9 of 16; part 13 of 16
-
-### Client-financed acquisition: engineer the offer so the cash collected from a customer in their first 30 days covers both the cost to acquire and the cost to fulfil them — and if the first purchase doesn't get there, add an immediate upsell sized so (upsell price × take rate) closes the gap. — 8/10
-
-**Why it works:** Thirty days is the interest-free float on a credit card. If 30-day gross profit per customer ≥ CAC + COGS, you pay the card off, the customer is free, and every later purchase is profit — so cash stops being the constraint on how fast you can buy customers. Waiting for LTV to trickle in over ten months caps ad spend at working capital.
-
-**Evidence:** Worked arithmetic ($15/mo membership, $5 cost, 10-month retention, $30 CAC, 3.3:1 LTGP:CAC but a two-month cash hole, fixed by a $100 upsell at a 1-in-5 take rate); his assertion that this is how he scaled every company past $1M/mo without outside funding.
-
-**Fit:** Decision-relevant at $30/day against a $50.46 AOV: with a sub-25% repeat rate the business cannot fund acquisition out of a lifetime value that mostly never arrives, so the 30-day cash test is the right gate on what the Meta giveaway campaign may pay per entry. Extends the existing 'break even on the first purchase' claim by naming the window, the card-float reason, and the upsell-sizing arithmetic — and 12 SKUs make a lip-balm or deodorant add-on a real lever. No volume gate.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 9 of 16; part 10 of 16
-
-### Map the conversion rate of every step a prospect passes through, find the step with the largest drop-off, and concentrate all testing there — because an identical percentage-point improvement at the constraint produces a far larger lift in total output than the same improvement anywhere else. — 8/10
-
-**Why it works:** Funnel steps multiply. A 5-point gain on a 5% step doubles throughput; the same 5 points on a 50% step adds 10%. Leverage of a fix is inversely proportional to the current conversion rate of the step you fix.
-
-**Evidence:** Worked three-step arithmetic (30% optin / 5% apply / 50% schedule) showing 1.16x, 2x and 1.1x lifts from identical improvements.
-
-**Fit:** Turns 'name the binding constraint' from a slogan into a calculation, runnable today: giveaway entry rate → email open → click → PDP → add-to-cart → purchase → second order. Applied to first-order → second-order it will almost certainly show the biggest multiplier sits in retention, which is the conclusion the business needs computed rather than asserted. Step-level drop-off is readable directionally from Shopify and Klaviyo at 54 orders/month.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 10 of 16
-
-### Measure your referral percentage and churn percentage as a baseline before launching anything, then track the referral growth equation monthly — referrals in minus churned customers out — because a business whose referral rate exceeds its churn rate compounds without further advertising. — 8/10
-
-**Why it works:** Referred customers cost nothing to acquire and referral growth is exponential (one brings two, two bring four), while paid and outreach channels are linear in effort. Without a baseline you also cannot tell whether the referral program or the goodwill work moved anything.
-
-**Evidence:** Author's account of doing $500k/week for two weeks with all Facebook ads shut off, a room of 700+ gym owners nearly all raising hands to 'who heard about us from another gym owner', and a claim of $30M in customers citing a referrer.
-
-**Fit:** Retention is the named binding constraint — 18-22.5% repeat, repeat customers 45-52% of revenue — and this puts a measurable number on the advocacy side of the same problem. Runnable today at ~54 orders/month: add 'how did you hear about us' to checkout and the post-purchase flow and compare referred-order count against lapsed-customer count monthly. Numbers are directional at this volume, so pair with a written evaluation horizon; recording the source data now is what makes it readable later.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 11 of 16; part 12 of 16
-
-### Ask for referrals explicitly and construct the ask as an offer with a real incentive — state the value the referrer gets — rather than hoping goodwill or word of mouth produces them. — 8/10
-
-**Why it works:** Customers only act on instructions they are given; an unincentivized, unstated ask has no reason to be acted on, while a stated benefit gives them one and turns latent goodwill into a countable acquisition channel.
-
-**Evidence:** Dropbox (39x in 15 months on referral storage) and PayPal ($10/$10 credit to a million users in two years) case studies; author's claim that most of his referral strategies failed until he framed the ask as an offer, and his account of launching a strong referral program with big incentives.
-
-**Fit:** Directly attacks the binding constraint: with repeat customers at ~45-52% of revenue and a sub-1,000 list, the cheapest net-new customer available is the friend of an existing buyer, at zero media cost against the $30/day Meta budget. A referral code and post-purchase ask are free to install on Shopify, and the incentive can be store credit. No existing skill covers customer referral asks — the acquisition skill covers business-to-business partnerships only.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16; part 16 of 16
-
-### Split your allowable CAC across both parties — cash or credit to the referrer, a discount to the friend — so both sides benefit from the introduction. — 8/10
-
-**Why it works:** The referrer gets paid and simultaneously gets to hand their friend something of value, which removes the awkwardness of the recommendation and gives the friend a reason to redeem it.
-
-**Evidence:** Dropbox and PayPal both ran two-sided programs to viral growth; author's own $500 program with $100/$100 splits worked well in local businesses.
-
-**Fit:** The strongest referral structure for a $50 AOV consumable and buildable today with an off-the-shelf Shopify referral app or manual codes. Attacks retention and acquisition at once: the referrer's credit is itself a repeat-purchase driver, which matters more than the new order at an 18-22.5% repeat rate.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Instead of paying a practitioner to run your ads, pay them by the hour to teach you how while you sit in the driver's seat and do the work on your own account. — 8/10
-
-**Why it works:** You buy the decision logic rather than the labour, so the skill stays with you when the engagement ends; because you are executing, the transfer is checked in real time against your actual account and data rather than delivered as generic advice.
-
-**Evidence:** First-person case: $750/hour, eight hours, ~$6,000 total, after which he could run Facebook ads himself — a skill he says has made millions.
-
-**Fit:** The most applicable tactic in the excerpt: a Meta campaign is being stood up at $30/day with no media buyer, and buying 3-4 hours of a working freelance buyer's time to review the account setup and the giveaway funnel while the operator clicks is affordable and creates no dependency the business cannot fund. Distinct from the existing 'buy an agency for the strategy layer at ~$50k/mo' claim, which is a later, larger purchase.
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Deliberately choose among three partner integration modes and start at the easiest: the partner includes your free sample or lead magnet with every purchase of their own product, the partner sells your entry product, or the partner sells your core offer — with the free-item mode monetized on the things the customer obviously needs next. — 8/10
-
-**Why it works:** Each mode puts a different amount of risk and work on the partner and yields a different quality of lead; naming the mode up front makes the deal legible and your cost structure predictable. At the easiest level the partner gets a stronger offer they can charge more for and needs to sell nothing, while you get your product physically into the hands of a pre-qualified buyer and own the follow-up upsell — so true acquisition cost is only the COGS of the giveaway.
-
-**Evidence:** Prestige Labs got gym affiliates to give a free nutrition consult to every new member and upsold supplements; tax-service case study giving free LLC setup to every affiliate's customer and monetizing on bookkeeping and tax prep, with the friend never spending a dollar on paid ads at $50M; author reports testing all three modes and settling on mode 1 twice a year plus mode 3 ongoing.
-
-**Fit:** The strongest fit available: deodorant, lip balm and soap are cheap, physical and sample-able, so a yoga studio, salon or refill shop dropping a trial into every purchase costs the partner nothing and costs this business COGS only. Pairs with the existing insert-with-scannable-opt-in claim to capture the email, feeding the retention constraint, and the 12-SKU catalog supplies the obvious next need. Solo-runnable at any volume; cap free full-size product per partner given the $50.46 AOV.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16; part 15 of 16; part 15 of 16
-
-### Advertise your core offer directly first and go straight for the sale; only lead with a lead magnet when the purchase is expensive enough that people need to know more before they buy. — 7/10
-
-**Why it works:** Every intermediate step between the ad and the sale is another place to lose people and another asset to build. The lead magnet exists only to buy information-gathering time for a considered purchase; when the purchase is cheap and low-consideration, the extra step subtracts revenue.
-
-**Evidence:** Assertion, hedged by the author's own case study: his high-ticket B2B service needed the lead magnet, which is the condition he names.
-
-**Fit:** At $50.46 AOV on deodorant and lip balm this is a low-consideration purchase, so the diagnostic says the $30/day Meta budget should have a cell pointing straight at a PDP with the core offer, tested against the soap-giveaway entry path that is currently the whole plan. Runnable today as a single ad in the existing campaign. Distinct from the 'simplest possible funnel' claim: that governs how many steps, this governs whether the thing advertised is the product or a giveaway.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 2 of 16
-
-### Take one narrow problem and build a version of the lead magnet in each of four delivery vehicles — a tool, information, a done-for-you service, or a physical product — then rotate the versions to keep advertising fresh and learn which pulls best. — 7/10
-
-**Why it works:** The same underlying problem can be solved in several formats; different people prefer different formats, and rotating them prevents ad fatigue while surfacing which vehicle attracts the right lead cheapest.
-
-**Evidence:** Hormozi lists his own four gym-owner magnets (stats dashboard, mini ad-writing course, thirty days of free ad management, the Gym Launch Secrets book) and asserts the winner is 'often surprising'.
-
-**Fit:** The soap giveaway is exactly one vehicle of the four, and a Meta campaign is live at $30/day driving entries to it. Scaled version: build two or three alternates (scent/skin-type finder quiz, a 'switching without the detox rash' guide, a deluxe sample trio) and run them sequentially, judging on entries and downstream first orders rather than a clean per-variant read, which $30/day cannot support.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 3 of 16
-
-### Test the lead magnet's name before you build it — headline first, then the image, then the subheadline — using free directional polls (social poll, a post asking people to reply '1' or '2', or direct messages) rather than guessing. — 7/10
-
-**Why it works:** Five times more people read the headline than anything else, so the name gates whether the magnet is ever consumed; naming changes can multiply engagement several-fold, and directional preference data is obtainable without statistical volume.
-
-**Evidence:** Hormozi's own book title and subtitle test log across three headline rounds, one image round and four subheadline rounds — including 'How to get strangers...' beating 'Get strangers...' on two words. Ogilvy's 80-cents quote as authority.
-
-**Fit:** Directly runnable today: the giveaway entry page and its Meta ad both need a name, and the sub-1,000 list plus an Instagram story poll is enough for a directional read. Complements the existing 'run two or three offer names in the ad campaign' claim because this costs no ad spend and runs before the asset is built, which matters at $30/day.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 3 of 16
-
-### Judge any lead magnet against four criteria: it engages ideal customers on sight, it gets more engagement than the core offer would, it is valuable enough that they actually consume it, and it makes the right people more likely to buy. — 7/10
-
-**Why it works:** A magnet can generate volume while failing the business if it attracts people who will never buy or never consume it; the four checks separate cheap engagement from engagement that converts.
-
-**Evidence:** Stated as the chapter's summary definition of a good lead magnet; assertion only.
-
-**Fit:** The exact filter the live soap giveaway needs — a free-soap entry offer risks failing criteria one and four, and with $30/day and $50.46 AOV an entry list of freebie hunters burns the whole budget. Running the four checks before spending more costs nothing. Not a duplicate of the 'run a giveaway as a front-end attraction offer' claim, which says to run one, not how to judge whether it selects for buyers.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 3 of 16
-
-### Find the real operational limit in your business — inventory, batch size, service capacity, time slots — and advertise it, rather than inventing artificial scarcity. — 7/10
-
-**Why it works:** Scarcity raises perceived value and compresses decision time, and using a limit that genuinely exists makes the claim true, defensible and repeatable instead of a bluff the buyer can spot.
-
-**Evidence:** Examples: 'I can only handle five people per week', 'we only printed one batch of shirts and will never reprint this design', 'the most convenient class times fill up fast'.
-
-**Fit:** A solo operator making 12 SKUs by hand has genuine, currently-unadvertised limits: batch sizes, a scent that will not be repeated, the number of giveaway prizes, how many orders can be packed in a week. Stating those on the PDP, entry page and Meta primary text costs nothing. Distinct from the recorded 'make the promotion expire, never the product' claim — this is about mining the operation for honest limits.
-
-**Target skill:** `marketing-scarcity-urgency-framing` (edit)
-
-**Merged from:** part 3 of 16
-
-### Ask a customer for referrals at the moment they get a result, and have the referrals come in and pay full price directly. — 7/10
-
-**Why it works:** A customer who has just experienced the outcome is at peak willingness to vouch, so the ask lands; referred buyers arrive pre-trusted and cost nothing to acquire, giving you a one-to-one warm channel into an audience you do not own at zero media cost.
-
-**Evidence:** Hormozi's first six free clients produced another five or six paying clients purely from a referral ask, roughly doubling the business to ~$4,000/mo.
-
-**Fit:** Executable now with no budget: at ~54 orders/month the ask goes into the post-purchase email at the point results appear (2-4 weeks into a deodorant switch) or onto the packaging insert. The timing element is the real content and it fits existing post-purchase machinery — the referral ask belongs immediately after the engineered early win rather than at a fixed day count. Not covered by the business-to-business partnership claim in acquisition-channel-selection.
+**Fit:** The single most retention-relevant item here. Natural deodorant lives or dies on whether the buyer survives the adjustment period: email the 18-22% who reordered, ask what they did differently (amount applied, dry vs damp skin, whether they pushed through week one), and hard-code the answer into the insert, the first post-purchase email and the guarantee wording. Extends the existing 'named routine' claim by supplying the empirical method for deriving it. A dozen interviews is enough at this size.
 
 **Target skill:** `marketing-post-purchase-onboarding` (edit)
 
-**Merged from:** part 3 of 16; part 4 of 16
+**Merged from:** (part 11 of 16)
 
-### Make the offer as a referral question — 'do you know anybody who is [struggle] looking to [dream outcome]?' — rather than asking the contact to buy, so interest is volunteered rather than pushed. — 7/10
+### Ask for referrals explicitly and construct the ask as an offer — state what the referrer gets, make the incentive big — rather than hoping goodwill produces them, and drive toward 25% or more of customers arriving via referral. — 8/10
 
-**Why it works:** Asking about a third party removes the social pressure of a direct pitch; the listener evaluates the offer for themselves anyway, so you get either a self-declared prospect, a referral, or both — and never come across as pushy.
+**Why it works:** Customers only do what they are told to do; referring costs them social risk with the friend, so the ask must carry stated value back to them for the trade to be worth making. Existing satisfied customers are then a free distribution channel that keeps producing leads even when ad spend is switched off.
 
-**Evidence:** Assertion plus a full verbatim script and the claim that of those who say yes, most turn out to be interested themselves.
+**Evidence:** Dropbox (free storage both sides, 39x in 15 months) and PayPal ($10/$10, 1M users in two years); the author reports most non-offer referral strategies he tried failed, and that referrals kept arriving weekly after his ads were shut off.
 
-**Fit:** Translates cleanly to a $50 skincare catalog ('do you know anyone whose natural deodorant keeps failing them?') in DMs, at markets and in email. Runnable today with no spend. Held below 8 because the script's case-study framing needs rewriting for a physical product.
+**Fit:** Retention and repeat behaviour are the binding constraint and no existing skill covers customer referral programs — the closest, marketing-acquisition-channel-selection, covers B2B partner reciprocity. Zero-budget acquisition attached to an already-warm base is exactly right at ~$2,700/mo with a sub-1,000 list; one person can add a stated referral offer to the post-purchase email and packaging insert this week. 25% is a directional target, not a promise, at this order volume.
 
-**Target skill:** `marketing-warm-outreach-sequence` (create)
+**Target skill:** `marketing-referral-programs` (create)
 
-**Merged from:** part 4 of 16
+**Merged from:** (part 12 of 16); (part 16 of 16)
 
-### When someone declines even a free offer, ask 'why?' and 'what would I have to do to make it worth it for you to continue?' — because the real price is the hidden cost of time, effort and sacrifice, not the dollar price. — 7/10
+### Two-sided referral benefit: split your allowable CAC between the referrer and the friend so both parties gain — half in cash or credit to the referrer, half as a discount to the new buyer. — 8/10
 
-**Why it works:** A refusal of free proves the blocker sits in one of three places — they don't want the outcome, they don't believe you, or the hidden costs are too high — so the follow-up question isolates which, and the answer is reusable ammunition on the next prospect.
+**Why it works:** The friend gets a reason to act now and the referrer gets a reason to introduce, so neither side is doing the other a pure favour — this removes the awkwardness that stalls one-sided programs and gives the referrer social cover.
 
-**Evidence:** Assertion; framed as a diagnostic derived from the value equation.
+**Evidence:** Dropbox and PayPal as case studies; author's own $500-program example with $100/$100 capped at three friends, reported to work well in his local businesses.
 
-**Fit:** Zero cost and it complements the existing 'instrument the store and ask non-buyers' claim by supplying the specific question and the three-way read of the answer. Directly relevant given retention is the binding constraint: the same question asked of one-and-done buyers names why the second order never came.
+**Fit:** Directly applicable to a low-AOV consumables catalog: 'give $10, get $10' on a $50 order is a standard Shopify referral structure needing no team or spend floor. The strongest lever in the excerpt against a repeat-and-word-of-mouth constraint.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Make the referral ask at the moment of purchase — on the checkout or confirmation surface — rather than waiting, and script it around the friend improving the buyer's own result. — 8/10
+
+**Why it works:** Goodwill and excitement peak at purchase, so that is when the ask converts; framing it as 'people who do this with someone else get better results' makes referring self-interested rather than a favour.
+
+**Evidence:** Case study of a salesman who outsold everyone by simply asking every buyer who else they'd want to come with them — half his sales became referrals.
+
+**Fit:** The three-way phone introduction is a high-ticket artifact, but the scaled-down version is runnable today by one person: put the referral offer on the Shopify thank-you page and in the order-confirmation email, framed as 'share with whoever you keep stealing this from.' Complements existing first-48-hours onboarding claims without duplicating them; needs no volume or budget.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Run time-boxed referral events — a named, dated one-to-four-week promotion where customers earn points, credits or dollars for bringing friends — and sell the benefit of participating with someone else during it. — 8/10
+
+**Why it works:** A named window with an end date concentrates action that would otherwise never happen; the name ('Bring-a-Friend', 'Accountability Buddy') gives the promotion an identity you can re-run and re-wrap.
+
+**Evidence:** Assertion plus a list of promotion names the author has used.
+
+**Fit:** Lands directly on the live surface: the soap giveaway fed by a $30/day Meta campaign is exactly a time-boxed event, and bonus entries for referred friends turns paid entries into a compounding loop rather than a one-shot list build. Solo-runnable, and it stacks with the existing scarcity rules on believable reasons why and real end dates.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Pay referral incentives in unlockable non-cash bonuses — VIP status, bonus product, merchandise, premium support, early access — especially when the referrer also leaves a testimonial. — 8/10
+
+**Why it works:** Non-cash bonuses cost you less than their perceived value, so you can make the offer larger for the same real spend and can afford to give them to both parties. Bundling the ask with a testimonial request harvests proof at the same time.
+
+**Evidence:** Assertion, with a list of bonus types and the instruction to make the offer so good they'd be stupid not to refer.
+
+**Fit:** A 12-SKU physical catalog is ideal for this: a free lip balm or full-size deodorant costs COGS, not $10 cash, against a $50.46 AOV and thin solo-operator margins. It also feeds the review-mining proof pipeline by tying the bonus to a written testimonial. No gate — fulfilment is already by hand at ~54 orders/month.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Instead of buying a done-for-you retainer, pay a practitioner by the hour to sit with you while YOU run your own ad account — they walk you through what to do, look over your shoulder while you do it, and explain why they make each decision; record every session, take notes, and do homework between calls until you no longer need them. — 8/10
+
+**Why it works:** The bottleneck is skill, not hands. Buying explanation rather than execution transfers a durable capability to the owner in a handful of hours, at a fraction of a retainer's cost, and leaves no ongoing dependency.
+
+**Evidence:** Detailed first-person story: eight weekly hours at $750/hr ($6,000) to learn Facebook ads; by calls seven and eight he no longer needed help.
+
+**Fit:** Durable principle; the specific 2016 platform features named are incidental. Best-fitting item in the excerpt: a solo operator is hand-standing-up a $30/day Meta campaign right now, and two to four paid hours with a working media buyer while she drives her own account is honestly affordable against ~$2,700/mo — far cheaper than a retainer or months of $900/mo trial and error. Scaled down: buy 2-3 recorded hours on account setup, event tracking and the first read of reporting.
+
+**Target skill:** `marketing-agency-engagement` (create)
+
+**Merged from:** (part 13 of 16)
+
+### Integrate with each partner at one of three escalating depths so lead flow endures: (1) the partner gives your lead magnet or sample away free with every purchase of their own product, (2) the partner sells your lead magnet or trial product and keeps all the cash, (3) the partner sells your core offer for a share of the revenue. — 8/10
+
+**Why it works:** Level 1 makes the partner's own offer more valuable at no cost to them, so they promote it as self-interest; level 2 hands them pure-profit revenue with no fulfilment; level 3 makes you a product line in their business. In all three you acquire the customer and own every subsequent sale, and naming the mode up front decides who pays for goods and who does the pitch instead of leaving a vague cross-promotion nobody executes.
+
+**Evidence:** Massage/personal-training worked examples for each level, plus what he actually ran: gyms giving away a free nutrition consult to every new member, gyms selling a $99-$199 consult and keeping the money, and gyms selling supplements on a split; also a national tax prep firm giving away free LLC setup and chiropractors bundling adjustments into memberships.
+
+**Fit:** The most transferable tactic in these excerpts and the cheapest to test. Level 1 is a yoga studio, gym, salon or midwife putting a lip balm or deodorant sample in every client bag or new-member welcome kit with a card routing to email capture — a physical lead magnet the operator already manufactures, and the opt-in feeds the retention flows that are the binding constraint. Level 2 is a small wholesale order the partner retails; level 3 is a plain commission code. No budget, no team, no ad account needed.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16); (part 15 of 16)
+
+### Pay a one-sided referral bounty: hand your entire allowable acquisition cost to one party — a named cash/credit amount to the referrer, or an equivalent discount to the friend — and announce it explicitly so customers know it exists. — 7/10
+
+**Why it works:** You are already willing to spend that amount to buy a customer from a platform; paying it to an existing customer instead buys a warmer, pre-vouched lead for the same money, and the payout only lands after revenue arrives so it costs nothing up front. A named, unambiguous amount converts vague goodwill into a reason to go find someone. Household/spouse versions work because both parties capture the benefit.
+
+**Evidence:** Hormozi told already-launched gyms he would pay $2,000 cash for any gym they sent that signed up, which combined with ads and community posts produced a $215,000 profit month; separately he gives worked examples at $200 CAC paid entirely to one side.
+
+**Fit:** Retention is the binding constraint and repeat customers already generate 45-52% of revenue — that loyal base is exactly the population this pays. Scaled honestly to a $50.46 AOV the bounty is store credit or ~$10 per referred order, not $2,000, and one person can run it with single-use Shopify discount codes. The household angle is unusually apt for deodorant and body care — partners share bathrooms. Held below 8 because at ~54 orders/month the referral base is small, so absolute volume will be modest even if the mechanism works.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 1 of 16); (part 12 of 16)
+
+### Advertise your core offer directly first and only put a lead magnet in front of it when buyers need to know more before they will buy — which is mostly for expensive purchases. — 7/10
+
+**Why it works:** Going straight for the sale is the direct path to money; every free step you insert adds a conversion step that must be paid for and maintained. A lead magnet earns its place only where the consideration cycle genuinely requires education or trust before purchase.
+
+**Evidence:** Assertion, illustrated by Hormozi's own failed $450 webinar funnel versus the later case-study funnel.
+
+**Fit:** This is a live decision for Real Skin Care right now: the Meta campaign points at a soap giveaway (a lead magnet) for a $50.46 AOV consumable that needs almost no education. The rule says run at least one cell straight to a deodorant PDP and compare it against the giveaway on cost per purchase, not cost per entry. Related to the 'simplest possible funnel' claim, but that governs how many steps sit between ad and PDP; this governs whether the thing advertised is the product or a free offer at all.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 2 of 16)
+
+### Pick the lead magnet by running the problem-solution cycle: choose a narrow, meaningful problem, solve it completely for free, and check that the next problem the solution reveals is one your core offer sells against. — 7/10
+
+**Why it works:** Every solution reveals a new problem. If the revealed problem is the one your paid product solves, the free offer manufactures its own demand for the purchase; if it isn't, you buy contacts with no path to revenue. The free solve also earns the trust that makes the paid ask credible.
+
+**Evidence:** Assertion plus a worked home-seller example (valuation, photos, cleaning, staging as narrow problems upstream of 'sell my home') and the pretzels-at-a-bar analogy.
+
+**Fit:** This is the test the soap giveaway currently fails or passes: does receiving a free bar of soap reveal a problem that natural deodorant, oral care or lip balm answers, or does it just harvest sweepstakes emails? A solo operator can apply this in an afternoon to re-pick the giveaway prize. Distinct from the upsell-offer-design claim, which applies the same cycle at the moment of purchase rather than to the free front end.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 2 of 16)
+
+### Take one narrowly-defined problem and build the lead magnet for it across four delivery vehicles — software/tool, information, a done-for-you service, or a physical product — then make several versions and rotate them. — 7/10
+
+**Why it works:** The same problem can be solved many ways; each vehicle appeals to a different person and each new version keeps advertising fresh at low incremental effort, while revealing which framing pulls best. Picking the vehicle you can actually produce determines whether it ships.
+
+**Evidence:** Hormozi's own gym-owner examples: a benchmarking spreadsheet, a mini course on writing an ad, thirty days of free ad management, and a book (Gym Launch Secrets).
+
+**Fit:** Durable offer-construction principle. Directly usable against the live Meta giveaway: the soap giveaway is one physical-product magnet, but the same narrow problem (switching to natural deodorant without the armpit transition stink) supports an information magnet (a transition guide), a tool (a scent/SKU picker quiz), and a sample-size physical magnet — all producible by one person from the existing 12 SKUs. Rotation gives the $30/day campaign fresh entry offers without new product development.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 2 of 16); (part 3 of 16)
+
+### Test the name of the lead magnet before promoting it — headline first, then image, then subheadline — using polls to your following, a post on every platform asking for a '1' or a '2', or direct messages if you have no following at all. — 7/10
+
+**Why it works:** Five times more people read the headline than anything else, so packaging determines whether the magnet is ever consumed; small wording changes ('how to' vs. no 'how to') produce large engagement swings, and directional preference data needs very few votes.
+
+**Evidence:** His own book-title tests: three headline rounds, one image round (real beat cartoon), four subheadline rounds with the winners recorded.
+
+**Fit:** Durable copy/packaging principle. Runnable today: an Instagram story poll, a two-option email subject test to a sub-1,000 list, or DMs to repeat customers all cost nothing and settle what to call the giveaway or the guide before $30/day is spent driving entries to it. The existing offer-construction claim about running offer names in an ad campaign covers the paid version; this adds the free, pre-spend version and the fixed test order.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 2 of 16); (part 3 of 16)
+
+### Screen every lead magnet against four requirements: it engages ideal customers on sight, it out-engages your core offer, it is valuable enough that they actually consume it, and it makes the right people more likely to buy. — 7/10
+
+**Why it works:** A magnet that fails any one of these produces volume without buyers — engaged leads, not raw leads, are what convert, so the magnet must select for the person who wants the core offer.
+
+**Evidence:** Assertion; stated as the chapter's summary criteria.
+
+**Fit:** This is the exact guard the live soap-giveaway Meta campaign needs at $30/day: a generic soap prize attracts sweepstakes hunters, not natural-deodorant buyers, and at ~54 orders/month there is no room to pay for a list that never buys. Durable principle, runnable as a written checklist before the next entry offer ships.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 3 of 16)
+
+### Budget real money per lead into delivering the lead magnet rather than insisting it be free to you, because a costlier magnet gets far more engagement and still lowers blended cost per acquired customer. — 7/10
+
+**Why it works:** Advertising a free high-value magnet instead of the core offer multiplies engaged leads for the same ad spend; even after adding the magnet's unit cost, total cost per customer falls because far more people enter the funnel.
+
+**Evidence:** A worked hypothetical: $3,000 CAC advertising the core offer vs. $1,000 CAC via a $25 lead magnet at a 1-in-10 close rate.
+
+**Fit:** Traffic gate is open and $30/day is live, so this is a decision facing the operator right now: how much product cost per entry the giveaway can carry. The honest scaled-down version is computing allowable cost per entry from entry-to-purchase rate × contribution margin × repeat value, then deciding whether a sample-size unit is affordable inside it. Complements rather than restates the existing allowable-cost-per-lead claim, which does not address funding the magnet itself.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 3 of 16)
+
+### Advertise the genuine operational limit in your business — batch size, capacity, slots — as ethical scarcity instead of hiding it. — 7/10
+
+**Why it works:** Real limits make the thing feel scarcer and more valuable, driving faster action, and because the limit is true it costs nothing to state and cannot be called a bluff.
+
+**Evidence:** Assertion with example lines ('we only printed one batch of shirts and will never reprint this design', 'I can only handle five people per week').
+
+**Fit:** Durable persuasion principle and honestly true here: a solo operator making small batches of 12 SKUs has real limits — batch counts, seasonal scents, a fixed number of giveaway prizes and consolation samples. The existing scarcity skill covers making the promotion expire and attaching bonuses to ordering, but not surfacing genuine capacity/batch limits, which is the one honest lever an always-in-stock catalog has.
+
+**Target skill:** `marketing-scarcity-urgency-framing` (edit)
+
+**Merged from:** (part 3 of 16)
+
+### You already have a list: pull contacts from your phone, every email account you have ever used, and every social profile's followers/connections, and add them up — that is your first thousand leads. — 7/10
+
+**Why it works:** Every contact has already granted you the means and permission to contact them, so the acquisition cost of that audience is zero and the trust is pre-built; the only reason it feels like you have no leads is that you never counted.
+
+**Evidence:** Author's own origin story — his first fitness clients and their referrals came entirely from personal contacts and produced ~$4,000/mo.
+
+**Fit:** Durable principle. A solo operator at ~54 orders/month with a sub-1,000 email list has no cheaper acquisition surface, and unlike Hormozi's high-ticket coaching example the product has a universal TAM, so personal contacts are genuine prospects. Runnable today at zero cost alongside the $30/day Meta test.
+
+**Target skill:** `marketing-warm-outreach` (create)
+
+**Merged from:** (part 4 of 16)
+
+### After three or four exchanges, make the offer in third person — 'do you know anybody who is (struggle) looking to (dream outcome)? I'm taking on five for free to get testimonials' — so the contact is never asked to buy anything. — 7/10
+
+**Why it works:** Removing the buy-ask removes the pushiness, so the contact self-selects in without defending against a pitch; the embedded named results from people with the same struggle raise perceived likelihood of achievement, and every outcome (interest, a referral, or both) is a win.
+
+**Evidence:** Full script provided plus the author's claim that most of those who say yes are themselves interested.
+
+**Fit:** Durable principle and one of the highest-value items for a solo operator. Translates cleanly: 'know anyone whose natural deodorant quit on them by noon? I'm sending five people a free stick in exchange for honest feedback.' Zero cost, runnable today, and it doubles as review-generation for a 12-SKU catalog that needs proof.
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### When someone turns down even a free offer, ask why and 'what would I have to do to make it worth it for you to continue?' — because if you cannot give it away, the blocker is dream outcome, belief, or hidden costs of time/effort/sacrifice, not price. — 7/10
+
+**Why it works:** Price is only one term of value; a free thing that still gets declined proves the hidden costs are the real expense, and naming them converts a no into a specific fixable defect and into ammunition for the next prospect.
+
+**Evidence:** Assertion only, framed as the author's own diagnostic habit.
+
+**Fit:** Durable principle and unusually well-matched here: natural deodorant carries a real hidden cost (the transition/detox period, reapplication) that plausibly caps the 18-22.5% repeat rate. Distinct from the existing declined-cross-sell claim and from generic buyer surveys — this is a specific question to ask a specific decliner. Runnable today via email replies and giveaway non-entrants.
 
 **Target skill:** `marketing-conversion-friction-audit` (edit)
 
-**Merged from:** part 4 of 16
+**Merged from:** (part 4 of 16)
 
-### Keep the list warm by giving regular value through email and social between asks, so it stays primed for the next reach-out. — 7/10
+### Ask for the referral once the customer has actually got a result and visibly signalled satisfaction — not at random — because referring is a risk they take with their own reputation. — 7/10
 
-**Why it works:** A list that only ever hears from you when you want something goes cold and stops replying; interleaving value keeps response rates alive, making the list a renewable source of engaged leads rather than a one-time harvest.
+**Why it works:** The referrer stakes goodwill with their friend on your performance, so referral rate is bounded by how confident they are the friend will have a good experience; asking at the moment the result lands means the confidence is highest and the social proof conversation is already ready, and referred buyers arrive pre-trusted.
 
-**Evidence:** Assertion; framed as the give side of a give-ask cycle.
+**Evidence:** Author's origin story — asking his first clients for referrals produced another five or six clients who paid him directly; plus his framing of referral as a risk/reward trade the customer weighs.
 
-**Fit:** Zero-cost and it targets exactly the binding constraint — an 18-22.5% repeat rate with a sub-1,000 list. Adjacent to marketing-email-list-health but not a duplicate of its recorded claims (opt-in confirmation sequencing, unsubscribe spikes after silence); this governs send cadence between asks.
+**Fit:** Durable principle, zero cost, and it attacks the binding constraint from the right side: the 18-22.5% who repeat are the people most likely to refer. Operationally it is a targeting rule — aim the referral offer at second-order buyers, positive reviewers and people past the deodorant transition window rather than blanketing a sub-1,000 list where every ask is scarce.
 
-**Target skill:** `marketing-email-list-health` (edit)
+**Target skill:** `marketing-referral-programs` (edit)
 
-**Merged from:** part 4 of 16
+**Merged from:** (part 4 of 16); (part 12 of 16)
 
-### Every piece of audience-growing content is built from a 'content unit' that must do three things — hook attention, retain attention, and reward attention by satisfying the reason the hook promised. — 7/10
+### Build headlines from the seven components a meta-analysis of news found drive interest — recency, relevancy, celebrity, proximity, conflict, unusual, ongoing — and include at least two in every headline. — 7/10
 
-**Why it works:** A person can only be rewarded by content if they notice it, stay long enough, and get the promised payoff; reversing those three outcomes gives three production steps you can check any asset against before publishing.
+**Why it works:** The reader uses the headline to estimate the likelihood of being rewarded versus every competing alternative; these seven components are the empirically recurring reasons a headline wins that comparison, so stacking two or more raises the pick rate.
 
-**Evidence:** Assertion plus the author's own audience growth (1.2M added in six months); worked examples of a hook/retain/reward story.
+**Evidence:** Cited as a meta-analysis of news headlines, with an illustrative example per component.
 
-**Fit:** A solo operator with no content process needs a checkable three-part structure for captions, reels, emails and blog posts; it costs nothing to apply and is the missing organizing frame — no existing skill covers organic content production, only ad/email hooks. Not the binding constraint, which caps it below 8.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 5 of 16
-
-### Source content topics from five named buckets — far past (life lessons), recent past (what you did or discussed this week), present (ideas captured the moment they occur), trending (commentary on what has attention now), and manufactured (deliberately create an experience worth talking about). — 7/10
-
-**Why it works:** Nobody else has lived your life, so personal experience is the only automatically differentiated raw material; enumerating the five sources removes the 'I have nothing to post about' blocker and makes content production a retrieval task rather than an invention task.
-
-**Evidence:** Examples of each bucket, including a tweet derived from a portfolio-CEO meeting and a manufactured 'lived on $100 for a month' experience.
-
-**Fit:** Topic supply is the binding practical problem for a solo content operator, and this converts customer conversations, formulation history and daily operations into posts at zero production cost. Directly usable on the natural-deodorant category (transition stories, ingredient decisions, customer emails).
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 5 of 16
-
-### Retain attention by embedding unresolved questions in the reader's mind using one of three structures — lists, steps, or stories — stating the item count up front and interweaving the three inside longer pieces. — 7/10
-
-**Why it works:** Curiosity is the strongest retention driver; a numbered list or an ordered step sequence tells the consumer exactly what reward is coming and how much is left, and a story makes them want to know what happens next, so they keep consuming instead of scrolling.
-
-**Evidence:** Examples of each ('7 Ways I invested $1000 in my 20s', '3 Steps to Creating a Great Hook'), plus the note that steps have an explicit reward while lists are more flexible.
-
-**Fit:** The existing hooks skill covers opening a loop but has nothing on how to structure the body so the loop stays open — the closest claim addresses momentum, not structural devices. Directly usable in captions, emails and long-form PDP copy by one person with no team.
+**Fit:** Durable principle. Concretely useful right now: a checklist for Meta primary text and headlines on the live $30/day giveaway campaign, for email subject lines, and for Amazon title/bullet angles. Distinct from the existing verbalization-transform list (which transforms a fixed claim) and the six headline jobs in awareness-level-messaging (which selects an intent).
 
 **Target skill:** `marketing-copy-hooks-and-formats` (edit)
 
-**Merged from:** part 5 of 16
+**Merged from:** (part 5 of 16)
 
-### Keep the give-to-ask ratio deliberately high — at minimum around 3:1 or 4:1 and preferably far higher — and place the CTA only after a valuable moment or at the very end of a piece, adding a second ask placement only if audience growth does not slow. — 7/10
+### Over-give and under-ask: hold a give:ask ratio well above the roughly 3.5:1 that mature platforms run, place the CTA after a valuable moment or at the end of a piece, and add a second ask position only if audience growth does not slow. — 7/10
 
-**Why it works:** Rewarding content deposits goodwill; asks withdraw from it. An audience that has been over-given to pays more attention, shares more, and complies more often, while over-asking burns goodwill faster than content replenishes it and reach stalls or reverses. Placing the ask after value is delivered means the reader has already been paid before being charged.
+**Why it works:** Rewarding content deposits goodwill; asks withdraw from it. Above the ratio the audience keeps growing and pays more attention when you do ask; below it growth stalls or reverses. Placing the ask immediately after a delivered reward means the goodwill deposit is freshest, and adding placements one at a time while watching growth keeps you from crossing the ratio unknowingly.
 
-**Evidence:** Benchmarks from television (13 ad minutes per 60) and the Facebook newsfeed (~4 posts per ad), plus a friend's podcast that shrank after he monetized too aggressively; the author's own default placement practice.
+**Evidence:** Benchmarks: television at 13 ad minutes per 60, Facebook newsfeed at roughly 4 posts per ad; counter-example of a friend's podcast that shrank after he monetized too aggressively.
 
-**Fit:** Governs the email program to a sub-1,000 list where over-asking shows up as unsubscribes, and the social cadence around the soap giveaway. The specific Facebook 4:1 feed-density number is 2023 platform mechanics and should be treated as illustration, not target — record the principle. Nothing existing records how frequently to ask or where in the piece the ask belongs.
+**Fit:** The ratio principle is durable; the specific 4:1 Facebook figure is stale platform mechanics, so use the principle and ignore the number. A solo operator posting for a natural deodorant brand and emailing a sub-1,000 list has this decision on every post and send, and the incremental 'add one ask position, watch growth' method is runnable today with no budget. Tension worth recording: this business's email revenue depends on regular asks, so the ratio governs organic feed cadence more than lifecycle email.
 
-**Target skill:** `marketing-organic-content-program` (create)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 5 of 16; part 6 of 16
+**Merged from:** (part 5 of 16); (part 6 of 16)
 
-### Weave promotion one of two ways depending on format length — integrated (a short CTA inside every long-form piece, placed after a valuable moment or at the end) or intermittent (roughly ten pure-value posts then one dedicated ask post) — using integration on long-form platforms and intermittent asks on short-form ones. — 7/10
+### When you do ask, promote exactly one of two things — your core offer or your lead magnet — nothing else; when unsure use the lead magnet because it is lower risk, and make it relevant to the content that advertised it. — 7/10
 
-**Why it works:** On long-form content there is enough give time to absorb a short ask without breaking the ratio; on short-form content any embedded ask consumes most of the unit, so the ask has to be its own separate post. Adding one CTA placement at a time and watching whether growth slows keeps the ratio honest.
+**Why it works:** Restricting the ask to two destinations keeps the audience's decision simple and keeps every ask pointed at either revenue now or an engaged lead you can monetise later. The lead magnet costs the audience nothing, so it burns less goodwill than a direct sale ask, and topical relevance means the people who opt in are already qualified on that problem.
 
-**Evidence:** Worked arithmetic (an hour podcast with 3x30s ads is 58.5 min give to 1.5 min ask) and the recommendation to add CTA placements one at a time.
+**Evidence:** Worked example ('I have 11 more tips… go to my site to grab a pretty visual'); assertion otherwise.
 
-**Fit:** Keys off format length rather than a named platform feature, so it does not decay. A solo operator posting Reels/TikToks for deodorant needs a concrete rule for how often a post can push the giveaway or a SKU; the 10:1 intermittent rule is executable today with no budget and gives the Meta giveaway campaign an organic counterpart that does not burn goodwill.
+**Fit:** Durable principle landing on a live asset: the soap giveaway is a lead magnet and a Meta campaign is driving entries, so every organic ask should point at the giveaway entry or a single SKU rather than a blog post, a follow request or a generic 'shop the site'. The relevance rule means a deodorant-problem post should route to a deodorant-relevant capture, not a generic newsletter signup.
 
-**Target skill:** `marketing-organic-content-program` (create)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 5 of 16; part 6 of 16
+**Merged from:** (part 5 of 16); (part 6 of 16)
 
-### When you do make an ask in content, promote exactly one of two things — your core offer or your lead magnet — and default to the lead magnet because it is lower risk. — 7/10
+### Keep making free content even when paid ads are your primary channel, because content makes all your other advertising more effective — a prospect who looks you up and finds nothing is less likely to buy, one who finds lots of valuable content is more likely to — even though the lift is hard to attribute. — 7/10
 
-**Why it works:** Restricting the ask to two possible destinations prevents the CTA from diluting into multiple competing requests; the lower-friction lead magnet ask costs less audience goodwill per ask and still captures contact details you can sell to later.
+**Why it works:** Advertising triggers a verification step: the prospect checks whether you are real, and a populated, valuable content presence resolves that check in your favour. Prospects who found value in your free content also arrive at the ad or page already trusting you, so the paid click converts at a higher rate — which is why the effect gets misattributed to the ads.
 
-**Evidence:** Assertion only ('That's it. Don't overcomplicate this.').
+**Evidence:** Survey of the author's own clients: 78% had consumed at least two long-form pieces before booking a call; and a decline in paid performance traced to him stopping topical content.
 
-**Fit:** Immediately concrete: the soap giveaway is the lead magnet and the deodorant/body-care SKUs are the core offer, so every organic ask resolves to one of those two and never to a vague 'link in bio'. With a sub-1,000 list, growing it via the low-risk ask is the right default. Adjacent to the email-design one-ask claim but that governs email layout, not which offer a content CTA may name.
+**Fit:** Durable principle and load-bearing right now: $30/day of Meta spend is driving cold entries to the soap giveaway, and a meaningful share of those people will tap the profile before entering or buying, so an empty grid leaks conversions the ad already paid for. It also warns against judging content by last-click revenue. Cheapest possible fix for one person; complements rather than duplicates the friction-audit claim about credibility on deep landing pages.
 
-**Target skill:** `marketing-organic-content-program` (create)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 5 of 16; part 6 of 16
+**Merged from:** (part 5 of 16); (part 6 of 16)
 
-### Run a limited-slot casting-call offer as the ad or post itself: 'I'm looking for [N] [specific avatar] to [get dream outcome / take part in free thing] — in exchange you let us use your before-and-after results in our marketing', assembled from the offer formula (avatar, dream outcome, time, without the effort, guarantee) and closed with a reply/DM/comment CTA. — 7/10
+### When a channel's performance declines, ask 'what did we stop doing in the months before the decline?' before debating which asset (creative, copy, offer, page, price) is at fault. — 7/10
 
-**Why it works:** The named small number creates quantity scarcity, naming the avatar self-selects the right reader, the exchange makes the giveaway feel like a fair trade rather than charity, and the output is both leads and a supply of proof assets you would otherwise have to buy.
+**Why it works:** A decline in a system that used to work is usually a removed input, not a newly broken component; debating components generates plausible answers indefinitely, while listing what changed produces a checkable, dated shortlist.
 
-**Evidence:** The 2013 gym ad: $1,000 spend, 19 sales at $299, ~$5,700 revenue; the same promotion later ran across 4,500+ licensed gyms. Fill-in-the-blank template for the post version.
+**Evidence:** Narrative: a room of department heads blaming creative/copy/offer/pages/price, while the actual cause was that the founder had stopped making topical gym content — later confirmed by a customer survey.
 
-**Fit:** Maps almost exactly onto what is already live: a Meta campaign at $30/day driving entries to a soap giveaway. Reframing it as 'looking for 10 people to try [product] free in exchange for honest before/after photos and a review' converts the same spend into review inventory and email opt-ins, feeding the credibility and retention work. Caveat: deodorant efficacy is not photographable, so run before/after on body care or lip balm and a written-verdict exchange for deodorant.
-
-**Target skill:** `marketing-offer-construction` (edit)
-
-**Merged from:** part 6 of 16; part 8 of 16
-
-### Scale content depth-then-width — post regularly on one relevant platform and maximize quality and quantity there before adding a second — rather than width-then-depth across every platform at once. — 7/10
-
-**Why it works:** Audiences compound on a platform the more you post there, so concentrating effort captures compounding and requires fewer resources; spreading thin early produces 'lots of bad content everywhere'. The tradeoff is single-channel dependency risk.
-
-**Evidence:** Assertion, with the advantages and disadvantages of each path enumerated.
-
-**Fit:** The right call for a one-person operation at ~54 orders/month: width-then-depth is explicitly the labor-heavy path and this business has no editor or team. Adjacent to the existing 'run one or two channels' claim but that is about channel type; this is about sequencing platforms inside the content channel, which is not recorded.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 6 of 16
-
-### Narrow the content topic to the smallest 'puddle' you can plausibly be king of, then widen to the pond, lake and ocean over time — never start on the broad general topic. — 7/10
-
-**Why it works:** In a broad topic the audience defaults to creators with better track records, so a small player gets no traction; in a narrow topic your specific experience outranks everyone, and the audience you win there transfers when you widen.
-
-**Evidence:** Assertion with a worked example (plumbing in one town → local business → brick-and-mortar chains → general business).
-
-**Fit:** This business has no authority in 'skincare' or 'wellness' broadly; the puddle is natural deodorant and the pit-detox transition, where its actual product experience is the credential. Directly shapes what to post and pairs with existing awareness-level work without duplicating it — those govern message, this governs topic scope.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 6 of 16
-
-### Assume people need to be reminded more than taught: keep repeating the same offer and the same core messages long past the point you are bored of them, because most of the audience has not seen them. — 7/10
-
-**Why it works:** No one sees all of your content, so perceived repetition by the creator is first exposure for most of the audience; message penetration comes from frequency of the same message, not from variety.
-
-**Evidence:** The author posted about his book daily and surveyed his audience — one in five who saw the post did not know he had a book.
-
-**Fit:** Direct application for a solo operator who will otherwise rotate topics out of boredom: keep the giveaway, the deodorant-transition message and the guarantee on repeat across posts and emails. Distinct from the recorded 'carry one dominant idea and re-present it in fresh settings' claim, which is about intensifying inside a single asset.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 6 of 16
-
-### Frame content as 'how I' rather than 'how to' and 'my favorite way' rather than 'the best way' — talk about your own experience, not what others should do. — 7/10
-
-**Why it works:** Experience claims cannot be argued with, so they are credibility-proof; prescriptive claims from someone with no track record read as preachy and invite the reader to challenge them.
-
-**Evidence:** Assertion with three paired before/after examples (oatmeal, agency, lead gen).
-
-**Fit:** Highly usable for a founder-operated skincare brand with no lab credentials — 'how I got through the two-week armpit detox' is defensible where 'the best way to detox your armpits' invites a fight in the comments. Complements rather than restates the recorded voice claims, which cover tone and consistency rather than experiential versus prescriptive framing.
-
-**Target skill:** `marketing-conversion-copy-angles` (edit)
-
-**Merged from:** part 6 of 16
-
-### Keep making free content even when paid ads are your primary channel, because content nurtures demand that paid gets credit for — and verify it by surveying buyers on what they consumed before purchasing rather than trusting platform attribution. — 7/10
-
-**Why it works:** Content warms people who then convert through paid, so paid metrics absorb credit for content's work; when content stops, paid performance decays with no visible cause. A direct buyer survey exposes the assisted path that no attribution window reports.
-
-**Evidence:** Survey of the author's gym-owner clients found 78% had consumed at least two long-form pieces before booking a call, after paid performance declined when he stopped making gym content.
-
-**Fit:** Immediately live: Meta spend starts at $30/day against ~$2,700/mo revenue, so the operator will be tempted to read Ads Manager as the whole truth and cut organic. A one-question survey on the order confirmation costs nothing at ~54 orders/month. The existing post-purchase-survey claim is aimed at naming the conversion constraint, not cross-channel attribution.
-
-**Target skill:** `marketing-paid-media-measurement` (edit)
-
-**Merged from:** part 6 of 16
-
-### When performance declines and the debate starts over creative, copy, offer, pages and price, ask instead 'what did we stop doing in the months before the decline?' — 7/10
-
-**Why it works:** Debate about which live asset is broken searches only among things currently running; declines are frequently caused by a removed input whose effect lagged. Reframing the question to subtraction surfaces the actual cause and is answerable from history rather than opinion.
-
-**Evidence:** Narrative: the January 2020 meeting where the real cause was that the author had stopped making gym-specific content months earlier, later confirmed by the 78% survey.
-
-**Fit:** A solo operator debating with themselves is the same failure mode, and with Meta live there will be weeks where results drop and the reflex will be to rewrite creative. Complements the recorded constraint-naming and decision-log steps rather than restating them — the log records what changed, this says to interrogate what stopped.
+**Fit:** Durable diagnostic, complementary rather than duplicative: the existing skill says assume the visible pain is not where the constraint sits and to keep a decision log, but neither states 'what did we stop doing' as the first move on a decline. With a solo operator now running paid, email and organic simultaneously, this is the cheapest first question when Shopify revenue dips.
 
 **Target skill:** `marketing-performance-pattern-analysis` (edit)
 
-**Merged from:** part 6 of 16
+**Merged from:** (part 6 of 16)
 
-### Open every cold message with one to three specific things a friend would know about the prospect — compliment them on it and, ideally, say how it benefited you — so the cold reach out reads like a warm one; batch the research across the list beforehand. — 7/10
+### Keep repeating the same message — most of the audience misses any given post, so you will get bored of your own content long before everyone has seen it. — 7/10
 
-**Why it works:** Strangers hang up or delete because nothing signals prior relationship. A researched, specific opener buys enough seconds to make the actual ask, because people give time to people who evidently know and like them.
+**Why it works:** Reach on any single send or post is a small fraction of the audience, and attention is intermittent; repetition is the only way coverage accumulates. Self-censoring out of boredom systematically under-exposes the offer.
 
-**Evidence:** A worked dialogue example (the dog-trainer call) plus assertion.
+**Evidence:** Author posts about his book daily and surveyed his audience: one in five who saw the post did not know he had a book.
 
-**Fit:** Executable today with zero budget: a DM to a boutique owner or creator that names their actual shop, post or ingredient they champion. The prospect universe here is dozens, not thousands, which is exactly the condition under which the author says to personalize every one. Nothing existing holds the cold-open personalization mechanic.
+**Fit:** Durable principle with a direct operational consequence for a solo operator running a sub-1,000 list and a small following: the giveaway, the deodorant hero SKU and the guarantee should be restated repeatedly across sends and posts rather than announced once. Costs nothing. Distinct from the existing 'carry one dominant idea through the piece' claim, which governs a single asset.
 
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 7 of 16
+**Merged from:** (part 6 of 16)
 
-### Contact each prospect multiple times in multiple ways, and use the non-response on one channel as the explicit pretext for the next ('I'm calling to follow up on my email'). — 7/10
+### Narrow the content topic to a 'puddle' you can be king of before widening to the pond, lake and ocean — a small operator should not make general-category content. — 7/10
 
-**Why it works:** People respond to different mediums, and most senders quit after one attempt. Multi-channel repetition raises the chance of being seen and signals seriousness, and every unanswered attempt manufactures a legitimate reason for the next one.
+**Why it works:** In a broad topic the audience will always prefer someone with a better track record, so a small player gets no traction; a narrow topic has few or no credible competitors, so authority accrues, and the audience earned there transfers when you widen.
 
-**Evidence:** Assertion plus the 'if you really needed to reach your parents' analogy; author states he never answers calls but replies to DMs.
+**Evidence:** Worked example of plumbing in one town expanding to local business, brick-and-mortar chains, then general business.
 
-**Fit:** No budget or headcount required, and it is where solo operators actually lose partnership and stockist deals — one unanswered DM and the prospect is abandoned. Directly usable on surfaces this business has (Instagram DM, email, then a follow-up referencing the email). Complements acquisition-channel-selection, which covers choosing partners but not contact cadence.
+**Fit:** Durable principle and a real constraint fix: with 12 SKUs and no authority, generic 'clean beauty' content competes with the entire category. The honest puddle here is narrow — switching to natural deodorant and surviving the transition period, which the post-purchase skill already treats as a retention problem. Runnable today, no gate.
 
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
+**Target skill:** `marketing-organic-content-program` (edit)
 
-**Merged from:** part 7 of 16
+**Merged from:** (part 6 of 16)
 
-### Write the opening callout using one of four verbal patterns — a label that groups people ('I'm looking for X'), a yes-question the right person answers 'that's me' to, an if-then qualifying statement, or a ridiculous result — tuned specific enough to catch the right people and broad enough to catch as many of them as possible. — 7/10
+### Research one to three things about each prospect before contacting them, compliment them on it and show how it benefited you, so the cold message reads like it came from someone they already know. — 7/10
 
-**Why it works:** The cocktail-party effect: in a noisy feed only a signal the reader recognises as being about them pierces through, and self-identification with the label or the yes-answer buys the next second of attention.
+**Why it works:** Strangers give you seconds and default to ignoring you; evidence that you spent effort on them specifically buys enough time to make the actual ask, and people like people who like them.
 
-**Evidence:** Assertion plus his all-caps 'I'M LOOKING FOR 5 CHINO HILLS RESIDENTS' ad that produced 19 sales at $299 from $1,000 of spend, plus worked examples of each pattern.
+**Evidence:** Extended illustrative dialogue (the dog-trainer cold call) — a worked example, not measured data.
 
-**Fit:** Executable today across the surfaces that matter: Meta primary text for the live giveaway campaign, Amazon titles and bullets, email subject lines. Natural deodorant has obvious yes-question and if-then openers ('Do you reapply by lunch?', 'If you quit natural deodorant in week two because of the detox…'). The label / if-then / ridiculous-result patterns are new generative options rather than reworded ones.
+**Fit:** Directly runnable today by one person: every outreach message to a stockist, subscription box or micro-creator can open with a specific line about their shop, their post, or their audience. Batching the research is cheap at list sizes of 50-150. It feeds creator sourcing without restating it — that skill covers how to judge and brief a creator, not how to open a cold DM to one.
 
-**Target skill:** `marketing-copy-hooks-and-formats` (edit)
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
 
-**Merged from:** part 8 of 16
+**Merged from:** (part 7 of 16)
 
-### Use nonverbal callouts: stage the frame as a visible depiction of the buyer's problem or situation (a person tossing and turning in bed for sleep trouble, a room stacked with junk for clutter) so the right person self-selects from the image alone. — 7/10
+### Contact each prospect multiple times across multiple channels, and treat non-response on one channel as the explicit reason to follow up on another ('I'm calling to follow up about my email'); expect two to three conversations before a sale rather than one. — 7/10
 
-**Why it works:** A scene that shows the yes-question does the same self-identification work as the headline but faster, before any copy is read — critical in a scrolling feed and a thumbnail grid.
+**Why it works:** Different people respond to different mediums, most senders quit after one attempt, and multi-channel persistence signals the matter is important — so an unanswered message manufactures a legitimate next touch instead of ending the sequence.
 
-**Evidence:** Assertion with five worked scene examples.
+**Evidence:** Assertion plus the analogy of urgently reaching your parents; his own stated preference for DMs over calls.
 
-**Fit:** Applies to a surface the solo operator already produces with AI imagery — Meta statics for the live $30/day campaign, Amazon secondary slots, PDP imagery. Concretely usable: a white shirt with a pit stain, an armpit checked mid-morning, a deodorant abandoned in a drawer. Existing image skills specify avatar, setting and emotional register but not the rule that the frame should depict the problem state as the attention mechanism.
+**Fit:** The most portable claim in the excerpt for a solo operator: an outreach list of 100 stockists and creators worked once produces almost nothing, and email → Instagram DM → follow-up email costs nothing but time. Nothing in the existing skills covers outreach follow-up cadence — the lifecycle-email skill covers automated flows to people who already opted in.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
+
+**Merged from:** (part 7 of 16)
+
+### Write the opening call-out from a menu of four verbal types — a label that names a group the buyer identifies with, a yes-question they can answer 'that's me' to, an if-then statement that states the qualifying condition, or a ridiculous result — chosen specific enough to catch the right people and broad enough to catch many of them. — 7/10
+
+**Why it works:** The cocktail-party effect: attention is captured by a signal the listener recognises as being about them, so a call-out that names the reader's group, symptom or situation pierces feed noise and self-selects the audience before any claim is made.
+
+**Evidence:** Cocktail-party-effect analogy plus multiple worked example lines; the 2013 'I'm looking for 5 Chino Hills residents' ad as a case.
+
+**Fit:** Durable copy principle, age-immune. It extends the existing 'call your audience out by name' claim by giving four generative structures to run a batch through — 'Do you reapply deodorant before 3pm?', 'If you switched to natural deodorant and quit in week two…'. Directly usable on giveaway ad primary text, Amazon titles and email subject lines with no budget or headcount.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+**Merged from:** (part 8 of 16)
+
+### Build a nonverbal call-out into the first frame as well as a verbal one — use contrast (colour, movement, anything that sticks out) and stage a scene that visually depicts the qualifying condition rather than only stating it in words. — 7/10
+
+**Why it works:** Attention is captured pre-verbally; a frame that shows the problem (a person tossing in bed, a room stacked with junk) makes the sufferer recognise themselves before they read a word, so the image does the targeting the copy would otherwise have to do alone.
+
+**Evidence:** Cocktail-party analogy extended to the dropped tray and the champagne flute; a list of worked scene examples.
+
+**Fit:** Durable creative principle, highly runnable now: the account runs static ads, the operator already produces imagery with AI reference-photo workflows, and a scene frame (reapplying at 3pm, a discarded stick of conventional deodorant, an armpit-check in a car mirror) costs nothing but a prompt. Adds a specific job — visually depicting the qualifying condition — that the existing image-format rotation does not name.
 
 **Target skill:** `marketing-product-image-stack` (edit)
 
-**Merged from:** part 8 of 16
+**Merged from:** (part 8 of 16)
 
-### Run each angle through the prospect's own timeline — past, present, and future — so they see the consequences of buying and of not buying at each point rather than only right now. — 7/10
+### Run an ad that recruits a small, explicitly numbered group of participants to receive the product or program free, on the stated condition that they let you use their before/after photos and results in your marketing. — 7/10
 
-**Why it works:** People default to evaluating a decision in the present; forcing them to visualize where their past decisions already led and where the current trajectory ends makes indecision feel costly today.
+**Why it works:** The capped number creates scarcity, the exchange framing makes the free product feel earned rather than cheap, and the deliverable is not just leads but a stock of proof assets — which is what makes the next round of advertising work.
 
-**Evidence:** Assertion plus weight-loss examples across past (teased as a kid), present (jeans won't button), future (another belt loop).
+**Evidence:** First-hand case: an all-caps, image-free Facebook ad with this structure turned $1,000 into $5,700 across 19 sales at $299, and became the '6 week challenge' promotion credited with $1.5B+ across 4,500+ licensed gyms.
 
-**Fit:** Cheap for one person to apply. For natural deodorant the past leg is strong and under-used — the previous natural brand that failed during the transition period — which the copy can absolve and re-frame. Partially overlaps the now/later contrast axis in conversion-copy-angles, but the past leg and consequences-of-indecision framing are new.
-
-**Target skill:** `marketing-problem-solution-inventory` (edit)
-
-**Merged from:** part 9 of 16
-
-### Long ads and short ads differ only in how many angles they cover — add or remove angles to fit the placement, but keep the callout at the start and the CTA at the end identical. — 7/10
-
-**Why it works:** The opening and the ask do fixed jobs (get noticed, tell them what to do); everything between them is interchangeable angle material, so one angle inventory can be cut down or expanded to fill any surface without rewriting the piece.
-
-**Evidence:** Assertion only.
-
-**Fit:** A real labor saver for a one-person shop repurposing the same angle set across a Meta primary text, an email, an Amazon bullet block and a PDP section. Complements the existing hook-effort and single-dominant-idea claims without restating them.
-
-**Target skill:** `marketing-copy-hooks-and-formats` (edit)
-
-**Merged from:** part 9 of 16
-
-### Bridge the second ask to the first using the consistency principle — remind the visitor of the action they just took and frame the next action as following from it ('now that you did A, you need to do B to get the most out of A'). — 7/10
-
-**Why it works:** Cialdini's consistency: people want to act consistently with what they have already done, so an explicit callback to the prior micro-commitment raises completion of the next step.
-
-**Evidence:** Cites Robert Cialdini's Influence.
-
-**Fit:** One line of copy to implement. Directly applicable to the giveaway entry page (clicked the ad → now enter), and reusable on the cart, the post-purchase upsell page and the insert-card opt-in destination. Distinct from the existing email claim about bridging a CTA to what the reader just read, which is within-asset relevance rather than carrying a prior action forward.
-
-**Target skill:** `marketing-lead-capture-landing-pages` (create)
-
-**Merged from:** part 9 of 16
-
-### Expect most tested ads to lose money — the pattern is many small losses and rare large wins — so judge the test portfolio in aggregate and pile budget onto the one winner rather than reading a running loss as failure. — 7/10
-
-**Why it works:** Ad returns are heavily skewed; the expected value of a test program comes from being able to identify and multiply the rare winner, which requires having run enough losers to find it.
-
-**Evidence:** Worked hypothetical (ten ads at $100, nine lose, one returns 5x) plus a client who took a year to reach profitability and repaid it in a month.
-
-**Fit:** Stage: scale. The psychology matters for a solo operator who will otherwise switch the campaign off in week two, but finding a winner out of a ten-ad portfolio and multiplying it needs spend and order volume this account does not have at $30/day and ~54 orders/month. Trigger: sustained spend where a single ad can accumulate 2x-30-day-cash of spend in a few days across multiple simultaneous cells.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 9 of 16
-
-### When you want more leads, exhaust 'more' and 'better' on the channel you already run before going 'new' — and when you do go new, follow the order: new audiences and placements on the platform you are already on, then every media type it supports, then another platform, then an entirely new acquisition activity. — 7/10
-
-**Why it works:** Each step outward costs more learning and setup than the last, so return per unit of work falls as you move right; the cheapest incremental leads come from surface area you have already paid to learn — the same account, pixel and creative library. Plateaus are usually mistaken saturation, not real saturation.
-
-**Evidence:** Two anecdotes — a chiropractor-niche owner claiming saturation at $30k/mo on one platform in a $15.1B industry, and a weight-loss operator afraid of saturating a 1B-DAU platform at $40k/mo — plus his own roadmap of expanding paid ads to reach affiliates before adding channels.
-
-**Fit:** A stop-rule against the solo operator's real failure mode: adding TikTok, Pinterest and a newsletter while the one live Meta campaign is under-exercised at $30/day. Gives a concrete ordering — work Reels/Stories/feed placements and formats on the account already running before opening any new platform. Overlaps but does not duplicate the existing claim about not opening a new demographic, which governs audiences inside paid rather than channel and placement expansion order.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 10 of 16; part 16 of 16
-
-### If customers are not referring, treat it as a product/experience problem first — ask 'why are my customers too embarrassed to tell everyone they know about my product?' — and fix the product on a standing cadence until referrals are consistent (target roughly 25% of customers arriving via referral) before ramping advertising again. — 7/10
-
-**Why it works:** Referrals are the market's verdict on whether the product is remarkable; an unremarkable product is literally not worthy of remark, so no amount of asking or advertising produces word of mouth until delivered value exceeds expectation. Referrals also keep running when ads are off, so scaling spend over a mediocre product buys expensive customers who never compound.
-
-**Evidence:** Author's examples of mediocre vendors he pays despite never referring them, the observation that people who copied his ads, funnels and scripts failed because the product was the differentiator, and his own account of ads off with referrals still arriving weekly after updating the product every two weeks from customer feedback.
-
-**Fit:** Lands on the stated binding constraint: retention at 18-22.5% with repeat buyers at 45-52% of revenue means product goodwill is the lever, not traffic. Natural deodorant in particular has a known 'stopped working / irritated me' failure mode that suppresses both repeat and referral. Honest scale-down: a solo operator cannot reformulate fortnightly but can run a standing feedback loop across ~54 orders/month, ship one product, packaging or instruction change per cycle, and track referral share as a gate on ad scaling. Distinct from the store-level friction audit, which instruments the store rather than the product experience.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 11 of 16; part 16 of 16
-
-### Find what your lowest-churning, best-outcome customers have in common, then rewrite your acquisition call-outs to target only that narrower profile — even if it is currently a small share of revenue. — 7/10
-
-**Why it works:** Customers who fit the product get the most value, build the most goodwill, churn least and refer most. Narrower targeting also makes messaging more specific, which lowers acquisition cost, so quality of prospect determines both retention and CAC.
-
-**Evidence:** Case study of a portfolio PR company whose lowest-churn customers were all one niche raising investor funding; retargeting to that 15% segment broke a multi-year plateau, lowered ad cost, and started producing regular referrals.
-
-**Fit:** Actionable now: segment the ~18-22.5% repeat buyers against one-and-done buyers, name what the repeaters share (first SKU, scent, sensitivity complaint, gift vs self), and point the Meta giveaway call-out at that profile rather than 'anyone who wants natural deodorant'. The existing pattern-analysis skill records the decile analysis but not the acquisition action that follows or the willingness to concentrate on a minority segment. At 54 orders/month the cohort contrast is directional only.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 11 of 16
-
-### Deliberately dial down the promises you make in your offers and copy — keep lowering them until close rates start to drop, then stop — so the actual experience exceeds the expectation you set. — 7/10
-
-**Why it works:** Expectations are set by you and largely determine the felt experience. A lower promise leaves headroom to overdeliver, which produces goodwill and referrals; an inflated promise creates a fulfilment nightmare and a customer who feels shortchanged even when the product is good.
-
-**Evidence:** Author's account of over-promising early, then inching promises down while holding quality, and netting referrals as a result; the movie-expectation analogy.
-
-**Fit:** Directly applicable to natural deodorant, where over-promising ('works all day, no adjustment period') is the standard category failure and produces exactly the one-and-done buyer this business already has too many of. Runnable today by editing PDP hero copy, Amazon bullets and the welcome email. Distinct from the post-purchase claim about making and keeping many small promises: this calibrates the size of the promise at the point of sale, with close rate as the stopping rule.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 11 of 16
-
-### Reverse-engineer results: survey to find the customers who got the best outcome, interview them to find what they did differently, isolate the common actions, then build those actions into what every new customer is told to do — and set your guarantee conditions to those same actions. — 7/10
-
-**Why it works:** Average customer results are the ceiling on testimonials, retention and referrals. The behaviours that separate best-result customers from average ones are transferable; installing them into onboarding raises average results, and tying the guarantee to those behaviours makes customers actually perform them.
-
-**Evidence:** Gym Launch example — tracking speed-to-first-ad and speed-to-first-sale showed gyms doing both within seven days tripled LTGP; forcing that behaviour lifted average results, testimonials and referrals.
-
-**Fit:** Honest translation: interview the handful of repeat deodorant buyers (a dozen emails, not a research project), find what the successful ones do — applied to clean damp skin, one swipe not three, pushed through the two-week adjustment, paired with the soap — and write it into the insert, the post-purchase email and the PDP. The guarantee condition maps to 'give it 14 days'. Complements the existing named-routine claim, which does not say where the routine's content comes from.
-
-**Target skill:** `marketing-post-purchase-onboarding` (edit)
-
-**Merged from:** part 11 of 16
-
-### Run a standing monthly product-improvement loop: pull the single most common complaint from support data, surveys and reviews; design the fix using feedback from customers who made it work anyway; ship the new version to a small group of struggling customers; roll out only if the complaint disappears; then move to the next most common problem. — 7/10
-
-**Why it works:** Every reduction in customer effort or sacrifice widens the value-minus-price gap, which increases goodwill and therefore referrals and repeat rate. Sequencing by complaint frequency guarantees each cycle removes the largest remaining source of dissatisfaction, and testing on the struggling cohort proves the fix before it reaches everyone.
-
-**Evidence:** Assertion; the author states he runs this as a recurring monthly process.
-
-**Fit:** A 12-SKU natural body-care line made by a solo operator is one of the few businesses that can actually reformulate — baking-soda irritation, melt in transit, residue on clothing, lip balm texture are all review-visible complaints with cheap fixes. Amazon and Shopify reviews plus support email are the free input, and 'small group of struggling customers' means a handful of past complainers. A one-question post-purchase survey plus a monthly review is hours of work, not a program. Distinct from the one-time pre-rewrite store diagnostic because of the recurring cadence and the fix-only-the-top-complaint rule.
-
-**Target skill:** `marketing-pre-launch-product-validation` (edit)
-
-**Merged from:** part 11 of 16; part 12 of 16
-
-### Keep selling existing customers the next thing — a new product or more of what they bought — because customers who fall off the back end stop referring, and make each next offer more compelling than the first. — 7/10
-
-**Why it works:** Every additional purchase extends lifetime value and adds another delivered result, which builds goodwill; a customer still buying is a customer still recommending, while one who lapsed has nothing to recommend. Satisfied demand otherwise goes to a competitor.
-
-**Evidence:** Anecdote about a weight-loss company where customers who did not refer at tier one referred after buying the more expensive product.
-
-**Fit:** Retention is the stated binding constraint — 18-22.5% repeat, repeat buyers ~45-52% of revenue — and 12 SKUs across deodorant, body care, oral care and lip balm give a real 'next thing' to sell. Overlaps the existing upsell and retention machinery, but the specific claim — that neglecting the back end kills referrals, and that the second ask must be stronger than the first and timed to a delivered win — is not recorded.
-
-**Target skill:** `marketing-retention-offers` (edit)
-
-**Merged from:** part 11 of 16; part 12 of 16
-
-### Ask for the referral at the exact moment of purchase — on the checkout or contract itself — and ask for a real introduction, not just a name, framing it as the buyer getting a better result by doing it with someone else. — 7/10
-
-**Why it works:** Buyer enthusiasm peaks at the moment of commitment, before the product has even arrived; asking later catches them at a lower point of goodwill. A three-way introduction converts far better than a passed-along name.
-
-**Evidence:** Salesman anecdote — half his sales came from asking every buyer who else they'd want to come with them, and he broke company sales records doing it.
-
-**Fit:** Translates cleanly to surfaces already owned: the Shopify thank-you page and order-confirmation email, which the post-purchase skill already treats as prime real estate — 54 asks a month at zero cost. The 'better results with a friend' framing needs an honest body-care version (share a scent, split a bundle, get your partner off aluminum too).
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Always ask for the spouse or household — offer a household discount so both partners are on the product. — 7/10
-
-**Why it works:** The referrer and the referred share a home and a benefit, so the social risk of recommending is near zero and the second unit is consumed in the same bathroom.
-
-**Evidence:** Assertion, offered as a variant of the one-sided referral benefit.
-
-**Fit:** Unusually good fit for this catalog: deodorant, oral care and body care are household consumables where a partner is the most plausible second user, and a two-person household doubles consumption rate — which raises repeat rate, the binding constraint. Runnable now as a 'grab one for your partner' line in the post-purchase email or a two-pack price.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Run a named, time-boxed referral event of one to four weeks — 'Bring-a-Friend', 'Spouse Challenge', 'Accountability Buddy' — with points, credits or bragging rights for bringing friends in that window. — 7/10
-
-**Why it works:** A deadline and a name convert an always-available option into an event people act on now, and the naming makes the same mechanic re-runnable as a fresh promotion.
-
-**Evidence:** Assertion with a list of promotion names the author has used.
-
-**Fit:** Sits on top of machinery this business already has: a live Meta campaign for the soap giveaway, an email list, and the existing scarcity rule about re-wrapping a recurring promotion with a new name and dates. A two-week 'Bring a Friend' event is one email sequence plus one discount code for a solo operator.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Pay referral rewards in unlockable non-cash bonuses — VIP status, product, premium support, extra service — granted for both referring and leaving a testimonial. — 7/10
-
-**Why it works:** Bonuses cost less than cash while carrying a higher perceived value, so you can make the offer more generous-looking for the same real spend, and bundling the testimonial requirement gets two assets from one ask.
-
-**Evidence:** Assertion with a list of bonus types; reasoning that bonuses cost less than cash so both parties can be rewarded.
-
-**Fit:** The right shape for a product business with thin cash margin at $50.46 AOV: a free lip balm or full-size deodorant costs COGS, not revenue, and carries the same perceived value as a cash reward. Pairing the reward with a testimonial feeds the review-mining skill, which needs corpus volume this business lacks. Runnable today by one person.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Train the first person who takes marketing work off your hands with the 3Ds: document the task as a checklist while you actually do it, demonstrate it once in front of them, then have them duplicate it from the checklist while you only observe and fix the checklist. — 7/10
-
-**Why it works:** Writing the steps during real execution captures what you would otherwise skip and converts tacit skill into a transferable artifact; having the trainee run it unaided immediately surfaces where the checklist is wrong, so the artifact — not the person — absorbs the correction and trains everyone after.
-
-**Evidence:** Assertion from experience training teams; the stated test is 'if you vanished tomorrow, could a stranger get your results from the checklist alone?'
-
-**Fit:** Stage: team. Nothing to delegate today with headcount of one, but this is the correct method the first time any recurring marketing task (posting content, review-request outreach, Amazon listing updates, customer replies) goes to a VA or contractor. Trigger: the first paid helper, even 5hr/week. Distinct from the existing 'when a problem recurs, write a process' claim because this is delegation, not error-correction.
-
-**Target skill:** `marketing-task-delegation-training` (create)
-
-**Merged from:** part 12 of 16; part 13 of 16
-
-### Open every agency relationship by stating the exit: work with us six months so we can learn how you do it, pay extra for you to explain the reasoning behind each decision, then downgrade to a lower-cost consulting arrangement once our side can do it. — 7/10
-
-**Why it works:** Naming the purpose and the deadline up front prevents the standard agency decay cycle (senior rep onboards you, junior rep inherits you, results fall, you churn), and converts a permanent cost line into a one-time skill purchase.
-
-**Evidence:** First-person: used across ten-plus agencies after the first success; verbatim script provided; claims most agencies accept it.
-
-**Fit:** Stage: scale. A good agency's minimum engagement is a large multiple of $2,700/mo revenue and a $900/mo ad budget, so this cannot be bought today — but the framing is exactly right for a solo operator who can least afford a permanent dependency. Trigger: revenue supports a retainer without cannibalising ad budget (his related threshold elsewhere is ~$50k/mo).
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Vet outside help against a fixed checklist before hiring: someone you know got results with them, recognisable clients, a waiting list, a clear sales process with realistic expectations, long-term strategy rather than short-term hacks, explicit statements of what they need from you and when, a set meeting cadence, plain-language reporting that ties cost to results, an offer that scores on the value equation, and a high price — and talk to several even after one agrees to your terms. — 7/10
-
-**Why it works:** The listed traits are the observable correlates of demand exceeding supply and of an operator who actually delivers; agencies that acquire clients through cold outreach and paid ads are, by revealed preference, not being kept alive by word of mouth.
-
-**Evidence:** Ten-point list assembled by pattern-matching across 'tons of bad agencies and a handful of good ones'.
-
-**Fit:** Runnable today in scaled-down form: the same checklist screens the freelance Meta buyer, email consultant or listing contractor a solo operator might buy a few hours from — 'found via cold DM' and 'no clear reporting' are the exact failure signals that would burn a $900/mo budget. Most criteria are observable before spending anything.
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Build the affiliate hit list by working backwards from your best customers — what they buy and who provides it, where they go and what businesses surround it, what they do for fun and who serves it, and who employs them — then group the answers into categories and flag any business that lands in more than one. — 7/10
-
-**Why it works:** The ideal affiliate is a non-competing business with a warm audience of people like your customers; deriving the list from actual customer behaviour rather than from who is available finds the audiences that already trust someone else and are pre-qualified for you.
-
-**Evidence:** Hormozi's own ALAN list of 200 agency-serving products and services, which sorted into six repeatable categories; asserted as his standard process for every new hit list.
-
-**Fit:** Executable today with a spreadsheet and zero budget: natural-deodorant buyers cluster around yoga studios, CrossFit gyms, salons, barbers, midwives, refill/zero-waste shops and farmers' market stalls. The existing acquisition skill derives partners from the binding constraint; this derives them from customer behaviour, a different generation method.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Qualify affiliates by requiring an investment before they get affiliate status — the lowest-barrier version is making them buy and actually use the product; if they will not buy it they should not be selling it. — 7/10
-
-**Why it works:** People who pay, pay attention. Purchase converts an interested party into a user with first-hand belief, which is what makes their recommendation credible, and it filters out sign-ups who will never promote.
-
-**Evidence:** Hormozi's stated observation that the more money an affiliate invests in the product the more money they make; presented as tested across 5000+ affiliates in two companies.
-
-**Fit:** Cheap, immediately runnable, and it fixes the main failure mode of a tiny affiliate program (thirty sign-ups, no promotion). It also produces revenue at recruitment: a studio owner buying a $50 starter set is an order, and a deodorant recommendation from someone who does not use it converts nothing.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Decide exactly what behaviour you want from the affiliate and pay for that specific thing — pay for repeat customers as well as new ones, and once you can track it, pay for the upstream steps that reliably turn into sales. — 7/10
-
-**Why it works:** Compensation determines behaviour; paying only on first orders makes affiliates hunt one-time buyers, while paying on repeat orders makes them route customers who stay.
-
-**Evidence:** Assertion drawn from his own payout design across two affiliate companies.
-
-**Fit:** Aimed at the binding constraint: repeat rate is 18-22.5% and repeat customers are ~45-52% of revenue, so an affiliate whose commission continues on reorders is being paid to send the kind of buyer this business needs. Shopify affiliate apps track recurring attribution today; no volume or people gate.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Do all the launch work for your affiliates ahead of time so they can plug and play — hand them the assets, the schedule and the calls to action rather than asking them to figure out how to promote you. — 7/10
-
-**Why it works:** Affiliates promote what is easiest to promote; removing the effort and creative burden is what converts a signed-up affiliate into an active one.
-
-**Evidence:** Assertion, framed as the precondition for a good launch ('good launches have the work done ahead of time').
-
-**Fit:** Free for a solo operator who already has product photography and copy: a shared folder with images, three caption drafts, a discount code and a dated posting schedule is an afternoon's work and determines whether a studio owner ever posts. Not blocked by budget, volume or people.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### At the middle level of integration, let the partner sell your cheap entry product — or run the launch promotion — and keep 100% of that cash; you make your money on the upsell and the repeat purchase and owe them no split on it. — 7/10
-
-**Why it works:** All-profit-no-work is the most attractive proposition you can make a business owner, so they push harder and want to run it again; you buy a customer at the cost of delivering the entry item and keep full margin on everything after.
-
-**Evidence:** Gyms charged $99-199 for a nutrition consult with his team and kept the money while he upsold supplements; chiropractor case where 30 attendees × $99 = $2,970 profit to the gym owner for a few emails.
-
-**Fit:** Honest translation: a salon or market stall buys lip balms or deodorant at cost and keeps the retail margin, with an insert routing the buyer to the store for the full line; or a partner-hosted sample event where the partner keeps the full margin that day. Gets product into a new audience with no commission accounting and no ad spend, capping acquisition cost at COGS. Contingent on the second purchase actually landing, which is the retention work already underway.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16; part 15 of 16
-
-### Run the 'whisper' phase of any launch by teasing the existence of something without revealing it — post behind-the-scenes of the work being made, show drafts and versions and late nights, and start as far out as you can, because the longer something appears to have taken, the more the audience values it. — 7/10
-
-**Why it works:** Curiosity is wanting to know what happens next; naming that something exists and refusing to explain it plants an open loop, while visible labour manufactures perceived value before any claim is made.
-
-**Evidence:** His own book launch: posting draft numbers, photos of printed drafts, hand-drawn framework versions, videos of editing sessions.
-
-**Fit:** Free, on-brand and solo-runnable: a maker of small-batch soap, deodorant and oral care has genuine behind-the-scenes material (formulation batches, pour days, label revisions) and 'show your work' is what a handmade natural brand should be posting anyway. Applies immediately to the soap giveaway and any new SKU.
-
-**Target skill:** `marketing-scarcity-urgency-framing` (edit)
-
-**Merged from:** part 14 of 16
-
-### Escalate a launch on a fixed cadence — whisper every 4-6 weeks until 60 days out, then every 2-3 weeks until 30 days out; tease (reveal the product, publish the date, show the value elements) weekly until 14 days out then twice weekly until 3 days out; then shout (specific calls to action, bonuses, scarcity) at least twice a day, hourly on launch day. — 7/10
-
-**Why it works:** Rising frequency converts accumulated curiosity into a concentrated buying window; each phase does one job (curiosity, then value, then action) so the audience is never asked to act before it wants to know.
-
-**Evidence:** His own book launch executed on this schedule; presented as the general method for launching anything, including activating affiliates.
-
-**Fit:** Concretely actionable for the soap giveaway now being promoted with the $30/day Meta campaign, and reusable for every future SKU or seasonal drop — it gives the solo operator a written posting and emailing schedule instead of ad-hoc announcements. The existing scarcity skill holds 'announce a fixed on-sale date' and 'send a closing reminder' but not the phased escalating cadence. Scale the shout frequency down for a sub-1,000 list.
-
-**Target skill:** `marketing-scarcity-urgency-framing` (edit)
-
-**Merged from:** part 14 of 16
-
-### Run partners in two phases — activate them with a one-off dated launch promotion to their audience first (have them promote before it is buyable, then sell to everyone on launch day), and only after that works, integrate your product permanently into what they already sell. — 7/10
-
-**Why it works:** Affiliates need a fast, visible win to stay engaged, and a dated launch concentrates their promotion into a window that produces real commission volume instead of a trickle. Once they have seen the money, they will accept a permanent structural change to their own offer, which is what produces ongoing lead flow.
-
-**Evidence:** Prestige Labs' fourth-week inflection ($450k in a week from 400+ affiliates); three worked case studies of launch-then-integrate (tax seminar then bundled LLC setup; 28-day challenge then nutrition orientation for every new member; chiropractor workshop then adjustments included in every membership).
-
-**Fit:** Scales down honestly: a one-off 'free natural deodorant with any class pass this month' promo at a single local studio with a dated code and a pre-written post, and if it moves units, get the studio to include a travel-size in every new-member welcome pack ongoing. A deadline is what makes a busy salon owner actually post. Keep it cheap — no bespoke assets, no paid support — because with a handful of partners the win will be modest.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16; part 15 of 16
-
-### Design the integration so your product makes the partner's own offer more valuable and more differentiated than their competitor's, not merely so it pays them a commission. — 7/10
-
-**Why it works:** A partner keeps promoting what improves their core business, not what pays a one-time cut; bundling your product into their membership or package raises their perceived value against the business down the street, so the arrangement survives without you pushing it.
-
-**Evidence:** Chiropractor case study — including one to two adjustments with every gym membership raises the gym's membership value and signals the gym cares about member safety; plus the Prestige Labs nutrition-orientation example.
-
-**Fit:** This business's constraint on partnerships is that a sub-1,000-list, $2,700/mo brand has nothing to trade on parity — this gives a currency it does have: a product that makes a studio's, salon's or spa's package look better. Distinct from the existing 'pay in another currency' claim, which is about flattering features and relationship rather than upgrading the partner's own offer.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 15 of 16
-
-### Before declaring a channel or asset dead, compute the test volume the expected response rate demands — a 0.5-1% response rate means a 300-unit test cannot produce an interpretable result, and undersized effort is the first suspect, not the idea. — 7/10
-
-**Why it works:** Outputs are a function of inputs; at realistic response rates a small sample produces a fractional expected result, so the test carries no information and any conclusion drawn from it is noise dressed as a verdict.
-
-**Evidence:** Flyer anecdote — 300 flyers, zero leads, versus a mentor who tests with 5,000 and rolls out 5,000/day; author computes that 0.5% of 300 is one and a half people.
-
-**Fit:** Directly relevant: at ~54 orders/month and a sub-1,000 list the operator will constantly be tempted to conclude 'email doesn't work' or 'that angle failed' off sends and ad runs too small to say anything. Step 6 of the pattern-analysis skill covers the retrospective interrogation of a retired angle; this adds the forward-looking sizing calculation — state the expected response rate and the minimum volume before you run.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 15 of 16
-
-### At the earliest level, make one offer, to one avatar, on one platform — and only start adding once that combination reliably produces engaged leads. — 7/10
-
-**Why it works:** Engaged leads are the moment money starts; splitting a small operator's attention across offers, avatars and platforms means none of them ever gets enough input volume to produce a readable result.
-
-**Evidence:** Personal roadmap anecdote (started with warm outreach to everyone he knew).
-
-**Fit:** Directly actionable now: 12 SKUs and a $30/day Meta campaign standing up, where the biggest failure mode is running several offers or audience ideas at once and never getting a readable signal. This says one offer (the soap giveaway), one avatar, Meta only. Extends the existing channel-count claim from channels to offer and avatar, so it sharpens rather than restates.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 16 of 16
-
-### Run the daily advertising action yourself until it earns enough money to pay someone else to do it — then make hiring your new lead-generation target and hire specifically for that exact proven action. — 7/10
-
-**Why it works:** Your personal work capacity, not the platform, is the ceiling on lead volume once the action is proven; buying back the specific hours the proven action consumes is the only way to raise input volume without changing what works.
-
-**Evidence:** Personal roadmap anecdote — hired a videographer and media buyer to take paid ads off his plate.
-
-**Fit:** Stage: team. A clean, self-funding trigger that a solo operator at ~$2,700/mo needs written down now so the first hire is not made from ambition. Trigger to unpark: a single advertising action (e.g. the Meta creative + giveaway loop) is demonstrably profitable and its incremental margin covers a freelancer's hours. The hire-for-the-proven-action rule prevents the classic mistake of hiring for work you have not yet made work.
-
-**Target skill:** `marketing-advertising-capacity-scaling` (create)
-
-**Merged from:** part 16 of 16
-
-### Pay existing customers a standing one-sided referral reward — cash, credit, or product — sized up to your full allowable cost to acquire a customer, and make sure they know it exists. — 6/10
-
-**Why it works:** Satisfied customers already sit inside the peer network you are trying to reach; a named, standing bounty converts vague goodwill into a repeatable reason to introduce someone. You are already willing to spend CAC to buy a customer from a platform, so paying that same money to a customer buys a warmer customer and keeps the money inside the relationship.
-
-**Evidence:** Anecdote: 'I'll pay $2000 cash for any gym they send that signs up' alongside ad and content leads; referrals 'poured in' and would have booked him two years out. Worked example at $200 CAC of paying the referrer instead of the platform.
-
-**Fit:** Retention is the binding constraint and the existing customer base is the only warm asset. Honest translation at $50.46 AOV: a $10-15 store credit or a free lip balm, not $2,000 cash, with the ceiling computed from the same allowable-CAC math used for the $30/day Meta budget. Runnable today as a manual code in the post-purchase email. Held at 6 because absolute volume is low at ~54 orders/month and a one-sided reward gives the referred friend no reason to act.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 1 of 16; part 12 of 16
-
-### Post your customer success stories into the online communities and groups where your buyers already gather, to generate leads from them. — 6/10
-
-**Why it works:** Communities aggregate people who already have the problem and are actively discussing it; a concrete result story reads as peer proof rather than advertising in that context, so it pulls inbound interest at zero media cost.
-
-**Evidence:** Assertion inside the narrative: 'I'll post our success stories in a few gym groups to get leads from there' — one of three lead sources that produced $215,000 in profit in 30 days, not isolated or measured.
-
-**Fit:** Free content leg of the cheap channel pair, which matters against $2,700/mo revenue and $900/mo of Meta budget. Natural deodorant, sensitive-skin and eczema communities on Facebook and Reddit are full of problem-aware buyers, and a solo operator can post one customer result story a week. Capped at 6 because self-promo rules make it fragile and it is a slow trickle that does not move the retention constraint.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 1 of 16
-
-### You already have a lead list — harvest every contact from your phone, every email account you have ever used, and every social profile, and add them up before saying you have no leads. — 6/10
-
-**Why it works:** Every contact has already granted you the means and permission to reach them, so a warm list costs nothing to assemble and converts far better than cold traffic because trust already exists.
-
-**Evidence:** Assertion plus the author's origin story — he replaced his job income with about $4,000/mo from clients sourced this way without knowing it was a channel.
-
-**Fit:** Executable today with zero budget and the one list-building move that does not depend on the $30/day Meta budget. Capped at 6 because at $50.46 AOV revenue per contact is small; its real use is seeding a new SKU and re-engaging the sub-1,000 list rather than acting as a revenue channel.
-
-**Target skill:** `marketing-warm-outreach-sequence` (create)
-
-**Merged from:** part 4 of 16
-
-### Open with a personalized greeting built from something you actually know about that contact, and ask for nothing on the first message. — 6/10
-
-**Why it works:** Using a real personal detail as the stated reason for contact makes the message read as a check-in rather than a pitch, which buys the right to steer the conversation later without triggering rejection.
-
-**Evidence:** Assertion plus an example script ('Saw you just had a baby! Congrats!').
-
-**Fit:** Runnable today with no spend, directly usable for DM replies, VIP customer cultivation and giveaway entrant follow-up — which is where the retention constraint lives. No existing skill covers one-to-one message construction.
-
-**Target skill:** `marketing-warm-outreach-sequence` (create)
-
-**Merged from:** part 4 of 16
-
-### Work a fixed daily batch of reach-outs and follow up up to three times — once per day for three days (once per week for physical mail) — or until they respond, whichever comes first. — 6/10
-
-**Why it works:** Warm outreach converts at a low but stable rate, so the only variable that determines output is volume, and a capped three-touch cadence extracts most of the available response without becoming harassment.
-
-**Evidence:** Assertion of 100 reach-outs per day, supported by the stated benchmark that 100 reach-outs yields ~20 replies, ~4 free-offer takers and ~1 customer.
-
-**Fit:** The 100/day figure is a service-business number; the honest scale-down for one person running fulfilment, Amazon and a $30/day Meta campaign is a fixed daily batch of 10-20 personalized messages with the same three-touch cap, needing no team and no spend. Score reflects that at $50.46 AOV a hundred contacts yields roughly one order, making this a seeding and re-engagement tool.
-
-**Target skill:** `marketing-warm-outreach-sequence` (create)
-
-**Merged from:** part 4 of 16
-
-### Reply to anyone who responds with the A-C-A framework: acknowledge what they said in your own words, compliment them and tie it to a positive character trait, then ask another question that steers toward your offer. — 6/10
-
-**Why it works:** People like being listened to and complimented; doing both before asking anything raises liking and trust, and the trailing question lets you route the conversation toward the problem your product solves without pitching.
-
-**Evidence:** Assertion plus worked examples across three verticals (coaching, fitness, cleaning).
-
-**Fit:** Zero cost, runnable today in Instagram DMs, giveaway entrant replies and support email. Useful against the retention constraint because it is how you turn a support thread into a second order. Nothing existing covers reply structure.
-
-**Target skill:** `marketing-warm-outreach-sequence` (create)
-
-**Merged from:** part 4 of 16
-
-### When you hand over a free product to the first users, state the exchange as an explicit three-part agreement up front — use it, give me feedback, and leave a killer review if you think it deserves one — and close with 'does that sound fair?' — 6/10
-
-**Why it works:** Naming the terms before the product ships converts a gift into a reciprocal contract, which sets the expectation that feedback and a review are owed, and the 'does that sound fair' close gets verbal commitment.
-
-**Evidence:** Assertion plus a verbatim script and four stated reasons the first-five-free structure pays off.
-
-**Fit:** The 'ship free product for honest feedback' half is already held, so this is adopted for the distinct addition: the up-front reciprocity contract and commitment close. Runnable today with 12 SKUs and no budget, and it attacks the proof gap for a store with a thin review corpus. Must sit alongside the existing guardrail against routing seeded product into Amazon reviews.
-
-**Target skill:** `marketing-pre-launch-product-validation` (edit)
-
-**Merged from:** part 4 of 16
-
-### Forecast a channel before committing to it and reverse-engineer the required inputs: measure the conversion rate at each step (e.g. one in five engages, one in five of those takes the free offer, one in four of those buys), multiply by your own order value, then solve for how many reach-outs, emails or entries per day the revenue target demands. — 6/10
-
-**Why it works:** Outreach and funnel response are roughly linear at small volumes, so once the response ratio is known, output becomes a scheduling problem rather than a guessing problem — and the same arithmetic run forward tells you in advance whether the hours or spend are worth it.
-
-**Evidence:** Stated benchmarks plus two worked examples: 500 reach-outs/week × a $400 offer = $104,000/year; 100 emails = 1 customer, therefore 10,000 emails = 100 customers = 333/day = three senders.
-
-**Fit:** The arithmetic is durable and executable today; the imported benchmark numbers must be vetted before acting on. Run against a real $50.46 AOV rather than his $400, a hundred reach-outs returns about one order — which is the useful output: warm outreach is for seeding and re-engagement, not revenue. It also converts a revenue target into required entries/emails per week and exposes when a target is arithmetically impossible at $30/day.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 4 of 16; part 8 of 16
-
-### Build long-form content by chaining content units together, and start with short pieces before attempting long ones because each additional unit is another chance to lose the audience. — 6/10
-
-**Why it works:** There is no structural difference between short and long content — long content simply hooks, retains and rewards more times in a row, which takes more skill; starting short lets you learn the unit before stringing many together.
-
-**Evidence:** Analogy: a new comedian gets a few minutes, only a master comic gets an hour; novelists start with short stories.
-
-**Fit:** An honest sequencing rule for a solo operator with no editor: start at caption/short-video length and graduate to long-form only once short units land. Useful but secondary to what the content actually says.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 5 of 16
-
-### Maintain a visible body of free content because it makes every other advertising channel convert better — a prospect who looks you up and finds nothing is less likely to buy than one who finds lots of valuable content. — 6/10
-
-**Why it works:** Cold prospects reached by ads or outreach verify the brand before purchasing; a populated content presence supplies that verification, so the same ad spend or outreach effort converts at a higher rate.
-
-**Evidence:** Assertion, framed as the lesson the author's ego prevented him from learning.
-
-**Fit:** The traffic gate is open and a Meta campaign is being stood up, so people clicking those ads will look the brand up — an empty or stale profile is a live conversion leak on money already being spent. Executable today at zero media cost by keeping a minimum cadence on whichever profile the ads point at.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 5 of 16
-
-### Build a master list of your 'greatest hits' content, labelling each piece with the problem it solves and the benefit it provides, so it can be sent to a prospect before or after a sales conversation to resolve a specific concern. — 6/10
-
-**Why it works:** Content that already performed has proven persuasive power; indexing it by objection turns a scattered feed into a retrievable answer library, so the specific worry blocking a purchase gets answered with an asset that already worked on strangers.
-
-**Evidence:** Assertion only.
-
-**Fit:** No sales team here, but the translation is cheap: index the posts that performed against the objections that actually block a deodorant purchase (odour, detox period, staining, price per stick) and reuse them in support replies, pre-purchase nurture, PDP FAQ and Amazon Q&A. Moderate because value depends on having a few proven pieces first, which low volume makes slow.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 6 of 16
-
-### Commit to a fixed advertising input — a daily ad spend, posting cadence and ask cadence — and hold it unchanged and uninterrupted for a long window (his Rule of 100: 100 consecutive days) rather than running in bursts, then read the output at the end of the window. — 6/10
-
-**Why it works:** Volume of primary actions is the single input most under your control, and inputs are the only controllable variable: if cadence fluctuates, month-to-month output changes cannot be attributed to anything. Holding the input constant for long enough turns the growth numbers into trustworthy feedback.
-
-**Evidence:** Assertion framed as the creator's one promise, plus his own practice of posting twice weekly for four years before charting, and the framing that 10→15 listeners is 50% monthly growth.
-
-**Fit:** Honest scaled-down version: keep the $30/day Meta campaign running continuously rather than pausing when a week looks bad, and block a fixed daily slot (30-45 minutes, not 100) for ad and content production. Literal 100 minutes/day plus 100 daily reach-outs is not survivable for one person fulfilling ~54 orders/month. Partially overlaps the recorded evaluation-horizon step; the addition is holding the input constant across that window rather than just fixing a review date. Avoid the vanity-metric trap: the prime directive is revenue, not followers.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 6 of 16; part 10 of 16
-
-### Build the targeted prospect list in three escalating tiers — subscribe to scraping software first, then pay list brokers, then assemble names by hand from groups and communities — and start at the manual tier if you have more time than money, because hand-assembled prospects are the freshest. — 6/10
-
-**Why it works:** Anyone can query the same searchable databases, so those prospects are saturated with other companies' pitches; names you dig out of communities yourself have received far fewer cold approaches, so response rates are higher.
-
-**Evidence:** Assertion plus the author's own stated process; no measured comparison of response rates between tiers.
-
-**Fit:** Cold outreach to individual $50 AOV consumers is not viable, but the honest translation is real: hand-build a list of 50-100 prospective stockists, boutiques, gyms/yoga studios, salons, podcast hosts and micro-creators from the communities they sit in. No software or broker spend needed — the manual tier is the recommended entry. Below 8 because retention is the binding constraint and this competes for hours with the live Meta campaign.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### When cold outreach take rates are poor, change the lead magnet before you tweak the script or process — keep raising what you give away until they feel stupid saying no. — 6/10
-
-**Why it works:** Strangers give you seconds, not minutes, so the size of the free thing is the dominant variable in whether they engage; script and process changes move a much smaller term.
-
-**Evidence:** Author's gym-industry cold outreach: four months of poor results, many tested process changes, then swapping a 'game planning session' for real free service tripled take rates.
-
-**Fit:** Executable now with 12 SKUs and no budget: the natural version of 'big fast value' for a stockist or creator is free product shipped, not a discount code or a 'quick chat'. The diagnostic ordering — offer first, script second — is the distinct contribution, since 'give away something other people charge for' is already held. Scored 6 because free-unit cost is real against ~$2,700/mo and must be capped to a small list.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### Set the automation/personalization ratio by list size — the fewer prospects you have, the less automation you should use and the more each message should be individually written. — 6/10
-
-**Why it works:** Personalization raises response rate; automation raises volume. With a small finite universe of qualified prospects, volume is capped anyway, so the only lever left is response rate — you cannot afford to burn a name on a templated blast.
-
-**Evidence:** Assertion with two contrasting examples (1,000 hedge fund managers vs tens of millions of weight-loss prospects).
-
-**Fit:** The realistic prospect universe for stockists, local studios and niche creators in this category is dozens to low hundreds, which puts this business at the 'personalize every one, automate nothing' end of the rule. It also correctly forbids buying sending tools that are not needed. Not covered by any existing skill.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### After you have exhausted a prospect list, wait three to six months and work the same list again from the top. — 6/10
-
-**Why it works:** Three independent reasons the same name can convert later: they never saw the first messages, they saw them at a bad moment, or their circumstances changed. Nothing about the offer has to change for the list to yield a fresh crop.
-
-**Evidence:** Assertion with the holiday-weight-gain illustration.
-
-**Fit:** Free to run and it means the hand-built prospect list keeps paying out rather than being a one-time effort — important when list building is the expensive part. Distinct from the recorded win-back claim, which addresses lapsed paying customers rather than never-replied prospects. Requires a written list with dates.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### Track every step of the outreach funnel as a rate, hold the channel to at least 3x lifetime profit versus fully-loaded cost (labor plus software), and reverse-engineer the input volume from the resulting equation. — 6/10
-
-**Why it works:** Cold outreach is deterministic in a way paid channels are not: a fixed input produces a fixed number of responses, so once you know the conversion rate at each step you can solve for the volume needed to hit a target and tell whether the channel is worth continuing.
-
-**Evidence:** Worked phone, email and DM examples with stated rates (20% pickup, 30% open × 10% reply = 3% engaged), plus his claim that failed cold outreach attempts were run by people who never tracked metrics.
-
-**Fit:** The honest gate on whether the solo operator should spend hours on partner and stockist prospecting: with $50.46 AOV and 18-22.5% repeat, one stockist or creator relationship must be worth several hours of labor to clear a 3:1 bar. Runnable today as a spreadsheet of sent/replied/agreed — ratios are directional at dozens of prospects, but the arithmetic still decides continue-or-stop. Not covered by paid-media-measurement, which is Ads Manager specific.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### Seed the platform's lookalike audience from your own lists in descending order of quality — current and past customers first, then warm contacts, then cold leads — adding lower-quality lists only as far as needed to hit the platform's minimum, and if you cannot build a lookalike at all, just target interests. — 6/10
-
-**Why it works:** The platform models responsiveness off the seed list, so the higher the buyer concentration in the seed, the more responsive the modelled audience; padding to reach the minimum broadens it, which is acceptable because filters can be layered back on.
-
-**Evidence:** Assertion plus 'this is exactly what I do'.
-
-**Fit:** Platform mechanics from 2023 — Meta has since pushed toward Advantage+ audience with the seed as a suggestion, so naming and minimums should be verified before implementing. The underlying move (upload the Shopify buyer list plus the sub-1,000 email list as a custom audience) is usable on the $30/day giveaway campaign now. The fallback clause is what actually applies: with a few hundred buyers the seed may be thin enough that interest or broad targeting is correct.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 8 of 16
-
-### Set up accurate revenue tracking before spending a dollar on ads — hire a consultant or watch tutorials if you must — because without it you cannot do more of what makes money and less of what doesn't. — 6/10
-
-**Why it works:** Ad spend is only rational if returns are attributable; untracked spend is gambling with no stopping rule.
-
-**Evidence:** Casino analogy; assertion.
-
-**Fit:** Timely: the tracking gate is open and the Meta account is being built now. Scores mid because the existing measurement skill already covers the operational half; this adds the sequencing rule — get the pixel, conversions and revenue attribution verified before the first $30/day goes out, and confirm Shopify and Amazon revenue are separable in the report.
-
-**Target skill:** `marketing-paid-media-measurement` (edit)
-
-**Merged from:** part 9 of 16
-
-### Once ads break even or better, stop asking how much to spend and reverse the budget from a customer goal instead: customers you can handle × CAC, padded 20% because ads get less efficient as they scale, divided into a daily number you then commit to. — 6/10
-
-**Why it works:** Budget set by comfort is arbitrary; budget derived from a capacity or revenue target makes spend a function of the outcome you want and forces the commitment that makes the math work.
-
-**Evidence:** Worked example (100 customers × $100 CAC = $10k, padded to $12k, $400/day).
-
-**Fit:** The arithmetic runs at any size — a solo operator with fulfillment capacity limits can compute it today. Mid because the precondition (ads at breakeven) is not met at $30/day and the existing 5%-step scaling rule governs the near term; this is the rule for setting the target the steps climb toward. Computing the number now is free and informs whether $30/day is even the right starting figure.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 9 of 16
-
-### Before launching, pick the monthly amount of ad money you are willing to lose, expect to lose it, and treat the spend as tuition rather than earnings. — 6/10
-
-**Why it works:** Pre-committing a loss budget stops you killing a campaign in week one on emotional grounds, and forces the budget to be sized against what the business can actually absorb rather than against hoped-for returns.
-
-**Evidence:** Assertion, plus the $100 'place one ad' exercise framed the same way ('you won't be earning, you'll be learning').
-
-**Fit:** $30/day is ~$900/mo against ~$2,700/mo combined revenue, so the loss tolerance needs to be written down before the giveaway campaign spends, or the operator will panic-edit and restart Meta's learning phase. Scored 6 because it partially overlaps the recorded evaluation-horizon step; the added piece is the dollar loss cap rather than the calendar date.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 10 of 16
-
-### Run one test at a time per surface on a fixed weekly cadence, and if four consecutive tries (about a month) fail to beat the current best version, stop testing that step and move to the next constraint. — 6/10
-
-**Why it works:** Testing multiple variables at once makes the result unreadable and hides cross-step interactions. A fixed cadence forces prioritisation of big tests and guarantees each runs long enough to read, and the four-try stop rule caps the effort sunk into a step that has stopped yielding.
-
-**Evidence:** The creator's described operating routine across his companies (Monday split test per platform, Monday review, log, next test); assertion for the four-try threshold.
-
-**Fit:** The one-change-at-a-time rule and the four-tries-then-move-on stop rule are the new pieces; the write-it-down half duplicates the existing decision-log claim. Honest scale-down for ~54 orders/month and a sub-1,000 list: run the cadence on fast-feedback surfaces — ad creative, email subject lines, PDP hero copy — and read results as directional, not significant. Statistical certainty is not required for the stop rule to save a month.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 10 of 16
-
-### Beyond doing the core four advertising activities yourself, recruit 'lead getters' — customers who refer, employees, agencies, and affiliates — who advertise on your behalf; audit which of the four you currently have and build the next one, expecting them to arrive roughly in that order. — 6/10
-
-**Why it works:** The core four have a linear input-to-output relationship with your own time. Lead getters break that link: you spend time once to acquire the lead getter, and they generate engaged leads continuously without further time from you, so leads per hour worked rises. Each type has a distinct strength and the sequence follows a founder's growing capacity to manage people.
-
-**Evidence:** Four-scenario thought experiment about work/leads/leverage; the author's claim that all four types were used to scale to $100M+.
-
-**Fit:** The audit is runnable today with a spreadsheet, and two legs are live now: customer referrals (directly on the binding constraint at 18-22.5% repeat) and affiliates/partners in natural body care. Employees and agencies are team-gated. Marked down because the enumeration is close to what the existing channel-selection skill already frames, so it lands as an added claim rather than a new system.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 11 of 16; part 15 of 16
-
-### Goodwill is the gap between the value a customer receives and the price they paid; widen it by adding value rather than by lowering price, because price cuts are a temporary and unprofitable way to buy goodwill. — 6/10
-
-**Why it works:** Word of mouth is produced by surplus — customers talk when they feel they got more than they paid for. Lowering price widens the gap only until margin runs out; raising delivered value widens it indefinitely and compounds into referrals.
-
-**Evidence:** Assertion, with a Rory Sutherland quote ('any fool can sell something for less').
-
-**Fit:** Relevant at a $50.46 AOV where discounting to move units eats the only margin funding the $30/day Meta test. Partially overlaps the existing claim that a discount only moves the effort/sacrifice term — the distinct payload is the causal link from surplus to word of mouth, which nothing currently records. A framing lens, with concrete moves supplied by the referral tactics around it.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 11 of 16
-
-### Manufacture more frequent wins: break the outcome into the smallest increments, update the customer even when there is no progress, make sure they always know when they will next hear from you, and pad every timeline by ~50% so you always deliver early and never late. — 6/10
-
-**Why it works:** Perceived speed comes from win frequency, not total progress — seven small deliveries beat one big one. Every kept promise compounds trust and lowers the perceived risk of referring a friend. Late delivery is never forgiven, so build slack into stated timelines.
-
-**Evidence:** Assertion plus the seven-promises-kept trust argument and the BAMFAM heuristic borrowed from a public-company CEO.
-
-**Fit:** Translates honestly: pad the stated ship window so shipping notice always lands 'early', send real dispatch and delivery updates rather than a silent gap, and split the first two weeks of deodorant use into staged check-ins with a named win at day 3, 7 and 14. Runnable in Klaviyo today. Scored 6 because it partially overlaps the existing 24-48-hour promise-keeping claim; the distinct payload is timeline padding and never leaving them without a next contact.
-
-**Target skill:** `marketing-post-purchase-onboarding` (edit)
-
-**Merged from:** part 11 of 16
-
-### Alternatively run the referral program as an always-on message — talk about the benefit of doing this with someone else in your content, outreach, ads and emails continuously, not just during a promo window. — 6/10
-
-**Why it works:** Constant exposure means the idea is present whenever a customer happens to be in a conversation where recommending is natural, rather than only during a two-week window.
-
-**Evidence:** A peer saw a 33% boost in total sign-ups; 250,000 of 1,000,000 ticket buyers were referred.
-
-**Fit:** Cheap to run — a standing line in every email footer, on the PDP, and in the Meta ad copy now going live at $30/day. Below the event version because 'do it with a friend' is weaker for a solo-use deodorant, so the always-on message must be the household or gifting angle to be honest. Evidence is a single unverifiable peer stat.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Design the referral offer around the fact that referring costs the customer social risk — raise the personal benefit with incentives and lower the risk by making the friend's outcome near-certain. — 6/10
-
-**Why it works:** A customer stakes their standing with a friend on your delivery, so they only refer when the benefit to them clearly exceeds the chance of embarrassment; incentives raise one side of that inequality and proof-of-delivery lowers the other.
-
-**Evidence:** Reasoned argument; presented as the principle behind why the seven asking methods work.
-
-**Fit:** A design rule for how to word and structure the ask — it says the friend's first purchase must carry the guarantee and the risk reversal, not the referrer's reward alone. Directly actionable on the gift-card insert and referral landing copy. Moderate because it is a principle over the concrete tactics rather than a separate executable move.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### Treat every trainee error as a defect in your instructions, not the person: if you have to explain a step it is too complicated, praise direction-following over results, give one piece of feedback at a time, and never penalise mistakes during training. — 6/10
-
-**Why it works:** If the operator is trained to follow directions exactly, a wrong result proves the directions are wrong — a variable the owner controls. Splitting competence from performance also stops you rewriting good instructions when the person just needs reps.
-
-**Evidence:** Assertion only, framed as rules of thumb learned from chronic training problems.
-
-**Fit:** Stage: team — nobody to train yet. Distinct from the training loop itself (it is the debugging rule) and it is exactly the failure mode a solo operator hits when they first delegate and conclude 'it's faster if I do it myself'. Trigger: first contractor or VA onboarding.
-
-**Target skill:** `marketing-task-delegation-training` (create)
-
-**Merged from:** part 13 of 16
-
-### Diagnose whether you have an advertising problem or a conversion problem with one question: do the leads you're getting have the problem you solve and the money to spend? — 6/10
-
-**Why it works:** Unqualified leads mean the targeting or the message is wrong (advertising); qualified leads who don't buy mean the closing surface is wrong (page/offer); qualified leads who do buy but too few means you need more volume. This routes the fix to the right asset instead of rewriting whichever thing you happen to dislike.
-
-**Evidence:** Assertion, presented as the question used to decide which employee to focus on.
-
-**Fit:** Translates cleanly: giveaway entrants who are deal-hunters with no interest in natural deodorant are an ad-targeting failure; PDP visitors who match the buyer and still don't check out are a page/offer failure. Adjacent to performance-pattern-analysis Step 1 but not a restatement — Step 1 says find the constraint, this gives one concrete qualification test splitting traffic quality from conversion. Slight overlap costs it two points.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 13 of 16
-
-### Run the paid-teaching engagement like a student: fixed weekly hour, homework between sessions, come with notes and questions, record every call and rewatch it, and take the controls yourself by the third session. — 6/10
-
-**Why it works:** Recording and rewatching converts a perishable one-hour conversation into a reusable asset; taking the controls early forces the gaps in your understanding to surface while the expert is still on the clock.
-
-**Evidence:** First-person account of the eight-call structure (calls 1-2 he watched, 3-4 he drove, 5-6 it clicked, 7-8 he was done).
-
-**Fit:** Executable now and cheap — it is the operating procedure for the paid-consult tactic, and a solo operator with no team has nobody else to retain the knowledge, so recording is worth more here. Below the parent tactic because on its own it is procedural detail.
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Pay the agency and your own team to do the same work in parallel, compare results weekly, and cancel the agency only once your side beats theirs regularly. — 6/10
-
-**Why it works:** The agency splits attention across clients and degrades as it wins new ones, while your team only gets better because it works on you full-time — so a running head-to-head gives an objective cancellation trigger instead of cancelling out of frustration or staying out of fear.
-
-**Evidence:** First-person: took a year initially to beat an agency, then ten months, then eight, now under six.
-
-**Fit:** Stage: team and scale. Requires both a retainer and an in-house person to run the parallel; the solo operator cannot be the 'team' and absorb the overlap cost. Sound guard against permanent outsourcing when relevant. Trigger: an agency engagement is live and at least one person other than the owner can execute the same work.
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Advertise to affiliates the way you advertise to customers, but sell them a way to make money rather than your product — and open with an affiliate-specific callout: name their business type, name their customers, name the result they promise, name the products they already sell, or ask your own customers if they know someone who owns one. — 6/10
-
-**Why it works:** Affiliates are businesses; the dream outcome they buy is 'more revenue from the customers you already have, with no product to build, deliver, or support, starting tomorrow'. Callouts self-select the right business owner out of a general audience.
-
-**Evidence:** Assertion plus worked callout examples for a spa-adjacent product; the value-element sentence is a fill-in-the-blank template.
-
-**Fit:** A one-paragraph DM or email to salon and studio owners costs nothing and the framing (make money on customers you already have, we handle fulfilment) is right. The 'ask your own customers who they know' variant is especially cheap at ~54 orders/month. Docked because the value-element half restates the four-term value equation already recorded; only the affiliate-specific callout list is new.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Use a three-tier affiliate payout instead of one flat commission: a small payout (≈25% of allowable CAC) for anyone who agrees to the terms, double it (≈50%) once they complete a defined activation action, and pay the full allowable CAC only to affiliates who sustain a performance level. — 6/10
-
-**Why it works:** Tiering pays for behaviour rather than mere sign-up, rewards activation at the moment it happens, and the mix of tiers means average acquisition cost lands below the maximum, freeing money for contests or profit.
-
-**Evidence:** Worked example: a 20/20/60 tier mix turns a $40 ceiling into a $30 blended payout, improving LTGP:CAC from 3:1 to 4:1.
-
-**Fit:** Runnable today with three or four affiliates — the tiers are a written payout schedule, not a multi-cell test. Against thin margins on a $50 AOV consumable, holding full commission back for affiliates who sustain volume is the difference between an affordable program and an unprofitable one. Docked because with a handful of affiliates the blended-cost arithmetic is a rounding error; the behavioural incentive is the real value.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Pay affiliates on the customer forever and never cap payouts, rather than paying a one-time bounty. — 6/10
-
-**Why it works:** A perpetual split gives the affiliate a standing financial interest in keeping that customer buying, so they keep promoting and supporting the relationship instead of churning through one-off referrals.
-
-**Evidence:** Stated preference from his own programs ('I prefer to pay forever so my affiliates stay motivated to keep my customers forever').
-
-**Fit:** Cheap to promise with almost no affiliates, and it converts a partner into someone with a retention incentive — which matters more than acquisition volume when repeat customers are ~half of revenue. Docked because on a $50 AOV consumable a perpetual 15-20% split permanently thins margin on the exact repeat orders that carry the business, so the rate must be set conservatively.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### At the deepest level of integration, have the partner sell your core offer directly as a bolt-on revenue stream — they own the selling, you do nothing but deliver, and they take a higher share of lifetime gross profit in exchange. — 6/10
-
-**Why it works:** Anything you sell, they can sell; the affiliate adds income with no product development, and you trade margin for a distribution channel you do not have to run.
-
-**Evidence:** Prestige Labs taught gyms to run nutrition consultations and upsell the supplement line to their own members, splitting the revenue; described as the ongoing strategy that scaled to ~300 orders/day.
-
-**Fit:** Translates to stockists/wholesale for a 12-SKU line — a studio or shop carrying the full range. Runnable now at one or two accounts and it adds order volume without ad spend. Docked because wholesale margin on a $50 AOV natural-deodorant line is thin, the buyer becomes the partner's customer (no email, no repeat relationship — the binding constraint), and restocking is manual work for a solo operator.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 14 of 16
-
-### Judge an affiliate/partner by comparing what it cost you to land them against the gross profit of every customer they send, and require at least 3:1 — improving it by lowering the cost to land partners, adding a launch process so more of them activate, or deepening integration so each is worth more. — 6/10
-
-**Why it works:** Affiliates do not repay you directly, so the normal LTGP:CAC frame misattributes; measuring at the partner level tells you whether to recruit more, fix activation, or fix integration, rather than guessing which end is broken.
-
-**Evidence:** Worked arithmetic: $4,000 to acquire an affiliate, $120,000 in sales over 12 months, 75% margins, 40% payout, $54,000 left, 12.5:1 ratio.
-
-**Fit:** Honest scaled-down version runnable today: give every partner a unique discount code, track gross profit per code against the product and hours spent landing them, and use the three levers to decide whether the problem is recruitment, activation or integration. At ~54 orders/month one partner's code produces single-digit orders, so conclusions stay directional — which the pattern-analysis skill already prescribes at low volume.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 15 of 16
-
-### Get a first small cohort of affiliates working and use their feedback to fix your offer, terms, launch and integration before recruiting more — then turn their documented results into the recruiting material for the next batch. — 6/10
-
-**Why it works:** Early partners surface the friction in the deal cheaply; once one partner has a real number attached to them, that number is the most persuasive asset for recruiting the next partner, so results compound into recruitment.
-
-**Evidence:** Stated action step (ten to twenty affiliates, work the kinks out, then scale by turning results into affiliate lead magnets); assertion only.
-
-**Fit:** Ten to twenty simultaneous partners is beyond a solo operator hand-running 12 SKUs at $2,700/mo, but the honest scale-down is 2-3 partners run properly with the first partner's sales number written into the pitch email for the next. Complements the existing 'run serially' claim rather than restating it, because it is specifically about partner recruitment sequencing.
-
-**Target skill:** `marketing-affiliate-program-design` (create)
-
-**Merged from:** part 15 of 16
-
-### Set aside a fixed percentage of the advertising budget (1%, 5%, 10%) for testing new campaigns, channels, pages or plain crazy ideas with no expectation of return, treating it as education spend. — 6/10
-
-**Why it works:** Segregating exploration budget removes the requirement that every dollar return profit, which is what stops operators from ever testing; occasional winners raise the ceiling of the whole account by more than the cumulative cost of the losers.
-
-**Evidence:** Attributed to a $3M/month operator at a private event; author reports tripling his budget afterwards and going from $400k to $780k/month.
-
-**Fit:** Stage: scale. At $30/day a 10% carve-out is $3/day — below any threshold where a separate test cell produces a readable signal, and the campaign-structure skill already says to collapse everything into one ad set at this volume. Trigger: daily spend high enough that an exploration cell can run alongside the working campaign without starving it (roughly the $100/day floor already named). Distinct from the double-80/20 creative allocation, which governs ad slots rather than a ring-fenced budget for new channels and pages.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 15 of 16
-
-### When follow-up to engaged leads produces nothing in one medium, test a different medium for the same follow-up rather than concluding follow-up does not work. — 6/10
-
-**Why it works:** The failure may be the channel, not the message or the audience; the same list that ignored email or calls can respond to a text blast, so medium is a variable to test independently of the offer.
-
-**Evidence:** Author's own sequence — tested email (nothing), phone calls (nothing), then text blasts, which moved monthly revenue materially in his telling.
-
-**Fit:** The mediums named are not platform mechanics that decay. This business runs email flows on a sub-1,000 list with retention as the binding constraint, so an SMS variant of an existing abandoned-cart or win-back step is a live, cheap test needing no spend, staff or volume. Scored 6 because it is anecdotal and a sub-1,000 list gives thin signal either way — treat results as directional.
-
-**Target skill:** `marketing-lifecycle-email-flows` (edit)
-
-**Merged from:** part 15 of 16
-
-### Commit your daily advertising work to a number of outcomes ('open to goal') rather than a number of actions — you work until the outcome count is hit, however many attempts that takes. — 6/10
-
-**Why it works:** An action quota lets you stop while the result is still missing; an outcome quota forces the volume upward until the market actually responds, and reveals capacity you did not know you had.
-
-**Evidence:** Gym chain sales managers required to sign up five members per day; flyer distributors doing five thousand a day for years; the book itself written in that block.
-
-**Fit:** A solo operator with ~54 orders/month and one pair of hands is exactly who under-ships; an honest scale-down is a daily outcome quota sized to this business ('do not stop today until three new ad creatives are uploaded' or 'until ten review requests are sent'), not five thousand flyers. Executable now, no gate. Scored 6 because the mechanism is discipline, not leverage — it multiplies whatever the current tactics are worth.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 15 of 16; part 16 of 16
-
-### Write the entire advertising plan on one page in about five minutes — pick the lead type you are going after, pick the commitment (fixed action count or open-to-goal), fill in the daily action, and run it — instead of writing a long plan or none at all. — 6/10
-
-**Why it works:** A one-page plan leaves no room for excuses or ambiguity: at the end of the day you either did the named action or you did not, which makes the plan self-auditing. A hundred-page plan is never used.
-
-**Evidence:** Assertion only.
-
-**Fit:** Directly usable today: this operator has a Meta giveaway campaign, a sub-1,000 email list and 12 SKUs, and the risk is diffuse effort across all of them. A one-page sheet naming the single lead type (giveaway entrants), the daily action and the commitment turns the existing constraint queue into something checkable. Not a duplicate of the constraint-queue claim — that sequences projects, this fixes the daily action artifact.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 16 of 16
-
-### When people show unprompted interest in something you do not sell yet, collect their contact details on the spot and build the offer afterwards. — 5/10
-
-**Why it works:** Demand is perishable and unevenly distributed; capturing the contact converts a moment of interest into an owned list you can sell to once the thing exists, so the offer gets built against proven demand instead of a guess.
-
-**Evidence:** Anecdote: 'I had nothing to sell them. Although, over one hundred people left me their phone numbers and business cards in case I did' — that list later seeded Gym Launch and was called back on when he needed $150,000.
-
-**Fit:** Honest translation for a 12-SKU catalog: a notify-me/waitlist capture on any scent, size or SKU that is out of stock or unformulated, plus email capture at in-person markets when someone asks for something not on the table. Executable today on Shopify with no budget and it feeds the sub-1,000 list retention depends on. Scored 5 because the excerpt states it as narrative rather than method and request volume at 54 orders/month is small.
-
-**Target skill:** `marketing-pre-launch-product-validation` (edit)
-
-**Merged from:** part 1 of 16
-
-### Package the lead magnet in every format people consume — read, watch, listen, and on any device — because take rate and consumption rise when effort falls. — 5/10
-
-**Why it works:** People prefer the path of least effort; offering the same content in four formats lets each person pick the one that costs them least, so more claim it and more actually consume it.
-
-**Evidence:** Hormozi reports a near-even quarter-each split of $100M Offers across ebook, physical book, audiobook and video, and asserts one-format distribution would have cost him 3-4x the readers.
-
-**Fit:** Applies only to the information-type magnet, not the soap giveaway, and producing a guide as PDF, phone-shot video and audio is real work with unclear payoff against a sub-1,000 list. Still executable now with no team, so adopted at low priority against the binding retention constraint.
+**Fit:** Durable offer construction that maps cleanly: 'looking for 10 people to run our 30-day natural deodorant switch, free full-size stick, you send us honest before/after notes and a photo we can use.' Runnable today on $30/day alongside the giveaway, and it attacks a real weakness — a thin proof corpus. Distinct from the private pre-launch validation panel; this is a public acquisition offer whose output is usage-rights content. Requires FTC material-connection disclosure on anything used as a testimonial.
 
 **Target skill:** `marketing-offer-construction` (edit)
 
-**Merged from:** part 3 of 16
+**Merged from:** (part 8 of 16)
 
-### Start with the platform where you have the most contacts, then move to the second-most, and so on until you have worked all of them. — 5/10
+### Inventory eight ad angles per offer by writing each of the four value drivers in both directions — the dream outcome AND the nightmare of going without, the likelihood of success AND the risk of doing nothing, the speed AND how slow their current trajectory is, the ease AND the work they'll keep spending without you. — 7/10
 
-**Why it works:** Sequencing by contact count front-loads volume, so the largest pool of replies arrives earliest and you learn what engages before burning the smaller lists.
+**Why it works:** Toward-pleasure and away-from-pain are separate motivators; writing only the positive half of the value equation leaves half the available motivational surface unwritten, so systematically mirroring each driver doubles the angle inventory from the same offer facts.
 
-**Evidence:** Assertion only.
+**Evidence:** Assertion, illustrated with weight-loss and business examples.
 
-**Fit:** Durable process rule, executable now with no budget. Low ceiling: a solo operator with a sub-1,000 list and ~54 orders/month has few platforms to sequence, so it saves hours, not dollars. Supporting detail inside the warm-outreach procedure.
-
-**Target skill:** `marketing-warm-outreach-sequence` (create)
-
-**Merged from:** part 4 of 16
-
-### Post far more content than you think you need — the content itself is disposable, but the audience it accumulates is the compounding asset, and raw output volume rather than per-post cleverness is what drives growth. — 5/10
-
-**Why it works:** Each content unit is another chance to hook someone new; reach per unit of effort is far higher for one-to-many content than one-to-one outreach, so more units published means more people entering the warm audience, and shares compound that reach.
-
-**Evidence:** Personal case: posting once/day grew his audience 200,000 in twelve months; 10x-ing output added 1.2M in the next six months. Celebrity examples used as motivation rather than proof.
-
-**Fit:** Durable principle but 'just do more' is thin as a mechanism and the celebrity evidence is survivorship. Honest scaled-down version: pick one platform, set a fixed weekly cadence above current, and repurpose each unit across email and the PDP. Static and photo posts are within reach today for a one-person shop already hand-running a $30/day Meta campaign; a video-crew interpretation would be a team park.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 4 of 16; part 5 of 16
-
-### Keep outreach scripts short — a page or two for calls and chat, under half a page for cold email — and send the first large batch before optimizing the wording. — 5/10
-
-**Why it works:** Script polish has far less leverage than volume and offer, and you cannot know which line is failing until you have real replies to read. Front-loading optimization delays the only thing that produces information.
-
-**Evidence:** Assertion ('there are no awards for prettiest script'), with a stated threshold of 100 conversations or 10,000 emails before tweaking.
-
-**Fit:** Correct anti-perfectionism guidance for a solo operator who will otherwise rewrite a DM for an hour. Scaled down: the stated thresholds are unreachable, so the operational version is 'send the whole first batch of 30-50 hand-built prospects before rewriting anything'. A discipline rule rather than a revenue mechanism.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### Allocate ten to twenty percent of outreach effort to brand-new untested tooling — e.g. if you call five days a week, run a new dialer on one of them and compare it to your standard. — 5/10
-
-**Why it works:** Outreach output is bounded by tooling, and tools improve faster than habits do; reserving a fixed slice surfaces the next efficiency gain before the current stack goes stale, with the comparison built into the schedule.
-
-**Evidence:** Assertion only.
-
-**Fit:** Not a duplicate of the double-80/20 in creative testing, which governs creative angles rather than tooling. Honest scaled-down version: try one new tool per outreach cycle rather than one day in five, and drop it if it does not beat the current method. Scored 5 because tooling is not the constraint — hours and retention are.
-
-**Target skill:** `marketing-cold-outreach-prospecting` (create)
-
-**Merged from:** part 7 of 16
-
-### Only advertise on a platform where four things are true: you have used it and gotten value from it as a consumer, you can target people interested in your stuff on it, you know how to format ads for it, and you have the minimum money required to place an ad. — 5/10
-
-**Why it works:** Consumer familiarity gives an intuition for the format and feed; targetability and format knowledge make spend efficient rather than random; the budget floor is a hard gate on whether the platform's optimizer can work at all.
-
-**Evidence:** Assertion only, framed as a principle that survives platform change.
-
-**Fit:** Cheap to apply, but Meta is already picked and standing up at $30/day, so the checklist earns its keep only the next time TikTok, Pinterest or Amazon Ads is considered. The fourth criterion (budget minimum) is the useful one now: it is the honest test for whether a second platform should be opened at all on $900/mo.
-
-**Target skill:** `marketing-acquisition-channel-selection` (edit)
-
-**Merged from:** part 8 of 16
-
-### Layer chosen filters (age, income, gender, interests, location, time of day) on top of the lookalike to raise the share of the right people, accepting that more filters mean a more efficient but faster-burning list. — 5/10
-
-**Why it works:** Excluding segments that provably never buy raises the density of buyers in the delivered audience, which lowers cost per result — at the price of a smaller pool that exhausts sooner.
-
-**Evidence:** Assertion with illustrative examples (exclude under-25s and over-45s if they never buy).
-
-**Fit:** The weakest-aged part of the chapter: at $30/day Meta needs conversion volume to exit learning, and heavy filter stacking starves delivery and inflates CPM — the modern default is closer to broad plus creative-as-targeting. Honest version: apply only exclusions the Shopify and Amazon order data actually supports (country, and age or gender bands with zero purchase history), nothing speculative.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 8 of 16
-
-### Make the destination address short and memorable wherever the audience has to read, remember, or type it. — 5/10
-
-**Why it works:** Every extra character is a chance to mistype or forget, and the drop-off happens between hearing the CTA and arriving at the page.
-
-**Evidence:** Assertion plus the author's own $370k domain purchase, which he concedes may bias him.
-
-**Fit:** Small. Clickable Meta ads make this near-irrelevant; it matters only where a URL is read rather than clicked — the packaging insert card, an Amazon insert, a market table sign. Worth one line. The $370k-domain half has no honest translation at ~$2,700/mo and is dropped.
-
-**Target skill:** `marketing-lead-capture-landing-pages` (create)
-
-**Merged from:** part 9 of 16
-
-### When computing your allowable cost to acquire a customer, count the customers each buyer refers — a 4:1 LTGP-to-CAC business where every customer brings two more is effectively 12:1, so the ceiling on what you may pay for a lead rises with your measured referral rate. — 5/10
-
-**Why it works:** Referred customers arrive at zero acquisition cost, so they can be attributed back to the acquisition of the customer who referred them, raising the blended value of every paid customer and therefore the price you can afford to pay for one.
-
-**Evidence:** Worked arithmetic example only (4:1 becoming 12:1 at two referrals per customer); no data given.
-
-**Fit:** Adds the specific move of folding a measured referral multiplier into the customer-value term of the existing allowable-cost-per-lead calculation. Useful against a live $30/day Meta budget, but only once referral rate is actually captured — inflating the CAC ceiling on an assumed rate is how a $900/mo budget against $2,700/mo revenue gets overspent. Measure referral share first, then raise the ceiling by what you measured.
-
-**Target skill:** `marketing-paid-campaign-structure` (edit)
-
-**Merged from:** part 11 of 16
-
-### Use referrals as the negotiation chip when someone asks for a lower price — grant the discount only in exchange for introductions, and answer a full-price customer who finds out with the same offer. — 5/10
-
-**Why it works:** Changing the terms of the sale ethically justifies a different price, so the discount buys something instead of just eroding margin; the same answer defuses the fairness complaint by making the discount available to anyone who does the work.
-
-**Evidence:** Scripting example plus the author's account of handling a full-price customer who discovered the discount.
-
-**Fit:** Honest scaled-down version runnable today: when a customer emails asking for a code, reply with 'happy to — send this to two people who'd use it'. But an ecommerce checkout has no live negotiation and at ~54 orders/month inbound discount requests are few, so the tactic is real but low-yield.
-
-**Target skill:** `marketing-customer-referral-program` (create)
-
-**Merged from:** part 12 of 16
-
-### When output dips sharply from normal, retrain rather than reprimand — the team has silently dropped a step they didn't know mattered. — 5/10
-
-**Why it works:** Performance regression in a checklist-run process is almost always step omission; finding the dropped step and rewarding its execution restores output and hardens the checklist.
-
-**Evidence:** Assertion only.
-
-**Fit:** Stage: team. Requires delegated work to regress; a solo operator's own dip is diagnosed by marketing-performance-pattern-analysis instead. Thin as a standalone rule but a real addition to a delegation skill. Trigger: a delegated process has been running long enough to have a 'normal'.
-
-**Target skill:** `marketing-task-delegation-training` (create)
-
-**Merged from:** part 13 of 16
-
-### Hire two agencies in sequence when entering a new platform: a 'good enough' one to learn the basic ropes, then a more elite (and more expensive) one to learn how to maximise it. — 5/10
-
-**Why it works:** Cheap competence teaches the mechanics faster than self-study; the expensive operator's value only becomes legible once you understand the mechanics well enough to ask the right questions, so paying elite prices first wastes the premium.
-
-**Evidence:** First-person YouTube example — one agency to keep him shipping videos, a second at 4x the price to teach content depth, dropped to consulting once his videos beat theirs.
-
-**Fit:** Stage: scale. Two sequential agency engagements is far beyond a $900/mo ad budget and ~$2,700/mo revenue, and even when the gate opens it is a refinement of the learn-then-exit engagement rather than a separate lever. Trigger: already running one agency engagement profitably and entering a genuinely new channel.
-
-**Target skill:** `marketing-agency-and-expert-buying` (create)
-
-**Merged from:** part 13 of 16
-
-### Structure the day so advertising production happens in one long uninterrupted block before anything reactive — no meetings, no fire-fighting, no rituals — and only handle everything else afterward. — 5/10
-
-**Why it works:** Creative and advertising output is the constrained resource in a one-person business; giving it the first, uninterrupted hours of the day means it never gets displaced by inbound noise, which is what actually kills consistency.
-
-**Evidence:** Personal anecdote — 4-5am wake, no meetings until noon, called his highest-ROI habit stack; he says the book was written in that block.
-
-**Fit:** This operator runs Shopify, Amazon, a $30/day Meta campaign and fulfilment, so advertising production is structurally the thing that gets displaced; ring-fencing it is what makes every other adopted tactic ship. Honest scale-down: the specific 4-5am wake time and twelve-hour day are personal noise; the portable part is one protected daily block for asset production before support, orders and email. Scored 5 because it is process hygiene, not a revenue mechanism.
-
-**Target skill:** `marketing-performance-pattern-analysis` (edit)
-
-**Merged from:** part 15 of 16; part 16 of 16
-
-### At the highest level, staff advertising with experienced department heads hired for exactly the problem you have — not for potential — and give them ownership-level incentives rather than salary alone. — 5/10
-
-**Why it works:** Departments per channel only grow without the founder if the people running them have both prior experience with that specific problem and enough upside to behave like owners.
-
-**Evidence:** Personal anecdote — took three years to learn it, sold the companies before applying it; credits 'expanding the pie' for crossing $100M+ portfolio revenue.
-
-**Fit:** Stage: team. Many hires downstream of ~$2,700/mo and zero staff. Trigger to unpark: multiple advertising channels running profitably with contractors and a founder who is the bottleneck on all of them. Scored 5 even at that gate because it is generic org-design advice with no specific mechanism a marketer executes.
-
-**Target skill:** `marketing-advertising-capacity-scaling` (create)
-
-**Merged from:** part 16 of 16
-
-### Post manually rather than pre-scheduling, because knowing you will be rewarded or punished within seconds makes you try harder on the piece. — 4/10
-
-**Why it works:** A tight feedback loop between publishing and response applies last-minute quality pressure; scheduling removes that pressure and quality drifts.
-
-**Evidence:** The author's own observed performance difference, explicitly labelled as his theory.
-
-**Fit:** Self-reported theory with an obvious confound, and for a solo operator running 12 SKUs batching and scheduling is precisely what makes a consistent cadence survivable — the cadence-consistency claim argues against this one. Worth recording as a cheap thing to test, not as a rule.
-
-**Target skill:** `marketing-organic-content-program` (create)
-
-**Merged from:** part 6 of 16
-
-### Create a mascot as a permanent spokesperson, because a mascot never ages, never asks for more money and never takes days off (Geico Gecko, Tony the Tiger, the Michelin Man). — 4/10
-
-**Why it works:** A recurring non-human character accumulates recognition across every asset and every year, giving the brand a consistent attention-grabbing face without a person's cost, availability or aging.
-
-**Evidence:** Named brand examples only.
-
-**Fit:** Executable now — the existing AI product imagery workflow can generate a consistent character from reference photos — but low leverage: with retention as the binding constraint and ~$2,700/mo, a recognition asset pays back over years and does nothing for the second-order problem. Worth doing only as a side effect of imagery work already happening.
+**Fit:** Durable copy principle. Directly usable: deodorant's nightmare half (reapplying at noon, ruined shirts, the natural brand that gave you a rash) is largely unwritten today. Partially overlaps the existing 'use negative framing' claim, but this is a systematic eight-cell generation checklist rather than a stylistic instruction, and it feeds the multiple primary texts a 3-2-2 flexible ad needs.
 
 **Target skill:** `marketing-conversion-copy-angles` (edit)
 
-**Merged from:** part 8 of 16
+**Merged from:** (part 9 of 16)
 
-### Use agencies only to learn a new method or a new platform you don't understand — never as a permanent way to avoid learning it. — 4/10
+### Bridge the second ask to the action just taken using the consistency principle — 'now that you've done A, do B to get the most out of A' — to move more people from click to giving contact information. — 7/10
 
-**Why it works:** Agencies have already paid the trial-and-error cost on a platform, so buying that shortcut converts money into time; treating the arrangement as permanent hands your growth to a vendor whose attention you only rent a fraction of.
+**Why it works:** Cialdini's consistency principle: people want to behave consistently with an action they just took, so framing the opt-in as the natural continuation of the click raises step-through rather than treating the second ask as a fresh decision.
 
-**Evidence:** Assertion supported by the eleven-step agency decay cycle he describes experiencing repeatedly.
+**Evidence:** Cites Robert Cialdini's Influence.
 
-**Fit:** Stage: scale — no agency budget at $2,700/mo. Scored down on merit because it is the premise of the learn-then-downgrade tactic already adopted; kept rather than rejected because the 'new platform' selection criterion (hire for TikTok Shop or Google Shopping, not for something you already half-know) is a small distinct addition.
+**Fit:** Durable persuasion principle, concretely applicable to the giveaway entry page and the Shopify opt-in popup — one line of copy, no cost — and retention is the binding constraint so growing the sub-1,000 list with people who actually opted in matters. Scored below message match because the lift is smaller and harder to verify at 54 orders/month.
 
-**Target skill:** `marketing-agency-and-expert-buying` (create)
+**Target skill:** `marketing-lead-capture-landing-pages` (edit)
 
-**Merged from:** part 13 of 16
+**Merged from:** (part 9 of 16)
+
+### Budget each new ad test at two times the cash a customer generates in their first thirty days, and shut the ad off at one times that figure if it has produced no leads at all. — 7/10
+
+**Why it works:** It caps the cost of being wrong while still giving an ad enough spend to prove itself — the two errors (killing winners early, letting losers run) are both expensive, and a spend threshold pegged to real customer cash sizes the test against the economics rather than against impatience.
+
+**Evidence:** Personal experience — the author reports wasting money in both directions before settling on this rule.
+
+**Fit:** Durable economic logic, not platform mechanics. Translates directly: AOV $50.46, so roughly $100 of spend per new ad before killing it and ~$50 if it produces literally nothing — about three days at $30/day, a rule a solo operator can hold to. Complements rather than duplicates the 5%-scaling and 7-14-day-freeze claims. Caveat: at this volume the threshold is a spend cap on obvious failures, not statistical significance.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 9 of 16)
+
+### Measure paid efficiency as lifetime gross profit to total customer acquisition cost (LTGP:CAC) — revenue minus cost to deliver, over the customer's whole life, against every cost of getting them, not just ad spend — and hold CAC to at most one third of LTGP. — 7/10
+
+**Why it works:** Gross profit, not revenue, is the money actually available to buy customers and run the business; a ratio built on revenue overstates headroom. A 3:1 floor leaves enough margin to fund overhead and cash-flow the gap between acquisition and payback, and the author's observed pattern is that businesses below it stall and above it take off.
+
+**Evidence:** Pattern observed across the author's portfolio companies, explicitly flagged as 'a pattern I personally observed, not a rule', plus a worked example ($4,000 LTGP / $1,000 CAC = 4:1).
+
+**Fit:** Durable financial logic, computable today from real numbers: AOV $50.46, repeat rate 18-22.5%, repeat customers 45-52% of revenue, minus COGS — that produces an honest LTGP figure and therefore a hard ceiling on what a Meta customer may cost at $30/day. Distinct from the existing allowable-cost-per-lead claim (a per-lead ceiling) and complementary to break-even-on-first-purchase (a day-1 target). Carry the author's own caveat about the threshold rather than stating it as law.
+
+**Target skill:** `marketing-paid-media-measurement` (edit)
+
+**Merged from:** (part 9 of 16); (part 13 of 16)
+
+### Engineer the offer so cash collected in the first 30 days covers both the cost to acquire and the cost to fulfil the customer — adding an immediate upsell priced and take-rated so its average dollars-per-customer closes the gap — rather than waiting on lifetime value. — 7/10
+
+**Why it works:** A credit card gives any business ~30 days of interest-free float, so if 30-day collected gross profit ≥ CAC + COGS the card is squared each cycle and ad spend recycles indefinitely with no outside funding. The arithmetic is explicit: a $100 upsell taken by 1 in 5 buyers adds $20 average upsell dollars per customer, which turns a $10 first-purchase profit into a $30 break-even against a $30 CAC.
+
+**Evidence:** Worked numeric example ($15/mo membership, $5 delivery cost, 10-month retention, $30 CAC) plus the claim that this is how he scaled every company past $1M/mo within twelve months for seven years.
+
+**Fit:** Durable offer/pricing logic, directly usable at $30/day: with AOV $50.46 and a Meta campaign live, the operator needs a hard number for what 30-day cash per acquired customer must be, and the average-upsell-dollars calculation (upsell price × take rate) is the lever they can pull across 12 SKUs. Extends rather than restates the existing 'break even on first purchase, win on day 30' claim by supplying the arithmetic and naming the upsell as the instrument. Docked slightly because at 54 orders/month any new upsell's take rate will be noisy.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 9 of 16); (part 10 of 16)
+
+### Map the conversion rate of every step a buyer passes through, find the step with the largest drop-off, and run your tests there — because an equal percentage-point improvement at the worst step produces a far larger throughput gain than the same improvement anywhere else. — 7/10
+
+**Why it works:** Throughput is multiplicative across steps, so a fixed absolute gain applied to a low-percentage step is a much larger relative multiplier: +5 points on a 5% apply step doubles leads (2x) while +5 points on a 30% opt-in step yields only 1.16x and on a 50% step only 1.1x.
+
+**Evidence:** Worked three-step arithmetic example (30% opt-in / 5% apply / 50% schedule).
+
+**Fit:** Sharpens the existing 'name the binding constraint' claim from a qualitative instruction into a quantitative selection rule, and for this business it points straight at the known worst step: an 18-22.5% repeat rate is by far the lowest-converting stage, so the multiplier math says retention work beats another PDP tweak. Runnable today with Shopify and Amazon reports; no significance testing required to see which step is worst.
+
+**Target skill:** `marketing-performance-pattern-analysis` (edit)
+
+**Merged from:** (part 10 of 16)
+
+### Run a standing monthly product-improvement loop — pull the most common complaint from support data, surveys and reviews, get the fix idea from customers who made the product work despite the flaw, ship the new version to a small group of struggling customers first, and only roll out once the complaint is gone — and treat referral rate as the read on whether the product is good enough to scale advertising against. — 7/10
+
+**Why it works:** Reducing the effort and sacrifice the customer spends to benefit raises goodwill, and goodwill is what converts into word of mouth; staging the fix on a small group prevents shipping a change that does not solve the complaint. Scaling spend on a product that does not earn referrals buys one-and-done customers and the goodwill never compounds.
+
+**Evidence:** Author's stated recurring monthly process ('I run this process every month'), and his level-4 practice of updating the product every two weeks off customer feedback paired with a referral program.
+
+**Fit:** With 12 SKUs and a solo operator, the review corpus and support inbox already exist and the loop is runnable at this size — one complaint per month, one fix, sampled to a handful of buyers before a full batch. A two-week reformulation cycle is not physically possible, but a standing loop on scent, irritation, application and packaging complaints is. Distinct from pre-launch validation (a one-time go/no-go panel) and from review-mining (which harvests reviews for copy, not defects); the referral-rate gate is the right check before pushing more $30/day traffic into an 18-22.5% repeat rate.
+
+**Target skill:** `marketing-referral-and-word-of-mouth` (edit)
+
+**Merged from:** (part 11 of 16); (part 12 of 16); (part 16 of 16)
+
+### Keep selling existing customers a next thing — a new product or more of what they just bought — and time the reminder to just after a big win, because customers who fall off the back end stop referring. — 7/10
+
+**Why it works:** Front-end offers get obsessed over and back ends get neglected; a customer with nothing left to buy disengages, and a disengaged customer neither repurchases nor refers. Each additional thing they own is another thing they can refer a friend to, and a satisfied customer's desire to buy will otherwise be spent with someone else.
+
+**Evidence:** Case example of a weight-loss company where customers who never referred the tier-1 product did refer friends after buying the more expensive product.
+
+**Fit:** Retention is the stated binding constraint — 18-22.5% repeat, repeat buyers already ~45-52% of revenue. With 12 SKUs across deodorant, body care, oral care and lip balm there is a real back end to sell into, and the new mechanic (fire the next ask at the moment the buyer reports a visible win, e.g. after the transition period or a 5-star review) is not what the existing retention or upsell claims say. Runnable in Klaviyo by one person.
+
+**Target skill:** `marketing-retention-offers` (edit)
+
+**Merged from:** (part 11 of 16); (part 12 of 16)
+
+### Alternatively run an always-on referral program: mention the referral benefit continuously across free content, outreach, emails and paid ads rather than only inside a promo window. — 7/10
+
+**Why it works:** Constant low-level exposure means the referral offer is present at whatever random moment a customer happens to be talking to a friend, instead of only during a window most people miss.
+
+**Evidence:** A peer reported a 33% lift in total sign-ups; 250,000 of 1,000,000 ticket buyers were referred.
+
+**Fit:** Runnable now with zero incremental cost: a standing line in the email footer, the packaging insert, the PDP and the Meta ad copy. The imported 33%/1M benchmark should be treated as directional only — a sub-1,000 list will not reproduce those numbers, but the placement discipline costs nothing.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Give every customer a transferable gift card worth roughly a third of the purchase price, redeemable only by a friend, expiring in 7-14 days — so the referrer gives a gift instead of pitching a discount. — 7/10
+
+**Why it works:** Handing a friend a card reframes the referrer from salesperson to benefactor and confers status ('I got this $X card, do you want it? I don't want to waste it'). The short expiry forces the hand-off to happen; personalizing it with the friend's name is also a legitimate pretext for collecting that name.
+
+**Evidence:** Assertion with detailed mechanics, plus a variant where cards are sold at 90% off to customers as gifts for friends.
+
+**Fit:** Honest scale-down for a $50.46 AOV: a $15-17 transferable code printed on the packaging insert — already the only owned surface for Amazon buyers — with a 14-day expiry, issued via Shopify discount codes. Scored below the two-sided split only because tracking the hand-off is manual at this order volume.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Build the partner prospect list by asking 'who's got my leads?' — what do my best customers buy, where do they go, what do they like to do, who do they work for — then group the answers into categories (products, equipment, services, groups they belong to, events they attend) and prioritise any business that falls into more than one category. — 7/10
+
+**Why it works:** Prospecting from your customers' actual behaviour surfaces businesses whose warm audience is already made of your buyers, so the list is pre-qualified before you pitch; multi-category overlap signals unusually dense concentration of your leads.
+
+**Evidence:** Assertion plus the ALAN example — a 200-item list of products and services agency owners buy, which sorted into six repeatable categories he now reuses for every new hit list.
+
+**Fit:** A free, one-afternoon research exercise a solo operator can do today with a spreadsheet and phone calls to existing customers. Complements rather than restates the existing claim about deriving the partner profile from the binding constraint: that one starts from what is capping output, this one starts from where the customers physically are.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Qualify affiliates by forcing an investment — require them to buy and actually use the product to hold affiliate status. — 7/10
+
+**Why it works:** Money paid is attention paid: an affiliate who has spent their own cash on the product believes in it, sells it more credibly, and self-selects out if they don't.
+
+**Evidence:** Assertion from experience across two affiliate companies ('nine times out of ten, if they pay, they'll pay attention'); described as the lowest-barrier investment that has worked for him.
+
+**Fit:** Directly runnable at this size and costs nothing to impose: any studio owner, salon or ambassador who wants a commission code first buys a small assortment at $50-ish. It solves the credibility problem for a natural-deodorant brand where the partner must vouch that it works, and filters out people a solo operator would otherwise administer codes for who never sell.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Set affiliate commission from your maximum allowable CAC — gross profit per order divided by your target LTGP:CAC ratio — and pay for the specific action you want (new customers, repeat customers, or upstream steps like a lead magnet download once you can track them). — 7/10
+
+**Why it works:** Deciding first what the affiliate is paid for makes 'how much' and 'how often' nearly solve themselves, and anchoring the payout to allowable CAC guarantees the channel is profitable by construction rather than by hope.
+
+**Evidence:** Worked example: $200 product, $40 fulfilment, $160 contribution, 3:1 LTGP:CAC leaves $40 to the affiliate.
+
+**Fit:** Runnable today and necessary before any code is issued: at $50.46 AOV with 18-22.5% repeat, the allowable-CAC calculation is what stops a solo operator handing out a 30% commission that loses money on first purchase. It also forces the same lifetime-value math the Meta campaign needs. Related to but distinct from the existing allowable-cost-per-lead claim.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Run every launch on a whisper-tease-shout cadence: whisper (curiosity, behind-the-scenes, no reveal) every 4-6 weeks until 60 days out then every 2-3 weeks; tease (reveal the product, publish the date, show the value elements) weekly until 14 days out then twice weekly; shout (explicit CTA, bonuses, scarcity) twice a day from 3 days out, every few hours on launch day, every 30 minutes in the final two hours. — 7/10
+
+**Why it works:** Curiosity built and deliberately left unresolved accumulates an engaged audience before anything is buyable, so demand is assembled in advance and released at once instead of trickling; the escalating frequency converts that stored attention on a fixed date.
+
+**Evidence:** Applied to his own book launch, described phase by phase; presented as the best method he has found for activating affiliates and 'how you launch anything'.
+
+**Fit:** Fully runnable by one person today across email (sub-1,000 list), organic social and the live Meta campaign — usable for the soap giveaway and any new SKU or seasonal drop. Extends the existing scarcity claim about announcing a dated opening by supplying the multi-week cadence and what each phase says. Scale down honestly: three phases and a real date, not twice-daily shouting to a 900-person list.
+
+**Target skill:** `marketing-scarcity-urgency-framing` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Run partners in two phases — a one-time 'launch' promotion to their audience to prove it works, then 'integrate' the product into their ongoing core offer so the flow continues without another campaign. — 7/10
+
+**Why it works:** A launch produces a visible burst of results that gives the partner a reason to believe; integration converts a one-off promo into a standing line item in their offer, so every new customer of theirs automatically becomes a lead or sale for you with no repeated persuasion.
+
+**Evidence:** Three worked case studies — blast-off seminar then embedded LLC offer; free 28-day challenge then a nutrition orientation on every new member; a paid workshop then adjustments included in every gym membership.
+
+**Fit:** Directly translatable at this size: launch = a one-week deodorant giveaway or sampling event with one local studio; integrate = that studio includes a travel-size deodorant or lip balm in every new-member welcome kit, bought wholesale monthly. Integration is what matters here because it produces recurring orders from a single relationship rather than a one-time spike. Runnable now with no team and no spend.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Give the partner all or nearly all of the money from the launch event — you take the customers and the contact details, not the front-end revenue. — 7/10
+
+**Why it works:** The partner does the promoting, so paying them 100% of the front end makes the deal free money for them and they will repeat it; you monetize downstream on the customers acquired, whose lifetime value exceeds the front-end margin you gave up.
+
+**Evidence:** Chiropractor case study — gym owner keeps the full $2,970 from a $99 workshop for thirty people and does no work beyond a few emails and posts; the chiropractor takes the room full of prospects.
+
+**Fit:** Solves the exact problem a sub-1,000-list brand has when approaching a partner with a bigger audience: there is nothing to trade on parity, so pay in margin instead. Concretely: let a studio keep 100% of retail on a sampling event or pop-up, or give them the full margin on a first wholesale order, in exchange for the email/SMS opt-ins. At $50 AOV and 18-22% repeat, giving up the first sale's margin is affordable if the opt-in enters the flows.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Before running a test, compute the minimum volume it needs from the expected response rate — at a 0.5-1% response, 300 flyers cannot produce a readable result, so a null result at that size proves nothing about the channel. — 7/10
+
+**Why it works:** Response-rate arithmetic sets a floor on sample size; below that floor the outcome is dominated by noise, so the operator concludes 'the channel doesn't work' when the only thing demonstrated is insufficient volume.
+
+**Evidence:** The flyer anecdote — 300 flyers, one angry call, zero leads — against a mentor who tested with 5,000 per day and treated 0.5-1% as decent-to-winning.
+
+**Fit:** The single most relevant idea for a business at ~54 orders/month, a sub-1,000 list and $30/day: nearly every test here is under-powered, and computing the required volume in advance is what stops a good angle being retired after two email sends or four days of spend. Complements rather than restates the 'we tried that is an unproven verdict' claim, which interrogates execution after the fact. No budget or people required.
+
+**Target skill:** `marketing-performance-pattern-analysis` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Post your customers' success stories into the online groups and communities where your buyers already congregate, as a standing lead source alongside ads. — 6/10
+
+**Why it works:** Proof posted inside a community the buyer already trusts borrows that community's credibility and reaches people who would never see an ad; it costs nothing but time, so it runs in parallel with paid without competing for budget.
+
+**Evidence:** Hormozi: 'I'll post our success stories in a few gym groups to get leads from there' — one of the three lead sources credited with the $215,000 profit month.
+
+**Fit:** Honest translation exists: natural-deodorant switchers, low-tox and zero-waste communities on Reddit and Facebook are real and reachable by a solo operator at zero cost, which matters against $2,700/mo revenue and a $30/day ad budget. Durable principle, not platform mechanics. Capped at 6 because most such groups ban overt self-promotion, so the tactic has to be run as answering switch-related questions with a customer result rather than posting promos, and it is slow relative to the giveaway campaign already standing up.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 1 of 16)
+
+### Capture contact information from every burst of attention, even when you have nothing to sell yet. — 6/10
+
+**Why it works:** Attention is perishable and offers are not; a list of people who raised their hand during a spike is the asset that makes a later offer sellable to a warm audience instead of a cold one.
+
+**Evidence:** After a conference talk with nothing to sell, over one hundred people left phone numbers and business cards; that list later became the seed audience for the licensing offer.
+
+**Fit:** Directly applicable with a sub-1,000 list where the binding constraint is retention and repeat revenue — every giveaway entrant, market-stall visitor and Amazon insert scan should land on the list, not just be a transaction. Runnable today by one person. Durable principle. Not higher because the soap giveaway already implements the core of it; the incremental value is extending it to the non-campaign attention spikes (markets, viral posts, press mentions).
+
+**Target skill:** `marketing-email-list-health` (edit)
+
+**Merged from:** (part 1 of 16)
+
+### Take money for the offer before it is packaged, then build to the deadline you just promised. — 6/10
+
+**Why it works:** A paid customer is the only real validation, and a collected payment creates a hard delivery deadline that forces the asset into existence in days rather than months — while an unsold, fully-built asset may never have had a buyer at all.
+
+**Evidence:** Hormozi sold the Gym Launch system for $6,000 before it existed as a package, then spent 48 hours assembling it; he repeated the sale seven more times before delivery, collecting $60,000 in a day.
+
+**Fit:** Honest ecommerce translation: presell a bundle, routine kit or new scent to the owned list with a stated ship date before committing inventory or packaging spend — a solo operator with 12 SKUs and no cash cushion should not fund production on a guess. Durable principle, age irrelevant. Capped at 6 because a sub-1,000 list gives a thin presell signal and the mechanic overlaps partly with validating an offer on the owned list before funding paid.
+
+**Target skill:** `marketing-pre-launch-product-validation` (edit)
+
+**Merged from:** (part 1 of 16)
+
+### Count the output of advertising as engaged leads — people who are contactable AND have shown interest — not raw leads, impressions, reach or follower counts. — 6/10
+
+**Why it works:** A contactable person who has taken no action has not signalled anything; a person who opted in, replied, or entered has self-selected as interested, which is what actually predicts a later purchase. If you count the wrong unit you will optimize toward cheap non-buyers.
+
+**Evidence:** Assertion only, framed as the six-month definitional exercise that started the book.
+
+**Fit:** Directly applicable to the live $30/day Meta giveaway campaign: the number to judge that spend against is opted-in entrants and cost per engaged lead, not reach or entries-page traffic. Marked down only because existing skills already name leads and cost per lead as primary metrics — this adds the unit definition (contactable + interested) rather than a new mechanism.
+
+**Target skill:** `marketing-paid-media-measurement` (edit)
+
+**Merged from:** (part 2 of 16)
+
+### Make the lead magnet as easy as possible to consume — offer information in every format (text, video, audio, images), make software work on phone and desktop, make a physical product fast to order, fast to arrive, easy to open, and shipped with simple directions. — 6/10
+
+**Why it works:** People prefer lower-effort options, so removing consumption friction multiplies both take rate and actual consumption — and only consumed magnets produce buyers.
+
+**Evidence:** Claims 2-4x increases in take rates; cites the near-even quarter split of $100M Offers across ebook, physical, audio and video.
+
+**Fit:** Durable principle. Scaled-down version for one operator: a deodorant-transition guide delivered as an email sequence, a one-page PDF, and a phone-shot 60-second video — no crew needed. The physical-product half partially overlaps the existing post-purchase insert claim, so the adoptable delta is format multiplication of the information magnet feeding the giveaway list.
+
+**Target skill:** `marketing-offer-construction` (edit)
+
+**Merged from:** (part 3 of 16)
+
+### Seed the first free units to your warm contacts on an explicit three-part condition — use it, give me feedback, and leave a review if you think it deserves one, asked as 'does that sound fair?' — then convert those people to paid once they have results and ask each of them for referrals. — 6/10
+
+**Why it works:** Warm contacts give permission to contact and try harder, producing testimonials and early results; stating the exchange upfront creates reciprocal obligation so free recipients actually produce the feedback and testimonials the free product is really buying. Once results exist, both the conversion to paid and the referral ask meet almost no resistance.
+
+**Evidence:** Six yeses from calls, texts and Facebook messages, converted to paid after twelve weeks, then another five or six clients from their referrals, reaching ~$4,000/month; plus his four stated reasons for giving the first five units away.
+
+**Fit:** Durable principle and runnable by a solo operator today on any of 12 SKUs at a few dollars of COGS: hand free product to warm contacts and past buyers on a stated exchange, then ask by name for a referral once they report a result. Score capped because the sub-1,000 warm list limits absolute volume. Guardrail: do not route seeded product into Amazon reviews.
+
+**Target skill:** `marketing-pre-launch-product-validation` (edit)
+
+**Merged from:** (part 3 of 16); (part 4 of 16)
+
+### Open every warm message with something you actually know about that specific person as the reason for reaching out, and ask for nothing in the first message. — 6/10
+
+**Why it works:** A personalized check-in reads as social contact rather than a pitch, so it gets a reply; asking for nothing means you have not spent any relationship capital before the conversation exists.
+
+**Evidence:** Assertion only, with a scripted example ('Saw you just had a baby! Congrats!').
+
+**Fit:** Durable principle. Directly executable by a solo operator in DMs and one-to-one emails, and it is the difference between a warm list producing replies and producing blocks. Low ceiling per message but zero cost.
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### When someone replies, use Acknowledge-Compliment-Ask: restate what they said, compliment a character trait it reveals, then ask a question that moves the conversation toward the territory your offer lives in. — 6/10
+
+**Why it works:** People like talking about themselves and being complimented, so the pattern buys liking and trust cheaply; the third move is a steering mechanism that lets you reach the offer topic without the conversation ever feeling like a pitch.
+
+**Evidence:** Scripted examples across three verticals; assertion only.
+
+**Fit:** Durable conversational principle with a concrete three-part structure — testable and runnable by one person in Instagram DMs, support email replies, and texts to past customers. Not covered by any existing skill (the copy skills govern one-to-many assets, not one-to-one threads).
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### Compress the whole pitch into one fill-in-the-blank line for texts, DMs and emails: 'I help (ideal customer) get (dream outcome) in (time period) without (effort and sacrifice)' plus one proof element. — 6/10
+
+**Why it works:** The four value terms stated back to back deliver the entire argument in the space a one-to-one message allows, so no element of the offer is dropped just because the surface is small.
+
+**Evidence:** Template only; assertion.
+
+**Fit:** Durable principle. Distinct from the existing value-equation audit claim in marketing-conversion-friction-audit — that one governs offer design, this is a compressed copy artifact for short one-to-one surfaces. Immediately usable in DMs, Instagram bio, and giveaway follow-up messages.
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### Build every piece of content from the same three-part unit: hook attention, retain attention, reward attention — the smallest amount of material that does all three is one content unit. — 6/10
+
+**Why it works:** A viewer can only be rewarded if they first have a reason to consume (hook), stay long enough (retain), and then get that reason satisfied (reward). Reversing those three outcomes gives the three production jobs, so any post can be diagnosed by which of the three failed.
+
+**Evidence:** Framework asserted; illustrated with a short personal story broken into hook/retain/reward, and the claim that memes and single tweets go viral because they do all three at once.
+
+**Fit:** Durable principle. Gives a solo operator a repeatable diagnostic for a deodorant/oral-care post that flopped — was it the hook, the middle, or the payoff — instead of rewriting blindly. Runnable today with zero budget. Complements rather than duplicates the existing hooks skill.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Source content topics from five named buckets — far past, recent past, present, trending, manufactured — and prefer your own lived experience because nobody else can say it. — 6/10
+
+**Why it works:** Personal experience is the only inherently non-copyable differentiator in a commoditised content feed; the five buckets turn 'what do I post' from a blank page into a finite list of places to look.
+
+**Evidence:** Assertion plus worked examples for each bucket, including a far-past lesson story and a manufactured 'I lived on $100 for a month' experience.
+
+**Fit:** Durable principle. A solo skincare formulator has exactly this asset — why she formulated an aluminium-free deodorant, what went wrong in the first batches, what customers write in. Gives a standing topic queue with no budget or team. Distinct from the existing persona-consistency claim, which governs voice, not where topics come from.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Mine the last week of your own calendar, meetings and customer conversations for content — take notes and recordings so the material is retrievable. — 6/10
+
+**Why it works:** Every interaction already contains a story with a lesson for the audience; recording them converts routine work you already did into a free, standing content stash rather than requiring net-new creative effort.
+
+**Evidence:** Assertion plus an example of a tweet that came directly out of a meeting with a portfolio CEO.
+
+**Fit:** Durable principle and cheap. This operator's 'calendar' is customer emails, DMs, Amazon Q&A and support replies — a real, already-existing corpus at ~54 orders/month. Adjacent to marketing-review-mining but not a duplicate: that skill mines reviews for proof quotes and objections, this one mines conversations for content topics.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Manufacture an experience on purpose — pick a topic people find interesting, go do it, then document it — rather than only reporting experiences you already had. — 6/10
+
+**Why it works:** A deliberately staged experience is inherently unusual and ongoing, which are two of the strongest attention drivers, and it produces material nobody else has. It costs the most effort but has the largest payoff.
+
+**Evidence:** Personal example: 'I lived on $100 for a month.'
+
+**Fit:** Durable principle with an obvious deodorant translation: a documented 30-day sweat test, a heatwave/gym-week wear test, or a side-by-side against the conventional stick the buyer already owns — all of which double as proof assets for the PDP and Meta creative on the live $30/day campaign. Runnable by one person with a phone; founder self-documentation, so no team gate.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Retain attention by embedding unresolved questions in the reader's mind using three devices — lists, steps and stories — and state the number of items up front. — 6/10
+
+**Why it works:** Curiosity is the durable retention driver; a numbered list or an ordered step sequence creates an explicit open question ('what are the other five?') while a story creates an implicit one ('what happened next?'), and naming the count up front tells the audience what to expect so they stay for it.
+
+**Evidence:** Assertion plus example headlines for each device and the distinction that steps have an explicit reward while lists are more flexible.
+
+**Fit:** Durable principle. Gives concrete structures for the operator's own assets — a '5 reasons your natural deodorant stopped working' email, a numbered switch-period routine post, a 3-step first-use sequence. Additive: the existing skill says a hook must open a loop, but does not supply the scaffolds that keep it open through the body.
+
+**Target skill:** `marketing-copy-hooks-and-formats` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Choose the ask format by content length: on short-form platforms use intermittent asks (roughly ten 'give' posts then one 'ask' post), on long-form use asks integrated inside the piece, placed after a valuable moment or at the end. — 6/10
+
+**Why it works:** A short post has no room to earn the ask inside itself, so the give:ask ratio has to be spread across posts; a long piece can deliver value and then convert attention in the same session, and the ask is a commercial interrupting your own programming so it belongs immediately after a delivered reward.
+
+**Evidence:** Worked arithmetic for a podcast (3 x 30-second ads in 60 minutes = 58.5:1.5) and the shrinking-podcast counter-example.
+
+**Fit:** Durable principle, runnable today by one person. Gives a concrete posting-calendar rule for Instagram/TikTok — roughly one promo post per ten value posts — and a placement rule for longer emails and blog posts: CTA after the payoff, not before it. The short/long-form split is generic enough to survive platform churn.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16); (part 6 of 16)
+
+### Pick one of two platform-scaling paths and follow its steps in order: depth-then-width (maximize quality and quantity on one platform before adding the next) or width-then-depth (get onto every relevant platform early by repurposing, then maximize them all together). — 6/10
+
+**Why it works:** Depth compounds — an audience grows faster the more you post to it, and one platform needs fewer resources. Width buys reach and repurposing efficiency but costs labor and usually produces a lot of bad content everywhere. Naming the path in advance stops you from half-doing both.
+
+**Evidence:** Structured advantages/disadvantages list; assertion.
+
+**Fit:** Durable principle and consistent with the existing rule to run only one or two awareness channels. For a solo operator at ~$2,700/mo, depth-then-width is the only affordable path, with the scale-down being a sustainable cadence rather than the '10 short-form posts a day' ceiling the book names. Adds sequencing for content platforms specifically, which the channel-selection skill does not cover.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Write claims as personal experience — 'how I' rather than 'how to', 'my favorite way' rather than 'the best way' — because nobody can dispute what you have actually done. — 6/10
+
+**Why it works:** A prescriptive claim invites the reader to check your authority and to argue; an experiential claim is unfalsifiable and reads as sharing rather than preaching, so it avoids the arrogance that makes an unknown brand's advice bounce off.
+
+**Evidence:** Three worked before/after examples (oatmeal, 7-figure agency, lead generation); assertion.
+
+**Fit:** Durable voice principle fitting a founder-run natural skincare brand with no lab, no clinical studies and low authority — 'here's the routine I use after switching off antiperspirant' is both truer and safer than 'this is the best way to detox your pits'. Runnable today on captions, emails and PDP copy. Distinct from the existing 'write in the voice of someone who actually uses the product' claim, which is about register.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Assemble a targeted prospect list by working from most accessible to least — scraping software, then paid list brokers, then joining groups and communities and hand-collecting names — and prefer the hand-assembled list because those people have received the fewest cold reach outs. — 6/10
+
+**Why it works:** Cold outreach only works if you can contact qualified strangers at all; databases everyone else can query are already saturated, so a self-assembled list gets a higher response rate at the cost of your time.
+
+**Evidence:** Assertion plus a stated process he personally runs.
+
+**Fit:** Consumer cold outreach is dead on arrival at $50.46 AOV, but the partner-side translation is real and runnable today: hand-build a list of 100 target stockists (refill shops, salons, gyms, boutiques), subscription boxes and micro-creators from Instagram/TikTok and local directories. Skip the scraping subscriptions and broker samples — the elbow-grease path is the only affordable one and also the highest-response one. Capped at 6 because acquisition is not the binding constraint here.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (create)
+
+**Merged from:** (part 7 of 16)
+
+### When outreach isn't converting, change the lead magnet or offer before you tune anything else in the process — swap the disguised sales call for as much free service as you can afford, and keep raising it until they feel stupid saying no. — 6/10
+
+**Why it works:** The offer is the single highest-leverage variable in the sequence; script, targeting and cadence changes move take rate marginally while the thing being offered moves it in multiples.
+
+**Evidence:** Four months of failing cold outreach to gyms; swapping 'game planning session' (code for sales call) for real free service 3x'd take rates and beat every other test he ran.
+
+**Fit:** The 'give away something people pay for' half is already recorded in marketing-offer-construction, so only the test-ordering claim is new: when a cold outreach sequence underperforms, replace the offer before rewriting the script — e.g. offering a boutique a free filled tester set and a printed shelf card rather than a 'quick call about wholesale'. Scored 6 because it is adjacent to an existing claim and the channel is secondary to retention here.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
+
+**Merged from:** (part 7 of 16)
+
+### Set your personalization level inversely to list size — a list of 1,000 highly qualified prospects gets every message personalized by hand, a list of millions can be templated and automated. — 6/10
+
+**Why it works:** Personalization raises response rate but costs time per contact; automation raises contacts per hour at a lower rate. Which trade wins depends entirely on how many qualified names exist in the universe.
+
+**Evidence:** Assertion with two contrasting examples (1,000 hedge fund managers vs. tens of millions of weight-loss prospects).
+
+**Fit:** This decides how the business should run outreach at all: the universe of realistic stockists, subscription boxes and niche creators is in the dozens-to-low-hundreds, which the rule says should be 100% hand-personalized and never blasted. It explicitly rules out the templated-blast tooling that would waste money at this revenue. Not higher because it is an operating rule rather than a revenue lever on its own.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
+
+**Merged from:** (part 7 of 16)
+
+### Once you have worked all the way through a cold list, wait three to six months and work it again from the top, because non-response is usually about visibility, timing or circumstance rather than rejection. — 6/10
+
+**Why it works:** Three separate failure modes decay over time — they never saw it, they saw it at a bad moment, or they did not need it then. Re-running the same list harvests the subset whose circumstances have since changed, at zero list-acquisition cost.
+
+**Evidence:** Assertion with an illustrative example (the prospect who gains ten pounds over the holidays).
+
+**Fit:** Free reuse of an asset a solo operator has already paid for in hours. A boutique that had no shelf space in March may be reformulating its lineup in September; a creator who ignored a DM may have just started a skincare series. Costs nothing but a calendar reminder. Held at 6 because it is a second-order improvement to a non-binding channel.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
+
+**Merged from:** (part 7 of 16)
+
+### Track every step-conversion of the acquisition process (contacts → opens/pick-ups → replies → engaged leads → sales), build the equation 'for every X contacted I get Y customers', then reverse a revenue target into the required input volume and divide it into a daily quota — gating the whole channel on lifetime profit per customer being at least 3x acquisition cost. — 6/10
+
+**Why it works:** Outreach and advertising behave like a conversion equation; once the input:output ratio is measured, output stops being a hope and becomes an arithmetic function of daily input volume, which also exposes when budget or headcount is the actual limiter. Without the ratios you cannot tell whether to do more, change the message, or stop.
+
+**Evidence:** Worked per-channel examples (100 calls at 20% pickup × 25% take = 4 engaged leads; 30% open × 10% reply = 3% engaged), a portfolio company at 4% engagement and 30:1 returns, and the 100 emails → 1 customer → 10,000 emails → 100 customers → 333/day worked example.
+
+**Fit:** Durable planning arithmetic; runnable on a spreadsheet with a hundred outreach attempts or a month of Meta data — these are counts, not significance tests. Directly usable now: at ~54 orders/month, $50.46 AOV and $30/day, the operator can state a target of e.g. 40 incremental orders and back out the entries, list adds and impressions required, which will immediately show whether $30/day can arithmetically produce it. The specific benchmark rates are B2B high-ticket and should be treated as directional.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 7 of 16); (part 8 of 16)
+
+### Seed the ad platform's lookalike audience from your own lists in quality order — past and current customers first, then warm contacts, then cold leads — padding down the quality ladder only as far as needed to clear the platform's minimum list size, then layer basic filters (age, gender, interest, location) on top. — 6/10
+
+**Why it works:** The platform models new people on the contacts you supply, so a higher-quality seed produces a more responsive lookalike; padding to hit the minimum broadens the model, and hand-set filters re-narrow it so a higher share of impressions land on likely buyers.
+
+**Evidence:** Assertion plus 'this is exactly what I do'.
+
+**Fit:** Platform mechanics from 2023 near the suspicion line — Meta has since pushed Advantage+ audience as the default, so lookalikes now function as a suggestion rather than a boundary; that is why this is a 6. The underlying move still works: hundreds of Shopify buyers plus a sub-1,000 list clears Meta's source minimum, and seeding the giveaway campaign off buyers rather than a bare interest stack is a free efficiency gain at $30/day. Verify current audience-tool behavior in Ads Manager first.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 8 of 16)
+
+### Consolidate every lead list you own into one place, separated into tiers — past/current customers, warm contacts, cold leads, and people who gave contact information to an ad but never bought — so each tier can be used as targeting or exclusion material. — 6/10
+
+**Why it works:** Ad platforms can only model or exclude audiences you actually upload; keeping the lists tiered by quality preserves the information about which contacts are worth modelling on and which are worth retargeting or suppressing.
+
+**Evidence:** Assertion, given as an action step.
+
+**Fit:** Runnable today by one person: export Shopify customers, pull whatever Amazon exposes through Manage Your Customer Engagement, and tag giveaway entrants separately from buyers. It matters here because the giveaway campaign will generate exactly the fourth tier — entrants who gave an email and did not buy — which is the raw material for both the nurture flow and paid exclusions. Prep work rather than a revenue lever on its own.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 8 of 16)
+
+### The only difference between a long ad and a short one is how many angles it covers — cut or add angles for the placement, but keep the opening callout and the CTA identical. — 6/10
+
+**Why it works:** The hook and the close are the two elements that determine whether the piece is noticed and acted on; the middle is compressible content, so adapting to a shorter format means dropping angles, not trimming the hook or softening the ask.
+
+**Evidence:** Assertion only.
+
+**Fit:** Durable formatting principle, practically useful when the same angle must appear as a Meta primary text, a PDP block, an Amazon bullet and an email — a solo operator repurposing one asset across surfaces needs a rule for what gets cut. Modest score because it is a refinement of what the hooks skill already implies.
+
+**Target skill:** `marketing-copy-hooks-and-formats` (edit)
+
+**Merged from:** (part 9 of 16)
+
+### Make the CTA destination itself frictionless — a short, memorable, typeable URL (acquisition.com/training, not a long parameterized path) — because the audience can only act on what they can easily execute. — 6/10
+
+**Why it works:** Every character of friction between motivation and action loses people, and motivation from an ad is high but very short-lived, so the destination must be executable instantly.
+
+**Evidence:** Assertion plus the author's own $370k single-word domain purchase, which he admits may bias him.
+
+**Fit:** Durable principle; scales down honestly to creating a clean /giveaway or /free-soap path on the existing Shopify domain and using it on package inserts, QR codes and any spoken or printed mention. Low ceiling — most Meta traffic clicks a button — but free and relevant to the printed insert, the only owned surface for Amazon buyers. No recommendation to buy an expensive domain.
+
+**Target skill:** `marketing-lead-capture-landing-pages` (edit)
+
+**Merged from:** (part 9 of 16)
+
+### Once ads at least break even, stop asking 'how much should I spend' and reverse the budget from a customer target — customers wanted × cost per customer, padded roughly 20% because ads get less efficient as they scale — then commit to the daily number. — 6/10 · parked until `scale`
+
+**Why it works:** Budget derived from capacity and CAC turns spend into an arithmetic consequence of a goal rather than a nerve-based decision, and the 20% pad prices in the efficiency decay that comes with higher spend.
+
+**Evidence:** Assertion with a worked example (100 customers × $100 CAC = $10,000, padded to $12,000, or $400/day).
+
+**Fit:** Sound and durable, but it presupposes ads that already break even and a budget set by ambition rather than cash — today the $30/day figure is set by what a ~$2,700/mo business can float. Park behind scale; trigger is a Meta campaign holding at or above breakeven CAC for a full month, at which point the question becomes 'how many customers can one person pack and ship'.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 9 of 16)
+
+### Diagnose whether the problem is the ads or the business model by comparing your CAC to the industry average: if your CAC is well below 3x the industry average, stop optimizing ads and work on how much you make per customer; if it is above, work on the ads. — 6/10
+
+**Why it works:** Acquisition costs between competitors in the same category converge much more than operators expect, because they bid in the same auction — so the variance between winners and losers lives in monetization, and cost can only fall toward zero while revenue per customer has no ceiling.
+
+**Evidence:** Author's observation from talking to hundreds of entrepreneurs monthly; presented as a heuristic.
+
+**Fit:** Durable diagnostic logic pointing at the right place for this business: with retention as the binding constraint and repeat customers at 45-52% of revenue, the LTGP lever is almost certainly where the money is. Marked down because a natural-deodorant industry CAC benchmark is hard for a solo operator to source honestly.
+
+**Target skill:** `marketing-paid-media-measurement` (edit)
+
+**Merged from:** (part 9 of 16)
+
+### Before launching paid, name a monthly amount you are willing to lose, expect to lose it, and treat the first months of spend as tuition rather than as revenue generation. — 6/10
+
+**Why it works:** Pre-committing a loss budget removes the mid-flight panic that kills campaigns early and mis-attributes learning cost to failure; you spend on the expectation of learning, not earning, which keeps the campaign alive long enough to produce readable behaviour.
+
+**Evidence:** Assertion only ('Start with an acceptable amount of money you are willing to lose each month. Expect to lose it. You won't be earning, you'll be learning.').
+
+**Fit:** $900/mo against ~$2,700/mo revenue is real money for a solo operator, and the most likely failure mode is killing the campaign in week two because it hasn't returned cash — which also violates the existing 7-14 day no-edit rule. Writing the loss budget down before launch is runnable today and complements the break-even target (the target is where you're heading; the loss budget is what you can survive on the way).
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 10 of 16)
+
+### Pick one advertising activity and commit to a fixed daily volume floor sustained for 100 consecutive days — 100 minutes a day making ads and 100 straight days of running them, or 100 reach-outs a day, or 100 minutes a day making content with at least one post released daily. — 6/10
+
+**Why it works:** Engaged-lead output is primarily a function of input volume, not cleverness; doubling inputs raises leads even with zero improvement in quality, and a 100-day horizon is long enough that the channel's real economics surface instead of being read off a two-week sample.
+
+**Evidence:** Assertion plus a personal guarantee ('I don't make many promises, but this is one') and an unnamed community example.
+
+**Fit:** Durable principle about input volume. The honest scaled-down version for one person at $30/day is: hold the Meta campaign running for 100 consecutive days at the committed budget, and book a fixed daily block for creative and email production rather than a literal 100 actions — the literal 100 warm reach-outs/day has no translation to a sub-1,000-list DTC catalog. Complements the 'run only one or two channels' claim, which says which channel, not how much or how long.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 10 of 16)
+
+### When a channel plateaus, exhaust volume first (more), then optimization (better), and only expand to 'new' when marginal returns from more/better drop below it — taking 'new' in the order new placement on a platform you already know, then a known placement on a new platform, then an entirely new acquisition activity. — 6/10
+
+**Why it works:** More is the cheapest lever because it requires no new skill; better compounds on volume you already have; new costs the most learning per lead, so it is ordered last and internally ordered by leads-per-unit-of-work. Skipping to 'new' spreads a solo operator across platforms where they have no competence and no data.
+
+**Evidence:** Illustrative story of a $2M/yr chiropractor-niche business spending $30k/mo on one platform claiming market saturation, contrasted with a peer spending $30k across four platforms in a week.
+
+**Fit:** Durable sequencing principle, directly relevant now: with one live Meta campaign at $30/day, the temptation to add TikTok or Pinterest before Meta has been run harder or improved is the specific error this prevents, and the placement-before-platform ordering is not in any existing claim. Partially overlaps 'don't open a new market until growth gets hard', hence not higher.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 10 of 16)
+
+### Cap how long you fight one control: if you cannot beat the current best version in four attempts (about one month), stop testing that step and move to the next constraint, writing every test result into a running log first. — 6/10
+
+**Why it works:** Testing effort has diminishing returns on a single step; a hard attempt cap prevents grinding on a step that is already near its ceiling and forces reallocation to the next largest drop-off, while the log means the next attempt starts from accumulated knowledge.
+
+**Evidence:** Description of his own standing Monday testing schedule across companies; assertion as to the four-try threshold.
+
+**Fit:** The stopping rule is the novel part and is runnable by one person today — the honest scale-down is that the read window must be longer than his one week, since 54 orders/month will not produce a readable weekly delta, so count attempts rather than weeks. The logging half overlaps the existing decision-record claim, so the adopted claim carries the abandonment threshold.
+
+**Target skill:** `marketing-performance-pattern-analysis` (edit)
+
+**Merged from:** (part 10 of 16)
+
+### Diagnose advertising versus conversion with one question — do the leads you are getting have the problem you solve and the money to spend? If no, it is an advertising/traffic problem; if yes but they are not buying, it is a sales/conversion problem; if they are buying but there are too few, it is an advertising problem. — 6/10
+
+**Why it works:** Cost per customer is a product of both ad efficiency and downstream conversion, so separating the two failure points before changing anything stops you rewriting creative when the real fault is the page, or rebuilding the page when you are buying the wrong audience.
+
+**Evidence:** Case of a portfolio company that spent $150k over twelve weeks, got qualified leads on the phone, blamed the ads and quit — estimated ~$30M enterprise value lost.
+
+**Fit:** Directly runnable against the live Meta giveaway campaign: giveaway entrants are the classic case of leads that do not have money or intent to spend, and this question forces that admission before creative gets blamed. Overlaps the binding-constraint step in performance-pattern-analysis but adds a concrete two-branch test in ecommerce terms, so it belongs there as a refinement.
+
+**Target skill:** `marketing-performance-pattern-analysis` (edit)
+
+**Merged from:** (part 10 of 16); (part 13 of 16)
+
+### Beyond the four things you can do yourself, four categories of people can advertise on your behalf — customers/referrers, employees, agencies and affiliates — and they arrive in a natural order, referrals first and affiliates last; you acquire each of them using the same core four channels. — 6/10
+
+**Why it works:** Other people running outreach, content or ads for you decouples lead volume from your own hours, so output stops being capped by the solo operator's time — but each type also demands a management capability you only acquire in sequence, so attempting affiliates before you can manage people tends to fail.
+
+**Evidence:** Author's claim that $30M of customers said someone referred them, plus his own sequence: referrals, team, agencies, then a $1.5M/mo affiliate program.
+
+**Fit:** Two of the four (customers, affiliates) are genuinely available to a solo operator at 54 orders/month; employees and agencies are not, so the live content reduces to 'work referrals before building a partner program' — a real sequencing instruction consistent with retention being the binding constraint. Partially overlaps the existing partnerships claim, so it belongs in channel-selection as an added claim.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 11 of 16); (part 15 of 16)
+
+### Baseline and then track two numbers before and during any referral work: the percentage of customers who arrive via referral and the percentage who churn each month — if referrals exceed churn the business compounds without more advertising; if lower you must advertise just to break even. — 6/10
+
+**Why it works:** Referral growth is multiplicative (one customer brings two, two bring four) while paid growth is linear in effort and spend, so the referral-minus-churn balance determines whether growth is self-sustaining or bought. Without a starting number you cannot tell whether the goodwill and asking work moved anything, and the two numbers together say which half — deliver value or ask — is broken.
+
+**Evidence:** Author's own two weeks with all ads shut off still producing $500k/week, plus the 700-person room where nearly everyone was referred; PayPal and Dropbox cited.
+
+**Fit:** Repeat rate is already measured (18-22.5%), so half the baseline exists; the missing half — referral share — is obtainable today with a one-question 'how did you hear about us' on the post-purchase survey and unique codes per referrer, needing no new tooling. At ~54 orders/month the monthly figure is noisy, so read it as a directional trailing-90-day number rather than a statistic.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 11 of 16); (part 12 of 16)
+
+### If you get few referrals, there are only two causes — the product is not as remarkable as you think, or you never ask — so diagnose which before building any referral mechanic, using the question 'why are my customers too embarrassed to tell everyone they know about my product?' — 6/10
+
+**Why it works:** Referral programs layered on an unremarkable product produce nothing, because there is no goodwill surplus to convert; the diagnostic separates a product problem from an ask problem so the fix matches the cause.
+
+**Evidence:** Assertion, supported by portfolio-company examples and personal anecdotes about mediocre vendors.
+
+**Fit:** Cheap and runnable today by one person with 12 SKUs — a five-minute diagnostic that gates whether the next work is a product fix or a referral ask. Sits close to the 'name the binding constraint' step but is specific to referral output, so it earns its own claim.
+
+**Target skill:** `marketing-referral-and-word-of-mouth` (create)
+
+**Merged from:** (part 11 of 16)
+
+### Deliberately lower the promises you make in your offers — inch them down until close rates start to fall, then stop — so there is room to exceed expectations after purchase. — 6/10
+
+**Why it works:** Experience is judged against expectation, and you set the expectation; a smaller promise kept generates goodwill surplus, while an oversized promise turns fulfilment into a nightmare and kills word of mouth.
+
+**Evidence:** Author's own experience of promising 'everything and the kitchen sink' early on, then inching promises down and gaining referrals.
+
+**Fit:** Highly relevant to natural deodorant, where over-promising ('works instantly, no adjustment period') is exactly what produces one-and-done buyers. The literal iterate-downward instruction is not readable at 54 orders/month; the honest runnable version is to write product-page and email promises at the conservative edge of what the product reliably does — naming the 1-2 week transition rather than hiding it — and hold them there. Complements the credibility skill's 'edge of believability' claim, which is about being believed.
+
+**Target skill:** `marketing-referral-and-word-of-mouth` (edit)
+
+**Merged from:** (part 11 of 16)
+
+### Pad every timeline you state by about 50% so you always deliver early rather than late, and never leave a customer without knowing when they will next hear from you. — 6/10
+
+**Why it works:** Customers do not forgive lateness, and each kept promise compounds trust; padding converts 'on time' into 'early', which reads as a win rather than as baseline performance.
+
+**Evidence:** Assertion plus the author's stated personal practice ('I add fifty percent to my timelines').
+
+**Fit:** Directly translatable to a solo-operator ecommerce catalog: state a padded ship/delivery window on the product page and in the confirmation email, then beat it. Distinct from the existing 'make many small promises and keep them' claim, which says to make promises but not how to size them so they survive a one-person fulfilment operation. Zero cost.
+
+**Target skill:** `marketing-post-purchase-onboarding` (edit)
+
+**Merged from:** (part 11 of 16)
+
+### Use referrals as the price of a discount — when someone wants a lower price, grant it in exchange for introductions, and answer 'why did she get a discount' by offering the same deal on the same terms. — 6/10
+
+**Why it works:** You can ethically charge a different price for the same product because you changed the terms of the sale; the discount is paid for by acquisition you would otherwise have bought. The public script defuses fairness complaints by making the discount earnable by anyone.
+
+**Evidence:** Author's negotiation scripts and a reported real instance of a full-price customer discovering the discount.
+
+**Fit:** No live negotiation surface exists on a $50 deodorant order, but the ecommerce translation is real and runnable: when a customer emails asking for a code, or in a win-back/second-place giveaway consolation, make the code conditional on sharing a referral link or naming a friend. Lower than the core structures because the situation arises only occasionally at ~54 orders/month.
+
+**Target skill:** `marketing-referral-programs` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Recruit help using the same four awareness channels you use for customers — ask your network (warm), recruit directly (cold), post job openings (content), and promote job postings (paid ads) — plus employee referrals and staffing sources. — 6/10 · parked until `team`
+
+**Why it works:** Hiring is an advertising problem in disguise: candidates are just another audience who must be made aware, shown value, and asked. Mapping the two makes an unfamiliar task use skills you already have.
+
+**Evidence:** Explicit mapping table; the opening story where doubling cold-outreach sales came from unblocking hiring throughput, not from changing the outreach method.
+
+**Fit:** Blocked only by people — there is no one but the solo operator and no revenue to pay a first helper at ~$2,700/mo. Parked at team, scored on the merit it will have then: the channel mapping is a genuinely useful frame for sourcing a first VA or editor and does not duplicate the existing freelancer-search-string claim. Trigger: revenue supports a recurring part-time cost, or a named marketing task is provably capping output.
+
+**Target skill:** `marketing-creator-content-sourcing` (edit)
+
+**Merged from:** (part 12 of 16)
+
+### Hand off any recurring task with the 3Ds: document it as a checklist you can personally do an A+ job from, demonstrate it live while amending the checklist, then have them duplicate it in front of you and fix the checklist where it breaks — until a stranger could reproduce your result from the checklist alone. — 6/10 · parked until `team`
+
+**Why it works:** Most handoff failures are documentation failures, not people failures. Documenting the task as an executable checklist moves the failure point to the instructions, which you control; the duplicate step is a live test of the checklist, so every confusion or stall is a defect you patch rather than a person you blame.
+
+**Evidence:** Model presented from the author's practice, with the test framed as 'if you vanished tomorrow, could a stranger get your results from the checklist alone?'; he reports the kinks work themselves out after the first few employees trained this way.
+
+**Fit:** Needs someone who is not the solo operator — a VA for review requests, content posting or Amazon listing updates — which is the team gate. Trigger: the first time a recurring marketing task is handed to a contractor. The self-only version (write an SOP) is already held by performance-pattern-analysis Step 10, so the non-duplicative part is the delegation loop, which genuinely requires a second person.
+
+**Target skill:** `marketing-team-training-systems` (create)
+
+**Merged from:** (part 12 of 16); (part 13 of 16)
+
+### Open every agency relationship by stating the purpose and deadline out loud: work together for ~6 months so you can learn how they do it, pay extra for them to break down why they make each decision, train your own team on it, then step down to a cheaper consulting arrangement. — 6/10 · parked until `team`
+
+**Why it works:** Agencies front-load their best rep and rotate them to newer clients, so results decay by design; contracting for knowledge transfer up front converts a decaying expense into a permanent internal capability, and most agencies will still take the deal.
+
+**Evidence:** The author's 11-step account of the agency decay cycle across 10+ agencies, plus a verbatim opening script and the YouTube example (two agencies hired, dropped to consulting once his videos beat theirs).
+
+**Fit:** Durable principle on how to buy a service. Blocked by money and people: a good agency retainer plus a team to absorb the knowledge is well beyond ~$2,700/mo and one operator. Trigger: revenue supports a real retainer and there is at least one other person to train. The runnable-today version is the hourly over-the-shoulder consult, adopted separately unparked.
+
+**Target skill:** `marketing-agency-engagement` (edit)
+
+**Merged from:** (part 13 of 16)
+
+### Screen agencies against a fixed ten-point checklist: someone you know got results with them, recognizable clients, a waiting list, a clear sales process that sets realistic expectations, long-term strategy rather than hacks, explicit statements of what they need from you and when, a proposed meeting cadence, plain-language reporting tying cost to results, an offer that scores well on the value equation, and a high price — and talk to several before choosing. — 6/10 · parked until `team`
+
+**Why it works:** Good agencies are demand-constrained and therefore sell by word of mouth, price high, and behave like operators rather than closers; the checklist substitutes observable signals for the promises everyone makes.
+
+**Evidence:** Assertion, presented as a pattern the author derived from working with 'tons of bad agencies and a handful of good ones'.
+
+**Fit:** Durable vendor-screening principle, not usable until there is budget for a real agency — the team gate, same trigger as the engagement-terms tactic. Note the checklist scales down usefully to screening an hourly freelance media buyer, which is why it belongs alongside the unparked hourly-consult tactic.
+
+**Target skill:** `marketing-agency-engagement` (edit)
+
+**Merged from:** (part 13 of 16)
+
+### Recruit affiliates — independent businesses that promote your product to their own audience for commission or free product — as a distinct lead channel alongside your own advertising. — 6/10
+
+**Why it works:** Each affiliate is a compounding stream: they do their own advertising to an audience that already trusts them, so every one you sign adds recurring lead flow for the same one-time recruiting effort, instead of you buying every customer yourself.
+
+**Evidence:** Prestige Labs: 400+ affiliates, 300+ orders/day, ~$450k weeks with no paid ads or sales team; ALAN scaled to $1.7M/mo in six months on a few super-affiliates; $75M combined across 5000+ affiliates.
+
+**Fit:** The honest scaled-down version is runnable today by one person: instead of an 'army', approach 3-5 non-competing local businesses whose customers sweat or care about ingredient labels (yoga studios, CrossFit boxes, salons, midwives, natural grocers) and set them up to sell or sample the deodorant line. Not a revenue fix this quarter at $50.46 AOV, but a zero-media-spend acquisition surface that runs in parallel with the $30/day Meta campaign.
+
+**Target skill:** `marketing-affiliate-program-design` (create)
+
+**Merged from:** (part 14 of 16)
+
+### Treat affiliates as a second class of customer and construct the offer as a money-making offer in their numbers, not a product pitch: more revenue from customers they already have, high likelihood because their audience already wants the product, no build, fulfilment or support burden, and they can start selling tomorrow. — 6/10
+
+**Why it works:** Affiliates buy income, not skincare. A partner promotes only when the arrangement improves their own P&L or differentiates their offer, so running the four value terms against 'a new income stream' is what makes a busy business owner sign up rather than politely decline.
+
+**Evidence:** Presented as the standard structure all money-making offers follow, supported by the chiropractor case where included adjustments make the gym membership more valuable than a rival's, and the Prestige Labs case where supplement sales are incremental gym revenue.
+
+**Fit:** Runnable today: writing a one-page partner pitch costs nothing and the fulfilment burden really is zero for the partner because a solo operator ships everything. The honest pitch is 'this adds a $12 margin item to every new-member kit and makes your welcome package look premium', not 'please share my brand'. Applies the four-term value equation to a different audience, which changes what goes in each term.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16); (part 15 of 16)
+
+### Use a three-tier payout ladder rather than one flat rate — 25% of allowable CAC for anyone who signs up, 50% once they activate (finish onboarding, do a launch, hit a post count), 100% once they sustain performance — so the blended payout lands well below your maximum CAC. — 6/10 · parked until `scale`
+
+**Why it works:** Tiering rewards the behaviour you actually want (activation and sustained selling) and, because most affiliates never reach the top tier, the blended cost per acquisition falls, improving LTGP:CAC and freeing money for contests and further recruiting.
+
+**Evidence:** Worked example: a 20/20/60 tier mix yields a $30 blended payout against a $40 maximum, moving the ratio from 3:1 to 4:1.
+
+**Fit:** Sound and correctly aimed, but it needs a roster of partners before the blend means anything — with three partners and a max commission near $10-15, a ladder is administrative overhead for no readable difference. Park behind scale. Trigger: roughly 10+ active partners, or partner-sourced orders large enough that the blended-vs-max gap is real money.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### In the pre-launch phase, show your work — behind-the-scenes of the product being made, drafts, versions, late nights — because an audience values a thing more the longer it appears to have taken. — 6/10
+
+**Why it works:** Visible duration and effort are read as evidence of quality, so documenting the build inflates perceived value before any claim is made, while also generating the curiosity the whisper phase depends on.
+
+**Evidence:** Book launch example (photos of printed drafts, framework versions, editing videos); asserted principle that a ten-year product is valued above a ten-day one.
+
+**Fit:** A solo formulator has exactly this material for free — batch-making, ingredient sourcing, reformulation attempts, packaging decisions — and it feeds organic content and Meta creative without a crew (phone footage is enough at this price point). Scored 6 because it is a perceived-value lift on a brand whose constraint is retention, not a direct revenue mechanism.
+
+**Target skill:** `marketing-scarcity-urgency-framing` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Do all the promotional work for your affiliates ahead of the launch so they can plug and play — hand them the assets, copy and schedule rather than asking them to create anything. — 6/10
+
+**Why it works:** Affiliates promote in proportion to how easy you make it; removing every production step from their side is what converts a signed-up affiliate into an advertising one.
+
+**Evidence:** Assertion — 'good launches have the work done ahead of time. So do all the work for them.'
+
+**Fit:** Runnable today by one person: a small partner kit (three social captions, two product photos, a discount code, an email template, dates) is an afternoon of work and is what makes a busy salon owner actually post. Adjacent to the fixed-component creator brief, but that covers briefing someone to produce a video for you; this is handing a partner finished assets to distribute.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Pay affiliates on the revenue their customers generate forever, and never cap payouts. — 6/10
+
+**Why it works:** A lifetime, uncapped split keeps the affiliate motivated to keep the customer alive rather than to harvest a one-time bounty, aligning them with retention instead of churn.
+
+**Evidence:** Assertion of personal preference — 'I prefer to pay forever so my affiliates stay motivated to keep my customers forever. And, I never cap payouts.'
+
+**Fit:** Cheap to promise and well matched to the binding constraint: repeat customers are 45-52% of revenue, so paying a partner on repeat orders buys a second party who cares about the second purchase. Must be set against the allowable-CAC math so lifetime commission does not eat the retention margin. Runnable today in Shopify with a standard affiliate app on a handful of partners.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Work 'open to goal': commit to a number of outcomes per day rather than a number of hours or attempts, and keep going until the outcomes exist. — 6/10
+
+**Why it works:** An activity quota is satisfied by effort that produced nothing, so the operator stops while the result is still missing; an outcome quota forces you to keep varying and continuing the work until the result actually exists, which also reveals the real conversion rate of the activity.
+
+**Evidence:** Anecdote about a gym chain whose sales managers set their own hours but had to sign five members per day; the author's own daily block (the book was written in it) and the flyer story ('five thousand times, every day, for years').
+
+**Fit:** A real commitment mechanism, not just exhortation, and a solo operator can run a scaled-down version today: 'work until 3 giveaway entries / 5 review requests sent / 1 ad asset shipped' rather than 'spend an hour on marketing'. Caps mid-range because it is operating discipline rather than a revenue lever, and the binding constraint here is retention rather than outreach throughput.
+
+**Target skill:** `marketing-advertising-cadence-planning` (create)
+
+**Merged from:** (part 15 of 16); (part 16 of 16)
+
+### When follow-up in one medium produces nothing, test the next medium rather than concluding follow-up does not work — email, then phone, then SMS. — 6/10
+
+**Why it works:** Engaged leads who ignored one channel are not unreachable; the same message in a medium they actually attend to converts, so the failure is channel fit, not the follow-up itself.
+
+**Evidence:** Author's account: email produced nothing, phone calls produced nothing, text blasts moved the business from $1.5M to $1.8M/mo.
+
+**Fit:** The named media are not era-bound platform features. Real Skin Care has a sub-1,000 list and an 18-22% repeat rate, so one-and-done buyers and non-buying subscribers are a known dead pool email alone has not moved. Adding an SMS opt-in and running the same win-back or nurture message there is a solo-operator-sized change in Klaviyo, needs no team or ad spend, and points at the binding retention constraint. Not a duplicate of the flow inventory, which specifies which flows exist rather than which medium carries them.
+
+**Target skill:** `marketing-lifecycle-email-flows` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Write the whole advertising plan on a single page in about five minutes — pick the lead type, pick the daily commitment, fill out the checklist for that one daily action — instead of writing (or skipping) a long plan. — 6/10
+
+**Why it works:** A one-page plan makes the day's action binary and auditable ('you either did the stuff or you didn't'), removing the room for excuses that both a hundred-page plan and no plan create.
+
+**Evidence:** Assertion only; the five-step checklist is given verbatim.
+
+**Fit:** Directly runnable today by one person at $30/day: the current plan is 'Meta ads → soap giveaway entries → email list → repeat purchase', which fits on one page and makes the daily action explicit. Complements the decision-log claim in performance-pattern-analysis — that logs what happened after, this commits the action before. Scored mid because it organizes work rather than generating revenue.
+
+**Target skill:** `marketing-advertising-cadence-planning` (edit)
+
+**Merged from:** (part 16 of 16)
+
+### Locate yourself on a seven-level advertising roadmap and take only the action that level prescribes — level 1 is one offer to one avatar on one platform via warm outreach, level 2 is maxing personal capacity with warm outreach plus posted content, level 3 is hiring, level 4 is fixing the product until referrals are consistent, level 5 is more platforms and methods, level 6 is veteran executives. — 6/10
+
+**Why it works:** Each level's bottleneck is different, so acting like a level you are not at (hiring before you have a repeatable input, adding platforms before the first one is maxed) spends money on the wrong constraint.
+
+**Evidence:** The author's own path through each level and Acquisition.com's use of the roadmap across portfolio companies.
+
+**Fit:** Usable today as a diagnostic: at ~$2,700/mo combined and one operator, Real Skin Care is level 2-4 — personal-capacity content plus a live $30/day Meta campaign, with the level-4 referral/product work being the honest next step given repeat rate sits at 18-22.5%. Belongs as an edit to channel-selection, which already stages channel count by revenue. Scored 6 because it is orientation, not execution detail.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 16 of 16)
+
+### Start with the single platform where you have the most contacts, work it to exhaustion, then move to the platform with the second most, and so on. — 5/10
+
+**Why it works:** Concentrating on the densest contact pool maximizes reach-outs per hour of context-switching, and you will eventually cover every platform anyway, so ordering by volume is strictly better than ordering by preference.
+
+**Evidence:** Assertion plus a worked example: 1,000 contacts across platforms equals about ten days of outreach, a month with follow-ups.
+
+**Fit:** Durable sequencing principle, trivially runnable by one person, but it is a small ordering rule rather than a lever — it makes an already-adopted activity slightly more efficient. Worth recording as part of the warm-outreach procedure, not on its own merit.
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### Send a fixed number of personalized reach-outs per day (Hormozi's number is 100), following up with each contact up to three times (once a day for three days, or once a week for physical mail) or until they respond. — 5/10
+
+**Why it works:** Warm outreach converts at a low but stable rate, so output is purely a volume function; the three-touch follow-up cap captures the large share of people who simply did not see message one without tipping into harassment.
+
+**Evidence:** Stated benchmarks (1 in 5 reply) and the author's claim that it works 'as certainly as the sun rises'; no data shown.
+
+**Fit:** Durable principle, but the volume prescription was calibrated to a $400 offer. At $50.46 AOV and Hormozi's own 1-customer-per-100 rate, 100 reach-outs buys about $50. The honest scale-down runnable today: 10-20 personalized touches a day aimed at lapsed buyers and personal contacts, with the same three-touch follow-up cap, since a past buyer converts far above 1%.
+
+**Target skill:** `marketing-warm-outreach` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### Multiply raw content output — post as much free content as you physically can, because roughly ten times the posting produced roughly ten times the audience growth; the compounding asset is the audience, not any individual post. — 5/10
+
+**Why it works:** Content is a one-to-many broadcast: you say it once and reach everyone, unlike warm outreach which needs one repetition per person. Each additional piece is another chance to be found, valued and shared, and because the audience persists after each post decays, output volume compounds into audience size.
+
+**Evidence:** Author's own numbers — 200,000 audience added in twelve months at one post per platform per day, then 1.2M added in the next six months after a friend audited his cadence and he 10x'd output.
+
+**Fit:** Durable principle rather than platform mechanics. Organic posting is one of the two cheapest channels for a solo operator and costs no ad budget. But the prime directive is revenue, retention is the binding constraint, and 'three posts a day on every platform' is not a real ask for one person also running fulfilment, Amazon and a $30/day Meta test. Adopt scaled down: fix a current baseline cadence, step it up deliberately on the one platform where the buyer actually is, and treat follower growth as a leading indicator only.
+
+**Target skill:** `marketing-organic-content-program` (create)
+
+**Merged from:** (part 4 of 16); (part 5 of 16)
+
+### Build a personal brand as the founder even if you would rather stay private — accept the cost of public exposure as the price of the reach. — 5/10
+
+**Why it works:** Audiences attach to people faster than to companies, which is why celebrity-founded consumer brands scaled to enormous valuations in months; the founder's face is the fastest route to an owned audience.
+
+**Evidence:** Anecdotes only — Kylie Jenner, Huda Kattan, Conor McGregor's Proper 12, Dwayne Johnson's Teremana — survivorship examples with pre-existing fame.
+
+**Fit:** Durable positioning principle and honestly runnable by a solo operator (founder-led posts need no crew). But the evidence is four already-famous people, which is not representative of a solo skincare operator. Worth adopting as a positioning choice — a maker-founder face gives natural-deodorant copy the provenance and identity material the awareness skill already asks for — not as a growth mechanism.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 4 of 16)
+
+### Keep a capture mechanism within arm's reach and write ideas down the moment they occur — pause a meeting to note them if necessary. — 5/10
+
+**Why it works:** Ideas are perishable; capturing them at the moment of occurrence builds a bucket of fresh material so content sessions start from a queue rather than from nothing.
+
+**Evidence:** Assertion from personal practice.
+
+**Fit:** Durable principle, zero cost, runnable today by one person. Modest score because it is a work habit rather than a revenue mechanism, and the second half of Hormozi's version — post the idea and make more of whatever outperforms — is already recorded in marketing-awareness-level-messaging.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Make content about what is trending right now and attach your own experience or expertise to it. — 5/10
+
+**Why it works:** Attention is already pooled around trending topics, so commentary on them borrows distribution you would otherwise have to build, exposing you to a broader audience than your niche alone.
+
+**Evidence:** Assertion only.
+
+**Fit:** Durable principle and free to run solo. Honest translation exists — trending natural-deodorant, aluminium, fluoride or ingredient-safety discourse is constant in this category and the founder has genuine expertise to attach. Scored mid because trend-chasing pulls in the broadest, least-qualified audience, and the prime directive is revenue with retention as the binding constraint.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Judge content by value per second and reward the exact promise the hook made to the exact audience it hooked — there is no such thing as too long, only too boring, so make longer content better rather than shorter. — 5/10
+
+**Why it works:** Length is not the variable; reward density is. Failing to deliver the promised count, delivering stale items, or delivering to people who cannot use the advice all destroy shares and repeat consumption, because the reason for consuming was never satisfied.
+
+**Evidence:** Two worked failure examples ('7 ways to make up with your spouse' delivered to single men; '4 marketing strategies dentists can use' that dentists cannot use), plus binge-watching behaviour as evidence that length is not the constraint.
+
+**Fit:** Durable principle, runnable today as a shipping check on emails and posts: did the piece actually deliver the count and the payoff its subject line promised. Scored mid because it partially overlaps existing guidance on curiosity loops and on deciding length by the jobs copy has to finish, leaving value-per-second and the wrong-audience failure mode as the genuinely new parts.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16); (part 6 of 16)
+
+### Long-form content is just content units linked together — so start with short pieces and add units as your skill grows. — 5/10
+
+**Why it works:** Each additional unit is another hook/retain/reward cycle you must land in a row; failing any one loses the audience, so the difficulty of long content scales with the number of units.
+
+**Evidence:** Analogy to comedians earning longer sets and novelists starting with short stories.
+
+**Fit:** Durable principle, runnable today. Practical sequencing rule for a solo operator with no editor: start with single-unit posts and short emails, and only attempt long-form once the short ones consistently land. Modest score because it is a skill-development ordering rule rather than a revenue lever.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 5 of 16)
+
+### Maintain a master list of your best-performing content ('greatest hits'), each labeled with the problem it solves and the benefit it provides, so it can be sent to a prospect before or after a conversation to resolve a specific concern. — 5/10
+
+**Why it works:** Content that already persuaded strangers at scale will persuade one hesitating buyer; labeling by problem makes the right piece retrievable at the moment the objection is voiced instead of being rewritten from scratch each time.
+
+**Evidence:** Assertion.
+
+**Fit:** Written for a sales team that does not exist here, but the scaled-down version is runnable today by one person: keep an indexed list of the best posts, reviews and explainers tagged by objection (transition period, staining, price, scent) and paste the matching link into DM and email replies, giveaway follow-ups and the PDP FAQ. Second-order against retention and paid, hence mid score.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Commit to a fixed posting cadence and a fixed ask cadence, then measure audience size and reach monthly in both absolute and percentage terms, because you can only control inputs and output measurement is only interpretable if the inputs were held constant. — 5/10
+
+**Why it works:** Consistent inputs make month-over-month output differences attributable; measuring both absolute and relative growth means small numbers still register as progress, which sustains the behavior long enough for compounding to appear.
+
+**Evidence:** Author posted twice weekly for four years before the podcast charted, hitting Top 10 US business in year five.
+
+**Fit:** The input-consistency half is sound and runnable today. The measurement half partially conflicts with the prime directive — follower and reach growth are not revenue, and dual measurement openly amounts to picking the number that feels better. Adopt with the caveat that reach is a leading indicator only and the scoreboard stays revenue.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Immediately after delivering value, ask the recipient to pass the thing itself along to someone else who would benefit from it. — 5/10
+
+**Why it works:** Providing value makes you more valuable to that person, so the moment after receipt is when they are most willing to spend social capital on your behalf; asking them to forward the artifact costs them nothing and puts you in front of a pre-vouched stranger.
+
+**Evidence:** Assertion, delivered as the book's own PS.
+
+**Fit:** Durable principle, runnable today by one person: add a 'know someone still fighting with their antiperspirant? forward this' line to the post-purchase and first-result emails and to the giveaway confirmation. Modest score because it is a low-yield lever on a sub-1,000 list, but it costs one sentence.
+
+**Target skill:** `marketing-post-purchase-onboarding` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Keep outreach scripts short — a page or two for calls and chat, half a page for cold email — and get your first 100 conversations or 10,000 emails out before you start tweaking the wording. — 5/10
+
+**Why it works:** There is no reward for a pretty script; response data from volume tells you what to change, whereas pre-optimizing wording with no reply data is guessing and delays the only thing that produces information.
+
+**Evidence:** Assertion.
+
+**Fit:** Runnable today with an honest scale-down: 10,000 emails is not this business's world, but 'work the entire first list of 100 before rewriting the message' is the same rule at this size and stops a solo operator burning a week polishing an email nobody has received. Scored 5 because it is a work-discipline rule with modest revenue consequence.
+
+**Target skill:** `marketing-cold-outreach-prospecting` (edit)
+
+**Merged from:** (part 7 of 16)
+
+### Screen an advertising platform against four tests before spending: you have used it as a consumer, you can target your buyer inside it, you know how to format ads for it, and you can afford its minimum spend. — 5/10
+
+**Why it works:** Each test removes a specific failure mode — unfamiliarity with the medium, no way to narrow the audience, format mismatch, and being priced out before you can gather signal — so the platform choice itself does the first round of audience filtering.
+
+**Evidence:** Assertion, framed as the author's personal checklist.
+
+**Fit:** Durable platform-selection logic. Value is limited because Meta is already chosen and the account is being stood up — it mostly confirms an existing decision. It stays useful as the gate to apply before anyone suggests TikTok, Pinterest or Amazon Sponsored Brands as a second channel on a $900/mo total budget.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 8 of 16)
+
+### Give the advertising an enduring non-founder likeness — a person who looks, talks and dresses like the target buyer, or a mascot — and keep it consistent, because a mascot never ages, never asks for more money, and detaches the brand from the owner's face. — 5/10
+
+**Why it works:** People pay attention to and trust people who resemble them, and a consistent recurring character compounds recognition across ads while removing the dependency that makes an owner-fronted business fragile and unsellable.
+
+**Evidence:** Assertion plus named examples (Mickey Mouse, the Geico Gecko, Tony the Tiger, the Michelin Man) and the Gym Launch sale anecdote.
+
+**Fit:** Durable positioning principle. Partially runnable now — a consistent AI-rendered character or mascot across statics needs no designer — but hiring on-camera talent is team-gated, and at ~$2,700/mo brand-recognition compounding is a slow-payback lever against the binding retention constraint. Adopted at a modest score because the scaled-down version is genuinely executable.
+
+**Target skill:** `marketing-product-image-stack` (edit)
+
+**Merged from:** (part 8 of 16)
+
+### Coach a trainee by rewarding direction-following rather than results: give one piece of feedback at a time, praise correct steps, never punish mistakes during training, distinguish competence from performance, and retrain the whole process whenever performance dips. — 5/10 · parked until `team`
+
+**Why it works:** If the trainee is trained to follow directions exactly, then a wrong outcome isolates the directions as the cause — which is the variable the owner controls. Punishment suppresses the behaviour you are installing; single-item feedback prevents overload on a novice.
+
+**Evidence:** Assertion only, framed as rules of thumb from the author's training experience.
+
+**Fit:** Durable management psychology, blocked purely by the absence of anyone to train. Trigger: once a VA or contractor is running any repeatable marketing task. Useful but second-order to the checklist loop itself.
+
+**Target skill:** `marketing-team-training-systems` (edit)
+
+**Merged from:** (part 13 of 16)
+
+### For non-paid advertising done by people you pay, compute cost per engaged lead as total payroll divided by engaged leads, then multiply by the leads-per-customer ratio to get CAC and compare that to lifetime gross profit. — 5/10 · parked until `team`
+
+**Why it works:** Content and outreach have no media cost, so their true acquisition cost hides inside labor. Attributing payroll to the leads produced makes an organic channel comparable to a paid one on the same CAC scale.
+
+**Evidence:** Worked example ($100,000 / 1,000 leads = $100/lead; 10:1 lead-to-customer = $1,000 CAC; $4,000 LTGP = 4:1) plus Acquisition.com's own numbers ($100k/mo content team, ~30,000 engaged leads, $3.33/lead).
+
+**Fit:** Durable arithmetic, but today there is no payroll — the operator's own time is the input and there is no honest dollar denominator yet. It becomes real the moment a content or outreach contractor is paid, which is the team gate. Adjacent to the allowable-cost-per-lead claim, which is about paid media; this puts a price on unpaid-channel labor.
+
+**Target skill:** `marketing-team-training-systems` (edit)
+
+**Merged from:** (part 13 of 16)
+
+### Advertise to potential affiliates the way you advertise to customers, using one of five callout entry points: the affiliate owner's title, their customers, the result they promise, the products they already sell, or your own customers ('do you know anyone who owns a spa?'). — 5/10
+
+**Why it works:** Affiliate recruitment is an offer with its own audience; naming the affiliate by role, clientele or product line makes them self-select, and asking your existing customers for introductions turns the buyer list into a recruiting list.
+
+**Evidence:** Assertion — illustrated with spa-owner example callout lines.
+
+**Fit:** Runnable today with zero budget — the fifth callout in particular (asking the existing ~54-orders/month buyer base whether they know a studio or salon owner) is the cheapest recruitment surface for a sub-1,000-person list. Scored mid because it partially overlaps the existing 'call your audience out by name' claim; the distinct content is the five affiliate-side entry points.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 14 of 16)
+
+### Judge a partner program by comparing what it cost to recruit and enable each affiliate against the gross profit of every customer that affiliate sends (target 3:1 or better), and improve a weak ratio in exactly three ways — cheaper recruiting, a launch process that activates signed partners, or deeper integration that makes each partner worth more. — 5/10
+
+**Why it works:** Affiliates rarely buy much themselves, so measuring them on their own purchases mis-reads the program; attributing all downstream customer gross profit to the partner who sent them makes the spend decision legible, and the three-lever diagnosis says which end of the program to fix.
+
+**Evidence:** Worked arithmetic ($4,000 affiliate CAC, $120k lifetime sales, 75% margins, 40% payout, 12.5:1 ratio) plus a stated 3:1 minimum.
+
+**Fit:** Durable measurement logic; the dollar figures are B2B-scale and irrelevant. Scaled-down version runnable today: give every partner a unique Shopify discount code and track revenue and gross profit per code against hours and free product spent recruiting them. The real value is the activation-versus-integration diagnosis. Scored mid because at ~54 orders/month a single partner's contribution will not be precise enough to act on for months.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Get a first cohort of affiliates, use their feedback to debug the offer, terms, launch and integration, then turn their documented results into the recruiting material for the next batch. — 5/10
+
+**Why it works:** Early partners surface the friction in the deal before you have scaled it; their results then become third-party proof that removes the biggest objection from the next partner, who wants to know it worked for someone like them.
+
+**Evidence:** Stated action step ('advertise your affiliate offer until you get ten to twenty affiliates… turn their results into your first batch of affiliate lead magnets').
+
+**Fit:** Ten to twenty partners is far beyond what one operator at $2,700/mo can service, but the honest scale-down is two or three local studios or shops: run them, fix the wholesale terms and the display, then use 'the studio on X street sells eight units a month in their welcome kits' as the opener for partner four. Not parked, because the scaled-down version is genuinely runnable now.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Ring-fence a fixed percentage of the advertising budget (1-10%) for tests run with no expectation of return, and account for it as education rather than as performance spend. — 5/10
+
+**Why it works:** Removing the return expectation from a slice of budget makes it psychologically and financially possible to test new channels, pages and crazy ideas; occasional winners pay for all the losses, and each loss still buys information.
+
+**Evidence:** Reported advice from an eight-figure operator, followed by the author's own sequence of tests (new audiences, email, phone, text blasts, affiliates) that took the business from $400k to $4M/mo.
+
+**Fit:** At $30/day (~$900/mo) a 10% carve-out is roughly $90/mo, which will not fund a readable parallel test cell — so the honest scale-down is to spend it as one discrete monthly experiment (a single new lead magnet page, one new angle, one week of a different entry offer) and book it as learning rather than judging it on ROAS. Distinct from the existing 80/20 proven-versus-experimental creative allocation, which governs which ads run rather than which bets get funded.
+
+**Target skill:** `marketing-paid-campaign-structure` (edit)
+
+**Merged from:** (part 15 of 16)
+
+### Structure the day so the advertising work happens in one long uninterrupted block first, before meetings, fires and day-to-day operations. — 5/10
+
+**Why it works:** The highest-leverage activity (getting customers) gets the most productive consecutive hours with nothing interrupting it; everything reactive is deliberately deferred to after the block, so growth work never gets displaced by operations.
+
+**Evidence:** Author's own habit stack described as his 'highest ROI habit stack, by a longshot'.
+
+**Fit:** The 4am / 12-hour-day framing does not translate, but the scaled-down version does and matches this business's shape: a solo operator who packs orders, answers support and runs Amazon will otherwise never ship the ad creative or the retention flow. Adopt the translated version — one protected block per day, ops after — and drop the wake-time prescription. Scored 5 because it is time management, not a mechanism that moves AOV, repeat rate or CAC.
+
+**Target skill:** `marketing-advertising-cadence-planning` (edit)
+
+**Merged from:** (part 16 of 16)
+
+### Run the daily advertising action yourself only until it earns enough to pay someone else to do it — then make hiring that person the new lead-getting goal and repeat the same process. — 5/10 · parked until `team`
+
+**Why it works:** Personal work capacity, not the platform, is what caps output first; buying back the repetitive advertising input with earned revenue is the only way to raise volume without a new channel, and recruiting is itself a lead-getting problem you already know how to solve.
+
+**Evidence:** Author's own hiring sequence at level 3 — his first hires were a videographer and a media buyer.
+
+**Fit:** Blocked purely by people and money — a videographer, editor or media buyer is the team gate, and $2,700/mo revenue with $900/mo committed to Meta cannot fund a hire. Trigger: the Meta campaign plus retention work producing enough contribution margin that a repeated weekly task can be paid for rather than done at 11pm. Scored on the merit it will have then: a real but generic scaling move.
+
+**Target skill:** `marketing-acquisition-channel-selection` (edit)
+
+**Merged from:** (part 16 of 16)
+
+### Point some of your paid ads at recruiting affiliates and partners rather than only at customers, using the same targeting machinery to build an affiliate program. — 5/10 · parked until `scale`
+
+**Why it works:** An affiliate acquired through paid ads becomes a permanent distribution node rather than a single purchase, so the same ad dollar buys recurring reach instead of one order.
+
+**Evidence:** Author expanded his paid ads to include potential affiliates, which 'paved the way' for his affiliate programs.
+
+**Fit:** A legitimate ecommerce channel at any size, but $30/day is a single-purpose budget currently pointed at giveaway entries, and splitting it across a second objective would leave neither cell readable at ~54 orders/month. Park behind scale; trigger is the giveaway campaign hitting a stable cost per entry with budget headroom for a second ad set, or a list large enough to recruit affiliates organically.
+
+**Target skill:** `marketing-affiliate-program-design` (edit)
+
+**Merged from:** (part 16 of 16)
+
+### Do not pre-schedule posts — press submit manually, because the immediate feedback loop makes you try harder on the content itself. — 4/10
+
+**Why it works:** Knowing you will be rewarded or punished within seconds of hitting publish applies last-minute quality pressure that a scheduler removes.
+
+**Evidence:** The author's own observed performance difference plus an explicitly labeled theory ('here's my theory').
+
+**Fit:** The mechanism is self-declared theory with no measurement behind it, and it works against the one advantage a solo operator has, which is batching — scheduling failure would show up as missed posts entirely. Worth recording as a low-confidence experiment, not as a rule.
+
+**Target skill:** `marketing-organic-content-program` (edit)
+
+**Merged from:** (part 6 of 16)
+
+### Run the agency and your own in-house effort in parallel — paying both to do the same job — and compare your team's results to theirs each period until yours wins consistently, then cancel and redirect the retainer into scaling what you learned. — 4/10 · parked until `team`
+
+**Why it works:** Overlap buys the breathing room to get results, learn the method, and train the team all at once; a head-to-head comparison gives an objective, non-emotional exit trigger instead of cancelling out of frustration.
+
+**Evidence:** Author's own timeline: initially a year to beat an agency, then ten months, then eight, now under six.
+
+**Fit:** Paying twice for the same function is meaningful money against ~$2,700/mo revenue and presumes an in-house team that does not exist — the team gate. Merit even when unblocked is moderate: for a one-channel, one-person operation the overlap period is expensive relative to what is learned.
+
+**Target skill:** `marketing-agency-engagement` (edit)
+
+**Merged from:** (part 13 of 16)
+
+### For ground-level advertising work, hire and train anyone willing rather than screening hard — who you pick matters less than how you train them; save selectivity for expensive senior hires. — 4/10 · parked until `team`
+
+**Why it works:** If the job is fully documented as a checklist, the training system produces the result, so selection stops being the constraint and labor supply for low-level work is effectively unlimited.
+
+**Evidence:** Assertion from the author's hiring experience, conditional on the checklist training method.
+
+**Fit:** Durable hiring principle blocked by the team gate. Merit when unblocked is limited here — the first hire will likely be a single part-time VA where a bad pick costs weeks of the operator's own time, so 'hire anyone willing' is weaker advice at one-hire scale. Recorded mainly because it is the precondition the checklist-training loop assumes.
+
+**Target skill:** `marketing-team-training-systems` (edit)
+
+**Merged from:** (part 13 of 16)
 
 ## Rejected
 
-### If engaged leads have the problem you solve and the money to spend but are not buying, your advertising is fine and you have a sales/conversion problem. — 5/10
+### Start narrow — one offer, one avatar, one platform, a small heavily-filtered audience — then expand in a fixed order: new audiences on your best platform, then every placement and media type it supports, then a second platform, accepting that efficiency falls as the audience grows because total profit dollars rise. — 4/10
 
-**Rejected because:** marketing-paid-campaign-structure already holds that the constraint is usually funnel economics rather than creative, and marketing-performance-pattern-analysis Step 1 already instructs naming the binding constraint before critiquing creative. The one distinct qualification test is adopted separately from part 13.
+**Rejected because:** Duplicate of existing narrow-first, placement-breakdown, one-or-two-channel and profit-dollar claims.
 
-**Fit reasoning:** Sound and durable, but a duplicate of two recorded claims.
+**Fit reasoning:** Durable but duplicated. marketing-paid-creative-testing already holds 'Do not open a genuinely different demographic or market until you have reached real scale on the current one', marketing-acquisition-channel-selection holds the one-or-two-channels rule, marketing-paid-media-measurement holds the placement-breakdown claim, and paid-campaign-structure holds judging in profit dollars and expecting worse cost per result after scaling.
 
-### Take free content pieces that generated sales or performed unusually well organically and run them as paid ads. — 5/10
+### Raise the price on each successive sale of the same offer in committed increments — $6,000, then $8,000, then $10,000, or cohorts of five at 80%, 60%, 40% off — until buyers stop agreeing, and use the announced increase as urgency. — 3/10
 
-**Rejected because:** marketing-paid-creative-testing already holds 'take your best-performing organic short-form videos and run them as paid ads'.
+**Rejected because:** Duplicate of existing offer-construction price-laddering claim and scarcity announced-increase claim.
 
-**Fit reasoning:** Directly relevant and would score well on merit, but recorded identically already.
+**Fit reasoning:** Duplicate. marketing-offer-construction already holds 'find that price by stepping it upward in committed increments, never dropping it to save a sale mid-test', and marketing-scarcity-urgency-framing already holds the announced-increase-as-deadline move. Recording it again would degrade skill triggering.
 
-### Build a system that encourages customers to publicly post testimonials and reviews using the product, then promote the ones that perform well organically as paid ads. — 5/10
+### Sell your new offer first to people who have already seen your results work in front of them — call the past customer list before doing anything else. — 3/10
 
-**Rejected because:** marketing-creator-content-sourcing holds 'use your own customers as creators' and marketing-paid-creative-testing holds the run-winning-organic-as-paid claim; the combination adds no distinct mechanism.
+**Rejected because:** Duplicate of existing warm-channel prioritisation and owned-list-first validation claims.
 
-**Fit reasoning:** Both halves already recorded across two skills.
+**Fit reasoning:** Duplicate on two counts: marketing-acquisition-channel-selection already holds warm outreach as one of the four channels a solo operator should prioritise, and marketing-offer-construction already holds 'validate a new offer on the smallest, cheapest audience that predicts the full result — email the owned list first.'
 
-### After warm outreach, choose your next channel by which resource you have more of: more time than money means post content; more money than time means cold outreach or paid ads. Do paid ads last. — 4/10
+### Give away for free the secrets and material you are most afraid to share — make the free thing as good as (or better than) what the market sells as paid, so it could have been charged for. — 3/10
 
-**Rejected because:** Duplicate of the marketing-acquisition-channel-selection claim about running one or two of the four channels, cheapest first, until seven figures.
+**Rejected because:** Duplicate of the existing 'give away something other people charge for' lead-magnet claim.
 
-**Fit reasoning:** Restates a claim already held, which already encodes resource-based selection and the paid-last ordering.
+**Fit reasoning:** Duplicate of the existing marketing-offer-construction claim 'Give away something other people charge for — the more real the lead magnet's cost, the better it converts.' The remainder is reputational framing with no distinct testable mechanism, and the holding-company acquisition-funnel version has no honest translation to a 12-SKU consumable catalog.
 
-### Know your overall throughput conversion rate from click to close before concluding a channel is saturated or broken. — 4/10
+### Structure the offer so the buyer takes no risk at all — 'I'll fill your gym in 30 days, you pay nothing, I pay for everything, and I only get paid out of the results.' — 3/10
 
-**Rejected because:** marketing-paid-media-measurement fixes the primary metric set and triage order, and the adopted constraint-mapping tactic already requires per-step conversion rates.
+**Rejected because:** Duplicate of the existing risk-reversal/guarantee claim; results-based pricing does not translate to physical goods.
 
-**Fit reasoning:** Sound but covered twice already.
+**Fit reasoning:** Duplicate of the existing marketing-offer-construction claim on risk reversal, and the pay-only-on-results form is B2B service pricing with no honest translation to a $50 physical-goods catalog beyond the guarantee already recorded.
 
-### Set the affiliate commission ceiling from your maximum allowable CAC — take gross profit per sale, split it to your target LTGP:CAC ratio, and the CAC share is what you can pay an affiliate. — 4/10
+### Prefer selling things with zero cost to fulfil, because the margin drops straight to profit and there is no delivery drag. — 3/10
 
-**Rejected because:** marketing-paid-campaign-structure already holds the allowable-cost-per-lead ceiling and marketing-offer-construction already holds the front-end margin gate; applying the identical calculation to an affiliate payee adds no new mechanism.
+**Rejected because:** Duplicate of the existing four-properties product-scoring claim.
 
-**Fit reasoning:** Sound but a rewording of a calculation already recorded twice.
+**Fit reasoning:** Duplicate of the existing marketing-offer-construction claim scoring products on four properties including 'air' (cheap to deliver). Recording it again adds nothing and dilutes triggering.
 
-### Discover the price by naming a bigger number to each successive prospect until someone balks ($6,000, then $8,000, then $10,000). — 3/10
+### Build the pieces in order — offer first, then leads, then sales — rather than skipping to the money. — 3/10
 
-**Rejected because:** Already recorded verbatim in marketing-offer-construction: 'find that price by stepping it upward in committed increments, never dropping it to save a sale mid-test.' Re-adding would duplicate an existing claim and degrade skill triggering.
+**Rejected because:** Duplicate of the existing dependency-ordering step, in vaguer form.
 
-**Fit reasoning:** Durable pricing principle and relevant at a $50.46 AOV, but already recorded verbatim elsewhere in the fleet.
+**Fit reasoning:** No mechanism beyond the ordering itself, and the ordering discipline is already held by marketing-performance-pattern-analysis Step 3 (plan by prerequisite, convert obstacles into dependency-ordered intermediate objectives, run the queue serially).
 
-### When you need revenue fast, call the people who have already bought from you or already watched your work succeed, before doing anything else. — 3/10
+### There are three types of lead magnet — reveal a problem (diagnosis), a sample or trial of the core offer, or one step of a multi-step process — and the third can be delivered as a free first step that shows only partial coverage, with the rest sold as a bundle. — 3/10
 
-**Rejected because:** Already held by marketing-acquisition-channel-selection (warm outreach run first because it is cheapest) and by the win-back and top-repeat-buyer cultivation claims in marketing-retention-offers.
+**Rejected because:** Duplicate of the existing three-lead-magnet-types and splinter-offer claims.
 
-**Fit reasoning:** Durable and correct for this business but already carried by existing claims.
+**Fit reasoning:** Duplicate. marketing-offer-construction already holds 'There are three lead-magnet types: reveal a problem, give a trial of the solution, or hand over one step of a multi-step process' and 'Splinter one low-cost component out of your full offer, sell it at 80–90% off or free, and upsell the rest.'
 
-### Sell the thing that costs you nothing to fulfil — packaging and licensing an existing system produced $60,000 in a day with zero delivery cost. — 3/10
+### Replace an over-produced lead-generation asset (a slide-heavy webinar) with a plain, low-production screen-recorded walkthrough of a real result, headlined with the exact numbers achieved. — 3/10
 
-**Rejected because:** Already recorded in marketing-offer-construction as the four-property SKU score ('unique, expensive relative to cost, sticky, and air') and as 'don't add products, add ways to offer the products you already have.'
+**Rejected because:** Duplicate — production-value matching, numeric specificity and format-vs-idea diagnosis are all already held.
 
-**Fit reasoning:** Durable but the physical-goods translation is already captured.
+**Fit reasoning:** Both halves are already recorded: production level in marketing-product-image-stack, the numeric headline in marketing-copy-credibility-and-proof, and 'the format broke, not the idea' in marketing-performance-pattern-analysis Step 6.
 
-### Build an offer where the buyer risks nothing — 'I'll fill your gym in 30 days for free, you pay nothing, I keep the first six weeks of fees.' — 3/10
+### Every CTA needs two parts — clear, simple, direct instruction on what to do ('call now', 'click this button', 'reply YES', 'scan this QR code') plus a reason to do it right now — and it should be repeated often. — 3/10
 
-**Rejected because:** The transferable half — reverse the risk, name the buyer's biggest fear, guarantee against it, build the cost into the price — is already recorded verbatim in marketing-offer-construction.
+**Rejected because:** Duplicate of the existing unhedged-imperative CTA claim.
 
-**Fit reasoning:** Durable offer principle but the specific structure is performance-based B2B service pricing with no clean physical-product analogue.
+**Fit reasoning:** Durable principle, but marketing-copy-hooks-and-formats already holds 'Close with an unhedged imperative — order now, enter now — repeated through the back half of the piece rather than softened into you can learn more here.' Same claim, same examples.
 
-### Do not blindly trust the author — but here is a track record (36:1 ROAS, $100M net worth, $250M portfolio) so you can decide for yourself. — 3/10
+### Attach urgency to the CTA with a dated promotion, discount or bonus that expires at a stated time, and invent a reason for the promotion if you do not have one — any 'because' beats none. — 3/10
 
-**Rejected because:** marketing-copy-credibility-and-proof already holds 'Endorse the reader's skepticism as a sign of intelligence rather than rebutting it — then shrink the immediate ask' and 'Raise the authority behind the same message'.
+**Rejected because:** Duplicate of existing reason-why/end-date and promotion-re-wrap claims.
 
-**Fit reasoning:** Durable copy principle with a real mechanism, but it is the same move already recorded.
+**Fit reasoning:** Durable principle already recorded in marketing-scarcity-urgency-framing: 'Give every promotion an explicit, believable reason why and a real end date — then re-wrap the same core promotion with a new seasonal name and fresh dates', plus 'Make the promotion, price, or bonus the thing that expires.'
 
-### There are three types of lead magnet: reveal a problem the audience does not know they have, give a sample or trial of the core offer, or hand over one step of a multi-step process. — 3/10
+### Construct any offer from the four elements of the value equation — maximize dream outcome and perceived likelihood of achievement, minimize time delay and effort/sacrifice. — 3/10
 
-**Rejected because:** Already recorded verbatim in marketing-offer-construction as the three lead-magnet types; re-adding would degrade skill triggering.
+**Rejected because:** Verbatim duplicate of the existing value-equation audit claim.
 
-**Fit reasoning:** Sound and durable but verbatim duplicate of a recorded claim.
+**Fit reasoning:** Durable principle, but already recorded verbatim in marketing-conversion-friction-audit.
 
-### Make the lead magnet valuable enough that you could legitimately charge for it — apply Grand Slam Offer standards to free stuff as hard as to paid stuff. — 3/10
+### Use the benchmark funnel — 1 in 5 warm contacts engage, 1 in 5 of those take the free offer, 1 in 4 of those convert to paid — to predict one customer per 100 reach-outs, and scale to $104k/year at 500 reach-outs a week against a $400 offer. — 3/10
 
-**Rejected because:** Already recorded in marketing-offer-construction: 'Give away something other people charge for — the more real the lead magnet's cost, the better it converts.'
+**Rejected because:** Imported high-ticket benchmarks that mislead at this AOV; the forecasting principle is already held.
 
-**Fit reasoning:** Durable but already held twice in the offer skill.
+**Fit reasoning:** Durable in form but the numbers come from a high-ticket coaching business, and the forecasting principle is already held twice. At a $50.46 AOV rather than $400, importing these rates would mislead rather than inform.
 
-### When a complex promotional asset stalls, abandon it and ship the simplest version you can record in one sitting — swap the multi-week webinar for a 13-minute unedited screen recording of a real result with a direct booking CTA. — 3/10
+### Between asks, keep the list warm by giving regular value through email and social so it stays primed for future reach-outs. — 3/10
 
-**Rejected because:** Duplicated by marketing-paid-creative-testing's static-first claim and marketing-performance-pattern-analysis Step 1's instruction to cap research and put an asset in front of buyers.
+**Rejected because:** Mechanism-free restatement of existing lifecycle and list-health coverage.
 
-**Fit reasoning:** Durable and true for a solo operator, but the same mechanism is already recorded twice.
+**Fit reasoning:** Durable principle, but as stated it has no mechanism beyond 'send value regularly', and sending-program coverage already exists across marketing-lifecycle-email-flows and marketing-email-list-health. The one concrete artifact, the nine-word email, is adopted separately.
 
-### Follow the seven-step lead magnet build: pick the problem and who for, decide how to solve it, decide how to deliver it, test what to name it, make it easy to consume, make it darn good, and make it easy for them to say they want more. — 3/10
+### Match your content's format to the best-performing format on the platform for your market, because people consume what looks like things they have liked before. — 3/10
 
-**Rejected because:** The useful steps are adopted separately, step 4 is already recorded as the offer-name testing claim, and the bare checklist would add an untestable shell.
+**Rejected because:** Duplicate of the existing format-camouflage claim.
 
-**Fit reasoning:** Steps 1-3 are adopted individually elsewhere; steps 4-7 carry no mechanism in this excerpt.
+**Fit reasoning:** Durable principle, but already recorded: marketing-copy-hooks-and-formats holds the camouflage claim about adopting the tone, feel, style and format of the channels people already trust.
 
-### There are only four ways to let anyone know about what you sell — warm outreach, posting content, cold outreach and paid ads — derived from crossing warm/cold audiences with one-to-one/one-to-many communication. — 3/10
+### Make the direct ask with a fill-in-the-blank offer script naming a specific avatar, dream outcome, time delay, removed effort, and a double guarantee, closing with 'DM me / comment below / reply'. — 3/10
 
-**Rejected because:** marketing-acquisition-channel-selection already records the four-channel enumeration verbatim.
+**Rejected because:** Duplicate of existing value-equation and guarantee claims, wrapped in a high-ticket service script.
 
-**Fit reasoning:** Duplicate of a recorded claim with its scaffolding shown.
+**Fit reasoning:** Duplicate. The four-term value equation is already recorded in marketing-conversion-friction-audit, and risk-reversal/guarantee construction in marketing-offer-construction. The 'I'm looking for 5 clients, book a call' wrapper is a high-ticket service script with no added mechanism for a $25 deodorant.
 
-### Make the free lead magnet as good as your paid product — give away the secrets and sell the implementation — because 99% will never buy but will build or destroy your reputation on the free thing. — 3/10
+### Once warm outreach and content are running, add cold outreach — one-to-one contact with strangers via cold calls, cold emails, cold DMs and voicemails at high volume — as the third advertising step. — 3/10
 
-**Rejected because:** Duplicate of the recorded offer-construction claim 'Give away something other people charge for — the more real the lead magnet's cost, the better it converts.'
+**Rejected because:** Duplicate of the existing channel enumeration and sequencing rule; no added mechanism.
 
-**Fit reasoning:** Duplicate; residue is exhortation without a distinct mechanism.
+**Fit reasoning:** Duplicate at the level this excerpt states it: marketing-acquisition-channel-selection already records the four-channel enumeration including cold outreach and the rule to run only the cheapest one or two until scale. Nothing here adds mechanism a $50 AOV consumer skincare brand could act on.
 
-### A lead magnet that costs real money to deliver still lowers customer acquisition cost, because the free offer generates far more engaged leads per ad dollar than advertising the core offer directly. — 3/10
+### Set proper expectations for slow channels and long time horizons — expect a new lead source to take three to six months (cold outreach took a year, not twelve weeks), expect to lose money during testing, and do not judge a launch on early results. — 3/10
 
-**Rejected because:** marketing-paid-campaign-structure already holds the allowable-cost-per-lead arithmetic and marketing-offer-construction already holds 'the more real the lead magnet's cost, the better it converts.'
+**Rejected because:** Duplicate of the existing written-evaluation-horizon step, with no added mechanism.
 
-**Fit reasoning:** Duplicate on both halves, and the specific numbers have no honest translation to a $50.46 AOV catalog.
+**Fit reasoning:** Duplicate. marketing-performance-pattern-analysis Step 9 already records fixing the evaluation horizon and continue-or-stop condition in writing before starting slow-feedback work, which is strictly more actionable than these anecdotes.
 
-### Every CTA needs two parts — a clear, direct instruction of what to do ('call now', not 'don't delay') and a reason to do it right now — and it should be repeated often. — 3/10
+### Allocate ten to twenty percent of your outreach effort to brand-new untested technology — e.g. if you dial five days a week, run a new dialer one of those days and compare it to your standard. — 3/10
 
-**Rejected because:** marketing-copy-hooks-and-formats holds the unhedged-imperative claim and marketing-scarcity-urgency-framing holds 'give every promotion an explicit, believable reason why and a real end date.'
+**Rejected because:** Allocation principle already held; the dialer instantiation has no solo-operator equivalent.
 
-**Fit reasoning:** Both halves already recorded.
+**Fit reasoning:** The allocation principle is already recorded, and the specific instantiation (rotating dialers) has no meaningful equivalent for a solo operator sending a few dozen hand-written emails a week.
 
-### Manufacture an occasion when none exists — any reason after 'because' lifts response even when the reason is arbitrary ('Margherita Monday', 'because it's my birthday'). — 3/10
+### Prefer cold outreach as a channel because it has no ad fatigue or banner blindness, keeps your methods invisible to competitors, is reliable, is barely affected by platform rule and algorithm changes, is easier to keep compliant, and makes the business sellable without a spokesperson. — 3/10
 
-**Rejected because:** marketing-scarcity-urgency-framing already holds 're-wrap the same core promotion with a new seasonal name and fresh dates', which is the manufacture-an-occasion mechanic.
+**Rejected because:** Advocacy for a channel with no executable action attached; the usable translation is captured elsewhere.
 
-**Fit reasoning:** Near-variant of a recorded claim, and the difference (tolerance for nonsense reasons) weakens rather than adds.
+**Fit reasoning:** Channel-selection advocacy, not a mechanism to execute — there is no instruction and no way to know whether it was done. It is also the wrong channel for this business: cold contact with consumers for a $50.46 AOV deodorant is not a legitimate surface, and the honest wholesale-pitch translation is a different tactic captured elsewhere.
 
-### Reach out one-to-one to everyone you already know, offering the service free in exchange for a testimonial and a donation to charity, then start charging once results are in. — 3/10
+### Concentrate the majority of your advertising effort on the headline and the first five seconds, and test that first impression more than anything else. — 3/10
 
-**Rejected because:** The free-for-feedback trade is in marketing-pre-launch-product-validation, testimonial solicitation is in marketing-conversion-friction-audit, and warm outreach as a channel is in marketing-acquisition-channel-selection.
+**Rejected because:** Duplicate of the existing hook-effort and hook-variation claims.
 
-**Fit reasoning:** Every component is already held across three skills.
+**Fit reasoning:** Already recorded in substance: marketing-copy-hooks-and-formats holds 'Put roughly 90% of your copy effort into the concept and the hook', and marketing-paid-creative-testing holds 'Test 3-6 hook variations per creative test'.
 
-### Build any offer from scratch against the value equation: maximize dream outcome and perceived likelihood of achievement, minimize time delay and effort/sacrifice. — 3/10
+### Show the nightmare as well as the dream outcome — the hassles and pain the prospect will keep experiencing if they don't buy — and lower perceived risk by explaining away past failures, showing people like them succeeding, and adding authority and guarantees. — 3/10
 
-**Rejected because:** Recorded verbatim as a claim in marketing-conversion-friction-audit; re-adding would degrade skill triggering.
+**Rejected because:** Every component is already recorded across existing copy and offer skills.
 
-**Fit reasoning:** Sound and durable but recorded verbatim already.
+**Fit reasoning:** Comprehensively already held: negative framing in marketing-conversion-copy-angles, absolving past failure and raising authority in marketing-copy-credibility-and-proof, guarantees in marketing-offer-construction.
 
-### Once people start referring you, start charging — swap 'free' for '80% off for the next five', then 60%, then 40%, raising the price 20% every five customers, which also creates honest urgency because the price genuinely goes up. — 3/10
+### Stop skipping or muting ads — consume them deliberately, looking for how each one does its call-out, presents value, and asks for the next step, and turn that into continuous training. — 3/10
 
-**Rejected because:** marketing-offer-construction records the committed-increment price stepping and marketing-scarcity-urgency-framing records making the price or promotion the thing that expires.
+**Rejected because:** Duplicate of the existing competitor ad-library teardown skill.
 
-**Fit reasoning:** Durable pricing logic but held twice over already.
+**Fit reasoning:** marketing-competitor-messaging-teardown already exists precisely for this and holds the ad-library gap analysis claim, explicitly covering borrowing premises from outside the category. A general 'watch ads more attentively' claim adds no mechanism.
 
-### Format your content to match the popular format of the platform it sits on, using the best-performing content on that platform in your market as the template. — 3/10
+### Every ad reduces to three core elements — a callout so it gets noticed, value elements so there is a reason to act, and a call to action so there is a way to act — so audit any ad against those three. — 3/10
 
-**Rejected because:** marketing-copy-hooks-and-formats already holds the camouflage-as-the-medium claim and marketing-competitor-messaging-teardown already holds the instruction to study the best-performing assets in the category first.
+**Rejected because:** Composite restatement of claims already held across hooks, value-equation and CTA skills.
 
-**Fit reasoning:** Same instruction as two recorded claims, reworded.
+**Fit reasoning:** A summary composite of things already held: callouts and openings in marketing-copy-hooks-and-formats, the value elements in the value-equation and angle claims, the CTA in the unhedged-imperative claim. A third framing of the same material would blur skill descriptions.
 
-### Reward the audience by completely satisfying the promise the hook made, and judge length by value per second — there is no such thing as too long, only too boring. — 3/10
+### Your best free content makes your best paid ads — if an organic piece generates sales or performs well, nine times out of ten it will perform as an ad. — 3/10
 
-**Rejected because:** marketing-copy-hooks-and-formats already holds 'make sure the destination actually satisfies the loop' and marketing-conversion-friction-audit already holds the information-fatigue/length claim.
+**Rejected because:** Duplicate of the existing organic-winners-to-paid claim.
 
-**Fit reasoning:** Duplicate on both halves.
+**Fit reasoning:** Verbatim already held: marketing-paid-creative-testing carries 'Take your best-performing organic short-form videos and run them as paid ads, because creative that worked with no spend usually works with spend.'
 
-### Post your raw ideas publicly as they occur, and when a post performs better than normal, make more content on that topic. — 3/10
+### Build a system that encourages customers to publicly post testimonials and reviews using your product, then promote the ones that perform well organically as paid ads. — 3/10
 
-**Rejected because:** Duplicate of marketing-awareness-level-messaging's cheap-reversible-surface claim and marketing-paid-creative-testing's organic-winner-to-paid claim.
+**Rejected because:** Intersection of existing customer-creator and organic-winners-to-paid claims.
 
-**Fit reasoning:** The test-cheap-then-invest mechanic is already recorded twice; the idea-capture habit is folded into the five-topic-bucket tactic.
+**Fit reasoning:** The intersection of two claims already recorded: marketing-creator-content-sourcing's 'use your own customers as creators' and marketing-paid-creative-testing's organic-winners-to-paid claim. The only new element, a standing prompt system, overlaps the post-purchase insert and review-request claims.
 
-### After building a warm audience, move to cold outreach — contact strangers one-to-one via cold calls, cold emails, cold DMs and voicemails — and expect it to take about a year rather than twelve weeks to become profitable. — 3/10
+### Do not conclude you have saturated your market (the Size of the Pie Fallacy) — a business running one channel on one platform in one way is seeing a tiny slice of a category worth billions. — 3/10
 
-**Rejected because:** marketing-acquisition-channel-selection already enumerates cold outreach as one of the four channels and instructs running only the cheapest one or two until scale; the excerpt stops before any mechanism.
+**Rejected because:** Belief correction with no mechanism; actionable residue already held.
 
-**Fit reasoning:** Duplicative narrative setup whose surrounding evidence is a 30-rep B2B sales team with no honest translation to one person selling a $50 AOV basket.
+**Fit reasoning:** A belief correction rather than a mechanism, and its only actionable residue is already held as Step 1 of performance-pattern-analysis and the more/better/new ordering adopted separately. Also mistargeted: this business is nowhere near a saturation ceiling.
 
-### There is no such thing as content that is too long, only content that is too boring — people do not have shorter attention spans, they have higher standards. — 3/10
+### Track your overall throughput — the conversion rate from click all the way to close — per platform, rather than only knowing spend. — 3/10
 
-**Rejected because:** marketing-conversion-friction-audit already holds 'decide length by the three jobs copy has to finish, not by a word target'; re-recording it as a slogan would degrade triggering.
+**Rejected because:** Duplicate of the existing paid measurement column and metric set.
 
-**Fit reasoning:** Durable but already recorded with a sharper decision rule attached.
+**Fit reasoning:** Already held: marketing-paid-media-measurement carries the fixed minimal Ads Manager column set and the primary-metric set (spend, purchases, cost per purchase, ROAS), which is click-to-close throughput for an ecommerce advertiser.
 
-### Define hyper-specific qualification criteria for who goes on the list — cold outreach is the only channel where you pick your targets instead of them picking you. — 3/10
+### Build goodwill (the gap between value delivered and price charged) by adding value rather than by lowering price, because price cuts are at best a temporary way to create it. — 3/10
 
-**Rejected because:** marketing-acquisition-channel-selection already holds the instruction to derive the partner profile from your binding constraint and prospect against that profile.
+**Rejected because:** Duplicate of the existing offer-versus-discount claim.
 
-**Fit reasoning:** Sound but already recorded with a stronger derivation rule.
+**Fit reasoning:** Already recorded: marketing-offer-construction holds 'Stop equating offer with discount — a discount only moves the effort/sacrifice term, and competitors who never discount often out-earn you because their total perceived value is higher.'
 
-### Sequence the channels: do warm reach outs first, then post content to grow your warm audience, and only move to cold outreach once you have reps. — 3/10
+### Make wins happen faster by breaking delivery into more frequent smaller increments, sending progress updates even when there is nothing to report, and forcing as many kept promises as possible into the first 48 hours after purchase. — 3/10
 
-**Rejected because:** marketing-acquisition-channel-selection already records the four channels, the run-one-or-two rule until seven figures, and the content-plus-warm-outreach ordering.
+**Rejected because:** Duplicate of existing first-48-hours and early-win onboarding claims.
 
-**Fit reasoning:** Same sequencing instruction already recorded.
+**Fit reasoning:** Already recorded twice in marketing-post-purchase-onboarding: 'In the first 24–48 hours after checkout, make as many small specific promises as you can and keep every one' and 'Engineer a visible win as close to the purchase as possible.' Only the timeline-padding sub-point is new and it is captured separately.
 
-### Cold outreach is the channel to lean on because it is invisible to competitors, reliable, insulated from platform changes, easier on compliance, does not depend on a spokesperson, and is hard to copy. — 3/10
+### Run the thought experiment: imagine you lost every customer but one and every new customer must come from that person — then design their experience accordingly. — 3/10
 
-**Rejected because:** The existing acquisition skill already holds the claim that a solo operator picks one or two of the four awareness channels; nothing here changes what would be done this week.
+**Rejected because:** A reframe with no prescribed surface or test; substance already covered by onboarding.
 
-**Fit reasoning:** Channel-choice rationale, not a mechanism to execute.
+**Fit reasoning:** The output is a reframe, not a mechanism: it prescribes no specific surface, artifact or test, and the concrete substance is already covered by marketing-post-purchase-onboarding.
 
-### Advertise profitably in a small puddle of an audience first, then expand to a pond, lake and ocean, accepting that the spend-to-return ratio falls as total profit rises. — 3/10
+### Advertising is the skill that lets you survive a bad product, bad sales and repeated mistakes — build it before anything else, because more leads make it hard to be poor. — 2/10
 
-**Rejected because:** Duplicate of existing audience-expansion claims; adopting again would degrade skill triggering.
+**Rejected because:** Motivational framing with no executable mechanism.
 
-**Fit reasoning:** Sound but already recorded twice in the fleet.
+**Fit reasoning:** Motivational framing with no stated mechanism — it names no surface, no test and no next action a solo operator could execute against a $30/day budget.
 
-### Build every ad from three chunks in order: Call Out (get the right people to notice), Value (get them interested), Call to Action (tell them what to do next). — 3/10
+### Cut the middleman and sell direct to the consumer — run ads to a sales page that books appointments instead of routing revenue through a partner. — 2/10
 
-**Rejected because:** Composite of three claims already held individually across the hooks, copy-angle and CTA skills.
+**Rejected because:** No honest translation — the business is already DTC and the appointment funnel is a service mechanic.
 
-**Fit reasoning:** Each component is already recorded in a separate skill; the composite skeleton adds a third overlapping trigger surface with no new mechanism.
+**Fit reasoning:** No honest translation at any size. Real Skin Care is already direct-to-consumer on Shopify; the only 'middleman' is Amazon, which contributes $1,800 of $2,700 monthly revenue and is not something to cut. The appointment-booking sales-page form is a service business mechanic.
 
-### Grab attention with visual contrast — bright colours over dull, movement over stillness, attractive people over plain ones — and match the spokesperson's likeness to the customer you want. — 3/10
+### You can only grow a business two ways — get more customers or make them worth more — and when you double your leads you double your business. — 2/10
 
-**Rejected because:** Re-adding would blur triggering between the existing imagery and creator-sourcing skills.
+**Rejected because:** Framing with no executable step; half duplicates existing claims and the other half is false for this business.
 
-**Fit reasoning:** Both halves already recorded, and the likeness half needs on-camera talent the solo operator does not have.
+**Fit reasoning:** Framing with no executable step, and the 'make them worth more' half duplicates the existing offer-construction claim about the eight levers. The 'double leads doubles business' line is also false as stated for this business, where repeat customers are 45-52% of revenue and retention is the binding constraint.
 
-### Use a spokesperson who is not the founder — it makes the business less dependent on you and more sellable, and it is cheap to get a good-looking person to say things to a camera. — 3/10
+### There are only four ways to let anyone know about what you sell — warm outreach (1-to-1 warm), posting content (1-to-many warm), cold outreach (1-to-1 cold), and paid ads (1-to-many cold). — 2/10
 
-**Rejected because:** Sourcing and judging on-camera talent is already covered by the creator-content skill, and exit valuation is not a marketing mechanism.
+**Rejected because:** Verbatim duplicate of the existing core-four enumeration.
 
-**Fit reasoning:** The executable half is already recorded in detail; the remainder is an exit-valuation argument.
+**Fit reasoning:** Verbatim duplicate of the first claim in marketing-acquisition-channel-selection. Re-adopting it would degrade skill triggering.
 
-### Put the majority of your effort into the first five seconds and the headline, and test that first impression more than anything else in the ad. — 3/10
+### Your audience growing is the verdict on whether your content is good — if it is not growing, your stuff is not good enough. — 2/10
 
-**Rejected because:** Duplicate of an existing hooks claim; re-adding degrades triggering rather than adding an action.
+**Rejected because:** No mechanism or threshold, and it installs a vanity scoreboard against a revenue directive.
 
-**Fit reasoning:** Already recorded verbatim in substance.
+**Fit reasoning:** A pep talk with no mechanism: no threshold, no measurement window, no action when the number is flat. It also installs a follower-count scoreboard against a prime directive that is explicitly revenue, and at a sub-1,000 list and ~54 orders/month the week-to-week delta would be unreadable.
 
-### Stop skipping and muting ads — deliberately consume the ads you are served and note how each one does its callout, value and CTA. — 3/10
+### Best strategy is 'give until they ask' — never make the ask publicly, keep giving until people DM, email or come to your site asking to buy, then sell in private. — 2/10
 
-**Rejected because:** The actionable output — study other people's ads and mine their structures — is already the core of marketing-competitor-messaging-teardown.
+**Rejected because:** Depends on a high-ticket private close that does not exist for a $50 consumable; suppressing public asks would cut revenue.
 
-**Fit reasoning:** A passive-consumption variant of an existing behaviour.
+**Fit reasoning:** The mechanism depends on a private inbound sales conversation converting a high-ticket relationship. A $50.46 AOV consumable catalog has no private close, and there is no margin or operator time to run DM conversations at ~54 orders/month. Deliberately never asking in public would suppress revenue against the prime directive.
 
-### Make the ad's value section show the dream outcome and its inverse nightmare, and raise perceived likelihood of achievement by explaining away past failures, showing the success of people like them, and giving authority-backed assurances and guarantees. — 3/10
+### Scale cold outreach by adding bodies: pay reps $15/hour plus $50 per shown appointment, have each call 200 leads a day for about two shows, and close 33% of shows — yielding roughly $360 cost per client against $3,600 profit per sale. — 2/10
 
-**Rejected because:** Would put a fourth overlapping description in front of the selector with no new mechanism.
+**Rejected because:** Unit economics are impossible at a $50 AOV regardless of scale; not a timing problem.
 
-**Fit reasoning:** Every component already recorded across the offer, credibility and copy-angle skills.
+**Fit reasoning:** An arithmetic impossibility at any size for this catalog: the model requires ~$3,600 gross profit per sale to absorb $120 per shown appointment, while a natural deodorant order is $50.46 with maybe $20-25 of gross profit. No volume of growth changes the per-order economics of a human dialing consumers one at a time.
 
-### Craft the ad so it repels everyone who is not the right buyer, then tell whoever is left standing to take the next step. — 3/10
+### Efficiency matters more than creativity — all advertising works, so stop tweaking and get the ad 'good enough to scale'. — 2/10
 
-**Rejected because:** A reworded version would compete with the existing disqualification claim for triggering.
+**Rejected because:** No mechanism or threshold; conflicts with existing creative-testing discipline.
 
-**Fit reasoning:** Relevant to the live Meta campaign but already recorded as an explicit disqualification move.
+**Fit reasoning:** Motivational framing with no stated mechanism and no test — no definition of 'good enough', no threshold, and nothing a solo operator could do differently tomorrow. It also cuts against the existing creative-testing discipline without offering a replacement rule.
 
-### Spell the call to action out explicitly — click this button, call this number, reply YES, scan this QR code. — 3/10
+### Search 'how to place a [platform] ad', then actually place one for $100 and spend the money rather than abandoning at the last step. — 2/10
 
-**Rejected because:** Duplicate of the recorded unhedged-imperative CTA claim in marketing-copy-hooks-and-formats.
+**Rejected because:** Already done — the ad account is live and spending, so the tactic has no remaining action.
 
-**Fit reasoning:** Restates an existing recorded claim.
+**Fit reasoning:** Nothing left to adopt: the Meta ad account is being stood up and $30/day is committed, so the first-ad barrier this exists to break has already been crossed.
 
-### Answer the questions the prospect is silently asking at exactly the moment they think them, using the words they would use. — 3/10
+### Do paid ads last of the four channels, because the skills from warm outreach, content and cold outreach transfer to it and because those methods generate the money paid ads require. — 2/10
 
-**Rejected because:** Duplicate of an existing objection-timing claim.
+**Rejected because:** Duplicate sequencing rule that contradicts the live paid campaign.
 
-**Fit reasoning:** Already recorded verbatim in substance.
+**Fit reasoning:** Duplicate of the existing cheapest-one-or-two-channels rule, and directly contradicted by current operating reality — the traffic gate is open and a Meta campaign is live at $30/day, so 'defer paid' must not be re-encoded.
 
-### Measure ad returns over a long time horizon rather than next week, because building a profitable advertising machine can take months of loss. — 3/10
+### Every combination of the core four channels boosts the others — a business posting content and running paid ads gets more from both than a business doing either alone. — 2/10
 
-**Rejected because:** Duplicate of the recorded evaluation-horizon claim in marketing-performance-pattern-analysis.
+**Rejected because:** Asserts compounding with no causal mechanism and conflicts with the one-or-two-channel rule.
 
-**Fit reasoning:** Already recorded as a written-in-advance evaluation-horizon step.
+**Fit reasoning:** No stated mechanism — no retargeting, proof-transfer or auction-cost path — so there is nothing to execute or test. It also cuts against the instruction for a solo operator to run only one or two channels.
 
-### Place one $100 ad on any platform after searching 'how to place a [platform] ad', and don't chicken out before spending the money. — 3/10
+### Use higher-leverage activities — ones that produce more output per unit of your time, like the internet versus handwritten postcards — and climb the ladder toward a lead getter who recruits other lead getters. — 2/10
 
-**Rejected because:** No testable mechanism, and marketing-paid-campaign-structure already covers how the first campaign is actually configured.
+**Rejected because:** Framing with no executable mechanism; the usable part is captured elsewhere.
 
-**Fit reasoning:** An initiation exercise with no way to judge whether it worked beyond 'you're in the game now', and the barrier has already been broken — the Meta account is live at $30/day.
+**Fit reasoning:** No stated mechanism a solo operator could execute — 'use higher leverage activities' names no surface, artifact or test. The one operable piece (the four lead-getter categories) is captured as its own tactic.
 
-### Stop assuming you have saturated your market (the Size of the Pie Fallacy) — the slice you advertise to is a tiny fraction of the addressable market. — 3/10
+### Hire so the business runs without you, because a business that only makes money with you in it is a job, not an asset. — 2/10
 
-**Rejected because:** Carries no separate mechanism — the actionable content is exactly the adopted more/better/new tactic.
+**Rejected because:** Valuation/exit framing, not a marketing tactic.
 
-**Fit reasoning:** Motivational framing wrapped around the More-Better-New tactic, and saturation is not a live question at ~$2,700/mo and $30/day.
+**Fit reasoning:** Business-exit and valuation framing, not a marketing tactic — there is no marketing surface, artifact or test attached at any catalog size. Not a 'not yet' that a team gate would unblock; it is a different subject.
 
-### For ground-level advertising roles, hire and train anyone willing rather than being selective — who you pick matters less than how you train them. — 3/10
+### When a hiring pipeline is the bottleneck, fix the screening step — switch from one-on-one to group interviews and screen only for work ethic and basic social skills, teaching the rest. — 2/10
 
-**Rejected because:** Duplicates the premise of the adopted 3Ds training tactic and would give the delegation skill a second, vaguer version of the same idea.
+**Rejected because:** Sales-team hiring operations; the transferable diagnostic is already held.
 
-**Fit reasoning:** Not a mechanism of its own — the corollary of the document-demonstrate-duplicate tactic, restated as a hiring slogan with no screening or sourcing procedure.
+**Fit reasoning:** The transferable part — work backwards to find which step is capping output — is already Step 1 of marketing-performance-pattern-analysis. What remains is sales-team hiring operations with no ecommerce marketing translation for a solo operator.
 
-### Sell affiliates rather than customers, because ten affiliates a month compound into recurring monthly revenue while ten customers a month plateaus. — 3/10
+### Recruit an army of affiliate businesses to sell your product for you. — 2/10
 
-**Rejected because:** A motivational frame with no distinct mechanism; adopting it would dilute the affiliate skill's triggering.
+**Rejected because:** No mechanism stated in this excerpt; substantive affiliate content captured elsewhere.
 
-**Fit reasoning:** Rationale for the channel, not a tactic — no action beyond what the six concrete affiliate steps already cover.
+**Fit reasoning:** No stated mechanism to evaluate, and the reciprocal-partnership version is already held by marketing-acquisition-channel-selection. The substantive affiliate tactics are captured from later excerpts.
 
-### Expect three to six months to crack a new lead source, and do not switch methods after a few early losses — pick a strategy and stick with it. — 3/10
+### Charge affiliates for a certification/onboarding program priced at 10-20% of what the average active affiliate earns in their first twelve months. — 2/10
 
-**Rejected because:** Duplicate of the recorded evaluation-horizon and channel-commitment claims; adding it again would degrade skill triggering.
+**Rejected because:** No honest translation at this AOV; the usable 'force an investment' version is captured separately.
 
-**Fit reasoning:** Durable and relevant, but already recorded.
+**Fit reasoning:** No honest translation at any size for this catalog. A partner selling natural deodorant at $50.46 AOV might make a few hundred dollars a year, so 10-20% is a $30-$80 fee — too small to fund onboarding, and charging a local salon owner to be allowed to sell your soap kills signups. The genuine 'force an investment' version is the starter-kit purchase, captured separately.
 
-### Test until you find something that works, take massive action, double down on it until it breaks, then test until you find the next thing. — 3/10
+### Triple the advertising budget once your mindset changes — you will either make more money or learn something. — 2/10
 
-**Rejected because:** Already covered by the recorded scale-the-winner and constraint-queue claims.
+**Rejected because:** Contradicts the recorded 5% scaling rule and offers no mechanism.
 
-**Fit reasoning:** Duplicates two recorded claims and adds no new mechanism.
+**Fit reasoning:** A mindset story, not a mechanism, and it directly contradicts a recorded operating rule: marketing-paid-campaign-structure holds 'scale by raising the campaign budget 5% or less whenever the last seven days beat your target cost per result'. Tripling $30/day on a ~$2,700/mo business with no target-beating evidence would restart the learning phase and burn a third of monthly revenue.
 
-### Close a long content asset with a menu of free giveaways — a bonus chapter gated behind an email address, free video training, free short-form content, a careers page — routed by whichever problem the reader has. — 3/10
+### Offer a free asset (a bonus chapter, free training, free downloads) in exchange for an email address at the end of every piece of content. — 2/10
 
-**Rejected because:** marketing-offer-construction already holds the three lead-magnet types and the give-away-what-others-charge-for claim, and marketing-email-design-production already settles the CTA-count question the other way ('one ask per objective, at most two destinations').
+**Rejected because:** Duplicate of existing lead-magnet and exchange-for-contact claims.
 
-**Fit reasoning:** The lead-magnet mechanic is already recorded, and the multi-destination menu contradicts a recorded claim rather than extending one.
+**Fit reasoning:** marketing-offer-construction already holds three lead-magnet claims covering exactly this — the three lead-magnet types, 'give away something other people charge for', and 'never let the ask be a bare request'. Recording it again would dilute triggering.
 
-### Write your marketing material the way you would want to read it: short in length, simple in words, with lots of pictures. — 2/10
+### Ask the people you have served to leave a review and share the product with peers. — 2/10
 
-**Rejected because:** Covered from two directions already: marketing-conversion-friction-audit's information-fatigue claim and marketing-copy-hooks-and-formats' understatement/short-sentence guidance.
+**Rejected because:** Duplicate of existing review-collection and review-request claims.
 
-**Fit reasoning:** Durable but a vaguer restatement of two existing claims.
+**Fit reasoning:** Already held twice: marketing-conversion-friction-audit has 'actively collect reviews and testimonials', and marketing-review-mining has the claim about wording the request so it returns a usable sentence.
 
-### Vet a partner's history before fronting capital or personally guaranteeing anything — a known past fraud indictment is not 'a big misunderstanding'. — 2/10
+### If you are not getting as many leads as you want, you are not doing the core four with enough skill or enough volume. — 1/10
 
-**Rejected because:** Not a marketing tactic; the partner-selection half that is marketing is already covered by the acquisition skill's partner-profile claim, and a solo operator running a soap giveaway cross-promo is not fronting capital.
+**Rejected because:** Tautology with no testable mechanism.
 
-**Fit reasoning:** Counterparty due diligence, not a marketing mechanism — nothing here generates or converts demand.
+**Fit reasoning:** Motivational framing with no stated mechanism and nothing testable. It also cuts against the measured reality here, where retention rather than lead volume is the binding constraint.
 
-### You can only grow a business two ways — get more customers or make each customer worth more — so pick which one you are working on before doing anything else. — 2/10
+### Spend at least four hours a day on getting new customers, first thing every morning, and don't stop until you hit your goal — embrace the work and rack up nos fast. — 1/10
 
-**Rejected because:** Covered by marketing-offer-construction's eight-levers claim and marketing-performance-pattern-analysis Step 1, which already forces naming the binding constraint before acting.
+**Rejected because:** Motivational framing; names hours, not a marketing move.
 
-**Fit reasoning:** Durable but already covered, and as stated it is framing with no mechanism for choosing between the two.
+**Fit reasoning:** Motivational framing with no testable mechanism — it names a number of hours, not a marketing move.
 
-### Define the output of advertising as engaged leads — people who show interest and whom you can contact — rather than as raw contacts, impressions or reach. — 2/10
+### Buy someone else's experience — pay an expert with the audience you want for direct access rather than figuring it out yourself (he paid $120,000 for four calls). — 1/10
 
-**Rejected because:** marketing-paid-campaign-structure already says to run only lead or sales objectives, and marketing-paid-media-measurement already splits primary optimizable metrics from secondary ones. Nothing here changes Monday's work.
+**Rejected because:** No marketing mechanism; the useful hourly-expertise version is captured separately.
 
-**Fit reasoning:** Definitional framing with no testable mechanism; where it becomes operational it is already covered.
+**Fit reasoning:** Not a marketing tactic: it names no mechanism that produces a lead, an order or a repeat purchase, and the actual advice extracted from the $120k ('post more') is captured separately. The genuinely useful hourly-consult version is adopted elsewhere.
 
-### Deliver a lead magnet as software — a spreadsheet, calculator or dashboard that computes the prospect's numbers, compares them to industry averages and ranks them. — 2/10
+### Make your first post now, include an ask if you have already been providing value, and do not fear what people think. — 1/10
 
-**Rejected because:** Reduces to the already-recorded 'reveal a problem' lead magnet type, and building the B2B version would consume the solo operator's only capacity while retention is the binding constraint.
+**Rejected because:** Motivational framing with no testable mechanism.
 
-**Fit reasoning:** The honest translation to a 12-SKU personal-care catalog is a quiz or diagnostic, already covered as the 'reveal a problem' magnet type; benchmark tooling is a B2B artifact with no analogue for a $50 deodorant buyer.
+**Fit reasoning:** Motivational framing with no testable mechanism — it prescribes no action a solo operator can evaluate.
 
-### Pay for access to someone who has already built what you want — buying somebody else's experience saves the time it takes to figure it out yourself. — 2/10
+### Never say 'I'm not techy' or 'I hate tech stuff' — declaring yourself bad at something makes you bad at it and keeps you poorer than you should be. — 1/10
 
-**Rejected because:** No criteria or mechanism, and it overlaps the recorded marketing-paid-media-measurement claim about buying an agency for the strategy layer at ~$50k/mo revenue, which already has an actual trigger. The concrete version (pay a practitioner hourly to teach you) is adopted separately.
+**Rejected because:** Motivational framing with no executable mechanism.
 
-**Fit reasoning:** No usable mechanism at any size — reduces to 'buy expertise' with no criteria for whom, at what price, or what to ask.
+**Fit reasoning:** Motivational framing with no mechanism that can be executed or tested against a product page, listing, flow or campaign.
 
-### Judge your content by whether your audience is growing — if it is not growing, your content is not good enough, so provide more value than anyone else and practice. — 2/10
+### It is the founder's job to advertise and sell the vision of the company publicly and privately; advertising takes guts rather than brains, and guts is a learnable skill. — 1/10
 
-**Rejected because:** No stated change to make, and it proposes audience growth as the verdict metric where the stated prime directive is revenue.
+**Rejected because:** Motivational framing with no attached surface or test.
 
-**Fit reasoning:** The actionable half is motivational with no mechanism, and the measurable half conflicts with the revenue prime directive; at ~54 orders/month follower growth is too noisy to steer on.
+**Fit reasoning:** Pure motivational framing with no surface, artifact or test attached; nothing changes on a product page, listing, email or ad.
 
-### Your very first post can contain an ask if you have already been providing value to people; if it does not produce an engaged lead, give for a while and earn the right to ask. — 2/10
+### Wake at 4-5am, start work immediately with no rituals, and take no meetings before noon. — 1/10
 
-**Rejected because:** Restates the adopted give-to-ask ratio tactic for a special case that does not apply, with no separate mechanism.
+**Rejected because:** Personal routine advice with no marketing mechanism.
 
-**Fit reasoning:** The give:ask ratio claim restated for the day-one special case; the remainder is motivational framing, and the business is years past its first post.
+**Fit reasoning:** Personal productivity advice with no marketing mechanism — it does not change what is said to a buyer, what is offered, what is measured, or where traffic comes from.
 
-### Staff cold outreach with paid reps on $15/hour plus $50 per shown appointment, calculate cost per show and cost per client from that, and scale the channel by adding bodies. — 2/10
+### Keep advertising through failure because volume itself compounds your hit rate — the many-sided die: the more you roll, the more greens you get, and you cannot lose if you do not quit. — 1/10
 
-**Rejected because:** Structural mismatch at any scale, not a stage gate; the transferable part (compute fully-loaded cost per engaged lead) is already captured in the adopted outreach-benchmarks tactic.
+**Rejected because:** Motivational fable with no executable mechanism.
 
-**Fit reasoning:** B2B high-ticket economics with $3,600 profit per sale carrying a commissioned appointment-setting team; at $50.46 AOV no version of this catalog at any size supports a paid cold-call rep.
-
-### Expect two to three conversations before closing a higher-ticket sale from cold outreach. — 2/10
-
-**Rejected because:** The only transferable idea (do not quit after one attempt) is already adopted as the multi-channel follow-up tactic in the same new skill.
-
-**Fit reasoning:** No sales-call motion and no high-ticket SKU exists here; the surviving idea is already adopted.
-
-### Prefer cold outreach because it has no ad fatigue or banner blindness, keeps your acquisition method invisible to competitors, and is insulated from platform rule and algorithm changes. — 2/10
-
-**Rejected because:** Nothing to write down that a future task could execute against; it changes no decision on a product page, listing, email flow or the live $30/day Meta campaign.
-
-**Fit reasoning:** Channel advocacy, not a tactic — no stated action, artifact or test.
-
-### For local businesses, use a 'LOCAL AREA + TYPE OF PERSON' callout — the more local the better — because people automatically identify with their own area. — 2/10
-
-**Rejected because:** Structural mismatch, and the transferable half (a label people identify with) is already adopted as part of the four callout patterns.
-
-**Fit reasoning:** Nationally shipped Shopify and Amazon catalog with no physical location or service area — the geographic half has no honest translation at any size.
-
-### Strengthen CTAs further with urgency, scarcity and bonuses. — 2/10
-
-**Rejected because:** marketing-scarcity-urgency-framing already covers urgency, scarcity and bonus stacking in detail.
-
-**Fit reasoning:** An entire existing skill covers this ground.
-
-### Efficiency matters more than creativity — all advertising works, ads only differ in how well, so stop tweaking and get it 'good enough to scale'. — 2/10
-
-**Rejected because:** No stated mechanism or test.
-
-**Fit reasoning:** Motivational framing with no threshold for 'good enough' and no action to take.
-
-### Every combination of the core four advertising activities boosts the others — a business doing content plus paid ads gets more from both than a business doing either alone. — 2/10
-
-**Rejected because:** No executable or testable mechanism, and it conflicts with the recorded channel-count claim.
-
-**Fit reasoning:** A general compounding claim with no artifact, threshold or decision rule, and it cuts against the correct run-one-or-two-channels guidance.
-
-### Run the thought experiment: you have one customer left and every future customer must come from them — write out how you would treat that person, then do it. — 2/10
-
-**Rejected because:** Prescribes 'think about it, write it out' with no mechanism telling a solo operator what to alter on a page, insert, flow or offer.
-
-**Fit reasoning:** Motivational framing with no defined artifact, surface or measurable change.
-
-### Recruit employees with the same core four channels used to get customers — warm outreach becomes asking your network, cold outreach becomes recruiting, content becomes job postings, paid ads become promoted job posts. — 2/10
-
-**Rejected because:** Not a marketing tactic for the catalog, and it restates the four-channel enumeration with the audience swapped, which would degrade that skill's triggering.
-
-**Fit reasoning:** A recruiting-process tactic that produces no change to any product page, listing, flow, offer or ad at any size.
-
-### Charge affiliates for a certification/onboarding program priced at 10-20% of what an average active affiliate earns in their first twelve months. — 2/10
-
-**Rejected because:** B2B/high-ticket pricing logic with no scaled-down form; the workable version of the same intent (require a product purchase to qualify) is adopted separately.
-
-**Fit reasoning:** No honest translation at any size: an affiliate selling $50 AOV consumables would earn tens to low hundreds in year one, making the prescribed fee a few dollars — which collects nothing and trains nobody.
-
-### Build a multi-level affiliate hierarchy — super-affiliates who recruit affiliates who recruit end-customer sources — so each signing compounds lead flow month over month. — 2/10
-
-**Rejected because:** Structural mismatch, not a volume or staffing gate — no honest translation at any size for this brand.
-
-**Fit reasoning:** Depends on a B2B2B2C chain that a direct-to-consumer body care catalog does not have; the only consumer-goods analog is multi-level marketing, a different business model with its own legal and brand consequences.
-
-### Recap of the Core Four — warm outreach, content, cold outreach, paid ads — and the maximization question 'what keeps me from doing what I am doing at ten times the volume?' — 2/10
-
-**Rejected because:** marketing-acquisition-channel-selection holds the four-channel enumeration and marketing-performance-pattern-analysis Step 1 holds the constraint-naming question.
-
-**Fit reasoning:** Already recorded twice.
-
-### At the second level, post as much free content as you can consistently alongside warm outreach. — 2/10
-
-**Rejected because:** marketing-acquisition-channel-selection already records 'ideally content plus warm outreach because they are the cheapest' until seven figures.
-
-**Fit reasoning:** Already held, and nothing new is added about what to post or how much.
-
-### Ask the customer who finished the product to leave a review and share it with peers. — 2/10
-
-**Rejected because:** Covered by marketing-conversion-friction-audit's review-collection claim and marketing-review-mining's request-shaping claim; the distinctive click-path/QR version from part 6 is adopted separately.
-
-**Fit reasoning:** Held in two places already, and this excerpt adds nothing about timing, wording or placement.
-
-### Advertising is the master skill — it lets you have a terrible product, be terrible at sales, and still make money. — 1/10
-
-**Rejected because:** No stated mechanism a person can execute or test — only a claim about the value of a skill taught later. More leads on top of a leaky bucket at $2,700/mo does not compound.
-
-**Fit reasoning:** Motivational framing with no executable mechanism, and actively wrong for a business whose measured binding constraint is retention rather than traffic.
-
-### All else equal, doubling your leads doubles your business, so the binding problem is almost always that you are not advertising enough. — 1/10
-
-**Rejected because:** No mechanism, and it would push work toward the wrong end of the funnel; marketing-performance-pattern-analysis Step 1 already instructs naming the real constraint rather than assuming it is traffic.
-
-**Fit reasoning:** Motivational framing with no mechanism, and actively wrong here where retention is the binding constraint.
-
-### If you aren't getting as many leads as you want, you are not doing the core four with enough skill or enough volume. — 1/10
-
-**Rejected because:** No stated mechanism; telling a solo operator to do more of the four channels harder is not a diagnosis when the binding constraint is repeat rate.
-
-**Fit reasoning:** Motivational framing with no mechanism, no test and no next action, and it cuts against the measured retention constraint.
-
-### If someone is making more money than you, they are better at the game in some way — adopt that belief rather than attributing their success to luck, and rack up 'nos' fast because failure is a requisite for success. — 1/10
-
-**Rejected because:** No stated mechanism, no test to run, no artifact — fails the bar independent of business fit.
-
-**Fit reasoning:** Motivational framing with no mechanism, no surface to change and no measurable output.
-
-### Never say 'I'm not techy' or 'I hate tech stuff', because declaring yourself bad at something makes you bad at it. — 1/10
-
-**Rejected because:** No mechanism, no surface, no measurable output.
-
-**Fit reasoning:** Pure motivational framing with no artifact to produce and nothing to test.
-
-### Use higher-leverage advertising activities — ones where the same time spent reaches more people, like the internet versus hand-written postcards. — 1/10
-
-**Rejected because:** 'Prefer higher leverage' cannot be actioned on a product page, listing, email flow or a $30/day Meta campaign.
-
-**Fit reasoning:** Motivational framing with no surface, no test and no decision rule.
-
-### When hiring throughput is the bottleneck, switch from one-on-one screening interviews to group interviews and screen for basic work ethic and social skills instead of skill. — 1/10
-
-**Rejected because:** No honest translation at any size, and the diagnostic reasoning in the story is already recorded as Step 1 of marketing-performance-pattern-analysis.
-
-**Fit reasoning:** A staffing-operations tactic for a company with an HR director and weekly rep churn; group interviewing has no scaled-down form for a solo operator who will at most hire one contractor.
-
-### Replace the beliefs 'nobody can do it like me' and 'if you want it done right do it yourself' with 'everyone is replaceable, especially me', and trade forty hours of doing for four hours of managing. — 1/10
-
-**Rejected because:** Not a tactic in any class; no executable or testable content.
-
-**Fit reasoning:** Mindset and valuation framing with no marketing mechanism — no surface to change, no test, no artifact.
-
-### It is the founder's job to advertise and sell the vision of the company publicly and privately; success is about guts rather than brains, and guts is a learnable skill. — 1/10
-
-**Rejected because:** No artifact to build, no metric to read, no decision it changes for a solo operator running a $30/day campaign.
-
-**Fit reasoning:** Motivational framing with no mechanism and nothing testable on any surface.
-
-### Persist through failure — the many-sided die fable: keep rolling, the more you advertise the more it works, you cannot lose if you do not quit. — 1/10
-
-**Rejected because:** Encouragement wrapped around the volume claim already captured by the open-to-goal and constraint-queue tactics.
-
-**Fit reasoning:** No mechanism a solo operator can execute or test; no surface, asset, metric or decision rule.
+**Fit reasoning:** Motivational framing with no stated mechanism a solo operator can execute or test. The nearest actionable relative already exists as Step 6 of marketing-performance-pattern-analysis.
 
 ## Skills touched
 
-- `marketing-customer-referral-program` (create)
+- `marketing-referral-programs` (create)
 - `marketing-acquisition-channel-selection` (edit)
-- `marketing-pre-launch-product-validation` (edit)
-- `marketing-offer-construction` (edit)
-- `marketing-scarcity-urgency-framing` (edit)
-- `marketing-post-purchase-onboarding` (edit)
-- `marketing-warm-outreach-sequence` (create)
-- `marketing-conversion-friction-audit` (edit)
 - `marketing-email-list-health` (edit)
+- `marketing-pre-launch-product-validation` (edit)
+- `marketing-paid-media-measurement` (edit)
+- `marketing-offer-construction` (edit)
+- `marketing-paid-campaign-structure` (edit)
+- `marketing-scarcity-urgency-framing` (edit)
+- `marketing-warm-outreach` (create)
+- `marketing-conversion-friction-audit` (edit)
 - `marketing-organic-content-program` (create)
 - `marketing-copy-hooks-and-formats` (edit)
 - `marketing-upsell-offer-design` (edit)
-- `marketing-conversion-copy-angles` (edit)
-- `marketing-paid-media-measurement` (edit)
 - `marketing-performance-pattern-analysis` (edit)
+- `marketing-conversion-copy-angles` (edit)
 - `marketing-review-mining` (edit)
+- `marketing-post-purchase-onboarding` (edit)
 - `marketing-cold-outreach-prospecting` (create)
-- `marketing-paid-campaign-structure` (edit)
 - `marketing-product-image-stack` (edit)
-- `marketing-problem-solution-inventory` (edit)
 - `marketing-lead-capture-landing-pages` (create)
+- `marketing-referral-and-word-of-mouth` (create)
+- `marketing-awareness-level-messaging` (edit)
 - `marketing-retention-offers` (edit)
-- `marketing-task-delegation-training` (create)
-- `marketing-agency-and-expert-buying` (create)
+- `marketing-creator-content-sourcing` (edit)
+- `marketing-team-training-systems` (create)
+- `marketing-agency-engagement` (create)
 - `marketing-affiliate-program-design` (create)
+- `marketing-advertising-cadence-planning` (create)
 - `marketing-lifecycle-email-flows` (edit)
-- `marketing-advertising-capacity-scaling` (create)

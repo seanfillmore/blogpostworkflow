@@ -1,6 +1,6 @@
 ---
 name: marketing-creator-content-sourcing
-description: How a solo operator sources, screens, briefs, QAs and deploys on-camera creator/customer content — judging on-camera delivery in the first 2-3 seconds, recruiting repeat customers as creators for product alone, building fully prescriptive briefs from a fixed component list, rejecting finished clips for motion and stability defects before they ship, and running the Meta partnership-ad delivery mechanism that pushes such content to net-new audiences.
+description: How a solo operator sources, screens, briefs, QAs and deploys on-camera creator/customer content — judging on-camera delivery in the first 2-3 seconds, recruiting repeat customers as creators for product alone, scaling brief depth to creator experience, building fully prescriptive briefs from a fixed component list, rejecting finished clips for motion and stability defects before they ship, and running the Meta partnership-ad delivery mechanism that pushes such content to net-new audiences.
 ---
 
 # Creator Content Sourcing
@@ -110,6 +110,17 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
+## Recruit help through the same four awareness channels you use to get customers — ask your network (warm), reach out directly (cold), post the job openly (content), and pay to promote the posting (paid ads) — plus employee referrals and staffing sources.
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** Hiring is an advertising problem in disguise: candidates are just another audience who must be made aware, shown the value on offer, and then asked. Mapping the two makes an unfamiliar task run on skills you already have, and it forces you to work all four channels rather than only passively posting and waiting.
+
+**Evidence offered:** An explicit mapping table between customer-acquisition channels and hiring channels, plus the opening story in which doubling cold-outreach sales came from unblocking hiring throughput rather than from changing the outreach method. No hit-rate or time-to-hire figures.
+
+**Fit here (6/10):** Blocked only by people — there is no one but the solo operator and no revenue to pay a first helper at ~$2,700/mo. Parked at `team`, scored on the merit it will have then: the channel mapping is a genuinely useful frame for sourcing a first VA or video editor and does not duplicate the resume-search-string heuristic below — that one is a single cold-search recipe, this one says work all four channels and start with the warm ones, which for a solo DTC operator usually means asking the network before searching anything. Trigger: revenue supports a recurring part-time cost, or a named marketing task is provably capping output.
+
+*Source: Alex Hormozi — "$100M Leads" (book, (part 12 of 16))*
+
 ## Find a freelancer by first writing down the exact skill combination the job needs and the prior career path an ideal candidate would have, then searching for that specific combination of terms plus 'resume' rather than browsing job boards.
 **Stage:** team — parked until the team phase opens.
 
@@ -117,7 +128,7 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 **Evidence offered:** A worked example for a website build (CSS + video editing, ex-graphic-designer and ex-webmaster) with the literal query string and three named results, plus a Firefox extension recommendation. No hit-rate data.
 
-**Fit here (4/10):** Platform-mechanics class for the execution detail — a 2008 Google resume-search string and a Firefox extension are ~18 years old and the pool of freelancers with indexed HTML resumes has moved to LinkedIn, Upwork and portfolio sites — so the recipe must be rebuilt rather than trusted. What survives is the durable kernel: derive the exact skill combination and prior-role path from the job before searching, and search for that combination rather than for a category. Parked under `team` because it exists only to hire someone who is not the solo operator. Trigger: the first time there is budget for a paid outside asset (a product photographer, or the video editor implied by the static-first rule in marketing-paid-creative-testing). Scored on the merit it will have then: a narrow sourcing heuristic that overlaps the TikTok-browsing and Backstage entries above, though it pairs usefully with the track-the-winners rule below — the search defines who gets a first shot, the track record decides who gets the next one.
+**Fit here (4/10):** Platform-mechanics class for the execution detail — a 2008 Google resume-search string and a Firefox extension are ~18 years old and the pool of freelancers with indexed HTML resumes has moved to LinkedIn, Upwork and portfolio sites — so the recipe must be rebuilt rather than trusted. What survives is the durable kernel: derive the exact skill combination and prior-role path from the job before searching, and search for that combination rather than for a category. Parked under `team` because it exists only to hire someone who is not the solo operator. Trigger: the first time there is budget for a paid outside asset (a product photographer, or the video editor implied by the static-first rule in marketing-paid-creative-testing). Scored on the merit it will have then: a narrow sourcing heuristic that overlaps the TikTok-browsing and Backstage entries above, and that is best used as the 'cold outreach' arm of the four-channel recruiting frame above rather than as the whole search. It pairs usefully with the track-the-winners rule below — the search defines who gets a first shot, the track record decides who gets the next one.
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 4 of 6)*
 

@@ -459,6 +459,22 @@ if (new Date().getDate() === 1) {
   // voice-of-customer rewrites in this same block, and running first would seed
   // from last month's personas instead of the ones just written.
   runStep('demand-miner', `"${NODE}" agents/demand-miner/index.js`, { indent: '    ' });
+
+  // Step 15: marketing-learner --regate — park live tactics that need a gate.
+  //
+  // A backstop, not the primary mechanism: extraction now emits `stage` itself, so a
+  // correctly-adjudicated ingest leaves nothing for this to do and it prints "nothing
+  // needs a gate". It exists because that field was absent from the extraction schema
+  // until 2026-08-23 — every tactic ingested before then was structurally ineligible
+  // for a gate — and because the gates themselves move: when `scale` or `team` opens,
+  // what counts as runnable changes underneath tactics nobody re-reads.
+  //
+  // --apply is safe unattended for the same reason --regate is stage-only: it adds a
+  // marker line and never edits a claim, a score or a body, insertStageMarker refuses a
+  // tactic that already carries one, and validateSkillEdit still guards every write. The
+  // failure mode is an over-parked tactic hidden from the projection, which `npm run
+  // learn -- --staged` lists and one edit reverses.
+  runStep('marketing-regate', `"${NODE}" agents/marketing-learner/index.js --regate --apply`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }

@@ -1,11 +1,11 @@
 ---
 name: marketing-pre-launch-product-validation
-description: Validation loops that run before and after a variant ships — a go/no-go panel of hardest-use-case buyers who get free units in exchange for an explicit up-front feedback agreement, a notify-me capture for demand you cannot yet fill, and a standing monthly loop that kills the single most common complaint — with guardrails against routing seeded product into Amazon reviews and disclosure rules if feedback becomes a testimonial.
+description: A go/no-go panel run before any promotion is built — recruit a handful of existing hardest-use-case buyers, ship free units on a stated exchange (use it, tell me the truth, review it if it earns one), ask what they would pay, and fix or kill the variant if the feedback is not strong. Also covers preselling a bundle or new scent to the owned list before funding inventory, and converting seeded testers into paying customers and referral sources — with guardrails against routing seeded product into Amazon reviews and disclosure rules if feedback becomes a testimonial.
 ---
 
 # Pre Launch Product Validation
 
-## Put the product in the hands of real users in the hardest use case before you build any promotion — give free samples in exchange for an explicit feedback agreement — and kill or fix the product if the feedback is not strong.
+## Put the product in the hands of real users in the hardest use case before you build any promotion — give free samples in exchange for honest opinions and what they would pay — and kill or fix the product if the feedback is not strong.
 
 **Why it works:** No amount of promotion rescues a product that does not deliver; disappointment eventually catches up and destroys the reputation the sales message depends on. Testing in the most demanding real-world conditions surfaces failures the seller cannot see from the inside, and asking testers what they would pay surfaces the price before any money is committed to the campaign.
 
@@ -15,36 +15,24 @@ description: Validation loops that run before and after a variant ships — a go
 
 *Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 1 of 3)*
 
-### State the exchange as a three-part agreement before the unit ships, and close with "does that sound fair?"
+## Seed the free units on an explicit three-part condition — use it, give me feedback, leave a review if you think it deserves one — asked as "does that sound fair?", then convert those testers to paid and ask each by name for referrals.
 
-Do not hand over a free unit and hope. Name the terms up front: **use it**, **give me feedback**, and **leave a killer review if you think it deserves one** — then close with "does that sound fair?" to get a verbal yes.
+**Why it works:** This is the delivery mechanic for the panel above. Warm contacts — past buyers, repeat customers, people who already replied to an email — give permission to contact and try harder with the product, which is what produces usable feedback rather than polite silence. Stating the exchange upfront creates a reciprocal obligation, so free recipients actually produce the thing the free product is really buying. "Does that sound fair?" makes the terms explicit and consented-to instead of implied. Once a tester has a real result, both the conversion to paid and the referral ask meet almost no resistance, so the seeding cost is partly recovered instead of being pure COGS burn.
 
-**Why it works:** Naming the terms before the product ships converts a gift into a reciprocal contract, so feedback and a review read as owed rather than optional. The "does that sound fair" close extracts an explicit commitment, which is what makes the tester actually reply.
+**Evidence offered:** Six yeses from calls, texts and Facebook messages; converted to paid after twelve weeks; then another five or six clients from their referrals, reaching ~$4,000/month — plus his four stated reasons for giving the first five units away.
 
-**Evidence offered:** Assertion plus a verbatim script and four stated reasons the first-five-free structure pays off.
+**Fit here (6/10):** Durable principle and runnable by a solo operator today on any of 12 SKUs at a few dollars of COGS: hand free product to warm contacts and past buyers on a stated exchange, then ask by name for a referral once they report a result. Score capped because the sub-1,000 warm list limits absolute volume — six to ten testers is a signal, not a measurement, same ceiling as the panel above.
 
-**Fit here (6/10):** The "ship free product for honest feedback" half is already covered above; this is adopted for the distinct addition — the up-front reciprocity contract and the commitment close. Runnable today across 12 SKUs with no budget, and it attacks the proof gap for a store with a thin review corpus. The review leg of the agreement is Shopify/owned-channel only: it must never be pointed at Amazon (flat TOS violation), and any feedback promoted to a testimonial carries a material-connection disclosure.
+**Guardrails (same as above, and they bind harder here because a review is being named in the ask):** never route seeded product into an Amazon review — that is a flat TOS violation regardless of how the ask is worded. The "leave a review if you think it deserves one" clause applies to owned channels only (site reviews, replies you can quote), and any feedback that later becomes a testimonial carries a disclosed material connection.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 4 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 3 of 16))*
 
-## Capture contact details the moment someone wants something you do not sell yet, then build the offer against that list
+## Take money for the offer before it is packaged, then build to the deadline you just promised.
 
-**Why it works:** Demand is perishable and unevenly distributed. Capturing the contact converts a moment of unprompted interest into an owned list you can sell to once the thing exists, so the offer gets built against proven demand instead of a guess.
+**Why it works:** A paid customer is the only real validation — free testers tell you the product works, a collected payment tells you the offer sells. The payment also creates a hard delivery deadline that forces the asset into existence in days rather than months, while an unsold but fully-built asset may never have had a buyer at all. This is the money-side complement to the free-unit panel: the panel de-risks the product, the presell de-risks the spend.
 
-**Evidence offered:** Anecdote: "I had nothing to sell them. Although, over one hundred people left me their phone numbers and business cards in case I did" — that list later seeded Gym Launch and was called back on when he needed $150,000.
+**Evidence offered:** Hormozi sold the Gym Launch system for $6,000 before it existed as a package, then spent 48 hours assembling it; he repeated the sale seven more times before delivery, collecting $60,000 in a day. Anecdotal, single operator, high-ticket B2B — not an ecommerce figure.
 
-**Fit here (5/10):** Honest translation for a 12-SKU catalogue: a notify-me/waitlist capture on any scent, size or SKU that is out of stock or unformulated, plus email capture at in-person markets when someone asks for something not on the table. Executable today on Shopify with no budget, and it feeds the sub-1,000 list retention depends on. It also pairs with the panel above — the waitlist is the recruiting pool for the hardest-use-case testers of the variant it asked for. Scored 5 because the excerpt states it as narrative rather than method, and request volume at 54 orders/month is small.
+**Fit here (6/10):** Honest ecommerce translation: presell a bundle, routine kit or new scent to the owned list with a stated ship date before committing inventory or packaging spend. A solo operator with 12 SKUs and no cash cushion should not fund production on a guess. Durable principle, age irrelevant. Capped at 6 because a sub-1,000 list gives a thin presell signal and the mechanic overlaps partly with validating an offer on the owned list before funding paid. Sequencing note: the free-unit panel and the presell answer different questions — run the panel to decide whether the variant is good enough to exist, run the presell to decide whether to fund the run. If a presell is taken, the stated ship date is a promise; miss it and you have manufactured exactly the first-use disappointment this skill exists to prevent, so quote a date you can hit with the slowest supplier lead time.
 
-*Source: Alex Hormozi — "$100M Leads" (book, part 1 of 16)*
-
-## Run a standing monthly loop that removes the single most common complaint, verified on the customers who complained
-
-Each month: pull the most frequent complaint from support email, post-purchase survey answers and reviews; design the fix using feedback from customers who made the product work anyway; ship the new version to a small group of struggling customers; roll out only if the complaint disappears; then move to the next most common problem.
-
-**Why it works:** Every reduction in customer effort or sacrifice widens the value-minus-price gap, which increases goodwill and therefore referrals and repeat rate. Sequencing by complaint frequency guarantees each cycle removes the largest remaining source of dissatisfaction, and testing on the struggling cohort proves the fix before it reaches everyone.
-
-**Evidence offered:** Assertion; the author states he runs this as a recurring monthly process.
-
-**Fit here (7/10):** A 12-SKU natural body-care line made by a solo operator is one of the few businesses that can actually reformulate — baking-soda irritation, melt in transit, residue on clothing, lip balm texture are all review-visible complaints with cheap fixes. Amazon and Shopify reviews plus support email are the free input, and "small group of struggling customers" means a handful of past complainers. A one-question post-purchase survey plus a monthly review is hours of work, not a program. Distinct from the one-time pre-rewrite store diagnostic because of the recurring cadence and the fix-only-the-top-complaint rule; distinct from the pre-launch panel above because it runs on shipped product against live complaint data rather than on a variant before release. When the fix ships to that struggling cohort, use the same up-front three-part agreement — and the same Amazon guardrail.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 11 of 16)*
+*Source: Alex Hormozi — "$100M Leads" (book, (part 1 of 16))*
