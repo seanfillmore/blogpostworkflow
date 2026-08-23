@@ -14,8 +14,9 @@
  *   CONSOLIDATE — Claude fetches both articles, merges the best content into winner.
  *                 If the editor agent passes the merged article cleanly, it is
  *                 auto-published to Shopify. If the editor flags blockers, the
- *                 merged article is saved as a draft for human review. Redirect
- *                 is created immediately either way so link equity is preserved.
+ *                 merged article is saved as a draft for human review and the
+ *                 merge is HELD — see redirect-decision.js for what happens
+ *                 to the redirect in that case.
  *   MONITOR     — No action. Logged for next review cycle. Use when pages serve
  *                 genuinely different sub-intents.
  *
@@ -27,8 +28,15 @@
  *     `meta.needs_rebuild` set on the merged post). Otherwise the merged article
  *     stays as a Shopify draft and is surfaced in the report's "Drafts needing
  *     review" section.
- *   - Redirect is created immediately on consolidation so link equity is preserved
- *     even before any draft is reviewed and published.
+ *   - Redirect is created immediately on a non-held consolidation, so link
+ *     equity is preserved before the draft is even reviewed. When the merge is
+ *     HELD, the redirect is skipped by default (the winner still shows old
+ *     content) UNLESS the loser is provably earning ~0 clicks — see
+ *     redirect-decision.js. Left unconditional, "skip while held" has no
+ *     expiry: a merge can stay held indefinitely (the editor holds on quality
+ *     blockers, nothing re-triggers it), so the cannibalization the merge was
+ *     meant to resolve would stay live indefinitely too. The tattoo-soap merge
+ *     sat held six days (2026-08-16 to 2026-08-22) this way before a manual fix.
  *   - All decisions persisted to cannibalization-decisions.json for audit trail.
  *
  * Usage:
@@ -51,6 +59,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
+import { decideHeldMergeRedirect } from './redirect-decision.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
@@ -306,8 +315,11 @@ Rules:
 
 // ── apply resolutions ─────────────────────────────────────────────────────────
 
-async function applyResolutions(decisions, articleIndex, existingRedirects) {
+async function applyResolutions(decisions, articleIndex, existingRedirects, groups) {
   const existingPaths = new Set(existingRedirects.map((r) => r.path));
+  // Already-fetched GSC group data, keyed by query, so the held-merge redirect
+  // decision can read the loser's clicks without a fresh network call.
+  const groupsByQuery = new Map((groups ?? []).map((g) => [g.query, g]));
   const results = [];
 
   for (const decision of decisions) {
@@ -319,9 +331,17 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
       const loserPath = loser.path;
       const winnerPath = decision.winner;
       // When a CONSOLIDATE merge fails the editor gate we HOLD it: the live
-      // winner is left untouched and the loser is NOT redirected, so both posts
-      // stay live and no content is lost while the merge awaits manual review.
+      // winner is left untouched. Whether the loser also stays un-redirected
+      // depends on its traffic — see decideHeldMergeRedirect below.
       let consolidateHeld = false;
+
+      // Loser's clicks from the GSC data already fetched for cannibalization
+      // detection (same window, no new call) — feeds the held-merge redirect
+      // decision. null when the group/path can't be matched (e.g. decisions
+      // JSON diverged from the live groups), which fails safe downstream.
+      const group = groupsByQuery.get(decision.query);
+      const loserPageData = group?.pages.find((p) => p.path === loserPath);
+      const loserClicks = loserPageData ? loserPageData.clicks : null;
 
       // Only act on blog posts
       if (!isBlogPost(loserPath) || !isBlogPost(winnerPath)) {
@@ -420,22 +440,37 @@ async function applyResolutions(decisions, articleIndex, existingRedirects) {
         }
       }
 
-      // Create redirect (for both REDIRECT and CONSOLIDATE). Skip it when a
-      // CONSOLIDATE merge was held for review — redirecting the loser into a
+      // Create redirect (for both REDIRECT and CONSOLIDATE). A held CONSOLIDATE
+      // merge normally still blocks the redirect — redirecting the loser into a
       // winner that still shows its OLD content would lose the loser's unique
-      // content until someone publishes the merged draft.
-      if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && !consolidateHeld) {
+      // content until someone publishes the merged draft. But left unconditional
+      // that protection never expires: a merge can stay held indefinitely (the
+      // editor holds on quality blockers, nothing re-triggers it), and while
+      // it's held, the cannibalization the merge was meant to fix stays live.
+      // The tattoo-soap merge sat held six days (2026-08-16–2026-08-22) this
+      // way while a 0-click/50-impression/pos-23 loser split ranking signal
+      // from a 10-click/1,102-impression/pos-6.9 winner — signal the loser
+      // wasn't converting into any traffic worth protecting. So: redirect
+      // anyway when the loser's own clicks are provably zero (nothing to
+      // lose); keep skipping when it earns real clicks or traffic is unknown
+      // (fails safe). See redirect-decision.js.
+      const { createRedirect: allowRedirect, reason: redirectDecisionReason } =
+        decideHeldMergeRedirect({ consolidateHeld, loserClicks });
+
+      if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && allowRedirect) {
         if (existingPaths.has(loserPath)) {
           results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_exists' });
         } else {
           try {
             await createRedirect(loserPath, winnerPath);
             existingPaths.add(loserPath);
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created' });
+            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', redirectDecisionReason });
           } catch (e) {
             results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_error', error: e.message });
           }
         }
+      } else if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && consolidateHeld) {
+        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_skipped_held', reason: redirectDecisionReason });
       }
     }
   }
@@ -826,7 +861,7 @@ async function main() {
     // Apply resolutions
     if (apply) {
       console.log('\n  Applying resolutions...');
-      results = await applyResolutions(decisions, articleIndex, existingRedirects);
+      results = await applyResolutions(decisions, articleIndex, existingRedirects, groups);
       const redirectsCreated = results.filter((r) => r.status === 'redirect_created').length;
       const published = results.filter((r) => r.status === 'published').length;
       // CONSOLIDATE pushes 'draft_needs_review'; 'draft_saved' is the legacy name.
