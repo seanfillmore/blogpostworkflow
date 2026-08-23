@@ -668,6 +668,25 @@ async function runRegate({ client, args }) {
   console.log(`\nStaged ${written} tactics across ${Object.keys(bySkill).length - failed} skills.` +
     (failed ? ` ${failed} skill(s) refused — see above.` : ''));
   syncContextMirror();
+
+  // This runs unattended on the 1st and mutates every skill it touches. A parked tactic
+  // disappears from the live projection, so a run that reports nothing is a change nobody
+  // can trace six weeks later — the same reasoning the cluster-hold agents follow.
+  // Deferred, never immediate: parking is the policy working, not a failure.
+  await notify({
+    subject: `Marketing re-gate: ${written} tactic${written === 1 ? '' : 's'} parked` +
+      (failed ? ` (${failed} skill${failed === 1 ? '' : 's'} refused)` : ''),
+    body: [
+      `${items.length} live tactics carried no stage; ${gated.length} needed one.`,
+      '',
+      ...Object.entries(byGate).map(([stage, list]) =>
+        `${stage} (${list.length}):\n` + list.map((g) => `  - ${g.skill}: ${g.claim.slice(0, 90)}`).join('\n')),
+      '',
+      'Parked tactics stay in their skill and are hidden from the fleet projection until the',
+      'gate opens. List them any time with: npm run learn -- --staged',
+    ].join('\n'),
+    status: failed ? 'error' : 'ok',
+  });
 }
 
 async function runReadjudicate({ client, args }) {

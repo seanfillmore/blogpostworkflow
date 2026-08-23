@@ -297,6 +297,7 @@ const GOOD = {
       evidence: 'assertion only',
       rscFit: { score: 8, reasoning: 'Retention is the constraint' },
       verdict: 'adopt',
+      stage: null,
       rejectReason: null,
       targetSkill: {
         name: 'marketing-retention-flows',
@@ -489,7 +490,7 @@ assert.throws(
     'and says null is an assertion, not a default');
 
   const con = buildConsolidationPrompt({
-    candidates: [{ claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 5, reasoning: 'r' }, verdict: 'adopt' }],
+    candidates: [{ claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 5, reasoning: 'r' }, verdict: 'adopt', stage: null }],
     source: { title: 't', creator: 'c', sourceId: 's' },
   });
   assert.match(con, /"stage":/, 'the consolidation schema has one too');
@@ -2600,3 +2601,44 @@ console.log('✓ marketing-learner staged-tactic tests pass');
 }
 
 console.log('✓ marketing-learner re-gate tests pass');
+
+// ── stage is required on an adopted tactic; null is a legal value ───────────
+// An omitted stage and a considered "runnable today" used to be indistinguishable, which
+// is how a missing schema field hid for months — every tactic looked deliberately unparked.
+// Requiring the key makes null an assertion someone made, not a default nobody saw.
+// Measured at 100% emission across 159 adopted tactics / 16 extraction calls before this
+// was tightened, so it is a contract the model already meets.
+{
+  const { validateExtraction } = await import('../../lib/marketing-learner.js');
+  const base = {
+    videoId: 'abc12345678', creator: 'C', title: 'T', summary: 'S', recencySignals: null,
+  };
+  const tactic = (extra) => ({
+    claim: 'A claim.', mechanism: 'm', evidence: 'assertion only',
+    rscFit: { score: 6, reasoning: 'r' }, verdict: 'adopt', rejectReason: null,
+    targetSkill: { name: 'marketing-x', action: 'create', description: 'Use when ...' },
+    ...extra,
+  });
+
+  assert.doesNotThrow(() => validateExtraction({ ...base, tactics: [tactic({ stage: null })] }),
+    'explicit null passes — it is the assertion that the tactic is runnable today');
+  assert.doesNotThrow(() => validateExtraction({ ...base, tactics: [tactic({ stage: 'team' })] }),
+    'a real gate passes');
+  assert.throws(
+    () => validateExtraction({ ...base, tactics: [tactic({})] }),
+    /stage is required on an adopted tactic/,
+    'omitting the key is refused — that ambiguity is the bug being closed',
+  );
+
+  // A rejected tactic still must NOT carry one: a stage with no skill entry behind it is
+  // the invisible parking lot the field exists to remove.
+  assert.doesNotThrow(
+    () => validateExtraction({ ...base, tactics: [{
+      claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 1, reasoning: 'r' },
+      verdict: 'reject', rejectReason: 'no mechanism', targetSkill: null,
+    }] }),
+    'a reject needs no stage key',
+  );
+}
+
+console.log('✓ marketing-learner required-stage tests pass');

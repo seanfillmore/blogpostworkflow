@@ -23,6 +23,7 @@ const group = (claim, idxs) => ({
   evidence: 'e',
   rscFit: { score: 8, reasoning: 'r' },
   verdict: 'adopt',
+  stage: null,
   targetSkill: { name: 'marketing-offer-construction', action: 'edit', description: 'Use when …' },
   mergedFrom: idxs.map((i) => ({ candidateIndex: i, label: CANDIDATES[i].chunk.label })),
 });
