@@ -38,6 +38,27 @@ export function renderRebuildSummary({ succeeded, failures = [], remaining }) {
   return lines.join('\n');
 }
 
+/**
+ * Drop a post's `needs_rebuild` tag and record that we deliberately let it go.
+ *
+ * findLegacyPosts() re-selects any post carrying `needs_rebuild`, so a branch
+ * that skips a post WITHOUT clearing the tag re-queues it tomorrow, and every
+ * day after — which is what the `broken` bucket did: it returned success, left
+ * the tag set, and the same post re-entered the run (and the digest) forever.
+ * The `winner` branch had always cleared it; `broken` never did.
+ *
+ * The bucket and its triage reason are untouched, so a broken post is still
+ * listed as broken and still needs its manual technical fix — it just stops
+ * asking for the same rebuild every morning.
+ *
+ * @returns {{meta: object, cleared: boolean}}
+ */
+export function clearNeedsRebuild(meta, { ackField, at } = {}) {
+  const { needs_rebuild: _drop, ...rest } = meta || {};
+  if (!meta?.needs_rebuild) return { meta: rest, cleared: false };
+  return { meta: ackField ? { ...rest, [ackField]: at } : rest, cleared: true };
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const BACKUPS_DIR = join(ROOT, 'data', 'backups', 'legacy-rebuild');
@@ -130,9 +151,11 @@ async function rebuildPost(slug) {
     console.log(`\nSkipping: ${slug}`);
     console.log(`  Bucket: winner — preserving post that is already ranking`);
     // Clear any stale needs_rebuild tag so the post doesn't keep surfacing
-    if (meta.needs_rebuild) {
-      const { needs_rebuild: _drop, ...rest } = meta;
-      writeFileSync(getMetaPath(slug), JSON.stringify(rest, null, 2));
+    const { meta: cleanedWinner, cleared: winnerCleared } = clearNeedsRebuild(meta, {
+      ackField: 'legacy_winner_ack_at', at: new Date().toISOString(),
+    });
+    if (winnerCleared) {
+      writeFileSync(getMetaPath(slug), JSON.stringify(cleanedWinner, null, 2));
       console.log('  Cleared stale needs_rebuild tag');
     }
     return true;
@@ -140,6 +163,18 @@ async function rebuildPost(slug) {
   if (bucket === 'broken') {
     console.log(`\nSkipping: ${slug}`);
     console.log(`  Bucket: broken — ${meta.legacy_triage_reason || 'technical fix required'}`);
+    // This branch used to return success with the tag still set, so the post
+    // re-entered findLegacyPosts() (and the digest) every single day, forever.
+    // Clearing it does not hide the problem — `legacy_bucket: 'broken'` and
+    // `legacy_triage_reason` still say exactly what is wrong, and the post is
+    // still picked up by the missing-FAQ-schema signal.
+    const { meta: cleanedBroken, cleared: brokenCleared } = clearNeedsRebuild(meta, {
+      ackField: 'legacy_broken_ack_at', at: new Date().toISOString(),
+    });
+    if (brokenCleared) {
+      writeFileSync(getMetaPath(slug), JSON.stringify(cleanedBroken, null, 2));
+      console.log('  Cleared needs_rebuild — broken-bucket posts need a manual fix, not a daily re-queue');
+    }
     return true;
   }
   if (bucket === 'rising') {
@@ -246,7 +281,7 @@ async function main() {
     status: failures.length > 0 ? 'warning' : 'success',
   });
 
-  console.log(`\nDone. ${succeeded} succeeded, ${failed} failed.`);
+  console.log(`\nDone. ${succeeded} succeeded, ${failures.length} failed.`);
 }
 
 // Only run when invoked directly. Without this guard, importing anything from

@@ -22,7 +22,7 @@
  *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
@@ -34,9 +34,14 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const DAILY_SUMMARY_DIR = join(ROOT, 'data', 'reports', 'daily-summary');
 
+// How many failure rows the digest renders in full. The count in the heading is
+// always the true total — see the errorsSection builder.
+const ERROR_ROWS_SHOWN = 8;
+
 import {
   listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
 } from '../../lib/posts.js';
+import { classifyBlockedReport } from '../../lib/blocked-posts.js';
 
 // Collector/snapshot agents — suppress their success entries from the digest
 const SILENT_ON_SUCCESS = new Set([
@@ -107,9 +112,22 @@ function isSilentSuccess(entry) {
 }
 
 /**
- * Find posts that are hard-blocked in the editorial gate.
- * Scans data/reports/editor/*.md for "Needs Work" verdicts and extracts blocker reasons.
- * Only includes posts whose HTML exists but have not been published/scheduled.
+ * Find posts that are hard-blocked in the editorial gate and need a HUMAN.
+ *
+ * "Action Required — N posts hard-blocked" ran every morning for three pages
+ * that all return HTTP 200. They were live legacy posts carrying a stale
+ * `Needs Work` report; the old skip rule here (`shopify_status === 'published'
+ * || 'scheduled'`) could never fire on them, because 52 of 93 posts have a
+ * `shopify_article_id` and no `shopify_status` key at all — the corpus synced in
+ * without ever passing through agents/publisher.
+ *
+ * Two things fix that, and they are different fixes:
+ *   - The rule now lives in lib/blocked-posts.js and resolves publish state via
+ *     lib/post-publish-state.js, so an inferred-live post is recognised as live.
+ *   - `includeLive: false`: a LIVE page is never an "Action Required" row in the
+ *     email. agents/blocked-post-resolver owns repairing those, unattended, and
+ *     reports its own outcome into this same digest. The dashboard still shows
+ *     them (it passes includeLive: true) — visibility without a daily alarm.
  */
 function findBlockedPosts() {
   const blocked = [];
@@ -120,30 +138,19 @@ function findBlockedPosts() {
       if (!existsSync(reportPath)) continue;
 
       const report = readFileSync(reportPath, 'utf8');
-      if (!/VERDICT[:*\s]*Needs Work/i.test(report)) continue;
-
       const meta = getPostMeta(slug);
       if (!meta) continue;
-      // Skip if already published or scheduled — only flag truly stuck posts
-      if (meta.shopify_status === 'published' || meta.shopify_status === 'scheduled') continue;
 
-      // Trust the editor's overall verdict over any sub-section verdicts.
-      // A post can have a Needs Work in (say) Source Verification while the
-      // OVERALL QUALITY signs off as Good — that's not a blocker, it's a
-      // note. The dashboard uses the same rule (data-loader.findBlockedPosts).
-      const overallMatch = report.match(/##[^\n]*OVERALL QUALITY[^\n]*\n[\s\S]*?VERDICT[:*\s]+([^\n]+)/i);
-      if (overallMatch && !/needs work/i.test(overallMatch[1])) continue;
+      let reportAgeDays = Infinity;
+      try { reportAgeDays = (Date.now() - statSync(reportPath).mtimeMs) / 86400000; } catch { /* keep Infinity */ }
 
-      // Extract the blocker reasons section. If it starts with "None", the
-      // editor has explicitly said there are no blockers — skip the post.
-      const blockersMatch = report.match(/##[^\n]*BLOCKER[^\n]*\n([\s\S]*?)(?=\n##|\n---|$)/i);
-      if (blockersMatch && /^\s*None\b/i.test(blockersMatch[1].trim())) continue;
-      const blockerText = blockersMatch ? blockersMatch[1].trim().slice(0, 600) : 'See editor report for details.';
+      const verdict = classifyBlockedReport({ report, meta, reportAgeDays, includeLive: false });
+      if (!verdict) continue;
 
       blocked.push({
         title: meta.title || slug,
         slug,
-        blockers: blockerText,
+        blockers: verdict.blockerText,
         reportPath: `data/posts/${slug}/editor-report.md`,
       });
     } catch { /* skip */ }
@@ -823,12 +830,20 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // Failures that cost money — error-status entries only.
   let errorsSection = '';
   {
-    const errs = visible.filter((e) => e.status === 'error').slice(0, 5);
-    if (errs.length) {
+    // Show a bounded list but ALWAYS count the true total. The cap used to be a
+    // bare slice(0, 5), so a sixth failure vanished with nothing saying so —
+    // that is how a daily `Legacy Rebuilder failed` ReferenceError went unread.
+    const allErrs = visible.filter((e) => e.status === 'error');
+    const errs = allErrs.slice(0, ERROR_ROWS_SHOWN);
+    if (allErrs.length) {
       const rows = errs.map((e) =>
         `<div class="blocked-post"><div class="title">&#10060; ${esc(e.subject)}</div>`
         + `${e.body ? `<div class="blockers">${esc(previewBody(e.body, { maxLines: 3, maxChars: 220 }))}</div>` : ''}</div>`).join('');
-      errorsSection = `<div class="action-required"><div class="section-title">&#10060; Failures &mdash; ${errs.length}</div>${rows}</div>`;
+      const hidden = allErrs.length - errs.length;
+      const more = hidden > 0
+        ? `<div class="blockers" style="margin-top:6px;">&hellip; and ${hidden} more failure${hidden > 1 ? 's' : ''} not shown &mdash; see the dashboard.</div>`
+        : '';
+      errorsSection = `<div class="action-required"><div class="section-title">&#10060; Failures &mdash; ${allErrs.length}</div>${rows}${more}</div>`;
     }
   }
 

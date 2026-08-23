@@ -135,7 +135,7 @@ function refreshOne(slug) {
     // quality. Refreshing is exactly the right action here — allow it through.
     if (idx && idx.state && idx.state !== 'indexed' && idx.state !== 'crawled_not_indexed') {
       console.log(`  [skip] ${slug}: indexing state is "${idx.state}" — run indexing-fixer first, not refresh`);
-      return { slug, ok: false, reason: `indexing state ${idx.state}, refresh suppressed` };
+      return { slug, ok: false, skipped: true, reason: `indexing state ${idx.state}, refresh suppressed` };
     }
   } catch { /* fall through */ }
 
@@ -144,7 +144,7 @@ function refreshOne(slug) {
     const lockMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
     if (lockMeta.legacy_locked) {
       console.log(`  [skip] ${slug}: legacy winner (locked)`);
-      return { slug, ok: false, reason: 'legacy winner, locked' };
+      return { slug, ok: false, skipped: true, reason: 'legacy winner, locked' };
     }
   } catch { /* proceed */ }
 
@@ -242,19 +242,30 @@ async function main() {
   }
 
   const ok = results.filter((r) => r.ok).length;
-  const failed = results.filter((r) => !r.ok);
-  console.log(`\n  Refresh complete: ${ok} succeeded, ${failed.length} failed`);
+  // A guard that deliberately declines to refresh a post (a locked legacy
+  // winner, an indexing state that wants indexing-fixer instead) is NOT a
+  // failure — it is the guard doing its job. Conflating the two sent
+  // `status: 'error'` to the digest every single day for `natural-soap-bar`,
+  // which trained the failures section to be ignored.
+  const skipped = results.filter((r) => !r.ok && r.skipped);
+  const failed = results.filter((r) => !r.ok && !r.skipped);
+  console.log(`\n  Refresh complete: ${ok} succeeded, ${failed.length} failed, ${skipped.length} skipped`);
   for (const f of failed) console.log(`    [fail] ${f.slug}: ${f.reason}`);
+  for (const s of skipped) console.log(`    [skip] ${s.slug}: ${s.reason}`);
 
   // A run that refreshed nothing (e.g. the slug didn't resolve to a post) is a
   // failure, not a success — exit non-zero so callers that observe the exit code
   // (the dashboard's seo-opportunity reconciler) can mark it failed rather than
-  // completed. Partial success in a batch run still exits 0.
+  // completed. Partial success in a batch run still exits 0. A run whose only
+  // non-successes were skips exits 0: nothing broke.
   if (failed.length && ok === 0) process.exitCode = 1;
 
+  const counts = [`${ok} succeeded`];
+  if (failed.length) counts.push(`${failed.length} failed`);
+  if (skipped.length) counts.push(`${skipped.length} skipped`);
   await notify({
-    subject: `Refresh Runner: ${ok} succeeded${failed.length ? `, ${failed.length} failed` : ''}`,
-    body: results.map((r) => `${r.ok ? '[ok]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
+    subject: `Refresh Runner: ${counts.join(', ')}`,
+    body: results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
     status: failed.length ? 'error' : 'info',
     category: 'pipeline',
   }).catch(() => {});

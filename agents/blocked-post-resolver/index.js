@@ -1,0 +1,308 @@
+#!/usr/bin/env node
+/**
+ * Blocked Post Resolver
+ *
+ * Hard-blocked posts used to resolve themselves only if somebody noticed the
+ * "Action Required — N posts hard-blocked" block in the 5 AM digest and ran a
+ * script by hand. Nobody did, so the same posts sat there for weeks: on
+ * 2026-08-16 three LIVE, HTTP-200, traffic-earning pages were flagged and were
+ * still flagged on 2026-08-22.
+ *
+ * scripts/remediate-live-post.js already does exactly the right loop — pull the
+ * LIVE body from Shopify, gate it, repair via link-repair / citation-finder /
+ * content-remediator up to 3×, re-gate, push only if it ends up PASSING and
+ * actually changed. It was simply never scheduled. This agent schedules it, and
+ * adds the one thing the script does not do: decide what happens when the loop
+ * runs out of attempts.
+ *
+ * ON EXHAUSTION: SOFTEN, NEVER DELETE. Sean's explicit decision. These are
+ * indexed pages that earn traffic. The agent strips/softens the offending claim
+ * (agents/citation-finder already supports softening what it cannot source),
+ * clears `needs_rebuild`, and LEAVES THE PAGE LIVE. It never calls
+ * lib/post-kill.js. It never unpublishes. A page that cannot be perfected is a
+ * page that keeps earning, not a page that gets deleted.
+ *
+ * It also records a fingerprint of the editor report it failed on, so the same
+ * unfixable verdict is not re-attempted tomorrow (and every day after) at full
+ * LLM price. A NEW editor verdict re-opens the post automatically.
+ *
+ * Output: one deferred notify() summary line, per the digest convention — this
+ * agent does not email.
+ *
+ * Usage:
+ *   node agents/blocked-post-resolver/index.js                  # DRY RUN — list only
+ *   node agents/blocked-post-resolver/index.js --apply          # remediate + push
+ *   node agents/blocked-post-resolver/index.js --slug <slug> --apply
+ *   node agents/blocked-post-resolver/index.js --limit 3 --apply
+ */
+
+import { execSync } from 'node:child_process';
+import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import {
+  listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT,
+} from '../../lib/posts.js';
+import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-posts.js';
+import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
+import { notify } from '../../lib/notify.js';
+
+// How many posts one unattended run will remediate. Each one is a chain of
+// paid LLM calls (editor gate ×N, plus up to 3 repair agents), so an uncapped
+// run after a bad editor day is an unauthorised bill.
+const DEFAULT_LIMIT = 5;
+
+// ── pure decisions (unit-tested; no I/O) ─────────────────────────────────────
+
+/**
+ * Which posts this run will act on.
+ *
+ * `includeLive: true` is deliberate and is the opposite of what the 5 AM digest
+ * asks for. A live page serving content that fails the gate is exactly this
+ * agent's job; it is just not something to wake a human for.
+ *
+ * @param {Array<{slug:string, meta:object, report:string, reportAgeDays:number}>} entries
+ * @param {{now?:number, limit?:number, slug?:string}} opts
+ */
+export function selectBlockedPosts(entries, { now = Date.now(), limit = null, slug = null } = {}) {
+  let out = (entries || [])
+    .map((e) => {
+      const verdict = classifyBlockedReport({
+        report: e.report, meta: e.meta, reportAgeDays: e.reportAgeDays, now, includeLive: true,
+      });
+      return verdict ? { ...e, live: verdict.live, blockers: verdict.blockerText } : null;
+    })
+    .filter(Boolean);
+  if (slug) out = out.filter((e) => e.slug === slug);
+  if (limit) out = out.slice(0, limit);
+  return out;
+}
+
+/**
+ * What to do with one selected post. A post with no Shopify article has no LIVE
+ * body to pull, so remediate-live-post.js exits 1 on it immediately — that post
+ * belongs to calendar-runner's publish pipeline, not here.
+ */
+export function planPost(entry) {
+  const meta = entry?.meta || {};
+  if (!meta.shopify_article_id || !meta.shopify_blog_id) {
+    return { slug: entry.slug, action: 'skip', reason: 'not on Shopify (no article/blog id) — owned by the publish pipeline' };
+  }
+  return { slug: entry.slug, action: 'remediate', reason: null };
+}
+
+/** Meta after the gate passes: the flag goes, and so does any prior write-off. */
+export function metaAfterSuccess(meta, { at }) {
+  const { needs_rebuild: _flag, blocked_resolution: _prior, ...rest } = meta || {};
+  return { ...rest, blocked_resolved_at: at };
+}
+
+/**
+ * Meta after the repair loop is exhausted.
+ *
+ * The flag is cleared so the post stops resurfacing, and the verdict it failed
+ * on is fingerprinted so tomorrow's run does not pay to fail again on identical
+ * text. Nothing about the post's PUBLISH state is touched — the page stays live.
+ */
+export function metaAfterExhaustion(meta, { at, report, reasons = [] }) {
+  const { needs_rebuild: _flag, ...rest } = meta || {};
+  return {
+    ...rest,
+    blocked_resolution: {
+      outcome: 'exhausted',
+      attempted_at: at,
+      reasons,
+      report_fingerprint: reportFingerprint(report),
+      note: 'Claims softened where possible; page left LIVE and earning. Never unpublished.',
+    },
+  };
+}
+
+/** The single deferred digest line. Names every post and what happened to it. */
+export function renderResolverSummary({
+  resolved = [], exhausted = [], skipped = [], failed = [], dryRun = false, candidates = [],
+} = {}) {
+  if (dryRun) {
+    if (!candidates.length) return 'Dry run — no blocked posts found.';
+    return [
+      `Dry run — ${candidates.length} blocked post(s) would be remediated:`,
+      ...candidates.map((c) => `- ${c.slug}${c.live ? ' (LIVE)' : ''}`),
+      '',
+      'Re-run with --apply to remediate and push.',
+    ].join('\n');
+  }
+
+  if (!resolved.length && !exhausted.length && !skipped.length && !failed.length) {
+    return 'No blocked posts — nothing to resolve.';
+  }
+
+  const lines = [
+    `${resolved.length} resolved, ${exhausted.length} softened & written off, `
+    + `${skipped.length} skipped, ${failed.length} failed.`,
+  ];
+  if (resolved.length) {
+    lines.push('', 'Resolved (gate passes; live content updated):');
+    for (const r of resolved) lines.push(`- ${r.slug}${r.softened ? ' (via claim softening)' : ''}`);
+  }
+  if (exhausted.length) {
+    lines.push('', 'Repair loop exhausted — claims softened, flag cleared, page STILL LIVE:');
+    for (const e of exhausted) lines.push(`- ${e.slug}: ${(e.reasons || []).join(', ') || 'see editor report'}`);
+  }
+  if (skipped.length) {
+    lines.push('', 'Skipped:');
+    for (const s of skipped) lines.push(`- ${s.slug}: ${s.reason}`);
+  }
+  if (failed.length) {
+    lines.push('', 'Failed (nothing changed on Shopify):');
+    for (const f of failed) lines.push(`- ${f.slug}: ${f.reason}`);
+  }
+  return lines.join('\n');
+}
+
+// ── run ──────────────────────────────────────────────────────────────────────
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function arg(name) {
+  const i = process.argv.indexOf(name);
+  return i !== -1 ? process.argv[i + 1] : null;
+}
+
+function readReport(slug) {
+  const p = getEditorReportPath(slug);
+  return existsSync(p) ? readFileSync(p, 'utf8') : null;
+}
+
+function reportAgeDays(slug) {
+  try { return (Date.now() - statSync(getEditorReportPath(slug)).mtimeMs) / 86400000; }
+  catch { return Infinity; }
+}
+
+function collectEntries() {
+  const out = [];
+  for (const slug of listAllSlugs()) {
+    const report = readReport(slug);
+    if (!report) continue;
+    const meta = getPostMeta(slug);
+    if (!meta) continue;
+    out.push({ slug, meta, report, reportAgeDays: reportAgeDays(slug) });
+  }
+  return out;
+}
+
+const NODE = process.execPath;
+/** Run a child step. Returns the exit code (0 = ok); never throws. */
+function runStep(cmd) {
+  try { execSync(cmd, { cwd: ROOT, stdio: 'inherit' }); return 0; }
+  catch (err) { return err.status ?? 1; }
+}
+
+function blockerSections(report) {
+  return parseEditorBlockers(report).map((b) => b.section);
+}
+
+/**
+ * Exhaustion path. Force a soften pass (citation-finder softens anything it
+ * cannot source), re-gate, and push ONLY if that cleared the gate. If it did
+ * not: clear the flag, write off this verdict, and leave the live page exactly
+ * as it is. Nothing here unpublishes, drafts, or deletes anything.
+ */
+async function softenAndSettle(slug, meta) {
+  console.log(`  ${slug}: repair loop exhausted — forcing a claim-softening pass.`);
+  runStep(`"${NODE}" agents/citation-finder/index.js --slug ${slug}`);
+  // Re-gate WITHOUT --in-pipeline so the editor rewrites editor-report.md and
+  // reconciles needs_rebuild (agents/editor/index.js:1393).
+  runStep(`"${NODE}" agents/editor/index.js ${getContentPath(slug)}`);
+
+  const report = readReport(slug) || '';
+  const at = new Date().toISOString();
+
+  if (isPassing(report)) {
+    const { updateArticle, getArticle } = await import('../../lib/shopify.js');
+    const live = await getArticle(meta.shopify_blog_id, meta.shopify_article_id);
+    const body = readFileSync(getContentPath(slug), 'utf8');
+    if (body && body !== (live.body_html || '')) {
+      await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: body });
+      console.log(`  ${slug}: ✓ softening cleared the gate — pushed to Shopify.`);
+    }
+    writeFileSync(getMetaPath(slug), JSON.stringify(metaAfterSuccess(getPostMeta(slug) || meta, { at }), null, 2));
+    return { outcome: 'resolved', softened: true };
+  }
+
+  const reasons = blockerSections(report);
+  if (!reasons.length) reasons.push(firstBlockerReason(report));
+  writeFileSync(getMetaPath(slug), JSON.stringify(
+    metaAfterExhaustion(getPostMeta(slug) || meta, { at, report, reasons }), null, 2,
+  ));
+  console.log(`  ${slug}: still failing (${reasons.join(', ')}). Page left LIVE; flag cleared; verdict written off.`);
+  return { outcome: 'exhausted', reasons };
+}
+
+async function main() {
+  const apply = process.argv.includes('--apply');
+  const slug = arg('--slug');
+  const limitRaw = arg('--limit');
+  const limit = limitRaw ? parseInt(limitRaw, 10) : DEFAULT_LIMIT;
+
+  console.log('\nBlocked Post Resolver\n');
+
+  const candidates = selectBlockedPosts(collectEntries(), { limit, slug });
+  console.log(`  ${candidates.length} blocked post(s)${apply ? '' : ' (DRY RUN)'}`);
+
+  if (!apply) {
+    for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
+    const body = renderResolverSummary({ dryRun: true, candidates });
+    console.log(`\n${body}`);
+    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s) (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
+    return;
+  }
+
+  const resolved = []; const exhausted = []; const skipped = []; const failed = [];
+
+  for (const entry of candidates) {
+    const plan = planPost(entry);
+    if (plan.action === 'skip') { skipped.push(plan); console.log(`  [skip] ${plan.slug}: ${plan.reason}`); continue; }
+
+    try {
+      // The canonical repair loop. --push because the scheduled path applies
+      // (Autonomy Principle); it still pushes ONLY a revision that PASSES.
+      const code = runStep(`"${NODE}" scripts/remediate-live-post.js ${entry.slug} --push`);
+      if (code === 0) {
+        const at = new Date().toISOString();
+        writeFileSync(getMetaPath(entry.slug), JSON.stringify(metaAfterSuccess(getPostMeta(entry.slug) || entry.meta, { at }), null, 2));
+        resolved.push({ slug: entry.slug, softened: false });
+        console.log(`  [ok] ${entry.slug}: gate passes.`);
+        continue;
+      }
+      const settled = await softenAndSettle(entry.slug, entry.meta);
+      if (settled.outcome === 'resolved') resolved.push({ slug: entry.slug, softened: true });
+      else exhausted.push({ slug: entry.slug, reasons: settled.reasons });
+    } catch (err) {
+      failed.push({ slug: entry.slug, reason: (err.message || String(err)).split('\n')[0] });
+      console.error(`  [fail] ${entry.slug}: ${err.message}`);
+    }
+  }
+
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false });
+  console.log(`\n${body}`);
+
+  await notify({
+    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed`,
+    body,
+    // Deferred, per the digest convention in CLAUDE.md — never immediate. An
+    // exhausted post is a note, not an outage: the page is still live.
+    status: failed.length ? 'error' : 'info',
+    category: 'pipeline',
+  }).catch(() => {});
+}
+
+// Only run when invoked directly. Importing this module must not start a live
+// remediation — it pushes to Shopify.
+const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+if (isDirectRun) {
+  main().catch((err) => {
+    notify({ subject: 'Blocked Post Resolver failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

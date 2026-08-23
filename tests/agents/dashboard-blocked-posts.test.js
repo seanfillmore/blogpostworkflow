@@ -11,7 +11,7 @@ const pastPublish = '2025-06-13T10:00:04-06:00'; // live (publish in the past)
 // explicit shopify_status and a past publish date. The old over-filter
 // (publish_at <= now → skip) hid it entirely. It must now surface as live.
 test('live post (past publish, no status) with fresh Needs Work → surfaces as live', () => {
-  const r = classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_publish_at: pastPublish }, reportAgeDays: 3.6, now });
+  const r = classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_article_id: 1, shopify_publish_at: pastPublish }, reportAgeDays: 3.6, now });
   assert.ok(r, 'should be blocked');
   assert.equal(r.live, true);
   assert.match(r.blockerText, /beeswax/);
@@ -23,9 +23,26 @@ test('pre-publish post (no publish date) with Needs Work → surfaces as not-liv
   assert.equal(r.live, false);
 });
 
-test('explicitly published/scheduled post is never blocked', () => {
-  assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_status: 'published', shopify_publish_at: pastPublish }, reportAgeDays: 1, now }), null);
+test('a SCHEDULED post is never blocked — it goes live on its own', () => {
   assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_status: 'scheduled' }, reportAgeDays: 1, now }), null);
+});
+
+// CHANGED 2026-08-22. Rule 2 used to skip an EXPLICITLY published post outright
+// while an unset status fell through to the freshness rule below — so the 41
+// posts publisher had stamped behaved differently from the 52 legacy posts that
+// carry an article id and no status at all. That split is the root of "live
+// pages report as blocked forever". Both are now the same post to this function:
+// live, and blocked only while the failing report is fresh.
+test('an explicitly published post is treated exactly like an inferred-live one', () => {
+  const explicit = { shopify_status: 'published', shopify_article_id: 1, shopify_publish_at: pastPublish };
+  const inferred = { shopify_article_id: 1, shopify_publish_at: pastPublish };
+  const a = classifyBlockedReport({ report: NEEDS_WORK, meta: explicit, reportAgeDays: 3, now });
+  const b = classifyBlockedReport({ report: NEEDS_WORK, meta: inferred, reportAgeDays: 3, now });
+  assert.ok(a, 'a live post with a FRESH failure still surfaces on the dashboard');
+  assert.equal(a.live, true);
+  assert.deepEqual(a, b);
+  // ...and both go quiet once the report is stale.
+  assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: explicit, reportAgeDays: 45, now }), null);
 });
 
 test('OVERALL QUALITY = Good overrides a sub-section Needs Work', () => {
@@ -38,7 +55,7 @@ test('BLOCKERS = None → not blocked', () => {
 });
 
 test('live post with a STALE (>30d) Needs Work report is suppressed (no flood)', () => {
-  const r = classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_publish_at: pastPublish }, reportAgeDays: 45, now });
+  const r = classifyBlockedReport({ report: NEEDS_WORK, meta: { shopify_article_id: 1, shopify_publish_at: pastPublish }, reportAgeDays: 45, now });
   assert.equal(r, null);
 });
 
