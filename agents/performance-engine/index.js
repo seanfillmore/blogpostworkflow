@@ -20,6 +20,16 @@
  * earns. Held pages are untouched — still live, still indexed, still ranking.
  * `--include-held` queues them anyway.
  *
+ * EFFICIENCY-RANKED BEFORE EVERY CAP (lib/cluster-efficiency.js). The hold says
+ * whether a candidate may cost anything; the ranking says which of the survivors
+ * each picker's small cap (3 flops / 2 quick-wins / 1 meta / 3 legacy flops) is
+ * spent on. It is applied inside `heldAware`, the one chokepoint every picker
+ * already passes through, so a cluster that converts is reached before one that
+ * merely ranks — and one slot in each cap is RESERVED for the lowest-ranked
+ * cluster present, because a ranking that never reaches the bottom is the hard
+ * block wearing a new name. The concatenation order across pickers (flops >
+ * quick-wins > meta > legacy) is a deliberate source priority and is left alone.
+ *
  * Cron: daily 3:00 AM PT (10:00 UTC).
  *
  * Usage:
@@ -37,6 +47,9 @@ import Anthropic from '../../lib/anthropic.js';
 import { notify } from '../../lib/notify.js';
 import { QUEUE_DIR, listQueueItems, writeItem, activeSlugs } from './lib/queue.js';
 import { buildSummaryPrompt } from './prompts.js';
+import {
+  rankClusters, orderByEfficiency, renderEfficiencyLines, efficiencyBanner,
+} from '../../lib/cluster-efficiency.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
@@ -118,20 +131,41 @@ export function holdCandidates(candidates, hold, { includeHeld = false } = {}) {
  * consume all three flop slots and leave the run doing nothing, instead of
  * moving on to the next three candidates that sit in a cluster that earns.
  */
-function heldAware(rows, hold, held) {
-  const out = partitionHeld(rows, hold, {
-    includeHeld: INCLUDE_HELD,
-    describe: (r) => ({ slug: r?.slug, title: r?.title }),
-  });
+function heldAware(rows, hold, held, { ranking = null, cap = null, moves = null } = {}) {
+  const describe = (r) => ({ slug: r?.slug, title: r?.title });
+  const out = partitionHeld(rows, hold, { includeHeld: INCLUDE_HELD, describe });
   held.push(...out.held);
-  return out.kept;
+  if (!ranking) return out.kept;
+  // Ranked before the per-picker cap for exactly the reason it is held before
+  // it. Passing `cap` is what lets the reserve know where the budget ends.
+  const eff = orderByEfficiency(out.kept, ranking, { limit: cap, describe });
+  if (moves && eff.reordered) moves.push(eff);
+  return eff.items;
 }
 
-function pickFlops(blocked, hold, held) {
+/**
+ * Four pickers, ONE digest paragraph.
+ *
+ * Each picker orders its own list against its own cap, so there are up to four
+ * `orderByEfficiency` results per run. Rendering each of them is how a digest
+ * section becomes one nobody reads, so they are summed into a single result
+ * shape. Null when nothing was reordered, which renders as no lines at all.
+ */
+function mergeMoves(moves) {
+  if (!moves?.length) return null;
+  return {
+    reordered: true,
+    ranked: moves.reduce((s, m) => s + m.ranked, 0),
+    unranked: moves.reduce((s, m) => s + m.unranked, 0),
+    reserved: moves.map((m) => m.reserved).find(Boolean) || null,
+  };
+}
+
+function pickFlops(blocked, hold, held, ctx) {
   const pp = readJsonSafe(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   if (!pp) return [];
   return heldAware((pp.action_required || [])
-    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug)), hold, held)
+    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug)), hold, held, { ...ctx, cap: MAX_FLOPS })
     .slice(0, MAX_FLOPS)
     .map(f => ({
       slug: f.slug,
@@ -141,10 +175,10 @@ function pickFlops(blocked, hold, held) {
     }));
 }
 
-function pickQuickWins(blocked, hold, held) {
+function pickQuickWins(blocked, hold, held, ctx) {
   const qw = readJsonSafe(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
   if (!qw) return [];
-  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug)), hold, held)
+  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug)), hold, held, { ...ctx, cap: MAX_QUICK_WINS })
     .slice(0, MAX_QUICK_WINS)
     .map(c => ({
       slug: c.slug,
@@ -154,7 +188,7 @@ function pickQuickWins(blocked, hold, held) {
     }));
 }
 
-function pickMetaRewrites(blocked, hold, held) {
+function pickMetaRewrites(blocked, hold, held, ctx) {
   const gsc = readJsonSafe(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   if (!gsc || !gsc.low_ctr) return [];
   const posts = listAllSlugs().map(slug => {
@@ -166,9 +200,15 @@ function pickMetaRewrites(blocked, hold, held) {
     } catch { return null; }
   }).filter(Boolean);
 
-  const picks = [];
+  // EVERY eligible candidate is collected before the hold and the cap are
+  // applied, rather than stopping at the first keeper. It used to `break` at
+  // MAX_META inside the loop, which made this the one picker whose budget was
+  // spent in raw GSC order — so the single meta slot went to whichever low-CTR
+  // query happened to be listed first, regardless of what its cluster earns.
+  // Collecting first is also what makes the held count here mean the same thing
+  // it means in the sibling pickers: how much the hold actually withheld.
+  const eligible = [];
   for (const q of gsc.low_ctr) {
-    if (picks.length >= MAX_META) break;
     const match = posts.find(p => {
       const tk = (p.target_keyword || '').toLowerCase();
       return tk && (q.keyword.toLowerCase().includes(tk) || tk.includes(q.keyword.toLowerCase()));
@@ -179,23 +219,26 @@ function pickMetaRewrites(blocked, hold, held) {
     // Skip posts that aren't on Shopify yet — the publish step would fail
     // because findPostMeta requires shopify_article_id to update the article.
     if (!match.shopify_article_id) continue;
-    // Revenue hold. Clustered on the GSC query rather than the slug — the query
-    // is what seo-impact attributed the (absent) revenue on.
-    const kept = heldAware(
-      [{ slug: match.slug, title: match.target_keyword || match.title || q.keyword }], hold, held,
-    );
-    if (!kept.length) continue;
-    picks.push({
+    if (eligible.some((e) => e.slug === match.slug)) continue;
+    eligible.push({
       slug: match.slug,
-      title: match.title || match.slug,
-      trigger: 'low-ctr-meta',
-      signal_source: { type: 'gsc-opportunity', query: q.keyword, impressions: q.impressions, ctr: q.ctr, position: q.position },
+      // Clustered on the GSC query rather than the slug — the query is what
+      // seo-impact attributed the (absent) revenue on.
+      title: match.target_keyword || match.title || q.keyword,
+      pick: {
+        slug: match.slug,
+        title: match.title || match.slug,
+        trigger: 'low-ctr-meta',
+        signal_source: { type: 'gsc-opportunity', query: q.keyword, impressions: q.impressions, ctr: q.ctr, position: q.position },
+      },
     });
   }
-  return picks;
+  return heldAware(eligible, hold, held, { ...ctx, cap: MAX_META })
+    .slice(0, MAX_META)
+    .map((e) => e.pick);
 }
 
-function pickLegacyFlops(blocked, hold, held) {
+function pickLegacyFlops(blocked, hold, held, ctx) {
   const triage = readJsonSafe(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   if (!triage) return [];
   return heldAware((triage.results || [])
@@ -305,19 +348,31 @@ async function main() {
   if (banner) console.log(`${banner}\n`);
   const held = [];
 
+  // Deprioritise, don't condemn — see the header. Built once and shared by all
+  // four pickers so they cannot disagree about the order.
+  const ranking = rankClusters(hold);
+  const rankBanner = efficiencyBanner(ranking);
+  if (rankBanner) console.log(`${rankBanner}\n`);
+  const moves = [];
+  const ctx = { ranking, moves };
+
   const blocked = activeSlugs();
-  const flops = pickFlops(blocked, hold, held);
+  const flops = pickFlops(blocked, hold, held, ctx);
   flops.forEach(c => blocked.add(c.slug));
-  const quickWins = pickQuickWins(blocked, hold, held);
+  const quickWins = pickQuickWins(blocked, hold, held, ctx);
   quickWins.forEach(c => blocked.add(c.slug));
-  const metaRewrites = pickMetaRewrites(blocked, hold, held);
-  const legacyFlops = pickLegacyFlops(blocked, hold, held);
+  const metaRewrites = pickMetaRewrites(blocked, hold, held, ctx);
+  const legacyFlops = pickLegacyFlops(blocked, hold, held, ctx);
   legacyFlops.forEach(c => blocked.add(c.slug));
 
   const candidates = [...flops, ...quickWins, ...metaRewrites, ...legacyFlops].slice(0, MAX_ITEMS);
   console.log(`    ${flops.length} flops, ${quickWins.length} quick-wins, ${metaRewrites.length} meta, ${legacyFlops.length} legacy flops`);
   console.log(`    Total candidates: ${candidates.length} / ${MAX_ITEMS}`);
   for (const line of renderHoldLines(held)) console.log(`    ${line}`);
+  // One summary for the whole run rather than one per picker: four near-identical
+  // paragraphs is how a digest section becomes one nobody reads.
+  const rankLines = renderEfficiencyLines(ranking, mergeMoves(moves));
+  for (const line of rankLines) console.log(`    ${line}`);
 
   if (candidates.length === 0 && feedbackCount === 0) {
     console.log('\n  Nothing to do.');
@@ -327,7 +382,7 @@ async function main() {
     if (held.length) {
       await notify({
         subject: `Performance Engine: 0 items queued, ${held.length} held ($0 cluster)`,
-        body: [...renderHoldLines(held), ...renderDisagreementLines(hold)].join('\n'),
+        body: [...renderHoldLines(held), ...rankLines, ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -386,6 +441,7 @@ async function main() {
     body: [
       queued.length === 0 ? 'No new items this run.' : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
       ...renderHoldLines(held),
+      ...rankLines,
       ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the policy working, not an error — it stays 'info' and deferred.

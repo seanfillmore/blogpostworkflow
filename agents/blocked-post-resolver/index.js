@@ -34,6 +34,12 @@
  * hold pauses spend, it never resolves or removes anything. `--include-held`
  * remediates them anyway, and naming a post with --slug is never held.
  *
+ * EFFICIENCY-RANKED, TOO (lib/cluster-efficiency.js). The hold decides WHETHER a
+ * post may be spent on; the ranking decides in what ORDER the survivors spend a
+ * budget of five, so the categories that convert are reached before the ones
+ * that merely rank. It excludes nothing — one in-cap slot is reserved for the
+ * lowest-ranked cluster present so a ranking can never starve one to zero.
+ *
  * Output: one deferred notify() summary line, per the digest convention — this
  * agent does not email.
  *
@@ -59,6 +65,9 @@ import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
+import {
+  rankClusters, orderByEfficiency, renderEfficiencyLines, efficiencyBanner,
+} from '../../lib/cluster-efficiency.js';
 
 // How many posts one unattended run will remediate. Each one is a chain of
 // paid LLM calls (editor gate ×N, plus up to 3 repair agents), so an uncapped
@@ -74,18 +83,25 @@ const DEFAULT_LIMIT = 5;
  * asks for. A live page serving content that fails the gate is exactly this
  * agent's job; it is just not something to wake a human for.
  *
- * ORDER: hold, THEN `--slug`, THEN `--limit`. Holding before the limit is the
- * point — five held posts must not consume a budget of five and leave every
- * earning-cluster post blocked for another day. `--slug` is checked after the
- * hold so an explicitly named post is never withheld: the hold stops unattended
- * spend, and a hand-typed slug is not unattended.
+ * ORDER: hold, THEN efficiency ranking, THEN `--slug`, THEN `--limit`. Both the
+ * hold and the ranking go before the limit for the same reason — five held (or
+ * five least-efficient) posts must not consume a budget of five and leave every
+ * earning-cluster post blocked for another day. `--slug` is checked after both
+ * so an explicitly named post is never withheld OR reordered away: the hold
+ * stops unattended spend, and a hand-typed slug is not unattended.
+ *
+ * The ranking DEPRIORITISES, it never excludes: `orderByEfficiency` reserves the
+ * last in-cap slot for the lowest-ranked cluster present, so the bottom cluster
+ * still gets a post remediated on a run where it has one to remediate.
  *
  * @param {Array<{slug:string, meta:object, report:string, reportAgeDays:number}>} entries
- * @param {{now?:number, limit?:number, slug?:string, hold?:object, includeHeld?:boolean}} opts
- * @returns {{kept:Array, held:Array, overridden:Array}}
+ * @param {{now?:number, limit?:number, slug?:string, hold?:object, includeHeld?:boolean,
+ *          ranking?:object}} opts
+ * @returns {{kept:Array, held:Array, overridden:Array, efficiency:object|null}}
  */
 export function selectBlockedPostsWithHold(entries, {
   now = Date.now(), limit = null, slug = null, hold = null, includeHeld = false,
+  ranking = null,
 } = {}) {
   const classified = (entries || [])
     .map((e) => {
@@ -104,9 +120,17 @@ export function selectBlockedPostsWithHold(entries, {
     });
 
   let out = kept;
+  let efficiency = null;
+  if (!slug && ranking) {
+    efficiency = orderByEfficiency(out, ranking, {
+      limit,
+      describe: (e) => ({ slug: e.slug, keyword: e.meta?.target_keyword, title: e.meta?.title }),
+    });
+    out = efficiency.items;
+  }
   if (slug) out = out.filter((e) => e.slug === slug);
   if (limit) out = out.slice(0, limit);
-  return { kept: out, held, overridden };
+  return { kept: out, held, overridden, efficiency };
 }
 
 /** The selection alone. Kept as the call shape everything already uses. */
@@ -294,16 +318,23 @@ async function main() {
   const hold = loadClusterHold({ root: ROOT });
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
+  // Deprioritise, don't condemn: the hold decides WHETHER, this decides IN WHAT
+  // ORDER the surviving posts spend a budget of five.
+  const ranking = rankClusters(hold);
+  const rankBanner = efficiencyBanner(ranking);
+  if (rankBanner) console.log(`${rankBanner}\n`);
 
-  const { kept: candidates, held } = selectBlockedPostsWithHold(
-    collectEntries(), { limit, slug, hold, includeHeld },
+  const { kept: candidates, held, efficiency } = selectBlockedPostsWithHold(
+    collectEntries(), { limit, slug, hold, includeHeld, ranking },
   );
   console.log(`  ${candidates.length} blocked post(s)${apply ? '' : ' (DRY RUN)'}`);
   if (held.length) for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+  const rankLines = renderEfficiencyLines(ranking, efficiency);
+  for (const line of rankLines) console.log(`  ${line}`);
 
   if (!apply) {
     for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
-    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: renderDisagreementLines(hold) });
+    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
     console.log(`\n${body}`);
     await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
     return;
@@ -335,7 +366,7 @@ async function main() {
     }
   }
 
-  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: renderDisagreementLines(hold) });
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
   console.log(`\n${body}`);
 
   await notify({

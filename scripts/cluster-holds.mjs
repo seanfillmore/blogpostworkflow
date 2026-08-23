@@ -18,6 +18,12 @@
  * one command that answers "why has nothing happened to those posts lately?" —
  * and now also "which clusters is the fleet getting wrong?".
  *
+ * IT ALSO PRINTS THE EFFICIENCY RANKING, because on this store a hold is now a
+ * rare event and the ranking is what actually decides where the budget goes on
+ * an ordinary day. Same file, same window, same command: an operator asking "why
+ * did toothpaste not get touched again?" needs one place to look, and splitting
+ * hold and rank across two commands is how the second one stops being read.
+ *
  * Usage:
  *   npm run cluster-holds
  *   node scripts/cluster-holds.mjs --json
@@ -28,6 +34,7 @@ import { fileURLToPath } from 'node:url';
 import {
   loadClusterHold, HOLD_FLAG, SEO_IMPACT_RELPATH, WIDE_WINDOW_DAYS,
 } from '../lib/cluster-hold.js';
+import { rankClusters, RESERVE_MIN_LIMIT } from '../lib/cluster-efficiency.js';
 import { staleNote } from '../lib/seo-impact-freshness.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -40,10 +47,23 @@ const GATED = [
   ['legacy-rebuilder', 'legacy + needs_rebuild pick list'],
   ['blocked-post-resolver', 'hard-blocked post candidates'],
   ['refresh-runner', '--from-post-performance / --from-quick-wins / --aging-quarterly'],
+  ['meta-optimizer', 'low-CTR candidate list (weekly --apply --limit 5)'],
   ['queue-autoapply', 'collection-gap dismissal (pre-existing, same evidence)'],
 ];
 
+// Which of those ALSO order their pick list by efficiency, and which do not.
+// `indexing-fixer` is the deliberate omission: its content-quality list has no
+// per-run cap, so every actionable post is refreshed whatever order it is in and
+// ranking there would be code that changes nothing. `queue-autoapply` drains
+// oldest-first on purpose — that IS its anti-starvation policy, and it applies
+// work another agent already decided to do.
+const RANKED = new Set([
+  'performance-engine', 'legacy-rebuilder', 'blocked-post-resolver',
+  'refresh-runner', 'meta-optimizer',
+]);
+
 const hold = loadClusterHold({ root: ROOT });
+const ranking = rankClusters(hold);
 
 if (process.argv.includes('--json')) {
   console.log(JSON.stringify({
@@ -58,6 +78,16 @@ if (process.argv.includes('--json')) {
     judging_window: hold.judgingWindow,
     judging_window_orders: hold.windowOrders,
     clusters: hold.classified,
+    efficiency: {
+      available: ranking.available,
+      reason: ranking.reason,
+      prior_clicks: ranking.priorClicks,
+      reserve_min_limit: RESERVE_MIN_LIMIT,
+      reserve_cluster: ranking.reserveCluster,
+      total_revenue: ranking.totalRevenue,
+      total_clicks: ranking.totalClicks,
+      ordered: ranking.ordered,
+    },
   }, null, 2));
   process.exit(0);
 }
@@ -124,14 +154,60 @@ if (hold.uncorroborated.length) {
   for (const u of hold.uncorroborated) console.log(`      ${u.cluster}: ${u.corroboration}`);
 }
 
+// ── efficiency ranking ───────────────────────────────────────────────────────
+// The softer intervention, and on this store the one that actually fires. A hold
+// EXCLUDES a cluster; this ORDERS what is left, so the categories that convert
+// are reached before the ones that merely rank.
+console.log('\n  EFFICIENCY RANKING — the order agents spend their per-run caps in.');
+if (!ranking.available) {
+  console.log(`    ⚠ Not ranked this run: ${ranking.reason}`);
+  console.log('    Every gated agent keeps whatever order its own picker produced. Nothing is blocked.\n');
+} else {
+  console.log(`    SCORE = SOLD $ ÷ (clicks + ${ranking.priorClicks} pseudo-clicks). The pseudo-clicks are the`);
+  console.log('    fair-shot bar (lib/cluster-revenue.js MIN_CLICKS): they stop a cluster with a handful of');
+  console.log('    clicks looking wildly efficient on a sample too small to mean anything. It shrinks toward');
+  console.log('    ZERO, never toward the site average — a category measured at $0 across every order in the');
+  console.log('    window must not be flattered back up to "probably average".');
+  console.log('    SCORE is an INDEX for comparing clusters on THIS report (90d all-channel $ over 28d organic');
+  console.log('    clicks). It is not dollars per click and does not survive a change of window.');
+  console.log('    $/PAGE is shown because page counts differ hugely; nothing sorts on it — pages are a');
+  console.log('    decision we made, clicks are demand the cluster actually attracted.\n');
+  const rpad = Math.max(...ranking.ordered.map((e) => e.cluster.length), 7);
+  console.log(`    ${'#'.padStart(2)}  ${'CLUSTER'.padEnd(rpad)}  ${'SCORE'.padStart(8)}  ${'SOLD $'.padStart(9)}  ${'CLICKS'.padStart(7)}  ${'%CLICKS'.padStart(7)}  ${'%REV'.padStart(6)}  ${'RAW $/CLK'.padStart(9)}  ${'$/PAGE'.padStart(7)}`);
+  for (const e of ranking.ordered) {
+    const pct = (n, d) => (d > 0 ? `${((n / d) * 100).toFixed(1)}%` : '—');
+    console.log(`    ${String(e.rank + 1).padStart(2)}  ${e.cluster.padEnd(rpad)}  ${e.score.toFixed(4).padStart(8)}`
+      + `  ${`$${e.productRevenue.toFixed(2)}`.padStart(9)}  ${String(e.clicks).padStart(7)}`
+      + `  ${pct(e.clicks, ranking.totalClicks).padStart(7)}  ${pct(e.productRevenue, ranking.totalRevenue).padStart(6)}`
+      + `  ${(e.revenuePerClick == null ? '—' : `$${e.revenuePerClick.toFixed(2)}`).padStart(9)}`
+      + `  ${(e.revenuePerPage == null ? '—' : `$${e.revenuePerPage.toFixed(2)}`).padStart(7)}`
+      + `${e.held ? '   [ON HOLD]' : ''}`);
+  }
+  console.log('\n    NOTHING IS BLOCKED BY THIS ORDER. Where an agent has a per-run cap of at least');
+  console.log(`    ${RESERVE_MIN_LIMIT}, one slot inside that cap is RESERVED for the lowest-ranked cluster in the pick`);
+  console.log('    list, so a ranking can never starve a cluster to zero the way a hard block would.');
+  console.log(`    Reserve target when every cluster is in play: ${ranking.reserveCluster || '(none — too few clusters)'}.`);
+  console.log('    A held cluster is NEVER the reserve target; that would undo the hold.');
+}
+
 console.log(`\n  ${hold.held.length} cluster(s) on hold.`);
 if (hold.held.length) {
   for (const h of hold.held) console.log(`      ${h.cluster}: ${h.corroboration}`);
-  console.log('\n  Those pages remain LIVE and INDEXED. Only unattended spend is paused.\n');
-  console.log('  Agents that honour the hold:');
-  for (const [agent, what] of GATED) console.log(`    ${agent.padEnd(22)} ${what}`);
-  console.log(`\n  Override on any of them: add ${HOLD_FLAG} to the run.`);
-  console.log('  A cluster releases itself automatically the moment it earns a dollar.\n');
+  console.log('\n  Those pages remain LIVE and INDEXED. Only unattended spend is paused.');
+  console.log('  A cluster releases itself automatically the moment it earns a dollar.');
 } else {
-  console.log('  No cluster currently qualifies. Every agent runs its full pick list.\n');
+  console.log('  No cluster currently qualifies — no cluster is EXCLUDED from any pick list.');
+  console.log('  That is the usual state and it is why the ranking above matters more than this line:');
+  console.log('  at ~50 orders / 90 days this store can rarely condemn a category on revenue evidence.');
 }
+
+console.log('\n  Agents that consult this report, and what each one does with it:');
+for (const [agent, what] of GATED) {
+  console.log(`    ${agent.padEnd(22)} ${RANKED.has(agent) ? 'hold + rank' : 'hold only  '}  ${what}`);
+}
+console.log('    indexing-fixer is hold-only on purpose: its content-quality list has no per-run cap,');
+console.log('    so every actionable post is refreshed whatever order it is in.');
+console.log('    queue-autoapply is hold-only on purpose: it drains oldest-first, which is already an');
+console.log('    anti-starvation policy, over work another agent has already decided to do.');
+console.log(`\n  Override the HOLD on any of them: add ${HOLD_FLAG} to the run. There is no flag to`);
+console.log('  override the RANKING, because it excludes nothing — it only decides what comes first.\n');
