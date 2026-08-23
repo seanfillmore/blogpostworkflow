@@ -28,6 +28,7 @@ import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
+import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 import { readUsage, summarizeRecords, listUsageDates } from '../../lib/llm-usage.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -932,23 +933,37 @@ function checkSystemHealth() {
   // generated_at. Thresholds match each producer's cadence + grace:
   //   gsc-opportunity: daily      → 2
   //   quick-wins:      weekly Mon → 9
+  //
+  // seo-impact is NOT a local number: it imports SEO_IMPACT_MAX_AGE_DAYS, the
+  // same constant the gates that block and delete work read. This row is the
+  // only channel a stale seo-impact report speaks through, so it must never
+  // alert LATER than a consumer degrades. It sat at 9 while
+  // `pipeline-prioritizer` silently dropped the revenue signal at 3 — ages 4-9
+  // were a window where the fleet ran degraded and the digest said all was well.
   const reports = [
     { name: 'gsc-opportunity report',      path: join(ROOT, 'data', 'reports', 'gsc-opportunity', 'latest.json'),      maxAgeDays: 2 },
     { name: 'quick-wins report',            path: join(ROOT, 'data', 'reports', 'quick-wins', 'latest.json'),            maxAgeDays: 9 },
-    { name: 'seo-impact report',            path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),            maxAgeDays: 9 },
+    { name: 'seo-impact report',            path: join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'),            maxAgeDays: SEO_IMPACT_MAX_AGE_DAYS,
+      // Not "running on stale data" — the gates fail SAFE and stop deciding at
+      // all, which is a quiet loss of a capability rather than a wrong action.
+      // Say which, or the row reads as a warning instead of an outage.
+      note: 'The $0-cluster gates have fallen open: nothing is being held, blocked, deferred or dropped on cluster revenue, and ad-brief is scoring `commercial` neutral. Re-run agents/seo-impact.' },
     { name: 'publish-drift report',         path: join(ROOT, 'data', 'reports', 'publish-drift', 'latest.json'),         maxAgeDays: 2 },
     { name: 'pipeline-prioritizer report',  path: join(ROOT, 'data', 'reports', 'pipeline-prioritizer', 'latest.json'), maxAgeDays: 2 },
   ];
+  const noteFor = new Map(reports.map(r => [r.name, r.note]));
   const reportResults = checkFreshness(
     reports.map(r => ({ name: r.name, newestDate: newestReportDate(r.path), maxAgeDays: r.maxAgeDays })),
     { today },
   );
   for (const r of problems(reportResults)) {
+    const note = noteFor.get(r.name);
     issues.push({
       title: `Analysis report "${r.name}" is ${r.status}`,
-      detail: r.status === 'missing'
+      detail: (r.status === 'missing'
         ? `${r.name} has never been generated (no latest.json). Its producer agent isn't running.`
-        : `${r.name} is ${r.ageDays} days old (generated ${r.newestDate}); expected within ${r.maxAgeDays} days. Downstream decisions are running on stale data.`,
+        : `${r.name} is ${r.ageDays} days old (generated ${r.newestDate}); expected within ${r.maxAgeDays} days. Downstream decisions are running on stale data.`)
+        + (note ? ` ${note}` : ''),
     });
   }
 

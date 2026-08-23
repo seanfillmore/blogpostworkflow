@@ -26,6 +26,7 @@ import { triageOrphanBrief } from '../lib/brief-triage.js';
 import { listAllSlugs, getPostMeta, getContentPath } from '../lib/posts.js';
 import { isInProductScope } from '../lib/product-scope.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../lib/cluster-hold.js';
+import { staleNote } from '../lib/seo-impact-freshness.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -58,11 +59,16 @@ const brandTerms = (readJson(join(ROOT, 'config', 'site.json'), {}).brand_terms 
 // the CORROBORATED classification: a $0 that real Shopify orders contradict is a
 // broken-attribution finding, and on 2026-08-22 acting on one unchecked would
 // have deleted every brief in a category earning 19% of all revenue.
+// A STALE report is refused exactly like an absent one — `loadClusterHold`
+// reports both as `available: false`, so this exit is the fail-safe for both.
+// Nothing here may delete a brief on a measurement nobody has refreshed.
 let clusterRevenue = null;
 if (DROP_NON_EARNING) {
   const hold = loadClusterHold({ root: ROOT });
   if (!hold.available) {
-    console.error('--drop-non-earning needs data/reports/seo-impact/latest.json. Run agents/seo-impact first.');
+    console.error(hold.stale
+      ? `--drop-non-earning refused: ${staleNote(hold.freshness)} Deleting briefs on a report this old is not reversible.`
+      : '--drop-non-earning needs data/reports/seo-impact/latest.json. Run agents/seo-impact first.');
     process.exit(1);
   }
   const banner = holdBanner(hold);

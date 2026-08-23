@@ -321,10 +321,17 @@ function applyFeedbackAdjustments(items, classified = loadClusterRevenue()) {
 function loadClusterRevenue() {
   try {
     const hold = loadClusterHold({ root: ROOT });
+    // Missing AND stale both speak here — holdBanner returns a line for each.
     const banner = holdBanner(hold);
     if (banner) console.log(banner);
     return corroboratedClassification(hold);
-  } catch { return {}; }
+  } catch (e) {
+    // Same reasoning as content-strategist's: `{}` blocks nothing, which is
+    // correct, but a silent catch makes a defect in the loader indistinguishable
+    // from a report that found no duds.
+    console.log(`  ⚠ cluster revenue could not be loaded (${e.message}) — nothing is blocked or deferred this run.`);
+    return {};
+  }
 }
 
 // ── state persistence ─────────────────────────────────────────────────────────

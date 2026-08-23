@@ -1652,6 +1652,21 @@ function renderSeoImpact(d) {
     (win.start || '') + ' → ' + (win.end || '') + ' (' + days + 'd, organic search'
     + (s.revenue_source === 'shopify-orders' ? ', Shopify orders' : '') + ')';
 
+  // Staleness banner. The card is DISPLAY, so a stale report is shown with a
+  // warning rather than hidden — hiding it would look like "no revenue data
+  // exists" and send the reader looking for the wrong problem. A three-week-old
+  // revenue table reads exactly as authoritative as today's without this.
+  var stale = document.getElementById('seo-impact-stale');
+  var fr = d && d.seoImpactFreshness;
+  if (stale) {
+    if (fr && fr.status === 'stale') {
+      stale.textContent = '⚠ ' + fr.note + ' Every $0-cluster gate has fallen open — nothing is being held, blocked or dropped on these numbers.';
+      stale.style.display = '';
+    } else {
+      stale.style.display = 'none';
+    }
+  }
+
   // ── weekly revenue trend: inline SVG bars ──
   // Bars are ORGANIC SEARCH revenue from Shopify orders — the same source and the same
   // channel as the headline above it, so the last four bars sum to the headline. The
