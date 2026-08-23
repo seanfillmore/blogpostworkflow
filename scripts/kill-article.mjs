@@ -12,9 +12,11 @@
 
 import { killPost } from '../lib/post-kill.js';
 import { createInterface } from 'readline';
+import { positionalArg } from '../lib/positional-arg.js';
 
 const args = process.argv.slice(2);
-const slug = args.find((a) => !a.startsWith('--'));
+// positionalArg, not args.find: `--reason <text>` would otherwise be read as the slug.
+const slug = positionalArg(args, ['--reason']);
 const reasonIdx = args.indexOf('--reason');
 const reason = reasonIdx !== -1 ? args[reasonIdx + 1] : 'killed via CLI';
 const skipConfirm = args.includes('--yes');
