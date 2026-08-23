@@ -51,6 +51,8 @@ try {
 
 const { listEntrantProfiles, listProfilesWithConsent, subscribeToList, updateProfileProperties } =
   await import('../../lib/klaviyo-profiles.js');
+const { resolveMechanism, confirmedEmailSet, CONFIRM_MECHANISMS } =
+  await import('../../lib/giveaway/reconcile.js');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
 
@@ -84,11 +86,37 @@ export function selectNudgeTargets({ submitted, confirmedEmails, now, minHours =
 
 async function main() {
   const apply = process.argv.includes('--apply');
+
+  // THIS SCRIPT DOES NOT WORK UNDER flow_link, AND ITS FAILURE IS SILENT.
+  //
+  // The whole mechanism above is "re-issue the subscribe, Klaviyo re-sends its
+  // double-opt-in email". On a SINGLE opt-in list there is no such email:
+  // subscribeToList simply re-subscribes an already-subscribed profile and
+  // returns success. Every counter below would still increment, the run would
+  // report "nudged 40", the profiles would get their gv_nudge_count bumped
+  // toward the cap of 3 — and not one message would be sent. Worse, burning the
+  // cap this way would permanently disqualify those entrants from the real
+  // nudge path.
+  //
+  // Under flow_link the branded confirmation flow owns re-sends: it can reach
+  // these profiles because they ARE subscribed, so a scheduled reminder inside
+  // the flow replaces this script entirely. Exit 0 — cron runs this daily and a
+  // deliberate policy stop is not a failure.
+  const mechanism = resolveMechanism(config);
+  if (mechanism === CONFIRM_MECHANISMS.FLOW_LINK) {
+    console.log(
+      'confirmMechanism=flow_link — this script is a no-op and exits without sending.\n'
+      + 'Re-issuing a subscribe to a single opt-in list sends NO confirmation email;\n'
+      + 'the branded confirmation flow (config.confirmFlowId) owns reminders now.',
+    );
+    return;
+  }
+
   const [submitted, listed] = await Promise.all([
     listEntrantProfiles(config.entryOpensAt),
     listProfilesWithConsent(config.listId),
   ]);
-  const confirmedEmails = listed.filter((p) => p.subscribed).map((p) => p.email);
+  const confirmedEmails = [...confirmedEmailSet(listed, { mechanism })];
 
   const { due, skipped } = selectNudgeTargets({ submitted, confirmedEmails, now: Date.now() });
 

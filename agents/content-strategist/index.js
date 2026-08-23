@@ -83,10 +83,19 @@ function slugify(str) {
 function loadClusterRevenue() {
   try {
     const hold = loadClusterHold({ root: ROOT });
+    // Missing AND stale both speak here — holdBanner returns a line for each.
     const banner = holdBanner(hold);
     if (banner) console.log(banner);
     return corroboratedClassification(hold);
-  } catch { return {}; }
+  } catch (e) {
+    // `{}` is the right VALUE — no verdicts, so nothing is dropped, matching the
+    // fail-open rule. Swallowing the reason was not. `loadClusterHold` reads
+    // defensively and should never throw, so reaching this catch is a defect in
+    // it, and the one run where it happened would otherwise look identical to a
+    // run where the report simply said nothing was a dud.
+    console.log(`  ⚠ cluster revenue could not be loaded (${e.message}) — no cluster is treated as a dud this run.`);
+    return {};
+  }
 }
 
 function loadLatestRankReport() {

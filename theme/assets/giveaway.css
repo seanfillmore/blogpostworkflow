@@ -102,6 +102,16 @@
 .gv-fine { font-size: 1.3rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
 .gv-fine a { color: var(--gv-ink); }
 
+/* Consent disclosure sitting directly above the submit button. Deliberately a
+   step more legible than .gv-fine: it is the only place the entrant is told
+   that submitting subscribes them, so it must not read as boilerplate. */
+.gv-consent {
+  font-size: 1.35rem;
+  line-height: 1.5;
+  color: var(--gv-muted);
+  margin: 0 0 1.2rem;
+}
+
 /* ── Shared controls ─────────────────────────────────────────────────────── */
 
 .gv-entry input[type="email"],

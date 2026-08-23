@@ -56,6 +56,7 @@ import { buildConcept, buildLabelStrings, fetchAdReviews, createJobReporter } fr
 import { scoreBrief } from '../../lib/ad-brief-score.js';
 import { writeBrief } from '../../lib/ad-brief.js';
 import { isValidJobId } from '../../lib/ad-studio-job.js';
+import { seoImpactPath, freshnessOfReport, staleNote } from '../../lib/seo-impact-freshness.js';
 // The selection brain lives in lib/ so the dashboard's /api/ad-brief routes can tell the
 // operator which products are briefable and how many copy calls a click costs WITHOUT
 // importing this module — which would pull Anthropic, @google/genai and sharp into the
@@ -469,10 +470,22 @@ async function main() {
 
   // Step 4: seo-impact, best-effort. Missing (the common case in a local checkout — see
   // CLAUDE.md's snapshot note) scores neutral rather than blocking.
+  //
+  // A STALE report DEGRADES, it does not block. This consumer only RANKS briefs;
+  // it destroys nothing, so refusing to run would cost more than running with
+  // one of four score components neutral. Dropping the report on the floor is
+  // exactly what `scoreCommercial` already treats as "the attribution has
+  // nothing to say" — the same epistemic position as no match at all — so the
+  // stale path reuses that rather than inventing a second neutral.
   let seoImpact = null;
   try {
-    seoImpact = loadJson(join(ROOT, 'data', 'reports', 'seo-impact', 'latest.json'));
+    seoImpact = loadJson(seoImpactPath(ROOT));
   } catch { /* neutral commercial score — see scoreCommercial */ }
+  const impactFreshness = freshnessOfReport(seoImpact);
+  if (impactFreshness.status === 'stale') {
+    console.log(`  ${staleNote(impactFreshness)} Scoring \`commercial\` neutral for every brief.`);
+    seoImpact = null;
+  }
 
   // Step 5: select angles — those named by --angles, else every angle passing
   // angleRelevance for this product.

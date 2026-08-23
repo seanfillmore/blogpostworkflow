@@ -1,0 +1,6 @@
+{
+  "sections": {
+    "main": { "type": "giveaway-confirmed", "settings": {} }
+  },
+  "order": ["main"]
+}

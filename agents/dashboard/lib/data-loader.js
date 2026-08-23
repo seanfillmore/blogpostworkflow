@@ -16,6 +16,7 @@ import {
 } from './data-parsers.js';
 import { parseTechSeoReport } from './tech-seo-parser.js';
 import { classifyBlockedReport, LIVE_BLOCK_FRESHNESS_DAYS } from '../../../lib/blocked-posts.js';
+import { freshnessOfReport, staleNote } from '../../../lib/seo-impact-freshness.js';
 
 // The rule moved to lib/blocked-posts.js so agents/daily-summary and
 // agents/blocked-post-resolver can share it — this module drags in the whole
@@ -246,6 +247,18 @@ export function aggregateData() {
 
   const quickWinsRaw       = readJsonIfExists(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
   const seoImpact          = readJsonIfExists(join(REPORTS_DIR, 'seo-impact', 'latest.json'));
+  // The dashboard DISPLAYS, so it degrades rather than hiding the card: an
+  // operator reading a revenue table has no way to tell a current one from a
+  // three-week-old one, and the numbers look equally authoritative either way.
+  // `{status, ageDays, newestDate, note}` — the card renders the note inline.
+  const seoImpactFreshnessResult = freshnessOfReport(seoImpact);
+  const seoImpactFreshness = {
+    status: seoImpactFreshnessResult.status,
+    ageDays: seoImpactFreshnessResult.ageDays,
+    generatedDate: seoImpactFreshnessResult.newestDate,
+    maxAgeDays: seoImpactFreshnessResult.maxAgeDays,
+    note: staleNote(seoImpactFreshnessResult),
+  };
   const postPerformance    = readJsonIfExists(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   const gscOpportunityRaw  = readJsonIfExists(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   const clusterWeights     = readJsonIfExists(join(REPORTS_DIR, 'content-strategist', 'cluster-weights.json'));
@@ -399,6 +412,7 @@ export function aggregateData() {
     contentGapLastReport,
     quickWins,
     seoImpact,
+    seoImpactFreshness,
     pipelinePrioritizer,
     priorityTuner,
     postPerformance,

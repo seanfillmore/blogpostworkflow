@@ -12,7 +12,9 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getListOptInProcess, listProfilesWithConsent } from '../../lib/klaviyo-profiles.js';
+import { klaviyoRequest } from '../../lib/klaviyo.js';
 import { isTestProfile } from '../../lib/giveaway/test-identity.js';
+import { resolveMechanism, CONFIRM_MECHANISMS } from '../../lib/giveaway/reconcile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -125,29 +127,78 @@ if (endpointMatch) {
 check(!!config.listId, 'config.listId is set');
 check(!!config.nurtureFlowId, 'config.nurtureFlowId is set');
 
-// 8. The giveaway list is DOUBLE opt-in.
+// 8. The list's opt-in process MATCHES the configured confirm mechanism.
 //
 // This was long documented as unassertable ("the API does not expose this
 // field"), which was simply false: GET /api/lists/{id}/ returns
 // attributes.opt_in_process. Verified live 2026-08-11 — Y2ukbE is
 // `double_opt_in`, and `S6hKFq "Email List"` is `single_opt_in`, so the account
 // is NOT uniform and a re-created list can land single without anyone noticing.
+// The setting can only be CHANGED in the Klaviyo UI, so asserting the read
+// value is the only guard there is.
 //
-// It matters twice over. Single opt-in marks every entrant SUBSCRIBED at
-// list-add, which (a) makes the advertised +2 confirmation rung pay out to
-// everyone for doing nothing, and (b) removes the deliverability screen the
-// existing 481 real subscribers depend on, on a list built from cold paid
-// traffic. The setting can only be CHANGED in the Klaviyo UI, so asserting the
-// read value is the only guard there is.
+// What is asserted is the PAIR, not the list alone. These are two halves of one
+// setting living in two systems, and every way they can disagree is silent in
+// production:
+//
+//   double_opt_in config + single opt-in list -> every entrant is subscribed on
+//     submit and the code reads that as confirmation, paying the +2 and every
+//     §5 referral rung to people who never clicked anything.
+//   flow_link config + double opt-in list -> the branded flow never reaches an
+//     unconfirmed profile (Klaviyo will not send marketing email to one), so
+//     confirmation stops happening at all and the +2 never pays again.
+//
+// Neither shows up as an error anywhere; both corrupt the entry ladder. So this
+// gate asserts the pair, not just the list.
 if (config.listId) {
+  const mechanism = resolveMechanism(config);
+  const expectedOptIn = mechanism === CONFIRM_MECHANISMS.FLOW_LINK ? 'single_opt_in' : 'double_opt_in';
   let optIn = null;
   let optInError = null;
   try { optIn = await getListOptInProcess(config.listId); }
   catch (error) { optInError = error.message; }
   check(
-    optIn === 'double_opt_in',
-    `Klaviyo list ${config.listId} is double opt-in (got ${optInError ? `error: ${optInError}` : optIn})`,
+    optIn === expectedOptIn,
+    `Klaviyo list ${config.listId} opt-in process matches confirmMechanism=${mechanism} `
+    + `(expected ${expectedOptIn}, got ${optInError ? `error: ${optInError}` : optIn})`,
   );
+
+  // Under flow_link the confirmation email is OURS, so its absence is a launch
+  // blocker in exactly the way a missing double-opt-in setting used to be:
+  // nothing else in the system sends a confirmation link.
+  if (mechanism === CONFIRM_MECHANISMS.FLOW_LINK) {
+    check(Boolean(config.confirmFlowId), `confirmFlowId is set (got ${config.confirmFlowId ?? 'null'})`);
+    check(Boolean(config.confirmTemplateId), `confirmTemplateId is set (got ${config.confirmTemplateId ?? 'null'})`);
+
+    // The confirmed segment gates every campaign send, and it is built by hand
+    // in the Klaviyo UI (this API revision will not return a segment definition,
+    // so nothing here can read back what it actually filters on). What CAN be
+    // read is its size, which catches both ways a hand-built definition goes
+    // wrong: an over-broad one matches the whole list, an under-broad or
+    // misspelled one matches nobody. Neither shows up as an error, and both
+    // decide who receives email.
+    check(Boolean(config.confirmedSegmentId), `confirmedSegmentId is set (got ${config.confirmedSegmentId ?? 'null'})`);
+    if (config.confirmedSegmentId) {
+      let count = null;
+      let countError = null;
+      try {
+        const res = await klaviyoRequest(
+          'GET',
+          `/segments/${config.confirmedSegmentId}/?additional-fields%5Bsegment%5D=profile_count`,
+        );
+        count = res?.data?.attributes?.profile_count ?? null;
+      } catch (error) { countError = error.message; }
+
+      const listed = (await listProfilesWithConsent(config.listId)).length;
+      check(
+        Number.isFinite(count) && count > 0 && count <= listed,
+        `confirmed segment ${config.confirmedSegmentId} holds a plausible count `
+        + `(got ${countError ? `error: ${countError}` : count}, list holds ${listed}; `
+        + 'expected between 1 and the list size — 0 means the definition matches nobody, '
+        + 'the full list size means it is not filtering on confirmation at all)',
+      );
+    }
+  }
 }
 
 // 9. No test identities may remain in the entrant pool.

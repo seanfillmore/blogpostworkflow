@@ -62,6 +62,7 @@ try {
 const { listProfilesWithConsent, listEntrantProfiles, updateProfileProperties } = await import('../../lib/klaviyo-profiles.js');
 const { trackEvent } = await import('../../lib/klaviyo.js');
 const { classifyReferrals, summarizeAudit, mergeEntrantProfiles } = await import('../../lib/giveaway/referral-audit.js');
+const { resolveMechanism } = await import('../../lib/giveaway/reconcile.js');
 const { notify } = await import('../../lib/notify.js');
 
 export const METRIC = 'Giveaway Referral Pending';
@@ -95,7 +96,7 @@ const [listed, submitted] = await Promise.all([
 ]);
 const profiles = mergeEntrantProfiles(listed, submitted);
 const byEmail = new Map(profiles.map((p) => [String(p.email || '').trim().toLowerCase(), p]));
-const rows = classifyReferrals(profiles);
+const rows = classifyReferrals(profiles, { mechanism: resolveMechanism(config) });
 const summary = summarizeAudit(rows);
 const targets = selectNotifyTargets(rows, byEmail);
 

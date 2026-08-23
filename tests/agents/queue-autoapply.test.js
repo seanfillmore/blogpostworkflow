@@ -81,8 +81,14 @@ test('the agent reads cluster revenue from the report, not from a hardcoded list
   assert.match(src, /loadClusterHold/);
   assert.match(src, /cluster-hold\.js/);
   assert.doesNotMatch(src, /['"]toothpaste['"]/, 'no cluster may be named in the agent');
+  // The path itself moved one module further along in 2026-08-23's freshness
+  // work — `lib/seo-impact-freshness.js` owns it alongside the one staleness
+  // policy, and `lib/cluster-hold.js` re-exports it so callers are unchanged.
+  // The invariant being pinned is unchanged: exactly one module spells the path.
   const loader = readFileSync(join(ROOT, 'lib/cluster-hold.js'), 'utf8');
-  assert.match(loader, /seo-impact['"],\s*['"]latest\.json/, 'the shared loader owns the path now');
+  assert.match(loader, /seo-impact-freshness\.js/, 'the shared loader reads the one policy module');
+  const policyModule = readFileSync(join(ROOT, 'lib/seo-impact-freshness.js'), 'utf8');
+  assert.match(policyModule, /seo-impact['"],\s*['"]latest\.json/, 'which owns the path');
   const policy = readFileSync(join(ROOT, 'lib/queue-autoapply.js'), 'utf8');
   assert.doesNotMatch(policy, /['"]toothpaste['"]/, 'no cluster may be named in the policy either');
 });
