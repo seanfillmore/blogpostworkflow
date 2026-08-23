@@ -25,6 +25,7 @@ import {
   fetchPageSpeed, parsePsiResult, buildSnapshot, diffSnapshots, summarizeMarkdown, PSI_API_KEY,
 } from '../../lib/pagespeed.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -114,40 +115,44 @@ async function main() {
   return { snapshot, diff, failures };
 }
 
-main()
-  .then(async ({ snapshot, diff, failures }) => {
-    const worst = Math.min(...snapshot.pages.map(p => p.score));
-    const vitalRegressions = diff.metricRegressions.length;
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(async ({ snapshot, diff, failures }) => {
+      const worst = Math.min(...snapshot.pages.map(p => p.score));
+      const vitalRegressions = diff.metricRegressions.length;
 
-    // Escalate on *changes*, not on standing state. A Core Web Vital crossing
-    // into a worse band is news; a vital that has been poor for weeks (TBT
-    // usually is) would otherwise mark every single daily digest as an error
-    // until nobody reads them. Standing failures still ship in the body.
-    const status = diff.regressions.length || vitalRegressions ? 'error' : 'success';
+      // Escalate on *changes*, not on standing state. A Core Web Vital crossing
+      // into a worse band is news; a vital that has been poor for weeks (TBT
+      // usually is) would otherwise mark every single daily digest as an error
+      // until nobody reads them. Standing failures still ship in the body.
+      const status = diff.regressions.length || vitalRegressions ? 'error' : 'success';
 
-    const vitalLine = m => `- ${m.url} (${m.strategy}): ${m.label} ${m.from} → ${m.to} (${m.fromBand} → ${m.toBand})`;
-    const parts = [
-      `Measured ${snapshot.pages.length} page/strategy results (worst score ${worst}).`,
-      vitalRegressions ? `\n🔴 Core Web Vital regressions:\n${diff.metricRegressions.map(vitalLine).join('\n')}` : '',
-      diff.regressions.length ? `\n🔴 Score regressions:\n${diff.regressions.map(r => `- ${r.url} (${r.strategy}): ${r.from}→${r.to}`).join('\n')}` : '',
-      diff.improvements.length ? `\n🟢 Score improvements:\n${diff.improvements.map(i => `- ${i.url} (${i.strategy}): ${i.from}→${i.to}`).join('\n')}` : '',
-      diff.metricImprovements.length ? `\n🟢 Core Web Vital improvements:\n${diff.metricImprovements.map(vitalLine).join('\n')}` : '',
-      diff.failing.length ? `\n⚠️ Vitals currently poor:\n${diff.failing.map(f => `- ${f.url} (${f.strategy}): ${f.label} ${f.value}`).join('\n')}` : '',
-      failures.length ? `\n⚠️ ${failures.length} fetch failure(s).` : '',
-    ].filter(Boolean);
+      const vitalLine = m => `- ${m.url} (${m.strategy}): ${m.label} ${m.from} → ${m.to} (${m.fromBand} → ${m.toBand})`;
+      const parts = [
+        `Measured ${snapshot.pages.length} page/strategy results (worst score ${worst}).`,
+        vitalRegressions ? `\n🔴 Core Web Vital regressions:\n${diff.metricRegressions.map(vitalLine).join('\n')}` : '',
+        diff.regressions.length ? `\n🔴 Score regressions:\n${diff.regressions.map(r => `- ${r.url} (${r.strategy}): ${r.from}→${r.to}`).join('\n')}` : '',
+        diff.improvements.length ? `\n🟢 Score improvements:\n${diff.improvements.map(i => `- ${i.url} (${i.strategy}): ${i.from}→${i.to}`).join('\n')}` : '',
+        diff.metricImprovements.length ? `\n🟢 Core Web Vital improvements:\n${diff.metricImprovements.map(vitalLine).join('\n')}` : '',
+        diff.failing.length ? `\n⚠️ Vitals currently poor:\n${diff.failing.map(f => `- ${f.url} (${f.strategy}): ${f.label} ${f.value}`).join('\n')}` : '',
+        failures.length ? `\n⚠️ ${failures.length} fetch failure(s).` : '',
+      ].filter(Boolean);
 
-    const headline = vitalRegressions
-      ? `${vitalRegressions} Core Web Vital regression${vitalRegressions > 1 ? 's' : ''}`
-      : diff.regressions.length ? `${diff.regressions.length} score regressions` : null;
-    await notify({
-      subject: `PageSpeed Monitor: worst score ${worst}${headline ? ` (${headline})` : ''}`,
-      body: parts.join('\n'),
-      status,
-      category: 'collector',
-    }).catch(() => {});
-  })
-  .catch(async err => {
-    await notify({ subject: 'PageSpeed Monitor failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+      const headline = vitalRegressions
+        ? `${vitalRegressions} Core Web Vital regression${vitalRegressions > 1 ? 's' : ''}`
+        : diff.regressions.length ? `${diff.regressions.length} score regressions` : null;
+      await notify({
+        subject: `PageSpeed Monitor: worst score ${worst}${headline ? ` (${headline})` : ''}`,
+        body: parts.join('\n'),
+        status,
+        category: 'collector',
+      }).catch(() => {});
+    })
+    .catch(async err => {
+      await notify({ subject: 'PageSpeed Monitor failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}

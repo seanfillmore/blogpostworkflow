@@ -38,6 +38,7 @@ import { fileURLToPath } from 'url';
 import { getArticle, updateArticle } from '../../lib/shopify.js';
 import { checkAnswerFirst, extractFirstBodyParagraph } from '../../lib/answer-first.js';
 import { getContentPath, getPostMeta, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -417,8 +418,12 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error('\nError:', err.message);
-  console.error(err.stack);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('\nError:', err.message);
+    console.error(err.stack);
+    process.exit(1);
+  });
+}

@@ -29,6 +29,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -163,4 +164,8 @@ function main() {
   console.log(`  Saved: data/reports/device-weights/latest.json`);
 }
 
-main();
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main();
+}
