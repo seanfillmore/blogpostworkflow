@@ -35,6 +35,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports');
 import {
   listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, getRefreshedPath, POSTS_DIR,
 } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -317,7 +318,11 @@ async function main() {
   console.log('\nPerformance Engine complete.');
 }
 
-main().catch(err => {
-  console.error('Performance engine failed:', err);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch(err => {
+    console.error('Performance engine failed:', err);
+    process.exit(1);
+  });
+}

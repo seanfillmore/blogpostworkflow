@@ -36,6 +36,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
 import { listAllSlugs, getPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -406,7 +407,11 @@ async function main() {
   console.log('\nPost performance review complete.');
 }
 
-main().catch((err) => {
-  console.error('Post performance agent failed:', err);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Post performance agent failed:', err);
+    process.exit(1);
+  });
+}
