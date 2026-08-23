@@ -3,7 +3,9 @@
 // the comparison is not real yet — a confident wrong verdict is worse than none.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { evaluateSpendGate, fetchCampaignSpend, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
+import {
+  evaluateSpendGate, fetchCampaignSpend, resolveAccessToken, spendWindow, AD_ACCOUNT_TIME_ZONE,
+} from '../../lib/giveaway/meta-spend.js';
 
 // A MEASURED value — i.e. a window that has actually closed. windowMatured is what the gate
 // reads; `matured` alone is ambiguous, because entryValue()'s no-window fallback reuses that
@@ -155,4 +157,46 @@ test('a since-entry $0 falls back to the provisional target, not a $0 ceiling', 
   });
   assert.equal(matured.basis, 'measured');
   assert.equal(matured.verdict, 'over', 'once 40 entrants have matured at $0, over IS the finding');
+});
+
+// ── spendWindow ───────────────────────────────────────────────────────────────
+
+test('spendWindow ends TODAY, not yesterday — the 24h lag maximum-preset bug', () => {
+  const w = spendWindow({
+    entryOpensAt: '2026-08-18T00:00:00-07:00',
+    now: Date.parse('2026-08-22T20:00:00-07:00'),
+  });
+  assert.deepEqual(w, { since: '2026-08-18', until: '2026-08-22' });
+});
+
+test('spendWindow buckets the day in the AD ACCOUNT timezone, not UTC', () => {
+  // 21:00 Pacific on the 22nd is already the 23rd in UTC. Reporting is bucketed
+  // by the account's clock, so the correct `until` is still the 22nd.
+  const at = Date.parse('2026-08-23T04:00:00Z');
+  assert.equal(spendWindow({ entryOpensAt: '2026-08-18', now: at }).until, '2026-08-22');
+  assert.equal(
+    spendWindow({ entryOpensAt: '2026-08-18', now: at, timeZone: 'UTC' }).until,
+    '2026-08-23',
+  );
+});
+
+test('spendWindow takes the calendar date verbatim and never shifts it by the offset', () => {
+  // Same reasoning as campaignSchedule: the date a merchant means is the one
+  // written in the string, not whatever UTC makes of it.
+  assert.equal(spendWindow({ entryOpensAt: '2026-08-18T23:59:59-07:00', now: Date.now() }).since, '2026-08-18');
+});
+
+test('spendWindow returns null on an unusable open date so the caller can fall back', () => {
+  for (const bad of [undefined, null, '', 'not-a-date', '2026-8-1', 42]) {
+    assert.equal(spendWindow({ entryOpensAt: bad }), null, `expected null for ${JSON.stringify(bad)}`);
+  }
+  assert.equal(spendWindow(), null);
+});
+
+test('AD_ACCOUNT_TIME_ZONE is the default spendWindow uses', () => {
+  const at = Date.parse('2026-08-23T04:00:00Z');
+  assert.equal(
+    spendWindow({ entryOpensAt: '2026-08-18', now: at }).until,
+    spendWindow({ entryOpensAt: '2026-08-18', now: at, timeZone: AD_ACCOUNT_TIME_ZONE }).until,
+  );
 });

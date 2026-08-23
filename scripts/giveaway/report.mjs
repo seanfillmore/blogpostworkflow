@@ -18,7 +18,9 @@ import { fileURLToPath } from 'node:url';
 import { listProfilesWithConsent, listEntrantProfiles } from '../../lib/klaviyo-profiles.js';
 import { summarizeEntrants, confirmationFunnel } from '../../lib/giveaway/summarize.js';
 import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
-import { fetchCampaignSpend, evaluateSpendGate, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
+import {
+  fetchCampaignSpend, evaluateSpendGate, resolveAccessToken, spendWindow,
+} from '../../lib/giveaway/meta-spend.js';
 import {
   referralAskReach, referralParticipationGate, evaluateKillThreshold, paidReadoutLines,
 } from '../../lib/giveaway/paid-readout.js';
@@ -87,9 +89,15 @@ try {
 }
 
 // Actual spend, not budget x days. See lib/giveaway/meta-spend.js.
+//
+// The explicit window is what includes TODAY: Meta's `maximum` preset ends
+// yesterday, so without this every cost-per-entry figure in the report lagged a
+// full day. A null window (unparseable entryOpensAt) falls back to the old
+// preset rather than dropping the spend block entirely.
 const spend = await fetchCampaignSpend({
   campaignId: metaCampaignId,
   accessToken: resolveAccessToken(),
+  ...(spendWindow({ entryOpensAt: config.entryOpensAt }) ?? {}),
 });
 const spendGate = spend && !spend.error && cohort
   ? evaluateSpendGate({
