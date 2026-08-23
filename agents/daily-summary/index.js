@@ -491,8 +491,17 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     const deltaColor = d >= 0 ? '#166534' : '#991b1b';
     const topPages = (seoImpact.top_revenue || []).slice(0, 5).map((r) =>
       `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${money(r.revenue)} &mdash; ${esc(r.path)}</div><div class="qw-meta">${r.conversions} conversions &middot; ${r.sessions} organic sessions${r.action ? ` &middot; ${esc(r.action.type)} ${esc(r.action.date)}` : ''}</div></div></div>`).join('');
+    // "By cluster" names a CATEGORY, so it prints what that category sold — from
+    // order line items — not what landed on pages named after it. The entry-page
+    // figure is still in the report and still drives every $0-cluster decision;
+    // it just cannot be printed beside a category's name without saying so.
+    // Reports written before this field existed fall back to the old alias.
+    const clustersHaveProduct = (seoImpact.clusters || []).some((c) => c.product_revenue_all_channels != null);
+    const clusterLabel = clustersHaveProduct ? 'Sold by category (organic / all channels)' : 'By cluster (entry-page organic)';
     const topClusters = (seoImpact.clusters || []).slice(0, 4)
-      .map((c) => `${esc(c.cluster)} ${money(c.revenue)}`).join(' &middot; ');
+      .map((c) => (clustersHaveProduct
+        ? `${esc(c.cluster)} ${money(c.product_organic_revenue)} / ${money(c.product_revenue_all_channels)}`
+        : `${esc(c.cluster)} ${money(c.revenue)}`)).join(' &middot; ');
     const notConv = (seoImpact.not_converting || []).slice(0, 3)
       .map((r) => `${esc(r.path)} (${r.sessions}s)`).join(', ');
     seoImpactSection = `
@@ -500,7 +509,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
         <div class="section-title">&#128200; What's Working &mdash; Organic Revenue (last ${windowDays} days)</div>
         <p style="font-size:13px;margin:0 0 12px 0;"><strong>${money(t.organic_revenue)}</strong> organic revenue &middot; <span style="color:${deltaColor};font-weight:600;">${deltaStr}</span> vs prior period &middot; ${t.organic_conversions} ${seoImpact.revenue_source === 'shopify-orders' ? 'Shopify orders' : 'conversion events'}${t.organic_sessions != null ? ` &middot; <span style="color:#6b7280;">${t.organic_sessions} organic sessions</span>` : ''}</p>
         ${topPages}
-        ${topClusters ? `<div class="qw-meta" style="margin-top:10px;"><strong>By cluster:</strong> ${topClusters}</div>` : ''}
+        ${topClusters ? `<div class="qw-meta" style="margin-top:10px;"><strong>${clusterLabel}:</strong> ${topClusters}</div>` : ''}
         ${notConv ? `<div class="qw-meta" style="margin-top:6px;color:#92400e;"><strong>Traffic, no sales:</strong> ${notConv} &mdash; conversion opportunities</div>` : ''}
       </div>`;
   }

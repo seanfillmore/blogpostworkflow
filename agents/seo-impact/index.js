@@ -28,6 +28,17 @@
  * windows are PACIFIC calendar days (agents/shopify-collector's DST-correct helpers), the
  * same days the daily snapshots bucket by.
  *
+ * TWO CLUSTER TABLES, TWO QUESTIONS — and the split is the point, not a redundancy.
+ * A landing page and a product category are different things, and one number cannot
+ * mean both. `clusters[].entry_page_organic_revenue` credits the page the session
+ * entered on, which is right for "which page earns" and useless for "what did this
+ * category sell": measured over 90 days, 29% of organic revenue lands on `/`, a
+ * `/cart/...` URL, or a subscription order with no landing page at all, and a soap
+ * bought in a cart that entered on the homepage is credited to the homepage. So
+ * `clusters[].product_*` answers the category question from order LINE ITEMS
+ * (lib/product-cluster-revenue.js), and the entry-page fields are preserved
+ * untouched beside it — every $0-cluster decision in the fleet still reads those.
+ *
  * The dashboard's 12-week `revenue_trend` is built from the same Shopify records, in
  * 7-Pacific-day buckets aligned to the window end, so its newest WINDOW/7 buckets sum
  * exactly to `organic_revenue`. It was GA4's modelled revenue until 2026-08-17 and
@@ -60,6 +71,10 @@ import {
   clusterRollup, residualRollup, actionWins, rankBy, weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
+import {
+  loadBundleIndex, clusterProductRevenue, productClusterRows, mergeClusterRows,
+  PRODUCT_REVENUE_BASIS,
+} from '../../lib/product-cluster-revenue.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -72,6 +87,29 @@ const WINDOW = (() => { const i = args.indexOf('--window'); return i !== -1 ? pa
 
 // Weeks in the dashboard trend. 12 × 7 = an 84-day orders pull.
 const TREND_WEEKS = 12;
+
+/**
+ * The wide window the CLUSTER (category) verdict is reported at, ending on the
+ * report window's end.
+ *
+ * The report window stays 28 days — every page-level number, every prior-window
+ * delta and the headline are computed on it, and changing that would make the
+ * report incomparable with its own history. But this store averages ~0.5 orders
+ * a day, so a 28-day window holds ~18 orders all-channel and ~8 organic, and a
+ * single category's slice of that is one or two orders. Measured on the
+ * trailing real data: `toothpaste` sold $0 in the 28 days to 2026-08-21 and
+ * $71.50 in the 90 days to the same date. Judging a category on the narrow
+ * window alone reads noise as a verdict.
+ *
+ * 90 days matches `lib/cluster-hold.js`'s `WIDE_WINDOW_DAYS` — the window the
+ * reconciliation that caught the soap misattribution was run over — so the two
+ * halves of the fleet's category evidence are measured over the same span.
+ *
+ * It costs no extra API call: the trend already pulls 84 days, so the single
+ * wide fetch below is widened to cover both.
+ */
+const WIDE_WINDOW_DAYS = 90;
+const WIDE_FETCH_DAYS = Math.max(TREND_WEEKS * 7, WIDE_WINDOW_DAYS);
 // Orders come through getAllOrders(), which cursor-paginates and reports its own
 // `truncated` flag. A silent truncation would understate revenue with no symptom at
 // all, so that flag is propagated into revenue_trend_meta rather than swallowed.
@@ -156,12 +194,32 @@ async function shopifyOrganic({ start, end }) {
   const { rows, fetched } = await fetchOrderRows({ start, end });
   const real = rows.filter((r) => r.countsAsRevenue);
   return {
+    rows,
     byPage: shopifyRevenueByPage(rows, { channels: ['organic-search'] }),
     channels: channelRollup(rows),
     fetched,
     orders: real.length,
     revenueAll: round2(real.reduce((s, r) => s + r.total, 0)),
   };
+}
+
+/**
+ * Product-attributed cluster revenue for one set of attribution rows, both
+ * channel views at once. See lib/product-cluster-revenue.js for the basis.
+ */
+function productRollups(rows, bundleIndex) {
+  return {
+    organic: clusterProductRevenue(rows, { channels: ['organic-search'], bundleIndex }),
+    allChannels: clusterProductRevenue(rows, { channels: null, bundleIndex }),
+  };
+}
+
+/** Attribution rows narrowed to a Pacific date range, for the wide-window slice. */
+function rowsWithin(rows, { start, end }) {
+  return (rows || []).filter((r) => {
+    const day = r?.created_at ? ptDayOf(r.created_at) : null;
+    return day != null && day >= start && day <= end;
+  });
 }
 
 async function main() {
@@ -224,11 +282,31 @@ async function main() {
 
   const topRevenue = rankBy(impacts.filter(i => i.revenue > 0), 'revenue', 10);
   const topGrowth = rankBy(impacts.filter(i => i.revenueDelta > 0), 'revenueDelta', 10);
-  const clusters = clusterRollup(impacts, clusterFor);
-  // What the cluster table drops on the floor. Reported explicitly so the table
-  // can be read as what it is — a partial view of organic entry-page revenue —
-  // rather than as a category P&L that mysteriously fails to add up.
+  const entryPageClusters = clusterRollup(impacts, clusterFor);
+  // What the ENTRY-PAGE cluster table drops on the floor. Reported explicitly so
+  // that table can be read as what it is — a partial view of organic entry-page
+  // revenue — rather than as a category P&L that mysteriously fails to add up.
   const clusterResidual = residualRollup(impacts, clusterFor);
+
+  // ── product-attributed cluster revenue ────────────────────────────────────
+  // What each CATEGORY sold, from the order line items, at three scopes: this
+  // window organic (comparable to the headline), this window all channels (how
+  // much of the category search actually reached), and a 90-day all-channel
+  // view (the span a category verdict is credible at, at ~0.5 orders/day).
+  const bundleIndex = loadBundleIndex({ root: ROOT });
+  const curProduct = productRollups(shopCur.rows, bundleIndex);
+  const priorProduct = productRollups(shopPrior.rows, bundleIndex);
+  const productRows = productClusterRows({
+    organic: curProduct.organic,
+    allChannels: curProduct.allChannels,
+    priorOrganic: priorProduct.organic,
+  });
+  const clusters = mergeClusterRows(entryPageClusters, productRows);
+  console.log('  Product-attributed clusters (this window, all channels):');
+  for (const r of clusters.slice(0, 6)) {
+    console.log(`    $${String(r.product_revenue_all_channels ?? 0).padStart(8)} all / $${String(r.product_organic_revenue ?? 0).padStart(8)} organic  ${r.cluster}`
+      + `   (entry-page organic $${r.entry_page_organic_revenue ?? 0})`);
+  }
   const wins = rankBy(actionWins(impacts), 'revenueDelta', 10);
   // High organic traffic that isn't converting — content driving visits, not sales.
   const notConverting = rankBy(
@@ -245,20 +323,34 @@ async function main() {
   // and an organic-only chart read as "the store" is the same misreading in a new place).
   // Buckets are 7 Pacific days ending on the window end, so the last WINDOW/7 of them
   // sum exactly to the headline — see weeklyRevenueTrend() for why not calendar weeks.
+  //
+  // ONE FETCH, TWO USES. This pull is widened to cover both the 84 days the
+  // trend needs and the 90 the wide cluster window needs, so the product view
+  // costs no extra Shopify call. `weeklyRevenueTrend` drops rows outside its own
+  // bucket range explicitly, so handing it the wider set is safe.
   let revenueTrend = [];
   let trendWindow = null;
+  let wideProduct = null;
+  let wideWindow = null;
   try {
-    const trendEnd = w.current.end;
-    const trendStart = ymd(Date.parse(trendEnd) - (TREND_WEEKS * 7 - 1) * DAY);
-    const { rows: trendRows, fetched } = await fetchOrderRows({ start: trendStart, end: trendEnd });
-    revenueTrend = weeklyRevenueTrend(trendRows, {
-      endDate: trendEnd, weeks: TREND_WEEKS, dayOf: ptDayOf, channels: ['organic-search'],
+    const wideEnd = w.current.end;
+    const wideStart = ymd(Date.parse(wideEnd) - (WIDE_FETCH_DAYS - 1) * DAY);
+    const { rows: wideRows, fetched } = await fetchOrderRows({ start: wideStart, end: wideEnd });
+    revenueTrend = weeklyRevenueTrend(wideRows, {
+      endDate: wideEnd, weeks: TREND_WEEKS, dayOf: ptDayOf, channels: ['organic-search'],
     });
-    trendWindow = { start: trendStart, end: trendEnd };
-    console.log(`  Trend: ${TREND_WEEKS} weeks from ${fetched} Shopify orders (${trendStart} → ${trendEnd} PT)`);
+    trendWindow = { start: ymd(Date.parse(wideEnd) - (TREND_WEEKS * 7 - 1) * DAY), end: wideEnd };
+    wideWindow = { start: ymd(Date.parse(wideEnd) - (WIDE_WINDOW_DAYS - 1) * DAY), end: wideEnd };
+    wideProduct = productRollups(rowsWithin(wideRows, wideWindow), bundleIndex);
+    console.log(`  Orders pulled for trend + wide window: ${fetched} over ${wideStart} → ${wideEnd} PT (${WIDE_FETCH_DAYS}d)`);
+    console.log(`  Trend: ${TREND_WEEKS} weeks ending ${wideEnd}`);
+    console.log(`  Wide product window (${WIDE_WINDOW_DAYS}d): ${wideProduct.allChannels.orders} orders, $${wideProduct.allChannels.subtotal} of product revenue`);
   } catch (err) {
-    console.error('  Trend build failed (non-fatal):', err.message);
+    console.error('  Trend/wide-window build failed (non-fatal):', err.message);
   }
+  const clustersProductWide = wideProduct
+    ? productClusterRows({ organic: wideProduct.organic, allChannels: wideProduct.allChannels })
+    : [];
 
   // Reconciliation: the trend's newest WINDOW/7 buckets ARE the headline window, so they
   // must sum to organic_revenue to the cent. Checked out loud every run — an assertion
@@ -307,8 +399,46 @@ async function main() {
     channel_mix: shopCur.channels,
     top_revenue: topRevenue,
     top_growth: topGrowth,
+    // Each row carries BOTH answers, under names that say which is which:
+    //   entry_page_organic_revenue / revenue / revenueDelta / clicks / pages
+    //     — unchanged, entry-page-credited, organic-only. Eleven consumers
+    //       decide on these; nothing here moves them.
+    //   product_* — what the CATEGORY sold, from order line items.
     clusters,
     cluster_residual: clusterResidual,
+    // The 90-day product view. Its own array rather than more columns on
+    // `clusters[]`, because it is a different WINDOW and the report's every
+    // other number is 28-day: a wide figure sitting in a narrow-window row is
+    // how a reader ends up comparing two spans without noticing.
+    clusters_product_wide: clustersProductWide,
+    // What the product numbers are, spelled out, because the mislabelling is
+    // what caused the misreading the last time round.
+    cluster_product_meta: {
+      source: 'shopify-orders',
+      basis: PRODUCT_REVENUE_BASIS,
+      window: w.current,
+      prior_window: w.prior,
+      wide_window: wideWindow,
+      wide_window_days: WIDE_WINDOW_DAYS,
+      bundles_expanded: true,
+      // These DO NOT reconcile to totals.organic_revenue and are not meant to.
+      // That figure is built from order totals; this one from line subtotals.
+      // The difference is shipping, tax and any other order-level charge, and
+      // it is reported rather than allocated across categories.
+      reconciles_to: 'line subtotals over the window, NOT totals.organic_revenue',
+      product_subtotal_organic: curProduct.organic.subtotal,
+      product_subtotal_all_channels: curProduct.allChannels.subtotal,
+      unclustered_line_revenue_organic: curProduct.organic.unclustered,
+      unclustered_line_revenue_all_channels: curProduct.allChannels.unclustered,
+      non_product_revenue_organic: curProduct.organic.nonProductRevenue,
+      non_product_revenue_all_channels: curProduct.allChannels.nonProductRevenue,
+      // Orders whose line items were not captured. NOT $0 of product revenue —
+      // orders we cannot attribute, counted so they can never read as a
+      // category selling nothing.
+      orders_without_lines_organic: curProduct.organic.ordersWithoutLines,
+      orders_without_lines_all_channels: curProduct.allChannels.ordersWithoutLines,
+      wide_orders_all_channels: wideProduct?.allChannels?.orders ?? null,
+    },
     action_wins: wins,
     not_converting: notConverting,
     revenue_trend: revenueTrend,
@@ -331,7 +461,10 @@ async function main() {
 
   await notify({
     subject: `SEO Impact: $${organicRevenue} organic revenue, ${organicConversions} orders (${organicRevenue >= organicRevenuePrev ? '+' : ''}$${round2(organicRevenue - organicRevenuePrev)} vs prior ${WINDOW}d)`,
-    body: `Revenue is Shopify per-order (landing_site), not GA4; GA4 supplies sessions only (${organicSessions} organic sessions this window).\n\nTop organic-revenue pages:\n${topRevenue.slice(0, 5).map(p => `  $${p.revenue} — ${p.path}`).join('\n')}\n\nTop clusters:\n${clusters.slice(0, 4).map(c => `  $${c.revenue} — ${c.cluster}`).join('\n')}`,
+    body: `Revenue is Shopify per-order (landing_site), not GA4; GA4 supplies sessions only (${organicSessions} organic sessions this window).\n\n`
+      + `Top organic-revenue pages (entry-page credited):\n${topRevenue.slice(0, 5).map(p => `  $${p.revenue} — ${p.path}`).join('\n')}\n\n`
+      + `What each category SOLD this window (product line items, organic / all channels):\n`
+      + `${clusters.slice(0, 4).map(c => `  $${c.product_organic_revenue ?? 0} organic / $${c.product_revenue_all_channels ?? 0} all — ${c.cluster}`).join('\n')}`,
     status: 'info',
     category: 'seo',
   }).catch(() => {});
@@ -368,11 +501,14 @@ export function buildReport(p) {
   for (const r of p.top_growth) L.push(`- **${delta(r.revenueDelta)}** — ${r.path} (${money(r.revenue)} now)`);
   if (!p.top_growth.length) L.push('- _No pages grew vs the prior window._');
   L.push('');
-  L.push('## Entry-page organic revenue by cluster');
+  L.push(...productClusterSection(p));
+  L.push('## Entry-page organic revenue by cluster — the LANDING-PAGE view');
   L.push('');
-  L.push('_Organic-search-only revenue over this window, credited to the page the session LANDED on and bucketed'
-    + ' by a word in that URL. **This is not product revenue and it is not a category\'s sales.** It reconciles to'
-    + ' `totals.organic_revenue` and to nothing else — the residual row below is the rest of it._');
+  L.push('_A different question from the table above, deliberately kept. Organic-search-only revenue over this'
+    + ' window, credited to the page the session LANDED on and bucketed by a word in that URL. **This is not'
+    + ' product revenue and it is not a category\'s sales** — read it as "which pages earn", never as "what this'
+    + ' category sold". It reconciles to `totals.organic_revenue` and to nothing else; the residual row is the'
+    + ' rest of it. Every $0-cluster decision in the fleet still runs on THIS column._');
   L.push('');
   L.push('| Cluster | Entry-page organic $ | Δ vs prior | Clicks | Pages |');
   L.push('|---------|--------:|-----------:|-------:|------:|');
@@ -399,6 +535,69 @@ export function buildReport(p) {
     L.push('');
   }
   return L.join('\n');
+}
+
+/**
+ * What each CATEGORY sold — the cluster question, answered at the product level.
+ *
+ * Exported for the same reason `buildReport` is: the labelling is the load-
+ * bearing part and has to be testable without a live run.
+ *
+ * Every money column here is the SAME basis (order line items). They differ only
+ * by channel and window, which this report already distinguishes in two other
+ * places (the weekly trend's organic-vs-all-channels pair, and the store-context
+ * section's organic share). Mixing BASES on one screen is what confuses; mixing
+ * channels of one basis, labelled, is how the rest of this file already reads.
+ */
+export function productClusterSection(p) {
+  const rows = (p.clusters || []).filter((c) => c.product_revenue_all_channels != null);
+  const meta = p.cluster_product_meta;
+  if (!rows.length || !meta) return [];
+  const money = (n) => `$${(Math.round((Number(n) || 0) * 100) / 100).toFixed(2)}`;
+  const delta = (n) => `${(Number(n) || 0) >= 0 ? '+' : '−'}${money(Math.abs(Number(n) || 0))}`;
+  const L = [];
+  L.push('## What each category actually SOLD — product-attributed');
+  L.push('');
+  L.push('_Built from order **line items** (`price × quantity` less allocated discounts), so a soap bought in a'
+    + ' cart that entered on the homepage counts as soap. Bundles are expanded into their configured components'
+    + ' and split pro rata by list value. **This is the cluster answer; the entry-page table below answers a'
+    + ' different question and is kept for that.**_');
+  L.push('');
+  L.push(`_It sums to **line subtotals**, not order totals: shipping and tax are order-level and are excluded`
+    + ` rather than allocated across categories. This window that gap is ${money(meta.non_product_revenue_organic)}`
+    + ` organic / ${money(meta.non_product_revenue_all_channels)} all channels, so these figures do **not**`
+    + ` reconcile to \`totals.organic_revenue\` and are not meant to._`);
+  L.push('');
+  L.push('| Cluster | Organic product $ | Δ vs prior | All channels | Organic share |');
+  L.push('|---------|--------:|-----------:|-------------:|--------------:|');
+  for (const c of rows) {
+    L.push(`| ${c.cluster} | ${money(c.product_organic_revenue)} | ${delta(c.product_organic_revenue_delta)}`
+      + ` | ${money(c.product_revenue_all_channels)} | ${c.organic_share == null ? '—' : `${c.organic_share}%`} |`);
+  }
+  const unclustered = Number(meta.unclustered_line_revenue_all_channels) || 0;
+  L.push(`| _no cluster (line items matching no category)_ | ${money(meta.unclustered_line_revenue_organic)} | — | ${money(unclustered)} | — |`);
+  L.push('');
+  if (meta.orders_without_lines_all_channels) {
+    L.push(`> ${meta.orders_without_lines_all_channels} order(s) in this window carried no line items and could not be`
+      + ' attributed to a category. They are excluded above — **not** counted as a category selling nothing.');
+    L.push('');
+  }
+  const wide = p.clusters_product_wide || [];
+  if (wide.length && meta.wide_window) {
+    L.push(`### The same thing over ${meta.wide_window_days} days — the span a category verdict is credible at`);
+    L.push('');
+    L.push(`_${meta.wide_window.start} → ${meta.wide_window.end}, ${meta.wide_orders_all_channels ?? '?'} orders. The store`
+      + ' averages ~0.5 orders a day, so a single category\'s slice of a 28-day window is one or two orders and a $0'
+      + ' there is noise, not a verdict. This is the window `lib/cluster-hold.js` already corroborates over._');
+    L.push('');
+    L.push('| Cluster | Organic product $ | All channels | Orders |');
+    L.push('|---------|--------:|-------------:|-------:|');
+    for (const c of wide) {
+      L.push(`| ${c.cluster} | ${money(c.product_organic_revenue)} | ${money(c.product_revenue_all_channels)} | ${c.product_orders_all_channels} |`);
+    }
+    L.push('');
+  }
+  return L;
 }
 
 /** The weekly trend, spelled out so the chart's bars can never be read as something else. */

@@ -1733,17 +1733,37 @@ function renderSeoImpact(d) {
     '</tr></thead><tbody>' + rows + '</tbody></table>';
 
   // ── clusters ──
-  var clusters = (s.clusters || []).slice(0, 6).map(function(c) {
-    var rev = c.entry_page_organic_revenue != null ? c.entry_page_organic_revenue : c.revenue;
-    return '<span style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px">' +
-      esc(c.cluster) + ' <strong>' + money(rev) + '</strong></span>';
-  }).join('');
-  // The residual chip. Without it these chips read as a category P&L that simply
-  // does not add up — over 90 days 54% of revenue lands on pages matching no
-  // cluster at all, and that invisibility is what let a $430 category read as $0.
-  if (clusters && s.cluster_residual) {
-    clusters += '<span style="display:inline-block;background:#f9fafb;border:1px dashed #d1d5db;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px;color:#6b7280">' +
-      esc(s.cluster_residual.label || 'no cluster') + ' <strong>' + money(s.cluster_residual.entry_page_organic_revenue) + '</strong></span>';
+  // "What did this category sell" is a PRODUCT question, so these chips read the
+  // product-attributed figure when the report carries one. The entry-page number
+  // is still in the report and still drives every $0-cluster decision — it just
+  // does not belong on a chip labelled with a category's name, because 29% of
+  // organic revenue lands on `/`, a cart URL or a subscription order with no
+  // landing page at all, and that invisibility is what let a $430 category read
+  // as $0. Reports written before this field existed fall back to the old chips.
+  var hasProduct = (s.clusters || []).some(function(c) { return c.product_revenue_all_channels != null; });
+  var clusterLabel, clusterNote, clusters;
+  if (hasProduct) {
+    clusterLabel = 'What each category SOLD this window';
+    clusterNote = 'Order line items, organic search / all channels. Sums to line subtotals, not to organic revenue above &mdash; shipping and tax are order-level.';
+    clusters = (s.clusters || []).slice(0, 6).map(function(c) {
+      return '<span style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px">' +
+        esc(c.cluster) + ' <strong>' + money(c.product_organic_revenue) + '</strong>' +
+        ' <span style="color:#6b7280">/ ' + money(c.product_revenue_all_channels) + '</span></span>';
+    }).join('');
+  } else {
+    clusterLabel = 'Entry-page organic revenue by cluster';
+    clusterNote = 'Organic-search only, credited to the landing page and bucketed by its URL. Not product revenue.';
+    clusters = (s.clusters || []).slice(0, 6).map(function(c) {
+      var rev = c.entry_page_organic_revenue != null ? c.entry_page_organic_revenue : c.revenue;
+      return '<span style="display:inline-block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px">' +
+        esc(c.cluster) + ' <strong>' + money(rev) + '</strong></span>';
+    }).join('');
+    // The residual chip. Without it these chips read as a category P&L that
+    // simply does not add up.
+    if (clusters && s.cluster_residual) {
+      clusters += '<span style="display:inline-block;background:#f9fafb;border:1px dashed #d1d5db;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:12px;color:#6b7280">' +
+        esc(s.cluster_residual.label || 'no cluster') + ' <strong>' + money(s.cluster_residual.entry_page_organic_revenue) + '</strong></span>';
+    }
   }
 
   // ── not converting ──
@@ -1762,8 +1782,8 @@ function renderSeoImpact(d) {
       '</div>' +
     chart +
     table +
-    (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">Entry-page organic revenue by cluster</div>' +
-      '<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">Organic-search only, credited to the landing page and bucketed by its URL. Not product revenue.</div>' + clusters + '</div>' : '') +
+    (clusters ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#6b7280;margin-bottom:4px">' + clusterLabel + '</div>' +
+      '<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">' + clusterNote + '</div>' + clusters + '</div>' : '') +
     (nc ? '<div style="margin-top:12px"><div style="font-size:11px;text-transform:uppercase;color:#92400e;margin-bottom:4px">High traffic, no sales &mdash; conversion opportunities</div><ul style="margin:0;padding-left:18px;font-size:13px;color:#374151">' + nc + '</ul></div>' : '');
 }
 
