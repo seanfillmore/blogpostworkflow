@@ -2642,3 +2642,84 @@ console.log('✓ marketing-learner re-gate tests pass');
 }
 
 console.log('✓ marketing-learner required-stage tests pass');
+
+// ── a stalled stream must abort, not hang forever ──────────────────────────
+// On 2026-08-23 a consolidation call sat 71 minutes having burned 3.84s of CPU with its
+// socket open — a stream that was not arriving. An HTTP client's timeout is a per-chunk
+// read timeout, not a wall clock, and withRetry cannot fire on a promise that never
+// settles. Unattended on the 1st of the month that is a cron job that stops without
+// failing.
+{
+  const { streamDeadline, consolidateTactics, STREAM_DEADLINES_MS } =
+    await import('../../lib/marketing-learner.js');
+
+  // The deadline must hold the event loop open long enough to fire. AbortSignal.timeout()
+  // uses an UNREF'D timer, so on Node 22 the process exits first and `node --test` reports
+  // `cancelled` alongside `# fail 0` — a dead test that reads like a pass. This asserts the
+  // abort actually happens, which is the only way that distinction is visible.
+  {
+    const dl = streamDeadline(30, 'probe');
+    const fired = await new Promise((resolve) => {
+      dl.signal.addEventListener('abort', () => resolve(true), { once: true });
+      setTimeout(() => resolve(false), 3000);
+    });
+    dl.clear();
+    assert.equal(fired, true, 'the deadline fires on its own — an unref\'d timer would not');
+  }
+
+  // ...and clearing it must stop the timer, or a finished run holds the loop open until
+  // the (25-minute) deadline elapses.
+  {
+    const dl = streamDeadline(50, 'probe');
+    dl.clear();
+    const fired = await new Promise((resolve) => {
+      dl.signal.addEventListener('abort', () => resolve(true), { once: true });
+      setTimeout(() => resolve(false), 300);
+    });
+    assert.equal(fired, false, 'a cleared deadline does not fire');
+  }
+
+  // End to end: a stream that never settles aborts instead of hanging.
+  let sawSignal = null;
+  const wedged = {
+    messages: {
+      stream: (_params, opts) => {
+        sawSignal = opts?.signal ?? null;
+        return { finalMessage: () => new Promise((_, reject) => {
+          // Never settles on its own — only the deadline can end this.
+          opts.signal.addEventListener('abort', () => reject(opts.signal.reason ?? new Error('aborted')), { once: true });
+        }) };
+      },
+    },
+  };
+  let attempts = 0;
+  const counting = {
+    messages: {
+      stream: (params, opts) => { attempts++; return wedged.messages.stream(params, opts); },
+    },
+  };
+  const started = Date.now();
+  const err = await consolidateTactics({
+    candidates: [{ claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 5, reasoning: 'r' }, verdict: 'adopt', stage: null }],
+    source: { title: 't', creator: 'c', sourceId: 's' },
+    client: counting,
+    retryOptions: { maxRetries: 3, delayMs: 1 },
+    deadlineMs: 40,
+  }).then(() => null, (e) => e);
+
+  assert.ok(sawSignal, 'the signal reaches the SDK call — without it the deadline cannot cancel anything');
+  assert.ok(err, 'a wedged stream rejects rather than hanging');
+  assert.match(String(err.message), /produced no completion|abort/i, 'and says the stream stalled');
+
+  // The deadline is only useful if it does NOT feed withRetry's restart machinery. That
+  // does 3 attempts, then waits 30 MINUTES and restarts, up to 10 cycles — so a retried
+  // 25-minute deadline is a multi-hour retry storm holding the cron slot, strictly worse
+  // than the single hang it replaced. status 408 makes withRetry treat it as terminal.
+  assert.equal(attempts, 1, 'a stalled stream is attempted once, not retried into a storm');
+  assert.ok(Date.now() - started < 5000, 'and fails in seconds rather than entering a restart cycle');
+
+  assert.ok(STREAM_DEADLINES_MS.consolidation > STREAM_DEADLINES_MS.extraction,
+    'consolidation gets the longest ceiling — its output scales with candidate count');
+}
+
+console.log('✓ marketing-learner stream-deadline tests pass');
