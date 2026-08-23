@@ -70,6 +70,7 @@ import {
 } from '../../lib/shopify.js';
 
 import { getContentPath, getMetaPath, ensurePostDir, ROOT } from '../../lib/posts.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
@@ -259,6 +260,15 @@ Return ONLY a JSON array, no other text:
 
 // ── claude: content consolidation ────────────────────────────────────────────
 
+// Output ceiling for a merge, derived from the winner it has to reproduce.
+// ~3.5 chars/token on this blog's HTML; ×1.5 covers the prompt's "+30% length"
+// allowance plus slack, with a floor at the old value and a sane upper bound.
+// Largest live article is ~31.5k chars (~9k tokens) → ~14.5k ceiling.
+function mergeMaxTokens(winnerHtml) {
+  const inputTokens = Math.ceil(String(winnerHtml || '').length / 3.5);
+  return Math.min(32000, Math.max(8000, Math.ceil(inputTokens * 1.5) + 1000));
+}
+
 async function consolidateContent(winnerArticle, loserArticle, query, articleIndex) {
   // Build a compact list of other posts available for internal linking
   const otherPosts = [...articleIndex.entries()]
@@ -297,11 +307,26 @@ Rules:
 
   const msg = await client.messages.create({
     model: 'claude-sonnet-4-6',
-    max_tokens: 8000,
+    // The winner's own body is the floor here — a merge is the winner plus
+    // selected loser sections, so the ceiling must clear the input, not sit at a
+    // fixed guess. The old flat 8000 was below the MEDIAN article's own token
+    // count (~6.6k) once the prompt's "+30% length" allowance is applied, so most
+    // merges were destined to truncate, not just the one that was caught.
+    max_tokens: mergeMaxTokens(winnerArticle.body_html),
     messages: [{ role: 'user', content: prompt }],
   });
 
-  return stripCodeFences(msg.content[0].text.trim());
+  const merged = stripCodeFences(msg.content[0].text.trim());
+
+  // A truncated merge is never salvageable: publishing it overwrites a proven
+  // ranking page with content cut mid-sentence. On 2026-08-16 this call hit an
+  // 8000-token ceiling and returned HTML ending "...fragrance-free (or scented",
+  // losing the CTA, Sources and Related Articles sections and 3 FAQ entries —
+  // with no stop_reason check, nothing noticed. Throw so the caller records an
+  // error and leaves the live winner alone.
+  assertHtmlComplete({ html: merged, stopReason: msg.stop_reason });
+
+  return merged;
 }
 
 // ── apply resolutions ─────────────────────────────────────────────────────────
