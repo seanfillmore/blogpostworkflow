@@ -343,8 +343,11 @@ test('\\r\\n is handled the same as \\n', () => {
 // mislabel the resulting artifact. These pin filterLeaksToSkinCluster's behavior
 // against the concrete leaks named in the fix-wave review.
 
-test('SKIN_LEAK_CLUSTERS is lotion + soap + the generic coconut-oil bucket', () => {
-  assert.deepEqual([...SKIN_LEAK_CLUSTERS].sort(), ['coconut oil', 'lotion', 'soap']);
+test('SKIN_LEAK_CLUSTERS covers every mineable RSC product cluster except toothpaste and hair', () => {
+  assert.deepEqual(
+    [...SKIN_LEAK_CLUSTERS].sort(),
+    ['coconut oil', 'deodorant', 'lip balm', 'lotion', 'soap'],
+  );
 });
 
 test('oral-care leaks that mention coconut oil are excluded, not misclassified as skin', () => {
@@ -365,13 +368,57 @@ test('genuine skin-cluster leaks survive, including generic coconut-oil-for-skin
   assert.deepEqual(filterLeaksToSkinCluster(leaks).map((l) => l.query), leaks.map((l) => l.query));
 });
 
-test('deodorant, lip balm and hair leaks are excluded — separate clusters, not skin', () => {
+test('hair leaks are excluded — the brand has no hair products', () => {
   const leaks = [
-    leak('coconut oil deodorant', 700),
     leak('coconut oil for hair benefits', 650),
-    leak('best natural lip balm for chapped lips', 600),
+    leak('best coconut oil shampoo', 300),
   ];
   assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('deodorant leaks now survive — the owner widened the mined set to include it', () => {
+  const leaks = [
+    leak('coconut oil deodorant', 700),
+    leak('best natural deodorant for sweating', 400),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    leaks.map((l) => l.query),
+  );
+});
+
+test('lip balm leaks now survive — the owner widened the mined set to include it', () => {
+  const leaks = [
+    leak('best natural lip balm for chapped lips', 600),
+    leak('lip balm for cold weather', 250),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    leaks.map((l) => l.query),
+  );
+});
+
+test('toothpaste leaks are still excluded — the Prime Directive names that cluster $0 revenue', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 500),
+    leak('coconut oil as toothpaste', 495),
+  ];
+  assert.deepEqual(filterLeaksToSkinCluster(leaks), []);
+});
+
+test('a mixed feed spanning every RSC product line keeps deodorant, lip balm, lotion, soap and coconut oil, and drops toothpaste and hair', () => {
+  const leaks = [
+    leak('cinnamon toothpaste', 900),
+    leak('coconut oil deodorant', 800),
+    leak('coconut oil for hair benefits', 700),
+    leak('best natural lip balm for chapped lips', 600),
+    leak('coconut oil acne', 500),
+    leak('natural bar soap for men', 400),
+  ];
+  assert.deepEqual(
+    filterLeaksToSkinCluster(leaks).map((l) => l.query),
+    ['coconut oil deodorant', 'best natural lip balm for chapped lips', 'coconut oil acne', 'natural bar soap for men'],
+  );
 });
 
 test('a mixed feed keeps only the skin-cluster entries, order preserved', () => {

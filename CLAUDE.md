@@ -19,7 +19,7 @@ When an agent has the data to make a revenue-improving decision, it makes it and
 
 | Brand | Products | Status |
 |---|---|---|
-| Real Skin Care | Coconut-oil deodorants, lotions, body cream, toothpaste, lip balm, hand soap, hair products | Brand Registered on Amazon |
+| Real Skin Care | Coconut-oil deodorants, lotions, body cream, toothpaste, lip balm, hand soap | Brand Registered on Amazon |
 | Culina | Cast iron / Blackstone griddle cleaning soap, restoring scrub, conditioning oil, kits | Acquired separately. Brand Registry pending. Previous owner is liquidating remaining FBA stock through ~early-May 2026 — buy-box anomalies on Culina ASINs are transitional, not a problem to fix. |
 
 Both brands ship from the same Amazon seller account. Until Culina Brand Registry approves, Amazon Brand Analytics + Search Query Performance reports return blended (BA) or zero (SQP) data for Culina. Classify ASINs by keyword in the product title:
