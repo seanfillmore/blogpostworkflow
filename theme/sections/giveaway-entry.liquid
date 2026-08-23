@@ -84,6 +84,38 @@
         <li><b>2</b><span>winners — you, and whoever referred you</span></li>
       </ul>
 
+      {%- comment -%}
+        THE SEED COMMITMENT. This must be live BEFORE entries close on
+        September 14, 2026 — announcing the method afterward defeats its whole
+        purpose, which is that the shuffle uses a number nobody could have known
+        or influenced when they entered.
+
+        It discloses the METHOD only. It grants no right and imposes no condition
+        beyond the published Official Rules, which are unchanged.
+
+        The date and the index named here are load-bearing: they are what
+        scripts/giveaway/draw.mjs is seeded with on September 16, and what any
+        entrant would use to re-derive the result. Do not edit either without
+        re-reading docs/giveaway-draw-runbook.md.
+      {%- endcomment -%}
+      <details class="gv-method">
+        <summary>How the winner is chosen</summary>
+        <p>
+          When entries close on September 14, 2026, we freeze the complete list of
+          entries — nothing is added to it after that. Each entry is one ticket.
+        </p>
+        <p>
+          To shuffle those tickets we use a number nobody can predict or influence:
+          the closing value of the Dow Jones Industrial Average on
+          <strong>Tuesday, September 15, 2026</strong>. If U.S. markets are
+          unexpectedly closed that day, we use the next day they close.
+        </p>
+        <p>
+          That number and the frozen list are what produce the winner on
+          September 16 — and anyone can check the result against them afterward.
+        </p>
+      </details>
+
       <p class="gv-fine">
         A $536 prize. Entering is free.
         No purchase necessary. Purchases do not earn entries.
