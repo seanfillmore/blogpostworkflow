@@ -53,6 +53,7 @@ constraint above.
 ## What this file is not
 
 It does not say what the emails should *say*. Copy angle comes from
-`marketing-conversion-copy-angles` and `marketing-awareness-level-messaging`; the offer
+`marketing-conversion-copy-angles`, `marketing-copy-hooks-and-formats`,
+`marketing-copy-credibility-and-proof` and `marketing-awareness-level-messaging`; the offer
 itself from `marketing-retention-offers` and `marketing-offer-construction`; proof
 selection from `marketing-review-mining`. This is the format layer only.
