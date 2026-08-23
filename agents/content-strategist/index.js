@@ -24,7 +24,12 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-strategist');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, POSTS_DIR } from '../../lib/posts.js';
-import { findSemanticDuplicate } from '../../lib/cannibalization-guard.js';
+import {
+  coveragePool, findCoverage, classifyClearedItems, renderClearedLines, clearedDigest,
+} from '../../lib/calendar-coverage.js';
+import { isLiveOrScheduled } from '../../lib/post-publish-state.js';
+import { appendRejection as appendRejectionEntry } from '../../lib/rejected-keywords.js';
+import { notify } from '../../lib/notify.js';
 import { splitInventory } from '../../lib/brief-triage.js';
 import { provenDuds, clusterForText } from '../../lib/cluster-revenue.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
@@ -369,12 +374,14 @@ export function loadRejections() {
 // keyword without us needing to remember it. matchType is "contains" by default
 // (see isRejected) — a substring like "body wash" will block any expansion of
 // that phrase.
+//
+// Goes through lib/rejected-keywords.js rather than read-modify-writing the
+// file here: this runs from the 15:00 UTC cron scheduler while the long-lived
+// PM2 dashboard writes the same file from two routes, and the old unguarded
+// read → push → write silently lost whichever side finished second. 18 of the
+// 39 entries on the server were written by this function.
 function appendRejection(keyword, reason) {
-  const path = join(ROOT, 'data', 'rejected-keywords.json');
-  const list = existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : [];
-  if (list.find((r) => (r.keyword || '').toLowerCase() === keyword.toLowerCase())) return;
-  list.push({ keyword, reason, rejected_at: new Date().toISOString(), source: 'content-strategist:product-scope' });
-  writeFileSync(path, JSON.stringify(list, null, 2));
+  appendRejectionEntry({ keyword, reason, rejected_at: new Date().toISOString(), source: 'content-strategist:product-scope' });
 }
 
 export function isRejected(keyword, rejections) {
@@ -572,32 +579,15 @@ export function briefQueueToCalendarItems(briefQueue, index, today = new Date(),
 /**
  * Is `keyword` already covered? Returns the colliding keyword, or null.
  *
- * Two candidate pools, deliberately different rules:
- *   - publishedKeywords (target_keyword of every post on disk, plus
- *     published.json): an EXACT match is the strongest possible duplicate.
- *   - calendarKeywords (items already scheduled): an exact match is the item
- *     matching ITSELF on a re-plan, which is expected and must not block.
- *
- * These used to share one call with a blanket `dup !== keyword` exemption, so
- * the self-match escape hatch applied to published posts too — near-duplicates
- * were rejected while exact duplicates sailed through. That is how "natural
- * antiperspirant" and "sls sensitivity toothpaste" were scheduled on 2026-08-17
- * with live posts carrying those exact target keywords.
+ * Thin back-compat wrapper over lib/calendar-coverage.js's `findCoverage`,
+ * which is where the rule and its two repaired defects are documented. Kept
+ * because existing callers and tests want a bare string back; anything that
+ * needs to say WHICH post matched should call `findCoverage` directly, since a
+ * keyword alone is what made the 2026-08 clearings unreadable.
  */
-export function findScheduledDuplicate(keyword, { publishedKeywords = [], calendarKeywords = [] } = {}) {
-  if (!keyword) return null;
-  const kw = keyword.toLowerCase();
-
-  const exact = publishedKeywords.find((k) => String(k).toLowerCase() === kw);
-  if (exact) return exact;
-
-  const publishedDup = findSemanticDuplicate(keyword, publishedKeywords, { threshold: 0.6 });
-  if (publishedDup) return publishedDup;
-
-  const calendarDup = findSemanticDuplicate(keyword, calendarKeywords, { threshold: 0.6 });
-  if (calendarDup && calendarDup.toLowerCase() !== kw) return calendarDup;
-
-  return null;
+export function findScheduledDuplicate(keyword, { publishedKeywords = [], publishedPosts = null, calendarKeywords = [] } = {}) {
+  const posts = publishedPosts || publishedKeywords.map((k) => ({ slug: null, keyword: k }));
+  return findCoverage(keyword, { publishedPosts: posts, calendarKeywords })?.keyword ?? null;
 }
 
 /**
@@ -870,19 +860,28 @@ ${calendarMd}`;
   });
 
   // Two candidate pools for cannibalization detection, kept SEPARATE because the
-  // exact-match rule differs — see findScheduledDuplicate(). Merging them is what
+  // exact-match rule differs — see lib/calendar-coverage.js. Merging them is what
   // let keywords with a live post back onto the calendar.
-  const publishedKeywords = [];
-  for (const slug of listAllSlugs()) {
-    try {
-      const meta = getPostMetaLib(slug);
-      if (meta?.target_keyword) publishedKeywords.push(meta.target_keyword);
-    } catch { /* skip */ }
+  //
+  // A directory under data/posts/ is NOT a post. `blog-post-writer` writes
+  // meta.json at draft time, so counting every meta.json as coverage meant a
+  // calendar item became "already covered by a published post" the moment it
+  // started drafting — covered by the post generated from it. The pool now
+  // applies the same written-or-published rule scripts/triage-orphan-briefs.mjs
+  // has always applied, and the excluded scaffolds are reported rather than
+  // silently believed.
+  const { posts: publishedPosts, unwritten } = coveragePool({
+    slugs: listAllSlugs(),
+    getMeta: (slug) => getPostMetaLib(slug),
+    hasContent: (slug) => existsSync(getContentPath(slug)),
+  });
+  if (unwritten.length) {
+    console.log(`  ${unwritten.length} post dir(s) hold meta.json but nothing written — NOT counted as coverage: ${unwritten.map((u) => u.slug).join(', ')}`);
   }
   if (existsSync(join(ROOT, 'data', 'published.json'))) {
     try {
       const pub = JSON.parse(readFileSync(join(ROOT, 'data', 'published.json'), 'utf8'));
-      for (const e of pub) { if (e.keyword) publishedKeywords.push(e.keyword); }
+      for (const e of pub) { if (e.keyword) publishedPosts.push({ slug: e.slug || null, keyword: e.keyword }); }
     } catch { /* ignore */ }
   }
 
@@ -893,6 +892,11 @@ ${calendarMd}`;
   })();
   const calendarKeywords = existingCalendarItems.map((i) => i.keyword).filter(Boolean);
 
+  // Every drop is recorded, not just printed. A `[SKIP]` line in an unattended
+  // cron log is not a record — it is what let 12 of 19 calendar items disappear
+  // on 2026-08-19/21 with nobody able to say which ones, or why.
+  const skips = [];
+
   let briefQueue = [];
   try {
     const raw = extractResponse.content[0].text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
@@ -901,24 +905,34 @@ ${calendarMd}`;
     briefQueue = briefQueue.filter(item => {
       if (isRejected(item.keyword, rejections)) {
         console.log(`  [SKIP] Rejected keyword: "${item.keyword}"`);
+        skips.push({ keyword: item.keyword, reason: 'rejected' });
         return false;
       }
       const kwLower = (item.keyword || '').toLowerCase();
       const brandHit = brandTerms.find((t) => kwLower.includes(t));
       if (brandHit) {
         console.log(`  [SKIP] Branded keyword (contains "${brandHit}"): "${item.keyword}"`);
+        skips.push({ keyword: item.keyword, reason: 'branded', detail: `contains "${brandHit}"` });
         return false;
       }
       if (!isInProductScope(item.keyword)) {
         console.log(`  [SKIP] Off product scope (no product mapping): "${item.keyword}"`);
         appendRejection(item.keyword, 'no product mapping');
+        skips.push({ keyword: item.keyword, reason: 'off_scope' });
         return false;
       }
       // Cannibalization check: exact against published posts, near-duplicate
       // against both pools. Self-matches on the calendar are allowed through.
-      const dup = findScheduledDuplicate(item.keyword, { publishedKeywords, calendarKeywords });
-      if (dup) {
-        console.log(`  [SKIP] already covered: "${item.keyword}" ~ existing "${dup}"`);
+      const hit = findCoverage(item.keyword, { publishedPosts, calendarKeywords });
+      if (hit) {
+        // Naming the PAGE, not just a keyword. "already covered: x ~ existing x"
+        // could not distinguish a live competitor page from the item's own draft.
+        const where = hit.slug ? `data/posts/${hit.slug}` : `the ${hit.pool} pool`;
+        console.log(`  [SKIP] already covered: "${item.keyword}" ~ "${hit.keyword}" (${hit.rule}-match, ${where})`);
+        skips.push({
+          keyword: item.keyword, reason: 'already_covered',
+          matched: hit.keyword, matchedSlug: hit.slug, rule: hit.rule, pool: hit.pool,
+        });
         return false;
       }
       // Clusters that have proven they do not earn. This is a HARD filter, not
@@ -928,7 +942,9 @@ ${calendarMd}`;
       const dudCluster = clusterForText(item.keyword) || clusterForText(item.category);
       if (clusterRevenue[dudCluster]?.status === 'proven_dud') {
         const c = clusterRevenue[dudCluster];
-        console.log(`  [SKIP] ${dudCluster} cluster does not earn (${c.clicks} clicks, $0.00): "${item.keyword}"`);
+        const detail = `${dudCluster} cluster does not earn (${c.clicks} clicks, $0.00)`;
+        console.log(`  [SKIP] ${detail}: "${item.keyword}"`);
+        skips.push({ keyword: item.keyword, reason: 'cluster_dud', detail });
         return false;
       }
       return true;
@@ -972,6 +988,33 @@ ${calendarMd}`;
   });
   console.log(`\n  Calendar saved: data/calendar/calendar.json (+ markdown view)`);
   if (carried > 0) console.log(`  Carried ${carried} item(s) awaiting review in the Ideas inbox`);
+
+  // ── The calendar is REPLACED, so say what that cost ──────────────────────────
+  //
+  // Everything above this line only ever printed why a PROPOSAL was dropped.
+  // Nothing said which SCHEDULED items stopped existing as a result, and five of
+  // the twelve cleared on 2026-08-19/21 were never mentioned at all — the
+  // planner simply did not re-propose them and no filter fired. That class of
+  // loss is now named, attributed, and put in front of a human.
+  const cleared = classifyClearedItems({
+    previousItems: existingCalendarItems,
+    newItems: calendarItems,
+    skips,
+    postState: (slug) => {
+      const meta = getPostMetaLib(slug);
+      return { exists: Boolean(meta), live: Boolean(meta) && isLiveOrScheduled(meta) };
+    },
+  });
+  if (cleared.length) {
+    console.log(`\n  CLEARED — ${cleared.length} scheduled item(s) removed from the calendar by this re-plan:`);
+    for (const line of renderClearedLines(cleared)) console.log(line);
+    const digest = clearedDigest(cleared, { kept: extractedItems.length });
+    // Deferred, per CLAUDE.md's digest convention. A cleared calendar is a thing
+    // to read at 5 AM, never a page.
+    if (digest) await notify(digest);
+  } else {
+    console.log('  Nothing was cleared from the calendar by this re-plan.');
+  }
 
   // ── Step 4: Generate briefs (optional) ───────────────────────────────────────
 
