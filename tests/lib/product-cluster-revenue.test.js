@@ -383,8 +383,14 @@ test('a new zero-click row can never become a proven_dud', () => {
   const merged = mergeClusterRows(ENTRY_ROWS, [
     { cluster: 'deodorant', product_organic_revenue: 0, product_revenue_all_channels: 0 },
   ]);
-  const classified = classifyClusters(merged, { totals: { organic_conversions: 8 } });
+  // Judged on the product figures the merge just added, over the 90-day window.
+  const classified = classifyClusters(merged, {
+    productRevenue: { lotion: 1757.1, toothpaste: 0, deodorant: 0 }, windowOrders: 50,
+  });
+  // A row with no clicks and no pages can only ever be `earning` or `unproven`,
+  // never a dud — safe by construction, whatever it sold.
   assert.equal(classified.deodorant.status, 'unproven');
+  assert.match(classified.deodorant.evidence, /fair shot/);
   // ...and the pre-existing verdicts are untouched.
   assert.equal(classified.toothpaste.status, 'proven_dud');
   assert.equal(classified.lotion.status, 'earning');

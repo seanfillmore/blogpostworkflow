@@ -113,6 +113,34 @@ test('a matched cluster with zero revenue but genuine negative momentum scores l
   assert.ok(declining < 12, `a real decline must score below the no-signal neutral, got ${declining}`);
 });
 
+// THE PRODUCT FIELDS ARE IGNORED, AND THAT IS A DECISION (2026-08-23).
+//
+// The $0-cluster gate moved off entry-page attribution onto what a category's PRODUCTS
+// SOLD over 90 days, and `clusters[]` gained `product_organic_revenue` /
+// `product_revenue_all_channels` alongside the untouched `revenue`. This score was NOT
+// migrated: its $200 saturation ceiling was calibrated on entry-page figures, which
+// rarely reach it, and product figures usually do — so reading them without re-deriving
+// the ceiling would push most categories to the 20/20 cap and flatten the component.
+// See lib/ad-brief-score.js's scoreCommercial docstring.
+//
+// This test exists so the migration, when it happens, is deliberate rather than a side
+// effect of someone renaming a field.
+test('scoreCommercial reads the entry-page figure and ignores the product figures', () => {
+  const entryOnly = { clusters: [{ cluster: 'soap', revenue: 62.4, revenueDelta: 62.4 }] };
+  const withProduct = {
+    clusters: [{
+      cluster: 'soap', revenue: 62.4, revenueDelta: 62.4,
+      // The real 2026-08-23 production figures. The all-channel one is well past
+      // the $200 ceiling; the organic one is not, which is the point — swapping
+      // the field would change the score by a different amount per channel view,
+      // so which one to read is part of the deferred decision, not a detail.
+      product_organic_revenue: 123.7, product_revenue_all_channels: 324.85,
+    }],
+  };
+  assert.equal(scoreCommercial('coconut-soap', withProduct), scoreCommercial('coconut-soap', entryOnly));
+  assert.ok(scoreCommercial('coconut-soap', entryOnly) < 25, 'and the entry-page figure has not saturated it');
+});
+
 // ── headroom ────────────────────────────────────────────────────────────────────────
 //
 // Narrow product-aware angles harvest fast and exhaust fast; broad problem-aware and

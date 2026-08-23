@@ -7,15 +7,16 @@
  * never unpublishes, deletes, redirects or deindexes anything — every held page
  * stays live and keeps its traffic.
  *
- * A cluster is held only when TWO sources agree it earns nothing: seo-impact's
- * attributed revenue AND real product revenue from the daily Shopify order
- * snapshots. When they disagree the cluster is NOT held and the disagreement is
- * printed as its own section — seo-impact's organic revenue is directional only,
- * and a $0 row beside real orders means attribution is broken for that cluster.
+ * A cluster is held only when TWO sources agree it earns nothing, both read over
+ * the 90-day judging window: what the category's PRODUCTS sold (order line items,
+ * keyed on product title) AND what its PAGES earned (order totals, keyed on the
+ * landing-page URL). When they disagree the cluster is NOT held and the
+ * disagreement is printed as its own section — either attribution is broken for
+ * that cluster, or its pages are selling somebody else's category.
  *
  * A hold nobody can see becomes a mystery outage six weeks later, so this is the
  * one command that answers "why has nothing happened to those posts lately?" —
- * and now also "which clusters is seo-impact getting wrong?".
+ * and now also "which clusters is the fleet getting wrong?".
  *
  * Usage:
  *   npm run cluster-holds
@@ -25,7 +26,7 @@
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  loadClusterHold, HOLD_FLAG, SEO_IMPACT_RELPATH, SHOPIFY_SNAPSHOT_RELDIR, TOP_PRODUCTS_PER_DAY,
+  loadClusterHold, HOLD_FLAG, SEO_IMPACT_RELPATH, WIDE_WINDOW_DAYS,
 } from '../lib/cluster-hold.js';
 import { staleNote } from '../lib/seo-impact-freshness.js';
 
@@ -54,11 +55,8 @@ if (process.argv.includes('--json')) {
     held: hold.held,
     disagreements: hold.disagreements,
     uncorroborated: hold.uncorroborated,
-    corroboration_windows: hold.measured.map((w) => ({
-      label: w.label, start: w.start, end: w.end, available: w.available,
-      orders: w.orders, revenue: w.revenue, aov: w.aov,
-      truncated_days: w.truncatedDays, by_family: w.byFamily,
-    })),
+    judging_window: hold.judgingWindow,
+    judging_window_orders: hold.windowOrders,
     clusters: hold.classified,
   }, null, 2));
   process.exit(0);
@@ -77,16 +75,16 @@ if (!hold.available) {
   process.exit(0);
 }
 
-console.log(`  Attributed revenue: ${SEO_IMPACT_RELPATH} (generated ${hold.generatedAt || 'date unknown'})`);
-console.log(`  Real product revenue: ${SHOPIFY_SNAPSHOT_RELDIR} — the corroborating source.`);
-for (const w of hold.measured) {
-  console.log(`    ${w.label}: ${w.available
-    ? `${w.orders} orders / $${(w.revenue || 0).toFixed(2)} — one average order = $${(w.aov || 0).toFixed(2)}`
-    : `UNUSABLE (${w.truncatedDays ? `${w.truncatedDays} day(s) at the top-${TOP_PRODUCTS_PER_DAY} collector cap` : 'no orders'})`}`);
-}
-console.log('\n  A cluster is HELD only when BOTH sources agree it earns nothing.');
-console.log('  seo-impact organic revenue is directional only — a disagreement means attribution is broken.');
-console.log('  ORDERS $ is per FAMILY, so clusters sharing a family repeat the same figure.\n');
+console.log(`  Source: ${SEO_IMPACT_RELPATH} (generated ${hold.generatedAt || 'date unknown'})`);
+console.log(`  Judging window: ${hold.judgingWindow
+  ? `${hold.judgingWindow.start} → ${hold.judgingWindow.end}`
+  : `${WIDE_WINDOW_DAYS}d (dates not recorded)`}`
+  + `${hold.windowOrders == null ? ' — order count MISSING, so nothing can be held' : `, ${hold.windowOrders} all-channel orders`}`);
+console.log('\n  A cluster is HELD only when BOTH sources agree it earns nothing:');
+console.log('    SOLD $   what the category\'s PRODUCTS sold  (line items, keyed on product title, all channels)');
+console.log('    PAGES $  what its PAGES earned              (order totals, keyed on landing-page URL, organic)');
+console.log('  Either one above $0 blocks the hold. PAGES $ is per FAMILY, so clusters sharing a family repeat it.');
+console.log('  ENTRY 28d is the report\'s own narrow-window figure — shown for context, judged on by nothing.\n');
 
 const rows = Object.entries(hold.classified)
   .sort((a, b) => (b[1].clicks || 0) - (a[1].clicks || 0));
@@ -101,25 +99,28 @@ const LABEL = {
 };
 const pad = Math.max(...rows.map(([c]) => c.length), 7);
 const fam = Math.max(...rows.map(([c]) => (hold.corroborated[c]?.family || '').length), 6);
-console.log(`  ${'CLUSTER'.padEnd(pad)}  ${'FAMILY'.padEnd(fam)}  ${'STATE'.padEnd(9)}  ${'ATTRIB $'.padStart(9)}  ${'ORDERS $'.padStart(9)}  ${'CLICKS'.padStart(7)}  ${'PAGES'.padStart(5)}`);
+const money = (n) => (n == null ? '     —' : `$${(Number(n) || 0).toFixed(2)}`);
+console.log(`  ${'CLUSTER'.padEnd(pad)}  ${'FAMILY'.padEnd(fam)}  ${'STATE'.padEnd(9)}  ${'SOLD $'.padStart(9)}  ${'PAGES $'.padStart(9)}  ${'ENTRY 28d'.padStart(9)}  ${'CLICKS'.padStart(7)}  ${'PAGES'.padStart(5)}`);
 for (const [cluster, v] of rows) {
   const c = hold.corroborated[cluster] || {};
   const state = LABEL[c.verdict] || c.verdict || '';
   console.log(`  ${cluster.padEnd(pad)}  ${(c.family || '').padEnd(fam)}  ${state.padEnd(9)}`
-    + `  ${('$' + (Number(v.revenue) || 0).toFixed(2)).padStart(9)}`
-    + `  ${('$' + (Number(c.productRevenue) || 0).toFixed(2)).padStart(9)}`
+    + `  ${money(v.productRevenue).padStart(9)}`
+    + `  ${money(c.entryPageRevenue).padStart(9)}`
+    + `  ${money(v.revenue).padStart(9)}`
     + `  ${String(v.clicks).padStart(7)}  ${String(v.pages).padStart(5)}`);
 }
 
-// The disagreements are the loud part. A cluster the report calls $0 while real
-// orders say otherwise is a broken-attribution finding, not a quiet non-event.
+// The disagreements are the loud part. A category whose products sold nothing
+// while its pages earn is either broken attribution or a cluster with no SKU
+// behind it — a finding either way, not a quiet non-event.
 if (hold.disagreements.length) {
-  console.log(`\n  ⚠ ATTRIBUTION DISAGREEMENT — ${hold.disagreements.length} cluster(s) NOT held:`);
+  console.log(`\n  ⚠ SOURCES DISAGREE — ${hold.disagreements.length} cluster(s) NOT held:`);
   for (const d of hold.disagreements) console.log(`      ${d.cluster}: ${d.corroboration}`);
 }
 
 if (hold.uncorroborated.length) {
-  console.log(`\n  · ${hold.uncorroborated.length} $0-attributed cluster(s) could not be corroborated — NOT held:`);
+  console.log(`\n  · ${hold.uncorroborated.length} cluster(s) sold $0 but could not be cross-checked — NOT held:`);
   for (const u of hold.uncorroborated) console.log(`      ${u.cluster}: ${u.corroboration}`);
 }
 

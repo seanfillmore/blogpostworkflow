@@ -14,30 +14,27 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildClusterHold, loadClusterHold, HOLD_FLAG } from '../../lib/cluster-hold.js';
-import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { loadClusterHold, HOLD_FLAG } from '../../lib/cluster-hold.js';
 import { SEO_IMPACT_RELPATH } from '../../lib/seo-impact-freshness.js';
+import { holdFor, heldScenario, impactReport, SOLD_90D, PAGES_EARNED_90D } from '../helpers/cluster-fixtures.js';
 import { holdMetaCandidates } from '../../agents/meta-optimizer/lib/hold.js';
 import { sortByValidation } from '../../agents/meta-optimizer/lib/sort.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
-// Production shape (2026-08-22), identical to tests/agents/cluster-hold-wiring.test.js.
-const MEASURED = [
-  { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, soap: 156 } },
-  { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, toothpaste: 39 } },
-];
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };
-const CLUSTERS = [
-  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
-  { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-];
-const HOLD = buildClusterHold(classifyClusters(CLUSTERS, { totals: TOTALS }),
-  { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
+// One cluster dead on BOTH sources — its products sold $0.00 over the 90-day
+// judging window AND its pages earned $0.00 over the same window. SYNTHETIC:
+// production has no held cluster as of 2026-08-23. What is under test is the
+// SELECTOR — that the hold is applied, and applied before the --limit cap.
+const SCENARIO = heldScenario('toothpaste');
+const CLUSTERS = SCENARIO.clusters;
+const HOLD = holdFor({ ...SCENARIO, generatedAt: '2026-08-23T10:00:00Z' });
 
-const EARNING = buildClusterHold(classifyClusters(
-  CLUSTERS.map((c) => (c.cluster === 'toothpaste' ? { ...c, revenue: 12.5 } : c)), { totals: TOTALS },
-), { measured: MEASURED });
+const EARNING = holdFor({
+  clusters: CLUSTERS,
+  sold: { ...SOLD_90D, toothpaste: 12.5 },
+  earned: { ...PAGES_EARNED_90D, toothpaste: 0 },
+});
 
 // The top of the REAL 2026-08-23 low-CTR pool, verbatim from the production
 // data/reports/gsc-opportunity/latest.json (impressions ≥100, CTR ≤5%), in
@@ -120,20 +117,12 @@ test('the hold is applied BEFORE the --limit cap, so held queries do not eat the
 // ── the freshness fail-safe composes ─────────────────────────────────────────
 
 test('a stale seo-impact report holds nothing for meta-optimizer either', () => {
-  const report = (generated_at) => ({
-    generated_at, window: { start: '2026-07-24', end: '2026-08-20' }, clusters: CLUSTERS, totals: TOTALS,
-  });
-  const snapshots = {
-    '2026-08-20.json': {
-      orders: { count: 18, revenue: 1079.46 },
-      topProducts: [{ title: 'Coconut Oil Body Lotion', revenue: 909 }],
-    },
-  };
   const load = (generatedAt) => loadClusterHold({
     root: '/fake',
     today: '2026-08-23',
-    readJson: (p) => (p.endsWith(SEO_IMPACT_RELPATH) ? report(generatedAt) : (snapshots[p.split('/').pop()] || { topProducts: [] })),
-    readDir: () => Object.keys(snapshots),
+    readJson: (p) => (p.endsWith(SEO_IMPACT_RELPATH)
+      ? impactReport({ generated_at: generatedAt, clusters: CLUSTERS, sold: SCENARIO.sold, earned: SCENARIO.earned })
+      : null),
   });
 
   const fresh = load('2026-08-22T15:16:44.241Z');

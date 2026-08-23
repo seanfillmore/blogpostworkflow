@@ -259,13 +259,16 @@ test('buildPrepaidSection caps the list so an 8-week plan is not swamped', () =>
 // ── clusters that do not earn ─────────────────────────────────────────────────
 
 import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { WIDE_ORDERS } from '../helpers/cluster-fixtures.js';
 
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
+// The verdict is made on what the category SOLD over the 90-day judging window.
+// The $0 rows are SYNTHETIC — on the real 2026-08-23 report nothing is a dud.
+const SOLD = { lotion: 1757.1, toothpaste: 0, soap: 0 };
 const CLUSTERS = classifyClusters([
   { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
   { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
   { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
-], { totals: TOTALS });
+], { productRevenue: SOLD, windowOrders: WIDE_ORDERS });
 
 test('buildNonEarningSection forbids new posts in a cluster with traffic and no revenue', () => {
   const out = buildNonEarningSection(CLUSTERS);
@@ -282,7 +285,7 @@ test('buildNonEarningSection does not condemn an untested cluster', () => {
 test('buildNonEarningSection is empty when every cluster earns or is untested', () => {
   const out = buildNonEarningSection(classifyClusters([
     { cluster: 'body lotion', revenue: 87.09, clicks: 34, pages: 20 },
-  ], { totals: TOTALS }));
+  ], { productRevenue: SOLD, windowOrders: WIDE_ORDERS }));
   assert.equal(out, '');
 });
 

@@ -5,10 +5,13 @@ import {
   MAX_APPLIES_PER_RUN, MAX_GATE_ATTEMPTS,
 } from '../../lib/queue-autoapply.js';
 import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { WIDE_ORDERS } from '../helpers/cluster-fixtures.js';
 
-// Real shape, from data/reports/seo-impact/latest.json on the production server
-// (2026-08-22). toothpaste is the $0 cluster CLAUDE.md names; body lotion earns.
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
+// Real `clusters[]` shape from data/reports/seo-impact/latest.json. The verdict
+// is made on `productRevenue` — what each category SOLD over the 90-day judging
+// window — so the toothpaste $0 below is SYNTHETIC: the real figure is $71.50
+// and the real report has no dud in it at all.
+const SOLD = { lotion: 1757.1, soap: 324.85, deodorant: 165, 'lip balm': 117, toothpaste: 0 };
 const CLUSTERS = classifyClusters([
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
   { cluster: 'hand soap', revenue: 62.4, clicks: 4, pages: 4 },
@@ -16,7 +19,7 @@ const CLUSTERS = classifyClusters([
   { cluster: 'deodorant', revenue: 38.25, clicks: 121, pages: 21 },
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
   { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
-], { totals: TOTALS });
+], { productRevenue: SOLD, windowOrders: WIDE_ORDERS });
 
 const pending = (over = {}) => ({ slug: 's', trigger: 'quick-win', status: 'pending', created_at: '2026-07-20T00:00:00Z', ...over });
 
@@ -109,7 +112,8 @@ test('both live toothpaste collection-gaps are auto-dismissed as a $0 cluster', 
 test('the $0-cluster list is read from the report, never hardcoded', () => {
   // Same item, a report in which toothpaste has started earning → no dismissal
   // on revenue grounds. Nothing in the policy names a cluster.
-  const earning = classifyClusters([{ cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 }], { totals: TOTALS });
+  const earning = classifyClusters([{ cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 }],
+    { productRevenue: { ...SOLD, toothpaste: 12.5 }, windowOrders: WIDE_ORDERS });
   const d = decide(gap(), { clusters: earning, productCounts: new Map([['glycerin-free-toothpaste', 4]]) });
   assert.notEqual(d.action, 'dismiss');
 });

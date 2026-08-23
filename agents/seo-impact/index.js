@@ -37,7 +37,15 @@
  * bought in a cart that entered on the homepage is credited to the homepage. So
  * `clusters[].product_*` answers the category question from order LINE ITEMS
  * (lib/product-cluster-revenue.js), and the entry-page fields are preserved
- * untouched beside it — every $0-cluster decision in the fleet still reads those.
+ * untouched beside it.
+ *
+ * SINCE 2026-08-23 THE $0-CLUSTER GATE READS THE PRODUCT SIDE, not the entry-page
+ * side, and it reads `clusters_product_wide[]` — the 90-day array — and nothing
+ * else. Each of those rows carries BOTH sources of the two-source hold rule for
+ * the same window: `product_revenue_all_channels` (what the category sold) and
+ * `entry_page_organic_revenue` (what its pages earned). Emitting one without the
+ * other is worse than emitting neither, so this agent writes the array only when
+ * both rollups succeeded; see `clustersProductWide` below.
  *
  * The dashboard's 12-week `revenue_trend` is built from the same Shopify records, in
  * 7-Pacific-day buckets aligned to the window end, so its newest WINDOW/7 buckets sum
@@ -68,9 +76,10 @@ import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { ptDayOf, ptDayBounds } from '../shopify-collector/index.js';
 import {
   pathOf, organicSessionsByPage, isSearchEngineSource, mergeRevenueSources, buildPageImpacts,
-  clusterRollup, residualRollup, actionWins, rankBy, weeklyRevenueTrend,
+  clusterRollup, residualRollup, entryPageClusterRevenue, withWideEntryPageRevenue,
+  actionWins, rankBy, weeklyRevenueTrend,
 } from '../../lib/seo-impact.js';
-import { clusterForText } from '../../lib/cluster-revenue.js';
+import { clusterForText, JUDGING_WINDOW_DAYS } from '../../lib/cluster-revenue.js';
 import {
   loadBundleIndex, clusterProductRevenue, productClusterRows, mergeClusterRows,
   PRODUCT_REVENUE_BASIS,
@@ -101,14 +110,20 @@ const TREND_WEEKS = 12;
  * $71.50 in the 90 days to the same date. Judging a category on the narrow
  * window alone reads noise as a verdict.
  *
- * 90 days matches `lib/cluster-hold.js`'s `WIDE_WINDOW_DAYS` — the window the
- * reconciliation that caught the soap misattribution was run over — so the two
- * halves of the fleet's category evidence are measured over the same span.
+ * IT IS IMPORTED, NOT SPELLED HERE. This constant is the window the $0-cluster
+ * gate makes its verdict over, and `lib/cluster-revenue.js`'s
+ * `JUDGING_WINDOW_DAYS` is where the derivation lives (at a materiality floor of
+ * one average order per 28 days, a window must span ≥84 days before a
+ * genuinely-selling category recording zero drops under 5%). A second `= 90`
+ * here would be a copy free to drift — and the drift would be silent and
+ * exactly wrong: the producer would emit one span while the gate judged it
+ * against thresholds derived for another. `lib/cluster-hold.js` re-exports the
+ * same constant as `WIDE_WINDOW_DAYS` for its historical importers.
  *
  * It costs no extra API call: the trend already pulls 84 days, so the single
  * wide fetch below is widened to cover both.
  */
-const WIDE_WINDOW_DAYS = 90;
+const WIDE_WINDOW_DAYS = JUDGING_WINDOW_DAYS;
 const WIDE_FETCH_DAYS = Math.max(TREND_WEEKS * 7, WIDE_WINDOW_DAYS);
 // Orders come through getAllOrders(), which cursor-paginates and reports its own
 // `truncated` flag. A silent truncation would understate revenue with no symptom at
@@ -332,6 +347,7 @@ async function main() {
   let trendWindow = null;
   let wideProduct = null;
   let wideWindow = null;
+  let wideEntryPage = null;
   try {
     const wideEnd = w.current.end;
     const wideStart = ymd(Date.parse(wideEnd) - (WIDE_FETCH_DAYS - 1) * DAY);
@@ -341,16 +357,42 @@ async function main() {
     });
     trendWindow = { start: ymd(Date.parse(wideEnd) - (TREND_WEEKS * 7 - 1) * DAY), end: wideEnd };
     wideWindow = { start: ymd(Date.parse(wideEnd) - (WIDE_WINDOW_DAYS - 1) * DAY), end: wideEnd };
-    wideProduct = productRollups(rowsWithin(wideRows, wideWindow), bundleIndex);
+    const wideInWindow = rowsWithin(wideRows, wideWindow);
+    wideProduct = productRollups(wideInWindow, bundleIndex);
+    // SOURCE B of the two-source hold rule: what each cluster's PAGES earned over
+    // the same 90 days, keyed on the landing-page URL instead of the product
+    // title. Costs no extra fetch — the landing path is on the order — and is
+    // what stops a category being condemned by a defect in the product-title
+    // join alone. See lib/cluster-hold.js's header.
+    wideEntryPage = entryPageClusterRevenue(
+      shopifyRevenueByPage(wideInWindow, { channels: ['organic-search'] }), clusterFor,
+    );
     console.log(`  Orders pulled for trend + wide window: ${fetched} over ${wideStart} → ${wideEnd} PT (${WIDE_FETCH_DAYS}d)`);
     console.log(`  Trend: ${TREND_WEEKS} weeks ending ${wideEnd}`);
     console.log(`  Wide product window (${WIDE_WINDOW_DAYS}d): ${wideProduct.allChannels.orders} orders, $${wideProduct.allChannels.subtotal} of product revenue`);
+    console.log(`  Wide entry-page window (${WIDE_WINDOW_DAYS}d): $${round2(Object.values(wideEntryPage.byCluster).reduce((s, v) => s + v, 0))} clustered, $${wideEntryPage.residual} residual`);
   } catch (err) {
     console.error('  Trend/wide-window build failed (non-fatal):', err.message);
   }
-  const clustersProductWide = wideProduct
-    ? productClusterRows({ organic: wideProduct.organic, allChannels: wideProduct.allChannels })
+  // Both sources on one row, for the same window. `lib/cluster-hold.js` reads
+  // exactly this array and nothing else — if either field stops being emitted
+  // here the gate goes quiet rather than guessing, which is the intended
+  // behaviour for a run whose order pull failed.
+  //
+  // BOTH are required to emit the array at all, and the asymmetry matters: a
+  // half-written array carrying A with B silently at $0 would make every cluster
+  // look cross-checked-dead, which is the direction that CREATES holds. Writing
+  // nothing switches the gate off; writing half of it condemns the catalogue.
+  const clustersProductWide = wideProduct && wideEntryPage
+    ? withWideEntryPageRevenue(
+      productClusterRows({ organic: wideProduct.organic, allChannels: wideProduct.allChannels }),
+      wideEntryPage,
+    )
     : [];
+  if (wideProduct && !wideEntryPage) {
+    console.error('  WARNING: the wide product rollup succeeded but the entry-page rollup did not. '
+      + 'clusters_product_wide is left EMPTY on purpose — the $0-cluster gate needs both sources or neither.');
+  }
 
   // Reconciliation: the trend's newest WINDOW/7 buckets ARE the headline window, so they
   // must sum to organic_revenue to the cent. Checked out loud every run — an assertion
@@ -406,10 +448,15 @@ async function main() {
     //   product_* — what the CATEGORY sold, from order line items.
     clusters,
     cluster_residual: clusterResidual,
-    // The 90-day product view. Its own array rather than more columns on
-    // `clusters[]`, because it is a different WINDOW and the report's every
-    // other number is 28-day: a wide figure sitting in a narrow-window row is
-    // how a reader ends up comparing two spans without noticing.
+    // The 90-day view, and THE ARRAY THE $0-CLUSTER GATE READS. Its own array
+    // rather than more columns on `clusters[]`, because it is a different WINDOW
+    // and the report's every other number is 28-day: a wide figure sitting in a
+    // narrow-window row is how a reader ends up comparing two spans without
+    // noticing. Each row carries BOTH sources of the two-source hold rule —
+    // `product_revenue_all_channels` (what the category sold) and
+    // `entry_page_organic_revenue` (what its pages earned) — over that one
+    // window. `lib/cluster-hold.js` reads this and nothing else; an empty array
+    // means the gate holds nothing.
     clusters_product_wide: clustersProductWide,
     // What the product numbers are, spelled out, because the mislabelling is
     // what caused the misreading the last time round.
@@ -437,7 +484,27 @@ async function main() {
       // category selling nothing.
       orders_without_lines_organic: curProduct.organic.ordersWithoutLines,
       orders_without_lines_all_channels: curProduct.allChannels.ordersWithoutLines,
+      // The denominator the $0-cluster gate needs. `lib/cluster-revenue.js`'s
+      // MIN_WINDOW_ORDERS is derived against THIS number — all-channel orders in
+      // the wide window — and refuses to call anything a dud without it, so a
+      // failed wide pull leaves it null and switches the gate off rather than
+      // condemning every category at once.
       wide_orders_all_channels: wideProduct?.allChannels?.orders ?? null,
+      // ...and how many of those orders carried NO line items, which is the
+      // failure `wide_orders_all_channels` alone cannot see. That count is
+      // incremented per revenue order regardless of line items, so a Shopify
+      // response with `line_items` missing or empty leaves the denominator at 50
+      // while every category reads $0 — a fully-armed gate over a rollup that
+      // measured nothing. `classifyClusters` refuses an all-zero product map for
+      // exactly this reason, and this number is what lets a human see WHY the
+      // gate went quiet instead of guessing.
+      wide_orders_without_lines_all_channels: wideProduct?.allChannels?.ordersWithoutLines ?? null,
+      // Source B's leftovers over the same window: organic revenue landing on a
+      // page that matches no cluster. Large by construction ($388.43 / 29% over
+      // the 90 days to 2026-08-20) and reported for the same reason
+      // `cluster_residual` is — so the entry-page column can be seen not to
+      // reconcile to the store, rather than quietly not reconciling.
+      wide_entry_page_residual: wideEntryPage?.residual ?? null,
     },
     action_wins: wins,
     not_converting: notConverting,
@@ -584,16 +651,26 @@ export function productClusterSection(p) {
   }
   const wide = p.clusters_product_wide || [];
   if (wide.length && meta.wide_window) {
-    L.push(`### The same thing over ${meta.wide_window_days} days — the span a category verdict is credible at`);
+    L.push(`### Over ${meta.wide_window_days} days — THE TABLE THE $0-CLUSTER GATE JUDGES ON`);
     L.push('');
     L.push(`_${meta.wide_window.start} → ${meta.wide_window.end}, ${meta.wide_orders_all_channels ?? '?'} orders. The store`
       + ' averages ~0.5 orders a day, so a single category\'s slice of a 28-day window is one or two orders and a $0'
-      + ' there is noise, not a verdict. This is the window `lib/cluster-hold.js` already corroborates over._');
+      + ' there is noise, not a verdict — at a floor of one average order a month, a genuinely-selling category records'
+      + ' zero 37% of the time over 28 days and 4% of the time over 90._');
     L.push('');
-    L.push('| Cluster | Organic product $ | All channels | Orders |');
-    L.push('|---------|--------:|-------------:|-------:|');
+    L.push('_Both columns of `lib/cluster-hold.js`\'s two-source rule, over one window. **All channels** is what the'
+      + ' category SOLD (order line items, keyed on product title). **Pages earned** is what its landing pages took'
+      + ' in from organic search (order totals, keyed on the URL). A cluster is only ever put on hold when BOTH are'
+      + ' $0.00; one of them earning is a finding, not a dud._');
+    L.push('');
+    L.push('| Cluster | Organic product $ | All channels | Orders | Pages earned (organic) |');
+    L.push('|---------|--------:|-------------:|-------:|-----------------------:|');
     for (const c of wide) {
-      L.push(`| ${c.cluster} | ${money(c.product_organic_revenue)} | ${money(c.product_revenue_all_channels)} | ${c.product_orders_all_channels} |`);
+      L.push(`| ${c.cluster} | ${money(c.product_organic_revenue)} | ${money(c.product_revenue_all_channels)}`
+        + ` | ${c.product_orders_all_channels} | ${money(c.entry_page_organic_revenue)} |`);
+    }
+    if (meta.wide_entry_page_residual != null) {
+      L.push(`| _no cluster (homepage / cart / subscription)_ | — | — | — | ${money(meta.wide_entry_page_residual)} |`);
     }
     L.push('');
   }

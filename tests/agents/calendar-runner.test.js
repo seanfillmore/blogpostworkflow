@@ -161,24 +161,29 @@ test('detectDraftStall treats a never-drafted pipeline with pending work as stal
 
 import { revenueAdjustment } from '../../agents/calendar-runner/index.js';
 import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { WIDE_ORDERS } from '../helpers/cluster-fixtures.js';
 
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
+// Priority is keyed on what the category SOLD over the 90-day judging window,
+// from raw order line items — not on what landed on pages named after it. The
+// $0 rows below are SYNTHETIC: on the real 2026-08-23 report every category RSC
+// sells, sells, so a dud fixture is the only way to exercise the deferral.
 const CLASSIFIED = classifyClusters([
   { cluster: 'body lotion', revenue: 87.09, clicks: 34,  pages: 20 },
   { cluster: 'toothpaste',  revenue: 0,     clicks: 725, pages: 26 },
   { cluster: 'hand soap',   revenue: 0,     clicks: 1,   pages: 2  },
-], { totals: TOTALS });
+], { productRevenue: { lotion: 1757.1, toothpaste: 0, soap: 0 }, windowOrders: WIDE_ORDERS });
 
 test('revenueAdjustment accelerates a cluster that earns', () => {
   const adj = revenueAdjustment('Body Lotion', CLASSIFIED);
   assert.ok(adj.days < 0, 'earning clusters move earlier');
-  assert.match(adj.reason, /\$87\.09/, 'the reason states the dollars, not the ranking');
+  assert.match(adj.reason, /sold \$1757\.10/, 'the reason states what the category SOLD, not what its pages earned');
 });
 
 test('revenueAdjustment defers a cluster with traffic and no revenue', () => {
   const adj = revenueAdjustment('Toothpaste', CLASSIFIED);
   assert.ok(adj.days > 0, 'a proven dud moves later, behind work that earns');
   assert.match(adj.reason, /725 clicks/);
+  assert.match(adj.reason, /sold \$0\.00/);
 });
 
 test('revenueAdjustment leaves an untested cluster alone', () => {
@@ -206,15 +211,15 @@ test('revenueAdjustment never accelerates a dud even when it ranks', () => {
 // labelled "Bar Soap" (unproven). Same topic, two answers, depending on which
 // field happened to be read.
 
-// SYNTHETIC click counts: 180 + 10 no longer clears the 400-click evidence bar,
-// and the real soap cluster is not a dud at all. What is under test here is that
-// the runner and the brief triage bucket the same topic identically, so the
-// fixture is given enough traffic to reach a verdict either could act on.
+// SYNTHETIC product revenue: the real soap cluster sold $324.85 over the judging
+// window and is not a dud at all. What is under test here is that the runner and
+// the brief triage bucket the same TOPIC identically, so the fixture gives soap
+// a $0 product reading to produce a verdict either could act on.
 const SOAP = classifyClusters([
   { cluster: 'soap',      revenue: 0, clicks: 470, pages: 20 },
   { cluster: 'bar soap',  revenue: 0, clicks: 10,  pages: 4  },
   { cluster: 'deodorant', revenue: 17.26, clicks: 109, pages: 21 },
-], { totals: TOTALS });
+], { productRevenue: { soap: 0, deodorant: 165 }, windowOrders: WIDE_ORDERS });
 
 test('revenueAdjustment judges on the keyword, matching what the brief triage does', () => {
   const adj = revenueAdjustment('Bar Soap', SOAP, 'oatmeal soap');

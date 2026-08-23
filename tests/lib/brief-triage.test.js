@@ -96,17 +96,18 @@ test('triageOrphanBrief drops a near-duplicate of a published post, not just an 
 // so it is limbo, not backlog.
 
 import { classifyClusters } from '../../lib/cluster-revenue.js';
+import { WIDE_ORDERS } from '../helpers/cluster-fixtures.js';
 
-const TOTALS = { organic_conversions: 8, organic_sessions: 1067 };  // the real 2026-08-22 window
-// SYNTHETIC soap click count (the real row is 223 and the real cluster EARNS).
-// 470 is used so the fixture still reaches a dud verdict and can test that a
-// keyword is bucketed the way seo-impact bucketed the revenue.
+// SYNTHETIC product revenue for soap and toothpaste — the real figures are
+// $324.85 and $71.50, so neither is a dud. Zeroing them is what lets this file
+// test that a keyword is bucketed the way the revenue was bucketed, which is the
+// defect it exists for.
 const REVENUE = classifyClusters([
   { cluster: 'deodorant',  revenue: 17.26, clicks: 109, pages: 21 },
   { cluster: 'toothpaste', revenue: 0,     clicks: 725, pages: 26 },
   { cluster: 'soap',       revenue: 0,     clicks: 470, pages: 20 },
   { cluster: 'coconut oil',revenue: 0,     clicks: 12,  pages: 7  },
-], { totals: TOTALS });
+], { productRevenue: { deodorant: 165, toothpaste: 0, soap: 0, 'coconut oil': 0 }, windowOrders: WIDE_ORDERS });
 
 test('triageOrphanBrief drops a brief in a cluster that has proven it does not earn', () => {
   const r = triageOrphanBrief('toothpaste for canker sores', { ...CTX, clusterRevenue: REVENUE });
