@@ -99,7 +99,8 @@
     "check-variant-picker": "node scripts/check-variant-picker.mjs",
     "ad-studio": "node agents/ad-studio/index.js",
     "prune-ad-studio": "node scripts/prune-ad-studio.mjs",
-    "creatives-budget": "node scripts/creatives-budget.mjs"
+    "creatives-budget": "node scripts/creatives-budget.mjs",
+    "cluster-holds": "node scripts/cluster-holds.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

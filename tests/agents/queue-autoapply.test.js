@@ -74,8 +74,15 @@ test('a collection-gap that really does hold two products counts two', async () 
 
 test('the agent reads cluster revenue from the report, not from a hardcoded list', () => {
   const src = readFileSync(join(ROOT, 'agents/queue-autoapply/index.js'), 'utf8');
-  assert.match(src, /seo-impact['"],\s*['"]latest\.json/);
+  // The path and the classification used to be built inline here. They moved to
+  // lib/cluster-hold.js when the $0-cluster HOLD was added to the refresh
+  // agents, so the queue and the refreshers hold on one reading of one report
+  // rather than on two copies that could drift apart.
+  assert.match(src, /loadClusterHold/);
+  assert.match(src, /cluster-hold\.js/);
   assert.doesNotMatch(src, /['"]toothpaste['"]/, 'no cluster may be named in the agent');
+  const loader = readFileSync(join(ROOT, 'lib/cluster-hold.js'), 'utf8');
+  assert.match(loader, /seo-impact['"],\s*['"]latest\.json/, 'the shared loader owns the path now');
   const policy = readFileSync(join(ROOT, 'lib/queue-autoapply.js'), 'utf8');
   assert.doesNotMatch(policy, /['"]toothpaste['"]/, 'no cluster may be named in the policy either');
 });

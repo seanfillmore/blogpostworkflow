@@ -11,12 +11,22 @@
  * Also processes items with unapplied feedback — re-runs the refresh from
  * the original HTML with the feedback injected into the prompt.
  *
+ * REVENUE-GATED CANDIDATE SELECTION. Every candidate this agent picks costs a
+ * content-refresher run plus a summary call, and the queue item it writes is
+ * later applied by queue-autoapply against a live article. A candidate whose
+ * cluster the revenue report shows earning $0 is SKIPPED AND COUNTED
+ * (lib/cluster-hold.js) before any of that is spent. No cluster is named in
+ * this file; the held set is measured and releases itself when the cluster
+ * earns. Held pages are untouched — still live, still indexed, still ranking.
+ * `--include-held` queues them anyway.
+ *
  * Cron: daily 3:00 AM PT (10:00 UTC).
  *
  * Usage:
  *   node agents/performance-engine/index.js
  *   node agents/performance-engine/index.js --dry-run
  *   node agents/performance-engine/index.js --limit 3
+ *   node agents/performance-engine/index.js --include-held
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
@@ -27,6 +37,10 @@ import Anthropic from '../../lib/anthropic.js';
 import { notify } from '../../lib/notify.js';
 import { QUEUE_DIR, listQueueItems, writeItem, activeSlugs } from './lib/queue.js';
 import { buildSummaryPrompt } from './prompts.js';
+import {
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
+  holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -39,6 +53,7 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
+const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const limitIdx = args.indexOf('--limit');
 const MAX_ITEMS = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : 6;
 const MAX_FLOPS = 3;
@@ -73,13 +88,50 @@ function loadPostHtml(slug) {
   return existsSync(p) ? readFileSync(p, 'utf8') : null;
 }
 
+// ── revenue hold ──────────────────────────────────────────────────────────────
+
+/**
+ * Split the assembled candidate list into what gets refreshed and what is held
+ * because its cluster earns $0. Applied to ALL four pickers at once, after they
+ * have run and before anything is spent: the pickers only read local JSON, so
+ * holding here costs nothing and keeps the per-picker counts honest.
+ *
+ * `low-ctr-meta` is held alongside the refresh triggers on purpose. A better
+ * title on a $0 cluster buys more traffic to pages that have never converted,
+ * which is the leak the Prime Directive says to stop funding, not close.
+ *
+ * Exported for test; the rule itself lives in lib/cluster-hold.js.
+ */
+export function holdCandidates(candidates, hold, { includeHeld = false } = {}) {
+  return partitionHeld(candidates, hold, {
+    includeHeld,
+    describe: (c) => ({ slug: c?.slug, keyword: c?.signal_source?.query || c?.signal_source?.top_query, title: c?.title }),
+  });
+}
+
 // ── candidate pickers ─────────────────────────────────────────────────────────
 
-function pickFlops(blocked) {
+/**
+ * Apply the revenue hold to a picker's candidate list BEFORE its per-source cap.
+ *
+ * Order is load-bearing. Holding after the cap would let three held candidates
+ * consume all three flop slots and leave the run doing nothing, instead of
+ * moving on to the next three candidates that sit in a cluster that earns.
+ */
+function heldAware(rows, hold, held) {
+  const out = partitionHeld(rows, hold, {
+    includeHeld: INCLUDE_HELD,
+    describe: (r) => ({ slug: r?.slug, title: r?.title }),
+  });
+  held.push(...out.held);
+  return out.kept;
+}
+
+function pickFlops(blocked, hold, held) {
   const pp = readJsonSafe(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   if (!pp) return [];
-  return (pp.action_required || [])
-    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug))
+  return heldAware((pp.action_required || [])
+    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug)), hold, held)
     .slice(0, MAX_FLOPS)
     .map(f => ({
       slug: f.slug,
@@ -89,11 +141,10 @@ function pickFlops(blocked) {
     }));
 }
 
-function pickQuickWins(blocked) {
+function pickQuickWins(blocked, hold, held) {
   const qw = readJsonSafe(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
   if (!qw) return [];
-  return (qw.top || [])
-    .filter(c => !blocked.has(c.slug))
+  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug)), hold, held)
     .slice(0, MAX_QUICK_WINS)
     .map(c => ({
       slug: c.slug,
@@ -103,7 +154,7 @@ function pickQuickWins(blocked) {
     }));
 }
 
-function pickMetaRewrites(blocked) {
+function pickMetaRewrites(blocked, hold, held) {
   const gsc = readJsonSafe(join(REPORTS_DIR, 'gsc-opportunity', 'latest.json'));
   if (!gsc || !gsc.low_ctr) return [];
   const posts = listAllSlugs().map(slug => {
@@ -128,6 +179,12 @@ function pickMetaRewrites(blocked) {
     // Skip posts that aren't on Shopify yet — the publish step would fail
     // because findPostMeta requires shopify_article_id to update the article.
     if (!match.shopify_article_id) continue;
+    // Revenue hold. Clustered on the GSC query rather than the slug — the query
+    // is what seo-impact attributed the (absent) revenue on.
+    const kept = heldAware(
+      [{ slug: match.slug, title: match.target_keyword || match.title || q.keyword }], hold, held,
+    );
+    if (!kept.length) continue;
     picks.push({
       slug: match.slug,
       title: match.title || match.slug,
@@ -138,16 +195,16 @@ function pickMetaRewrites(blocked) {
   return picks;
 }
 
-function pickLegacyFlops(blocked) {
+function pickLegacyFlops(blocked, hold, held) {
   const triage = readJsonSafe(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   if (!triage) return [];
-  return (triage.results || [])
+  return heldAware((triage.results || [])
     .filter(r => r.bucket === 'flop' && !blocked.has(r.slug))
     .filter(r => {
       const existing = listQueueItems().find(i => i.slug === r.slug);
       return !existing || existing.status === 'dismissed';
     })
-    .sort((a, b) => (b.impressions || 0) - (a.impressions || 0))
+    .sort((a, b) => (b.impressions || 0) - (a.impressions || 0)), hold, held)
     .slice(0, MAX_FLOPS)
     .map(r => ({
       slug: r.slug,
@@ -243,21 +300,38 @@ async function main() {
 
   // Stage 2: new candidates
   console.log('\n  Stage 2: selecting new candidates...');
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+  const held = [];
+
   const blocked = activeSlugs();
-  const flops = pickFlops(blocked);
+  const flops = pickFlops(blocked, hold, held);
   flops.forEach(c => blocked.add(c.slug));
-  const quickWins = pickQuickWins(blocked);
+  const quickWins = pickQuickWins(blocked, hold, held);
   quickWins.forEach(c => blocked.add(c.slug));
-  const metaRewrites = pickMetaRewrites(blocked);
-  const legacyFlops = pickLegacyFlops(blocked);
+  const metaRewrites = pickMetaRewrites(blocked, hold, held);
+  const legacyFlops = pickLegacyFlops(blocked, hold, held);
   legacyFlops.forEach(c => blocked.add(c.slug));
 
   const candidates = [...flops, ...quickWins, ...metaRewrites, ...legacyFlops].slice(0, MAX_ITEMS);
   console.log(`    ${flops.length} flops, ${quickWins.length} quick-wins, ${metaRewrites.length} meta, ${legacyFlops.length} legacy flops`);
   console.log(`    Total candidates: ${candidates.length} / ${MAX_ITEMS}`);
+  for (const line of renderHoldLines(held)) console.log(`    ${line}`);
 
   if (candidates.length === 0 && feedbackCount === 0) {
     console.log('\n  Nothing to do.');
+    // A run that did nothing BECAUSE everything was held must still say so.
+    // Silence is exactly the failure mode a hold has to avoid: six weeks later
+    // nobody remembers why this agent stopped queueing anything.
+    if (held.length) {
+      await notify({
+        subject: `Performance Engine: 0 items queued, ${held.length} held ($0 cluster)`,
+        body: [...renderHoldLines(held), ...renderDisagreementLines(hold)].join('\n'),
+        status: 'info',
+        category: 'pipeline',
+      }).catch(() => {});
+    }
     return;
   }
 
@@ -308,9 +382,13 @@ async function main() {
   console.log(`\n  Queued ${queued.length} new item${queued.length === 1 ? '' : 's'}.`);
 
   await notify({
-    subject: `Performance Engine: ${queued.length} item${queued.length === 1 ? '' : 's'} queued`,
-    body: queued.length === 0 ? 'No new items this run.'
-      : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
+    subject: `Performance Engine: ${queued.length} item${queued.length === 1 ? '' : 's'} queued${holdSummaryFragment(held)}`,
+    body: [
+      queued.length === 0 ? 'No new items this run.' : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
+      ...renderHoldLines(held),
+      ...renderDisagreementLines(hold),
+    ].join('\n'),
+    // A hold is the policy working, not an error — it stays 'info' and deferred.
     status: 'info',
     category: 'pipeline',
   }).catch(() => {});
