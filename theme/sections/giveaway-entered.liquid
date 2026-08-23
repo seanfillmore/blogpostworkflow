@@ -37,6 +37,25 @@
   </p>
   <p class="gv-lead-sub">Your entry is already counted. Confirming is what multiplies it.</p>
 
+  {%- comment -%}
+    Shown ONLY to someone who named a referrer, and only while they are still
+    unconfirmed — revealed by giveaway.js from the hasReferrer flag on
+    GET /api/giveaway/entries.
+
+    Why it exists: §5 pays the referrer +5 only once the friend they referred
+    CONFIRMS. Measured 2026-08-22, six of seven referral pairs in the system were
+    stuck at exactly this step. Everything else on this page argues from what the
+    reader gets; this is the one line that argues from what someone else loses.
+
+    It never names the friend. The endpoint returns a boolean precisely so that
+    this page cannot disclose one entrant's referrer to anyone who knows their
+    address.
+  {%- endcomment -%}
+  <p class="gv-referral-stake" data-gv-referral-stake hidden>
+    <strong>Your friend gets +5 entries too — but only after you click.</strong>
+    Right now they have nothing from referring you.
+  </p>
+
   <form class="gv-survey" data-step="required">
     <fieldset>
       <legend>Who's the soap for?</legend>

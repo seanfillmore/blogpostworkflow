@@ -460,6 +460,14 @@ export function createEntriesHandler({ getProfileByEmail: getProfile = getProfil
         ok: true,
         entries: profile.properties.gv_entries ?? 1,
         breakdown: profile.properties.gv_breakdown,
+        // WHETHER, never WHO. The entered page uses this to tell a referred
+        // entrant that confirming also pays the friend who referred them —
+        // measured 2026-08-22, six of seven referrals were stuck at exactly
+        // that step. Returning gv_referred_by instead would turn this public,
+        // unauthenticated route into a way for anyone holding an entrant's
+        // address to learn who referred them, for no extra persuasive value:
+        // the page says "the friend who referred you" and never names them.
+        hasReferrer: Boolean(profile.properties.gv_referred_by),
       });
     } catch (e) {
       console.error('[giveaway] entries lookup failed', e.message);

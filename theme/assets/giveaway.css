@@ -223,6 +223,20 @@
 .gv-method > summary:focus-visible { outline: 2px solid var(--gv-ink); outline-offset: 2px; }
 .gv-method p { margin: 10px 0 0; }
 
+/* The referral stake. Given a left rule and the brand green so it reads as a
+   distinct point rather than more of the same lead paragraph — it is the only
+   line on the page that argues from what someone ELSE loses, and it is shown to
+   under 2% of visitors, so it has to earn its place at a glance. */
+.gv-referral-stake {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border-left: 3px solid var(--gv-green, #2f5e3f);
+  background: var(--gv-line);
+  border-radius: 0 var(--gv-radius) var(--gv-radius) 0;
+  font-size: 1.5rem;
+  line-height: 1.5;
+}
+
 /* ── Lander ──────────────────────────────────────────────────────────────── */
 
 .gv-brand { text-align: center; padding: 4px 0 22px; }
