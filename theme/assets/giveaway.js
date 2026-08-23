@@ -181,8 +181,17 @@
   var count = root.querySelector('[data-gv-count]');
   var errorEl = survey.querySelector('.gv-error');
   var submitButton = survey.querySelector('button[type="submit"]');
+  // Hoisted to this scope because fail() has to be able to put BOTH the survey
+  // and the buy path back exactly as they were before the optimistic hide below.
+  var next = root.querySelector('[data-gv-next]');
 
+  // The single rollback point for the optimistic hide in the submit handler.
+  // Anything the handler changes before the fetch must be undone here, or a
+  // 400/429/502 leaves the entrant staring at a page with no form, no error and
+  // no way to claim the +3.
   function fail(msg) {
+    survey.hidden = false;
+    if (next) next.hidden = true;
     errorEl.textContent = msg;
     errorEl.hidden = false;
     submitButton.disabled = false;
@@ -251,16 +260,37 @@
     submitButton.disabled = true;
     submitButton.textContent = 'Saving…';
 
+    // Hide the form and reveal the buy path HERE, synchronously inside the
+    // submit handler, NOT in the .then() below.
+    //
+    // The form is ~900-1100px tall and .gv-ladder sits directly under it in DOM
+    // order, already on screen. Hiding the form snaps the ladder upward. Done in
+    // the .then() that runs after POST /answers, that snap lands 15-45s into the
+    // session and well past Chrome's 500ms hadRecentInput window on a mobile
+    // connection, so it counts in full: measured p75 CLS 0.3141 on this page,
+    // 98 of 117 non-zero beacons blaming `section.gv-entered > div.gv-ladder`,
+    // median 0.4424. This page is where $30/day of Meta traffic lands.
+    //
+    // Moved here, the identical shift happens inside the input window and is
+    // excluded from CLS. Nothing else about the sequence changes -- see fail()
+    // for the rollback that keeps the hide-only-on-success guarantee below.
+    survey.hidden = true;
+    if (next) next.hidden = false;
+
     fetch(endpoint + '/answers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     })
       // A .catch alone covers only a NETWORK failure. On a 400, a 429 or a 502
-      // the promise resolves normally with {ok:false}, so hiding the form here
-      // unconditionally made the survey silently vanish, lose the +3 rung, and
-      // show no error at all -- the entrant has no way to know they were not
-      // credited and no way to retry. Only hide the form on a real success.
+      // the promise resolves normally with {ok:false}, so the form must be put
+      // BACK on every non-success -- otherwise the survey silently vanishes, the
+      // +3 rung is lost, no error is shown, and the entrant has no way to know
+      // they were not credited and no way to retry. The hide is now optimistic
+      // rather than deferred (see the submit handler), but the guarantee is
+      // unchanged: the form is only gone for good on a real success, and every
+      // failure path -- non-2xx, {ok:false}, malformed body, network error --
+      // routes through fail(), which restores it.
       .then(function (r) { return r.json().then(function (b) { return { ok: r.ok, body: b }; }); })
       .then(function (res) {
         if (!res.ok || !res.body || !res.body.ok) {
@@ -268,12 +298,9 @@
         }
         submitButton.disabled = false;
         submitButton.textContent = 'Save — and get 3 bonus entries';
-        survey.hidden = true;
+        // survey.hidden / next.hidden were already set before the fetch. Only
+        // the authoritative entry count has to wait for the response.
         showLadder(res.body.entries);
-        // The buy path appears only now. Before the survey saves, the +3 rung
-        // should be the single ask on the page.
-        var next = root.querySelector('[data-gv-next]');
-        if (next) next.hidden = false;
       })
       .catch(function () { fail('Network error. Please try again.'); });
   });

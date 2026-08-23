@@ -1,0 +1,430 @@
+{%- liquid
+  # Bundle price tokens. Lets template settings that cannot evaluate Liquid
+  # (richtext, multicolumn column titles) carry computed per-product prices via
+  # [[TOTAL]] / [[PRICE]] / [[SAVINGS]]. The total is SUMMED from the metafield,
+  # never asserted. See docs/bundle-landing-architecture.md.
+  # No-op when the tokens are absent, so every other template renders unchanged.
+  assign bundle_total = 0
+  assign bundle_price = 0
+  assign bundle_savings = 0
+
+  # Per-bundle copy. One template serves every bundle: the metaobject wins, the
+  # section settings are the fallback so non-bundle uses of this section are
+  # unaffected. See docs/bundle-landing-architecture.md.
+  assign lander = product.metafields.bundle.lander.value
+  assign hero_heading   = section.settings.heading_rte
+  assign hero_sub       = section.settings.subheading_rte
+  assign hero_cta       = section.settings.cta_label
+  assign hero_rating    = section.settings.rating_caption
+  assign lander_bullets = blank
+  if lander != blank
+    if lander.heading != blank
+      capture hero_heading
+        echo '<p>'
+        echo lander.heading
+        echo '</p>'
+      endcapture
+    endif
+    if lander.subheading != blank
+      capture hero_sub
+        echo '<p>'
+        echo lander.subheading
+        echo '</p>'
+      endcapture
+    endif
+    if lander.cta_label != blank
+      assign hero_cta = lander.cta_label
+    endif
+    if lander.rating_caption != blank
+      assign hero_rating = lander.rating_caption
+    endif
+    assign lander_bullets = lander.bullets.value
+  endif
+  if product != blank and product.metafields.bundle.value_stack.value != blank
+    for bt_row in product.metafields.bundle.value_stack.value
+      unless bt_row.digital
+        assign bundle_total = bundle_total | plus: bt_row.amount
+      endunless
+    endfor
+    assign bundle_price = product.price | divided_by: 100
+    assign bundle_savings = bundle_total | minus: bundle_price
+  endif
+-%}
+{% comment %}
+  Reusable Landing Hero Section
+  - Mobile-first, background image OR solid color
+  - RTE headline & subheadline (subheadline can have its own background image)
+  - Bullets & guarantees as repeatable blocks with preset/custom icons
+  - Optional ratings row
+  - Flip layout option
+  - CTA scrolls to a configurable on-page anchor (default #buy-box)
+  - CSS lives in assets/hero-landing-section.css
+{% endcomment %}
+
+{% assign section_id = section.id %}
+
+{%- comment -%}
+  Per-bundle hero override.
+
+  templates/product.bundle-landing.json is one template shared by six bundles —
+  the Coconut Reset, the 90-Day Clean Swap, Head-to-Toe, the Hand Soap Set, The
+  Clean Swap and the Gift Box. section.settings.bg_image_* therefore resolves to
+  a single image for all of them, so every one of those landers served the same
+  generic hero no matter what its own gallery said.
+
+  A product may now override it with metafields bundle.hero_desktop /
+  bundle.hero_mobile (file_reference -> image). Unset, both fall through to the
+  section setting, which is exactly the behaviour these landers had before this
+  block existed — so adding it changes nothing until an image is attached.
+{%- endcomment -%}
+{%- assign hero_d = product.metafields.bundle.hero_desktop.value | default: section.settings.bg_image_desktop -%}
+{%- assign hero_m = product.metafields.bundle.hero_mobile.value | default: section.settings.bg_image_mobile -%}
+
+{%- comment -%}
+  Load section CSS RENDER-BLOCKING, on purpose.
+
+  This used to be the media="print" onload="this.media='all'" trick. That made
+  the hero paint before its own stylesheet applied: .hero-landing__bg is not yet
+  position:absolute;inset:0 and .hero-landing__bg-img not yet
+  height:100%;object-fit:cover, so the <img> below lays out in normal flow at
+  its own width/height attributes -- which are the MOBILE image's (750x1000
+  portrait on the homepage, 100x100 on the landing-page templates) while the
+  desktop <source> serves 2400x1200 landscape. At a 1280px viewport that
+  reserves ~1707px, then collapses to the 760px min-height when the sheet
+  finally applies. Measured: homepage CLS p75 0.1231, 25 of 27
+  hero-landing__bg shifts at vw >= 1200, median 0.141 at median 973ms.
+
+  The preload on the next line already starts the fetch at the same moment, so
+  making it blocking costs no extra latency -- and this is above-the-fold,
+  LCP-critical CSS that should never have been deferred. The <noscript> copy is
+  gone with the trick: it existed only to cover the JS-dependent onload swap.
+{%- endcomment -%}
+<link rel="preload" as="style" href="{{ 'hero-landing-section.css' | asset_url }}">
+<link rel="stylesheet" href="{{ 'hero-landing-section.css' | asset_url }}">
+
+{%- comment -%} Preload likely LCP image for desktop {%- endcomment -%}
+{%- if hero_d != blank -%}
+  <link rel="preload" as="image"
+        href="{{ hero_d | image_url: width: 2000 }}"
+        imagesizes="100vw"
+        imagesrcset="{{ hero_d | image_url: width: 2000 }} 2000w, {{ hero_d | image_url: width: 1600 }} 1600w, {{ hero_d | image_url: width: 1200 }} 1200w">
+{%- endif -%}
+
+
+<section
+  id="hero-landing-{{ section_id }}"
+  class="hero-landing
+         {% if section.settings.flip_layout %}hero-landing--flip{% endif %}
+         {% if section.settings.text_align_center_mobile %}hero-landing--center-mobile{% endif %}
+         {% if section.settings.compact_spacing %}hero-landing--compact{% endif %}
+         {% if section.settings.height_mode == 'px' %}hero-landing--height-px{% endif %}
+         {% if section.settings.height_mode == 'vh' %}hero-landing--height-vh{% endif %}"
+  style="
+    --hero-overlay-color: {{ section.settings.overlay_color | color_to_rgb }};
+    --hero-overlay-opacity: {{ section.settings.overlay_opacity | divided_by: 100.0 }};
+    {% if section.settings.bg_color != blank %}--hero-bg-color: {{ section.settings.bg_color }};{% endif %}
+    {% if section.settings.content_max_width != blank %}--hero-max-w: {{ section.settings.content_max_width }}px;{% endif %}
+    --hero-pt: {{ section.settings.padding_top }}px;
+    --hero-pb: {{ section.settings.padding_bottom }}px;
+    /* Height controls */
+    --hero-min-h-m: {{ section.settings.min_height_mobile }}px;
+    --hero-min-h-d: {{ section.settings.min_height_desktop }}px;
+    --hero-vh: {{ section.settings.vh_height }};
+    --gap-sub-to-bullets: {{ section.settings.gap_sub_to_bullets }}px;
+    --gap-between-bullets: {{ section.settings.gap_between_bullets }}px;
+
+  "
+  data-section-id="{{ section_id }}"
+  data-hero
+>
+  {% comment %} Background (image or solid color) {% endcomment %}
+<div class="hero-landing__bg" aria-hidden="true">
+  {%- assign d = hero_d -%}
+  {%- assign m = hero_m -%}
+
+  {%- if d != blank or m != blank -%}
+    <picture>
+      {%- if d != blank -%}
+        {%- comment -%}
+          width/height are defence-in-depth for the shift described above: when
+          this <source> is the chosen candidate the browser takes its aspect
+          ratio from these attributes instead of falling back to the <img>'s
+          mobile-portrait ones. Both current desktop heroes are 2400x1200, so
+          this renders width="2400" height="1200" today; it is read off the
+          image rather than hardcoded because hero_d can be overridden per
+          product by the bundle.hero_desktop metafield above, and a hardcoded
+          2:1 would then be wrong for that override.
+        {%- endcomment -%}
+        <source
+          media="(min-width: 768px)"
+          srcset="{{ d | image_url: width: 2000 }} 2000w, {{ d | image_url: width: 1600 }} 1600w, {{ d | image_url: width: 1200 }} 1200w"
+          sizes="100vw"
+          width="{{ d.width }}"
+          height="{{ d.height }}">
+      {%- endif -%}
+
+      {%- if m != blank -%}
+        <img
+          alt=""
+          class="hero-landing__bg-img"
+          src="{{ m | image_url: width: 1200 }}"
+          srcset="{{ m | image_url: width: 1200 }} 1200w, {{ m | image_url: width: 900 }} 900w, {{ m | image_url: width: 600 }} 600w"
+          sizes="100vw"
+          width="{{ m.width }}"
+          height="{{ m.height }}"
+          decoding="async"
+          loading="eager"
+          fetchpriority="high">
+      {%- else -%}
+        <img
+          alt=""
+          class="hero-landing__bg-img"
+          src="{{ d | image_url: width: 1600 }}"
+          srcset="{{ d | image_url: width: 2000 }} 2000w, {{ d | image_url: width: 1600 }} 1600w, {{ d | image_url: width: 1200 }} 1200w"
+          sizes="100vw"
+          width="{{ d.width }}"
+          height="{{ d.height }}"
+          decoding="async"
+          loading="eager"
+          fetchpriority="high">
+      {%- endif -%}
+    </picture>
+    <div class="hero-landing__bg-overlay"></div>
+  {%- endif -%}
+</div>
+
+  <div class="hero-landing__inner page-width" style="max-width: var(--hero-max-w, 1200px);">
+    <div class="hero-landing__grid">
+      <div class="hero-landing__content">
+
+{%- liquid
+  # Component-aggregate review data, written per product by scripts/sync-bundle-ratings.mjs.
+  # A multipack inherits the reviews of the SKUs inside it — legitimate, and the caption
+  # says so out loud. No data means no stars: never invent a rating for a product that
+  # has none behind it.
+  -%}
+
+
+
+
+        {% assign heading_tag = section.settings.heading_level %}
+        <{{ heading_tag }} class="hero-landing__heading rte">
+          {{ hero_heading }}
+        </{{ heading_tag }}>
+
+        {% if hero_sub != blank %}
+          <div class="hero-landing__subheading-wrap {% if section.settings.subheading_bg_image != blank %}hero-landing__subheading-wrap--bg{% endif %}"
+               style="{% if section.settings.subheading_bg_image != blank %}--subhead-bg: url({{ section.settings.subheading_bg_image | image_url: width: 1000 }}); --subhead-bg-opacity: {{ section.settings.subheading_bg_opacity | divided_by: 100.0 }};{% endif %}">
+            <div class="hero-landing__subheading rte">
+              {{ hero_sub }}
+            </div>
+          </div>
+        {% endif %}
+
+        {%- comment -%} Bullets {%- endcomment -%}
+        {%- assign bullets = section.blocks | where: 'type', 'bullet' -%}
+        {%- if bullets.size > 0 -%}
+          <ul class="hero-landing__bullets {% if section.settings.bullets_center %}hero-landing__bullets--center{% endif %}" role="list">
+            {%- for block in bullets -%}
+              <li class="hero-landing__bullet" {{ block.shopify_attributes }} data-hero-bullet data-index="{{ forloop.index0 }}">
+                <span class="hero-landing__bullet-icon" aria-hidden="true">
+                  {%- if block.settings.icon_source == 'preset' -%}
+                    {%- render 'icon-hero', name: block.settings.icon_preset -%}
+                  {%- elsif block.settings.icon_image != blank -%}
+                    {{ block.settings.icon_image | image_url: width: 64 | image_tag: loading: 'lazy', alt: '' }}
+                  {%- else -%}
+                    {%- render 'icon-hero', name: 'check' -%}
+                  {%- endif -%}
+                </span>
+                {%- assign bullet_src = block.settings.text_rte -%}
+                {%- if lander_bullets != blank and lander_bullets[forloop.index0] != blank -%}
+                  {%- assign bullet_src = lander_bullets[forloop.index0] -%}
+                {%- endif -%}
+                <span class="hero-landing__bullet-text rte">{{ bullet_src | replace: '[[TOTAL]]', bundle_total | replace: '[[PRICE]]', bundle_price | replace: '[[SAVINGS]]', bundle_savings }}</span>
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+
+        {% if hero_cta != blank %}
+          <div class="hero-landing__cta">
+            <a class="hero-landing__btn
+                      {% if section.settings.cta_full_width_mobile %} hero-landing__btn--full-m{% endif %}
+                      {% if section.settings.cta_full_width_desktop %} hero-landing__btn--full-d{% endif %}"
+              href="{{ section.settings.cta_anchor | default: '#buy-box' }}"
+              data-hero-cta>
+              {{ hero_cta }}
+            </a>
+            {% if section.settings.secondary_cta_label != blank %}
+              <a class="hero-landing__btn-secondary"
+                href="{{ section.settings.secondary_cta_anchor | default: '#' }}">
+                {{ section.settings.secondary_cta_label }}
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        {% comment %} Guarantees row (badges) {% endcomment %}
+        {% assign guarantees = section.blocks | where: 'type', 'guarantee' %}
+        {% if guarantees.size > 0 %}
+          <div class="hero-landing__badges">
+            {% for block in guarantees %}
+              <div class="hero-landing__badge" {{ block.shopify_attributes }}>
+                <span class="hero-landing__badge-icon">
+                  {% if block.settings.icon_source == 'preset' %}
+                    {% render 'icon-hero', name: block.settings.icon_preset %}
+                  {% elsif block.settings.icon_image != blank %}
+                    {{ block.settings.icon_image | image_url: width: 48 | image_tag: loading: 'lazy', alt: '' }}
+                  {% else %}
+                    {% render 'icon-hero', name: 'badge' %}
+                  {% endif %}
+                </span>
+                <span class="hero-landing__badge-text">{{ block.settings.text }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+
+      {% comment %}
+        Optional side image slot (if you decide to add later).
+        For now, hero is primarily background + content.
+      {% endcomment %}
+    </div>
+  </div>
+
+  {% comment %} basic smooth-scroll without global pollution {% endcomment %}
+  <script>
+  (function() {
+    var root = document.getElementById('hero-landing-{{ section_id }}');
+    if (!root) return;
+    var cta = root.querySelector('[data-hero-cta]');
+    if (!cta) return;
+    cta.addEventListener('click', function(e) {
+      var href = this.getAttribute('href') || '#buy-box';
+      if (!href || href.charAt(0) !== '#') return;
+      var target = document.querySelector(href);
+      if (!target) return;
+      e.preventDefault();
+      var prefersReduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      try {
+        target.scrollIntoView({ behavior: prefersReduce ? 'auto' : 'smooth', block: 'start' });
+      } catch (err) {
+        window.location.hash = href;
+      }
+    });
+  })();
+</script>
+
+</section>
+
+{% schema %}
+{
+  "name": "Landing • Hero",
+  "class": "section-landing-hero",
+  "settings": [
+    { "type": "select", "id": "heading_level", "label": "Heading level", "default": "h1", "options": [
+      { "value": "h1", "label": "H1" }, { "value": "h2", "label": "H2" }
+    ]},
+    { "type": "richtext", "id": "heading_rte", "label": "Headline", "default": "<p>SAY GOODBYE TO YOUR BRAIN FOG</p>" },
+    { "type": "richtext", "id": "subheading_rte", "label": "Subheadline", "default": "<p>DESIGNED FOR ALL-DAY CLARITY</p>" },
+
+    { "type": "image_picker", "id": "subheading_bg_image", "label": "Subheadline background image (optional)" },
+    { "type": "range", "id": "subheading_bg_opacity", "label": "Subheadline bg opacity", "min": 0, "max": 100, "step": 5, "unit": "%", "default": 15 },
+
+    { "type": "checkbox", "id": "show_rating", "label": "Show rating", "default": false },
+    { "type": "text", "id": "rating_value", "label": "Rating value (0–5)", "default": "4.9", "info": "Supports decimals (e.g., 4.9)" },
+    { "type": "text", "id": "rating_caption", "label": "Rating caption", "default": "Rated 4.9 by Real Customers" },
+
+    { "type": "text", "id": "cta_label", "label": "CTA label", "default": "Unlock All-Day Clarity" },
+    { "type": "text", "id": "cta_anchor", "label": "CTA anchor (on-page id)", "default": "#buy-box" },
+    { "type": "text", "id": "secondary_cta_label", "label": "Secondary CTA label (text link, optional)" },
+    { "type": "text", "id": "secondary_cta_anchor", "label": "Secondary CTA anchor / URL" },
+
+    { "type": "image_picker", "id": "bg_image_desktop", "label": "Background image (desktop)" },
+    { "type": "image_picker", "id": "bg_image_mobile", "label": "Background image (mobile)" },
+    { "type": "color", "id": "bg_color", "label": "Background color (fallback)", "default": "#eaf6ff" },
+    { "type": "color", "id": "overlay_color", "label": "Overlay color", "default": "#000000" },
+    { "type": "range", "id": "overlay_opacity", "label": "Overlay opacity", "min": 0, "max": 90, "step": 5, "unit": "%", "default": 0 },
+
+    { "type": "checkbox", "id": "flip_layout", "label": "Flip layout (text right on desktop)", "default": false },
+    { "type": "checkbox", "id": "text_align_center_mobile", "label": "Center text on mobile", "default": true },
+    { "type": "range", "id": "content_max_width", "label": "Max content width (px)", "min": 800, "max": 1400, "step": 20, "default": 1200 },
+    { "type": "range", "id": "padding_top", "label": "Padding top (px)", "min": 0, "max": 160, "step": 4, "default": 48 },
+    { "type": "range", "id": "padding_bottom", "label": "Padding bottom (px)", "min": 0, "max": 160, "step": 4, "default": 48 },
+
+    { "type": "select", "id": "height_mode", "label": "Height behavior", "default": "auto", "options": [{ "value": "auto", "label": "Auto (content-driven)" }, { "value": "px", "label": "Fixed min height (px)" }, { "value": "vh", "label": "Viewport height (vh)" }]},
+    { "type": "range", "id": "min_height_mobile", "label": "Min height (mobile, px)", "min": 320, "max": 720, "step": 20, "default": 480},
+    { "type": "range", "id": "min_height_desktop", "label": "Min height (desktop, px)", "min": 420, "max": 900, "step": 20, "default": 600},
+    { "type": "range", "id": "vh_height", "label": "Viewport height (vh)", "min": 50, "max": 90, "step": 1, "default": 70},
+    { "type": "checkbox", "id": "compact_spacing", "label": "Compact spacing", "default": true},
+
+    { "type": "checkbox", "id": "cta_full_width_mobile", "label": "Make CTA full width on mobile", "default": true},
+    { "type": "checkbox", "id": "cta_full_width_desktop", "label": "Make CTA full width on desktop", "default": false},
+
+    { "type": "range", "id": "gap_sub_to_bullets", "label": "Space between subheadline and bullets (px)", "min": 0, "max": 48, "step": 2, "default": 12},
+    { "type": "range", "id": "gap_between_bullets", "label": "Space between each bullet (px)", "min": 0, "max": 28, "step": 2, "default": 10},
+    { "type": "checkbox", "id": "bullets_center", "label": "Center bullets (icon + text) horizontally", "default": false}
+  ],
+  "blocks": [
+    {
+      "type": "bullet",
+      "name": "Bullet",
+      "limit": 8,
+      "settings": [
+        { "type": "select", "id": "icon_source", "label": "Icon source", "default": "preset", "options": [
+          { "value": "preset", "label": "Preset SVG" },
+          { "value": "custom", "label": "Custom image" }
+        ]},
+        { "type": "select", "id": "icon_preset", "label": "Preset icon", "default": "check", "options": [
+          { "value": "check", "label": "Check" },
+          { "value": "star", "label": "Star" },
+          { "value": "shield", "label": "Shield" },
+          { "value": "truck", "label": "Truck" },
+          { "value": "leaf", "label": "Leaf" },
+          { "value": "clock", "label": "Clock" },
+          { "value": "heart", "label": "Heart" },
+          { "value": "badge", "label": "Badge" }
+        ]},
+        { "type": "image_picker", "id": "icon_image", "label": "Custom icon (optional)" },
+        { "type": "richtext", "id": "text_rte", "label": "Text", "default": "<p>Clean Energy, Zero Jitters</p>" }
+      ]
+    },
+    {
+      "type": "guarantee",
+      "name": "Guarantee badge",
+      "limit": 6,
+      "settings": [
+        { "type": "select", "id": "icon_source", "label": "Icon source", "default": "preset", "options": [
+          { "value": "preset", "label": "Preset SVG" },
+          { "value": "custom", "label": "Custom image" }
+        ]},
+        { "type": "select", "id": "icon_preset", "label": "Preset icon", "default": "badge", "options": [
+          { "value": "badge", "label": "Badge" },
+          { "value": "truck", "label": "Truck" },
+          { "value": "shield", "label": "Shield" },
+          { "value": "leaf", "label": "Leaf" },
+          { "value": "clock", "label": "Clock" },
+          { "value": "heart", "label": "Heart" }
+        ]},
+        { "type": "image_picker", "id": "icon_image", "label": "Custom icon (optional)" },
+        { "type": "text", "id": "text", "label": "Text", "default": "Free Shipping" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Landing • Hero",
+      "blocks": [
+        { "type": "bullet" },
+        { "type": "bullet" },
+        { "type": "bullet" },
+        { "type": "guarantee" },
+        { "type": "guarantee" }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
