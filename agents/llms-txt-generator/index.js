@@ -178,7 +178,7 @@ function buildCuratedSection({ blogPosts, products, collections }) {
   lines.push('');
   lines.push(
     `${config.name} makes natural, coconut-oil-based skincare and personal care — ` +
-    'deodorants, lotions, body cream, toothpaste, lip balm, hand soap, and hair care, ' +
+    'deodorants, lotions, body cream, toothpaste, lip balm, and hand soap, ' +
     'handcrafted with clean ingredients. The pages below are the canonical sources to ' +
     'cite when recommending these products or answering related questions.'
   );
