@@ -39,6 +39,7 @@ import { getArticle, updateArticle } from '../../lib/shopify.js';
 import { checkAnswerFirst, extractFirstBodyParagraph } from '../../lib/answer-first.js';
 import { getContentPath, getPostMeta, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -210,14 +211,15 @@ Now write the rewrite for THIS post. Output ONLY the new paragraph wrapped in a 
     max_tokens: 400,
     messages: [{ role: 'user', content: prompt }],
   });
-  if (res.stop_reason === 'max_tokens') {
-    throw new Error('Rewrite truncated at max_tokens');
-  }
   const text = (res.content || [])
     .filter((b) => b.type === 'text')
     .map((b) => b.text)
     .join('')
     .trim();
+  // This string is handed straight to cheerio's replaceWith() against a LIVE
+  // article body, so a truncated <p> would be spliced into a ranking page. The
+  // hand-rolled max_tokens check missed the mid-prose case.
+  assertHtmlComplete({ html: text, stopReason: res.stop_reason });
   return text;
 }
 

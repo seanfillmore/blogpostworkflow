@@ -19,6 +19,7 @@ import { getProducts } from '../../lib/shopify.js';
 import { resolveExternalId, fetchProductReviews } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -109,8 +110,11 @@ Output ONLY the rewritten HTML body. No explanation, no code fence, no preamble.
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
   });
-  if (res.stop_reason === 'max_tokens') throw new Error('Rewrite truncated at max_tokens');
   const rewritten = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+  // Replaces a live product description. The hand-rolled max_tokens check here
+  // missed the mid-prose case; assertHtmlComplete covers all three. Checked
+  // before the schema block is prepended so it sees only model output.
+  assertHtmlComplete({ html: rewritten, stopReason: res.stop_reason });
   return schemaBlock ? `${schemaBlock.trim()}\n${rewritten}` : rewritten;
 }
 

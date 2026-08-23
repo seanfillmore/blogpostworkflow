@@ -40,6 +40,7 @@ import { loadIndex, entriesForCluster, loadCategoryCompetitors } from '../../lib
 import { clusterForCollection } from './lib/cluster-mapper.js';
 import { validateCollectionSpec } from '../../lib/collection-validation.js';
 import { buildCollectionPageSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
+import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -282,9 +283,11 @@ No explanation, no markdown fences.`,
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
   const parsed = JSON.parse(raw);
 
-  if (/href="[^"]*$/.test(parsed.body_html)) {
-    throw new Error('Unclosed href detected — output likely truncated');
-  }
+  // Guard the body_html FIELD, not the raw response — the response is JSON, so
+  // the block-tag check would be meaningless against the envelope. stop_reason
+  // is already handled above (and a truncated envelope fails JSON.parse first),
+  // so this adds the unclosed-href and mid-prose checks on the HTML that ships.
+  assertHtmlComplete({ html: parsed.body_html });
 
   return parsed;
 }

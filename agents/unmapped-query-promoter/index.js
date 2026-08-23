@@ -1,8 +1,22 @@
 #!/usr/bin/env node
-// DEPRECATED (2026-06): superseded by agents/pipeline-prioritizer, which injects
-// unmapped queries as just-in-time backlog ideas (no fixed +14d date) and ranks
-// them against all other signals. Left in place for manual/historical use; no
-// longer scheduled. See docs/superpowers/specs/2026-06-13-pipeline-prioritizer-design.md
+// STILL SCHEDULED AND STILL RUNNING — verified against the live crontab 2026-08-23.
+//
+// This header used to read "DEPRECATED (2026-06) … no longer scheduled". That was
+// false for roughly ten weeks: the live crontab runs this agent daily at 13:45 UTC
+// (`45 13 * * *`), fifteen minutes BEFORE agents/pipeline-prioritizer at 14:00 UTC
+// (`0 14 * * *`). Both run, every day, and this one writes to the calendar first.
+//
+// The intent recorded in docs/superpowers/specs/2026-06-13-pipeline-prioritizer-design.md
+// still stands — pipeline-prioritizer is meant to supersede this agent by injecting
+// unmapped queries as just-in-time backlog ideas (no fixed +14d date), ranked against
+// all other signals — but the cutover was never completed, so this is a PLAN, not a
+// description of the current system. Whoever finishes that cutover should remove the
+// `45 13 * * *` line from scripts/setup-cron.sh and the live crontab in the same
+// change; until then, treat this agent as live and maintained.
+//
+// Do not re-add a deprecation notice without also pulling the cron entry. A file that
+// claims it does not run, while running daily against the content calendar, is worse
+// than either state on its own.
 /**
  * Unmapped Query Promoter
  *
