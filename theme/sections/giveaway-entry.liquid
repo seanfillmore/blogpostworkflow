@@ -74,6 +74,33 @@
           <p class="gv-ref-fix" hidden role="status"></p>
         </div>
 
+        {%- comment -%}
+          EXPRESS EMAIL CONSENT AT THE POINT OF COLLECTION.
+
+          Added 2026-08-23 with the single-opt-in cutover. Under double opt-in
+          the confirmation click WAS the consent record, so the form never had
+          to say this. Under single opt-in the entrant is subscribed the moment
+          they submit, and the only honest place to disclose that is here —
+          immediately above the button, before they act. Keep it there; moved
+          down among the other fine print it stops being disclosure and starts
+          being decoration.
+
+          US CAN-SPAM does not require express consent for commercial email, so
+          this is not what makes the send lawful. It is what makes it honest,
+          and what keeps spam complaints down — and complaints, not law, are
+          what damage a small sending domain.
+
+          Keep the unsubscribe promise in it. §12 of the Official Rules
+          guarantees unsubscribing does not forfeit an entry, and saying so here
+          is what stops someone reading "unsubscribe" as "withdraw from the
+          giveaway".
+        {%- endcomment -%}
+        <p class="gv-consent">
+          By entering, you'll also join our email list so we can send your entry
+          confirmation and giveaway updates. Unsubscribe any time — it does not
+          forfeit your entry.
+        </p>
+
         <button type="submit">Enter free</button>
         <p class="gv-error" hidden role="alert"></p>
       </form>

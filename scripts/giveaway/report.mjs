@@ -17,6 +17,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listProfilesWithConsent, listEntrantProfiles } from '../../lib/klaviyo-profiles.js';
 import { summarizeEntrants, confirmationFunnel } from '../../lib/giveaway/summarize.js';
+import { confirmedEmailSet, resolveMechanism } from '../../lib/giveaway/reconcile.js';
 import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
 import {
   fetchCampaignSpend, evaluateSpendGate, resolveAccessToken, spendWindow,
@@ -53,9 +54,10 @@ let funnel = null;
 let askReach = null;
 try {
   const submitted = await listEntrantProfiles(config.entryOpensAt);
-  const confirmedEmails = new Set(
-    profiles.map((p) => String(p.email || '').toLowerCase().trim()).filter(Boolean),
-  );
+  // NOT "everyone on the list". That held under double opt-in, where Klaviyo
+  // only adds a profile once the link is clicked; under flow_link the list is
+  // every entrant, and this funnel would report 100% confirmed forever.
+  const confirmedEmails = confirmedEmailSet(profiles, { mechanism: resolveMechanism(config) });
   const now = Date.now();
   funnel = confirmationFunnel({ submitted, confirmedEmails, now });
   askReach = referralAskReach({ submitted, confirmedEmails, now });

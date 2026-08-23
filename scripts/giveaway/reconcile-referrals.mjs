@@ -16,7 +16,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listProfilesWithConsent, listEntrantProfiles, updateProfileProperties } from '../../lib/klaviyo-profiles.js';
-import { planEntryUpdates } from '../../lib/giveaway/reconcile.js';
+import { planEntryUpdates, resolveMechanism, confirmedEmailSet } from '../../lib/giveaway/reconcile.js';
 import { mergeEntrantProfiles } from '../../lib/giveaway/referral-audit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -24,19 +24,30 @@ const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'u
 const { listId } = config;
 const apply = process.argv.includes('--apply');
 
-// BOTH populations. Klaviyo adds a profile to the list only once double opt-in
-// completes, so the list IS the confirmed set — measured 2026-08-22: 280
-// submitted, 77 listed. Reading the list alone could not see an unconfirmed
+// BOTH populations. Under double opt-in Klaviyo adds a profile to the list only
+// once opt-in completes, so the list IS the confirmed set — measured 2026-08-22:
+// 280 submitted, 77 listed. Reading the list alone could not see an unconfirmed
 // entrant at all, which is why §5's "+5 per confirmed friend" was never paid to
 // a referrer who had not confirmed: they were invisible, not merely filtered.
+//
+// Under flow_link the list holds EVERY entrant and confirmation is a property,
+// so the two populations largely converge — but merging both is still correct
+// (a profile can be created by the entry endpoint before the subscribe lands)
+// and keeps this script identical across the cutover.
+const mechanism = resolveMechanism(config);
 const [listed, submitted] = await Promise.all([
   listProfilesWithConsent(listId),
   listEntrantProfiles(config.entryOpensAt),
 ]);
 const profiles = mergeEntrantProfiles(listed, submitted);
-console.log(`${submitted.length} submitted, ${listed.length} on the list (${listed.filter((p) => p.subscribed).length} currently subscribed)`);
+const confirmedCount = confirmedEmailSet(profiles, { mechanism }).size;
+console.log(
+  `${submitted.length} submitted, ${listed.length} on the list `
+  + `(${listed.filter((p) => p.subscribed).length} currently subscribed, `
+  + `${confirmedCount} confirmed via ${mechanism})`,
+);
 
-const updates = planEntryUpdates(profiles);
+const updates = planEntryUpdates(profiles, { mechanism });
 if (!updates.length) { console.log('Everything already reconciled.'); process.exit(0); }
 
 let failures = 0;

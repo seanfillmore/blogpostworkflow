@@ -1,7 +1,9 @@
 // tests/lib/giveaway-reconcile.test.js
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { planEntryUpdates } from '../../lib/giveaway/reconcile.js';
+import {
+  planEntryUpdates, confirmedEver, confirmedEmailSet, resolveMechanism, CONFIRM_MECHANISMS,
+} from '../../lib/giveaway/reconcile.js';
 import { REFERRAL_CAP } from '../../lib/giveaway/entries.js';
 
 // planEntryUpdates now receives EVERY profile on the list, each tagged with its
@@ -21,6 +23,7 @@ const profile = (email, props = {}, { subscribed = true } = {}) => ({
 });
 const forEmail = (updates, email) => updates.find((u) => u.email === email);
 const NOW = '2026-09-10T08:30:00.000Z';
+const { FLOW_LINK } = CONFIRM_MECHANISMS;
 
 test('REGRESSION: confirmation is credited — being in the SUBSCRIBED set IS the confirmation', () => {
   // Nothing in a request can know someone clicked the opt-in link, so if this
@@ -201,4 +204,153 @@ test('matching is case-insensitive, so a mixed-case referral field still pays', 
     profile('friend@x.com', { gv_referred_by: 'ReFerrer@X.com' }),
   ]);
   assert.equal(forEmail(updates, 'referrer@x.com').breakdown.referrals, 1);
+});
+
+// ---------------------------------------------------------------------------
+// FLOW_LINK mechanism — the list is SINGLE opt-in and subscription proves nothing.
+//
+// Every test above holds `subscribed: true` to mean "clicked the double-opt-in
+// link", because under DOUBLE_OPT_IN that is literally the only way onto the
+// list. Under FLOW_LINK an entrant is subscribed the instant they submit the
+// form, so that inference becomes false for EVERY entrant at once — which is
+// exactly the shape of bug that quietly pays a rung nobody earned.
+// ---------------------------------------------------------------------------
+
+test('FLOW_LINK: being subscribed is NOT confirmation — the +2 is withheld until the link is clicked', () => {
+  // The whole point of the cutover. Under DOUBLE_OPT_IN this same fixture earns
+  // 3 entries (see the first test in this file); under FLOW_LINK it must earn 1.
+  const updates = planEntryUpdates([profile('a@x.com')], { now: NOW, mechanism: FLOW_LINK });
+  const u = forEmail(updates, 'a@x.com');
+  assert.equal(u, undefined, 'nothing earned, nothing written — the profile is left alone');
+});
+
+test('FLOW_LINK: the confirmation link writes gv_confirmed as the STRING "true", and that counts', () => {
+  // update_property_link takes its value as a quoted literal, so the property
+  // arrives as the string 'true', never a boolean. Testing only for `=== true`
+  // would reject every real confirmation while passing every unit test written
+  // with a boolean fixture.
+  const updates = planEntryUpdates([
+    profile('a@x.com', { gv_confirmed: 'true' }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+  const u = forEmail(updates, 'a@x.com');
+  assert.equal(u.breakdown.confirmed, true);
+  assert.equal(u.entries, 3, 'base 1 + confirm 2');
+  assert.equal(u.confirmedAt, NOW, 'first sighting stamps the durable record');
+});
+
+test('FLOW_LINK: a boolean gv_confirmed counts too', () => {
+  const updates = planEntryUpdates([
+    profile('a@x.com', { gv_confirmed: true }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+  assert.equal(forEmail(updates, 'a@x.com').breakdown.confirmed, true);
+});
+
+test('FLOW_LINK: a stray gv_confirmed value is not confirmation', () => {
+  // A hand-edited profile, a CSV import, or a mistyped flow action must not be
+  // able to pay the rung. Only the two spellings the link itself produces count.
+  for (const value of ['false', false, '', 'yes', 1, null]) {
+    const updates = planEntryUpdates([
+      profile('a@x.com', { gv_confirmed: value }),
+    ], { now: NOW, mechanism: FLOW_LINK });
+    assert.equal(forEmail(updates, 'a@x.com'), undefined, `gv_confirmed=${JSON.stringify(value)} must not confirm`);
+  }
+});
+
+test('FLOW_LINK: entrants who confirmed under DOUBLE_OPT_IN keep their confirmation across the cutover', () => {
+  // The stamp is the durable record and it predates the mechanism switch. If the
+  // cutover dropped it, every already-confirmed entrant would lose 2 entries
+  // overnight and every referral they generated would stop paying.
+  const updates = planEntryUpdates([
+    profile('stamped@x.com', { gv_confirmed_at: '2026-08-20T00:00:00.000Z' }, { subscribed: false }),
+    profile('legacy@x.com', {
+      gv_breakdown: { confirmed: true, survey: false, referrals: 0, instagram: false, upload: false },
+    }, { subscribed: false }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+
+  const stamped = forEmail(updates, 'stamped@x.com');
+  assert.equal(stamped.breakdown.confirmed, true, 'the stamp still proves confirmation after the cutover');
+  assert.equal(stamped.entries, 3, 'base 1 + confirm 2 — the +2 is not stripped by the switch');
+  assert.equal(
+    stamped.confirmedAt, '2026-08-20T00:00:00.000Z',
+    'and the original stamp is carried forward verbatim, never rewritten to now',
+  );
+
+  assert.equal(forEmail(updates, 'legacy@x.com').breakdown.confirmed, true, 'a pre-stamp credit does not regress');
+});
+
+test('FLOW_LINK: an unconfirmed subscriber does not pay the referrer they named', () => {
+  // §5 pays +5 per friend "who confirms their own entry". Under FLOW_LINK every
+  // entrant is subscribed, so reading subscription as confirmation would pay
+  // this rung for every form submission — inflating the referral half of the
+  // ladder for the whole promotion, not just the +2.
+  const updates = planEntryUpdates([
+    profile('referrer@x.com', { gv_confirmed: 'true' }),
+    profile('friend@x.com', { gv_referred_by: 'referrer@x.com' }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+
+  const r = forEmail(updates, 'referrer@x.com');
+  assert.equal(r.breakdown.referrals, 0, 'the friend submitted but never confirmed');
+  assert.equal(r.entries, 3, 'base 1 + own confirm 2 — no referral');
+});
+
+test('FLOW_LINK: a confirmed friend DOES pay their referrer', () => {
+  const updates = planEntryUpdates([
+    profile('referrer@x.com', { gv_confirmed: 'true' }),
+    profile('friend@x.com', { gv_referred_by: 'referrer@x.com', gv_confirmed: 'true' }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+  assert.equal(forEmail(updates, 'referrer@x.com').entries, 8, 'base 1 + confirm 2 + referral 5');
+});
+
+test('FLOW_LINK: confirmation survives a later unsubscribe, exactly as under DOUBLE_OPT_IN', () => {
+  // Rules §12 — the draw snapshot is independent of ongoing subscription status.
+  const updates = planEntryUpdates([
+    profile('a@x.com', { gv_confirmed: 'true' }, { subscribed: false }),
+  ], { now: NOW, mechanism: FLOW_LINK });
+  assert.equal(forEmail(updates, 'a@x.com').breakdown.confirmed, true);
+});
+
+test('the mechanism defaults to DOUBLE_OPT_IN, so an un-updated caller keeps today’s behaviour', () => {
+  // Cutover safety: this library ships BEFORE the Klaviyo list is flipped, and
+  // any caller that has not passed a mechanism yet must behave as it did.
+  assert.equal(confirmedEver({ email: 'a@x.com', subscribed: true, properties: {} }), true);
+  assert.equal(
+    confirmedEver({ email: 'a@x.com', subscribed: true, properties: {} }, { mechanism: FLOW_LINK }),
+    false,
+  );
+});
+
+test('confirmedEmailSet replaces the "subscribed means confirmed" filter under both mechanisms', () => {
+  const profiles = [
+    profile('clicked@x.com', { gv_confirmed: 'true' }),
+    profile('submitted@x.com'), // subscribed, never clicked
+    profile('stamped@x.com', { gv_confirmed_at: '2026-08-20T00:00:00.000Z' }, { subscribed: false }),
+  ];
+
+  const doi = confirmedEmailSet(profiles);
+  assert.deepEqual([...doi].sort(), ['clicked@x.com', 'stamped@x.com', 'submitted@x.com'],
+    'under double opt-in, being on the list IS the click');
+
+  const flow = confirmedEmailSet(profiles, { mechanism: FLOW_LINK });
+  assert.deepEqual([...flow].sort(), ['clicked@x.com', 'stamped@x.com'],
+    'under flow-link, the submitted-but-unclicked entrant is NOT confirmed');
+});
+
+test('confirmedEmailSet skips unusable rows instead of throwing the whole run', () => {
+  const set = confirmedEmailSet([{ email: 'not-an-email', properties: {} }, profile('ok@x.com')]);
+  assert.deepEqual([...set], ['ok@x.com']);
+});
+
+test('resolveMechanism defaults to double opt-in and rejects a typo', () => {
+  assert.equal(resolveMechanism({}), CONFIRM_MECHANISMS.DOUBLE_OPT_IN);
+  assert.equal(resolveMechanism({ confirmMechanism: 'flow_link' }), FLOW_LINK);
+  assert.throws(() => resolveMechanism({ confirmMechanism: 'flowlink' }), /unknown confirm mechanism/i);
+});
+
+test('an unknown mechanism throws rather than silently picking one', () => {
+  // The two mechanisms disagree about every entrant on the list. A typo in
+  // config must not resolve to whichever branch happens to be the default.
+  assert.throws(
+    () => planEntryUpdates([profile('a@x.com')], { mechanism: 'single_opt_in' }),
+    /unknown confirm mechanism/i,
+  );
 });
