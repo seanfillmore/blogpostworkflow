@@ -28,6 +28,11 @@
  * cluster is named in this file, and a held post is otherwise untouched —
  * still live, still indexed, still published. `--include-held` refreshes them.
  *
+ * EFFICIENCY-RANKED BEFORE --limit (lib/cluster-efficiency.js). The hold decides
+ * whether a slug may be refreshed; the ranking decides which of the survivors a
+ * budget of three is spent on, cheapest-converting-first. It excludes nothing:
+ * one of those slots is reserved for the lowest-ranked cluster present.
+ *
  * A SINGLE SLUG ARGUMENT IS NEVER HELD. That path is either an operator asking
  * by hand or a caller (indexing-fixer, legacy-rebuilder) that has already
  * applied the same hold to its own pick list; holding again here would be a
@@ -49,6 +54,9 @@ import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
+import {
+  rankClusters, orderByEfficiency, renderEfficiencyLines, efficiencyBanner,
+} from '../../lib/cluster-efficiency.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
@@ -149,7 +157,19 @@ function gatherSlugs() {
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
   const { kept, held } = holdSlugs([...slugs], hold, { includeHeld: INCLUDE_HELD, metaFor: metaForSlug });
-  return { slugs: kept.slice(0, LIMIT), held, hold };
+
+  // ORDERED before --limit for the same reason it is HELD before --limit: a
+  // budget of three spent on the least efficient cluster is a budget spent on
+  // traffic that does not convert. The ranking excludes nothing — one of those
+  // three slots is reserved for the lowest-ranked cluster present.
+  const ranking = rankClusters(hold);
+  const rankBanner = efficiencyBanner(ranking);
+  if (rankBanner) console.log(`${rankBanner}\n`);
+  const efficiency = orderByEfficiency(kept, ranking, {
+    limit: LIMIT,
+    describe: (s) => ({ slug: s, keyword: metaForSlug(s)?.target_keyword }),
+  });
+  return { slugs: efficiency.items.slice(0, LIMIT), held, hold, ranking, efficiency };
 }
 
 function run(cmd, label) {
@@ -277,8 +297,10 @@ function refreshOne(slug) {
 async function main() {
   console.log('\nRefresh Runner\n');
 
-  const { slugs, held, hold } = gatherSlugs();
+  const { slugs, held, hold, ranking, efficiency } = gatherSlugs();
   for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+  const rankLines = renderEfficiencyLines(ranking, efficiency);
+  for (const line of rankLines) console.log(`  ${line}`);
   if (!slugs.length) {
     console.log('  No slugs to refresh. Provide a slug argument or use --from-post-performance / --from-quick-wins / --aging-quarterly.');
     // A run that refreshed nothing BECAUSE everything was held has to say so —
@@ -328,6 +350,7 @@ async function main() {
     body: [
       results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
       ...renderHoldLines(held),
+      ...rankLines,
       ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the same class of thing as a skip: the guard doing its job, not

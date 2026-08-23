@@ -13,6 +13,12 @@
  * named in this file. Held posts are NOT touched in any way — still live, still
  * indexed, still carrying whatever tags they had. `--include-held` rebuilds them.
  *
+ * EFFICIENCY-RANKED BEFORE --limit (lib/cluster-efficiency.js). The scheduler
+ * runs this at `--limit 5`, so the order the pick list is in decides which five
+ * of the backlog get rebuilt. The hold answers WHETHER; the ranking answers IN
+ * WHAT ORDER, cheapest-converting-first — and reserves one of the five for the
+ * lowest-ranked cluster present so a ranking never starves one to zero.
+ *
  * Naming one slug on the command line is an operator asking for that post, and
  * is never held — the hold exists to stop UNATTENDED spend.
  *
@@ -32,6 +38,9 @@ import { mayRewriteBody } from '../../lib/post-lock.js';
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import {
+  rankClusters, orderByEfficiency, renderEfficiencyLines, efficiencyBanner,
+} from '../../lib/cluster-efficiency.js';
+import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
@@ -42,22 +51,27 @@ import {
  *
  * Held BEFORE `--limit` is applied, deliberately: holding afterwards would let
  * five held posts consume the whole daily budget and leave the backlog of
- * earning-cluster posts untouched.
+ * earning-cluster posts untouched. The efficiency ranking is applied in the same
+ * place and for the same reason — and unlike the hold it removes nothing, so a
+ * `ranking` that is absent or unavailable simply leaves the list as it was.
  *
- * Exported for test; the rule itself lives in lib/cluster-hold.js so this agent
- * and the queue hold on the same measured evidence.
+ * Exported for test; both rules live in lib/ so this agent, the queue and every
+ * other gated agent decide on the same measured evidence.
  *
- * @returns {{kept:Array, held:Array, overridden:Array}}
+ * @returns {{kept:Array, held:Array, overridden:Array, efficiency:object|null}}
  */
-export function selectLegacyPosts(posts, { hold = null, includeHeld = false } = {}) {
-  return partitionHeld(posts, hold, {
-    includeHeld,
-    describe: (p) => ({
-      slug: p?.slug,
-      keyword: p?.meta?.target_keyword,
-      title: p?.meta?.title,
-    }),
+export function selectLegacyPosts(posts, {
+  hold = null, includeHeld = false, ranking = null, limit = null,
+} = {}) {
+  const describe = (p) => ({
+    slug: p?.slug,
+    keyword: p?.meta?.target_keyword,
+    title: p?.meta?.title,
   });
+  const out = partitionHeld(posts, hold, { includeHeld, describe });
+  if (!ranking) return { ...out, efficiency: null };
+  const efficiency = orderByEfficiency(out.kept, ranking, { limit, describe });
+  return { ...out, kept: efficiency.items, efficiency };
 }
 
 /**
@@ -276,16 +290,25 @@ async function main() {
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
 
+  // Deprioritise, don't condemn. Same order rule as the hold: rank BEFORE the
+  // cap, or the five least efficient posts eat a budget of five.
+  const ranking = rankClusters(hold);
+  const rankBanner = efficiencyBanner(ranking);
+  if (rankBanner) console.log(`${rankBanner}\n`);
+
   // An explicit slug is an operator asking for that post; the hold only ever
-  // stops unattended spend, so it does not apply to a hand-typed request.
-  const { kept: legacy, held } = slugArg
-    ? { kept: findLegacyPosts(), held: [] }
-    : selectLegacyPosts(findLegacyPosts(), { hold, includeHeld });
+  // stops unattended spend, so it does not apply to a hand-typed request — and
+  // neither does the ranking, which would otherwise silently reorder a list of one.
+  const { kept: legacy, held, efficiency } = slugArg
+    ? { kept: findLegacyPosts(), held: [], efficiency: null }
+    : selectLegacyPosts(findLegacyPosts(), { hold, includeHeld, ranking, limit });
 
   if (held.length) {
     for (const line of renderHoldLines(held)) console.log(`  ${line}`);
     console.log('');
   }
+  const rankLines = renderEfficiencyLines(ranking, efficiency);
+  for (const line of rankLines) console.log(`  ${line}`);
 
   // Tier breakdown — shows what action each post would receive.
   const byBucket = { winner: [], rising: [], flop: [], broken: [], untriaged: [] };
@@ -343,6 +366,7 @@ async function main() {
     body: [
       renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
       ...(held.length ? ['', ...renderHoldLines(held)] : []),
+      ...(rankLines.length ? ['', ...rankLines] : []),
       ...(hold.disagreements.length ? ['', ...renderDisagreementLines(hold)] : []),
     ].join('\n'),
     // A hold never moves the status — it is the policy working, not a failure.

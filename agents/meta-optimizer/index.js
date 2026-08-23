@@ -45,6 +45,9 @@ import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-i
 import { sortByValidation } from './lib/sort.js';
 import { holdMetaCandidates } from './lib/hold.js';
 import {
+  rankClusters, renderEfficiencyLines, efficiencyBanner,
+} from '../../lib/cluster-efficiency.js';
+import {
   loadClusterHold, holdBanner, renderHoldLines, renderDisagreementLines,
   holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
@@ -426,12 +429,28 @@ async function main() {
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
 
-  const { kept: eligibleCandidates, held } = holdMetaCandidates(sortedCandidates, hold, {
+  // ── efficiency ranking, applied in the same place and BEFORE the same cap ──
+  // The hold now fires almost never (every category RSC sells, sells), but the
+  // cap is still spent in sortByValidation order, which is blind to what a
+  // cluster earns. Ranking DEMOTES the inefficient ones rather than blocking
+  // them, and reserves the last in-cap slot so the bottom cluster is never
+  // starved to zero. No ranking (missing/stale report, or one with no product
+  // revenue) leaves the order exactly as sortByValidation built it.
+  const ranking = rankClusters(hold);
+  const rankBanner = efficiencyBanner(ranking);
+  if (rankBanner) console.log(`${rankBanner}\n`);
+
+  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(sortedCandidates, hold, {
     includeHeld: INCLUDE_HELD,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
+    ranking,
+    limit: limitArg,
   });
   for (const line of renderHoldLines(held)) console.log(`  ${line}`);
   if (held.length) console.log('');
+  const rankLines = renderEfficiencyLines(ranking, efficiency);
+  for (const line of rankLines) console.log(`  ${line}`);
+  if (rankLines.length) console.log('');
 
   const results = [];
   const gateSkipped = [];
@@ -639,7 +658,7 @@ async function main() {
   // the hold and any attribution disagreement have to be here or they reach
   // nobody — this agent runs unattended from cron and its stdout is read by no
   // one. Both blocks vanish entirely on a clean run.
-  const holdLines = [...renderHoldLines(held), ...renderDisagreementLines(hold)];
+  const holdLines = [...renderHoldLines(held), ...rankLines, ...renderDisagreementLines(hold)];
   if (holdLines.length) {
     lines.push('## Cluster hold');
     lines.push('');
