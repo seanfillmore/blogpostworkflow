@@ -35,6 +35,12 @@ import { writeFileSync, readFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
+
+// Suggestion-call parse failures for this run. Collected rather than thrown: the
+// agent loops over many articles and one bad response must not abandon the batch,
+// but it must not vanish either.
+const PARSE_FAILURES = [];
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -194,14 +200,15 @@ Return ONLY valid JSON, no markdown.`,
     }],
   });
 
-  try {
-    const raw = message.content[0].text.trim()
-      .replace(/^```json\s*/i, '').replace(/\s*```$/i, '');
-    const suggestions = JSON.parse(raw);
-    return Array.isArray(suggestions) ? suggestions.filter((s) => s.score >= minScore) : [];
-  } catch {
-    return [];
+  // A parse failure used to return [] silently, which is indistinguishable from
+  // "the model found no natural link opportunities". Record it instead so the run
+  // can report it — see PARSE_FAILURES below.
+  const { suggestions, failure } = parseScoredSuggestions(message, { minScore });
+  if (failure) {
+    PARSE_FAILURES.push(failure);
+    console.log(`    \u26a0 suggestion parse failed (${failure.reason}): ${failure.detail}`);
   }
+  return suggestions;
 }
 
 // ── html link injector ────────────────────────────────────────────────────────
@@ -494,6 +501,14 @@ async function main() {
   reportLines.push('');
   reportLines.push('## Summary');
   reportLines.push(`**Total links ${apply ? 'applied' : 'identified'}:** ${grandTotal} across ${targets.length} target pages`);
+  const parseWarning = summarizeSuggestionFailures(PARSE_FAILURES);
+  if (parseWarning) {
+    // A run that found zero opportunities and a run whose calls all failed to
+    // parse both used to print the same "0 links" line. Say which happened.
+    reportLines.push('');
+    reportLines.push(`> \u26a0 ${parseWarning}`);
+    console.log(`\n  \u26a0 ${parseWarning}`);
+  }
   if (!apply && grandTotal > 0) {
     reportLines.push('');
     reportLines.push('To apply all changes, run each target with `--apply`:');
