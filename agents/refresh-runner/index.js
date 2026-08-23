@@ -49,7 +49,8 @@ import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
-  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
+  holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -112,7 +113,7 @@ function metaForSlug(slug) {
 function gatherSlugs() {
   // Manual single slug wins — an operator naming a post is never held, and the
   // agents that call this with one slug have already applied the hold upstream.
-  if (SLUG_ARG) return { slugs: [SLUG_ARG], held: [] };
+  if (SLUG_ARG) return { slugs: [SLUG_ARG], held: [], hold: null };
 
   const slugs = new Set();
 
@@ -147,7 +148,7 @@ function gatherSlugs() {
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
   const { kept, held } = holdSlugs([...slugs], hold, { includeHeld: INCLUDE_HELD, metaFor: metaForSlug });
-  return { slugs: kept.slice(0, LIMIT), held };
+  return { slugs: kept.slice(0, LIMIT), held, hold };
 }
 
 function run(cmd, label) {
@@ -275,7 +276,7 @@ function refreshOne(slug) {
 async function main() {
   console.log('\nRefresh Runner\n');
 
-  const { slugs, held } = gatherSlugs();
+  const { slugs, held, hold } = gatherSlugs();
   for (const line of renderHoldLines(held)) console.log(`  ${line}`);
   if (!slugs.length) {
     console.log('  No slugs to refresh. Provide a slug argument or use --from-post-performance / --from-quick-wins / --aging-quarterly.');
@@ -284,7 +285,7 @@ async function main() {
     if (held.length) {
       await notify({
         subject: `Refresh Runner: 0 refreshed${holdSummaryFragment(held)}`,
-        body: renderHoldLines(held).join('\n'),
+        body: [...renderHoldLines(held), ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -326,6 +327,7 @@ async function main() {
     body: [
       results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
       ...renderHoldLines(held),
+      ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the same class of thing as a skip: the guard doing its job, not
     // a failure. It never moves the status off 'info'.

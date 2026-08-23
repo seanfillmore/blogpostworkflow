@@ -56,7 +56,7 @@ import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
 import { isInfraError, countDeliveredSubmissions } from '../../lib/indexing-escalation.js';
 import {
-  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, HOLD_FLAG,
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
 import { getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
@@ -442,6 +442,7 @@ async function processNormalRun() {
         ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${r.error.slice(0, 120)}`),
         ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
         ...renderHoldLines(heldRefreshes),
+        ...renderDisagreementLines(hold),
         ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict.action}`),
       ].join('\n'),
       // A hold is routine housekeeping working as designed, so it never moves

@@ -38,7 +38,8 @@ import { notify } from '../../lib/notify.js';
 import { QUEUE_DIR, listQueueItems, writeItem, activeSlugs } from './lib/queue.js';
 import { buildSummaryPrompt } from './prompts.js';
 import {
-  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
+  holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -325,7 +326,7 @@ async function main() {
     if (held.length) {
       await notify({
         subject: `Performance Engine: 0 items queued, ${held.length} held ($0 cluster)`,
-        body: renderHoldLines(held).join('\n'),
+        body: [...renderHoldLines(held), ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -384,6 +385,7 @@ async function main() {
     body: [
       queued.length === 0 ? 'No new items this run.' : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
       ...renderHoldLines(held),
+      ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the policy working, not an error — it stays 'info' and deferred.
     status: 'info',

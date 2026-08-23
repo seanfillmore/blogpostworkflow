@@ -31,7 +31,8 @@ import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../li
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import {
-  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
+  holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
 /**
@@ -331,6 +332,7 @@ async function main() {
     body: [
       renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
       ...(held.length ? ['', ...renderHoldLines(held)] : []),
+      ...(hold.disagreements.length ? ['', ...renderDisagreementLines(hold)] : []),
     ].join('\n'),
     // A hold never moves the status — it is the policy working, not a failure.
     status: failures.length > 0 ? 'warning' : 'success',

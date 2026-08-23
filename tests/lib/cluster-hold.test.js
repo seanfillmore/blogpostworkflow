@@ -21,7 +21,17 @@ const REPORT = [
   { cluster: 'deodorant', revenue: 38.25, clicks: 121, pages: 21 },
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
 ];
-const HOLD = buildClusterHold(classifyClusters(REPORT), { generatedAt: '2026-08-22T10:00:00Z' });
+// Real measured product revenue over the same windows — the corroborating
+// source. A cluster is held only when BOTH agree it earns nothing, so every
+// hold fixture here has to carry it (see tests/lib/cluster-corroboration.test.js
+// for the rule itself, and for the soap case that made it necessary).
+const MEASURED = [
+  { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, 'lip balm': 120, soap: 156, deodorant: 60 } },
+  { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, deodorant: 180, 'lip balm': 120, toothpaste: 39 } },
+];
+const withOrders = (clusters, opts = {}) => buildClusterHold(classifyClusters(clusters), { measured: MEASURED, ...opts });
+
+const HOLD = withOrders(REPORT, { generatedAt: '2026-08-22T10:00:00Z' });
 
 // ── which clusters are held ──────────────────────────────────────────────────
 
@@ -33,17 +43,13 @@ test('a cluster with traffic across several pages and $0 revenue is held', () =>
 
 test('a cluster that earns ANY money is not held — the rule releases automatically', () => {
   // Same cluster, same traffic, one sale. Nothing else changes.
-  const earning = buildClusterHold(classifyClusters([
-    { cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 },
-  ]));
+  const earning = withOrders([{ cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 }]);
   assert.equal(earning.heldSet.size, 0);
   assert.equal(holdDecision({ slug: 'no-fluoride-toothpaste' }, earning).skip, false);
 });
 
 test('a cluster too small to judge is never held — a new category must be able to get tested', () => {
-  const young = buildClusterHold(classifyClusters([
-    { cluster: 'lip balm', revenue: 0, clicks: 4, pages: 6 },
-  ]));
+  const young = withOrders([{ cluster: 'lip balm', revenue: 0, clicks: 4, pages: 6 }]);
   assert.equal(young.heldSet.size, 0, 'unproven, not held');
 });
 
@@ -51,27 +57,39 @@ test('no cluster name is hardcoded anywhere in the hold rule', () => {
   // The precedent set by lib/queue-autoapply.js: the held set is derived from
   // measured revenue, so it generalises to whatever goes to $0 next.
   for (const rel of ['lib/cluster-hold.js', 'scripts/cluster-holds.mjs']) {
-    const src = readFileSync(join(ROOT, rel), 'utf8').toLowerCase();
+    // Executable source only — the module docstring names the incident cluster
+    // on purpose, so the correction stays explicable.
+    const src = readFileSync(join(ROOT, rel), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|[^:])\/\/.*$/gm, '$1')
+      .toLowerCase();
     assert.ok(!src.includes('toothpaste'), `${rel} must not name a cluster`);
   }
 });
 
 test('a missing seo-impact report holds nothing and says so, rather than guessing', () => {
-  const blind = loadClusterHold({ root: ROOT, readJson: () => null });
+  const blind = loadClusterHold({ root: ROOT, readJson: () => null, readDir: () => [] });
   assert.equal(blind.available, false);
   assert.equal(blind.heldSet.size, 0);
   assert.match(holdBanner(blind), /cannot fire/i);
   assert.match(holdBanner(blind), new RegExp(SEO_IMPACT_RELPATH.replace(/[/\\]/g, '.')));
 });
 
-test('loadClusterHold reads the one report every agent holds on', () => {
+test('loadClusterHold reads the report AND the orders that corroborate it', () => {
   const seen = [];
   const hold = loadClusterHold({
     root: ROOT,
-    readJson: (p) => { seen.push(p); return { generated_at: 'X', clusters: REPORT }; },
+    readDir: () => ['2026-08-20.json'],
+    readJson: (p) => {
+      seen.push(p);
+      if (p.endsWith(SEO_IMPACT_RELPATH)) {
+        return { generated_at: 'X', window: { start: '2026-08-20', end: '2026-08-20' }, clusters: REPORT };
+      }
+      return { date: '2026-08-20', orders: { count: 2, revenue: 120 }, topProducts: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients', revenue: 120 }] };
+    },
   });
-  assert.equal(seen.length, 1);
   assert.ok(seen[0].endsWith(SEO_IMPACT_RELPATH));
+  assert.ok(seen.some((p) => p.includes('snapshots')), 'the corroborating source is read too');
   assert.equal(hold.available, true);
   assert.equal(hold.generatedAt, 'X');
   assert.deepEqual([...hold.heldSet], ['toothpaste']);
@@ -155,7 +173,7 @@ test('partitionHeld can describe non-object items (a bare slug list)', () => {
 });
 
 test('partitionHeld holds nothing when the revenue report is unavailable', () => {
-  const blind = loadClusterHold({ root: ROOT, readJson: () => null });
+  const blind = loadClusterHold({ root: ROOT, readJson: () => null, readDir: () => [] });
   const { kept, held } = partitionHeld(PICKS, blind);
   assert.equal(kept.length, 4, 'no report means no evidence — nothing is paused on a guess');
   assert.equal(held.length, 0);
@@ -222,5 +240,5 @@ test('holdBanner lists the currently-held clusters with the evidence behind each
   assert.match(b, /toothpaste/);
   assert.match(b, /663/);
   assert.match(b, new RegExp(HOLD_FLAG));
-  assert.equal(holdBanner(buildClusterHold(classifyClusters([]))), '', 'nothing held → no banner');
+  assert.equal(holdBanner(withOrders([])), '', 'nothing held and nothing disputed → no banner');
 });

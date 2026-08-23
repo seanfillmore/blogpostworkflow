@@ -56,7 +56,8 @@ import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-post
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
 import {
-  loadClusterHold, partitionHeld, renderHoldLines, holdBanner, holdSummaryFragment, HOLD_FLAG,
+  loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
+  holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
 // How many posts one unattended run will remediate. Each one is a chain of
@@ -155,9 +156,12 @@ export function metaAfterExhaustion(meta, { at, report, reasons = [] }) {
 
 /** The single deferred digest line. Names every post and what happened to it. */
 export function renderResolverSummary({
-  resolved = [], exhausted = [], skipped = [], failed = [], dryRun = false, candidates = [], held = [],
+  resolved = [], exhausted = [], skipped = [], failed = [], dryRun = false, candidates = [],
+  held = [], notes = [],
 } = {}) {
-  const holdLines = renderHoldLines(held);
+  // `notes` carries the attribution-disagreement lines. They belong in the
+  // digest body, not only in the console banner: this agent runs unattended.
+  const holdLines = [...renderHoldLines(held), ...notes];
   if (dryRun) {
     if (!candidates.length) {
       return ['Dry run — no blocked posts found.', ...holdLines].join('\n');
@@ -299,7 +303,7 @@ async function main() {
 
   if (!apply) {
     for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
-    const body = renderResolverSummary({ dryRun: true, candidates, held });
+    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: renderDisagreementLines(hold) });
     console.log(`\n${body}`);
     await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
     return;
@@ -331,7 +335,7 @@ async function main() {
     }
   }
 
-  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held });
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: renderDisagreementLines(hold) });
   console.log(`\n${body}`);
 
   await notify({

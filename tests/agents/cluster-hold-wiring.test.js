@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { buildClusterHold, HOLD_FLAG } from '../../lib/cluster-hold.js';
+import { buildClusterHold, renderDisagreementLines, HOLD_FLAG } from '../../lib/cluster-hold.js';
 import { classifyClusters } from '../../lib/cluster-revenue.js';
 import { holdContentQuality } from '../../agents/indexing-fixer/index.js';
 import { holdCandidates } from '../../agents/performance-engine/index.js';
@@ -14,15 +14,23 @@ import { holdSlugs } from '../../agents/refresh-runner/index.js';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
 // Production shape (2026-08-22). One $0 cluster with real traffic, one earner.
+// MEASURED is the corroborating source — real product revenue from the daily
+// Shopify order snapshots. A cluster is held only when BOTH agree it earns
+// nothing, so a hold fixture without it would hold nothing at all.
+const MEASURED = [
+  { label: 'report window (28d)', available: true, orders: 18, revenue: 1079.46, aov: 59.97, truncatedDays: 0, byFamily: { lotion: 909, soap: 156 } },
+  { label: 'wide window (90d)', available: true, orders: 39, revenue: 2118.77, aov: 54.33, truncatedDays: 0, byFamily: { lotion: 1695.3, soap: 365.7, toothpaste: 39 } },
+];
+
 const HOLD = buildClusterHold(classifyClusters([
   { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-]), { generatedAt: '2026-08-22T10:00:00Z' });
+]), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
 
 const EARNING = buildClusterHold(classifyClusters([
   { cluster: 'toothpaste', revenue: 12.5, clicks: 663, pages: 24 },
   { cluster: 'body lotion', revenue: 313.49, clicks: 35, pages: 20 },
-]));
+]), { measured: MEASURED });
 
 const DUD = 'no-fluoride-toothpaste';
 const EARNER = 'best-coconut-oil-body-lotion';
@@ -149,6 +157,43 @@ test('refresh-runner returns bare slugs, not wrappers — its caller iterates st
   assert.equal(typeof kept[0], 'string');
 });
 
+// ── the correction: a misattributed cluster reaches every agent unheld ───────
+
+// seo-impact attributes $0 to this cluster; real orders show it is the second
+// biggest earner in the catalogue. Holding it paused 19% of revenue. Every gated
+// agent must now let its posts through, and say why.
+const MISATTRIBUTED = buildClusterHold(classifyClusters([
+  { cluster: 'soap', revenue: 0, clicks: 223, pages: 24 },
+  { cluster: 'toothpaste', revenue: 0, clicks: 663, pages: 24 },
+]), { generatedAt: '2026-08-22T10:00:00Z', measured: MEASURED });
+
+const SOAP_POST = 'best-natural-bar-soap-for-men';
+
+test('no gated agent holds a cluster the orders show is earning', () => {
+  assert.equal(holdContentQuality([{ slug: SOAP_POST }], MISATTRIBUTED).held.length, 0);
+  assert.equal(holdCandidates([{ slug: SOAP_POST }], MISATTRIBUTED).held.length, 0);
+  assert.equal(selectLegacyPosts([legacyPost(SOAP_POST)], { hold: MISATTRIBUTED }).held.length, 0);
+  assert.equal(selectBlockedPostsWithHold([entry(SOAP_POST)], { now, hold: MISATTRIBUTED }).held.length, 0);
+  assert.equal(holdSlugs([SOAP_POST], MISATTRIBUTED).held.length, 0);
+});
+
+test('the cluster the orders confirm is dead is still held in the same run', () => {
+  const { kept, held } = holdSlugs([DUD, SOAP_POST], MISATTRIBUTED);
+  assert.deepEqual(kept, [SOAP_POST], 'the earner runs');
+  assert.deepEqual(held.map((h) => h.slug), [DUD], 'the real dud is still held');
+});
+
+test('the disagreement reaches the DIGEST, not just the console banner', () => {
+  // These agents run unattended at 3 and 8 AM. The 5 AM digest is the only
+  // channel a broken-attribution finding can speak through.
+  const lines = renderDisagreementLines(MISATTRIBUTED).join('\n');
+  assert.match(lines, /ATTRIBUTION DISAGREEMENT/);
+  assert.match(lines, /soap/);
+  assert.match(lines, /365\.7/);
+  assert.deepEqual(renderDisagreementLines(HOLD), [], 'silent when both sources agree');
+  assert.deepEqual(renderDisagreementLines(null), []);
+});
+
 // ── the contract every gated agent shares ────────────────────────────────────
 
 const GATED = [
@@ -177,6 +222,7 @@ test('every gated agent accepts the override flag and names no cluster in code',
     assert.ok(src.includes(HOLD_FLAG), `${rel} must accept ${HOLD_FLAG}`);
     assert.ok(src.includes('cluster-hold.js'), `${rel} must use the shared hold rule`);
     assert.ok(!/toothpaste/i.test(code(rel)), `${rel} must not hardcode a cluster name`);
+    assert.ok(!/\bsoap\b/i.test(code(rel)), `${rel} must not hardcode a cluster name`);
   }
 });
 
