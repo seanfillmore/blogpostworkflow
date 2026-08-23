@@ -8,8 +8,12 @@
  *   1. Query GSC for pages with > 100 impressions and < 5% CTR (90 days)
  *   2. Fetch current title + meta description from Shopify for each page
  *   3. Claude rewrites them to be more compelling and keyword-specific
- *   4. Report shows before/after with estimated CTR improvement
- *   5. With --apply, pushes changes to Shopify
+ *   4. HEALTH-CLAIM GATE (lib/seo-copy-health-gate.js + lib/gate.js) — a rewrite
+ *      that makes a claim a cosmetic may not make is regenerated ONCE with the
+ *      offending words named, and skipped only if the retry trips too. Every
+ *      skip is counted, named and carried into the digest body.
+ *   5. Report shows before/after with estimated CTR improvement
+ *   6. With --apply, pushes changes to Shopify
  *
  * Output: data/reports/meta-optimizer-report.md
  *
@@ -45,6 +49,10 @@ import {
   holdSummaryFragment, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 import { buildPromptGrounding } from './lib/grounding.js';
+import { gateProposedCopy } from './lib/gate.js';
+import {
+  SEO_COPY_COMPLIANCE_RULE, renderGateSkipLines, gateSkipSummaryFragment,
+} from '../../lib/seo-copy-health-gate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -110,7 +118,13 @@ async function buildArticleMap() {
 
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
-async function rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground) {
+/**
+ * `constraint` is appended verbatim when a previous attempt tripped the
+ * health-claim gate (see lib/gate.js). It is empty on the first attempt — the
+ * standing SEO_COPY_COMPLIANCE_RULE is in the prompt either way, because
+ * preventing the claim is cheaper than detecting it and retrying.
+ */
+async function rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground, constraint = '') {
   const ctrPct = (ctr * 100).toFixed(1);
   const avgPos = Math.round(position);
 
@@ -153,6 +167,8 @@ Write an improved title and meta description that:
 - Meta description: 140–155 characters
 - Sounds like ${config.name}'s voice: clean, expert, trustworthy, not salesy
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object with this exact structure:
 {
   "title": "...",
@@ -418,6 +434,7 @@ async function main() {
   if (held.length) console.log('');
 
   const results = [];
+  const gateSkipped = [];
   let processed = 0;
 
   // ── A/B tracker, loaded up front and written after EVERY applied change ────
@@ -476,10 +493,53 @@ async function main() {
     process.stdout.write(`  [${processed + 1}] ${tagPrefix}"${keyword}" (#${Math.round(position)}, ${(ctr * 100).toFixed(1)}% CTR)... `);
 
     try {
-      const proposed = await rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground);
-      console.log('done');
+      // ── health-claim gate ───────────────────────────────────────────────
+      // This agent writes live page titles and meta descriptions — the SERP
+      // snippet a cosmetic brand shows next to its own name — and until
+      // 2026-08-23 it had no claims gate at all. On 2026-08-22 it published
+      // "Best Soap for Tattoos: Clean Ingredients That Heal" with a matching
+      // meta. See lib/seo-copy-health-gate.js for why the ad-copy gate is not
+      // reused wholesale here (its toxicity vocabulary IS this site's editorial
+      // position and would remove those pages from CTR work permanently).
+      //
+      // A blocked first attempt is regenerated ONCE with the offending words
+      // named. Only a second failure skips the candidate — visibly.
+      const gated = await gateProposedCopy((constraint) =>
+        rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground, constraint));
+
+      if (!gated.ok) {
+        console.log('gated');
+        const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+        console.log(`    ⊘ health-claim gate: ${words} — skipped after ${gated.attempts} attempt(s), page unchanged`);
+        gateSkipped.push({
+          keyword, pageUrl, violations: gated.violations, attempts: gated.attempts,
+          rejectedTitle: gated.rejected?.title || '', rejectedMeta: gated.rejected?.meta_description || '',
+        });
+        // NOT counted against `processed`: the limit is a budget for pages
+        // optimised, and a gated page was not optimised. Counting it would let
+        // a run of bad luck silently spend the whole weekly cap on nothing.
+        //
+        // But it needs its OWN bound, or "doesn't count" becomes unbounded: a
+        // pool where everything trips would walk the entire candidate list at
+        // two model calls each. Capped at the same number, so worst-case spend
+        // is 2× the intended run and never a function of pool size.
+        if (gateSkipped.length >= limitArg) {
+          console.log(`  Health-claim gate: ${gateSkipped.length} skips — at the skip budget, stopping.`);
+          break;
+        }
+        continue;
+      }
+
+      const proposed = gated.proposed;
+      console.log(gated.attempts > 1 ? 'done (regenerated once — health-claim gate)' : 'done');
+      if (gated.advisory.length) {
+        const words = [...new Set(gated.advisory.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+        console.log(`    · advisory (not blocked): ${words}`);
+      }
 
       const result = {
+        gateAttempts: gated.attempts,
+        gateAdvisory: gated.advisory,
         keyword,
         pageUrl,
         article,
@@ -587,6 +647,44 @@ async function main() {
     lines.push('');
   }
 
+  // Same reasoning as the hold block above: the digest body IS this report, so a
+  // skip that is not written here reaches nobody. A skip is the gate working, so
+  // it renders as a normal section on the deferred success path — never
+  // `immediate: true`, never `status: 'error'`. It vanishes on a clean run.
+  const skipLines = renderGateSkipLines(gateSkipped);
+  if (skipLines.length) {
+    lines.push('## Health-claim gate — skipped');
+    lines.push('');
+    for (const l of skipLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+    lines.push('The rejected copy, for review:');
+    lines.push('');
+    for (const s of gateSkipped) {
+      lines.push(`- **${s.keyword}** — title: \`${s.rejectedTitle}\` · meta: \`${s.rejectedMeta}\``);
+    }
+    lines.push('');
+  }
+
+  // Advisory: reported, never blocking. See lib/seo-copy-health-gate.js — this is
+  // the ingredient-avoidance vocabulary that is this brand's editorial position,
+  // not a claim that the product treats anything.
+  const advisoryResults = results.filter((r) => r.gateAdvisory?.length);
+  if (advisoryResults.length) {
+    lines.push('## Health-claim gate — advisory (published, not blocked)');
+    lines.push('');
+    for (const r of advisoryResults) {
+      const words = [...new Set(r.gateAdvisory.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+      lines.push(`- **${r.keyword}** — ${words}`);
+    }
+    lines.push('');
+  }
+
+  const regenerated = results.filter((r) => r.gateAttempts > 1).length;
+  if (regenerated) {
+    lines.push(`_${regenerated} rewrite(s) tripped the health-claim gate on the first attempt and were regenerated once, successfully._`);
+    lines.push('');
+  }
+
   lines.push('---');
   lines.push('');
 
@@ -623,6 +721,9 @@ async function main() {
 
   console.log(`\n  Report saved: ${reportPath}`);
   console.log(`  Pages ${apply ? 'updated' : 'analyzed'}: ${results.length}`);
+  if (gateSkipped.length) {
+    console.log(`  Health-claim gate: ${gateSkipped.length} candidate(s) skipped (page unchanged)`);
+  }
   if (!apply && results.length > 0) {
     console.log(`  Run with --apply to push changes to Shopify`);
   }
@@ -630,13 +731,14 @@ async function main() {
   // Returned so the caller can put the held count in the notify subject. A hold
   // is the policy working, so it stays on the normal deferred success path —
   // never `immediate: true`, never `status: 'error'`.
-  return { held };
+  return { held, gateSkipped };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main()
     .then((outcome) => notifyLatestReport(
-      `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}`,
+      `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}` +
+        gateSkipSummaryFragment(outcome?.gateSkipped || []),
       join(ROOT, 'data', 'reports', 'meta-optimizer'),
     ))
     .catch((err) => {
