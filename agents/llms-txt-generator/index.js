@@ -17,7 +17,10 @@
  * that orphaned page + redirect.
  *
  * Selection:
- *   - Blog posts with >=100 GSC impressions in last 90 days
+ *   - Blog posts that are CURRENTLY published on Shopify AND have >=100 GSC
+ *     impressions in the last 90 days (published state gates first — GSC's
+ *     90-day window still counts impressions from before a post was
+ *     unpublished, so impressions alone would keep citing a dead URL)
  *   - All active products
  *   - Top 10 collections by organic traffic (DataForSEO)
  *
@@ -31,6 +34,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
+  getBlogs, getArticles,
   getProducts, getCustomCollections, getSmartCollections,
   getPages, deletePage,
   getRedirects, deleteRedirect,
@@ -81,12 +85,54 @@ async function getMetaDescription(resource, resourceId) {
   }
 }
 
+/**
+ * Ids of articles that are CURRENTLY published, across every blog the store
+ * has (not just the blogs referenced by local meta.json — a slug can be
+ * missing `shopify_blog_id`, and this must not silently skip its blog).
+ *
+ * Why this exists: GSC's page-performance API answers "did this URL get
+ * impressions in the last 90 days", which stays true for a while after a
+ * post is unpublished — the rolling window still contains days when the
+ * page was live. Gating on impressions alone therefore keeps citing a page
+ * Shopify no longer serves. That is exactly how three hair-cluster posts
+ * (RSC sells no hair products) survived a full `llms.txt` regeneration on
+ * 2026-08-22, hours after being unpublished: impressions were still >=100,
+ * live-published status was never checked. Published state answers "does
+ * this URL still resolve to this content"; GSC impressions still decide
+ * which of the *published* posts are worth citing. Neither substitutes for
+ * the other.
+ */
+async function getPublishedArticleIds() {
+  const publishedIds = new Set();
+  const blogs = await getBlogs();
+  for (const blog of blogs) {
+    let sinceId = 0;
+    for (;;) {
+      const articles = await getArticles(blog.id, {
+        limit: 250,
+        since_id: sinceId,
+        fields: 'id,published_at',
+      });
+      if (!articles.length) break;
+      for (const a of articles) {
+        if (a.published_at) publishedIds.add(a.id);
+      }
+      sinceId = articles[articles.length - 1].id;
+      if (articles.length < 250) break;
+    }
+  }
+  return publishedIds;
+}
+
 async function selectBlogPosts() {
   const selected = [];
   const slugs = listAllSlugs();
+  const publishedIds = await getPublishedArticleIds();
+
   for (const slug of slugs) {
     const meta = getPostMeta(slug);
     if (!meta || !meta.shopify_article_id) continue;
+    if (!publishedIds.has(meta.shopify_article_id)) continue; // unpublished — never cite it, regardless of past impressions
 
     const url = `${config.url}/blogs/${meta.shopify_blog_handle || 'news'}/${meta.shopify_handle || slug}`;
 
