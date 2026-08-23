@@ -468,6 +468,103 @@ assert.throws(
   assert.ok(!prompt.includes('ONLYINBODY'), 'skill bodies do not reach the extraction prompt');
 }
 
+// ── the stage field must exist in the schemas that emit tactics ─────────────
+// The extraction prompt spends ~30 lines on "Timing is a stage, never a reject" — the six
+// gates, "adopt with the stage that unblocks it" — while the JSON schema it told the model
+// to fill in had NO stage field. First-pass ingestion therefore could not park anything,
+// whatever the prose said; every staged marker in the fleet came from --readjudicate,
+// whose schema did have one. That is why all 71 tactics in the nine skills created by
+// "$100M Leads" landed unparked, including seven about hiring agencies and three about
+// training a team, for a solo operator on $30/day.
+{
+  const { buildExtractionPrompt, buildConsolidationPrompt, STAGES, validateExtraction } =
+    await import('../../lib/marketing-learner.js');
+
+  const ext = buildExtractionPrompt({ video: VIDEO, inventory: [] });
+  assert.match(ext, /"stage":/, 'the extraction schema has a stage field');
+  for (const g of STAGES) {
+    assert.ok(ext.includes(`"${g}"`), `the extraction schema offers the "${g}" gate`);
+  }
+  assert.match(ext, /null is a claim that it is runnable NOW/,
+    'and says null is an assertion, not a default');
+
+  const con = buildConsolidationPrompt({
+    candidates: [{ claim: 'c', mechanism: 'm', evidence: 'e', rscFit: { score: 5, reasoning: 'r' }, verdict: 'adopt' }],
+    source: { title: 't', creator: 'c', sourceId: 's' },
+  });
+  assert.match(con, /"stage":/, 'the consolidation schema has one too');
+  assert.match(con, /Carry `stage` through/,
+    'and tells the model to preserve a stage across a merge — dropping it would silently unpark');
+
+  // The validator already accepted the field; pin that it still does, and still rejects a
+  // gate that is not real.
+  const staged = {
+    videoId: 'abc12345678', creator: 'C', title: 'T', summary: 'S', recencySignals: null,
+    tactics: [{
+      claim: 'Hire an agency to run ads.', mechanism: 'they know the platform',
+      evidence: 'assertion only', rscFit: { score: 7, reasoning: 'needs budget and people' },
+      verdict: 'adopt', stage: 'team', rejectReason: null,
+      targetSkill: { name: 'marketing-agency-buying', action: 'create', description: 'Use when...' },
+    }],
+  };
+  assert.doesNotThrow(() => validateExtraction(staged), 'a staged adopt validates');
+  assert.throws(
+    () => validateExtraction({ ...staged, tactics: [{ ...staged.tactics[0], stage: 'someday' }] }),
+    /stage must be one of/,
+    'an invented gate is refused',
+  );
+}
+
+// ── assertNewSkillGating ────────────────────────────────────────────────────
+// The structural backstop for the schema gap above. A schema the model CAN fill is not one
+// it always fills correctly, and "$100M Leads" merged nine skills / 71 unparked tactics
+// clean — nothing failed, it was caught by reading the result.
+{
+  const { assertNewSkillGating } = await import('../../lib/marketing-learner.js');
+  const t = (stage = null) => ({ claim: 'c', mechanism: 'm', stage });
+
+  assert.throws(
+    () => assertNewSkillGating({
+      name: 'marketing-agency-and-expert-buying',
+      description: 'Use when deciding whether to hire an agency.',
+      tactics: [t(), t(), t()],
+    }),
+    /not one of its 3 tactics carries a stage/,
+    'an agency-shaped skill with nothing staged is refused',
+  );
+  assert.throws(
+    () => assertNewSkillGating({
+      name: 'marketing-task-delegation-training',
+      description: 'Use when training the first person who takes work off your hands.',
+      tactics: [t()],
+    }),
+    /delegation-shaped work/i,
+    'a delegation-shaped skill is refused too',
+  );
+
+  // One staged tactic proves the question was weighed. A skill can legitimately mix a solo
+  // scale-down ("pay a practitioner by the hour to teach you") with gated work.
+  assert.doesNotThrow(
+    () => assertNewSkillGating({
+      name: 'marketing-agency-and-expert-buying',
+      description: 'Use when deciding whether to hire an agency.',
+      tactics: [t(), t('team'), t()],
+    }),
+    'one staged tactic is enough to pass',
+  );
+
+  // Narrow by construction — it must not fire on ordinary solo skills.
+  for (const name of ['marketing-warm-outreach-sequence', 'marketing-lead-capture-landing-pages',
+    'marketing-customer-referral-program', 'marketing-copy-hooks-and-formats']) {
+    assert.doesNotThrow(
+      () => assertNewSkillGating({ name, description: 'Use when writing copy for a page.', tactics: [t(), t()] }),
+      `${name} is solo-runnable and must not trip the guard`,
+    );
+  }
+  assert.doesNotThrow(() => assertNewSkillGating({ name: 'marketing-agency-x', description: '', tactics: [] }),
+    'a skill with no tactics is not judged');
+}
+
 // ── extractTactics ──────────────────────────────────────────────────────────
 // Extraction streams, for the same reason consolidation does: the budget it needs
 // is large enough that the SDK rejects a non-streaming call outright. The stub
@@ -2430,3 +2527,76 @@ import {
 }
 
 console.log('✓ marketing-learner staged-tactic tests pass');
+
+// ── re-gating tactics that were adopted before the stage field existed ──────
+{
+  const { buildRegatePrompt, regateAdopted, insertStageMarker, extractStagedTactics, STAGES } =
+    await import('../../lib/marketing-learner.js');
+
+  const items = [
+    { skill: 'marketing-a', claim: 'Hire two agencies in sequence.', fit: '7/10 needs budget' },
+    { skill: 'marketing-b', claim: 'Write a subject line with a number.', fit: '8/10 free' },
+  ];
+  const p = buildRegatePrompt({ items });
+  assert.match(p, /\[0\] skill: marketing-a/, 'items are indexed for a positional merge');
+  assert.match(p, /Do NOT re-score/, 'the pass is stage-only — scoring a parked tactic down double-counts the timing');
+  assert.match(p, /never park behind\nthose/, 'the four open funnel gates are excluded');
+
+  const reply = (obj) => ({
+    messages: { stream: () => ({ finalMessage: async () => ({
+      stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(obj) }],
+    }) }) },
+  });
+
+  const out = await regateAdopted({
+    items, retryOptions: { delayMs: 1 },
+    client: reply({ decisions: [
+      { index: 0, stage: 'team', reasoning: 'no agency budget and no one to brief them' },
+      { index: 1, stage: null },
+    ] }),
+  });
+  assert.equal(out.length, 1, 'only gated tactics come back');
+  assert.equal(out[0].claim, items[0].claim, 'joined by index, not by text');
+  assert.equal(out[0].stage, 'team');
+
+  // The join is positional, so a response that drops or doubles an index is corrupt, not partial.
+  for (const [label, decisions] of [
+    ['a skipped index', [{ index: 0, stage: null }]],
+    ['a doubled index', [{ index: 0, stage: null }, { index: 0, stage: null }, { index: 1, stage: null }]],
+    ['an out-of-range index', [{ index: 0, stage: null }, { index: 9, stage: null }]],
+  ]) {
+    await assert.rejects(
+      () => regateAdopted({ items, client: reply({ decisions }), retryOptions: { delayMs: 1 } }),
+      /Re-gate/,
+      `${label} is refused rather than silently mis-joined`,
+    );
+  }
+  await assert.rejects(
+    () => regateAdopted({ items, retryOptions: { delayMs: 1 },
+      client: reply({ decisions: [{ index: 0, stage: 'team' }, { index: 1, stage: null }] }) }),
+    /no reasoning/,
+    'a gate with no justification is refused',
+  );
+  await assert.rejects(
+    () => regateAdopted({ items, retryOptions: { delayMs: 1 },
+      client: reply({ decisions: [{ index: 0, stage: 'someday', reasoning: 'x' }, { index: 1, stage: null }] }) }),
+    /not one of/,
+    'an invented gate is refused',
+  );
+
+  // insertStageMarker: surgery, not regeneration.
+  const skill = ['---', 'name: marketing-a', 'description: d', '---', '', '# A', '',
+    '## Hire two agencies in sequence.', '', '**Why it works:** body.', '', '*Source: X — "Y" (book)*', '',
+    '## Another live one.', '', '**Why it works:** body.', '', '*Source: X — "Y" (book)*', ''].join('\n');
+  const staged = insertStageMarker(skill, 'Hire two agencies in sequence.', 'team');
+  assert.equal(extractStagedTactics(staged).length, 1, 'the tactic is now staged');
+  assert.equal(extractStagedTactics(staged)[0].stage, 'team');
+  assert.match(staged, /## Hire two agencies in sequence\.\n\n\*\*Stage:\*\* team/,
+    'the marker sits directly under the heading, where extractStagedTactics reads it');
+  assert.ok(staged.includes('## Another live one.'), 'other sections survive');
+  assert.throws(() => insertStageMarker(staged, 'Hire two agencies in sequence.', 'scale'), /already carries a stage/);
+  assert.throws(() => insertStageMarker(skill, 'No such claim.', 'team'), /no live tactic/);
+  assert.throws(() => insertStageMarker(skill, 'Hire two agencies in sequence.', 'nonsense'), /must be one of/);
+}
+
+console.log('✓ marketing-learner re-gate tests pass');

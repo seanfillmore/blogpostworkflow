@@ -96,6 +96,11 @@ import {
   falsifyTactic,
   renderContextMirror,
   renderInventoryForExtraction,
+  assertNewSkillGating,
+  liveTacticHeadings,
+  regateAdopted,
+  insertStageMarker,
+  validateSkillEdit,
   extractStagedTactics,
   isStageActive,
   STAGES,
@@ -115,7 +120,7 @@ const REPORT_DIR = join(ROOT, 'data', 'reports', 'marketing-learner');
 
 const FLAGS = {
   '--extract-only': 'extractOnly', '--no-pr': 'noPr', '--refetch': 'refetch',
-  '--readjudicate': 'readjudicate', '--all': 'all',
+  '--readjudicate': 'readjudicate', '--all': 'all', '--regate': 'regate', '--apply': 'apply',
 };
 
 /** Repo convention: agents read .env themselves. There is no dotenv import anywhere here. */
@@ -143,7 +148,7 @@ const VALUE_FLAGS = {
 export function parseArgs(argv) {
   const out = {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
-    falsify: null, claim: null, reason: null, staged: null,
+    falsify: null, claim: null, reason: null, staged: null, regate: false, apply: false,
     file: null, author: null, title: null, chunkWords: 4500, splitOn: null, sourceKind: null,
     readjudicate: false, all: false,
   };
@@ -173,6 +178,14 @@ export function parseArgs(argv) {
       out.urls.push(a);
     }
   }
+
+  if (out.regate) {
+    if (out.urls.length || out.file || out.falsify || out.staged || out.readjudicate) {
+      throw new Error('--regate cannot be combined with URLs, --file, --falsify, --staged or --readjudicate — it is a separate mode over the live skills.');
+    }
+    return out;
+  }
+  if (out.apply) throw new Error('--apply is only valid with --regate.');
 
   if (out.readjudicate) {
     if (out.urls.length || out.file || out.falsify || out.staged) {
@@ -328,6 +341,9 @@ export async function writeSkill({ name, description, tactics, existing, client,
       `this run will not overwrite it.`
     );
   }
+
+  // Before the directory exists, so a refusal leaves nothing half-written behind.
+  assertNewSkillGating({ name, description, tactics });
 
   mkdirSync(dir, { recursive: true });
   writeFileSync(path, renderSkillMarkdown({ name, description, tactics }));
@@ -582,6 +598,77 @@ export function collectRejects(reportDir = REPORT_DIR, { all = false } = {}) {
  * corruption, not partial success, so it would discard the entire pass.
  */
 const READJUDICATE_BATCH = 25;
+
+/**
+ * Add stage markers to tactics that are already adopted and live but were never eligible
+ * for a gate, because the extraction schema had no `stage` field before 2026-08-23.
+ *
+ * Reads the SKILLS, not the reports: the skill file is what the fleet projection is built
+ * from, and a report entry can have been consolidated, merged or renamed on its way in.
+ *
+ * Dry by default. This mutates every skill in the fleet at once, and the plan is the thing
+ * worth reading before it does.
+ */
+async function runRegate({ client, args }) {
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const items = [];
+  for (const s of inventory) {
+    const gated = new Set(extractStagedTactics(s.content).map((t) => t.claim));
+    for (const claim of liveTacticHeadings(s.content)) {
+      if (gated.has(claim)) continue;
+      const sec = s.content.split(/^(?=## )/m).find((x) => x.startsWith(`## ${claim}`)) ?? '';
+      const fit = (sec.match(/\*\*Fit here \(([^)]*)\):\*\* ([^\n]*)/) ?? [])
+        .slice(1).join(' — ').slice(0, 400);
+      items.push({ skill: s.name, claim, fit });
+    }
+  }
+
+  console.log(`${items.length} live tactics carry no stage, across ${inventory.length} skills.`);
+  if (!items.length) return;
+
+  const gated = await regateAdopted({ items, client });
+  if (!gated.length) {
+    console.log('Nothing needs a gate — every live tactic is runnable today.');
+    return;
+  }
+
+  const byGate = {};
+  for (const g of gated) (byGate[g.stage] ??= []).push(g);
+  for (const [stage, list] of Object.entries(byGate)) {
+    console.log(`\n── ${stage} (${list.length}) ──`);
+    for (const g of list) console.log(`  ${g.skill}\n    ${g.claim.slice(0, 96)}\n    ↳ ${g.reasoning}`);
+  }
+  console.log(`\n${gated.length} of ${items.length} tactics would be parked.`);
+
+  if (!args.apply) {
+    console.log('\nDry run — pass --apply to write the markers.');
+    return;
+  }
+
+  // Group by skill so each file is read once, written once, and validated as a whole.
+  const bySkill = {};
+  for (const g of gated) (bySkill[g.skill] ??= []).push(g);
+  let written = 0, failed = 0;
+  for (const [name, list] of Object.entries(bySkill)) {
+    const path = join(SKILLS_DIR, name, 'SKILL.md');
+    const before = readFileSync(path, 'utf8');
+    let after = before;
+    try {
+      for (const g of list) after = insertStageMarker(after, g.claim, g.stage);
+      validateSkillEdit(before, after);
+    } catch (err) {
+      console.error(`  ✗ ${name}: ${err.message}`);
+      failed++;
+      continue;
+    }
+    writeFileSync(path, after);
+    written += list.length;
+    console.log(`  ✓ ${name}: +${list.length} staged`);
+  }
+  console.log(`\nStaged ${written} tactics across ${Object.keys(bySkill).length - failed} skills.` +
+    (failed ? ` ${failed} skill(s) refused — see above.` : ''));
+  syncContextMirror();
+}
 
 async function runReadjudicate({ client, args }) {
   const rejects = collectRejects(REPORT_DIR, { all: args.all });
@@ -966,6 +1053,10 @@ async function main() {
 
   const client = new Anthropic({ apiKey: anthropicKey });
   const results = [];
+
+  if (args.regate) {
+    return runRegate({ client, args });
+  }
 
   if (args.readjudicate) {
     return runReadjudicate({ client, args });

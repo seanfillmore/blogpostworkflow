@@ -1,19 +1,9 @@
 ---
 name: marketing-paid-media-measurement
-description: Use when setting up paid-media reporting, or reading what a running campaign is telling you — verifying pixel, conversions and revenue attribution (with Shopify and Amazon separable) before the first dollar goes out, configuring a minimal Ads Manager column set sorted highest-to-lowest by spend so triage follows the dollars, running the two-question triage (can I spend more and stay profitable right now, or must I replace the single highest-spend worst-performing ad by changing one variable), giving each new ad a pre-committed test ceiling of about 2x first-30-day cash with a no-leads kill at 1x, extending that same restraint to the funnel assets (PDP, offer structure, mechanism copy) while acquisition is already hitting target and pre-committing the degradation signals that license testing again, splitting primary metrics you may optimize budget on (spend, purchases, cost per purchase, ROAS, or leads and cost per lead) from secondary storytelling metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain, reading sustained average frequency above about 5 as audience exhaustion but early high frequency on a brand-new ad as learning rather than fatigue, building hook rate and hold rate as custom metrics instead of trusting video average play time, leaving Meta's budget allocation alone rather than hand-forcing spend onto the ad with the prettiest ROAS (the breakdown effect), pulling age, gender and placement breakdowns on a winner to aim the next asset, keeping free content running because paid absorbs credit for the demand it warms (verified by surveying buyers rather than trusting attribution windows), comparing CAC to the category average to decide whether to keep optimizing acquisition or move the work to lifetime gross profit, and declining a multi-touch attribution subscription such as Triple Whale or Northbeam until real budget runs across several channels. The account being measured is marketing-paid-campaign-structure; the creative in it is marketing-paid-creative-testing.
+description: Use when setting up paid-media reporting, or reading what a running campaign is telling you — configuring a minimal Ads Manager column set sorted highest-to-lowest by spend so triage follows the dollars, running the two-question triage (can I spend more and stay profitable right now, or must I replace the single highest-spend worst-performing ad by changing one variable), extending that same restraint to the funnel assets (PDP, offer structure, mechanism copy) while acquisition is already hitting target and pre-committing the degradation signals that license testing again, splitting primary metrics you may optimize budget on (spend, purchases, cost per purchase, ROAS, or leads and cost per lead) from secondary storytelling metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain, reading sustained average frequency above about 5 as audience exhaustion but early high frequency on a brand-new ad as learning rather than fatigue, building hook rate and hold rate as custom metrics instead of trusting video average play time, leaving Meta's budget allocation alone rather than hand-forcing spend onto the ad with the prettiest ROAS (the breakdown effect), pulling age, gender and placement breakdowns on a winner to aim the next asset, and declining a multi-touch attribution subscription such as Triple Whale or Northbeam until real budget runs across several channels. The account being measured is marketing-paid-campaign-structure; the creative in it is marketing-paid-creative-testing.
 ---
 
 # Paid Media Measurement
-
-## Set up accurate revenue tracking — pixel, conversions, and revenue attributable back to source — before the first dollar of ad spend goes out. Hire a consultant or work through tutorials if you must.
-
-**Why it works:** Ad spend is only rational if the returns are attributable. Without tracking you cannot do more of what makes money and less of what doesn't, so the spend is gambling with no stopping rule — you can lose for months without knowing, or turn off the thing that was working. Tracking is not an optimization you add later; it is the precondition that makes every other rule in this file executable.
-
-**Evidence offered:** Casino analogy; assertion.
-
-**Fit here (6/10):** Durable-principle class (sequencing), and directly timely — the tracking gate is open and the Meta account is being built right now. Most of this file covers the operational half of measurement; this adds the ordering rule. Concretely: verify the pixel fires, that purchase and lead conversions register with correct values, and that the report separates Shopify revenue from Amazon revenue before $30/day starts running. Held at 6 because it produces no revenue itself and much of the verification work is already implied by the Tracking gate — but doing it after launch rather than before is the failure this prevents.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
 
 ## Do not buy a first-party attribution platform (Triple Whale, Northbeam) until you are running meaningful budgets across several channels — native platform reporting is enough for a single-channel advertiser.
 
@@ -25,16 +15,6 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
-## Keep making free content even once paid is the primary channel — paid absorbs credit for demand that content warmed — and verify the assisted path by surveying buyers on what they consumed before purchasing rather than trusting platform attribution.
-
-**Why it works:** Content warms people who then convert through a paid click, so the paid report books the whole sale and the content looks like it contributed nothing. Cut the content and paid performance decays weeks later with no visible cause inside Ads Manager, because the thing that was priming the audience is gone and no window ever reported it. A direct buyer survey — asking what they read, watched or followed before buying — exposes that assisted path, which is the only measurement instrument that can see it at all.
-
-**Evidence offered:** Survey of the author's gym-owner clients found 78% had consumed at least two long-form pieces before booking a call, after paid performance declined when he stopped making gym content. Single vertical, self-reported recall.
-
-**Fit here (7/10):** Durable-principle class (attribution honesty), so age is irrelevant, and it is live the moment spend starts. With $30/day going out against ~$2,700/mo revenue, the operator will be tempted to treat Ads Manager as the whole truth and reallocate the hours currently going into organic — which is exactly the move that makes paid look worse a month later for reasons the dashboard cannot show. The instrument is cheap: one question on the order confirmation, running continuously, costs nothing at ~54 orders/month. Note this is a different question from the existing post-purchase survey work, which is aimed at naming the conversion constraint rather than the cross-channel path — add the channel question, do not replace the constraint question. Held at 7 rather than higher because at ~54 orders/month the responses are directional for a quarter at best, and the evidence comes from a service business with a booked-call funnel, not ecommerce.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 6 of 16)*
-
 ## Benchmark your CPM and click-through rate against industry, product and demographic norms (Varos) so you know whether a number reflects your creative or just your category's auction prices.
 
 **Stage:** scale — parked until the scale phase opens.
@@ -43,7 +23,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 **Evidence offered:** Tool name-drop repeated twice, described as what she uses to keep brands inside benchmark. No data shown.
 
-**Fit here (5/10):** A paid benchmarking subscription is explicitly a scale park. The mechanism is honest — a $22 CPM means nothing until you know whether skincare in your demo trades at $14 or $35, which tells you whether to fix creative or accept the auction. Two things hold it back today: it is a second paid subscription against a $900/mo budget, and at $30/day RSC's own CPM/CTR are too thin to benchmark meaningfully. It also only ever informs secondary storytelling metrics, never budget decisions, which caps its score. Note it buys precision on CPM and CTR only — the CAC-versus-category comparison recorded above is the one that actually gates a budget decision, and that one needs nothing but a rough estimate. Trigger: several thousand dollars a month of Meta spend where a persistent category-level CPM gap is worth a subscription fee to diagnose. Sits naturally beside the standing decision to decline multi-touch attribution tools until real budget runs across several channels — same test, same restraint.
+**Fit here (5/10):** A paid benchmarking subscription is explicitly a scale park. The mechanism is honest — a $22 CPM means nothing until you know whether skincare in your demo trades at $14 or $35, which tells you whether to fix creative or accept the auction. Two things hold it back today: it is a second paid subscription against a $900/mo budget, and at $30/day RSC's own CPM/CTR are too thin to benchmark meaningfully. It also only ever informs secondary storytelling metrics, never budget decisions, which caps its score. Trigger: several thousand dollars a month of Meta spend where a persistent category-level CPM gap is worth a subscription fee to diagnose. Sits naturally beside the standing decision to decline multi-touch attribution tools until real budget runs across several channels — same test, same restraint.
 
 *Source: undefined — "undefined" (CCsty8R0UaA)*
 
@@ -103,14 +83,6 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 *Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
 
-**Refinement — give each new ad a pre-committed test budget in dollars: about 2x the cash you collect from a customer in the first 30 days, with an earlier kill at 1x if it has produced no leads or purchases at all.** The triage above tells you *which* ad to replace; this tells you how long the replacement gets before you judge it. Setting the ceiling in dollars before launch prevents both failure modes at once: letting a dead ad keep spending because you are hoping it turns around, and killing a live ad before it had enough delivery to show anything.
-
-**Evidence offered:** Personal experience — money wasted on both sides of the error before settling on this rule. No account data, no derivation of why 2x rather than some other multiple.
-
-**Fit here (8/10):** Durable-principle class (stopping rule), age irrelevant, and it produces an actual number here rather than a posture. At $50.46 AOV, 30-day cash from a customer is roughly one order, so the per-ad test ceiling is around $100 and the zero-results kill is around $50 — two to three days at $30/day. That is a rule a solo operator can hold to instead of eyeballing the dashboard each morning. Two cautions: apply it per ad, not per campaign, so it does not collide with the learning-phase freeze in marketing-paid-campaign-structure; and on the giveaway substitute entries for purchases, since a 1x kill on "no purchases" would fire on every entry-optimized ad. No volume gate — a single-ad kill threshold needs no statistical significance, only a spend counter.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
-
 **Refinement — the same restraint covers the funnel assets, not just the ad account.** When the ads and the funnel are already hitting target, change nothing: do not rewrite the headline, restructure the offer, build new advertorials, or test new ad formats. A working system is a configuration you cannot yet explain, so every change is an unattributed variable that can break it and the expected value of tinkering on a winner is negative. Restraint preserves the thing producing money until an external signal says it has stopped. The two-question triage above governs what you do inside Ads Manager; this extends it outward to the PDP, the offer structure and the mechanism copy.
 
 **Evidence offered:** One anecdote: a founder at $130k revenue in month three, $30 CAC, 2.5x ROAS, throttled only by inventory. No before/after, no counterfactual, no figures on what tinkering costs.
@@ -126,16 +98,6 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 **Fit here (5/10):** Durable-principle class (decision rules), age irrelevant, and free to write down before the giveaway campaign has run a week. It is the missing counterpart to the restraint rules recorded here — those say do not touch it, this says what has to happen before you may. Capped at 5 because the signals are unquantified, it overlaps the frequency-exhaustion alarm and the two-question triage above, and at $30/day driving giveaway entries the two metrics that actually matter are cost per entry and entry-to-purchase rate, not ROAS and margin — so rewrite the list in this campaign's terms, and read every reading of it as directional rather than significant at ~54 orders/month.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #9: Don't strangle your golden goose" (social post)*
-
-## Diagnose whether the ads or the business model is the problem by comparing your CAC to the category average — if you are within roughly 3x of it, stop trying to lower CAC and put the work on lifetime gross profit instead.
-
-**Why it works:** Competitors in the same category pay far more similar acquisition costs than people assume, because they are bidding in the same auction for the same attention. Acquisition cost is therefore bounded by prices you do not control, while lifetime gross profit has no ceiling — more margin, more repeat purchases, higher AOV are all yours to move. A CAC already near the category norm means further creative and targeting optimization has almost no headroom left, so hours spent there are hours not spent on the side of the equation that can actually double.
-
-**Evidence offered:** Pattern from talking to hundreds of entrepreneurs monthly; explicitly labelled a personal observation, cross-referenced to his paid ads chapter. No dataset, and the 3x band is not derived.
-
-**Fit here (8/10):** Durable-principle class (diagnostic), age irrelevant, and it points straight at the stated binding constraint: retention at 18–22.5% means LTGP, not CAC, is where the headroom sits. That makes this the explicit stopping rule for tinkering with the new $30/day campaign — once cost per acquisition lands anywhere near a plausible category figure, the next hour belongs to repeat purchase, not to another creative variant. It needs only a rough category estimate to run, which is why it is usable now. Two caveats: at ~54 orders/month read CAC over quarters rather than weeks, and a rough estimate can be wrong by a wide margin, so treat "within 3x" as a band rather than a line — the decision it licenses (work on LTGP) is the right default here regardless.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 9 of 16)*
 
 ## Do not force budget toward the ads showing the best cost per purchase or ROAS while the algorithm concentrates spend elsewhere — that is Meta's documented breakdown effect, and throttling spend to the apparently cheaper ads usually makes them worse.
 

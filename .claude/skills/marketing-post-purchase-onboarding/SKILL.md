@@ -1,6 +1,6 @@
 ---
 name: marketing-post-purchase-onboarding
-description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, padded ship windows and staged day-3/7/14 check-ins, the order-confirmation email that counters buyer's remorse by re-selling the benefit and restating the guarantee, packaging inserts and their scannable opt-in destination, first-use instructions and named routines reverse-engineered from your best-result customers, transition-period expectation setting, the referral ask timed to the first visible result, and free content aimed at people who already bought — in order to get them to a visible result faster and drive a second order.
+description: Use when building or fixing what a customer receives after they buy — post-purchase and pre-arrival email sequences, the promise-and-timeline schedule in the first 48 hours after checkout, the order-confirmation email that counters buyer's remorse by re-selling the benefit and restating the guarantee, packaging inserts and their scannable opt-in destination, first-use instructions and named routines, and transition-period expectation setting — in order to get them to a visible result faster and drive a second order.
 ---
 
 # Post Purchase Onboarding
@@ -21,19 +21,9 @@ description: Use when building or fixing what a customer receives after they buy
 
 **Evidence offered:** Practitioner assertion from onboarding thousands of gym and agency customers: 'the reason a lot of customers cancel is because you said someone's going to reach out and they thought it was going to take 30 minutes, you didn't set the expectation, it takes two days.' No cancellation or retention figures.
 
-**Fit here (7/10):** Durable retention principle, age irrelevant, and it names a mechanism no other entry owns — the rest of this skill covers *what* to teach (transition period, routine, early win) but nothing covers the expectation-setting schedule in the hours right after checkout. Direct fit because retention is the binding constraint and repeat customers are 45–52% of revenue. The honest ecommerce translation is an order-confirmation and pre-arrival sequence that states exactly when the order ships, when it arrives, when the first email lands and what week two will feel like — and then actually delivers each. Free, solo-executable in existing Klaviyo flows, no traffic or attribution needed. Not higher because every promise must be genuinely keepable by one person with FBA and third-party shipping — **only promise what the fulfilment reality can hit** — and at ~54 orders/month the effect on repeat rate will never be cleanly measurable. The mechanics of making those promises safely to keep — padding the stated windows, and never ending a message without naming the next one — are the section below.
+**Fit here (7/10):** Durable retention principle, age irrelevant, and it names a mechanism no other entry owns — the rest of this skill covers *what* to teach (transition period, routine, early win) but nothing covers the expectation-setting schedule in the hours right after checkout. Direct fit because retention is the binding constraint and repeat customers are 45–52% of revenue. The honest ecommerce translation is an order-confirmation and pre-arrival sequence that states exactly when the order ships, when it arrives, when the first email lands and what week two will feel like — and then actually delivers each. Free, solo-executable in existing Klaviyo flows, no traffic or attribution needed. Not higher because every promise must be genuinely keepable by one person with FBA and third-party shipping — **only promise what the fulfilment reality can hit** — and at ~54 orders/month the effect on repeat rate will never be cleanly measurable.
 
 *Source: Alex Hormozi — "If I Wanted To Become a Millionaire in 2025, This Is What I'd Do [FULL BLUEPRINT]" (AN2KpRBsmRY)*
-
-## Pad every stated timeline by ~50% so you always deliver early and never late, break the outcome into the smallest increments, update the buyer even when there is no progress, and never let a message end without saying when they will next hear from you.
-
-**Why it works:** Perceived speed comes from win frequency, not total progress — seven small deliveries feel faster than one big one. Every kept promise compounds trust and lowers the perceived risk of recommending you to someone else, while a silent gap invites the buyer to invent a worse story. Late delivery is never forgiven, so slack belongs inside the stated window rather than in your hope that fulfilment cooperates.
-
-**Evidence offered:** Assertion plus the seven-promises-kept trust argument and the BAMFAM ('book a meeting from a meeting') heuristic borrowed from a public-company CEO. No figures.
-
-**Fit here (6/10):** Runnable in Klaviyo today at zero cost. The honest translation: pad the stated ship window so the dispatch notice always lands 'early', send real dispatch and delivery updates instead of a silent stretch, and split the first two weeks of deodorant use into staged check-ins with a named observable win at day 3, day 7 and day 14 — which is the delivery mechanism for the interim-benefit list in the early-win section below. Scored 6 rather than higher because it partially overlaps the 24–48-hour promise-keeping claim above; the distinct payload is only the padding rule and the never-leave-them-without-a-next-contact rule, and with FBA and third-party shipping the padding is the part that makes those promises actually keepable by one person.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 11 of 16)*
 
 ## Counter buyer's remorse in the same window: the order-confirmation and first post-purchase email should re-sell the specific benefit they just bought, restate the money-back guarantee, and say exactly how to reach a human with a question.
 
@@ -61,19 +51,9 @@ description: Use when building or fixing what a customer receives after they buy
 
 **Evidence offered:** Anecdote: writing per-item dosing instructions on the order form led the customer to buy everything without being asked; he claims 30-day profits 'skyrocketed' after adopting it. No figures.
 
-**Fit here (8/10):** The artifact already has a home — the packaging insert and post-purchase email sequence. Turning first-use instructions into a named multi-SKU routine (morning: deodorant plus this bar; night: this oral care step, in a stated order and cadence) does double duty: it removes the misuse that causes transition-period churn, the binding constraint, and cross-sells the adjacent SKUs of a 12-SKU catalog. Costs a print run and some copy, no traffic or attribution needed. The additive claim over the instruction-card tactic above is that the sheet is the *upsell vehicle*, not just education. Held below 9 because the AOV lift is a suggestion on a page rather than a live human removing the option to decline. On Amazon, keep it to usage guidance only — the policy limits above still apply. Where the routine's actual steps come from is the next section.
+**Fit here (8/10):** The artifact already has a home — the packaging insert and post-purchase email sequence. Turning first-use instructions into a named multi-SKU routine (morning: deodorant plus this bar; night: this oral care step, in a stated order and cadence) does double duty: it removes the misuse that causes transition-period churn, the binding constraint, and cross-sells the adjacent SKUs of a 12-SKU catalog. Costs a print run and some copy, no traffic or attribution needed. The additive claim over the instruction-card tactic above is that the sheet is the *upsell vehicle*, not just education. Held below 9 because the AOV lift is a suggestion on a page rather than a live human removing the option to decline. On Amazon, keep it to usage guidance only — the policy limits above still apply.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
-
-## Reverse-engineer the routine from your own best-result customers: find who got the best outcome, interview them for what they did differently, isolate the common actions, install those actions into what every new buyer is told to do — and set the guarantee conditions to those same actions.
-
-**Why it works:** Average customer results are the ceiling on testimonials, retention and referrals. The behaviours that separate best-result customers from average ones are transferable rather than innate, so installing them into onboarding raises the average result directly. Tying the guarantee to those behaviours is what makes customers actually perform them — the condition converts advice into compliance.
-
-**Evidence offered:** Gym Launch example — tracking speed-to-first-ad and speed-to-first-sale showed gyms doing both within seven days tripled LTGP; forcing that behaviour lifted average results, testimonials and referrals.
-
-**Fit here (7/10):** Honest translation at this size: this is a dozen emails to the existing repeat deodorant buyers, not a research project. Ask what the successful ones actually do — applied to clean damp skin, one swipe not three, pushed through the two-week adjustment, paired with the soap — then write those exact actions into the insert, the post-purchase emails and the PDP. The guarantee condition maps cleanly to 'give it 14 days', which is also the transition window that causes the churn. This is the missing input to the named-routine section above, which says to write a regimen but not where its content comes from. Free, solo-executable, and the interviews double as testimonial raw material for `marketing-copy-credibility-and-proof`. Held at 7 because with ~54 orders/month the sample of best-result buyers is small enough that the 'common actions' will be judgement, not statistics — and a guarantee condition must never become a reason to refuse an honest refund.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 11 of 16)*
 
 ## Engineer a visible win as close to the purchase as possible, and name the short-term benefits that appear along the way — buyers purchase the long-term dream but only stay long enough to reach it because of the early wins.
 
@@ -84,16 +64,6 @@ description: Use when building or fixing what a customer receives after they buy
 **Fit here (8/10):** Retention is the binding constraint, repeat customers are 45–52% of revenue, and the known churn point is the transition period — weeks where the long-term outcome has not arrived and the buyer concludes the product failed. This gives the post-purchase flow a job no other entry names: define a concrete win observable in the first 48 hours (no irritation, scent holds through the evening, one swipe is enough) and list interim benefits so week two reads as progress rather than failure. Zero cost, no attribution. Not 9 because a consumable cannot manufacture a win as vividly as a service — **it has to be an honest early observation, not a manufactured one**, or it sets up the exact disappointment it is meant to prevent.
 
 *Source: Alex Hormozi — "$100M Offers" (book, part 5 of 11)*
-
-## Ask for referrals at the moment the customer gets the result — not on a fixed day count — and let the referred buyer come in and pay full price.
-
-**Why it works:** A customer who has just experienced the outcome is at peak willingness to vouch, so the ask lands instead of being ignored. Referred buyers arrive pre-trusted and cost nothing to acquire, which is a one-to-one warm channel into an audience you do not own at zero media cost.
-
-**Evidence offered:** Hormozi's first six free clients produced another five or six paying clients purely from a referral ask, roughly doubling the business to ~$4,000/mo.
-
-**Fit here (7/10):** Executable now with no budget, and the timing rule is the whole content: the ask belongs immediately after the engineered early win above — for a deodorant switch that is 2–4 weeks in, once the transition has resolved — not at an arbitrary day-7 email. It slots into machinery this skill already owns: the staged day-3/7/14 check-ins carry it on the Shopify side, the packaging insert carries it on Amazon (usage-guidance framing only; the same insert policy limits apply, and no review solicitation). Not covered by the business-to-business partnership claim in `acquisition-channel-selection`, which is about other people's audiences rather than your own buyers. Held at 7 because at ~54 orders/month the absolute referral volume is small and, like everything else here, unmeasurable in the noise.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 3 of 16)*
 
 ## Give the insert a scannable destination that captures consent — the printed card is the only owned surface for a marketplace buyer, so route it to a page that asks for email/SMS opt-in, not just to a review form.
 
@@ -106,16 +76,6 @@ description: Use when building or fixing what a customer receives after they buy
 **The Amazon constraint decides the destination.** Amazon prohibits inserts that direct buyers to review or off-platform, so on the larger channel the QR must land on a genuine 'how to use this / how did we do' page, never a review solicitation. The capture also needs a real reason to opt in (see the lead-magnet rules in `marketing-offer-construction`) rather than a bare 'join our list'. Held at 7 because it carries per-unit print cost at a $50.46 AOV.
 
 *Source: Justin Cener — "How To Get More Store Reviews That Boost Shopify Sales" (z10IydevTX4)*
-
-## Make the free content good enough for existing customers, because buyers consume it more than strangers do and they fold its quality into the ROI they assign to the product they already paid for.
-
-**Why it works:** Perceived value of a purchase is computed from everything received from the brand, not only from the item in the box. Ongoing free value after purchase raises that total and lengthens the relationship; conversely, thin or sloppy free content makes the paid product itself feel worse in hindsight.
-
-**Evidence offered:** Assertion, framed as a counterintuitive observation about who actually consumes free content.
-
-**Fit here (8/10):** Retention is the stated binding constraint — repeat rate 18–22.5%, repeat buyers ~45–52% of revenue — and this says plainly that a share of the content calendar should be aimed at people who have already bought: usage routines, transition-period troubleshooting, what to pair with what, how to store it in summer. Zero cost, solo-executable, and it recycles the material already being written for the insert and the post-purchase flow. Distinct from the pre-arrival education series above, which is a fixed automated flow fired by a purchase; this is ongoing public content that happens to be read mostly by existing customers, so it also carries the reverse-engineered best-customer behaviours out to buyers who never opened the emails — including the Amazon two-thirds of revenue with no email relationship at all.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 6 of 16)*
 
 ## Give buyers instant access to a community the moment they check out — a group they can join while the product is still in transit — so they receive something of value before delivery.
 

@@ -1,6 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, Meta statics, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, staging the problem state as a nonverbal callout so the right buyer self-selects before reading, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), running a standing Amazon Experiments A/B cadence, how to pick comparison attributes and lifestyle avatars, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -38,7 +38,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (7/10):** The mechanism is sound and durable — promote proven winners to control and always keep one variant in test — and Amazon Experiments is a live, current tool available to brand-registered sellers, so this is not a stale platform-mechanics artifact. Note that this was parked under `traffic`, but its real blocker was never ad budget: it is Amazon session volume, at ~36 Amazon orders/month too thin for a variant to reach a readable delta. Opening the Meta gate does not fix that, because the giveaway campaign drives Shopify entries rather than Amazon sessions. Still worth 7 on merit and worth starting a standing cadence on the highest-traffic ASIN, accepting that early reads are directional.
 
-**How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Where session volume cannot support a readable test, main-image and secondary-slot changes are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs when sessions support it.
+**How it meshes with the rules above:** the one-lever-per-frame discipline is what makes this cadence readable — a variant that changes three levers at once produces a delta you cannot attribute. Until the gate opens, main-image and secondary-slot changes here are judgement-led: change one lever, ship, move on, and keep a written record of what changed so the same frames can be re-run as proper A/B pairs when sessions support it.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -66,22 +66,8 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (8/10):** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Purely editorial: solo-operator executable with no budget, no tools, no traffic. Note that headline-as-focal-point applies to secondary slots and ads; on the Amazon main image, text overlay is constrained by the compliance rule below.
 
-**The nonverbal alternative:** where the frame itself can show the buyer's problem, the scene does the self-qualifying faster than any headline — see the rule immediately below.
-
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
-
-## Use nonverbal callouts: stage the frame as a visible depiction of the buyer's problem or situation, so the right person self-selects from the image alone before reading a word.
-
-**Why it works:** A headline self-qualifies the viewer by asking a yes-question in text. A scene that *shows* the yes-question does the same work faster, because an image is comprehended before copy is read — decisive in a scrolling feed and in a thumbnail grid where the text may never be read at all. The frame is the callout: a person tossing and turning in bed calls out insomniacs; a room stacked with junk calls out people drowning in clutter. Nobody has to be told who the ad is for.
-
-**Evidence offered:** Assertion with five worked scene examples. No test data.
-
-**Fit here (7/10):** Durable attention principle, free, purely editorial, and it lands on surfaces the solo operator is already producing with AI imagery — Meta statics for the live $30/day campaign, Amazon secondary slots, PDP imagery. Concretely usable for this catalog: a white shirt with a pit stain, an armpit checked mid-morning, a natural deodorant abandoned in a drawer after it quit by noon. Genuinely additive — the lifestyle rule below specifies avatar, setting and emotional register, but never says the setting should be the *problem state* and that this is what does the attention work.
-
-**How it meshes with the rules above and below:** the problem state is the 'before' half of the transformation format below, usable on its own when you cannot honestly show an after. Pick the problem from the same narrowly-specified persona the one-persona rule demands — a generic discomfort scene calls out nobody. Reserve it for secondary slots, PDP and Meta statics: the Amazon main image is constrained by the compliance guardrail below, which requires an accurate depiction of the product being sold.
-
-*Source: Alex Hormozi — "$100M Leads" (book, part 8 of 16)*
 
 ## Always have these static formats in rotation: educational infographic, headliner, benefit callout, us-vs-them comparison, transformation, instructional/step-by-step, lifestyle/in-context, grid/multi-SKU, and text-only.
 
@@ -108,7 +94,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 ## Show the transformation rather than describing the after-state — before/after visuals are the highest-leverage format for problem-aware and solution-aware buyers looking for proof.
 
-**Why it works:** Problem- and solution-aware buyers have stopped needing persuasion and only need evidence; a visual before/after is proof in a form that requires no reading. This is the strongest instance of the demonstrable-result rule above: the before frame supplies the contrast that makes the result legible. That before frame is the nonverbal callout described earlier — the problem state doing the self-selection — with the after frame added as proof.
+**Why it works:** Problem- and solution-aware buyers have stopped needing persuasion and only need evidence; a visual before/after is proof in a form that requires no reading. This is the strongest instance of the demonstrable-result rule above: the before frame supplies the contrast that makes the result legible.
 
 **Evidence offered:** Assertion plus her observation that transformation is the biggest format gap in the ad accounts she audits; AI demo produces a pit-stain before/after she rates highly.
 
@@ -148,7 +134,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (7/10):** Durable principle class and free. RSC's buy motive is concrete enough to specify (getting through a shift, switching off aluminum, sensitive skin), and personas.json already exists to source the avatar rather than guessing. Held at 7 because AI-generated humans holding a body-care product need the same accuracy audit applied to the packaging, and at ~54 orders/month the lift is judged, not measured.
 
-**Two more things to specify:** whether the scene depicts the problem state or the resolved state — the nonverbal-callout rule above says the problem state is what earns attention — and the effort the depicted use appears to take, per the rule immediately below.
+**Fourth thing to specify:** the effort the depicted use appears to take — see the rule immediately below.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -160,7 +146,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (6/10):** Durable-principle class (perceived effort), age irrelevant, free, purely editorial. Genuinely additive: the lifestyle rule above governs who is in the frame, the setting and the emotional register but never how much effort the depicted use appears to take, and marketing-conversion-friction-audit governs actual effort in the value equation — this is the imagery-level version of the same term. Exact form here: one swipe rather than repeated scrubbing, a loose grip on the stick, no reapplication implied, a lifestyle frame where the product is used in passing rather than laboured over. That matters on the two surfaces carrying revenue — Amazon secondary slots on the ~$1,800/mo channel and the Shopify PDP — and it costs nothing. Held at 6 because it is a staging discipline rather than a revenue mechanism and, at ~54 orders/month, will never be measurable.
 
-**Audit pass:** run the existing stack once with this single question — does any frame, caption or step label imply work? Repeated application, scrubbing motion, a tensed hand, 'reapply as needed' all read as effort and should be restaged or reworded. Note the one exception: a deliberate problem-state frame per the nonverbal-callout rule above may show struggle, because there the struggle is the *problem*, not the product's use.
+**Audit pass:** run the existing stack once with this single question — does any frame, caption or step label imply work? Repeated application, scrubbing motion, a tensed hand, 'reapply as needed' all read as effort and should be restaged or reworded.
 
 *Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 2 of 3)*
 
@@ -182,7 +168,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (5/10):** Durable-principle class (trust psychology and positioning), so age is irrelevant. It resolves a real decision for a solo operator with no photographer and no designer: at a $50.46 AOV, phone-shot and plainly-lit imagery is the correct register, and money or time spent chasing studio polish is misallocated. Held to 5 because it is a calibration judgment rather than a revenue mechanism, the evidence is a single observed brand, and it partly overlaps the raw-phone-reference discipline already in marketing-ai-product-imagery. Additive only in giving a price-point rule for how much polish an asset needs.
 
-**How it meshes with the rules above:** this sets the ceiling on effort per frame, not the standard for clarity. Legibility at phone size, one job per frame, a scene that identifies its buyer, a visible result in the lead frame, effortless-looking use, and the compliance guardrail below are non-negotiable at every price point — 'raw is fine' licenses plain lighting and simple backgrounds, never small text, cluttered layouts, or a frame that fails the 1-second read.
+**How it meshes with the rules above:** this sets the ceiling on effort per frame, not the standard for clarity. Legibility at phone size, one job per frame, a visible result in the lead frame, effortless-looking use, and the compliance guardrail below are non-negotiable at every price point — 'raw is fine' licenses plain lighting and simple backgrounds, never small text, cluttered layouts, or a frame that fails the 1-second read.
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
@@ -192,7 +178,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Stated flatly as a rule ('you can't just stamp it on the image, you'll get banned'), plus a live catch where GPT Images 2.0 rendered a screen the product does not have and he corrected it back to the reference image. Assertion from practice, no policy citation.
 
-**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly, and it confines problem-state nonverbal callouts to secondary slots, PDP and Meta. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
+**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
