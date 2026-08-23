@@ -140,3 +140,52 @@ test('reconcileOverallQuality: no-op when Overall already passes', () => {
   const clean = `## 9. Overall Quality\n**VERDICT:** Excellent\n**NOTES:** great\n`;
   assert.equal(reconcileOverallQuality(clean), clean);
 });
+
+// ── llmBlockerReasons: the needs_rebuild gate must read the SAME text the report shows ──
+//
+// The editor reconciles Overall Quality into the saved report, then derived the
+// meta.needs_rebuild reasons from the raw pre-reconciliation LLM text. So the
+// report a human reads said "Pass" while the flag that gates auto-publish said
+// "needs work" — which is how the tattoo-soap merge sat held for six days on a
+// verdict its own report had already overturned.
+import { llmBlockerReasons } from '../../lib/editor-remediation.js';
+
+test('llmBlockerReasons: empty for a report reconciled to Pass (the held-merge bug)', () => {
+  const reconciled = reconcileOverallQuality(REPORT_ONLY_OVERALL_FAILS);
+  assert.deepEqual(llmBlockerReasons(reconciled), []);
+});
+
+test('llmBlockerReasons: reports "overall quality: needs work" only when nothing concrete blocks AND Overall still fails', () => {
+  // Un-reconciled input — Overall says Needs Work, no concrete section named.
+  assert.deepEqual(llmBlockerReasons(REPORT_ONLY_OVERALL_FAILS), ['overall quality: needs work']);
+});
+
+test('llmBlockerReasons: names the concrete blocking sections when they exist', () => {
+  const reasons = llmBlockerReasons(REPORT_REAL_SECTION_BLOCKS);
+  assert.equal(reasons.length, 1);
+  assert.match(reasons[0], /content blockers: factual concerns/i);
+});
+
+test('llmBlockerReasons: empty when Overall Quality passes outright', () => {
+  assert.deepEqual(llmBlockerReasons(`## 9. Overall Quality\n**VERDICT:** Excellent\n**NOTES:** great\n`), []);
+});
+
+test('llmBlockerReasons: a section blocker is reported even alongside a reconcilable summary', () => {
+  const both = `## 2. Ingredient Accuracy
+**VERDICT:** Needs Work
+**NOTES:** lists baking soda
+
+---
+## 9. Overall Quality
+**VERDICT:** Needs Work
+**NOTES:** fix ingredients
+`;
+  // reconcile leaves this alone (a concrete section blocks), and the gate agrees
+  assert.equal(reconcileOverallQuality(both), both);
+  assert.match(llmBlockerReasons(both)[0], /ingredient accuracy/i);
+});
+
+test('llmBlockerReasons on empty/missing report is empty (no report = no blocker)', () => {
+  assert.deepEqual(llmBlockerReasons(''), []);
+  assert.deepEqual(llmBlockerReasons(null), []);
+});

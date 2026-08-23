@@ -42,7 +42,7 @@ import { verifyProduct, extractBrandMentions } from '../product-verifier/index.j
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
-import { reconcileOverallQuality } from '../../lib/editor-remediation.js';
+import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -1358,29 +1358,15 @@ async function runEditor(htmlPath) {
     // Parse the LLM editorial review for content blockers that the
     // deterministic signals don't capture (factual concerns, competitor
     // names in FAQ, ingredient accuracy gaps, etc.).
-    const overallBlocker = /##\s*\d?\.?\s*OVERALL QUALITY[\s\S]*?VERDICT[:*\s]+([^\n]+)/i.exec(review);
-    const overallNeedsWork = overallBlocker && /needs work/i.test(overallBlocker[1]);
-    if (overallNeedsWork) {
-      const contentSections = [
-        { name: 'factual concerns', pattern: /##\s*\d?\.?\s*FACTUAL CONCERNS[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
-        { name: 'ingredient accuracy', pattern: /##\s*\d?\.?\s*INGREDIENT ACCURACY[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
-        { name: 'competitor names in FAQ', pattern: /##\s*\d?\.?\s*COMPETITOR NAMES IN FAQ[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
-        { name: 'topical relevance', pattern: /##\s*\d?\.?\s*TOPICAL RELEVANCE[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
-        { name: 'brand voice', pattern: /##\s*\d?\.?\s*BRAND VOICE[\s\S]*?VERDICT[:*\s]+([^\n]+)/i },
-      ];
-      const llmBlockers = [];
-      for (const s of contentSections) {
-        const m = s.pattern.exec(review);
-        if (m && /(blocker|needs work|fail)/i.test(m[1])) {
-          llmBlockers.push(s.name);
-        }
-      }
-      if (llmBlockers.length > 0) {
-        reasons.push(`content blockers: ${llmBlockers.join(', ')}`);
-      } else if (reasons.length === 0) {
-        // Overall verdict is Needs Work but no specific section flagged — still a signal
-        reasons.push('overall quality: needs work');
-      }
+    //
+    // Read `report`, NOT the raw `review`: `report` is the reconciled text that
+    // was just written to disk and that every other gate reads. Deriving these
+    // reasons from the pre-reconciliation review made meta.needs_rebuild
+    // contradict the saved report — see llmBlockerReasons() for the incident.
+    const llmReasons = llmBlockerReasons(report);
+    const summaryOnly = llmReasons.length === 1 && llmReasons[0] === 'overall quality: needs work';
+    if (llmReasons.length > 0 && !(summaryOnly && reasons.length > 0)) {
+      reasons.push(...llmReasons);
     }
 
     if (reasons.length > 0) {

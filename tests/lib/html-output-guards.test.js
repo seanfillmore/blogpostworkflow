@@ -26,6 +26,53 @@ test('passes when stopReason is absent and HTML is well-formed', () => {
   assert.doesNotThrow(() => assertHtmlComplete({ html: '<p>hello</p>' }));
 });
 
+// ── unclosed block tags: truncation that ends mid-PROSE, not mid-link ──────────
+//
+// The cannibalization-resolver's merge hit its 8000-token ceiling and returned
+// HTML ending "...fragrance-free (or scented" — no closing </p>, no CTA, no
+// Sources section. stop_reason was not inspected and the href check did not fire
+// (the cut was mid-sentence, not mid-attribute), so this shape passed every
+// guard the fleet had. Verified against all 203 live articles: zero unbalanced.
+import { unclosedBlockTags } from '../../lib/html-output-guards.js';
+
+test('unclosedBlockTags: flags a paragraph left open by truncation', () => {
+  const truncated = '<h2>Title</h2>\n<p>done</p>\n<p>cut off mid sen';
+  assert.deepEqual(unclosedBlockTags(truncated), [{ tag: 'p', open: 2, close: 1 }]);
+});
+
+test('unclosedBlockTags: empty for well-formed HTML', () => {
+  assert.deepEqual(unclosedBlockTags('<h2>T</h2><ul><li>a</li><li>b</li></ul><p>x</p>'), []);
+});
+
+test('unclosedBlockTags: does not confuse <pre> with <p>', () => {
+  assert.deepEqual(unclosedBlockTags('<pre>code</pre><p>x</p>'), []);
+});
+
+test('unclosedBlockTags: counts an attributed opening tag (not just the bare form)', () => {
+  // balanced with attributes → clean
+  assert.deepEqual(unclosedBlockTags('<p class="lead">x</p><li id="a">y</li>'), []);
+  // attributed tag left open → still counted
+  assert.deepEqual(unclosedBlockTags('<p class="lead">x</p><li id="a">y'), [{ tag: 'li', open: 1, close: 0 }]);
+});
+
+test('unclosedBlockTags: empty/missing input is clean', () => {
+  assert.deepEqual(unclosedBlockTags(''), []);
+  assert.deepEqual(unclosedBlockTags(null), []);
+});
+
+test('assertHtmlComplete throws on truncation that left a block tag open', () => {
+  assert.throws(
+    () => assertHtmlComplete({ html: '<p>done</p><p>cut off mid sen', stopReason: 'end_turn' }),
+    /unclosed|truncat/i
+  );
+});
+
+test('assertHtmlComplete still passes well-formed HTML with balanced blocks', () => {
+  assert.doesNotThrow(() =>
+    assertHtmlComplete({ html: '<h2>T</h2><ul><li>a</li></ul><p>x</p>', stopReason: 'end_turn' })
+  );
+});
+
 // ── fabricated-fact guards (content-remediator must not invent citations/dates) ──
 const ORIG = '<p>PFAS in cosmetics. <a href="https://www.realskincare.com/x">internal</a></p>';
 
