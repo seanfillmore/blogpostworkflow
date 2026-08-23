@@ -143,6 +143,27 @@ runStep('collection content publish-approved', `"${NODE}" agents/collection-cont
 // Step 4c: pages from GSC
 runStep('pages-from-gsc', `"${NODE}" agents/product-optimizer/index.js --pages-from-gsc${dryFlag}`);
 
+// Step 4d: drain the Optimization Queue without a human clicking Approve.
+//
+// Position is load-bearing: it runs AFTER every producer that writes into
+// data/performance-queue/ on this schedule — pages-from-gsc immediately above
+// (page-meta-rewrite), the calendar pipeline in steps 1-2, plus performance-
+// engine (own cron, 07:30 UTC) and seo-opportunity-analyzer (Mondays 14:10
+// UTC), both of which land hours before this 15:00 UTC run. Moving it above
+// step 4c would make today's meta rewrites wait a full day for no reason.
+//
+// It sits alongside steps 4a/4b, the two `--publish-approved` drains, because
+// it does the same job for the triggers those two do not cover. It applies
+// directly rather than only stamping `approved`: the publisher's own
+// publishApprovedQueueItems() runs inside agents/publisher/index.js `main()`,
+// which requires a post metadata argument, so approved items only ship on days
+// the calendar happens to publish something. Depending on that would have
+// replaced a manual chore with a silent stall.
+//
+// The CLI defaults to a dry run; the scheduled path applies (Autonomy
+// Principle). Capped at 5 live applies per run — see lib/queue-autoapply.js.
+runStep('queue-autoapply', `"${NODE}" agents/queue-autoapply/index.js${dryFlag ? '' : ' --apply'}`);
+
 // Step 5: run collection linker to inject cross-links from blog posts to collections.
 // WEEKLY (Mondays), not daily: it makes ~1 Claude call per (target × article) and
 // re-analyzed the same pairs every day — the #1 metered cost driver (~250 Haiku

@@ -595,17 +595,26 @@ function renderPerformanceQueueCard(d) {
   if (items.length === 0) return '';
   const cards = items.map(function(i) {
     var statusClass = 'status-' + i.status;
+    // data/performance-queue/ is a SHARED directory with more than one writer.
+    // agents/pdp-builder writes items with `type:` instead of `trigger:`, no
+    // `summary` at all, and status `needs_rework` — and `i.summary.what_changed`
+    // on one of those threw inside this .map(), which took down the entire
+    // Optimization Queue card rather than the one item. Read defensively: this
+    // renderer does not own the schema of everything in that directory.
+    var summary = i.summary || {};
+    var trigger = i.trigger || i.type || 'unknown';
+    var summaryRows = '';
+    if (summary.what_changed) summaryRows += '<div><strong>What changed:</strong> ' + esc(summary.what_changed) + '</div>';
+    if (summary.why) summaryRows += '<div><strong>Why:</strong> ' + esc(summary.why) + '</div>';
+    if (summary.projected_impact) summaryRows += '<div><strong>Projected impact:</strong> ' + esc(summary.projected_impact) + '</div>';
+    if (!summaryRows) summaryRows = '<div style="color:#6b7280">No summary recorded for this item.</div>';
     return '<div class="queue-item ' + statusClass + '">' +
       '<div class="queue-item-head">' +
-        '<span class="queue-trigger trigger-' + esc(i.trigger) + '">' + esc(i.trigger) + '</span>' +
-        '<span class="queue-title">' + esc(i.title) + '</span>' +
+        '<span class="queue-trigger trigger-' + esc(trigger) + '">' + esc(trigger) + '</span>' +
+        '<span class="queue-title">' + esc(i.title || i.slug || '(untitled)') + '</span>' +
         '<span class="queue-status">' + esc(i.status) + '</span>' +
       '</div>' +
-      '<div class="queue-summary">' +
-        '<div><strong>What changed:</strong> ' + esc(i.summary.what_changed) + '</div>' +
-        '<div><strong>Why:</strong> ' + esc(i.summary.why) + '</div>' +
-        '<div><strong>Projected impact:</strong> ' + esc(i.summary.projected_impact) + '</div>' +
-      '</div>' +
+      '<div class="queue-summary">' + summaryRows + '</div>' +
       '<div class="queue-actions">' +
         (i.status === 'pending' || i.status === 'approved'
           ? '<button id="approve-btn-' + esc(i.slug) + '" class="btn-approve" onclick="approveQueueItem(\'' + esc(i.slug) + '\')">' + (i.trigger === 'seo-opportunity' ? 'Approve &amp; Run' : 'Approve &amp; Publish') + '</button>' +
