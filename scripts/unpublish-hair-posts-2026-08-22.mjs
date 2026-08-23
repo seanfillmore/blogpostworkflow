@@ -2,8 +2,23 @@
 // RSC sells no hair products (owner-confirmed) — these were still cited to AI
 // assistants as canonical sources for a product line that doesn't exist.
 // Records before-state, sets published:false, and creates a redirect for
-// each URL to the closest genuinely relevant live page. See
-// unpublish-report.md for full reasoning.
+// each URL to the closest genuinely relevant live page.
+//
+// Before-state, recorded 2026-08-22 immediately before this script mutated
+// anything (also the durable record needed to reverse it — flip `published`
+// back to true on each article id and delete the corresponding redirect):
+//
+//   handle                                                       article id     blog id      published_at (before)
+//   best-hair-mask-for-dry-hair-diy-natural-options              563424624810   48998449187  2026-05-14T09:00:06-06:00
+//   is-coconut-oil-good-for-your-hair-benefits-how-to-use-it     563424559274   48998449187  2026-05-06T09:10:30-06:00
+//   best-diy-natural-hair-masks-for-dry-hair-that-work-1         563512311978   48998449187  2026-05-06T09:00:06-06:00
+//
+// The third article's id came from scripts/find-hair-post-article-2026-08-22.mjs
+// — it has no data/posts/ directory in this git checkout (its local
+// intermediates exist only on the production server, under
+// data/posts/best-hair-mask-for-dry-hair-diy-natural-options/, never
+// committed). Full reasoning, redirect-destination justification and live
+// verification transcripts: see PR #601.
 import { getArticle, updateArticle, getRedirects, createRedirect } from '../lib/shopify.js';
 
 const BLOG_ID = 48998449187; // "news"

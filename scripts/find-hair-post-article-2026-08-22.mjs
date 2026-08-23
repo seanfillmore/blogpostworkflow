@@ -1,6 +1,7 @@
 // One-shot: locate the Shopify article id for a live hair-post handle that
 // has no local data/posts/ directory, ahead of unpublishing three hair posts
-// (RSC sells no hair products). See unpublish-report.md for context.
+// (RSC sells no hair products). See PR #601 for context; the article id this
+// found is recorded in scripts/unpublish-hair-posts-2026-08-22.mjs.
 import { getBlogs, getArticles } from '../lib/shopify.js';
 
 const targetHandles = new Set([
