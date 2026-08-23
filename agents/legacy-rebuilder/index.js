@@ -28,6 +28,7 @@ import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import {
@@ -185,10 +186,20 @@ async function rebuildPost(slug) {
   //   (unset) → treat as flop to preserve current behavior for untriaged
   //             posts. run `node agents/legacy-triage/index.js` first to
   //             classify properly.
+  //
+  // The BUCKET is not the lock. `legacy_locked` is stamped when triage buckets a
+  // post as a winner, but a later re-triage can move the bucket without clearing
+  // the lock — production carries `natural-soap-bar` at `legacy_locked: true` /
+  // `legacy_bucket: 'flop'`, which this routing alone would have sent through a
+  // FULL pipeline rebuild. The lock decides; the bucket only picks the treatment
+  // among posts the lock allows. See lib/post-lock.js.
   const bucket = meta.legacy_bucket || null;
-  if (bucket === 'winner') {
+  const bodyLock = mayRewriteBody(slug);
+  if (bucket === 'winner' || !bodyLock.allowed) {
     console.log(`\nSkipping: ${slug}`);
-    console.log(`  Bucket: winner — preserving post that is already ranking`);
+    console.log(bucket === 'winner'
+      ? `  Bucket: winner — preserving post that is already ranking`
+      : `  Winner lock: ${bodyLock.reason} (bucket: ${bucket || 'unset'})`);
     // Clear any stale needs_rebuild tag so the post doesn't keep surfacing
     const { meta: cleanedWinner, cleared: winnerCleared } = clearNeedsRebuild(meta, {
       ackField: 'legacy_winner_ack_at', at: new Date().toISOString(),

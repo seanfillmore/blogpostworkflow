@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { upsertMetafield } from '../../lib/shopify.js';
 import { findActiveWindow } from '../../lib/change-log.js';
+import { getMetaPath } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -133,8 +134,11 @@ async function main() {
     const conclude = new Date(t.concludeDate + 'T12:00:00Z');
     const daysRemaining = Math.max(0, Math.ceil((conclude - new Date()) / 86400000));
 
-    // Get page path from slug
-    const metaPath = join(ROOT, 'data', 'posts', `${t.slug}.json`);
+    // Get page path from slug. This used to build a FLAT data/posts/<slug>.json,
+    // a layout that no longer exists, so `meta` was always null and the
+    // shopify_url fallback below could never fire — a test with no `url` silently
+    // measured `/<slug>` instead of `/blogs/news/<slug>` and matched no GSC row.
+    const metaPath = getMetaPath(t.slug);
     const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : null;
     let pagePath;
     if (t.url) {

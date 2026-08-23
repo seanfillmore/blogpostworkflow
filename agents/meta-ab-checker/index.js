@@ -26,7 +26,7 @@ import { fileURLToPath } from 'url';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
-import { decideOutcome } from '../../lib/meta-ab-decision.js';
+import { decideOutcome, pickBaselineCtr } from '../../lib/meta-ab-decision.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -130,10 +130,15 @@ async function main() {
       const currentImpressions = perf.impressions ?? 0;
       const currentPosition = perf.position ?? entry.baselinePosition;
 
-      const decision = decideOutcome({ baselineCtr: entry.baselineCtr, currentCtr });
+      // `perf` above is PAGE-level over 28 days, so the baseline has to be too.
+      // pickBaselineCtr prefers the page-level baseline meta-optimizer now
+      // records and falls back to the historical keyword-level one, which is a
+      // different denominator and can read as improved/regressed on its own.
+      const { ctr: baselineCtr, basis: baselineBasis } = pickBaselineCtr(entry);
+      const decision = decideOutcome({ baselineCtr, currentCtr });
       const ctrDelta = decision.delta;
-      const ctrDeltaPct = entry.baselineCtr > 0
-        ? ((ctrDelta / entry.baselineCtr) * 100).toFixed(1)
+      const ctrDeltaPct = baselineCtr > 0
+        ? ((ctrDelta / baselineCtr) * 100).toFixed(1)
         : 'N/A';
       const improved = decision.outcome === 'improved';
       const flag = improved ? '✅' : (decision.outcome === 'regressed' ? '⚠️ Regressed' : '→ Flat');
@@ -170,11 +175,16 @@ async function main() {
       entry.currentCtr = currentCtr;
       entry.currentDelta = ctrDelta;
       entry.outcome = decision.outcome;
+      entry.baselineBasis = baselineBasis;
       entry.reverted = reverted;
       if (revertError) entry.revertError = revertError;
 
       results.push({
         ...entry,
+        // After the spread, so the report prints the baseline the decision was
+        // actually made against rather than the raw keyword-level field.
+        baselineCtr,
+        baselineBasis,
         currentCtr,
         currentImpressions,
         currentPosition,
@@ -232,7 +242,7 @@ async function main() {
     lines.push('');
     lines.push(`| Metric | Before | After | Change |`);
     lines.push(`|---|---|---|---|`);
-    lines.push(`| CTR | ${(r.baselineCtr * 100).toFixed(2)}% | ${(r.currentCtr * 100).toFixed(2)}% | **${sign}${(r.ctrDelta * 100).toFixed(2)}%** (${sign}${r.ctrDeltaPct}%) |`);
+    lines.push(`| CTR (${r.baselineBasis === 'page-28d' ? 'page, 28d' : 'keyword, 90d baseline vs page, 28d — mixed basis'}) | ${(r.baselineCtr * 100).toFixed(2)}% | ${(r.currentCtr * 100).toFixed(2)}% | **${sign}${(r.ctrDelta * 100).toFixed(2)}%** (${sign}${r.ctrDeltaPct}%) |`);
     lines.push(`| Impressions | ${r.baselineImpressions.toLocaleString()} | ${r.currentImpressions.toLocaleString()} | — |`);
     lines.push(`| Position | #${Math.round(r.baselinePosition)} | #${Math.round(r.currentPosition)} | — |`);
     lines.push('');

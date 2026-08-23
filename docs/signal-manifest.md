@@ -109,8 +109,10 @@ Each signal is a file path. `latest.json` variants are the canonical machine-rea
 | Signal | Writer | Consumers | Status |
 |---|---|---|---|
 | `data/reports/legacy-triage/latest.json` | `legacy-triage` | `performance-engine` (picks legacy flops), `meta-optimizer` (picks rising), dashboard Optimize tab | healthy |
-| `data/posts/<slug>.json#legacy_bucket` | `legacy-triage` | `performance-engine`, `content-refresher`, `refresh-runner`, `meta-optimizer` | healthy |
-| `data/posts/<slug>.json#legacy_locked` | `legacy-triage` (auto-lock winners) | `content-refresher`, `refresh-runner`, `meta-optimizer` (skip if locked) | healthy |
+| `data/posts/<slug>/meta.json#legacy_bucket` | `legacy-triage` | `performance-engine`, `legacy-rebuilder` (treatment tier), `post-analyst`, `content-strategist` | healthy |
+| `data/posts/<slug>/meta.json#legacy_locked` | `legacy-triage` (auto-lock winners) | **`lib/post-lock.js` only** — `content-refresher`, `refresh-runner`, `legacy-rebuilder` block BODY rewrites via `mayRewriteBody()`; `meta-optimizer` calls `mayTestMetadata()`, which never blocks (title/meta tests are permitted on winners and auto-reverted by `meta-ab-checker`) | healthy |
+
+Both paths above were documented as a **flat** `data/posts/<slug>.json` until 2026-08-23. That is not a typo with no consequences: `meta-optimizer` was written against the documented path, its `readFileSync` therefore threw on every post, and its bare `catch` swallowed the throw — the winner guard never fired once. The layout is `data/posts/<slug>/meta.json`; resolve a Shopify handle or URL to a slug with `resolvePostSlug()` from `lib/posts.js`, never by using the handle as a slug.
 
 ### Deprecated / audit-only signals
 
