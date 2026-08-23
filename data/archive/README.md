@@ -1,7 +1,10 @@
-# Image archive
+# Archive
 
-Product imagery that is **not recoverable from anywhere else**. This directory is
-committed on purpose, against the usual instinct to keep binaries out of git.
+Content that is **not recoverable from anywhere else** once a destructive
+Shopify API call runs. Originally product imagery only; as of 2026-08-22 it
+also holds a full-content snapshot of deleted blog articles, for the same
+reason. This directory is committed on purpose, against the usual instinct to
+keep binaries/large content out of git.
 
 ## Why this exists
 
@@ -11,9 +14,12 @@ removed from the foaming soap PDP and the originals were lost: absent from the
 Files library, 404 on the CDN, no Wayback capture. Only 600px copies survived,
 and only by luck.
 
-The standing rule that came out of that: **download full-resolution before any
-destructive image call, to a durable path outside the session scratchpad.** This
-is that path.
+The standing rule that came out of that: **download full-resolution/full-content
+before any destructive API call, to a durable path outside the session
+scratchpad.** This is that path. `DELETE .../articles/{id}.json` has the same
+one-way property as the image endpoint — no undelete — which is why
+`orphan-drafts-2026-08-22/` follows the same rule for article content instead
+of imagery.
 
 ## Contents
 
@@ -23,6 +29,7 @@ is that path.
 | `legacy-amazon-heroes/` | The five original Amazon hero images | Four are still live on the CDN and embedded in ~20 blog posts; the lip balm one was removed from its product. |
 | `replaced-lotion-frames/` | The six older shared PDP frames replaced on `coconut-lotion` | No — deleted from the product, so the CDN files are gone. |
 | `generated-pdp-frames/` | The 24 shared PDP frames generated for 6 SKUs | Live on the CDN, but **not reproducible** — image generation is non-deterministic, so re-running the same prompt returns a different picture. |
+| `orphan-drafts-2026-08-22/` | Full Shopify article objects (incl. `body_html`) for 15 abandoned duplicate blog drafts, archived before deletion | No — deleted via the Shopify Admin API, which has no undelete. See that folder's README for the four-criteria evidence and how to restore one. |
 
 ## Provenance of `generated-pdp-frames/`
 
