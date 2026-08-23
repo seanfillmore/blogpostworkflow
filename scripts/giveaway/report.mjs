@@ -19,12 +19,18 @@ import { listProfilesWithConsent, listEntrantProfiles } from '../../lib/klaviyo-
 import { summarizeEntrants, confirmationFunnel } from '../../lib/giveaway/summarize.js';
 import { computeEntryPurchaseCohort, entryValue, PRIOR_LOOKBACK_DAYS } from '../../lib/giveaway/cohort.js';
 import { fetchCampaignSpend, evaluateSpendGate, resolveAccessToken } from '../../lib/giveaway/meta-spend.js';
+import {
+  referralAskReach, referralParticipationGate, evaluateKillThreshold, paidReadoutLines,
+} from '../../lib/giveaway/paid-readout.js';
 import { getAllOrders } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
-const { listId, metaCampaignId, provisionalCostPerEntryTargetUsd } = config;
+const {
+  listId, metaCampaignId, provisionalCostPerEntryTargetUsd,
+  killThresholdEntryPurchaseRatePct,
+} = config;
 const OUT_DIR = join(ROOT, 'data', 'reports', 'giveaway');
 
 const profiles = await listProfilesWithConsent(listId);
@@ -39,12 +45,18 @@ const summary = summarizeEntrants(profiles);
 // Never fatal: the daily report must survive Klaviyo being slow or this filter changing
 // shape. A null funnel renders as "unavailable", exactly like the spend block does.
 let funnel = null;
+// How many entrants have actually RECEIVED the referral ask. Null when the funnel read
+// failed, which is not the same as zero — see the referral gate below, which treats a
+// null reach as "cannot judge" rather than as "nobody was asked".
+let askReach = null;
 try {
   const submitted = await listEntrantProfiles(config.entryOpensAt);
   const confirmedEmails = new Set(
     profiles.map((p) => String(p.email || '').toLowerCase().trim()).filter(Boolean),
   );
-  funnel = confirmationFunnel({ submitted, confirmedEmails, now: Date.now() });
+  const now = Date.now();
+  funnel = confirmationFunnel({ submitted, confirmedEmails, now });
+  askReach = referralAskReach({ submitted, confirmedEmails, now });
 } catch (e) {
   console.error('[giveaway] submission funnel unavailable:', e.message);
 }
@@ -91,6 +103,14 @@ const spendGate = spend && !spend.error && cohort
   })
   : null;
 
+// The number that decides whether to keep buying leads at all, pre-committed in
+// config/giveaway.json before the data landed. Returns 'not-readable' — never a 0% kill —
+// until a 30-day window has both matured and accumulated a sample worth acting on.
+const kill = evaluateKillThreshold({
+  cohort,
+  thresholdPct: killThresholdEntryPurchaseRatePct ?? null,
+});
+
 const report = {
   funnel,
   generatedAt: new Date().toISOString(),
@@ -100,6 +120,8 @@ const report = {
   ordersTruncated,
   spend: spend ?? null,
   spendGate: spendGate ?? null,
+  referralAskReach: askReach,
+  killThreshold: kill,
 };
 
 mkdirSync(OUT_DIR, { recursive: true });
@@ -146,9 +168,16 @@ if (ordersTruncated) {
 if (answered >= 50 && reactiveShare < 0.5) {
   gates.push('GATE: answer mix is drifting off the fragrance-free angle — shift budget to creative #3.');
 }
-if (summary.total >= 50 && summary.ladder.entrantsWithReferrals === 0) {
-  gates.push('GATE: zero referral participation — rework the nurture CTA, do not raise budget.');
-}
+// Anchored to how many entrants have RECEIVED the referral ask, not to how many exist.
+// The old form (`summary.total >= 50`) fired on 2026-08-22 across 88 entrants and told the
+// operator to hold budget three days into a campaign whose referral email had barely sent.
+// See lib/giveaway/paid-readout.js.
+const referralGate = referralParticipationGate({
+  reach: askReach,
+  entrantsWithReferrals: summary.ladder.entrantsWithReferrals,
+});
+if (referralGate) gates.push(referralGate);
+if (kill.verdict === 'kill') gates.push(kill.line);
 
 console.log(`Entrants: ${summary.total}  Entries: ${summary.entriesTotal}  Still subscribed: ${subscribed}`);
 if (funnel) {
@@ -186,6 +215,7 @@ if (cohort) {
   }
 }
 if (spendGate) console.log(spendGate.line);
+if (kill.line) console.log(kill.line);
 if (ordersTruncated) console.log('WARNING: the Shopify order lookback was truncated — new/existing split may be wrong.');
 for (const gate of gates) console.log(gate);
 
@@ -204,8 +234,14 @@ await notify({
     `Entries: ${summary.entriesTotal}`,
     `Reactive/fragrance share: ${(reactiveShare * 100).toFixed(0)}% of ${answered} survey respondents`,
     `Ladder: confirmed ${summary.ladder.confirmed}, survey ${summary.ladder.survey}, `
-      + `referrals ${summary.ladder.referrals} across ${summary.ladder.entrantsWithReferrals} entrants, `
+      + `referrals ${summary.ladder.referrals} across ${summary.ladder.entrantsWithReferrals} entrants`
+      + (askReach === null ? '' : ` (${askReach} have received the ask)`) + `, `
       + `instagram ${summary.ladder.instagram}, upload ${summary.ladder.upload}`,
+    // Spend, leads and cost per lead were previously printed to stdout only, which on a
+    // cron-run script means a log file nobody reads. The digest is the only artifact
+    // anyone actually sees, so the paid numbers belong in it.
+    ...paidReadoutLines({ spend, funnel, kill }),
+    ...(spendGate ? ['', spendGate.line] : []),
     ...(cohort ? cohortLines(cohort) : ['', 'Entry -> purchase: unavailable (Shopify read failed).']),
     '',
     ...(gates.length ? gates : ['No gates fired.']),
