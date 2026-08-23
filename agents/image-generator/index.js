@@ -45,6 +45,7 @@ import { getProducts } from '../../lib/shopify.js';
 import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { buildImageAlt } from '../../lib/image-alt.js';
 import { SHOT_TYPES, shotTypePool } from '../../lib/image-variety.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = join(ROOT, 'data', 'images');
@@ -1227,7 +1228,11 @@ async function main() {
   console.log('\nImage generation complete.');
 }
 
-main().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

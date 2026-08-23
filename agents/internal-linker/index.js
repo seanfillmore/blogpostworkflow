@@ -40,6 +40,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { identifyPillar } from '../../lib/cluster-architecture.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'internal-linker');
@@ -823,9 +824,13 @@ async function main() {
   console.log(`  Total links ${apply ? 'applied' : 'identified'}: ${grandTotal}`);
 }
 
-main().then(() => {
-  console.log('\nInternal linking complete.');
-}).catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main().then(() => {
+    console.log('\nInternal linking complete.');
+  }).catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

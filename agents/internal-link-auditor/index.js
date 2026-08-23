@@ -16,6 +16,7 @@ import * as cheerio from 'cheerio';
 import { readFileSync, writeFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -314,7 +315,11 @@ async function run() {
   console.log(`  data/link-audit-report.md`);
 }
 
-run().catch((err) => {
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  run().catch((err) => {
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}

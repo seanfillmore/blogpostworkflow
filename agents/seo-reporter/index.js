@@ -41,6 +41,7 @@ const ROOT = join(__dirname, '..', '..');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'seo-reporter');
 
 import { listAllSlugs, getEditorReportPath } from '../../lib/posts.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -313,10 +314,14 @@ async function main() {
   console.log(`\n  Report saved: ${reportPath}`);
 }
 
-main()
-  .then(() => notifyLatestReport('SEO Reporter completed', join(ROOT, 'data', 'reports', 'seo-reporter')))
-  .catch((err) => {
-    notify({ subject: 'SEO Reporter failed', body: err.message || String(err), status: 'error' });
-    console.error('Error:', err.message);
-    process.exit(1);
-  });
+// Guarded: importing this module must not run the agent (live writes, paid
+// API calls, process.exit). See lib/is-direct-run.js.
+if (isDirectRun(import.meta.url)) {
+  main()
+    .then(() => notifyLatestReport('SEO Reporter completed', join(ROOT, 'data', 'reports', 'seo-reporter')))
+    .catch((err) => {
+      notify({ subject: 'SEO Reporter failed', body: err.message || String(err), status: 'error' });
+      console.error('Error:', err.message);
+      process.exit(1);
+    });
+}
