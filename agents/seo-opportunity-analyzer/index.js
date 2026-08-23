@@ -32,6 +32,7 @@ import { getSearchVolume } from '../../lib/dataforseo.js';
 import { analyzeOpportunities, recommendedAgentFor, partitionLiveOpportunities } from '../../lib/seo-opportunities.js';
 import { writeItem, activeSlugs } from '../performance-engine/lib/queue.js';
 import { notify } from '../../lib/notify.js';
+import { buildOpportunityQueueItem, slugFromPage } from './queue-item.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -68,11 +69,6 @@ function siteHost() {
     const c = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
     return (c.url || 'https://www.realskincare.com').replace(/\/$/, '');
   } catch { return 'https://www.realskincare.com'; }
-}
-
-function slugFromPage(page) {
-  const m = String(page).match(/\/([^/?#]+)\/?$/);
-  return m ? m[1] : page.replace(/[^a-z0-9]+/gi, '-');
 }
 
 // Route an opportunity to the executor agent best suited to act on it, so a human
@@ -184,35 +180,8 @@ async function main() {
 
   const staged = [];
   for (const o of toStage) {
-    const slug = `seo-opp-${slugFromPage(o.page)}`;
     if (!DRY) {
-      writeItem({
-        slug,
-        title: `SEO opportunity: ${o.topKeyword}`,
-        trigger: 'seo-opportunity',
-        signal_source: {
-          type: 'gsc-opportunity-analyzer',
-          page: o.page,
-          page_type: o.page_type,
-          cluster_volume: o.clusterVolume,
-          impressions: o.impressions,
-          position: o.position,
-          keywords: o.keywords.slice(0, 10),
-        },
-        summary: {
-          what_changed: `${o.keywordCount} query/queries (~${o.clusterVolume.toLocaleString()}/mo) hit ${o.page.replace(host, '')} at avg position ${o.position}.`,
-          why: `Recommended: ${o.action.replace('_', ' ')} — est. +${o.est_monthly_clicks} clicks/mo${o.commercial ? ` (commercial ${o.page_type})` : ''}.`,
-          projected_impact: o.action === 'rank_push'
-            ? `Run ${recommendedAgent(o)}: internal links + on-page to push from page 2 onto page 1.`
-            : `Run ${recommendedAgent(o)}: deeper content rebuild to become competitive.`,
-        },
-        resource_type: o.page_type === 'collection' ? 'collection' : 'seo-opportunity',
-        recommended_action: o.action,
-        recommended_agent: recommendedAgent(o),
-        target_keyword: o.topKeyword,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      });
+      writeItem(buildOpportunityQueueItem(o, { host }));
     }
     staged.push(o);
   }
@@ -248,8 +217,10 @@ async function main() {
   console.log(`Done. ${opps.length} opportunities, ${staged.length} staged${DRY ? ' (dry-run, none written)' : ''}.`);
 }
 
-main().catch((err) => {
-  notify({ subject: 'SEO Opportunity Analyzer failed', body: err.message || String(err), status: 'error' }).catch(() => {});
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+if (process.argv[1] && process.argv[1].endsWith('seo-opportunity-analyzer/index.js')) {
+  main().catch((err) => {
+    notify({ subject: 'SEO Opportunity Analyzer failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
