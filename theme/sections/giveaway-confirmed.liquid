@@ -53,7 +53,13 @@
         you entered with into the referral field on the entry form, so send them
         the entry page and tell them which address to use.
       </p>
-      <a class="gv-next-cta" href="/pages/giveaway">Get the entry page to share</a>
+      {%- comment -%}
+        The entry page's handle is `free-soap-giveaway`, NOT `giveaway` —
+        /pages/giveaway 404s. Every nurture email (02-referral, 05-reminder,
+        06-final-call) already uses the full handle; this link shipped wrong for
+        one upload and is the referral CTA, the most valuable action on the page.
+      {%- endcomment -%}
+      <a class="gv-next-cta" href="/pages/free-soap-giveaway">Get the entry page to share</a>
       <p class="gv-ladder-fine">
         Both halves have to happen: your friend must enter <em>and</em> confirm
         their own email before the +5 is credited.
