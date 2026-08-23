@@ -720,7 +720,9 @@ async function main() {
         + `Questions written: ${result.questions.length}.\n`
         + renderRunMetrics(result.metrics)
         + '\n\n'
-        + 'Review data/context/demand-questions.md, then git diff data/context/ to see what changed.',
+        + 'Open data/context/demand-questions.md to see what changed — it is tracked but '
+        + 'never committed by cron, so `git diff` shows nothing; `git status --short data/context/` '
+        + 'will list it.',
       status: 'success',
       category: 'demand-miner',
     });
