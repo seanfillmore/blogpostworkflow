@@ -50,6 +50,12 @@ test('legacy_locked is read only through lib/post-lock.js', () => {
   const ALLOWED = new Set([
     'lib/post-lock.js',            // the single reader
     'agents/legacy-triage/index.js', // the writer that stamps the flag
+    // Names the flag as a KEY in its field-ownership table, never reads its
+    // value or decides anything from it — the merge treats every field as an
+    // opaque value and only asks which side owns it. Spelling the key out is
+    // the point: the table has to stay greppable, and building the name
+    // dynamically to dodge this guard would be obfuscation, not compliance.
+    'lib/post-meta-reconcile.js',
   ]);
   // Comments are how the reasoning stays next to the code — only real code
   // lines count as a hand-rolled read.

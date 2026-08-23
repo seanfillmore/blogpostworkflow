@@ -10,7 +10,16 @@
  *   2. Cross-reference GSC to find which URLs have impressions (have traffic potential)
  *   3. Flag pages with thin body copy (<100 words), missing meta titles, or low CTR
  *   4. Claude rewrites the description and SEO fields for flagged pages
- *   5. Dry-run shows before/after; --apply pushes to Shopify
+ *   5. HEALTH-CLAIM GATE (lib/seo-copy-health-gate.js + lib/seo-copy-gate-loop.js)
+ *      — every generated string this agent writes live is checked. A blocking
+ *      hit is REGENERATED ONCE with the offending words named, and skipped only
+ *      if the retry trips too; gated candidates do not consume --limit but carry
+ *      their own equal budget. `--publish-approved` applies copy an earlier run
+ *      generated and cannot regenerate, so a hit there REFUSES the write and
+ *      leaves the item approved-but-stamped: never dismissed, never deleted.
+ *      This agent writes live PRODUCT TITLES, which is the most direct claim a
+ *      product can make about itself, and had no claims gate until 2026-08-24.
+ *   6. Dry-run shows before/after; --apply pushes to Shopify
  *
  * Output: data/reports/product-optimizer-report.md
  *
@@ -61,6 +70,11 @@ import {
 } from '../../lib/keyword-index/consumer.js';
 import { clusterForCollection } from '../collection-content-optimizer/lib/cluster-mapper.js';
 import { sortProductCandidates } from './lib/sort.js';
+import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
+import {
+  SEO_COPY_COMPLIANCE_RULE, checkSeoCopyFields,
+  renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
+} from '../../lib/seo-copy-health-gate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -164,6 +178,73 @@ function stripHtml(html) {
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/**
+ * Record one health-claim gate skip and say whether the run should stop.
+ *
+ * A gated candidate does NOT consume `--limit`: that budget counts pages
+ * OPTIMISED, and a gated page was not optimised — spending the cap on nothing
+ * is how a run of bad luck silently produces an empty day. But "doesn't count"
+ * has to be bounded or it becomes an unbounded walk of the candidate list at
+ * two model calls each, so gated candidates carry their own budget of the same
+ * size. Worst-case spend is 2× the intended run, never a function of pool size.
+ *
+ * @returns {boolean} true when the skip budget is exhausted and the caller
+ *                    should break out of its loop
+ */
+function recordGateSkip(skipped, { label, pageUrl, gated }, budget) {
+  const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+  console.log('gated');
+  console.log(`    ⊘ health-claim gate: ${words} — skipped after ${gated.attempts} attempt(s), page unchanged`);
+  skipped.push({ label, pageUrl, violations: gated.violations, attempts: gated.attempts });
+  if (skipped.length >= budget) {
+    console.log(`  Health-claim gate: ${skipped.length} skips — at the skip budget, stopping.`);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * The health-claim gate at a point where REGENERATION IS IMPOSSIBLE.
+ *
+ * `--publish-approved` runs daily from scheduler.js step 4a and pushes copy an
+ * earlier run generated — possibly before this gate existed. There is no prompt
+ * here, so a blocking hit refuses the write and stops.
+ *
+ * The item keeps its `approved` status and its proposed copy: it is refused,
+ * not dismissed and not deleted. A gate is allowed to decide copy cannot ship;
+ * it is not allowed to decide the work is worthless — that answer permanently
+ * destroyed three paid-for content briefs on 2026-08-19. `health_gate` is
+ * stamped on the item so the refusal is legible from the queue file itself, and
+ * cleared again the moment compliant copy replaces it. Re-checking daily costs
+ * nothing: this is regexes, not a model call, so no attempt counter is needed
+ * to bound it.
+ *
+ * @returns {boolean} true when the caller must skip this item
+ */
+function refuseOnClaims(item, resource, refused, extraFields = {}) {
+  const check = checkSeoCopyFields({
+    'meta title_tag': item.proposed_meta?.seo_title,
+    'meta description_tag': item.proposed_meta?.seo_description,
+    'page summary': item.proposed_meta?.summary,
+    'product title': item.proposed_title?.new_title,
+    ...extraFields,
+  });
+  if (check.ok) {
+    if (item.health_gate) { delete item.health_gate; writeItem(item); }
+    return false;
+  }
+  const words = [...new Set(check.blocking.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+  console.error(`REFUSED (health-claim gate): ${words}`);
+  item.health_gate = {
+    refused_at: new Date().toISOString(),
+    refused_by: 'product-optimizer --publish-approved',
+    violations: check.blocking,
+  };
+  writeItem(item); // still `approved` — refused, not dismissed
+  refused.push({ label: item.title, resource, violations: check.blocking });
+  return true;
 }
 
 const BRAND_TERMS = (config.brand_terms || []).map((t) => t.toLowerCase());
@@ -274,7 +355,7 @@ async function pickBestKeyword(url, fallbackTitle) {
 
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
-async function rewriteProduct(product, keyword, gscData) {
+async function rewriteProduct(product, keyword, gscData, constraint = '') {
   const currentDesc = stripHtml(product.body_html).slice(0, 2000);
   const currentWords = wordCount(product.body_html);
   const gscNote = gscData?.impressions > 0
@@ -325,6 +406,8 @@ Also write:
 - SEO title (50–60 chars, includes keyword)
 - Meta description (140–155 chars, benefit-driven, includes keyword)
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "body_html": "<p>...</p>",
@@ -340,7 +423,7 @@ No explanation, no markdown fences.`,
   return JSON.parse(raw);
 }
 
-async function rewriteCollection(collection, keyword, gscData) {
+async function rewriteCollection(collection, keyword, gscData, constraint = '') {
   const currentDesc = stripHtml(collection.body_html).slice(0, 2000);
   const currentWords = wordCount(collection.body_html);
   const gscNote = gscData?.impressions > 0
@@ -379,6 +462,8 @@ Also write:
 - SEO title (50–60 chars, includes keyword, format: "[Category] | ${config.name}")
 - Meta description (140–155 chars, benefit-driven, includes keyword)
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "body_html": "<p>...</p>",
@@ -413,7 +498,7 @@ function formatGroundingBlock(ground) {
   return lines.length ? `\n${lines.join('\n')}\n` : '';
 }
 
-async function rewriteProductMeta(product, topQueries, gscData, ground) {
+async function rewriteProductMeta(product, topQueries, gscData, ground, constraint = '') {
   const queriesFormatted = topQueries.slice(0, 5)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}, ${(q.ctr * 100).toFixed(1)}%`)
     .join('\n');
@@ -448,6 +533,8 @@ Also provide:
 - why: 1-sentence explanation of why this change should improve CTR
 - projected_impact: 1-sentence estimate of expected improvement
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "seo_title": "...",
@@ -467,7 +554,7 @@ No explanation, no markdown fences.`,
 
 // ── page meta rewriter (GSC mode) ───────────────────────────────────────────
 
-async function rewritePageMeta(page, topQueries, gscData) {
+async function rewritePageMeta(page, topQueries, gscData, constraint = '') {
   const queriesFormatted = topQueries.slice(0, 5)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}, ${(q.ctr * 100).toFixed(1)}%`)
     .join('\n');
@@ -502,6 +589,8 @@ Also provide:
 - why: 1-sentence explanation of why this change should improve CTR
 - projected_impact: 1-sentence estimate of expected improvement
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "seo_title": "...",
@@ -522,7 +611,7 @@ No explanation, no markdown fences.`,
 
 // ── product title rewriter (GSC-driven keyword enrichment) ──────────────────
 
-async function rewriteProductTitle(product, topQueries, gscData, ground) {
+async function rewriteProductTitle(product, topQueries, gscData, ground, constraint = '') {
   const queriesFormatted = topQueries.slice(0, 8)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}`)
     .join('\n');
@@ -561,6 +650,8 @@ DO NOT:
 - Add pricing or promotional language
 - Make it longer than 70 characters
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "new_title": "...",
@@ -658,6 +749,7 @@ async function optimizeTitlesMode() {
 
   console.log('');
 
+  const gateSkipped = [];
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${c.title}"... `);
@@ -665,7 +757,21 @@ async function optimizeTitlesMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
-      const proposed = await rewriteProductTitle(c, topQueries, c.gsc, ground);
+
+      // ── health-claim gate ────────────────────────────────────────────────
+      // The single highest-exposure string this fleet writes: a PRODUCT TITLE
+      // is the most direct claim a product can make about itself, it is what
+      // Shopify puts in the <title> tag, and it is what a shopper reads first.
+      // Nothing checked it before 2026-08-24.
+      const gated = await gateGeneratedCopy(
+        (constraint) => rewriteProductTitle(c, topQueries, c.gsc, ground, constraint),
+        { extract: (p) => ({ 'product title': p?.new_title }), required: ['product title'] },
+      );
+      if (!gated.ok) {
+        if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
+        continue;
+      }
+      const proposed = gated.proposed;
 
       const item = {
         slug: c.handle,
@@ -702,7 +808,9 @@ async function optimizeTitlesMode() {
     }
   }
 
-  console.log(`\n  Done — ${candidates.length} title rewrite(s) written to data/performance-queue/`);
+  console.log(`\n  Done — ${candidates.length - gateSkipped.length} title rewrite(s) written to data/performance-queue/`);
+  for (const line of renderGateSkipLines(gateSkipped)) console.log(`  ${line}`);
+  return { gateSkipped };
 }
 
 // ── candidate selection (shared with tests) ──────────────────────────────────
@@ -847,6 +955,7 @@ async function fromGscMode() {
   console.log('');
 
   // Process each candidate
+  const gateSkipped = [];
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${c.title}"... `);
@@ -854,12 +963,18 @@ async function fromGscMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
-      const proposed = await rewriteProductMeta(
-        { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
-        topQueries,
-        c.gsc,
-        ground,
+      const gated = await gateGeneratedCopy(
+        (constraint) => rewriteProductMeta(
+          { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
+          topQueries, c.gsc, ground, constraint,
+        ),
+        { extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description }), required: ['title'] },
       );
+      if (!gated.ok) {
+        if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
+        continue;
+      }
+      const proposed = gated.proposed;
 
       const item = buildProductMetaQueueItem(c, c.gsc, topQueries, proposed);
       item.cluster = c.idx.cluster;
@@ -872,7 +987,9 @@ async function fromGscMode() {
     }
   }
 
-  console.log(`\n  Done — ${candidates.length} item(s) written to data/performance-queue/`);
+  console.log(`\n  Done — ${candidates.length - gateSkipped.length} item(s) written to data/performance-queue/`);
+  for (const line of renderGateSkipLines(gateSkipped)) console.log(`  ${line}`);
+  return { gateSkipped };
 }
 
 // ── pages-from-gsc mode ─────────────────────────────────────────────────────
@@ -958,17 +1075,30 @@ async function pagesFromGscMode() {
   console.log('');
 
   // Process each candidate
+  const gateSkipped = [];
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${c.title}"... `);
 
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
-      const proposed = await rewritePageMeta(
-        { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
-        topQueries,
-        c.gsc,
+      // `summary` is checked as well as title/meta: it is written to Shopify's
+      // summary_html, which the theme renders on the page itself.
+      const gated = await gateGeneratedCopy(
+        (constraint) => rewritePageMeta(
+          { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
+          topQueries, c.gsc, constraint,
+        ),
+        {
+          extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, 'page summary': p?.summary }),
+          required: ['title'],
+        },
       );
+      if (!gated.ok) {
+        if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
+        continue;
+      }
+      const proposed = gated.proposed;
 
       const item = {
         slug: c.handle,
@@ -1005,7 +1135,9 @@ async function pagesFromGscMode() {
     }
   }
 
-  console.log(`\n  Done — ${candidates.length} item(s) written to data/performance-queue/`);
+  console.log(`\n  Done — ${candidates.length - gateSkipped.length} item(s) written to data/performance-queue/`);
+  for (const line of renderGateSkipLines(gateSkipped)) console.log(`  ${line}`);
+  return { gateSkipped };
 }
 
 // ── expand-faq mode ─────────────────────────────────────────────────────────
@@ -1062,6 +1194,12 @@ async function expandFaqMode() {
 
   const existingBody = faqPage.body_html || '';
 
+  // The gate needs to be able to REGENERATE this, so the prompt lives in a
+  // function that takes a constraint like every other rewriter here. An FAQ
+  // answer is the highest-risk long text this agent writes — a real shopper
+  // question is "can I use this on eczema?", and answering it in the product's
+  // own voice is precisely what FDA intended-use doctrine reads as a drug claim.
+  const generateFaq = async (constraint = '') => {
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 4096,
@@ -1089,6 +1227,8 @@ Also write:
 - why: why these additions should improve search visibility
 - projected_impact: expected improvement
 
+${SEO_COPY_COMPLIANCE_RULE}
+${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "body_html": "<the full expanded FAQ HTML>",
@@ -1105,8 +1245,21 @@ No explanation, no markdown fences.`,
 
   const raw = message.content[0].text.trim()
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-  const proposed = JSON.parse(raw);
-  console.log('done');
+    return JSON.parse(raw);
+  };
+
+  const gated = await gateGeneratedCopy(generateFaq, {
+    extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, 'faq body': p?.body_html }),
+    required: ['title', 'faq body'],
+  });
+  if (!gated.ok) {
+    const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
+    console.log('gated');
+    console.log(`  \u2298 health-claim gate: ${words} — skipped after ${gated.attempts} attempt(s), nothing queued`);
+    return { gateSkipped: [{ label: faqPage.title, pageUrl: faqUrl, violations: gated.violations }] };
+  }
+  const proposed = gated.proposed;
+  console.log(gated.attempts > 1 ? 'done (regenerated once — health-claim gate)' : 'done');
 
   // Save HTML to data/page-content/faq.html
   const pageContentDir = join(ROOT, 'data', 'page-content');
@@ -1145,12 +1298,16 @@ No explanation, no markdown fences.`,
   console.log(`  Queue item written to data/performance-queue/`);
 
   console.log(`\n  Done — review the expanded FAQ at ${htmlPath} and approve in the queue.`);
+  return { gateSkipped: [] };
 }
 
 // ── publish-approved mode ────────────────────────────────────────────────────
 
 async function publishApprovedProducts() {
   console.log(`\nProduct Optimizer — publishing approved meta rewrites\n`);
+
+  // Refusals collected across all four item kinds this mode publishes.
+  const refused = [];
 
   const items = listQueueItems().filter(
     (i) => i.trigger === 'product-meta-rewrite' && i.status === 'approved',
@@ -1170,6 +1327,7 @@ async function publishApprovedProducts() {
       console.error('skipped: missing resource_id or proposed_meta');
       continue;
     }
+    if (refuseOnClaims(item, `products/${item.slug}`, refused)) continue;
     try {
       await upsertMetafield('products', item.resource_id, 'global', 'title_tag', item.proposed_meta.seo_title);
       await upsertMetafield('products', item.resource_id, 'global', 'description_tag', item.proposed_meta.seo_description);
@@ -1214,6 +1372,7 @@ async function publishApprovedProducts() {
         console.error('skipped: missing resource_id or proposed_meta');
         continue;
       }
+      if (refuseOnClaims(item, `pages/${item.slug}`, refused)) continue;
       try {
         await upsertMetafield('pages', item.resource_id, 'global', 'title_tag', item.proposed_meta.seo_title);
         await upsertMetafield('pages', item.resource_id, 'global', 'description_tag', item.proposed_meta.seo_description);
@@ -1258,8 +1417,17 @@ async function publishApprovedProducts() {
         console.error('skipped: missing resource_id or proposed_html_path');
         continue;
       }
+      let html;
       try {
-        const html = readFileSync(item.proposed_html_path, 'utf8');
+        html = readFileSync(item.proposed_html_path, 'utf8');
+      } catch (e) {
+        console.error(`skipped: ${e.message}`);
+        continue;
+      }
+      // The FAQ body is checked too, not just its meta — the answers are the
+      // copy, and they are what an "is this safe for my eczema?" query gets.
+      if (refuseOnClaims(item, `pages/${item.slug}`, refused, { 'faq body': html })) continue;
+      try {
         await updatePage(item.resource_id, { body_html: html });
 
         if (item.proposed_meta?.seo_title) {
@@ -1295,6 +1463,7 @@ async function publishApprovedProducts() {
         console.error('skipped: missing resource_id, new_title, or handle');
         continue;
       }
+      if (refuseOnClaims(item, `products/${item.slug}`, refused)) continue;
       try {
         await updateProduct(item.resource_id, {
           title: item.proposed_title.new_title,
@@ -1312,6 +1481,9 @@ async function publishApprovedProducts() {
     }
     console.log(`\n  Done — ${titlePublished}/${titleItems.length} product title rewrite(s) pushed to Shopify.`);
   }
+
+  for (const line of renderGateRefusalLines(refused)) console.log(`  ${line}`);
+  return { refused };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -1410,6 +1582,7 @@ async function main() {
   // ── Process candidates ─────────────────────────────────────────────────────
 
   const results = [];
+  const gateSkipped = [];
 
   for (let i = 0; i < candidates.length; i++) {
     const candidate = candidates[i];
@@ -1440,12 +1613,25 @@ async function main() {
     process.stdout.write(`  [${i + 1}/${candidates.length}] "${candidate.title}"... `);
 
     try {
-      let proposed;
-      if (candidate.type === 'product') {
-        proposed = await rewriteProduct(candidate.raw, keyword, gscData);
-      } else {
-        proposed = await rewriteCollection(candidate.raw, keyword, gscData);
+      // This is the only mode that writes a live BODY on --apply, with no queue
+      // and no human in between, so the gate covers body_html as well as the two
+      // SEO fields. Measured against the current live copy on 2026-08-24: 1 of
+      // 19 product bodies and 32 of 82 collection bodies carry blocking-tier
+      // language today, so the retry earns its keep here.
+      const gated = await gateGeneratedCopy(
+        (constraint) => (candidate.type === 'product'
+          ? rewriteProduct(candidate.raw, keyword, gscData, constraint)
+          : rewriteCollection(candidate.raw, keyword, gscData, constraint)),
+        {
+          extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
+          required: ['title', 'body'],
+        },
+      );
+      if (!gated.ok) {
+        if (recordGateSkip(gateSkipped, { label: candidate.title, pageUrl: candidate.url, gated }, limit)) break;
+        continue;
       }
+      const proposed = gated.proposed;
       console.log(`done (${wordCount(proposed.body_html)} words)`);
 
       const result = {
@@ -1522,6 +1708,22 @@ async function main() {
     lines.push('');
   }
 
+  // The report IS the digest body, so a skip that is not written here reaches
+  // nobody. A skip is the gate working — it is never `status: 'error'`.
+  const skipLines = renderGateSkipLines(gateSkipped);
+  if (skipLines.length) {
+    lines.push('## Health-claim gate — skipped');
+    lines.push('');
+    lines.push(skipLines[0]);
+    lines.push('');
+    for (const s of gateSkipped) {
+      lines.push(`- **${s.label}** (${s.pageUrl}) — ${[...new Set(s.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ')}`);
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
   if (!apply && results.length > 0) {
     lines.push('## To Apply Changes');
     lines.push('```bash');
@@ -1535,9 +1737,11 @@ async function main() {
 
   console.log(`\n  Report: ${reportPath}`);
   console.log(`  Pages ${apply ? 'updated' : 'analyzed'}: ${results.length}`);
+  if (gateSkipped.length) console.log(`  Health-claim gate: ${gateSkipped.length} candidate(s) skipped (page unchanged)`);
   if (!apply && results.length > 0) {
     console.log('  Run with --apply to push changes to Shopify');
   }
+  return { gateSkipped };
 }
 
 const run = pagesFromGsc ? pagesFromGscMode
@@ -1547,9 +1751,39 @@ const run = pagesFromGsc ? pagesFromGscMode
   : publishApproved ? publishApprovedProducts
   : main;
 
+/**
+ * Gate skips and refusals must reach the 5 AM digest. Four of the six modes
+ * write no markdown report at all, so `notifyLatestReport` would say "no report
+ * generated this run" and the skip would live only in a cron log nobody reads.
+ * DEFERRED, never `immediate: true`, and `status: 'success'` — the gate
+ * refusing a claim is the policy working, not a failure.
+ */
+async function notifyGateOutcome(outcome) {
+  const lines = [
+    ...renderGateSkipLines(outcome?.gateSkipped || []),
+    ...renderGateRefusalLines(outcome?.refused || []),
+  ];
+  if (!lines.length) return;
+  const n = (outcome?.gateSkipped?.length || 0) + (outcome?.refused?.length || 0);
+  await notify({
+    subject: `Product Optimizer: ${n} health-claim gate ${n === 1 ? 'block' : 'blocks'}`,
+    body: lines.join('\n'),
+    status: 'success',
+    category: 'pipeline',
+  });
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   run()
-    .then(() => notifyLatestReport('Product Optimizer completed', join(ROOT, 'data', 'reports', 'product-optimizer')))
+    .then(async (outcome) => {
+      await notifyGateOutcome(outcome);
+      return notifyLatestReport(
+        `Product Optimizer completed${gateSkipSummaryFragment([
+          ...(outcome?.gateSkipped || []), ...(outcome?.refused || []),
+        ])}`,
+        join(ROOT, 'data', 'reports', 'product-optimizer'),
+      );
+    })
     .catch((err) => {
       notify({ subject: 'Product Optimizer failed', body: err.message || String(err), status: 'error' });
       console.error('Error:', err.message);

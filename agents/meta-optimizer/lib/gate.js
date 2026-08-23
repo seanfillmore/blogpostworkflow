@@ -27,7 +27,12 @@
  * carries SEO_COPY_COMPLIANCE_RULE, so most runs should never reach the retry.
  */
 
-import { checkSeoCopy, seoCopyConstraint } from '../../../lib/seo-copy-health-gate.js';
+// The loop itself now lives in lib/seo-copy-gate-loop.js — three more unattended
+// writers needed it verbatim on 2026-08-24, and a hand-copied retry policy is a
+// retry policy that drifts. What stays here is the only thing that is genuinely
+// meta-optimizer's: the mapping from THIS agent's rewriter shape
+// ({title, meta_description}) onto the gate's named fields.
+import { gateGeneratedCopy } from '../../../lib/seo-copy-gate-loop.js';
 
 /**
  * @param {(constraint: string) => Promise<{title?:string, meta_description?:string}|null>} generate
@@ -43,36 +48,8 @@ import { checkSeoCopy, seoCopyConstraint } from '../../../lib/seo-copy-health-ga
  * }>}
  */
 export async function gateProposedCopy(generate) {
-  let constraint = '';
-  let attempts = 0;
-  let last = null;
-  let check = null;
-
-  // Two passes max — the first unconstrained, the second told what it did wrong.
-  for (let i = 0; i < 2; i++) {
-    last = await generate(constraint);
-    attempts++;
-    check = checkSeoCopy({ title: last?.title, meta: last?.meta_description });
-
-    // A null/garbled return has no blocking hits (there is nothing to match), so
-    // it would sail through the gate. Fail it closed here rather than proposing
-    // a write of `undefined` over a live title.
-    if (!last?.title) {
-      check = {
-        ok: false,
-        blocking: [{ field: 'title', category: 'malformed', why: 'the rewriter returned no title', match: '(empty)' }],
-        advisory: check.advisory,
-      };
-    }
-
-    if (check.ok) {
-      return { ok: true, proposed: last, rejected: null, violations: [], advisory: check.advisory, attempts };
-    }
-    constraint = seoCopyConstraint(check.blocking);
-  }
-
-  // Both attempts blocked. Report the SECOND attempt's violations and text — it
-  // is the copy that was rejected last, and the one a human reading the digest
-  // would go looking at.
-  return { ok: false, proposed: null, rejected: last, violations: check.blocking, advisory: check.advisory, attempts };
+  return gateGeneratedCopy(generate, {
+    extract: (r) => ({ title: r?.title, meta: r?.meta_description }),
+    required: ['title'],
+  });
 }

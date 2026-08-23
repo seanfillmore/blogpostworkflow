@@ -25,6 +25,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
+import { positionalArg } from '../../lib/positional-arg.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -45,7 +46,10 @@ try {
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 
 const args = process.argv.slice(2);
-const metaArg = args.find((a) => !a.startsWith('--'));
+// positionalArg, not args.find: `--publish-at <ts>` would otherwise let the
+// TIMESTAMP be read as the meta path on any flag-first invocation.
+// See lib/positional-arg.js — the same shape broke blog-post-verifier for 4 months.
+const metaArg = positionalArg(args, ['--publish-at']);
 const publishAtArg = (() => {
   const i = args.indexOf('--publish-at');
   return i !== -1 ? args[i + 1] : null;

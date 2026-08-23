@@ -85,6 +85,7 @@
     "voc": "node agents/voice-of-customer/index.js",
     "voc-analyze": "node agents/voice-of-customer/index.js --analyze",
     "learn": "node agents/marketing-learner/index.js",
+    "reconcile-post-metas": "node scripts/reconcile-post-metas.mjs",
     "sync-snapshots": "bash scripts/sync-snapshots.sh",
     "archive-snapshots": "bash scripts/archive-snapshots.sh",
     "backup-snapshots-offsite": "bash scripts/backup-snapshots-offsite.sh",

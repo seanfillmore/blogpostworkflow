@@ -48,6 +48,12 @@ data/reports/daily-summary/
 data/reports/cro/
 data/reports/editor/
 
+# Post-meta reconcile run records, backups and pre-pull snapshots.
+# Deliberately NOT tracked: this directory is written by the deploy itself, on
+# the production box. Tracking it would recreate the exact hazard the reconcile
+# exists to fix — a tracked file that cron writes, colliding with the next pull.
+data/reports/post-meta-reconcile/
+
 # Generated agent reports (regenerable; not tracked)
 data/reports/ai-citations/
 data/reports/legacy-triage/

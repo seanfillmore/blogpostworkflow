@@ -24,6 +24,7 @@ import { listAllSlugs, getPostMeta, ROOT } from '../../lib/posts.js';
 import * as gsc from '../../lib/gsc.js';
 import { getSerpResults } from '../../lib/dataforseo.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { positionalArg } from '../../lib/positional-arg.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(ROOT, 'data', 'analysis');
@@ -34,7 +35,8 @@ const args = process.argv.slice(2);
 const tierIdx = args.indexOf('--tier');
 const tierFilter = tierIdx !== -1 ? args[tierIdx + 1] : null;
 const all = args.includes('--all') || tierFilter !== null;
-const slugArg = !all ? args.find((a) => !a.startsWith('--')) : null;
+// positionalArg, not args.find: `--tier <n>` would otherwise be read as the slug.
+const slugArg = !all ? positionalArg(args, ['--tier']) : null;
 
 function toCanonicalUrl(meta, slug) {
   if (meta?.shopify_handle) return `${CANONICAL_ROOT}/blogs/news/${meta.shopify_handle}`;

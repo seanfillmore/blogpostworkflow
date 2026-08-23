@@ -21,6 +21,14 @@
  *            lib/cluster-hold.js loader — the same evidence, read the same way,
  *            as every agent that puts a $0 cluster on hold. No cluster is named
  *            in code. Only the 2+ products rule is hardcoded (CLAUDE.md).
+ *   REFUSE   any item whose STORED copy trips the blocking tier of
+ *            lib/seo-copy-health-gate.js. This is the last line before a live
+ *            write and it applies copy some other agent generated, possibly days
+ *            ago — there is no prompt here, so it cannot regenerate. It refuses
+ *            the write, leaves the item PENDING (never dismissed, never deleted)
+ *            and names it in the report and the digest. The check runs in the
+ *            pure planner, before the editor gate and before the per-run cap, so
+ *            a refused item spends nothing and eats nobody's slot.
  *   LEAVE    everything else, including the pdp-builder artifacts that share
  *            this directory with a different schema.
  *
@@ -50,6 +58,7 @@ import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN } from '..
 import { applyItem, findPostMeta, matchProductsForGap } from '../../lib/queue-apply.js';
 import { revertPlanFor } from '../../lib/queue-revert.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
+import { renderGateRefusalLines } from '../../lib/seo-copy-health-gate.js';
 import { buildTriggerCommand } from '../dashboard/lib/opportunity-trigger.js';
 import { notify } from '../../lib/notify.js';
 
@@ -346,7 +355,24 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     }
   }
 
-  for (const { item, reason } of plan.skip) log(`  ·  skip     ${item?.slug || '(malformed item)'} — ${reason}`);
+  // A health-claim skip is not an ordinary skip. It means stored copy was
+  // refused at the last line before a live write, by a layer that cannot
+  // regenerate it — so it needs its own row in the report and its own lines in
+  // the digest body, or it reads as "over the cap" and nobody ever looks.
+  // It is NOT `status: 'error'` and never `immediate: true`: the gate refusing
+  // is the policy working. The item stays pending; nothing is dismissed.
+  const healthGated = plan.skip
+    .filter((s) => s.gate === 'health-claim')
+    .map(({ item, reason, violations }) => ({ slug: item?.slug || null, trigger: item?.trigger || null, reason, violations }));
+  for (const g of healthGated) {
+    const words = [...new Set((g.violations || []).map((v) => `${v.field}: "${v.match}"`))].join(', ');
+    log(`  ⊘ health-claim  ${g.slug} [${g.trigger}] — ${words} (refused, left pending, nothing written)`);
+  }
+
+  for (const { item, reason, gate } of plan.skip) {
+    if (gate === 'health-claim') continue; // already reported above, more loudly
+    log(`  ·  skip     ${item?.slug || '(malformed item)'} — ${reason}`);
+  }
 
   const report = {
     generated_at: new Date().toISOString(),
@@ -357,6 +383,7 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     applied,
     dismissed,
     gated,
+    health_gated: healthGated,
     failed,
     skipped: plan.skip.map(({ item, reason }) => ({ slug: item?.slug || null, trigger: item?.trigger || item?.type || null, reason })),
   };
@@ -367,15 +394,17 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
   // ONE deferred notification per run. Never `immediate: true` — this is
   // routine housekeeping and belongs in the 5 AM digest with everything else.
   const lines = [
-    `Applied ${applied.length} · dismissed ${dismissed.length} · gated ${gated.length} · failed ${failed.length} (queue ${items.length}, cap ${cap}/run)`,
+    `Applied ${applied.length} · dismissed ${dismissed.length} · gated ${gated.length} · health-claim refused ${healthGated.length} · failed ${failed.length} (queue ${items.length}, cap ${cap}/run)`,
     '',
     ...applied.map((a) => `APPLIED   ${a.slug} [${a.trigger}]${a.revertible === false ? ' — no automatic revert' : ''}`),
     ...dismissed.map((d) => `DISMISSED ${d.slug} [${d.trigger}] — ${d.reason}`),
     ...gated.map((g) => `GATED     ${g.slug} [${g.trigger}] — ${g.reason} (${g.repair_attempts} repair attempts; stays pending for the repair loop)`),
+    ...(healthGated.length ? ['', ...renderGateRefusalLines(healthGated.map((g) => ({ label: g.slug, resource: g.trigger, violations: g.violations })))] : []),
+    ...(failed.length ? [''] : []),
     ...failed.map((f) => `FAILED    ${f.slug} [${f.trigger}] — ${f.error}`),
   ];
   await notify({
-    subject: `Queue auto-apply: ${applied.length} applied, ${dismissed.length} dismissed${dryRun ? ' (dry run)' : ''}`,
+    subject: `Queue auto-apply: ${applied.length} applied, ${dismissed.length} dismissed${healthGated.length ? `, ${healthGated.length} health-claim refused` : ''}${dryRun ? ' (dry run)' : ''}`,
     body: lines.join('\n'),
     status: failed.length ? 'error' : 'success',
     category: 'pipeline',
