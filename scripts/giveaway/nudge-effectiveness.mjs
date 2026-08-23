@@ -49,6 +49,7 @@ try {
 
 const { listEntrantProfiles, listProfilesWithConsent } = await import('../../lib/klaviyo-profiles.js');
 const { MIN_HOURS_BETWEEN, MAX_NUDGES } = await import('./nudge-unconfirmed.mjs');
+const { confirmedEmailSet, resolveMechanism } = await import('../../lib/giveaway/reconcile.js');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
 const [listed, submitted] = await Promise.all([
@@ -65,16 +66,16 @@ const norm = (e) => String(e ?? '').trim().toLowerCase();
 // stamp alone and reported 21 confirmed against a list of 81 — undercounting by
 // three quarters and making the nudge look far more necessary than it is.
 //
-// Being on the list IS the confirmation (Klaviyo only adds after double opt-in).
-// The stamp is used only for TIMING, and its absence means "confirmed, when
-// unknown" rather than "not confirmed".
-const confirmedSet = new Set();
+// Under double opt-in, being on the list IS the confirmation (Klaviyo only adds
+// after the click). Under flow_link it is not — the list holds every entrant —
+// so the mechanism decides, and confirmedEmailSet owns that decision for the
+// whole toolchain. The stamp is used only for TIMING, and under double opt-in
+// its absence means "confirmed, when unknown" rather than "not confirmed".
+const confirmedSet = confirmedEmailSet(listed, { mechanism: resolveMechanism(config) });
 const confirmedAtByEmail = new Map();
 for (const p of listed) {
-  const email = norm(p.email);
   const stamp = p.properties?.gv_confirmed_at;
-  if (p.subscribed || stamp) confirmedSet.add(email);
-  if (stamp) confirmedAtByEmail.set(email, Date.parse(stamp));
+  if (stamp) confirmedAtByEmail.set(norm(p.email), Date.parse(stamp));
 }
 
 const now = Date.now();

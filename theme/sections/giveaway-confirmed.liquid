@@ -1,0 +1,104 @@
+{%- comment -%}
+  Post-CONFIRMATION page. The redirect target of the confirmation link in the
+  giveaway confirm email (data/giveaway/nurture/00-confirm-request.html).
+
+  WHY THIS PAGE EXISTS SEPARATELY FROM page.giveaway-entered.
+  "Entered" is reached by submitting the form and says "go check your email".
+  This page is reached by CLICKING the link in that email — the entrant has just
+  done the thing that page asked for, and repeating the ask would be the one
+  clear way to waste the moment. Before this page existed, a confirming entrant
+  landed on Klaviyo's generic "you're subscribed" page, which sells nothing,
+  asks for nothing, and is not on our domain.
+
+  IT CANNOT KNOW WHO THE VISITOR IS. Klaviyo's update_property_link takes its
+  redirect as a STATIC url — the tag supports no dynamic content and cannot be
+  nested inside another tag — so there is no way to append ?e={{ email }} the
+  way 01-confirm.html does for the entered page. Everything here therefore has
+  to work for an anonymous visitor. That is why the referral ask sends them to
+  the entry page to grab their link rather than rendering a personalised one,
+  and why there is no live entry count on this page.
+
+  The single job of this page is the REFERRAL rung: +5 entries per confirmed
+  friend, up to 10 friends, which is the largest rung an entrant can still move
+  after confirming. Second job is a full-price purchase path, because a page
+  that earns attention and offers no way to buy is unfinished work.
+{%- endcomment -%}
+
+{%- liquid
+  assign set_handle = 'sensitive-skin-starter-set'
+  assign set_image = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/frame-01-what-arrives.jpg?v=1785635169'
+-%}
+
+{{ 'giveaway.css' | asset_url | stylesheet_tag }}
+
+<section class="gv-entered" data-gv-confirmed>
+  <div class="gv-entered-main">
+
+    <h1 class="gv-entered-title">Confirmed — that's 3 entries.</h1>
+    <p class="gv-entered-lede">
+      Your email is confirmed, which banks <strong>+2 entries</strong> on top of
+      your base entry. Your running total is recalculated once a day, so if the
+      entry page hasn't caught up yet, it will by tomorrow morning.
+    </p>
+
+    <div class="gv-ladder">
+      <h2 class="gv-ladder-title">The biggest rung left is referrals</h2>
+      <p class="gv-ladder-body">
+        Every friend who enters and names your email address as their referrer is
+        worth <strong>+5 entries</strong> — up to 10 friends, so up to 50 entries.
+        That is more than every other action on the page combined.
+      </p>
+      <p class="gv-ladder-body">
+        There is no unique referral link. Your friend just types the email address
+        you entered with into the referral field on the entry form, so send them
+        the entry page and tell them which address to use.
+      </p>
+      <a class="gv-next-cta" href="/pages/giveaway">Get the entry page to share</a>
+      <p class="gv-ladder-fine">
+        Both halves have to happen: your friend must enter <em>and</em> confirm
+        their own email before the +5 is credited.
+      </p>
+    </div>
+
+    <div class="gv-ladder">
+      <h2 class="gv-ladder-title">Two more, while you're here</h2>
+      <p class="gv-ladder-body">
+        Answering three quick questions on the entry page is worth
+        <strong>+3 entries</strong>, and posting about us with
+        <strong>@realskincare_com</strong> tagged is worth another
+        <strong>+3</strong>.
+      </p>
+    </div>
+
+    <p class="gv-fine">
+      Entries close <strong>September 14, 2026</strong>; we draw on
+      <strong>September 16</strong>. A $536.40 prize. Entering is free.
+      No purchase necessary. Purchases do not earn entries.
+      <a href="/pages/giveaway-official-rules">Official rules</a>.
+      This promotion is not sponsored, endorsed, or administered by Meta.
+    </p>
+  </div>
+
+  <aside class="gv-next">
+    <div class="gv-next-card">
+      <img class="gv-next-img" src="{{ set_image }}" alt="Sensitive Skin Moisturizing Set" loading="lazy" width="480" height="480"/>
+      <h2 class="gv-next-title">Don't want to wait for the draw?</h2>
+      <p class="gv-next-body">
+        Three of these ship with the prize, one a year. Two products, eight
+        ingredients, no fragrance — the body lotion and body cream that go
+        alongside the soap you just entered for.
+      </p>
+      <p class="gv-next-price">$46.80</p>
+      <a class="gv-next-cta" href="/products/{{ set_handle }}">See the Set</a>
+      <p class="gv-next-fine">Buying doesn't change your entries.</p>
+    </div>
+  </aside>
+</section>
+
+{% schema %}
+{
+  "name": "Giveaway confirmed",
+  "settings": [],
+  "presets": [{ "name": "Giveaway confirmed" }]
+}
+{% endschema %}
