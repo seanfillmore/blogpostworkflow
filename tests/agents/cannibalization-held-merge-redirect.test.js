@@ -14,7 +14,27 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { decideHeldMergeRedirect, NEGLIGIBLE_LOSER_CLICKS } from '../../agents/cannibalization-resolver/redirect-decision.js';
+import {
+  decideHeldMergeRedirect, findLoserClicks, shapeCannibalizationPage,
+  NEGLIGIBLE_LOSER_CLICKS,
+} from '../../agents/cannibalization-resolver/redirect-decision.js';
+
+// Builds a cannibalization group the same way
+// agents/cannibalization-resolver/index.js's detectCannibalization does:
+// `pages: rows.map(shapeCannibalizationPage)`. These fixtures are never a
+// hand-typed guess at the real output shape — they're produced by the exact
+// function detectCannibalization calls, verified by reading that function
+// (agents/cannibalization-resolver/index.js's detectCannibalization, ~line
+// 152: `pages: sorted.map(shapeCannibalizationPage)`). If
+// shapeCannibalizationPage's field names ever change, these fixtures and
+// findLoserClicks (which reads the same fields) change together — a
+// producer/consumer field mismatch can't pass here the way one shipped
+// before (a report's rows destructured `query` when the real field was
+// `keyword`; every hand-written test fixture had guessed `query` too, so
+// the whole suite stayed green while production silently got nothing).
+function buildGroup(query, rows) {
+  return { query, pages: rows.map(shapeCannibalizationPage) };
+}
 
 test('held merge, zero-click loser: creates the redirect', () => {
   // The actual tattoo-soap case: loser had 0 clicks / 50 impressions / pos 23.
@@ -76,4 +96,90 @@ test('NEGLIGIBLE_LOSER_CLICKS threshold is exported and used at the boundary', (
   // Mutation this catches: an off-by-one in the comparison operator would
   // move the boundary in either direction without any of the other tests
   // (which use 0 and 10) necessarily catching it.
+});
+
+// ── findLoserClicks: the glue between "the run's GSC groups" and a number ──
+
+test('findLoserClicks: matching group + matching path returns that page real click count', () => {
+  const groups = [
+    buildGroup('best soap for tattoos', [
+      {
+        page: 'https://realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2',
+        impressions: 1102, clicks: 10, position: 6.9, ctr: 0.9,
+      },
+      {
+        page: 'https://realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing',
+        impressions: 50, clicks: 7, position: 23.0, ctr: 0,
+      },
+    ]),
+  ];
+  const clicks = findLoserClicks({
+    groups,
+    query: 'best soap for tattoos',
+    loserPath: '/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing',
+  });
+  assert.equal(clicks, 7);
+  // Mutation this catches: renaming shapeCannibalizationPage's `path` field
+  // (e.g. to `url`, colliding with or replacing the full-URL field it
+  // already returns) breaks this immediately — findLoserClicks's
+  // `p.path === loserPath` and this fixture's pages come from the SAME
+  // function, so there is no second hand-written copy of the shape left to
+  // quietly keep matching. This is the concrete answer to "would renaming
+  // p.path to p.url on the producing side fail a test": yes, this one.
+});
+
+test('findLoserClicks: path not present in the matched group returns null, not 0', () => {
+  const groups = [
+    buildGroup('best soap for tattoos', [
+      { page: 'https://realskincare.com/blogs/news/some-other-post', impressions: 200, clicks: 4, position: 8, ctr: 2 },
+    ]),
+  ];
+  const clicks = findLoserClicks({
+    groups,
+    query: 'best soap for tattoos',
+    loserPath: '/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing',
+  });
+  assert.equal(clicks, null);
+  // Mutation this catches: `.find(...)` returning `undefined` and the
+  // function coercing that to `0` (e.g. `page?.clicks ?? 0` instead of an
+  // explicit page-not-found check) would make decideHeldMergeRedirect treat
+  // an unmatched path as "provably zero clicks" and redirect on no evidence
+  // — exactly the failure this glue exists to prevent.
+});
+
+test('findLoserClicks: no group for the query returns null', () => {
+  const groups = [buildGroup('unrelated query', [
+    { page: 'https://realskincare.com/blogs/news/x', impressions: 10, clicks: 1, position: 5, ctr: 10 },
+  ])];
+  const clicks = findLoserClicks({ groups, query: 'best soap for tattoos', loserPath: '/blogs/news/x' });
+  assert.equal(clicks, null);
+  // Mutation this catches: matching the first/only group regardless of its
+  // query (e.g. `groups[0]` instead of `.find(g => g.query === query)`)
+  // would silently attribute one query's traffic to a completely different
+  // decision whenever decisions and groups are processed out of lockstep.
+});
+
+test('findLoserClicks: page present with a non-numeric clicks value returns null', () => {
+  const groups = [
+    buildGroup('best soap for tattoos', [
+      {
+        page: 'https://realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing',
+        impressions: 50, clicks: undefined, position: 23.0, ctr: 0,
+      },
+    ]),
+  ];
+  const clicks = findLoserClicks({
+    groups,
+    query: 'best soap for tattoos',
+    loserPath: '/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing',
+  });
+  assert.equal(clicks, null);
+  // Mutation this catches: dropping the `typeof page.clicks !== 'number'`
+  // guard would make findLoserClicks return `undefined` here instead of
+  // `null` — a different "no data" value than the rest of this module's
+  // contract promises callers, and one decideHeldMergeRedirect's own
+  // null/undefined check happens to also catch today. That overlap is
+  // accidental, not a reason to let this guard rot: a future caller that
+  // checks `=== null` specifically (as the JSDoc promises) would silently
+  // treat an unresolved `undefined` as truthy/present.
 });

@@ -59,7 +59,10 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
-import { decideHeldMergeRedirect } from './redirect-decision.js';
+import {
+  decideHeldMergeRedirect, findLoserClicks, shapeCannibalizationPage,
+  urlPath, slugFromPath,
+} from './redirect-decision.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
@@ -109,10 +112,10 @@ const reportJson = args.includes('--report-json');
 const publishPending = args.includes('--publish-pending-drafts');
 
 // ── URL helpers ───────────────────────────────────────────────────────────────
-
-function urlPath(fullUrl) {
-  try { return new URL(fullUrl).pathname; } catch { return fullUrl; }
-}
+// urlPath / slugFromPath live in redirect-decision.js (imported above) — same
+// canonical functions detectCannibalization's shapeCannibalizationPage and
+// applyResolutions's findLoserClicks join against, so this file can't drift
+// from what those two use to match a loser's path to its clicks.
 
 function isBlogPost(url) {
   return urlPath(url).startsWith('/blogs/');
@@ -126,10 +129,6 @@ function classifyUrl(url) {
   if (isProduct(url)) return 'product';
   if (isCollection(url)) return 'collection';
   return 'other';
-}
-
-function slugFromPath(path) {
-  return path.split('/').pop();
 }
 
 // ── blog article index ────────────────────────────────────────────────────────
@@ -166,15 +165,7 @@ function detectCannibalization(queryPageRows) {
         query,
         totalImpressions: pages.reduce((s, p) => s + p.impressions, 0),
         totalClicks: pages.reduce((s, p) => s + p.clicks, 0),
-        pages: sorted.map((p) => ({
-          url: p.page,
-          path: urlPath(p.page),
-          handle: slugFromPath(urlPath(p.page)),
-          impressions: p.impressions,
-          clicks: p.clicks,
-          position: Math.round(p.position * 10) / 10,
-          ctr: Math.round(p.ctr * 1000) / 10,
-        })),
+        pages: sorted.map(shapeCannibalizationPage),
       };
     })
     .filter((g) => g.totalImpressions >= minImpr)
@@ -317,9 +308,6 @@ Rules:
 
 async function applyResolutions(decisions, articleIndex, existingRedirects, groups) {
   const existingPaths = new Set(existingRedirects.map((r) => r.path));
-  // Already-fetched GSC group data, keyed by query, so the held-merge redirect
-  // decision can read the loser's clicks without a fresh network call.
-  const groupsByQuery = new Map((groups ?? []).map((g) => [g.query, g]));
   const results = [];
 
   for (const decision of decisions) {
@@ -337,11 +325,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
 
       // Loser's clicks from the GSC data already fetched for cannibalization
       // detection (same window, no new call) — feeds the held-merge redirect
-      // decision. null when the group/path can't be matched (e.g. decisions
-      // JSON diverged from the live groups), which fails safe downstream.
-      const group = groupsByQuery.get(decision.query);
-      const loserPageData = group?.pages.find((p) => p.path === loserPath);
-      const loserClicks = loserPageData ? loserPageData.clicks : null;
+      // decision. findLoserClicks fails safe (null) when the group/path can't
+      // be matched, e.g. decisions JSON diverged from the live groups.
+      const loserClicks = findLoserClicks({ groups, query: decision.query, loserPath });
 
       // Only act on blog posts
       if (!isBlogPost(loserPath) || !isBlogPost(winnerPath)) {
@@ -464,7 +450,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           try {
             await createRedirect(loserPath, winnerPath);
             existingPaths.add(loserPath);
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', redirectDecisionReason });
+            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', reason: redirectDecisionReason });
           } catch (e) {
             results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_error', error: e.message });
           }

@@ -62,3 +62,84 @@ export function decideHeldMergeRedirect({ consolidateHeld, loserClicks }) {
   }
   return { createRedirect: false, reason: 'held_loser_has_traffic' };
 }
+
+// ── the glue: getting loserClicks in the first place ──────────────────────
+//
+// decideHeldMergeRedirect only ever sees a number (or null). Getting that
+// number means joining a decision's loserPath back to the GSC group it came
+// from, and matching a page within it — two lookups a hand-written test
+// fixture can silently get "right" by construction even when the join it's
+// supposed to be exercising is broken. So the join itself, and the exact
+// shape it joins against, live here as named, imported, single-source-of-
+// truth functions — the same functions index.js's detectCannibalization and
+// applyResolutions call, not a parallel re-implementation of them in a test
+// file. If `shapeCannibalizationPage` ever stops calling its field `path`,
+// every caller — production AND any test built from these fixtures — breaks
+// together, instead of production breaking silently while hand-typed test
+// fixtures keep passing. (That exact class of bug has shipped here before:
+// a producer/consumer field-name mismatch — `query` destructured from rows
+// whose real field was `keyword` — passed the whole suite because the test
+// fixtures were hand-written from a plan instead of derived from the real
+// producing code, and was only caught by running the agent against live data.)
+
+/** Pathname-only view of a GSC row's URL. Never throws on a malformed URL. */
+export function urlPath(fullUrl) {
+  try { return new URL(fullUrl).pathname; } catch { return fullUrl; }
+}
+
+/** Shopify article handle from a `/blogs/news/<handle>` path. */
+export function slugFromPath(path) {
+  return path.split('/').pop();
+}
+
+/**
+ * Shapes one GSC query+page row into the page object a cannibalization
+ * group's `pages[]` array carries — the exact transform
+ * agents/cannibalization-resolver/index.js's detectCannibalization applies
+ * per page (`url`, `path`, `handle`, `impressions`, `clicks`, rounded
+ * `position`/`ctr`). detectCannibalization calls this directly rather than
+ * inlining its own copy, so the field names `findLoserClicks` (below) and
+ * any test built on it rely on can't drift from what actually gets produced.
+ *
+ * @param {{page:string, impressions:number, clicks:number, position:number, ctr:number}} row
+ * @returns {{url:string, path:string, handle:string, impressions:number, clicks:number, position:number, ctr:number}}
+ */
+export function shapeCannibalizationPage(row) {
+  const path = urlPath(row.page);
+  return {
+    url: row.page,
+    path,
+    handle: slugFromPath(path),
+    impressions: row.impressions,
+    clicks: row.clicks,
+    position: Math.round(row.position * 10) / 10,
+    ctr: Math.round(row.ctr * 1000) / 10,
+  };
+}
+
+/**
+ * Finds a loser page's clicks within the cannibalization-detection groups
+ * already fetched for this run (see detectCannibalization / shapeCannibalizationPage
+ * above for the shape). Matches `group.query === query` then
+ * `page.path === loserPath` — the two joins index.js's applyResolutions needs
+ * before it has a clicks number to hand decideHeldMergeRedirect.
+ *
+ * Returns null (never 0) whenever anything fails to match — no group for the
+ * query, no page for the path, or a page whose `clicks` isn't a number — so
+ * a broken join reads as "traffic unknown" rather than a fabricated "zero",
+ * and decideHeldMergeRedirect's fail-safe branch (skip on null) is what
+ * fires, not its zero-clicks redirect branch.
+ *
+ * @param {object} p
+ * @param {Array<{query:string, pages:Array<{path:string, clicks:number}>}>} p.groups
+ * @param {string} p.query
+ * @param {string} p.loserPath
+ * @returns {number|null}
+ */
+export function findLoserClicks({ groups, query, loserPath }) {
+  const group = (groups ?? []).find((g) => g.query === query);
+  if (!group) return null;
+  const page = (group.pages ?? []).find((p) => p.path === loserPath);
+  if (!page || typeof page.clicks !== 'number') return null;
+  return page.clicks;
+}
