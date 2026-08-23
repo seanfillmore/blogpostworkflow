@@ -555,8 +555,8 @@ assert.throws(
   );
 
   // Narrow by construction — it must not fire on ordinary solo skills.
-  for (const name of ['marketing-warm-outreach-sequence', 'marketing-lead-capture-landing-pages',
-    'marketing-customer-referral-program', 'marketing-copy-hooks-and-formats']) {
+  for (const name of ['marketing-warm-outreach', 'marketing-lead-capture-landing-pages',
+    'marketing-referral-programs', 'marketing-copy-hooks-and-formats']) {
     assert.doesNotThrow(
       () => assertNewSkillGating({ name, description: 'Use when writing copy for a page.', tactics: [t(), t()] }),
       `${name} is solo-runnable and must not trip the guard`,

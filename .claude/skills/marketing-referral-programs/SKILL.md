@@ -1,6 +1,6 @@
 ---
 name: marketing-referral-programs
-description: How to design, price and place customer referral offers, including payout structures, timing of the ask and how to measure the program.
+description: How to design, price and place customer referral offers, including payout structures, timing of the ask and how to measure the program. Assumes the product already earns talk and the only missing piece is the ask — if you are not sure which of those is broken, diagnose it first in marketing-word-of-mouth-goodwill, because a bounty layered on an unremarkable product converts nothing.
 ---
 
 # Referral Programs
