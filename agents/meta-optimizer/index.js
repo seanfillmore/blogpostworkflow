@@ -19,6 +19,9 @@
  *   node agents/meta-optimizer/index.js --min-impr 200 # higher impression threshold
  *   node agents/meta-optimizer/index.js --max-ctr 0.03 # stricter CTR threshold
  *   node agents/meta-optimizer/index.js --limit 20                # max pages to process
+ *   node agents/meta-optimizer/index.js --include-held            # also rewrite $0-cluster queries
+ *                                                                 # (held by lib/cluster-hold.js; the
+ *                                                                 #  hold is applied BEFORE --limit)
  *   node agents/meta-optimizer/index.js --refresh-stale-years     # scan all posts for stale years (dry run)
  *   node agents/meta-optimizer/index.js --refresh-stale-years --apply  # scan + push refreshed titles to Shopify
  */
@@ -36,6 +39,11 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
+import { holdMetaCandidates } from './lib/hold.js';
+import {
+  loadClusterHold, holdBanner, renderHoldLines, renderDisagreementLines,
+  holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 import { buildPromptGrounding } from './lib/grounding.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -75,6 +83,7 @@ function getArg(flag) {
 
 const apply = args.includes('--apply');
 const refreshStaleYearsMode = args.includes('--refresh-stale-years');
+const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const minImpressions = parseFloat(getArg('--min-impr') ?? '100');
 const maxCTR = parseFloat(getArg('--max-ctr') ?? '0.05');
 const limitArg = parseInt(getArg('--limit') ?? '25', 10);
@@ -388,6 +397,26 @@ async function main() {
     if (!kwToPage.has(p.keyword)) kwToPage.set(p.keyword, p.url);
   }
 
+  // ── $0-cluster hold, applied to the pick list BEFORE the --limit cap ───────
+  // The cap is the whole reason this has to happen here. The weekly cron is
+  // `--apply --limit 5`, spent in sortByValidation order, and on the real
+  // 2026-08-23 pool four of those five slots fell in the held cluster while the
+  // biggest CTR opportunity on the site ranked SIXTH and was never reached at
+  // all (it moves to second once the held queries step aside). Holding after the cap would
+  // "skip" them and still let them eat the budget — the bug this rule exists to
+  // prevent, wearing different clothes. A missing or stale seo-impact report
+  // holds nothing (lib/seo-impact-freshness.js); the banner says which.
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+
+  const { kept: eligibleCandidates, held } = holdMetaCandidates(sortedCandidates, hold, {
+    includeHeld: INCLUDE_HELD,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+  if (held.length) console.log('');
+
   const results = [];
   let processed = 0;
 
@@ -410,7 +439,7 @@ async function main() {
   const testedAt = new Date().toISOString().slice(0, 10);
   let trackerWrites = 0;
 
-  for (const item of sortedCandidates) {
+  for (const item of eligibleCandidates) {
     if (processed >= limitArg) break;
 
     const { keyword, impressions, ctr, position } = item;
@@ -545,6 +574,19 @@ async function main() {
   lines.push(`**Criteria:** ${minImpressions}+ impressions, < ${(maxCTR * 100).toFixed(0)}% CTR (90 days)`);
   lines.push(`**Pages optimized:** ${results.length}`);
   lines.push('');
+
+  // The digest body IS this report (notifyLatestReport → notifyWithReport), so
+  // the hold and any attribution disagreement have to be here or they reach
+  // nobody — this agent runs unattended from cron and its stdout is read by no
+  // one. Both blocks vanish entirely on a clean run.
+  const holdLines = [...renderHoldLines(held), ...renderDisagreementLines(hold)];
+  if (holdLines.length) {
+    lines.push('## Cluster hold');
+    lines.push('');
+    for (const l of holdLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
+
   lines.push('---');
   lines.push('');
 
@@ -584,11 +626,19 @@ async function main() {
   if (!apply && results.length > 0) {
     console.log(`  Run with --apply to push changes to Shopify`);
   }
+
+  // Returned so the caller can put the held count in the notify subject. A hold
+  // is the policy working, so it stays on the normal deferred success path —
+  // never `immediate: true`, never `status: 'error'`.
+  return { held };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main()
-    .then(() => notifyLatestReport('Meta Optimizer completed', join(ROOT, 'data', 'reports', 'meta-optimizer')))
+    .then((outcome) => notifyLatestReport(
+      `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}`,
+      join(ROOT, 'data', 'reports', 'meta-optimizer'),
+    ))
     .catch((err) => {
       notify({ subject: 'Meta Optimizer failed', body: err.message || String(err), status: 'error' });
       console.error('Error:', err.message);
