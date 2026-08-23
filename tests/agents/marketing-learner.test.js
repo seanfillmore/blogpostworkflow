@@ -266,12 +266,21 @@ const VIDEO = {
   assert.match(p, /required.*even when action is "edit"/i, 'states the description requirement is unconditional on action');
 }
 {
+  // The extractor is shown each skill's CLAIMS, not its body — enough to edit rather than
+  // duplicate, without shipping 94% of the prompt as skill text. See
+  // renderInventoryForExtraction for why headings are the right cut.
   const p = buildExtractionPrompt({
     video: VIDEO,
-    inventory: [{ name: 'marketing-offers', description: 'Offer construction', path: 'x', content: 'BODY_OF_EXISTING_SKILL' }],
+    inventory: [{
+      name: 'marketing-offers', description: 'Offer construction', path: 'x',
+      content: '---\nname: marketing-offers\ndescription: Offer construction\n---\n\n'
+        + '## AN_EXISTING_CLAIM.\n\n**Why it works:** BODY_OF_EXISTING_SKILL\n',
+    }],
   });
   assert.match(p, /marketing-offers/, 'lists the existing skill');
-  assert.match(p, /BODY_OF_EXISTING_SKILL/, 'includes existing skill content so it edits rather than duplicates');
+  assert.match(p, /Offer construction/, 'lists its description — what triggering matches on');
+  assert.match(p, /AN_EXISTING_CLAIM/, 'lists its claims so the model edits rather than duplicates');
+  assert.ok(!p.includes('BODY_OF_EXISTING_SKILL'), 'but not the body behind each claim');
 }
 
 // ── validateExtraction ──────────────────────────────────────────────────────
@@ -395,6 +404,69 @@ assert.throws(
   /mechanism is required/,
   'tactic missing a mechanism is rejected'
 );
+
+// ── renderInventoryForExtraction ────────────────────────────────────────────
+// The extractor is shown claim HEADINGS, not full skill bodies. Bodies were 94% of the
+// prompt (144k of 153k tokens on a 25-skill fleet) and, because the chunk cache keys on
+// what the prompt contains, any successful merge invalidated every cached chunk of every
+// source. Headings are the right cut: the heading IS the claim, and duplication is judged
+// against claims.
+{
+  const { renderInventoryForExtraction, liveTacticHeadings } =
+    await import('../../lib/marketing-learner.js');
+
+  const skill = [
+    '---', 'name: marketing-thing', 'description: does a thing', '---', '',
+    '# Thing', '',
+    '## First live claim.', '', '**Why it works:** a long body that must NOT be shipped.', '',
+    '*Source: X — "Y" (book, part 1 of 2)*', '',
+    '## Second live claim.', '', '**Why it works:** another long body.', '',
+    '## Falsified', '', 'Tried here and did not work.', '',
+    '### A dead claim.', '**Falsified 2026-01-01:** it did not work.', '',
+  ].join('\n');
+
+  const heads = liveTacticHeadings(skill);
+  assert.deepEqual(heads, ['First live claim.', 'Second live claim.'],
+    'live headings are the ## claims');
+  assert.ok(!heads.includes('Falsified'), 'the graveyard heading is not a claim');
+  assert.ok(!heads.some((h) => /dead claim/i.test(h)),
+    'a falsified claim is not offered as live — listing it would invite an edit to a dead tactic');
+
+  const block = renderInventoryForExtraction([
+    { name: 'marketing-thing', description: 'does a thing', content: skill },
+  ]);
+  assert.match(block, /marketing-thing/, 'names the skill');
+  assert.match(block, /does a thing/, 'carries the description, which is what triggering matches on');
+  assert.match(block, /- First live claim\./, 'lists each claim');
+  assert.ok(!block.includes('must NOT be shipped'), 'bodies are excluded');
+  assert.ok(block.length < skill.length, 'the projection is smaller than the source skill');
+
+  // A skill with no tactics yet must still appear — otherwise the extractor cannot see
+  // that the name is taken and proposes a near-duplicate skill.
+  const empty = renderInventoryForExtraction([
+    { name: 'marketing-empty', description: 'nothing yet', content: '---\nname: marketing-empty\ndescription: nothing yet\n---\n\n# Empty\n' },
+  ]);
+  assert.match(empty, /marketing-empty/, 'an empty skill is still listed');
+  assert.match(empty, /no tactics recorded yet/, 'and says so explicitly');
+
+  assert.match(renderInventoryForExtraction([]), /no marketing skills exist yet/,
+    'an empty fleet keeps its original wording');
+}
+
+// The prompt and the cache fingerprint must read the SAME projection. Deriving them
+// separately is how a cache starts keying on something the prompt does not contain.
+{
+  const { renderInventoryForExtraction, buildExtractionPrompt } =
+    await import('../../lib/marketing-learner.js');
+  const inv = [{
+    name: 'marketing-x', description: 'd',
+    content: '---\nname: marketing-x\ndescription: d\n---\n\n## A claim here.\n\n**Why it works:** body text ONLYINBODY.\n',
+  }];
+  const prompt = buildExtractionPrompt({ video: VIDEO, inventory: inv });
+  assert.ok(prompt.includes(renderInventoryForExtraction(inv)),
+    'the prompt embeds the projection verbatim, so hashing it keys on what was actually sent');
+  assert.ok(!prompt.includes('ONLYINBODY'), 'skill bodies do not reach the extraction prompt');
+}
 
 // ── extractTactics ──────────────────────────────────────────────────────────
 // Extraction streams, for the same reason consolidation does: the budget it needs
@@ -2302,6 +2374,59 @@ import {
     () => validateSkillEdit(staged, unparked, { supersedes: 'traffic phase opened; tactic is now live' }),
     'an explicit supersedes reason unparks it',
   );
+}
+
+// A skill whose headings are a numbered sequence renumbers its own later steps whenever a
+// merge inserts one in the middle. "Step 5 — X" legitimately becomes "Step 7 — X" with the
+// marker intact, and matching staged tactics on the raw claim read that as an unpark. The
+// false positive blocked every merge into marketing-performance-pattern-analysis — the
+// fleet's only numbered skill — and killed two ingests before it was diagnosed.
+{
+  const { validateSkillEdit, normalizeStagedClaim } = await import('../../lib/marketing-learner.js');
+
+  const mk = (n, extra = '') => [
+    '---', 'name: marketing-steps', 'description: d', '---', '', '# Steps', '',
+    '## Step 1 — name the constraint.', '', '**Why it works:** body.', '', '*Source: A — "B" (book)*', '',
+    `## Step ${n} — read a high conversion rate as a narrow-funnel symptom.`, '',
+    '**Stage:** scale', '', '**Why it works:** body.', '', '*Source: A — "B" (book)*', '', extra,
+  ].join('\n');
+  const INSERTED = '## Step 9 — a newly adopted tactic.\n\n**Why it works:** b.\n\n*Source: A — "B" (book)*\n';
+  const before = mk(5);
+
+  assert.doesNotThrow(
+    () => validateSkillEdit(before, mk(7, INSERTED)),
+    'renumbering a staged tactic while keeping its marker is not an unpark',
+  );
+  assert.doesNotThrow(
+    () => validateSkillEdit(before, mk(5, INSERTED)),
+    'the ordinary same-number case still passes',
+  );
+
+  // The fallback must not mask real damage. It only consults tactics that are STAGED in
+  // the replacement, so a dropped marker is absent from both sets however it was numbered.
+  assert.throws(
+    () => validateSkillEdit(before, mk(7, INSERTED).replace('**Stage:** scale\n', '')),
+    /unparks/,
+    'renumbering AND dropping the marker is still refused',
+  );
+  assert.throws(
+    () => validateSkillEdit(before, mk(5, INSERTED).replace('**Stage:** scale\n', '')),
+    /unparks/,
+    'dropping the marker without renumbering is still refused',
+  );
+
+  // Narrow by construction: only an ordinal prefix is stripped, so two different claims
+  // never collapse onto one key.
+  assert.equal(normalizeStagedClaim('Step 7 — read a high rate.'), 'read a high rate.');
+  assert.equal(normalizeStagedClaim('Step 12: read a high rate.'), 'read a high rate.');
+  assert.equal(normalizeStagedClaim('read a high rate.'), 'read a high rate.');
+  assert.notEqual(
+    normalizeStagedClaim('Step 1 — name the constraint.'),
+    normalizeStagedClaim('Step 1 — read a high rate.'),
+    'distinct claims stay distinct after normalizing',
+  );
+  assert.equal(normalizeStagedClaim('Stepping back — a claim.'), 'stepping back — a claim.',
+    'only a real ordinal is stripped, not any word beginning "step"');
 }
 
 console.log('✓ marketing-learner staged-tactic tests pass');
