@@ -1,6 +1,6 @@
 ---
 name: marketing-upsell-offer-design
-description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, or in a follow-up email once the buyer has felt the problem; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
+description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, on the opt-in confirmation page after a lead magnet or giveaway entry, or in a follow-up email once the buyer has felt the problem; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
 ---
 
 # Upsell Offer Design
@@ -25,6 +25,16 @@ description: Use when designing the second ask in a purchase path rather than th
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
+## Send lead-magnet and giveaway opt-ins to a thank-you page that immediately presents the paid offer with a short video explaining how it works — and keep the lead magnet topically tied to the content that advertised it.
+
+**Why it works:** The moment right after opt-in is peak intent and costs nothing to use; a confirmation page that only says 'check your email' throws that moment away. A lead magnet that matches the ad or content that drove it also pre-qualifies the lead, so the thank-you-page pitch lands on someone who has already self-identified as interested in that specific problem.
+
+**Evidence offered:** Assertion only, described as the author's own funnel structure.
+
+**Fit here (8/10):** Meta spend at $30/day is being pointed at a soap giveaway, so a giveaway entry confirmation page is about to exist and is currently the highest-leverage unbuilt surface in the funnel. No other claim here covers the post-opt-in, pre-purchase thank-you page — the rest of this skill covers the post-purchase one only. A solo operator can build the page and shoot the explainer clip on a phone without a team, at zero incremental cost against the ad spend already committed. The relevance half also constrains the giveaway itself: the prize and the follow-on offer should be the same problem (deodorant, not a generic gift card), or the opt-ins arrive unqualified.
+
+*Source: Alex Hormozi — "$100M Leads" (book, part 6 of 16)*
+
 ## Don't make the buyer re-enter payment details — close on the card already on file.
 
 **Why it works:** Re-entering payment is friction at the exact moment of highest intent, and choosing a card, retrieving it and re-confronting past spending decisions is a real cost separate from price. Referencing an existing method eliminates that cost and converts a decided buyer instead of losing them to the mechanics of paying.
@@ -41,7 +51,7 @@ description: Use when designing the second ask in a purchase path rather than th
 
 **Evidence offered:** Stated as a three-item failure list; assertion only.
 
-**Fit here (7/10):** This is the timing rule that decides which surface each cross-sell belongs on: 'more of the same' (a multipack) belongs in the cart because the problem is running out, while a residue remover or body wash belongs in a post-purchase email 2–3 weeks in, once the transition period has actually been experienced. That sequencing is free, needs no attribution, and aims at the 18–22.5% repeat rate. Not higher because at ~54 orders/month RSC can't A/B the timing and must place offers by judgment.
+**Fit here (7/10):** This is the timing rule that decides which surface each cross-sell belongs on: 'more of the same' (a multipack) belongs in the cart because the problem is running out, while a residue remover or body wash belongs in a post-purchase email 2–3 weeks in, once the transition period has actually been experienced. The same test governs the opt-in thank-you page: a giveaway entrant has felt the deodorant problem (that's why they entered) but has felt nothing downstream of it, so that page should pitch the core offer, not an accessory. That sequencing is free, needs no attribution, and aims at the 18–22.5% repeat rate. Not higher because at ~54 orders/month RSC can't A/B the timing and must place offers by judgment.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -61,7 +71,7 @@ description: Use when designing the second ask in a purchase path rather than th
 
 **Evidence offered:** Presented as a taxonomy plus a staging discipline ('measure in quarters, never implement the whole model at once'); assertion, no data.
 
-**Fit here (7/10):** A coverage checklist a solo operator can run in an hour at zero cost, and it maps cleanly onto a 12-SKU consumable catalog: attraction = the low-COGS lip balm or travel size, upsell = multi-unit or mixed-SKU pack above the $50.46 AOV, downsell = single unit when the bundle is declined, continuity = a refill cadence. The staging half matches the gated Tracking → CRO → Offer/AOV → Traffic sequence directly — the failure mode here is stacking a bundle, a subscription, a popup incentive and a post-purchase upsell in the same month and learning nothing at ~54 orders/month. Not higher because it is a taxonomy and a discipline, not a revenue mechanism: it tells you what is missing, not what to build.
+**Fit here (7/10):** A coverage checklist a solo operator can run in an hour at zero cost, and it maps cleanly onto a 12-SKU consumable catalog: attraction = the low-COGS lip balm, travel size, or the soap giveaway now running on Meta, upsell = multi-unit or mixed-SKU pack above the $50.46 AOV, downsell = single unit when the bundle is declined, continuity = a refill cadence. The staging half matches the gated Tracking → CRO → Offer/AOV → Traffic sequence directly — the failure mode here is stacking a bundle, a subscription, a popup incentive and a post-purchase upsell in the same month and learning nothing at ~54 orders/month. Not higher because it is a taxonomy and a discipline, not a revenue mechanism: it tells you what is missing, not what to build.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 2 of 11)*
 
