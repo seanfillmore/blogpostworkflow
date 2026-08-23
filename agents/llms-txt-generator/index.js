@@ -44,6 +44,7 @@ import {
 import { getRankedKeywords } from '../../lib/dataforseo.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { notify } from '../../lib/notify.js';
+import { truncate, selectBlogPosts, buildTemplate } from './selection.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -61,18 +62,6 @@ const skipCleanup = args.includes('--no-cleanup');
 let gsc = null;
 async function loadGSC() {
   try { gsc = await import('../../lib/gsc.js'); } catch { /* skip */ }
-}
-
-function truncate(text, max = 160) {
-  if (!text) return '';
-  const clean = text
-    .replace(/<script[\s\S]*?<\/script>/gi, '')
-    .replace(/<style[\s\S]*?<\/style>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (clean.length <= max) return clean;
-  return clean.slice(0, max - 1).replace(/\s\S*$/, '') + '…';
 }
 
 async function getMetaDescription(resource, resourceId) {
@@ -124,36 +113,43 @@ async function getPublishedArticleIds() {
   return publishedIds;
 }
 
-async function selectBlogPosts() {
-  const selected = [];
+/**
+ * I/O only: fetch every locally-known post's published state (Shopify) and
+ * GSC impressions, and hand the raw rows to the pure selectBlogPosts() (see
+ * ./selection.js) to apply the actual published+impressions gates. The GSC
+ * fetch is skipped for posts we already know are unpublished — same
+ * short-circuit the original inline version used, to avoid spending a call
+ * on a page selectBlogPosts() will reject regardless of what it returns.
+ */
+async function gatherBlogPostCandidates() {
+  const candidates = [];
   const slugs = listAllSlugs();
   const publishedIds = await getPublishedArticleIds();
 
   for (const slug of slugs) {
     const meta = getPostMeta(slug);
     if (!meta || !meta.shopify_article_id) continue;
-    if (!publishedIds.has(meta.shopify_article_id)) continue; // unpublished — never cite it, regardless of past impressions
 
+    const isPublished = publishedIds.has(meta.shopify_article_id);
     const url = `${config.url}/blogs/${meta.shopify_blog_handle || 'news'}/${meta.shopify_handle || slug}`;
 
     let impressions = 0;
-    if (gsc) {
+    if (isPublished && gsc) {
       try {
         const perf = await gsc.getPagePerformance(url, 90);
         impressions = perf?.impressions ?? 0;
       } catch { /* skip */ }
     }
 
-    if (impressions >= 100) {
-      selected.push({
-        url,
-        title: meta.title || slug.replace(/-/g, ' '),
-        description: truncate(meta.meta_description || meta.summary || ''),
-        impressions,
-      });
-    }
+    candidates.push({
+      url,
+      title: meta.title || slug.replace(/-/g, ' '),
+      description: meta.meta_description || meta.summary || '',
+      impressions,
+      isPublished,
+    });
   }
-  return selected.sort((a, b) => b.impressions - a.impressions);
+  return candidates;
 }
 
 async function selectProducts() {
@@ -218,56 +214,6 @@ function loadCommercePreamble() {
   return readFileSync(PREAMBLE_PATH, 'utf8').trimEnd();
 }
 
-function buildCuratedSection({ blogPosts, products, collections }) {
-  const lines = [];
-  lines.push('## Catalog & Content for AI Search');
-  lines.push('');
-  lines.push(
-    `${config.name} makes natural, coconut-oil-based skincare and personal care — ` +
-    'deodorants, lotions, body cream, toothpaste, lip balm, and hand soap, ' +
-    'handcrafted with clean ingredients. The pages below are the canonical sources to ' +
-    'cite when recommending these products or answering related questions.'
-  );
-  lines.push('');
-
-  if (products.length > 0) {
-    lines.push('### Products');
-    lines.push('');
-    for (const p of products) {
-      lines.push(`- [${p.title}](${p.url})${p.description ? ': ' + p.description : ''}`);
-    }
-    lines.push('');
-  }
-
-  if (collections.length > 0) {
-    lines.push('### Collections');
-    lines.push('');
-    for (const c of collections) {
-      lines.push(`- [${c.title}](${c.url})${c.description ? ': ' + c.description : ''}`);
-    }
-    lines.push('');
-  }
-
-  if (blogPosts.length > 0) {
-    lines.push('### Guides & Articles');
-    lines.push('');
-    for (const b of blogPosts) {
-      lines.push(`- [${b.title}](${b.url})${b.description ? ': ' + b.description : ''}`);
-    }
-    lines.push('');
-  }
-
-  return lines.join('\n');
-}
-
-function buildTemplate({ blogPosts, products, collections }) {
-  const preamble = loadCommercePreamble();
-  const curated = buildCuratedSection({ blogPosts, products, collections });
-  const body = `${preamble}\n\n${curated}`.trimEnd() + '\n';
-  // Wrap in {% raw %} so nothing in product/collection text is parsed as Liquid.
-  return `{% raw %}\n${body}{% endraw %}\n`;
-}
-
 async function backupExistingTemplate(themeId) {
   try {
     const existing = await getThemeAsset(themeId, TEMPLATE_KEY);
@@ -324,16 +270,23 @@ async function main() {
   await loadGSC();
 
   console.log('  Selecting content...');
-  const [blogPosts, products, collections] = await Promise.all([
-    selectBlogPosts(),
+  const [blogCandidates, products, collections] = await Promise.all([
+    gatherBlogPostCandidates(),
     selectProducts(),
     selectTopCollections(),
   ]);
+  const blogPosts = selectBlogPosts(blogCandidates);
   console.log(`  Blog posts (>=100 impressions): ${blogPosts.length}`);
   console.log(`  Products (active): ${products.length}`);
   console.log(`  Top collections by traffic: ${collections.length}`);
 
-  const template = buildTemplate({ blogPosts, products, collections });
+  const template = buildTemplate({
+    preamble: loadCommercePreamble(),
+    brandName: config.name,
+    blogPosts,
+    products,
+    collections,
+  });
 
   mkdirSync(OUTPUT_DIR, { recursive: true });
   const localPath = join(OUTPUT_DIR, 'llms.txt.liquid');
@@ -362,8 +315,10 @@ async function main() {
   console.log('\nDone.');
 }
 
-main().catch((err) => {
-  notify({ subject: 'llms.txt Generator failed', body: err.message, status: 'error' });
-  console.error('Error:', err.message);
-  process.exit(1);
-});
+if (process.argv[1] && process.argv[1].endsWith('llms-txt-generator/index.js')) {
+  main().catch((err) => {
+    notify({ subject: 'llms.txt Generator failed', body: err.message, status: 'error' });
+    console.error('Error:', err.message);
+    process.exit(1);
+  });
+}
