@@ -19,6 +19,9 @@
  *   node agents/meta-optimizer/index.js --min-impr 200 # higher impression threshold
  *   node agents/meta-optimizer/index.js --max-ctr 0.03 # stricter CTR threshold
  *   node agents/meta-optimizer/index.js --limit 20                # max pages to process
+ *   node agents/meta-optimizer/index.js --include-held            # also rewrite $0-cluster queries
+ *                                                                 # (held by lib/cluster-hold.js; the
+ *                                                                 #  hold is applied BEFORE --limit)
  *   node agents/meta-optimizer/index.js --refresh-stale-years     # scan all posts for stale years (dry run)
  *   node agents/meta-optimizer/index.js --refresh-stale-years --apply  # scan + push refreshed titles to Shopify
  */
@@ -29,11 +32,18 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getPostMeta, getMetaPath } from '../../lib/posts.js';
+import { mayTestMetadata } from '../../lib/post-lock.js';
+import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
+import { holdMetaCandidates } from './lib/hold.js';
+import {
+  loadClusterHold, holdBanner, renderHoldLines, renderDisagreementLines,
+  holdSummaryFragment, HOLD_FLAG,
+} from '../../lib/cluster-hold.js';
 import { buildPromptGrounding } from './lib/grounding.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -73,6 +83,7 @@ function getArg(flag) {
 
 const apply = args.includes('--apply');
 const refreshStaleYearsMode = args.includes('--refresh-stale-years');
+const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const minImpressions = parseFloat(getArg('--min-impr') ?? '100');
 const maxCTR = parseFloat(getArg('--max-ctr') ?? '0.05');
 const limitArg = parseInt(getArg('--limit') ?? '25', 10);
@@ -386,10 +397,49 @@ async function main() {
     if (!kwToPage.has(p.keyword)) kwToPage.set(p.keyword, p.url);
   }
 
+  // ── $0-cluster hold, applied to the pick list BEFORE the --limit cap ───────
+  // The cap is the whole reason this has to happen here. The weekly cron is
+  // `--apply --limit 5`, spent in sortByValidation order, and on the real
+  // 2026-08-23 pool four of those five slots fell in the held cluster while the
+  // biggest CTR opportunity on the site ranked SIXTH and was never reached at
+  // all (it moves to second once the held queries step aside). Holding after the cap would
+  // "skip" them and still let them eat the budget — the bug this rule exists to
+  // prevent, wearing different clothes. A missing or stale seo-impact report
+  // holds nothing (lib/seo-impact-freshness.js); the banner says which.
+  const hold = loadClusterHold({ root: ROOT });
+  const banner = holdBanner(hold);
+  if (banner) console.log(`${banner}\n`);
+
+  const { kept: eligibleCandidates, held } = holdMetaCandidates(sortedCandidates, hold, {
+    includeHeld: INCLUDE_HELD,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+  if (held.length) console.log('');
+
   const results = [];
   let processed = 0;
 
-  for (const item of sortedCandidates) {
+  // ── A/B tracker, loaded up front and written after EVERY applied change ────
+  // It used to be written once, after the whole loop. A crash or a failed later
+  // step therefore left Shopify already mutated with no baseline recorded — and
+  // an unrecorded mutation is one meta-ab-checker will never evaluate and never
+  // revert. That is tolerable on an ordinary page and not tolerable on a locked
+  // winner, whose whole safety case is auto-revert, so the write moved inside.
+  // NOTE the directory: the tracker lives under data/reports/meta-ab/, which is
+  // where agents/meta-ab-checker reads it from — NOT this agent's own
+  // REPORTS_DIR. The old code mkdir'd REPORTS_DIR and then wrote here, which
+  // worked only because something else had already created meta-ab/.
+  const abTrackerDir = join(ROOT, 'data', 'reports', 'meta-ab');
+  const abTrackerPath = join(abTrackerDir, 'meta-ab-tracker.json');
+  let tracker = [];
+  if (existsSync(abTrackerPath)) {
+    try { tracker = JSON.parse(readFileSync(abTrackerPath, 'utf8')); } catch {}
+  }
+  const testedAt = new Date().toISOString().slice(0, 10);
+  let trackerWrites = 0;
+
+  for (const item of eligibleCandidates) {
     if (processed >= limitArg) break;
 
     const { keyword, impressions, ctr, position } = item;
@@ -402,14 +452,19 @@ async function main() {
     const article = articleMap.get(pageUrl);
     if (!article) continue;
 
-    // Winner protection
-    try {
-      const lockMeta = JSON.parse(readFileSync(join(ROOT, 'data', 'posts', `${article.handle}.json`), 'utf8'));
-      if (lockMeta.legacy_locked) {
-        console.log(`  [skip] "${keyword}": legacy winner (locked)`);
-        continue;
-      }
-    } catch { /* proceed */ }
+    // Winner protection — deliberately does NOT block here. `legacy_locked`
+    // guards the BODY; a title/meta rewrite leaves the body untouched, is two
+    // reversible fields, and is auto-reverted by meta-ab-checker if CTR
+    // regresses. Blocking it meant a winner could never have its CTR improved,
+    // which is the main lever a winner has left. See lib/post-lock.js.
+    //
+    // (This block used to read a FLAT data/posts/<handle>.json, a path that has
+    // never existed in this layout, so it threw on every post and the guard was
+    // inert. The lock is real now — it is just pointed at body rewrites.)
+    const metaLock = mayTestMetadata(pageUrl);
+    if (metaLock.state === 'locked') {
+      console.log(`  [winner] "${keyword}": ${metaLock.slug} is a locked winner — metadata test allowed, body untouched`);
+    }
 
     const currentTitle = article.title || '';
     const currentMeta = article.summary_html?.replace(/<[^>]+>/g, '').trim() || '';
@@ -441,6 +496,19 @@ async function main() {
 
       // Apply to Shopify if requested
       if (apply) {
+        // Capture the baseline on the SAME basis meta-ab-checker will measure
+        // (page-level, 28 days) and BEFORE the mutation, or the "before" number
+        // is already contaminated by the change. Best-effort: a failure here
+        // leaves the checker on the legacy keyword-level baseline rather than
+        // blocking the run.
+        let pageCtr = null;
+        try {
+          const perf = await gsc.getPagePerformance(pageUrl, 28);
+          pageCtr = perf?.ctr ?? null;
+        } catch (e) {
+          console.warn(`    ! baseline page CTR unavailable (${e.message}) — falling back to keyword CTR`);
+        }
+
         try {
           await updateArticle(article.blogId, article.id, {
             title: proposed.title,
@@ -451,6 +519,36 @@ async function main() {
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
         }
+
+        // Persist the baseline immediately — see the note where `tracker` is
+        // loaded. mayTestMetadata().requiresAbTracking is true for a locked
+        // winner (and when the lock could not be read); a failure to record it
+        // there is loud, because auto-revert is the reason the change was
+        // permitted at all.
+        if (result.applied) {
+          tracker = upsertTrackerEntry(tracker, buildTrackerEntry(result, testedAt, {
+            pageCtr,
+            locked: metaLock.state === 'locked',
+          }));
+          try {
+            mkdirSync(abTrackerDir, { recursive: true });
+            writeFileSync(abTrackerPath, JSON.stringify(tracker, null, 2));
+            trackerWrites++;
+          } catch (e) {
+            const msg = `A/B baseline NOT recorded for ${pageUrl}: ${e.message}`;
+            if (metaLock.requiresAbTracking) {
+              console.error(`    ✗ ${msg} — this change on a protected page will never be auto-reverted`);
+              notify({
+                subject: 'Meta Optimizer: unrecorded change on a locked winner',
+                body: msg,
+                status: 'error',
+                immediate: true,
+              });
+            } else {
+              console.error(`    ✗ ${msg}`);
+            }
+          }
+        }
       }
 
       results.push(result);
@@ -460,35 +558,9 @@ async function main() {
     }
   }
 
-  // ── Save A/B test baseline (when applied) ─────────────────────────────────
-
   if (apply) {
-    const abTrackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
-    let tracker = [];
-    if (existsSync(abTrackerPath)) {
-      try { tracker = JSON.parse(readFileSync(abTrackerPath, 'utf8')); } catch {}
-    }
-    const testedAt = new Date().toISOString().slice(0, 10);
-    for (const r of results.filter((r) => r.applied)) {
-      // Replace existing entry for this URL if present
-      tracker = tracker.filter((e) => e.pageUrl !== r.pageUrl);
-      tracker.push({
-        keyword: r.keyword,
-        pageUrl: r.pageUrl,
-        originalTitle: r.currentTitle,
-        proposedTitle: r.proposedTitle,
-        originalMeta: r.currentMeta,
-        proposedMeta: r.proposedMeta,
-        baselineCtr: r.ctr,
-        baselineImpressions: r.impressions,
-        baselinePosition: r.position,
-        validation_source: r.validation_source ?? null,
-        testedAt,
-      });
-    }
-    mkdirSync(REPORTS_DIR, { recursive: true });
-    writeFileSync(abTrackerPath, JSON.stringify(tracker, null, 2));
-    console.log(`\n  A/B baseline saved: ${abTrackerPath} (${results.filter((r) => r.applied).length} entries)`);
+    const appliedCount = results.filter((r) => r.applied).length;
+    console.log(`\n  A/B baselines saved: ${abTrackerPath} (${trackerWrites}/${appliedCount} applied changes recorded)`);
   }
 
   // ── Build report ──────────────────────────────────────────────────────────
@@ -502,6 +574,19 @@ async function main() {
   lines.push(`**Criteria:** ${minImpressions}+ impressions, < ${(maxCTR * 100).toFixed(0)}% CTR (90 days)`);
   lines.push(`**Pages optimized:** ${results.length}`);
   lines.push('');
+
+  // The digest body IS this report (notifyLatestReport → notifyWithReport), so
+  // the hold and any attribution disagreement have to be here or they reach
+  // nobody — this agent runs unattended from cron and its stdout is read by no
+  // one. Both blocks vanish entirely on a clean run.
+  const holdLines = [...renderHoldLines(held), ...renderDisagreementLines(hold)];
+  if (holdLines.length) {
+    lines.push('## Cluster hold');
+    lines.push('');
+    for (const l of holdLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
+
   lines.push('---');
   lines.push('');
 
@@ -541,11 +626,19 @@ async function main() {
   if (!apply && results.length > 0) {
     console.log(`  Run with --apply to push changes to Shopify`);
   }
+
+  // Returned so the caller can put the held count in the notify subject. A hold
+  // is the policy working, so it stays on the normal deferred success path —
+  // never `immediate: true`, never `status: 'error'`.
+  return { held };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main()
-    .then(() => notifyLatestReport('Meta Optimizer completed', join(ROOT, 'data', 'reports', 'meta-optimizer')))
+    .then((outcome) => notifyLatestReport(
+      `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}`,
+      join(ROOT, 'data', 'reports', 'meta-optimizer'),
+    ))
     .catch((err) => {
       notify({ subject: 'Meta Optimizer failed', body: err.message || String(err), status: 'error' });
       console.error('Error:', err.message);
