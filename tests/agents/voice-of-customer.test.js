@@ -32,16 +32,17 @@ function stubSerpResult() {
   };
 }
 
-// Shaped like a real Zigpoll open-ended response: an "Other" write-in on the
-// post-purchase survey, with the order's line items in metadata as one
-// comma-separated string of product titles.
+// Field-for-field the shape a real write-in has, read off the live account
+// 2026-08-24: `valueType: 'dynamic-response'`, NO `answers` key at all, and
+// `metadata.shopify_line_items` as one comma-separated string of product titles.
+// An earlier version of this fixture guessed `valueType: 'vote'` with an
+// `answers: [{ title: 'Other' }]` array — neither is what the API returns.
 function stubZigpollResponses() {
   return [{
     _id: 'zp1',
     createdAt: '2026-07-30T13:47:31.000Z',
     response: 'Originally found on Amazon',
-    answers: [{ handle: 'other', title: 'Other' }],
-    valueType: 'vote',
+    valueType: 'dynamic-response',
     metadata: {
       shopify_line_items: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients - Pure Unscented',
     },
@@ -50,9 +51,9 @@ function stubZigpollResponses() {
 
 // Every collectCorpus test supplies all four sources, so each one isolates the
 // single variable it is about. Zigpoll also falls back to
-// process.env.ZIGPOLL_API_TOKEN, so a test must own that variable rather than
+// process.env.ZIGPOLL_API_KEY, so a test must own that variable rather than
 // assume the developer has not exported it — same reason as TAVILY_API_KEY.
-const FULL_ENV = { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test', ZIGPOLL_API_TOKEN: 'zp-test' };
+const FULL_ENV = { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test', ZIGPOLL_API_KEY: 'zp-test' };
 
 function fullDeps(overrides = {}) {
   return {
@@ -280,7 +281,7 @@ test('collectCorpus sets partial:true and still returns Judge.me records when TA
   delete process.env.TAVILY_API_KEY;
   try {
     const corpus = await collectCorpus({
-      env: { JUDGEME_API_TOKEN: 'x', ZIGPOLL_API_TOKEN: 'zp-test' }, // no TAVILY_API_KEY
+      env: { JUDGEME_API_TOKEN: 'x', ZIGPOLL_API_KEY: 'zp-test' }, // no TAVILY_API_KEY
       deps: fullDeps(),
     });
     assert.equal(corpus.partial, true);
@@ -360,11 +361,26 @@ test('collectCorpus drops a zigpoll fixed-choice vote, keeping only free text', 
       fetchZigpoll: async () => [{
         ...stubZigpollResponses()[0],
         response: 'Google',
-        answers: [{ handle: 'google', title: 'Google' }],
+        valueType: 'vote',
       }],
     }),
   });
   assert.ok(!corpus.records.some((r) => r.source === 'zigpoll'));
+});
+
+// Regression: a real customer typed "Google" into the Other box on a survey
+// that already offered Google as an option. Screening free text by comparing it
+// against answer-option titles would have silently discarded that verbatim.
+test('collectCorpus keeps a write-in whose text matches an existing option title', async () => {
+  const corpus = await collectCorpus({
+    env: FULL_ENV,
+    deps: fullDeps({
+      fetchZigpoll: async () => [{ ...stubZigpollResponses()[0], response: 'Google' }],
+    }),
+  });
+  const zp = corpus.records.filter((r) => r.source === 'zigpoll');
+  assert.equal(zp.length, 1);
+  assert.equal(zp[0].text, 'Google');
 });
 
 test('collectCorpus sets partial:true when the zigpoll call throws, without aborting other sources', async () => {
@@ -377,19 +393,19 @@ test('collectCorpus sets partial:true when the zigpoll call throws, without abor
   assert.ok(corpus.records.some((r) => r.source === 'serp'), 'serp records should still be present');
 });
 
-test('collectCorpus sets partial:true when ZIGPOLL_API_TOKEN is missing', async () => {
-  const saved = process.env.ZIGPOLL_API_TOKEN;
-  delete process.env.ZIGPOLL_API_TOKEN;
+test('collectCorpus sets partial:true when ZIGPOLL_API_KEY is missing', async () => {
+  const saved = process.env.ZIGPOLL_API_KEY;
+  delete process.env.ZIGPOLL_API_KEY;
   try {
     const corpus = await collectCorpus({
-      env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' }, // no ZIGPOLL_API_TOKEN
+      env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' }, // no ZIGPOLL_API_KEY
       deps: fullDeps({ fetchZigpoll: async () => { throw new Error('must not be called'); } }),
     });
     assert.equal(corpus.partial, true);
     assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
   } finally {
-    if (saved === undefined) delete process.env.ZIGPOLL_API_TOKEN;
-    else process.env.ZIGPOLL_API_TOKEN = saved;
+    if (saved === undefined) delete process.env.ZIGPOLL_API_KEY;
+    else process.env.ZIGPOLL_API_KEY = saved;
   }
 });
 

@@ -10,29 +10,39 @@ import {
 
 // ── responseText ─────────────────────────────────────────────────────────────
 
-test('responseText returns null for a plain fixed-choice vote', () => {
+test('responseText returns null for a fixed-choice vote', () => {
   // `response` echoes the option's own title — our copy, not the customer's.
   assert.equal(
-    responseText({ response: 'Very Satisfied', answers: [{ title: 'Very Satisfied' }], valueType: 'vote' }),
+    responseText({ response: 'Very Satisfied', valueType: 'vote' }),
     null,
   );
 });
 
-test('responseText keeps a write-in that differs from every option title', () => {
-  // The shape every real verbatim on this account has: an "Other" write-in,
-  // which Zigpoll records as BOTH a vote and free text.
+test('responseText keeps a dynamic-response write-in', () => {
+  // The shape every real verbatim on this account has, read off the live API
+  // 2026-08-24: valueType 'dynamic-response' and no `answers` key at all.
   assert.equal(
-    responseText({ response: 'Originally found on Amazon', answers: [{ title: 'Other' }], valueType: 'vote' }),
+    responseText({ response: 'Originally found on Amazon', valueType: 'dynamic-response' }),
     'Originally found on Amazon',
   );
 });
 
-test('responseText matches an option title case-insensitively', () => {
-  assert.equal(responseText({ response: 'google', answers: [{ title: 'Google' }] }), null);
+// Regression against a rule that looked reasonable and was wrong. Zigpoll's docs
+// say a write-in "other" "counts as a vote", which suggests screening free text
+// by comparing it against the answer options' titles. A real customer typed
+// "Google" into the Other box on a survey that already offered Google — that
+// rule would have discarded a genuine verbatim. valueType is the discriminator.
+test('responseText keeps a write-in whose text equals an option title', () => {
+  assert.equal(
+    responseText({ response: 'Google', valueType: 'dynamic-response', answers: [{ title: 'Google' }] }),
+    'Google',
+  );
 });
 
-test('responseText keeps free text when there are no answer components', () => {
-  assert.equal(responseText({ response: 'too expensive for me', valueType: 'text' }), 'too expensive for me');
+test('responseText keeps free text when valueType is absent', () => {
+  // The server-side filter=open-ended has already scoped the pull, so an
+  // unrecognised shape defaults to keeping the text rather than dropping it.
+  assert.equal(responseText({ response: 'too expensive for me' }), 'too expensive for me');
 });
 
 test('responseText returns null for empty or whitespace text', () => {
@@ -154,12 +164,36 @@ test('fetchResponses throws without an apiKey rather than calling out', async ()
   assert.equal(called, false);
 });
 
+// Regression, and the reason this is pinned: /accounts returns a BARE ARRAY,
+// not the { data: [...] } envelope /responses uses. Stubbing the wrapped shape
+// is what let the original version pass every unit test and then throw
+// "could not resolve an accountId" on its first live call.
+test('resolveAccountId reads the bare array /accounts actually returns', async () => {
+  const impl = async () => ({
+    ok: true,
+    status: 200,
+    json: async () => ([{ _id: '6855b8c3ca33d275edfcce04', title: 'realskincare-com' }]),
+  });
+  assert.equal(await resolveAccountId({ apiKey: 'k', fetchImpl: impl }), '6855b8c3ca33d275edfcce04');
+});
+
+test('resolveAccountId also accepts a wrapped envelope', async () => {
+  const impl = async () => ({ ok: true, status: 200, json: async () => ({ data: [{ _id: 'wrapped' }] }) });
+  assert.equal(await resolveAccountId({ apiKey: 'k', fetchImpl: impl }), 'wrapped');
+});
+
+test('resolveAccountId accepts an array of bare id strings', async () => {
+  // The shape /me carries in its `accounts` field.
+  const impl = async () => ({ ok: true, status: 200, json: async () => (['acct-as-string']) });
+  assert.equal(await resolveAccountId({ apiKey: 'k', fetchImpl: impl }), 'acct-as-string');
+});
+
 test('fetchResponses resolves the account id when none is supplied', async () => {
   const calls = [];
   const impl = async (url) => {
     calls.push(url);
     if (url.includes('/accounts')) {
-      return { ok: true, status: 200, json: async () => ({ data: [{ _id: 'discovered' }] }) };
+      return { ok: true, status: 200, json: async () => ([{ _id: 'discovered' }]) };
     }
     return { ok: true, status: 200, json: async () => ({ data: [], hasNextPage: false }) };
   };
@@ -169,6 +203,6 @@ test('fetchResponses resolves the account id when none is supplied', async () =>
 });
 
 test('resolveAccountId returns null when the account list is empty', async () => {
-  const impl = async () => ({ ok: true, status: 200, json: async () => ({ data: [] }) });
+  const impl = async () => ({ ok: true, status: 200, json: async () => ([]) });
   assert.equal(await resolveAccountId({ apiKey: 'k', fetchImpl: impl }), null);
 });

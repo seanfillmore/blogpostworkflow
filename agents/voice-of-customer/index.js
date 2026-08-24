@@ -135,9 +135,9 @@ export async function collectCorpus({ env, root = ROOT, deps = {} } = {}) {
   // Best-effort like every other external source: a missing key or a failed
   // request degrades the corpus to partial rather than failing the run, matching
   // how Tavily and DataForSEO are already handled.
-  const zigpollKey = e.ZIGPOLL_API_TOKEN || process.env.ZIGPOLL_API_TOKEN;
+  const zigpollKey = e.ZIGPOLL_API_KEY || process.env.ZIGPOLL_API_KEY;
   if (!zigpollKey) {
-    console.warn('  no ZIGPOLL_API_TOKEN — skipping survey responses');
+    console.warn('  no ZIGPOLL_API_KEY — skipping survey responses');
     partial = true;
   } else {
     try {
