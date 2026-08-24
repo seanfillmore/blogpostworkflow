@@ -43,6 +43,8 @@ import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
+import { partitionInternalLinkIssues, indexLinkResults } from '../../lib/internal-link-validation.js';
+import { productKeyFromLinks, resolveProductKey } from '../../lib/product-format.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -340,25 +342,30 @@ function getPillarSuggestions(clusters, linkedBlogUrls, postUrl) {
 
 // ── internal link validation ──────────────────────────────────────────────────
 
-function validateInternalLinks(categorised, sitemap, blogArticles) {
+function validateInternalLinks(categorised, sitemap, blogArticles, linkResults = []) {
   const sitemapUrls = new Set((sitemap?.pages || []).map((p) => p.url));
   const blogUrls = new Set(blogArticles.map((a) => a.url));
 
-  const issues = [];
+  const candidates = [];
 
   for (const link of [...categorised.internal.products, ...categorised.internal.collections]) {
     if (!sitemapUrls.has(link.href) && !sitemapUrls.has(link.href.replace(/\/$/, ''))) {
-      issues.push({ type: 'internal_not_in_sitemap', link });
+      candidates.push({ type: 'internal_not_in_sitemap', link });
     }
   }
 
   for (const link of categorised.internal.blog) {
     if (!blogUrls.has(link.href) && !blogUrls.has(link.href.replace(/\/$/, ''))) {
-      issues.push({ type: 'blog_not_in_index', link });
+      candidates.push({ type: 'blog_not_in_index', link });
     }
   }
 
-  return issues;
+  // Sitemap membership is not the same question as "does this link work". The
+  // live check above already followed redirects; a link it proved reachable is
+  // not broken, it is just a hop. Blocking on those held 12 of 17 merges on
+  // 2026-08-23 over 1,001 legacy collection links that all 301 to live pages.
+  // See lib/internal-link-validation.js.
+  return partitionInternalLinkIssues({ candidates, byHref: indexLinkResults(linkResults) });
 }
 
 // ── CTA check ─────────────────────────────────────────────────────────────────
@@ -666,7 +673,7 @@ ${editorialContent}`,
 
 // ── report builder ────────────────────────────────────────────────────────────
 
-function buildReport({ slug, meta, linkResults, internalIssues, sourceVerifications,
+function buildReport({ slug, meta, linkResults, internalIssues, internalAdvisories = [], sourceVerifications,
   topicalSuggestions, editorialReview, linkedBlogUrls, ctaResult, uncited = [] }) {
 
   const lines = [];
@@ -734,13 +741,25 @@ function buildReport({ slug, meta, linkResults, internalIssues, sourceVerificati
   // ── 2. Internal link validation ───────────────────────────────────────────
   lines.push('---\n## 2. Internal Link Validation\n');
   if (internalIssues.length === 0) {
-    lines.push('All internal product, collection, and blog links match the sitemap/blog index.\n');
+    lines.push('All internal product, collection, and blog links resolve.\n');
   } else {
-    lines.push('The following internal links could not be verified against the sitemap or blog index:\n');
+    lines.push('The following internal links are NOT in the sitemap/blog index **and did not resolve live** — these block:\n');
     for (const issue of internalIssues) {
       const label = issue.type === 'blog_not_in_index' ? 'Blog URL not in blog index' : 'URL not in sitemap';
       lines.push(`- **${label}:** \`${issue.link.href}\` (anchor: "${issue.link.text}")`);
     }
+    lines.push('');
+  }
+
+  if (internalAdvisories.length > 0) {
+    // Advisory, never blocking: these resolve to a live page via a redirect.
+    // Mostly legacy collection handles from the 62->5 cleanup. Worth tidying to
+    // drop the hop, but a working buy path is not a defect.
+    lines.push(`**Advisory — ${internalAdvisories.length} link(s) resolve via a redirect** (live and reachable; tidy to remove the hop):\n`);
+    for (const a of internalAdvisories.slice(0, 10)) {
+      lines.push(`- \`${a.link.href}\` (anchor: "${a.link.text}")`);
+    }
+    if (internalAdvisories.length > 10) lines.push(`- …and ${internalAdvisories.length - 10} more`);
     lines.push('');
   }
 
@@ -1016,9 +1035,38 @@ async function runEditor(htmlPath) {
     const oils = (p.variations || []).flatMap((v) => v.essential_oils || []);
     return { name: p.name, format: p.format, ingredients: [...new Set([...base, ...oils])] };
   }
-  const productKey = classifyPostProduct(keyword, slug);
+  // Load context data
+  const sitemap = loadSitemap();
+  const blogArticles = loadBlogIndex();
+  const topicalMap = loadTopicalMap();
+  const postMeta = getPostMeta(slug);
+
+  // Parse HTML
+  let $ = cheerio.load(html);
+  let workingHtml = html;
+  let allLinks = extractLinks($);
+  let categorised = categoriseLinks(allLinks);
+
+  // Which SKU is this post about? Two signals: what it is ABOUT (keyword/slug)
+  // and what it SELLS (its product CTA). The LINKED product wins for spec
+  // validation — validating against anything else invents format mismatches,
+  // which is exactly what blocked the tattoo-soap winner: it correctly
+  // recommends a foaming liquid soap and CTAs to that SKU, but its keyword
+  // ("best soap to use on new tattoo") resolved to the BAR spec.
+  // A disagreement is reported rather than discarded. See lib/product-format.js.
+  const textProductKey = classifyPostProduct(keyword, slug);
+  const linkProductKey = productKeyFromLinks(
+    [...categorised.internal.products].map((l) => l.href),
+    ingredients,
+  );
+  const resolvedProduct = resolveProductKey({ textKey: textProductKey, linkKey: linkProductKey });
+  const productKey = resolvedProduct.key;
   const isTopicalAuthority = productKey === null;
   const productIngredients = productKey ? flattenProduct(ingredients[productKey]) : null;
+  if (resolvedProduct.mismatch) {
+    const { fromText, fromLink } = resolvedProduct.mismatch;
+    console.log(`  ⚠ product mismatch: content reads as ${fromText}, but the CTA sells ${fromLink} — validating against ${fromLink}`);
+  }
 
   const formatNote = productIngredients?.format ? ` | Product format: ${productIngredients.format}` : '';
   const productIngredientsContext = productIngredients
@@ -1031,17 +1079,6 @@ async function runEditor(htmlPath) {
     console.log(`  Post type: product (${productKey})`);
   }
 
-  // Load context data
-  const sitemap = loadSitemap();
-  const blogArticles = loadBlogIndex();
-  const topicalMap = loadTopicalMap();
-  const postMeta = getPostMeta(slug);
-
-  // Parse HTML
-  let $ = cheerio.load(html);
-  let workingHtml = html;
-  let allLinks = extractLinks($);
-  let categorised = categoriseLinks(allLinks);
 
   // Build post URL — prefer shopify_handle since that's what the published
   // URL actually uses. Fall back to slug for unpublished drafts.
@@ -1148,8 +1185,9 @@ async function runEditor(htmlPath) {
 
   // 2. Internal validation
   process.stdout.write('  Validating internal links... ');
-  const internalIssues = validateInternalLinks(categorised, sitemap, blogArticles);
-  console.log(`${internalIssues.length} issues`);
+  const { issues: internalIssues, advisories: internalAdvisories } =
+    validateInternalLinks(categorised, sitemap, blogArticles, linkResults);
+  console.log(`${internalIssues.length} issues${internalAdvisories.length ? `, ${internalAdvisories.length} advisory (resolve via redirect)` : ''}`);
 
   // 2b. CTA and formatting check
   const ctaResult = checkCTAs(html, categorised);
@@ -1287,7 +1325,7 @@ async function runEditor(htmlPath) {
 
   // Build and save report
   let report = buildReport({
-    slug, meta, linkResults, internalIssues,
+    slug, meta, linkResults, internalIssues, internalAdvisories,
     sourceVerifications, topicalSuggestions,
     editorialReview: review, linkedBlogUrls, ctaResult, uncited,
   });
