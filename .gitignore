@@ -171,3 +171,9 @@ data/briefs/ad-studio/
 # brief there is a rename git can follow and undo. Ignoring it would make the archive
 # itself untracked — which is exactly the condition that made the 2026-08-19 loss of
 # vegan-soap/oatmeal-soap/coconut-oil-soap-benefits unrecoverable. See lib/brief-archive.js.
+
+# content-mirror live-body snapshots — read-only captures of what is on Shopify,
+# written by scripts/check-content-mirrors.mjs --snapshot-live --apply purely so a
+# human can diff them against the local mirror. Regenerable from Shopify, and a
+# tracked copy would be one more stale body somebody later mistakes for current.
+data/reports/content-mirror/
