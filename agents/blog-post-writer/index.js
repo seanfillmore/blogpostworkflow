@@ -24,6 +24,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
 
@@ -710,21 +711,41 @@ ${badIntro?.html || ''}`,
   ensurePostDir(slug);
   writeFileSync(htmlPath, html);
 
-  // Save metadata for Shopify upload — preserve any existing Shopify fields from a previous publish
+  // Save metadata for Shopify upload — PRESERVE BY DEFAULT.
+  //
+  // This used to build a NEW object and copy 11 named keys across from the old
+  // file, which meant every field not on that list was DESTROYED on any
+  // redraft: legacy_locked, legacy_bucket, legacy_triaged_at,
+  // legacy_triage_reason, indexing_state, indexing_submissions,
+  // indexing_blocked, published_at, shopify_status_verified_at, needs_rebuild,
+  // blocked_resolution, performance_review, the whole image record, and more.
+  // An allowlist of what to KEEP has to be updated by everyone who adds a field
+  // and loses data silently when they forget — which is exactly what happened.
+  // The list of what THIS agent owns is short, stable, and fails safe, and it
+  // lives in lib/post-meta-reconcile.js beside the deploy ownership table it has
+  // to agree with, so there is one place that knows.
+  //
+  // Nothing downstream relied on the old clearing behaviour: agents/editor
+  // clears a stale needs_rebuild itself when a post reviews clean, and
+  // agents/image-generator regenerates and clears image_blocked regardless of
+  // what it finds. Both run AFTER this agent in the content pipeline.
   let existingMeta = {};
   if (existsSync(metaPath)) {
-    try { existingMeta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch {}
-  }
-  const shopifyFields = {};
-  for (const key of ['shopify_blog_id', 'shopify_blog_handle', 'shopify_article_id', 'shopify_handle', 'shopify_url', 'shopify_status', 'shopify_publish_at', 'uploaded_at', 'legacy_synced_at', 'legacy_source', 'last_refreshed_at']) {
-    if (existingMeta[key] !== undefined) shopifyFields[key] = existingMeta[key];
+    try {
+      existingMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    } catch (err) {
+      // Do NOT swallow this. An unreadable meta.json is usually git conflict
+      // markers from a bad deploy, and it is the one case where the merge below
+      // preserves nothing — which must be visible, not silent.
+      console.warn(`  Warning: could not read ${metaPath} (${err.message}) — previous metadata will NOT be preserved.`);
+    }
   }
 
   const currentYear = new Date().getFullYear();
   const sanitizedTitle = brief.recommended_title.replace(/\b(202[0-9])\b/g, (match) => {
     return parseInt(match) < currentYear ? String(currentYear) : match;
   });
-  const meta = {
+  const meta = composeAuthoredMeta(existingMeta, {
     slug,
     title: sanitizedTitle,
     meta_description: brief.meta_description,
@@ -734,8 +755,7 @@ ${badIntro?.html || ''}`,
     generated_at: new Date().toISOString(),
     brief_path: briefPath,
     tokens_used: { input: inputTokens, output: outputTokens },
-    ...shopifyFields,
-  };
+  }, 'blog-post-writer');
   writeFileSync(metaPath, JSON.stringify(meta, null, 2));
 
   console.log(`  Saved: ${htmlPath}`);

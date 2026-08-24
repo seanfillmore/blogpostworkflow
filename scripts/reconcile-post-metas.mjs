@@ -58,6 +58,18 @@
  *                       (recording HEAD's SHA) into a snapshot directory
  *   --slug <slug>       restrict to one post — rehearse before bulk-applying
  *   --quiet             suppress the human report (the run record still lands)
+ *   --no-run-record     do not write data/reports/post-meta-reconcile/ at all.
+ *                       For the SCHEDULED detector only (see
+ *                       scripts/check-post-meta-drift.mjs): a deploy runs this
+ *                       a handful of times and its run record is the audit
+ *                       trail, but a daily cron would leave a run-<id>/
+ *                       directory every morning forever, and this box has
+ *                       already lost four days of cron to a full disk. The
+ *                       detector never writes a meta.json, so there is no
+ *                       decision to audit — its human report goes to the cron
+ *                       log and its verdict to the 5 AM digest. Ignored (and
+ *                       refused) when --apply is set: a run that WROTE files
+ *                       must always leave the record naming what lost.
  *
  * EXIT CODES — a deploy step can gate on these
  *   0  in sync, or --apply completed with every decision classified
@@ -113,6 +125,10 @@ const opt = (name, fallback = null) => {
 
 const APPLY = flag('--apply');
 const QUIET = flag('--quiet');
+// A run that writes files ALWAYS leaves the record naming every value that lost
+// an arbitration — that half of "never silently drop a field" is the whole
+// point, and no flag may switch it off.
+const NO_RUN_RECORD = flag('--no-run-record') && !APPLY;
 const REF = opt('--ref', 'HEAD');
 const AGAINST = opt('--against', null);
 const ONLY_SLUG = opt('--slug', null);
@@ -363,7 +379,7 @@ function main() {
     }
   }
 
-  mkdirSync(runDir, { recursive: true });
+  if (!NO_RUN_RECORD) mkdirSync(runDir, { recursive: true });
   const record = {
     run_id: runId,
     generated_at: new Date().toISOString(),
@@ -389,9 +405,11 @@ function main() {
         fields: p.decisions.filter((d) => d.outcome !== 'agree'),
       })),
   };
-  writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`);
-  writeFileSync(join(runDir, 'run.md'), `${renderReconcileReport(result, { repoLabel, serverLabel, baseLabel })}\n`);
-  writeFileSync(join(REPORT_DIR, 'latest.json'), `${JSON.stringify(record, null, 2)}\n`);
+  if (!NO_RUN_RECORD) {
+    writeFileSync(join(runDir, 'run.json'), `${JSON.stringify(record, null, 2)}\n`);
+    writeFileSync(join(runDir, 'run.md'), `${renderReconcileReport(result, { repoLabel, serverLabel, baseLabel })}\n`);
+    writeFileSync(join(REPORT_DIR, 'latest.json'), `${JSON.stringify(record, null, 2)}\n`);
+  }
 
   if (APPLY && applied.length) {
     console.log(`Wrote ${applied.length} meta.json file(s). Backups: ${join(runDir, 'backup')}`);
@@ -403,7 +421,7 @@ function main() {
   } else if (!APPLY && summary.changed) {
     console.log(`Report only. Re-run with --apply to write ${summary.changed} reconciled file(s).`);
   }
-  console.log(`Run record: ${join(runDir, 'run.json')}`);
+  console.log(NO_RUN_RECORD ? 'Run record: not written (--no-run-record).' : `Run record: ${join(runDir, 'run.json')}`);
   console.log('');
 
   if (refused.length) return EXIT_REFUSED;
