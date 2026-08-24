@@ -14,7 +14,8 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getContentPath, getMetaPath, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, classifyPostProduct, ROOT } from '../../lib/posts.js';
+import { productKeyForProduct, singularize } from '../../lib/product-format.js';
 
 export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,7 +53,12 @@ export function linkedProductCounts(html) {
   return Object.entries(counts).map(([handle, count]) => ({ handle, count })).sort((a, b) => b.count - a.count);
 }
 
-function _tokens(s) { return new Set(String(s || '').toLowerCase().match(/[a-z0-9]+/g) || []); }
+// Tokens are singularized so "lips" matches "lip balm" and "soaps" matches
+// "soap". Without it, `petroleum jelly for lips` scored 0 against every product
+// and the post got NO buy box at all. See singularize() in lib/product-format.js.
+function _tokens(s) {
+  return new Set((String(s || '').toLowerCase().match(/[a-z0-9]+/g) || []).map(singularize));
+}
 
 /**
  * Rank linked products by relevance to the post's keyword+title, tie-broken by link count.
@@ -107,16 +113,28 @@ function _contentTokens(s) {
  * of dead-ending at the publisher gate.
  * Returns [{ product, relevance }], most relevant first (relevance-0 retained).
  */
-export function rankProductsByRelevance(products, { keyword, title }) {
+export function rankProductsByRelevance(products, { keyword, title, ingredients = null, postProductKey = null }) {
   const want = _contentTokens(`${keyword || ''} ${title || ''}`);
   const scored = (products || []).map((p) => {
     const tagsStr = Array.isArray(p.tags) ? p.tags.join(' ') : (p.tags || '');
     const hay = _contentTokens(`${p.title || ''} ${p.handle || ''} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
-    return { product: p, relevance: overlap };
+
+    // CATEGORY/FORMAT match. Token overlap alone cannot tell a bar from a pump
+    // or a 4oz jar from a 32oz refill: on "coconut soap benefits" the bar, the
+    // foaming pump and a 32oz refill all scored 1 and the tie was broken by
+    // ARRAY ORDER, handing a benefits post a refill. When the post resolves to a
+    // product key and this product IS that key, say so. A product absent from
+    // config/ingredients.json (a refill) gets no bonus and so can never win the tie.
+    const categoryMatch = Boolean(
+      postProductKey && ingredients && productKeyForProduct(p, ingredients) === postProductKey,
+    );
+    return { product: p, relevance: overlap, categoryMatch };
   });
-  scored.sort((a, b) => b.relevance - a.relevance);
+  // Category match outranks token overlap — it is a statement about what the
+  // product IS, where overlap is a statement about which words happen to appear.
+  scored.sort((a, b) => (Number(b.categoryMatch) - Number(a.categoryMatch)) || (b.relevance - a.relevance));
   return scored;
 }
 
@@ -125,9 +143,13 @@ export function rankProductsByRelevance(products, { keyword, title }) {
  * product object, or null when nothing is genuinely relevant (relevance 0) —
  * the caller then HOLDS the post for review rather than forcing a random product.
  */
-export function pickRelevantProduct(products, { keyword, title }) {
-  const best = rankProductsByRelevance(products, { keyword, title })[0];
-  return best && best.relevance > 0 && best.product && best.product.title ? best.product : null;
+export function pickRelevantProduct(products, { keyword, title, ingredients = null, postProductKey = null }) {
+  const best = rankProductsByRelevance(products, { keyword, title, ingredients, postProductKey })[0];
+  if (!best || !best.product || !best.product.title) return null;
+  // A category match is sufficient on its own: `petroleum jelly for lips` shares
+  // no discriminating token with "Natural Coconut Oil Lip Balm" yet is plainly a
+  // lip-balm post. Without this it scored 0 and the post got no buy box.
+  return (best.categoryMatch || best.relevance > 0) ? best.product : null;
 }
 
 /**
@@ -319,7 +341,19 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
     // pick the most relevant product from the catalog and embed a buy box for it.
     // Only HOLD the post for review if nothing in the catalog is relevant.
     const all = await getProducts().catch(() => []);
-    product = pickRelevantProduct(all, { keyword, title: postTitle });
+    // Give the picker the post's product CATEGORY, not just its words — see
+    // rankProductsByRelevance. Without it a "coconut soap benefits" post could
+    // be handed a 32oz refill on an array-order tie.
+    let ingredientsCfg = null;
+    try {
+      ingredientsCfg = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+    } catch { /* no config → fall back to pure token relevance */ }
+    // postMeta.slug, not a bare `slug` — injectIntoHtml receives postMeta and has
+    // no slug binding of its own.
+    const postProductKey = classifyPostProduct(keyword, postMeta.slug || '');
+    product = pickRelevantProduct(all, {
+      keyword, title: postTitle, ingredients: ingredientsCfg, postProductKey,
+    });
     if (!product) {
       return { html: rawHtml, skipped: true, reason: 'no relevant product' };
     }
