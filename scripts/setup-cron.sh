@@ -222,20 +222,24 @@ DAILY_GIVEAWAY_REFERRAL_AUDIT="40 8 * * * cd \"$PROJECT_DIR\" && $NODE scripts/g
 # the reconciler so the digest reads freshly credited numbers.
 DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE scripts/giveaway/report.mjs >> data/reports/scheduler/giveaway-report.log 2>&1"
 
-# Re-send the double-opt-in confirmation to entrants who submitted but never
-# clicked. Measured 2026-08-21, day three of the paid campaign: 108 submissions,
-# 26 confirmed — and 36% even among the cohort mature enough to have decided. An
-# unconfirmed entrant is on no list, so they get no nurture email, cannot be
-# credited as anyone's referrer, and cannot be sold to; the whole gap is this one
-# step. Re-issuing the subscribe makes Klaviyo re-send its opt-in email, which is
-# a CONSENT REQUEST, not marketing — that is the only reason it may reach an
-# unconsented profile, and why this line must never be pointed at a promotional
-# send. Capped at 3 per address, 48h apart, stamped on the profile; skips anyone
-# already confirmed. Idempotent.
+# DAILY_GIVEAWAY_NUDGE — RETIRED 2026-08-24, and it must not come back.
 #
-# 16:00 UTC = 9 AM PT, a sane send hour for a US list, and AFTER the 08:45 report
-# so the daily funnel snapshot is taken before the nudge moves it.
-DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/nudge-unconfirmed.mjs --apply >> data/reports/scheduler/giveaway-nudge.log 2>&1"
+# It re-issued the Klaviyo subscribe so Klaviyo would re-send its double-opt-in
+# email. Under `confirmMechanism: flow_link` (the cutover, 2026-08-24) the list is
+# SINGLE opt-in, and re-subscribing a single-opt-in list sends NO EMAIL AT ALL —
+# so the job would report "nudged 40" while sending zero and burning each
+# profile's 3-per-address nudge cap. `nudge-unconfirmed.mjs` refuses to run under
+# flow_link for exactly that reason, which made this line a daily no-op.
+#
+# What replaced it: confirm flow `VyjCRz` reaches every entrant automatically
+# (it triggers on list-add, so even the 2026-08-24 backfill of 510 previously
+# unreachable entrants was mailed by it), and the follow-up is a human-scheduled
+# campaign to segment `X7atwC` "Entered, not confirmed" — see
+# `config/giveaway.json`'s confirmReminderCampaign and
+# docs/giveaway-confirm-cutover.md.
+#
+# The script is deliberately KEPT: it is still correct under double_opt_in, which
+# is the documented rollback path. Re-add this line ONLY as part of that rollback.
 
 # Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
 # PATCH /flows accepts only status, so the boundary is enforced from outside.
@@ -261,15 +265,9 @@ DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/n
 # ever changes, recompute the UTC fields by hand — nothing here follows it.
 GIVEAWAY_CLOSE_ENTRY_PERIOD="5 8 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
 
-# Re-send the double-opt-in confirmation to entrants who submitted but never
-# clicked. ~64% of paid submissions never confirm, and an unconfirmed entrant
-# gets no nurture email, cannot be credited as a referrer and cannot be sold to.
-# Consent request, not marketing — capped at 3 per address, 48h apart, stamped
-# on the profile. Idempotent. Runs AFTER the 08:45 report so the daily funnel
-# snapshot is taken before nudging. 16:00 UTC = 9 AM PT, a reasonable send hour
-# for a US list — deliberately expressed in UTC, so no TZ= prefix needed.
-# Installed on the server 2026-08-21; recorded here for the first time.
-DAILY_GIVEAWAY_NUDGE="0 16 * * * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/nudge-unconfirmed.mjs --apply >> data/reports/scheduler/giveaway-nudge.log 2>&1"
+# (A SECOND DAILY_GIVEAWAY_NUDGE definition lived here, identical to the one
+# above it and silently overriding it — two comment blocks, one job. Both were
+# removed together on 2026-08-24; see the retirement note above.)
 
 # ── Install ──────────────────────────────────────────────────────────────────
 # Strip ALL previous seo-claude entries (covers ~/seo-claude, /root/seo-claude,
@@ -344,7 +342,6 @@ $MONTHLY_PRIORITY_TUNER
 $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REFERRAL_AUDIT
 $DAILY_GIVEAWAY_REPORT
-$DAILY_GIVEAWAY_NUDGE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 "
 
@@ -408,7 +405,6 @@ echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ tra
 echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
 echo "  08:40 UTC — giveaway referral audit (why a referral isn't paying; reports near-misses)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
-echo "  16:00 UTC — giveaway nudge-unconfirmed (re-send opt-in confirmation)"
 echo "  08:05 UTC 2026-09-15 — giveaway close-entry-period (~1h AFTER entries close; UTC clock, no TZ prefix)"
 echo ""
 echo "View with: crontab -l"

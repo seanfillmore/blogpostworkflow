@@ -419,7 +419,7 @@ All five `TZ=America/Los_Angeles` prefixes were therefore inert twice over, and 
 ```bash
 ssh root@137.184.119.230 'crontab -l' | grep -vE '^\s*#|^\s*$' | sort > /tmp/live-jobs.txt
 
-sed -n '1,351p' scripts/setup-cron.sh \
+sed -n '1,348p' scripts/setup-cron.sh \
   | sed 's#PROJECT_DIR="\$(cd "\$(dirname "\$0")/\.\." \&\& pwd)"#PROJECT_DIR=/root/seo-claude#' \
   | sed 's#NODE="\$(which node)"#NODE=/usr/bin/node#' \
   | grep -v '^mkdir -p' > /tmp/generate-mirror.sh
@@ -429,17 +429,18 @@ echo "$NEW_CRONTAB" | grep -vE '^\s*#|^\s*$' | sort > /tmp/script-jobs.txt
 diff /tmp/live-jobs.txt /tmp/script-jobs.txt   # empty output = exact mirror
 ```
 
-As of **2026-08-24 this diff has exactly ONE line in it, and that is the intended state**:
+As of **2026-08-24 (second check, after the nudge retirement) this diff is EMPTY** — 48 job lines on both sides.
 
-```
-> 40 12 * * * cd "/root/seo-claude" && /usr/bin/node scripts/check-post-meta-drift.mjs >> data/reports/scheduler/post-meta-gate.log 2>&1
-```
+Two changes landed between the two checks that day, and the direction of the diff is what tracked them:
 
-`DAILY_POST_META_GATE` was added to the script and **deliberately not installed** — the operator installs it, by re-running `setup-cron.sh` or by hand. The direction of the diff is what says so: `>` means "in the script, not yet live", which is a pending install. A `<` would mean a live job nobody wrote down, which is the condition this mirror exists to catch. **This line disappears from the diff the moment the job is installed; if it is still here a week from now, the install never happened.** (The diff was empty on 2026-08-23, and was previously non-empty on one cosmetic line — the live `prune-ad-studio` entry had been hand-added via `crontab -e` with different shell quoting and an absolute log path. Same schedule, same command, same effective log file, and it now matches.)
+- **`DAILY_POST_META_GATE` was installed.** It had been added to the script and deliberately left uninstalled, showing as a single `>` line ("in the script, not yet live"). It is now live and the line is gone, which is exactly what a completed install looks like. A `<` would have meant a live job nobody wrote down — the condition this mirror exists to catch.
+- **`DAILY_GIVEAWAY_NUDGE` was retired** from both sides (49 → 48). See the retirement note in `scripts/setup-cron.sh`: under `confirmMechanism: flow_link` it was a daily no-op, because re-subscribing a SINGLE opt-in list sends no email at all and `nudge-unconfirmed.mjs` refuses to run. Removing it from the script alone would have left a live job nobody wrote down; removing it live alone would have had the next `setup-cron.sh` run reinstall it. **Retiring a job means both sides, in the same change.** The script also carried **two identical `DAILY_GIVEAWAY_NUDGE` definitions** under different comment blocks, the second silently overriding the first — both went.
 
-**Note the two `sed` line numbers above are positional and go stale** whenever `setup-cron.sh` grows. `1,351p` must stop at the line *before* the script's own `echo "$NEW_CRONTAB" | crontab -` install line — re-derive it with `grep -n 'crontab -' scripts/setup-cron.sh` rather than trusting the number here. Cutting too early silently yields **zero** job lines and a diff that looks like catastrophic drift; that is a broken command, not a broken crontab.
+(The diff was also empty on 2026-08-23, and was previously non-empty on one cosmetic line — the live `prune-ad-studio` entry had been hand-added via `crontab -e` with different shell quoting and an absolute log path. Same schedule, same command, same effective log file, and it now matches.)
 
-The line count that matters is the number of job lines (**48 live / 49 in the script as of 2026-08-24** — 48 was the count on 2026-08-23, itself down from 49 when `unmapped-query-promoter` was retired), not the file's raw line count — the live crontab also carries several stale auto-generated header-comment blocks from past runs of this script that `grep -v '^\s*#'` strips out along with everything else commented.
+**Note the two `sed` line numbers above are positional and go stale** whenever `setup-cron.sh` grows. `1,348p` must stop at the line *before* the script's own `echo "$NEW_CRONTAB" | crontab -` install line — re-derive it with `grep -n 'crontab -' scripts/setup-cron.sh` rather than trusting the number here. Cutting too early silently yields **zero** job lines and a diff that looks like catastrophic drift; that is a broken command, not a broken crontab.
+
+The line count that matters is the number of job lines (**48 on both sides as of 2026-08-24**, after `DAILY_POST_META_GATE` was installed (+1) and `DAILY_GIVEAWAY_NUDGE` was retired (−1); it was 48 on 2026-08-23, itself down from 49 when `unmapped-query-promoter` was retired), not the file's raw line count — the live crontab also carries several stale auto-generated header-comment blocks from past runs of this script that `grep -v '^\s*#'` strips out along with everything else commented.
 
 ### The post-meta drift gate — `DAILY_POST_META_GATE`, 12:40 UTC, DETECT ONLY
 
