@@ -163,25 +163,45 @@ The backfill never sets `gv_confirmed`. It makes people **reachable**, not confi
 conflating the two would pay the +2 to everyone and inflate every §5 referral credit that
 depends on it.
 
-## Still outstanding (as of 2026-08-24)
+## Done 2026-08-24, after the cutover
 
-1. **The two deadline campaigns are DRAFT and have never been scheduled.** They were draft
-   and unscheduled *before* this cutover too — creating a campaign via the API stores the
-   send date but queues no send job. `01M0RVNDD14BZ0BDM6FJDMZ3S0` (11 Sep) and
-   `01M0RVNFR94NM0T2W1QVNT4C04` (13 Sep) each need Schedule clicked in the UI. **Nothing
-   sends on those dates until that happens.**
-2. **The ~353 unconfirmed entrants have no way to confirm.** Both flows trigger on an
-   *addition*, and these people are already on the list, so neither fires for them. Per this
-   runbook's own note, reminders belong in a **campaign to the entered-but-not-confirmed
-   segment** — that segment does not exist yet. The two stripped entrants above are in this
-   group.
-3. **The backfill of the existing 330 has not been run** — see the section below.
-4. **`STEQR5 "TEMP diag — gv_entrant equals false"`** is a leftover diagnostic segment in the
-   account; harmless, but delete it so it is not mistaken for something load-bearing.
-5. **Watch the first real confirmation end to end.** The `update_property_link` button has
-   not been clicked by a real entrant yet; confirm one lands `gv_confirmed='true'` and enters
-   `SajAVS`. Do not create a test profile on the production list to do this — gate 9 of
-   `verify-launch.mjs` exists because a forgotten test identity sits in the draw pool.
+- **Deadline campaigns scheduled** by the operator — both now `Scheduled`, audience `Tamb9u`.
+- **`STEQR5 "TEMP diag"`** deleted.
+- **Backfill complete: 510 subscribed across 4 batches, 0 failures.** List went 224 → 733 of
+  739 submitted. Health after each batch: **2 bounces, 1 unsubscribe, 0 spam complaints,
+  0 suppressions beyond the bounces**, with opens arriving during the run.
+- **The backfill IS the confirm send, and that is the design.** `subscribeToList` adds the
+  profile to `Y2ukbE`, which is exactly what confirm flow `VyjCRz` triggers on, so every
+  backfilled entrant received the branded confirm email automatically — verified through
+  `Subscribed to List` → `Received Email` → `Opened Email` on real profiles. No separate
+  "send them the confirm email" step is needed or wanted.
+- **Confirmation chain verified end to end on real entrants** (no test profile — gate 9 of
+  `verify-launch.mjs` exists precisely to keep test identities out of the draw pool):
+  click → `update_property_link` writes `gv_confirmed:"true"` → segment `Tamb9u` picks them
+  up in ~2 min → nurture `SajAVS` triggers. The `gv_confirmed` arm of that segment is what
+  makes it ~2 min instead of up to 24h waiting for the reconciler.
+- **`X7atwC` "Entered, not confirmed"** created as the negation of `Tamb9u`, and
+  **`confirmReminderCampaign`** drafted against it for 27 Aug.
+
+**One measurement trap worth keeping.** `/profile-subscription-bulk-create-jobs/` is an
+ASYNC job. `subscribeToList` discards the job id and returns `{ ok: true }` immediately, so
+a profile reads `consent: "NEVER_SUBSCRIBED"` and absent from the list for a minute or two
+after a "successful" subscribe. Ninety seconds after the first batch it looked exactly like
+a silent failure; it was not. **Wait before concluding a subscribe did not happen** — same
+class as `/{pixel}/stats` lag in [[project_traffic_gate_open]].
+
+## Still outstanding
+
+1. **The confirm reminder campaign `01M0RZM53084R8VEM8A2MS63PZ` is DRAFT.** A campaign
+   created via the API stores its send date but queues **no send job** — it needs Schedule
+   clicked in the UI, the same trap the deadline campaigns had.
+2. **Watch the confirmation rate over the next few days.** 215 of 734 confirmed at the time
+   of the backfill; the 510 just-mailed entrants are the population that decides whether
+   `flow_link` actually beats the 30% double-opt-in rate. That number is the whole point of
+   the cutover, and it is the one thing not yet measurable.
+3. **`nudge-unconfirmed` is still on cron at 16:00 UTC** and correctly no-ops under
+   `flow_link`. It is now dead weight — the reminder campaign replaces it. Retire the cron
+   line when convenient (see the UTC-only cron rules in CLAUDE.md).
 
 ## Rollback
 
