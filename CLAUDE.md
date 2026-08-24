@@ -460,11 +460,13 @@ ssh root@137.184.119.230 'cd ~/seo-claude && git fetch origin && node scripts/re
 ssh root@137.184.119.230 'cd ~/seo-claude \
   && SNAP=$(node scripts/reconcile-post-metas.mjs --snapshot | sed -n "s/.*→ //p") \
   && echo "snapshot: $SNAP" \
-  && git checkout -- data/posts/*/meta.json \
+  && git checkout -- "data/posts/*/meta.json" \
   && git pull \
   && node scripts/reconcile-post-metas.mjs --against "$SNAP" --apply; \
   pm2 restart seo-dashboard'
 ```
+
+**The quotes around the pathspec are load-bearing.** Unquoted, `data/posts/*/meta.json` is expanded by the SHELL against the filesystem, which includes the ~110 post directories whose `meta.json` is UNTRACKED — git then errors `pathspec ... did not match any file(s) known to git` on the first one, and because the chain is `&&`, **the pull never runs**. That failure is safe (nothing is modified) but silent-looking: it scrolls a hundred error lines and leaves the box on old code. Quoted, git does the matching itself against tracked files only. Verified 2026-08-24.
 
 Two details in that chain are deliberate. The reconcile is joined with `;` rather than `&&`, because it exits **2** on an unclassified conflict *after* writing a correct merge — a condition that needs a human to classify a field, not a box left unrestarted on old code. And `git checkout --` names `data/posts/*/meta.json` specifically, not `data/posts`: `content.html`, `editor-report.md` and the rest of the per-post tree are not covered by this reconcile and must not be discarded by it. If the pull still aborts after step 2, something *other* than a meta.json is dirty — deal with that file on its own merits; do not widen the checkout to make the error go away.
 
