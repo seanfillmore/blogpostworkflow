@@ -32,6 +32,38 @@ function stubSerpResult() {
   };
 }
 
+// Shaped like a real Zigpoll open-ended response: an "Other" write-in on the
+// post-purchase survey, with the order's line items in metadata as one
+// comma-separated string of product titles.
+function stubZigpollResponses() {
+  return [{
+    _id: 'zp1',
+    createdAt: '2026-07-30T13:47:31.000Z',
+    response: 'Originally found on Amazon',
+    answers: [{ handle: 'other', title: 'Other' }],
+    valueType: 'vote',
+    metadata: {
+      shopify_line_items: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients - Pure Unscented',
+    },
+  }];
+}
+
+// Every collectCorpus test supplies all four sources, so each one isolates the
+// single variable it is about. Zigpoll also falls back to
+// process.env.ZIGPOLL_API_TOKEN, so a test must own that variable rather than
+// assume the developer has not exported it — same reason as TAVILY_API_KEY.
+const FULL_ENV = { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test', ZIGPOLL_API_TOKEN: 'zp-test' };
+
+function fullDeps(overrides = {}) {
+  return {
+    fetchReviews: async () => stubReviews(),
+    searchTavily: async () => stubTavilyResults(),
+    fetchSerp: async () => stubSerpResult(),
+    fetchZigpoll: async () => stubZigpollResponses(),
+    ...overrides,
+  };
+}
+
 // Every quote here is verbatim from CORPUS below — runAnalysis now rejects a
 // quote it cannot find in the corpus it handed the model.
 const SOURCED = 'Great lotion.';
@@ -225,30 +257,20 @@ test('writeArtifacts carries the partial flag into personas.json and the markdow
 // A live run against the real lib surfaced `(items || []).map is not a function`
 // because collectCorpus originally treated the whole result as the array.
 test('collectCorpus reads the .organic array out of the real getSerpResults shape', async () => {
-  const corpus = await collectCorpus({
-    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
-    deps: {
-      fetchReviews: async () => stubReviews(),
-      searchTavily: async () => stubTavilyResults(),
-      fetchSerp: async () => stubSerpResult(),
-    },
-  });
+  const corpus = await collectCorpus({ env: FULL_ENV, deps: fullDeps() });
   assert.ok(corpus.records.some((r) => r.source === 'serp'), 'expected at least one serp record');
   assert.equal(corpus.partial, false);
 });
 
 test('collectCorpus sets partial:true when a fetchSerp call throws, without aborting other sources', async () => {
   const corpus = await collectCorpus({
-    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
-    deps: {
-      fetchReviews: async () => stubReviews(),
-      searchTavily: async () => stubTavilyResults(),
-      fetchSerp: async () => { throw new Error('dataforseo down'); },
-    },
+    env: FULL_ENV,
+    deps: fullDeps({ fetchSerp: async () => { throw new Error('dataforseo down'); } }),
   });
   assert.equal(corpus.partial, true);
   assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
   assert.ok(corpus.records.some((r) => r.source === 'reddit'), 'tavily records should still be present');
+  assert.ok(corpus.records.some((r) => r.source === 'zigpoll'), 'zigpoll records should still be present');
 });
 
 test('collectCorpus sets partial:true and still returns Judge.me records when TAVILY_API_KEY is missing', async () => {
@@ -258,12 +280,8 @@ test('collectCorpus sets partial:true and still returns Judge.me records when TA
   delete process.env.TAVILY_API_KEY;
   try {
     const corpus = await collectCorpus({
-      env: { JUDGEME_API_TOKEN: 'x' }, // no TAVILY_API_KEY
-      deps: {
-        fetchReviews: async () => stubReviews(),
-        searchTavily: async () => stubTavilyResults(),
-        fetchSerp: async () => stubSerpResult(),
-      },
+      env: { JUDGEME_API_TOKEN: 'x', ZIGPOLL_API_TOKEN: 'zp-test' }, // no TAVILY_API_KEY
+      deps: fullDeps(),
     });
     assert.equal(corpus.partial, true);
     assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
@@ -279,12 +297,9 @@ test('collectCorpus sets partial:true and still returns Judge.me records when TA
 // external friction, which is the one thing the spec says must never happen.
 test('collectCorpus sets partial:true when Tavily silently returns [] for every query', async () => {
   const corpus = await collectCorpus({
-    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-expired' },
-    deps: {
-      fetchReviews: async () => stubReviews(),
-      searchTavily: async () => [],           // exactly what lib/tavily.js does on failure
-      fetchSerp: async () => stubSerpResult(),
-    },
+    env: { ...FULL_ENV, TAVILY_API_KEY: 'tvly-expired' },
+    // exactly what lib/tavily.js does on failure
+    deps: fullDeps({ searchTavily: async () => [] }),
   });
   assert.equal(corpus.partial, true);
   assert.ok(!corpus.records.some((r) => r.source === 'reddit' || r.source === 'web'));
@@ -293,26 +308,89 @@ test('collectCorpus sets partial:true when Tavily silently returns [] for every 
 
 test('collectCorpus still sets partial:true when Tavily throws for every query', async () => {
   const corpus = await collectCorpus({
-    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
-    deps: {
-      fetchReviews: async () => stubReviews(),
-      searchTavily: async () => { throw new Error('tavily down'); },
-      fetchSerp: async () => stubSerpResult(),
-    },
+    env: FULL_ENV,
+    deps: fullDeps({ searchTavily: async () => { throw new Error('tavily down'); } }),
   });
   assert.equal(corpus.partial, true);
 });
 
-test('collectCorpus yields partial:false when all three sources succeed', async () => {
-  const corpus = await collectCorpus({
-    env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' },
-    deps: {
-      fetchReviews: async () => stubReviews(),
-      searchTavily: async () => stubTavilyResults(),
-      fetchSerp: async () => stubSerpResult(),
-    },
-  });
+test('collectCorpus yields partial:false when all four sources succeed', async () => {
+  const corpus = await collectCorpus({ env: FULL_ENV, deps: fullDeps() });
   assert.equal(corpus.partial, false);
+});
+
+// ── zigpoll source ──────────────────────────────────────────────────────────
+
+test('collectCorpus keeps an in-scope zigpoll verbatim as a corpus record', async () => {
+  const corpus = await collectCorpus({ env: FULL_ENV, deps: fullDeps() });
+  const zp = corpus.records.filter((r) => r.source === 'zigpoll');
+  assert.equal(zp.length, 1);
+  assert.equal(zp[0].text, 'Originally found on Amazon');
+});
+
+test('collectCorpus drops a zigpoll response whose order is another cluster', async () => {
+  const corpus = await collectCorpus({
+    env: FULL_ENV,
+    deps: fullDeps({
+      fetchZigpoll: async () => [{
+        ...stubZigpollResponses()[0],
+        metadata: { shopify_line_items: 'Coconut Oil Toothpaste | Fluoride Free' },
+      }],
+    }),
+  });
+  assert.ok(!corpus.records.some((r) => r.source === 'zigpoll'));
+  assert.equal(corpus.partial, false, 'an out-of-scope response is not a source failure');
+});
+
+test('collectCorpus drops a zigpoll response with no order attached', async () => {
+  // Exit-intent and cart surveys — nothing says which cluster the visitor saw.
+  const corpus = await collectCorpus({
+    env: FULL_ENV,
+    deps: fullDeps({
+      fetchZigpoll: async () => [{ _id: 'x', response: 'too expensive', valueType: 'text', metadata: {} }],
+    }),
+  });
+  assert.ok(!corpus.records.some((r) => r.source === 'zigpoll'));
+});
+
+test('collectCorpus drops a zigpoll fixed-choice vote, keeping only free text', async () => {
+  const corpus = await collectCorpus({
+    env: FULL_ENV,
+    deps: fullDeps({
+      fetchZigpoll: async () => [{
+        ...stubZigpollResponses()[0],
+        response: 'Google',
+        answers: [{ handle: 'google', title: 'Google' }],
+      }],
+    }),
+  });
+  assert.ok(!corpus.records.some((r) => r.source === 'zigpoll'));
+});
+
+test('collectCorpus sets partial:true when the zigpoll call throws, without aborting other sources', async () => {
+  const corpus = await collectCorpus({
+    env: FULL_ENV,
+    deps: fullDeps({ fetchZigpoll: async () => { throw new Error('zigpoll 401'); } }),
+  });
+  assert.equal(corpus.partial, true);
+  assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
+  assert.ok(corpus.records.some((r) => r.source === 'serp'), 'serp records should still be present');
+});
+
+test('collectCorpus sets partial:true when ZIGPOLL_API_TOKEN is missing', async () => {
+  const saved = process.env.ZIGPOLL_API_TOKEN;
+  delete process.env.ZIGPOLL_API_TOKEN;
+  try {
+    const corpus = await collectCorpus({
+      env: { JUDGEME_API_TOKEN: 'x', TAVILY_API_KEY: 'tvly-test' }, // no ZIGPOLL_API_TOKEN
+      deps: fullDeps({ fetchZigpoll: async () => { throw new Error('must not be called'); } }),
+    });
+    assert.equal(corpus.partial, true);
+    assert.ok(corpus.records.some((r) => r.source === 'judgeme'), 'judge.me records should still be present');
+  } finally {
+    if (saved === undefined) delete process.env.ZIGPOLL_API_TOKEN;
+    else process.env.ZIGPOLL_API_TOKEN = saved;
+  }
 });
 
 // ── empty-corpus guard ──────────────────────────────────────────────────────
