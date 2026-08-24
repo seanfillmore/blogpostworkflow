@@ -5,9 +5,9 @@ import {
 } from '../../lib/product-format.js';
 
 const INGREDIENTS = {
-  lotion:      { name: 'Body Lotion', handle: 'coconut-lotion', format: 'squeeze bottle' },
-  bar_soap:    { name: 'Bar Soap', handle: 'coconut-soap', format: 'bar' },
-  liquid_soap: { name: 'Foaming Liquid Soap', handle: 'organic-foaming-hand-soap', format: 'foaming pump bottle' },
+  lotion:      { name: 'Body Lotion', shopify_handle: 'coconut-lotion', format: 'squeeze bottle' },
+  bar_soap:    { name: 'Bar Soap', shopify_handle: 'coconut-soap', format: 'bar' },
+  liquid_soap: { name: 'Foaming Liquid Soap', shopify_handle: 'organic-foaming-hand-soap', format: 'foaming pump bottle' },
 };
 
 // ── normalizeText: the hyphen bug ─────────────────────────────────────────────
@@ -100,4 +100,45 @@ test('no link falls back to text, and that is not a mismatch', () => {
 test('neither signal -> null (a topical-authority post)', () => {
   assert.deepEqual(resolveProductKey({ textKey: null, linkKey: null }),
     { key: null, source: 'none', mismatch: null });
+});
+
+// ── the REAL config, because a synthetic fixture cannot catch a wrong field name ──
+//
+// The first cut of productKeyFromLinks read `p.handle`. Every product in
+// config/ingredients.json uses `shopify_handle`, so it matched nothing in
+// production while every synthetic test passed. These load the actual file.
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const REAL = JSON.parse(readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'config', 'ingredients.json'), 'utf8'));
+
+test('REAL CONFIG: every product resolves from its own product URL', () => {
+  const entries = Object.entries(REAL).filter(([, p]) => p?.shopify_handle || p?.handle);
+  assert.ok(entries.length >= 5, `expected several products, got ${entries.length}`);
+  for (const [key, p] of entries) {
+    const handle = p.shopify_handle || p.handle;
+    assert.equal(
+      productKeyFromLinks([`https://www.realskincare.com/products/${handle}`], REAL),
+      key,
+      `${key} (/products/${handle}) must resolve back to ${key}`,
+    );
+  }
+});
+
+test('REAL CONFIG: the two soaps are distinct and both resolve', () => {
+  const bar = productKeyFromLinks(['/products/coconut-soap'], REAL);
+  const liquid = productKeyFromLinks(['/products/organic-foaming-hand-soap'], REAL);
+  assert.equal(bar, 'bar_soap');
+  assert.equal(liquid, 'liquid_soap');
+  assert.notEqual(bar, liquid);
+});
+
+test('REAL CONFIG: the tattoo post\'s actual CTA resolves to the foaming soap', () => {
+  // This is the case the whole change exists for.
+  assert.equal(
+    productKeyFromLinks(['https://www.realskincare.com/products/organic-foaming-hand-soap'], REAL),
+    'liquid_soap',
+  );
 });
