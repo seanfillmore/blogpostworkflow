@@ -2,13 +2,18 @@
 /**
  * Voice-of-Customer Agent
  *
- * Mines Judge.me reviews plus Reddit/SERP friction into three durable context
- * artifacts that agents and humans read:
+ * Mines Judge.me reviews and Zigpoll on-site survey verbatims, plus Reddit/SERP
+ * friction, into three durable context artifacts that agents and humans read:
  *   data/context/voice-of-customer.md   objections, phrases, triggers, not-for
  *   data/context/personas.md            human-readable persona deck
  *   data/context/personas.json          machine-readable, rank-ordered
  *
  * Scope: the skin cluster only (see SKIN_CLUSTER_HANDLES in lib/voice-of-customer.js).
+ * Zigpoll records carry a product TITLE and no handle, so they are scoped by
+ * their order through ZIGPOLL_CLUSTERS instead — see lib/zigpoll.js.
+ *
+ * All four sources are best-effort: any one of them failing sets partial=true
+ * on the corpus rather than failing the run.
  *
  * Usage:
  *   node agents/voice-of-customer/index.js              # collect + analyze
@@ -27,10 +32,17 @@ import { searchWeb } from '../../lib/tavily.js';
 import { getSerpResults } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
 import {
+  fetchResponses as fetchZigpollResponses,
+  responseText as zigpollResponseText,
+  lineItemTitles as zigpollLineItemTitles,
+} from '../../lib/zigpoll.js';
+import {
   AWARENESS_LEVELS,
   normalizeJudgemeReview,
   normalizeTavilyResult,
   normalizeSerpItem,
+  normalizeZigpollResponse,
+  zigpollOrderInScope,
   dedupeRecords,
   filterSkinCluster,
   validateAnalysis,
@@ -104,6 +116,7 @@ export async function collectCorpus({ env, root = ROOT, deps = {} } = {}) {
     fetchReviews = fetchAllReviews,
     searchTavily = searchWeb,
     fetchSerp = getSerpResults,
+    fetchZigpoll = fetchZigpollResponses,
   } = deps;
   const e = env || loadEnv(root);
   const records = [];
@@ -113,6 +126,50 @@ export async function collectCorpus({ env, root = ROOT, deps = {} } = {}) {
   const reviews = await fetchReviews(shop, e.JUDGEME_API_TOKEN);
   console.log(`  judge.me: ${reviews.length} reviews with bodies`);
   records.push(...reviews.map(normalizeJudgemeReview));
+
+  // Zigpoll — the only first-party source that hears from a buyer who did NOT
+  // write a review, and the only one carrying acquisition context ("how did you
+  // hear about us?") in the customer's own words. Judge.me is retention voice;
+  // this is closer to acquisition voice.
+  //
+  // Best-effort like every other external source: a missing key or a failed
+  // request degrades the corpus to partial rather than failing the run, matching
+  // how Tavily and DataForSEO are already handled.
+  const zigpollKey = e.ZIGPOLL_API_KEY || process.env.ZIGPOLL_API_KEY;
+  if (!zigpollKey) {
+    console.warn('  no ZIGPOLL_API_KEY — skipping survey responses');
+    partial = true;
+  } else {
+    try {
+      const responses = await fetchZigpoll({
+        apiKey: zigpollKey,
+        accountId: e.ZIGPOLL_ACCOUNT_ID || undefined,
+      });
+      let kept = 0;
+      let outOfScope = 0;
+      let unscoped = 0;
+      for (const r of responses) {
+        const text = zigpollResponseText(r);
+        if (!text) continue;
+        const titles = zigpollLineItemTitles(r);
+        // Counted separately because they mean different things: "bought a
+        // product we don't cover" is a real exclusion, "no order attached" is a
+        // limitation of scoping by order (see zigpollOrderInScope). Collapsing
+        // them into one number would hide the exit-intent corpus growing.
+        if (titles.length === 0) { unscoped++; continue; }
+        if (!zigpollOrderInScope(titles)) { outOfScope++; continue; }
+        records.push(normalizeZigpollResponse(r, text));
+        kept++;
+      }
+      console.log(
+        `  zigpoll: ${kept} in-scope verbatims `
+        + `(${outOfScope} other-cluster, ${unscoped} no order attached, ${responses.length} fetched)`,
+      );
+    } catch (err) {
+      console.warn(`  zigpoll failed: ${err.message}`);
+      partial = true;
+    }
+  }
 
   const tavilyKey = e.TAVILY_API_KEY || process.env.TAVILY_API_KEY;
   if (!tavilyKey) {
@@ -251,6 +308,12 @@ export function buildAnalysisPrompt(corpus) {
     '',
     'Each record is labelled with its source:',
     '  judgeme — one of our own verified customer reviews (survivor-biased, 4.68 avg)',
+    '  zigpoll — free text a buyer typed into our own on-site survey, most of it',
+    '            answering "how did you hear about us?" right after checkout. Short,',
+    '            unpolished and often a bare channel name — that is the format, not a',
+    '            weak signal. It is the best evidence for trigger_points and for how',
+    '            buyers FIND us, and it is thin evidence for objections, because these',
+    '            people had already bought when they wrote it.',
     '  reddit  — an outside discussion thread on reddit.com (where the real objections live)',
     '  web     — another outside page returned by the same search; weigh it on its merits',
     '  serp    — a Google page-1 result a first-time buyer would hit',
