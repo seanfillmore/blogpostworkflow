@@ -50,9 +50,10 @@
   "confirmReminderCampaign": {
     "id": "01M0RZM53084R8VEM8A2MS63PZ",
     "messageId": "01M0RZM539K1JR6GBZHYGBDDRM",
-    "sendAt": "2026-08-27T14:00:00+00:00",
+    "sendAt": "2026-08-25T14:00:00+00:00",
     "templateId": "VxJnPd",
-    "audienceSegmentId": "X7atwC"
+    "audienceSegmentId": "X7atwC",
+    "status": "scheduled"
   },
-  "_confirmReminderNote": "DRAFT — a campaign created via the API stores its send date but queues NO send job; it does not send until Schedule is clicked in the UI (same trap as deadlineCampaigns). Reuses the confirm-request template VxJnPd rather than new copy, so it inherits that template’s already-passed content gates and its update_property_link button. Dated 3 days after the 2026-08-24 backfill on purpose: every backfilled entrant received the confirm email at subscribe time, so a same-day reminder would be redundant and smart sending would suppress it anyway."
+  "_confirmReminderNote": "DRAFT — a campaign created via the API stores its send date but queues NO send job; it does not send until Schedule is clicked in the UI (same trap as deadlineCampaigns). Reuses the confirm-request template VxJnPd rather than new copy, so it inherits that template’s already-passed content gates and its update_property_link button. SCHEDULED by the operator for 2026-08-25 14:00 UTC (drafted for the 27th; the operator moved it in). That is ~34h after the backfill send, clear of Klaviyo smart sending’s 16h window, so it will not be suppressed. Dated after the backfill on purpose: every backfilled entrant received the confirm email at subscribe time, so a same-day reminder would be redundant and smart sending would suppress it anyway."
 }
