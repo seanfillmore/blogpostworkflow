@@ -243,10 +243,20 @@ await notify({
     `Entrants: ${summary.total} (still subscribed: ${subscribed})`,
     `Entries: ${summary.entriesTotal}`,
     `Reactive/fragrance share: ${(reactiveShare * 100).toFixed(0)}% of ${answered} survey respondents`,
+    // "referrals N" alone reads as participation and is not — it is what has been
+    // CREDITED, and a rung pays only once both parties confirm. Named-but-uncredited
+    // is the normal mid-campaign state, so the named count is printed beside it and
+    // a 0 is spelled out rather than left to be misread as nobody trying.
     `Ladder: confirmed ${summary.ladder.confirmed}, survey ${summary.ladder.survey}, `
-      + `referrals ${summary.ladder.referrals} across ${summary.ladder.entrantsWithReferrals} entrants`
+      + `referrals ${summary.ladder.referrals} credited across ${summary.ladder.entrantsWithReferrals} entrants`
+      + ` / ${summary.ladder.referralsNamed} named`
       + (askReach === null ? '' : ` (${askReach} have received the ask)`) + `, `
       + `instagram ${summary.ladder.instagram}, upload ${summary.ladder.upload}`,
+    ...(summary.ladder.referralsNamed > 0 && summary.ladder.referrals === 0
+      ? [`  ${summary.ladder.referralsNamed} referral(s) named, none credited yet — a rung pays only once BOTH`
+         + ` parties confirm, and reconcile.js re-evaluates nightly. See the referral audit for why each is`
+         + ` waiting; this is pending, not a CTA failure.`]
+      : []),
     // Spend, leads and cost per lead were previously printed to stdout only, which on a
     // cron-run script means a log file nobody reads. The digest is the only artifact
     // anyone actually sees, so the paid numbers belong in it.

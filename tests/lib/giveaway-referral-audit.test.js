@@ -144,6 +144,52 @@ test('REGRESSION: an UNCONFIRMED entrant who named a referrer is visible to the 
   assert.equal(r.status, 'referee_unconfirmed');
 });
 
+test('REGRESSION: a typo is detected even when the REFEREE is the one who has not confirmed', () => {
+  // The near-miss lookup used to run AFTER the referee_unconfirmed return, so a
+  // pair was only examined for a typo once the referee had confirmed — two
+  // unrelated conditions with the wrong one gating the other. On the 2026-08-24
+  // 08:40 production run that hid 17 of 26 pairs, reported referrer_near_miss: 0,
+  // and left an operator reconciling misspellings by hand against a report built
+  // to surface them. One of the hidden pairs was a single edit apart.
+  //
+  // Both facts are true at once, so both must survive: the BLOCKER is still that
+  // the referee has not confirmed, and the SUGGESTION is still recorded.
+  const rows = classifyReferrals([
+    confirmed('carlacythurston@yahoo.com'),
+    profile('typo@x.com', { gv_referred_by: 'carlacythurston@yahoo.como' }, { subscribed: false }),
+  ]);
+  const r = forReferee(rows, 'typo@x.com');
+  assert.equal(r.status, 'referee_unconfirmed', 'the real blocker is still reported as the status');
+  assert.ok(r.suggestion, 'the typo must be recorded even though the referee is unconfirmed');
+  assert.equal(r.suggestion.email, 'carlacythurston@yahoo.com');
+  assert.equal(r.suggestion.distance, 1);
+});
+
+test('a confirmed referee with a typo still classifies as referrer_near_miss', () => {
+  // The other half of the reorder: moving the lookup earlier must not stop the
+  // near-miss STATUS being reached when nothing else blocks first.
+  const rows = classifyReferrals([
+    confirmed('sara.jones@gmail.com'),
+    confirmed('friend@x.com', { gv_referred_by: 'sara.jones@gmial.com' }),
+  ]);
+  const r = forReferee(rows, 'friend@x.com');
+  assert.equal(r.status, 'referrer_near_miss');
+  assert.equal(r.suggestion.email, 'sara.jones@gmail.com');
+});
+
+test('a creditable pair is never downgraded by a coincidental near-miss', () => {
+  // Ordering hazard introduced by computing the suggestion first: an exact,
+  // confirmed referrer must still win outright. The suggestion may ride along as
+  // evidence, but it must never change the status of a referral that pays.
+  const rows = classifyReferrals([
+    confirmed('sam@x.com'),
+    confirmed('san@x.com'),
+    confirmed('friend@x.com', { gv_referred_by: 'sam@x.com' }),
+  ]);
+  const r = forReferee(rows, 'friend@x.com');
+  assert.equal(r.status, 'creditable', 'an exact confirmed referrer outranks any lookalike');
+});
+
 test('mergeEntrantProfiles marks submitted-but-unlisted profiles as not subscribed', () => {
   // The merge is where the blind spot is actually closed, and the subscribed
   // flag is the load-bearing part: listEntrantProfiles does not return one, and

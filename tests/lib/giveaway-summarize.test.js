@@ -160,3 +160,33 @@ import { MIN_HOURS_BETWEEN } from '../../scripts/giveaway/nudge-unconfirmed.mjs'
 }
 
 console.log('✓ giveaway confirmation-funnel tests pass');
+
+test('referralsNamed counts everyone who TYPED a referrer, credited or not', () => {
+  // The reporting artifact this exists to stop. `referrals` and
+  // `entrantsWithReferrals` are CREDITED counts — a rung pays only once both
+  // parties confirm — so mid-campaign they sit at 0 while people are referring
+  // steadily. On 2026-08-24 that was 41 named against 0 credited, and the 0 was
+  // read as "zero referral participation" and reported to the operator as a CTA
+  // failure. Named is the denominator that makes the credited figure legible.
+  const s = summarizeEntrants([
+    p({ gv_entries: 1, gv_referred_by: 'a@x.com', gv_breakdown: { referrals: 0 } }),
+    p({ gv_entries: 1, gv_referred_by: 'b@x.com', gv_breakdown: { referrals: 0 } }),
+    p({ gv_entries: 6, gv_referred_by: 'c@x.com', gv_breakdown: { referrals: 1 } }),
+    p({ gv_entries: 1, gv_breakdown: { referrals: 0 } }),
+  ]);
+  assert.equal(s.ladder.referralsNamed, 3, 'three entrants named someone');
+  assert.equal(s.ladder.referrals, 1, 'only one of them has been credited');
+  assert.equal(s.ladder.entrantsWithReferrals, 1);
+});
+
+test('a blank or whitespace referrer field is not an attempt', () => {
+  // The form submits the optional field whether or not it was filled in, so a
+  // truthiness check on the raw value would count every entrant as a referrer
+  // and make the denominator meaningless in the opposite direction.
+  const s = summarizeEntrants([
+    p({ gv_entries: 1, gv_referred_by: '', gv_breakdown: { referrals: 0 } }),
+    p({ gv_entries: 1, gv_referred_by: '   ', gv_breakdown: { referrals: 0 } }),
+    p({ gv_entries: 1, gv_breakdown: { referrals: 0 } }),
+  ]);
+  assert.equal(s.ladder.referralsNamed, 0);
+});

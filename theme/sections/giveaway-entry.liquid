@@ -50,6 +50,14 @@
         <div>
           <label for="gv-email">Email</label>
           <input id="gv-email" name="email" type="email" required autocomplete="email" inputmode="email">
+          {%- comment -%}
+            A mistyped domain here is silent and total: the confirmation email goes
+            nowhere, so the entrant never confirms, is never credited, is never
+            emailed again and is never told. Five real entrants were lost this way
+            before the check was attached to this field as well as the referrer one.
+            role="status" so the suggestion is announced rather than only drawn.
+          {%- endcomment -%}
+          <p class="gv-ref-fix gv-email-fix" hidden role="status"></p>
         </div>
 
         <div>

@@ -57,3 +57,30 @@ test('the server module the theme mirrors behaves as the theme claims', () => {
   assert.equal(suggestDomainTypo('sara.jones@gmial.com'), 'sara.jones@gmail.com');
   assert.equal(suggestDomainTypo('someone@mail.com'), null);
 });
+
+test('the typo check is attached to BOTH address fields, not just the referrer', () => {
+  // Measured 2026-08-24 across 1,102 real entrants: the protected referrer field
+  // held ZERO domain typos, the unprotected entrant field held FIVE — all five
+  // unconfirmed, because a confirmation email cannot reach an address that does
+  // not exist. Same check, same file, one field wired and the other not.
+  //
+  // A mistyped entrant address is unrecoverable in the plainest way: that person
+  // never confirms, is never credited, is never sold to, and is never told.
+  assert.match(themeJs, /attachTypoCheck\(/, 'the shared helper must still exist');
+  const wired = [...themeJs.matchAll(/attachTypoCheck\(\s*\n?\s*form\.querySelector\('(#[\w-]+)'/g)]
+    .map((m) => m[1]);
+  assert.deepEqual(wired.sort(), ['#gv-email', '#gv-ref'],
+    'both the entrant email and the referrer field must be wired');
+});
+
+test('the entrant field has somewhere to render a suggestion', () => {
+  // The JS resolves `.gv-email-fix` and silently does nothing when it is absent,
+  // so deleting the element from the section disables the check with no error
+  // anywhere — exactly the kind of silent unwiring this whole file guards.
+  const section = readFileSync(
+    new URL('../../theme/sections/giveaway-entry.liquid', import.meta.url), 'utf8');
+  assert.match(section, /class="gv-ref-fix gv-email-fix"/,
+    'the entrant email field needs its own suggestion target');
+  assert.match(section, /class="gv-ref-fix gv-email-fix" hidden role="status"/,
+    'and it must be announced, not merely drawn');
+});
