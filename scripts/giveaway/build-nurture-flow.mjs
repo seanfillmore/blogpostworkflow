@@ -69,8 +69,42 @@ import { fileURLToPath } from 'node:url';
 import { upsertTemplateByName, createFlow, updateFlowStatus, deleteFlow, createCampaign, deleteCampaign, assignTemplateToCampaignMessage } from '../../lib/klaviyo.js';
 import { send, delay, FROM } from '../flows/klaviyo-graph.js';
 import { FLOW_DELAYS_HOURS, splitNurtureFiles, flowDelayDeltas, campaignSchedule } from '../../lib/giveaway/nurture-schedule.js';
+import { resolveMechanism, CONFIRM_MECHANISMS } from '../../lib/giveaway/reconcile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+/**
+ * WHO the nurture sequence and the deadline campaigns are for — and it is NOT
+ * the same population under the two confirm mechanisms.
+ *
+ *   DOUBLE_OPT_IN — Klaviyo adds a profile to the list only once the opt-in
+ *     link is clicked, so "added to the list" IS "confirmed". The list is the
+ *     correct audience and always has been.
+ *   FLOW_LINK — the list is SINGLE opt-in and holds EVERY submitter, confirmed
+ *     or not. Triggering on it would open 01-confirm ("Your email is confirmed
+ *     — that's +2 entries banked") at people who never clicked anything, and
+ *     would send both deadline campaigns to the ~70% who never confirmed. The
+ *     confirmed segment is the only population that sentence is true of.
+ *
+ * Two things that make a mistake here invisible rather than loud:
+ *   - Klaviyo reports `trigger_type: "Added to List"` for a SEGMENT trigger too
+ *     (verified live 2026-08-24), so that field cannot distinguish the two.
+ *     Read `definition.triggers` instead.
+ *   - `audiences.included` accepts list and segment ids interchangeably, so a
+ *     campaign pointed at the wrong one is accepted without complaint.
+ */
+function nurtureAudience(config) {
+  const mechanism = resolveMechanism(config);
+  if (mechanism !== CONFIRM_MECHANISMS.FLOW_LINK) return { type: 'list', id: config.listId };
+  if (!config.confirmedSegmentId) {
+    throw new Error(
+      'confirmMechanism is flow_link but config.confirmedSegmentId is not set — the nurture flow '
+      + 'would trigger on every submitter and tell unconfirmed entrants their email is confirmed. '
+      + 'See docs/giveaway-confirm-cutover.md.',
+    );
+  }
+  return { type: 'segment', id: config.confirmedSegmentId };
+}
 const CONFIG_PATH = join(ROOT, 'config', 'giveaway.json');
 const config = JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
 const NURTURE_DIR = join(ROOT, 'data', 'giveaway', 'nurture');
@@ -159,14 +193,33 @@ for (const file of files) {
       + 'a sweepstakes email that asks for a sale must disclaim it in the same email.',
     );
   }
+}
+
+// The content gates above run on EVERY html file in the directory, including the
+// ones another builder owns — an unsubscribe link and the entry-retention line
+// are required of every giveaway email regardless of which flow sends it.
+//
+// Everything BELOW is per-message send configuration, so it covers only the
+// files this script actually sends. 00-confirm-request.html and
+// 07-referral-pending.html carry their subject/preview/name in their own
+// builders; demanding a MESSAGES entry here threw on a file this script must
+// not send in the first place.
+const ownedFiles = [...flowFiles, ...campaignFiles];
+for (const file of ownedFiles) {
   const key = file.replace(/\.html$/, '');
   if (!MESSAGES[key]) throw new Error(`${file} has no MESSAGES entry (subject/preview/name)`);
 }
-console.log(`All ${files.length} emails pass the content gates (${flowFiles.length} in the flow, ${campaignFiles.length} as dated campaigns).`);
+console.log(`All ${files.length} emails pass the content gates (${flowFiles.length} in the flow, ${campaignFiles.length} as dated campaigns, ${files.length - ownedFiles.length} owned by another builder).`);
 
 if (mode === 'templates' || mode === 'flow' || mode === 'campaigns') {
-  config.nurtureTemplates = {};
-  for (const file of files) {
+  // Preserve, rather than reset. Another builder's template id lives in this
+  // same map (07-referral-pending.html is written by build-referral-audit-flow.mjs),
+  // and `= {}` silently dropped it — leaving that flow pointing at a template id
+  // nothing in config could still name.
+  config.nurtureTemplates = Object.fromEntries(
+    Object.entries(config.nurtureTemplates || {}).filter(([f]) => !ownedFiles.includes(f)),
+  );
+  for (const file of ownedFiles) {
     const key = file.replace(/\.html$/, '');
     const name = MESSAGES[key].name;
     const tpl = await upsertTemplateByName(name, readFileSync(join(NURTURE_DIR, file), 'utf8'));
@@ -204,7 +257,7 @@ if (mode === 'flow') {
   });
 
   const definition = {
-    triggers: [{ type: 'list', id: config.listId }],
+    triggers: [nurtureAudience(config)],
     profile_filter: null,
     entry_action_id: entryActionId,
     actions,
@@ -259,7 +312,7 @@ if (mode === 'campaigns') {
 
     const campaign = await createCampaign({
       name: `Giveaway — ${msg.name.replace(/^Giveaway Nurture \d+ — /, '')} (${sendAt.slice(0, 10)})`,
-      listId: config.listId,
+      audienceId: nurtureAudience(config).id,
       sendAt,
       subject: msg.subject,
       preview: msg.preview,

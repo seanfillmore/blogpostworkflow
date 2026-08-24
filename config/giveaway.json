@@ -1,21 +1,21 @@
 {
   "listId": "Y2ukbE",
   "listName": "Giveaway 2026-09 — Entrants",
-  "confirmMechanism": "double_opt_in",
+  "confirmMechanism": "flow_link",
   "_confirmMechanismNote": "HOW A CONFIRMATION CLICK IS OBSERVED, and the single switch for the cutover. `double_opt_in`: the Klaviyo list is double opt-in, Klaviyo only adds a profile once the opt-in link is clicked, so membership of the subscribed set IS the confirmation. `flow_link`: the list is SINGLE opt-in, entrants are subscribed on form submit, and a branded flow email carries the confirmation link (update_property_link writes gv_confirmed). Under flow_link, subscription proves NOTHING — reading it as confirmation pays the +2 to every submitter and inflates every §5 referral rung with it. lib/giveaway/reconcile.js resolveMechanism() is the only reader; an unrecognised value throws rather than defaulting, because the two branches disagree about every entrant on the list at once. FLIPPING THIS IS HALF THE CUTOVER — the Klaviyo list opt-in process must be changed in the UI in the same maintenance window, and in this order: set the list to single opt-in FIRST, then flip this key. The reverse order leaves a window where entrants are on a double-opt-in list while the code has stopped believing subscription means anything, which stalls every +2 until the flip completes. See docs/giveaway-confirm-cutover.md.",
   "confirmTemplateId": "VxJnPd",
   "confirmFlowId": "VyjCRz",
-  "confirmedSegmentId": null,
+  "confirmedSegmentId": "Tamb9u",
   "nurtureTemplates": {
+    "07-referral-pending.html": "U8ZQLt",
     "01-confirm.html": "RFn6ZR",
     "02-referral.html": "RAJQEt",
     "03-angle.html": "Rw7Aj5",
     "04-ugc.html": "V2k6YD",
     "05-reminder.html": "Xm9LLm",
-    "06-final-call.html": "WJ8J9J",
-    "07-referral-pending.html": "U8ZQLt"
+    "06-final-call.html": "WJ8J9J"
   },
-  "nurtureFlowId": "XnD2WQ",
+  "nurtureFlowId": "SajAVS",
   "entryOpensAt": "2026-08-18T00:00:00-07:00",
   "entryClosesAt": "2026-09-14T23:59:59-07:00",
   "drawAt": "2026-09-16T12:00:00-07:00",
@@ -26,13 +26,13 @@
   "_metaPixelNote": "Real Skin Care pixel, installed via the Shopify Facebook & Instagram sales channel with Maximum data sharing (Pixel + advanced matching + Conversions API). Asserted by scripts/giveaway/verify-launch.mjs.",
   "deadlineCampaigns": {
     "05-reminder.html": {
-      "id": "01M0J6WCPCV923BMHCHEK4TXRP",
-      "messageId": "01M0J6WCPNFT7BEFWD4X6BAS5W",
+      "id": "01M0RVNDD14BZ0BDM6FJDMZ3S0",
+      "messageId": "01M0RVNDDCSJW2B6BAVZST4E7V",
       "sendAt": "2026-09-11T14:00:00.000Z"
     },
     "06-final-call.html": {
-      "id": "01M0J6WF89Y705RGF6JMR534MX",
-      "messageId": "01M0J6WF8M9X774BWQE1BFGCHM",
+      "id": "01M0RVNFR94NM0T2W1QVNT4C04",
+      "messageId": "01M0RVNFRN39BNQE7HYXSZ5G93",
       "sendAt": "2026-09-13T14:00:00.000Z"
     }
   },
@@ -43,5 +43,6 @@
   "metaAdAccountId": "act_946015593265647",
   "metaCampaignId": "120248756571100173",
   "_metaCampaignNote": "Soap Giveaway 2026-09 | Leads | US — objective OUTCOME_LEADS. Spend is read from this campaign by lib/giveaway/meta-spend.js for the daily spend gate. Recorded explicitly rather than discovered by name each run: four ad accounts exist on this token and name-matching would silently pick the wrong one if the campaign is ever renamed or duplicated.",
-  "referralAuditFlowId": "TvYN9Q"
+  "referralAuditFlowId": "TvYN9Q",
+  "_confirmedSegmentNote": "Giveaway 2026-09 — Confirmed. Built 2026-08-24 via POST /segments/ as ONE condition_group holding TWO conditions: gv_confirmed_at is-set OR gv_confirmed equals the STRING \"true\". Both must live in the SAME group — Klaviyo combines condition_groups with AND and conditions WITHIN a group with OR, which is the inverse of what the nesting reads like, and splitting them would match only profiles carrying both. Both spellings are needed: gv_confirmed is what update_property_link writes the instant someone clicks, and gv_confirmed_at is the durable stamp the reconciler writes on its next run — a segment on the stamp alone would hold a confirmer out of the nurture flow until the 08:30 UTC reconcile, up to 24h later. Verified at creation against the list: 213 members, 213 in the segment, 0 missing and 0 extra. This API revision (2025-07-15) will not return a segment definition, so re-verify by MEMBERSHIP rather than by reading it back."
 }

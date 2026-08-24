@@ -15,6 +15,7 @@ import {
   splitNurtureFiles,
   flowDelayDeltas,
   campaignSchedule,
+  EXTERNAL_EMAILS,
 } from '../../lib/giveaway/nurture-schedule.js';
 
 const ALL = ['01-confirm.html', '02-referral.html', '03-angle.html', '04-ugc.html', '05-reminder.html', '06-final-call.html'];
@@ -27,8 +28,22 @@ test('the four onboarding emails stay in the flow; the two deadline emails do no
 });
 
 test('an unexpected nurture file throws rather than being silently dropped', () => {
-  assert.throws(() => splitNurtureFiles([...ALL, '07-surprise.html']), /07-surprise/,
+  assert.throws(() => splitNurtureFiles([...ALL, '99-surprise.html']), /99-surprise/,
     'an unclassified email would otherwise reach neither the flow nor a campaign, and nobody would notice');
+});
+
+test('templates owned by another builder are tolerated and stay out of both buckets', () => {
+  // Real files: 00-confirm-request.html belongs to build-confirm-flow.mjs and
+  // 07-referral-pending.html to build-referral-audit-flow.mjs. Both sit in the
+  // nurture directory, and before EXTERNAL_EMAILS existed each one threw
+  // "unclassified nurture email" and stopped the nurture flow being rebuilt.
+  const { flow, campaigns } = splitNurtureFiles([...ALL, ...EXTERNAL_EMAILS]);
+  assert.deepEqual(flow, ['01-confirm.html', '02-referral.html', '03-angle.html', '04-ugc.html']);
+  assert.deepEqual(campaigns, ['05-reminder.html', '06-final-call.html']);
+  for (const f of EXTERNAL_EMAILS) {
+    assert.ok(!flow.includes(f) && !campaigns.includes(f),
+      `${f} belongs to another builder and must not be sent by the nurture flow or a deadline campaign`);
+  }
 });
 
 test('a missing nurture file throws — a short flow must not build quietly', () => {
