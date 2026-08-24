@@ -81,36 +81,65 @@
     return local + '@' + best;
   }
 
-  var refInput = form.querySelector('#gv-ref');
-  var refNote = form.querySelector('.gv-ref-note');
-  var refFix = form.querySelector('.gv-ref-fix');
-
-  if (refInput && refNote && refFix) {
-    var showFix = function () {
-      var typed = (refInput.value || '').trim();
-      refNote.hidden = !typed;
+  // ONE implementation, wired to BOTH address fields. It was attached to #gv-ref
+  // only, and the asymmetry was measurable: on 2026-08-24, across 1,102 entrants,
+  // the protected referrer field held ZERO domain typos while the unprotected
+  // entrant field held FIVE (hotmail.comi, gmail.comc, yahoo.como, gmail.comin,
+  // hotmail.cp) — all five unconfirmed, because the confirmation email cannot
+  // reach an address that does not exist.
+  //
+  // The stakes differ by field and both are unrecoverable after submit. A mistyped
+  // REFERRER cannot lawfully be corrected (§5 makes the typed value the sole
+  // identifier). A mistyped ENTRANT address is worse in a plainer way: that person
+  // never gets the confirm email, so they can never confirm, never be credited,
+  // never be sold to, and never be told. They are simply gone, and they do not know.
+  function attachTypoCheck(input, note, fix) {
+    if (!input || !fix) return;
+    var show = function () {
+      var typed = (input.value || '').trim();
+      if (note) note.hidden = !typed;
       var guess = suggestDomainTypo(typed);
-      if (!guess) { refFix.hidden = true; refFix.textContent = ''; return; }
-      refFix.textContent = 'Did you mean ';
+      if (!guess) { fix.hidden = true; fix.textContent = ''; return; }
+      // Rebuild rather than append: showing twice without clearing stacks a second
+      // "Did you mean" onto the first.
+      fix.textContent = 'Did you mean ';
       var btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'gv-ref-fix-apply';
       btn.textContent = guess;
       btn.addEventListener('click', function () {
-        refInput.value = guess;
-        refFix.hidden = true;
+        input.value = guess;
+        fix.hidden = true;
+        // Return focus so a keyboard or screen-reader user is not dropped at the
+        // top of the document by the button they just removed from the flow.
+        try { input.focus(); } catch (e) { /* focus is best effort */ }
       });
-      refFix.appendChild(btn);
-      refFix.appendChild(document.createTextNode('?'));
-      refFix.hidden = false;
+      fix.appendChild(btn);
+      fix.appendChild(document.createTextNode('?'));
+      fix.hidden = false;
     };
-    refInput.addEventListener('blur', showFix);
-    refInput.addEventListener('input', function () {
+    input.addEventListener('blur', show);
+    input.addEventListener('input', function () {
       // Only ever retract on typing; re-proposing mid-word is noise.
-      refNote.hidden = !(refInput.value || '').trim();
-      refFix.hidden = true;
+      if (note) note.hidden = !(input.value || '').trim();
+      fix.hidden = true;
     });
   }
+
+  attachTypoCheck(
+    form.querySelector('#gv-ref'),
+    form.querySelector('.gv-ref-note'),
+    form.querySelector('.gv-ref-fix')
+  );
+  // No note element on the entrant field — the referrer note explains an
+  // irreversible RULES consequence, whereas a suggestion on your own address
+  // speaks for itself and a standing warning over the first field of the form
+  // would cost entries.
+  attachTypoCheck(
+    form.querySelector('#gv-email'),
+    null,
+    form.querySelector('.gv-email-fix')
+  );
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
