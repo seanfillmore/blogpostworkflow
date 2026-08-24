@@ -68,7 +68,7 @@ function _tokens(s) {
  * Note: Shopify REST returns tags as a comma-separated string; split before passing,
  * or pass the raw string — _tokens handles both.
  */
-export function rankLinkedProducts(linked, products, { keyword, title }) {
+export function rankLinkedProducts(linked, products, { keyword, title, ingredients = null, postProductKey = null }) {
   const want = new Set([..._tokens(keyword), ..._tokens(title)]);
   const byHandle = new Map((products || []).map((p) => [p.handle, p]));
   const scored = (linked || []).map((l) => {
@@ -77,10 +77,29 @@ export function rankLinkedProducts(linked, products, { keyword, title }) {
     const hay = _tokens(`${p.title || ''} ${p.handle || l.handle} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
-    return { ...l, product: p, relevance: overlap };
+    const categoryMatch = Boolean(
+      postProductKey && ingredients && productKeyForProduct(p, ingredients) === postProductKey,
+    );
+    return { ...l, product: p, relevance: overlap, categoryMatch };
   });
-  scored.sort((a, b) => (b.relevance - a.relevance) || (b.count - a.count));
+  scored.sort((a, b) => (Number(b.categoryMatch) - Number(a.categoryMatch))
+    || (b.relevance - a.relevance) || (b.count - a.count));
   return scored;
+}
+
+/**
+ * Does any product the writer linked belong to the post's own category?
+ *
+ * A soap post that links only the body lotion is not miscited — "follow with a
+ * moisturizer" is correct aftercare. But the FEATURED CARD is the buy box, and
+ * putting lotion in it on a soap post sells the wrong thing while leaving the
+ * post with no path to its own product. When nothing linked matches the
+ * category, the caller falls back to the catalogue instead of promoting a
+ * cross-sell into the buy box.
+ */
+export function linkedCoversCategory(ranked, { postProductKey }) {
+  if (!postProductKey) return true;   // no category opinion → any linked product is fine
+  return (ranked || []).some((r) => r.categoryMatch);
 }
 
 // Tokens that carry NO discriminating signal for matching a post to a product.
@@ -369,8 +388,15 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
       )
     ).filter(Boolean);
 
-    // Rank by relevance to post keyword + title; tie-break by link count
-    const ranked = rankLinkedProducts(linked, fetchedProducts, { keyword, title: postTitle });
+    // Rank by category first, then relevance to keyword + title, then link count
+    let ingredientsCfg = null;
+    try {
+      ingredientsCfg = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'));
+    } catch { /* no config → pure token relevance, as before */ }
+    const postProductKey = classifyPostProduct(keyword, postMeta.slug || '');
+    const ranked = rankLinkedProducts(linked, fetchedProducts, {
+      keyword, title: postTitle, ingredients: ingredientsCfg, postProductKey,
+    });
 
     // Pick the top-ranked product; fall back through the list if fetch failed
     for (const entry of ranked) {
@@ -380,6 +406,21 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
         break;
       }
     }
+
+    // Nothing the writer linked belongs to this post's category — a soap post
+    // linking only the lotion it recommends as aftercare. Take the buy box from
+    // the catalogue rather than promoting a cross-sell into it.
+    if (!linkedCoversCategory(ranked, { postProductKey })) {
+      const all = await getProducts().catch(() => []);
+      const better = pickRelevantProduct(all, {
+        keyword, title: postTitle, ingredients: ingredientsCfg, postProductKey,
+      });
+      if (better && better.handle) {
+        product = better;
+        productHandle = better.handle;
+      }
+    }
+
     if (!product) {
       return { html: rawHtml, skipped: true, reason: 'no linked product data found in Shopify' };
     }
