@@ -90,6 +90,33 @@ DAILY_PUBLISH_DRIFT="45 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/publish-dri
 # Performance engine (daily)
 DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/performance-engine/index.js >> data/logs/performance-engine.log 2>&1"
 
+# Post-meta drift gate (daily, DETECT ONLY) — does data/posts/*/meta.json on
+# this box diverge from origin/main in a way a deploy cannot resolve by itself?
+#
+# That file is tracked in git AND rewritten continuously by cron, and on
+# 2026-08-23 the stash-pop deploy recovery turned five of them into invalid JSON
+# on production. scripts/reconcile-post-metas.mjs is the semantic merge that
+# replaced it; this wrapper runs its GATE mode and routes the verdict into the
+# 5 AM digest, deferred, never immediate. It NEVER writes a meta.json — the
+# arguments are a frozen constant and --apply is refused, because a reconcile
+# applying on a timer would resolve contested fields nobody reviewed.
+#
+# Exit 2 (a field changed on both sides with no owner) and exit 3 (a file on the
+# box already will not parse — silent today, since every reader catch{}es a
+# parse failure) render as digest failures. Exit 1 is the ordinary state of a
+# live box and is reported quietly so it does not cry wolf.
+#
+# 12:40 UTC, deliberately expressed in UTC — this host's cron (3.0pl1) supports
+# neither CRON_TZ nor a TZ crontab variable, so a TZ= prefix schedules nothing;
+# see the note above GIVEAWAY_CLOSE_ENTRY_PERIOD. The hour is chosen against two
+# UTC landmarks, neither of which is a Pacific wall-clock time, so DST cannot
+# move it out from between them: 20 minutes BEFORE the 13:00 UTC daily-summary,
+# so the row lands in the SAME morning's digest rather than tomorrow's; and
+# ~2h20m before the 15:00 UTC scheduler, so it reports a settled tree instead of
+# one mid-pipeline. It is a cheap read (git fetch + one local pass over ~200
+# JSON files) and shares the slot with nothing.
+DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-post-meta-drift.mjs >> data/reports/scheduler/post-meta-gate.log 2>&1"
+
 # Daily digest (runs last — collects everything from the day)
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
@@ -286,6 +313,8 @@ $FREQUENT_CAMPAIGN_AD_FIXER
 $DAILY_PUBLISH_DRIFT
 # ── Performance engine (daily) ──
 $DAILY_PERFORMANCE_ENGINE
+# ── Post-meta drift gate (daily, detect only — before the digest) ──
+$DAILY_POST_META_GATE
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
