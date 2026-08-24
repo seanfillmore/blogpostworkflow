@@ -101,6 +101,7 @@ test('every field the census found has an owner, and none is owned twice', () =>
     'shopify_url', 'shopify_status', 'shopify_publish_at', 'shopify_image_url',
     'shopify_status_verified_at', 'shopify_scheduled_at',
     'uploaded_at', 'published_at', 'unpublished_at', 'unpublished_reason',
+    'republished_at', 'republish_reason',
     'indexing_state', 'indexing_submissions', 'indexing_blocked',
     'indexing_blocked_reason', 'indexing_blocked_at', 'indexing_unblocked_at', 'indexing_unblocked_by',
     'legacy_bucket', 'legacy_triage_reason', 'legacy_triaged_at', 'legacy_locked',
@@ -142,6 +143,38 @@ test('title, meta_description and target_keyword are flagged contested', () => {
     assert.equal(classifyField(f), 'repo');
   }
   assert.ok(!CONTESTED_FIELDS.has('tags'));
+});
+
+test('republished_at and republish_reason are server-owned — an audit trail of a live action', () => {
+  // Traced 2026-08-23. Both keys enter the corpus through commit dddd0e74, the
+  // `best-boka-alternatives-2025` silent-draft-drift remediation. The script in
+  // that commit (scripts/republish-boka-alternatives-2026-08-22.mjs) calls
+  // updateArticle and nothing else — it does not touch meta.json — so the stamp
+  // was hand-written in the same commit and there is no code writer anywhere.
+  // That is why PR #646 could not find one, and it is NOT a reason to leave the
+  // fields unclassified: `unpublished_at`/`unpublished_reason` also have no
+  // writer and are server-owned. What decides ownership is what the field
+  // records, and these record an observation about the live world plus the
+  // action taken against it — machine state, never authored copy.
+  for (const f of ['republished_at', 'republish_reason']) {
+    assert.equal(classifyField(f), 'server', `${f} should be server-owned`);
+    assert.ok(!CONTESTED_FIELDS.has(f), `${f} is not authored in git, so it is not contested`);
+  }
+});
+
+test('a deploy carrying an older meta.json cannot delete a republish audit trail', () => {
+  // The concrete failure the classification prevents: the box stamps a new
+  // republish, a deploy lands a commit that predates it, and both sides have
+  // moved on the field. Repo ownership would revert the box; server ownership
+  // keeps the record of the incident that actually happened.
+  const base = { slug: 's', republished_at: '2026-08-22T22:07:54-06:00' };
+  const repo = { slug: 's', republished_at: '2026-08-22T22:07:54-06:00', title: 'Edited in a PR' };
+  const server = { slug: 's', republished_at: '2026-09-04T03:11:00-06:00', republish_reason: 'drift again' };
+  const { merged, unclassifiedConflicts } = reconcileMeta({ base, repo, server });
+  assert.equal(merged.republished_at, '2026-09-04T03:11:00-06:00');
+  assert.equal(merged.republish_reason, 'drift again');
+  assert.equal(merged.title, 'Edited in a PR');
+  assert.deepEqual(unclassifiedConflicts, [], 'neither field may still be unclassified');
 });
 
 test('an unknown field is unclassified, not silently assigned a side', () => {

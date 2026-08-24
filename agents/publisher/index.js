@@ -16,16 +16,41 @@
  *   --publish-at <ISO 8601>   Schedule publish at this datetime (e.g. 2026-03-17T08:00:00-05:00)
  *   --draft                  Upload as draft (not published, no schedule)
  *   --force                  Skip editor gate (bypass approval check)
+ *   --allow-divergent-mirror Push even when content.html is a DIFFERENT ARTICLE
+ *                            from what is live. See the mirror gate below.
  *   (no flag)                Publish immediately
+ *
+ * THE MIRROR GATE (2026-08-23)
+ * ────────────────────────────
+ * Updating an existing article REPLACES its body with local content.html. On
+ * 2026-08-23, 27 of the 89 comparable local mirrors were not stale copies of
+ * their live article — they were DIFFERENT, OLDER ARTICLES, sharing under a
+ * quarter of their text blocks with what is live. `scheduler.js`'s daily
+ * link-repair step republishes any such post with `--force`, unattended, so
+ * this was a live fuse rather than a theoretical one.
+ *
+ * So the update path now reads the live body first and refuses when the push
+ * would replace the page rather than edit it. `--force` does NOT disarm it —
+ * `--force` is what the unattended caller already passes, and a gate its
+ * routine caller turns off is not a gate. The override is `--allow-divergent-
+ * mirror`, typed by a human who has looked at the two bodies (see
+ * `node scripts/check-content-mirrors.mjs --snapshot-live --apply`).
+ *
+ * `publishApprovedQueueItems()` below is DELIBERATELY not gated. It publishes a
+ * queue item's `refreshed_html_path`, not the mirror, and the live path for
+ * that work is `lib/queue-apply.js`, which already captures a pre-write backup
+ * and stamps a `revert_plan`. Stating that is better than extending this change
+ * into a seam CLAUDE.md documents as near-dead.
  */
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
-import { getBlogs, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
+import { getBlogs, getArticle, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
+import { assessRepublish } from '../../lib/content-mirror.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -57,6 +82,7 @@ const publishAtArg = (() => {
 const isDraft = args.includes('--draft');
 const forcePublish = args.includes('--force');
 const skipVerify = args.includes('--no-verify');
+const allowDivergentMirror = args.includes('--allow-divergent-mirror');
 
 if (isDirectRun && !metaArg) {
   console.error('Usage: node agents/publisher/index.js data/posts/<slug>.json [--publish-at "ISO8601"] [--draft]');
@@ -279,6 +305,44 @@ async function main() {
 
   let article;
   if (meta.shopify_article_id) {
+    // ── mirror gate ───────────────────────────────────────────────────────────
+    // Read what is live BEFORE overwriting it. A failed read is a refusal, not a
+    // shrug: the evidence exists and cannot be read, which is exactly when "this
+    // might be a different article" has to win — the same call lib/post-lock.js
+    // makes for an unreadable lock. The refusal is loud (non-zero exit), so it
+    // surfaces as a publish failure rather than as silence.
+    let liveHtml = null;
+    let liveReadable = true;
+    try {
+      const liveArticle = await getArticle(blogId, meta.shopify_article_id);
+      liveHtml = liveArticle?.body_html ?? '';
+    } catch (err) {
+      liveReadable = false;
+      console.error(`\n  ⚠ Could not read live article ${meta.shopify_article_id}: ${err.message}`);
+    }
+
+    const verdict = assessRepublish({
+      localHtml: bodyHtml,
+      liveHtml,
+      liveReadable,
+      hasLiveArticle: true,
+      force: forcePublish,
+      allowDivergentMirror,
+    });
+
+    if (!verdict.allow) {
+      console.error(`\n  ✗ Mirror gate: refusing to republish "${slug}".`);
+      console.error(`  ${verdict.reason}`);
+      console.error(`  Local:  ${getContentPath(slug)}`);
+      console.error(`  Live:   https://${STORE}/blogs/${blogHandle || 'news'}/${meta.shopify_handle || slug}`);
+      console.error('  Inspect both: node scripts/check-content-mirrors.mjs --slug ' + slug + ' --snapshot-live --apply');
+      console.error('  --force does NOT bypass this. Pass --allow-divergent-mirror once you have looked.');
+      process.exit(1);
+    }
+    if (verdict.severity !== 'ok') {
+      console.warn(`\n  ⚠ Mirror gate (${verdict.severity}): ${verdict.reason}`);
+    }
+
     process.stdout.write(`  Updating existing article ${meta.shopify_article_id}... `);
     article = await updateArticle(blogId, meta.shopify_article_id, articleFields);
     console.log('done');

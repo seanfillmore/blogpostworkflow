@@ -101,7 +101,8 @@
     "ad-studio": "node agents/ad-studio/index.js",
     "prune-ad-studio": "node scripts/prune-ad-studio.mjs",
     "creatives-budget": "node scripts/creatives-budget.mjs",
-    "cluster-holds": "node scripts/cluster-holds.mjs"
+    "cluster-holds": "node scripts/cluster-holds.mjs",
+    "check-content-mirrors": "node scripts/check-content-mirrors.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
