@@ -18,6 +18,7 @@ const CATALOG = [
   { title: 'Natural Coconut Oil Lip Balm | 0.15oz | Four Pack', handle: 'coconut-oil-lip-balm', tags: 'lip' },
   { title: 'Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free', handle: 'coconut-oil-toothpaste', tags: '' },
   { title: 'Coconut Moisturizer | 4oz', handle: 'coconut-moisturizer', tags: '' },
+  { title: 'Non-Toxic Body Lotion', handle: 'coconut-lotion', tags: 'lotion' },
 ];
 
 const pick = (keyword, title, slug) => pickRelevantProduct(CATALOG, {
@@ -62,4 +63,43 @@ test('with no category signal it falls back to pure token relevance (unchanged)'
 
 test('a genuinely irrelevant post still gets nothing rather than a random product', () => {
   assert.equal(pick('how to build a birdhouse', 'Birdhouse Guide', 'birdhouse'), null);
+});
+
+// ── linked products that miss the post's category ─────────────────────────────
+//
+// A soap post linking only the body lotion is not miscited — "follow with a
+// moisturizer" is correct aftercare. But the FEATURED CARD is the buy box, and
+// putting lotion in it sells the wrong thing and leaves the post with no path to
+// its own product.
+import { rankLinkedProducts, linkedCoversCategory } from '../../agents/featured-product-injector/index.js';
+
+const linkedOf = (...handles) => handles.map((h, i) => ({ handle: h, count: handles.length - i }));
+
+test('a linked product IN the post category is preferred over link count', () => {
+  // lotion linked twice, soap once — soap must still win on a soap post
+  const ranked = rankLinkedProducts(
+    [{ handle: 'coconut-lotion', count: 2 }, { handle: 'coconut-soap', count: 1 }],
+    CATALOG, { keyword: 'natural bar soap', title: '', ingredients: ING, postProductKey: 'bar_soap' },
+  );
+  assert.equal(ranked[0].handle, 'coconut-soap');
+  assert.equal(linkedCoversCategory(ranked, { postProductKey: 'bar_soap' }), true);
+});
+
+test('linkedCoversCategory is FALSE when the soap post links only lotion', () => {
+  const ranked = rankLinkedProducts(linkedOf('coconut-lotion'), CATALOG, {
+    keyword: 'coconut soap benefits', title: '', ingredients: ING, postProductKey: 'bar_soap',
+  });
+  assert.equal(linkedCoversCategory(ranked, { postProductKey: 'bar_soap' }), false);
+});
+
+test('linkedCoversCategory is TRUE when the post has no category opinion', () => {
+  const ranked = rankLinkedProducts(linkedOf('coconut-lotion'), CATALOG, { keyword: 'x', title: '' });
+  assert.equal(linkedCoversCategory(ranked, { postProductKey: null }), true);
+});
+
+test('a lotion post linking lotion is covered — no fallback, nothing changes', () => {
+  const ranked = rankLinkedProducts(linkedOf('coconut-lotion'), CATALOG, {
+    keyword: 'natural lotion', title: '', ingredients: ING, postProductKey: 'lotion',
+  });
+  assert.equal(linkedCoversCategory(ranked, { postProductKey: 'lotion' }), true);
 });
