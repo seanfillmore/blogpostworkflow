@@ -127,7 +127,16 @@ const nudgedTotal = buckets.nudgedThenConfirmed + buckets.nudgedStillUnconfirmed
   + buckets.confirmedBeforeNudge + buckets.nudgedConfirmedTimingUnknown;
 const neverTotal = buckets.neverNudgedConfirmed + buckets.neverNudgedUnconfirmed;
 
-console.log(`${submitted.length} submitted | ${listed.length} confirmed (${pct(listed.length, submitted.length)})`);
+// COUNT CONFIRMATIONS THE SAME WAY THE BUCKETS BELOW DO — through confirmedSet,
+// which resolveMechanism() has already made mechanism-aware. This line used to
+// print `listed.length`, i.e. LIST MEMBERSHIP, which is only a synonym for
+// "confirmed" under double_opt_in. Under flow_link the list is single opt-in and
+// holds every entrant, so on 2026-08-24 it reported "1079 submitted | 1060
+// confirmed (98.2%)" when 430 of 1083 had actually confirmed — the exact trap
+// config/giveaway.json's _confirmMechanismNote warns about, in the one script
+// whose whole job is to say whether confirmation is being recovered.
+const confirmedCount = submitted.reduce((n, p) => n + (confirmedSet.has(norm(p.email)) ? 1 : 0), 0);
+console.log(`${submitted.length} submitted | ${confirmedCount} confirmed (${pct(confirmedCount, submitted.length)})`);
 console.log(`${totalNudgesSent} nudge(s) sent across ${nudgedTotal} profile(s)\n`);
 
 console.log('NUDGED');
@@ -139,10 +148,24 @@ console.log('\nNEVER NUDGED  — biased toward confirmers, read as a ceiling not
 console.log(`  confirmed               : ${buckets.neverNudgedConfirmed}  (${pct(buckets.neverNudgedConfirmed, neverTotal)} of never-nudged)`);
 console.log(`  still unconfirmed       : ${buckets.neverNudgedUnconfirmed}`);
 
-console.log('\nWHY THE REMAINING UNCONFIRMED ARE NOT BEING NUDGED RIGHT NOW');
+// UNDER flow_link THERE IS NO NEXT RUN, so say so rather than printing a queue
+// nothing will drain. nudge-unconfirmed.mjs refuses to run under this mechanism
+// (re-subscribing a single opt-in list sends no email at all), and its cron entry
+// DAILY_GIVEAWAY_NUDGE was retired from both setup-cron.sh and the live crontab
+// on 2026-08-24. "173 due on the next run" read as a pending backlog when it is
+// really a permanent residue — the confirm flow and the confirm-reminder
+// campaign are what reach these people now.
+const nudgeRetired = resolveMechanism(config) === 'flow_link';
+console.log(nudgeRetired
+  ? '\nWHY THE REMAINING UNCONFIRMED WERE NOT NUDGED (the nudge is RETIRED under flow_link)'
+  : '\nWHY THE REMAINING UNCONFIRMED ARE NOT BEING NUDGED RIGHT NOW');
 console.log(`  at the ${MAX_NUDGES}-nudge cap      : ${blockedBy.capped}`);
 console.log(`  inside the ${MIN_HOURS_BETWEEN}h gap      : ${blockedBy.insideWindow}`);
-console.log(`  due on the next run     : ${blockedBy.dueNow}`);
+console.log(`  ${nudgeRetired ? 'would have been due     ' : 'due on the next run     '}: ${blockedBy.dueNow}`);
+if (nudgeRetired) {
+  console.log('  ^ no job will send these — confirmation now runs through the confirm flow');
+  console.log('    and the confirm-reminder campaign (config/giveaway.json).');
+}
 
 if (!totalNudgesSent) {
   console.log('\nNo nudge has been delivered yet, so none of the above means anything.');
