@@ -22,11 +22,20 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from 
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
+import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
+
+/**
+ * Wall-clock ceiling for the one streaming call in this agent. Measured 2026-08-23: a full
+ * 8000-token generation on claude-sonnet-4-6 completed in 224s, so this is >3x headroom.
+ * Generous on purpose — a false fire costs a whole regeneration, and the deadline exists to
+ * break a hang, not to bound a slow response.
+ */
+const BLOG_STREAM_DEADLINE_MS = 12 * 60_000;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
@@ -595,26 +604,42 @@ async function writePost(briefPath) {
 
   await withRetry(async () => {
     html = '';
-    const stream = client.messages.stream({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8000,
-      system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
-      messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
-    });
+    // Wall-clock deadline — this is the fleet's only other unattended STREAM, and a stream
+    // is the one call shape the SDK's own timeout does not bound (it clears its timer when
+    // response headers arrive, ~7s in, and a stream body runs for minutes after that; see
+    // lib/stream-deadline.js for the measurements). A full 8000-token generation on this
+    // model measured 224s end to end, so 12 minutes is >3x headroom: this breaks a hang, it
+    // does not police a slow-but-working response.
+    const dl = streamDeadline(BLOG_STREAM_DEADLINE_MS, 'blog-post-writer');
+    try {
+      const stream = client.messages.stream({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
+        system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
+        messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
+      }, { signal: dl.signal });
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-        html += chunk.delta.text;
-        process.stdout.write('.');
+      for await (const chunk of stream) {
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          html += chunk.delta.text;
+          process.stdout.write('.');
+        }
       }
-    }
 
-    const finalMessage = await stream.finalMessage();
-    inputTokens = finalMessage.usage?.input_tokens || 0;
-    outputTokens = finalMessage.usage?.output_tokens || 0;
-    stopReason = finalMessage.stop_reason;
-    if (stopReason === 'max_tokens') {
-      throw new Error(`Output was truncated (stop_reason=max_tokens, ${outputTokens} tokens). Post is incomplete — increase max_tokens or shorten the brief and re-run.`);
+      const finalMessage = await stream.finalMessage();
+      inputTokens = finalMessage.usage?.input_tokens || 0;
+      outputTokens = finalMessage.usage?.output_tokens || 0;
+      stopReason = finalMessage.stop_reason;
+      if (stopReason === 'max_tokens') {
+        throw new Error(`Output was truncated (stop_reason=max_tokens, ${outputTokens} tokens). Post is incomplete — increase max_tokens or shorten the brief and re-run.`);
+      }
+    } catch (err) {
+      // Only a fired deadline is converted to a terminal error. A truncation throw or a
+      // genuine 429 passes through unchanged and stays retryable, which is why this is
+      // toTerminal() and not a blanket rethrow.
+      throw dl.toTerminal(err);
+    } finally {
+      dl.clear();
     }
   }, { label: 'blog-post-writer' });
 
