@@ -12,9 +12,12 @@
   "shopify_article_id": 562322571434,
   "shopify_handle": "best-boka-alternatives-2025",
   "shopify_publish_at": "2025-06-06T14:50:55-06:00",
+  "shopify_status": "published",
   "legacy_synced_at": "2026-04-09T23:17:12.633Z",
   "legacy_source": "sync-legacy-posts.js",
   "legacy_bucket": "rising",
   "legacy_triage_reason": "Position 12, 2881 impressions. Meta-only optimization candidate.",
-  "legacy_triaged_at": "2026-08-04T03:55:40.861Z"
+  "legacy_triaged_at": "2026-08-04T03:55:40.861Z",
+  "republished_at": "2026-08-22T22:07:54-06:00",
+  "republish_reason": "Silent draft drift — published_at was null live despite a real legacy publish_at, no redirect, no kill marker, still earning impressions. See scripts/republish-boka-alternatives-2026-08-22.mjs."
 }
