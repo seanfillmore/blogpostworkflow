@@ -44,7 +44,7 @@ import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
 import { partitionInternalLinkIssues, indexLinkResults } from '../../lib/internal-link-validation.js';
-import { productKeyFromLinks, resolveProductKey } from '../../lib/product-format.js';
+import { productKeyFromLinks, resolveProductKey, soapFormatIsExplicit } from '../../lib/product-format.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1059,7 +1059,12 @@ async function runEditor(htmlPath) {
     [...categorised.internal.products].map((l) => l.href),
     ingredients,
   );
-  const resolvedProduct = resolveProductKey({ textKey: textProductKey, linkKey: linkProductKey });
+  // A text key that merely DEFAULTED (generic "soap" -> bar_soap) must not be
+  // reported as disagreeing with the CTA — see soapFormatIsExplicit.
+  const textIsExplicit = soapFormatIsExplicit(`${keyword} ${slug}`) || !/soap/i.test(`${keyword} ${slug}`);
+  const resolvedProduct = resolveProductKey({
+    textKey: textProductKey, linkKey: linkProductKey, textIsExplicit,
+  });
   const productKey = resolvedProduct.key;
   const isTopicalAuthority = productKey === null;
   const productIngredients = productKey ? flattenProduct(ingredients[productKey]) : null;

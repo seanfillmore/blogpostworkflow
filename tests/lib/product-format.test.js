@@ -142,3 +142,42 @@ test('REAL CONFIG: the tattoo post\'s actual CTA resolves to the foaming soap', 
     'liquid_soap',
   );
 });
+
+// ── explicit signal vs default ────────────────────────────────────────────────
+//
+// A default is not an assertion. The tattoo winner's keyword says only "soap",
+// so bar_soap is a fallback — and warning that it "disagrees" with the foaming
+// CTA on a post whose copy is entirely about foaming liquid soap is noise that
+// would fire on every run forever.
+import { soapFormatIsExplicit } from '../../lib/product-format.js';
+
+test('soapFormatIsExplicit: true only when the text names a format', () => {
+  assert.equal(soapFormatIsExplicit('natural bar soap for men'), true);
+  assert.equal(soapFormatIsExplicit('foaming hand soap'), true);
+  assert.equal(soapFormatIsExplicit('bar-soap-vs-liquid-hand-soap'), true);
+});
+
+test('soapFormatIsExplicit: false for generic soap (a DEFAULT, not a claim)', () => {
+  assert.equal(soapFormatIsExplicit('best soap to use on new tattoo'), false);
+  assert.equal(soapFormatIsExplicit('natural soap'), false);
+  assert.equal(soapFormatIsExplicit('what is castile soap'), false);
+});
+
+test('a DEFAULTED text key does not produce a mismatch against the CTA', () => {
+  // the real tattoo case
+  const r = resolveProductKey({ textKey: 'bar_soap', linkKey: 'liquid_soap', textIsExplicit: false });
+  assert.equal(r.key, 'liquid_soap');
+  assert.equal(r.source, 'link');
+  assert.equal(r.mismatch, null, 'a guess losing to the buy button is not a finding');
+});
+
+test('an EXPLICIT text key still produces a mismatch', () => {
+  // "natural bar soap for men" that CTAs the foaming pump IS a real conflict
+  const r = resolveProductKey({ textKey: 'bar_soap', linkKey: 'liquid_soap', textIsExplicit: true });
+  assert.deepEqual(r.mismatch, { fromText: 'bar_soap', fromLink: 'liquid_soap' });
+});
+
+test('textIsExplicit defaults to true so existing callers are unchanged', () => {
+  const r = resolveProductKey({ textKey: 'lotion', linkKey: 'cream' });
+  assert.deepEqual(r.mismatch, { fromText: 'lotion', fromLink: 'cream' });
+});
