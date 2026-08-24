@@ -117,6 +117,42 @@ DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/perform
 # JSON files) and shares the slot with nothing.
 DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-post-meta-drift.mjs >> data/reports/scheduler/post-meta-gate.log 2>&1"
 
+# Content-mirror drift gate (daily, DETECT ONLY) — does every local
+# data/posts/*/content.html still hold the article that is actually LIVE?
+#
+# agents/publisher replaces body_html from that file, so a drifted mirror is a
+# queued overwrite of a live page. Measured 2026-08-23: 27 of 89 mirrors held a
+# DIFFERENT ARTICLE, and they had been wrong since an April bulk import with
+# nothing anywhere saying so. The publisher now refuses that republish, but a
+# refusal is a guard rather than a fix, and drift can reappear at any time.
+#
+# It NEVER resyncs. GATE_ARGS is a frozen EMPTY list and --apply /
+# --snapshot-live are refused: scripts/reconcile-content-mirrors.mjs exists and
+# is --apply-gated, so "detector on cron" is one careless edit away from
+# "resync on cron" — which would eventually fire inside the minutes when
+# refresh-runner legitimately has a paid LLM rewrite sitting in content.html.
+# The empty argument list is also the --no-run-record decision: the check writes
+# nothing at all unless given --snapshot-live --apply, which would drop ~80 full
+# live article bodies into data/reports/content-mirror/ every morning forever on
+# a box that has already lost four days of cron to a full disk.
+#
+# Exit 2 (a local file is a different article) and exit 3 (a post could not be
+# read) render as digest failures. Exit 1 is the 0.25-0.75 warn band, reported
+# quietly on purpose — that threshold is deliberately ADVISORY and blocks
+# nothing, so a daily failure row for it would be crying wolf about a decision
+# we made.
+#
+# 12:20 UTC, expressed in UTC because a TZ= prefix schedules NOTHING on this
+# host (cron 3.0pl1 supports neither CRON_TZ nor a TZ crontab variable; see the
+# note above GIVEAWAY_CLOSE_ENTRY_PERIOD). The hour sits between three UTC
+# landmarks, none of them a Pacific wall-clock time, so DST cannot walk it out
+# from between them: 40 minutes BEFORE the 13:00 UTC daily-summary, so the row
+# lands in the SAME morning's digest; 20 minutes before the 12:40 UTC post-meta
+# gate, so the two cheap detectors do not share a slot; and ~2h40m before the
+# 15:00 UTC scheduler, whose link-repair step is the very republish this drift
+# endangers — reporting before it runs is the whole point.
+DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-content-mirror-drift.mjs >> data/reports/scheduler/content-mirror-gate.log 2>&1"
+
 # Daily digest (runs last — collects everything from the day)
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
@@ -311,7 +347,8 @@ $FREQUENT_CAMPAIGN_AD_FIXER
 $DAILY_PUBLISH_DRIFT
 # ── Performance engine (daily) ──
 $DAILY_PERFORMANCE_ENGINE
-# ── Post-meta drift gate (daily, detect only — before the digest) ──
+# ── Drift detectors (daily, detect only — before the digest) ──
+$DAILY_CONTENT_MIRROR_GATE
 $DAILY_POST_META_GATE
 # ── Daily digest ──
 $DAILY_SUMMARY
@@ -365,6 +402,8 @@ echo "  07:30 UTC — performance-engine"
 echo "  10:00 UTC — calendar-runner (--run --all)"
 echo "  11:00 UTC — indexing-checker"
 echo "  11:30 UTC — indexing-fixer"
+echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
+echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
