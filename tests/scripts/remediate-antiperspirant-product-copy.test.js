@@ -24,7 +24,7 @@ describe('antiperspirant remediation — plan shape', () => {
       assert.notEqual(e.before, e.after, e.id);
       assert.ok(Number.isInteger(e.expectedOccurrences) && e.expectedOccurrences > 0, e.id);
       assert.ok(Array.isArray(e.mustContain) && e.mustContain.length > 0, e.id);
-      assert.ok(['arm-a', 'arm-b', 'judgement'].includes(e.caughtBy), e.id);
+      assert.ok(['arm-a', 'arm-b', 'arm-a+arm-b', 'judgement'].includes(e.caughtBy), e.id);
       assert.ok(e.why.length > 40, `${e.id} needs a real written reason`);
     }
   });
@@ -182,23 +182,36 @@ describe('antiperspirant remediation — scope discipline', () => {
   });
 
   test('caughtBy is checked against the code, not trusted as a label', () => {
-    // `arm-a` must actually trip findProductCategoryMisnomers; `arm-b` and `judgement`
-    // must not — otherwise the plan could claim enforcement coverage it does not have,
-    // which is the one thing a reader six weeks from now will rely on it for.
+    // A label claiming coverage the code does not have is the one thing a reader six
+    // weeks from now will rely on this plan for, so it is verified rather than believed:
+    // any label naming arm-a must actually trip findProductCategoryMisnomers, and
+    // `judgement` must actually not.
     for (const e of PLAN) {
       const armAFires = findProductCategoryMisnomers(e.before).length > 0;
-      assert.equal(armAFires, e.caughtBy === 'arm-a', `${e.id}: caughtBy disagrees with Arm A`);
+      assert.equal(
+        armAFires,
+        e.caughtBy.includes('arm-a'),
+        `${e.id}: caughtBy "${e.caughtBy}" disagrees with Arm A`,
+      );
     }
   });
 
   test('an arm-b entry is a buy-box line the injector regenerates', () => {
     // Arm B is sanitizeProductCategoryTerm inside buildCtaCopy. Claiming it for
     // anything the injector does not generate would be claiming a fix that is not there.
-    for (const e of PLAN.filter((x) => x.caughtBy === 'arm-b')) {
+    for (const e of PLAN.filter((x) => x.caughtBy.includes('arm-b'))) {
       assert.ok(e.before.startsWith('Our pick for'), e.id);
       assert.ok(sanitizeProductCategoryTerm(e.before).includes('deodorant'), e.id);
       assert.doesNotMatch(sanitizeProductCategoryTerm(e.before), /antiperspirant/i, e.id);
     }
+  });
+
+  test('the buy-box entries are covered by BOTH arms — defence in depth', () => {
+    // Arm B stops the generator emitting the line; Arm A blocks it if any other caller
+    // ever builds that shape, or if Arm B regresses. Neither alone is the design.
+    const cta = PLAN.filter((e) => e.before.startsWith('Our pick for'));
+    assert.equal(cta.length, 4);
+    for (const e of cta) assert.equal(e.caughtBy, 'arm-a+arm-b', e.id);
   });
 
   test('a judgement entry says so, and nothing prevents it recurring', () => {

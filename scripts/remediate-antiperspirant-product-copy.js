@@ -47,7 +47,7 @@
  * than trusting the label: `arm-a` must actually trip `findProductCategoryMisnomers`,
  * and `judgement` must actually not.
  *
- * 1-2. THE TWO BUY-BOX LINES — `caughtBy: 'arm-b'`.
+ * 1-2. THE TWO BUY-BOX LINES — `caughtBy: 'arm-a+arm-b'`, defence in depth.
  *      `agents/featured-product-injector` builds its featured-
  *      product headline as `Our pick for ${target_keyword}: ${product}` — a sentence
  *      whose subject is unambiguously our product. Two live articles therefore carried
@@ -62,14 +62,15 @@
  *      through `sanitizeProductCategoryTerm`), which is what makes this remediation
  *      stick — without it the next injector run rewrites both lines back.
  *
- *      NOTE WHAT DOES **NOT** CATCH THESE, because it is the design and not a gap: Arm A
- *      declines them, correctly. In "Our pick for travel size antiperspirant", the
- *      possessive `Our` heads `pick`, and `for` opens a new phrase — grammatically the
- *      brand possessive is not attached to the term at all. What makes the line a
- *      product description is the FIELD it sits in (a buy-box headline), which is
- *      exactly the question Arm B answers. If Arm A were widened to reach it, the same
- *      widening would flag "our deep-dive on aluminum-free antiperspirant", which is a
- *      live sentence about an article we wrote.
+ *      ARM A CATCHES THESE TOO, since 2026-08-24, and the two arms are deliberately
+ *      redundant here. Grammatically `Our` heads `pick` and `for` opens a new phrase, so
+ *      no tightening of possessive attachment reaches the line — and simply allowing
+ *      `for` into the gap re-acquires the "our deep-dive on aluminum-free antiperspirant"
+ *      false positive, which is a live sentence about an article we wrote. The narrow way
+ *      in is to name the RECOMMENDATION idioms ("our pick for", "our top choice for"),
+ *      which take a product as their object by construction where "our deep-dive on"
+ *      takes a document. Arm B still sanitizes the line so the generator cannot emit it;
+ *      Arm A now also blocks it if any OTHER caller ever builds that shape.
  *
  * 3.   THE BUYING-GUIDE HEADING — `caughtBy: 'judgement'`, the borderline one.
  *      `<h2>What to Look For in a Natural Antiperspirant (Buying Guide)</h2>` on
@@ -167,8 +168,8 @@ const H2_AFTER = '<h2>What to Look For in a Natural Deodorant (Buying Guide)</h2
  * @property {string} after
  * @property {number} expectedOccurrences
  * @property {string[]} mustContain    tokens that must survive BEFORE -> AFTER, in order
- * @property {'arm-a'|'arm-b'|'judgement'} caughtBy  which enforcement arm stops this
- *                                    shape being written again — see the header
+ * @property {'arm-a'|'arm-b'|'arm-a+arm-b'|'judgement'} caughtBy  which enforcement arm
+ *                                    stops this shape being written again — see the header
  * @property {string} why
  */
 
@@ -182,7 +183,7 @@ export const PLAN = [
     after: CTA_TRAVEL_AFTER,
     expectedOccurrences: 1,
     mustContain: ['Our pick for', 'travel size', CTA_PRODUCT],
-    caughtBy: 'arm-b',
+    caughtBy: 'arm-a+arm-b',
     why:
       'featured-product buy-box headline. "Our pick for <X>: <our product>" makes our '
       + 'deodorant the referent of the category name, directly above an Add-to-Cart button.',
@@ -195,7 +196,7 @@ export const PLAN = [
     after: CTA_TRAVEL_AFTER,
     expectedOccurrences: 1,
     mustContain: ['Our pick for', 'travel size', CTA_PRODUCT],
-    caughtBy: 'arm-b',
+    caughtBy: 'arm-a+arm-b',
     why: 'local mirror of the above — agents/publisher republishes this file over body_html.',
   },
   {
@@ -206,7 +207,7 @@ export const PLAN = [
     after: CTA_ALU_AFTER,
     expectedOccurrences: 1,
     mustContain: ['Our pick for', 'aluminum free', CTA_PRODUCT],
-    caughtBy: 'arm-b',
+    caughtBy: 'arm-a+arm-b',
     why:
       'featured-product buy-box headline, same generator, same defect. The raw target '
       + 'keyword makes this headline clumsy as well as wrong; only the wrong part is fixed here.',
@@ -220,7 +221,7 @@ export const PLAN = [
     after: CTA_ALU_AFTER,
     expectedOccurrences: 1,
     mustContain: ['Our pick for', 'aluminum free', CTA_PRODUCT],
-    caughtBy: 'arm-b',
+    caughtBy: 'arm-a+arm-b',
     why: 'local mirror of the above — agents/publisher republishes this file over body_html.',
   },
   {

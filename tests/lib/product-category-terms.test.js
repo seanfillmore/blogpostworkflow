@@ -100,6 +100,123 @@ test('"our" must be a whole word — "your", "four", "hour" never match', () => 
   assert.deepEqual(findProductCategoryMisnomers('24-hour antiperspirant protection'), []);
 });
 
+// ── Arm A — ATTRIBUTIVE use (widened 2026-08-24) ─────────────────────────────────
+//
+// The head-of-noun-phrase requirement alone missed the single most important string
+// to catch: in "Real Skin Care's antiperspirant formula" the term MODIFIES `formula`,
+// so the head test skipped it. It is unambiguously a product description, and it is the
+// phrasing an editor pass flagged as an ingredient-accuracy BLOCKER.
+
+test('flags the term modifying a product noun', () => {
+  for (const s of [
+    "Real Skin Care's antiperspirant formula",
+    'Real Skin Care’s antiperspirant formula',
+    'our antiperspirant formula',
+    'our antiperspirant stick',
+    'our antiperspirant collection',
+    'our coconut oil antiperspirant bar',
+    'our aluminum-free antiperspirant spray keeps you dry',
+  ]) {
+    assert.equal(findProductCategoryMisnomers(s).length, 1, s);
+  }
+});
+
+test('the product-noun list is a whitelist — an unknown follower is a miss, not a hit', () => {
+  // `aisle`, `brands`, `debate` are nouns this list has never seen. Not flagged, on
+  // purpose: a word the file does not know can only ever produce a miss, never a
+  // killed ranking page.
+  assert.deepEqual(findProductCategoryMisnomers('our antiperspirant aisle'), []);
+  assert.deepEqual(findProductCategoryMisnomers('our antiperspirant debate'), []);
+});
+
+// ── Arm A — BARE BRAND TOKEN (widened 2026-08-24) ────────────────────────────────
+
+test('flags the brand naming the term with no possessive', () => {
+  assert.equal(findProductCategoryMisnomers('Real Skin Care antiperspirant').length, 1);
+  assert.equal(findProductCategoryMisnomers('Real Skin Care antiperspirant stick').length, 1);
+  assert.equal(findProductCategoryMisnomers('realskincare antiperspirant, 2oz').length, 1);
+});
+
+test('a sentence boundary after the brand breaks the attachment', () => {
+  // Punctuation terminates the gap outright — the gap token must be preceded by
+  // whitespace alone — so a new sentence can never be governed by the previous one.
+  assert.deepEqual(
+    findProductCategoryMisnomers('Real Skin Care. Conventional antiperspirants use aluminum.'),
+    [],
+  );
+  assert.deepEqual(
+    findProductCategoryMisnomers('switching to Real Skin Care from an antiperspirant'),
+    [],
+  );
+});
+
+// ── Arm A — RECOMMENDATION FRAME (widened 2026-08-24) ────────────────────────────
+//
+// The generated buy-box headline. Grammatically `Our` heads `pick` and `for` opens a
+// new phrase, so no tightening of possessive attachment reaches it — and loosening the
+// gap to allow `for` re-acquires the "our deep-dive on" false positive. Naming the
+// recommendation idioms is the narrow way in, and it makes Arm A and Arm B defence in
+// depth on the exact line that was live.
+
+test('flags the generated buy-box headline — both live variants verbatim', () => {
+  assert.equal(
+    findProductCategoryMisnomers(
+      'Our pick for travel size antiperspirant: Best Coconut Oil Deodorant — All Natural Formula | 2oz',
+    ).length,
+    1,
+  );
+  assert.equal(
+    findProductCategoryMisnomers(
+      'Our pick for aluminum free antiperspirant what it is does it work: Best Coconut Oil Deodorant — All Natural Formula | 2oz',
+    ).length,
+    1,
+  );
+});
+
+test('flags the other recommendation idioms', () => {
+  for (const s of [
+    'Our top pick for natural antiperspirant: Coconut Oil Deodorant',
+    'our choice for aluminum free antiperspirant.',
+    'our best recommendation for travel antiperspirant.',
+  ]) {
+    assert.equal(findProductCategoryMisnomers(s).length, 1, s);
+  }
+});
+
+test('a recommendation whose object is not the term is left alone', () => {
+  // "Our pick for antiperspirant QUITTERS" recommends a product to a kind of person;
+  // it does not say our product is an antiperspirant.
+  assert.deepEqual(
+    findProductCategoryMisnomers('Our pick for antiperspirant quitters: Coconut Oil Deodorant'),
+    [],
+  );
+  assert.deepEqual(findProductCategoryMisnomers('our guide to antiperspirant brands'), []);
+  assert.deepEqual(findProductCategoryMisnomers('our review of antiperspirant sticks'), []);
+});
+
+test('an overlapping double match is reported once, not twice', () => {
+  // Both compiled patterns can match the buy-box line. A retry prompt that names the
+  // same phrase twice reads as two separate problems.
+  const hits = findProductCategoryMisnomers('Our pick for travel size antiperspirant: X');
+  assert.equal(hits.length, 1);
+});
+
+// ── Arm A — DETERMINERS, the false positive the widening created and then killed ──
+
+test('a determiner in the gap breaks the attachment — negations are safe', () => {
+  // Found by measurement: the widened rule fired on the compliance rule's OWN sentence,
+  // "never call our product, our formula or our collection an antiperspirant". A
+  // determiner opens a new noun phrase exactly as a preposition does.
+  for (const s of [
+    'never call our product, our formula or our collection an antiperspirant',
+    'our deodorant is not an antiperspirant',
+    'we do not sell an antiperspirant',
+    'our formula is a deodorant, not an antiperspirant',
+  ]) {
+    assert.deepEqual(findProductCategoryMisnomers(s), [], s);
+  }
+});
+
 test('empty and non-string inputs are safe', () => {
   assert.deepEqual(findProductCategoryMisnomers(''), []);
   assert.deepEqual(findProductCategoryMisnomers(null), []);
