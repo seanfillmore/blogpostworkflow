@@ -1,8 +1,10 @@
 /**
  * Legacy Post Rebuilder
  *
- * Identifies blog posts that lack FAQ schema (a proxy for "built before the
- * current pipeline existed") and rebuilds them tier-appropriately:
+ * Identifies blog posts that carry no injected JSON-LD at all (the direct
+ * statement of "built before the current pipeline existed"; it was a `FAQPage`
+ * substring search until 2026-08-24, when the injector stopped emitting that
+ * type — see `isLegacyHtml` below) and rebuilds them tier-appropriately:
  *   winner → skip · rising → light surgical refresh · flop/untriaged → full
  *   refresh via refresh-runner (content-refresher → editor → publisher, in
  *   place on the existing post) · broken → skip for manual fix.
@@ -35,6 +37,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { hasInjectedSchema } from '../../lib/injected-schema.js';
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import {
@@ -123,16 +126,42 @@ const limitIdx = args.indexOf('--limit');
 const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : null;
 const slugArg = args.find((a, i) => !a.startsWith('--') && args[i - 1] !== '--limit');
 
+/**
+ * Has this post been through the content pipeline at all?
+ *
+ * The pure half of `isLegacy`, exported so the predicate a paid rebuild routes
+ * on is testable without a filesystem.
+ *
+ * IT USED TO BE `!html.includes('FAQPage')` AND THAT STOPPED WORKING (2026-08-24)
+ * ─────────────────────────────────────────────────────────────────────────────
+ * `agents/schema-injector` no longer emits FAQPage — Google removed the FAQ rich
+ * result from Search — so every post the pipeline writes from now on carries no
+ * such string. Left alone, this function would have called all of them legacy
+ * and queued a full paid rebuild for each, five a day, unattended, forever.
+ *
+ * `hasInjectedSchema` states directly what the substring was only a proxy for.
+ * The swap can only SHRINK the legacy set (FAQPage can only occur inside a
+ * JSON-LD block), so no post is newly enrolled into spend: measured over the 93
+ * eligible local posts, 39 legacy before, 36 after, 0 newly legacy. The 3 that
+ * fall out were a defect — FAQPage was conditional on 2+ question headings while
+ * the injector ran unconditionally, so a processed post with too few question
+ * headings could never satisfy the test and was rebuilt and re-queued every
+ * morning.
+ */
+export function isLegacyHtml(html) {
+  return !hasInjectedSchema(html);
+}
+
 function isLegacy(slug) {
   const p = getContentPath(slug);
   if (!existsSync(p)) return false;
-  const html = readFileSync(p, 'utf8');
-  return !html.includes('FAQPage');
+  return isLegacyHtml(readFileSync(p, 'utf8'));
 }
 
 function findLegacyPosts() {
-  // Two signals: missing FAQ schema (old posts built before the pipeline), or
-  // editor-tagged needs_rebuild (posts that failed the editor this week).
+  // Two signals: no injected schema at all (old posts built before the pipeline
+  // existed), or editor-tagged needs_rebuild (posts that failed the editor this
+  // week).
   return listAllSlugs()
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
     .filter((p) => p.meta && p.meta.shopify_article_id)

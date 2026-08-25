@@ -40,6 +40,7 @@ import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpubl
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
+import { extractFaqQAs } from '../../lib/faq-blocks.js';
 import { findUncitedClaims } from '../../lib/citation-check.js';
 import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../../lib/year-accuracy.js';
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
@@ -441,22 +442,21 @@ function checkYearInHeadings($) {
   return issues;
 }
 
-function extractFaqQAs($) {
-  const qas = [];
-  $('script[type="application/ld+json"]').each((_, el) => {
-    try {
-      const parsed = JSON.parse($(el).html());
-      for (const s of (Array.isArray(parsed) ? parsed : [parsed])) {
-        if (s['@type'] === 'FAQPage' && Array.isArray(s.mainEntity)) {
-          for (const q of s.mainEntity) {
-            qas.push({ q: q.name || '', a: q.acceptedAnswer?.text || '' });
-          }
-        }
-      }
-    } catch {}
-  });
-  return qas;
-}
+// Rule 8's Q&As come from `lib/faq-blocks.js` — the PROSE — not from JSON-LD.
+//
+// This used to parse the `FAQPage` block `agents/schema-injector` prepended to
+// the body. That block is gone as of 2026-08-24: Google removed the FAQ rich
+// result from Search, so the injector stopped emitting it, and a schema-fed rule
+// would have rendered "Pass · rule does not apply" on every post the pipeline
+// writes from that day on — a BLOCKER-tier compliance check switching itself off
+// in silence.
+//
+// Moving to the prose also closed a live inconsistency. Step 1c AUTO-FIXES
+// competitor names by delegating to `agents/faq-rewriter`, which rewrites the
+// prose and never touched the JSON-LD, so the fixer and the checker read two
+// different copies of the same FAQ and the schema copy was the stale one. A post
+// whose prose had just been cleaned could still be BLOCKED for a brand name that
+// no longer appeared anywhere on the rendered page. One extractor, one answer.
 
 /**
  * Load competitor brand aliases from config/ai-citation-prompts.json.
@@ -528,7 +528,7 @@ function buildFaqCompetitorVerdict(faqQAs, competitorAliases) {
   if (!faqQAs.length) {
     return `## 8. COMPETITOR NAMES IN FAQ
 **VERDICT:** Pass
-**NOTES:** No FAQ Q&As detected (no FAQPage JSON-LD schema in post). Rule does not apply.
+**NOTES:** No FAQ Q&As detected (no question-heading or bolded-question FAQ blocks in the post body). Rule does not apply.
 
 ---
 `;
@@ -1246,7 +1246,8 @@ async function runEditor(htmlPath) {
   }
 
   // 6. Extract FAQ Q&As for competitor check
-  const faqQAs = extractFaqQAs($);
+  // Read from the same prose faq-rewriter just fixed, not from JSON-LD.
+  const faqQAs = extractFaqQAs(workingHtml);
 
   // 7. Build compressed editorial content from the auto-fixed HTML so the
   // review + year-accuracy check see the corrected state, not the original.
