@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getContentPath, getMetaPath, classifyPostProduct, ROOT } from '../../lib/posts.js';
 import { productKeyForProduct, singularize } from '../../lib/product-format.js';
+import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js';
 
 export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -174,10 +175,24 @@ export function pickRelevantProduct(products, { keyword, title, ingredients = nu
 /**
  * Build conversion-oriented CTA copy for the featured product card.
  * Returns { headline, buttonText }.
+ *
+ * THE KEYWORD IS SANITIZED FOR PRODUCT-CATEGORY ACCURACY, and this is the one place in
+ * the fleet where the misnomer was actually reaching live pages. The headline reads
+ * `Our pick for <target_keyword>: <product>` — a sentence whose subject is
+ * unambiguously OUR product — so a post targeting "travel size antiperspirant" produced
+ * `Our pick for travel size antiperspirant: Best Coconut Oil Deodorant`, inside the buy
+ * box, calling a cosmetic by an OTC-drug category name. Two live articles carried
+ * exactly that on 2026-08-24 (`travel-size-antiperspirant-…`,
+ * `aluminum-free-antiperspirant-…-2`), and because this line is GENERATED, any hand fix
+ * would have been undone by the next injector run.
+ *
+ * It SANITIZES rather than refusing. Those keywords are real queries the pages rank for,
+ * and refusing here would drop the buy box off a page that has traffic — by the Prime
+ * Directive a worse outcome than the inaccuracy. See `lib/product-category-terms.js`.
  */
 export function buildCtaCopy({ product, keyword }) {
   const name = (product && product.title) || 'this pick';
-  const kw = keyword || 'what you need';
+  const kw = sanitizeProductCategoryTerm(keyword || 'what you need');
   return { headline: `Our pick for ${kw}: ${name}`, buttonText: `Shop ${name}`.slice(0, 60) };
 }
 
