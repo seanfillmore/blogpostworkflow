@@ -140,6 +140,13 @@ data/reports/shopping-calibrator/
 # files waiting for someone's `git add .`
 data/reports/seo-impact/
 
+# CTR-program wave plans — same reasoning as seo-impact above: cron owns them on
+# the server, they are rebuilt from GSC snapshots (which are themselves
+# server-authoritative and gitignored), and a committed wave.json would be a
+# stale holdout list that meta-optimizer reads as current — which is worse than
+# no wave at all, because the holdout it protects would be last month's.
+data/reports/ctr-program/
+
 # Queue auto-apply run reports — same reasoning as seo-impact above: cron owns
 # them on the server, and a local dry run would otherwise leave untracked files
 # behind for someone's `git add .`

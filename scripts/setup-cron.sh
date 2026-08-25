@@ -164,8 +164,19 @@ WEEKLY_CRO_ANALYZER="45 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/cro-analyze
 #   2. meta-optimizer rewrites low-CTR titles/metas, starting fresh A/B tests.
 # (Supersedes the legacy meta-ab-tracker, which read an empty data/meta-tests/.)
 WEEKLY_META_AB_CHECKER="50 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ab-checker/index.js >> data/reports/scheduler/meta-ab-checker.log 2>&1"
-# --limit 5: cap to 5 fresh meta tests/week — bounded live edits + cleaner A/B
-# attribution (fewer simultaneous changes) than the default limit of 25.
+# ctr-program plans the wave BEFORE meta-optimizer picks candidates, at 14:55 —
+# between the checker (14:50) and the optimizer (15:00). Order is load-bearing in
+# one direction only: meta-optimizer reads wave.json as its DO-NOT-TOUCH list, so
+# a stale or absent wave means the holdout is unprotected and that week's cohort
+# stops being measurable. It fails open by design (no wave → nothing withheld),
+# which is right for "the planner has not run yet" and wrong to rely on.
+# It writes no Shopify changes and makes no paid call — it reads GSC snapshots.
+WEEKLY_CTR_PROGRAM="55 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ctr-program/index.js >> data/reports/scheduler/ctr-program.log 2>&1"
+# --limit 5: cap to 5 fresh meta tests/week. KEPT AT 5 ON EVIDENCE, 2026-08-24,
+# not left alone by default — see the CTR-program section of CLAUDE.md. Only 20
+# non-toothpaste pages carry 4,000+ impressions/90d, so the whole population
+# worth touching is four weeks at this cap; raising it exhausts the pool in two
+# and then spends the budget where nothing is measurable.
 WEEKLY_META_OPTIMIZER="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-optimizer/index.js --apply --limit 5 >> data/reports/scheduler/meta-optimizer.log 2>&1"
 WEEKLY_QUICK_WIN="0 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/quick-win-targeter/index.js >> data/reports/scheduler/quick-win-targeter.log 2>&1"
 WEEKLY_KEYWORD_RESEARCH="0 8 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/keyword-research/index.js >> data/reports/scheduler/keyword-research.log 2>&1"
@@ -356,6 +367,7 @@ $DAILY_SUMMARY
 $WEEKLY_INSIGHTS
 $WEEKLY_CRO_ANALYZER
 $WEEKLY_META_AB_CHECKER
+$WEEKLY_CTR_PROGRAM
 $WEEKLY_META_OPTIMIZER
 $WEEKLY_QUICK_WIN
 $WEEKLY_SEO_OPPORTUNITY
@@ -424,6 +436,7 @@ echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  14:10 UTC — seo-opportunity-analyzer (rank winnable opportunities, stage bigger moves)"
 echo "  14:50 UTC — meta-ab-checker (conclude tests, auto-revert losers)"
+echo "  14:55 UTC — ctr-program (plan the wave + holdout; read-only, no Shopify writes)"
 echo "  15:00 UTC — meta-optimizer (rewrite low-CTR metas) + quick-win-targeter"
 echo ""
 echo "  WEEKLY (Sunday)"

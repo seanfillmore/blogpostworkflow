@@ -19,6 +19,8 @@
  * is explicitly not allowed to do.
  */
 
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
 import { partitionHeld } from '../../../lib/cluster-hold.js';
 import { orderByEfficiency } from '../../../lib/cluster-efficiency.js';
 import { handleFromUrl } from '../../../lib/posts.js';
@@ -60,4 +62,54 @@ export function holdMetaCandidates(candidates, hold, {
   if (!ranking) return { ...out, efficiency: null };
   const efficiency = orderByEfficiency(out.kept, ranking, { limit, describe });
   return { ...out, kept: efficiency.items, efficiency };
+}
+
+/**
+ * THE OTHER DO-NOT-TOUCH LIST: the CTR program's holdout cohort.
+ *
+ * `agents/ctr-program` splits the ranked pages into a treatment arm it wants
+ * rewritten and a matched HOLDOUT arm that must not be, because the holdout is
+ * the only thing that separates "the rewrite worked" from "the whole blog corpus
+ * drifted upward again". Blog-wide CTR went 0.166% → 0.505% across six
+ * consecutive 28-day blocks ending 2026-08-21 with nobody touching most of those
+ * pages; without a control, every one of those blocks looks like a win.
+ *
+ * A single rewritten holdout page does not degrade the measurement a little — it
+ * removes the control for the whole wave, and there is no way to reconstruct it
+ * afterwards. So this filter runs on the pick list alongside the cluster hold,
+ * before the cap, and it FAILS OPEN: no wave file, an unreadable wave file, or a
+ * wave with no holdout means no exclusions, exactly as before this existed. A
+ * planner that has not run must not be able to stop the optimiser working.
+ *
+ * @param {Array<{keyword:string}>} candidates
+ * @param {{root:string, pageForKeyword?:(kw:string)=>string|null}} opts
+ * @returns {{kept:Array, excluded:Array<{keyword:string, url:string}>}}
+ */
+export function excludeHoldout(candidates, { root, pageForKeyword = () => null } = {}) {
+  const list = Array.isArray(candidates) ? candidates : [];
+  let holdout = [];
+  try {
+    const p = join(root ?? '.', 'data', 'reports', 'ctr-program', 'wave.json');
+    if (!existsSync(p)) return { kept: list, excluded: [] };
+    const wave = JSON.parse(readFileSync(p, 'utf8'));
+    holdout = Array.isArray(wave?.holdout) ? wave.holdout : [];
+  } catch {
+    return { kept: list, excluded: [] };
+  }
+  if (holdout.length === 0) return { kept: list, excluded: [] };
+
+  // Match on the article handle, not the full URL: the wave is built from GSC
+  // page rows (www host) and candidates resolve through the blog index, which
+  // has been known to carry the myshopify host. Comparing whole URLs would
+  // silently match nothing, which is the failure mode that looks like success.
+  const handles = new Set(holdout.map((h) => String(h?.url || '').split('/').pop()).filter(Boolean));
+
+  const kept = []; const excluded = [];
+  for (const c of list) {
+    const url = pageForKeyword(c?.keyword) || null;
+    const handle = url ? String(url).split('/').pop() : null;
+    if (handle && handles.has(handle)) excluded.push({ keyword: c?.keyword, url });
+    else kept.push(c);
+  }
+  return { kept, excluded };
 }

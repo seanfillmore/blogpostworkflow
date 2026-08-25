@@ -23,7 +23,8 @@ export function upsertTrackerEntry(tracker, entry) {
 /**
  * @param {object} result   the meta-optimizer result row
  * @param {string} testedAt YYYY-MM-DD
- * @param {{pageCtr?:number|null, locked?:boolean}} [ctx]
+ * @param {{pageCtr?:number|null, pagePosition?:number|null, pageImpressions?:number|null,
+ *          locked?:boolean}} [ctx]
  */
 export function buildTrackerEntry(result, testedAt, ctx = {}) {
   return {
@@ -40,6 +41,16 @@ export function buildTrackerEntry(result, testedAt, ctx = {}) {
     // like; see pickBaselineCtr in lib/meta-ab-decision.js. Null when the
     // lookup failed, in which case the checker falls back to baselineCtr.
     baselinePageCtr: ctx.pageCtr ?? null,
+    // The other two page-basis fields, recorded for the same reason as
+    // baselinePageCtr and used by meta-ab-checker's confound guards.
+    // `baselinePosition` below is the KEYWORD's 90-day average; comparing it to
+    // the page's measured position would be the same different-denominator
+    // error PR #630 removed from the CTR side, in a different unit. The checker
+    // will refetch these when they are absent (all entries before 2026-08-24),
+    // but recording them here means the numbers the decision used are the
+    // numbers a reader can see, rather than a later approximation of them.
+    baselinePagePosition: ctx.pagePosition ?? null,
+    baselinePageImpressions: ctx.pageImpressions ?? null,
     baselineImpressions: result.impressions,
     baselinePosition: result.position,
     validation_source: result.validation_source ?? null,
