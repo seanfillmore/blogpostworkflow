@@ -48,7 +48,7 @@ import { createMetaTest } from '../../lib/meta-test.js';
 import { loadIndex, entriesForCluster, loadCategoryCompetitors } from '../../lib/keyword-index/consumer.js';
 import { clusterForCollection } from './lib/cluster-mapper.js';
 import { validateCollectionSpec } from '../../lib/collection-validation.js';
-import { buildCollectionPageSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
+import { buildCollectionPageSchema, buildBreadcrumb } from '../../lib/schema-builders.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
 import {
@@ -310,24 +310,33 @@ No explanation, no markdown fences.`,
 
 // -- schema helpers -----------------------------------------------------------
 
-function extractFaqPairs(html) {
-  const out = [];
-  const re = /<h[23][^>]*>([^<]*\?[^<]*)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let m;
-  while ((m = re.exec(html || '')) !== null) {
-    const q = m[1].replace(/<[^>]+>/g, '').trim();
-    const a = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
-    if (q && a) out.push({ q, a });
-    if (out.length >= 8) break;
-  }
-  return out;
-}
+// `extractFaqPairs` used to live here — a byte-identical copy of
+// collection-creator's — and fed a `FAQPage` node. Both went on 2026-08-24:
+// Google REMOVED the FAQ rich result from Search
+// (`developers.google.com/search/docs/appearance/structured-data/faqpage` 301s
+// to `/search/updates#removing-faq-rich-result`; `.../how-to` 301s to its own
+// deprecation note; `.../article` still returns 200, so the 301s are the
+// features being retired and not a docs reshuffle). The heuristic had exactly
+// one caller and is deleted rather than left dead.
 
 function stripExistingSchemas(html) {
   return (html || '').replace(/<script\s+type="application\/ld\+json"[\s\S]*?<\/script>/gi, '').trimStart();
 }
 
-function buildSchemaBlock(collection, gen, bodyHtml) {
+/**
+ * TWO NODES, AND NEITHER IS A DUPLICATE (measured live 2026-08-24).
+ * All 5 published collection pages were fetched and their JSON-LD parsed: the
+ * theme publishes `Organization` on a collection and nothing else — no
+ * CollectionPage, no BreadcrumbList. That is what makes this different from the
+ * blog change, where the injector's `Article` was a second copy of the theme's.
+ * These two are the only copies there are, so they stay.
+ *
+ * It no longer takes the body: the only thing it read the prose for was the
+ * retired FAQ node, and a builder that cannot see the body cannot grow a
+ * body-conditional type back by accident — the same reasoning as
+ * `buildPostSchemas` in lib/schema-builders.js.
+ */
+function buildSchemaBlock(collection, gen) {
   const collUrl = `${config.url}/collections/${collection.handle}`;
   const schemas = [
     buildCollectionPageSchema({ name: collection.title, description: gen.seo_description, url: collUrl }),
@@ -337,8 +346,6 @@ function buildSchemaBlock(collection, gen, bodyHtml) {
       { name: collection.title, url: collUrl },
     ]),
   ];
-  const faqs = extractFaqPairs(bodyHtml);
-  if (faqs.length >= 2) schemas.push(buildFaqSchema(faqs));
   return schemas.map((s) => `<script type="application/ld+json">\n${JSON.stringify(s)}\n</script>`).join('\n');
 }
 
@@ -408,14 +415,20 @@ async function publishApprovedCollections() {
       const resourceType = item.collection_type === 'custom' ? 'custom_collections' : 'smart_collections';
 
       // Strip any previously-embedded schema blocks to avoid duplication on re-runs,
-      // then prepend fresh schema (CollectionPage + BreadcrumbList + FAQPage if ≥2 Q&A pairs).
+      // then prepend fresh schema (CollectionPage + BreadcrumbList).
+      //
+      // THE STRIP IS ALSO THE ATTRITION MECHANISM. It is type-agnostic — every
+      // ld+json block goes, whatever it holds — so a collection that passes
+      // through here again sheds any retired FAQPage its body carried, as a side
+      // effect of work already happening on it. That is what lets "stop emitting,
+      // do not sweep the corpus" be a drain rather than a permanent residue.
       const strippedHtml = stripExistingSchemas(rawHtml);
       const collectionForSchema = {
         title: item.proposed_meta?.original_title || item.title,
         handle: item.slug,
       };
       const genForSchema = { seo_description: item.proposed_meta?.seo_description || '' };
-      const schemaBlock = buildSchemaBlock(collectionForSchema, genForSchema, strippedHtml);
+      const schemaBlock = buildSchemaBlock(collectionForSchema, genForSchema);
       const html = schemaBlock + '\n' + strippedHtml;
 
       if (item.collection_type === 'custom') {
