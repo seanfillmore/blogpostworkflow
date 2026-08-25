@@ -36,6 +36,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
+import { injectLink } from '../../lib/internal-link-inject.js';
 
 // Suggestion-call parse failures for this run. Collected rather than thrown: the
 // agent loops over many articles and one bad response must not abandon the batch,
@@ -212,26 +213,13 @@ Return ONLY valid JSON, no markdown.`,
 }
 
 // ── html link injector ────────────────────────────────────────────────────────
-
-function injectLink(html, anchorText, url, title) {
-  const escaped = anchorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`(?<!<[^>]*)\\b(${escaped})\\b`, 'i');
-  const idx = html.search(regex);
-  if (idx === -1) return { html, applied: false };
-
-  const before = html.slice(Math.max(0, idx - 300), idx).toLowerCase();
-  const lastAOpen = before.lastIndexOf('<a ');
-  const lastAClose = before.lastIndexOf('</a>');
-  const lastHOpen = Math.max(before.lastIndexOf('<h1'), before.lastIndexOf('<h2'), before.lastIndexOf('<h3'));
-  const lastHClose = Math.max(before.lastIndexOf('</h1>'), before.lastIndexOf('</h2>'), before.lastIndexOf('</h3>'));
-
-  if (lastAOpen > lastAClose) return { html, applied: false };
-  if (lastHOpen > lastHClose) return { html, applied: false };
-
-  const safeTitle = title.replace(/"/g, '&quot;');
-  const linked = html.replace(regex, `<a href="${url}" title="${safeTitle}">$1</a>`);
-  return { html: linked, applied: linked !== html };
-}
+//
+// `injectLink` lived here as a byte-identical copy of the one in
+// `agents/internal-linker`, and carried the same defect: it searched the whole
+// body_html with a regex and so rewrote text inside JSON-LD blocks, breaking
+// them. Both now import the one guarded implementation — see
+// lib/internal-link-inject.js for the measurement and lib/html-prose.js for the
+// region guard. A second copy is a second copy that drifts.
 
 // ── per-target analysis ───────────────────────────────────────────────────────
 
