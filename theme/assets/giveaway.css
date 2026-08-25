@@ -102,6 +102,20 @@
 .gv-fine { font-size: 1.3rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
 .gv-fine a { color: var(--gv-ink); }
 
+/* Body prose in the MAIN column. The entry and entered pages never needed one —
+   their main columns are a headline, a form and list panels, so the only prose
+   classes that existed were .gv-lead (one muted intro, capped at 42ch) and
+   .gv-fine (small print). The confirmed and offer pages do carry real
+   paragraphs, and using .gv-lead for them would render every one as a muted
+   28px-spaced intro. Matches .gv-next-body's size so the aside and the main
+   column read as one page. */
+.gv-copy {
+  margin: 0 0 14px;
+  font-size: 1.58rem;
+  line-height: 1.5;
+}
+.gv-copy:last-child { margin-bottom: 0; }
+
 /* Consent disclosure sitting directly above the submit button. Deliberately a
    step more legible than .gv-fine: it is the only place the entrant is told
    that submitting subscribes them, so it must not read as boilerplate. */

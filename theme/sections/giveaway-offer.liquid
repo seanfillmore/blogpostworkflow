@@ -5,6 +5,16 @@
   its three sends are the whole return on $1,500 of ad spend. It goes live on
   draw day and closes seven days later.
 
+  USE THE EXISTING CLASS VOCABULARY. `theme/assets/giveaway.css` is a closed set
+  — `.gv-entered`, `.gv-lead`, `.gv-copy`, `.gv-ladder`, `.gv-fine`, and the
+  `.gv-next` block (`-shot`, `-copy`, `-eyebrow`, `-body`, `-price`, `-cta`,
+  `-fine`). The first version of this page invented `.gv-next-card`,
+  `.gv-next-img`, `.gv-entered-main`, `.gv-entered-title/-lede` and
+  `.gv-ladder-title/-body/-fine`, none of which exist. Headings still rendered,
+  because `.gv-entered h1`/`h2` are descendant selectors — which is exactly why
+  it looked *almost* right and the missing product shot was the only visible
+  symptom. Check a class against the stylesheet before using it here.
+
   ONE TAP, ONE VARIANT. The CTA is a cart permalink that preloads all 12 bars
   with the discount code applied. Two things about that are load-bearing:
 
@@ -29,68 +39,71 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign bar_variant = 45828179951786
   assign cart_url = '/cart/45828179951786:12?discount=GIVEAWAY6X6'
   assign closes_human = 'September 23, 2026'
+  assign set_handle = 'sensitive-skin-starter-set'
+  assign set_image = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/frame-01-what-arrives.jpg?v=1785635169'
 -%}
 
 {{ 'giveaway.css' | asset_url | stylesheet_tag }}
 
 <section class="gv-entered" data-gv-offer>
-  <div class="gv-entered-main">
 
-    <h1 class="gv-entered-title">We drew the winner. It wasn't you.</h1>
-    <p class="gv-entered-lede">
-      So here's the next best thing — the same soap, at half price, for one week only.
+  <h1>We drew the winner. It wasn't you.</h1>
+  <p class="gv-lead">
+    So here's the next best thing — the same soap, at half price, for one week only.
+  </p>
+
+  <div class="gv-ladder">
+    <h2>Buy 6 bars, get 6 free</h2>
+    <p class="gv-next-price">$66 <span class="gv-fine">for 12 bars — $132 value</span></p>
+    <p class="gv-copy">
+      Twelve bars of Pure Unscented Moisturizing Coconut Soap. The six free
+      ones are roughly <strong>four months of soap for one person</strong>.
+    </p>
+    <p class="gv-copy">
+      Fragrance-free · Free shipping · 30-day no-questions guarantee
     </p>
 
-    <div class="gv-ladder">
-      <h2 class="gv-ladder-title">Buy 6 bars, get 6 free</h2>
-      <p class="gv-next-price">$66 <span class="gv-ladder-fine">for 12 bars — $132 value</span></p>
-      <p class="gv-ladder-body">
-        Twelve bars of Pure Unscented Moisturizing Coconut Soap. The six free
-        ones are roughly <strong>four months of soap for one person</strong>.
-      </p>
-      <p class="gv-ladder-body">
-        Fragrance-free · Free shipping · 30-day no-questions guarantee
-      </p>
-
-      <a class="gv-next-cta" href="{{ cart_url }}">Get 12 bars for $66</a>
-
-      <p class="gv-ladder-fine">
-        Offer closes <strong>{{ closes_human }}</strong>. One per customer.
-        Discount applies automatically at checkout.
-      </p>
-    </div>
-
-    <div class="gv-ladder">
-      <h2 class="gv-ladder-title">Why we're doing this</h2>
-      <p class="gv-ladder-body">
-        You entered to win three years of free soap and you didn't win — one
-        person did. This is the closest we can get for everyone else: the same
-        Pure Unscented bar that was the prize, at the lowest price we've ever
-        put on it.
-      </p>
-    </div>
+    <a class="gv-next-cta" href="{{ cart_url }}">Get 12 bars for $66</a>
 
     <p class="gv-fine">
-      No purchase necessary to have entered the giveaway. A purchase did not and
-      does not improve anyone's chances of winning, and purchases never earned
-      entries. This offer is separate from the promotion and is open to everyone.
-      <a href="/pages/giveaway-official-rules">Official rules</a>.
-      This promotion is not sponsored, endorsed, or administered by Meta.
+      Offer closes <strong>{{ closes_human }}</strong>. One per customer.
+      Discount applies automatically at checkout.
     </p>
   </div>
 
+  <div class="gv-ladder">
+    <h2>Why we're doing this</h2>
+    <p class="gv-copy">
+      You entered to win three years of free soap and you didn't win — one
+      person did. This is the closest we can get for everyone else: the same
+      Pure Unscented bar that was the prize, at the lowest price we've ever
+      put on it.
+    </p>
+  </div>
+
+  <p class="gv-fine">
+    No purchase necessary to have entered the giveaway. A purchase did not and
+    does not improve anyone's chances of winning, and purchases never earned
+    entries. This offer is separate from the promotion and is open to everyone.
+    <a href="/pages/giveaway-official-rules">Official rules</a>.
+    This promotion is not sponsored, endorsed, or administered by Meta.
+  </p>
+
   <aside class="gv-next">
-    <div class="gv-next-card">
-      <h2 class="gv-next-title">Prefer something for sensitive skin?</h2>
+    <div class="gv-next-shot">
+      <img src="{{ set_image }}&width=600" alt="The Sensitive Skin Moisturizing Set" width="600" height="600" loading="lazy">
+    </div>
+    <div class="gv-next-copy">
+      <p class="gv-next-eyebrow">Prefer something for sensitive skin?</p>
+      <h2>The Sensitive Skin Moisturizing Set</h2>
       <p class="gv-next-body">
-        The Sensitive Skin Moisturizing Set — body lotion and body cream, eight
-        ingredients, no fragrance. Three of these shipped with the giveaway prize.
+        Body lotion and body cream — two products, eight ingredients, no
+        fragrance. Three of these shipped with the giveaway prize.
       </p>
       <p class="gv-next-price">$46.80</p>
-      <a class="gv-next-cta" href="/products/sensitive-skin-starter-set">See the Set</a>
+      <a class="gv-next-cta" href="/products/{{ set_handle }}">See the Set</a>
       <p class="gv-next-fine">Full price — the soap offer above is the discounted one.</p>
     </div>
   </aside>
