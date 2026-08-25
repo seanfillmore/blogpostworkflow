@@ -1218,7 +1218,6 @@ Expand this FAQ page by:
 2. Add new Q&A sections for the question queries above that aren't already covered
 3. Write clear, helpful answers (2–4 sentences each) in ${config.name}'s voice: clean, expert, trustworthy
 4. Include relevant internal links where appropriate (use ${config.url} as base)
-5. Generate a FAQPage JSON-LD schema covering ALL questions (existing + new)
 
 Also write:
 - SEO title (50–60 chars, includes "FAQ" naturally)
@@ -1232,7 +1231,6 @@ ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
   "body_html": "<the full expanded FAQ HTML>",
-  "faq_schema": { "@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [...] },
   "seo_title": "...",
   "seo_description": "...",
   "what_changed": "...",
@@ -1283,7 +1281,17 @@ No explanation, no markdown fences.`,
       seo_description: proposed.seo_description,
     },
     proposed_html_path: htmlPath,
-    faq_schema: proposed.faq_schema || null,
+    // NO `faq_schema` HERE ANY MORE (retired 2026-08-24). This mode used to ask
+    // Claude for a `FAQPage` JSON-LD block and stamp it onto the queue item —
+    // and NOTHING ever read it: `--publish-approved` below pushes `body_html`
+    // and the two SEO metafields, and never looks at the field. So it was a
+    // dead payload, and the prompt line that produced it was an open invitation
+    // to embed the same dead markup inside `body_html`, where it WOULD have
+    // shipped. Google REMOVED the FAQ rich result from Search
+    // (`.../structured-data/faqpage` 301s to
+    // `/search/updates#removing-faq-rich-result`; `.../how-to` likewise;
+    // `.../article` still 200s, so the 301s are the features being retired).
+    // The FAQ prose this mode writes is the point and is untouched.
     resource_type: 'page',
     resource_id: faqPage.id,
     summary: {

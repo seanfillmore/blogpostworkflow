@@ -120,9 +120,11 @@ async function triggerOpportunity(item, ctx, res) {
   return respondJson(res, { ok: true, triggered: cmd.agent });
 }
 
-// collection-content items carry generated body_html + schema + meta and are
-// published by the collection-content-optimizer's own --publish-approved path
-// (which builds schema, updates the collection, and opens a meta A/B test).
+// collection-content items carry generated body_html + meta and are published
+// by the collection-content-optimizer's own --publish-approved path (which
+// prepends CollectionPage + BreadcrumbList JSON-LD — no FAQPage since
+// 2026-08-24, when Google's removal of the FAQ rich result retired it —
+// updates the collection, and opens a meta A/B test).
 // Reuse it rather than duplicate that logic: mark approved, then spawn it.
 function publishCollectionContent(item, ctx, res) {
   item.status = 'approved';
