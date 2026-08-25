@@ -5,7 +5,11 @@ import { test } from 'node:test';
 // pages, and an unused builder is how the duplicate gets re-added. Its
 // replacement, `buildPostSchemas`, is tested in
 // tests/agents/schema-injector-dead-types.test.js alongside the evidence.
-import { buildBreadcrumb, buildCollectionPageSchema, buildItemListSchema, buildFaqSchema } from '../../lib/schema-builders.js';
+// `buildFaqSchema` is deliberately absent too, retired 2026-08-24 in the
+// follow-up change that stopped the COMMERCIAL callers. Google removed the FAQ
+// rich result from Search outright. Its evidence and the removal from all three
+// callers are pinned in tests/agents/commercial-dead-schema.test.js.
+import { buildBreadcrumb, buildCollectionPageSchema, buildItemListSchema } from '../../lib/schema-builders.js';
 
 const CONFIG = { name: 'Real Skin Care', url: 'https://www.realskincare.com', author: { name: 'Sean Fillmore', slug: 'sean-fillmore' } };
 
@@ -39,9 +43,3 @@ test('buildItemListSchema: positioned product URLs', () => {
   assert.equal(s.itemListElement[1].url, 'https://x/products/b');
 });
 
-test('buildFaqSchema: question/answer pairs', () => {
-  const s = buildFaqSchema([{ q: 'Is it safe?', a: 'Yes.' }]);
-  assert.equal(s['@type'], 'FAQPage');
-  assert.equal(s.mainEntity[0].name, 'Is it safe?');
-  assert.equal(s.mainEntity[0].acceptedAnswer.text, 'Yes.');
-});

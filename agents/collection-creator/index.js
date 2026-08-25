@@ -50,7 +50,6 @@ import { validateCollectionSpec } from '../../lib/collection-validation.js';
 import {
   buildCollectionPageSchema,
   buildBreadcrumb,
-  buildFaqSchema,
 } from '../../lib/schema-builders.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
@@ -182,24 +181,23 @@ function isCollection(path) {
 }
 
 /**
- * Extract question/answer pairs from body_html for FAQ schema.
- * Matches <h2> or <h3> tags whose text ends with "?" followed by a <p>.
- */
-function extractFaqPairs(html) {
-  const out = [];
-  const re = /<h[23][^>]*>([^<]*\?[^<]*)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let m;
-  while ((m = re.exec(html || '')) !== null) {
-    const q = m[1].replace(/<[^>]+>/g, '').trim();
-    const a = m[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600);
-    if (q && a) out.push({ q, a });
-    if (out.length >= 8) break;
-  }
-  return out;
-}
-
-/**
  * Build JSON-LD schema block and prepend it to body_html.
+ *
+ * TWO NODES, AND NEITHER IS A DUPLICATE (measured live 2026-08-24).
+ * All 5 published collection pages were fetched and their JSON-LD parsed: the
+ * theme publishes `Organization` and NOTHING else on a collection — no
+ * CollectionPage, no BreadcrumbList. So unlike the blog surface, where the
+ * theme's own Article made the injector's a second copy, these two are the only
+ * copies that exist and must not be removed alongside the FAQ.
+ *
+ * NO `FAQPage`, RETIRED 2026-08-24. Google REMOVED the FAQ rich result from
+ * Search: `developers.google.com/search/docs/appearance/structured-data/faqpage`
+ * 301s to `/search/updates#removing-faq-rich-result` and the doc is gone
+ * (`.../how-to` went the same way; `.../article` still returns 200, so the 301
+ * is the feature being retired rather than a docs reshuffle). The Q&A PROSE the
+ * prompt asks for is untouched — the rich result died, the content did not.
+ * `extractFaqPairs` went with it: its only caller was the FAQ builder, and a
+ * heuristic left behind with nothing calling it reads like a live feature.
  */
 function buildBodyWithSchema(spec) {
   const collUrl = `${config.url}/collections/${slugify(spec.handle)}`;
@@ -215,8 +213,6 @@ function buildBodyWithSchema(spec) {
       { name: spec.title, url: collUrl },
     ]),
   ];
-  const faqs = extractFaqPairs(spec.body_html);
-  if (faqs.length >= 2) schemas.push(buildFaqSchema(faqs));
   const schemaBlock = schemas
     .map((s) => `<script type="application/ld+json">\n${JSON.stringify(s)}\n</script>`)
     .join('\n');
@@ -326,7 +322,11 @@ ${opportunities.map((o, i) => `${i + 1}. "${o.query}" — position ${o.position.
                                // 3. A 4–6 question FAQ section. Format EACH Q&A as:
                                //    <h2>Question text ending with a question mark?</h2>
                                //    <p>Answer text here (2–4 sentences).</p>
-                               //    Questions must end with "?" so FAQ schema can extract them.
+                               //    Questions must end with "?" — it is how a shopper scans the
+                               //    section for the one that is theirs. (This used to say "so FAQ
+                               //    schema can extract them"; that schema is retired — Google
+                               //    removed the FAQ rich result — and the format stays on its own
+                               //    merits as readable copy.)
                                //
                                // Use <p>, <h2>, <ul> tags only. Include the keyword naturally 2–3 times total.
                                // Write for the shopper, not search engines.
