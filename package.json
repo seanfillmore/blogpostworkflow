@@ -103,7 +103,9 @@
     "creatives-budget": "node scripts/creatives-budget.mjs",
     "cluster-holds": "node scripts/cluster-holds.mjs",
     "check-content-mirrors": "node scripts/check-content-mirrors.mjs",
-    "reconcile-content-mirrors": "node scripts/reconcile-content-mirrors.mjs"
+    "reconcile-content-mirrors": "node scripts/reconcile-content-mirrors.mjs",
+    "ctr-program": "node agents/ctr-program/index.js",
+    "ctr-audit": "node agents/ctr-program/index.js --audit --no-write"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

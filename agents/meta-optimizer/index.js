@@ -43,7 +43,8 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
-import { holdMetaCandidates } from './lib/hold.js';
+import { assessDistinctness } from '../../lib/ctr-copy-distinctness.js';
+import { holdMetaCandidates, excludeHoldout } from './lib/hold.js';
 import {
   rankClusters, renderEfficiencyLines, efficiencyBanner,
 } from '../../lib/cluster-efficiency.js';
@@ -440,7 +441,23 @@ async function main() {
   const rankBanner = efficiencyBanner(ranking);
   if (rankBanner) console.log(`${rankBanner}\n`);
 
-  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(sortedCandidates, hold, {
+  // ── CTR-program holdout, applied to the pick list BEFORE the cap ───────────
+  // Same placement and same reasoning as the $0-cluster hold below it: a
+  // holdout page filtered after the cap has already eaten a slot. But the
+  // consequence of missing it is worse than a wasted slot — rewriting one
+  // holdout page removes the control for the whole wave, and there is no way to
+  // reconstruct it afterwards. Fails open when no wave has been planned.
+  const { kept: notHeldOut, excluded: holdoutExcluded } = excludeHoldout(sortedCandidates, {
+    root: ROOT,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  if (holdoutExcluded.length) {
+    console.log(`  CTR-program holdout: ${holdoutExcluded.length} candidate(s) withheld as controls`);
+    for (const e of holdoutExcluded.slice(0, 10)) console.log(`    · "${e.keyword}" → ${e.url}`);
+    console.log('');
+  }
+
+  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(notHeldOut, hold, {
     includeHeld: INCLUDE_HELD,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
     ranking,
@@ -549,8 +566,76 @@ async function main() {
         continue;
       }
 
-      const proposed = gated.proposed;
+      // ── distinctness gate ───────────────────────────────────────────────
+      // The health gate asks whether the copy is ALLOWED. This asks whether it
+      // is a CHANGE. On 2026-08-24 this agent rewrote "Best Soap for Tattoos:
+      // Clean, Gentle, Fragrance-Free" to "Best Soap for Tattoos: Gentle, Clean
+      // & Fragrance-Free" — the same three adjectives reordered — and spent a
+      // live Shopify mutation, an A/B tracker slot and 28 days of the store's
+      // only measurement capacity on it. Across the eight most recent rewrites
+      // not one introduced a number, a year, a count or any new concrete
+      // specific. Measurement fixes are worthless against a treatment that does
+      // not treat anything: no instrument reads a synonym shuffle.
+      //
+      // One retry, naming what is missing, exactly as the health gate does and
+      // for the same reason — dropping the candidate on the first miss deletes
+      // CTR work silently, and an unbounded loop is how an unattended run burns
+      // a budget on one page.
+      let proposed = gated.proposed;
+      let distinct = assessDistinctness({
+        originalTitle: currentTitle,
+        proposedTitle: proposed.title,
+        originalMeta: currentMeta,
+        proposedMeta: proposed.meta_description,
+      });
+      let distinctAttempts = 1;
+
+      if (!distinct.ok) {
+        const constraint = `The previous attempt was rejected as a cosmetic rewrite: ${distinct.reasons.join('; ')}. `
+          + `Produce a materially DIFFERENT title, not a reordering or a synonym swap. It must introduce at least one `
+          + `concrete new element the current title lacks — a count ("7 Picks"), a year, a bracketed qualifier, a named `
+          + `audience ("for Sensitive Skin"), a timeframe, or an explicit exclusion ("Without SLS"). Keep the target `
+          + `keyword intact and keep it under 60 characters.`;
+        const retry = await gateProposedCopy((c) =>
+          rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground,
+            [constraint, c].filter(Boolean).join(' ')));
+        distinctAttempts = 2;
+        if (retry.ok) {
+          const retryDistinct = assessDistinctness({
+            originalTitle: currentTitle,
+            proposedTitle: retry.proposed.title,
+            originalMeta: currentMeta,
+            proposedMeta: retry.proposed.meta_description,
+          });
+          if (retryDistinct.ok) {
+            proposed = retry.proposed;
+            distinct = retryDistinct;
+          }
+        }
+      }
+
+      if (!distinct.ok) {
+        console.log('not distinct');
+        console.log(`    ⊘ distinctness gate: ${distinct.reasons.join('; ')} — skipped after ${distinctAttempts} attempt(s), page unchanged`);
+        // Counted against the same skip budget as the health gate, for the same
+        // reason: "doesn't count against the limit" must still be bounded.
+        gateSkipped.push({
+          keyword, pageUrl, violations: [], attempts: distinctAttempts,
+          distinctness: distinct.reasons,
+          rejectedTitle: proposed.title || '', rejectedMeta: proposed.meta_description || '',
+        });
+        if (gateSkipped.length >= limitArg) {
+          console.log(`  Gate skips: ${gateSkipped.length} — at the skip budget, stopping.`);
+          break;
+        }
+        continue;
+      }
+
       console.log(gated.attempts > 1 ? 'done (regenerated once — health-claim gate)' : 'done');
+      if (distinctAttempts > 1) console.log('    · regenerated once — distinctness gate');
+      if (distinct.advisory.length) {
+        console.log(`    · distinctness advisory: ${distinct.advisory.join('; ')}`);
+      }
       if (gated.advisory.length) {
         const words = [...new Set(gated.advisory.map((v) => `${v.field}: "${v.match}"`))].join(', ');
         console.log(`    · advisory (not blocked): ${words}`);
@@ -580,10 +665,12 @@ async function main() {
         // is already contaminated by the change. Best-effort: a failure here
         // leaves the checker on the legacy keyword-level baseline rather than
         // blocking the run.
-        let pageCtr = null;
+        let pageCtr = null; let pagePosition = null; let pageImpressions = null;
         try {
           const perf = await gsc.getPagePerformance(pageUrl, 28);
           pageCtr = perf?.ctr ?? null;
+          pagePosition = perf?.position ?? null;
+          pageImpressions = perf?.impressions ?? null;
         } catch (e) {
           console.warn(`    ! baseline page CTR unavailable (${e.message}) — falling back to keyword CTR`);
         }
@@ -607,6 +694,8 @@ async function main() {
         if (result.applied) {
           tracker = upsertTrackerEntry(tracker, buildTrackerEntry(result, testedAt, {
             pageCtr,
+            pagePosition,
+            pageImpressions,
             locked: metaLock.state === 'locked',
           }));
           try {

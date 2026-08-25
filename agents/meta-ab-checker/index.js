@@ -67,6 +67,53 @@ function handleFromUrl(url) {
   return m ? m[1] : null;
 }
 
+function isoDaysBefore(iso, n) {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+// GSC data lags ~3 days; the measurement window has to end where the data does.
+function measurementWindow(days) {
+  const end = new Date();
+  end.setUTCDate(end.getUTCDate() - 3);
+  const endIso = end.toISOString().slice(0, 10);
+  return { start: isoDaysBefore(endIso, days - 1), end: endIso };
+}
+
+/**
+ * What the untouched blog corpus did between the test's baseline window and the
+ * measurement window. Subtracting it is the difference between measuring a
+ * headline and measuring an algorithm update — see lib/meta-ab-decision.js.
+ *
+ * Best-effort by design: a failure here yields null, `decideOutcome` ignores a
+ * non-finite drift, and the run degrades to the old uncontrolled comparison
+ * rather than stopping. It is cached per baseline window because a run
+ * evaluating several tests from the same week would otherwise repeat the call.
+ */
+function makeControlDriftReader(minDays) {
+  const cache = new Map();
+  let currentPromise = null;
+  const now = measurementWindow(minDays);
+
+  return async function controlDriftFor(testedAt) {
+    try {
+      if (!currentPromise) currentPromise = gsc.getBlogPerformanceForRange(now.start, now.end);
+      const current = await currentPromise;
+      if (!cache.has(testedAt)) {
+        const preEnd = isoDaysBefore(testedAt, 1);
+        const preStart = isoDaysBefore(preEnd, minDays - 1);
+        cache.set(testedAt, gsc.getBlogPerformanceForRange(preStart, preEnd));
+      }
+      const pre = await cache.get(testedAt);
+      if (!Number.isFinite(current?.ctr) || !Number.isFinite(pre?.ctr)) return null;
+      return current.ctr - pre.ctr;
+    } catch {
+      return null;
+    }
+  };
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -118,6 +165,7 @@ async function main() {
 
   const results = [];
   const concludedAt = new Date().toISOString().slice(0, 10);
+  const controlDriftFor = makeControlDriftReader(minDays);
 
   for (const entry of due) {
     process.stdout.write(`  Checking "${entry.keyword}" (${entry.testedAt})... `);
@@ -135,13 +183,61 @@ async function main() {
       // records and falls back to the historical keyword-level one, which is a
       // different denominator and can read as improved/regressed on its own.
       const { ctr: baselineCtr, basis: baselineBasis } = pickBaselineCtr(entry);
-      const decision = decideOutcome({ baselineCtr, currentCtr });
+
+      // The three confounds, supplied here because they need I/O and the
+      // decision itself must stay pure. Each is optional: a null simply skips
+      // that guard rather than failing the evaluation.
+      const controlDrift = await controlDriftFor(entry.testedAt);
+
+      // The baseline window on the SAME basis the measurement uses (page-level,
+      // `minDays` long, ending the day before the test went live).
+      //
+      // This refetch is not an optimisation, it is a correctness requirement for
+      // the position guard. `entry.baselinePosition` on the 13 pre-2026-08-24
+      // entries is the KEYWORD's 90-day average position; `perf.position` is the
+      // PAGE's over `minDays`. Comparing those two would be the same
+      // different-denominator error PR #630 removed from the CTR side, wearing a
+      // different unit — it would manufacture "confounded" verdicts out of a
+      // basis mismatch. If the refetch fails we pass nulls and skip the guard
+      // rather than compare things that are not comparable.
+      //
+      // Note what is NOT re-based: the CTR baseline. `pickBaselineCtr` documents
+      // a deliberate choice to leave legacy entries on their recorded value
+      // rather than silently re-basing them, and that choice is left standing.
+      const preEnd = isoDaysBefore(entry.testedAt, 1);
+      const preStart = isoDaysBefore(preEnd, minDays - 1);
+      let basePerf = null;
+      try {
+        basePerf = await gsc.getPagePerformanceForRange(entry.pageUrl, preStart, preEnd);
+      } catch { /* guard skipped, not fatal */ }
+
+      // Power is set by the THINNER arm — a huge measurement window cannot
+      // rescue a baseline nobody saw.
+      const impressionsPerArm = Number.isFinite(basePerf?.impressions)
+        ? Math.min(basePerf.impressions, currentImpressions)
+        : currentImpressions;
+
+      const decision = decideOutcome({
+        baselineCtr,
+        currentCtr,
+        controlDrift,
+        baselinePosition: basePerf?.position ?? null,
+        currentPosition: perf.position ?? null,
+        impressionsPerArm,
+      });
       const ctrDelta = decision.delta;
       const ctrDeltaPct = baselineCtr > 0
         ? ((ctrDelta / baselineCtr) * 100).toFixed(1)
         : 'N/A';
       const improved = decision.outcome === 'improved';
-      const flag = improved ? '✅' : (decision.outcome === 'regressed' ? '⚠️ Regressed' : '→ Flat');
+      const FLAGS = {
+        improved: '✅',
+        regressed: '⚠️ Regressed',
+        flat: '→ Flat',
+        confounded: '⏸ Confounded (position moved)',
+        underpowered: '⏸ Underpowered (sample too thin)',
+      };
+      const flag = FLAGS[decision.outcome] ?? '→ Flat';
 
       // Auto-revert a clear loser to the original title/meta.
       let reverted = false, revertError = null;
@@ -169,15 +265,32 @@ async function main() {
 
       // Write the outcome back onto the tracker entry so it's concluded (won't
       // be re-evaluated) and the digest can show a real winner/delta.
-      entry.status = 'concluded';
-      entry.concludedDate = concludedAt;
-      entry.winner = decision.winner;
-      entry.currentCtr = currentCtr;
-      entry.currentDelta = ctrDelta;
+      //
+      // A `confounded` or `underpowered` test is NOT concluded. It stays open,
+      // gets re-evaluated on a later run, and keeps its live variant. The whole
+      // point of those two outcomes is that nothing has been learned yet, and
+      // stamping `concluded` on them would close the only chance to learn it —
+      // the same one-way door that made the 2026-07-27 revert unrecoverable.
+      // `lastCheckedAt` records that we looked, so a stuck test is visible
+      // rather than looking like one nobody ever got to.
+      entry.lastCheckedAt = concludedAt;
       entry.outcome = decision.outcome;
       entry.baselineBasis = baselineBasis;
-      entry.reverted = reverted;
-      if (revertError) entry.revertError = revertError;
+      entry.controlDrift = decision.controlDrift;
+      entry.positionDelta = decision.positionDelta;
+      entry.impressionsPerArm = impressionsPerArm;
+
+      if (decision.concluded) {
+        entry.status = 'concluded';
+        entry.concludedDate = concludedAt;
+        entry.winner = decision.winner;
+        entry.currentCtr = currentCtr;
+        entry.currentDelta = ctrDelta;
+        entry.reverted = reverted;
+        if (revertError) entry.revertError = revertError;
+      } else {
+        entry.openReason = decision.outcome;
+      }
 
       results.push({
         ...entry,
@@ -194,6 +307,15 @@ async function main() {
         flag,
         reverted,
         revertError,
+        // The decision's own working, so the report explains a verdict instead
+        // of re-deriving one.
+        outcome: decision.outcome,
+        rawDelta: decision.rawDelta,
+        controlDrift: decision.controlDrift,
+        positionDelta: decision.positionDelta,
+        positionTolerance: decision.positionTolerance,
+        power: decision.power,
+        impressionsPerArm,
       });
     } catch (e) {
       console.error(`failed: ${e.message}`);
@@ -212,9 +334,18 @@ async function main() {
 
   // ── Build report ────────────────────────────────────────────────────────────
 
-  const improved = results.filter((r) => r.improved);
-  const regressed = results.filter((r) => r.ctrDelta < -0.005);
-  const flat = results.filter((r) => !r.improved && r.ctrDelta >= -0.005);
+  // Bucket on the DECISION, never by re-deriving it from the delta. The old
+  // `ctrDelta < -0.005` here was a second copy of the rule in
+  // lib/meta-ab-decision.js — it ignored the dead-band epsilon and, once the
+  // decision learned about drift, position and power, it would have reported a
+  // different verdict from the one that was actually acted on.
+  const byOutcome = (name) => results.filter((r) => r.outcome === name);
+  const improved = byOutcome('improved');
+  const regressed = byOutcome('regressed');
+  const flat = byOutcome('flat');
+  const confounded = byOutcome('confounded');
+  const underpowered = byOutcome('underpowered');
+  const stillOpen = [...confounded, ...underpowered];
 
   const now = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   const lines = [];
@@ -230,6 +361,8 @@ async function main() {
   lines.push(`| ✅ Improved CTR | ${improved.length} |`);
   lines.push(`| → Flat (±0.5%) | ${flat.length} |`);
   lines.push(`| ⚠️ Regressed    | ${regressed.length} |`);
+  lines.push(`| ⏸ Confounded (position moved) | ${confounded.length} |`);
+  lines.push(`| ⏸ Underpowered (sample too thin) | ${underpowered.length} |`);
   lines.push('');
   lines.push('---');
   lines.push('');
@@ -251,7 +384,19 @@ async function main() {
     lines.push(`| **Title** | ${r.originalTitle} | ${r.proposedTitle} |`);
     lines.push(`| **Meta** | ${r.originalMeta || '*(none)*'} | ${r.proposedMeta} |`);
     lines.push('');
-    if (r.reverted) {
+    // What the comparison was corrected for, so a reader can see whether the
+    // verdict survived its confounds or was blocked by them.
+    if (Number.isFinite(r.controlDrift) && r.controlDrift !== 0) {
+      const cd = (r.controlDrift * 100).toFixed(2);
+      lines.push(`> **Corpus drift over the same window:** ${r.controlDrift >= 0 ? '+' : ''}${cd}pp, subtracted before deciding. Raw delta was ${(r.rawDelta * 100).toFixed(2)}pp.`);
+      lines.push('');
+    }
+
+    if (r.outcome === 'confounded') {
+      lines.push(`> **Not concluded — confounded.** The page moved ${r.positionDelta?.toFixed(1)} positions during the window (tolerance ${r.positionTolerance?.toFixed(1)}). CTR follows rank before it follows copy, so this window cannot say anything about the rewrite. The variant stays live and the test stays open for a later run.`);
+    } else if (r.outcome === 'underpowered') {
+      lines.push(`> **Not concluded — underpowered.** ${Number(r.impressionsPerArm).toLocaleString()} impressions in the thinner arm; detecting the target lift needs ${Math.round(r.power?.requiredImpressionsPerArm ?? 0).toLocaleString()}. The smallest move this sample can distinguish from noise is ${((r.power?.mde ?? 0) * 100).toFixed(2)}pp. Variant stays live, test stays open.`);
+    } else if (r.reverted) {
       lines.push(`> **Action taken:** Reverted to the original title/meta (variant B lost). meta-optimizer can try a fresh variant on the next run.`);
     } else if (r.revertError) {
       lines.push(`> **Revert FAILED:** ${r.revertError} — restore manually.`);
@@ -269,6 +414,9 @@ async function main() {
   const revertedCount = results.filter((r) => r.reverted).length;
   console.log(`\n  Report: ${reportPath}`);
   console.log(`  ✅ Improved: ${improved.length}  → Flat: ${flat.length}  ⚠️ Regressed: ${regressed.length}  ↩ Reverted: ${revertedCount}`);
+  if (stillOpen.length) {
+    console.log(`  ⏸ Left open (not concluded): ${stillOpen.length} — ${confounded.length} confounded, ${underpowered.length} underpowered`);
+  }
 }
 
 // Guarded: importing this module must not run the agent (live writes, paid

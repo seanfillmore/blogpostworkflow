@@ -62,16 +62,29 @@ test('pickBaselineCtr treats a zero page baseline as a real measurement, not mis
   assert.deepEqual(pickBaselineCtr({ baselineCtr: 0.02, baselinePageCtr: 0 }), { ctr: 0, basis: 'page-28d' });
 });
 
-test('the mixed-basis comparison this replaces really does flip the verdict', () => {
-  // The live tattoo winner: keyword CTR 0.56% vs page CTR 0.62%. Measuring the
-  // page against the keyword baseline reads "improved" before the new title has
-  // done anything at all — the auto-revert safety net scoring its own noise.
+test('the symmetric dead-band now absorbs a SMALL mixed-basis gap on its own', () => {
+  // The live tattoo winner: keyword CTR 0.56% vs page CTR 0.62%. This case used
+  // to read "improved" before the new title had done anything — the auto-revert
+  // safety net scoring its own noise. It no longer does, because `delta > 0` is
+  // no longer a win: the dead-band became symmetric on 2026-08-24 when replaying
+  // the tracker showed that ALL FIVE verdicts ever recorded as improved sat
+  // inside it. Both bases now agree, which is the point.
   const entry = { baselineCtr: 0.0056, baselinePageCtr: 0.0062 };
   const currentCtr = 0.0062; // nothing changed
 
-  const mixed = decideOutcome({ baselineCtr: entry.baselineCtr, currentCtr });
-  assert.equal(mixed.outcome, 'improved');
+  assert.equal(decideOutcome({ baselineCtr: entry.baselineCtr, currentCtr }).outcome, 'flat');
+  assert.equal(decideOutcome({ baselineCtr: pickBaselineCtr(entry).ctr, currentCtr }).outcome, 'flat');
+});
 
-  const likeForLike = decideOutcome({ baselineCtr: pickBaselineCtr(entry).ctr, currentCtr });
-  assert.equal(likeForLike.outcome, 'flat');
+test('a LARGE mixed-basis gap still flips the verdict, so pickBaselineCtr stays load-bearing', () => {
+  // The dead-band is a noise floor, not a basis correction, and it must not be
+  // mistaken for one. A page whose tested query is a small slice of its traffic
+  // can differ from the page baseline by far more than 0.5pp — the flagship
+  // earns 37,531 impressions across 666 queries, its biggest worth 6.1% of them
+  // — and at that size the wrong denominator still manufactures a win.
+  const entry = { baselineCtr: 0.0056, baselinePageCtr: 0.0120 };
+  const currentCtr = 0.0120; // nothing changed
+
+  assert.equal(decideOutcome({ baselineCtr: entry.baselineCtr, currentCtr }).outcome, 'improved');
+  assert.equal(decideOutcome({ baselineCtr: pickBaselineCtr(entry).ctr, currentCtr }).outcome, 'flat');
 });
