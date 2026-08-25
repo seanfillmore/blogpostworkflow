@@ -55,5 +55,15 @@
     "audienceSegmentId": "X7atwC",
     "status": "scheduled"
   },
-  "_confirmReminderNote": "DRAFT — a campaign created via the API stores its send date but queues NO send job; it does not send until Schedule is clicked in the UI (same trap as deadlineCampaigns). Reuses the confirm-request template VxJnPd rather than new copy, so it inherits that template’s already-passed content gates and its update_property_link button. SCHEDULED by the operator for 2026-08-25 14:00 UTC (drafted for the 27th; the operator moved it in). That is ~34h after the backfill send, clear of Klaviyo smart sending’s 16h window, so it will not be suppressed. Dated after the backfill on purpose: every backfilled entrant received the confirm email at subscribe time, so a same-day reminder would be redundant and smart sending would suppress it anyway."
+  "_confirmReminderNote": "DRAFT — a campaign created via the API stores its send date but queues NO send job; it does not send until Schedule is clicked in the UI (same trap as deadlineCampaigns). Reuses the confirm-request template VxJnPd rather than new copy, so it inherits that template’s already-passed content gates and its update_property_link button. SCHEDULED by the operator for 2026-08-25 14:00 UTC (drafted for the 27th; the operator moved it in). That is ~34h after the backfill send, clear of Klaviyo smart sending’s 16h window, so it will not be suppressed. Dated after the backfill on purpose: every backfilled entrant received the confirm email at subscribe time, so a same-day reminder would be redundant and smart sending would suppress it anyway.",
+  "offerTemplates": {
+    "10-offer-drawday.html": "WTXm4d",
+    "11-offer-reminder.html": "RmrbPY",
+    "12-offer-final.html": "WE5A23"
+  },
+  "offerCampaigns": {
+    "10-offer-drawday.html": "01M0V7J4WQ62KKRJNZM1KJB0WN",
+    "11-offer-reminder.html": "01M0V7JAARVYV05VJ9S62KR59X",
+    "12-offer-final.html": "01M0V7JFJ9QP4JDY0N64RN91NT"
+  }
 }

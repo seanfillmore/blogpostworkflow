@@ -1,0 +1,6 @@
+{
+  "sections": {
+    "main": { "type": "giveaway-offer", "settings": {} }
+  },
+  "order": ["main"]
+}

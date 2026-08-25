@@ -1,0 +1,105 @@
+{%- comment -%}
+  The consolation offer page — the giveaway's ENTIRE revenue event (spec §7.3).
+
+  Nothing was sold during the 30-day entry period by design, so this page and
+  its three sends are the whole return on $1,500 of ad spend. It goes live on
+  draw day and closes seven days later.
+
+  ONE TAP, ONE VARIANT. The CTA is a cart permalink that preloads all 12 bars
+  with the discount code applied. Two things about that are load-bearing:
+
+    1. It must preload TWELVE, not six. A Shopify BXGY marks 6 of 12 as free —
+       it does not ADD the free ones. A cart holding 6 shows $66 with no
+       discount visible and reads as a broken offer.
+    2. Pure Unscented only. One variant removes the scent picker, the
+       out-of-stock-variant handling and a whole class of wrong-product bug,
+       and it matches the prize itself.
+
+  THE DURATION CLAIM IS THE CONSERVATIVE END, AND IT IS PER PERSON. Bar soap is
+  25 days/bar (merchant figure, range 20-30 — Sean, 2026-08-02, superseding a
+  47-day reorder gap that was never consumption). Six free bars is ~150 days at
+  the midpoint; this page claims ~4 months (120 days), the 20-day end. It says
+  "for one person" out loud because a shared bar does not last 25 days, and the
+  spec gated this claim on the household answer — which this page cannot see,
+  because the confirmation redirect is static and carries no entrant identity.
+  Pinned by tests/lib/giveaway-consolation-offer.test.js via assertDurationClaim.
+
+  NO PURCHASE NECESSARY STAYS ON THIS PAGE. Spec §8 requires it here, not only
+  in the rules — this is a page selling to sweepstakes entrants.
+{%- endcomment -%}
+
+{%- liquid
+  assign bar_variant = 45828179951786
+  assign cart_url = '/cart/45828179951786:12?discount=GIVEAWAY6X6'
+  assign closes_human = 'September 23, 2026'
+-%}
+
+{{ 'giveaway.css' | asset_url | stylesheet_tag }}
+
+<section class="gv-entered" data-gv-offer>
+  <div class="gv-entered-main">
+
+    <h1 class="gv-entered-title">We drew the winner. It wasn't you.</h1>
+    <p class="gv-entered-lede">
+      So here's the next best thing — the same soap, at half price, for one week only.
+    </p>
+
+    <div class="gv-ladder">
+      <h2 class="gv-ladder-title">Buy 6 bars, get 6 free</h2>
+      <p class="gv-next-price">$66 <span class="gv-ladder-fine">for 12 bars — $132 value</span></p>
+      <p class="gv-ladder-body">
+        Twelve bars of Pure Unscented Moisturizing Coconut Soap. The six free
+        ones are roughly <strong>four months of soap for one person</strong>.
+      </p>
+      <p class="gv-ladder-body">
+        Fragrance-free · Free shipping · 30-day no-questions guarantee
+      </p>
+
+      <a class="gv-next-cta" href="{{ cart_url }}">Get 12 bars for $66</a>
+
+      <p class="gv-ladder-fine">
+        Offer closes <strong>{{ closes_human }}</strong>. One per customer.
+        Discount applies automatically at checkout.
+      </p>
+    </div>
+
+    <div class="gv-ladder">
+      <h2 class="gv-ladder-title">Why we're doing this</h2>
+      <p class="gv-ladder-body">
+        You entered to win three years of free soap and you didn't win — one
+        person did. This is the closest we can get for everyone else: the same
+        Pure Unscented bar that was the prize, at the lowest price we've ever
+        put on it.
+      </p>
+    </div>
+
+    <p class="gv-fine">
+      No purchase necessary to have entered the giveaway. A purchase did not and
+      does not improve anyone's chances of winning, and purchases never earned
+      entries. This offer is separate from the promotion and is open to everyone.
+      <a href="/pages/giveaway-official-rules">Official rules</a>.
+      This promotion is not sponsored, endorsed, or administered by Meta.
+    </p>
+  </div>
+
+  <aside class="gv-next">
+    <div class="gv-next-card">
+      <h2 class="gv-next-title">Prefer something for sensitive skin?</h2>
+      <p class="gv-next-body">
+        The Sensitive Skin Moisturizing Set — body lotion and body cream, eight
+        ingredients, no fragrance. Three of these shipped with the giveaway prize.
+      </p>
+      <p class="gv-next-price">$46.80</p>
+      <a class="gv-next-cta" href="/products/sensitive-skin-starter-set">See the Set</a>
+      <p class="gv-next-fine">Full price — the soap offer above is the discounted one.</p>
+    </div>
+  </aside>
+</section>
+
+{% schema %}
+{
+  "name": "Giveaway offer",
+  "settings": [],
+  "presets": [{ "name": "Giveaway offer" }]
+}
+{% endschema %}
