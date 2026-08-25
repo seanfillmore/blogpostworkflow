@@ -16,6 +16,9 @@ import {
   seoCopyConstraint,
   BLOCKING_CATEGORIES,
   ADVISORY_CATEGORIES,
+  checkSeoCopyFields,
+  PRODUCT_CATEGORY_CATEGORY,
+  SEO_COPY_COMPLIANCE_RULE,
 } from '../../lib/seo-copy-health-gate.js';
 
 describe('seo-copy-health-gate — the live 2026-08-22 incident', () => {
@@ -190,5 +193,67 @@ describe('seo-copy-health-gate — mechanics', () => {
 
   test('seoCopyConstraint on no violations is an empty string', () => {
     assert.equal(seoCopyConstraint([]), '');
+  });
+});
+
+// ── product-category accuracy — the second, non-health-claim blocking source ─────
+//
+// Added 2026-08-24. `BLOCKING_CATEGORIES` still describes only the health-claim
+// tiering, so these assertions read `result.blocking`, which is what actually decides
+// whether a write is refused.
+
+describe('seo-copy-health-gate — product-category accuracy', () => {
+  test('describing our product as an antiperspirant blocks', () => {
+    const r = checkSeoCopy({ meta: "Try Real Skin Care's natural antiperspirant." });
+    assert.equal(r.ok, false);
+    assert.equal(r.blocking[0].category, PRODUCT_CATEGORY_CATEGORY);
+    assert.match(r.blocking[0].match, /antiperspirant/i);
+  });
+
+  test('"our antiperspirant" blocks and names the field', () => {
+    const r = checkSeoCopyFields({ 'product title': 'Our antiperspirant, aluminum-free' });
+    assert.equal(r.ok, false);
+    assert.equal(r.blocking[0].field, 'product title');
+  });
+
+  test('the CATEGORY reference never blocks — these pages rank for the query', () => {
+    for (const meta of [
+      'Natural Deodorant vs. Antiperspirant: What is the Actual Difference?',
+      // NB: the FDA sentence is written without "over-the-counter" on purpose — that
+      // phrase is already blocked by the pre-existing `drug` health-claim pattern, and
+      // this case is here to isolate the product-category rule.
+      'The FDA classifies antiperspirants as drugs, not cosmetics.',
+      'Switching away from aluminum-based antiperspirants cuts yellow stains.',
+      'Travel Size Antiperspirant: What to Know Before You Pack',
+    ]) {
+      assert.equal(checkSeoCopy({ meta }).ok, true, meta);
+    }
+  });
+
+  test('it is a separate source from the health-claim tiers', () => {
+    assert.ok(!BLOCKING_CATEGORIES.has(PRODUCT_CATEGORY_CATEGORY));
+    assert.ok(!ADVISORY_CATEGORIES.has(PRODUCT_CATEGORY_CATEGORY));
+  });
+
+  test('a bare string still returns ok:true — the trap this gate already documents', () => {
+    assert.equal(checkSeoCopy('our antiperspirant').ok, true);
+  });
+
+  test('markup is stripped before matching, so an href cannot trigger it', () => {
+    const html = '<p>Read <a href="/blogs/news/our-antiperspirant-guide" '
+      + 'title="Our Antiperspirant Guide">the guide</a>.</p>';
+    assert.equal(checkSeoCopyFields({ body: html }).ok, true);
+  });
+
+  test('the retry constraint tells the model the category reference is allowed', () => {
+    const r = checkSeoCopy({ meta: 'Our antiperspirant is clean.' });
+    const c = seoCopyConstraint(r.blocking);
+    assert.match(c, /antiperspirant/i);
+    assert.match(c, /categor/i);
+  });
+
+  test('SEO_COPY_COMPLIANCE_RULE carries the rule into the first generation', () => {
+    assert.match(SEO_COPY_COMPLIANCE_RULE, /antiperspirant/i);
+    assert.match(SEO_COPY_COMPLIANCE_RULE, /deodorant/i);
   });
 });
