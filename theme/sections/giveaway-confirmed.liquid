@@ -32,23 +32,22 @@
 {{ 'giveaway.css' | asset_url | stylesheet_tag }}
 
 <section class="gv-entered" data-gv-confirmed>
-  <div class="gv-entered-main">
 
-    <h1 class="gv-entered-title">Confirmed — that's 3 entries.</h1>
-    <p class="gv-entered-lede">
+    <h1>Confirmed — that's 3 entries.</h1>
+    <p class="gv-lead">
       Your email is confirmed, which banks <strong>+2 entries</strong> on top of
       your base entry. Your running total is recalculated once a day, so if the
       entry page hasn't caught up yet, it will by tomorrow morning.
     </p>
 
     <div class="gv-ladder">
-      <h2 class="gv-ladder-title">The biggest rung left is referrals</h2>
-      <p class="gv-ladder-body">
+      <h2>The biggest rung left is referrals</h2>
+      <p class="gv-copy">
         Every friend who enters and names your email address as their referrer is
         worth <strong>+5 entries</strong> — up to 10 friends, so up to 50 entries.
         That is more than every other action on the page combined.
       </p>
-      <p class="gv-ladder-body">
+      <p class="gv-copy">
         There is no unique referral link. Your friend just types the email address
         you entered with into the referral field on the entry form, so send them
         the entry page and tell them which address to use.
@@ -60,15 +59,15 @@
         one upload and is the referral CTA, the most valuable action on the page.
       {%- endcomment -%}
       <a class="gv-next-cta" href="/pages/free-soap-giveaway">Get the entry page to share</a>
-      <p class="gv-ladder-fine">
+      <p class="gv-fine">
         Both halves have to happen: your friend must enter <em>and</em> confirm
         their own email before the +5 is credited.
       </p>
     </div>
 
     <div class="gv-ladder">
-      <h2 class="gv-ladder-title">Two more, while you're here</h2>
-      <p class="gv-ladder-body">
+      <h2>Two more, while you're here</h2>
+      <p class="gv-copy">
         Answering three quick questions on the entry page is worth
         <strong>+3 entries</strong>, and posting about us with
         <strong>@realskincare_com</strong> tagged is worth another
@@ -83,12 +82,14 @@
       <a href="/pages/giveaway-official-rules">Official rules</a>.
       This promotion is not sponsored, endorsed, or administered by Meta.
     </p>
-  </div>
 
   <aside class="gv-next">
-    <div class="gv-next-card">
-      <img class="gv-next-img" src="{{ set_image }}" alt="Sensitive Skin Moisturizing Set" loading="lazy" width="480" height="480"/>
-      <h2 class="gv-next-title">Don't want to wait for the draw?</h2>
+    <div class="gv-next-shot">
+      <img src="{{ set_image }}&width=600" alt="The Sensitive Skin Moisturizing Set" width="600" height="600" loading="lazy">
+    </div>
+    <div class="gv-next-copy">
+      <p class="gv-next-eyebrow">Don't want to wait for the draw?</p>
+      <h2>The Sensitive Skin Moisturizing Set</h2>
       <p class="gv-next-body">
         Three of these ship with the prize, one a year. Two products, eight
         ingredients, no fragrance — the body lotion and body cream that go
