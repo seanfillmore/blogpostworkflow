@@ -38,23 +38,29 @@
  * SCHEMA RE-INJECTION IS NOT AN EXTRA — IT IS WHAT KEEPS THE FIX FREE
  * ──────────────────────────────────────────────────────────────────
  * `agents/legacy-rebuilder` runs daily from `scheduler.js` at `--limit 5
- * --apply`, and decides "legacy" by `!html.includes('FAQPage')` read straight
- * from `content.html`. 36 mirrors on this corpus carry FAQ JSON-LD their live
- * article does not, so a plain copy-down hands that agent 36 new legacy posts
- * and it starts paying for full pipeline rebuilds of live pages, five a day,
- * unattended. So a mirror that had JSON-LD gets `agents/schema-injector` re-run
- * on it (WITHOUT `--apply` — local write only, no Shopify call), which rebuilds
- * the schema from the NEW prose. That is strictly better than preserving the old
- * blocks: on a different-article mirror the old FAQPage answers questions the
- * live page does not ask.
+ * --apply`, and decides "legacy" by whether `content.html` carries any injected
+ * JSON-LD at all (`lib/injected-schema.js`'s `hasInjectedSchema`; it was
+ * `!html.includes('FAQPage')` until 2026-08-24, when the injector stopped
+ * emitting that type because Google removed the FAQ rich result from Search).
+ * 36 mirrors on this corpus carry schema their live article does not, so a plain
+ * copy-down hands that agent 36 new legacy posts and it starts paying for full
+ * pipeline rebuilds of live pages, five a day, unattended. So a mirror that had
+ * JSON-LD gets `agents/schema-injector` re-run on it (WITHOUT `--apply` — local
+ * write only, no Shopify call), which rebuilds the schema from the NEW prose.
+ * That is strictly better than preserving the old blocks: on a different-article
+ * mirror the old schema describes an article the live page is not.
  *
- * The FAQ check is a VERIFY, not a prediction — the injector's heading
- * heuristics live in the injector, and a second copy here would drift from it
- * silently. Each post is written, re-injected, and then checked; a post that
- * comes back without `FAQPage` is RESTORED FROM ITS BACKUP and reported as
- * `held: faq-regression`. On this corpus that is one post
- * (`best-natural-bar-soap-for-men`, whose live body carries a single question
- * heading).
+ * The schema check is a VERIFY, not a prediction — what the injector emits is
+ * the injector's business, and a second copy of that decision here would drift
+ * from it silently. Each post is written, re-injected, and then checked; a post
+ * that comes back with no JSON-LD is RESTORED FROM ITS BACKUP and reported as
+ * `held: schema-regression`.
+ *
+ * That hold used to fire on `best-natural-bar-soap-for-men`, whose live body has
+ * a single question heading where FAQPage needed two. The breadcrumb the
+ * injector emits now is unconditional, so every reconciled mirror regains schema
+ * and this arm should only be reached by an injector that crashed or wrote
+ * nothing.
  *
  * `--no-reinject-schema` does NOT switch that protection off — it only removes
  * the thing that would have restored the schema, so every mirror that had FAQ
@@ -97,7 +103,7 @@ import { fileURLToPath } from 'node:url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
 import { compareBodies } from '../lib/content-mirror.js';
 import {
-  applyMirrorReconcile, decideMirrorAction, hasFaqPage, inDefaultScope, PINNED_MIRROR_SLUGS,
+  applyMirrorReconcile, decideMirrorAction, hasInjectedSchema, inDefaultScope, PINNED_MIRROR_SLUGS,
 } from '../lib/content-reconcile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -191,7 +197,7 @@ for (const slug of postDirs()) {
     blocksGained: comparison.liveOnlyBlocks,
     blocksLost: comparison.localOnlyBlocks,
     direction: comparison.direction,
-    hadFaqSchema: hasFaqPage(localHtml),
+    hadInjectedSchema: hasInjectedSchema(localHtml),
     action: decision.action,
     hold: decision.hold,
     reason: decision.reason,
@@ -231,9 +237,9 @@ if (apply) {
 
     if (out.rolledBack) {
       r.action = 'hold';
-      r.hold = 'faq-regression';
+      r.hold = 'schema-regression';
       r.applied = false;
-      r.reason = 'reconciled, but FAQ schema could not be regenerated from the live body — rolled back, because agents/legacy-rebuilder would queue a paid full rebuild for a mirror without FAQPage';
+      r.reason = 'reconciled, but no JSON-LD could be regenerated from the live body — rolled back, because agents/legacy-rebuilder would queue a paid full rebuild for a mirror carrying no injected schema';
     } else {
       r.applied = true;
     }

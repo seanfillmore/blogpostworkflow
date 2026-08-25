@@ -20,6 +20,10 @@ import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
 import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getPostMeta, getMetaPath, getContentPath, ROOT } from '../../lib/posts.js';
+// The ONE FAQ extractor. `agents/editor` reads the same one for its rule-8
+// competitor check, so the fix and the check can never see different Q&As —
+// see lib/faq-blocks.js for why that mattered.
+import { extractFaqBlocks } from '../../lib/faq-blocks.js';
 import { updateArticle } from '../../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -58,36 +62,6 @@ function findCompetitorsInText(text, aliases) {
     if (re.test(lower)) found.push(a);
   }
   return [...new Set(found)];
-}
-
-/**
- * Extract FAQ Q&A blocks from the HTML. Returns an array of
- * { raw, q, a, start, end } where start/end are absolute offsets in the
- * source string — so callers can do targeted replacements without
- * re-rendering the whole document.
- *
- * Handles two common patterns seen in our posts:
- *   1. <p><strong>Question?</strong><br>Answer</p>  (inline FAQ style)
- *   2. <h2|h3>Question?</h2|h3><p>Answer</p>        (schema-injector style)
- */
-function extractFaqBlocks(html) {
-  const blocks = [];
-  const patterns = [
-    /<p[^>]*>\s*<strong[^>]*>\s*([^<]*\?[^<]*?)\s*<\/strong>\s*(?:<br\s*\/?>\s*)?([\s\S]*?)<\/p>/gi,
-    /<(h[23])[^>]*>\s*([^<]*\?[^<]*?)\s*<\/\1>\s*<p[^>]*>([\s\S]*?)<\/p>/gi,
-  ];
-  for (const re of patterns) {
-    let m;
-    while ((m = re.exec(html)) !== null) {
-      // Regex with two capture groups (Q, A) for the strong pattern, or three
-      // (heading-tag, Q, A) for the heading pattern. Grab Q/A from the end.
-      const a = m[m.length - 1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      const q = m[m.length - 2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      blocks.push({ raw: m[0], q, a, start: m.index, end: m.index + m[0].length });
-    }
-  }
-  // Sort by start offset to make diff reasoning easier
-  return blocks.sort((x, y) => x.start - y.start);
 }
 
 async function rewriteQa(q, a, brandsToRemove, postKeyword) {

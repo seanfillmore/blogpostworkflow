@@ -7,8 +7,13 @@
 //
 //   * idempotence — a second --apply must be a no-op even though re-injected
 //     JSON-LD leaves the mirror not byte-equal to live, and
-//   * faqRegression — `agents/legacy-rebuilder` queues a PAID full rebuild for
-//     any mirror lacking the string `FAQPage`, daily and unattended.
+//   * schemaRegression — `agents/legacy-rebuilder` queues a PAID full rebuild
+//     for any mirror carrying no injected JSON-LD, daily and unattended. That
+//     predicate was `!html.includes('FAQPage')` until 2026-08-24, when
+//     agents/schema-injector stopped emitting FAQPage (Google removed the FAQ
+//     rich result). Keyed on FAQPage, re-injecting an old mirror — which now
+//     swaps FAQPage/HowTo/Article for a BreadcrumbList — read as a LOSS, and
+//     every mirror this module reconciled would have been rolled back and held.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -19,8 +24,8 @@ import { join } from 'node:path';
 import { compareBodies } from '../../lib/content-mirror.js';
 import {
   stripLdJson,
-  hasFaqPage,
-  faqRegression,
+  hasInjectedSchema,
+  schemaRegression,
   inDefaultScope,
   decideMirrorAction,
   applyMirrorReconcile,
@@ -32,7 +37,7 @@ const P = (n) => `<p>Paragraph number ${n} carries enough characters to count as
 const body = (...ns) => ns.map(P).join('\n');
 const LD = (type) => `<script type="application/ld+json">\n{"@type":"${type}"}\n</script>`;
 
-// ── stripLdJson / hasFaqPage ─────────────────────────────────────────────────
+// ── stripLdJson / hasInjectedSchema ──────────────────────────────────────────
 
 test('stripLdJson removes JSON-LD blocks and leaves prose untouched', () => {
   const html = `${LD('FAQPage')}\n${body(1, 2)}`;
@@ -50,22 +55,31 @@ test('stripLdJson leaves non-JSON-LD scripts alone', () => {
   assert.equal(stripLdJson(html), html);
 });
 
-test('hasFaqPage matches the exact substring legacy-rebuilder reads', () => {
-  assert.equal(hasFaqPage(LD('FAQPage')), true);
-  assert.equal(hasFaqPage(LD('Article')), false);
-  assert.equal(hasFaqPage(''), false);
-  assert.equal(hasFaqPage(null), false);
+test('hasInjectedSchema matches what legacy-rebuilder actually reads', () => {
+  assert.equal(hasInjectedSchema(LD('BreadcrumbList')), true);
+  assert.equal(hasInjectedSchema(LD('FAQPage')), true);
+  assert.equal(hasInjectedSchema(body(1)), false);
+  assert.equal(hasInjectedSchema(''), false);
+  assert.equal(hasInjectedSchema(null), false);
 });
 
-// ── faqRegression ────────────────────────────────────────────────────────────
+// ── schemaRegression ─────────────────────────────────────────────────────────
 
-test('faqRegression fires only when FAQ schema is present before and gone after', () => {
-  assert.equal(faqRegression(LD('FAQPage'), LD('Article')), true);
-  assert.equal(faqRegression(LD('FAQPage'), LD('FAQPage')), false);
-  assert.equal(faqRegression(LD('Article'), LD('Article')), false);
+test('schemaRegression fires only when schema is present before and gone after', () => {
+  assert.equal(schemaRegression(LD('FAQPage'), body(1)), true);
+  assert.equal(schemaRegression(LD('FAQPage'), LD('FAQPage')), false);
+  assert.equal(schemaRegression(body(1), body(1)), false);
   // Gaining schema is never a regression — a mirror that never had it is not
   // one legacy-rebuilder's verdict changes for.
-  assert.equal(faqRegression(LD('Article'), LD('FAQPage')), false);
+  assert.equal(schemaRegression(body(1), LD('BreadcrumbList')), false);
+});
+
+test('SWAPPING A RETIRED TYPE FOR THE LIVE ONE IS NOT A REGRESSION', () => {
+  // The reason this predicate had to move off `FAQPage`. Re-injecting an old
+  // mirror replaces its retired FAQPage/HowTo/Article with a BreadcrumbList,
+  // which is the migration working. The old key called it a loss and would have
+  // rolled back all 35 of the 36 mirrors CLAUDE.md records as recovering.
+  assert.equal(schemaRegression(LD('FAQPage') + LD('HowTo'), LD('BreadcrumbList')), false);
 });
 
 // ── inDefaultScope ───────────────────────────────────────────────────────────
@@ -216,22 +230,24 @@ test('applyMirrorReconcile backs up first, then installs the live body', () => {
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('applyMirrorReconcile ROLLS BACK when FAQ schema cannot be regenerated', () => {
+test('applyMirrorReconcile ROLLS BACK when no schema can be regenerated', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mirror-reconcile-'));
   const contentPath = join(dir, 'content.html');
   const backupPath = join(dir, 'backups', 'content-reconcile-STAMP.html');
   const local = `${LD('FAQPage')}\n${body(1, 2, 3)}`;
   writeFileSync(contentPath, local);
 
-  // The live body yields no question headings, so a real schema-injector run
-  // emits Article + BreadcrumbList and no FAQPage. Leaving that on disk is what
-  // hands agents/legacy-rebuilder a paid full rebuild the next morning.
+  // The injector ran and left no JSON-LD behind at all. Leaving that on disk is
+  // what hands agents/legacy-rebuilder a paid full rebuild the next morning.
+  // (Under the retired FAQPage key this arm also fired when the injector
+  // succeeded and simply emitted a BreadcrumbList — see the schemaRegression
+  // swap test above for why that was wrong.)
   const out = applyMirrorReconcile({
     contentPath,
     backupPath,
     liveHtml: body(7, 8, 9),
     reinject: true,
-    runInjector: (p) => writeFileSync(p, `${LD('Article')}\n${readFileSync(p, 'utf8')}`),
+    runInjector: (p) => writeFileSync(p, readFileSync(p, 'utf8')),
   });
 
   assert.deepEqual(out, { applied: false, rolledBack: true, injectorError: null });
@@ -240,7 +256,7 @@ test('applyMirrorReconcile ROLLS BACK when FAQ schema cannot be regenerated', ()
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('applyMirrorReconcile keeps the write when the injector restores FAQ schema', () => {
+test('applyMirrorReconcile keeps the write when the injector restores schema', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mirror-reconcile-'));
   const contentPath = join(dir, 'content.html');
   const backupPath = join(dir, 'backups', 'content-reconcile-STAMP.html');
@@ -252,7 +268,7 @@ test('applyMirrorReconcile keeps the write when the injector restores FAQ schema
     backupPath,
     liveHtml: live,
     reinject: true,
-    runInjector: (p) => writeFileSync(p, `${LD('FAQPage')}\n${readFileSync(p, 'utf8')}`),
+    runInjector: (p) => writeFileSync(p, `${LD('BreadcrumbList')}\n${readFileSync(p, 'utf8')}`),
   });
 
   assert.equal(out.applied, true);
@@ -276,12 +292,12 @@ test('a failing injector is recorded, and still rolls back rather than shipping 
   });
 
   assert.match(out.injectorError, /exploded/);
-  assert.equal(out.rolledBack, true, 'a crashed injector leaves no FAQPage, which is a regression like any other');
+  assert.equal(out.rolledBack, true, 'a crashed injector leaves no schema, which is a regression like any other');
   assert.equal(readFileSync(contentPath, 'utf8'), local);
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('a mirror that never had FAQ schema is not rolled back for still not having it', () => {
+test('a mirror that never had schema is not rolled back for still not having it', () => {
   const dir = mkdtempSync(join(tmpdir(), 'mirror-reconcile-'));
   const contentPath = join(dir, 'content.html');
   const backupPath = join(dir, 'backups', 'content-reconcile-STAMP.html');
@@ -294,7 +310,7 @@ test('a mirror that never had FAQ schema is not rolled back for still not having
   rmSync(dir, { recursive: true, force: true });
 });
 
-test('with re-injection OFF, a mirror that had FAQ schema is still rolled back rather than shipped without it', () => {
+test('with re-injection OFF, a mirror that had schema is still rolled back rather than shipped without it', () => {
   // `--no-reinject-schema` does not switch the legacy-rebuilder protection off —
   // it just means there is nothing to restore the schema, so every such post is
   // held. That is the honest consequence of the flag, not a bug in it.

@@ -18,7 +18,9 @@
  *   8.  write       — Write post(s) from brief(s)
  *   9.  image       — Generate hero image(s)
  *   10. edit         — Editorial review (link health, sources, brand voice)
- *   11. schema       — Inject JSON-LD structured data (Article, FAQPage, HowTo)
+ *   11. schema       — Inject JSON-LD structured data (BreadcrumbList only;
+ *                      FAQPage/HowTo/Article retired 2026-08-24 — see
+ *                      lib/schema-builders.js's buildPostSchemas)
  *   12. verify       — Verify links, facts, and meta quality before publishing
  *   13. publish      — Upload to Shopify as draft for manual review
  *   14. rank-tracker  — Snapshot keyword positions, detect changes, flag actions

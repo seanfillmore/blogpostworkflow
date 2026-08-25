@@ -2,9 +2,28 @@
  * Schema Markup Injector Agent
  *
  * Injects JSON-LD structured data into published blog post HTML files.
- * Always injects Article schema. Detects and injects:
- *   - FAQPage  — when the post contains question-format headings with answers
- *   - HowTo    — when the post contains ordered list steps (≥3 items)
+ * It emits exactly ONE node: BreadcrumbList. See lib/schema-builders.js's
+ * `buildPostSchemas` for the list and the reasoning.
+ *
+ * THREE TYPES WERE RETIRED ON 2026-08-24 AND MUST NOT COME BACK
+ * ────────────────────────────────────────────────────────────
+ * FAQPage — Google REMOVED the FAQ rich result from Search. Not the 2023
+ *   narrowing; outright removal. Verified: the docs page
+ *   `developers.google.com/search/docs/appearance/structured-data/faqpage`
+ *   returns 301 → `/search/updates#removing-faq-rich-result` (the page is gone)
+ *   and FAQ is absent from the rich results gallery.
+ * HowTo — removed the same way in September 2023. `.../structured-data/howto`
+ *   returns 404.
+ * Article — a DUPLICATE. Measured off the rendered live pages (not the repo's
+ *   partial `theme/` mirror): the theme already publishes Article +
+ *   BreadcrumbList + Organization + WebPage + Person on 182 of 182 blog article
+ *   pages. This agent's Article node was a second copy layered on top.
+ *
+ * Existing blocks on live pages are NOT swept — they are inert (Google ignores
+ * unsupported types) and rewriting `body_html` on ~74 live ranking pages buys
+ * nothing. They drain on their own instead: `stripExistingSchemas` below removes
+ * every JSON-LD block before writing, so any post that passes through this agent
+ * again loses its dead schema as a side effect of work already happening on it.
  *
  * Saves updated HTML locally. With --apply, pushes to Shopify as draft.
  *
@@ -23,7 +42,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
-import { buildArticleSchema, buildBreadcrumb, buildFaqSchema } from '../../lib/schema-builders.js';
+import { buildPostSchemas } from '../../lib/schema-builders.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -52,77 +71,14 @@ if (!slugArg && !all) {
   process.exit(1);
 }
 
-// ── schema builders ───────────────────────────────────────────────────────────
-
-function buildHowToSchema(title, steps) {
-  return {
-    '@context': 'https://schema.org',
-    '@type': 'HowTo',
-    'name': title,
-    'step': steps.map((text, i) => ({
-      '@type': 'HowToStep',
-      'position': i + 1,
-      'text': text,
-    })),
-  };
-}
-
-// ── content detection ─────────────────────────────────────────────────────────
-
-function extractFAQs(html) {
-  const faqs = [];
-  // Match headings that end with '?' followed by a paragraph
-  const pattern = /<h[23][^>]*>([^<]*\?[^<]*)<\/h[23]>\s*<p[^>]*>([\s\S]*?)<\/p>/gi;
-  let match;
-  while ((match = pattern.exec(html)) !== null) {
-    const q = match[1].replace(/<[^>]+>/g, '').trim();
-    const raw = match[2].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-    // Truncate at last sentence boundary (max 600 chars) to avoid mid-sentence cuts in schema
-    const MAX = 600;
-    const a = raw.length <= MAX ? raw : (raw.slice(0, MAX).match(/^[\s\S]*[.!?]/)?.[0] || raw.slice(0, MAX)).trim();
-    if (q && a) faqs.push({ q, a });
-    if (faqs.length >= 10) break;
-  }
-  return faqs;
-}
-
-function extractHowToSteps(html) {
-  const steps = [];
-  // Look for ordered lists
-  const olPattern = /<ol[^>]*>([\s\S]*?)<\/ol>/gi;
-  let olMatch;
-  while ((olMatch = olPattern.exec(html)) !== null) {
-    const liPattern = /<li[^>]*>([\s\S]*?)<\/li>/gi;
-    let liMatch;
-    const batch = [];
-    while ((liMatch = liPattern.exec(olMatch[1])) !== null) {
-      const text = liMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      if (text.length > 15) batch.push(text.slice(0, 200));
-    }
-    if (batch.length >= 3) {
-      steps.push(...batch);
-      break; // use the first qualifying OL
-    }
-  }
-  // Fallback: heading-based steps ("<h2>Step 1 — …</h2>" + following text), the
-  // shape the how_to writer format produces. Use the heading + its first
-  // paragraph as the step text.
-  if (steps.length === 0) {
-    const headingPattern = /<h2[^>]*>\s*(step\s*\d+[^<]*)<\/h2>([\s\S]*?)(?=<h2|$)/gi;
-    let hMatch;
-    const batch = [];
-    while ((hMatch = headingPattern.exec(html)) !== null) {
-      const name = hMatch[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      const body = (hMatch[2].match(/<p[^>]*>([\s\S]*?)<\/p>/i)?.[1] || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      const text = body ? `${name}: ${body}` : name;
-      if (text.length > 15) batch.push(text.slice(0, 200));
-    }
-    if (batch.length >= 3) steps.push(...batch);
-  }
-  return steps;
-}
-
 // ── injection ─────────────────────────────────────────────────────────────────
+//
+// There is no content-detection step any more. The two types whose emission was
+// conditional on the prose — FAQPage (2+ question headings) and HowTo (3+
+// ordered steps) — are retired, so nothing here reads the body to decide what to
+// write. The heading heuristic that fed FAQPage lives on in `lib/faq-blocks.js`,
+// where `agents/editor` and `agents/faq-rewriter` use it to find FAQ Q&As in the
+// PROSE; it is no longer a schema decision.
 
 function stripExistingSchemas(html) {
   return html.replace(/<script[^>]*type="application\/ld\+json"[^>]*>[\s\S]*?<\/script>\s*/gi, '');
@@ -157,34 +113,10 @@ function processSlug(slug) {
   const handle = meta.shopify_handle || slug;
   const url = `${config.url}/blogs/news/${handle}`;
 
-  const schemas = [];
-  const schemaTypes = [];
-
-  // Article — always
-  schemas.push(buildArticleSchema(meta, url, config));
-  schemaTypes.push('Article');
-
-  // BreadcrumbList — always
-  schemas.push(buildBreadcrumb([
-    { name: 'Home', url: config.url },
-    { name: 'News', url: `${config.url}/blogs/news` },
-    { name: (meta.title || '').slice(0, 110), url },
-  ]));
-  schemaTypes.push('BreadcrumbList');
-
-  // FAQPage — if question headings with answers detected
-  const faqs = extractFAQs(html);
-  if (faqs.length >= 2) {
-    schemas.push(buildFaqSchema(faqs));
-    schemaTypes.push(`FAQPage(${faqs.length})`);
-  }
-
-  // HowTo — if ordered list with 3+ steps detected
-  const steps = extractHowToSteps(html);
-  if (steps.length >= 3) {
-    schemas.push(buildHowToSchema(title, steps));
-    schemaTypes.push(`HowTo(${steps.length})`);
-  }
+  // The whole emission list, from the one shared builder. See its docstring for
+  // why three types were retired and why the breadcrumb was not.
+  const schemas = buildPostSchemas(meta, url, config);
+  const schemaTypes = schemas.map((s) => s['@type']);
 
   const updatedHtml = injectSchemas(html, schemas);
   writeFileSync(htmlPath, updatedHtml);
