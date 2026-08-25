@@ -149,3 +149,44 @@ test('buildCtaCopy: benefit headline + product-specific button text', () => {
   assert.ok(c.headline.length > 0);
   assert.match(c.buttonText, /shop/i);
 });
+
+// ── product-category accuracy in the buy box ──────────────────────────────────
+//
+// This headline names OUR product, so the target keyword cannot be pasted into it
+// unexamined. Two live articles carried `Our pick for travel size antiperspirant:
+// Best Coconut Oil Deodorant` on 2026-08-24 — a cosmetic described with an OTC drug
+// category name, inside the conversion path, regenerated on every injector run.
+
+test('buildCtaCopy: rewrites an antiperspirant keyword to the accurate category', () => {
+  const c = buildCtaCopy({
+    product: { title: 'Best Coconut Oil Deodorant — All Natural Formula | 2oz' },
+    keyword: 'travel size antiperspirant',
+  });
+  assert.equal(
+    c.headline,
+    'Our pick for travel size deodorant: Best Coconut Oil Deodorant — All Natural Formula | 2oz',
+  );
+  assert.doesNotMatch(c.headline, /antiperspirant/i);
+});
+
+test('buildCtaCopy: reproduces the exact live defect and its fix', () => {
+  const c = buildCtaCopy({
+    product: { title: 'Best Coconut Oil Deodorant — All Natural Formula | 2oz' },
+    keyword: 'aluminum free antiperspirant what it is does it work',
+  });
+  assert.doesNotMatch(c.headline, /antiperspirant/i);
+  assert.match(c.headline, /aluminum free deodorant what it is does it work/);
+});
+
+test('buildCtaCopy: an ordinary keyword is byte-identical after sanitizing', () => {
+  const c = buildCtaCopy({ product: { title: 'Coconut Oil Deodorant' }, keyword: 'best natural deodorant for men' });
+  assert.equal(c.headline, 'Our pick for best natural deodorant for men: Coconut Oil Deodorant');
+});
+
+test('buildCtaCopy: sanitizing never removes the buy box (no throw, no empty headline)', () => {
+  for (const keyword of ['antiperspirant', 'antiperspirants', undefined, '', null]) {
+    const c = buildCtaCopy({ product: { title: 'Coconut Oil Deodorant' }, keyword });
+    assert.ok(c.headline.length > 0);
+    assert.ok(c.buttonText.length > 0);
+  }
+});
