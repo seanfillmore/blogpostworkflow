@@ -42,6 +42,7 @@ import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT } from 
 import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
+import { injectLink } from '../../lib/internal-link-inject.js';
 
 // Suggestion-call parse failures for this run. Collected rather than thrown: the
 // agent loops over many articles and one bad response must not abandon the batch,
@@ -296,44 +297,13 @@ Return ONLY valid JSON, no markdown.`,
 }
 
 // ── html link injector ────────────────────────────────────────────────────────
-
-/**
- * Insert a link around the first occurrence of anchor_text in the HTML,
- * skipping occurrences already inside an <a> tag or heading.
- * Returns { html, applied } — applied is true if a replacement was made.
- */
-function injectLink(html, anchorText, url, title) {
-  // Escape special regex chars in anchor text
-  const escaped = anchorText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-
-  // Match the anchor text NOT already inside an <a> tag
-  // We do a simple pass: find the text, check context, replace first match
-  const regex = new RegExp(`(?<!<[^>]*)\\b(${escaped})\\b`, 'i');
-
-  // Check it's not inside a heading or existing link by scanning the surrounding HTML
-  const idx = html.search(regex);
-  if (idx === -1) return { html, applied: false };
-
-  // Look backwards for unclosed <a or <h1/h2/h3 tags
-  const before = html.slice(Math.max(0, idx - 300), idx).toLowerCase();
-  const lastAOpen = before.lastIndexOf('<a ');
-  const lastAClose = before.lastIndexOf('</a>');
-  const lastHOpen = Math.max(
-    before.lastIndexOf('<h1'), before.lastIndexOf('<h2'), before.lastIndexOf('<h3')
-  );
-  const lastHClose = Math.max(
-    before.lastIndexOf('</h1>'), before.lastIndexOf('</h2>'), before.lastIndexOf('</h3>')
-  );
-
-  // Skip if inside an open <a> or heading
-  if (lastAOpen > lastAClose) return { html, applied: false };
-  if (lastHOpen > lastHClose) return { html, applied: false };
-
-  const safeTitle = title.replace(/"/g, '&quot;');
-  const linked = html.replace(regex, `<a href="${url}" title="${safeTitle}">$1</a>`);
-
-  return { html: linked, applied: linked !== html };
-}
+//
+// `injectLink` moved to lib/internal-link-inject.js. It used to search the
+// whole body_html with a regex, so it rewrote text inside
+// <script type="application/ld+json"> blocks and broke them — 58 of 183 live
+// blog pages carried an unparseable block as a result. The guard is now
+// structural (lib/html-prose.js) and shared with `agents/collection-linker`,
+// which carried a byte-identical copy of the same defect.
 
 // ── per-target analysis ───────────────────────────────────────────────────────
 
