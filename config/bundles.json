@@ -1397,7 +1397,7 @@
       "handle": "coconut-deodorant-4-pack",
       "title": "Coconut Deodorant — 4-Pack",
       "status": "live",
-      "templateSuffix": null,
+      "templateSuffix": "scoped-gallery",
       "packaging": 0,
       "tags": [
         "bundle",
@@ -1406,7 +1406,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription.",
+      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription. Template is scoped-gallery and must stay on a gang-scoping template: all 10 of its images carry #scent_ alt tokens, and that mechanism only runs where hide_variants is false. The roster recorded null (the default PDP, hide_variants: true), so build-bundle.mjs --all would have silently turned gang scoping off and unscoped every image. Verified 2026-08-25 by reading hide_variants off all three templates: product.json true, scoped-gallery false, bundle-landing false.",
       "options": [
         {
           "name": "Scent",
