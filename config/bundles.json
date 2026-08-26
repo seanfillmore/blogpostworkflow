@@ -322,6 +322,124 @@
       ]
     },
     {
+      "handle": "coconut-bar-soap-12-pack",
+      "title": "Coconut Bar Soap — 12-Pack",
+      "status": "draft",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bar-soap",
+        "bundle",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 8, get 4 free — $88 for twelve bars, $7.33/bar against $11 single and $9.75 in the 4-pack. A one-time stock-up, NOT a subscription vehicle: twelve bars is ~300 days at the merchant's 25-day consumption rate, so it forward-buys the year instead of setting a cadence — the 4-pack stays the subscription SKU and at a 23% per-bar gap it survives alongside this. Priced off the free-portion frame rather than a percent: compareAtPrice is 12 × $11, so the saving reads as four free bars and the $11 anchor is never restated as $7.33. Contribution $41.33 = 1.65× the $25 CAC, so it clears breakeven but NOT the 2× scale gate, which needs $97 — email and organic first, paid only if repriced. DRAFT until the soap giveaway entry period closes 2026-09-14: discounted soap while we are paying Meta to make people want the soap prize devalues the prize.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "Variety — 3 of each",
+            "12x Calming Lavender",
+            "12x Nourishing Tea Tree",
+            "12x Refreshing Lemongrass",
+            "12x Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "Variety — 3 of each"
+          },
+          "price": 88,
+          "compareAtPrice": 132,
+          "contents": "3 × Calming Lavender (lavender)\n3 × Nourishing Tea Tree (tea tree)\n3 × Refreshing Lemongrass (lemongrass & tea tree)\n3 × Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Refreshing Lemongrass",
+              "qty": 3
+            },
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "12x Calming Lavender"
+          },
+          "price": 88,
+          "compareAtPrice": 132,
+          "contents": "12 × Calming Lavender (lavender)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Calming Lavender",
+              "qty": 12
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "12x Nourishing Tea Tree"
+          },
+          "price": 88,
+          "compareAtPrice": 132,
+          "contents": "12 × Nourishing Tea Tree (tea tree)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Nourishing Tea Tree",
+              "qty": 12
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "12x Refreshing Lemongrass"
+          },
+          "price": 88,
+          "compareAtPrice": 132,
+          "contents": "12 × Refreshing Lemongrass (lemongrass & tea tree)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Refreshing Lemongrass",
+              "qty": 12
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "12x Pure Unscented"
+          },
+          "price": 88,
+          "compareAtPrice": 132,
+          "contents": "12 × Pure Unscented (no essential oils)",
+          "components": [
+            {
+              "product": "coconut-soap",
+              "variant": "Pure Unscented",
+              "qty": 12
+            }
+          ]
+        }
+      ]
+    },
+    {
       "handle": "90-day-clean-swap",
       "title": "The 90-Day Clean Swap",
       "status": "live",
