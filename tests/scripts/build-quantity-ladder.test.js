@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { renderLadderPreamble, renderBlock } from '../../scripts/build-quantity-ladder.mjs';
+import { renderLadderPreamble, renderBlock, checkPricingCoherence } from '../../scripts/build-quantity-ladder.mjs';
 
 const TIERS = [
   { handle: 'coconut-soap', units: 1, isBase: true },
@@ -26,4 +26,139 @@ test('no price or currency symbol is ever baked into the shipped block', () => {
   // asserting about an object that can never fail the assertion.
   const out = renderBlock(TIERS, LADDER);
   assert.doesNotMatch(out, /\$\d/);
+});
+
+// checkPricingCoherence — the divergence check the spec's "Data model" section
+// describes and freeUnitFraming was never wired to. Prices are integer cents,
+// matching lib/quantity-ladder.js's own convention (soap 12-pack: 8800/1100).
+
+test('checkPricingCoherence: passes on coherent real-catalogue prices', () => {
+  const prices = { 'coconut-soap': 1100, 'coconut-bar-soap-4-pack': 3900, 'coconut-bar-soap-12-pack': 8800 };
+  assert.deepEqual(checkPricingCoherence(TIERS, prices, LADDER), []);
+});
+
+test('checkPricingCoherence: refuses a multipack priced ABOVE buying singly', () => {
+  const prices = { 'coconut-soap': 1100, 'coconut-bar-soap-4-pack': 4401, 'coconut-bar-soap-12-pack': 8800 };
+  const errors = checkPricingCoherence(TIERS, prices, LADDER);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /coconut-bar-soap-4-pack/);
+  assert.match(errors[0], /at or above buying singly/);
+});
+
+test('checkPricingCoherence: refuses a multipack priced EQUAL to buying singly', () => {
+  // Exact equality is the case freeUnitFraming alone reads as clean --
+  // paid === units routes to the savings branch, not an error -- but a
+  // multipack with zero savings over singles is still a repricing accident.
+  const prices = { 'coconut-soap': 1100, 'coconut-bar-soap-4-pack': 4400, 'coconut-bar-soap-12-pack': 8800 };
+  const errors = checkPricingCoherence(TIERS, prices, LADDER);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /coconut-bar-soap-4-pack/);
+});
+
+test('checkPricingCoherence: refuses when the base tier has no usable live price', () => {
+  const prices = { 'coconut-bar-soap-4-pack': 3900, 'coconut-bar-soap-12-pack': 8800 };
+  const errors = checkPricingCoherence(TIERS, prices, LADDER);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /no usable live price for base tier/);
+});
+
+test('checkPricingCoherence: refuses when a non-base tier has no usable live price', () => {
+  const prices = { 'coconut-soap': 1100, 'coconut-bar-soap-12-pack': 8800 };
+  const errors = checkPricingCoherence(TIERS, prices, LADDER);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /no usable live price for tier "coconut-bar-soap-4-pack"/);
+});
+
+// Note: the first passing test above ("passes on coherent real-catalogue
+// prices") already exercises the free-units branch via the soap 12-pack
+// (8800/1100 = 8, an exact whole-unit remainder), not just the savings
+// branch the other tests here trip.
+
+// ── theme/blocks/quantity-ladder.liquid — three hard-won guards ────────────
+//
+// Nothing tests the Liquid block itself: it isn't Node, so it can't be
+// imported and exercised the way lib/quantity-ladder.js can. These are source
+// scans over renderBlock()'s output -- the actual shipped artifact, preamble
+// plus body, not just the theme file read in isolation -- for the same reason
+// tests/agents/link-injectors-guarded.test.js and
+// tests/lib/briefs-dir-readers.test.js scan source rather than run it: the
+// three defects below were each found by a human reading during review, and
+// each is the kind that regresses silently on the next edit.
+//
+// If any of these ever fail against the CURRENT liquid, that means the block
+// itself has regressed -- a much bigger finding than a missing test, and not
+// something to "fix" by loosening the assertion.
+
+test('the free-unit predicate is an exact remainder test, not a float-tolerance comparison', () => {
+  const block = renderBlock(TIERS, LADDER);
+  // All prices are integer cents (lib/quantity-ladder.js's freeUnitFraming
+  // documents exactly this), so the Liquid side must test equality to zero,
+  // not fall inside some tolerance band -- a tolerance would disagree with
+  // the JS side's exact `% baseUnitPrice !== 0` at prices like 8801/1100.
+  assert.match(block, /paid_remainder == 0/,
+    'the free-unit predicate must be an exact `paid_remainder == 0` test');
+  assert.doesNotMatch(block, /paid_remainder\s*<[=]?\s*[1-9]/,
+    'a `paid_remainder < N` (N > 0) shape would be a tolerance band, not an exact test, ' +
+    'and would silently disagree with the JS side at fractional cents');
+});
+
+test('the variants JSON blob places commas by a printed-flag, never `unless forloop.last`', () => {
+  const block = renderBlock(TIERS, LADDER);
+  // The Critical bug this pins: entries are filtered by an `if` (a handle
+  // missing from all_products is skipped), so if the LAST handle in the loop
+  // happens to be the one that's absent, `unless forloop.last` still emits a
+  // trailing comma with nothing after it -- `{"a":{...},}` -- and
+  // JSON.parse throws, killing the whole selector IIFE behind an enabled,
+  // dead CTA button. The default tier is always last in all three configured
+  // ladders, which is exactly the shape that trips this.
+  // Matches the actual Liquid TAG form, `{%- unless forloop.last -%}` etc --
+  // not a bare `/unless\s+forloop\.last/`, which also matches the block's own
+  // explanatory comment prose above (it deliberately names the rejected idiom
+  // to document why it was rejected) and would false-positive on that.
+  assert.doesNotMatch(block, /\{%-?\s*unless\s+forloop\.last/,
+    'commas must be emitted by a printed-flag guard, not forloop.last, ' +
+    'because the loop body is filtered by an `if`');
+  // Positive assertion: the actual (safe) mechanism is present, so this test
+  // pins the fix, not just the absence of the bug.
+  assert.match(block, /tier_printed/, 'expected the printed-flag comma guard for tiers');
+  assert.match(block, /variant_printed/, 'expected the printed-flag comma guard for variants');
+});
+
+test('divided_by/modulo against base_unit_price is guarded by a positivity check', () => {
+  const block = renderBlock(TIERS, LADDER);
+  // A missing base product means base_unit_price is nil/0; unguarded
+  // `divided_by`/`modulo` against that would print a visible
+  // "Liquid error: divided by 0" as text on a live PDP.
+  const guardMatch = block.match(
+    /\{%-\s*if base_unit_price and base_unit_price > 0\s*-%\}([\s\S]*?)\{%-\s*endif\s*-%\}/
+  );
+  assert.ok(guardMatch,
+    'expected an `if base_unit_price and base_unit_price > 0` guard around the divide/modulo assigns');
+
+  const guardedBody = guardMatch[1];
+  assert.match(guardedBody, /divided_by:\s*base_unit_price/,
+    '`divided_by: base_unit_price` must sit inside the positivity guard');
+  assert.match(guardedBody, /modulo:\s*base_unit_price/,
+    '`modulo: base_unit_price` must sit inside the positivity guard');
+
+  // And neither operation may appear a second time, unconditionally, outside
+  // that guard -- which is what would actually reach the divide-by-zero.
+  const outsideGuard = block.replace(guardMatch[0], '');
+  assert.doesNotMatch(outsideGuard, /divided_by:\s*base_unit_price/,
+    'an unconditional divided_by: base_unit_price outside the guard can divide by zero');
+  assert.doesNotMatch(outsideGuard, /modulo:\s*base_unit_price/,
+    'an unconditional modulo: base_unit_price outside the guard can divide by zero');
+});
+
+test('the generated preamble bakes no 3+ digit run (no baked price)', () => {
+  // Restores the cent-denominated no-baked-price check, but only where it can
+  // actually fire: asserting this over the FULL block (renderBlock) trips on
+  // CSS hex colours in the static Liquid/CSS/JS body (e.g. #b3261e contains
+  // the digit run "3261"), which is a false positive unrelated to price
+  // baking. The preamble is the generated half and carries only handles,
+  // units and the unit noun -- structure, never a price -- so it is the one
+  // place this check is clean.
+  const preamble = renderLadderPreamble(TIERS, LADDER);
+  assert.doesNotMatch(preamble, /\d{3,}/,
+    'a 3+ digit run in the generated preamble would indicate a baked price literal');
 });
