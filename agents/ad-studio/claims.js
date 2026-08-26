@@ -51,6 +51,31 @@ export function normalizeForMatch(s) {
 }
 
 /**
+ * ONE SERIALIZATION FOR A STRUCTURED SOURCE — the exact text the writer is shown IS the text
+ * this index searches. copy.js's `sourceBlock` imports this rather than stringifying again.
+ *
+ * THE BUG, found 2026-08-25 on the first coconut-bar-soap-12-pack run. The index used
+ * `JSON.stringify(x)` and the prompt used `JSON.stringify(x, null, 1)`. Those are not
+ * interchangeable after `normalizeForMatch`, because it DELETES `"` and `:` and then
+ * collapses whitespace: compact JSON glues the key to its value (`pricelabel$88`) while
+ * indented JSON leaves a space (`pricelabel $88`). A writer that quoted a contiguous span
+ * exactly as this file's own docstrings demand — `"priceLabel": "$88"` — produced a needle
+ * matching the text it was shown and not the text being searched. Two of three concepts in
+ * that run were rejected for claims that were entirely true and correctly attributed.
+ *
+ * Note the direction: the INDENTED form is also the stricter haystack. Gluing tokens
+ * together is what lets a nonsense span like `$88compareatlabel` count as a contiguous
+ * substring; separating them means only real spans match. So this is a tightening as well
+ * as a fix, which is the only direction a change to a claim gate may go.
+ *
+ * A string source (pdp, reviews, giveaway) is prose and is passed through untouched — there
+ * is nothing to serialize and no second representation to disagree with.
+ */
+export function sourceText(value) {
+  return typeof value === 'string' ? value : JSON.stringify(value, null, 1);
+}
+
+/**
  * `giveaway` is the plain text of the PUBLISHED Official Rules, and only that. It is built
  * by lib/giveaway-claim-source.js, which also refuses to produce it when config/giveaway.json
  * and the rules document disagree about the Entry Period dates. Never hand this a summary,
@@ -67,8 +92,8 @@ export function normalizeForMatch(s) {
 export function buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway } = {}) {
   const index = {};
   if (pdpBody) index.pdp = normalizeForMatch(pdpBody);
-  if (brandKit) index.brandKit = normalizeForMatch(JSON.stringify(brandKit));
-  if (catalogEntry) index.catalog = normalizeForMatch(JSON.stringify(catalogEntry));
+  if (brandKit) index.brandKit = normalizeForMatch(sourceText(brandKit));
+  if (catalogEntry) index.catalog = normalizeForMatch(sourceText(catalogEntry));
   if (reviews && reviews.length) index.reviews = normalizeForMatch(reviews.join(' '));
   if (giveaway) index.giveaway = normalizeForMatch(giveaway);
   return index;

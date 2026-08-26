@@ -37,7 +37,7 @@ import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './c
 import { selectFormats, FORMATS, formatForVariation, formatByKey } from './formats.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
-import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims } from './copy.js';
+import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims, giveawayIsCitable } from './copy.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
@@ -364,7 +364,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null }) {
+export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null, objective = DEFAULT_OBJECTIVE }) {
   console.log(`Copy: ${format.key} (${format.name})...`);
   // Prevention as well as detection: a review carrying disease or drug language is
   // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
@@ -379,7 +379,7 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
   // source that does not hold it — see buildCopyPrompt's sourceBlock for the run that cost.
   const prompt = buildCopyPrompt({
     format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant, giveaway,
-    sourceIndex, brandKit, catalogEntry,
+    sourceIndex, brandKit, catalogEntry, objective,
   });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
@@ -443,11 +443,11 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
  *
  * @returns {Promise<{concepts:{format:object, zones:object, claims:object[]}[], rejectedConcepts:{conceptSlug:string, format:string, violations:object[], error:string}[]}>}
  */
-export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null }) {
+export async function buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null, objective = DEFAULT_OBJECTIVE }) {
   const concepts = [];
   const rejectedConcepts = [];
   for (const format of formats) {
-    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry });
+    const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry, objective });
     if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
@@ -636,7 +636,6 @@ export async function writeFlexibleManifest({
     product, concepts, sourceIds: Object.keys(sourceIndex),
     objective, giveaway,
     persona, pdpBody, reviews: selectQuotableReviews(reviews),
-    giveawayBlock: giveaway ? `\nAN ENTRY PERIOD IS OPEN. You may cite the published Official Rules as "giveaway".\n` : '',
   });
   // ONE retry, and only for SHAPE failures — a count that is not 2, two texts that say the
   // same thing, or a field over Meta's character limit. Those are formatting mistakes the
@@ -1294,7 +1293,24 @@ async function fetchPdpBody(siteUrl, handle) {
 // next string. Keep these anchored; widening them is how this guard gets gutted.
 const BADGE_NOUNS = 'badge|seal|emblem|roundel|medallion';
 // noun directly precedes the quote: ...a small circular badge noting "..."
-const BADGE_BEFORE_RE = new RegExp(`\\b(?:${BADGE_NOUNS})\\b(?:\\s+(?:noting|reading|stating|saying|that reads))?[\\s,]*$`, 'i');
+//
+// THE GAP CLAUSE, added 2026-08-25, and it is the difference between this guard working on
+// coconut-soap and not. The comment above lists the two prose shapes that were verified, and
+// coconut-soap is neither of them: it reads `a circular badge below it noting "Made with
+// Organic Coconut Oil + Essential Oils"`. Those three interposed words made the anchored
+// pattern miss, so the badge fell through to labelStrings — and the verifier then demanded
+// the SCENTED badge back off a PURE UNSCENTED bar, which prints "Made with Organic Coconut
+// Oil" and must never print the other. Every unscented plate of this product was therefore
+// unrenderable: measured 2026-08-26, offer-focused and us-vs-them each burned all three paid
+// attempts on frames whose badges were correct, at ~$1.30 for the run.
+//
+// The widening is deliberately narrow, because the comment above is right that this is how
+// the guard gets gutted. The BADGE NOUN may now sit further back, but a gap is only allowed
+// when it ends in an explicit connector verb, and that verb still has to be the last thing
+// before the quote. `[^".]` keeps the gap inside one clause — it cannot cross a sentence
+// boundary or reach past an intervening quoted string — and 40 characters is a phrase, not a
+// sentence. The zero-gap form is unchanged, so nothing that matched before stops matching.
+const BADGE_BEFORE_RE = new RegExp(`\\b(?:${BADGE_NOUNS})\\b(?:[^".]{0,40}?\\b(?:noting|reading|stating|saying|that reads))?[\\s,]*$`, 'i');
 // noun directly follows the quote: ..."..." badge, a botanical illustration...
 const BADGE_AFTER_RE = new RegExp(`^[\\s,]*\\b(?:${BADGE_NOUNS})\\b`, 'i');
 
@@ -1764,17 +1780,44 @@ async function main() {
     // no giveaway live this is null and everything below is exactly what it was.
     giveaway = loadGiveaway({ root: ROOT });
     if (giveaway) {
-      console.log(`Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. "giveaway" is a citable source.`);
+      const citable = giveawayIsCitable(args.objective, giveaway);
+      console.log(
+        `Giveaway live: ${giveaway.name} — entries close ${giveaway.closesOn}. ` +
+        (citable
+          ? '"giveaway" is a citable source.'
+          : `--objective ${args.objective}, so the Official Rules are WITHHELD from the copy prompt and ` +
+            '"giveaway" is not citable in this run. Pass --objective entry to write entry copy.')
+      );
     }
 
     // Checked HERE — the first point at which a live giveaway is actually known, and still
     // before any paid call. --objective entry with no open Entry Period would otherwise
     // render three plates and only fail at the manifest, after the money was spent.
-    if (args.flexible) assertObjective(args.objective, { giveaway });
+    //
+    // UNCONDITIONAL since 2026-08-25. It used to run only under --flexible, which was right
+    // while the objective reached nothing but the ad-level prompt; now that it also decides
+    // what the PLATE writer is shown, an unvalidated objective on an ordinary run is the
+    // same money and the same silence.
+    assertObjective(args.objective, { giveaway });
 
     sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
     formats = selectFormats(args.formats.length ? args.formats : undefined);
+
+    // THE ONE COMBINATION THAT CANNOT MEAN ANYTHING. A `requiresGiveaway` format's whole
+    // layoutBrief asks for an entry — a prize, a deadline, "no purchase necessary", and no
+    // price or cart at all — so pairing it with `--objective sale` asks the writer for entry
+    // furniture and selling copy in the same frame. Refusing is also what keeps the existing
+    // giveaway campaign honest across this change: its runs now say `--objective entry` out
+    // loud instead of inheriting entry copy from a default that reads `sale`.
+    const entryOnly = formats.filter(f => f.requiresGiveaway).map(f => f.key);
+    if (entryOnly.length && args.objective !== 'entry') {
+      throw new Error(
+        `ad-studio: --formats ${entryOnly.join(', ')} ${entryOnly.length > 1 ? 'ask' : 'asks'} the reader to ENTER a ` +
+        `giveaway, but --objective is "${args.objective}". Pass --objective entry, or drop ` +
+        `${entryOnly.length > 1 ? 'those formats' : 'that format'} from --formats.`
+      );
+    }
 
     // Stage 2: copy + the claim gate, per concept. Runs regardless of --dry-run — the
     // dry run's whole purpose is proving the gate fires against real generated copy
@@ -1784,7 +1827,7 @@ async function main() {
     // buildConcept, which mirror renderVariationTargets/renderTarget's per-target
     // resilience. assertClaimsSourced itself is unchanged: still throws, still no
     // override flag; buildConcept is the caller the isolation belongs in.
-    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry }));
+    ({ concepts, rejectedConcepts } = await buildConcepts({ anthropic, formats, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry, objective: args.objective }));
   }
 
   // A gate rejection is a first-class outcome the UI must show, and it happens before

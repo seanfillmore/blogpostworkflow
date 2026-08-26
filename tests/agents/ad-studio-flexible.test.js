@@ -424,3 +424,59 @@ console.log('✓ ad-studio flexible-ad tests pass');
   assert.throws(() => assertNoSupplyDurationClaims({ rows: ['No parabens.', 'A year of soap.'] }),
     /\[rows\]/);
 }
+
+// ── BOTH writers obey the objective, not one of them (2026-08-26) ────────────────────
+//
+// This bug has now been committed twice, in opposite directions, in one week:
+//   1. --objective was added to the AD-LEVEL prompt only. The plates kept writing entry CTAs.
+//   2. The fix threaded it into the PLATE prompt and left the ad-level rules block
+//      unconditional. A --objective sale rebuild returned the primary text "Gentle enough for
+//      sensitive skin, made for hands in water all day. Enter free to win 36 bars. Entries
+//      close September 14, 2026."
+// Both gates passed every word both times, correctly — an incoherent ad is not an unsourced
+// one, so nothing but a test is in a position to catch it. This asserts the two prompts
+// against the SAME giveaway, so neither can be fixed without the other.
+{
+  const { buildFlexibleCopyPrompt } = await import('../../agents/ad-studio/flexible.js');
+  const { buildCopyPrompt } = await import('../../agents/ad-studio/copy.js');
+  const { formatByKey } = await import('../../agents/ad-studio/formats.js');
+
+  const giveaway = {
+    name: 'Official Rules — "Win 36 Free Bars" Giveaway',
+    closesOn: 'September 14, 2026',
+    prizes: 'Thirty-six (36) bars of Pure Unscented Moisturizing Coconut Soap, shipped over three (3) years.',
+    entryPeriod: 'The Promotion begins at 12:00 AM CT on August 18, 2026 and ends at 11:59 PM CT on September 14, 2026.',
+    howToEnter: 'No purchase necessary. To enter, submit your email address and first name.',
+    eligibility: 'Open to legal residents of the fifty (50) United States who are eighteen (18) years of age or older.',
+  };
+  const product = { title: 'Coconut Bar Soap — 12-Pack', handle: 'coconut-bar-soap-12-pack', priceLabel: '$88' };
+  const sourceIds = ['pdp', 'catalog', 'brandKit', 'reviews', 'giveaway'];
+  const concepts = [{ format: formatByKey('offer-focused') }, { format: formatByKey('us-vs-them') }, { format: formatByKey('problem-aware') }];
+
+  const prompts = (objective) => ({
+    plate: buildCopyPrompt({
+      format: formatByKey('offer-focused'), product, pdpBody: 'saponified coconut oil',
+      giveaway, objective, variant: 'pure-unscented',
+    }),
+    adLevel: buildFlexibleCopyPrompt({ product, concepts, sourceIds, giveaway, objective }),
+  });
+
+  // SALE: neither writer sees the rules, and neither is offered `giveaway` as a source.
+  for (const [which, prompt] of Object.entries(prompts('sale'))) {
+    assert.ok(!/Thirty-six \(36\) bars/.test(prompt), `${which}: the prize is withheld`);
+    assert.ok(!/September 14, 2026/.test(prompt), `${which}: the deadline is withheld`);
+    assert.ok(!/No purchase necessary/.test(prompt), `${which}: the rules block is withheld`);
+    assert.match(prompt, /A GIVEAWAY IS RUNNING, AND THIS AD IS NOT IT/, `${which}: and the writer is told so`);
+    assert.ok(
+      /from: pdp, catalog, brandKit, reviews —/.test(prompt),
+      `${which}: giveaway is dropped from the citable-source list — shown and citable move together`,
+    );
+  }
+
+  // ENTRY: both writers see it, and both may cite it. The mode still works.
+  for (const [which, prompt] of Object.entries(prompts('entry'))) {
+    assert.match(prompt, /Thirty-six \(36\) bars/, `${which}: the prize is quoted verbatim`);
+    assert.match(prompt, /giveaway —|, giveaway/, `${which}: giveaway is citable`);
+    assert.ok(!/AND THIS AD IS NOT IT/.test(prompt), `${which}: no contradictory prohibition`);
+  }
+}

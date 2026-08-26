@@ -297,8 +297,10 @@ assert.throws(
   assert.ok(!/GIVEAWAY/.test(without), 'no giveaway language leaks into an ordinary prompt');
   assert.match(without, /from: pdp, catalog, brandKit, reviews —/, 'the source list is unchanged');
 
-  // With a giveaway, the writer is told the three things it cannot get wrong: what the
-  // prize is, when entries close, and that the ask is an ENTRY rather than a purchase.
+  // With a giveaway AND --objective entry, the writer is told the three things it cannot get
+  // wrong: what the prize is, when entries close, and that the ask is an ENTRY rather than a
+  // purchase. The objective is explicit throughout this block because since 2026-08-25 it is
+  // what decides whether the rules are shown at all — see the `sale` case below.
   const giveaway = {
     name: 'Official Rules — "Win 36 Free Bars" Giveaway',
     closesOn: 'September 14, 2026',
@@ -307,7 +309,7 @@ assert.throws(
     howToEnter: 'No purchase necessary. To enter, submit your email address and first name.',
     eligibility: 'Open to legal residents of the fifty (50) United States who are eighteen (18) years of age or older.',
   };
-  const withGiveaway = buildCopyPrompt({ ...base, giveaway });
+  const withGiveaway = buildCopyPrompt({ ...base, giveaway, objective: 'entry' });
 
   assert.match(withGiveaway, /Thirty-six \(36\) bars/, 'the prize is stated, verbatim from the rules');
   assert.match(withGiveaway, /three \(3\) years/, 'including its duration — the strong hook');
@@ -359,25 +361,25 @@ assert.throws(
   // here would silently re-frame every giveaway ad the fleet already generates.
   assert.ok(!/PRIZE FRAMING/.test(withGiveaway), 'no framing instruction without the option');
   assert.equal(
-    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: undefined } }),
+    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: undefined }, objective: 'entry' }),
     withGiveaway,
     'an undefined framing must be byte-identical to no framing',
   );
   assert.equal(
-    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'nonsense' } }),
+    buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'nonsense' }, objective: 'entry' }),
     withGiveaway,
     'an unrecognised framing falls back to no instruction rather than emitting a broken one — '
     + 'parseArgs is what rejects a bad value, and it does so by name before any spend',
   );
 
-  const soapOnly = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'soap' } });
+  const soapOnly = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'soap' }, objective: 'entry' });
   assert.match(soapOnly, /lead with the SOAP portion of the prize only/);
   assert.match(soapOnly, /Do not mention the\s+Sensitive Skin Moisturizing Sets/);
   // Understating a prize is safe; overstating is not. The asymmetry is stated so nobody
   // "balances" it later into permission to inflate.
   assert.match(soapOnly, /Understating a prize is permitted; overstating one is not/);
 
-  const fullPrize = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'full' } });
+  const fullPrize = buildCopyPrompt({ ...base, giveaway: { ...giveaway, prizeFraming: 'full' }, objective: 'entry' });
   assert.match(fullPrize, /name BOTH components of the prize/);
   assert.match(fullPrize, /Sensitive\s+Skin Moisturizing Sets/);
   // Both framings still quote the SAME rules text and face the SAME gate — the knob decides
@@ -387,6 +389,35 @@ assert.throws(
     assert.match(p, /from: pdp, catalog, brandKit, reviews, giveaway —/);
     assert.match(p, /SHIPPING SCHEDULE/);
   }
+
+  // ── --objective sale WITHHOLDS the rules, even mid-giveaway (2026-08-25) ───────────
+  //
+  // THE BUG THIS PINS. `--objective` reached flexible.js's ad-level prompt and never this
+  // one, so a `--flexible --objective sale` run mid-giveaway produced one manifest whose
+  // Meta primary texts sold a product and whose three plates asked for a giveaway entry.
+  // Measured on the coconut-bar-soap-12-pack dry run: all three plate concepts led with
+  // "ENTER TO WIN 36 BARS ... ENTRIES CLOSE SEPTEMBER 14, 2026" and not one named the price
+  // or the quantity. BOTH gates passed every word — an incoherent ad is not an unsourced
+  // one, which is exactly why this needs a test rather than a gate.
+  const selling = buildCopyPrompt({ ...base, giveaway, objective: 'sale' });
+  assert.ok(!/Thirty-six \(36\) bars/.test(selling), 'the prize is NOT quoted at the writer');
+  assert.ok(!/September 14, 2026/.test(selling), 'nor is the deadline');
+  assert.ok(!/SHIPPING SCHEDULE/.test(selling), 'nor any of the rules block');
+  assert.match(selling, /THE JOB OF THIS AD: sell the product/);
+  assert.match(selling, /A GIVEAWAY IS RUNNING, AND THIS AD IS NOT IT/);
+
+  // SHOWN AND CITABLE MOVE TOGETHER. Offering a source the writer is never shown is the
+  // documented failure that killed three runs in a row — it invents a plausible deadline and
+  // cites it. Withholding the rules while still listing `giveaway` would be that same defect.
+  assert.match(selling, /from: pdp, catalog, brandKit, reviews —/, 'giveaway is dropped from the offer');
+  assert.equal(
+    buildCopyPrompt({ ...base, giveaway, objective: 'sale' }),
+    buildCopyPrompt({ ...base, giveaway }),
+    'sale is the default, so an omitted objective behaves identically',
+  );
+
+  // The two objectives must genuinely differ, or the flag is decorative.
+  assert.notEqual(selling, withGiveaway, '--objective changes the plate prompt');
 }
 
 // ── every citable source must be VISIBLE to the writer (2026-08-18) ──────────────────

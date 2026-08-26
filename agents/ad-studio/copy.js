@@ -3,6 +3,10 @@
 // Stage 2: exact per-zone ad copy plus the claim metadata the gate in claims.js checks.
 // Copy is where revenue is made, so this runs on the flagship model.
 
+// The gate's own serializer. Imported rather than re-implemented so the text shown to the
+// writer and the text searched by claims.js cannot drift apart — see sourceText's docstring.
+import { sourceText } from './claims.js';
+
 /**
  * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[],
  *          variant?:string, giveaway?:object}} args
@@ -26,6 +30,88 @@ const UNSCENTED_VARIANT_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
 // Period is open (lib/giveaway-claim-source.js decides), so with no giveaway running this
 // list — and therefore the whole prompt — is byte-identical to what it has always been.
 const BASE_SOURCE_IDS = ['pdp', 'catalog', 'brandKit', 'reviews'];
+
+/**
+ * WHAT THE AD IS FOR — the one thing about an ad that cannot be inferred from its format.
+ *
+ * These three lived in flexible.js until 2026-08-25 and moved here because BOTH copy calls
+ * need them, and flexible.js already imports from this file (the reverse would be a cycle).
+ * flexible.js re-exports them, so every existing importer is unchanged.
+ *
+ * THE BUG THAT MOVED THEM. `--objective` reached the ad-level writer and never the plate
+ * writer, so with an Entry Period open a `--flexible --objective sale` run produced ONE
+ * manifest whose Meta primary texts sold a product and whose three plates asked the reader
+ * to enter a giveaway. Measured on the coconut-bar-soap-12-pack dry run: all three plate
+ * concepts led with "ENTER TO WIN 36 BARS ... ENTRIES CLOSE SEPTEMBER 14, 2026" and not one
+ * of them mentioned the price, the quantity or the offer the run existed to advertise. Both
+ * gates passed every word of it, correctly — an incoherent ad is not an unsourced one, and
+ * no claim gate is in a position to notice that an ad is selling two different actions.
+ */
+export const OBJECTIVES = Object.freeze(['sale', 'entry']);
+export const DEFAULT_OBJECTIVE = 'sale';
+
+/**
+ * `entry` requires a live giveaway, and says so rather than quietly writing entry copy with
+ * nothing to enter. Outside an Entry Period `sourceId: "giveaway"` is not even a valid
+ * source, so every deadline and prize detail would fail the claim gate anyway — this just
+ * fails it earlier, and legibly.
+ */
+export function assertObjective(objective, { giveaway = null } = {}) {
+  if (!OBJECTIVES.includes(objective)) {
+    throw new Error(`ad-studio: unknown --objective "${objective}". Valid: ${OBJECTIVES.join(', ')}.`);
+  }
+  if (objective === 'entry' && !giveaway) {
+    throw new Error(
+      'ad-studio: --objective entry needs a live giveaway, and no Entry Period is open. ' +
+      'Outside one, "giveaway" is not a citable source, so every prize and deadline in the copy would ' +
+      'fail the claim gate. Check config/giveaway.json against the published Official Rules.'
+    );
+  }
+}
+
+/**
+ * Does this objective let the writer see, and cite, the Official Rules?
+ *
+ * ONE PREDICATE, because "show the rules block" and "list giveaway as a citable source" must
+ * never disagree. Offering a source the writer is never shown is the documented failure this
+ * file's giveaway-block docstring describes at length — the writer invents a plausible
+ * deadline and cites it, and three runs die at the gate. Showing the rules while omitting
+ * them from the source list is the same defect wearing the other sign.
+ */
+export function giveawayIsCitable(objective, giveaway) {
+  return Boolean(giveaway) && objective === 'entry';
+}
+
+/**
+ * The objective instruction for a PLATE prompt.
+ *
+ * Deliberately NOT flexible.js's `objectiveBrief`, and this is not a duplicated rule. That
+ * one briefs Meta-rendered primary text and headlines ("the call to action is to ENTER, in
+ * both primary texts"); this one briefs zone strings an operator sets in Photoshop, which
+ * have no primary texts and no call-to-action field. The shared thing is the VOCABULARY —
+ * `OBJECTIVES`, `DEFAULT_OBJECTIVE`, `assertObjective`, `giveawayIsCitable` — and that is
+ * defined once, here, and imported. Two prompts for two artifacts is not drift.
+ *
+ * When a giveaway is live and the objective is `sale`, this block is where the writer is
+ * told so explicitly. Saying nothing was the old behaviour and it is what produced the
+ * incoherent manifest above: the rules block is long, vivid and full of quotable specifics,
+ * and a writer given it with no counterweight will write the ad it describes.
+ */
+export function buildObjectiveBlock(objective = DEFAULT_OBJECTIVE, { giveaway = null } = {}) {
+  if (objective === 'entry') {
+    return `\nTHE JOB OF THIS AD: get a GIVEAWAY ENTRY, not a sale. The product is the reason
+the prize is worth having, not the thing being sold. Lead with the prize and the deadline,
+both quoted from the Official Rules below.\n`;
+  }
+  const giveawayCaveat = giveaway
+    ? `\n\nA GIVEAWAY IS RUNNING, AND THIS AD IS NOT IT. The Official Rules are deliberately
+NOT shown to you and "giveaway" is NOT a source you may cite here. Do not mention a prize, a
+giveaway, an entry, a sweepstakes, a draw, "no purchase necessary", or any entry deadline.
+A reader who finishes this ad wanting to enter something has been sent to the wrong place.`
+    : '';
+  return `\nTHE JOB OF THIS AD: sell the product. The reader should want to buy it, and the
+copy should give them the reason — what it is, what it costs, and why that is worth it.${giveawayCaveat}\n`;
+}
 
 /**
  * The giveaway instruction block, or '' when no giveaway is running.
@@ -130,8 +216,10 @@ factual: false. So is urgency with no number in it ("Closing soon"). A DATE is a
  */
 function sourceBlock(value, id, label) {
   if (!value || (typeof value === 'object' && !Object.keys(value).length)) return '';
-  const body = typeof value === 'string' ? value : JSON.stringify(value, null, 1);
-  return `\n${label} (a source you may cite as "${id}"):\n${body}\n`;
+  // sourceText, NOT a second JSON.stringify. The writer must be shown byte-for-byte what
+  // claims.js will search, or an honest contiguous quote fails the gate — see sourceText's
+  // docstring for the run where exactly that rejected two of three correct concepts.
+  return `\n${label} (a source you may cite as "${id}"):\n${sourceText(value)}\n`;
 }
 
 /**
@@ -184,7 +272,7 @@ export function buildClaimRules({ sourceIds, unit = 'zone' }) {
 - Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.`;
 }
 
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry }) {
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry, objective = DEFAULT_OBJECTIVE }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
@@ -206,7 +294,11 @@ export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, re
         : '') +
       '\n'
     : '';
-  const giveawayBlock = buildGiveawayBlock(giveaway);
+  // BOTH read the one predicate. A `sale` run sees neither the rules nor "giveaway" in its
+  // source list, so the writer is never invited to cite something it was not shown.
+  const citable = giveawayIsCitable(objective, giveaway);
+  const objectiveBlock = buildObjectiveBlock(objective, { giveaway });
+  const giveawayBlock = citable ? buildGiveawayBlock(giveaway) : '';
   const brandKitBlock = sourceBlock(brandKit, 'brandKit', 'BRAND KIT');
   const catalogBlock = sourceBlock(catalogEntry, 'catalog', 'CATALOG ENTRY');
   // OFFER ONLY WHAT IS ACTUALLY THERE. This used to be a fixed list, so the writer was told
@@ -216,15 +308,20 @@ export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, re
   // authority on what may be cited, because it is the authority on what will be accepted.
   // Callers that pass none keep the old fixed list, so nothing that has not been updated
   // changes behaviour.
-  const sourceIds = sourceIndex
+  // The sourceIndex still HOLDS `giveaway` — the claim gate's index is about what is true,
+  // not about what this ad is for — so it is filtered out of the prompt's offer rather than
+  // out of the index. A sale ad that somehow cited the rules would still pass the gate; it
+  // is simply never told it may.
+  const sourceIds = (sourceIndex
     ? Object.keys(sourceIndex)
-    : (giveaway ? [...BASE_SOURCE_IDS, 'giveaway'] : BASE_SOURCE_IDS);
+    : (giveaway ? [...BASE_SOURCE_IDS, 'giveaway'] : BASE_SOURCE_IDS)
+  ).filter(id => id !== 'giveaway' || citable);
   return `You are writing the copy for a single static ad for Real Skin Care.
 
 FORMAT: ${format.key} — ${format.name}
 AWARENESS LEVEL: ${format.awareness}
 LAYOUT: ${format.layoutBrief}
-
+${objectiveBlock}
 PRODUCT: ${product.title} (${product.handle}) — ${product.priceLabel}
 ${variantBlock}${giveawayBlock}
 PRODUCT PAGE COPY (a source you may cite as "pdp"):

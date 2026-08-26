@@ -22,7 +22,7 @@
       "price": 15,
       "priceLabel": "$15",
       "priceVaries": false,
-      "defaultVariantId": "44180191772842",
+      "defaultVariantId": "45828179656874",
       "url": "https://www.realskincare.com/products/coconut-oil-lip-balm"
     },
     "coconut-lotion": {
@@ -38,15 +38,27 @@
       "price": 11,
       "priceLabel": "$11",
       "priceVaries": false,
-      "defaultVariantId": "44179485655210",
+      "defaultVariantId": "45828179951786",
       "url": "https://www.realskincare.com/products/coconut-soap"
+    },
+    "coconut-bar-soap-12-pack": {
+      "title": "Coconut Bar Soap — 12-Pack",
+      "price": 88,
+      "priceLabel": "$88",
+      "priceVaries": false,
+      "compareAtPrice": 132,
+      "compareAtLabel": "$132",
+      "savings": 44,
+      "savingsLabel": "$44",
+      "defaultVariantId": "49135322857642",
+      "url": "https://www.realskincare.com/products/coconut-bar-soap-12-pack"
     },
     "coconut-moisturizer": {
       "title": "Coconut Moisturizer | 4oz",
       "price": 28,
       "priceLabel": "$28",
       "priceVaries": false,
-      "defaultVariantId": "44179428475050",
+      "defaultVariantId": "45828182114474",
       "url": "https://www.realskincare.com/products/coconut-moisturizer"
     },
     "organic-foaming-hand-soap": {
@@ -54,7 +66,7 @@
       "price": 13,
       "priceLabel": "$13",
       "priceVaries": false,
-      "defaultVariantId": "44179472187562",
+      "defaultVariantId": "45828180770986",
       "url": "https://www.realskincare.com/products/organic-foaming-hand-soap"
     },
     "sensitive-skin-starter-set": {
@@ -62,6 +74,10 @@
       "price": 46.8,
       "priceLabel": "$46.80",
       "priceVaries": false,
+      "compareAtPrice": 58,
+      "compareAtLabel": "$58",
+      "savings": 11.2,
+      "savingsLabel": "$11.20",
       "defaultVariantId": "48075580539050",
       "url": "https://www.realskincare.com/products/sensitive-skin-starter-set"
     }

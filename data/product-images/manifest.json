@@ -107,6 +107,27 @@
     }
   },
   {
+    "handle": "coconut-bar-soap-12-pack",
+    "title": "Coconut Bar Soap — 12-Pack",
+    "unitCount": 12,
+    "_unitCountNote": "TWELVE, because the offer IS twelve bars — $88 against a $132 twelve-bar list, which lib/quantity-ladder.js's derivation renders as 'Buy 8, get 4 free' (88/11 = exactly 8 paid). A plate showing one bar under a '12 bars' headline is the operator compositing a number the picture contradicts. Note this is the highest unitCount in the manifest by 3x (lip balm is 4) and inventoryVerdict hard-fails a miscount, so expect this product to reject more often than a single-unit one; if 12 proves unrenderable, lower this rather than loosening the gate.",
+    "tags": [
+      "bar soap multipack",
+      "bulk natural soap",
+      "coconut oil soap bulk",
+      "fragrance free soap bulk",
+      "unscented bar soap 12 pack"
+    ],
+    "imageDir": "coconut-soap",
+    "_imageDirNote": "Shares coconut-soap's reference photographs deliberately — the 12-pack is twelve of that exact bar, not a different product, and there is no photograph of twelve of them together. The variant subdirectories (pure-unscented/ etc.) resolve the same way they do for the single bar.",
+    "productDescription": "TWELVE identical round, puck-shaped bars of soap, each wrapped in white pleated paper with crimped edges, resembling hotel-style wrapped soap discs. Every bar is the same scent and carries the same label — this is a twelve-bar multipack of one variant, never an assortment. The flat top of each bar features a circular white label with clean, minimalist typography in black: the brand name \"real SKIN CARE\" at the top, a circular badge below it noting \"Made with Organic Coconut Oil + Essential Oils\" on a scented variant — an unscented variant's badge names the coconut oil alone and never an essential oil (the pure-unscented variant reads simply Made with Organic Coconut Oil), a botanical illustration as the central visual element, matching the scent on a scented variant and a plain broad dew-covered green leaf on the pure-unscented variant, the scent name in bold lowercase type, \"hand & body soap\" in lighter text beneath it, and the net weight \"3.4 oz • 84g\" in small type near the lower edge above \"realskincare.com\". Small text runs along the label's circular border noting ingredients and claims. The overall finish is clean white and matte, with a soft, natural aesthetic. There is no outer carton, sleeve, box or printed multipack packaging of any kind — the product is the twelve wrapped bars themselves.",
+    "labelInk": "black",
+    "_labelInkNote": "Same bar as coconut-soap; ink verified there across 14 rendered plates.",
+    "variantBadges": {
+      "pure-unscented": "Made with Organic Coconut Oil"
+    }
+  },
+  {
     "handle": "coconut-oil-lip-balm",
     "title": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
     "unitCount": 4,
