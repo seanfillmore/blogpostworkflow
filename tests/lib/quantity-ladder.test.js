@@ -80,3 +80,25 @@ test('validateLadder rejects a default that is not one of the tiers', () => {
   assert.equal(errs.length, 1);
   assert.match(errs[0], /default "nope" is not one of the tiers/);
 });
+
+test('validateLadder fails OPEN on a wholly absent catalogue — no status data, no verdict', () => {
+  // This is the two-argument-caller shape: scripts/build-bundle.mjs calls
+  // validateRoster(roster, catalogue) with no third argument, so
+  // productStatuses defaults to {}. An empty/missing catalogue must never be
+  // read as "every tier is missing".
+  assert.deepEqual(validateLadder(LADDER, ROSTER, {}), []);
+  assert.deepEqual(validateLadder(LADDER, ROSTER, null), []);
+  assert.deepEqual(validateLadder(LADDER, ROSTER, undefined), []);
+});
+
+test('a populated catalogue missing just one tier still errors — fail-open covers only a WHOLLY empty catalogue', () => {
+  const errs = validateLadder(LADDER, ROSTER, { 'coconut-soap': { status: 'ACTIVE' } });
+  assert.equal(errs.length, 2);
+  assert.match(errs[0], /coconut-bar-soap-4-pack.*not in the catalogue/);
+});
+
+test('the default-not-in-tiers check still runs when the catalogue is disarmed', () => {
+  const errs = validateLadder({ ...LADDER, default: 'nope' }, ROSTER, {});
+  assert.equal(errs.length, 1);
+  assert.match(errs[0], /default "nope" is not one of the tiers/);
+});
