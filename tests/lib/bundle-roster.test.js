@@ -165,3 +165,17 @@ test('the Gift Box carries the $1 custom box', () => {
   const b = loadRoster().bundles.find(x => x.handle === 'gift-box');
   assert.equal(b.packaging, 1.0);
 });
+
+test('validateRoster surfaces ladder errors alongside bundle errors', () => {
+  const roster = {
+    bundles: [{ handle: 'p4', status: 'live', variants: [{ components: [{ product: 'coconut-soap', variant: 'a', qty: 4 }] }] }],
+    ladders: [{ base: 'coconut-soap', tiers: ['coconut-soap', 'p4'], default: 'nope' }],
+  };
+  const errors = validateRoster(roster, { 'coconut-soap': ['a'] }, { 'coconut-soap': { status: 'ACTIVE' }, p4: { status: 'ACTIVE' } });
+  assert.ok(errors.some((e) => /default "nope" is not one of the tiers/.test(e)));
+});
+
+test('a roster with no ladders key is still valid', () => {
+  const roster = { bundles: [] };
+  assert.deepEqual(validateRoster(roster, {}, {}), []);
+});

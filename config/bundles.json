@@ -1610,5 +1610,38 @@
         }
       ]
     }
+  ],
+  "ladders": [
+    {
+      "base": "coconut-soap",
+      "tiers": [
+        "coconut-soap",
+        "coconut-bar-soap-4-pack",
+        "coconut-bar-soap-12-pack"
+      ],
+      "default": "coconut-bar-soap-12-pack",
+      "template": "product.landing-page-bar-soap.json",
+      "block_id": "quantity-ladder"
+    },
+    {
+      "base": "coconut-oil-deodorant",
+      "tiers": [
+        "coconut-oil-deodorant",
+        "coconut-deodorant-4-pack"
+      ],
+      "default": "coconut-deodorant-4-pack",
+      "template": "product.landing-page-deodorant.json",
+      "block_id": "quantity-ladder"
+    },
+    {
+      "base": "coconut-oil-toothpaste",
+      "tiers": [
+        "coconut-oil-toothpaste",
+        "coconut-toothpaste-3-pack"
+      ],
+      "default": "coconut-toothpaste-3-pack",
+      "template": "product.landing-page-toothpaste.json",
+      "block_id": "quantity-ladder"
+    }
   ]
 }
