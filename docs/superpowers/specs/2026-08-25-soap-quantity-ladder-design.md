@@ -1,6 +1,6 @@
-# Soap quantity ladder — one page, three quantities
+# Quantity ladders — one page per consumable, several quantities
 
-Design, 2026-08-25. Approved in chat the same day (Approach A; buy-box replacement and bundle republish both approved).
+Design, 2026-08-25. Approved in chat the same day (Approach A; buy-box replacement, bundle republish, and rollout to all three consumables all approved).
 
 ---
 
@@ -17,25 +17,45 @@ The obvious fix — make quantity an option on `coconut-soap` — is **blocked b
 
 ## Goal
 
-`/products/coconut-soap` becomes the one soap page. It carries a 1 / 4 / 12 tier selector; picking a tier changes what add-to-cart puts in the cart. It stays the only indexed soap URL.
+Each consumable's single-unit PDP becomes the one page for that product, carrying a tier selector. Picking a tier changes what add-to-cart puts in the cart. Each stays the only indexed URL for its product.
+
+| Base product | Template | Tiers | Options per tier |
+|---|---|---|--:|
+| `coconut-soap` | `landing-page-bar-soap` | 1 / 4 / 12 | 4 + 5 + 5 = 14 |
+| `coconut-oil-deodorant` | `landing-page-deodorant` | 1 / 4 | 4 + 5 = 9 |
+| `coconut-oil-toothpaste` | `landing-page-toothpaste` | 1 / 3 | 3 + 4 = 7 |
+
+Thirty tier×option combinations across three templates. All three base products already carry their own `landing-page-*` template, so no new template is created.
 
 ## Non-goals
 
 - **Subscriptions on the ladder.** Decided out of scope. This matters architecturally: Shopify states *"Bundles can't be sold with selling plans, such as subscriptions, pre-orders, and try-before-you-buy."* Because the ladder's cart targets are componentized bundles, a subscribe toggle cannot be bolted on later without changing the mechanism to quantity-plus-discount. If subscriptions are ever wanted here, that is a redesign, not an increment. Recorded so nobody discovers it mid-sprint.
-- **Deodorant and toothpaste.** The ladder shape is identical for them (`coconut-oil-deodorant` → 1/4, `coconut-oil-toothpaste` → 1/3) and the data model below generalizes, but only soap is built.
-- **New products.** The three products already exist.
+- **Lotion, cream, lip balm, hand soap.** No single-unit-plus-multipack ladder exists for them today. Out of scope until one does.
+- **New products.** Every product involved already exists.
 
 ## Architecture
 
 ### Where it renders
 
-A new `custom_liquid` block in `templates/product.landing-page-bar-soap.json`, positioned between the scent picker and the CTA.
+One new `custom_liquid` block per base product, in that product's existing template, positioned between the option picker and the CTA:
+
+- `templates/product.landing-page-bar-soap.json`
+- `templates/product.landing-page-deodorant.json`
+- `templates/product.landing-page-toothpaste.json`
 
 `sections/main-product.liquid` is **not touched**. It is 157 KB, shared by every PDP, and declares no `@theme` block support — but it does expose a `custom_liquid` block type, which is already how `theme/blocks/set-value-stack.liquid` is injected. This follows that established pattern.
 
-`coconut-soap` already carries `templateSuffix: landing-page-bar-soap`, so no new template is created and no other product is affected.
+Every base product already carries its own `landing-page-*` template, so no new template is created and no other product is affected.
 
-**Gallery-scoping check (required by CLAUDE.md, done):** `coconut-soap` has 9 images and **zero** carry a `#` alt token, so it uses variant attachment, not gang scoping. `hide_variants` is not being changed and the gallery is not at risk. This check is mandatory before touching any product template; it is recorded here so it is not re-derived.
+**Gallery-scoping check (required by CLAUDE.md, done 2026-08-25):** the alt-text `#` gang mechanism only runs where `hide_variants` is false, so a template change can silently unscope a gallery. Verified for all three:
+
+| Base product | Images | `#` gang-scoped | Mechanism |
+|---|--:|--:|---|
+| `coconut-soap` | 9 | 0 | variant attachment |
+| `coconut-oil-deodorant` | 9 | 0 | variant attachment |
+| `coconut-oil-toothpaste` | 8 | 0 | variant attachment |
+
+None use gang scoping, `hide_variants` is not being changed on any of them, and no gallery is at risk. Recorded so it is not re-derived — and note the contrast with `coconut-deodorant-4-pack`, a *tier target* whose 10 images are 100% gang-scoped and which must stay on `scoped-gallery` (see Prerequisite).
 
 ### Cart mechanism
 
@@ -57,6 +77,16 @@ Three layers, with one rule: **prices are never stored, only read.**
     "base": "coconut-soap",
     "tiers": ["coconut-soap", "coconut-bar-soap-4-pack", "coconut-bar-soap-12-pack"],
     "default": "coconut-bar-soap-12-pack"
+  },
+  {
+    "base": "coconut-oil-deodorant",
+    "tiers": ["coconut-oil-deodorant", "coconut-deodorant-4-pack"],
+    "default": "coconut-deodorant-4-pack"
+  },
+  {
+    "base": "coconut-oil-toothpaste",
+    "tiers": ["coconut-oil-toothpaste", "coconut-toothpaste-3-pack"],
+    "default": "coconut-toothpaste-3-pack"
   }
 ]
 ```
@@ -76,27 +106,38 @@ Tier order is display order. `default` is the pre-selected tier.
 - savings = `tier.compare_at_price - tier.price`
 - **free-unit label is derived, never written**: `paid = tier.price / base_unit_price`, `free = units - paid`, rendering "Buy 8, get 4 free". At $88 against an $11 bar that is exactly 8 paid and 4 free. If the bar is repriced, the label follows or the validator fails — it cannot silently lie.
 
-  **The free-unit framing renders only when `paid` is a whole number** (within one cent of tolerance). This is not an edge case, it is the common case: the 4-pack is $39 against $44, which is `39/11 = 3.545` paid units — a percentage discount, not a free-unit offer. Rendering it as free units would print "Buy 3.5, get 0.5 free". Tiers that fail the whole-number test fall back to a savings label ("Save $5"). Each tier picks its own framing; they do not have to match.
+  **The free-unit framing renders only when `paid` is a whole number** (within one cent of tolerance). This is not an edge case — across all six multipack tiers, **exactly one qualifies**:
+
+  | Tier | Arithmetic | Framing |
+  |---|---|---|
+  | Bar soap 12-pack | `88 / 11 = 8` ✓ | **Buy 8, get 4 free** |
+  | Bar soap 4-pack | `39 / 11 = 3.545` | Save $5 |
+  | Deodorant 4-pack | `53 / 15 = 3.53` | Save $7 |
+  | Toothpaste 3-pack | `34 / 13 = 2.615` | Save $5 |
+
+  Rendering the others as free units would print "Buy 3.5, get 0.5 free". Tiers that fail the whole-number test fall back to a savings label. Each tier picks its own framing independently; they do not have to match, and a page may show one of each.
 
 This follows `docs/bundle-landing-architecture.md`'s rule: *"Only `product.price` and `compareAtPrice` come from Shopify commerce data... Nothing is a literal, and no total is ever asserted — it is summed."*
 
 Only display arithmetic exists in both Liquid and JS. The validator's job is to catch divergence: it recomputes the same values from live data and fails if any tier would render something incoherent.
 
-### Scent handling
+### Scent / flavour handling
 
-Tier and scent together resolve to exactly one variant.
+Tier and option together resolve to exactly one variant. The single-unit product offers only its own scents; every multipack additionally offers a Variety variant.
 
-| Tier | Scent options |
-|---|---|
-| 1 bar | 4 scents |
-| 4-pack | Variety (one of each) + 4 single-scent |
-| 12-pack | Variety (3 of each) + 4 single-scent |
+| Ladder | Single unit | Multipack tiers |
+|---|---|---|
+| Soap | 4 scents | Variety + 4 (both 4-pack and 12-pack) |
+| Deodorant | 4 scents | Variety + 4 |
+| Toothpaste | 3 flavours | Variety + 3 |
 
-On tier change the chosen scent is preserved if the new tier offers it; otherwise it falls back to Variety for a multipack, or the first scent for the single bar. Default state is 12-pack + Variety.
+Note the option axis is named differently per product — soap and deodorant use **Scent**, toothpaste uses **Flavor**. The block reads the option name off the product rather than assuming "Scent", or the toothpaste ladder silently fails to match.
 
-### The other two URLs
+On tier change the chosen option is preserved if the new tier offers it; otherwise it falls back to Variety for a multipack, or the first option for the single unit. Default state is the ladder's `default` tier plus Variety.
 
-The 4-pack and 12-pack stay **published** — they must be, to be purchasable as cart targets — but are excluded from collections and served `noindex`, so `/products/coconut-soap` remains the single indexed soap URL. This is deliberate under the collection-architecture rule: the point is one page accumulating signal, not three competing for the same query.
+### The tier-target URLs
+
+Multipack products stay **published** — they must be, to be purchasable as cart targets — but are excluded from collections and served `noindex`, so each base product's URL remains the single indexed one for its product. This is deliberate under the collection-architecture rule: one page accumulating signal, not several competing for the same query.
 
 ## Error handling
 
@@ -111,7 +152,9 @@ The 4-pack and 12-pack stay **published** — they must be, to be purchasable as
 
 **Integration** (validator against live Shopify): every tier handle resolves, is published, and its componentized unit count matches the roster.
 
-**Live** (the check that actually counts, per `feedback_verify_live_after_mutating_agents`): page returns 200; for each of the 14 tier×scent combinations (4 single-scent + 5 + 5), add-to-cart lands the expected variant ID and quantity in a real cart; the theme's own buy box is not double-rendered.
+**Live** (the check that actually counts, per `feedback_verify_live_after_mutating_agents`): all three pages return 200; for each of the **30** tier×option combinations (14 soap + 9 deodorant + 7 toothpaste), add-to-cart lands the expected variant ID and quantity in a real cart; the theme's own buy box is not double-rendered on any of the three.
+
+Ship one ladder first. Soap goes live and is verified end-to-end before the deodorant and toothpaste templates are touched — three templates changed at once is three ways to break a PDP with one deploy, and the per-product config makes staggering free.
 
 ## Rollout and rollback
 
@@ -125,7 +168,7 @@ The 4-pack and 12-pack stay **published** — they must be, to be purchasable as
 |---|---|
 | Dawn `product-info.js` interactions | Ladder owns its own form; theme buy box hidden on this template only |
 | Theme not fully version-controlled | Block source committed under `theme/blocks/`; deploys go through `update-theme-asset.mjs`, which backs up first |
-| Bundle products drift back to DRAFT | Real and recurring (8 were dark on 2026-08-25). The validator treats an unpublished tier as an error, so the ladder reports it instead of silently losing a tier |
+| Tier products drift back to DRAFT | Real and recurring (8 were dark on 2026-08-25, unnoticed). The validator treats an unpublished tier as an error, so the ladder reports it instead of silently losing a tier. A standing fleet check that alerts on roster-`live`-but-Shopify-`DRAFT` is tracked separately — the ladder makes the drift *visible*, but only a scheduled check makes it *noticed* |
 | Subscribe & Save wanted later | Not incrementally addable — documented in Non-goals as a redesign |
 
 ## Prerequisite — done
