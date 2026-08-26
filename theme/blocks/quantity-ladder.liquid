@@ -106,16 +106,25 @@
 
 <style>
   .qty-ladder__tiers{display:grid;gap:8px;margin:12px 0}
-  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+  {%- comment -%}
+    4th column (badge) sits to the right of the price (col3), same row.
+    grid-template-rows reserves row 1's height at the badge's own rendered
+    height (padding 3px 9px + .8em text) so a badge-less card's row 1 never
+    shrinks below a badge-bearing card's -- every tier card ends up the same
+    total height (2 rows, always) whether or not it carries a badge, instead
+    of the badge pushing a 3rd row onto only some cards.
+  {%- endcomment -%}
+  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto auto;
+    grid-template-rows:minmax(28px,auto) auto;gap:10px;align-items:center;
     border:1px solid #e0ded8;border-radius:8px;padding:12px 14px;cursor:pointer;background:#faf8f4}
   .qty-ladder__tier.is-selected{border-color:#4a8b3c;box-shadow:0 0 0 1px #4a8b3c}
   .qty-ladder__qty{font-weight:700}
   .qty-ladder__price{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
   .qty-ladder__unit{grid-column:2;font-size:.85em;color:#6d7175}
-  .qty-ladder__badge{grid-column:1/-1;justify-self:start;background:#4a8b3c;color:#fff;
-    border-radius:4px;padding:3px 9px;font-size:.85em;font-weight:700}
-  .qty-ladder__cta{width:100%;padding:14px;border:0;border-radius:8px;background:#1a1b18;color:#fff;
-    font-weight:700;font-size:1rem;cursor:pointer}
+  .qty-ladder__badge{grid-column:4;grid-row:1;justify-self:end;align-self:center;white-space:nowrap;
+    background:#4a8b3c;color:#fff;border-radius:4px;padding:3px 9px;font-size:.8em;font-weight:700}
+  .qty-ladder__cta{width:100%;padding:18px 16px;border:0;border-radius:10px;background:#1a1b18;color:#fff;
+    font-weight:700;font-size:1.15rem;min-height:56px;cursor:pointer}
   .qty-ladder__cta[disabled]{opacity:.5;cursor:not-allowed}
   .qty-ladder__error{color:#b3261e;font-size:.9em;margin:8px 0 0}
 </style>
@@ -129,6 +138,20 @@
   var cta = root.querySelector('[data-qty-cta]');
   var errorEl = root.querySelector('[data-qty-error]');
   var chosenOption = null;
+
+  // Display-only label transform: the tier card already says "12-pack" /
+  // "4-pack", so repeating the count in the option text is redundant. Strips
+  // a leading "<digits>x " count prefix and collapses "Variety — <anything>"
+  // to plain "Variety". opt.value (the variant id posted to /cart/add.js) is
+  // never touched by this -- see the call site below. An unrecognised shape
+  // (no count prefix, not a Variety title) passes through UNCHANGED, never
+  // blanked, so a future option naming scheme degrades to its raw title
+  // instead of an empty label.
+  function ladderOptionLabel(title) {
+    if (typeof title !== 'string') return title;
+    if (/^Variety\s*[—-]\s*.+/i.test(title)) return 'Variety';
+    return title.replace(/^\d+x\s+/i, '');
+  }
 
   function currentTier() {
     var checked = root.querySelector('input[name="qty-tier"]:checked');
@@ -150,11 +173,12 @@
     info.variants.forEach(function (v) {
       var opt = document.createElement('option');
       opt.value = v.id;
-      opt.textContent = v.title + (v.available ? '' : ' — sold out');
+      opt.textContent = ladderOptionLabel(v.title) + (v.available ? '' : ' — sold out');
       opt.disabled = !v.available;
       // Keep the shopper's choice across a tier change when the new tier offers
-      // it; otherwise fall back to the first available option.
-      if (chosenOption && v.title === chosenOption) opt.selected = true;
+      // it; otherwise fall back to the first available option. Compared on the
+      // DISPLAY label (same transform), since that's what chosenOption stores.
+      if (chosenOption && ladderOptionLabel(v.title) === chosenOption) opt.selected = true;
       select.appendChild(opt);
     });
 
