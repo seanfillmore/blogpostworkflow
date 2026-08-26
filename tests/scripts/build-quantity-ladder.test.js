@@ -150,6 +150,34 @@ test('divided_by/modulo against base_unit_price is guarded by a positivity check
     'an unconditional modulo: base_unit_price outside the guard can divide by zero');
 });
 
+test('option labels strip the redundant pack-count prefix and collapse Variety titles', () => {
+  // The tier card already says "12-pack" / "4-pack", so the <select> must not
+  // repeat the count -- operator's words: "We don't need to tell them how
+  // many of each scent, it is implied." This is real logic (a regex
+  // transform), inline in the block's IIFE, not something Liquid renders --
+  // so per the pattern in this file (and tests/agents/link-injectors-guarded
+  // .test.js) it's exercised by extracting the function's own source out of
+  // renderBlock()'s shipped output and running it for real, rather than just
+  // grepping for a string. That makes this assertion able to actually go red
+  // if the transform regresses, not just if it disappears.
+  const block = renderBlock(TIERS, LADDER);
+  const fnMatch = block.match(/function ladderOptionLabel\([^)]*\)\s*\{[\s\S]*?\n\s*\}/);
+  assert.ok(fnMatch, 'expected a ladderOptionLabel(title) function in the shipped IIFE');
+
+  // eslint-disable-next-line no-new-func -- extracting real shipped logic to run it, not user input
+  const ladderOptionLabel = new Function(`return (${fnMatch[0]});`)();
+
+  assert.equal(ladderOptionLabel('12x Calming Lavender'), 'Calming Lavender');
+  assert.equal(ladderOptionLabel('4x Nourishing Tea Tree'), 'Nourishing Tea Tree');
+  assert.equal(ladderOptionLabel('3x Calming Lavender'), 'Calming Lavender');
+  assert.equal(ladderOptionLabel('Variety — 3 of each'), 'Variety');
+  assert.equal(ladderOptionLabel('Variety — one of each'), 'Variety');
+  // Unrecognised shape: no count prefix, not a Variety title -- must degrade
+  // to the raw title unchanged, never to an empty string.
+  assert.equal(ladderOptionLabel('Ocean Breeze'), 'Ocean Breeze');
+  assert.equal(ladderOptionLabel(''), '');
+});
+
 test('the generated preamble bakes no 3+ digit run (no baked price)', () => {
   // Restores the cent-denominated no-baked-price check, but only where it can
   // actually fire: asserting this over the FULL block (renderBlock) trips on
