@@ -1,0 +1,20 @@
+{%- comment -%}
+  Per-day anchor for the bar soap PDP.
+
+  25 days is the merchant's own figure (config/consumption-rates.json,
+  "A bar of soap is lasting between 20 and 30 days in the shower"), which
+  SUPERSEDES the 47-day median reorder gap — a reorder gap measures when
+  somebody got round to buying again, not how long the bar lasted.
+
+  This block previously claimed "about 6 weeks" and "$0.16 per day". Both were
+  wrong and mutually inconsistent: 6 weeks is 42 days against a 25-day figure,
+  and $0.16 x 42 = $6.72 against an $11 bar. Overstating supply is the
+  documented reason RSC subscribers churned, so the claim is stated at the
+  SHORT end of the merchant's 20-30 day range.
+
+  The per-day figure divides by 20, not 25, for the same reason: it is the
+  conservative end, and it is derived from live price so it cannot drift.
+{%- endcomment -%}
+<p style="font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;">
+  A bar lasts about 3 weeks of daily use — roughly {{ product.price | divided_by: 20 | money }} per day.
+</p>
