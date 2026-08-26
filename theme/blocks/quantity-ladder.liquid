@@ -1,0 +1,186 @@
+{%- comment -%}
+  Quantity ladder. Tier structure is baked; every price below is read live from
+  all_products, so a reprice cannot leave a stale number here.
+
+  The option axis is NOT always called "Scent" — toothpaste uses "Flavor" — so
+  the option name is read off each product rather than assumed.
+{%- endcomment -%}
+
+{%- assign base_product = all_products[ladder_base] -%}
+{%- assign base_unit_price = base_product.price -%}
+
+<div class="qty-ladder" data-qty-ladder>
+  <div class="qty-ladder__tiers" role="radiogroup" aria-label="Choose your pack size">
+    {%- for handle in ladder_handles -%}
+      {%- assign p = all_products[handle] -%}
+      {%- assign units = ladder_units[forloop.index0] | plus: 0 -%}
+      {%- if p == blank or p.available == false -%}{%- continue -%}{%- endif -%}
+
+      {%- assign per_unit = p.price | divided_by: units -%}
+      {%- assign paid_exact = p.price | divided_by: base_unit_price -%}
+      {%- assign paid_remainder = p.price | modulo: base_unit_price -%}
+
+      <label class="qty-ladder__tier{% if handle == ladder_default %} is-selected{% endif %}">
+        <input type="radio" name="qty-tier" value="{{ handle }}"
+               {% if handle == ladder_default %}checked{% endif %}>
+        <span class="qty-ladder__qty">{{ units }} {% if units == 1 %}{{ 'bar' }}{% else %}pack{% endif %}</span>
+        <span class="qty-ladder__price">{{ p.price | money }}</span>
+        <span class="qty-ladder__unit">{{ per_unit | money }} each</span>
+
+        {%- comment -%}
+          Free-unit framing only when the price divides into whole single units.
+          Across this catalogue exactly one tier qualifies; the rest show savings,
+          because "buy 3.5, get 0.5 free" is what the naive version prints.
+        {%- endcomment -%}
+        {%- if paid_remainder == 0 and paid_exact > 0 and paid_exact < units -%}
+          {%- assign free_units = units | minus: paid_exact -%}
+          <span class="qty-ladder__badge">Buy {{ paid_exact }}, get {{ free_units }} free</span>
+        {%- elsif p.compare_at_price > p.price -%}
+          {%- assign saved = p.compare_at_price | minus: p.price -%}
+          <span class="qty-ladder__badge">Save {{ saved | money }}</span>
+        {%- endif -%}
+      </label>
+    {%- endfor -%}
+  </div>
+
+  <div class="qty-ladder__options" data-qty-options></div>
+
+  <button type="button" class="qty-ladder__cta" data-qty-cta>Add to cart</button>
+  <p class="qty-ladder__error" data-qty-error hidden></p>
+
+  {%- comment -%} Variant data per tier, for the option selector. {%- endcomment -%}
+  <script type="application/json" data-qty-data>
+    {
+      {%- for handle in ladder_handles -%}
+        {%- assign p = all_products[handle] -%}
+        {%- if p != blank -%}
+        "{{ handle }}": {
+          "optionName": {{ p.options.first | json }},
+          "variants": [
+            {%- for v in p.variants -%}
+            {"id": {{ v.id }}, "title": {{ v.title | json }}, "available": {{ v.available }}}{%- unless forloop.last -%},{%- endunless -%}
+            {%- endfor -%}
+          ]
+        }{%- unless forloop.last -%},{%- endunless -%}
+        {%- endif -%}
+      {%- endfor -%}
+    }
+  </script>
+</div>
+
+<style>
+  .qty-ladder__tiers{display:grid;gap:8px;margin:12px 0}
+  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
+    border:1px solid #e0ded8;border-radius:8px;padding:12px 14px;cursor:pointer;background:#faf8f4}
+  .qty-ladder__tier.is-selected{border-color:#4a8b3c;box-shadow:0 0 0 1px #4a8b3c}
+  .qty-ladder__qty{font-weight:700}
+  .qty-ladder__price{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
+  .qty-ladder__unit{grid-column:2;font-size:.85em;color:#6d7175}
+  .qty-ladder__badge{grid-column:1/-1;justify-self:start;background:#4a8b3c;color:#fff;
+    border-radius:4px;padding:3px 9px;font-size:.85em;font-weight:700}
+  .qty-ladder__cta{width:100%;padding:14px;border:0;border-radius:8px;background:#1a1b18;color:#fff;
+    font-weight:700;font-size:1rem;cursor:pointer}
+  .qty-ladder__cta[disabled]{opacity:.5;cursor:not-allowed}
+  .qty-ladder__error{color:#b3261e;font-size:.9em;margin:8px 0 0}
+</style>
+
+<script>
+(function () {
+  var root = document.querySelector('[data-qty-ladder]');
+  if (!root) return;
+  var data = JSON.parse(root.querySelector('[data-qty-data]').textContent);
+  var optionsEl = root.querySelector('[data-qty-options]');
+  var cta = root.querySelector('[data-qty-cta]');
+  var errorEl = root.querySelector('[data-qty-error]');
+  var chosenOption = null;
+
+  function currentTier() {
+    var checked = root.querySelector('input[name="qty-tier"]:checked');
+    return checked ? checked.value : null;
+  }
+
+  function renderOptions() {
+    var tier = currentTier();
+    var info = data[tier];
+    optionsEl.innerHTML = '';
+    if (!info) return;
+
+    var label = document.createElement('label');
+    label.textContent = info.optionName;
+    label.style.cssText = 'display:block;font-size:.9em;margin:10px 0 4px';
+    var select = document.createElement('select');
+    select.style.cssText = 'width:100%;padding:10px;border:1px solid #e0ded8;border-radius:6px';
+
+    info.variants.forEach(function (v) {
+      var opt = document.createElement('option');
+      opt.value = v.id;
+      opt.textContent = v.title + (v.available ? '' : ' — sold out');
+      opt.disabled = !v.available;
+      // Keep the shopper's choice across a tier change when the new tier offers
+      // it; otherwise fall back to the first available option.
+      if (chosenOption && v.title === chosenOption) opt.selected = true;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', function () {
+      chosenOption = select.options[select.selectedIndex].textContent.replace(' — sold out', '');
+      syncCta();
+    });
+    optionsEl.appendChild(label);
+    optionsEl.appendChild(select);
+    syncCta();
+  }
+
+  function selectedVariant() {
+    var select = optionsEl.querySelector('select');
+    if (!select) return null;
+    var info = data[currentTier()];
+    return info.variants.find(function (v) { return String(v.id) === select.value; }) || null;
+  }
+
+  function syncCta() {
+    var v = selectedVariant();
+    cta.disabled = !v || !v.available;
+    cta.textContent = v && !v.available ? 'Sold out' : 'Add to cart';
+  }
+
+  root.querySelectorAll('input[name="qty-tier"]').forEach(function (input) {
+    input.addEventListener('change', function () {
+      root.querySelectorAll('.qty-ladder__tier').forEach(function (el) {
+        el.classList.toggle('is-selected', el.contains(input) && input.checked);
+      });
+      renderOptions();
+    });
+  });
+
+  cta.addEventListener('click', function () {
+    var v = selectedVariant();
+    if (!v) return;
+    errorEl.hidden = true;
+    cta.disabled = true;
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items: [{ id: v.id, quantity: 1 }] }),
+    })
+      .then(function (r) { if (!r.ok) throw new Error('Could not add to cart'); return r.json(); })
+      .then(function () { window.location.href = '/cart'; })
+      .catch(function (err) {
+        errorEl.textContent = err.message + '. Please try again.';
+        errorEl.hidden = false;
+        cta.disabled = false;
+      });
+  });
+
+  renderOptions();
+})();
+</script>
+
+<noscript>
+  {%- comment -%} Without JS the default tier is still buyable. {%- endcomment -%}
+  {%- assign default_product = all_products[ladder_default] -%}
+  {%- form 'product', default_product -%}
+    <input type="hidden" name="id" value="{{ default_product.selected_or_first_available_variant.id }}">
+    <button type="submit" class="qty-ladder__cta">Add {{ default_product.title }} to cart</button>
+  {%- endform -%}
+</noscript>
