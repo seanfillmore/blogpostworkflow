@@ -212,6 +212,7 @@
       "tags": [
         "bar-soap",
         "bundle",
+        "ladder-tier",
         "subscription"
       ],
       "collections": [],
@@ -330,6 +331,7 @@
       "tags": [
         "bar-soap",
         "bundle",
+        "ladder-tier",
         "value-set"
       ],
       "collections": [],
@@ -1402,6 +1404,7 @@
       "tags": [
         "bundle",
         "deodorant",
+        "ladder-tier",
         "subscription",
         "value-set"
       ],
@@ -1520,8 +1523,9 @@
       "packaging": 0,
       "tags": [
         "bundle",
-        "toothpaste",
+        "ladder-tier",
         "subscription",
+        "toothpaste",
         "value-set"
       ],
       "collections": [],
@@ -1609,6 +1613,42 @@
           ]
         }
       ]
+    }
+  ],
+  "ladders": [
+    {
+      "base": "coconut-soap",
+      "tiers": [
+        "coconut-soap",
+        "coconut-bar-soap-4-pack",
+        "coconut-bar-soap-12-pack"
+      ],
+      "default": "coconut-bar-soap-12-pack",
+      "template": "product.landing-page-bar-soap.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "bar"
+    },
+    {
+      "base": "coconut-oil-deodorant",
+      "tiers": [
+        "coconut-oil-deodorant",
+        "coconut-deodorant-4-pack"
+      ],
+      "default": "coconut-deodorant-4-pack",
+      "template": "product.landing-page-deodorant.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "unit"
+    },
+    {
+      "base": "coconut-oil-toothpaste",
+      "tiers": [
+        "coconut-oil-toothpaste",
+        "coconut-toothpaste-3-pack"
+      ],
+      "default": "coconut-toothpaste-3-pack",
+      "template": "product.landing-page-toothpaste.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "unit"
     }
   ]
 }

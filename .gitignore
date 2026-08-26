@@ -125,6 +125,13 @@ digitalassets/*
 # Generated digital-asset PDFs (build artifacts — source is assets/digital/)
 data/digital-assets/
 
+# Generated quantity-ladder Liquid blocks (build artifacts — source is
+# config/bundles.json + theme/blocks/quantity-ladder.liquid, rebuilt by
+# scripts/build-quantity-ladder.mjs). Committing one risks the same
+# generated-file-in-git conflict data/context/marketing-tactics.md already
+# documents.
+data/ladder-*.liquid
+
 # runtime health-check artifact — regenerated every run, never reviewed in a diff
 data/reports/ga4-health/
 data/reports/giveaway/

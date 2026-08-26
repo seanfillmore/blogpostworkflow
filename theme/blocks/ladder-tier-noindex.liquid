@@ -1,0 +1,8 @@
+{%- comment -%}
+  Tier-target products must stay purchasable (the ladder adds their variants to
+  the cart) but must not compete with the base product's PDP for the same query.
+  One page accumulating signal, not several splitting it.
+{%- endcomment -%}
+{%- if product.tags contains 'ladder-tier' -%}
+  <meta name="robots" content="noindex,follow">
+{%- endif -%}
