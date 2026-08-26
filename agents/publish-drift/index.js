@@ -31,9 +31,10 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
-import { getBlogs, getArticles, updateArticle, getRedirects } from '../../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getRedirects, shopifyGraphQL } from '../../lib/shopify.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
-import { findPublishDrift, reconcileEverPublishedLedger, crawlDraftDriftRecords } from '../../lib/publish-drift.js';
+import { loadRoster } from '../../lib/bundle-roster.js';
+import { findPublishDrift, findProductPublishDrift, reconcileEverPublishedLedger, crawlDraftDriftRecords } from '../../lib/publish-drift.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -172,6 +173,15 @@ async function main() {
     console.log(`  Crawl 404→draft cross-ref (crawl ${Math.round(crawl.ageDays)}d old): ${crawlRecords.length} live draft(s) content links to, ${added} new to watch-list`);
   }
 
+  // 4th source, different resource entirely: PRODUCTS. Everything above watches
+  // blog articles, which is why eight bundles the roster called "live" sat at
+  // HTTP 404 on 2026-08-25 with nothing alerting — the whole multipack
+  // catalogue, found by hand. config/bundles.json is the declared source of
+  // truth for what should be live, so it is the watch-list here.
+  const productLive = await fetchProductPublishState();
+  const productDrift = findProductPublishDrift(loadRoster().bundles, productLive);
+  console.log(`  Product drift: ${productDrift.length} of ${Object.keys(productLive).length} products (roster says live, Shopify does not serve)`);
+
   const records = [...recordsById.values()];
   const drift = findPublishDrift(records, live, { intentional });
   const drafts = drift.filter((d) => d.reason === 'draft');
@@ -193,18 +203,67 @@ async function main() {
     }
   }
 
+  // Product --fix republishes NARROWLY: status -> ACTIVE and publish to the
+  // storefront channels, nothing else. Deliberately NOT build-bundle.mjs, which
+  // also reconciles templates — on 2026-08-25 that path wanted to move
+  // coconut-deodorant-4-pack onto a template with hide_variants: true and would
+  // have silently unscoped all 10 of its gang-scoped images. A drift fixer must
+  // restore reachability, never restructure a product.
+  let productFixed = [];
+  const productDrafts = productDrift.filter((d) => d.reason !== 'missing');
+  if (FIX && productDrafts.length) {
+    console.log('\n  --fix: republishing drifted products (status + channels only)...');
+    for (const d of productDrafts) {
+      try {
+        await republishProduct(productLive[d.handle].id);
+        productFixed.push(d.handle);
+        console.log(`    republished: ${d.handle}`);
+      } catch (err) {
+        console.error(`    FAILED ${d.handle}: ${err.message}`);
+      }
+    }
+  }
+
   // ── outputs ──
   mkdirSync(REPORTS_DIR, { recursive: true });
   writeFileSync(LEDGER_PATH, JSON.stringify(ledger, null, 2));
   const generated_at = now;
   const dateStr = generated_at.slice(0, 10);
-  const payload = { generated_at, checked: records.length, ledger_size: Object.keys(ledger).length, intentional_excluded: intentional.size, drift, drafts, missing, fixed };
+  const payload = { generated_at, checked: records.length, ledger_size: Object.keys(ledger).length, intentional_excluded: intentional.size, drift, drafts, missing, fixed, product_drift: productDrift, product_fixed: productFixed };
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify(payload, null, 2));
   writeFileSync(join(REPORTS_DIR, `${dateStr}.md`), buildReport(payload));
   console.log(`\n  Report saved: data/reports/publish-drift/${dateStr}.md`);
 
-  // Alert only when there's drift the user still needs to act on (errors bypass
-  // the digest deferral → emailed immediately).
+  // Alert only when there's drift the user still needs to act on.
+  //
+  // NOTE: `status: 'error'` does NOT escalate — every notify() call appends to
+  // the daily digest and waits for the 5 AM email. Only `immediate: true` sends
+  // at call time. This comment used to claim errors bypassed deferral; they
+  // never have. See CLAUDE.md, "Deferred-notification digest".
+  const productRemaining = productDrift.filter((d) => !productFixed.includes(d.handle));
+  if (productRemaining.length) {
+    // Products are the one case here that earns immediate:true. A drifted blog
+    // post loses a page; a drifted product makes the catalogue unbuyable and
+    // stops revenue outright — eight of them did, unnoticed, until 2026-08-25.
+    // That must not wait for the next digest.
+    await notify({
+      subject: `🚨 ${productRemaining.length} product(s) unbuyable: roster says live, Shopify does not`,
+      body: productRemaining.map((d) => `- ${d.handle} (${d.reason})`).join('\n')
+        + (productFixed.length ? `\n\nAuto-republished this run: ${productFixed.join(', ')}` : '')
+        + '\n\nEach of these returns 404 on the storefront. Fix with:\n  node agents/publish-drift/index.js --fix',
+      status: 'error',
+      immediate: true,
+      category: 'ops',
+    }).catch(() => {});
+  } else if (productFixed.length) {
+    await notify({
+      subject: `Publish drift: republished ${productFixed.length} unbuyable product(s)`,
+      body: `Restored to live: ${productFixed.join(', ')}`,
+      status: 'info',
+      category: 'ops',
+    }).catch(() => {});
+  }
+
   const remaining = drift.filter((d) => !fixed.includes(d.slug));
   if (remaining.length) {
     await notify({
@@ -226,6 +285,74 @@ async function main() {
   console.log('\nPublish-drift check complete.');
 }
 
+/**
+ * Every product's publish state, keyed by handle.
+ *
+ * `status: ACTIVE` and "published to the Online Store" are separate flags that
+ * drift independently — a product can be ACTIVE and still 404 because its
+ * Online Store publication was dropped — so both are returned.
+ */
+async function fetchProductPublishState() {
+  const d = await shopifyGraphQL(`{
+    products(first: 250) {
+      nodes {
+        id handle status
+        resourcePublications(first: 20) { nodes { publication { name } isPublished } }
+      }
+    }
+  }`);
+  const byHandle = {};
+  for (const p of d.products.nodes) {
+    byHandle[p.handle] = {
+      id: p.id,
+      status: p.status,
+      publishedToOnlineStore: p.resourcePublications.nodes
+        .some((n) => n.publication?.name === 'Online Store' && n.isPublished),
+    };
+  }
+  return byHandle;
+}
+
+/** Storefront channels a product must be published to in order to be reachable. */
+const STOREFRONT_PUBLICATIONS = [
+  ['gid://shopify/Publication/41249308707', 'Online Store'],
+  ['gid://shopify/Publication/90546471082', 'Shop'],
+];
+
+/**
+ * Restore reachability and nothing else: status -> ACTIVE, then publish to the
+ * storefront channels. Templates, prices and components are never touched.
+ */
+async function republishProduct(productId) {
+  const run = async (query, variables) => {
+    const data = await shopifyGraphQL(query, variables);
+    for (const v of Object.values(data ?? {})) {
+      if (v?.userErrors?.length) throw new Error(v.userErrors.map((e) => e.message).join('; '));
+    }
+    return data;
+  };
+
+  await run(
+    `mutation($input: ProductInput!) { productUpdate(input: $input) { product { id } userErrors { field message } } }`,
+    { input: { id: productId, status: 'ACTIVE' } },
+  );
+
+  for (const [id, name] of STOREFRONT_PUBLICATIONS) {
+    try {
+      await run(
+        `mutation($id: ID!, $input: [PublicationInput!]!) {
+          publishablePublish(id: $id, input: $input) { userErrors { field message } }
+        }`,
+        { id: productId, input: [{ publicationId: id }] },
+      );
+    } catch (err) {
+      // Channels refuse componentized bundles individually; a refusal on one
+      // must not abort the others or the whole fix.
+      console.error(`      channel ${name}: ${err.message}`);
+    }
+  }
+}
+
 function buildReport(p) {
   const L = [];
   L.push('# Publish-Drift Report');
@@ -233,8 +360,27 @@ function buildReport(p) {
   L.push(`**Checked:** ${p.checked} posts watched (local records + ever-published ledger of ${p.ledger_size ?? '?'})`);
   L.push(`**Drift found:** ${p.drift.length} (${p.drafts.length} reverted to draft, ${p.missing.length} missing/deleted)`);
   if (p.fixed.length) L.push(`**Auto-republished (--fix):** ${p.fixed.join(', ')}`);
+  const productDrift = p.product_drift ?? [];
+  const productFixed = p.product_fixed ?? [];
+  L.push(`**Product drift:** ${productDrift.length} (roster says live, Shopify does not serve)`);
   L.push('');
-  if (!p.drift.length) { L.push('✅ No drift — every post we consider published is live on Shopify.'); return L.join('\n'); }
+
+  if (productDrift.length) {
+    L.push('## Products unbuyable (roster-live, Shopify not serving)');
+    L.push('');
+    L.push('Each of these returns 404 on the storefront. Revenue is stopped, not degraded.');
+    L.push('');
+    for (const d of productDrift) {
+      L.push(`- \`${d.handle}\` (${d.reason})${productFixed.includes(d.handle) ? ' — ✅ republished' : ''}`);
+    }
+    L.push('');
+  }
+
+  if (!p.drift.length && !productDrift.length) {
+    L.push('✅ No drift — every post and product we consider published is live on Shopify.');
+    return L.join('\n');
+  }
+  if (!p.drift.length) { L.push('✅ No article drift — every post we consider published is live on Shopify.'); return L.join('\n'); }
   if (p.drafts.length) {
     L.push('## Reverted to draft (republish to fix)');
     for (const d of p.drafts) L.push(`- \`${d.slug}\` (article ${d.articleId})${p.fixed.includes(d.slug) ? ' — ✅ republished' : ''}`);
