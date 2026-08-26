@@ -37,22 +37,27 @@
       <label class="qty-ladder__tier{% if handle == ladder_default %} is-selected{% endif %}">
         <input type="radio" name="qty-tier" value="{{ handle }}"
                {% if handle == ladder_default %}checked{% endif %}>
-        <span class="qty-ladder__qty">{% if units == 1 %}{{ units }} {{ ladder_unit_noun }}{% else %}{{ units }}-pack{% endif %}</span>
+        <span class="qty-ladder__qty-wrap">
+          <span class="qty-ladder__qty">{% if units == 1 %}{{ units }} {{ ladder_unit_noun }}{% else %}{{ units }}-pack{% endif %}</span>
+
+          {%- comment -%}
+            Free-unit framing only when the price divides into whole single units.
+            Across this catalogue exactly one tier qualifies; the rest show savings,
+            because "buy 3.5, get 0.5 free" is what the naive version prints.
+            The badge sits here, beside the quantity label, not beside the price --
+            see the CSS comment below for why that also removes the need for a
+            reserved row height.
+          {%- endcomment -%}
+          {%- if paid_remainder == 0 and paid_exact > 0 and paid_exact < units -%}
+            {%- assign free_units = units | minus: paid_exact -%}
+            <span class="qty-ladder__badge">Buy {{ paid_exact }}, get {{ free_units }} free</span>
+          {%- elsif p.compare_at_price > p.price -%}
+            {%- assign saved = p.compare_at_price | minus: p.price -%}
+            <span class="qty-ladder__badge">Save {{ saved | money }}</span>
+          {%- endif -%}
+        </span>
         <span class="qty-ladder__price">{{ p.price | money }}</span>
         <span class="qty-ladder__unit">{{ per_unit | money }} each</span>
-
-        {%- comment -%}
-          Free-unit framing only when the price divides into whole single units.
-          Across this catalogue exactly one tier qualifies; the rest show savings,
-          because "buy 3.5, get 0.5 free" is what the naive version prints.
-        {%- endcomment -%}
-        {%- if paid_remainder == 0 and paid_exact > 0 and paid_exact < units -%}
-          {%- assign free_units = units | minus: paid_exact -%}
-          <span class="qty-ladder__badge">Buy {{ paid_exact }}, get {{ free_units }} free</span>
-        {%- elsif p.compare_at_price > p.price -%}
-          {%- assign saved = p.compare_at_price | minus: p.price -%}
-          <span class="qty-ladder__badge">Save {{ saved | money }}</span>
-        {%- endif -%}
       </label>
     {%- endfor -%}
   </div>
@@ -67,7 +72,9 @@
     The IIFE's own renderOptions()/syncCta() correct this to the real state
     once it runs.
   {%- endcomment -%}
-  <button type="button" class="qty-ladder__cta" data-qty-cta disabled>Add to cart</button>
+  <button type="button" class="qty-ladder__cta button button--secondary button--full-width" data-qty-cta disabled>
+    <span>Add to cart</span>
+  </button>
   <p class="qty-ladder__error" data-qty-error hidden></p>
 
   {%- comment -%}
@@ -107,25 +114,29 @@
 <style>
   .qty-ladder__tiers{display:grid;gap:8px;margin:12px 0}
   {%- comment -%}
-    4th column (badge) sits to the right of the price (col3), same row.
-    grid-template-rows reserves row 1's height at the badge's own rendered
-    height (padding 3px 9px + .8em text) so a badge-less card's row 1 never
-    shrinks below a badge-bearing card's -- every tier card ends up the same
-    total height (2 rows, always) whether or not it carries a badge, instead
-    of the badge pushing a 3rd row onto only some cards.
+    3 columns: radio, qty (with its inline badge), price. The badge lives
+    inside qty-wrap, immediately right of the quantity label, so every card
+    is naturally two rows (label row, unit-price row) whether or not it
+    carries a badge -- no reserved row height is needed. An earlier version
+    of this block force-reserved row 1's height for a badge that wasn't
+    there on badge-less cards, which rendered as a visible empty green box.
   {%- endcomment -%}
-  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto auto;
-    grid-template-rows:minmax(28px,auto) auto;gap:10px;align-items:center;
+  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
     border:1px solid #e0ded8;border-radius:8px;padding:12px 14px;cursor:pointer;background:#faf8f4}
   .qty-ladder__tier.is-selected{border-color:#4a8b3c;box-shadow:0 0 0 1px #4a8b3c}
+  .qty-ladder__qty-wrap{display:flex;align-items:center;gap:8px;min-width:0}
   .qty-ladder__qty{font-weight:700}
   .qty-ladder__price{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
   .qty-ladder__unit{grid-column:2;font-size:.85em;color:#6d7175}
-  .qty-ladder__badge{grid-column:4;grid-row:1;justify-self:end;align-self:center;white-space:nowrap;
-    background:#4a8b3c;color:#fff;border-radius:4px;padding:3px 9px;font-size:.8em;font-weight:700}
-  .qty-ladder__cta{width:100%;padding:18px 16px;border:0;border-radius:10px;background:#1a1b18;color:#fff;
-    font-weight:700;font-size:1.15rem;min-height:56px;cursor:pointer}
-  .qty-ladder__cta[disabled]{opacity:.5;cursor:not-allowed}
+  .qty-ladder__badge{white-space:nowrap;background:#4a8b3c;color:#fff;border-radius:4px;
+    padding:3px 9px;font-size:.8em;font-weight:700}
+  {%- comment -%}
+    .qty-ladder__cta deliberately carries NO sizing/color rules -- it is a
+    hook for the JS selector and for the theme's own
+    `button button--secondary button--full-width` classes, which supply
+    size, color, hover/focus and [disabled] styling. Spacing above the CTA
+    is set on the injected <select> itself (see the IIFE below), not here.
+  {%- endcomment -%}
   .qty-ladder__error{color:#b3261e;font-size:.9em;margin:8px 0 0}
 </style>
 
@@ -136,6 +147,11 @@
   var data = JSON.parse(root.querySelector('[data-qty-data]').textContent);
   var optionsEl = root.querySelector('[data-qty-options]');
   var cta = root.querySelector('[data-qty-cta]');
+  // The button's label lives in a child <span>, matching the theme's own
+  // product-form button markup -- cta.textContent would blow away that
+  // <span> (and any future theme-injected content) instead of just
+  // updating the visible label.
+  var ctaLabel = cta.querySelector('span');
   var errorEl = root.querySelector('[data-qty-error]');
   var chosenOption = null;
 
@@ -168,7 +184,11 @@
     label.textContent = info.optionName;
     label.style.cssText = 'display:block;font-size:.9em;margin:10px 0 4px';
     var select = document.createElement('select');
-    select.style.cssText = 'width:100%;padding:10px;border:1px solid #e0ded8;border-radius:6px';
+    // margin-bottom is the gap between the scent/flavor select and the CTA
+    // button below it -- without it they render touching, since neither
+    // .qty-ladder__options nor the theme's button classes supply any
+    // separation on their own.
+    select.style.cssText = 'width:100%;padding:10px;border:1px solid #e0ded8;border-radius:6px;margin-bottom:14px';
 
     info.variants.forEach(function (v) {
       var opt = document.createElement('option');
@@ -201,7 +221,7 @@
   function syncCta() {
     var v = selectedVariant();
     cta.disabled = !v || !v.available;
-    cta.textContent = v && !v.available ? 'Sold out' : 'Add to cart';
+    ctaLabel.textContent = v && !v.available ? 'Sold out' : 'Add to cart';
   }
 
   root.querySelectorAll('input[name="qty-tier"]').forEach(function (input) {
@@ -241,6 +261,8 @@
   {%- assign default_product = all_products[ladder_default] -%}
   {%- form 'product', default_product -%}
     <input type="hidden" name="id" value="{{ default_product.selected_or_first_available_variant.id }}">
-    <button type="submit" class="qty-ladder__cta">Add {{ default_product.title }} to cart</button>
+    <button type="submit" class="qty-ladder__cta button button--secondary button--full-width">
+      <span>Add {{ default_product.title }} to cart</span>
+    </button>
   {%- endform -%}
 </noscript>

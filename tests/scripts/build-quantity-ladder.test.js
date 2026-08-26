@@ -190,3 +190,35 @@ test('the generated preamble bakes no 3+ digit run (no baked price)', () => {
   assert.doesNotMatch(preamble, /\d{3,}/,
     'a 3+ digit run in the generated preamble would indicate a baked price literal');
 });
+
+test('the badge sits inside the same element as the quantity label, not beside the price', () => {
+  // 2026-08-26 UI fix: the badge used to render in its own grid column
+  // beside qty-ladder__price, with a grid-template-rows height reservation
+  // to keep badge-less cards the same height -- which rendered as a visible
+  // empty green box on every tier that HAD a badge. The fix moves the badge
+  // inside qty-ladder__qty-wrap, immediately after qty-ladder__qty, so a
+  // future edit that quietly moves it back toward the price is what this
+  // pins against.
+  const block = renderBlock(TIERS, LADDER);
+
+  // The badge markup and the quantity label must both sit inside one
+  // qty-ladder__qty-wrap span, and that span must be the element
+  // immediately preceding qty-ladder__price in source order -- i.e. the
+  // badge is beside the quantity, and the price comes after the whole
+  // wrapped group, not interleaved with it.
+  const wrapMatch = block.match(
+    /<span class="qty-ladder__qty-wrap">([\s\S]*?)<\/span>\s*<span class="qty-ladder__price">/
+  );
+  assert.ok(wrapMatch,
+    'expected a qty-ladder__qty-wrap span immediately followed by qty-ladder__price');
+  assert.match(wrapMatch[1], /qty-ladder__qty"/,
+    'the quantity label must be inside qty-ladder__qty-wrap');
+  assert.match(wrapMatch[1], /qty-ladder__badge/,
+    'the badge markup must be inside qty-ladder__qty-wrap, beside the quantity label, not beside the price');
+
+  // The height-reservation hack must be gone: once the badge is inline with
+  // the quantity label, every card is naturally two rows and nothing needs
+  // to reserve height for a badge that might not be there.
+  assert.doesNotMatch(block, /grid-template-rows/,
+    'the row-height reservation hack should be removed now that the badge renders inline with the quantity label');
+});
