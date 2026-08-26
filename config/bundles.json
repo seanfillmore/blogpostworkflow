@@ -324,7 +324,7 @@
     {
       "handle": "coconut-bar-soap-12-pack",
       "title": "Coconut Bar Soap — 12-Pack",
-      "status": "draft",
+      "status": "live",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -333,7 +333,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Buy 8, get 4 free — $88 for twelve bars, $7.33/bar against $11 single and $9.75 in the 4-pack. A one-time stock-up, NOT a subscription vehicle: twelve bars is ~300 days at the merchant's 25-day consumption rate, so it forward-buys the year instead of setting a cadence — the 4-pack stays the subscription SKU and at a 23% per-bar gap it survives alongside this. Priced off the free-portion frame rather than a percent: compareAtPrice is 12 × $11, so the saving reads as four free bars and the $11 anchor is never restated as $7.33. Contribution $41.33 = 1.65× the $25 CAC, so it clears breakeven but NOT the 2× scale gate, which needs $97 — email and organic first, paid only if repriced. DRAFT until the soap giveaway entry period closes 2026-09-14: discounted soap while we are paying Meta to make people want the soap prize devalues the prize.",
+      "story": "Buy 8, get 4 free — $88 for twelve bars, $7.33/bar against $11 single and $9.75 in the 4-pack. A one-time stock-up, NOT a subscription vehicle: twelve bars is ~300 days at the merchant's 25-day consumption rate, so it forward-buys the year instead of setting a cadence — the 4-pack stays the subscription SKU and at a 23% per-bar gap it survives alongside this. Priced off the free-portion frame rather than a percent: compareAtPrice is 12 × $11, so the saving reads as four free bars and the $11 anchor is never restated as $7.33. Contribution $41.33 = 1.65× the $25 CAC, so it clears breakeven but NOT the 2× scale gate, which needs $97 — email and organic first, paid only if repriced. Published 2026-08-25 ahead of the giveaway close (operator decision, 2026-08-25) so a test campaign has a buyable page. The prize-devaluation risk of selling discounted soap during the giveaway entry period was raised and accepted; the separate ad-account risk is that the giveaway campaign is still running, so any 12-pack ad set must not be read as if it ran in a quiet account.",
       "options": [
         {
           "name": "Scent",
