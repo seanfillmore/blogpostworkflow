@@ -1621,7 +1621,8 @@
       ],
       "default": "coconut-bar-soap-12-pack",
       "template": "product.landing-page-bar-soap.json",
-      "block_id": "quantity-ladder"
+      "block_id": "quantity-ladder",
+      "unit_noun": "bar"
     },
     {
       "base": "coconut-oil-deodorant",
@@ -1631,7 +1632,8 @@
       ],
       "default": "coconut-deodorant-4-pack",
       "template": "product.landing-page-deodorant.json",
-      "block_id": "quantity-ladder"
+      "block_id": "quantity-ladder",
+      "unit_noun": "unit"
     },
     {
       "base": "coconut-oil-toothpaste",
@@ -1641,7 +1643,8 @@
       ],
       "default": "coconut-toothpaste-3-pack",
       "template": "product.landing-page-toothpaste.json",
-      "block_id": "quantity-ladder"
+      "block_id": "quantity-ladder",
+      "unit_noun": "unit"
     }
   ]
 }

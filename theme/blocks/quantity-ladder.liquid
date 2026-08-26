@@ -17,13 +17,27 @@
       {%- if p == blank or p.available == false -%}{%- continue -%}{%- endif -%}
 
       {%- assign per_unit = p.price | divided_by: units -%}
-      {%- assign paid_exact = p.price | divided_by: base_unit_price -%}
-      {%- assign paid_remainder = p.price | modulo: base_unit_price -%}
+
+      {%- comment -%}
+        Guard against a nil/zero base price (base product missing from
+        all_products): `divided_by`/`modulo` against 0 would print a visible
+        "Liquid error: divided by 0" on a live PDP. paid_remainder defaults to
+        a non-zero value so the free-unit branch below can never fire on a
+        base_unit_price of 0/nil -- the same guard freeUnitFraming applies in
+        lib/quantity-ladder.js (`if (!baseUnitPrice || !units) return
+        {kind:'savings'}`).
+      {%- endcomment -%}
+      {%- assign paid_exact = 0 -%}
+      {%- assign paid_remainder = 1 -%}
+      {%- if base_unit_price and base_unit_price > 0 -%}
+        {%- assign paid_exact = p.price | divided_by: base_unit_price -%}
+        {%- assign paid_remainder = p.price | modulo: base_unit_price -%}
+      {%- endif -%}
 
       <label class="qty-ladder__tier{% if handle == ladder_default %} is-selected{% endif %}">
         <input type="radio" name="qty-tier" value="{{ handle }}"
                {% if handle == ladder_default %}checked{% endif %}>
-        <span class="qty-ladder__qty">{{ units }} {% if units == 1 %}{{ 'bar' }}{% else %}pack{% endif %}</span>
+        <span class="qty-ladder__qty">{% if units == 1 %}{{ units }} {{ ladder_unit_noun }}{% else %}{{ units }}-pack{% endif %}</span>
         <span class="qty-ladder__price">{{ p.price | money }}</span>
         <span class="qty-ladder__unit">{{ per_unit | money }} each</span>
 
@@ -45,23 +59,45 @@
 
   <div class="qty-ladder__options" data-qty-options></div>
 
-  <button type="button" class="qty-ladder__cta" data-qty-cta>Add to cart</button>
+  {%- comment -%}
+    Statically disabled: the default tier's radio only carries `checked` when
+    that tier survived the availability filter above, so a sold-out default
+    would otherwise leave this button in its static enabled markup with no
+    radio checked and no JS path that re-visits it until a selection changes.
+    The IIFE's own renderOptions()/syncCta() correct this to the real state
+    once it runs.
+  {%- endcomment -%}
+  <button type="button" class="qty-ladder__cta" data-qty-cta disabled>Add to cart</button>
   <p class="qty-ladder__error" data-qty-error hidden></p>
 
-  {%- comment -%} Variant data per tier, for the option selector. {%- endcomment -%}
+  {%- comment -%}
+    Variant data per tier, for the option selector. Commas are emitted BEFORE
+    each entry (guarded by a printed-flag, not `forloop.last`), because the
+    outer loop skips handles missing from all_products -- `unless
+    forloop.last` would leave a trailing comma with nothing after it whenever
+    the LAST handle is the one that's absent (the default tier is always last
+    in all three configured ladders), producing `{"a":{...},}` that
+    JSON.parse throws on, aborting the whole IIFE before any listener attaches.
+  {%- endcomment -%}
   <script type="application/json" data-qty-data>
     {
+      {%- assign tier_printed = false -%}
       {%- for handle in ladder_handles -%}
         {%- assign p = all_products[handle] -%}
         {%- if p != blank -%}
+        {%- if tier_printed -%},{%- endif -%}
         "{{ handle }}": {
           "optionName": {{ p.options.first | json }},
           "variants": [
+            {%- assign variant_printed = false -%}
             {%- for v in p.variants -%}
-            {"id": {{ v.id }}, "title": {{ v.title | json }}, "available": {{ v.available }}}{%- unless forloop.last -%},{%- endunless -%}
+              {%- if variant_printed -%},{%- endif -%}
+              {"id": {{ v.id }}, "title": {{ v.title | json }}, "available": {{ v.available }}}
+              {%- assign variant_printed = true -%}
             {%- endfor -%}
           ]
-        }{%- unless forloop.last -%},{%- endunless -%}
+        }
+        {%- assign tier_printed = true -%}
         {%- endif -%}
       {%- endfor -%}
     }
@@ -103,7 +139,7 @@
     var tier = currentTier();
     var info = data[tier];
     optionsEl.innerHTML = '';
-    if (!info) return;
+    if (!info) { syncCta(); return; }
 
     var label = document.createElement('label');
     label.textContent = info.optionName;
