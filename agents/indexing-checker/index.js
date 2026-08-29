@@ -362,7 +362,12 @@ async function main() {
     await notify({
       subject: `Indexing: ${critical.length} critical, ${actionable.length - critical.length} warnings`,
       body: actionable.slice(0, 15).map((r) => `[${r.verdict.severity}] ${r.state} — ${r.slug} (${r.age_days ?? '?'}d old)${r.verdict.action ? ` → ${r.verdict.action}` : ''}`).join('\n'),
-      status: critical.length > 0 ? 'error' : 'info',
+      // A coverage FINDING, not an agent failure — the run succeeded and this is
+      // what it found. It fired `error` every single day (14 of 14 digests to
+      // 2026-08-29), which is how the Failures block stops being read: half its
+      // rows were reports whose agent completed fine. The body is unchanged and
+      // still lists every critical, it simply renders as info.
+      status: 'info',
       category: 'seo',
     }).catch(() => {});
   }
