@@ -7,7 +7,7 @@
   "shopify_handle": "best-clean-body-lotion-soft-skin-zero-toxins-real-skin-care",
   "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-clean-body-lotion-soft-skin-zero-toxins-real-skin-care",
   "shopify_status": "published",
-  "uploaded_at": "2026-03-12T00:18:51.527Z",
+  "uploaded_at": "2026-08-29T23:43:15.927Z",
   "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/best-clean-body-lotion-2025_7b7e97a5-8950-46dc-9fd4-1b198719b60c.webp?v=1773274727",
   "published_at": "2026-03-24T15:00:00.000Z",
   "indexing_state": {
@@ -22,5 +22,11 @@
   "slug": "best-clean-body-lotion-2025",
   "legacy_bucket": "rising",
   "legacy_triage_reason": "Position 19, 4828 impressions. Meta-only optimization candidate.",
-  "legacy_triaged_at": "2026-08-04T03:55:40.954Z"
+  "legacy_triaged_at": "2026-08-04T03:55:40.954Z",
+  "needs_rebuild": {
+    "flagged_at": "2026-08-29T23:41:42.365Z",
+    "reasons": [
+      "1 internal link issue(s)"
+    ]
+  }
 }
