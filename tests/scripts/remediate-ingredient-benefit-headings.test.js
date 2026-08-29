@@ -248,13 +248,23 @@ test('every mirror target exists and is committed', () => {
   }
 });
 
-test('every mirror BEFORE occurs exactly expectedOccurrences times in the real file', () => {
+// EITHER the BEFORE or the AFTER, never a third value — the invariant the
+// sibling tea-tree plan has always used. It replaces a strict "BEFORE is
+// present" assertion, which pinned these mirrors in a shape no reconciliation
+// could survive: `scripts/reconcile-content-mirrors.mjs` pulls the LIVE body
+// down, live already carries every AFTER, and the strict form then failed on
+// files that were MORE correct than before.
+//
+// This still catches everything the strict form caught. A mirror that drifts to
+// neither string means the plan no longer describes the file, which is the real
+// hazard: a compliance entry nobody can find and nobody can verify.
+test('every mirror carries EITHER the BEFORE or the AFTER, never a third value', () => {
   for (const e of fileEntries()) {
     const html = readFileSync(join(ROOT, e.target.path), 'utf8');
     assert.equal(
-      occurrences(html, e.before),
+      occurrences(html, e.before) + occurrences(html, e.after),
       e.expectedOccurrences,
-      `${e.id}: BEFORE not found as written in ${e.target.path}`,
+      `${e.id}: mirror drifted to a third value in ${e.target.path}`,
     );
   }
 });
@@ -262,14 +272,20 @@ test('every mirror BEFORE occurs exactly expectedOccurrences times in the real f
 test('applying a mirror produces a file with the claim gone and nothing else moved', () => {
   for (const e of fileEntries()) {
     const html = readFileSync(join(ROOT, e.target.path), 'utf8');
+    const pending = occurrences(html, e.before);
     const once = replaceAll(html, e.before, e.after);
     assert.equal(occurrences(once, e.before), 0, `${e.id}: BEFORE survived`);
     assert.equal(occurrences(once, e.after), e.expectedOccurrences, `${e.id}: AFTER not written`);
-    assert.equal(
-      html.length - e.before.length * e.expectedOccurrences,
-      once.length - e.after.length * e.expectedOccurrences,
-      `${e.id}: the replacement changed more than the planned span`,
-    );
+    // Span check only where a replacement actually happened. On an
+    // already-applied mirror there is nothing to replace, so comparing the two
+    // string lengths would assert that BEFORE and AFTER are the same size.
+    if (pending > 0) {
+      assert.equal(
+        html.length - e.before.length * pending,
+        once.length - e.after.length * pending,
+        `${e.id}: the replacement changed more than the planned span`,
+      );
+    }
     assert.equal(replaceAll(once, e.before, e.after), once, `${e.id}: not idempotent`);
   }
 });

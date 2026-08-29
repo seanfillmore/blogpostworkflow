@@ -309,13 +309,19 @@ test('the mirror exists and is committed', () => {
   assert.ok(existsSync(join(ROOT, MIRROR_PATH)), `${MIRROR_PATH} missing`);
 });
 
-test('every mirror BEFORE occurs exactly expectedOccurrences times in the real file', () => {
+// EITHER the BEFORE or the AFTER, never a third value — the same invariant this
+// file already applies to the sibling plan's entries further down. The strict
+// "BEFORE is present" form pinned this mirror in a shape no reconciliation could
+// survive: scripts/reconcile-content-mirrors.mjs pulls the LIVE body down, live
+// already carries every AFTER, and the strict form then failed on a file that
+// was MORE correct than before.
+test('every mirror carries EITHER the BEFORE or the AFTER, never a third value', () => {
   const html = mirrorHtml();
   for (const e of fileEntries()) {
     assert.equal(
-      occurrences(html, e.before),
+      occurrences(html, e.before) + occurrences(html, e.after),
       e.expectedOccurrences,
-      `${e.id}: BEFORE not found as written in ${MIRROR_PATH}`,
+      `${e.id}: mirror drifted to a third value in ${MIRROR_PATH}`,
     );
   }
 });
@@ -345,9 +351,12 @@ test('applying the WHOLE plan leaves no claim behind and moves nothing else', ()
 
   let expectedDelta = 0;
   for (const e of fileEntries()) {
+    // Count what was actually PENDING before the apply. An already-applied entry
+    // contributes no delta — there is nothing left in the file to replace.
+    const pending = occurrences(html, e.before);
     assert.equal(occurrences(once, e.before), 0, `${e.id}: BEFORE survived`);
     assert.equal(occurrences(once, e.after), e.expectedOccurrences, `${e.id}: AFTER not written`);
-    expectedDelta += (e.after.length - e.before.length) * e.expectedOccurrences;
+    expectedDelta += (e.after.length - e.before.length) * pending;
   }
   assert.equal(
     once.length,

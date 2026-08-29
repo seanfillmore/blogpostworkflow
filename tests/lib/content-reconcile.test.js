@@ -19,9 +19,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { compareBodies } from '../../lib/content-mirror.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const occurrences = (hay, needle) => (needle ? String(hay).split(needle).length - 1 : 0);
 import {
   stripLdJson,
   hasInjectedSchema,
@@ -188,24 +192,41 @@ test('no hold is ever returned with reinjectSchema set', () => {
   }
 });
 
-// ── the pinned list cannot drift from the plans it describes ─────────────────
+// ── the pin is retired, and the invariant that replaced it ──────────────────
 
-test('PINNED_MIRROR_SLUGS is exactly the set of mirrors the committed plans target', async () => {
+test('PINNED_MIRROR_SLUGS is EMPTY — the strict-literal pin was retired', () => {
+  // It pinned three mirrors so a reconcile could not break the remediation
+  // plans' "BEFORE is present" assertions. Those assertions were relaxed to
+  // "EITHER the BEFORE or the AFTER, never a third value", which tolerates a
+  // remediation that has already shipped, so the pin has no job left.
+  //
+  // The pin had no expiry, and the cost was concrete: the tea-tree post — live,
+  // indexed, 5,744 impressions/90d — kept a mirror that was a different, older
+  // draft linking four DEAD product handles, so every publish was refused and
+  // its buy box could never be rebuilt.
+  assert.deepEqual([...PINNED_MIRROR_SLUGS], []);
+});
+
+test('every plan mirror carries EITHER its BEFORE or its AFTER — what makes unpinning safe', async () => {
+  // This is the property the pin used to buy by brute force. Asserted here
+  // across BOTH plans at once, because it is the reason a reconcile may now
+  // overwrite these files: whatever the mirror holds, the plan can still find
+  // itself in it, so no compliance entry goes unverifiable.
   const plans = await Promise.all([
     import('../../scripts/remediate-ingredient-benefit-headings.js'),
     import('../../scripts/remediate-tea-tree-11-benefits-post.js'),
   ]);
-  const slugs = new Set();
+  let checked = 0;
   for (const mod of plans) {
     for (const entry of mod.PLAN) {
       if (entry.target?.kind !== 'file') continue;
-      const m = /^data\/posts\/([^/]+)\/content\.html$/.exec(entry.target.path);
-      assert.ok(m, `plan entry ${entry.id} targets an unexpected file path: ${entry.target.path}`);
-      slugs.add(m[1]);
+      const html = readFileSync(join(ROOT, entry.target.path), 'utf8');
+      const seen = occurrences(html, entry.before) + occurrences(html, entry.after);
+      assert.equal(seen, entry.expectedOccurrences, `${entry.id}: drifted to a third value`);
+      checked += 1;
     }
   }
-  assert.ok(slugs.size > 0, 'precondition: the plans carry at least one mirror entry');
-  assert.deepEqual([...slugs].sort(), [...PINNED_MIRROR_SLUGS].sort());
+  assert.ok(checked > 0, 'precondition: the plans still carry mirror entries');
 });
 
 // ── applyMirrorReconcile — real files, real rollback ─────────────────────────

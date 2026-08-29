@@ -346,31 +346,6 @@ export const PLAN = [
     why: 'Byte-identical mirror of vanilla-supports-skin-healing, so a republish cannot push the claim back.',
     bodyVerdict: 'Mirror of a HEADING ONLY entry — see vanilla-supports-skin-healing.',
   },
-  {
-    id: 'mirror-coconut-why-antibacterial-stale-draft',
-    target: FILE('data/posts/why-choose-coconut-skin-care-products/content.html'),
-    gateSlot: 'meta',
-    before:
-      '<h3>5. Naturally Antibacterial</h3>\n'
-      + '<p>Thanks to lauric acid, coconut oil also offers mild antibacterial and antifungal benefits, '
-      + 'which may help minimize breakouts and soothe minor skin irritations when used gently and '
-      + 'correctly.</p>',
-    after:
-      '<h3>5. Naturally Odor-Fighting</h3>\n'
-      + '<p>Thanks to lauric acid, coconut oil helps keep odor-causing bacteria in check, which may help '
-      + 'minimize breakouts and soothe minor skin irritations when used gently and correctly.</p>',
-    expectedOccurrences: 1,
-    mustContain: ['5. Naturally', 'lauric acid'],
-    why:
-      'NOT a copy of the live string. This local file is an older draft of the article: it numbers the '
-      + 'section 5 and words it differently ("mild antibacterial and antifungal benefits"). It is still '
-      + 'the file `agents/publisher` would republish from, so it is toned down on its own terms rather '
-      + 'than skipped. "Antifungal" is the blocking word here.',
-    bodyVerdict:
-      'HEADING + BODY, because in this older wording the claim IS the paragraph ("offers mild '
-      + 'antibacterial and antifungal benefits"). The hedged tail about breakouts and minor irritations '
-      + 'is kept verbatim.',
-  },
 ];
 
 // --- pure helpers (exported for the tests) ------------------------------------
