@@ -8,7 +8,7 @@ import {
   renderHoldLines, holdSummaryFragment, holdBanner, dedupeHeld, HOLD_FLAG, SEO_IMPACT_RELPATH,
 } from '../../lib/cluster-hold.js';
 import {
-  holdFor, heldScenario, impactReport, SOLD_90D, PAGES_EARNED_90D,
+  holdFor, heldScenario, impactReport, staleStamp, SOLD_90D, PAGES_EARNED_90D,
 } from '../helpers/cluster-fixtures.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -264,4 +264,34 @@ test('holdBanner lists the currently-held clusters with the evidence behind each
   assert.match(b, /2026-05-24 → 2026-08-21/, 'and the window they were read over');
   assert.match(b, new RegExp(HOLD_FLAG));
   assert.equal(holdBanner(holdFor({ clusters: [] })), '', 'nothing held and nothing disputed → no banner');
+});
+
+// ── the STALE path, pinned deliberately rather than by accident ──────────────
+// "loadClusterHold treats a stale report EXACTLY like an absent one" is a
+// documented safety property, and until 2026-08-29 it had no test at all. It was
+// being exercised only by accident: the fixtures hardcoded a generated_at that
+// aged past SEO_IMPACT_MAX_AGE_DAYS on 2026-08-28, which turned four unrelated
+// tests red rather than asserting anything. Fixtures are fresh by construction
+// now, so the stale path has to ask for itself.
+
+test('a report older than the freshness policy disarms the gate — fail SAFE, never a verdict', () => {
+  const old = loadClusterHold({
+    root: ROOT,
+    readJson: () => impactReport({ ...heldScenario('toothpaste'), generated_at: staleStamp() }),
+  });
+  assert.equal(old.available, false, 'a stale report is treated exactly like an absent one');
+  assert.equal(old.heldSet.size, 0, 'nothing is paused, blocked or deleted on a measurement this old');
+  assert.equal(old.stale, true, 'and it says WHY, so the banner can explain itself');
+  assert.match(holdBanner(old), /STALE/i);
+});
+
+test('a stale report holds nothing even when both sources scream $0', () => {
+  // The scenario is a genuine two-source dud. Freshness still wins: a hold is a
+  // spend decision, and an old measurement may not make one.
+  const s = heldScenario('toothpaste');
+  const fresh = loadClusterHold({ root: ROOT, readJson: () => impactReport(s) });
+  assert.ok(fresh.heldSet.size > 0, 'the scenario really is a dud when the report is fresh');
+
+  const old = loadClusterHold({ root: ROOT, readJson: () => impactReport({ ...s, generated_at: staleStamp() }) });
+  assert.equal(old.heldSet.size, 0, 'same evidence, stale report, nothing held');
 });

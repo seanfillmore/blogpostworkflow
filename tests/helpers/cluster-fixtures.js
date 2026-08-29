@@ -25,6 +25,7 @@
 
 import { classifyClusters } from '../../lib/cluster-revenue.js';
 import { buildClusterHold } from '../../lib/cluster-hold.js';
+import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 
 /** The report's own window, verbatim from the 2026-08-23 production report. */
 export const REPORT_WINDOW = { start: '2026-07-25', end: '2026-08-21' };
@@ -99,6 +100,40 @@ export function wideRows({ sold = SOLD_90D, earned = PAGES_EARNED_90D } = {}) {
 }
 
 /**
+ * When a fixture report claims it was generated.
+ *
+ * THIS MUST BE RELATIVE TO NOW, and the reason is a live incident rather than a
+ * style preference. Both fixture builders used to hardcode
+ * `'2026-08-23T15:58:15.208Z'`. `loadClusterHold` applies
+ * `SEO_IMPACT_MAX_AGE_DAYS` (4), so on 2026-08-28 that stamp silently crossed
+ * the freshness bar and four tests began failing — and would have failed every
+ * day after, forever, on a suite where nothing had changed.
+ *
+ * The failure is doubly bad because it is INVISIBLE in the right way: a stale
+ * report makes the gate fail SAFE (`available: false`, empty classification,
+ * `disarmed: null`, `judgingWindow: null`), which is correct production
+ * behaviour, so the tests fail with "cannot read properties of undefined"
+ * rather than anything that points at a date. Four red tests that are nobody's
+ * bug are how a suite stops being read — the same mechanism as a digest
+ * Failures block that is half noise.
+ *
+ * A test that wants the STALE path asks for it explicitly (see `staleStamp`),
+ * so that behaviour stays pinned rather than being an accident of the calendar.
+ */
+export function freshStamp() {
+  return new Date().toISOString();
+}
+
+/**
+ * A stamp deliberately older than `SEO_IMPACT_MAX_AGE_DAYS`, for tests that
+ * assert the fail-safe. Derived from the policy constant, never a literal, so
+ * raising the policy cannot leave this quietly fresh.
+ */
+export function staleStamp(days = SEO_IMPACT_MAX_AGE_DAYS + 3) {
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+/**
  * A whole `data/reports/seo-impact/latest.json` in the shape `loadClusterHold`
  * reads.
  *
@@ -113,7 +148,7 @@ export function wideRows({ sold = SOLD_90D, earned = PAGES_EARNED_90D } = {}) {
  */
 export function impactReport({
   clusters = PRODUCTION_CLUSTER_ROWS, sold = SOLD_90D, earned = PAGES_EARNED_90D,
-  orders = WIDE_ORDERS, generated_at = '2026-08-23T15:58:15.208Z',
+  orders = WIDE_ORDERS, generated_at = freshStamp(),
   window = REPORT_WINDOW, judgingWindow = JUDGING_WINDOW, wide = undefined,
 } = {}) {
   const report = {
@@ -134,7 +169,7 @@ export function impactReport({
  */
 export function holdFor({
   clusters = PRODUCTION_CLUSTER_ROWS, sold = SOLD_90D, earned = PAGES_EARNED_90D,
-  orders = WIDE_ORDERS, generatedAt = '2026-08-23T15:58:15.208Z',
+  orders = WIDE_ORDERS, generatedAt = freshStamp(),
   judgingWindow = JUDGING_WINDOW, ...rest
 } = {}) {
   return buildClusterHold(
