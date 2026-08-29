@@ -568,7 +568,12 @@ async function main() {
       body: result.skipped
         ? `Skipped — ${result.reason}`
         : `Injected "${result.productTitle}"${result.fallbackInjected ? ' (auto-selected)' : ''} into ${handle}`,
-      status: result.skipped && result.reason === 'no relevant product' ? 'error' : 'success',
+      // "no relevant product" is a SCOPE decision the agent is supposed to make
+      // — an off-catalogue post (tea tree oil, stretch marks) genuinely has no
+      // product to feature, and the publisher block it sets is the real signal.
+      // Reporting the decision itself as a failure put the same two posts in the
+      // Failures block every morning.
+      status: result.skipped && result.reason === 'no relevant product' ? 'info' : 'success',
     }).catch(() => {});
     return;
   }

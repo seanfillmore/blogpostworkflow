@@ -399,7 +399,10 @@ async function main() {
     await notify({
       subject: `Post Performance: ${todayReviews.length} review${todayReviews.length === 1 ? '' : 's'}${flopsToday.length ? `, ${flopsToday.length} flop${flopsToday.length === 1 ? '' : 's'}` : ''}`,
       body: todayReviews.map((r) => `${r.review.milestone}d [${r.review.verdict}] ${r.slug}: ${r.review.reason}`).join('\n'),
-      status: flopsToday.length ? 'error' : 'info',
+      // A review VERDICT, not an agent failure — a flop is this agent working.
+      // It belongs in the digest body a human reads, not in the Failures block
+      // beside a crashed subprocess.
+      status: 'info',
       category: 'seo',
     }).catch(() => {});
   }
