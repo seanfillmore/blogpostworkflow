@@ -290,17 +290,25 @@ test('applying a mirror produces a file with the claim gone and nothing else mov
   }
 });
 
-test('a rewritten heading does not collide with another heading in the same file', () => {
-  // Two identical headings are two identical anchors.
+// Two identical headings are two identical anchors — so assert the OUTCOME, not
+// a pre-state. The old form asserted the AFTER heading was not ALREADY in the
+// file, which is only true before the remediation ships. Once
+// scripts/reconcile-content-mirrors.mjs pulls the live body down, live carries
+// the AFTER, and the check failed on a mirror that was already correct. The
+// sibling tea-tree plan's own version of this test has always been written the
+// outcome way; this is that form.
+test('applying the plan leaves no two headings identical in the same file', () => {
+  const byPath = new Map();
   for (const e of fileEntries()) {
-    const newHeading = (e.after.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/) || [])[1];
-    if (!newHeading) continue;
-    const html = readFileSync(join(ROOT, e.target.path), 'utf8');
-    const existing = [...html.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)].map((m) => m[1].trim());
-    assert.ok(
-      !existing.includes(newHeading.trim()),
-      `${e.id}: "${newHeading.trim()}" already exists in ${e.target.path}`,
-    );
+    if (!byPath.has(e.target.path)) byPath.set(e.target.path, []);
+    byPath.get(e.target.path).push(e);
+  }
+  for (const [relPath, entries] of byPath) {
+    let html = readFileSync(join(ROOT, relPath), 'utf8');
+    for (const e of entries) html = replaceAll(html, e.before, e.after);
+    const headings = [...html.matchAll(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/g)].map((m) => m[1].trim());
+    const dupes = headings.filter((h, i) => headings.indexOf(h) !== i);
+    assert.deepEqual(dupes, [], `duplicate headings in ${relPath} after remediation: ${dupes}`);
   }
 });
 
