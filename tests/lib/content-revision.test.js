@@ -24,8 +24,34 @@ test('validateRevision accepts a revision that preserves every link', () => {
 test('validateRevision still refuses a revision that drops a link', () => {
   assert.throws(
     () => validateRevision({ original: ORIGINAL, revised: dropsOneLink, now }),
-    /Revision dropped links \(2 < 3\)/,
+    /Revision dropped 1 link/,
   );
+});
+
+// The guard is an href-identity diff (droppedLinks), but the message used to
+// print raw `<a` COUNTS. A revision that drops one link and adds another nets
+// out, so the digest carried arithmetic that is simply false — three real rows:
+//   Revision dropped links (23 < 23) — refusing to save: Tea Tree Bar Soap, ...
+//   Revision dropped links (21 < 20) — refusing to save: Shop Now
+//   Revision dropped links (14 < 14) — refusing to save: Tea Tree Bar Soap, ...
+// It reads as a broken guard rather than a working one, which is how a real
+// failure gets triaged as noise.
+test('the message never prints a false inequality when a link is swapped, not lost', () => {
+  const swapped = ORIGINAL
+    .replace(
+      '<a href="https://www.realskincare.com/blogs/news/dry-skin">dry skin guide</a>',
+      '<a href="https://www.realskincare.com/blogs/news/winter-skin">winter skin guide</a>',
+    );
+  try {
+    validateRevision({ original: ORIGINAL, revised: swapped, now });
+    assert.fail('should have thrown — an href that is gone is gone');
+  } catch (err) {
+    assert.equal(err.droppedLinks.length, 1);
+    assert.doesNotMatch(err.message, /\((\d+) < \1\)/, 'must never claim N < N');
+    assert.doesNotMatch(err.message, /\d+ < \d+/, 'no count comparison at all — it is not a count guard');
+    assert.match(err.message, /dropped 1 link/);
+    assert.match(err.message, /dry skin guide/, 'names what was actually lost');
+  }
 });
 
 test('the link-drop error carries the dropped links so a retry can name them', () => {
@@ -86,7 +112,7 @@ test('a SECOND dropped-link revision still throws — the guard is not softened'
       now,
       callModel: async () => ({ text: dropsOneLink, stopReason: 'end_turn' }),
     }),
-    /Revision dropped links/,
+    /Revision dropped 1 link/,
   );
 });
 
