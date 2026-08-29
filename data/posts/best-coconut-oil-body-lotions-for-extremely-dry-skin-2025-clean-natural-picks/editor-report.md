@@ -1,24 +1,29 @@
-# Editor Report — Best Coconut Oil Body Lotions for Extremely Dry Skin (2025 Clean & Natural Picks)
-**Post:** data/posts/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks-refreshed.html
-**Target keyword:** best coconut body lotion
-**Reviewed:** March 12, 2026
+# Editor Report — Best Coconut Oil Body Lotions for Extremely Dry Skin (2026 Clean & Natural Picks)
+**Post:** data/posts/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks/content.html
+**Target keyword:** 
+**Reviewed:** August 29, 2026
 
 ---
 ## 1. Link Health
 
-**6 links OK** | **0 broken/unreachable**
+**3 links OK** | **0 broken/unreachable**
 
 All links returned a valid HTTP response.
 
 ---
 ## 2. Internal Link Validation
 
-All internal product, collection, and blog links match the sitemap/blog index.
+All internal product, collection, and blog links resolve.
 
 ---
 ## 2b. CTA & Formatting Check
 
-**Pass** — Product/collection CTA links found: [Organic Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Shop Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Organic Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Add to Cart](https://www.realskincare.com/products/coconut-lotion), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [natural body lotion collection](https://www.realskincare.com/collections/coconut-oil-body-lotion), [Shop Now](https://www.realskincare.com/collections/coconut-oil-body-lotion)
+**Pass** — Product/collection CTA links found: [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Shop Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Shop Non-Toxic Body Lotion Made With Only 6 Clean Ingredient →](https://www.realskincare.com/products/coconut-lotion), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Shop Now](https://www.realskincare.com/products/coconut-lotion)
+
+---
+## 2c. Uncited Claims
+
+✅ No uncited statistical/health claims.
 
 ---
 ## 3. Source Verification
@@ -30,7 +35,21 @@ No external source links found in the post.
 
 The following posts are in the same topical cluster and should be linked from this post (or vice versa) as the cluster grows:
 
-- **[Best Fragrance Free Body Lotion 2025](https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025)** *(7 inbound links)*
+- **[Organic Coconut Oil: Types, Uses & Benefits for Skin](https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin-1)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Your Hair? Benefits & How to Use It](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-your-hair-benefits-how-to-use-it-1)** *(0 inbound links)*
+- **[Coconut Oil Deodorant: Benefits, DIY Recipes & What to Know](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-benefits-diy-recipes-what-to-know)** *(0 inbound links)*
+- **[Benefits of Coconut Oil on Skin Everyday: Full Guide](https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-on-skin-everyday-full-guide)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Stretch Marks? Here's the Truth](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-heres-the-truth)** *(0 inbound links)*
+- **[Does Coconut Oil Help With Stretch Marks? The Truth](https://www.realskincare.com/blogs/news/does-coconut-oil-help-with-stretch-marks-the-truth)** *(0 inbound links)*
+- **[Coconut Oil for Stretch Marks: Does It Really Work?](https://www.realskincare.com/blogs/news/coconut-oil-for-stretch-marks-does-it-really-work)** *(0 inbound links)*
+- **[Organic Coconut Oil: Types, Uses & Benefits for Skin](https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Your Hair? Benefits & How to Use It](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-your-hair-benefits-how-to-use-it)** *(0 inbound links)*
+- **[Can You Use Coconut Oil as Toothpaste? What to Know](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste-what-to-know)** *(0 inbound links)*
+- **[Clean Body Lotion: What to Look For & Best Picks](https://www.realskincare.com/blogs/news/clean-body-lotion-what-to-look-for-best-picks)** *(0 inbound links)*
+- **[Organic Body Lotion: What It Is & How to Choose](https://www.realskincare.com/blogs/news/organic-body-lotion-what-it-is-how-to-choose)** *(0 inbound links)*
+- **[Best Non Toxic Body Lotion: Clean Ingredients Guide](https://www.realskincare.com/blogs/news/best-non-toxic-body-lotion-clean-ingredients-guide)** *(0 inbound links)*
+- **[Natural Lotion: What It Is & How to Choose the Best](https://www.realskincare.com/blogs/news/natural-lotion-what-it-is-how-to-choose-the-best)** *(0 inbound links)*
+- **[How to Make a Natural Moisturizer at Home (Easy Recipes)](https://www.realskincare.com/blogs/news/how-to-make-a-natural-moisturizer-at-home-easy-recipes)** *(0 inbound links)*
 - **[Is Coconut Oil a Good Moisturizer? Here's the Truth](https://www.realskincare.com/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin)** *(0 inbound links)*
 - **[Discover the Secrets of Organic Natural Body Lotion](https://www.realskincare.com/blogs/news/discover-the-secrets-of-organic-natural-body-lotion)** *(orphan — no inbound links yet)*
 - **[Why You Should Moisturize Every Day](https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday)** *(0 inbound links)*
@@ -40,67 +59,60 @@ The following posts are in the same topical cluster and should be linked from th
 ---
 ## 5. Editorial Review
 
-# EDITORIAL REVIEW
-**POST TITLE:** Best Coconut Oil Body Lotions for Extremely Dry Skin (2025 Clean & Natural Picks)
-
----
-
 ## 1. TOPICAL RELEVANCE
 **VERDICT:** Pass  
-**NOTES:** Post is tightly focused on the target keyword "best coconut body lotion" and maintains that focus throughout. The comparison table, product reviews, and guidance sections all support the core topic. No significant off-topic tangents detected.
+**NOTES:** Post stays tightly focused on coconut oil body lotions for extremely dry skin throughout. The title keyword is met by the table of contents, product comparisons, and FAQ sections. No off-topic tangents detected. Note: URL slug contains "2025" while body content and title say "2026" — per instructions, slug year is permanent and intentional; body content is what matters for topical relevance, and it is current.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
 **VERDICT:** Pass  
-**NOTES:** Voice is conversational and warm with effective use of "you/your" language. Sentence length is appropriately varied, and paragraphs stay within the 4-sentence guideline. Plain language is used throughout (e.g., "tocotrienols — a form of vitamin E" includes a helpful plain-language explanation). No jargon left unexplained. Tone feels authentic to a natural skincare brand.
+**NOTES:** Conversational tone with warm, approachable language ("No junk," "just clean hydration that works"). Sentences are short and punchy. Mostly avoids jargon without explanation—e.g., "lauric acid" is defined immediately, and "comedogenic" is explained in context. Paragraph lengths stay under 4 sentences except in the "Quick Look" table header area, which is necessary. "You/your" voice is consistent throughout. Eighth-grade readability is maintained.
 
 ---
 
 ## 3. INGREDIENT ACCURACY
 **VERDICT:** Pass  
-**NOTES:** Product ingredients are correctly described. The post accurately notes that the Coconut Body Lotion contains "organic coconut, jojoba, and red palm oil" and mentions the product is in squeeze bottle format (implied by the product description). Essential oils (rose, ylang ylang, lavender, roman chamomile, geranium) and grapefruit seed extract are present in the formula but are not emphasized in the post—this is appropriate given the post's focus on the core hydrating oils. No false claims about missing or non-existent ingredients detected.
+**NOTES:** Post correctly identifies Real Skin Care Coconut Body Lotion ingredients: organic virgin coconut oil, organic jojoba, organic red palm oil, and notes organic essential oils (rose, ylang ylang, lavender, roman chamomile, geranium). Format described as squeeze bottle matches product spec. Product claims (no alcohols, no synthetic fragrance, no fillers) align with ingredient list provided. "Handmade in the USA" language is compliant with product-origin rule (no city/state named).
 
 ---
 
 ## 4. YEAR ACCURACY
-**VERDICT:** Fail — Year Mismatch  
-**NOTES:** **BLOCKER ISSUE:** The post title says **(2025)** but body text explicitly states **"This 2026 guide"** and the FAQ section references **"2026"** multiple times. This is a display/internal consistency error. The URL slug should also be audited by the web team — if it contains 2025 while the post content says 2026, this must be corrected before publication. The current mismatch will cause confusion for readers and SEO issues.
+**VERDICT:** Pass
+**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale current-year references detected. Legitimate historical references (e.g. "since 2020", "a 2021 study"), and any YYYY patterns in href slugs, id attributes, or other HTML attributes, are ignored by design.
 
 ---
 
-## 5. FACTUAL CONCERNS
-**VERDICT:** Needs Work — Unsourced Claims  
-**NOTES:** The post references "A study published in the International Journal of Dermatology" about virgin coconut oil vs. mineral oil for xerosis, but the References section does not include a full citation or URL. This is a central supporting claim for the post's argument. The EWG: Coconut Oil reference is also incomplete (no URL or publication date provided). Both references should be upgraded to include DOI, URL, or proper academic citation format so readers can verify the claims. Flag as "unsourced pending replacement" until proper citations are added.
+---
+
+## 5. Factual Concerns
+**VERDICT:** Pass
+**NOTES:** Citation sufficiency is governed by the deterministic uncited-claims check (section 2c), which is within threshold. General consumer-guidance health phrasing does not each require its own source.
+
+---
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Good  
-**NOTES:** Multiple CTAs are present and well-placed: "Shop Coconut Body Lotion" near the top, "Add to Cart" after the Real Skin Care product section, and "Shop Now" at the end. CTAs feel natural and are integrated into the narrative rather than feeling forced. However, note that the same product link (`/products/coconut-lotion`) appears 7 times — this is excessive repetition and should be consolidated to 2–3 strategic placements.
+**VERDICT:** Pass  
+**NOTES:** Multiple CTAs embedded naturally throughout: "Shop Coconut Body Lotion" near the top, repeated product links in the Real Skin Care #1 pick section, and a closing "Shop Now" CTA in the final FAQ answer. CTAs are placed within the first 25% of body content and are well-distributed. All CTA links verified as HTTP 200 OK by pre-check.
 
 ---
 
 ## 7. FORMATTING
 **VERDICT:** Pass  
-**NOTES:** Heading hierarchy is clean (H2 and H3 only; no H1 in body). The comparison table is well-structured and easy to scan. All major sections have clear headings. No orphaned sections detected. The "Related Real Skin Care Blog Posts" section lists internal links that should be verified for 404 errors as part of the standing issue queue.
+**NOTES:** Clean heading hierarchy: H2s used for main sections ("Deep Hydration Without the Junk," "How we picked these," "Our Top Picks," "What to Look for," "Frequently Asked Questions"), H3s for subsections within picks and FAQ. No H1 in body (verified by pre-check). Table used appropriately for quick reference. No orphaned sections. Bullet points break up long concepts. Formatting supports readability and scroll depth.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
-**VERDICT:** Fail — BLOCKER  
-**NOTES:** The post contains competitor brand names in the body and product comparison table: **Acure, Dr. Bronner's, Kopari, and Everyone.** The standing feedback specifies that competitor names in FAQ sections are flagged as blockers. While these names appear in the main product reviews (section 2–5) and comparison table rather than the FAQ itself, the spirit of the rule suggests that competitive positioning should be handled carefully. The FAQ section does NOT mention competitor names—it focuses on how-to questions and Real Skin Care benefits. **However, to be conservative and aligned with brand guidelines: the inclusion of 4 competitor products with detailed reviews and benefits may conflict with Real Skin Care's positioning as the primary focus.** This warrants clarification from the brand team on whether comparative reviews are approved editorial practice. If they are approved, no blocker applies; if not, this entire section must be revised.
+**VERDICT:** Pass
+**NOTES:** Scanned 8 FAQ Q&As against 40 competitor aliases. None found.
+
+---
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** Needs Work  
-**NOTES:** The post is well-written, informative, and engaging, but **two blocking issues prevent approval:** (1) The year mismatch in the title (2025) vs. body text (2026) must be resolved, and (2) the incomplete academic citations make central claims unsourced. Additionally, the CTA link repetition should be consolidated. Request resubmission with: corrected year consistency, full citations for the International Journal of Dermatology study and EWG reference, reduced CTA link duplication, and brand confirmation that competitor product reviews are approved editorial content.
-
----
-
-## ADDITIONAL NOTES FOR WEB TEAM
-
-- **Internal links to verify:** "Best Body Lotion for Sensitive Skin 2026," "Best Non-Toxic Body Lotion 2026," "Best Clean Lotion 2026," and "Is Coconut Oil Good for Your Skin?" — check for 404 errors.
-- **CTA link consolidation:** The same product URL appears 7 times; reduce to 2–3 strategic placements.
-- **Year mismatch:** Title says 2025; body says 2026. Align before publication and verify URL slug.
+**VERDICT:** Excellent  
+**NOTES:** Post meets all editorial standards. Ingredient accuracy, topical relevance, brand voice, CTAs, formatting, and factual grounding are all solid. The post demonstrates honest product comparison (including flaws in Real Skin Care's own offering: "pricier end," limited size options), which builds trust. FAQ is comprehensive and addresses real user questions. Year is current, and link health is verified. Standing feedback on CTAs and factual concerns has been addressed. This post is publication-ready.

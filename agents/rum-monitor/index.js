@@ -242,7 +242,13 @@ async function main() {
       ? `RUM: ${beacons.length} beacons, ${failing.length} failing Core Web Vitals`
       : 'RUM: no beacons received',
     body: md,
-    status: failing.length || !beacons.length ? 'error' : 'success',
+    // NO BEACONS is a real outage — the storefront stopped reporting, or the
+    // collector stopped receiving, and nothing else would say so. Poor vitals on
+    // some page/device pair is a MEASUREMENT and belongs in the body: the
+    // 2026-08-29 row read "2 failing Core Web Vitals" while every device and
+    // page in the table was green except tablet INP on 761 views, and it landed
+    // in the Failures block looking like a crash.
+    status: !beacons.length ? 'error' : failing.length ? 'info' : 'success',
     category: 'performance',
   });
 }

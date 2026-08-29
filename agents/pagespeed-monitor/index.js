@@ -127,7 +127,12 @@ if (isDirectRun(import.meta.url)) {
       // into a worse band is news; a vital that has been poor for weeks (TBT
       // usually is) would otherwise mark every single daily digest as an error
       // until nobody reads them. Standing failures still ship in the body.
-      const status = diff.regressions.length || vitalRegressions ? 'error' : 'success';
+      // A lab MEASUREMENT, not an agent failure. Lighthouse throttling swings
+      // these wildly — the 2026-08-29 run reported mobile LCP 3.0s → 25.5s on the
+      // homepage while first-party RUM had mobile LCP p75 at 1.33s (green) over
+      // 7,410 real sessions the same morning. RUM is the field truth; this feed
+      // is directional. Regressions still ship in the body.
+      const status = diff.regressions.length || vitalRegressions ? 'info' : 'success';
 
       const vitalLine = m => `- ${m.url} (${m.strategy}): ${m.label} ${m.from} → ${m.to} (${m.fromBand} → ${m.toBand})`;
       const parts = [

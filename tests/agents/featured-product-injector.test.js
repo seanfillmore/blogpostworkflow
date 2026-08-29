@@ -190,3 +190,124 @@ test('buildCtaCopy: sanitizing never removes the buy box (no throw, no empty hea
     assert.ok(c.buttonText.length > 0);
   }
 });
+
+// ── variant titles are part of what a product IS ─────────────────────────────
+// RSC sells scents as VARIANTS, not products: "Nourishing Tea Tree" is a variant
+// of "Moisturizing Coconut Soap". The haystack was built from title + handle +
+// tags + product_type only, so an entire scent line was invisible to the matcher.
+//
+// Live consequence (2026-08-29): the tea-tree post — 5,744 impressions, live and
+// indexed — scored 0 against all 20 products, so pickRelevantProduct returned
+// null, featured-product-injector reported "no relevant product", and the
+// publisher blocked it every morning. Measured against the real catalogue, the
+// two bar soaps that carry the Tea Tree variant go 0 -> matched.
+
+const VARIANT_CATALOG = [
+  { handle: 'coconut-lotion', title: 'Non-Toxic Body Lotion', tags: 'lotion,body', product_type: 'Lotion',
+    variants: [{ title: 'Default Title' }] },
+  { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap', tags: 'bar soap', product_type: 'Bar Soap',
+    variants: [{ title: 'Pure Unscented' }, { title: 'Nourishing Tea Tree' }, { title: 'Calming Lavender' }] },
+  { handle: 'coconut-oil-toothpaste', title: 'Coconut Oil Toothpaste', tags: 'toothpaste', product_type: 'Toothpaste',
+    variants: [{ title: 'Default Title' }] },
+];
+
+test('a scent sold as a VARIANT is findable — the tea-tree case', () => {
+  const p = pickRelevantProduct(VARIANT_CATALOG, {
+    keyword: '',
+    title: '11 Benefits of Incorporating Tea Tree Oil Into Your Everyday Life',
+  });
+  assert.ok(p, 'must not return null — the catalogue does carry a tea tree product');
+  assert.equal(p.handle, 'coconut-soap');
+});
+
+test('a variant match NEVER outranks a real title/tag match', () => {
+  // The regression this weighting exists to prevent: every soap has a "Pure
+  // Unscented" variant, so an unscented-LOTION post must still get the lotion.
+  const ranked = rankProductsByRelevance(VARIANT_CATALOG, {
+    keyword: 'best unscented lotion',
+    title: 'Best Unscented Lotion for Sensitive Skin',
+  });
+  assert.equal(ranked[0].product.handle, 'coconut-lotion');
+});
+
+test('"Default Title" is not a token — it is Shopify padding, not a scent', () => {
+  const ranked = rankProductsByRelevance(VARIANT_CATALOG, { keyword: 'default title', title: 'Default Title' });
+  assert.equal(ranked[0].relevance, 0, 'nothing may match on Shopify\'s placeholder variant name');
+});
+
+test('a product with no variants array still ranks exactly as before', () => {
+  const noVariants = VARIANT_CATALOG.map(({ variants, ...p }) => p);
+  const before = rankProductsByRelevance(noVariants, { keyword: 'toothpaste', title: 'Fluoride Free Toothpaste' });
+  assert.equal(before[0].product.handle, 'coconut-oil-toothpaste');
+  assert.ok(before[0].relevance > 0);
+});
+
+test('rankLinkedProducts sees variant titles too', () => {
+  const linked = [{ handle: 'coconut-soap', count: 1 }, { handle: 'coconut-oil-toothpaste', count: 9 }];
+  const ranked = rankLinkedProducts(linked, VARIANT_CATALOG, { keyword: '', title: 'Tea Tree Benefits' });
+  // Relevance beats raw link count: the soap is linked once, the toothpaste nine
+  // times, and the soap still wins because "tea tree" names one of its variants.
+  assert.equal(ranked[0].handle, 'coconut-soap');
+  assert.ok(ranked[0].relevance > 0, 'the variant is what makes it relevant at all');
+});
+
+test('rankLinkedProducts does NOT strip brand-ubiquitous tokens, and that is unchanged', () => {
+  // Unlike the catalogue matcher, this one scores on raw tokens — so "oil" is a
+  // real match for the toothpaste. Pinned because the variant bonus must not
+  // quietly change which matcher strips what.
+  const linked = [{ handle: 'coconut-soap', count: 1 }, { handle: 'coconut-oil-toothpaste', count: 9 }];
+  const ranked = rankLinkedProducts(linked, VARIANT_CATALOG, { keyword: '', title: 'Tea Tree Oil Benefits' });
+  assert.equal(ranked[0].handle, 'coconut-oil-toothpaste', 'matched "oil" on the title, then won on link count');
+});
+
+// ── publisher_block is set but was never cleared by anything ─────────────────
+// `meta.publisher_block` is written here and READ only by agents/publisher.
+// Nothing in the fleet ever removed one, so a post held for "no relevant
+// product" stayed held forever — even after the reason stopped being true.
+//
+// That is what kept the tea-tree post failing every morning: the catalogue does
+// carry a tea tree product, the matcher simply could not see a variant title
+// (fixed separately). Without this, fixing the matcher unblocks nothing.
+//
+// It clears only a block THIS agent set. Another agent's hold is not ours to lift.
+
+import { resolvePublisherBlock } from '../../agents/featured-product-injector/index.js';
+
+const OURS = { flagged_by: 'featured-product-injector', reason: 'no relevant product to feature — off product scope; holding for review' };
+const THEIRS = { flagged_by: 'editor', reason: 'unsourced health claim' };
+
+test('a successful injection clears the block this agent set', () => {
+  const d = resolvePublisherBlock(OURS, { skipped: false, productTitle: 'Coconut Bar Soap' });
+  assert.equal(d.action, 'clear');
+});
+
+test('a successful injection does NOT clear another agent\'s block', () => {
+  const d = resolvePublisherBlock(THEIRS, { skipped: false, productTitle: 'Coconut Bar Soap' });
+  assert.equal(d.action, 'leave');
+});
+
+test('"already has a buy box" clears our block too — the reason is provably false', () => {
+  // The post demonstrably carries a featured product, so "no relevant product"
+  // cannot be true of it.
+  const d = resolvePublisherBlock(OURS, { skipped: true, reason: 'already has rsc-featured-product' });
+  assert.equal(d.action, 'clear');
+});
+
+test('"no relevant product" still sets the block', () => {
+  const d = resolvePublisherBlock(null, { skipped: true, reason: 'no relevant product' });
+  assert.equal(d.action, 'set');
+  assert.equal(d.block.flagged_by, 'featured-product-injector');
+  assert.match(d.block.reason, /off product scope/);
+});
+
+test('an inconclusive skip leaves everything alone — it is not evidence either way', () => {
+  // Shopify did not return the linked product data. That says nothing about
+  // whether a relevant product exists, so it must neither set nor clear.
+  const d = resolvePublisherBlock(OURS, { skipped: true, reason: 'no linked product data found in Shopify' });
+  assert.equal(d.action, 'leave');
+});
+
+test('no block and nothing to set is a no-op, not a write', () => {
+  assert.equal(resolvePublisherBlock(null, { skipped: false }).action, 'leave');
+  assert.equal(resolvePublisherBlock(undefined, { skipped: true, reason: 'already has rsc-featured-product' }).action, 'leave');
+});

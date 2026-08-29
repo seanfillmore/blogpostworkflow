@@ -61,6 +61,80 @@ function _tokens(s) {
   return new Set((String(s || '').toLowerCase().match(/[a-z0-9]+/g) || []).map(singularize));
 }
 
+// This brand sells its scents as VARIANTS, not products: "Nourishing Tea Tree"
+// is a variant of "Moisturizing Coconut Soap", and nothing in that product's
+// title, handle, tags or product_type says "tea tree". So an entire scent line
+// was invisible to both matchers below, and a post about one of those scents
+// scored 0 against the whole catalogue.
+//
+// "Default Title" is Shopify's placeholder for a product with no real variants;
+// it names nothing and must never become a matchable token.
+function _variantText(p) {
+  return ((p && p.variants) || [])
+    .map((v) => (v && v.title) || '')
+    .filter((t) => t && t !== 'Default Title')
+    .join(' ');
+}
+
+// A variant match is worth LESS than a title/tag match, and the weighting is the
+// point rather than a detail. Every soap carries a "Pure Unscented" variant, so
+// at equal weight an unscented-LOTION post would tie the lotion against three
+// soaps and the tie would fall to array order. Scored this way a variant can
+// only ever break a tie or rescue a zero — it can never displace a product that
+// matched on what it actually IS. Counted only for tokens the primary haystack
+// did NOT already match, so a product is never paid twice for one word.
+const VARIANT_TOKEN_WEIGHT = 0.5;
+
+function _variantBonus(want, hay, variantHay) {
+  let extra = 0;
+  for (const t of want) if (!hay.has(t) && variantHay.has(t)) extra++;
+  return extra * VARIANT_TOKEN_WEIGHT;
+}
+
+/** The hold this agent sets, and the only one it is allowed to lift. */
+const BLOCK_OWNER = 'featured-product-injector';
+
+/**
+ * Whether this run should set, clear, or leave `meta.publisher_block`.
+ *
+ * `publisher_block` is written here and READ only by agents/publisher. Nothing in
+ * the fleet ever removed one, so a post held for "no relevant product" stayed
+ * held forever — even after the reason had stopped being true. That is what kept
+ * the tea-tree post failing every morning: the catalogue does carry a tea tree
+ * product, the matcher simply could not see a variant title. Fixing the matcher
+ * unblocks nothing on its own.
+ *
+ * Two asymmetries are deliberate. It clears only a block THIS agent set —
+ * another agent's hold (an editor's health-claim BLOCKER, say) is not ours to
+ * lift, and lifting one would silently publish what that agent refused. And an
+ * INCONCLUSIVE skip neither sets nor clears: "no linked product data found in
+ * Shopify" is a failed lookup, not evidence that a relevant product does or does
+ * not exist.
+ *
+ * @returns {{action: 'set'|'clear'|'leave', block?: object}}
+ */
+export function resolvePublisherBlock(existing, result) {
+  if (result && result.skipped && result.reason === 'no relevant product') {
+    return {
+      action: 'set',
+      block: {
+        flagged_at: new Date().toISOString(),
+        flagged_by: BLOCK_OWNER,
+        reason: 'no relevant product to feature — off product scope; holding for review',
+      },
+    };
+  }
+
+  // A successful injection proves a relevant product exists. So does finding the
+  // buy box already in place — the post demonstrably carries one, so the block's
+  // stated reason cannot be true of it.
+  const proves = result && (!result.skipped || result.reason === 'already has rsc-featured-product');
+  const ours = existing && existing.flagged_by === BLOCK_OWNER;
+  if (proves && ours) return { action: 'clear' };
+
+  return { action: 'leave' };
+}
+
 /**
  * Rank linked products by relevance to the post's keyword+title, tie-broken by link count.
  * linked: Array<{ handle, count }>
@@ -78,6 +152,7 @@ export function rankLinkedProducts(linked, products, { keyword, title, ingredien
     const hay = _tokens(`${p.title || ''} ${p.handle || l.handle} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
+    overlap += _variantBonus(want, hay, _tokens(_variantText(p)));
     const categoryMatch = Boolean(
       postProductKey && ingredients && productKeyForProduct(p, ingredients) === postProductKey,
     );
@@ -140,6 +215,7 @@ export function rankProductsByRelevance(products, { keyword, title, ingredients 
     const hay = _contentTokens(`${p.title || ''} ${p.handle || ''} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
+    overlap += _variantBonus(want, hay, _contentTokens(_variantText(p)));
 
     // CATEGORY/FORMAT match. Token overlap alone cannot tell a bar from a pump
     // or a 4oz jar from a 32oz refill: on "coconut soap benefits" the bar, the
@@ -545,20 +621,23 @@ async function main() {
     // only to HOLD for review, never to auto-kill — when nothing in the catalog
     // is relevant at all (genuinely off scope, e.g. headphones). The strategist's
     // product-scope filter remains the primary guard; this is the last-mile catch.
-    if (result.skipped && result.reason === 'no relevant product') {
+    {
       const metaPath = getMetaPath(handle);
       if (existsSync(metaPath)) {
         try {
           const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
-          meta.publisher_block = {
-            flagged_at: new Date().toISOString(),
-            flagged_by: 'featured-product-injector',
-            reason: 'no relevant product to feature — off product scope; holding for review',
-          };
-          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-          console.log('  ⚠ publisher_block set — no relevant product (held for review)');
+          const decision = resolvePublisherBlock(meta.publisher_block, result);
+          if (decision.action === 'set') {
+            meta.publisher_block = decision.block;
+            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            console.log('  ⚠ publisher_block set — no relevant product (held for review)');
+          } else if (decision.action === 'clear') {
+            delete meta.publisher_block;
+            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            console.log('  ✓ publisher_block cleared — this post now has a relevant product');
+          }
         } catch (e) {
-          console.log(`  ⚠ Could not set publisher_block: ${e.message}`);
+          console.log(`  ⚠ Could not update publisher_block: ${e.message}`);
         }
       }
     }
@@ -568,7 +647,12 @@ async function main() {
       body: result.skipped
         ? `Skipped — ${result.reason}`
         : `Injected "${result.productTitle}"${result.fallbackInjected ? ' (auto-selected)' : ''} into ${handle}`,
-      status: result.skipped && result.reason === 'no relevant product' ? 'error' : 'success',
+      // "no relevant product" is a SCOPE decision the agent is supposed to make
+      // — an off-catalogue post (tea tree oil, stretch marks) genuinely has no
+      // product to feature, and the publisher block it sets is the real signal.
+      // Reporting the decision itself as a failure put the same two posts in the
+      // Failures block every morning.
+      status: result.skipped && result.reason === 'no relevant product' ? 'info' : 'success',
     }).catch(() => {});
     return;
   }
