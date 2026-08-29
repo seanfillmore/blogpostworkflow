@@ -392,7 +392,19 @@ function checkCTAs(html, categorised) {
 
 // ── html → editorial content (strips tags, preserves structure) ───────────────
 
-function buildEditorialContent(html) {
+/**
+ * `includeSchemas: false` returns the PROSE ONLY, with the JSON-LD blocks left off.
+ *
+ * The LLM review wants the schemas (it checks them), but the deterministic
+ * year-accuracy check must never see them. Every injected post begins with a
+ * JSON-LD block carrying the article's own `url`, `mainEntityOfPage` and
+ * `datePublished` — so on any post whose SLUG contains a year, appending the
+ * schema handed the year scanner a permanent, unfixable BLOCKER: the only ways
+ * to satisfy it are renaming a live URL or falsifying a publish date.
+ * That is what made this fire on `best-davids-toothpaste-alternatives-2025` and
+ * `best-coconut-oil-body-lotions-…-2025-…`, both of which review clean otherwise.
+ */
+function buildEditorialContent(html, { includeSchemas = true } = {}) {
   const $c = cheerio.load(html);
   $c('style, noscript').remove();
   const schemas = [];
@@ -416,7 +428,7 @@ function buildEditorialContent(html) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 
-  if (schemas.length) body += '\n\n[JSON-LD SCHEMAS]\n' + schemas.join('\n---\n');
+  if (includeSchemas && schemas.length) body += '\n\n[JSON-LD SCHEMAS]\n' + schemas.join('\n---\n');
   return body;
 }
 
@@ -1300,9 +1312,14 @@ async function runEditor(htmlPath) {
 
   // Same treatment for YEAR ACCURACY. The LLM keeps confusing slug/id
   // attribute year references with visible body text, flagging stale
-  // years the reader never sees. Deterministic scan over the same text
-  // the LLM gets is authoritative.
-  const yearVerdict = buildYearAccuracyVerdict(editorialContent);
+  // years the reader never sees. A deterministic scan is authoritative.
+  //
+  // It runs over the PROSE ONLY — not the same string the LLM gets. The LLM is
+  // handed the JSON-LD too (it reviews it), and every injected post opens with
+  // a block holding the article's own url/mainEntityOfPage/datePublished, so
+  // scanning that string made a year in the SLUG an unfixable blocker. See
+  // buildEditorialContent.
+  const yearVerdict = buildYearAccuracyVerdict(buildEditorialContent(workingHtml, { includeSchemas: false }));
   review = review.replace(
     /##\s*\d?\.?\s*YEAR ACCURACY[\s\S]*?(?=\n##\s|\n---|$)/i,
     yearVerdict.trim() + '\n'

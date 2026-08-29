@@ -103,3 +103,52 @@ test('bumpStaleYears: bumps edition-marker text', () => {
 test('bumpStaleYears: leaves current/future/pre-2020 alone', () => {
   assert.equal(bumpStaleYears('ready for 2026 and 2030, since 2008', CUR).changed, false);
 });
+
+// ── URL / slug / ISO-date immunity ───────────────────────────────────────────
+//
+// These are the strings that produced live, unfixable BLOCKERs on 2026-08-29.
+// Both posts reviewed clean on every other dimension; the only way to satisfy
+// the year check was to rename a live URL or falsify a publish date.
+
+test('a year inside a URL or slug is never stale — renaming a handle breaks a ranking page', () => {
+  const cases = [
+    '"item": "https://www.realskincare.com/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks"',
+    '"url": "https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025"',
+    'https://www.realskincare.com/blogs/news/best-toothpaste-without-sls-2025',
+    '/blogs/news/best-natural-deodorant-for-men-in-2025-that-works',
+    'See https://example.com/a/2024/report for the source.',
+  ];
+  for (const text of cases) {
+    assert.deepEqual(findStaleYears(text, CUR), [], `should not flag: ${text}`);
+  }
+});
+
+test('an ISO-8601 publication date is never stale — bumping it would falsify the record', () => {
+  const cases = [
+    '"datePublished": "2025-06-25T11:00:07-06:00"',
+    '"dateModified": "2025-06-25T11:00:07-06:00"',
+    'Published 2024-03-11 and still accurate.',
+  ];
+  for (const text of cases) {
+    assert.deepEqual(findStaleYears(text, CUR), [], `should not flag: ${text}`);
+  }
+});
+
+test('the URL guard is whitespace-delimited, so it cannot swallow prose near a slash', () => {
+  // A slash with whitespace around it is prose, not a path — still flagged.
+  const r = findStaleYears('Our Best Deodorant 2024 / Top Picks', CUR);
+  assert.equal(r.length, 1);
+  assert.equal(r[0].year, 2024);
+});
+
+test('a stale year in visible prose is STILL flagged when the post URL also carries one', () => {
+  // The whole point: suppressing the slug must not suppress the real finding.
+  const text = [
+    '## Best Davids Toothpaste Alternatives 2025',
+    'Here is what actually works in 2025.',
+    '"url": "https://www.realskincare.com/blogs/news/best-davids-toothpaste-alternatives-2025"',
+  ].join('\n');
+  const r = findStaleYears(text, CUR);
+  assert.equal(r.length, 2, 'both prose occurrences flagged, the URL one ignored');
+  assert.ok(r.every((s) => s.year === 2025));
+});
