@@ -35,7 +35,7 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getPostMeta, getRefreshedPath, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, resolvePostSlug, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
@@ -328,6 +328,26 @@ Return only the bullet points, no preamble.`,
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
+/**
+ * Which post directory a refresh is written to.
+ *
+ * The Shopify article handle is not always the local post-dir name — most local
+ * metas record the article as `shopify_handle` and sit under a shorter slug
+ * (`data/posts/organic-toothpaste/` holds
+ * `best-organic-toothpaste-what-to-look-for-why-it-matters`). Writing to
+ * `article.handle` blindly created a SECOND directory for a post that already
+ * had one, holding a content-refreshed.html and nothing else. performance-engine
+ * and refresh-runner then reported "content-refresher did not produce ..." for a
+ * refresh that had in fact been generated, and the orphan directory — with no
+ * content.html in it — went on to feed queue-autoapply's repair loop.
+ *
+ * `resolvePostSlug` is the canonical mapping and documents its own resolution
+ * order; it is injected here so the wiring is testable without a filesystem.
+ */
+export function writeTargetSlug(handle, resolve = resolvePostSlug) {
+  return resolve(handle) || handle;
+}
+
 async function main() {
   console.log(`\nContent Refresher — ${config.name}`);
   console.log(`Mode: ${apply ? 'APPLY (will push drafts to Shopify)' : 'DRY RUN (use --apply to publish)'}\n`);
@@ -444,7 +464,7 @@ async function main() {
 
   for (let i = 0; i < targets.length; i++) {
     const { article, keyword, position, impressions, relatedKeywords, userConcerns = [] } = targets[i];
-    const slug = article.handle;
+    const slug = writeTargetSlug(article.handle);
 
     // Winner protection — a refresh rewrites the BODY, which is exactly what the
     // lock exists to prevent on a page that already ranks. See lib/post-lock.js
