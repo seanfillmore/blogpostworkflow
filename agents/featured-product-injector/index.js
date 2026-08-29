@@ -91,6 +91,50 @@ function _variantBonus(want, hay, variantHay) {
   return extra * VARIANT_TOKEN_WEIGHT;
 }
 
+/** The hold this agent sets, and the only one it is allowed to lift. */
+const BLOCK_OWNER = 'featured-product-injector';
+
+/**
+ * Whether this run should set, clear, or leave `meta.publisher_block`.
+ *
+ * `publisher_block` is written here and READ only by agents/publisher. Nothing in
+ * the fleet ever removed one, so a post held for "no relevant product" stayed
+ * held forever — even after the reason had stopped being true. That is what kept
+ * the tea-tree post failing every morning: the catalogue does carry a tea tree
+ * product, the matcher simply could not see a variant title. Fixing the matcher
+ * unblocks nothing on its own.
+ *
+ * Two asymmetries are deliberate. It clears only a block THIS agent set —
+ * another agent's hold (an editor's health-claim BLOCKER, say) is not ours to
+ * lift, and lifting one would silently publish what that agent refused. And an
+ * INCONCLUSIVE skip neither sets nor clears: "no linked product data found in
+ * Shopify" is a failed lookup, not evidence that a relevant product does or does
+ * not exist.
+ *
+ * @returns {{action: 'set'|'clear'|'leave', block?: object}}
+ */
+export function resolvePublisherBlock(existing, result) {
+  if (result && result.skipped && result.reason === 'no relevant product') {
+    return {
+      action: 'set',
+      block: {
+        flagged_at: new Date().toISOString(),
+        flagged_by: BLOCK_OWNER,
+        reason: 'no relevant product to feature — off product scope; holding for review',
+      },
+    };
+  }
+
+  // A successful injection proves a relevant product exists. So does finding the
+  // buy box already in place — the post demonstrably carries one, so the block's
+  // stated reason cannot be true of it.
+  const proves = result && (!result.skipped || result.reason === 'already has rsc-featured-product');
+  const ours = existing && existing.flagged_by === BLOCK_OWNER;
+  if (proves && ours) return { action: 'clear' };
+
+  return { action: 'leave' };
+}
+
 /**
  * Rank linked products by relevance to the post's keyword+title, tie-broken by link count.
  * linked: Array<{ handle, count }>
@@ -577,20 +621,23 @@ async function main() {
     // only to HOLD for review, never to auto-kill — when nothing in the catalog
     // is relevant at all (genuinely off scope, e.g. headphones). The strategist's
     // product-scope filter remains the primary guard; this is the last-mile catch.
-    if (result.skipped && result.reason === 'no relevant product') {
+    {
       const metaPath = getMetaPath(handle);
       if (existsSync(metaPath)) {
         try {
           const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
-          meta.publisher_block = {
-            flagged_at: new Date().toISOString(),
-            flagged_by: 'featured-product-injector',
-            reason: 'no relevant product to feature — off product scope; holding for review',
-          };
-          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
-          console.log('  ⚠ publisher_block set — no relevant product (held for review)');
+          const decision = resolvePublisherBlock(meta.publisher_block, result);
+          if (decision.action === 'set') {
+            meta.publisher_block = decision.block;
+            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            console.log('  ⚠ publisher_block set — no relevant product (held for review)');
+          } else if (decision.action === 'clear') {
+            delete meta.publisher_block;
+            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            console.log('  ✓ publisher_block cleared — this post now has a relevant product');
+          }
         } catch (e) {
-          console.log(`  ⚠ Could not set publisher_block: ${e.message}`);
+          console.log(`  ⚠ Could not update publisher_block: ${e.message}`);
         }
       }
     }
