@@ -259,3 +259,55 @@ test('rankLinkedProducts does NOT strip brand-ubiquitous tokens, and that is unc
   const ranked = rankLinkedProducts(linked, VARIANT_CATALOG, { keyword: '', title: 'Tea Tree Oil Benefits' });
   assert.equal(ranked[0].handle, 'coconut-oil-toothpaste', 'matched "oil" on the title, then won on link count');
 });
+
+// ── publisher_block is set but was never cleared by anything ─────────────────
+// `meta.publisher_block` is written here and READ only by agents/publisher.
+// Nothing in the fleet ever removed one, so a post held for "no relevant
+// product" stayed held forever — even after the reason stopped being true.
+//
+// That is what kept the tea-tree post failing every morning: the catalogue does
+// carry a tea tree product, the matcher simply could not see a variant title
+// (fixed separately). Without this, fixing the matcher unblocks nothing.
+//
+// It clears only a block THIS agent set. Another agent's hold is not ours to lift.
+
+import { resolvePublisherBlock } from '../../agents/featured-product-injector/index.js';
+
+const OURS = { flagged_by: 'featured-product-injector', reason: 'no relevant product to feature — off product scope; holding for review' };
+const THEIRS = { flagged_by: 'editor', reason: 'unsourced health claim' };
+
+test('a successful injection clears the block this agent set', () => {
+  const d = resolvePublisherBlock(OURS, { skipped: false, productTitle: 'Coconut Bar Soap' });
+  assert.equal(d.action, 'clear');
+});
+
+test('a successful injection does NOT clear another agent\'s block', () => {
+  const d = resolvePublisherBlock(THEIRS, { skipped: false, productTitle: 'Coconut Bar Soap' });
+  assert.equal(d.action, 'leave');
+});
+
+test('"already has a buy box" clears our block too — the reason is provably false', () => {
+  // The post demonstrably carries a featured product, so "no relevant product"
+  // cannot be true of it.
+  const d = resolvePublisherBlock(OURS, { skipped: true, reason: 'already has rsc-featured-product' });
+  assert.equal(d.action, 'clear');
+});
+
+test('"no relevant product" still sets the block', () => {
+  const d = resolvePublisherBlock(null, { skipped: true, reason: 'no relevant product' });
+  assert.equal(d.action, 'set');
+  assert.equal(d.block.flagged_by, 'featured-product-injector');
+  assert.match(d.block.reason, /off product scope/);
+});
+
+test('an inconclusive skip leaves everything alone — it is not evidence either way', () => {
+  // Shopify did not return the linked product data. That says nothing about
+  // whether a relevant product exists, so it must neither set nor clear.
+  const d = resolvePublisherBlock(OURS, { skipped: true, reason: 'no linked product data found in Shopify' });
+  assert.equal(d.action, 'leave');
+});
+
+test('no block and nothing to set is a no-op, not a write', () => {
+  assert.equal(resolvePublisherBlock(null, { skipped: false }).action, 'leave');
+  assert.equal(resolvePublisherBlock(undefined, { skipped: true, reason: 'already has rsc-featured-product' }).action, 'leave');
+});
