@@ -302,3 +302,47 @@ assert.ok(!/SAFE ZONE/i.test(platePrompt), 'a text-free plate needs no safe-zone
   assert.ok(!/undefined/.test(bare), 'a missing layout brief must not interpolate "undefined"');
   assert.ok(bare.includes('SIX INGREDIENTS.'), 'and the copy must still be set');
 }
+
+// ── multi-unit arrangement: abundance AND countability (2026-08-26) ──────────────────
+//
+// Six bars laid out flat read as "some soap", not "a year of soap" — and abundance IS the
+// offer on a 12-for-$88 ad. But the verify gate COUNTS units, and the two failures that
+// cost the most were both arrangement failures: an overlapping pile counted 11 of 12, and a
+// stack came back as ONE unit ("a stack of several wrapped soap bars"). So the clause has to
+// ask for height and separability together, or fixing one breaks the other.
+{
+  const { buildRenderPrompt } = await import('../../agents/ad-studio/render.js');
+  const { formatByKey } = await import('../../agents/ad-studio/formats.js');
+  const base = {
+    format: formatByKey('offer-focused'),
+    mode: 'plate',
+    product: {
+      handle: 'x', title: 'X', priceLabel: '$1',
+      labelStrings: ['real SKIN CARE'], physicalDescription: 'a bar',
+    },
+    ratio: '4:5',
+  };
+
+  const six = buildRenderPrompt({ ...base, product: { ...base.product, unitCount: 6 } });
+  assert.match(six, /EXACTLY 6 UNITS/);
+  assert.match(six, /READS AS A QUANTITY WORTH BUYING/, 'abundance is asked for');
+  assert.match(six, /stacked or\s*\n?tiered/, 'height, not a flat layer');
+  assert.match(six, /separately visible and countable/, 'and the gate can still count them');
+  assert.match(six, /NOTHING may be cropped by the edge/, 'the measured cropped-bar failure');
+
+  // ONE unit must not gain any of it — "arrange them as a group" is meaningless for a
+  // single bottle, and that branch is the one every existing product uses.
+  const one = buildRenderPrompt({ ...base, product: { ...base.product, unitCount: 1 } });
+  assert.match(one, /EXACTLY ONE UNIT/);
+  assert.ok(!/QUANTITY WORTH BUYING/.test(one), 'no arrangement clause on a single unit');
+
+  // Nor two: a pair side by side is not a stack, and the starter set is a real 2-unit product.
+  const two = buildRenderPrompt({ ...base, product: { ...base.product, unitCount: 2 } });
+  assert.match(two, /EXACTLY 2 UNITS/);
+  assert.ok(!/QUANTITY WORTH BUYING/.test(two), 'threshold is 3, so a pair is left alone');
+
+  // Three is where it starts — the foam-soap bundle and the lip balm four-pack are the
+  // existing products this also reaches.
+  const three = buildRenderPrompt({ ...base, product: { ...base.product, unitCount: 3 } });
+  assert.match(three, /QUANTITY WORTH BUYING/);
+}

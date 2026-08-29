@@ -108,6 +108,8 @@ const GREY = '#EDEDED';
 export const FORMATS = [
   {
     key: 'us-vs-them',
+    // Black is the brand's PRIMARY colour, not an accent, and white wrapped soap on black is the highest-contrast frame available here. It also separates this plate hardest from the other two.
+    plateGround: { name: 'near-black', hex: '#000000' },
     name: 'Us vs them',
     awareness: 'solution',
     pairsImagesWithLabels: true,
@@ -455,6 +457,8 @@ export const FORMATS = [
   },
   {
     key: 'offer-focused',
+    // The offer ad carries the price, so it needs the loudest ground in the palette — mint green against a white wrapper is the only real colour contrast brand-kit.json offers.
+    plateGround: { name: 'brand green', hex: '#AEDEAC' },
     name: 'Offer-focused',
     awareness: 'product',
     pairsImagesWithLabels: false,
@@ -819,6 +823,63 @@ export function formatForVariation(format, variation = 1) {
   const i = (Math.max(1, Number(variation) || 1) - 1) % variants.length;
   const chosen = variants[i];
   return { ...format, plateBrief: chosen.plateBrief, plateVariantKey: chosen.key };
+}
+
+/**
+ * THE GROUND EVERY STUDIO PLATE STANDS ON — and until 2026-08-26 there was exactly one.
+ *
+ * All ten studio formats hardcoded the identical `warm sand #EDE5D8` in their own plateBrief
+ * prose, so the format rotation differentiated WHERE THE TYPE GOES and not what the picture
+ * looked like. Build a 3-2-2 from three studio formats and you get three photographs of the
+ * same thing: measured on the coconut-bar-soap-12-pack set, offer-focused and us-vs-them came
+ * back as one creative wearing two arrangements. Three ads that look identical defeat the
+ * only reason to run three.
+ *
+ * `plateGround` is OPTIONAL and defaults to the sand below, so every format that does not
+ * declare one is byte-identical to what it has always been. This is deliberately not a
+ * fleet-wide repaint: the brand look is warm sand and it stays warm sand unless a format
+ * says otherwise.
+ *
+ * COLOURS COME FROM data/brand/brand-kit.json's palette_hexes AND NOWHERE ELSE. Inventing a
+ * saturated gold to chase a competitor's ad would be off-brand by construction, and the kit
+ * names one hex — #C1DF6D, the retired green — as an explicit off-brand SIGNAL, so a palette
+ * picked by eye can actively mark the asset as built from the wrong source.
+ */
+export const PLATE_GROUND_DEFAULT = Object.freeze({ name: 'warm sand', hex: '#EDE5D8' });
+
+/**
+ * The phrase every plateBrief uses for the default ground. Substituted, not appended: two
+ * colour statements in one prompt is how a render comes back split between them, and the
+ * briefs word the surrounding sentence differently ("A flat, evenly lit …", "A soft …
+ * gradient", "A clean … lit like premium CPG product photography") so only the colour
+ * phrase itself can be swapped without flattening those into one look.
+ */
+const GROUND_PHRASE = `${PLATE_GROUND_DEFAULT.name} ${PLATE_GROUND_DEFAULT.hex}`;
+
+/**
+ * A format's plateBrief with its ground resolved.
+ *
+ * THROWS rather than no-opping when a format declares a `plateGround` whose brief carries no
+ * substitutable phrase. A silent no-op here is the worst outcome available: the operator sets
+ * a colour, pays for the render, and gets the old ground back with nothing anywhere saying
+ * why — the same class of failure as the winner lock that read like a working guard for its
+ * whole life while throwing on every post.
+ */
+export function resolvePlateBrief(format) {
+  const brief = String(format?.plateBrief || '');
+  const ground = format?.plateGround;
+  if (!ground) return brief;
+  if (!ground.name || !ground.hex) {
+    throw new Error(`ad-studio: format "${format?.key}" has a plateGround missing name or hex`);
+  }
+  if (!brief.includes(GROUND_PHRASE)) {
+    throw new Error(
+      `ad-studio: format "${format?.key}" declares plateGround ${ground.hex} but its plateBrief ` +
+      `does not contain "${GROUND_PHRASE}", so the colour would be silently ignored. Reword the ` +
+      `brief to use the standard ground phrase, or drop plateGround.`
+    );
+  }
+  return brief.split(GROUND_PHRASE).join(`${ground.name} ${ground.hex}`);
 }
 
 const BY_KEY = new Map(FORMATS.map(f => [f.key, f]));

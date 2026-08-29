@@ -413,3 +413,63 @@ for (const f of FORMATS) {
       `${key}'s plate brief must ask for the bare bar explicitly`);
   }
 }
+
+// ── per-format plate ground (2026-08-26) ─────────────────────────────────────────────
+//
+// THE FINDING. All ten studio formats hardcoded the identical `warm sand #EDE5D8` in their
+// own plateBrief prose, so the format rotation differentiated WHERE THE TYPE GOES and not
+// what the picture looked like. A 3-2-2 built from three studio formats came back as three
+// photographs of one thing — measured on the coconut-bar-soap-12-pack set, where the
+// operator's verdict was simply "not impressed".
+{
+  const { FORMATS, resolvePlateBrief, PLATE_GROUND_DEFAULT } =
+    await import('../../agents/ad-studio/formats.js');
+  const { readFileSync } = await import('node:fs');
+  const brandKit = JSON.parse(readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8'));
+
+  // COLOURS COME FROM THE BRAND KIT. Inventing a saturated gold to chase a competitor's ad
+  // is off-brand by construction — and the kit names #C1DF6D, the retired green, as an
+  // explicit off-brand SIGNAL, so a palette picked by eye can mark the asset as built from
+  // the wrong source.
+  const palette = new Set(brandKit.palette_hexes || []);
+  assert.ok(palette.has(PLATE_GROUND_DEFAULT.hex), 'the default ground is a brand colour');
+  for (const f of FORMATS) {
+    if (!f.plateGround) continue;
+    assert.ok(palette.has(f.plateGround.hex), `${f.key}: ground ${f.plateGround.hex} is in palette_hexes`);
+    assert.ok(!/#C1DF6D/i.test(f.plateGround.hex), `${f.key}: the retired green is an off-brand signal`);
+  }
+
+  // The set actually differs now. Studio formats carrying a ground must not all match.
+  const studioGrounds = FORMATS
+    .filter(f => f.plateSetting === 'studio')
+    .map(f => (resolvePlateBrief(f).match(/#[0-9A-Fa-f]{6}/) || [])[0]);
+  assert.ok(new Set(studioGrounds).size > 1, 'studio formats no longer share one ground');
+
+  // A format with no plateGround resolves to EXACTLY the string it always was — this is not
+  // a fleet-wide repaint, and every untouched format must be byte-identical.
+  for (const f of FORMATS) {
+    if (f.plateGround) continue;
+    assert.equal(resolvePlateBrief(f), f.plateBrief, `${f.key}: unchanged without a plateGround`);
+  }
+
+  // Substituted, not appended: the OLD colour must be gone, or the prompt carries two
+  // colour statements and the render splits the difference between them.
+  const green = FORMATS.find(f => f.plateGround?.hex === '#AEDEAC');
+  assert.ok(green, 'a format declares the brand green');
+  const resolved = resolvePlateBrief(green);
+  assert.match(resolved, /#AEDEAC/);
+  assert.ok(!resolved.includes(PLATE_GROUND_DEFAULT.hex), 'the default hex is replaced, not joined');
+  assert.ok(!/warm sand/i.test(resolved), 'and its name goes with it');
+
+  // THROWS rather than no-opping. An operator who sets a colour, pays for the render and
+  // silently gets the old ground back is the worst outcome available here.
+  assert.throws(
+    () => resolvePlateBrief({ key: 'x', plateBrief: 'A plain grey ground.', plateGround: { name: 'green', hex: '#AEDEAC' } }),
+    /does not contain/,
+    'a brief with no substitutable phrase is an error, never a silent skip',
+  );
+  assert.throws(
+    () => resolvePlateBrief({ key: 'x', plateBrief: `A ${PLATE_GROUND_DEFAULT.name} ${PLATE_GROUND_DEFAULT.hex} ground.`, plateGround: { name: 'green' } }),
+    /missing name or hex/,
+  );
+}
