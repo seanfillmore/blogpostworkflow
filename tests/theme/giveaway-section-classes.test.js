@@ -25,14 +25,16 @@ const STRUCTURAL_ONLY = new Set(['gv-next-copy']);
 const JS_HOOKS = new Set(['gv-email-fix']);
 
 /**
- * PRE-EXISTING and genuinely unstyled — not exempt, just not this change's to
- * fix. `.gv-lead-sub` (giveaway-entered.liquid:38) has no rule and no JS
- * reference, so that sub-lede renders at browser default rather than at
- * `.gv-lead`'s muted 1.7rem. It is the same gap `.gv-copy` was added for.
- * Fixing it changes the typography of a live page and belongs in its own
- * change; this entry is here so it stays visible rather than passing silently.
+ * PRE-EXISTING and genuinely unstyled — classes with no rule that are neither
+ * structural nor a JS hook, parked here so they stay visible rather than
+ * passing silently.
+ *
+ * EMPTY as of 2026-08-24. It held `gv-lead-sub`, which had no rule and rendered
+ * the entered page's sub-lede at browser default — larger and darker than the
+ * `.gv-lead` it is subordinate to. That is now styled, so the set is empty and
+ * every remaining exemption is a positive reason rather than a deferral.
  */
-const KNOWN_UNSTYLED = new Set(['gv-lead-sub']);
+const KNOWN_UNSTYLED = new Set([]);
 
 const exempt = (c) => STRUCTURAL_ONLY.has(c) || JS_HOOKS.has(c) || KNOWN_UNSTYLED.has(c);
 

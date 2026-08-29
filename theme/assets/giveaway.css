@@ -99,6 +99,26 @@
 }
 .gv-lead { margin: 0 0 28px; }
 
+/* A second, quieter line CONTINUING .gv-lead — the entered page's "Your entry is
+   already counted" reassurance under the confirmation instruction.
+
+   It had no rule at all until 2026-08-24, so it rendered at the browser default:
+   larger and darker than the lede it is subordinate to, which inverted the
+   hierarchy. Found by tests/theme/giveaway-section-classes.test.js while fixing
+   the offer page's invented classes.
+
+   A step down from .gv-lead and pulled closer to it, because it is the same
+   thought rather than a new one. The :has() rule only tightens the gap, so where
+   it is unsupported the pair simply keeps the normal 28px separation. */
+.gv-lead-sub {
+  font-size: 1.5rem;
+  line-height: 1.5;
+  color: var(--gv-muted);
+  margin: 0 0 28px;
+  max-width: 42ch;
+}
+.gv-lead:has(+ .gv-lead-sub) { margin-bottom: 10px; }
+
 .gv-fine { font-size: 1.3rem; line-height: 1.55; color: var(--gv-muted); margin: 0; }
 .gv-fine a { color: var(--gv-ink); }
 
