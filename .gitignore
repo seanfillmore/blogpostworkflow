@@ -192,6 +192,12 @@ data/briefs/ad-studio/
 # tracked copy would be one more stale body somebody later mistakes for current.
 data/reports/content-mirror/
 
+# Rendered previews of the frustration segment emails. GENERATED from
+# lib/giveaway/frustration-campaigns.js, which is the source of truth — committing the
+# output would conflict on every concurrent PR and let git 3-way-merge it into copy the
+# renderer would never emit (same reason data/context/marketing-tactics.md is ignored).
+data/giveaway/frustration/
+
 # Live-theme template backups written by scripts/add-complete-the-routine.mjs.
 # Point-in-time copies of a server-authoritative artifact; the theme is the truth.
 data/reports/theme-backups/
