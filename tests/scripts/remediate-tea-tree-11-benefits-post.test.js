@@ -330,18 +330,24 @@ test('the three FAQ entries really do hit prose AND the JSON-LD block', () => {
   // The whole reason they declare expectedOccurrences: 2. If the schema block ever
   // stops mirroring the prose, this fails rather than silently half-fixing a rich
   // result that Google may render.
+  //
+  // Asserted as BEFORE-or-AFTER per half, not BEFORE in both halves. The strict
+  // form assumed a mirror on which the remediation had not yet shipped; once
+  // scripts/reconcile-content-mirrors.mjs pulls the live body down, live carries
+  // the AFTER and the check failed on a file that was already correct. What the
+  // guard is actually for — prose and schema saying the SAME thing — is
+  // unchanged, and is what this asserts.
   const html = mirrorHtml();
-  const schema = html.slice(html.indexOf('<script type="application/ld+json">'));
+  const cut = html.indexOf('<script type="application/ld+json">');
+  const schema = html.slice(cut);
   assert.ok(schema.includes('"@type": "FAQPage"'), 'precondition: the FAQ schema block exists');
+  const prose = html.slice(0, cut);
   const faq = fileEntries().filter((e) => e.expectedOccurrences === 2);
   assert.equal(faq.length, 3, 'expected exactly the three FAQ strings to be doubled');
+  const eitherForm = (hay, e) => occurrences(hay, e.before) + occurrences(hay, e.after);
   for (const e of faq) {
-    assert.equal(occurrences(schema, e.before), 1, `${e.id}: not present in the JSON-LD block`);
-    assert.equal(
-      occurrences(html.slice(0, html.indexOf('<script type="application/ld+json">')), e.before),
-      1,
-      `${e.id}: not present in the visible prose`,
-    );
+    assert.equal(eitherForm(schema, e), 1, `${e.id}: not present in the JSON-LD block`);
+    assert.equal(eitherForm(prose, e), 1, `${e.id}: not present in the visible prose`);
   }
 });
 
