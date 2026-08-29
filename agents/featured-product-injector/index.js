@@ -61,6 +61,36 @@ function _tokens(s) {
   return new Set((String(s || '').toLowerCase().match(/[a-z0-9]+/g) || []).map(singularize));
 }
 
+// This brand sells its scents as VARIANTS, not products: "Nourishing Tea Tree"
+// is a variant of "Moisturizing Coconut Soap", and nothing in that product's
+// title, handle, tags or product_type says "tea tree". So an entire scent line
+// was invisible to both matchers below, and a post about one of those scents
+// scored 0 against the whole catalogue.
+//
+// "Default Title" is Shopify's placeholder for a product with no real variants;
+// it names nothing and must never become a matchable token.
+function _variantText(p) {
+  return ((p && p.variants) || [])
+    .map((v) => (v && v.title) || '')
+    .filter((t) => t && t !== 'Default Title')
+    .join(' ');
+}
+
+// A variant match is worth LESS than a title/tag match, and the weighting is the
+// point rather than a detail. Every soap carries a "Pure Unscented" variant, so
+// at equal weight an unscented-LOTION post would tie the lotion against three
+// soaps and the tie would fall to array order. Scored this way a variant can
+// only ever break a tie or rescue a zero — it can never displace a product that
+// matched on what it actually IS. Counted only for tokens the primary haystack
+// did NOT already match, so a product is never paid twice for one word.
+const VARIANT_TOKEN_WEIGHT = 0.5;
+
+function _variantBonus(want, hay, variantHay) {
+  let extra = 0;
+  for (const t of want) if (!hay.has(t) && variantHay.has(t)) extra++;
+  return extra * VARIANT_TOKEN_WEIGHT;
+}
+
 /**
  * Rank linked products by relevance to the post's keyword+title, tie-broken by link count.
  * linked: Array<{ handle, count }>
@@ -78,6 +108,7 @@ export function rankLinkedProducts(linked, products, { keyword, title, ingredien
     const hay = _tokens(`${p.title || ''} ${p.handle || l.handle} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
+    overlap += _variantBonus(want, hay, _tokens(_variantText(p)));
     const categoryMatch = Boolean(
       postProductKey && ingredients && productKeyForProduct(p, ingredients) === postProductKey,
     );
@@ -140,6 +171,7 @@ export function rankProductsByRelevance(products, { keyword, title, ingredients 
     const hay = _contentTokens(`${p.title || ''} ${p.handle || ''} ${tagsStr} ${p.product_type || ''}`);
     let overlap = 0;
     for (const t of want) if (hay.has(t)) overlap++;
+    overlap += _variantBonus(want, hay, _contentTokens(_variantText(p)));
 
     // CATEGORY/FORMAT match. Token overlap alone cannot tell a bar from a pump
     // or a 4oz jar from a 32oz refill: on "coconut soap benefits" the bar, the
