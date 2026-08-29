@@ -24,13 +24,36 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // ── Pure helpers (exported for testing) ───────────────────────────────────────
 
 /**
+ * Matches a product link and captures its handle.
+ *
+ * The trailing `(?:[?#][^"]*)?` is load-bearing. Without it the capture excluded
+ * `?` and then demanded a literal `"`, so a link carrying a query string matched
+ * NOTHING — not the handle, not even a partial. And `?variant=` is how you link
+ * one specific variant, which on this catalogue is how you link a SCENT.
+ *
+ * The tea-tree post links its Tea Tree Bar Soap as
+ * `/products/coconut-soap?variant=45828179886250` — correctly — and the injector
+ * could not see it, so it featured the DEODORANT on a post about tea tree oil.
+ * The most precisely targeted links in the corpus were the invisible ones.
+ * Measured 2026-08-29 over 207 posts: 20 product links carry a query, and 2
+ * posts gain a product they could not previously see.
+ *
+ * Returned as a factory, not a shared constant: a `/g` regex carries `lastIndex`
+ * between calls, so two callers sharing one instance would skip matches
+ * depending on who ran first.
+ */
+function productLinkRe() {
+  return /href="(?:https?:\/\/[^"]*?)?\/products\/([^"/?#]+)(?:[?#][^"]*)?"/g;
+}
+
+/**
  * Find the most-linked /products/<handle> in the HTML.
  * Returns the handle string or null if none found.
  * Kept for back-compat — new code uses linkedProductCounts + rankLinkedProducts.
  */
 export function findPrimaryProduct(html) {
   const counts = {};
-  const re = /href="(?:https?:\/\/[^"]*)?\/products\/([^"/?#]+)"/g;
+  const re = productLinkRe();
   let m;
   while ((m = re.exec(html)) !== null) {
     const handle = m[1];
@@ -48,7 +71,7 @@ export function findPrimaryProduct(html) {
  */
 export function linkedProductCounts(html) {
   const counts = {};
-  const re = /href="(?:https?:\/\/[^"]*)?\/products\/([^"/?#]+)"/g;
+  const re = productLinkRe();
   let m;
   while ((m = re.exec(html)) !== null) counts[m[1]] = (counts[m[1]] || 0) + 1;
   return Object.entries(counts).map(([handle, count]) => ({ handle, count })).sort((a, b) => b.count - a.count);
@@ -495,6 +518,35 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
         product = entry.product;
         productHandle = entry.handle;
         break;
+      }
+    }
+
+    // Every linked handle is DEAD — the writer linked products, but not one of
+    // them resolves in Shopify any more (renamed, deleted, or a handle that was
+    // never right). That is functionally "the writer linked nothing", and the
+    // catalogue fallback above exists for exactly that, so use it rather than
+    // dead-ending. Dead-ending here left a live post with no buy box AND no
+    // publisher block, because "no linked product data found in Shopify" is an
+    // inconclusive skip: silent, and invisible in the digest.
+    //
+    // Real case: the tea-tree post's mirror linked organic-lip-balm,
+    // organic-body-lotion, organic-body-cream and natural-deodorant — all four
+    // 404 in Shopify — so it lost its buy box on a page earning 5,744
+    // impressions/90d. A page with traffic and no buy path is a bug to fix.
+    if (!product) {
+      const all = await getProducts().catch(() => []);
+      const rescued = pickRelevantProduct(all, {
+        keyword, title: postTitle, ingredients: ingredientsCfg, postProductKey,
+      });
+      if (rescued && rescued.handle) {
+        product = rescued;
+        productHandle = rescued.handle;
+        fallbackInjected = true;
+      } else {
+        // Genuinely nothing relevant in the catalogue — the same verdict the
+        // no-links branch reaches, and it must report the SAME reason so the
+        // publisher block is set rather than left to an inconclusive skip.
+        return { html: rawHtml, skipped: true, reason: 'no relevant product' };
       }
     }
 

@@ -311,3 +311,39 @@ test('no block and nothing to set is a no-op, not a write', () => {
   assert.equal(resolvePublisherBlock(null, { skipped: false }).action, 'leave');
   assert.equal(resolvePublisherBlock(undefined, { skipped: true, reason: 'already has rsc-featured-product' }).action, 'leave');
 });
+
+// ── a variant link is the MOST precise product link, and was invisible ───────
+// The handle regex captured [^"/?#]+ and then demanded a literal `"`, so a link
+// carrying a query string matched NOTHING — not the handle, not even a partial.
+//
+// That is exactly backwards: `?variant=` is how you link one specific variant,
+// which on this catalogue is how you link a SCENT. The tea-tree post links its
+// Tea Tree Bar Soap as /products/coconut-soap?variant=45828179886250 — correctly
+// — and the injector could not see it, so it featured the deodorant instead on a
+// post about tea tree oil. Measured across the corpus: 20 product links carry a
+// query, and 2 posts gain a product they could not previously see.
+
+test('linkedProductCounts sees a variant-scoped product link', () => {
+  const html = '<p>Try <a href="https://www.realskincare.com/products/coconut-soap?variant=45828179886250">our Tea Tree Bar Soap</a>.</p>';
+  assert.deepEqual(linkedProductCounts(html), [{ handle: 'coconut-soap', count: 1 }]);
+});
+
+test('a variant link and a plain link to the same product are ONE product, counted twice', () => {
+  const html = '<a href="/products/coconut-soap?variant=1">scent</a> and <a href="/products/coconut-soap">the bar</a>';
+  assert.deepEqual(linkedProductCounts(html), [{ handle: 'coconut-soap', count: 2 }]);
+});
+
+test('a fragment is handled the same way as a query', () => {
+  const html = '<a href="/products/coconut-lotion#reviews">reviews</a>';
+  assert.deepEqual(linkedProductCounts(html), [{ handle: 'coconut-lotion', count: 1 }]);
+});
+
+test('plain product links are unchanged — the old behaviour is preserved exactly', () => {
+  const html = '<a href="/products/a">a</a> <a href="https://x.com/products/b">b</a> <a href="/products/a">a</a>';
+  assert.deepEqual(linkedProductCounts(html), [{ handle: 'a', count: 2 }, { handle: 'b', count: 1 }]);
+});
+
+test('a collection or blog link is still not a product link', () => {
+  const html = '<a href="/collections/lotion">c</a><a href="/blogs/news/products/fake">b</a>';
+  assert.deepEqual(linkedProductCounts(html), []);
+});
