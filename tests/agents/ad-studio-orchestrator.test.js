@@ -1568,3 +1568,62 @@ test('describeSweep stays silent on the failed-sweep shape', () => {
     'it later reopens the window where a second Render click pays for a second run',
   );
 }
+
+// ── the badge cue must survive an interposed phrase (2026-08-26) ─────────────────────
+//
+// THE BUG. BADGE_BEFORE_RE required the connector verb to follow the badge noun IMMEDIATELY
+// (`badge noting "..."`). coconut-soap's manifest prose says `a circular badge below it
+// noting "Made with Organic Coconut Oil + Essential Oils"` — three words in between — so the
+// cue missed and the badge fell through into labelStrings. The verifier then demanded the
+// SCENTED badge back off a PURE UNSCENTED bar, which prints "Made with Organic Coconut Oil"
+// and must never print the other. Every unscented plate of this product was unrenderable:
+// on 2026-08-26 offer-focused and us-vs-them each burned all three paid attempts on frames
+// whose badges were correct.
+//
+// The two halves have to be checked together, because they are what disagreed: whatever
+// resolveBadgeStrings decides is the badge, buildLabelStrings must not demand back.
+{
+  const { buildLabelStrings, resolveBadgeStrings, extractBadgeText } =
+    await import('../../agents/ad-studio/index.js');
+  const { readFileSync } = await import('node:fs');
+  const manifest = JSON.parse(readFileSync(new URL('../../data/product-images/manifest.json', import.meta.url), 'utf8'));
+
+  for (const handle of ['coconut-soap', 'coconut-bar-soap-12-pack']) {
+    const manifestEntry = manifest.find(e => e.handle === handle);
+    assert.ok(manifestEntry, `${handle} is in the manifest`);
+
+    // The prose shape that broke it, asserted against the REAL file rather than a fixture —
+    // a fixture would keep passing after someone reworded the manifest.
+    assert.match(
+      manifestEntry.productDescription,
+      /badge below it noting "/,
+      `${handle}'s prose still has the interposed phrase this guard exists for`,
+    );
+    assert.deepEqual(
+      extractBadgeText(manifestEntry.productDescription),
+      ['Made with Organic Coconut Oil + Essential Oils'],
+      'the badge is recognised as a badge',
+    );
+
+    const labels = buildLabelStrings({ manifestEntry, variant: 'pure-unscented' });
+    assert.ok(
+      !labels.some(s => /Essential Oils/i.test(s)),
+      `${handle}: the scented badge must not be demanded off an unscented bar`,
+    );
+    assert.ok(
+      !labels.some(s => /^Made with Organic Coconut Oil/i.test(s)),
+      `${handle}: no badge text in labelStrings at all — the verifier cannot read 8px arc micro-copy`,
+    );
+    assert.deepEqual(
+      resolveBadgeStrings({ manifestEntry, variant: 'pure-unscented' }),
+      ['Made with Organic Coconut Oil'],
+      `${handle}: the RENDERER is still told exactly what to draw`,
+    );
+
+    // The spec-bearing strings are the whole reason labelStrings exists. Widening the badge
+    // cue must never eat one — that is the documented way this guard gets gutted.
+    for (const keep of ['real SKIN CARE', 'hand & body soap', '3.4 oz • 84g', 'realskincare.com']) {
+      assert.ok(labels.includes(keep), `${handle}: "${keep}" is still verified`);
+    }
+  }
+}

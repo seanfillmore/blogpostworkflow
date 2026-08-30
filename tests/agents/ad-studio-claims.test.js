@@ -167,3 +167,60 @@ assert.equal(normalizeForMatch('4 FL oz / 118ml'), '4 fl oz 118ml');
   );
   assert.equal(bad.ok, false, 'and a claim that is genuinely absent still fails');
 }
+
+// ── one serialization for a structured source (2026-08-25) ───────────────────────────
+//
+// THE BUG. buildSourceIndex used `JSON.stringify(x)`; copy.js's sourceBlock showed the
+// writer `JSON.stringify(x, null, 1)`. normalizeForMatch DELETES `"` and `:` and then
+// collapses whitespace, so those two are not interchangeable: compact JSON glues a key to
+// its value (`pricelabel$88`), indented JSON leaves a space (`pricelabel $88`). A writer
+// quoting a contiguous span exactly as shown produced a needle that matched the text it was
+// shown and not the text being searched — two of three concepts on the first
+// coconut-bar-soap-12-pack run were rejected for claims that were true and correctly
+// attributed. The gate was not wrong about them; it was reading a different document.
+{
+  const { sourceText } = await import('../../agents/ad-studio/claims.js');
+  const catalogEntry = {
+    title: 'Coconut Bar Soap — 12-Pack',
+    price: 88,
+    priceLabel: '$88',
+    compareAtPrice: 132,
+    compareAtLabel: '$132',
+    savingsLabel: '$44',
+  };
+  const index = buildSourceIndex({ catalogEntry });
+
+  // THE INVARIANT: anything a writer can read off the displayed source is findable in the
+  // index. Asserted against sourceText's own output, which is what sourceBlock renders.
+  const shown = sourceText(catalogEntry);
+  for (const span of ['"priceLabel": "$88"', '"compareAtLabel": "$132"', '"savingsLabel": "$44"']) {
+    assert.ok(shown.includes(span), `the writer is shown ${span} verbatim`);
+    assert.equal(
+      validateClaims([{ zone: 'offerBadge', text: 'x', factual: true, sourceId: 'catalog', evidence: span }], index).ok,
+      true,
+      `and a claim quoting ${span} is sourced`,
+    );
+  }
+
+  // Quoting the VALUE alone still works — that path never broke and must not start.
+  assert.equal(
+    validateClaims([{ zone: 'offerBadge', text: '$88', factual: true, sourceId: 'catalog', evidence: '$88' }], index).ok,
+    true,
+  );
+
+  // AND THE FIX TIGHTENS RATHER THAN LOOSENS. Gluing tokens is what let a span straddling
+  // two unrelated fields count as contiguous; separated, it cannot.
+  assert.equal(
+    validateClaims([{ zone: 'offerBadge', text: 'nonsense', factual: true, sourceId: 'catalog', evidence: '$88compareAtLabel' }], index).ok,
+    false,
+    'a span straddling two fields is not evidence',
+  );
+  assert.equal(
+    validateClaims([{ zone: 'offerBadge', text: 'invented', factual: true, sourceId: 'catalog', evidence: '$77' }], index).ok,
+    false,
+    'and a price that is simply not there still fails',
+  );
+
+  // A prose source has one representation and is passed through untouched.
+  assert.equal(sourceText('saponified coconut oil, nothing else'), 'saponified coconut oil, nothing else');
+}

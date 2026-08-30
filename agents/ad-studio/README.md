@@ -35,6 +35,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
 | `--flexible` | no | Build ONE Meta **flexible ad** rather than a loose set of plates. See below. Mutually exclusive with `--brief`. |
+| `--objective` | no | What the ad ASKS FOR: `sale` (default) or `entry`. It is the one thing about an ad that cannot be inferred from its format, and it now reaches **both** copy calls — the plate zones and the Meta-rendered primary text/headline. `entry` requires a live giveaway and is refused without one. Mid-giveaway, `sale` **withholds** the Official Rules from both writers and drops `giveaway` from the citable-source list, so a selling ad cannot wander into prize copy; the run says so on stdout. A `requiresGiveaway` format (`giveaway-entry`) with anything but `--objective entry` is refused by name. |
 | `--dry-run` | no | Generates copy and runs the claim gate, prints the result, and exits before any image is rendered. See below. |
 | `--job-id` | no | Progress reporting for the dashboard. Writes stage-by-stage state into `data/reports/ad-studio/jobs/<id>.json`, which the Ad Studio tab polls. Set by the dashboard's launch route; a human never types it. The file is CLAIMED (status `running`, this process's pid) immediately after argument parsing, before any network call — the route refuses a second launch only while a job is pending-and-fresh or claimed-and-alive, so claiming late is how two paid runs start at once. **With no `--job-id` nothing is written and the CLI behaves exactly as before.** |
 
@@ -85,6 +86,7 @@ quietly produce a different structure:
 | exactly 1 target (default `meta=4:5`) | All three plates share one aspect ratio. Mixing ratios asks Meta to decide creative *and* shape at once, which this budget cannot separate. 4:5 is the tallest ratio served in-feed without giving up the ~14%/~20% margins 9:16 loses to UI. |
 | `--variations` fixed at 1 | Each format contributes exactly one plate. |
 | Meta only | Demand Gen has no flexible-ad equivalent. |
+| one `--objective` for the whole ad | Until 2026-08-25 the objective reached the ad-level writer and not the plate writer, so a mid-giveaway `--objective sale` run shipped ONE manifest whose primary texts sold a product and whose three plates asked for a giveaway entry. Both gates passed every word — an incoherent ad is not an unsourced one. |
 | 2 primary texts, 2 headlines, all distinct | Two *phrasings* of one angle give the shared pool nothing to learn — that is the whole reason for writing two. Case-insensitive duplicates are rejected. |
 | ≤40 char headlines, ≤125 char primary texts | Meta truncates rather than wrapping, and a truncated headline is a different headline. |
 

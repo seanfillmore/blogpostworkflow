@@ -19,7 +19,9 @@
 // WHAT THIS MODULE DOES NOT DO: it never creates, edits or launches anything on Meta. It
 // writes a manifest a human carries into Ads Manager. Spend is a human decision.
 
-import { buildClaimRules, buildGiveawayBlock } from './copy.js';
+// DEFAULT_OBJECTIVE is imported as well as re-exported below: `export ... from` creates no
+// local binding, and buildFlexibleCopyPrompt uses it as a parameter default.
+import { buildClaimRules, buildGiveawayBlock, DEFAULT_OBJECTIVE, giveawayIsCitable } from './copy.js';
 
 /** The 3, the 2 and the 2. Named because "3" appears three times below and they are not the same 3. */
 export const PLATE_COUNT = 3;
@@ -83,32 +85,30 @@ export function assertFlexibleArgs({ formats, targets, variations }) {
  * likely to enter a giveaway, using an ad that never mentioned one. The plates carried
  * giveaway CTAs — because a live giveaway is a citable source — while the primary text and
  * headline, which are the fields Meta actually renders, did not.
+ *
+ * ONLY HALF OF THAT WAS FIXED WHEN IT WAS FOUND, and the docstring above described the
+ * unfixed half without anyone noticing. `--objective` was threaded into THIS module's
+ * ad-level prompt and never into copy.js's plate prompt, so "the plates carried giveaway
+ * CTAs ... while the primary text and headline did not" simply INVERTED: from 2026-08-25 a
+ * `--objective sale` run wrote selling primary texts over three plates that still asked for
+ * an entry. The vocabulary now lives in copy.js, which both prompts import — see the moved
+ * block there for the measured case. Re-exported so every existing importer is unchanged.
  */
-export const OBJECTIVES = Object.freeze(['sale', 'entry']);
-export const DEFAULT_OBJECTIVE = 'sale';
-
-/**
- * `entry` requires a live giveaway, and says so rather than quietly writing entry copy with
- * nothing to enter. Outside an Entry Period `sourceId: "giveaway"` is not even a valid
- * source, so every deadline and prize detail would fail the claim gate anyway — this just
- * fails it earlier, and legibly.
- */
-export function assertObjective(objective, { giveaway = null } = {}) {
-  if (!OBJECTIVES.includes(objective)) {
-    throw new Error(`ad-studio: unknown --objective "${objective}". Valid: ${OBJECTIVES.join(', ')}.`);
-  }
-  if (objective === 'entry' && !giveaway) {
-    throw new Error(
-      'ad-studio: --objective entry needs a live giveaway, and no Entry Period is open. ' +
-      'Outside one, "giveaway" is not a citable source, so every prize and deadline in the copy would ' +
-      'fail the claim gate. Check config/giveaway.json against the published Official Rules.'
-    );
-  }
-}
+export { OBJECTIVES, DEFAULT_OBJECTIVE, assertObjective } from './copy.js';
 
 function objectiveBrief(objective, giveaway) {
   if (objective !== 'entry') {
-    return `THE JOB OF THIS AD: sell the product. The reader should want to buy it.`;
+    // The `giveaway` argument was accepted and then ignored on this branch, which is the one
+    // branch that needs it: mid-giveaway a bare "sell the product" is not a strong enough
+    // instruction on its own. Naming the prohibition is what stops the primary text drifting
+    // into "Enter free to win 36 bars".
+    return `THE JOB OF THIS AD: sell the product. The reader should want to buy it.${giveaway ? `
+
+A GIVEAWAY IS RUNNING, AND THIS AD IS NOT IT. The Official Rules are deliberately not shown
+to you and "giveaway" is NOT a source you may cite. Neither primary text and neither headline
+may mention a prize, a giveaway, an entry, a sweepstakes, a draw, "no purchase necessary", or
+an entry deadline. The call to action is to BUY. A reader who finishes this copy wanting to
+enter something has been sent to the wrong place.` : ''}`;
   }
   return `THE JOB OF THIS AD: get a GIVEAWAY ENTRY. Not a sale — an entry.
 
@@ -138,8 +138,17 @@ export function buildFlexibleCopyPrompt({
   product, concepts, sourceIds, persona, pdpBody = '', reviews = [],
   objective = DEFAULT_OBJECTIVE, giveaway = null,
 }) {
-  // The SAME block the plate writer gets — verbatim Official Rules, prize framing and all.
-  const giveawayBlock = buildGiveawayBlock(giveaway);
+  // The SAME block the plate writer gets — verbatim Official Rules, prize framing and all —
+  // and, since 2026-08-26, gated on the SAME predicate. It used to be unconditional, so
+  // fixing the plate writer alone left this half still writing entry copy: a `--objective
+  // sale` rebuild returned the primary text "Gentle enough for sensitive skin ... Enter free
+  // to win 36 bars. Entries close September 14, 2026." That is the identical half-fix this
+  // file's own OBJECTIVES docstring describes, committed a second time in the same week.
+  // Whenever this predicate is consulted anywhere, it must be consulted everywhere.
+  const citable = giveawayIsCitable(objective, giveaway);
+  const giveawayBlock = citable ? buildGiveawayBlock(giveaway) : '';
+  // Shown and citable move together — see giveawayIsCitable.
+  const offeredSourceIds = (sourceIds || []).filter(id => id !== 'giveaway' || citable);
   const angles = concepts
     .map((c, i) => `  ${i + 1}. ${c.format.key} — ${c.format.name} (awareness: ${c.format.awareness})`)
     .join('\n');
@@ -180,7 +189,7 @@ ${PRIMARY_TEXT_MAX_CHARS} characters or fewer. Meta truncates past that, and a t
 headline is a different headline, not a shorter one.
 
 RULES:
-${buildClaimRules({ sourceIds, unit: 'field' })}
+${buildClaimRules({ sourceIds: offeredSourceIds, unit: 'field' })}
 
 Respond with JSON only, no commentary:
 {

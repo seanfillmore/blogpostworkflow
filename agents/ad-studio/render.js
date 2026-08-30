@@ -13,6 +13,7 @@ import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, extname } from 'node:path';
 import { CREATIVE_MODELS } from '../../config/creative-models.js';
 import { SAFE_ZONE_RATIOS } from './critique.js';
+import { resolvePlateBrief } from './formats.js';
 
 const IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
 const MIME = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.webp': 'image/webp' };
@@ -44,7 +45,11 @@ export function buildRenderPrompt({ format, zones, product, brandKit, mode, rati
   // model made of it. formats.js validates the real table at load; this catches a caller
   // that hand-builds a format object.
   const briefField = mode === 'plate' ? 'plateBrief' : 'layoutBrief';
-  const brief = String(format?.[briefField] || '').trim();
+  // resolvePlateBrief SUBSTITUTES the format's own ground colour into the brief. Every studio
+  // format used to hardcode the same warm sand, so a three-format set came back as three
+  // photographs of one thing — see PLATE_GROUND_DEFAULT. A format with no plateGround resolves
+  // to exactly the string it always was.
+  const brief = (mode === 'plate' ? resolvePlateBrief(format) : String(format?.[briefField] || '')).trim();
   if (!brief) throw new Error(`ad-studio: format "${format?.key}" has no ${briefField}`);
 
   const palette = (brandKit?.palette_hexes || []).join(', ');
@@ -167,6 +172,9 @@ below it.
   // unvalidated missing count would fall through to the plural branch and ship the literal
   // string "EXACTLY NaN UNITS" to a paid render — the same silent-stringify hole as a
   // missing brief, one line further down.
+  // Below three, "arrange them as a group" is meaningless — two bottles side by side is not a
+  // stack — and the sentence would only add noise to the two-unit starter set's prompt.
+  const MIN_UNITS_FOR_ARRANGEMENT = 3;
   const units = Number(product?.unitCount);
   if (mode === 'plate' && (!Number.isInteger(units) || units < 1)) {
     throw new Error(`ad-studio: product "${product?.handle}" has no valid unitCount (got ${JSON.stringify(product?.unitCount)})`);
@@ -176,7 +184,17 @@ below it.
 or jar, not even a faded, blurred, ghosted, reflected or partially cropped one.`
     : `EXACTLY ${units} UNITS — this product IS a set of ${units} pieces, described under
 PHYSICAL FORM above. Render those ${units} and nothing else: no extra unit beyond them, and
-no faded, blurred, ghosted, reflected or partially cropped duplicate of any of them.`;
+no faded, blurred, ghosted, reflected or partially cropped duplicate of any of them.${units >= MIN_UNITS_FOR_ARRANGEMENT ? `
+
+ARRANGE THEM AS A DELIBERATE GROUP THAT READS AS A QUANTITY WORTH BUYING — a stacked or
+tiered arrangement with real height, gathered close together, NOT ${units} pieces laid out
+flat and evenly spaced in one layer like a catalogue diagram.
+
+Both halves of that matter and they pull against each other, so honour both:
+- EVERY ONE of the ${units} must be separately visible and countable. None entirely hidden
+  behind another, none reduced to a sliver, and no unresolved heap where the count is a
+  guess. A group whose pieces cannot be told apart is a failed frame.
+- NOTHING may be cropped by the edge of the frame. Every unit sits fully inside it.` : ''}`;
 
   // What may share the frame with the product. Driven by format.plateSetting, because the
   // first cut of this forbade every setting on every format and flattened `problem-aware`
