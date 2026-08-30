@@ -27,8 +27,7 @@ import { getAccessToken } from '../../lib/shopify.js';
 import { API_VERSION } from '../../lib/shopify-api-version.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
-  buildBxgyInput, cartPermalink, priceUsd, valueUsd, totalBars,
-  DISCOUNT_CODE, DISCOUNT_TITLE, OPENS_AT, CLOSES_AT, CLOSES_HUMAN,
+  TIERS, buildBxgyInput, cartPermalink, OPENS_AT, CLOSES_AT, CLOSES_HUMAN,
 } from '../../lib/giveaway/consolation-offer.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -65,15 +64,19 @@ mutation CreateGiveawayBogo($bxgyCodeDiscount: DiscountCodeBxgyInput!) {
   }
 }`;
 
+// EXACT lookup by code. The obvious `codeDiscountNodes(query: "code:X")` is NOT a
+// filter — it silently ignores the term and returns the first N discounts on the
+// store, so an idempotence check built on it always concludes "does not exist"
+// and creates a DUPLICATE code. Verified live 2026-08-24: `code:GIVEAWAY6X6`
+// returned 10 unrelated discounts while the real one existed.
+// codeDiscountNodeByCode is exact and case-insensitive.
 const LOOKUP = `
-query FindByCode($q: String!) {
-  codeDiscountNodes(first: 10, query: $q) {
-    nodes {
-      id
-      codeDiscount {
-        ... on DiscountCodeBxgy { title status startsAt endsAt codes(first: 5) { nodes { code } } }
-        ... on DiscountCodeBasic { title status }
-      }
+query FindByCode($code: String!) {
+  codeDiscountNodeByCode(code: $code) {
+    id
+    codeDiscount {
+      ... on DiscountCodeBxgy { title status startsAt endsAt }
+      ... on DiscountCodeBasic { title status }
     }
   }
 }`;
@@ -97,42 +100,42 @@ async function main() {
     return json.data;
   };
 
-  console.log(`Offer: buy ${totalBars() / 2} Pure Unscented bars, get ${totalBars() / 2} free`);
-  console.log(`  $${priceUsd()} for ${totalBars()} bars ($${valueUsd()} value)`);
-  console.log(`  code ${DISCOUNT_CODE} | opens ${OPENS_AT} | closes ${CLOSES_AT} (${CLOSES_HUMAN} PT)`);
-  console.log(`  cart: ${cartPermalink()}`);
+  console.log(`Window: ${OPENS_AT} → ${CLOSES_AT} (closes ${CLOSES_HUMAN} PT)\n`);
 
-  const existing = await gql(LOOKUP, { q: `code:${DISCOUNT_CODE}` });
-  const hit = existing.codeDiscountNodes.nodes.find((n) =>
-    (n.codeDiscount?.codes?.nodes || []).some((c) => c.code === DISCOUNT_CODE));
-  if (hit) {
-    console.log(`\nAlready exists: ${hit.id} — ${hit.codeDiscount.title} (${hit.codeDiscount.status})`);
-    console.log('Nothing created. Delete it in the admin first if you need to change the terms.');
-    return;
+  let created = 0;
+  let existed = 0;
+  for (const tier of TIERS) {
+    console.log(`${tier.anchor ? '⭐ ' : '   '}${tier.title} — $${tier.priceUsd} for ${tier.totalBars} bars ($${tier.valueUsd} value)`);
+    console.log(`     code ${tier.code} | cart ${cartPermalink(tier)}`);
+
+    const existing = await gql(LOOKUP, { code: tier.code });
+    const hit = existing.codeDiscountNodeByCode;
+    if (hit) {
+      console.log(`     already exists: ${hit.id} (${hit.codeDiscount.status}) — left alone`);
+      existed += 1;
+      continue;
+    }
+
+    if (!apply) { console.log('     WOULD create'); continue; }
+
+    const data = await gql(CREATE, { bxgyCodeDiscount: buildBxgyInput(tier) });
+    const errs = data.discountCodeBxgyCreate.userErrors;
+    if (errs?.length) {
+      for (const e of errs) console.error(`     FAIL ${e.field?.join('.')}: ${e.message} (${e.code})`);
+      throw new Error(`${errs.length} userError(s) on ${tier.code} — stopping`);
+    }
+    const node = data.discountCodeBxgyCreate.codeDiscountNode;
+    const d = node.codeDiscount;
+    console.log(`     created ${node.id} | status ${d.status} | oncePerCustomer ${d.appliesOncePerCustomer} | usesPerOrderLimit ${d.usesPerOrderLimit}`);
+    if (d.status !== 'SCHEDULED' && d.status !== 'ACTIVE') console.error(`     WARNING: unexpected status ${d.status}`);
+    created += 1;
   }
 
   if (!apply) {
-    console.log('\nDry run — would create:');
-    console.log(JSON.stringify(buildBxgyInput(), null, 2));
-    console.log('\nRe-run with --apply to create it.');
+    console.log('\nDry run — re-run with --apply to create the missing tiers.');
     return;
   }
-
-  const data = await gql(CREATE, { bxgyCodeDiscount: buildBxgyInput() });
-  const errs = data.discountCodeBxgyCreate.userErrors;
-  if (errs?.length) {
-    for (const e of errs) console.error(`  FAIL ${e.field?.join('.')}: ${e.message} (${e.code})`);
-    throw new Error(`${errs.length} userError(s) — nothing created`);
-  }
-  const node = data.discountCodeBxgyCreate.codeDiscountNode;
-  const d = node.codeDiscount;
-  console.log(`\nCreated ${node.id}`);
-  console.log(`  ${d.title} | status ${d.status} | ${d.startsAt} → ${d.endsAt}`);
-  console.log(`  code(s): ${d.codes.nodes.map((c) => c.code).join(', ')}`);
-  console.log(`  oncePerCustomer ${d.appliesOncePerCustomer} | usesPerOrderLimit ${d.usesPerOrderLimit}`);
-  if (d.status !== 'SCHEDULED' && d.status !== 'ACTIVE') {
-    console.error(`  WARNING: unexpected status ${d.status}`);
-  }
+  console.log(`\n${created} created, ${existed} already existed.`);
 }
 
 if (isDirectRun(import.meta.url)) {

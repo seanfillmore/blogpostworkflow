@@ -18,9 +18,10 @@
   ONE TAP, ONE VARIANT. The CTA is a cart permalink that preloads all 12 bars
   with the discount code applied. Two things about that are load-bearing:
 
-    1. It must preload TWELVE, not six. A Shopify BXGY marks 6 of 12 as free —
-       it does not ADD the free ones. A cart holding 6 shows $66 with no
-       discount visible and reads as a broken offer.
+    1. Each tier's link must preload THAT TIER's full box — 18 for the 9+9, 12
+       for the 6+6. A Shopify BXGY marks the free half of what is ALREADY in the
+       cart; it does not add it. Point the 9+9 code at a 12-bar cart and the
+       buyer gets three free bars instead of nine, silently and with no error.
     2. Pure Unscented only. One variant removes the scent picker, the
        out-of-stock-variant handling and a whole class of wrong-product bug,
        and it matches the prize itself.
@@ -39,7 +40,8 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign cart_url = '/cart/45828179951786:12?discount=GIVEAWAY6X6'
+  assign cart_url_9 = '/cart/45828179951786:18?discount=GIVEAWAY9X9'
+  assign cart_url_6 = '/cart/45828179951786:12?discount=GIVEAWAY6X6'
   assign closes_human = 'September 23, 2026'
   assign set_handle = 'sensitive-skin-starter-set'
   assign set_image = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/frame-01-what-arrives.jpg?v=1785635169'
@@ -54,22 +56,43 @@
     So here's the next best thing — the same soap, at half price, for one week only.
   </p>
 
+  {%- comment -%}
+    ANCHOR FIRST (spec §7.3). The 9+9 is starred and listed above the 6+6 so the
+    smaller tier reads as the modest option rather than as the price. Each tier
+    owns its own cart link: a BXGY discounts the free half of what is ALREADY in
+    the cart, so pointing the 9+9 code at a 12-bar cart hands over three free
+    bars instead of nine, silently. The quantities (18 and 12) are pinned to
+    their codes by tests/lib/giveaway-offer-campaigns.test.js.
+  {%- endcomment -%}
+
+  <div class="gv-ladder">
+    <h2>⭐ Buy 9 bars, get 9 free</h2>
+    <p class="gv-next-price">$99 <span class="gv-fine">for 18 bars — $198 value</span></p>
+    <p class="gv-copy">
+      Eighteen bars of Pure Unscented Moisturizing Coconut Soap. The nine free
+      ones are roughly <strong>six months of soap for one person</strong>.
+    </p>
+    <a class="gv-next-cta" href="{{ cart_url_9 }}">Get 18 bars for $99</a>
+  </div>
+
   <div class="gv-ladder">
     <h2>Buy 6 bars, get 6 free</h2>
     <p class="gv-next-price">$66 <span class="gv-fine">for 12 bars — $132 value</span></p>
     <p class="gv-copy">
-      Twelve bars of Pure Unscented Moisturizing Coconut Soap. The six free
-      ones are roughly <strong>four months of soap for one person</strong>.
+      Twelve bars, and the six free ones are roughly
+      <strong>four months for one person</strong>.
     </p>
+    <a class="gv-next-cta" href="{{ cart_url_6 }}">Get 12 bars for $66</a>
+  </div>
+
+  <div class="gv-ladder">
     <p class="gv-copy">
-      Fragrance-free · Free shipping · 30-day no-questions guarantee
+      Both are fragrance-free, ship free, and carry a 30-day no-questions
+      guarantee.
     </p>
-
-    <a class="gv-next-cta" href="{{ cart_url }}">Get 12 bars for $66</a>
-
     <p class="gv-fine">
       Offer closes <strong>{{ closes_human }}</strong>. One per customer.
-      Discount applies automatically at checkout.
+      The discount applies automatically at checkout — pick a tier above.
     </p>
   </div>
 
