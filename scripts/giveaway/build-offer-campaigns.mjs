@@ -128,8 +128,21 @@ async function main() {
 
       // VERIFY through the consumer. A template assign returning 200 is not
       // evidence the campaign now carries the new copy — read it back.
-      const after = await getCampaign(campaignId);
-      const msg = (after.included || []).find((x) => x.type === 'campaign-message');
+      //
+      // Re-read once on mismatch: Klaviyo's read-after-write is eventually
+      // consistent, and a single read straight after a successful PATCH
+      // reported a stale subject that was in fact already updated. A verifier
+      // that cries wolf is one people stop believing, which is worse than not
+      // having it.
+      let after = await getCampaign(campaignId);
+      let msgCheck = (after.included || []).find((x) => x.type === 'campaign-message');
+      const readSubject = (m) => m?.attributes?.definition?.content?.subject ?? m?.attributes?.content?.subject ?? null;
+      if (readSubject(msgCheck) !== send.subject) {
+        await new Promise((r) => setTimeout(r, 1500));
+        after = await getCampaign(campaignId);
+        msgCheck = (after.included || []).find((x) => x.type === 'campaign-message');
+      }
+      const msg = msgCheck;
       const assigned = msg?.relationships?.template?.data?.id ?? null;
       const liveSubject = msg?.attributes?.definition?.content?.subject ?? msg?.attributes?.content?.subject ?? null;
       // Built into the same log line rather than console.error: stderr and stdout
