@@ -152,3 +152,36 @@ test('a stale year in visible prose is STILL flagged when the post URL also carr
   assert.equal(r.length, 2, 'both prose occurrences flagged, the URL one ignored');
   assert.ok(r.every((s) => s.year === 2025));
 });
+
+// ── Month + year is a DATE, never an edition marker ──────────────────────────
+//
+// `bumpStaleYears` shares `isHistoricalYearReference`, and before this guard it
+// rewrote a real References line — "FDA Report on the Use of PFAS in Cosmetic
+// Products (December 2025)" — into "(December 2026)", a report dated in the
+// future, on two live pages whose body text still said December 2025. The FDA
+// published it 2025-12-29. Bumping a citation date manufactures a false source.
+
+test('a month name before the year makes it a date, not a stale marker', () => {
+  const cases = [
+    'FDA Report on the Use of PFAS in Cosmetic Products and Associated Risks (December 2025)',
+    'In December 2025, the FDA released its report on PFAS in cosmetics.',
+    'Published Dec 2025 and still the current guidance.',
+    'The rule took effect in March 2024.',
+    'Announced May 2025 at the industry conference.',
+  ];
+  for (const text of cases) {
+    assert.deepEqual(findStaleYears(text, CUR), [], `should not flag: ${text}`);
+  }
+});
+
+test('bumpStaleYears must never rewrite a cited month-and-year', () => {
+  const cited = 'FDA Report on the Use of PFAS in Cosmetic Products (December 2025)';
+  assert.deepEqual(bumpStaleYears(cited, CUR), { text: cited, changed: false });
+});
+
+test('a bare edition year with no month is still bumped', () => {
+  // The guard is about DATES. "Best X 2025" carries no month and stays in scope.
+  const r = bumpStaleYears('Best Clean Body Lotion 2025', CUR);
+  assert.equal(r.text, 'Best Clean Body Lotion 2026');
+  assert.equal(r.changed, true);
+});
