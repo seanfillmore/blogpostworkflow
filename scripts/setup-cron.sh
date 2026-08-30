@@ -312,6 +312,21 @@ DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE
 # ever changes, recompute the UTC fields by hand — nothing here follows it.
 GIVEAWAY_CLOSE_ENTRY_PERIOD="5 8 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/close-entry-period.mjs --apply >> data/reports/scheduler/giveaway-close.log 2>&1"
 
+# Publish /pages/giveaway-offer on DRAW DAY, in the gap between the draw
+# (2026-09-16 19:00 UTC) and the first consolation send (22:00 UTC). All three
+# consolation emails link to that page; if it is still unpublished when the first
+# one goes out, every link in the campaign's only revenue event is a 404 and
+# nothing else in the system would notice.
+#
+# 19:30 UTC = 12:30 PT, half an hour after the draw and 2.5h of slack before the
+# send. No TZ= prefix — one schedules nothing on this host.
+#
+# The script refuses to publish BEFORE the offer opens (the page says "We drew
+# the winner. It wasn't you.", which is false during an open Entry Period) and
+# refuses AFTER it closes — which is what makes this line's missing year field
+# harmless: it fires again in 2027 and does nothing. Never add --force here.
+GIVEAWAY_PUBLISH_OFFER_PAGE="30 19 16 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/publish-offer-page.mjs --apply >> data/reports/scheduler/giveaway-offer-page.log 2>&1"
+
 # (A SECOND DAILY_GIVEAWAY_NUDGE definition lived here, identical to the one
 # above it and silently overriding it — two comment blocks, one job. Both were
 # removed together on 2026-08-24; see the retirement note above.)
@@ -392,6 +407,7 @@ $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REFERRAL_AUDIT
 $DAILY_GIVEAWAY_REPORT
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
+$GIVEAWAY_PUBLISH_OFFER_PAGE
 "
 
 echo "Installing cron jobs..."
