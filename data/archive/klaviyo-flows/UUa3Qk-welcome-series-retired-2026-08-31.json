@@ -1,0 +1,535 @@
+{
+  "archived_at": "2026-08-31T18:45:48.760Z",
+  "reason": "Duplicate of the live Welcome Series (V5fp5i). Retired to draft by the 02:59 UTC go-live on 2026-08-31; deleted 2026-08-31 after verifying the live flow carries the branded rebuilds AND the identical profile_filter (including the gv_entrant suppression).",
+  "flow": {
+    "id": "UUa3Qk",
+    "name": "Welcome Series (RSC v2)",
+    "status": "draft",
+    "created": "2026-07-21T15:59:54+00:00",
+    "updated": "2026-08-31T02:59:37+00:00"
+  },
+  "definition": {
+    "triggers": [
+      {
+        "type": "list",
+        "id": "S6hKFq"
+      }
+    ],
+    "profile_filter": {
+      "condition_groups": [
+        {
+          "conditions": [
+            {
+              "type": "profile-metric",
+              "metric_id": "V69ueg",
+              "measurement": "count",
+              "measurement_filter": {
+                "type": "numeric",
+                "operator": "equals",
+                "value": 0
+              },
+              "timeframe_filter": {
+                "type": "date",
+                "operator": "flow-start"
+              },
+              "metric_filters": null
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "profile-metric",
+              "metric_id": "VieVPL",
+              "measurement": "count",
+              "measurement_filter": {
+                "type": "numeric",
+                "operator": "equals",
+                "value": 0
+              },
+              "timeframe_filter": {
+                "type": "date",
+                "operator": "flow-start"
+              },
+              "metric_filters": null
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "profile-metric",
+              "metric_id": "Wfyj88",
+              "measurement": "count",
+              "measurement_filter": {
+                "type": "numeric",
+                "operator": "equals",
+                "value": 0
+              },
+              "timeframe_filter": {
+                "type": "date",
+                "operator": "flow-start"
+              },
+              "metric_filters": null
+            }
+          ]
+        },
+        {
+          "conditions": [
+            {
+              "type": "profile-property",
+              "property": "properties['gv_entrant']",
+              "filter": {
+                "type": "existence",
+                "operator": "not-set"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "actions": [
+      {
+        "id": "112416853",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "Welcome to Real Skin Care — free shipping inside 🌿",
+            "preview_text": "Here's a little welcome gift to get you started.",
+            "template_id": "RPrD3C",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 01 Welcome + Free Shipping",
+            "id": "SuH7He"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416854"
+        }
+      },
+      {
+        "id": "112416854",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 1,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416855"
+        }
+      },
+      {
+        "id": "112416855",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "We started this for a reason",
+            "preview_text": "The family story behind Real Skin Care.",
+            "template_id": "TzuGfG",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 02 Brand Story",
+            "id": "Sq5RmQ"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416856"
+        }
+      },
+      {
+        "id": "112416856",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 2,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416857"
+        }
+      },
+      {
+        "id": "112416857",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "The ones everyone starts with",
+            "preview_text": "Our most-loved clean essentials — free shipping over $50.",
+            "template_id": "XtF4DY",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 03 Best Sellers",
+            "id": "XaktgE"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416858"
+        }
+      },
+      {
+        "id": "112416858",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 3,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416859"
+        }
+      },
+      {
+        "id": "112416859",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "What makes ours different (in 30 seconds)",
+            "preview_text": "Few ingredients, handmade in the USA — here's why it matters.",
+            "template_id": "U7SuwV",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 04 Why Clean / USP",
+            "id": "SjsB2s"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416860"
+        }
+      },
+      {
+        "id": "112416860",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 4,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416861"
+        }
+      },
+      {
+        "id": "112416861",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "Your free shipping is still waiting",
+            "preview_text": "Use it before it slips your mind — free shipping on your first order.",
+            "template_id": "XGJfxT",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 05 Last Chance Free Shipping",
+            "id": "VUin3q"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": null
+        }
+      }
+    ],
+    "entry_action_id": "112416853"
+  },
+  "actions": [
+    {
+      "id": "112416853",
+      "definition": {
+        "id": "112416853",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "Welcome to Real Skin Care — free shipping inside 🌿",
+            "preview_text": "Here's a little welcome gift to get you started.",
+            "template_id": "RPrD3C",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 01 Welcome + Free Shipping",
+            "id": "SuH7He"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416854"
+        }
+      }
+    },
+    {
+      "id": "112416854",
+      "definition": {
+        "id": "112416854",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 1,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416855"
+        }
+      }
+    },
+    {
+      "id": "112416855",
+      "definition": {
+        "id": "112416855",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "We started this for a reason",
+            "preview_text": "The family story behind Real Skin Care.",
+            "template_id": "TzuGfG",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 02 Brand Story",
+            "id": "Sq5RmQ"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416856"
+        }
+      }
+    },
+    {
+      "id": "112416856",
+      "definition": {
+        "id": "112416856",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 2,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416857"
+        }
+      }
+    },
+    {
+      "id": "112416857",
+      "definition": {
+        "id": "112416857",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "The ones everyone starts with",
+            "preview_text": "Our most-loved clean essentials — free shipping over $50.",
+            "template_id": "XtF4DY",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 03 Best Sellers",
+            "id": "XaktgE"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416858"
+        }
+      }
+    },
+    {
+      "id": "112416858",
+      "definition": {
+        "id": "112416858",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 3,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416859"
+        }
+      }
+    },
+    {
+      "id": "112416859",
+      "definition": {
+        "id": "112416859",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "What makes ours different (in 30 seconds)",
+            "preview_text": "Few ingredients, handmade in the USA — here's why it matters.",
+            "template_id": "U7SuwV",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 04 Why Clean / USP",
+            "id": "SjsB2s"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": "112416860"
+        }
+      }
+    },
+    {
+      "id": "112416860",
+      "definition": {
+        "id": "112416860",
+        "type": "time-delay",
+        "data": {
+          "unit": "days",
+          "value": 4,
+          "secondary_value": null,
+          "timezone": "profile"
+        },
+        "links": {
+          "next": "112416861"
+        }
+      }
+    },
+    {
+      "id": "112416861",
+      "definition": {
+        "id": "112416861",
+        "type": "send-email",
+        "data": {
+          "message": {
+            "from_email": "support@realskincare.com",
+            "from_label": "Real Skin Care",
+            "reply_to_email": "support@realskincare.com",
+            "cc_email": null,
+            "bcc_email": null,
+            "subject_line": "Your free shipping is still waiting",
+            "preview_text": "Use it before it slips your mind — free shipping on your first order.",
+            "template_id": "XGJfxT",
+            "smart_sending_enabled": true,
+            "transactional": false,
+            "add_tracking_params": false,
+            "custom_tracking_params": null,
+            "additional_filters": null,
+            "name": "Welcome — 05 Last Chance Free Shipping",
+            "id": "VUin3q"
+          },
+          "status": "draft"
+        },
+        "links": {
+          "next": null
+        }
+      }
+    }
+  ],
+  "templates": [
+    {
+      "messageId": "SuH7He",
+      "messageName": "Welcome — 01 Welcome + Free Shipping",
+      "subject": "Welcome to Real Skin Care — free shipping inside 🌿",
+      "templateId": "RPrD3C",
+      "html": "<!DOCTYPE html>\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\"/>\n<meta content=\"width=device-width, initial-scale=1\" name=\"viewport\"/>\n<meta content=\"light dark\" name=\"color-scheme\"/>\n<meta content=\"light dark\" name=\"supported-color-schemes\"/>\n<title>\n      Real Skin Care\n    </title>\n<style>@media only screen and (max-width: 480px) {\n    .px {\n        padding-left: 20px !important;\n        padding-right: 20px !important\n        }\n    .h1 {\n        font-size: 24px !important;\n        line-height: 30px !important\n        }\n    }</style></head>\n<body style=\"margin:0;padding:0;background-color:#EDE5D8;\">\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;\">\n      Six ingredients, and a reason for each one. Your shipping is covered.\n    </div>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"background-color:#EDE5D8;\" width=\"100%\">\n<tr>\n<td align=\"center\" style=\"padding:24px 12px;\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"max-width:600px;width:100%;\" width=\"600\">\n<tr>\n<td align=\"center\" style=\"padding:8px 0 20px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#000000;\"> <a href=\"https://www.realskincare.com\" style=\"color:#000000;text-decoration:none;\">Real Skin Care</a>\n</td>\n</tr>\n<tr>\n<td class=\"px\" style=\"background-color:#FFFFFF;border-radius:12px;padding:36px 32px;\">\n<h1 class=\"h1\" style=\"margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;\">\n                  What you just signed up for\n                </h1>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Hi {{ first_name|default:\"there\" }} — here is the short version. Everything we make starts with cold-pressed virgin coconut oil and a list of ingredients short enough to read on one hand.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Cold-pressed virgin coconut oil keeps its lauric acid, which is the part that actually does the work. Refined coconut oil is cheaper, neutral and more shelf-stable — the deodorising process strips the lauric acid out. We buy the expensive one, and that is most of why this costs more than the drugstore version.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  That is the whole pitch. No fillers to bulk out a tube, no synthetic fragrance, nothing added to make a label look better.\n                </p>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 24px;\" width=\"100%\">\n<tr>\n<td align=\"center\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n<tr>\n<td style=\"border:2px dashed #AEDEAC;border-radius:10px;padding:14px 34px;text-align:center;\">\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#000000;\">\n                              Free shipping on your first order\n                            </div>\n<div style=\"font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:24px;letter-spacing:4px;color:#000000;font-weight:700;margin-top:4px;\">\n                              SHIPFREE\n                            </div>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 28px;\" width=\"100%\">\n<tr>\n<td align=\"center\" bgcolor=\"#000000\" style=\"border-radius:6px;\">\n<a href=\"https://www.realskincare.com/collections/best-sellers\" style=\"display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;\">Shop best sellers</a>\n</td>\n</tr>\n</table>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Use it at checkout. Orders over $45 ship free anyway.\n                </p>\n<p style=\"margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Take care,<br/><strong>Sean</strong><br/><span style=\"font-size:14px;\">Co-Founder, Real Skin Care</span>\n</p>\n<p style=\"margin:20px 0 0;padding-top:18px;border-top:1px solid #EDEDED;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:23px;color:#000000;\">\n<strong>PS —</strong> Reply to this email if you want a recommendation for your skin — a real person answers, usually me.\n                </p>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;\">\n                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>\n                Questions? Just reply, or email\n                <a href=\"mailto:support@realskincare.com\" style=\"color:#000000;\">support@realskincare.com</a>.<br/>\n<a href=\"https://x.com/realskincarecom\" style=\"color:#000000;\">X</a> ·<a href=\"https://www.instagram.com/realskincare_com/\" style=\"color:#000000;\">Instagram</a> ·<a href=\"https://www.facebook.com/real.skincare1\" style=\"color:#000000;\">Facebook</a>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:0 16px 22px;\"> <a href=\"{% unsubscribe_link %}\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;\">Don't want these? Unsubscribe here — no hard feelings.</a>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n</body>\n</html>"
+    },
+    {
+      "messageId": "Sq5RmQ",
+      "messageName": "Welcome — 02 Brand Story",
+      "subject": "We started this for a reason",
+      "templateId": "TzuGfG",
+      "html": "<!DOCTYPE html>\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\"/>\n<meta content=\"width=device-width, initial-scale=1\" name=\"viewport\"/>\n<meta content=\"light dark\" name=\"color-scheme\"/>\n<meta content=\"light dark\" name=\"supported-color-schemes\"/>\n<title>\n      Real Skin Care\n    </title>\n<style>@media only screen and (max-width: 480px) {\n    .px {\n        padding-left: 20px !important;\n        padding-right: 20px !important\n        }\n    .h1 {\n        font-size: 24px !important;\n        line-height: 30px !important\n        }\n    }</style></head>\n<body style=\"margin:0;padding:0;background-color:#EDE5D8;\">\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;\">\n      Julie started this over 20 years ago, for a reason that still decides every formula.\n    </div>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"background-color:#EDE5D8;\" width=\"100%\">\n<tr>\n<td align=\"center\" style=\"padding:24px 12px;\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"max-width:600px;width:100%;\" width=\"600\">\n<tr>\n<td align=\"center\" style=\"padding:8px 0 20px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#000000;\"> <a href=\"https://www.realskincare.com\" style=\"color:#000000;text-decoration:none;\">Real Skin Care</a>\n</td>\n</tr>\n<tr>\n<td class=\"px\" style=\"background-color:#FFFFFF;border-radius:12px;padding:36px 32px;\">\n<h1 class=\"h1\" style=\"margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;\">\n                  Why this exists\n                </h1>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Hi {{ first_name|default:\"there\" }} — I am Sean, co-founder. My sister-in-law Julie started Real Skin Care over 20 years ago, after looking for skincare that was both organic and genuinely simple and finding that it mostly did not exist.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Twenty years later the test we apply to every formula is still hers:\n                  <em>if a cheaper substitute would do the same job, would we use it?</em> The answer is yes, honestly — if it would. The reason we do not is that the cheap substitutes do not.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Baking soda is softer than enamel and neutralises oral acid. Hydrated silica is harder than enamel and simply abrades. Silica is cheaper. We use baking soda. That decision repeats itself across every product we make.\n                </p>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 28px;\" width=\"100%\">\n<tr>\n<td align=\"center\" bgcolor=\"#000000\" style=\"border-radius:6px;\">\n<a href=\"https://www.realskincare.com/collections/all\" style=\"display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;\">See what we make</a>\n</td>\n</tr>\n</table>\n<p style=\"margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Take care,<br/><strong>Sean</strong><br/><span style=\"font-size:14px;\">Co-Founder, Real Skin Care</span>\n</p>\n<p style=\"margin:20px 0 0;padding-top:18px;border-top:1px solid #EDEDED;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:23px;color:#000000;\">\n<strong>PS —</strong> Handmade in the USA, in small enough batches that the texture shifts a little between runs. That is the coconut oil behaving like a real ingredient, not a defect.\n                </p>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;\">\n                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>\n                Questions? Just reply, or email\n                <a href=\"mailto:support@realskincare.com\" style=\"color:#000000;\">support@realskincare.com</a>.<br/>\n<a href=\"https://x.com/realskincarecom\" style=\"color:#000000;\">X</a> ·<a href=\"https://www.instagram.com/realskincare_com/\" style=\"color:#000000;\">Instagram</a> ·<a href=\"https://www.facebook.com/real.skincare1\" style=\"color:#000000;\">Facebook</a>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:0 16px 22px;\"> <a href=\"{% unsubscribe_link %}\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;\">Don't want these? Unsubscribe here — no hard feelings.</a>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n</body>\n</html>"
+    },
+    {
+      "messageId": "XaktgE",
+      "messageName": "Welcome — 03 Best Sellers",
+      "subject": "The ones everyone starts with",
+      "templateId": "XtF4DY",
+      "html": "<!DOCTYPE html>\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\"/>\n<meta content=\"width=device-width, initial-scale=1\" name=\"viewport\"/>\n<meta content=\"light dark\" name=\"color-scheme\"/>\n<meta content=\"light dark\" name=\"supported-color-schemes\"/>\n<title>Real Skin Care</title>\n<style>@import url(\"https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&family=Outfit:wght@400;500;600&display=swap\");\n.logo-dark {\n    display: none\n    }\n@media (prefers-color-scheme: dark) {\n    .logo-light {\n        display: none !important\n        }\n    .logo-dark {\n        display: inline-block !important\n        }\n    }\n@media only screen and (max-width: 480px) {\n    .px {\n        padding-left: 20px !important;\n        padding-right: 20px !important\n        }\n    .h1 {\n        font-size: 24px !important;\n        line-height: 30px !important\n        }\n    }</style></head>\n<body style=\"margin:0;padding:0;background-color:#EDE5D8;\">\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;\">The three people start with, and who each one is actually for.</div>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"background-color:#EDE5D8;\" width=\"100%\">\n<tr><td align=\"center\" style=\"padding:24px 12px;\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"max-width:600px;width:100%;\" width=\"600\">\n<tr><td align=\"center\" style=\"padding:8px 0 20px;\">\n<a href=\"https://www.realskincare.com\" style=\"text-decoration:none;\">\n<img alt=\"Real Skin Care\" class=\"logo-light\" src=\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244\" style=\"display:inline-block;width:180px;max-width:180px;height:auto;border:0;\" width=\"180\"/>\n<img alt=\"Real Skin Care\" class=\"logo-dark\" src=\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298\" style=\"display:none;width:180px;max-width:180px;height:auto;border:0;\" width=\"180\"/>\n</a>\n</td></tr>\n<tr><td class=\"px\" style=\"background-color:#FFFFFF;border-radius:12px;padding:36px 32px;\">\n<h1 class=\"h1\" style=\"margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;\">Where most people start</h1>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">Not sure what to try first? These three cover most people, and they are not interchangeable — each one suits a different problem.</p>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;\" width=\"100%\"><tr><td>\n<a href=\"https://www.realskincare.com/products/coconut-oil-deodorant\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;\">Coconut Oil Deodorant — $15</a>\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;\">Aluminium-free. Expect a 1–2 week adjustment when you switch off antiperspirant — that is the point, not a flaw.</div>\n</td></tr></table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;\" width=\"100%\"><tr><td>\n<a href=\"https://www.realskincare.com/products/coconut-oil-toothpaste\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;\">Coconut Oil Toothpaste — $13</a>\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;\">Fluoride-free and SLS-free. It foams less than conventional paste, because the foam was the SLS.</div>\n</td></tr></table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;\" width=\"100%\"><tr><td>\n<a href=\"https://www.realskincare.com/products/sensitive-skin-starter-set\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;\">Sensitive Skin Set — $46.80</a>\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;\">The gentlest set we make, and cheaper than buying the pieces separately.</div>\n</td></tr></table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;\" width=\"100%\"><tr><td>\n<a href=\"https://www.realskincare.com/products/clean-swap\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;\">The Clean Swap — $59</a>\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;\">Replacing several things at once rather than trying one — save $10 against buying them singly.</div>\n</td></tr></table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 28px;\" width=\"100%\"><tr><td align=\"center\" bgcolor=\"#000000\" style=\"border-radius:6px;\"><a href=\"https://www.realskincare.com/collections/best-sellers\" style=\"display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;\">Shop best sellers</a></td></tr></table>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">Free shipping over $45.</p>\n</td></tr>\n<tr><td align=\"center\" style=\"padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;\">\nReal Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>\nQuestions? Just reply, or email <a href=\"mailto:support@realskincare.com\" style=\"color:#000000;\">support@realskincare.com</a>.<br/>\n<a href=\"https://x.com/realskincarecom\" style=\"color:#000000;\">X</a> ·\n<a href=\"https://www.instagram.com/realskincare_com/\" style=\"color:#000000;\">Instagram</a> ·\n<a href=\"https://www.facebook.com/real.skincare1\" style=\"color:#000000;\">Facebook</a>\n</td></tr>\n<tr><td align=\"center\" style=\"padding:0 16px 22px;\">\n<a href=\"{% unsubscribe_link %}\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;\">Don't want these? Unsubscribe here — no hard feelings.</a>\n</td></tr>\n</table>\n</td></tr>\n</table>\n</body>\n</html>"
+    },
+    {
+      "messageId": "SjsB2s",
+      "messageName": "Welcome — 04 Why Clean / USP",
+      "subject": "What makes ours different (in 30 seconds)",
+      "templateId": "U7SuwV",
+      "html": "<!DOCTYPE html>\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\"/>\n<meta content=\"width=device-width, initial-scale=1\" name=\"viewport\"/>\n<meta content=\"light dark\" name=\"color-scheme\"/>\n<meta content=\"light dark\" name=\"supported-color-schemes\"/>\n<title>\n      Real Skin Care\n    </title>\n<style>@media only screen and (max-width: 480px) {\n    .px {\n        padding-left: 20px !important;\n        padding-right: 20px !important\n        }\n    .h1 {\n        font-size: 24px !important;\n        line-height: 30px !important\n        }\n    }</style></head>\n<body style=\"margin:0;padding:0;background-color:#EDE5D8;\">\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;\">\n      Tom's of Maine sells \"natural\" toothpaste with SLS in it. That is the problem.\n    </div>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"background-color:#EDE5D8;\" width=\"100%\">\n<tr>\n<td align=\"center\" style=\"padding:24px 12px;\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"max-width:600px;width:100%;\" width=\"600\">\n<tr>\n<td align=\"center\" style=\"padding:8px 0 20px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:15px;letter-spacing:2px;text-transform:uppercase;color:#000000;\"> <a href=\"https://www.realskincare.com\" style=\"color:#000000;text-decoration:none;\">Real Skin Care</a>\n</td>\n</tr>\n<tr>\n<td class=\"px\" style=\"background-color:#FFFFFF;border-radius:12px;padding:36px 32px;\">\n<h1 class=\"h1\" style=\"margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;\">\n                  Why we never say \"natural\"\n                </h1>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  The word is essentially unregulated in personal-care labelling. Tom's of Maine sells \"natural\" toothpaste containing sodium lauryl sulfate. Crest markets SKUs as natural. Burt's Bees uses the word alongside hydrogenated castor oil.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  So the word tells you nothing, and if you have reacted badly to something labelled natural before, you already know that.\n                </p>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  What we do instead is name what is absent and why. No SLS — it is a foaming agent linked to canker sores in people prone to them. No fluoride. No glycerin or sorbitol coating. No titanium dioxide. No synthetic sweeteners or fragrance. Each of those is verifiable by reading our ingredient list against any conventional alternative.\n                </p>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 28px;\" width=\"100%\">\n<tr>\n<td align=\"center\" bgcolor=\"#000000\" style=\"border-radius:6px;\">\n<a href=\"https://www.realskincare.com/collections/all\" style=\"display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;\">Read the ingredient lists</a>\n</td>\n</tr>\n</table>\n<p style=\"margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Take care,<br/><strong>Sean</strong><br/><span style=\"font-size:14px;\">Co-Founder, Real Skin Care</span>\n</p>\n<p style=\"margin:20px 0 0;padding-top:18px;border-top:1px solid #EDEDED;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;line-height:23px;color:#000000;\">\n<strong>PS —</strong> The trade-off is real: it costs more, tastes milder, and does not foam. Every one of those is a downstream effect of leaving something out.\n                </p>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;\">\n                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>\n                Questions? Just reply, or email\n                <a href=\"mailto:support@realskincare.com\" style=\"color:#000000;\">support@realskincare.com</a>.<br/>\n<a href=\"https://x.com/realskincarecom\" style=\"color:#000000;\">X</a> ·<a href=\"https://www.instagram.com/realskincare_com/\" style=\"color:#000000;\">Instagram</a> ·<a href=\"https://www.facebook.com/real.skincare1\" style=\"color:#000000;\">Facebook</a>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:0 16px 22px;\"> <a href=\"{% unsubscribe_link %}\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;\">Don't want these? Unsubscribe here — no hard feelings.</a>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n</body>\n</html>"
+    },
+    {
+      "messageId": "VUin3q",
+      "messageName": "Welcome — 05 Last Chance Free Shipping",
+      "subject": "Your free shipping is still waiting",
+      "templateId": "XGJfxT",
+      "html": "<!DOCTYPE html>\n<html lang=\"en\" xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n<meta charset=\"utf-8\"/>\n<meta content=\"width=device-width, initial-scale=1\" name=\"viewport\"/>\n<meta content=\"light dark\" name=\"color-scheme\"/>\n<meta content=\"light dark\" name=\"supported-color-schemes\"/>\n<title>\n      Real Skin Care\n    </title>\n<style>@import url(\"https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&family=Outfit:wght@400;500;600&display=swap\");\n.logo-dark {\n    display: none\n    }\n@media (prefers-color-scheme: dark) {\n    .logo-light {\n        display: none !important\n        }\n    .logo-dark {\n        display: inline-block !important\n        }\n    }\n@media only screen and (max-width: 480px) {\n    .px {\n        padding-left: 20px !important;\n        padding-right: 20px !important\n        }\n    .h1 {\n        font-size: 24px !important;\n        line-height: 30px !important\n        }\n    }</style></head>\n<body style=\"margin:0;padding:0;background-color:#EDE5D8;\">\n<div style=\"display:none;max-height:0;overflow:hidden;opacity:0;\">\n      SHIPFREE is still good — this is the last time I mention it.\n    </div>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"background-color:#EDE5D8;\" width=\"100%\">\n<tr>\n<td align=\"center\" style=\"padding:24px 12px;\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"max-width:600px;width:100%;\" width=\"600\">\n<tr>\n<td align=\"center\" style=\"padding:8px 0 20px;\"> <a href=\"https://www.realskincare.com\" style=\"text-decoration:none;\">\n<img alt=\"Real Skin Care\" class=\"logo-light\" src=\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244\" style=\"display:inline-block;width:180px;max-width:180px;height:auto;border:0;\" width=\"180\"/>\n<img alt=\"Real Skin Care\" class=\"logo-dark\" src=\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298\" style=\"display:none;width:180px;max-width:180px;height:auto;border:0;\" width=\"180\"/>\n</a>\n</td>\n</tr>\n<tr>\n<td class=\"px\" style=\"background-color:#FFFFFF;border-radius:12px;padding:36px 32px;\">\n<h1 class=\"h1\" style=\"margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;\">\n                  Last time I mention this\n                </h1>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Your welcome code is still active. This is the last email in which I bring it up.\n                </p>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 24px;\" width=\"100%\">\n<tr>\n<td align=\"center\">\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\">\n<tr>\n<td style=\"border:2px dashed #AEDEAC;border-radius:10px;padding:14px 34px;text-align:center;\">\n<div style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#000000;\">\n                              Free shipping on your first order\n                            </div>\n<div style=\"font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:24px;letter-spacing:4px;color:#000000;font-weight:700;margin-top:4px;\">\n                              SHIPFREE\n                            </div>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n<table cellpadding=\"0\" cellspacing=\"0\" role=\"presentation\" style=\"margin:0 0 28px;\" width=\"100%\">\n<tr>\n<td align=\"center\" bgcolor=\"#000000\" style=\"border-radius:6px;\">\n<a href=\"https://www.realskincare.com/collections/best-sellers\" style=\"display:inline-block;padding:15px 32px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;\">Use it on a best seller</a>\n</td>\n</tr>\n</table>\n<p style=\"margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  If something is stopping you — you are not sure which product suits your skin, or you have reacted badly to a \"clean\" brand before — just reply. A real person answers, usually me.\n                </p>\n<p style=\"margin:0 0 6px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;\">\n                  Take care,<br/><strong>Sean</strong><br/><span style=\"font-size:14px;\">Co-Founder, Real Skin Care</span>\n</p>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;\">\n                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>\n                Questions? Just reply, or email\n                <a href=\"mailto:support@realskincare.com\" style=\"color:#000000;\">support@realskincare.com</a>.<br/>\n<a href=\"https://x.com/realskincarecom\" style=\"color:#000000;\">X</a> ·<a href=\"https://www.instagram.com/realskincare_com/\" style=\"color:#000000;\">Instagram</a> ·<a href=\"https://www.facebook.com/real.skincare1\" style=\"color:#000000;\">Facebook</a>\n</td>\n</tr>\n<tr>\n<td align=\"center\" style=\"padding:0 16px 22px;\"> <a href=\"{% unsubscribe_link %}\" style=\"font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;\">Don't want these? Unsubscribe here — no hard feelings.</a>\n</td>\n</tr>\n</table>\n</td>\n</tr>\n</table>\n</body>\n</html>"
+    }
+  ]
+}
