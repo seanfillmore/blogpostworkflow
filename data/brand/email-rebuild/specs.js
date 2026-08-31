@@ -44,6 +44,16 @@ const price = (handle) => {
   if (!p.priceLabel) throw new Error(`${handle} has no priceLabel — regenerate the catalog`);
   return p.priceLabel;
 };
+// Bundle savings, for the multipack placements added 2026-08-30. THROWS rather than
+// degrading to no saving: a bundle whose whole argument is "cheaper per unit" and which
+// renders without the number is a worse email than one that fails to build. Regenerate
+// the catalog if this fires — the storefront is the source, never a typed number.
+const savings = (handle) => {
+  const p = CATALOG[handle];
+  if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
+  if (!p.savingsLabel) throw new Error(`${handle} has no savingsLabel — is it actually discounted?`);
+  return p.savingsLabel;
+};
 const variant = (handle) => {
   const p = CATALOG[handle];
   if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
@@ -52,6 +62,9 @@ const variant = (handle) => {
 
 const PDP = 'https://www.realskincare.com/products';
 const BEST = 'https://www.realskincare.com/collections/best-sellers';
+// The Sets & Bundles collection — a SMART collection on tag "bundle", holding all 11
+// live bundles. Added here 2026-08-30 with the first bundle placements in any flow.
+const BUNDLES = 'https://www.realskincare.com/collections/sets-and-bundles';
 
 // The product they actually bought, with a fallback — these emails fire long after the
 // order and a discontinued product would otherwise render a broken image.
@@ -200,6 +213,13 @@ export const specs = {
         html: 'That matters more than it sounds. Cold-pressed virgin coconut oil keeps its lauric acid — the part that actually does the work. Refined coconut oil is cheaper, more shelf-stable, and has that stripped out. We still buy the expensive one.',
       },
       { type: 'raw', html: boughtLink('Reorder what you bought last time →') },
+      // A lapsed buyer needs a reason to come back that is bigger than the one thing they
+      // stopped buying. The Clean Swap is that without being a big ask — the $87
+      // Head-to-Toe and $144 90-Day are further than a cold winback should reach.
+      {
+        type: 'raw',
+        html: productRow('The Clean Swap', price('clean-swap'), `Or replace more than one thing this time — save ${savings('clean-swap')} against buying them singly.`, `${PDP}/clean-swap`),
+      },
       { type: 'signoff' },
       {
         type: 'ps',
@@ -376,6 +396,14 @@ export const specs = {
         type: 'raw',
         html: productRow('Sensitive Skin Set', price('sensitive-skin-starter-set'), 'The gentlest set we make, and cheaper than buying the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
       },
+      // For anyone replacing more than one thing at once. Deliberately the $59 Clean Swap
+      // and NOT the $144 90-Day version: docs/bundle-marketing-plan.md §4 rules that one
+      // out of the welcome series as too steep cold, and it is right — this reader has not
+      // bought anything yet.
+      {
+        type: 'raw',
+        html: productRow('The Clean Swap', price('clean-swap'), `Replacing several things at once rather than trying one — save ${savings('clean-swap')} against buying them singly.`, `${PDP}/clean-swap`),
+      },
       { type: 'cta', text: 'Shop best sellers', href: BEST },
       { type: 'p', html: `Free shipping over $${SHIP}.` },
     ],
@@ -460,6 +488,20 @@ export const specs = {
       {
         type: 'raw',
         html: productRow('Coconut Oil Lip Balm', price('coconut-oil-lip-balm'), 'The small one people add on and then reorder on its own.', `${PDP}/coconut-oil-lip-balm`),
+      },
+      // A reader who just left a review is warm and has no single obvious next SKU — this
+      // flow fires on any product. The collection is the honest destination: it lets them
+      // pick rather than guessing at them. Added 2026-08-30 with the first bundle
+      // placements in any flow.
+      // A CTA rather than a productRow, and not by preference: `productRow`'s price slot
+      // renders a bare "$NN", and lib/email-render.js's stale-threshold guard reads any
+      // such figure as a possible out-of-date free-shipping number and refuses the build.
+      // It is right to be strict — an $8 lip balm and a $50 threshold both reached live
+      // emails — so the collection is linked without a price instead of the guard widened.
+      { type: 'cta', text: 'Browse sets & bundles', href: BUNDLES },
+      {
+        type: 'p',
+        html: 'Every multipack and set in one place — all cheaper per unit than reordering one at a time.',
       },
     ],
   },
@@ -613,6 +655,26 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       // `items` is scoped to its {% with %} block, and the one above is already closed —
       // without reopening it here every condition reads as false and the dedupe silently
       // does nothing.
+      // Multipacks. Added 2026-08-30, when a read of the live account found 16 flow
+      // emails across 5 flows carrying ZERO bundle links — while the multipacks exist
+      // for precisely the second order this email already asks for.
+      //
+      // Shown only for a category the customer actually bought, so this stays a better
+      // way to do the thing they came for rather than an unrelated upsell. `items` is
+      // reopened because the block above closed it (see the note there); forgetting that
+      // makes every condition read false and the section silently vanish.
+      { type: 'raw', html: ITEMS_OPEN },
+      { type: 'p', html: '<strong>Or stock up and pay less per bar, tube and stick</strong>' },
+      {
+        type: 'raw',
+        html: [
+          ['coconut-bar-soap-4-pack', 'Bar Soap 4-Pack', 'Soap'],
+          ['coconut-deodorant-4-pack', 'Deodorant 4-Pack', 'Deodorant'],
+          ['coconut-toothpaste-3-pack', 'Toothpaste 3-Pack', 'Toothpaste'],
+        ].map(([handle, label, key]) =>
+          `{% if "${key}" in items %}${secondaryButton(`${label} — ${price(handle)}, save ${savings(handle)}`, variant(handle))}{% endif %}`,
+        ).join('\n'),
+      },
       { type: 'raw', html: ITEMS_CLOSE },
       { type: 'p', html: `Free shipping over $${SHIP}, if you are stocking up on more than one.` },
     ],
@@ -660,6 +722,22 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       },
       { type: 'raw', html: cadenceTable() },
       { type: 'raw', html: subscribeLinks() },
+      // A third option the email never offered: buy enough that running out stops being an
+      // event. This reader has proven their cadence by reaching a second reorder nudge, so
+      // the multipack is the honest recommendation — and the saving is the whole argument,
+      // which is why it is interpolated rather than described.
+      {
+        type: 'p',
+        html: '<strong>Or stop running out</strong>',
+      },
+      {
+        type: 'raw',
+        html: productRow('90-Day Coconut Reset', price('99-coconut-reset-digital'), `Three months of lotion and cream in one order — save ${savings('99-coconut-reset-digital')} against reordering them separately.`, `${PDP}/99-coconut-reset-digital`),
+      },
+      {
+        type: 'raw',
+        html: productRow('Bar Soap 12-Pack', price('coconut-bar-soap-12-pack'), `Roughly a year of soap — save ${savings('coconut-bar-soap-12-pack')}.`, `${PDP}/coconut-bar-soap-12-pack`),
+      },
       { type: 'signoff' },
     ],
   },

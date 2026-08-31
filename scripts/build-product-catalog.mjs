@@ -28,6 +28,17 @@ const HANDLES = [
   'coconut-moisturizer',
   'organic-foaming-hand-soap',
   'sensitive-skin-starter-set',
+  // Bundles. The email flows had no bundle placement at all until 2026-08-30 —
+  // 16 live flow emails, 0 bundle links — and a placement cannot be written
+  // without a price and a variant id from here. Adding a handle to this list is
+  // the only correct way to make one available to `specs.js`.
+  'coconut-bar-soap-4-pack',
+  'coconut-deodorant-4-pack',
+  'coconut-toothpaste-3-pack',
+  'hand-soap-set',
+  'clean-swap',
+  'head-to-toe',
+  '99-coconut-reset-digital',
 ];
 
 const catalog = {};
