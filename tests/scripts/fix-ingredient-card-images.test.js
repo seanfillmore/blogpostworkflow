@@ -57,7 +57,7 @@ const doc = () => JSON.parse(LIVE);
 const entry = (over) => ({
   template: 'product.landing-page-lotion.json',
   title: 'Organic Jojoba',
-  before: 'Spring_Water.webp',
+  before: ['Spring_Water.webp'],
   after: 'Jojoba.webp',
   ...over,
 });
@@ -180,8 +180,12 @@ test('no incoming image is WIDER than the incumbent max, so the row keeps its he
     'Coconut_Oil_Extract.webp': 1200 / 794, // 1.5113 — the incumbent max
     'Spring_Water.webp': 1200 / 801,
     'Wax.webp': 1200 / 800,
-    'red-palm-oil.webp': 1200 / 800, // 1.5
-    'Jojoba.webp': 1200 / 900, // 1.3333
+    'red-palm-oil.webp': 1200 / 800,
+    'Jojoba.webp': 1200 / 900, // 1.3333, the tallest
+    // Prepared 2026-08-31 at the incumbent geometry exactly, so the max cannot move.
+    'baking-soda.webp': 1200 / 794,
+    'myrrh-resin.webp': 1200 / 794,
+    'red-palm-fruit.webp': 1200 / 794,
   };
   const incumbentMax = ASPECT['Coconut_Oil_Extract.webp'];
   assert.equal((1 / incumbentMax * 100).toFixed(4), '66.1667'); // what the PDPs render
@@ -192,12 +196,74 @@ test('no incoming image is WIDER than the incumbent max, so the row keeps its he
       ASPECT[e.after] <= incumbentMax,
       `${e.after} (${ASPECT[e.after].toFixed(4)}) is wider than ${incumbentMax.toFixed(4)} and would shorten the row`,
     );
+    for (const b of e.before) assert.ok(ASPECT[b] !== undefined, `${b} has no measured aspect ratio`);
   }
 });
 
+test('the three prepared assets exist on disk at exactly the incumbent geometry', async () => {
+  // They arrived as 1024x1024 and are pre-cropped rather than uploaded square,
+  // so what was reviewed is what ships instead of a sight-unseen 34% cover-crop.
+  const { default: sharp } = await import('sharp');
+  for (const f of ['baking-soda.webp', 'myrrh-resin.webp', 'red-palm-fruit.webp']) {
+    const m = await sharp(new URL(`../../data/brand/pdp-sections/${f}`, import.meta.url).pathname).metadata();
+    assert.equal(`${m.width}x${m.height}`, '1200x794', `${f} is ${m.width}x${m.height}`);
+  }
+});
+
+test('the rejected essential-oils source is KEPT, so the finding is not re-derived', async () => {
+  // "FRANKINCENBE" plus gibberish binomials. Committed so the next person does
+  // not regenerate the same brief and rediscover the same defect.
+  const { existsSync } = await import('node:fs');
+  assert.ok(existsSync(new URL('../../data/brand/pdp-sections/essential-oils.REJECTED.source.jpg', import.meta.url).pathname));
+  for (const b of BLOCKED) {
+    assert.match(b.rejected ?? '', /REJECTED/, `${b.title} should name the rejected artwork`);
+  }
+});
+
+test('a per-entry section is honoured, so a non-PDP template can be swept', () => {
+  const pageEntry = PLAN.find((e) => e.template.startsWith('page.'));
+  assert.ok(pageEntry, 'the draft ingredient page should be in the plan');
+  assert.equal(pageEntry.section, 'landing_ingredients_nd9fBX');
+
+  const doc = JSON.parse(LIVE.replace('"hero-ingredient-cards"', '"landing_ingredients_nd9fBX"'));
+  const v = decideEntry({ ...entry(), section: 'landing_ingredients_nd9fBX' }, doc);
+  assert.equal(v.status, 'change');
+  assert.equal(v.sectionKey, 'landing_ingredients_nd9fBX');
+  // …and the default section is still used when none is named.
+  assert.equal(decideEntry(entry(), doc).status, 'skip');
+});
+
+test('`before` accepts any prior value the card has held, so an entry survives its own history', () => {
+  const e = { ...entry(), before: ['Wax.webp', 'Spring_Water.webp'], after: 'Jojoba.webp' };
+  const v = decideEntry(e, doc());
+  assert.equal(v.status, 'change');
+  assert.equal(v.matched, 'Spring_Water.webp', 'reports WHICH prior value it found');
+
+  // Still refuses a value the plan never listed.
+  const other = doc();
+  other.sections['hero-ingredient-cards'].blocks['ingredient-card-2'].settings.image = ref('Grapefruit.webp');
+  assert.equal(decideEntry(e, other).status, 'skip');
+});
+
 test('the plan only moves images ONTO an ingredient that matches the card title', () => {
-  const expected = { 'Organic Jojoba': 'Jojoba.webp', 'Organic Red Palm Oil': 'red-palm-oil.webp' };
+  const expected = {
+    'Organic Jojoba': 'Jojoba.webp',
+    'Organic Red Palm Oil': 'red-palm-fruit.webp',
+    'Red Palm Oil': 'red-palm-fruit.webp',
+    'Baking Soda': 'baking-soda.webp',
+    'Wildcrafted Myrrh': 'myrrh-resin.webp',
+  };
   for (const e of PLAN) assert.equal(e.after, expected[e.title], `${e.title} → ${e.after}`);
+});
+
+test('the retired teal red-palm image is left with no referrer anywhere', () => {
+  // It is accurate but a mint/teal lab flask against warm-natural siblings.
+  // Sweeping the draft page too is what stops it surviving on the one surface
+  // nobody looks at.
+  const swaps = PLAN.filter((e) => e.before.includes('red-palm-oil.webp'));
+  assert.equal(swaps.length, 4, 'lotion, cream, lip-balm and the draft page');
+  assert.ok(swaps.some((e) => e.template.startsWith('page.')), 'the draft page must be included');
+  assert.ok(swaps.every((e) => e.after === 'red-palm-fruit.webp'));
 });
 
 test('the three lists are disjoint — a card is fixable, blocked, or not an ingredient', () => {
