@@ -43,9 +43,9 @@ export default {
     cart_2: {
       name: 'Abandoned Cart — 02 Still Saved',
       subject: 'Still saved for you',
-      preview: 'Your clean skincare is waiting — free shipping over $50.',
+      preview: 'Your clean skincare is waiting — free shipping over $45.',
       html: shell(
-        'Your clean skincare is waiting — free shipping over $50.',
+        'Your clean skincare is waiting — free shipping over $45.',
         H1('Still thinking it over?') +
         P_('Your cart is still here. Everything we make is handmade in the USA from a short list of clean, coconut-oil ingredients — no fillers, no junk. Worth finishing up.') +
         cartItems +

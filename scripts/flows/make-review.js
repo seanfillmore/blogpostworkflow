@@ -123,14 +123,14 @@ const page = `<title>Klaviyo Flows — Rebuild Review</title>
 <div class="wrap">
   <section class="hero">
     <h1>Flow rebuilds — review</h1>
-    <p>All five remaining flows rebuilt as code-based templates on the Post-Purchase design bar: preview text everywhere, live www links (no more staging URLs), $50 free-shipping framing, dynamic personalization (viewed product, cart items, purchased products), and a clear buy path in every email. Built as drafts — nothing sends until you say go.</p>
+    <p>All five remaining flows rebuilt as code-based templates on the Post-Purchase design bar: preview text everywhere, live www links (no more staging URLs), $45 free-shipping framing, dynamic personalization (viewed product, cart items, purchased products), and a clear buy path in every email. Built as drafts — nothing sends until you say go.</p>
   </section>
   ${sections.join('\n')}
   <footer>
     <h2>To go live</h2>
     <p>Each flow: <code>node scripts/flows/build.js &lt;flow&gt; golive</code> — recreates with live messages, sets it live, and flips the old flow to draft so nothing double-sends. Flows: <code>welcome-series</code>, <code>abandoned-cart</code>, <code>browse-abandonment</code>, <code>product-review</code>, <code>winback</code>.</p>
     <ul>
-      <li>Discounts used: <code>SHIPFREE</code> (free ship) in Welcome + Winback; <code>ComeBack25</code> (25%) as the Winback closer only.</li>
+      <li>Discounts used: <code>NEWCUSTOMER</code> (free ship) in Welcome; <code>WELCOMEBACK</code> (free ship) in Winback; <code>ComeBack25</code> (25%) as the Winback closer only.</li>
       <li>The Product Review flow now owns the review ask; it was removed from Post-Purchase Email 4.</li>
     </ul>
   </footer>

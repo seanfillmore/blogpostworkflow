@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 export const SITE = 'https://www.realskincare.com';
 const ADDRESS = JSON.parse(readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8')).postal_address;
 const SUPPORT = 'support@realskincare.com';
-export const FREE_SHIP = '$50';
+export const FREE_SHIP = '$45';
 
 // Verified-live product URLs + cart permalinks (variant ids)
 export const P = {

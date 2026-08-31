@@ -1,13 +1,18 @@
 /**
  * Welcome Series (rebuild) — trigger: Email List signup (S6hKFq).
  * Trimmed from 7 (incl. 2 unfinished drafts) to a focused 5, all with preview text
- * and a real buy path. Offer = SHIPFREE (free shipping — on strategy, no % discount).
+ * and a real buy path. Offer = NEWCUSTOMER (free shipping — on strategy, no % discount).
  * Social-follow moved to the footer (not its own email). Preserves old profile filter
  * (excludes existing purchasers).
  */
 import { shell, H1, P_, SIGN, button, productCard, codeBox, P, FREE_SHIP } from '../components.js';
 
-const SHIPFREE = codeBox('Free shipping — welcome gift', 'SHIPFREE');
+// NEWCUSTOMER, not SHIPFREE: the two were duplicate $25+/US/$7-cap free-shipping
+// codes. NEWCUSTOMER is the survivor — it is the code printed in the site-wide
+// announcement bar, it is restricted to the "hasn't purchased" segment (which is
+// exactly who this flow reaches), and it does not stack with order/product
+// discounts, closing an unintended SHIPFREE+FIRST20 stack.
+const WELCOME_CODE = codeBox('Free shipping — welcome gift', 'NEWCUSTOMER');
 
 export default {
   name: 'Welcome Series (RSC v2)',
@@ -23,7 +28,7 @@ export default {
         H1('Welcome — we\'re glad you\'re here.') +
         P_('Hi {{ first_name|default:"there" }}, thanks for joining us. We make clean, coconut-oil-based skincare by hand in the USA — a short list of ingredients, nothing you can\'t pronounce.') +
         P_('To get you started, here\'s <strong>free shipping</strong> on your first order:') +
-        SHIPFREE +
+        WELCOME_CODE +
         button(P.bestSellers.url, 'Shop best sellers') +
         P_(`Use the code at checkout. Orders over ${FREE_SHIP} always ship free, too.`),
       ),
@@ -44,9 +49,9 @@ export default {
     welcome_3: {
       name: 'Welcome — 03 Best Sellers',
       subject: 'The ones everyone starts with',
-      preview: 'Our most-loved clean essentials — free shipping over $50.',
+      preview: 'Our most-loved clean essentials — free shipping over $45.',
       html: shell(
-        'Our most-loved clean essentials — free shipping over $50.',
+        'Our most-loved clean essentials — free shipping over $45.',
         H1('Where most people start') +
         P_('Not sure what to try first? These are the ones our customers reach for again and again.') +
         productCard({ ...P.deodorant, note: 'Aluminum-free and it actually works.' }) +
@@ -79,7 +84,7 @@ export default {
         'Use it before it slips your mind — free shipping on your first order.',
         H1('Still deciding? Here\'s a nudge.') +
         P_('Your welcome free-shipping code is still good — but don\'t let it slip your mind. Here it is one more time:') +
-        SHIPFREE +
+        WELCOME_CODE +
         button(P.bestSellers.url, 'Use it on a best seller') +
         P_('If you have any questions before you order, just reply — a real person (often me) will answer.') +
         SIGN,
