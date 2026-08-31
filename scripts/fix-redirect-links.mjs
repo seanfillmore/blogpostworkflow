@@ -42,14 +42,14 @@
  *    stops working.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getBlogs, getArticles, updateArticle, getRedirects } from '../lib/shopify.js';
 import { rewriteRedirectLinks, buildRedirectMap } from '../lib/redirect-links.js';
 import { compareBodies } from '../lib/content-mirror.js';
-import { getContentPath } from '../lib/posts.js';
+import { getContentPath, resolvePostSlug } from '../lib/posts.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -67,22 +67,30 @@ const limit = (() => {
 
 const countAnchors = (html) => (html.match(/<a\b/gi) || []).length;
 
-/** Find the local mirror for a Shopify handle, if the repo has one. */
+/**
+ * Find the local mirror for a Shopify handle, if the repo has one.
+ *
+ * Goes through `resolvePostSlug`, the fleet's one resolver, rather than a
+ * hand-rolled prefix match. The first version of this script matched
+ * `handle.startsWith(d) || d.startsWith(handle)`, and the SECOND half of that
+ * is the documented trap: a directory like `<handle>-2` is a Shopify dedup
+ * DUPLICATE — a genuinely different article — so that direction pairs an
+ * article with the wrong post. The dry run caught it as 25 pages reporting
+ * `mirror-is-a-different-article` while `check-content-mirrors` reported ZERO,
+ * and under --apply it would have written one post's link fixes into another
+ * post's content.html.
+ *
+ * `resolvePostSlug` refuses that direction explicitly and tries the
+ * authoritative matches first (exact dir, then `meta.handle`/`meta.url`, then
+ * `meta.shopify_handle`/`meta.shopify_url` — the field 93 of 94 local metas
+ * actually carry), falling back to a longest-prefix truncation match only for
+ * posts stored under a shortened slug.
+ */
 function mirrorPathFor(handle) {
-  const direct = getContentPath(handle);
-  if (existsSync(direct)) return direct;
-  // The Shopify handle is not always the local slug (CLAUDE.md documents the
-  // tattoo winner). Fall back to a prefix match over data/posts.
-  const postsDir = join(ROOT, 'data', 'posts');
-  if (!existsSync(postsDir)) return null;
-  for (const d of readdirSync(postsDir)) {
-    if (d.startsWith('_')) continue;
-    if (handle.startsWith(d) || d.startsWith(handle)) {
-      const p = join(postsDir, d, 'content.html');
-      if (existsSync(p)) return p;
-    }
-  }
-  return null;
+  const slug = resolvePostSlug(handle);
+  if (!slug) return null;
+  const p = getContentPath(slug);
+  return existsSync(p) ? p : null;
 }
 
 async function main() {
