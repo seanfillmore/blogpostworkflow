@@ -1,0 +1,80 @@
+{
+  "handle": "99-coconut-reset-digital",
+  "fields": [
+    {
+      "key": "heading",
+      "value": "The 90-Day Coconut Skin Reset",
+      "type": "single_line_text_field"
+    },
+    {
+      "key": "subheading",
+      "value": "The complete routine in one box — three daily lotions and an overnight cream — for skin that finally stays soft. Ninety days. Never run out.",
+      "type": "multi_line_text_field"
+    },
+    {
+      "key": "cta_label",
+      "value": "Start My 90-Day Reset",
+      "type": "single_line_text_field"
+    },
+    {
+      "key": "rating_caption",
+      "value": "Rated 4.9 by Real Customers",
+      "type": "single_line_text_field"
+    },
+    {
+      "key": "bullets",
+      "value": "[\"3 full-size Body Lotions + 3 Body Creams — a complete 90-day routine\",\"A complete $[[TOTAL]] routine — everything you need in one box — yours for $[[PRICE]]\",\"Cold-pressed coconut oil + organic jojoba — no fragrance, parabens, or mineral oil\"]",
+      "type": "list.single_line_text_field"
+    },
+    {
+      "key": "buybox_bullets",
+      "value": "[\"3 full-size Body Lotions + 3 Body Creams — about a 90-day supply\",\"Two formulas, one routine — daily lotion + overnight cream\",\"Cold-pressed coconut oil + organic jojoba + beeswax barrier\",\"No synthetic fragrance, no petrolatum, no dimethicone, no lanolin\"]",
+      "type": "list.single_line_text_field"
+    },
+    {
+      "key": "whats_in_it_note",
+      "value": "Three months of lotion, and three months of overnight cream.",
+      "type": "single_line_text_field"
+    },
+    {
+      "key": "faq",
+      "value": "[{\"q\":\"How long will the 90-Day Reset last?\",\"a\":\"About 90 days of daily use for one person. Lotion is what you use most, which is why you get three.\"},{\"q\":\"Is this a subscription?\",\"a\":\"No. This is a one-time order — no auto-billing, no commitment.\"},{\"q\":\"Lotion vs. cream — when do I use each?\",\"a\":\"Lotion in the morning and after showers. Cream overnight, where skin cracks.\"},{\"q\":\"Which scent should I choose?\",\"a\":\"Pure Unscented has no essential oils at all — choose it for reactive skin. Coconut Breeze is a light natural coconut scent.\"},{\"q\":\"Should I patch test first?\",\"a\":\"Yes, especially if you have reacted to multiple products before. Apply a small amount to your inner arm and wait 24 hours.\"},{\"q\":\"What if my skin reacts?\",\"a\":\"Email us within 30 days. We will refund you and you do not need to send anything back.\"}]",
+      "type": "json"
+    },
+    {
+      "key": "tabs",
+      "value": "[{\"heading\":\"What's Inside\",\"body\":\"3 full-size Body Lotions (8oz) and 1 Body Cream (4oz), plus two digital guides emailed within minutes of ordering.\"},{\"heading\":\"Ingredients\",\"body\":\"Lotion: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil. Cream adds organic beeswax and palm stearic.\"},{\"heading\":\"How to Use\",\"body\":\"Lotion in the morning and after showers — it absorbs in minutes. Cream at night on hands, elbows, heels and anywhere that cracks.\"},{\"heading\":\"Shipping & Returns\",\"body\":\"Free shipping included. Standard delivery 2 business days within the US. 30-day no-questions-asked money-back guarantee — email us and we will refund you; you do not need to send anything back.\"}]",
+      "type": "json"
+    },
+    {
+      "key": "hook",
+      "value": "You have bought one bottle before. It lasted about a month — right about the time your skin started behaving.\nThis is ninety days of both formulas — about $1.34 a day — so you find out what your skin does when it never runs out.",
+      "type": "multi_line_text_field"
+    },
+    {
+      "key": "ingredient_cards",
+      "value": "[{\"name\":\"Purified spring water\",\"role\":\"What makes the lotion a lotion, not an oil.\"},{\"name\":\"Organic virgin coconut oil\",\"role\":\"Cold-pressed. The base of both formulas.\"},{\"name\":\"Organic jojoba\",\"role\":\"Closest plant oil to skin's own sebum. In the lotion.\"},{\"name\":\"Organic plant-based emulsifying wax\",\"role\":\"Holds oil and water together. No petroleum.\"},{\"name\":\"Organic grapefruit seed extract\",\"role\":\"The preservative — instead of parabens or phenoxyethanol.\"},{\"name\":\"Organic red palm oil\",\"role\":\"In both. This is not a palm-free product, and we would rather say so.\"},{\"name\":\"Organic palm stearic\",\"role\":\"Gives the cream its body. In the cream.\"},{\"name\":\"Organic beeswax\",\"role\":\"The barrier that holds moisture overnight. In the cream — so not vegan.\"}]",
+      "type": "json"
+    },
+    {
+      "key": "stats",
+      "value": "[{\"value\":\"8\",\"label\":\"ingredients across both formulas\"},{\"value\":\"90\",\"label\":\"days of both formulas\"},{\"value\":\"30\",\"label\":\"day money-back guarantee\"},{\"value\":\"$1.34\",\"label\":\"per day\"}]",
+      "type": "json"
+    },
+    {
+      "key": "mechanism",
+      "value": "[{\"title\":\"Lotion — daily, absorbs fast\",\"body\":\"Lighter, for everyday use over large areas. \\\"dude as soon as you put it on it just ABSORBS.\\\" Answers the \\\"natural oils sit on top like a greasy baked good\\\" objection (5 mentions).\"},{\"title\":\"Cream — overnight, concentrated\",\"body\":\"Thicker, for heels, elbows and cracked hands while you sleep. \\\"It may be a tiny 4oz jar but has the power of a big bottle of lotion.\\\"\"}]",
+      "type": "json"
+    },
+    {
+      "key": "timeline",
+      "value": "[{\"when\":\"Month 1\",\"title\":\"Twice a day, every day\",\"body\":\"Lotion in the morning, cream at night. The first month is about not skipping — dry skin comes back fastest when the routine is occasional.\"},{\"when\":\"Month 2\",\"title\":\"You stop thinking about it\",\"body\":\"Most people are into their second bottle here — past the point where a single one would have run out.\"},{\"when\":\"Month 3\",\"title\":\"The part you never reach\",\"body\":\"Third lotion, third jar. Ninety days is long enough to know whether something works, rather than guessing after two weeks.\"}]",
+      "type": "json"
+    },
+    {
+      "key": "founder_note",
+      "value": "I made this because my own family kept running out. One bottle is what everybody buys first, and it ends before you know whether it worked.\nThree of each is what ninety days actually takes. Nothing else changed — same formulas, same batch sizes.",
+      "type": "multi_line_text_field"
+    }
+  ]
+}

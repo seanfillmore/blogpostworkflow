@@ -34,19 +34,29 @@
  * `attachment`. Writing an `attachment` as text would corrupt it, so those are
  * counted and named instead of written.
  *
+ * IT WILL NOT OVERWRITE AN UNCOMMITTED LOCAL EDIT
+ * ────────────────────────────────────────────────
+ * Added after this tool destroyed real work on 2026-08-31: two lander edits were
+ * made locally, previewed, and then silently reverted from live by a later
+ * unrelated `pull-theme` run. A file with uncommitted changes is now HELD and
+ * named; `--force` discards them deliberately. Committed files are recoverable
+ * from git, which is why the line is drawn at uncommitted.
+ *
  * USAGE
  *   node scripts/pull-theme.mjs                          # refresh the mirror
+ *   node scripts/pull-theme.mjs --force                  # discard local edits
  *   node scripts/pull-theme.mjs --key templates/product.bundle-landing.json
  *   node scripts/pull-theme.mjs --all
  *   node scripts/pull-theme.mjs --theme 147480051882     # a specific theme
  */
 
+import { spawnSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, readdirSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isDirectRun } from '../lib/is-direct-run.js';
-import { getThemes, getMainThemeId, getThemeAsset, listThemeAssets } from '../lib/shopify.js';
+import { getThemes, getMainThemeId, getThemeAssetRaw, listThemeAssets } from '../lib/shopify.js';
 
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 const THEME_DIR = join(ROOT, 'theme');
@@ -88,16 +98,48 @@ export function mirroredKeys(dir = THEME_DIR) {
 }
 
 export function parseArgs(argv) {
-  const args = { keys: [], all: false, theme: null };
+  const args = { keys: [], all: false, theme: null, force: false };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
     if (a === '--all') args.all = true;
     else if (a === '--key') args.keys.push(argv[++i]);
     else if (a === '--theme') args.theme = argv[++i];
+    else if (a === '--force') args.force = true;
     else if (a === '--help' || a === '-h') args.help = true;
     else throw new Error(`unknown argument: ${a}`);
   }
   return args;
+}
+
+/**
+ * Asset keys whose local file has UNCOMMITTED changes.
+ *
+ * This exists because the tool destroyed real work on 2026-08-31. Two edits to
+ * the lander template — a section removal and a CSS change — were made locally,
+ * uploaded to a preview theme, and then silently overwritten from live when
+ * `pull-theme` was run again for an unrelated reason. Nothing warned; the file
+ * simply went back to what production held, and the loss was found only because
+ * a later assertion failed.
+ *
+ * A puller that clobbers local edits is the same shape as the content-mirror
+ * bug this repo already documents: a routine unattended write over work nobody
+ * knew was there. Committed files are recoverable from git, so the line is
+ * drawn at UNCOMMITTED.
+ *
+ * @returns {Set<string>} keys to refuse, empty when git cannot answer
+ */
+export function locallyModifiedKeys(root, spawn = spawnSync) {
+  const r = spawn('git', ['status', '--porcelain', '--', 'theme'], { cwd: root, encoding: 'utf8' });
+  if (r.status !== 0 || !r.stdout) return new Set();
+  const out = new Set();
+  for (const line of r.stdout.split('\n')) {
+    // porcelain v1: XY <path>, and a rename prints "old -> new"
+    const m = line.match(/^..\s+(?:.*->\s*)?(.+)$/);
+    if (!m) continue;
+    const p = m[1].trim().replace(/^"|"$/g, '');
+    if (p.startsWith('theme/')) out.add(p.slice('theme/'.length));
+  }
+  return out;
 }
 
 async function main(argv) {
@@ -124,11 +166,21 @@ async function main(argv) {
   }
   if (!keys.length) { console.error('nothing to pull'); return 1; }
 
-  let written = 0, skipped = 0, missing = 0;
+  const dirty = args.force ? new Set() : locallyModifiedKeys(ROOT);
+  if (dirty.size) {
+    console.log(`${dirty.size} file(s) have UNCOMMITTED local changes and will NOT be overwritten.`);
+    console.log('Commit them, or pass --force to discard them.\n');
+  }
+
+  let written = 0, skipped = 0, missing = 0, held = 0;
   const binary = [];
   for (const key of keys.sort()) {
+    if (dirty.has(key)) { held += 1; console.log(`  HELD     ${key} (uncommitted local changes)`); continue; }
     let asset;
-    try { asset = await getThemeAsset(id, key); } catch { missing += 1; console.log(`  MISSING  ${key}`); continue; }
+    try { asset = await getThemeAssetRaw(id, key); } catch { missing += 1; console.log(`  MISSING  ${key}`); continue; }
+    // getThemeAssetRaw hands back the whole record, so `attachment` is reachable
+    // and a BINARY asset is distinguishable from an ABSENT one. Through
+    // getThemeAsset both were null and every binary reported as MISSING.
     const value = typeof asset === 'string' ? asset : asset?.value;
     if (value === undefined || value === null) {
       if (asset?.attachment) { binary.push(key); skipped += 1; console.log(`  BINARY   ${key} (skipped — would corrupt as text)`); }
@@ -147,7 +199,7 @@ async function main(argv) {
     pulledAt: new Date().toISOString(), keys: keys.length, written, binarySkipped: binary,
   }, null, 2)}\n`);
 
-  console.log(`\n${written} written, ${skipped} binary skipped, ${missing} not on this theme.`);
+  console.log(`\n${written} written, ${held} held (local edits), ${skipped} binary skipped, ${missing} not on this theme.`);
   console.log('Provenance recorded in theme/.theme-source.json');
   console.log('\nThis script NEVER uploads. To ship a change: review the diff, then upload to an');
   console.log('UNPUBLISHED theme and verify the rendered page before anything reaches customers.');
