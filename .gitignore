@@ -201,3 +201,7 @@ data/giveaway/frustration/
 # Live-theme template backups written by scripts/add-complete-the-routine.mjs.
 # Point-in-time copies of a server-authoritative artifact; the theme is the truth.
 data/reports/theme-backups/
+
+# Klaviyo flow-push run records and live-body backups — machine-written, and the
+# backups are copies of live email HTML that do not belong in git.
+data/reports/klaviyo-flow-push/
