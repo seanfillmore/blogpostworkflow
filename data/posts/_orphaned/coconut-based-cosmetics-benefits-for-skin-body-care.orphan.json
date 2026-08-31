@@ -1,0 +1,12 @@
+{
+  "slug": "coconut-based-cosmetics-benefits-for-skin-body-care",
+  "archived_at": "2026-08-31T01:13:52.432Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "target coconut-based-cosmetics already has its own pending refresh",
+  "resolved_target": "coconut-based-cosmetics",
+  "refresh_mtime": "2026-08-29T07:34:44.376Z",
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/coconut-based-cosmetics-benefits-for-skin-body-care data/posts/coconut-based-cosmetics-benefits-for-skin-body-care"
+}

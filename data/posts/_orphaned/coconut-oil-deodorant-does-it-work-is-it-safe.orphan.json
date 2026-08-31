@@ -1,0 +1,12 @@
+{
+  "slug": "coconut-oil-deodorant-does-it-work-is-it-safe",
+  "archived_at": "2026-08-31T01:13:52.434Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to coconut-oil-deodorant, inert",
+  "resolved_target": "coconut-oil-deodorant",
+  "refresh_mtime": "2026-07-15T11:31:14.848Z",
+  "rehomed_to": "data/posts/coconut-oil-deodorant/orphaned-refresh-2026-07-15.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/coconut-oil-deodorant-does-it-work-is-it-safe data/posts/coconut-oil-deodorant-does-it-work-is-it-safe"
+}

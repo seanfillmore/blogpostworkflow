@@ -1,0 +1,12 @@
+{
+  "slug": "sulfate-free-toothpaste-why-it-matters-best-options",
+  "archived_at": "2026-08-31T01:13:52.446Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to sulfate-free-toothpaste, inert",
+  "resolved_target": "sulfate-free-toothpaste",
+  "refresh_mtime": "2026-08-17T07:36:56.338Z",
+  "rehomed_to": "data/posts/sulfate-free-toothpaste/orphaned-refresh-2026-08-17.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/sulfate-free-toothpaste-why-it-matters-best-options data/posts/sulfate-free-toothpaste-why-it-matters-best-options"
+}

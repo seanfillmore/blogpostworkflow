@@ -1,0 +1,12 @@
+{
+  "slug": "fluoride-free-toothpaste-benefits-how-it-works-best-picks",
+  "archived_at": "2026-08-31T01:13:52.437Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to fluoride-free-toothpaste, inert",
+  "resolved_target": "fluoride-free-toothpaste",
+  "refresh_mtime": "2026-07-17T11:33:21.712Z",
+  "rehomed_to": "data/posts/fluoride-free-toothpaste/orphaned-refresh-2026-07-17.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/fluoride-free-toothpaste-benefits-how-it-works-best-picks data/posts/fluoride-free-toothpaste-benefits-how-it-works-best-picks"
+}

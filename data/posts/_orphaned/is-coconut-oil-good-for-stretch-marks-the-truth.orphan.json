@@ -1,0 +1,12 @@
+{
+  "slug": "is-coconut-oil-good-for-stretch-marks-the-truth",
+  "archived_at": "2026-08-31T01:13:52.438Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to is-coconut-oil-good-for-stretch-marks, inert",
+  "resolved_target": "is-coconut-oil-good-for-stretch-marks",
+  "refresh_mtime": "2026-08-17T07:38:34.078Z",
+  "rehomed_to": "data/posts/is-coconut-oil-good-for-stretch-marks/orphaned-refresh-2026-08-17.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/is-coconut-oil-good-for-stretch-marks-the-truth data/posts/is-coconut-oil-good-for-stretch-marks-the-truth"
+}

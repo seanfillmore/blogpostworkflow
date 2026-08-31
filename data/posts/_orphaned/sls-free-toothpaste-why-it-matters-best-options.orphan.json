@@ -1,0 +1,12 @@
+{
+  "slug": "sls-free-toothpaste-why-it-matters-best-options",
+  "archived_at": "2026-08-31T01:13:52.444Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to sls-free-toothpaste, inert",
+  "resolved_target": "sls-free-toothpaste",
+  "refresh_mtime": "2026-06-20T07:33:03.674Z",
+  "rehomed_to": "data/posts/sls-free-toothpaste/orphaned-refresh-2026-06-20.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/sls-free-toothpaste-why-it-matters-best-options data/posts/sls-free-toothpaste-why-it-matters-best-options"
+}

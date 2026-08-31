@@ -1,0 +1,12 @@
+{
+  "slug": "best-coconut-scented-lotion-natural-picks-for-soft-skin",
+  "archived_at": "2026-08-31T01:13:52.427Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to best-coconut-scented-lotion, inert",
+  "resolved_target": "best-coconut-scented-lotion",
+  "refresh_mtime": "2026-08-27T15:29:27.558Z",
+  "rehomed_to": "data/posts/best-coconut-scented-lotion/orphaned-refresh-2026-08-27.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-coconut-scented-lotion-natural-picks-for-soft-skin data/posts/best-coconut-scented-lotion-natural-picks-for-soft-skin"
+}

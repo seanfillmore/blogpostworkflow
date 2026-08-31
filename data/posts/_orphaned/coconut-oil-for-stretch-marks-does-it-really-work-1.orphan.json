@@ -1,0 +1,12 @@
+{
+  "slug": "coconut-oil-for-stretch-marks-does-it-really-work-1",
+  "archived_at": "2026-08-31T01:13:52.435Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to coconut-oil-for-stretch-marks, inert",
+  "resolved_target": "coconut-oil-for-stretch-marks",
+  "refresh_mtime": "2026-08-17T11:31:14.422Z",
+  "rehomed_to": "data/posts/coconut-oil-for-stretch-marks/orphaned-refresh-2026-08-17.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/coconut-oil-for-stretch-marks-does-it-really-work-1 data/posts/coconut-oil-for-stretch-marks-does-it-really-work-1"
+}

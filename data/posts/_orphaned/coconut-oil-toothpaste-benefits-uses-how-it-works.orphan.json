@@ -1,0 +1,12 @@
+{
+  "slug": "coconut-oil-toothpaste-benefits-uses-how-it-works",
+  "archived_at": "2026-08-31T01:13:52.436Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to coconut-oil-toothpaste, inert",
+  "resolved_target": "coconut-oil-toothpaste",
+  "refresh_mtime": "2026-05-21T11:32:29.952Z",
+  "rehomed_to": "data/posts/coconut-oil-toothpaste/orphaned-refresh-2026-05-21.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/coconut-oil-toothpaste-benefits-uses-how-it-works data/posts/coconut-oil-toothpaste-benefits-uses-how-it-works"
+}

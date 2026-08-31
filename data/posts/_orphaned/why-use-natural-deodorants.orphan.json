@@ -1,0 +1,12 @@
+{
+  "slug": "why-use-natural-deodorants",
+  "archived_at": "2026-08-31T01:13:52.449Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to why-use-natural-deodorant, inert",
+  "resolved_target": "why-use-natural-deodorant",
+  "refresh_mtime": "2026-08-04T04:00:31.336Z",
+  "rehomed_to": "data/posts/why-use-natural-deodorant/orphaned-refresh-2026-08-04.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/why-use-natural-deodorants data/posts/why-use-natural-deodorants"
+}

@@ -1,0 +1,12 @@
+{
+  "slug": "how-to-dry-brush-your-body-step-by-step-guide",
+  "archived_at": "2026-08-31T01:13:52.437Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "no content-refreshed.html — nothing to carry across",
+  "resolved_target": "how-to-dry-brush",
+  "refresh_mtime": null,
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/how-to-dry-brush-your-body-step-by-step-guide data/posts/how-to-dry-brush-your-body-step-by-step-guide"
+}

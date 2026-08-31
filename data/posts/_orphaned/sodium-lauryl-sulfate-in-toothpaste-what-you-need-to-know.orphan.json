@@ -1,0 +1,12 @@
+{
+  "slug": "sodium-lauryl-sulfate-in-toothpaste-what-you-need-to-know",
+  "archived_at": "2026-08-31T01:13:52.445Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to sodium-lauryl-sulfate-toothpaste, inert",
+  "resolved_target": "sodium-lauryl-sulfate-toothpaste",
+  "refresh_mtime": "2026-07-05T11:31:31.042Z",
+  "rehomed_to": "data/posts/sodium-lauryl-sulfate-toothpaste/orphaned-refresh-2026-07-05.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/sodium-lauryl-sulfate-in-toothpaste-what-you-need-to-know data/posts/sodium-lauryl-sulfate-in-toothpaste-what-you-need-to-know"
+}

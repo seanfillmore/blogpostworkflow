@@ -1,0 +1,12 @@
+{
+  "slug": "best-sls-free-toothpaste-for-kids-safe-natural",
+  "archived_at": "2026-08-31T01:13:52.430Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to sls-free-toothpaste-for-kids, inert",
+  "resolved_target": "sls-free-toothpaste-for-kids",
+  "refresh_mtime": "2026-08-28T11:31:22.389Z",
+  "rehomed_to": "data/posts/sls-free-toothpaste-for-kids/orphaned-refresh-2026-08-28.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-sls-free-toothpaste-for-kids-safe-natural data/posts/best-sls-free-toothpaste-for-kids-safe-natural"
+}

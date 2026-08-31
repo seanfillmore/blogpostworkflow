@@ -1,0 +1,12 @@
+{
+  "slug": "all-natural-lotion-what-it-is-how-to-choose-the-best",
+  "archived_at": "2026-08-31T01:13:52.422Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "target all-natural-lotion already has its own pending refresh",
+  "resolved_target": "all-natural-lotion",
+  "refresh_mtime": "2026-08-29T07:32:54.184Z",
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/all-natural-lotion-what-it-is-how-to-choose-the-best data/posts/all-natural-lotion-what-it-is-how-to-choose-the-best"
+}

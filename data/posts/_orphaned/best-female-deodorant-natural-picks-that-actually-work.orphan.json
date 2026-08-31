@@ -1,0 +1,12 @@
+{
+  "slug": "best-female-deodorant-natural-picks-that-actually-work",
+  "archived_at": "2026-08-31T01:13:52.428Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to best-female-deodorant, inert",
+  "resolved_target": "best-female-deodorant",
+  "refresh_mtime": "2026-08-26T15:12:11.842Z",
+  "rehomed_to": "data/posts/best-female-deodorant/orphaned-refresh-2026-08-26.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-female-deodorant-natural-picks-that-actually-work data/posts/best-female-deodorant-natural-picks-that-actually-work"
+}

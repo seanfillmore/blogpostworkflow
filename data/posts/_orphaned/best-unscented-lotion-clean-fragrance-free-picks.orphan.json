@@ -1,0 +1,12 @@
+{
+  "slug": "best-unscented-lotion-clean-fragrance-free-picks",
+  "archived_at": "2026-08-31T01:13:52.430Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "target best-unscented-lotion already has its own pending refresh",
+  "resolved_target": "best-unscented-lotion",
+  "refresh_mtime": "2026-08-29T07:38:01.193Z",
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-unscented-lotion-clean-fragrance-free-picks data/posts/best-unscented-lotion-clean-fragrance-free-picks"
+}

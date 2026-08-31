@@ -1,0 +1,12 @@
+{
+  "slug": "sls-free-toothpaste-list-best-natural-options-2026",
+  "archived_at": "2026-08-31T01:13:52.443Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to sls-free-toothpaste-list, inert",
+  "resolved_target": "sls-free-toothpaste-list",
+  "refresh_mtime": "2026-07-13T07:31:21.554Z",
+  "rehomed_to": "data/posts/sls-free-toothpaste-list/orphaned-refresh-2026-07-13.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/sls-free-toothpaste-list-best-natural-options-2026 data/posts/sls-free-toothpaste-list-best-natural-options-2026"
+}

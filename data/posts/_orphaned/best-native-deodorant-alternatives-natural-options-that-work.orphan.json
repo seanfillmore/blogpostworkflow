@@ -1,0 +1,12 @@
+{
+  "slug": "best-native-deodorant-alternatives-natural-options-that-work",
+  "archived_at": "2026-08-31T01:13:52.429Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to best-native-deodorant-alternatives-natural, inert",
+  "resolved_target": "best-native-deodorant-alternatives-natural",
+  "refresh_mtime": "2026-08-27T15:04:16.658Z",
+  "rehomed_to": "data/posts/best-native-deodorant-alternatives-natural/orphaned-refresh-2026-08-27.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-native-deodorant-alternatives-natural-options-that-work data/posts/best-native-deodorant-alternatives-natural-options-that-work"
+}

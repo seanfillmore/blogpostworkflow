@@ -1,0 +1,12 @@
+{
+  "slug": "natural-lip-balm-recipe-easy-diy-in-15-minutes-1",
+  "archived_at": "2026-08-31T01:13:52.441Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to natural-lip-balm-recipe, inert",
+  "resolved_target": "natural-lip-balm-recipe",
+  "refresh_mtime": "2026-06-21T15:29:17.889Z",
+  "rehomed_to": "data/posts/natural-lip-balm-recipe/orphaned-refresh-2026-06-21.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/natural-lip-balm-recipe-easy-diy-in-15-minutes-1 data/posts/natural-lip-balm-recipe-easy-diy-in-15-minutes-1"
+}

@@ -1,0 +1,12 @@
+{
+  "slug": "best-aluminum-free-deodorant-in-2026-that-actually-works",
+  "archived_at": "2026-08-31T01:13:52.427Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to best-aluminum-free-deodorant, inert",
+  "resolved_target": "best-aluminum-free-deodorant",
+  "refresh_mtime": "2026-08-03T15:32:36.505Z",
+  "rehomed_to": "data/posts/best-aluminum-free-deodorant/orphaned-refresh-2026-08-03.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-aluminum-free-deodorant-in-2026-that-actually-works data/posts/best-aluminum-free-deodorant-in-2026-that-actually-works"
+}
