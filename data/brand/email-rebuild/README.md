@@ -4,36 +4,65 @@ Brand-corrected HTML for the Klaviyo flow emails. One folder pair per template:
 `<templateId>.before.html` (exactly what was live when it was pulled) and
 `<templateId>.after.html` (the rebuild).
 
-## Why these are files and not API calls
+## These push through the API — the "paste it by hand" rule was wrong
 
-**Flow-owned templates are readable but not writable.** Measured 2026-07-30:
+This section used to say flow-owned templates could not be written and every rebuild
+had to be pasted into the Klaviyo UI. **That was wrong, and the way it was wrong is
+worth keeping:** it tested revisions `2024-10-15`, `2025-01-15` and `2025-07-15`, saw
+the same 404 on all three, and concluded "not a versioning artifact". All three predate
+the endpoint. `PATCH /api/flow-actions/{id}` went GA in revision **`2025-10-15`**
+("Update flow actions within a flow, including associated message content"). Testing N
+revisions proves nothing unless one of them postdates the feature.
+
+Re-measured live 2026-08-30 on revision `2026-07-15`:
 
 | Call | Result |
 |---|---|
 | `GET /api/templates/{id}` | **200** — full HTML |
-| `PATCH /api/templates/{id}` | **404** "Template … does not exist" |
-| `PATCH /api/flow-messages/{id}` | **405** method_not_allowed |
-| `POST` + `PATCH /api/templates` (your own) | **200** — works fine |
+| `PATCH /api/templates/{id}` on a flow-owned template | **404** — still true |
+| `PATCH /api/flow-messages/{id}` | **405** — still true, wrong endpoint |
+| `PATCH /api/flow-actions/{id}` @ `2026-07-15` | **200** — writes, on live and draft flows |
+| same call @ `2025-07-15` | **404** "No valid revisions found for method" |
 
-The 404 is identical across revisions `2024-10-15`, `2025-01-15` and `2025-07-15`, so
-it is not a versioning artifact — Klaviyo returns 404 rather than 403 to mean "not in
-the writable set". A *library* template you create is writable; a *flow-owned* one is
-not. Confusing those two is what led an earlier note to claim flow emails were
-API-editable. They are not.
-
-Every flow template here is `editor_type: CODE`, so this is still a paste, not a
-block-by-block rebuild.
+**A push is a REPLACEMENT, not an edit.** The flow action rejects raw HTML
+(`'body' is not a valid field for the resource 'FlowEmail'`), so content moves by
+`template_id`: create a library template, repoint the action at it, and Klaviyo
+**snapshots** it into a brand-new flow-owned copy. Nothing is ever updated in place, and
+every push strands the copy it replaced.
 
 ## Applying one
 
-1. Klaviyo → Flows → the flow → the message → **Edit email** → code editor.
-2. Select all, paste the `.after.html` body, save.
-3. Send a preview to yourself. Check specifically:
-   - the coupon renders a real code (`{% coupon_code %}` is live, not literal text)
-   - the unsubscribe link resolves
-   - the logo loads (it is a Shopify CDN URL, not an attachment)
-   - dark mode swaps the logo — toggle your client's appearance
-4. Re-run `node scripts/klaviyo-email-audit.mjs` and confirm that row is on-brand.
+```bash
+node scripts/klaviyo-push-flow-template.mjs <id>            # dry run
+node scripts/klaviyo-push-flow-template.mjs <id> --apply
+node scripts/klaviyo-push-flow-template.mjs --sweep-orphans --apply
+```
+
+It backs the live body up **before** writing, refuses if the live email has drifted from
+`.before.html` (pass `--allow-drift` only after diffing), verifies through the consumer
+(`GET /api/flow-messages/{id}/template/`) rather than trusting the PATCH's 200, and rolls
+back if the verify fails. On success it refreshes `.before.html` from what Klaviyo
+actually stored and records the mapping in `flow-map.json`.
+
+**`flow-map.json` is what makes a second push possible.** The filename is the template id
+that was live when the rebuild was pulled, and a push changes that id — so after one push
+the filename no longer resolves to anything. The map records the **message id**, which is
+stable across every repoint, and later runs resolve through it.
+
+Still worth doing by hand after a push: send yourself a preview and check the coupon
+renders a real code, the unsubscribe link resolves, the logo loads, and dark mode swaps
+it. Then re-run `node scripts/klaviyo-email-audit.mjs`.
+
+## Sweeping the strays
+
+Each push strands the previous flow-owned snapshot. `--sweep-orphans` deletes them —
+and **only** them. It works from an allowlist of ids recorded in `flow-map.json`, never
+from "what does no flow reference", because those are very different questions:
+`GET /api/templates` enumerates **library templates only** (measured: 47 listed, sharing
+*zero* ids with the 33 a flow actually serves), so a sweep driven by that list proposed
+deleting 47 templates including `camp_*` campaign snapshots and the named library sources
+`build-nurture-flow.mjs` finds through `upsertTemplateByName`. Flow-owned snapshots are
+readable by id and invisible to the list endpoint.
 
 ## The unsubscribe tag: all 22 shipped with the wrong one
 

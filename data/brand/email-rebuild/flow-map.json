@@ -1,0 +1,57 @@
+{
+  "Ra3L8A": {
+    "flowId": "UUa3Qk",
+    "flowName": "Welcome Series (RSC v2)",
+    "messageId": "XaktgE",
+    "actionId": "112416857",
+    "servingTemplateId": "XtF4DY",
+    "updatedAt": "2026-08-31T05:24:09.004Z",
+    "stranded": [
+      "Ra3L8A"
+    ]
+  },
+  "RiMM8C": {
+    "flowId": "V4U4Qn",
+    "flowName": "Post-Purchase Flow (RSC v2)",
+    "messageId": "Xj6ugG",
+    "actionId": "112411013",
+    "servingTemplateId": "YysDcs",
+    "updatedAt": "2026-08-31T05:24:09.004Z",
+    "stranded": [
+      "RiMM8C"
+    ]
+  },
+  "SHb8Df": {
+    "flowId": "Yb63w6",
+    "flowName": "Customer Winback (RSC v2)",
+    "messageId": "QUKf8L",
+    "actionId": "112416904",
+    "servingTemplateId": "StwFGY",
+    "updatedAt": "2026-08-31T05:24:09.004Z",
+    "stranded": [
+      "SHb8Df"
+    ]
+  },
+  "TA5Wi4": {
+    "flowId": "Ud6YUF",
+    "flowName": "Product Review / Cross-Sell (RSC v2)",
+    "messageId": "RME4Mz",
+    "actionId": "112416895",
+    "servingTemplateId": "ThdZ8y",
+    "updatedAt": "2026-08-31T05:23:08.632Z",
+    "stranded": [
+      "TA5Wi4"
+    ]
+  },
+  "ThCS7T": {
+    "flowId": "UxEXm9",
+    "flowName": "Replenishment (RSC v2)",
+    "messageId": "RvcYBq",
+    "actionId": "112464444",
+    "servingTemplateId": "Tyigfs",
+    "updatedAt": "2026-08-31T05:24:09.004Z",
+    "stranded": [
+      "ThCS7T"
+    ]
+  }
+}
