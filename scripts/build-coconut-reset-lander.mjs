@@ -100,6 +100,35 @@ export const PLAN = Object.freeze([
       + 'handled. The customer quote is real and stays; only the annotation goes, and the objection it was '
       + 'flagging is now answered in plain copy ("sinks in rather than sitting on top") instead of being labelled.',
   },
+  {
+    id: 'buybox-bullet-2-guarantee',
+    kind: 'positioning',
+    field: 'buybox_bullets',
+    before: 'Two formulas, one routine — daily lotion + overnight cream',
+    after: '30-day money-back guarantee — keep the box, we still refund you',
+    reason:
+      'Bullet 2 restated bullet 1 ("3 Body Lotions + 3 Body Creams" already says there are two formulas), so the '
+      + 'slot was spent twice on the same fact. Nothing in the bullets reduced RISK, which is what a cold visitor '
+      + 'weighs at a $121 first purchase from a brand they do not know — and the hero just lost its free-shipping '
+      + 'line, so risk reversal belongs at the buy box rather than above the fold. "Keep the box" is not a new '
+      + 'promise: the Shipping & Returns tab already says "you do not need to send anything back".',
+  },
+  {
+    id: 'buybox-bullet-4-plain-negation',
+    kind: 'positioning',
+    field: 'buybox_bullets',
+    before: 'No synthetic fragrance, no petrolatum, no dimethicone, no lanolin',
+    after: 'No synthetic fragrance, no petroleum, no silicone, no parabens',
+    reason:
+      'Same device — ingredient NEGATION is the most-validated pattern in the competitor teardown (4 of 4 brands) '
+      + 'and the only one that is automatically compliance-safe, because it claims absence rather than effect. It '
+      + 'stays CONCRETE rather than going soft ("nothing synthetic"), since the reason negation works is that it is '
+      + 'checkable; petrolatum and dimethicone simply become the words people use. '
+      + 'NOTE THE FOURTH ITEM: the operator asked for "no wax fillers", which would have been FALSE and '
+      + 'self-contradicting — the Ingredients tab lists plant-based emulsifying wax in the lotion and organic '
+      + 'beeswax in the cream, and bullet 3 directly above says "beeswax barrier". Substituted "no parabens", '
+      + 'which is true and already claimed in the free-from block.',
+  },
 ]);
 
 /** Template-file fallbacks that still carry the old count. */
@@ -133,6 +162,51 @@ export function classifyEntry(liveValue, entry) {
 }
 
 /** Every AFTER must clear the health gate before it can be written. */
+/**
+ * Turn the plan into `metaobjectUpdate` field inputs — ONE per FIELD, never one
+ * per entry.
+ *
+ * Several entries legitimately target the same field: `buybox_bullets` is a
+ * single value holding four bullets, and bullets 2 and 4 were replaced
+ * independently. Pushing a write per entry sent two inputs with the same key,
+ * which Shopify refuses outright ("Field \"buybox_bullets\" duplicates other
+ * inputs") — and had it accepted them, each value was computed from the ORIGINAL
+ * live string, so the second would have silently discarded the first.
+ *
+ * So replacements ACCUMULATE: each entry is classified against the value as it
+ * stands after the earlier entries, which also makes `already-applied` mean the
+ * same thing on the second pass as on the first.
+ *
+ * @param {Record<string,{value:string}>} fields  live metaobject fields by key
+ * @param {readonly object[]} plan
+ * @param {(line:string)=>void} [log]
+ * @returns {{key:string, value:string}[]}
+ */
+export function buildWrites(fields, plan = PLAN, log = () => {}) {
+  const current = new Map();   // field -> value as edited so far
+  const touched = new Set();   // fields that actually changed
+  for (const e of plan) {
+    if (!current.has(e.field)) {
+      const live = fields[e.field]?.value;
+      if (live === undefined) { log(`  MISSING FIELD  ${e.id} (${e.field})`); continue; }
+      current.set(e.field, live);
+    }
+    const value = current.get(e.field);
+    const verdict = classifyEntry(value, e);
+    log(`  ${verdict.toUpperCase().padEnd(16)} ${e.id}`);
+    if (verdict === 'skip-drift') {
+      log('      live matches neither BEFORE nor AFTER — refusing to overwrite an edit nobody here made');
+      continue;
+    }
+    if (verdict === 'already-applied') continue;
+    log(`      - ${e.before.slice(0, 110)}`);
+    log(`      + ${e.after.slice(0, 110)}`);
+    current.set(e.field, value.split(e.before).join(e.after));
+    touched.add(e.field);
+  }
+  return [...touched].map((key) => ({ key, value: current.get(key) }));
+}
+
 export function gatePlan(plan = PLAN) {
   const failures = [];
   for (const e of plan) {
@@ -167,21 +241,7 @@ async function main(argv) {
     console.log(`backed up the whole metaobject -> ${path}\n`);
   }
 
-  const writes = [];
-  for (const e of PLAN) {
-    const live = fields[e.field]?.value;
-    if (live === undefined) { console.log(`  MISSING FIELD  ${e.id} (${e.field})`); continue; }
-    const verdict = classifyEntry(live, e);
-    console.log(`  ${verdict.toUpperCase().padEnd(16)} ${e.id}`);
-    if (verdict === 'skip-drift') {
-      console.log('      live matches neither BEFORE nor AFTER — refusing to overwrite an edit nobody here made');
-      continue;
-    }
-    if (verdict === 'already-applied') continue;
-    console.log(`      - ${e.before.slice(0, 110)}`);
-    console.log(`      + ${e.after.slice(0, 110)}`);
-    writes.push({ key: e.field, value: live.split(e.before).join(e.after) });
-  }
+  const writes = buildWrites(fields, PLAN, (line) => console.log(line));
 
   console.log('\n--- template fallbacks ---');
   for (const t of TEMPLATE_FIXES) {
