@@ -300,3 +300,52 @@ test('computePlan: injected idea carries contributing[] of its injecting signal'
   assert.equal(inj.contributing[0].type, 'unmapped');
   assert.equal(inj.contributing[0].score, 40);
 });
+
+// ── buildContributionIndex (fix/prioritizer-ledger-scored-shape) ─────────────
+// `plan.scored` holds ONLY backlog ideas (pending, no publish_date) — items already
+// in production are excluded from `backlog` by construction in the agent. The first
+// attempt at production attribution read `plan.scored` and so found NOTHING on a real
+// run. This exports the SAME matching computePlan uses, so the agent can attribute
+// in-production calendar items without duplicating (and drifting from) the rules.
+import { buildContributionIndex } from '../../lib/pipeline-priority.js';
+
+const IDX_CFG = {
+  base: CFG.base,
+  strongThreshold: 30,
+  signals: {
+    unmapped:        { minImpressions: 500, strongImpressions: 3000, perImpression: 0.01, cap: 40 },
+    rank_drop:       { strongPositions: 5, perPosition: 3, cap: 40, trafficStrongPct: 20 },
+    revenue_cluster: { minDelta: 25, strongDelta: 100, perDollar: 0.2, cap: 30 },
+    competitor_gap:  { boost: 15, cap: 30 },
+    ai_gap:          { boost: 12, cap: 24 },
+  },
+};
+
+test('buildContributionIndex matches a signal by keyword', () => {
+  const { contributionsFor } = buildContributionIndex(
+    [{ type: 'unmapped', key: 'vegan soap', strength: 900, cluster: null }], IDX_CFG);
+  const { contributing } = contributionsFor({ slug: 'vegan-soap', keyword: 'vegan soap', cluster: null });
+  assert.equal(contributing.length, 1);
+  assert.equal(contributing[0].type, 'unmapped');
+});
+
+test('buildContributionIndex matches by cluster and de-dups one signal hit twice', () => {
+  const { contributionsFor } = buildContributionIndex(
+    [{ type: 'revenue_cluster', key: 'soap', strength: 62, cluster: 'soap' }], IDX_CFG);
+  // hits on BOTH the key ('soap') and the cluster ('soap') — must count once
+  const { contributing } = contributionsFor({ slug: 'soap', keyword: 'soap', cluster: 'soap' });
+  assert.equal(contributing.length, 1, 'de-duped by type:key');
+});
+
+test('buildContributionIndex gives an unrelated item no contribution', () => {
+  const { contributionsFor } = buildContributionIndex(
+    [{ type: 'unmapped', key: 'vegan soap', strength: 900, cluster: null }], IDX_CFG);
+  const { contributing } = contributionsFor({ slug: 'lip-balm', keyword: 'lip balm', cluster: 'lip balm' });
+  assert.deepEqual(contributing, []);
+});
+
+test('buildContributionIndex still emits the weak-signal suggestions list', () => {
+  const { suggestions } = buildContributionIndex(
+    [{ type: 'unmapped', key: 'weak', strength: 600, cluster: null }], IDX_CFG);
+  assert.ok(Array.isArray(suggestions));
+});
