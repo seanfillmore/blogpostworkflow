@@ -27,7 +27,7 @@ export const P = {
   shopAll:    { url: `${SITE}/collections/all` },
 };
 
-const FREE_SHIP = '$50';
+const FREE_SHIP = '$45';
 
 // ---------- shared shell ----------
 
@@ -201,9 +201,9 @@ export const EMAILS = {
     key: 'e5',
     name: 'Post-Purchase — 05 Restock Reorder',
     subject: 'Running low? Restock in one click 🔁',
-    preview: 'Stock up on your essentials — and cross $50 for free shipping.',
+    preview: 'Stock up on your essentials — and cross $45 for free shipping.',
     html: shell(
-      'Stock up on your essentials — and cross $50 for free shipping.',
+      'Stock up on your essentials — and cross $45 for free shipping.',
       H1('Time for a refill?') +
       P_('If you\'re getting low on your everyday essentials, here\'s the one-click way to restock. Each button adds it straight to your cart.') +
       // Show the reorder card for what they actually bought; fall back to the trio.

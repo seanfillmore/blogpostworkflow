@@ -10,7 +10,7 @@ const meta = JSON.parse(readFileSync(`${SCRATCH}/render-meta.json`, 'utf8'));
 const STEPS = [
   { key: 'e1_thankyou', when: '+1 hr', tag: 'Day 0', job: 'Thank-you + what to expect. Build trust, cut refunds.' },
   { key: 'e2_howto', when: '+2 days', tag: 'Day 2', job: 'How to use what they bought (personalized in-email). Deflect returns.' },
-  { key: 'e3_set', when: '+3 days', tag: 'Day 5', job: 'Cross-sell the Set → clears $50 free-ship. The AOV lever.' },
+  { key: 'e3_set', when: '+3 days', tag: 'Day 5', job: 'Cross-sell the Set → clears $45 free-ship. The AOV lever.' },
   { key: 'e4_review', when: '+5 days', tag: 'Day 10', job: 'Judge.me review + soft referral (NEWCUS).' },
   { key: 'e5_restock', when: '+25 days', tag: 'Day 35', job: 'One-click reorder. Consumable buyers only. The repeat lever.' },
 ];
@@ -114,7 +114,7 @@ const page = `<style>
 <div class="wrap">
   <section class="hero">
     <h1>Post-Purchase Flow</h1>
-    <p><span class="lead-accent">Five emails, now live in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$50 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No price discounts — free shipping is the only lever, including a <strong>SETSHIP</strong> code that ships the bundle free in Email 3.</p>
+    <p><span class="lead-accent">Five emails, now live in Klaviyo.</span> The sequence is engineered around the two things that move RSC revenue: pushing order value toward the <strong>$45 free-shipping</strong> line with a set cross-sell, and driving the repeat order with a one-click replenishment reorder. No price discounts — free shipping is the only lever, including a <strong>SETSHIP</strong> code that ships the bundle free in Email 3.</p>
 
     <ul class="timeline">${timeline}
     </ul>

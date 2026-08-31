@@ -2,7 +2,7 @@
  * Customer Winback (rebuild) — trigger: Placed Order (V69ueg) + 75 days lapsed.
  * Discount ladder (softest first, save margin for the closer):
  *   E1 (75d)  no discount — re-engage + best sellers
- *   E2 (+15d) free shipping (SHIPFREE)
+ *   E2 (+15d) free shipping (WELCOMEBACK)
  *   E3 (+7d)  25% off (ComeBack25) — final, with urgency
  * Preserves old profile filter (excludes anyone who has since re-ordered).
  */
@@ -35,7 +35,7 @@ export default {
         'Free shipping to pick up right where you left off.',
         H1('Let\'s make this easy') +
         P_('We\'d love to have you back. To make it easy, here\'s <strong>free shipping</strong> on your next order:') +
-        // Dedicated winback code (NOT the welcome SHIPFREE, which is once-per-customer
+        // Dedicated winback code (NOT the welcome NEWCUSTOMER, which is new-customers-only
         // and most lapsed customers already used it).
         codeBox('Free shipping — welcome back', 'WELCOMEBACK') +
         button(P.bestSellers.url, 'Restock your favorites') +
