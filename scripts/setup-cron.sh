@@ -153,6 +153,20 @@ DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-pos
 # endangers — reporting before it runs is the whole point.
 DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-content-mirror-drift.mjs >> data/reports/scheduler/content-mirror-gate.log 2>&1"
 
+# Bundle value-stack gate — DETECT ONLY, 12:30 UTC.
+# Asks whether every bundle's value_stack metafield totals its own Shopify
+# compare-at price. Built after the Coconut Reset lander was found stating
+# "$180 of value / $59 savings" in three places and "$174 / $53" in a fourth,
+# with the buy box striking through $174 — two Liquid blocks summing one
+# metafield under two rules, the whole difference being a `Free shipping $6`
+# row. It had been live for months with nothing reporting it, and the first
+# run of the checker found the SAME row on clean-swap and gift-box.
+# It can never fix anything: resolving a divergence is a judgement about what
+# counts as customer value, not a number to recompute.
+# 12:30 sits between the two sibling detectors (12:20, 12:40) and before the
+# 13:00 digest, so all three land in the same morning's email. UTC, no TZ=.
+DAILY_VALUE_STACK_GATE="30 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-bundle-value-stack-drift.mjs >> data/reports/scheduler/value-stack-gate.log 2>&1"
+
 # Daily digest (runs last — collects everything from the day)
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
@@ -375,6 +389,7 @@ $DAILY_PUBLISH_DRIFT
 $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
 $DAILY_CONTENT_MIRROR_GATE
+$DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 # ── Daily digest ──
 $DAILY_SUMMARY
