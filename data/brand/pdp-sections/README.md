@@ -127,27 +127,44 @@ the whole time — corroboration that the shortcut was the PDPs', not the shoot'
 | Organic Red Palm Oil | `red-palm-fruit.webp` | operator-supplied 2026-08-31 (lotion, cream, lip balm, draft page) |
 | Baking Soda | `baking-soda.webp` | operator-supplied 2026-08-31 (deodorant, toothpaste) |
 | Wildcrafted Myrrh | `myrrh-resin.webp` | operator-supplied 2026-08-31 (toothpaste) |
+| Variation Essential Oils | `essential-oils.webp` | operator-supplied 2026-08-31 (bar soap, liquid soap) — **unlabelled on purpose** |
 
 `red-palm-oil.webp` (a mint/teal lab flask) is **retired and has zero referrers**
 — accurate, but visibly foreign beside the warm naturals. It is left in Files
 rather than deleted; nothing here needs it.
 
-### Still wrong — the one card with no usable photograph
+### Every card is correct — verified 2026-08-31
 
-Both soaps' **"Variation Essential Oils"** still shows `Wax.webp`. **Do not paper
-this over with a near-miss image** — substituting `Grapefruit` for "essential
-oils" is the exact defect this work removed.
+All 8 landing-page PDPs render their own ingredient on every card
+(`coconut-lotion`, `coconut-moisturizer`, `coconut-oil-lip-balm`,
+`coconut-oil-deodorant`, `coconut-oil-toothpaste`, `coconut-soap`,
+`organic-foaming-hand-soap`, `foam-soap-refill-32oz`). The script's `BLOCKED`
+list is **empty and kept** — an empty list is a measured state it prints on
+every run, and the next card added to a template starts there.
 
-**Artwork was supplied and REJECTED**, kept at
-`essential-oils.REJECTED.source.jpg` so the same brief is not regenerated: one
-bottle's headline reads **FRANKINCENBE**, every Latin binomial is model
-gibberish (`Lecendule engustifate`, `Eocelyptis glebeloe`, `Cldos bergamia`),
-volumes read `1burt` / `Tord` / `10nd`, and the bergamot bottle is drawn with
-green limes. It cannot be cropped clean — the labelled bottles ARE the subject.
+Two cards are **not** ingredients and are left alone: bar soap's "Naturally
+Lathering" and liquid soap's "Built for the Foaming Dispenser", both showing
+`Spring_Water.webp`, which reads as lather and as dilution. The soaps are the
+family where a three-ingredient list does not apply — Pure Unscented is
+saponified coconut oil and nothing else.
 
-**Replacement brief: amber dropper bottles with NO readable label text** (blank
-labels, or turned away from camera), warm wood, soft daylight, 3:2. Nothing on
-this card needs to name an oil; the copy beside it already does.
+### The essential-oils card must stay UNLABELLED
+
+The first supplied shot had nine **labelled** bottles and was rejected: one
+headline read **FRANKINCENBE**, every Latin binomial was gibberish
+(`Lecendule engustifate`, `Eocelyptis glebeloe`, `Cldos bergamia`), volumes read
+`1burt` / `Tord` / `10nd`, and bergamot was drawn with green limes. It could not
+be cropped clean because the labelled bottles were the subject. It is kept at
+`essential-oils.REJECTED.source.jpg`.
+
+**The fix was to remove the labels, not to fix the words** — and that is the
+durable reason, not just an expedient one. Bare amber glass cannot misspell
+anything, and it cannot contradict the copy beside it either: that copy lists a
+different blend per variation (Orange Zest is orange, bergamot, spearmint, lemon
+and grapefruit; Calming Lavender is lavender; Coconut Breeze is coconut oil
+extract; Pure Unscented has none). **Any** set of named bottles would be wrong
+for most variations even spelled perfectly. If this card is ever reshot, keep
+the bottles blank or turned away from camera.
 
 ### Preparing a supplied image
 
@@ -156,11 +173,12 @@ which cuts **34% off a square, top and bottom, sight unseen** — so they are
 pre-cropped to **1200x794 exactly** (the incumbent geometry) and reviewed at
 that crop, rather than uploaded square. `myrrh-resin.webp` is cropped *below*
 its source's jar, which is what removes a label misspelling **MYRRRH** (three
-R's) from the frame.
+R's) from the frame — a crop can rescue an image whose text is incidental, and
+cannot rescue one whose text is the subject.
 
 **Verify supplied artwork by zooming each string and reading it letter by
-letter.** At a glance all four looked clean; `MYRRRH` and `FRANKINCENBE` both
-survived a first read.
+letter.** At a glance all five looked clean; `MYRRRH` and `FRANKINCENBE` both
+survived a first read, and both were only caught at 4x zoom.
 
 ### The row's height is `1 / the widest image` — check that, not the position
 
