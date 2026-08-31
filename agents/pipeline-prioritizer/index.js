@@ -31,7 +31,7 @@ import { slugify } from '../../lib/keyword-dedup.js';
 import { isInProductScope } from '../../lib/product-scope.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
-import { appendAttribution } from '../../lib/attribution-log.js';
+import { appendAttribution, readAttribution, buildProductionRecords, dedupeAgainst } from '../../lib/attribution-log.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -201,8 +201,10 @@ async function main() {
   const backlog = [];
   let bufferReady = 0;
   const takenSlots = new Set();
+  const statusBySlug = new Map(); // slug → derived status, reused by the attribution ledger
   for (const it of calendar.items) {
     const st = statusOf(it);
+    statusBySlug.set(it.slug, st);
     if (['written', 'scheduled', 'draft', 'briefed'].includes(st)) bufferReady++;
     if (it.publish_date) takenSlots.add(ymd(it.publish_date));
     if (st === 'pending' && !it.publish_date) {
@@ -306,8 +308,18 @@ async function main() {
         signal_type: c.type, strength: c.strength, score: c.score, action: 'promote', cluster: item.cluster || null });
     }
   }
-  appendAttribution(attribution, { path: ATTRIBUTION_PATH });
-  if (attribution.length) console.log(`  Attribution: logged ${attribution.length} signal→post record(s).`);
+  // Items already IN PRODUCTION. `inject` and `promote` are both correctly rare in
+  // steady state (stocked buffer, keywords already covered), which left the ledger at
+  // one record in 78 days and made priority-tuner a permanent no-op. Logging here is
+  // what lets the closed loop accumulate evidence without anyone intervening.
+  attribution.push(...buildProductionRecords({ scored: plan.scored, statusBySlug, today, nowIso }));
+
+  // The agent runs DAILY — dedupe against the existing ledger or the same items are
+  // re-appended every morning and the tuner reads one post as dozens of samples.
+  const fresh = dedupeAgainst(attribution, readAttribution(ATTRIBUTION_PATH));
+  appendAttribution(fresh, { path: ATTRIBUTION_PATH });
+  if (fresh.length) console.log(`  Attribution: logged ${fresh.length} new signal→post record(s) (${attribution.length - fresh.length} already recorded).`);
+  else if (attribution.length) console.log(`  Attribution: no new records (${attribution.length} already recorded).`);
 
   // 4) persist signal state + report
   mkdirSync(REPORTS_DIR, { recursive: true });
