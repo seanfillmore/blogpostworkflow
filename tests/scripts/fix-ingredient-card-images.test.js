@@ -186,6 +186,7 @@ test('no incoming image is WIDER than the incumbent max, so the row keeps its he
     'baking-soda.webp': 1200 / 794,
     'myrrh-resin.webp': 1200 / 794,
     'red-palm-fruit.webp': 1200 / 794,
+    'essential-oils.webp': 1200 / 794,
   };
   const incumbentMax = ASPECT['Coconut_Oil_Extract.webp'];
   assert.equal((1 / incumbentMax * 100).toFixed(4), '66.1667'); // what the PDPs render
@@ -200,24 +201,67 @@ test('no incoming image is WIDER than the incumbent max, so the row keeps its he
   }
 });
 
-test('the three prepared assets exist on disk at exactly the incumbent geometry', async () => {
+test('the four prepared assets exist on disk at exactly the incumbent geometry', async () => {
   // They arrived as 1024x1024 and are pre-cropped rather than uploaded square,
   // so what was reviewed is what ships instead of a sight-unseen 34% cover-crop.
   const { default: sharp } = await import('sharp');
-  for (const f of ['baking-soda.webp', 'myrrh-resin.webp', 'red-palm-fruit.webp']) {
+  for (const f of ['baking-soda.webp', 'myrrh-resin.webp', 'red-palm-fruit.webp', 'essential-oils.webp']) {
     const m = await sharp(new URL(`../../data/brand/pdp-sections/${f}`, import.meta.url).pathname).metadata();
     assert.equal(`${m.width}x${m.height}`, '1200x794', `${f} is ${m.width}x${m.height}`);
   }
 });
 
-test('the rejected essential-oils source is KEPT, so the finding is not re-derived', async () => {
-  // "FRANKINCENBE" plus gibberish binomials. Committed so the next person does
-  // not regenerate the same brief and rediscover the same defect.
+test('the rejected essential-oils source is KEPT beside the one that shipped', async () => {
+  // The first shot had "FRANKINCENBE" plus gibberish binomials and could not be
+  // cropped clean, because the LABELLED bottles were the subject. The fix was to
+  // remove the labels, not to fix the words. Both files stay: one records why
+  // the brief says "unlabelled", the other is what ships.
   const { existsSync } = await import('node:fs');
-  assert.ok(existsSync(new URL('../../data/brand/pdp-sections/essential-oils.REJECTED.source.jpg', import.meta.url).pathname));
+  const at = (f) => new URL(`../../data/brand/pdp-sections/${f}`, import.meta.url).pathname;
+  assert.ok(existsSync(at('essential-oils.REJECTED.source.jpg')), 'the rejected shot must be kept');
+  assert.ok(existsSync(at('essential-oils.source.jpg')), 'the shipped source must be kept');
+  assert.ok(existsSync(at('essential-oils.webp')), 'the prepared asset must be kept');
+});
+
+test('BLOCKED is empty — every ingredient card shows its own ingredient', () => {
+  // Kept rather than deleted: an empty list is a measured state the run prints,
+  // and the next card added to a template starts here. Any future entry must
+  // still name what it NEEDS rather than carrying a near-miss substitution.
+  assert.equal(BLOCKED.length, 0);
   for (const b of BLOCKED) {
-    assert.match(b.rejected ?? '', /REJECTED/, `${b.title} should name the rejected artwork`);
+    assert.ok(!('after' in b), `${b.title} must not carry a substitution`);
+    assert.ok(b.needs, `${b.title} must name what it needs`);
   }
+});
+
+test('every ingredient-naming card in every template is covered by the plan', () => {
+  // The real completeness statement: each (template, title) pair that names an
+  // ingredient is either in PLAN or explicitly recorded as a mechanism card.
+  const covered = new Set([...PLAN, ...NOT_INGREDIENTS].map((e) => `${e.template}::${e.title}`));
+  const expected = [
+    ['product.landing-page-lotion.json', 'Organic Jojoba'],
+    ['product.landing-page-lotion.json', 'Organic Red Palm Oil'],
+    ['product.landing-page-cream.json', 'Organic Red Palm Oil'],
+    ['product.landing-page-lip-balm.json', 'Organic Red Palm Oil'],
+    ['product.landing-page-deodorant.json', 'Organic Jojoba'],
+    ['product.landing-page-deodorant.json', 'Baking Soda'],
+    ['product.landing-page-toothpaste.json', 'Baking Soda'],
+    ['product.landing-page-toothpaste.json', 'Wildcrafted Myrrh'],
+    ['product.landing-page-bar-soap.json', 'Variation Essential Oils'],
+    ['product.landing-page-liquid-soap.json', 'Variation Essential Oils'],
+    ['product.landing-page-bar-soap.json', 'Naturally Lathering'],
+    ['product.landing-page-liquid-soap.json', 'Built for the Foaming Dispenser'],
+  ];
+  for (const [t, title] of expected) assert.ok(covered.has(`${t}::${title}`), `${t} "${title}" is uncovered`);
+});
+
+test('the essential-oils card stays UNLABELLED, not re-labelled with named oils', () => {
+  // The copy beside it lists a different blend per variation (Orange Zest is
+  // five oils; Calming Lavender is one; Pure Unscented has none), so any set of
+  // NAMED bottles is wrong for most variations even spelled perfectly.
+  const soaps = PLAN.filter((e) => e.title === 'Variation Essential Oils');
+  assert.equal(soaps.length, 2, 'bar soap and liquid soap');
+  assert.ok(soaps.every((e) => e.after === 'essential-oils.webp'));
 });
 
 test('a per-entry section is honoured, so a non-PDP template can be swept', () => {
@@ -252,6 +296,7 @@ test('the plan only moves images ONTO an ingredient that matches the card title'
     'Red Palm Oil': 'red-palm-fruit.webp',
     'Baking Soda': 'baking-soda.webp',
     'Wildcrafted Myrrh': 'myrrh-resin.webp',
+    'Variation Essential Oils': 'essential-oils.webp',
   };
   for (const e of PLAN) assert.equal(e.after, expected[e.title], `${e.title} → ${e.after}`);
 });
@@ -270,15 +315,4 @@ test('the three lists are disjoint — a card is fixable, blocked, or not an ing
   const id = (r) => `${r.template}::${r.title}`;
   const all = [...PLAN, ...BLOCKED, ...NOT_INGREDIENTS].map(id);
   assert.equal(new Set(all).size, all.length);
-});
-
-test('BLOCKED names an ingredient that has no image, never a near-miss substitution', () => {
-  // Filling these with Grapefruit.webp or Wax.webp is the exact defect this
-  // script removes, so the list must stay a statement of absence.
-  const library = new Set(['Coconut_Oil_Extract.webp', 'coconut_oil.webp', 'Spring_Water.webp',
-    'Jojoba.webp', 'Wax.webp', 'Grapefruit.webp', 'red-palm-oil.webp']);
-  for (const b of BLOCKED) {
-    assert.ok(!('after' in b), `${b.title} must not carry a substitution`);
-    assert.ok(library.has(b.current), `${b.current} should be one of the recycled library images`);
-  }
 });

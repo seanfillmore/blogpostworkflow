@@ -34,27 +34,29 @@
  * Oil Extract. Somebody built that correctly; only the PDP templates took the
  * position shortcut. That page is why entries carry their own `section`.
  *
- * ── What this does NOT fix, and why it is not a silent gap ─────────────────
- * A generic `ESSENTIAL OILS` photograph still does not exist, so both soaps'
- * "Variation Essential Oils" card keeps a knowingly wrong image. It is printed
- * as `BLOCKED` on every run, dry or applied, so the residual is reported rather
- * than left to be rediscovered. Substituting an approximate photograph —
- * grapefruit for "essential oils", wax for "baking soda" — IS the defect this
- * script exists to remove, so nothing is guessed.
+ * ── Nothing is BLOCKED any more, and that list is kept anyway ─────────────
+ * Every ingredient card now shows its own ingredient. `BLOCKED` is EMPTY rather
+ * than deleted, and the run prints "BLOCKED: none" — a measured state, not an
+ * absent check. The next card added to a template starts there.
  *
- * ── One supplied photograph was REJECTED on its text, and it is kept ───────
- * `data/brand/pdp-sections/essential-oils.REJECTED.source.jpg` is an operator-
- * supplied shot of nine labelled dropper bottles. It cannot ship: the headline
- * on one bottle reads **FRANKINCENBE**, every Latin binomial is model gibberish
- * (`Lecendule engustifate`, `Eocelyptis glebeloe`, `Cldos bergamia`), several
- * volumes read `1burt` / `Tord` / `10nd`, and the bergamot bottle is
- * illustrated with green limes. Unlike the myrrh shot below it CANNOT be
- * cropped clean — the labelled bottles ARE the subject. It is committed so the
- * next person does not regenerate the same brief and re-derive the same finding;
- * the replacement brief is in the README.
+ * ── The FIRST essential-oils photograph was REJECTED on its text ───────────
+ * `data/brand/pdp-sections/essential-oils.REJECTED.source.jpg` is kept, and the
+ * `.source.jpg` beside it is the one that shipped. The rejected shot had nine
+ * LABELLED bottles: one headline read **FRANKINCENBE**, every Latin binomial was
+ * model gibberish (`Lecendule engustifate`, `Eocelyptis glebeloe`,
+ * `Cldos bergamia`), volumes read `1burt` / `Tord` / `10nd`, and the bergamot
+ * bottle was drawn with green limes. Unlike the myrrh shot it could NOT be
+ * cropped clean, because the labelled bottles were the subject.
+ *
+ * **The fix was to remove the labels, not to fix the words.** Bare amber glass
+ * cannot misspell anything, and it cannot contradict the copy beside it either —
+ * that copy lists a different blend per variation (Orange Zest is orange,
+ * bergamot, spearmint, lemon and grapefruit; Calming Lavender is lavender; Pure
+ * Unscented has none), so ANY set of named bottles would be wrong for most
+ * variations even spelled perfectly. Keep this card unlabelled.
  *
  * Verify supplied artwork by zooming each string and reading it letter by
- * letter. At a glance all three of these images looked clean; `MYRRRH` (three
+ * letter. At a glance all four supplied images looked clean; `MYRRRH` (three
  * R's) and `FRANKINCENBE` both survived a first read, which is exactly the
  * autocorrecting-vision failure the fleet has hit before.
  *
@@ -76,12 +78,12 @@
  * giving the 66.1666% measured on the rendered PDPs. Every image this plan
  * introduces sits at or below it: `Jojoba.webp` 1200x900 = 1.3333 (tallest,
  * so cover-cropped ~11% top and bottom, subject centred with margin), and the
- * three prepared on 2026-08-31 — `baking-soda`, `myrrh-resin`,
- * `red-palm-fruit` — are cut to **1200x794 exactly**, byte-identical geometry
- * to the incumbent, precisely so `highest_ratio` cannot move.
+ * four prepared on 2026-08-31 — `baking-soda`, `myrrh-resin`, `red-palm-fruit`
+ * and `essential-oils` — are cut to **1200x794 exactly**, byte-identical
+ * geometry to the incumbent, precisely so `highest_ratio` cannot move.
  *
  * They are pre-cropped rather than uploaded square for the same reason: all
- * three arrived as 1024x1024, which the row would have cover-cropped by 34% top
+ * four arrived as 1024x1024, which the row would have cover-cropped by 34% top
  * and bottom sight-unseen. Composing the crop here means what was reviewed is
  * what ships.
  *
@@ -209,31 +211,38 @@ export const PLAN = [
     after: 'myrrh-resin.webp',
     reason: 'showed wax pellets; no myrrh photograph existed until 2026-08-31',
   },
-];
-
-/**
- * Cards naming an ingredient we have NO usable photograph of. Printed every run
- * so the residual stays visible; deliberately not filled with a near-miss image.
- *
- * `rejected` records that artwork WAS supplied and failed, which is a different
- * state from "nobody has tried" and needs a different next step.
- */
-export const BLOCKED = [
+  // The soaps' card 3. It is a category illustration, not one named oil — the
+  // copy beside it lists the actual blends per variation, and the bottles are
+  // deliberately UNLABELLED so the picture cannot contradict that copy.
   {
     template: 'product.landing-page-bar-soap.json',
     title: 'Variation Essential Oils',
-    current: 'Wax.webp',
-    needs: 'unlabelled amber dropper bottles',
-    rejected: 'essential-oils.REJECTED.source.jpg — "FRANKINCENBE", gibberish binomials',
+    before: ['Wax.webp'],
+    after: 'essential-oils.webp',
+    reason: 'showed wax pellets; the first supplied shot was rejected on its label text',
   },
   {
     template: 'product.landing-page-liquid-soap.json',
     title: 'Variation Essential Oils',
-    current: 'Wax.webp',
-    needs: 'unlabelled amber dropper bottles',
-    rejected: 'essential-oils.REJECTED.source.jpg — "FRANKINCENBE", gibberish binomials',
+    before: ['Wax.webp'],
+    after: 'essential-oils.webp',
+    reason: 'showed wax pellets; the first supplied shot was rejected on its label text',
   },
 ];
+
+/**
+ * Cards naming an ingredient we have no usable photograph of.
+ *
+ * EMPTY as of 2026-08-31 — every ingredient card now shows its own ingredient.
+ * Keep the list and its reporting: the next card added to a template starts
+ * here, and an empty BLOCKED is a measured state that the run prints, not an
+ * absence of the check.
+ *
+ * If one is ever added back, `rejected` records that artwork WAS supplied and
+ * failed, which is a different state from "nobody has tried" and needs a
+ * different next step.
+ */
+export const BLOCKED = [];
 
 /** Cards whose heading is a mechanism claim, not an ingredient. Left alone. */
 export const NOT_INGREDIENTS = [
@@ -396,10 +405,14 @@ async function main() {
     console.log(`\n  ${changed.length} to change, `
       + `${results.length - changed.length - skipped.length} already applied, ${skipped.length} skipped`);
 
-    console.log(`\nBLOCKED — no usable photograph of this ingredient exists:`);
-    for (const b of BLOCKED) {
-      console.log(`  · ${short(b.template).padEnd(11)} "${b.title}" still shows ${b.current} — needs ${b.needs}`);
-      if (b.rejected) console.log(`      artwork was supplied and REJECTED: ${b.rejected}`);
+    if (BLOCKED.length === 0) {
+      console.log(`\nBLOCKED: none — every ingredient card shows its own ingredient.`);
+    } else {
+      console.log(`\nBLOCKED — no usable photograph of this ingredient exists:`);
+      for (const b of BLOCKED) {
+        console.log(`  · ${short(b.template).padEnd(11)} "${b.title}" still shows ${b.current} — needs ${b.needs}`);
+        if (b.rejected) console.log(`      artwork was supplied and REJECTED: ${b.rejected}`);
+      }
     }
     console.log(`\nNot ingredients (mechanism cards, left alone):`);
     for (const n of NOT_INGREDIENTS) {
