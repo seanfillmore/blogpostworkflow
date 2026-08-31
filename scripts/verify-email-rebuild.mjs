@@ -36,6 +36,8 @@
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { liveFlowTemplates, resolveLiveTemplate } from '../lib/klaviyo-flow-templates.js';
+import { specs } from '../data/brand/email-rebuild/specs.js';
 import {
   linksIn,
   linkFindings,
@@ -69,22 +71,42 @@ const textIn = (s) => s
   .replace(/\s+/g, ' ')
   .trim();
 
-async function liveHtml(id) {
+/**
+ * The live body of the template a flow email ACTUALLY sends.
+ *
+ * Resolved by the email's NAME, never by the spec's file key. Klaviyo rotates the
+ * template id every time the email is saved in the UI: on 2026-08-31, one day after
+ * five emails were pasted, 9 of 21 spec ids had rotated and every old id 404'd. This
+ * function used to fetch by the key, get a 404, return null, print "(could not fetch)"
+ * and let the run report PASS — a drift check that had silently stopped checking.
+ *
+ * Returns a reason rather than a bare null so the caller can tell "no API key here"
+ * (benign) from "this email no longer exists under that name" (a real finding).
+ */
+async function liveHtml(specId, index) {
   const key = loadEnv().KLAVIYO_PRIVATE_KEY;
-  if (!key) return null;
+  if (!key) return { html: null, skipped: 'no KLAVIYO_PRIVATE_KEY' };
+
+  const name = specs[specId]?.name;
+  if (!name) return { html: null, problem: `no spec named ${specId} — cannot resolve its live template` };
+
+  const r = await resolveLiveTemplate({ specId, name, index });
+  if (!r.templateId) return { html: null, problem: r.reason };
+
   try {
-    const res = await fetch(`https://a.klaviyo.com/api/templates/${id}/`, {
+    const res = await fetch(`https://a.klaviyo.com/api/templates/${r.templateId}/`, {
       headers: { Authorization: `Klaviyo-API-Key ${key}`, revision: '2024-10-15' },
       signal: AbortSignal.timeout(25_000),
     });
-    if (!res.ok) return null;
-    return (await res.json())?.data?.attributes?.html ?? null;
-  } catch {
-    return null;
+    if (!res.ok) return { html: null, problem: `template ${r.templateId} -> HTTP ${res.status}`, rotated: r.rotated, templateId: r.templateId };
+    const html = (await res.json())?.data?.attributes?.html ?? null;
+    return { html, rotated: r.rotated, templateId: r.templateId };
+  } catch (e) {
+    return { html: null, problem: `fetching ${r.templateId}: ${e.message}`, rotated: r.rotated, templateId: r.templateId };
   }
 }
 
-async function verify(id) {
+async function verify(id, index) {
   const before = join(DIR, `${id}.before.html`);
   const after = join(DIR, `${id}.after.html`);
   if (!existsSync(before) || !existsSync(after)) {
@@ -118,15 +140,33 @@ async function verify(id) {
 
   problems.push(...postalFindings(a, KIT.postal_address).problems);
 
-  const live = await liveHtml(id);
+  const liveRes = await liveHtml(id, index);
+  const live = liveRes.html;
   const drifted = live !== null && live !== b;
+  // A rotation means somebody saved this email in the UI, so `.before.html` is a
+  // snapshot of a body that is no longer what ships. Say so — this is the state in
+  // which a later 'safe to paste' would be reasoning from a stale baseline.
+  // A rotation on its OWN is not a finding — the ids move every time the email is saved,
+  // and 9 of 21 specs are permanently rotated already. Warning on that alone would print
+  // nine standing warnings with nothing to do about them, which is how a report stops
+  // being read. It only matters when the body ALSO drifted: then `.before.html` is a
+  // baseline for a body that no longer ships.
+  if (liveRes.rotated && drifted) warnings.push(`this email was saved in Klaviyo (template is now ${liveRes.templateId}) — refresh .before.html before trusting the diff`);
+  if (liveRes.problem) warnings.push(`live check UNAVAILABLE — ${liveRes.problem}`);
 
   console.log(`\n${id}`);
   console.log(`  tags     ${tb.length} → ${ta.length}${tag.problems.length ? ' ✗' : ' ✓'}`);
   console.log(`  links    ${linksIn(b).length} → ${linksIn(a).length}${link.problems.length ? ' ✗' : link.warnings.length ? ' ⚠ dropped (redesign)' : ' ✓'}`);
   console.log(`  colours  ${hexesIn(b).length} → ${hexesIn(a).length}${offPalette.length ? ' ✗' : ' ✓ all on-palette'}`);
   console.log(`  copy     ${copyChanged ? (REDESIGN ? '⚠ changed (redesign — intended)' : '✗ changed') : '✓ unchanged'}`);
-  console.log(`  live     ${live === null ? '(could not fetch)' : drifted ? '⚠ DRIFTED from .before — someone edited it in the UI' : '✓ matches .before'}`);
+  // The resolved id is printed on the happy path too: it is the only place a reader can
+  // see WHICH template was actually compared, and the spec key is no longer that id.
+  const liveLabel = live !== null
+    ? (drifted
+      ? `⚠ DRIFTED from .before — someone edited it in the UI (template ${liveRes.templateId})`
+      : `✓ matches .before (template ${liveRes.templateId})`)
+    : liveRes.skipped ? `(skipped — ${liveRes.skipped})` : `⚠ NOT CHECKED — ${liveRes.problem}`;
+  console.log(`  live     ${liveLabel}`);
   for (const w of warnings) console.log(`  ⚠ ${w}`);
   for (const p of problems) console.log(`  ✗ ${p}`);
   if (!problems.length) console.log(`  → safe to paste${drifted ? ', BUT reconcile the drift first' : ''}`);
@@ -150,7 +190,12 @@ if (!ids.length) {
   process.exit(2);
 }
 
+// One index for the whole run — resolving per email would re-walk every flow each time.
+let index = null;
+try { index = loadEnv().KLAVIYO_PRIVATE_KEY ? await liveFlowTemplates() : null; }
+catch (e) { console.error(`could not index live flow templates: ${e.message}`); }
+
 let allOk = true;
-for (const id of ids) allOk = (await verify(id)) && allOk;
+for (const id of ids) allOk = (await verify(id, index)) && allOk;
 console.log(`\n${allOk ? 'PASS' : 'FAIL'}`);
 process.exit(allOk ? 0 : 1);
