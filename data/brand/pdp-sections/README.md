@@ -41,46 +41,46 @@ given source is suitable.
 | `bar-soap-free-from.*` | `product.landing-page-bar-soap.json` → `free-from-block` | `shopify://shop_images/bar-soap-free-from.webp` |
 | `cream-free-from.*` | `product.landing-page-cream.json` → `free-from-block` | `shopify://shop_images/cream-free-from.webp` |
 | `deodorant-free-from.*` | `product.landing-page-deodorant.json` → `free-from-block` | `shopify://shop_images/deodorant-free-from.webp` |
+| `lip-balm-free-from.*` | `product.landing-page-lip-balm.json` → `free-from-block` | `shopify://shop_images/lip-balm-free-from.webp` |
+| `liquid-soap-free-from.*` | `product.landing-page-liquid-soap.json` → `free-from-block` | `shopify://shop_images/liquid-soap-free-from.webp` |
 | `toothpaste-free-from.*` | `product.landing-page-toothpaste.json` → `free-from-block` | `shopify://shop_images/toothpaste-free-from.webp` |
 
-## Still unfixed — 3 live PDPs, audited against LIVE templates 2026-08-30
+## Status — every live PDP clear, verified 2026-08-30
+
+`grep -c media--placeholder` returns **0** on all eight landing-page PDPs:
+`coconut-soap`, `coconut-oil-toothpaste`, `coconut-moisturizer`,
+`coconut-oil-deodorant`, `coconut-lotion`, `coconut-oil-lip-balm`,
+`organic-foaming-hand-soap`, `foam-soap-refill-32oz`. The dead
+`free-from-ingredients.webp` reference is gone from every live template.
 
 **Audit the LIVE template, not this repo's copy.** The theme repo is well behind
-live, and reading it produced a wrong list twice: it says `cream` carried the
-dead `free-from-ingredients.webp` reference, when live had **no `image` key at
-all** (same placeholder, different cause — the fix is an insert, not a replace),
-and it put `foaming-soap` on the broken list when that template has no
-free-from section at all.
+live and reading it produced a wrong list twice: it showed `cream` carrying the
+dead reference when live had **no `image` key at all** (same placeholder,
+opposite fix — an insert, not a replace), and it put `foaming-soap` on the broken
+list when that template has no free-from section at all.
 
 ```bash
 node scripts/update-theme-asset.mjs get templates/product.landing-page-<x>.json /tmp/t.json
 curl -sL https://www.realskincare.com/products/<handle> | grep -c media--placeholder
 ```
 
-Measured that way, `free-from-ingredients.webp` is **not in Shopify Files** and
-two templates still name it, covering three live PDPs:
+### Two things left alone, on purpose
 
-| template | PDPs showing a placeholder | layout |
-|---|---|---|
-| `landing-page-lip-balm` | `coconut-oil-lip-balm` | `text_first` |
-| `landing-page-liquid-soap` | `organic-foaming-hand-soap`, `foam-soap-refill-32oz` | `image_first` |
+- **`landing-page-lotion` uses `why-1-lotion.webp` (800×800), not a 1920×1160
+  file of ours.** It renders, so it was never broken — but being square, that
+  band is noticeably taller than its six siblings. Cosmetic; replace it if the
+  inconsistency starts to show.
+- **`landing-page-liquid-soap` serves TWO products** — `organic-foaming-hand-soap`
+  and `foam-soap-refill-32oz` — from one section, so the refill PDP shows the
+  8 fl oz **pump bottle**, not the 32 oz jug it sells. The operator chose the
+  pump bottle knowing this. Splitting the templates is the fix if it ever
+  matters; the exclusion list itself is accurate for both.
 
-Each needs its own packshot; an image from another product is not a stand-in.
+### Templates with no free-from section (nothing to fix)
 
-Note `landing-page-liquid-soap` covers **two** products, so one packshot there
-fixes two PDPs — but the refill is a 32 oz jug and the hand soap a pump bottle,
-so decide which one the section should show.
-
-**Not broken, despite what the repo copy suggests:**
-
-- `landing-page-lotion` names `why-1-lotion.webp`, which **is** in Files (800×800).
-  It renders, so it is not urgent — but it is square rather than 1920×1160, so
-  that band is taller than its siblings.
-- `landing-page-sensitive-skin-set` carries the dead reference and is **unused** —
-  `sensitive-skin-starter-set` renders through `landing-page-sensitive-skin-set-lander`.
-- `landing-page-foaming-soap`, `-body-cream`, `-body-lotion`,
-  `-sensitive-skin-set-lander` and `-99-coconut-reset` have **no free-from
-  section**, so there is nothing to fix.
+`foaming-soap`, `body-cream`, `body-lotion`, `sensitive-skin-set-lander`,
+`99-coconut-reset`. And `landing-page-sensitive-skin-set` still names the dead
+file but is **unused** — `sensitive-skin-starter-set` renders through `-lander`.
 
 `layout` differs per template (`image_first` puts the image on the LEFT). That
 alternation is the page's existing rhythm — do not normalise it.
