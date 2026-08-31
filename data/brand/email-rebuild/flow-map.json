@@ -1,14 +1,15 @@
 {
   "Ra3L8A": {
-    "flowId": "UUa3Qk",
+    "flowId": "V5fp5i",
     "flowName": "Welcome Series (RSC v2)",
-    "messageId": "XaktgE",
-    "actionId": "112416857",
-    "servingTemplateId": "XtF4DY",
-    "updatedAt": "2026-08-31T05:24:09.004Z",
+    "messageId": "Xq54R2",
+    "actionId": "115998386",
+    "servingTemplateId": "Xynx38",
     "stranded": [
-      "Ra3L8A"
-    ]
+      "Ra3L8A",
+      "RpLmGW"
+    ],
+    "updatedAt": "2026-08-31T12:31:27.784Z"
   },
   "RiMM8C": {
     "flowId": "V4U4Qn",
@@ -53,5 +54,49 @@
     "stranded": [
       "ThCS7T"
     ]
+  },
+  "TzuGfG": {
+    "flowId": "V5fp5i",
+    "flowName": "Welcome Series (RSC v2)",
+    "messageId": "WeEdXa",
+    "actionId": "115998384",
+    "servingTemplateId": "X6BZ7h",
+    "stranded": [
+      "Y367tD"
+    ],
+    "updatedAt": "2026-08-31T12:31:25.664Z"
+  },
+  "U7SuwV": {
+    "flowId": "V5fp5i",
+    "flowName": "Welcome Series (RSC v2)",
+    "messageId": "UYC8HU",
+    "actionId": "115998388",
+    "servingTemplateId": "UrhhVZ",
+    "stranded": [
+      "WM42ep"
+    ],
+    "updatedAt": "2026-08-31T12:31:29.458Z"
+  },
+  "W5ySJc": {
+    "flowId": "V5fp5i",
+    "flowName": "Welcome Series (RSC v2)",
+    "messageId": "WRFgzM",
+    "actionId": "115998382",
+    "servingTemplateId": "Skmpct",
+    "stranded": [
+      "QRnzrH"
+    ],
+    "updatedAt": "2026-08-31T12:31:23.508Z"
+  },
+  "XGJfxT": {
+    "flowId": "V5fp5i",
+    "flowName": "Welcome Series (RSC v2)",
+    "messageId": "XWsR8f",
+    "actionId": "115998390",
+    "servingTemplateId": "T6BWmm",
+    "stranded": [
+      "VwZUZ9"
+    ],
+    "updatedAt": "2026-08-31T12:31:32.015Z"
   }
 }
