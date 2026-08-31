@@ -5,9 +5,7 @@
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
 <meta content="light dark" name="color-scheme"/>
 <meta content="light dark" name="supported-color-schemes"/>
-<title>
-      Real Skin Care
-    </title>
+<title>Real Skin Care</title>
 <style>@import url("https://fonts.googleapis.com/css2?family=Cabin:wght@400;600;700&family=Outfit:wght@400;500;600&display=swap");
 .logo-dark {
     display: none
@@ -31,146 +29,89 @@
         }
     }</style></head>
 <body style="margin:0;padding:0;background-color:#EDE5D8;">
-<div style="display:none;max-height:0;overflow:hidden;opacity:0;">
-      One tap adds your usual straight to the cart.
-    </div>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">One tap adds your usual straight to the cart.</div>
 <table cellpadding="0" cellspacing="0" role="presentation" style="background-color:#EDE5D8;" width="100%">
-<tr>
-<td align="center" style="padding:24px 12px;">
+<tr><td align="center" style="padding:24px 12px;">
 <table cellpadding="0" cellspacing="0" role="presentation" style="max-width:600px;width:100%;" width="600">
-<tr>
-<td align="center" style="padding:8px 0 20px;"> <a href="https://www.realskincare.com" style="text-decoration:none;">
+<tr><td align="center" style="padding:8px 0 20px;">
+<a href="https://www.realskincare.com" style="text-decoration:none;">
 <img alt="Real Skin Care" class="logo-light" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-black.png?v=1785417244" style="display:inline-block;width:180px;max-width:180px;height:auto;border:0;" width="180"/>
 <img alt="Real Skin Care" class="logo-dark" src="https://cdn.shopify.com/s/files/1/0270/1911/6579/files/rsc-logo-white.png?v=1785417298" style="display:none;width:180px;max-width:180px;height:auto;border:0;" width="180"/>
 </a>
-</td>
-</tr>
-<tr>
-<td class="px" style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;">
-<h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">
-                  Running low?
-                </h1>
-<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">
-                  Each button drops it straight into your cart — no hunting for it.
-                </p>
-                {% with items=event.Items|join:", " %}{% if "Deodorant" in items or "Toothpaste" in items or "Soap" in items or "Lotion" in items or "Coconut Moisturizer" in items or "Lip" in items %}
-{% if "Deodorant" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179451052202:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Deodorant — $15</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Toothpaste" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179458162858:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Toothpaste — $13</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Soap" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179472187562:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Foaming Hand Soap — $13</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Lotion" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/45828179165354:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Body Lotion — $30</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Coconut Moisturizer" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179428475050:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Moisturizer — $28</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Lip" in items %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44180191772842:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Lip Balm — $15</a>
-</td>
-</tr>
-</table>{% endif %}
+</td></tr>
+<tr><td class="px" style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;">
+<h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Running low?</h1>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Each button drops it straight into your cart — no hunting for it.</p>
+{% with items=event.Items|join:", " %}{% if "Deodorant" in items or "Toothpaste" in items or "Soap" in items or "Lotion" in items or "Coconut Moisturizer" in items or "Lip" in items %}
+{% if "Deodorant" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/44179451052202:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Deodorant — $15</a>
+</td></tr></table>{% endif %}
+{% if "Toothpaste" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/44179458162858:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Toothpaste — $13</a>
+</td></tr></table>{% endif %}
+{% if "Soap" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828180770986:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Foaming Hand Soap — $13</a>
+</td></tr></table>{% endif %}
+{% if "Lotion" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828179165354:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Body Lotion — $30</a>
+</td></tr></table>{% endif %}
+{% if "Coconut Moisturizer" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828182114474:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Moisturizer — $28</a>
+</td></tr></table>{% endif %}
+{% if "Lip" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828179656874:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Lip Balm — $15</a>
+</td></tr></table>{% endif %}
 {% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%">
-<tr>
-<td align="center" bgcolor="#000000" style="border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179451052202:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Deodorant — $15</a>
-</td>
-</tr>
-</table>
-                {% endif %}{% endwith %}
+<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 14px;" width="100%"><tr><td align="center" bgcolor="#000000" style="border-radius:6px;">
+<a href="https://www.realskincare.com/cart/44179451052202:1" style="display:inline-block;padding:14px 28px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#FFFFFF;text-decoration:none;border-radius:6px;">Reorder Coconut Oil Deodorant — $15</a>
+</td></tr></table>
+{% endif %}{% endwith %}
 {% with items=event.Items|join:", " %}
-                <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">
-<strong>Add to the same order</strong>
-</p>
-                {% if "Deodorant" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179451052202:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Deodorant — $15</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Toothpaste" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179458162858:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Toothpaste — $13</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Lip" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/44180191772842:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Lip Balm — $15</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Soap" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179485655210:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Moisturizing Coconut Soap — $11</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Lotion" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/45828179165354:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Non-Toxic Body Lotion — $30</a>
-</td>
-</tr>
-</table>{% endif %}
-{% if "Coconut Moisturizer" in items %}{% else %}
-                <table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%">
-<tr>
-<td align="center" style="border:1px solid #000000;border-radius:6px;"> <a href="https://www.realskincare.com/cart/44179428475050:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Moisturizer — $28</a>
-</td>
-</tr>
-</table>{% endif %}
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;"><strong>Add to the same order</strong></p>
+{% if "Deodorant" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/44179451052202:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Deodorant — $15</a>
+</td></tr></table>{% endif %}
+{% if "Toothpaste" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/44179458162858:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Toothpaste — $13</a>
+</td></tr></table>{% endif %}
+{% if "Lip" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828179656874:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Oil Lip Balm — $15</a>
+</td></tr></table>{% endif %}
+{% if "Soap" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828179951786:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Moisturizing Coconut Soap — $11</a>
+</td></tr></table>{% endif %}
+{% if "Lotion" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828179165354:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Non-Toxic Body Lotion — $30</a>
+</td></tr></table>{% endif %}
+{% if "Coconut Moisturizer" in items %}{% else %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/45828182114474:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Add Coconut Moisturizer — $28</a>
+</td></tr></table>{% endif %}
+{% with items=event.Items|join:", " %}
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;"><strong>Or stock up and pay less per bar, tube and stick</strong></p>
+{% if "Soap" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/48868611457194:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Bar Soap 4-Pack — $39, save $5</a>
+</td></tr></table>{% endif %}
+{% if "Deodorant" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/48941787087018:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Deodorant 4-Pack — $53, save $7</a>
+</td></tr></table>{% endif %}
+{% if "Toothpaste" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 10px;" width="100%"><tr><td align="center" style="border:1px solid #000000;border-radius:6px;">
+<a href="https://www.realskincare.com/cart/48941796982954:1" style="display:block;padding:13px 20px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:none;">Toothpaste 3-Pack — $34, save $5</a>
+</td></tr></table>{% endif %}
 {% endwith %}
-                <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">
-                  Free shipping over $45, if you are stocking up on more than one.
-                </p>
-</td>
-</tr>
-<tr>
-<td align="center" style="padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;">
-                Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>
-                Questions? Just reply, or email
-                <a href="mailto:support@realskincare.com" style="color:#000000;">support@realskincare.com</a>.<br/>
-<a href="https://x.com/realskincarecom" style="color:#000000;">X</a> ·<a href="https://www.instagram.com/realskincare_com/" style="color:#000000;">Instagram</a> ·<a href="https://www.facebook.com/real.skincare1" style="color:#000000;">Facebook</a>
-</td>
-</tr>
-<tr>
-<td align="center" style="padding:0 16px 22px;"> <a href="{% unsubscribe_link %}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;">Don't want these? Unsubscribe here — no hard feelings.</a>
-</td>
-</tr>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Free shipping over $45, if you are stocking up on more than one.</p>
+</td></tr>
+<tr><td align="center" style="padding:22px 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#000000;">
+Real Skin Care · 1623 Central Ave STE 201, Cheyenne, WY 82001, United States<br/>
+Questions? Just reply, or email <a href="mailto:support@realskincare.com" style="color:#000000;">support@realskincare.com</a>.<br/>
+<a href="https://x.com/realskincarecom" style="color:#000000;">X</a> ·
+<a href="https://www.instagram.com/realskincare_com/" style="color:#000000;">Instagram</a> ·
+<a href="https://www.facebook.com/real.skincare1" style="color:#000000;">Facebook</a>
+</td></tr>
+<tr><td align="center" style="padding:0 16px 22px;">
+<a href="{% unsubscribe_link %}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:13px;line-height:20px;color:#000000;text-decoration:underline;">Don't want these? Unsubscribe here — no hard feelings.</a>
+</td></tr>
 </table>
-</td>
-</tr>
+</td></tr>
 </table>
 </body>
 </html>
