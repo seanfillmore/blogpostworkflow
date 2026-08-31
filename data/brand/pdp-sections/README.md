@@ -104,66 +104,71 @@ this slot doubles the copy.
 
 A different section from the free-from block above, on the same templates: the
 `multicolumn` row headed "Three ingredients, three jobs" (soaps: "One base.
-Three things to know."). These images are **not** prepared here — they are
-photographs already in Shopify Files. `scripts/fix-ingredient-card-images.mjs`
-(dry by default, `--apply`) is the plan that points each card at the ingredient
-it names; read its header before changing one.
+Three things to know."). `scripts/fix-ingredient-card-images.mjs` (dry by
+default, `--apply`) points each card at the ingredient it names; read its header
+before changing one. It is idempotent and asserts each card's prior value, so a
+card someone has since edited is SKIPPED rather than overwritten.
 
-**The library is the LOTION's ingredient list, and that is why it has gaps.**
-Files holds exactly seven ingredient photographs — `Spring_Water`,
-`coconut_oil`, `Coconut_Oil_Extract`, `Jojoba`, `Wax`, `Grapefruit`,
-`red-palm-oil` — one for one the body lotion's ingredients. Every other
-template was seeded from three of them dealt out **by card position**, so a
-card saying "Organic Jojoba" showed a pond and one saying "Baking Soda" showed
-wax pellets. Coconut oil was right everywhere only because it is card 1.
+**The original library was the LOTION's ingredient list, and that is why the
+other products were wrong.** Files held exactly seven ingredient photographs —
+`Spring_Water`, `coconut_oil`, `Coconut_Oil_Extract`, `Jojoba`, `Wax`,
+`Grapefruit`, `red-palm-oil` — one for one the body lotion's ingredients. Every
+PDP template was then seeded from three of them dealt out **by card position**,
+so a card saying "Organic Jojoba" showed a pond and one saying "Baking Soda"
+showed wax pellets. Coconut oil was right everywhere only because it is card 1.
+The unpublished `page.landing-page-design.json` had all seven wired correctly
+the whole time — corroboration that the shortcut was the PDPs', not the shoot's.
 
 | card | image | note |
 |---|---|---|
 | Organic Virgin Coconut Oil | `Coconut_Oil_Extract.webp` | was already correct |
 | Organic Beeswax | `Wax.webp` | white wax pellets; also serves the lotion's plant emulsifying wax |
 | Organic Jojoba | `Jojoba.webp` | fixed 2026-08-31 (lotion, deodorant) |
-| Organic Red Palm Oil | `red-palm-oil.webp` | fixed 2026-08-31 (lotion, cream, lip balm) |
+| Organic Red Palm Oil | `red-palm-fruit.webp` | operator-supplied 2026-08-31 (lotion, cream, lip balm, draft page) |
+| Baking Soda | `baking-soda.webp` | operator-supplied 2026-08-31 (deodorant, toothpaste) |
+| Wildcrafted Myrrh | `myrrh-resin.webp` | operator-supplied 2026-08-31 (toothpaste) |
 
-### Still wrong, because the photograph does not exist
+`red-palm-oil.webp` (a mint/teal lab flask) is **retired and has zero referrers**
+— accurate, but visibly foreign beside the warm naturals. It is left in Files
+rather than deleted; nothing here needs it.
 
-**Do not paper these over with a near-miss image** — substituting `Grapefruit`
-for "essential oils" or `Wax` for "baking soda" is the exact defect that was
-just removed. Checked against all 1,092 files by filename *and* by alt text:
+### Still wrong — the one card with no usable photograph
 
-| template | card | shows | needs |
-|---|---|---|---|
-| deodorant | Baking Soda | `Wax.webp` | baking soda |
-| toothpaste | Baking Soda | `Spring_Water.webp` | baking soda |
-| toothpaste | Wildcrafted Myrrh | `Wax.webp` | myrrh resin |
-| bar-soap | Variation Essential Oils | `Wax.webp` | essential oil bottles |
-| liquid-soap | Variation Essential Oils | `Wax.webp` | essential oil bottles |
+Both soaps' **"Variation Essential Oils"** still shows `Wax.webp`. **Do not paper
+this over with a near-miss image** — substituting `Grapefruit` for "essential
+oils" is the exact defect this work removed.
 
-Three photographs close all five. Upload them to Files under those names and
-add the entries to `PLAN`; the script asserts the file exists before writing.
+**Artwork was supplied and REJECTED**, kept at
+`essential-oils.REJECTED.source.jpg` so the same brief is not regenerated: one
+bottle's headline reads **FRANKINCENBE**, every Latin binomial is model
+gibberish (`Lecendule engustifate`, `Eocelyptis glebeloe`, `Cldos bergamia`),
+volumes read `1burt` / `Tord` / `10nd`, and the bergamot bottle is drawn with
+green limes. It cannot be cropped clean — the labelled bottles ARE the subject.
 
-### Two cards are not ingredients
+**Replacement brief: amber dropper bottles with NO readable label text** (blank
+labels, or turned away from camera), warm wood, soft daylight, 3:2. Nothing on
+this card needs to name an oil; the copy beside it already does.
 
-Bar soap's card 2 is "Naturally Lathering" and liquid soap's is "Built for the
-Foaming Dispenser" — mechanism claims, both showing `Spring_Water.webp`, which
-reads as lather and as dilution. Left alone. The soaps are the family where a
-three-ingredient list does not apply: Pure Unscented is saponified coconut oil
-and nothing else.
+### Preparing a supplied image
+
+All four supplied shots arrived **1024x1024**. The row cover-crops to 1.5113:1,
+which cuts **34% off a square, top and bottom, sight unseen** — so they are
+pre-cropped to **1200x794 exactly** (the incumbent geometry) and reviewed at
+that crop, rather than uploaded square. `myrrh-resin.webp` is cropped *below*
+its source's jar, which is what removes a label misspelling **MYRRRH** (three
+R's) from the frame.
+
+**Verify supplied artwork by zooming each string and reading it letter by
+letter.** At a glance all four looked clean; `MYRRRH` and `FRANKINCENBE` both
+survived a first read.
 
 ### The row's height is `1 / the widest image` — check that, not the position
 
 `sections/multicolumn.liquid` under `image_ratio: adapt` takes
 `max(aspect_ratio)` across every block and renders one
-`--image-ratio-percent: 1 / that` on all the cards, cover-cropping each into
-it. The incumbent maximum is `Coconut_Oil_Extract.webp` (1200x794 = 1.5113),
-which is the 66.1666% the PDPs render. An image **wider** than that shortens
-the whole row and crops every sibling harder; a taller one changes nothing but
-its own crop. Both images added in 2026-08-31 sit at or below the max
-(`red-palm-oil` 1.5, `Jojoba` 1.3333), so the ratio is unchanged — verified on
-the rendered pages after applying.
-
-### Known cosmetic mismatch
-
-`red-palm-oil.webp` is a lab flask on a **mint/teal** ground, against the warm
-naturals of its two siblings. It is the only red palm oil photograph we hold,
-and ingredient accuracy was the ask, so it ships. Replace it with a warm-ground
-shot when one exists — the fix is a new file plus one `PLAN` edit.
+`--image-ratio-percent: 1 / that` on all the cards, cover-cropping each into it.
+The incumbent maximum is 1.5113 (`Coconut_Oil_Extract.webp`, 1200x794), which is
+the 66.1666% the PDPs render. An image **wider** than that shortens the whole row
+and crops every sibling harder; a taller one changes nothing but its own crop.
+Every image added sits at or below the max, verified on the rendered pages after
+each apply.
