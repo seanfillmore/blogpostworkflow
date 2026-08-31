@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node --test 'tests/**/*.test.js'",
     "pipeline": "node pipeline.js",
+    "pull-theme": "node scripts/pull-theme.mjs",
     "check-value-stacks": "node scripts/check-bundle-value-stacks.mjs",
     "commercial-cvr": "node scripts/commercial-page-cvr.mjs",
     "sitemap": "node agents/sitemap-indexer/index.js",
