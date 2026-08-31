@@ -65,5 +65,42 @@
     "10-offer-drawday.html": "01M0V7J4WQ62KKRJNZM1KJB0WN",
     "11-offer-reminder.html": "01M0V7JAARVYV05VJ9S62KR59X",
     "12-offer-final.html": "01M0V7JFJ9QP4JDY0N64RN91NT"
+  },
+  "frustrationCampaigns": {
+    "sendAt": "2026-09-01T14:00:00+00:00",
+    "segments": {
+      "dry": "XeG7JA",
+      "reactive": "T2Pi6Z",
+      "ingredients": "WBF57X",
+      "fragrance": "VYE2vk"
+    },
+    "templates": {
+      "dry": "XGsDEr",
+      "reactive": "UDYEUG",
+      "ingredients": "U2XCi5",
+      "fragrance": "RBwGaX"
+    },
+    "campaigns": {
+      "dry": {
+        "id": "01M17Y2J9Y9MWGB2WZJS72Q1Y8",
+        "messageId": "01M17Y2JA70JHEMQ49PMEYN1W3",
+        "sendAt": "2026-09-01T14:00:00+00:00"
+      },
+      "reactive": {
+        "id": "01M17Y2M3D1DV0WWY8KEA44NR9",
+        "messageId": "01M17Y2M3NBAFS901WE7JNVA7G",
+        "sendAt": "2026-09-01T14:00:00+00:00"
+      },
+      "ingredients": {
+        "id": "01M17Y2NZ1QPV8TR1ND5EVBNVA",
+        "messageId": "01M17Y2NZBQK4RKZBY4BY6J6Y7",
+        "sendAt": "2026-09-01T14:00:00+00:00"
+      },
+      "fragrance": {
+        "id": "01M17Y2QQWYRCQP0D36QZE08ZP",
+        "messageId": "01M17Y2QR5FCYQFCZ6WA8FFAHE",
+        "sendAt": "2026-09-01T14:00:00+00:00"
+      }
+    }
   }
 }
