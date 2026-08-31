@@ -11,20 +11,28 @@
     "",
     "Where a rate carries `supersedes`, the merchant has given a direct consumption figure and it wins. A reorder gap cannot see consumption; it can only bound it. Prefer product knowledge over a weak gap every time — the deodorant's 90-day gap read as 12 months of supply for a 4-pack and was used to call a subscription plan 3x too aggressive, which was wrong.",
     "",
-    "TWO of these rates have now been corrected downward by the merchant, and both by a lot: deodorant 90 -> 42, bar soap 47 -> 25. That is not two coincidences, it is the method. A reorder gap measures when somebody got round to buying again, and people put off reordering. Treat every remaining gap-derived rate here (lotion 38, cream 28, toothpaste 61) as a CEILING that is probably well above true consumption, and get a merchant figure before using any of them to set a subscription cadence."
+    "FOUR of these rates have now been corrected by the merchant: deodorant 90 -> 42, bar soap 47 -> 25, lotion 38 -> 30, cream 28 -> 30. That is not four coincidences, it is the method. A reorder gap measures when somebody got round to buying again, not how long the product lasted. The deeper problem Sean named on 2026-08-30 is sample size: this store does ~16 Shopify orders/month with an ~18% repeat rate, so the interval counts behind these medians are far too small to bound anything. Note the cream moved UP, which a pure 'gaps are upper bounds' reading says is impossible - that reading assumes the sample is meaningful. coconut-oil-toothpaste (61, 12 intervals, weak) is the LAST gap-derived rate left; get a merchant figure before using it for a duration claim or a subscription cadence."
   ],
   "_how_to_use": "A bundle lasts as long as the FIRST thing in it runs out — the minimum over its components of (per-unit days x quantity), not the average and not the longest. lib/supply-duration.js does this; do not re-derive it by hand.",
   "_rederive": "orders(first:250, query:\"financial_status:paid\") WITH pagination. lib/shopify.js getOrders() truncates at 250 silently and must not be used for this.",
   "rates": {
     "coconut-lotion": {
-      "daysPerUnit": 38,
+      "daysPerUnit": 30,
       "intervals": 76,
-      "confidence": "solid"
+      "confidence": "merchant estimate",
+      "supersedes": {
+        "daysPerUnit": 38,
+        "why": "That 38 was a median REORDER GAP over 76 intervals, not consumption. Sean, 2026-08-30: each lotion and each cream is estimated to last one month. He also named why the gap method cannot carry this claim here at all - at ~16 Shopify orders/month with an ~18% repeat rate the interval sample is far too thin to bound consumption, so a gap is not even a reliable CEILING at this store's volume, which is a stronger caveat than the one this file already carried."
+      }
     },
     "coconut-moisturizer": {
-      "daysPerUnit": 28,
+      "daysPerUnit": 30,
       "intervals": 24,
-      "confidence": "fair"
+      "confidence": "merchant estimate",
+      "supersedes": {
+        "daysPerUnit": 28,
+        "why": "That 28 was a median REORDER GAP over 24 intervals, not consumption. Sean, 2026-08-30: one month per unit. Note the direction - this rate moved UP, which a pure upper-bound reading of reorder gaps says cannot happen. That reading assumes the gap sample is meaningful; at 24 intervals on a store doing ~16 orders/month it is noise, not a bound. Third and fourth merchant corrections of gap-derived rates, after deodorant 90->42 and bar soap 47->25."
+      }
     },
     "coconut-soap": {
       "daysPerUnit": 25,
