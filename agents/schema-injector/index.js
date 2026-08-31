@@ -164,11 +164,32 @@ async function pushToShopify(results) {
     }
 
     try {
+      // Send body_html ONLY. This agent splices a JSON-LD block into the body;
+      // it has no business deciding whether the article is live.
+      //
+      // It used to send `published: false` unconditionally, so every live,
+      // indexed article it pushed became a draft serving 404 until
+      // `agents/publish-drift --fix` healed it at the next 13:45 UTC run.
+      // Measured over two weeks of production logs, its own success line mapped
+      // one-to-one onto EVERY publish-drift event — ~22 unpublish events per
+      // fortnight, concentrated on the lotion cluster (72% of revenue) because
+      // the `--apply` caller on cron is `agents/legacy-rebuilder`'s
+      // lightRefresh(), whose pick list is ordered by `lib/cluster-efficiency.js`
+      // and therefore aimed at the highest-earning pages first.
+      //
+      // Omitting the field preserves whatever Shopify already has — a live post
+      // stays live, a draft stays a draft — so this agent needs no notion of
+      // publish state and cannot get one wrong. That is deliberately simpler
+      // than content-refresher's `published: !!article.published_at`: this agent
+      // reaches articles both by stored id and by handle lookup, and only the
+      // latter has the live record in hand.
+      //
+      // Same defect class as PR #285 (content-refresher). See
+      // tests/agents/schema-injector-preserves-publish-state.test.js.
       await updateArticle(blogId, articleId, {
         body_html: r.updatedHtml,
-        published: false,
       });
-      console.log(`    ✓ ${r.slug} — updated in Shopify (draft)`);
+      console.log(`    ✓ ${r.slug} — schema updated in Shopify (publish state unchanged)`);
     } catch (e) {
       console.error(`    ✗ ${r.slug} — Shopify error: ${e.message}`);
     }
