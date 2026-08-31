@@ -8,6 +8,7 @@ import {
   pushVerdict,
   findOrphans,
   strandedIds,
+  alreadyInSync,
   resolveTarget,
 } from '../../lib/flow-template-push.js';
 
@@ -212,4 +213,37 @@ test('strandedIds collects every replaced template across the map', () => {
   };
   assert.deepEqual([...strandedIds(map)].sort(), ['Ra3L8A', 'TA5Wi4', 'XtF4DY']);
   assert.deepEqual([...strandedIds()], []);
+});
+
+test('alreadyInSync ignores the markup Klaviyo rewrites on save', () => {
+  const intended = '<style>/* n */ .a{color:#FFF}</style><p>Hello {% coupon_code %}</p><a href="https://x.com/p">Shop</a>';
+  const saved = '<html><head></head><body><style>\n.a {\n  color: #FFF;\n}\n</style>\n<p>Hello {% coupon_code %}</p>\n<a href="https://x.com/p">Shop</a></body></html>';
+  assert.equal(alreadyInSync(intended, saved), true);
+});
+
+test('alreadyInSync is false when the COPY differs but tags and links match', () => {
+  const a = '<p>Running low?</p><a href="https://x.com/p">Shop</a>';
+  const b = '<p>Time to restock?</p><a href="https://x.com/p">Shop</a>';
+  assert.equal(alreadyInSync(a, b), false);
+});
+
+test('alreadyInSync is false when a link or tag differs', () => {
+  assert.equal(alreadyInSync('<a href="https://x.com/a">S</a>', '<a href="https://x.com/b">S</a>'), false);
+  assert.equal(alreadyInSync('<p>x {% coupon_code %}</p>', '<p>x</p>'), false);
+});
+
+test('alreadyInSync treats a missing live body as not in sync', () => {
+  assert.equal(alreadyInSync('<p>x</p>', null), false);
+});
+
+test('alreadyInSync decodes entities Klaviyo re-encodes on save', () => {
+  // Measured live: the rebuild says "sets & bundles"; Klaviyo stores "sets &amp; bundles".
+  const intended = '<p>Browse sets & bundles</p>';
+  const saved = '<p>Browse sets &amp; bundles</p>';
+  assert.equal(alreadyInSync(intended, saved), true);
+});
+
+test('entity decoding cannot double-decode &amp;lt; into a tag', () => {
+  assert.equal(alreadyInSync('<p>&amp;lt;b&amp;gt;</p>', '<p>&amp;lt;b&amp;gt;</p>'), true);
+  assert.equal(alreadyInSync('<p>&amp;lt;</p>', '<p>&lt;</p>'), false);
 });

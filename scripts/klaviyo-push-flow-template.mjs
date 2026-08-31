@@ -51,6 +51,7 @@ import {
   findOrphans,
   strandedIds,
   resolveTarget,
+  alreadyInSync,
 } from '../lib/flow-template-push.js';
 import { tagFindings, linkFindings, postalFindings, unsubscribeFindings } from '../lib/email-rebuild-checks.js';
 
@@ -181,6 +182,15 @@ async function pushOne(templateId, index) {
   // a fresh snapshot, so `getTemplate(templateId)` would compare the current rebuild
   // against the stranded pre-push copy and report drift on every already-pushed email.
   const live = await getFlowMessageTemplate(use.messageId);
+
+  // A push is NOT idempotent — it mints a library template and a fresh snapshot even
+  // when the content is identical, so an unguarded `--all` re-run churns every live
+  // flow and strands one template per email for no change at all.
+  if (alreadyInSync(intended, live.html)) {
+    log(`  ${templateId} → "${use.flowName}" — already in sync, skipping`);
+    return;
+  }
+
   const drift = driftFindings(before, live.html);
   drift.warnings.forEach((w) => log(`  ! ${templateId}: ${w}`));
   if (drift.problems.length && !ALLOW_DRIFT) {
