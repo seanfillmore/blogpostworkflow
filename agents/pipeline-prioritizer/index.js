@@ -26,12 +26,12 @@ import { loadCalendar, upsertItem, writeCalendar } from '../../lib/calendar-stor
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS, freshnessOfFile, staleNote } from '../../lib/seo-impact-freshness.js';
-import { computePlan, applyHysteresis } from '../../lib/pipeline-priority.js';
+import { computePlan, applyHysteresis, buildContributionIndex } from '../../lib/pipeline-priority.js';
 import { slugify } from '../../lib/keyword-dedup.js';
 import { isInProductScope } from '../../lib/product-scope.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
-import { appendAttribution, readAttribution, buildProductionRecords, dedupeAgainst } from '../../lib/attribution-log.js';
+import { appendAttribution, readAttribution, buildProductionRecords, dedupeAgainst, PRODUCTION_STATUSES } from '../../lib/attribution-log.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -312,7 +312,21 @@ async function main() {
   // steady state (stocked buffer, keywords already covered), which left the ledger at
   // one record in 78 days and made priority-tuner a permanent no-op. Logging here is
   // what lets the closed loop accumulate evidence without anyone intervening.
-  attribution.push(...buildProductionRecords({ scored: plan.scored, statusBySlug, today, nowIso }));
+  //
+  // Built from `calendar.items`, NOT from `plan.scored`: `scored` holds only backlog
+  // ideas (`backlog` above is `pending` items with no publish_date), so every item
+  // this ledger targets is absent from it. Reading `plan.scored` here produced zero
+  // records on a real run. `buildContributionIndex` is computePlan's own matcher, so
+  // the contributing signals are derived by identical rules.
+  const { contributionsFor } = buildContributionIndex(active, cfg);
+  const productionItems = calendar.items
+    .filter((it) => PRODUCTION_STATUSES.includes(statusBySlug.get(it.slug)))
+    .map((it) => {
+      const cluster = (it.category || it.topical_hub || '').toLowerCase() || null;
+      const idea = { slug: it.slug, keyword: it.keyword, cluster };
+      return { ...idea, contributing: contributionsFor(idea).contributing };
+    });
+  attribution.push(...buildProductionRecords({ scored: productionItems, statusBySlug, today, nowIso }));
 
   // The agent runs DAILY — dedupe against the existing ledger or the same items are
   // re-appended every morning and the tuner reads one post as dozens of samples.
