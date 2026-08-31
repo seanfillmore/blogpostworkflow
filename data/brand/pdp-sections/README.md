@@ -39,19 +39,55 @@ given source is suitable.
 | file | slot | uploaded as |
 |---|---|---|
 | `bar-soap-free-from.*` | `product.landing-page-bar-soap.json` → `free-from-block` | `shopify://shop_images/bar-soap-free-from.webp` |
+| `cream-free-from.*` | `product.landing-page-cream.json` → `free-from-block` | `shopify://shop_images/cream-free-from.webp` |
+| `deodorant-free-from.*` | `product.landing-page-deodorant.json` → `free-from-block` | `shopify://shop_images/deodorant-free-from.webp` |
 | `toothpaste-free-from.*` | `product.landing-page-toothpaste.json` → `free-from-block` | `shopify://shop_images/toothpaste-free-from.webp` |
 
-## Still unfixed
+## Still unfixed — 3 live PDPs, audited against LIVE templates 2026-08-30
 
-Seven more landing-page templates point `free-from-block.settings.image` at
-`shopify://shop_images/free-from-ingredients.webp`, which is **not in Shopify
-Files** — so each renders Dawn's grey `media--placeholder` band live, next to
-its "What's NOT in this ..." list:
+**Audit the LIVE template, not this repo's copy.** The theme repo is well behind
+live, and reading it produced a wrong list twice: it says `cream` carried the
+dead `free-from-ingredients.webp` reference, when live had **no `image` key at
+all** (same placeholder, different cause — the fix is an insert, not a replace),
+and it put `foaming-soap` on the broken list when that template has no
+free-from section at all.
 
-`cream`, `deodorant`, `lip-balm`, `liquid-soap`, `lotion`,
-`sensitive-skin-set`, `foaming-soap`.
+```bash
+node scripts/update-theme-asset.mjs get templates/product.landing-page-<x>.json /tmp/t.json
+curl -sL https://www.realskincare.com/products/<handle> | grep -c media--placeholder
+```
 
-Each needs its own product photo; the bar soap image is not a stand-in. Note
-also that `bar-soap-not-in-it.png` and its siblings already in Shopify Files are
-**Amazon listing infographics** — they repeat the same exclusion list the
-section already prints on the left — so they are the wrong asset for this slot.
+Measured that way, `free-from-ingredients.webp` is **not in Shopify Files** and
+two templates still name it, covering three live PDPs:
+
+| template | PDPs showing a placeholder | layout |
+|---|---|---|
+| `landing-page-lip-balm` | `coconut-oil-lip-balm` | `text_first` |
+| `landing-page-liquid-soap` | `organic-foaming-hand-soap`, `foam-soap-refill-32oz` | `image_first` |
+
+Each needs its own packshot; an image from another product is not a stand-in.
+
+Note `landing-page-liquid-soap` covers **two** products, so one packshot there
+fixes two PDPs — but the refill is a 32 oz jug and the hand soap a pump bottle,
+so decide which one the section should show.
+
+**Not broken, despite what the repo copy suggests:**
+
+- `landing-page-lotion` names `why-1-lotion.webp`, which **is** in Files (800×800).
+  It renders, so it is not urgent — but it is square rather than 1920×1160, so
+  that band is taller than its siblings.
+- `landing-page-sensitive-skin-set` carries the dead reference and is **unused** —
+  `sensitive-skin-starter-set` renders through `landing-page-sensitive-skin-set-lander`.
+- `landing-page-foaming-soap`, `-body-cream`, `-body-lotion`,
+  `-sensitive-skin-set-lander` and `-99-coconut-reset` have **no free-from
+  section**, so there is nothing to fix.
+
+`layout` differs per template (`image_first` puts the image on the LEFT). That
+alternation is the page's existing rhythm — do not normalise it.
+
+## Do not reuse the `*-not-in-it.png` files
+
+`bar-soap-not-in-it.png` and its six siblings already in Shopify Files are
+**Amazon listing infographics**: they bake the same exclusion list into the image
+as type, which the section already prints in its text column. Dropping one into
+this slot doubles the copy.
