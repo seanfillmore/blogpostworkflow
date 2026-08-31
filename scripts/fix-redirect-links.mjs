@@ -49,7 +49,7 @@ import { fileURLToPath } from 'node:url';
 import { getBlogs, getArticles, updateArticle, getRedirects } from '../lib/shopify.js';
 import { rewriteRedirectLinks, buildRedirectMap } from '../lib/redirect-links.js';
 import { compareBodies } from '../lib/content-mirror.js';
-import { getContentPath, resolvePostSlug } from '../lib/posts.js';
+import { getContentPath, listAllSlugs, getPostMeta } from '../lib/posts.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -68,29 +68,46 @@ const limit = (() => {
 const countAnchors = (html) => (html.match(/<a\b/gi) || []).length;
 
 /**
- * Find the local mirror for a Shopify handle, if the repo has one.
+ * Local slug -> content.html, keyed by the Shopify ARTICLE ID the post records.
  *
- * Goes through `resolvePostSlug`, the fleet's one resolver, rather than a
- * hand-rolled prefix match. The first version of this script matched
- * `handle.startsWith(d) || d.startsWith(handle)`, and the SECOND half of that
- * is the documented trap: a directory like `<handle>-2` is a Shopify dedup
- * DUPLICATE — a genuinely different article — so that direction pairs an
- * article with the wrong post. The dry run caught it as 25 pages reporting
- * `mirror-is-a-different-article` while `check-content-mirrors` reported ZERO,
- * and under --apply it would have written one post's link fixes into another
- * post's content.html.
+ * PAIRING IS BY ARTICLE ID, NOT BY HANDLE, and that is a correctness fix rather
+ * than a refinement. Two earlier attempts both mispaired:
  *
- * `resolvePostSlug` refuses that direction explicitly and tries the
- * authoritative matches first (exact dir, then `meta.handle`/`meta.url`, then
- * `meta.shopify_handle`/`meta.shopify_url` — the field 93 of 94 local metas
- * actually carry), falling back to a longest-prefix truncation match only for
- * posts stored under a shortened slug.
+ *   1. A hand-rolled `handle.startsWith(d) || d.startsWith(handle)`. The second
+ *      half is the trap lib/posts.js documents — `<handle>-2` is a Shopify
+ *      dedup duplicate, a different article.
+ *   2. `resolvePostSlug(handle)`, which is the fleet's correct resolver for the
+ *      question "which post dir is this handle's", but that is NOT the question
+ *      here. Its step 1 is an exact directory match, and on this corpus an
+ *      exact directory match can still be the wrong ARTICLE:
+ *
+ *        data/posts/natural-soap-bar-the-clean-skin-guide-you-need/meta.json
+ *          -> shopify_article_id 563512606890  (handle …-you-need-2)
+ *        live article with handle …-you-need
+ *          -> id 563395887274
+ *
+ *      Both are PUBLISHED — genuine duplicate live articles, four such pairs
+ *      found while building this (see the run report). So the directory named
+ *      for a handle can belong to a different article that merely shares the
+ *      stem, and comparing the two produced 16 bogus `different-article` skips
+ *      while `check-content-mirrors` — which compares each post against the
+ *      article its OWN meta names — reported zero.
+ *
+ * The article id is the only unambiguous join, and it makes the two tools agree
+ * by construction. A live article no local post claims simply has no mirror:
+ * the script fixes live and says so, which is correct — there is nothing local
+ * that a republish could push back over it.
  */
-function mirrorPathFor(handle) {
-  const slug = resolvePostSlug(handle);
-  if (!slug) return null;
-  const p = getContentPath(slug);
-  return existsSync(p) ? p : null;
+function buildMirrorIndex() {
+  const index = new Map();
+  for (const slug of listAllSlugs()) {
+    const meta = getPostMeta(slug);
+    const id = meta?.shopify_article_id;
+    if (!id) continue;
+    const p = getContentPath(slug);
+    if (existsSync(p)) index.set(String(id), p);
+  }
+  return index;
 }
 
 async function main() {
@@ -108,6 +125,9 @@ async function main() {
   const live = articles.filter((a) => a.published_at && new Date(a.published_at) <= new Date());
   const scope = slugArg ? live.filter((a) => a.handle === slugArg) : live;
   console.log(`  Live articles: ${live.length}${slugArg ? ` (scoped to ${slugArg})` : ''}\n`);
+
+  const mirrorIndex = buildMirrorIndex();
+  console.log(`  Local mirrors indexed by article id: ${mirrorIndex.size}\n`);
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupDir = join(ROOT, 'data', 'reports', 'redirect-links', 'backups', stamp);
@@ -131,7 +151,7 @@ async function main() {
       continue;
     }
 
-    const mirror = mirrorPathFor(art.handle);
+    const mirror = mirrorIndex.get(String(art.id)) || null;
     let mirrorHtml = null;
     let mirrorAfter = null;
     if (mirror) {
