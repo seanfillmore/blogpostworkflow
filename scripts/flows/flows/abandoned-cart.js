@@ -24,7 +24,7 @@ const freeShipLine = P_(`Orders over ${FREE_SHIP} ship free — add one more fav
 
 export default {
   name: 'Abandoned Cart (RSC v2)',
-  oldFlowId: 'SVn26v',
+  oldFlowId: 'QU9Z6q',
   entry: 'd1',
   emails: {
     cart_1: {

@@ -10,7 +10,7 @@ import { shell, H1, P_, SIGN, button, productCard, codeBox, P } from '../compone
 
 export default {
   name: 'Customer Winback (RSC v2)',
-  oldFlowId: 'T4FNSc',
+  oldFlowId: 'Yb63w6',
   entry: 'd1',
   emails: {
     winback_1: {
