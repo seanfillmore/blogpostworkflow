@@ -21,8 +21,17 @@ test('a box is limited by the FIRST thing to run out, not the average or the lon
   assert.equal(r.days, 25);
   // The toothpaste in the same box is ~61 days. An average (or the headline
   // product) would have licensed exactly the overstatement this guards against.
-  const tp = r.detail.find((d) => d.product === 'coconut-oil-toothpaste');
-  assert.ok(r.days < tp.days / 2, 'the shortest component is a fraction of the longest — averaging is not safe here');
+  // Assert the invariant this test is NAMED for — the binding duration is below
+  // both the average and the longest — rather than a fixed ratio against one
+  // component. The old form asserted `days < toothpaste/2`, which was true only
+  // while toothpaste sat at its gap-derived 61 d/unit; the merchant corrected it
+  // to 45 on 2026-08-30 and the assertion broke without the guarded behaviour
+  // changing at all. A test calibrated to a data value fails when the data is
+  // corrected, which is the opposite of what a regression test is for.
+  const days = r.detail.map((d) => d.days);
+  const average = days.reduce((s, d) => s + d, 0) / days.length;
+  assert.ok(r.days < average, `binding ${r.days}d must be under the ${average.toFixed(1)}d average — averaging overstates`);
+  assert.ok(r.days < Math.max(...days), 'binding duration must be under the longest component, never equal to it');
 });
 
 test('a multipack is grouped by product before the minimum is taken', () => {

@@ -11,7 +11,7 @@
     "",
     "Where a rate carries `supersedes`, the merchant has given a direct consumption figure and it wins. A reorder gap cannot see consumption; it can only bound it. Prefer product knowledge over a weak gap every time — the deodorant's 90-day gap read as 12 months of supply for a 4-pack and was used to call a subscription plan 3x too aggressive, which was wrong.",
     "",
-    "FOUR of these rates have now been corrected by the merchant: deodorant 90 -> 42, bar soap 47 -> 25, lotion 38 -> 30, cream 28 -> 30. That is not four coincidences, it is the method. A reorder gap measures when somebody got round to buying again, not how long the product lasted. The deeper problem Sean named on 2026-08-30 is sample size: this store does ~16 Shopify orders/month with an ~18% repeat rate, so the interval counts behind these medians are far too small to bound anything. Note the cream moved UP, which a pure 'gaps are upper bounds' reading says is impossible - that reading assumes the sample is meaningful. coconut-oil-toothpaste (61, 12 intervals, weak) is the LAST gap-derived rate left; get a merchant figure before using it for a duration claim or a subscription cadence."
+    "ALL FIVE gap-derived rates in this file have now been corrected by the merchant: deodorant 90 -> 42, bar soap 47 -> 25, lotion 38 -> 30, cream 28 -> 30, toothpaste 61 -> 45. Five for five. A reorder gap measures when somebody got round to buying again, not how long the product lasted, and at this store's volume - ~16 Shopify orders/month at an ~18% repeat rate - the interval counts behind these medians were far too small to bound anything either. There is no gap-derived rate left here. If a NEW rate is ever derived that way, treat it as a hypothesis to put to the merchant, not as evidence for a claim. Note also that toothpaste carries perPerson: true - a shared product's duration depends on household size."
   ],
   "_how_to_use": "A bundle lasts as long as the FIRST thing in it runs out — the minimum over its components of (per-unit days x quantity), not the average and not the longest. lib/supply-duration.js does this; do not re-derive it by hand.",
   "_rederive": "orders(first:250, query:\"financial_status:paid\") WITH pagination. lib/shopify.js getOrders() truncates at 250 silently and must not be used for this.",
@@ -48,9 +48,15 @@
       }
     },
     "coconut-oil-toothpaste": {
-      "daysPerUnit": 61,
+      "daysPerUnit": 45,
       "intervals": 12,
-      "confidence": "weak"
+      "confidence": "merchant estimate",
+      "supersedes": {
+        "daysPerUnit": 61,
+        "why": "That 61 was a median REORDER GAP over 12 intervals (confidence: weak), not consumption. Sean, 2026-08-30: 45 days per tube FOR ONE PERSON. Read that qualifier before using this rate: unlike a lotion, a tube of toothpaste is typically shared, so a two-person household consumes one in roughly half the time. A duration claim on a toothpaste bundle is therefore a claim about household size as much as about supply - state it per person, or size it for the larger household. This is the LAST gap-derived rate in this file; every one of the five has now been corrected by the merchant."
+      },
+      "perPerson": true,
+      "_perPersonNote": "45 days assumes a single user. Divide by the number of people brushing from the same tube before making a duration claim."
     },
     "coconut-oil-deodorant": {
       "daysPerUnit": 42,

@@ -134,7 +134,14 @@ test('raising the two rates cannot make any other bundle over-claim', () => {
     'clean-swap': 25,
     'gift-box': 25,
     'coconut-deodorant-4-pack': 168,
-    'coconut-toothpaste-3-pack': 183,
+    // Lowered 183 -> 135 on 2026-08-30, and this is the ONE entry that has ever
+    // moved down. Toothpaste went 61 -> 45 d/unit when the merchant replaced the
+    // last gap-derived rate. The floor is lowered deliberately and only after
+    // checking that no live claim depended on the old figure: this bundle
+    // carries no `bundle.duration_days` metafield, so nothing on the storefront
+    // asserted 183 days. A future drop with a live claim behind it must fix the
+    // claim, not this number.
+    'coconut-toothpaste-3-pack': 135,
   };
   for (const [handle, floor] of Object.entries(expectedFloor)) {
     const b = bundles.find((x) => x.handle === handle);
