@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  PLAN, TEMPLATE_FIXES, classifyEntry, gatePlan, METAOBJECT_ID,
+  PLAN, TEMPLATE_FIXES, classifyEntry, gatePlan, buildWrites, METAOBJECT_ID,
 } from '../../scripts/build-coconut-reset-lander.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -60,4 +60,41 @@ test('the template fallback BEFORE really is in the committed file', () => {
 test('the metaobject id is pinned, not discovered at runtime', () => {
   // Resolving "the lander metaobject" by search could pick another bundle's.
   assert.match(METAOBJECT_ID, /^gid:\/\/shopify\/Metaobject\/\d+$/);
+});
+
+// Two PLAN entries can target the SAME metaobject field — the buy box has four
+// bullets in one `buybox_bullets` value, and bullets 2 and 4 were replaced
+// independently. Building one write per ENTRY sent two inputs with the same key,
+// which Shopify rejects outright ("Field ... duplicates other inputs"). Even if it
+// had accepted them, each was computed from the ORIGINAL live value, so the second
+// would have silently discarded the first.
+test('entries sharing a field coalesce into ONE write carrying both edits', () => {
+  const fields = { bullets: { value: 'one\ntwo\nthree\nfour' } };
+  const plan = [
+    { id: 'b', field: 'bullets', before: 'two', after: 'SECOND' },
+    { id: 'd', field: 'bullets', before: 'four', after: 'FOURTH' },
+  ];
+  const writes = buildWrites(fields, plan);
+  assert.equal(writes.length, 1, 'one write per FIELD, not per entry');
+  assert.equal(writes[0].key, 'bullets');
+  assert.equal(writes[0].value, 'one\nSECOND\nthree\nFOURTH', 'the second edit builds on the first');
+});
+
+test('a field whose entries are ALL already applied produces no write at all', () => {
+  const fields = { bullets: { value: 'one\nSECOND\nthree\nFOURTH' } };
+  const plan = [
+    { id: 'b', field: 'bullets', before: 'two', after: 'SECOND' },
+    { id: 'd', field: 'bullets', before: 'four', after: 'FOURTH' },
+  ];
+  assert.deepEqual(buildWrites(fields, plan), [], 'a re-run must be a no-op, not a rewrite');
+});
+
+// classifyEntry decides "already applied" by looking for the BEFORE string. If a
+// BEFORE is a substring of its own AFTER, that test can never come back false: the
+// entry re-applies on every run, compounding (a 'B' -> 'BEE' rewrite becomes
+// 'BEEEE' on the second pass). Found by writing exactly that as a test fixture.
+test('no plan entry has a BEFORE contained in its own AFTER', () => {
+  for (const e of [...PLAN, ...TEMPLATE_FIXES]) {
+    assert.ok(!e.after.includes(e.before), `${e.id}: BEFORE inside AFTER can never read as applied`);
+  }
 });
