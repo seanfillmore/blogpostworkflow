@@ -91,3 +91,71 @@ alternation is the page's existing rhythm — do not normalise it.
 **Amazon listing infographics**: they bake the same exclusion list into the image
 as type, which the section already prints in its text column. Dropping one into
 this slot doubles the copy.
+
+## Ingredient card images — `hero-ingredient-cards`
+
+A different section from the free-from block above, on the same templates: the
+`multicolumn` row headed "Three ingredients, three jobs" (soaps: "One base.
+Three things to know."). These images are **not** prepared here — they are
+photographs already in Shopify Files. `scripts/fix-ingredient-card-images.mjs`
+(dry by default, `--apply`) is the plan that points each card at the ingredient
+it names; read its header before changing one.
+
+**The library is the LOTION's ingredient list, and that is why it has gaps.**
+Files holds exactly seven ingredient photographs — `Spring_Water`,
+`coconut_oil`, `Coconut_Oil_Extract`, `Jojoba`, `Wax`, `Grapefruit`,
+`red-palm-oil` — one for one the body lotion's ingredients. Every other
+template was seeded from three of them dealt out **by card position**, so a
+card saying "Organic Jojoba" showed a pond and one saying "Baking Soda" showed
+wax pellets. Coconut oil was right everywhere only because it is card 1.
+
+| card | image | note |
+|---|---|---|
+| Organic Virgin Coconut Oil | `Coconut_Oil_Extract.webp` | was already correct |
+| Organic Beeswax | `Wax.webp` | white wax pellets; also serves the lotion's plant emulsifying wax |
+| Organic Jojoba | `Jojoba.webp` | fixed 2026-08-31 (lotion, deodorant) |
+| Organic Red Palm Oil | `red-palm-oil.webp` | fixed 2026-08-31 (lotion, cream, lip balm) |
+
+### Still wrong, because the photograph does not exist
+
+**Do not paper these over with a near-miss image** — substituting `Grapefruit`
+for "essential oils" or `Wax` for "baking soda" is the exact defect that was
+just removed. Checked against all 1,092 files by filename *and* by alt text:
+
+| template | card | shows | needs |
+|---|---|---|---|
+| deodorant | Baking Soda | `Wax.webp` | baking soda |
+| toothpaste | Baking Soda | `Spring_Water.webp` | baking soda |
+| toothpaste | Wildcrafted Myrrh | `Wax.webp` | myrrh resin |
+| bar-soap | Variation Essential Oils | `Wax.webp` | essential oil bottles |
+| liquid-soap | Variation Essential Oils | `Wax.webp` | essential oil bottles |
+
+Three photographs close all five. Upload them to Files under those names and
+add the entries to `PLAN`; the script asserts the file exists before writing.
+
+### Two cards are not ingredients
+
+Bar soap's card 2 is "Naturally Lathering" and liquid soap's is "Built for the
+Foaming Dispenser" — mechanism claims, both showing `Spring_Water.webp`, which
+reads as lather and as dilution. Left alone. The soaps are the family where a
+three-ingredient list does not apply: Pure Unscented is saponified coconut oil
+and nothing else.
+
+### The row's height is `1 / the widest image` — check that, not the position
+
+`sections/multicolumn.liquid` under `image_ratio: adapt` takes
+`max(aspect_ratio)` across every block and renders one
+`--image-ratio-percent: 1 / that` on all the cards, cover-cropping each into
+it. The incumbent maximum is `Coconut_Oil_Extract.webp` (1200x794 = 1.5113),
+which is the 66.1666% the PDPs render. An image **wider** than that shortens
+the whole row and crops every sibling harder; a taller one changes nothing but
+its own crop. Both images added in 2026-08-31 sit at or below the max
+(`red-palm-oil` 1.5, `Jojoba` 1.3333), so the ratio is unchanged — verified on
+the rendered pages after applying.
+
+### Known cosmetic mismatch
+
+`red-palm-oil.webp` is a lab flask on a **mint/teal** ground, against the warm
+naturals of its two siblings. It is the only red palm oil photograph we hold,
+and ingredient accuracy was the ask, so it ships. Replace it with a warm-ground
+shot when one exists — the fix is a new file plus one `PLAN` edit.
