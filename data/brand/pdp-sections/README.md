@@ -39,16 +39,17 @@ given source is suitable.
 | file | slot | uploaded as |
 |---|---|---|
 | `bar-soap-free-from.*` | `product.landing-page-bar-soap.json` → `free-from-block` | `shopify://shop_images/bar-soap-free-from.webp` |
+| `toothpaste-free-from.*` | `product.landing-page-toothpaste.json` → `free-from-block` | `shopify://shop_images/toothpaste-free-from.webp` |
 
 ## Still unfixed
 
-Eight more landing-page templates point `free-from-block.settings.image` at
+Seven more landing-page templates point `free-from-block.settings.image` at
 `shopify://shop_images/free-from-ingredients.webp`, which is **not in Shopify
 Files** — so each renders Dawn's grey `media--placeholder` band live, next to
 its "What's NOT in this ..." list:
 
 `cream`, `deodorant`, `lip-balm`, `liquid-soap`, `lotion`,
-`sensitive-skin-set`, `toothpaste`, `foaming-soap`.
+`sensitive-skin-set`, `foaming-soap`.
 
 Each needs its own product photo; the bar soap image is not a stand-in. Note
 also that `bar-soap-not-in-it.png` and its siblings already in Shopify Files are
