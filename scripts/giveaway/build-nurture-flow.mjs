@@ -17,9 +17,11 @@
  * working tree, recovered via `git show fccdd89:scripts/flows/build-reset-delivery.mjs`)
  * and scripts/flows/klaviyo-graph.js's send()/delay() helpers, reused as-is here.
  *
- * NOTE: entrants must be suppressed from the Welcome flow (UUa3Qk) or FIRST20
- * stacks on the day-30 offer and silently costs ~$20 of a $40 contribution.
- * That is a one-time manual filter in the Klaviyo UI, printed as a reminder below.
+ * NOTE: entrants must be suppressed from the LIVE Welcome Series or FIRST20 stacks
+ * on the day-30 offer and silently costs ~$20 of a $40 contribution. Applied
+ * 2026-08-14; `golive` now RESOLVES that flow by name and reports whether the filter
+ * is still there, because a go-live rebuilds the flow and can drop it. Do not write a
+ * flow id here — the one this note used to name (UUa3Qk) is a 404 as of 2026-08-31.
  *
  * ============================================================================
  * KLAVIYO CLONES TEMPLATES INTO A FLOW — `templates` MODE ALONE IS NOT ENOUGH
@@ -66,7 +68,8 @@
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { upsertTemplateByName, createFlow, updateFlowStatus, deleteFlow, createCampaign, deleteCampaign, assignTemplateToCampaignMessage } from '../../lib/klaviyo.js';
+import { upsertTemplateByName, createFlow, updateFlowStatus, deleteFlow, createCampaign, deleteCampaign, assignTemplateToCampaignMessage, liveFlowIdsByName, klaviyoRequest } from '../../lib/klaviyo.js';
+import { suppressesProperty } from '../../lib/flow-profile-filter.js';
 import { send, delay, FROM } from '../flows/klaviyo-graph.js';
 import { FLOW_DELAYS_HOURS, splitNurtureFiles, flowDelayDeltas, campaignSchedule } from '../../lib/giveaway/nurture-schedule.js';
 import { resolveMechanism, CONFIRM_MECHANISMS } from '../../lib/giveaway/reconcile.js';
@@ -338,11 +341,43 @@ if (mode === 'campaigns') {
   console.log('    send job exists until it is scheduled. <<<');
 }
 
+/**
+ * Report whether the LIVE Welcome Series still excludes giveaway entrants.
+ *
+ * Replaces a printed manual reminder that named flow `UUa3Qk`. That step was done on
+ * 2026-08-14 and that id is now a 404 — a go-live replaced the flow — so the reminder
+ * had become a stale instruction pointing at nothing. Resolving by NAME and CHECKING
+ * is strictly better than reprinting an id: a go-live rebuilds the flow, and a
+ * profile_filter is the quietest thing to lose in that rebuild.
+ *
+ * Never throws. This runs at the end of a successful go-live; a reporting failure must
+ * not read as the go-live failing.
+ */
+async function reportWelcomeSuppression() {
+  const NAME = 'Welcome Series (RSC v2)';
+  try {
+    const ids = await liveFlowIdsByName(NAME);
+    if (ids.length === 0) return console.log(`\n>>> Could not find a LIVE flow named "${NAME}" — check gv_entrant suppression by hand. <<<`);
+    if (ids.length > 1) console.log(`\n>>> ${ids.length} live flows named "${NAME}" (${ids.join(', ')}) — they will BOTH send. <<<`);
+    for (const id of ids) {
+      const f = await klaviyoRequest('GET', `/flows/${id}/?additional-fields%5Bflow%5D=definition`, null, { revision: '2026-07-15' });
+      const { suppressed, reason } = suppressesProperty(f.data.attributes.definition, 'gv_entrant');
+      if (suppressed) console.log(`\nWelcome flow ${id}: gv_entrant suppression PRESENT.`);
+      else console.log(`\n>>> Welcome flow ${id}: gv_entrant suppression MISSING (${reason}).\n    FIRST20 will stack on the day-30 offer, ~$20 of a $40 contribution per entrant. <<<`);
+    }
+  } catch (err) {
+    console.log(`\n>>> Could not check gv_entrant suppression on "${NAME}": ${err.message}\n    Verify by hand. <<<`);
+  }
+}
+
 if (mode === 'golive') {
   await updateFlowStatus(config.nurtureFlowId, 'live');
   console.log(`Flow ${config.nurtureFlowId} is live.`);
-  console.log('\n>>> MANUAL STEP: add a suppression filter excluding gv_entrant profiles');
-  console.log('    from the Welcome flow (UUa3Qk), or FIRST20 will stack on the day-30 offer. <<<');
+  // Was a printed MANUAL STEP naming flow `UUa3Qk`. The filter has been applied since
+  // 2026-08-14, and that id is now a 404 — a go-live on 2026-08-31 replaced the flow
+  // with a new one, which is exactly why this resolves the flow BY NAME at run time.
+  // A hardcoded flow id is correct until the next go-live and silently wrong after.
+  await reportWelcomeSuppression();
   console.log('\nEnd boundary: scripts/giveaway/close-entry-period.mjs (cron `TZ=America/Los_Angeles 5 5 15 9 *`) flips');
   console.log('this flow to draft the morning after entries close, so a late entrant stops');
   console.log('receiving onboarding emails once there is nothing left to act on. The two');
