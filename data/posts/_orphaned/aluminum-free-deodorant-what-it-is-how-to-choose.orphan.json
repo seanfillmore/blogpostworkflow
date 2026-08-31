@@ -1,0 +1,12 @@
+{
+  "slug": "aluminum-free-deodorant-what-it-is-how-to-choose",
+  "archived_at": "2026-08-31T01:13:52.424Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to aluminum-free-deodorant, inert",
+  "resolved_target": "aluminum-free-deodorant",
+  "refresh_mtime": "2026-08-24T07:34:23.240Z",
+  "rehomed_to": "data/posts/aluminum-free-deodorant/orphaned-refresh-2026-08-24.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/aluminum-free-deodorant-what-it-is-how-to-choose data/posts/aluminum-free-deodorant-what-it-is-how-to-choose"
+}

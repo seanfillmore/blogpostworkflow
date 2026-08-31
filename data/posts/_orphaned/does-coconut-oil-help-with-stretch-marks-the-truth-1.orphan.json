@@ -1,0 +1,12 @@
+{
+  "slug": "does-coconut-oil-help-with-stretch-marks-the-truth-1",
+  "archived_at": "2026-08-31T01:13:52.437Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to does-coconut-oil-help-with-stretch-marks, inert",
+  "resolved_target": "does-coconut-oil-help-with-stretch-marks",
+  "refresh_mtime": "2026-08-10T11:31:10.466Z",
+  "rehomed_to": "data/posts/does-coconut-oil-help-with-stretch-marks/orphaned-refresh-2026-08-10.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/does-coconut-oil-help-with-stretch-marks-the-truth-1 data/posts/does-coconut-oil-help-with-stretch-marks-the-truth-1"
+}

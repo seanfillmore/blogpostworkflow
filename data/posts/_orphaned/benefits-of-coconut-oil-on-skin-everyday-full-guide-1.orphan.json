@@ -1,0 +1,12 @@
+{
+  "slug": "benefits-of-coconut-oil-on-skin-everyday-full-guide-1",
+  "archived_at": "2026-08-31T01:13:52.425Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to benefits-of-coconut-oil-on-skin-everyday, inert",
+  "resolved_target": "benefits-of-coconut-oil-on-skin-everyday",
+  "refresh_mtime": "2026-07-21T11:31:12.769Z",
+  "rehomed_to": "data/posts/benefits-of-coconut-oil-on-skin-everyday/orphaned-refresh-2026-07-21.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/benefits-of-coconut-oil-on-skin-everyday-full-guide-1 data/posts/benefits-of-coconut-oil-on-skin-everyday-full-guide-1"
+}

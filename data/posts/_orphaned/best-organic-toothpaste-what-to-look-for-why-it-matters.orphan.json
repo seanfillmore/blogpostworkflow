@@ -1,0 +1,12 @@
+{
+  "slug": "best-organic-toothpaste-what-to-look-for-why-it-matters",
+  "archived_at": "2026-08-31T01:13:52.429Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "target organic-toothpaste already has its own pending refresh",
+  "resolved_target": "organic-toothpaste",
+  "refresh_mtime": "2026-08-29T07:36:31.364Z",
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/best-organic-toothpaste-what-to-look-for-why-it-matters data/posts/best-organic-toothpaste-what-to-look-for-why-it-matters"
+}

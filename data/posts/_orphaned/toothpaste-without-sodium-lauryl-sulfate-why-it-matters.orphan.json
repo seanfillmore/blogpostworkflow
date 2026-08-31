@@ -1,0 +1,12 @@
+{
+  "slug": "toothpaste-without-sodium-lauryl-sulfate-why-it-matters",
+  "archived_at": "2026-08-31T01:13:52.447Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to toothpaste-without-sodium-lauryl-sulfate, inert",
+  "resolved_target": "toothpaste-without-sodium-lauryl-sulfate",
+  "refresh_mtime": "2026-08-03T07:37:32.328Z",
+  "rehomed_to": "data/posts/toothpaste-without-sodium-lauryl-sulfate/orphaned-refresh-2026-08-03.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/toothpaste-without-sodium-lauryl-sulfate-why-it-matters data/posts/toothpaste-without-sodium-lauryl-sulfate-why-it-matters"
+}

@@ -1,0 +1,12 @@
+{
+  "slug": "can-coconut-oil-replace-toothpaste-the-honest-answer",
+  "archived_at": "2026-08-31T01:13:52.432Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to can-coconut-oil-replace-toothpaste, inert",
+  "resolved_target": "can-coconut-oil-replace-toothpaste",
+  "refresh_mtime": "2026-05-22T11:32:12.490Z",
+  "rehomed_to": "data/posts/can-coconut-oil-replace-toothpaste/orphaned-refresh-2026-05-22.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/can-coconut-oil-replace-toothpaste-the-honest-answer data/posts/can-coconut-oil-replace-toothpaste-the-honest-answer"
+}

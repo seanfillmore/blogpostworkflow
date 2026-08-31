@@ -1,0 +1,12 @@
+{
+  "slug": "sls-toothpaste-what-it-is-why-to-go-sls-free",
+  "archived_at": "2026-08-31T01:13:52.444Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "archive",
+  "reason": "no content-refreshed.html — nothing to carry across",
+  "resolved_target": "sls-toothpaste",
+  "refresh_mtime": null,
+  "rehomed_to": null,
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/sls-toothpaste-what-it-is-why-to-go-sls-free data/posts/sls-toothpaste-what-it-is-why-to-go-sls-free"
+}

@@ -1,0 +1,13 @@
+{
+  "slug": "best-soap-for-tattoos-what-to-use-for-safe-healing",
+  "archived_at": "2026-08-29T23:50:52.461Z",
+  "archived_by": "manual cleanup 2026-08-29",
+  "reason": "Orphan directory created by the content-refresher slug-mismatch bug fixed in PR #679. It carries a meta.json with no shopify_article_id and NO content.html, so resolvePostSlug(<handle>) matched it at step 1 (exact dir) and SHADOWED data/posts/best-soap-for-tattoos, which is the real directory for the article with handle best-soap-for-tattoos-what-to-use-for-safe-healing (article 563424362666, status redirected).",
+  "contents": [
+    "backups",
+    "content-refreshed.html",
+    "editor-report.md",
+    "meta.json"
+  ],
+  "note": "MOVED, never deleted — content-refreshed.html is a paid content-researcher/LLM output. Restore with: mv data/posts/_orphaned/best-soap-for-tattoos-what-to-use-for-safe-healing data/posts/best-soap-for-tattoos-what-to-use-for-safe-healing"
+}

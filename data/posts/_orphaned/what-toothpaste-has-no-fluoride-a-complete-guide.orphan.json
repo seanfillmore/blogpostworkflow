@@ -1,0 +1,12 @@
+{
+  "slug": "what-toothpaste-has-no-fluoride-a-complete-guide",
+  "archived_at": "2026-08-31T01:13:52.448Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to what-toothpaste-has-no-fluoride, inert",
+  "resolved_target": "what-toothpaste-has-no-fluoride",
+  "refresh_mtime": "2026-07-03T11:31:20.184Z",
+  "rehomed_to": "data/posts/what-toothpaste-has-no-fluoride/orphaned-refresh-2026-07-03.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/what-toothpaste-has-no-fluoride-a-complete-guide data/posts/what-toothpaste-has-no-fluoride-a-complete-guide"
+}

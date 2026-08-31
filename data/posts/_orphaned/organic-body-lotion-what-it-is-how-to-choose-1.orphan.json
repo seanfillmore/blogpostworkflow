@@ -1,0 +1,12 @@
+{
+  "slug": "organic-body-lotion-what-it-is-how-to-choose-1",
+  "archived_at": "2026-08-31T01:13:52.442Z",
+  "archived_by": "scripts/rehome-orphan-refreshes.mjs",
+  "action": "rehome",
+  "reason": "carry the refresh to organic-body-lotion, inert",
+  "resolved_target": "organic-body-lotion",
+  "refresh_mtime": "2026-06-19T17:29:29.472Z",
+  "rehomed_to": "data/posts/organic-body-lotion/orphaned-refresh-2026-06-19.html",
+  "cause": "content-refresher slug mismatch, fixed in PR #679 — the agent wrote to data/posts/<shopify handle>/ instead of the existing local slug directory",
+  "restore": "mv data/posts/_orphaned/organic-body-lotion-what-it-is-how-to-choose-1 data/posts/organic-body-lotion-what-it-is-how-to-choose-1"
+}
