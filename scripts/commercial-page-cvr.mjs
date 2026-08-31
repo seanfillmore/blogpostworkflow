@@ -22,14 +22,16 @@ import { getAllOrders } from '../lib/shopify.js';
 import { attributionRows } from '../lib/order-attribution.js';
 import {
   aggregateCvr, assertGa4WindowClean, breakevenCostPerSession, requiredCvr,
-  GA4_HOLE_END,
+  heroOffers, GA4_HOLE_END,
 } from '../lib/commercial-cvr.js';
+import { FALLBACK_PACKAGE_COSTS } from '../lib/shipping-costs.js';
+import { BUNDLES, evaluate } from './bundle-economics.mjs';
 
-// Contribution margins from the verified unit economics in the growth plan.
-const OFFERS = [
-  { label: 'Sensitive Skin Set ($46.80)', contribution: 25 },
-  { label: 'Coconut Reset ($119)', contribution: 47 },
-];
+// Contribution is DERIVED from the same rows `npm run bundle-economics` prints,
+// never transcribed. Both numbers here had gone stale — the Reset was carried at
+// "$119 / $47" against a real $121 / $78.56 — and a break-even CPC computed from
+// a contribution 40% too low says paid traffic is unaffordable when it is not.
+const OFFERS = heroOffers(BUNDLES.map((b) => evaluate(b, FALLBACK_PACKAGE_COSTS)));
 const REFERENCE_CPCS = [0.5, 1.0, 1.5];
 
 function parseArgs(argv) {
@@ -141,16 +143,22 @@ async function main() {
   }
 
   console.log('\nPAID BREAKEVEN at the measured commercial rate');
+  // Column width follows the longest offer NAME. It used to be a fixed 22, which
+  // silently ran the headings together the moment the names came from the roster
+  // instead of being hand-shortened here.
+  const names = OFFERS.map((o) => o.label.split(' (')[0]);
+  const labelW = Math.max(...OFFERS.map((o) => o.label.length)) + 2;
+  const colW = Math.max(...names.map((n) => n.length)) + 3;
   for (const o of OFFERS) {
     const maxCps = breakevenCostPerSession(commercial.cvr, o.contribution);
-    console.log(`  ${o.label.padEnd(28)} max ${maxCps === null ? 'n/a' : money(maxCps)}/click`);
+    console.log(`  ${o.label.padEnd(labelW)} max ${maxCps === null ? 'n/a' : money(maxCps)}/click`);
   }
   console.log('\n  CVR each offer would need at a real CPC:');
-  console.log('  CPC'.padEnd(10) + OFFERS.map((o) => o.label.split(' (')[0].padStart(22)).join(''));
+  console.log('  CPC'.padEnd(10) + names.map((n) => n.padStart(colW)).join(''));
   for (const cpc of REFERENCE_CPCS) {
     console.log(
       ('  ' + money(cpc)).padEnd(10) +
-      OFFERS.map((o) => pct(requiredCvr(cpc, o.contribution)).padStart(22)).join('')
+      OFFERS.map((o) => pct(requiredCvr(cpc, o.contribution)).padStart(colW)).join('')
     );
   }
   console.log('\n  Read it as: the offer with the LOWER required CVR is the cheaper one to');
