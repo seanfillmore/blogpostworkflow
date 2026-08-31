@@ -80,6 +80,90 @@
       "savingsLabel": "$11.20",
       "defaultVariantId": "48075580539050",
       "url": "https://www.realskincare.com/products/sensitive-skin-starter-set"
+    },
+    "coconut-bar-soap-4-pack": {
+      "title": "Coconut Bar Soap — 4-Pack",
+      "price": 39,
+      "priceLabel": "$39",
+      "priceVaries": false,
+      "compareAtPrice": 44,
+      "compareAtLabel": "$44",
+      "savings": 5,
+      "savingsLabel": "$5",
+      "defaultVariantId": "48868611457194",
+      "url": "https://www.realskincare.com/products/coconut-bar-soap-4-pack"
+    },
+    "coconut-deodorant-4-pack": {
+      "title": "Coconut Deodorant — 4-Pack",
+      "price": 53,
+      "priceLabel": "$53",
+      "priceVaries": false,
+      "compareAtPrice": 60,
+      "compareAtLabel": "$60",
+      "savings": 7,
+      "savingsLabel": "$7",
+      "defaultVariantId": "48941787087018",
+      "url": "https://www.realskincare.com/products/coconut-deodorant-4-pack"
+    },
+    "coconut-toothpaste-3-pack": {
+      "title": "Coconut Oil Toothpaste — 3-Pack",
+      "price": 34,
+      "priceLabel": "$34",
+      "priceVaries": false,
+      "compareAtPrice": 39,
+      "compareAtLabel": "$39",
+      "savings": 5,
+      "savingsLabel": "$5",
+      "defaultVariantId": "48941796982954",
+      "url": "https://www.realskincare.com/products/coconut-toothpaste-3-pack"
+    },
+    "hand-soap-set": {
+      "title": "Hand Soap Set",
+      "price": 44,
+      "priceLabel": "$44",
+      "priceVaries": true,
+      "compareAtPrice": 52,
+      "compareAtLabel": "$52",
+      "savings": 8,
+      "savingsLabel": "$8",
+      "defaultVariantId": "48939262640298",
+      "url": "https://www.realskincare.com/products/hand-soap-set"
+    },
+    "clean-swap": {
+      "title": "The Clean Swap",
+      "price": 59,
+      "priceLabel": "$59",
+      "priceVaries": false,
+      "compareAtPrice": 69,
+      "compareAtLabel": "$69",
+      "savings": 10,
+      "savingsLabel": "$10",
+      "defaultVariantId": "48937845653674",
+      "url": "https://www.realskincare.com/products/clean-swap"
+    },
+    "head-to-toe": {
+      "title": "Head-to-Toe",
+      "price": 87,
+      "priceLabel": "$87",
+      "priceVaries": false,
+      "compareAtPrice": 125,
+      "compareAtLabel": "$125",
+      "savings": 38,
+      "savingsLabel": "$38",
+      "defaultVariantId": "48936066777258",
+      "url": "https://www.realskincare.com/products/head-to-toe"
+    },
+    "99-coconut-reset-digital": {
+      "title": "The 90-Day Coconut Reset",
+      "price": 121,
+      "priceLabel": "$121",
+      "priceVaries": false,
+      "compareAtPrice": 174,
+      "compareAtLabel": "$174",
+      "savings": 53,
+      "savingsLabel": "$53",
+      "defaultVariantId": "48955068121258",
+      "url": "https://www.realskincare.com/products/99-coconut-reset-digital"
     }
   }
 }
