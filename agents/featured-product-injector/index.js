@@ -17,6 +17,11 @@ import { fileURLToPath } from 'node:url';
 import { getContentPath, getMetaPath, classifyPostProduct, ROOT } from '../../lib/posts.js';
 import { productKeyForProduct, singularize } from '../../lib/product-format.js';
 import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js';
+// The SEO tier, deliberately NOT ad-studio's `hasHealthClaim`. The ad gate
+// blocks the whole `toxicity` vocabulary, and "non-toxic" / "free from harmful
+// chemicals" is this brand's central content position and appears verbatim in
+// real customer reviews — CLAUDE.md names reusing it here as the over-correction.
+import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
 
 export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -292,7 +297,41 @@ export function pickRelevantProduct(products, { keyword, title, ingredients = nu
 export function buildCtaCopy({ product, keyword }) {
   const name = (product && product.title) || 'this pick';
   const kw = sanitizeProductCategoryTerm(keyword || 'what you need');
-  return { headline: `Our pick for ${kw}: ${name}`, buttonText: `Shop ${name}`.slice(0, 60) };
+
+  // The buy box is a REGULATED SURFACE: this copy renders in live article
+  // body_html directly above an Add-to-Cart button, which is marketing material
+  // and therefore evidence of intended use. `sanitizeProductCategoryTerm` above
+  // already handles the "call it a deodorant, never an antiperspirant" rule
+  // (Arm B); this handles health claims, which that arm does not see.
+  //
+  // The keyword is the live hazard: the headline interpolates `target_keyword`
+  // verbatim, so a post targeting "body lotion for eczema" would ship a disease
+  // name above the buy button. Measured live 2026-08-31, exactly one page had
+  // that shape and it was an unpublished draft — so this is preventative.
+  //
+  // DEGRADE, NEVER REFUSE. Dropping the buy box off a page that earns traffic is
+  // a worse outcome than the inaccuracy (Prime Directive), and it is the same
+  // call Arm B makes on this very line. So: try the keyword-free form, then give
+  // up the headline entirely. The product link, price and button always ship.
+  const clean = (s) => checkSeoCopyFields({ 'cta headline': s }).ok;
+
+  let headline = `Our pick for ${kw}: ${name}`;
+  if (!clean(headline)) {
+    // Keyword-free fallback — still names and links the product.
+    headline = `Our pick: ${name}`;
+    // Only reachable when the PRODUCT TITLE is itself the claim. The catalogue
+    // really has one ("Natural Wound Care ... Heal every cut and scrape"), and
+    // no rewriting of ours can fix a product's own name.
+    if (!clean(headline)) headline = null;
+  }
+
+  // The button repeats the title, so it fails exactly when the headline's
+  // keyword-free form does. 'Add to Cart' is buildFeaturedProductHtml's own
+  // default, so this is the no-copy path rather than a new string.
+  const shopLabel = `Shop ${name}`.slice(0, 60);
+  const buttonText = checkSeoCopyFields({ 'cta button': shopLabel }).ok ? shopLabel : 'Add to Cart';
+
+  return { headline, buttonText };
 }
 
 /**
@@ -574,8 +613,16 @@ async function injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShop
 
   // Fetch Judge.me data (both calls in parallel)
   const { fetchTopReview, fetchProductStats } = await import('../../lib/judgeme.js');
+  // The quote is a verbatim customer sentence going into live marketing copy
+  // above an Add-to-Cart button, and the SAME top review is reused on every page
+  // featuring this product (measured 2026-08-31: one quote on 40 live pages), so
+  // one bad review would publish across all of them unattended. Screening here
+  // makes fetchTopReview fall through to the next 5-star review at no extra API
+  // cost; if none is clean it returns null and the card renders with no quote.
   const [reviewData, statsData] = await Promise.all([
-    judgemeToken ? fetchTopReview(productHandle, judgemeShopDomain, judgemeToken).catch(() => null) : Promise.resolve(null),
+    judgemeToken ? fetchTopReview(productHandle, judgemeShopDomain, judgemeToken, {
+      isQuotable: (quote) => checkSeoCopyFields({ 'review quote': quote }).ok,
+    }).catch(() => null) : Promise.resolve(null),
     judgemeToken ? fetchProductStats(productHandle, judgemeShopDomain, judgemeToken).catch(() => null) : Promise.resolve(null),
   ]);
 
