@@ -30,3 +30,13 @@ test('a name with no live flow email is a REASON, never a fallback to the spec k
   assert.equal(r.templateId, null);
   assert.match(r.reason, /no live flow email named/);
 });
+
+test('resolveLiveTemplate refuses a name served by more than one flow', async () => {
+  // Real shape: a draft and a live "Welcome Series (RSC v2)" share five message names.
+  const index = new Map([['Welcome — 03 Best Sellers', { templateId: 'RpLmGW', flowId: 'V5fp5i', flowName: 'Welcome Series (RSC v2)', messageId: 'Xq54R2' }]]);
+  index.duplicateNames = new Set(['Welcome — 03 Best Sellers']);
+  const r = await resolveLiveTemplate({ specId: 'Ra3L8A', name: 'Welcome — 03 Best Sellers', index });
+  assert.equal(r.templateId, null, 'must not hand back the other flow\'s template');
+  assert.equal(r.ambiguous, true);
+  assert.equal(r.rotated, false, 'ambiguous is not the same finding as rotated');
+});

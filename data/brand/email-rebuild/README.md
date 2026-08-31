@@ -79,33 +79,18 @@ breakage, not something a rebuild introduced. No rebuild may carry it forward �
 `verify-email-rebuild.mjs` now fails on it, and both the tag and link checks treat the
 two spellings as the same destination so the repair doesn't read as a dropped link.
 
-## Copying a rebuild to the clipboard
+## What Klaviyo rewrites on save
 
-Use `LC_CTYPE=UTF-8 pbcopy < <id>.after.html`. Plain `pbcopy` under `LC_CTYPE=C` tags the
-pasteboard as Mac Roman, so every em dash and arrow arrives in Klaviyo as `‚Äî` / `‚Üí`.
-A `pbcopy | pbpaste` round-trip **cannot detect this** — both ends share the same wrong
-assumption and it looks clean. Check with `osascript -e 'the clipboard as text'`, which
-reads the pasteboard the way a GUI app does.
+Measured: CSS is pretty-printed and single quotes become double, CSS comments are
+**stripped** (never put load-bearing explanation in `/* … */` inside `<style>`; HTML
+comments survive), `&` is re-encoded to `&amp;`, and a `<head>` is inserted. Everything
+functional comes through untouched — template tags, the `@media (prefers-color-scheme:
+dark)` block, `!important` rules, the webfont `@import`.
 
-## What Klaviyo rewrites when you save
-
-Measured on the Winback 03 paste (8,313 bytes in, 8,583 out):
-
-- **CSS is pretty-printed** and single quotes become double. Harmless.
-- **CSS comments are stripped.** Never put load-bearing explanation in `/* … */`
-  inside `<style>` — it will not survive. HTML comments *do* survive.
-- Everything functional came through untouched: all template tags, the
-  `@media (prefers-color-scheme: dark)` block, `!important` rules, and the webfont
-  `@import`.
-
-So after pasting, refresh `.before.html` from live rather than assuming it matches what
-you pasted — otherwise every later run reports phantom drift.
-
-## Before pasting anything
-
-Diff the `.before.html` against what is live right now. These files are a snapshot; if
-someone edited the email in the UI since, pasting the rebuild silently reverts their
-work.
+That is why nothing here compares bytes. The push verifies on **tags, links and visible
+text**; the drift check compares **tags and links**; `.before.html` is refreshed from
+what Klaviyo actually stored after every push. Comparing raw HTML would report a
+difference on every single email, on a byte Klaviyo itself introduced.
 
 ## What the rebuild changes, and what it must not
 
