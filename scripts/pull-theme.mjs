@@ -51,6 +51,25 @@ import { getThemes, getMainThemeId, getThemeAsset, listThemeAssets } from '../li
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 const THEME_DIR = join(ROOT, 'theme');
 
+/**
+ * Directories under `theme/` that are AUTHORING SOURCE, not Shopify assets.
+ * Re-pulling one either 404s or overwrites hand-written source with a build.
+ *
+ * `blocks/` is the subtle one, and it was briefly mistaken for four pieces of
+ * merged work that never shipped. The live theme has 480 assets and ZERO under
+ * `blocks/`, and none of those four filenames exist anywhere on it — which looks
+ * exactly like a compliance fix and an SEO fix silently never uploaded.
+ *
+ * They ship a different way. Each is inlined into a `"type": "custom_liquid"`
+ * block in a template's JSON, whose block ID happens to match the filename —
+ * `quantity-ladder` is a custom_liquid block inside
+ * product.landing-page-bar-soap.json, `ladder-tier-noindex` one inside
+ * product.json. The features are live; the `.liquid` file is the readable copy
+ * of what got pasted in. So these are kept, and the puller must not report them
+ * as MISSING, which reads like an outage.
+ */
+const LOCAL_ONLY = ['rum/', 'blocks/'];
+
 /** Every file currently mirrored, as Shopify asset keys. */
 export function mirroredKeys(dir = THEME_DIR) {
   const out = [];
@@ -65,9 +84,7 @@ export function mirroredKeys(dir = THEME_DIR) {
     }
   };
   walk(dir);
-  // `theme/rum/` is authored here and has no Shopify counterpart — it is source
-  // for an asset that is built and uploaded under a different key.
-  return out.filter((k) => !k.startsWith('rum/'));
+  return out.filter((k) => !LOCAL_ONLY.some((p) => k.startsWith(p)));
 }
 
 export function parseArgs(argv) {

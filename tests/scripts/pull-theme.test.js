@@ -42,4 +42,8 @@ test('mirroredKeys returns Shopify asset keys, not filesystem paths', () => {
   // theme/rum/ is authored source for an asset uploaded under a different key,
   // so re-pulling it would either 404 or overwrite the source with the build.
   assert.ok(!keys.some((k) => k.startsWith('rum/')), 'rum/ is excluded');
+  mkdirSync(join(dir, 'blocks'), { recursive: true });
+  writeFileSync(join(dir, 'blocks', 'b.liquid'), 'x');
+  // blocks/ is inlined into custom_liquid template blocks, not uploaded as assets.
+  assert.ok(!mirroredKeys(dir).some((k) => k.startsWith('blocks/')), 'blocks/ is excluded');
 });
