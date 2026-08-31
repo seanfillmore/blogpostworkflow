@@ -43,6 +43,7 @@ given source is suitable.
 | `deodorant-free-from.*` | `product.landing-page-deodorant.json` → `free-from-block` | `shopify://shop_images/deodorant-free-from.webp` |
 | `lip-balm-free-from.*` | `product.landing-page-lip-balm.json` → `free-from-block` | `shopify://shop_images/lip-balm-free-from.webp` |
 | `liquid-soap-free-from.*` | `product.landing-page-liquid-soap.json` → `free-from-block` | `shopify://shop_images/liquid-soap-free-from.webp` |
+| `lotion-free-from.*` | `product.landing-page-lotion.json` → `free-from-block` | `shopify://shop_images/lotion-free-from.webp` |
 | `toothpaste-free-from.*` | `product.landing-page-toothpaste.json` → `free-from-block` | `shopify://shop_images/toothpaste-free-from.webp` |
 
 ## Status — every live PDP clear, verified 2026-08-30
@@ -64,17 +65,24 @@ node scripts/update-theme-asset.mjs get templates/product.landing-page-<x>.json 
 curl -sL https://www.realskincare.com/products/<handle> | grep -c media--placeholder
 ```
 
-### Two things left alone, on purpose
+All seven bands now render at **507px on desktop / 1920×1160**, so the pattern is
+uniform down the page.
 
-- **`landing-page-lotion` uses `why-1-lotion.webp` (800×800), not a 1920×1160
-  file of ours.** It renders, so it was never broken — but being square, that
-  band is noticeably taller than its six siblings. Cosmetic; replace it if the
-  inconsistency starts to show.
+### One thing left alone, on purpose
+
 - **`landing-page-liquid-soap` serves TWO products** — `organic-foaming-hand-soap`
   and `foam-soap-refill-32oz` — from one section, so the refill PDP shows the
   8 fl oz **pump bottle**, not the 32 oz jug it sells. The operator chose the
   pump bottle knowing this. Splitting the templates is the fix if it ever
   matters; the exclusion list itself is accurate for both.
+
+`why-1-lotion.webp` (800×800) is no longer referenced by any template. It is
+**left in Shopify Files, not deleted** — deleting a Shopify image destroys the
+CDN file, and nothing here needed it gone.
+
+**The lotion ground is a deeper tan than the other six**, which run pale
+cream/beige. That is the source photograph, not the preparation; re-shoot rather
+than recolour if it should match.
 
 ### Templates with no free-from section (nothing to fix)
 
