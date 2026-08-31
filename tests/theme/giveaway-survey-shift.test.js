@@ -63,7 +63,14 @@ let origin;
 // the file would take its no-email early-return and never reach the code under
 // test.
 before(async () => {
-  browser = await puppeteer.launch({ headless: 'new' });
+  // --no-sandbox because the production box runs as root, where Chrome refuses
+  // to start without it ("Running as root without --no-sandbox is not
+  // supported"). Without the flag these seven tests fail on every server run
+  // while passing locally, which turns `npm test` on the box — the one check
+  // CLAUDE.md says to trust over a local green — permanently red and therefore
+  // unreadable. Everything loaded here is first-party: our own theme CSS and
+  // markup, served from 127.0.0.1. Pinned by tests/lib/puppeteer-launch-args.
+  browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
   server = createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
     res.end(`<!doctype html><meta charset="utf-8"><style>${themeCss}</style>${MARKUP}`);

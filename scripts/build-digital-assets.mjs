@@ -340,7 +340,12 @@ async function main() {
     : readdirSync(SRC, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name);
   if (!slugs.length) throw new Error(`no assets found under ${SRC}`);
 
-  const browser = await puppeteer.launch({ headless: 'new' });
+  // --no-sandbox for the same reason every other launch site in this repo
+  // passes it: Chrome will not start as root, and the production box is root.
+  // This has not bitten yet only because the PDFs are built by hand from a
+  // laptop — it would have failed the first time anyone ran it on the server.
+  // Input is our own asset HTML. Pinned by tests/lib/puppeteer-launch-args.
+  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
   try {
     for (const slug of slugs) {
       const { out, words } = await build(slug, images, ingredients, browser);
