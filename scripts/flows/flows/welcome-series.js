@@ -16,7 +16,7 @@ const WELCOME_CODE = codeBox('Free shipping — welcome gift', 'NEWCUSTOMER');
 
 export default {
   name: 'Welcome Series (RSC v2)',
-  oldFlowId: 'WMhLtj',
+  oldFlowId: 'UUa3Qk',
   entry: 'e1',
   emails: {
     welcome_1: {

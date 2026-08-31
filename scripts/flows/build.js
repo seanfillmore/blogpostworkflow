@@ -92,18 +92,40 @@ async function cmdVerify(flowName) {
 async function cmdGolive(flowName, mod) {
   const state = loadState();
   if (state[flowName]?.flowId) { await k.deleteFlow(state[flowName].flowId).catch(() => {}); console.log(`  removed prior draft ${state[flowName].flowId}`); }
+
+  // Which flow does this go-live REPLACE? Resolved by name against live Klaviyo,
+  // never from mod.oldFlowId alone.
+  //
+  // mod.oldFlowId is correct exactly once. The first go-live retires it and puts
+  // a NEW flow live under the same name; from then on the hardcoded id names a
+  // flow that no longer exists, `updateFlowStatus` on it is a no-op or a 404,
+  // and the genuinely-live flow is never retired. The result is TWO live flows
+  // with the same trigger, both sending — the exact double-send the retire step
+  // exists to prevent, arrived at silently. Measured 2026-08-31: all five
+  // oldFlowId values on this account pointed at deleted flows, and three had a
+  // live namesake.
+  const preexistingLive = await k.liveFlowIdsByName(mod.name);
+  const retireIds = preexistingLive.length ? preexistingLive : (mod.oldFlowId ? [mod.oldFlowId] : []);
+  console.log(`  will retire after go-live: ${retireIds.length ? retireIds.join(', ') : '(nothing live under this name)'}`);
+
   const id = await cmdFlow(flowName, mod, 'live');
   const live = await k.updateFlowStatus(id, 'live');
   const v = await verifyFlow(id);
   const draftSends = v.sends.filter((s) => s.status !== 'live');
   if (live.status !== 'live' || draftSends.length || v.issues.length) throw new Error(`go-live incomplete: status=${live.status} draftSends=${draftSends.length} issues=${v.issues.join(';')}`);
-  // set OLD flow to draft so it stops sending
-  if (mod.oldFlowId) {
-    await k.updateFlowStatus(mod.oldFlowId, 'draft');
-    console.log(`✓ ${flowName} LIVE (${id}); old flow ${mod.oldFlowId} set to draft. Messages: ${v.sends.length}/${v.sends.length} live.`);
-  } else {
-    console.log(`✓ ${flowName} LIVE (${id}); net-new flow (no old flow to retire). Messages: ${v.sends.length}/${v.sends.length} live.`);
+
+  for (const oldId of retireIds) {
+    if (oldId === id) continue;
+    await k.updateFlowStatus(oldId, 'draft').catch((e) => { throw new Error(`new flow ${id} is LIVE but retiring ${oldId} failed (${e.message}) — two live flows may be double-sending, fix by hand now`); });
+    console.log(`  retired ${oldId} → draft`);
   }
+
+  // Assert the end state rather than trusting the writes: exactly this flow,
+  // live, under this name.
+  const stragglers = await k.liveFlowIdsByName(mod.name, { exceptId: id });
+  if (stragglers.length) throw new Error(`${stragglers.length} other flow(s) still LIVE as "${mod.name}": ${stragglers.join(', ')} — double-send risk, retire by hand`);
+
+  console.log(`✓ ${flowName} LIVE (${id}); retired ${retireIds.filter((x) => x !== id).length} old flow(s). Messages: ${v.sends.length}/${v.sends.length} live.`);
 }
 
 async function cmdRender(flowName, key, itemsCsv) {
