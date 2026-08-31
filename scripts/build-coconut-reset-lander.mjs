@@ -83,6 +83,23 @@ export const PLAN = Object.freeze([
       + 'it is verified: the Ingredients tab lists 6 for the lotion plus beeswax and palm stearic for the cream, '
       + 'and the stats block already publishes "8 ingredients across both formulas".',
   },
+  {
+    id: 'mechanism-lotion-strip-research-note',
+    kind: 'correctness',
+    field: 'mechanism',
+    before:
+      'Lighter, for everyday use over large areas. \\"dude as soon as you put it on it just ABSORBS.\\" '
+      + 'Answers the \\"natural oils sit on top like a greasy baked good\\" objection (5 mentions).',
+    after:
+      'Lighter, for everyday use over large areas. It sinks in rather than sitting on top — as one customer '
+      + 'put it, \\"dude as soon as you put it on it just ABSORBS.\\"',
+    reason:
+      'INTERNAL RESEARCH NOTE SHIPPED TO CUSTOMERS. "Answers the ... objection (5 mentions)" is an instruction '
+      + 'to the copywriter and a tally from the voice-of-customer corpus — it names the objection being handled '
+      + 'and counts how many reviews raised it. A reader is told, in the brand\'s own voice, that they are being '
+      + 'handled. The customer quote is real and stays; only the annotation goes, and the objection it was '
+      + 'flagging is now answered in plain copy ("sinks in rather than sitting on top") instead of being labelled.',
+  },
 ]);
 
 /** Template-file fallbacks that still carry the old count. */

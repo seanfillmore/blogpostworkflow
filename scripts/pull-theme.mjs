@@ -46,7 +46,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isDirectRun } from '../lib/is-direct-run.js';
-import { getThemes, getMainThemeId, getThemeAsset, listThemeAssets } from '../lib/shopify.js';
+import { getThemes, getMainThemeId, getThemeAssetRaw, listThemeAssets } from '../lib/shopify.js';
 
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 const THEME_DIR = join(ROOT, 'theme');
@@ -128,7 +128,10 @@ async function main(argv) {
   const binary = [];
   for (const key of keys.sort()) {
     let asset;
-    try { asset = await getThemeAsset(id, key); } catch { missing += 1; console.log(`  MISSING  ${key}`); continue; }
+    try { asset = await getThemeAssetRaw(id, key); } catch { missing += 1; console.log(`  MISSING  ${key}`); continue; }
+    // getThemeAssetRaw hands back the whole record, so `attachment` is reachable
+    // and a BINARY asset is distinguishable from an ABSENT one. Through
+    // getThemeAsset both were null and every binary reported as MISSING.
     const value = typeof asset === 'string' ? asset : asset?.value;
     if (value === undefined || value === null) {
       if (asset?.attachment) { binary.push(key); skipped += 1; console.log(`  BINARY   ${key} (skipped — would corrupt as text)`); }
