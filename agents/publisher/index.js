@@ -51,6 +51,7 @@ import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath } fr
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
+import { EXIT_MIRROR_DIVERGED } from '../../lib/refresh-writeoff.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -337,7 +338,13 @@ async function main() {
       console.error(`  Live:   https://${STORE}/blogs/${blogHandle || 'news'}/${meta.shopify_handle || slug}`);
       console.error('  Inspect both: node scripts/check-content-mirrors.mjs --slug ' + slug + ' --snapshot-live --apply');
       console.error('  --force does NOT bypass this. Pass --allow-divergent-mirror once you have looked.');
-      process.exit(1);
+      // A DISTINCT exit code, not a generic 1. Every caller (scheduler.js:121,
+      // pipeline.js:150, agents/refresh-runner) treats any nonzero as failure and
+      // branches on none of them, so this is additive for all of them — and it is
+      // the only thing that lets refresh-runner tell a DETERMINISTIC refusal (no
+      // tomorrow makes the same rewrite publishable) from a transient Shopify
+      // error, which must never bench a live page. See lib/refresh-writeoff.js.
+      process.exit(EXIT_MIRROR_DIVERGED);
     }
     if (verdict.severity !== 'ok') {
       console.warn(`\n  ⚠ Mirror gate (${verdict.severity}): ${verdict.reason}`);

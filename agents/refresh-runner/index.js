@@ -55,6 +55,10 @@ import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditor
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
+  decideRefreshFailure, buildRefreshWriteoff, mirrorFingerprint,
+  isRefreshWrittenOff,
+} from '../../lib/refresh-writeoff.js';
+import {
   rankClusters, orderByEfficiency, renderEfficiencyLines, efficiencyBanner,
 } from '../../lib/cluster-efficiency.js';
 import {
@@ -216,6 +220,23 @@ function refreshOne(slug) {
     return { slug, ok: false, skipped: true, reason: bodyLock.reason };
   }
 
+  // Written off by a previous run whose rewrite the mirror gate refused. THE
+  // CHOKEPOINT: every caller reaches a refresh through here — legacy-rebuilder's
+  // full-rebuild branch, this agent's own three bulk pick lists, indexing-fixer —
+  // so one skip covers all of them, and it lands BEFORE content-refresher, which
+  // is the paid step. It lapses on its own when content.html changes.
+  try {
+    const priorMeta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
+    const mirror = existsSync(getContentPath(slug)) ? readFileSync(getContentPath(slug), 'utf8') : null;
+    if (isRefreshWrittenOff(priorMeta, mirror)) {
+      const rec = priorMeta.refresh_writeoff;
+      console.log(`  [skip] ${slug}: written off ${rec.written_off_at} — ${rec.reason}`);
+      console.log('         The mirror is unchanged since, so this rewrite would be refused again.');
+      console.log(`         Re-open it with: node scripts/reconcile-content-mirrors.mjs --slug ${slug} --apply`);
+      return { slug, ok: false, skipped: true, writtenOff: true, reason: `written off: ${rec.reason}` };
+    }
+  } catch { /* unreadable meta — unknown means allow, same as every other gate here */ }
+
   console.log(`\n══ Refreshing: ${slug} ══`);
 
   try {
@@ -228,21 +249,73 @@ function refreshOne(slug) {
   // back over the canonical HTML so editor + publisher pick it up.
   const refreshedHtml = getRefreshedPath(slug);
   const canonicalHtml = getContentPath(slug);
+
+  // The mirror is about to be overwritten, so from here on EVERY failure exit has
+  // to go through `abort()` — which restores it. Leaving the rewrite in place is
+  // what made a refused publish permanent: the mirror then reads as a DIFFERENT
+  // ARTICLE forever, so every later publish refuses too, and the post keeps
+  // reading as legacy so legacy-rebuilder re-pays for the whole chain daily.
+  // Production 2026-08-31: 19 refusals, one post eight times, TEN unused backups
+  // in its backups/ directory. See lib/refresh-writeoff.js.
+  let mirrorBackup = null;
+  let mirrorOverwritten = false;
   if (existsSync(refreshedHtml)) {
     // Backup the original alongside the refresh for safety.
     if (existsSync(canonicalHtml)) {
       const backupsDir = getBackupsDir(slug);
       mkdirSync(backupsDir, { recursive: true });
-      const backup = join(backupsDir, `content.backup-${Date.now()}.html`);
-      writeFileSync(backup, readFileSync(canonicalHtml));
+      mirrorBackup = join(backupsDir, `content.backup-${Date.now()}.html`);
+      writeFileSync(mirrorBackup, readFileSync(canonicalHtml));
     }
     writeFileSync(canonicalHtml, readFileSync(refreshedHtml));
+    mirrorOverwritten = Boolean(mirrorBackup);
+  }
+
+  /**
+   * Fail this refresh, putting the mirror back the way it was.
+   *
+   * The paid rewrite is NOT lost: it is still `content-refreshed.html`, and the
+   * pre-write copy we restore from stays in `backups/`. All this ends is the
+   * window where the mirror is ahead of live — at the point we know the publish
+   * is not going to happen.
+   */
+  function abort(reason, exitCode) {
+    const decision = decideRefreshFailure({ exitCode, mirrorOverwritten });
+    if (decision.restoreMirror) {
+      try {
+        writeFileSync(canonicalHtml, readFileSync(mirrorBackup));
+        console.log(`  ↩ Mirror restored from ${mirrorBackup} — the refresh was not published.`);
+      } catch (e) {
+        // Say so loudly. A failed restore leaves exactly the divergence this
+        // exists to prevent, and silence is how it stayed invisible for months.
+        console.error(`  ✗ COULD NOT RESTORE the mirror for ${slug}: ${e.message}`);
+        console.error('    data/posts/' + slug + '/content.html is now AHEAD of live and every publish will refuse.');
+        console.error('    Fix with: node scripts/reconcile-content-mirrors.mjs --slug ' + slug + ' --apply');
+        return { slug, ok: false, reason };
+      }
+    }
+    if (decision.writeOff) {
+      try {
+        const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+        meta.refresh_writeoff = buildRefreshWriteoff({
+          reason,
+          fingerprint: mirrorFingerprint(readFileSync(canonicalHtml, 'utf8')),
+          at: new Date().toISOString(),
+        });
+        writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        console.log(`  ⏸ Written off: the mirror gate refuses this rewrite, so re-running it tomorrow buys nothing.`);
+        console.log(`    This LAPSES on its own the moment content.html changes (e.g. a mirror reconcile).`);
+      } catch (e) {
+        console.error(`  ⚠ Could not record the write-off for ${slug}: ${e.message}`);
+      }
+    }
+    return { slug, ok: false, reason };
   }
 
   try {
     run(`node agents/editor/index.js "${canonicalHtml}"`, 'editor');
   } catch (e) {
-    return { slug, ok: false, reason: `editor failed: ${e.message}` };
+    return abort(`editor failed: ${e.message}`, e.status);
   }
 
   // Gate on editor verdict — the editor exits 0 even on "Needs Work", so the
@@ -261,7 +334,7 @@ function refreshOne(slug) {
     const { gate, attempts } = runEditGateWithRepair(slug, { maxAttempts: 3 });
     if (!gate.pass) {
       console.log(`\n  Editor still reports Needs Work after ${attempts} repair attempt(s) — not publishing.`);
-      return { slug, ok: false, reason: `editor: ${gate.reason || 'Needs Work'} — not published after repair loop` };
+      return abort(`editor: ${gate.reason || 'Needs Work'} — not published after repair loop`, 1);
     }
   }
 
@@ -285,7 +358,7 @@ function refreshOne(slug) {
     try {
       run(`node agents/publisher/index.js "${metaPath}"`, 'publisher');
     } catch (e) {
-      return { slug, ok: false, reason: `publisher failed: ${e.message}` };
+      return abort(`publisher failed: ${e.message}`, e.status);
     }
   } else {
     console.log(`\n  Refreshed HTML ready (--no-publish mode): ${canonicalHtml}`);
