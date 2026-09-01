@@ -19,6 +19,7 @@
  *   node scripts/regate-live-posts.js            # flagged posts only
  *   node scripts/regate-live-posts.js --all      # every Shopify post
  *   node scripts/regate-live-posts.js --limit 25
+ *   node scripts/regate-live-posts.js --slug <slug> [--slug <slug>]   # named posts only
  */
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync, copyFileSync, existsSync } from 'node:fs';
@@ -32,6 +33,15 @@ import { isPassing, firstBlockerReason } from '../lib/editor-remediation.js';
 const argAll = process.argv.includes('--all');
 const limitArg = process.argv.indexOf('--limit');
 const LIMIT = limitArg !== -1 ? parseInt(process.argv[limitArg + 1], 10) : Infinity;
+// --slug re-gates named posts and nothing else. Every re-gate is a paid editor
+// call, and the two other scopes are all-or-nothing: `--all` is every Shopify
+// post and the default is every FLAGGED one, which on production is 45. Wanting
+// two of them should not cost forty-five, and `--limit` cannot express WHICH.
+// The usual case is a post whose content.html was just reconciled, leaving its
+// report describing a body that is no longer there.
+const SLUGS = process.argv.reduce((acc, a, i, all) => (
+  a === '--slug' && all[i + 1] && !all[i + 1].startsWith('--') ? [...acc, all[i + 1]] : acc
+), []);
 
 function brokenCount(report) {
   const m = report.match(/broken links:\s*(\d+)/i) || report.match(/(\d+)\s+broken\/unreachable/i);
@@ -54,13 +64,22 @@ async function main() {
   const blogs = await getBlogs();
   const defaultBlogId = blogs[0].id;
 
+  // A named slug is an operator asking for that post, so it is NOT filtered by
+  // `isFlagged` — the whole reason to name one is usually that its report is
+  // stale rather than failing, which is precisely what isFlagged cannot see.
+  const missing = SLUGS.filter((s) => !listAllSlugs().includes(s));
+  if (missing.length) {
+    console.error(`No such post director${missing.length === 1 ? 'y' : 'ies'}: ${missing.join(', ')}`);
+    process.exit(1);
+  }
+
   const candidates = listAllSlugs()
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
     .filter(({ meta }) => meta && meta.shopify_article_id)
-    .filter(({ slug }) => argAll || isFlagged(slug))
+    .filter(({ slug }) => (SLUGS.length ? SLUGS.includes(slug) : argAll || isFlagged(slug)))
     .slice(0, LIMIT);
 
-  console.log(`Re-gating ${candidates.length} ${argAll ? 'Shopify' : 'flagged'} post(s) against live content...\n`);
+  console.log(`Re-gating ${candidates.length} ${SLUGS.length ? 'named' : argAll ? 'Shopify' : 'flagged'} post(s) against live content...\n`);
 
   const cleared = [];   // was flagged → now passes (stale false alarm gone)
   const confirmed = []; // was flagged → still fails (real live issue)
