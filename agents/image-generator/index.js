@@ -42,7 +42,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlink
 import { join, dirname, basename, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
-import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { buildImageAlt } from '../../lib/image-alt.js';
 import { SHOT_TYPES, shotTypePool } from '../../lib/image-variety.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -1020,7 +1020,7 @@ async function generateImage(metaPath) {
     meta.image_blocked = true;
     meta.image_blocked_at = new Date().toISOString();
     meta.image_blocked_reason = `CD rejected ${rejectedImages.length} attempt(s): ${rejectedImages.map(r => r.failures.join(', ')).join('; ')}`;
-    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    replacePostMeta(metaPath, meta);
 
     sceneLog.push({ slug, scene: 'unknown (not approved)', templateKey: finalTemplateKey, shotType: lastShotType, prompt: finalPrompt.slice(0, 200) });
     saveSceneLog(sceneLog);
@@ -1078,7 +1078,7 @@ async function generateImage(metaPath) {
   meta.image_prompt = finalPrompt;
   meta.image_alt = buildImageAlt({ keyword: meta.target_keyword, title: meta.title, scene: finalScene || undefined });
   meta.image_generated_at = new Date().toISOString();
-  writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  replacePostMeta(metaPath, meta);
 
   console.log(`  Saved:  ${finalImagePath}`);
 
@@ -1176,7 +1176,7 @@ async function main() {
           if (!meta.image_alt) {
             meta.image_alt = buildImageAlt({ keyword: meta.target_keyword, title: meta.title });
           }
-          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+          replacePostMeta(metaPath, meta);
         } catch { /* ignore */ }
       }
     }

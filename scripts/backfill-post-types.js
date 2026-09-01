@@ -19,7 +19,7 @@
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { POSTS_DIR, classifyPostType, classifyPostProduct } from '../lib/posts.js';
+import { POSTS_DIR, classifyPostType, classifyPostProduct, replacePostMeta } from '../lib/posts.js';
 
 const dryRun = process.argv.includes('--dry-run');
 
@@ -46,7 +46,7 @@ for (const slug of readdirSync(POSTS_DIR)) {
 
   if (!dryRun) {
     meta.post_type = newType;
-    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    replacePostMeta(metaPath, meta);
   }
   updated++;
 }

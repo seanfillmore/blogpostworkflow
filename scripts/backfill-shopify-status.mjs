@@ -27,7 +27,7 @@
  */
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getPostMeta, getMetaPath } from '../lib/posts.js';
+import { listAllSlugs, getPostMeta, getMetaPath, replacePostMeta } from '../lib/posts.js';
 import { statusFromShopifyArticle, hasExplicitStatus } from '../lib/post-publish-state.js';
 
 /**
@@ -128,7 +128,7 @@ async function main() {
     counts[status]++;
     const was = hasExplicitStatus(meta) ? meta.shopify_status : '(unset)';
     console.log(`  ${changed ? '~' : '='} ${s}: ${was} → ${status}`);
-    if (apply) { writeFileSync(getMetaPath(s), JSON.stringify(next, null, 2)); counts.written++; }
+    if (apply) { replacePostMeta(s, next); counts.written++; }
   }
 
   console.log(

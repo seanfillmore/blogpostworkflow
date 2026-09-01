@@ -51,7 +51,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
-import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
@@ -302,7 +302,7 @@ function refreshOne(slug) {
           fingerprint: mirrorFingerprint(readFileSync(canonicalHtml, 'utf8')),
           at: new Date().toISOString(),
         });
-        writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        replacePostMeta(metaPath, meta);
         console.log(`  ⏸ Written off: the mirror gate refuses this rewrite, so re-running it tomorrow buys nothing.`);
         console.log(`    This LAPSES on its own the moment content.html changes (e.g. a mirror reconcile).`);
       } catch (e) {
@@ -351,7 +351,7 @@ function refreshOne(slug) {
   try {
     const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
     meta.last_refreshed_at = new Date().toISOString();
-    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    replacePostMeta(metaPath, meta);
   } catch { /* ignore */ }
 
   if (FLAG_PUBLISH) {

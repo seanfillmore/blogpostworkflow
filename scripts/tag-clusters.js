@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getMetaPath } from '../lib/posts.js';
+import { listAllSlugs, getMetaPath, replacePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const apply = process.argv.includes('--apply');
@@ -114,7 +114,7 @@ for (const slug of listAllSlugs()) {
 
   if (apply) {
     meta.tags = [cluster, ...existingTags];
-    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    replacePostMeta(metaPath, meta);
   }
 }
 

@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { upsertItem, loadCalendar } from '../../lib/calendar-store.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -123,7 +123,7 @@ function computeNextPublishDate() {
  */
 function scheduleDraft(slug, meta, publishAt) {
   const updated = { ...meta, shopify_status: 'scheduled', shopify_publish_at: publishAt };
-  writeFileSync(getMetaPath(slug), JSON.stringify(updated, null, 2));
+  replacePostMeta(slug, updated);
   try {
     upsertItem({
       slug,

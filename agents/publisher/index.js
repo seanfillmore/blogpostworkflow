@@ -47,7 +47,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticle, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
@@ -377,7 +377,7 @@ async function main() {
   if (imageField?.src) meta.shopify_image_url = imageField.src;
   meta.uploaded_at = new Date().toISOString();
 
-  writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  replacePostMeta(metaPath, meta);
 
   console.log(`\n  Article ID: ${article.id}`);
   console.log(`  Handle:     ${article.handle}`);

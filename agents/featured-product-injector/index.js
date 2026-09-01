@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getContentPath, getMetaPath, classifyPostProduct, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, classifyPostProduct, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { productKeyForProduct, singularize } from '../../lib/product-format.js';
 import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js';
 // The SEO tier, deliberately NOT ad-studio's `hasHealthClaim`. The ad gate
@@ -728,11 +728,11 @@ async function main() {
           const decision = resolvePublisherBlock(meta.publisher_block, result);
           if (decision.action === 'set') {
             meta.publisher_block = decision.block;
-            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            replacePostMeta(metaPath, meta);
             console.log('  ⚠ publisher_block set — no relevant product (held for review)');
           } else if (decision.action === 'clear') {
             delete meta.publisher_block;
-            writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+            replacePostMeta(metaPath, meta);
             console.log('  ✓ publisher_block cleared — this post now has a relevant product');
           }
         } catch (e) {

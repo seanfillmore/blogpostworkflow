@@ -70,7 +70,7 @@ import {
   getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
-import { getContentPath, getMetaPath, ensurePostDir, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
@@ -480,11 +480,11 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let existingWinnerMeta = {};
           try { existingWinnerMeta = JSON.parse(readFileSync(getMetaPath(winnerHandle), 'utf8')); } catch { /* ok */ }
           const { needs_rebuild: _dropWinner, ...winnerMetaRest } = existingWinnerMeta;
-          writeFileSync(getMetaPath(winnerHandle), JSON.stringify({
+          replacePostMeta(winnerHandle, {
             ...winnerMetaRest,
             title: winnerArticle.title,
             target_keyword: decision.query,
-          }, null, 2));
+          });
 
           // Run editor review — checks link health, topical map alignment, editorial quality.
           // Use process.execPath so this works in cron/sh environments where `node` may not be on PATH.
@@ -810,11 +810,11 @@ async function publishPendingDrafts() {
       // Drop any stale needs_rebuild flag from a previous run so the editor's
       // current verdict is the source of truth.
       const { needs_rebuild: _drop, ...metaRest } = existingMeta;
-      writeFileSync(getMetaPath(handle), JSON.stringify({
+      replacePostMeta(handle, {
         ...metaRest,
         title: article.title,
         target_keyword: targetQueryByWinner.get(winnerPath) || metaRest.target_keyword || article.title,
-      }, null, 2));
+      });
     } catch (e) {
       console.log(`    error preparing local files: ${e.message}`);
       summary.push({ winnerPath, status: 'prep_error', error: e.message });

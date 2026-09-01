@@ -35,7 +35,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
+import { listAllSlugs, getContentPath, getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { hasInjectedSchema } from '../../lib/injected-schema.js';
 import { excludeWrittenOff } from '../../lib/refresh-writeoff.js';
@@ -240,7 +240,7 @@ async function lightRefresh(slug) {
   // Clear the needs_rebuild tag on success
   const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
   const updated = { ...rest, refreshed_at: new Date().toISOString() };
-  writeFileSync(getMetaPath(slug), JSON.stringify(updated, null, 2));
+  replacePostMeta(slug, updated);
 
   console.log(`  ✓ Light refresh complete`);
   return true;
@@ -281,7 +281,7 @@ async function rebuildPost(slug) {
       ackField: 'legacy_winner_ack_at', at: new Date().toISOString(),
     });
     if (winnerCleared) {
-      writeFileSync(getMetaPath(slug), JSON.stringify(cleanedWinner, null, 2));
+      replacePostMeta(slug, cleanedWinner);
       console.log('  Cleared stale needs_rebuild tag');
     }
     return true;
@@ -298,7 +298,7 @@ async function rebuildPost(slug) {
       ackField: 'legacy_broken_ack_at', at: new Date().toISOString(),
     });
     if (brokenCleared) {
-      writeFileSync(getMetaPath(slug), JSON.stringify(cleanedBroken, null, 2));
+      replacePostMeta(slug, cleanedBroken);
       console.log('  Cleared needs_rebuild — broken-bucket posts need a manual fix, not a daily re-queue');
     }
     return true;
@@ -340,7 +340,7 @@ async function rebuildPost(slug) {
   // add rebuilt_at + drop needs_rebuild so the post stops surfacing as legacy).
   const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
   const updatedMeta = { ...rest, rebuilt_at: new Date().toISOString() };
-  writeFileSync(getMetaPath(slug), JSON.stringify(updatedMeta, null, 2));
+  replacePostMeta(slug, updatedMeta);
 
   return true;
 }

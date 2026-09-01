@@ -51,11 +51,19 @@ test('the 11-key preservation allowlist is gone', () => {
 });
 
 test('no bare `const meta = {` object literal is written straight to metaPath', () => {
-  // Pins the inversion at the write site: whatever is serialized to meta.json
-  // has to be the composed object.
-  const write = SRC.match(/writeFileSync\(metaPath,[^)]*\)/);
-  assert.ok(write, 'expected a writeFileSync(metaPath, ...) call');
-  assert.match(write[0], /JSON\.stringify\(meta\b/);
+  // Pins the inversion at the write site: whatever is written to meta.json has
+  // to be the composed object.
+  //
+  // The write is `replacePostMeta(metaPath, meta)` since the meta/state split —
+  // it was `writeFileSync(metaPath, JSON.stringify(meta, null, 2))`, and this
+  // test asserted that literal shape. What it is FOR is unchanged: that the
+  // object reaching the write is `composeAuthoredMeta`'s output and never a
+  // fresh literal. Only the function on the left of it moved.
+  const write = SRC.match(/replacePostMeta\(metaPath,[^)]*\)/);
+  assert.ok(write, 'expected a replacePostMeta(metaPath, ...) call');
+  assert.match(write[0], /replacePostMeta\(metaPath,\s*meta\b/);
+  assert.doesNotMatch(SRC, /writeFileSync\(metaPath/,
+    'meta.json must go through the lib/posts.js chokepoint, never a raw write');
 
   const assignment = SRC.match(/const\s+meta\s*=\s*([\s\S]{0,40})/);
   assert.ok(assignment, 'expected a `const meta =` assignment');

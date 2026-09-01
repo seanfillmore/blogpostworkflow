@@ -56,8 +56,7 @@ import { readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
-  listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT,
-} from '../../lib/posts.js';
+  listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-posts.js';
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
@@ -293,15 +292,14 @@ async function softenAndSettle(slug, meta) {
       await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: body });
       console.log(`  ${slug}: ✓ softening cleared the gate — pushed to Shopify.`);
     }
-    writeFileSync(getMetaPath(slug), JSON.stringify(metaAfterSuccess(getPostMeta(slug) || meta, { at }), null, 2));
+    replacePostMeta(slug, metaAfterSuccess(getPostMeta(slug) || meta, { at }));
     return { outcome: 'resolved', softened: true };
   }
 
   const reasons = blockerSections(report);
   if (!reasons.length) reasons.push(firstBlockerReason(report));
-  writeFileSync(getMetaPath(slug), JSON.stringify(
-    metaAfterExhaustion(getPostMeta(slug) || meta, { at, report, reasons }), null, 2,
-  ));
+  replacePostMeta(slug, 
+    metaAfterExhaustion(getPostMeta(slug) || meta, { at, report, reasons }));
   console.log(`  ${slug}: still failing (${reasons.join(', ')}). Page left LIVE; flag cleared; verdict written off.`);
   return { outcome: 'exhausted', reasons };
 }
@@ -352,7 +350,7 @@ async function main() {
       const code = runStep(`"${NODE}" scripts/remediate-live-post.js ${entry.slug} --push`);
       if (code === 0) {
         const at = new Date().toISOString();
-        writeFileSync(getMetaPath(entry.slug), JSON.stringify(metaAfterSuccess(getPostMeta(entry.slug) || entry.meta, { at }), null, 2));
+        replacePostMeta(entry.slug, metaAfterSuccess(getPostMeta(entry.slug) || entry.meta, { at }));
         resolved.push({ slug: entry.slug, softened: false });
         console.log(`  [ok] ${entry.slug}: gate passes.`);
         continue;
