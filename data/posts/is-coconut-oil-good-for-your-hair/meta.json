@@ -7,26 +7,5 @@
     "coconut oil",
     "natural skincare",
     "organic"
-  ],
-  "word_count": 2989,
-  "generated_at": "2026-04-04T17:50:43.800Z",
-  "brief_path": "/root/seo-claude/data/briefs/is-coconut-oil-good-for-your-hair.json",
-  "tokens_used": {
-    "input": 9506,
-    "output": 6087
-  },
-  "shopify_blog_id": 48998449187,
-  "shopify_blog_handle": "news",
-  "shopify_article_id": 563424559274,
-  "shopify_handle": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
-  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
-  "shopify_status": "redirected",
-  "shopify_publish_at": "2026-05-06T15:00:00.000Z",
-  "unpublished_at": "2026-08-22T00:00:00.000Z",
-  "unpublished_reason": "RSC sells no hair products; owner decision. Redirected to /blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides.",
-  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/is-coconut-oil-good-for-your-hair_6894eb73-21a2-422b-8da0-08958f1d2c12.webp?v=1775331032",
-  "uploaded_at": "2026-04-04T19:30:35.871Z",
-  "legacy_bucket": "rising",
-  "legacy_triage_reason": "Position 11, 87 impressions. Default: meta-only.",
-  "legacy_triaged_at": "2026-08-04T03:55:46.350Z"
+  ]
 }

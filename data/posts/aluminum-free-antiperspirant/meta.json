@@ -6,25 +6,5 @@
   "tags": [
     "natural skincare",
     "organic"
-  ],
-  "word_count": 2555,
-  "generated_at": "2026-04-04T16:48:22.745Z",
-  "brief_path": "/root/seo-claude/data/briefs/aluminum-free-antiperspirant.json",
-  "tokens_used": {
-    "input": 9491,
-    "output": 5536
-  },
-  "shopify_blog_id": 48998449187,
-  "shopify_blog_handle": "news",
-  "shopify_article_id": 563424297130,
-  "shopify_handle": "aluminum-free-antiperspirant-what-it-is-does-it-work",
-  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/aluminum-free-antiperspirant-what-it-is-does-it-work",
-  "shopify_status": "scheduled",
-  "shopify_publish_at": "2026-04-15T15:00:00.000Z",
-  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/aluminum-free-antiperspirant.webp?v=1775321383",
-  "uploaded_at": "2026-04-04T16:49:46.338Z",
-  "legacy_bucket": "winner",
-  "legacy_triage_reason": "Position 8, 88 impressions. Page 1 — auto-locked.",
-  "legacy_locked": true,
-  "legacy_triaged_at": "2026-08-04T03:55:40.117Z"
+  ]
 }

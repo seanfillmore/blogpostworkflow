@@ -6,15 +6,5 @@
   "tags": [
     "MOF",
     "soap"
-  ],
-  "shopify_blog_id": 48998449187,
-  "shopify_blog_handle": "news",
-  "shopify_article_id": 561046159530,
-  "shopify_handle": "discover-the-soothing-power-of-coconut-oil-bar-soap",
-  "shopify_publish_at": "2024-04-18T14:41:21-06:00",
-  "legacy_synced_at": "2026-04-09T23:17:12.628Z",
-  "legacy_source": "sync-legacy-posts.js",
-  "legacy_bucket": "flop",
-  "legacy_triage_reason": "Thin content (736 words). Full rewrite needed.",
-  "legacy_triaged_at": "2026-08-04T03:55:44.674Z"
+  ]
 }
