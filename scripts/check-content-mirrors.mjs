@@ -54,6 +54,9 @@ import { fileURLToPath } from 'node:url';
 
 import { getBlogs, getArticles } from '../lib/shopify.js';
 import { compareBodies, DIFFERENT_ARTICLE_MAX, DIVERGENT_WARN_MAX } from '../lib/content-mirror.js';
+// The merged view — shopify_article_id is server-owned and lives in state.json
+// since the meta/state split. Reading meta.json raw made this compare 0 posts.
+import { requirePostMeta } from '../lib/posts.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const POSTS_DIR = join(ROOT, 'data', 'posts');
@@ -107,7 +110,7 @@ for (const slug of localSlugs()) {
   if (onlySlug && slug !== onlySlug) continue;
 
   let meta;
-  try { meta = JSON.parse(readFileSync(join(POSTS_DIR, slug, 'meta.json'), 'utf8')); }
+  try { meta = requirePostMeta(slug); }
   catch (err) { rows.push({ slug, state: 'meta-unreadable', detail: err.message }); continue; }
 
   if (!meta.shopify_article_id) { rows.push({ slug, state: 'no-article-id' }); continue; }

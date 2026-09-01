@@ -24,7 +24,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isStaleAuthBlock, countDeliveredSubmissions } from '../lib/indexing-escalation.js';
-import { replacePostMeta } from '../lib/posts.js';
+import { replacePostMeta, requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -44,7 +44,7 @@ function main() {
     const metaPath = join(POSTS_DIR, slug, 'meta.json');
     if (!existsSync(metaPath)) continue;
     let meta;
-    try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { continue; }
+    try { meta = requirePostMeta(metaPath); } catch { continue; }
     if (!meta.indexing_blocked) continue;
 
     if (isStaleAuthBlock(meta)) {

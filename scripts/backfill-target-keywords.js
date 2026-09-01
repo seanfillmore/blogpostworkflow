@@ -23,7 +23,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { POSTS_DIR, replacePostMeta } from '../lib/posts.js';
+import { POSTS_DIR, replacePostMeta, requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dryRun = process.argv.includes('--dry-run');
@@ -42,7 +42,7 @@ for (const slug of readdirSync(POSTS_DIR)) {
   if (!existsSync(metaPath)) { noMeta++; continue; }
 
   let meta;
-  try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { continue; }
+  try { meta = requirePostMeta(metaPath); } catch { continue; }
   if ((meta.target_keyword || '').trim()) { alreadySet++; continue; }
 
   const newKeyword = deriveKeyword(meta.title, slug);

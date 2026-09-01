@@ -16,7 +16,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
-import { getMetaPath } from '../lib/posts.js';
+import { getMetaPath, requirePostMeta } from '../lib/posts.js';
 import { upsertMetafield } from '../lib/shopify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -54,7 +54,7 @@ const GSC_DIR        = join(ROOT, 'data', 'snapshots', 'gsc');
 
 const metaPath = getMetaPath(slug);
 if (!existsSync(metaPath)) { console.error(`Post not found: ${metaPath}`); process.exit(1); }
-const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+const meta = requirePostMeta(metaPath);
 
 if (!meta.shopify_article_id || !meta.shopify_blog_id) {
   console.error('Post is missing shopify_article_id or shopify_blog_id. Re-publish it first.');

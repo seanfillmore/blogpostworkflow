@@ -63,7 +63,7 @@ function toCanonicalUrl(meta) {
   return null;
 }
 
-import { listAllSlugs, getPostMeta as loadPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta as loadPostMeta, getMetaPath, POSTS_DIR, ROOT, requirePostMeta } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
@@ -288,7 +288,7 @@ async function main() {
       if (meta.slug && meta.slug !== 'ad-hoc') {
         // Detect state transition for history
         try {
-          const postMeta = JSON.parse(readFileSync(getMetaPath(meta.slug), 'utf8'));
+          const postMeta = requirePostMeta(meta.slug);
           const prevState = postMeta.indexing_state?.state;
           if (prevState && prevState !== inspection.state) {
             stateTransitions.push({

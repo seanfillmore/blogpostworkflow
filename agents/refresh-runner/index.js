@@ -51,7 +51,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
-import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
@@ -89,7 +89,7 @@ function loadJSON(path, fallback) {
 function listPublishedPosts() {
   return listAllSlugs().map((slug) => {
     try {
-      const meta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
+      const meta = requirePostMeta(slug);
       return meta.shopify_status === 'published' ? meta : null;
     } catch { return null; }
   }).filter(Boolean);
@@ -120,7 +120,7 @@ export function holdSlugs(slugs, hold, { includeHeld = false, metaFor = () => nu
 }
 
 function metaForSlug(slug) {
-  try { return JSON.parse(readFileSync(getMetaPath(slug), 'utf8')); } catch { return null; }
+  try { return requirePostMeta(slug); } catch { return null; }
 }
 
 function gatherSlugs() {
@@ -201,7 +201,7 @@ function refreshOne(slug) {
   // indexed is wasted effort. Fix indexing first, then rewrite if needed.
   // See docs/signal-manifest.md (indexing-checker → refresh-runner loop).
   try {
-    const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const meta = requirePostMeta(metaPath);
     const idx = meta.indexing_state;
     // crawled_not_indexed = Google reached the page but rejected it on content
     // quality. Refreshing is exactly the right action here — allow it through.
@@ -226,7 +226,7 @@ function refreshOne(slug) {
   // so one skip covers all of them, and it lands BEFORE content-refresher, which
   // is the paid step. It lapses on its own when content.html changes.
   try {
-    const priorMeta = JSON.parse(readFileSync(getMetaPath(slug), 'utf8'));
+    const priorMeta = requirePostMeta(slug);
     const mirror = existsSync(getContentPath(slug)) ? readFileSync(getContentPath(slug), 'utf8') : null;
     if (isRefreshWrittenOff(priorMeta, mirror)) {
       const rec = priorMeta.refresh_writeoff;
@@ -296,7 +296,7 @@ function refreshOne(slug) {
     }
     if (decision.writeOff) {
       try {
-        const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+        const meta = requirePostMeta(metaPath);
         meta.refresh_writeoff = buildRefreshWriteoff({
           reason,
           fingerprint: mirrorFingerprint(readFileSync(canonicalHtml, 'utf8')),
@@ -349,7 +349,7 @@ function refreshOne(slug) {
 
   // Stamp last_refreshed_at on the metadata
   try {
-    const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const meta = requirePostMeta(metaPath);
     meta.last_refreshed_at = new Date().toISOString();
     replacePostMeta(metaPath, meta);
   } catch { /* ignore */ }

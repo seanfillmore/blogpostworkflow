@@ -20,7 +20,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getContentPath, getMetaPath, getEditorReportPath, loadUnpublishedPostIndex, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, loadUnpublishedPostIndex, ROOT, requirePostMeta } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -309,7 +309,7 @@ async function main() {
   let postContext = slug.replace(/-/g, ' ');
   let parentPublishAt = null;
   try {
-    const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    const meta = requirePostMeta(metaPath);
     postContext = meta.target_keyword || postContext;
     if (meta.shopify_publish_at) parentPublishAt = new Date(meta.shopify_publish_at);
   } catch {}

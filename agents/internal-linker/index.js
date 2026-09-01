@@ -38,7 +38,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
-import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getPostMeta, getInternalLinksPath, POSTS_DIR, ROOT, requirePostMeta } from '../../lib/posts.js';
 import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
@@ -160,7 +160,7 @@ function loadTargetPost(slug) {
     console.error(`Post metadata not found: ${metaPath}`);
     process.exit(1);
   }
-  return JSON.parse(readFileSync(metaPath, 'utf8'));
+  return requirePostMeta(metaPath);
 }
 
 function buildTargetUrl(meta) {
@@ -213,7 +213,7 @@ function findClusterPillar(slug, targetMeta) {
         .filter((d) => existsSync(join(POSTS_DIR, d, 'meta.json')));
       for (const s of slugs) {
         try {
-          const m = JSON.parse(readFileSync(join(POSTS_DIR, s, 'meta.json'), 'utf8'));
+          const m = requirePostMeta(s);
           const mTags = (m.shopify_tags || m.tags || '').split(',').map((t) => t.trim().toLowerCase());
           if (!mTags.includes(primaryTag)) continue;
           clusterPosts.push({
@@ -702,7 +702,7 @@ async function main() {
         reportLines.push('---\n');
         continue;
       }
-      targetMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
+      targetMeta = requirePostMeta(metaPath);
       targetMeta.target_keyword = targetMeta.target_keyword || row.keyword;
     }
 

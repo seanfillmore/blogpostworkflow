@@ -19,7 +19,7 @@
 
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { POSTS_DIR, classifyPostType, classifyPostProduct, replacePostMeta } from '../lib/posts.js';
+import { POSTS_DIR, classifyPostType, classifyPostProduct, replacePostMeta, requirePostMeta } from '../lib/posts.js';
 
 const dryRun = process.argv.includes('--dry-run');
 
@@ -32,7 +32,7 @@ for (const slug of readdirSync(POSTS_DIR)) {
   if (!existsSync(metaPath)) { noMeta++; continue; }
 
   let meta;
-  try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { continue; }
+  try { meta = requirePostMeta(metaPath); } catch { continue; }
 
   const newType = classifyPostType(meta.target_keyword, slug);
   const product = classifyPostProduct(meta.target_keyword, slug);

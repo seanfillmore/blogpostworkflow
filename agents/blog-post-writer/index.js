@@ -24,7 +24,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
-import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
@@ -757,7 +757,7 @@ ${badIntro?.html || ''}`,
   let existingMeta = {};
   if (existsSync(metaPath)) {
     try {
-      existingMeta = JSON.parse(readFileSync(metaPath, 'utf8'));
+      existingMeta = requirePostMeta(metaPath);
     } catch (err) {
       // Do NOT swallow this. An unreadable meta.json is usually git conflict
       // markers from a bad deploy, and it is the one case where the merge below
