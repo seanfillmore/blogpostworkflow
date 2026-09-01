@@ -69,34 +69,84 @@ export const MARKER = 'empty-section-guard';
  * `null` means "emptiness is not a single expression" and is handled below.
  */
 export const SECTION_DATA = Object.freeze({
-  timeline: 'product.metafields.bundle.lander.value.timeline.value',
-  mechanism: 'product.metafields.bundle.lander.value.mechanism.value',
-  'ingredient-cards': 'product.metafields.bundle.lander.value.ingredient_cards.value',
-  stats: 'product.metafields.bundle.lander.value.stats.value',
-  'compare-rows': 'product.metafields.bundle.comparison_rows.value',
-  'founder-note': 'product.metafields.bundle.lander.value.founder_note',
-  'collapsible-content': 'product.metafields.bundle.lander.value.faq.value',
+  timeline: { data: 'product.metafields.bundle.lander.value.timeline.value' },
+  mechanism: {
+    data: 'product.metafields.bundle.lander.value.mechanism.value',
+    imageList: 'product.metafields.bundle.lander.value.mechanism_images',
+  },
+  'ingredient-cards': { data: 'product.metafields.bundle.lander.value.ingredient_cards.value' },
+  stats: { data: 'product.metafields.bundle.lander.value.stats.value' },
+  'compare-rows': { data: 'product.metafields.bundle.comparison_rows.value' },
+  'founder-note': {
+    data: 'product.metafields.bundle.lander.value.founder_note',
+    image: 'product.metafields.bundle.lander.value.founder_image',
+  },
+  'collapsible-content': { data: 'product.metafields.bundle.lander.value.faq.value' },
   // No `hook` entry: that section was removed from the template outright, and a
   // guard for a section that does not exist reads like coverage it is not.
-  'whats-in-it': null,
+  'whats-in-it': { variantStack: true },
 });
+
+const HIDE = '<style>#shopify-section-{{ section.id }}{display:none}</style>';
 
 /**
  * `whats-in-it` is empty when NO variant carries a value_stack, which is a loop
  * rather than an expression — the same test the section's own body already runs.
  */
-export const WHATS_IN_IT_GUARD = `{%- comment -%}${MARKER}{%- endcomment -%}`
-  + '{%- assign _guard_stack = false -%}'
+export const WHATS_IN_IT_GUARD = '{%- assign _guard_stack = false -%}'
   + '{%- for v in product.variants -%}{%- if v.metafields.bundle.value_stack.value -%}{%- assign _guard_stack = true -%}{%- endif -%}{%- endfor -%}'
-  + '{%- unless _guard_stack -%}<style>#shopify-section-{{ section.id }}{display:none}</style>{%- endunless -%}';
+  + `{%- unless _guard_stack -%}${HIDE}{%- endunless -%}`;
 
-/** @returns {string} the guard to prepend for a section backed by one expression */
-export function guardFor(expr) {
-  return `{%- comment -%}${MARKER}{%- endcomment -%}`
-    + `{%- assign _guard = ${expr} -%}`
-    + '{%- if _guard == blank or _guard.size == 0 -%}'
-    + '<style>#shopify-section-{{ section.id }}{display:none}</style>'
-    + '{%- endif -%}';
+/**
+ * Build the guard for one section.
+ *
+ * COPY ALONE IS NOT ENOUGH for a section that renders a figure. `mechanism` and
+ * `founder-note` fall back to an "Image coming soon" placeholder SVG rather than
+ * rendering nothing, and the Coconut Reset shipped live with two of them: it had
+ * mechanism copy and no `mechanism_images`. A placeholder reads as a broken page,
+ * where an absent section reads as a page that does not have that part.
+ *
+ * So `imageList` sections compare image COUNT against ROW COUNT — a partial set
+ * still leaves some rows on a placeholder — and `image` sections require the one
+ * file to be present.
+ *
+ * @param {{data?:string, image?:string, imageList?:string, variantStack?:boolean}} spec
+ */
+export function guardFor(spec) {
+  if (spec.variantStack) return `{%- comment -%}${MARKER}{%- endcomment -%}${WHATS_IN_IT_GUARD}{%- comment -%}/${MARKER}{%- endcomment -%}`;
+
+  const conds = ['_guard == blank', '_guard.size == 0'];
+  let assigns = `{%- assign _guard = ${spec.data} -%}`;
+  if (spec.imageList) {
+    assigns += `{%- assign _guard_img = ${spec.imageList} -%}`;
+    conds.push('_guard_img == blank', '_guard_img.size < _guard.size');
+  } else if (spec.image) {
+    assigns += `{%- assign _guard_img = ${spec.image} -%}`;
+    conds.push('_guard_img == blank');
+  }
+  return `{%- comment -%}${MARKER}{%- endcomment -%}${assigns}`
+    + `{%- if ${conds.join(' or ')} -%}${HIDE}{%- endif -%}`
+    + `{%- comment -%}/${MARKER}{%- endcomment -%}`;
+}
+
+/**
+ * Remove a guard this script previously wrote, so a re-run REPLACES it.
+ *
+ * Handles the first version too, which had no closing marker: it ended at the
+ * first hide-style. Without this an upgrade would prepend a second guard and
+ * leave a stale one nobody would find by reading the top of the file.
+ */
+export function stripGuard(liquid) {
+  const open = `{%- comment -%}${MARKER}{%- endcomment -%}`;
+  if (!liquid.startsWith(open)) return liquid;
+  const close = `{%- comment -%}/${MARKER}{%- endcomment -%}`;
+  const i = liquid.indexOf(close);
+  if (i !== -1) return liquid.slice(i + close.length);
+  for (const tail of [`${HIDE}{%- endif -%}`, `${HIDE}{%- endunless -%}`]) {
+    const j = liquid.indexOf(tail);
+    if (j !== -1) return liquid.slice(j + tail.length);
+  }
+  return liquid;
 }
 
 /**
@@ -105,12 +155,13 @@ export function guardFor(expr) {
 export function applyGuards(template, data = SECTION_DATA) {
   const json = JSON.parse(template);
   const changed = [], skipped = [], missing = [];
-  for (const [key, expr] of Object.entries(data)) {
+  for (const [key, spec] of Object.entries(data)) {
     const sec = json.sections?.[key];
     if (!sec || typeof sec.settings?.custom_liquid !== 'string') { missing.push(key); continue; }
-    if (sec.settings.custom_liquid.includes(MARKER)) { skipped.push(key); continue; }
-    const guard = expr === null ? WHATS_IN_IT_GUARD : guardFor(expr);
-    sec.settings.custom_liquid = guard + sec.settings.custom_liquid;
+    const body = stripGuard(sec.settings.custom_liquid);
+    const next = guardFor(spec) + body;
+    if (next === sec.settings.custom_liquid) { skipped.push(key); continue; }
+    sec.settings.custom_liquid = next;
     changed.push(key);
   }
   return { changed, skipped, missing, json };
