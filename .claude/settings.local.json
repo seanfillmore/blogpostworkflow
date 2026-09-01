@@ -10,11 +10,8 @@
       "Bash(mv:*)",
       "Bash(wc:*)",
       "Bash(echo:*)",
-      "WebFetch(domain:www.realskincare.com)",
-      "WebFetch(domain:realskincare-com.myshopify.com)",
-      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
-      "WebFetch(domain:www.ncbi.nlm.nih.gov)",
-      "WebFetch(domain:html.duckduckgo.com)",
+      "WebFetch",
+      "WebSearch",
       "Bash(git pull:*)"
     ],
     "defaultMode": "bypassPermissions"
