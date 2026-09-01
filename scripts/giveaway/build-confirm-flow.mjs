@@ -46,6 +46,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { send } from '../flows/klaviyo-graph.js';
+import { hasUnsubscribeTag, unsubscribeFindings } from '../../lib/email-rebuild-checks.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CONFIG_PATH = join(ROOT, 'config', 'giveaway.json');
@@ -88,9 +89,14 @@ export function checkConfirmTemplate(html) {
     }
   }
 
-  if (!/\{%\s*unsubscribe\s*%\}/.test(html)) {
-    problems.push('no {% unsubscribe %} link — required by CAN-SPAM on a promotional send');
+  // Presence is the CAN-SPAM question; well-formedness is whether the link the recipient
+  // sees actually works. `{% unsubscribe %}` expands to a whole <a> element, so nesting
+  // it in an href renders href="<a class=" and spills the rest of the footer as visible
+  // text — and because a tag IS present, Klaviyo's auto-append never fires to cover it.
+  if (!hasUnsubscribeTag(html)) {
+    problems.push('no unsubscribe merge tag — required by CAN-SPAM on a promotional send');
   }
+  problems.push(...unsubscribeFindings(html).problems);
   // Sweepstakes disclosure, same rule build-nurture-flow.mjs enforces.
   if (!/No purchase necessary/i.test(html)) {
     problems.push('missing "No purchase necessary" disclosure');

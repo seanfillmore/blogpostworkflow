@@ -205,6 +205,9 @@ data/reports/theme-backups/
 # Klaviyo flow-push run records and live-body backups — machine-written, and the
 # backups are copies of live email HTML that do not belong in git.
 data/reports/klaviyo-flow-push/
+# Same class as the line above: pre-write campaign JSON + live-body backups. Operational
+# recovery artifacts, not repo content, and they carry full campaign bodies.
+data/reports/campaign-unsub-repair/
 
 # Per-post local safety copies, written before an overwrite by the reconciler, the
 # refresh path and the remediation scripts. Regenerable point-in-time captures of a

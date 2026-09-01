@@ -73,6 +73,7 @@ import { suppressesProperty } from '../../lib/flow-profile-filter.js';
 import { send, delay, FROM } from '../flows/klaviyo-graph.js';
 import { FLOW_DELAYS_HOURS, splitNurtureFiles, flowDelayDeltas, campaignSchedule } from '../../lib/giveaway/nurture-schedule.js';
 import { resolveMechanism, CONFIRM_MECHANISMS } from '../../lib/giveaway/reconcile.js';
+import { hasUnsubscribeTag, unsubscribeFindings } from '../../lib/email-rebuild-checks.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -181,7 +182,16 @@ const { flow: flowFiles, campaigns: campaignFiles } = splitNurtureFiles(files);
 
 for (const file of files) {
   const html = readFileSync(join(NURTURE_DIR, file), 'utf8');
-  if (!/unsubscribe/i.test(html)) throw new Error(`${file} has no unsubscribe link`);
+  // `/unsubscribe/i` was the old test and it passed on every one of these files while
+  // the actual link was broken — each email's PROSE says "the unsubscribe link at the
+  // bottom works immediately", which satisfies a bare word match. Ask for the merge tag,
+  // then ask whether it is well formed: `{% unsubscribe %}` expands to a whole <a>
+  // element, so nesting it in an href yields href="<a class=" and leaks the rest of the
+  // footer as visible text. Klaviyo only auto-appends a working link when it detects NO
+  // tag, so a malformed one is strictly worse than none.
+  if (!hasUnsubscribeTag(html)) throw new Error(`${file} has no unsubscribe merge tag`);
+  const unsub = unsubscribeFindings(html).problems;
+  if (unsub.length) throw new Error(`${file}: ${unsub.join('; ')}`);
   if (!/does not forfeit your entry/i.test(html)) throw new Error(`${file} is missing the entry-retention line`);
   if (/SOAP4MO|SOAP6MO|\$99|\$66/.test(html)) throw new Error(`${file} contains offer copy — the offer is day 30 only`);
   // A plain catalogue link is NOT the day-30 offer and is allowed: the entered

@@ -48,8 +48,15 @@ test('a dynamic redirect is rejected — the tag does not interpolate', () => {
 });
 
 test('the compliance lines are all required', () => {
-  assert.ok(checkConfirmTemplate(REAL.replace(/\{%\s*unsubscribe\s*%\}/, '#'))
+  assert.ok(checkConfirmTemplate(REAL.replace(/\{%\s*unsubscribe(_link)?\s*%\}/, '#'))
     .some((p) => /unsubscribe/.test(p)));
+  // A tag that is PRESENT but nested in an href is the failure that actually shipped on
+  // this template: it satisfies a presence check, defeats Klaviyo's auto-append, and
+  // renders a dead link with raw markup beside it.
+  assert.ok(
+    checkConfirmTemplate(REAL.replace(/href="\{%\s*unsubscribe_link\s*%\}"/, 'href="{% unsubscribe %}"'))
+      .some((p) => /unsubscribe_link/.test(p)),
+  );
   assert.ok(checkConfirmTemplate(REAL.replace(/No purchase necessary/i, 'Buy now'))
     .some((p) => /No purchase necessary/.test(p)));
   assert.ok(checkConfirmTemplate(REAL.replace(/unsubscribing does not forfeit your entry/i, 'thanks'))
