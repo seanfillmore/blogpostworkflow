@@ -1,4 +1,15 @@
 {
+  "R6xS2J": {
+    "flowId": "TvYN9Q",
+    "flowName": "Giveaway — Referral Pending",
+    "messageId": "X6QzaN",
+    "actionId": "115272851",
+    "servingTemplateId": "Y4q4vv",
+    "stranded": [
+      "R6xS2J"
+    ],
+    "updatedAt": "2026-09-01T16:24:45.820Z"
+  },
   "Ra3L8A": {
     "flowId": "V5fp5i",
     "flowName": "Welcome Series (RSC v2)",
@@ -21,6 +32,28 @@
     "stranded": [
       "RiMM8C"
     ]
+  },
+  "RksPdY": {
+    "flowId": "VyjCRz",
+    "flowName": "Giveaway — Confirm request",
+    "messageId": "XkKwn4",
+    "actionId": "115322113",
+    "servingTemplateId": "W6HEie",
+    "stranded": [
+      "RksPdY"
+    ],
+    "updatedAt": "2026-09-01T16:24:47.688Z"
+  },
+  "SGHpd7": {
+    "flowId": "SajAVS",
+    "flowName": "Giveaway — Entry & Nurture",
+    "messageId": "QUhvGC",
+    "actionId": "115346678",
+    "servingTemplateId": "SxSTrM",
+    "stranded": [
+      "SGHpd7"
+    ],
+    "updatedAt": "2026-09-01T16:24:41.973Z"
   },
   "SHb8Df": {
     "flowId": "Yb63w6",
@@ -77,6 +110,28 @@
     ],
     "updatedAt": "2026-08-31T12:31:29.458Z"
   },
+  "V8ajkd": {
+    "flowId": "SajAVS",
+    "flowName": "Giveaway — Entry & Nurture",
+    "messageId": "Rxiyjf",
+    "actionId": "115346676",
+    "servingTemplateId": "SMLEtX",
+    "stranded": [
+      "V8ajkd"
+    ],
+    "updatedAt": "2026-09-01T16:24:39.630Z"
+  },
+  "VKbmWQ": {
+    "flowId": "SajAVS",
+    "flowName": "Giveaway — Entry & Nurture",
+    "messageId": "TWKusm",
+    "actionId": "115346674",
+    "servingTemplateId": "WCwcx7",
+    "stranded": [
+      "VKbmWQ"
+    ],
+    "updatedAt": "2026-09-01T16:24:37.298Z"
+  },
   "W5ySJc": {
     "flowId": "V5fp5i",
     "flowName": "Welcome Series (RSC v2)",
@@ -87,6 +142,17 @@
       "QRnzrH"
     ],
     "updatedAt": "2026-08-31T12:31:23.508Z"
+  },
+  "Whzae5": {
+    "flowId": "SajAVS",
+    "flowName": "Giveaway — Entry & Nurture",
+    "messageId": "Uv9gHA",
+    "actionId": "115346680",
+    "servingTemplateId": "U6qZU6",
+    "stranded": [
+      "Whzae5"
+    ],
+    "updatedAt": "2026-09-01T16:24:44.185Z"
   },
   "XGJfxT": {
     "flowId": "V5fp5i",
