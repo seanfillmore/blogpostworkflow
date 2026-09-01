@@ -234,3 +234,24 @@ data/reports/seo-opportunities/
 # current, which is the hazard CLAUDE.md names when it says to re-count rather than
 # carry a schema figure forward. Same reasoning as data/reports/content-mirror/.
 data/reports/schema-audit/
+
+# The SERVER-OWNED half of a post's metadata. data/posts/<slug>/meta.json used to
+# hold both the ~6 authored fields and the ~51 a machine observes or stamps, in one
+# file that was tracked in git AND rewritten continuously by cron — and on
+# 2026-08-23 that collision fired twice in one day, both times leaving INVALID JSON
+# on production, because `git stash pop` runs a line-based TEXT merge over a
+# pretty-printed object. Splitting the machine half out and ignoring it is what
+# makes the collision structurally impossible; lib/post-meta-reconcile.js was only
+# ever the patch.
+#
+# IT HAS NO REDUNDANCY IN GIT, SO IT IS BACKED UP OFFSITE INSTEAD.
+# scripts/backup-snapshots-offsite.sh archives it weekly to DigitalOcean Spaces
+# under the `post-state` prefix. That is not optional housekeeping: state.json
+# holds shopify_article_id, the only link between a local post directory and its
+# live article, plus legacy_locked, indexing_state and published_at across ~200
+# posts. Never gitignore this without that backup running.
+data/posts/*/state.json
+
+# Pre-write backups from scripts/split-post-meta.mjs — machine-written, and a
+# tracked copy of a meta.json would recreate the exact hazard the split removes.
+data/reports/post-meta-split/

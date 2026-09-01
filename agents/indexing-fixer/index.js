@@ -59,7 +59,7 @@ import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
-import { getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getMetaPath, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
@@ -155,7 +155,7 @@ function stampPostMeta(slug, patch) {
   const meta = loadPostMeta(slug);
   if (!meta) return;
   const merged = { ...meta, ...patch };
-  writeFileSync(getMetaPath(slug), JSON.stringify(merged, null, 2));
+  replacePostMeta(slug, merged);
 }
 
 function recordSubmission(slug, submission) {

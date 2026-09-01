@@ -14,6 +14,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, relative, basename } from 'path';
 import { fileURLToPath } from 'url';
+import { replacePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -50,7 +51,7 @@ for (const f of files) {
       console.log(`  ${oldPath}  →  ${rel}`);
       meta.image_path = rel;
       normalized++;
-      if (apply) writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+      if (apply) replacePostMeta(metaPath, meta);
     } else {
       alreadyGood++;
     }
@@ -62,7 +63,7 @@ for (const f of files) {
     delete meta.image_prompt;
     delete meta.image_generated_at;
     cleared++;
-    if (apply) writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    if (apply) replacePostMeta(metaPath, meta);
   }
 }
 

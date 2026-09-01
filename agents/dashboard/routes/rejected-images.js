@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync, rmdirSync, createReadStream, copyFileSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';
 import { execSync } from 'node:child_process';
-import { getMetaPath, getImagePath } from '../../../lib/posts.js';
+import { getMetaPath, getImagePath, replacePostMeta } from '../../../lib/posts.js';
 import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
@@ -56,7 +56,7 @@ export default [
           delete meta.image_blocked;
           delete meta.image_blocked_at;
           delete meta.image_blocked_reason;
-          writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+          replacePostMeta(metaPath, meta);
         }
 
         // Clean up rejected directory
@@ -87,7 +87,7 @@ export default [
         delete meta.image_blocked;
         delete meta.image_blocked_at;
         delete meta.image_blocked_reason;
-        writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        replacePostMeta(metaPath, meta);
       } catch { /* proceed anyway */ }
 
       // Clean up old rejected images

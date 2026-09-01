@@ -23,7 +23,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { POSTS_DIR } from '../lib/posts.js';
+import { POSTS_DIR, replacePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dryRun = process.argv.includes('--dry-run');
@@ -50,7 +50,7 @@ for (const slug of readdirSync(POSTS_DIR)) {
 
   if (!dryRun) {
     meta.target_keyword = newKeyword;
-    writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    replacePostMeta(metaPath, meta);
   }
   updated++;
 }

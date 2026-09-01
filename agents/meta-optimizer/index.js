@@ -35,7 +35,7 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
-import { getPostMeta, getMetaPath } from '../../lib/posts.js';
+import { getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayTestMetadata } from '../../lib/post-lock.js';
 import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
 import * as gsc from '../../lib/gsc.js';
@@ -289,7 +289,7 @@ async function runRefreshStaleYears({ apply }) {
         console.log(`    ${field}: "${before[field]}" → "${meta[field]}"`);
       }
       if (apply) {
-        writeFileSync(getMetaPath(slug), JSON.stringify(meta, null, 2));
+        replacePostMeta(slug, meta);
       }
     } catch { /* skip */ }
   }
@@ -348,7 +348,7 @@ function syncLocalMeta(handle, updates) {
     const meta = getPostMeta(handle);
     if (!meta) return false;
     const updated = { ...meta, ...updates };
-    writeFileSync(metaPath, JSON.stringify(updated, null, 2));
+    replacePostMeta(metaPath, updated);
     return true;
   } catch (e) {
     console.warn(`    Warning: could not sync local meta for ${handle}: ${e.message}`);

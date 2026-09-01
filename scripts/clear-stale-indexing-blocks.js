@@ -24,6 +24,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isStaleAuthBlock, countDeliveredSubmissions } from '../lib/indexing-escalation.js';
+import { replacePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -53,7 +54,7 @@ function main() {
         meta.indexing_blocked_reason = null;
         meta.indexing_unblocked_at = new Date().toISOString();
         meta.indexing_unblocked_by = 'clear-stale-indexing-blocks (auth-outage cleanup)';
-        writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+        replacePostMeta(metaPath, meta);
       }
     } else {
       keptBlocked.push({

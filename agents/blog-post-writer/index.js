@@ -24,7 +24,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
-import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
@@ -781,7 +781,7 @@ ${badIntro?.html || ''}`,
     brief_path: briefPath,
     tokens_used: { input: inputTokens, output: outputTokens },
   }, 'blog-post-writer');
-  writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+  replacePostMeta(metaPath, meta);
 
   console.log(`  Saved: ${htmlPath}`);
   console.log(`  Meta:  ${metaPath}`);

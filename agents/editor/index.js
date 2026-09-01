@@ -36,7 +36,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, getPostMeta, ROOT } from '../../lib/posts.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, getPostMeta, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
@@ -1148,7 +1148,7 @@ async function runEditor(htmlPath) {
     if (titleChanged || metaChanged) {
       if (titleChanged) { meta.title = newTitle; console.log(`  Auto-fixed title year → "${newTitle}"`); }
       if (metaChanged) { meta.meta_description = newMetaDesc; console.log(`  Auto-fixed meta description year`); }
-      writeFileSync(getMetaPath(slug), JSON.stringify(meta, null, 2));
+      replacePostMeta(slug, meta);
       if (meta.shopify_blog_id && meta.shopify_article_id) {
         const update = {};
         if (titleChanged) update.title = newTitle;
@@ -1436,11 +1436,11 @@ async function runEditor(htmlPath) {
         ...meta,
         needs_rebuild: { flagged_at: new Date().toISOString(), reasons },
       };
-      writeFileSync(metaPath, JSON.stringify(updatedMeta, null, 2));
+      replacePostMeta(metaPath, updatedMeta);
       console.log(`\n  Tagged for pipeline rebuild: ${reasons.join(', ')}`);
     } else if (meta.needs_rebuild) {
       const { needs_rebuild: _drop, ...rest } = meta;
-      writeFileSync(metaPath, JSON.stringify(rest, null, 2));
+      replacePostMeta(metaPath, rest);
       console.log('\n  Cleared stale needs_rebuild tag (post is clean).');
     }
   }
