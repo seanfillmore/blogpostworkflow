@@ -70,7 +70,7 @@ import {
   getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
-import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
@@ -478,7 +478,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           ensurePostDir(winnerHandle);
           writeFileSync(getContentPath(winnerHandle), mergedHtml);
           let existingWinnerMeta = {};
-          try { existingWinnerMeta = JSON.parse(readFileSync(getMetaPath(winnerHandle), 'utf8')); } catch { /* ok */ }
+          try { existingWinnerMeta = requirePostMeta(winnerHandle); } catch { /* ok */ }
           const { needs_rebuild: _dropWinner, ...winnerMetaRest } = existingWinnerMeta;
           replacePostMeta(winnerHandle, {
             ...winnerMetaRest,
@@ -506,7 +506,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let needsRebuild = null;
           if (editorRan) {
             try {
-              const meta = JSON.parse(readFileSync(getMetaPath(winnerHandle), 'utf8'));
+              const meta = requirePostMeta(winnerHandle);
               needsRebuild = meta.needs_rebuild ?? null;
             } catch { /* missing/unreadable meta — treat as ambiguous, fall back to draft */ }
           }
@@ -806,7 +806,7 @@ async function publishPendingDrafts() {
       // Preserve any existing meta.json fields (e.g. shopify_article_id) and
       // ensure target_keyword + title are present so the editor can run.
       let existingMeta = {};
-      try { existingMeta = JSON.parse(readFileSync(getMetaPath(handle), 'utf8')); } catch { /* ok */ }
+      try { existingMeta = requirePostMeta(handle); } catch { /* ok */ }
       // Drop any stale needs_rebuild flag from a previous run so the editor's
       // current verdict is the source of truth.
       const { needs_rebuild: _drop, ...metaRest } = existingMeta;
@@ -837,7 +837,7 @@ async function publishPendingDrafts() {
     let needsRebuild = null;
     if (editorRan) {
       try {
-        const meta = JSON.parse(readFileSync(getMetaPath(handle), 'utf8'));
+        const meta = requirePostMeta(handle);
         needsRebuild = meta.needs_rebuild ?? null;
       } catch { /* ignore */ }
     }

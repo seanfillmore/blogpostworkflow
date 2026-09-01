@@ -15,7 +15,7 @@ import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
-import { getMetaPath, getContentPath, ensurePostDir, classifyPostType, POSTS_DIR } from '../lib/posts.js';
+import { getMetaPath, getContentPath, ensurePostDir, classifyPostType, POSTS_DIR, requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -40,7 +40,7 @@ function buildExistingIndex() {
     const metaPath = join(POSTS_DIR, slug, 'meta.json');
     if (!existsSync(metaPath)) continue;
     try {
-      const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+      const meta = requirePostMeta(metaPath);
       if (meta.shopify_article_id) index.set(meta.shopify_article_id, slug);
     } catch { /* skip unreadable */ }
   }

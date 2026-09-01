@@ -16,6 +16,7 @@
 import { readFileSync, readdirSync, existsSync, rmSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -26,7 +27,7 @@ const dryRun = process.argv.includes('--dry-run');
 function loadMeta(slug) {
   const metaPath = join(POSTS_DIR, slug, 'meta.json');
   if (!existsSync(metaPath)) return null;
-  try { return JSON.parse(readFileSync(metaPath, 'utf8')); } catch { return null; }
+  try { return requirePostMeta(metaPath); } catch { return null; }
 }
 
 function scoreCanonical(meta) {

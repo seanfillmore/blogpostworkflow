@@ -47,7 +47,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticle, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
@@ -161,7 +161,7 @@ async function main() {
 
   let meta;
   try {
-    meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+    meta = requirePostMeta(metaPath);
   } catch (e) {
     console.error(`Failed to parse post metadata ${metaPath}: ${e.message}`);
     process.exit(1);

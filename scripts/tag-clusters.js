@@ -18,7 +18,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getMetaPath, replacePostMeta } from '../lib/posts.js';
+import { listAllSlugs, getMetaPath, replacePostMeta, requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const apply = process.argv.includes('--apply');
@@ -100,7 +100,7 @@ const samples = [];
 for (const slug of listAllSlugs()) {
   const metaPath = getMetaPath(slug);
   let meta;
-  try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { continue; }
+  try { meta = requirePostMeta(metaPath); } catch { continue; }
 
   const cluster = determineCluster(slug, meta);
   summary[cluster] = (summary[cluster] || 0) + 1;

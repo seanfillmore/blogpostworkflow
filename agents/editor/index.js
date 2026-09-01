@@ -36,7 +36,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, copyFileSync, readd
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
-import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, getPostMeta, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getMetaPath, getEditorReportPath, getPostDir, ensurePostDir, loadUnpublishedPostIndex, classifyPostProduct, getPostMeta, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { updateArticle } from '../../lib/shopify.js';
 import { verifyProduct, extractBrandMentions } from '../product-verifier/index.js';
 import { fixCompetitorsInFaqs } from '../faq-rewriter/index.js';
@@ -1022,7 +1022,7 @@ async function runEditor(htmlPath) {
   const metaPath = getMetaPath(slug);
   let meta = null;
   if (existsSync(metaPath)) {
-    try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); }
+    try { meta = requirePostMeta(metaPath); }
     catch (e) { console.warn(`  Warning: could not parse metadata ${metaPath}: ${e.message}`); }
   }
   // `??` only falls through on null/undefined — empty-string target_keyword

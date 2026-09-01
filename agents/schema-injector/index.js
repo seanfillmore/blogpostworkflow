@@ -41,7 +41,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, POSTS_DIR } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, POSTS_DIR, requirePostMeta } from '../../lib/posts.js';
 import { buildPostSchemas } from '../../lib/schema-builders.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
@@ -105,7 +105,7 @@ function processSlug(slug) {
 
   let meta = {};
   if (existsSync(metaPath)) {
-    try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch {}
+    try { meta = requirePostMeta(metaPath); } catch {}
   }
 
   const html = readFileSync(htmlPath, 'utf8');

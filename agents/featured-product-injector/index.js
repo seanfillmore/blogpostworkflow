@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getContentPath, getMetaPath, classifyPostProduct, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, classifyPostProduct, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { productKeyForProduct, singularize } from '../../lib/product-format.js';
 import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js';
 // The SEO tier, deliberately NOT ad-studio's `hasHealthClaim`. The ad gate
@@ -702,7 +702,7 @@ async function main() {
     const metaPath = getMetaPath(handle);
     let pipelineMeta = {};
     if (existsSync(metaPath)) {
-      try { pipelineMeta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { /* ignore */ }
+      try { pipelineMeta = requirePostMeta(metaPath); } catch { /* ignore */ }
     }
     const result = await injectIntoHtml(rawHtml, avgScrollDepth, judgemeToken, judgemeShopDomain, pipelineMeta);
 
@@ -724,7 +724,7 @@ async function main() {
       const metaPath = getMetaPath(handle);
       if (existsSync(metaPath)) {
         try {
-          const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+          const meta = requirePostMeta(metaPath);
           const decision = resolvePublisherBlock(meta.publisher_block, result);
           if (decision.action === 'set') {
             meta.publisher_block = decision.block;

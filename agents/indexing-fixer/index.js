@@ -59,7 +59,7 @@ import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
 
-import { getMetaPath, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getMetaPath, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
@@ -107,7 +107,7 @@ function upsertQueueItem(item) {
 // ── post metadata ─────────────────────────────────────────────────────────────
 
 function loadPostMeta(slug) {
-  try { return JSON.parse(readFileSync(getMetaPath(slug), 'utf8')); } catch { return null; }
+  try { return requirePostMeta(slug); } catch { return null; }
 }
 
 /**

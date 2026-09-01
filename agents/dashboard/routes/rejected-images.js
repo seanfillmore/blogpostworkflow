@@ -2,7 +2,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, unlinkSync, rmdirSync, createReadStream, copyFileSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';
 import { execSync } from 'node:child_process';
-import { getMetaPath, getImagePath, replacePostMeta } from '../../../lib/posts.js';
+import { getMetaPath, getImagePath, replacePostMeta, requirePostMeta } from '../../../lib/posts.js';
 import { readJsonBody } from '../lib/responses.js';
 
 function respondJson(res, data, status = 200) {
@@ -50,7 +50,7 @@ export default [
         // Update post metadata
         const metaPath = getMetaPath(slug);
         if (existsSync(metaPath)) {
-          const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+          const meta = requirePostMeta(metaPath);
           meta.image_path = relative(ctx.ROOT, destPath).replace(/\\/g, '/');
           meta.image_generated_at = new Date().toISOString();
           delete meta.image_blocked;
@@ -83,7 +83,7 @@ export default [
 
       // Clear the blocked flag so the generator can run
       try {
-        const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+        const meta = requirePostMeta(metaPath);
         delete meta.image_blocked;
         delete meta.image_blocked_at;
         delete meta.image_blocked_reason;

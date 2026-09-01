@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { upsertMetafield } from '../../lib/shopify.js';
 import { findActiveWindow } from '../../lib/change-log.js';
-import { getMetaPath } from '../../lib/posts.js';
+import { getMetaPath, requirePostMeta } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -139,7 +139,7 @@ async function main() {
     // shopify_url fallback below could never fire — a test with no `url` silently
     // measured `/<slug>` instead of `/blogs/news/<slug>` and matched no GSC row.
     const metaPath = getMetaPath(t.slug);
-    const meta = existsSync(metaPath) ? JSON.parse(readFileSync(metaPath, 'utf8')) : null;
+    const meta = existsSync(metaPath) ? requirePostMeta(metaPath) : null;
     let pagePath;
     if (t.url) {
       try { pagePath = new URL(t.url).pathname; } catch { pagePath = `/${t.slug}`; }

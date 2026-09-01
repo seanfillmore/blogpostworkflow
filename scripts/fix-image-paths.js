@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'fs';
 import { join, dirname, relative, basename } from 'path';
 import { fileURLToPath } from 'url';
-import { replacePostMeta } from '../lib/posts.js';
+import { replacePostMeta, requirePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -28,7 +28,7 @@ let cleared = 0, normalized = 0, alreadyGood = 0, noPath = 0;
 
 for (const f of files) {
   const metaPath = join(POSTS_DIR, f);
-  const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+  const meta = requirePostMeta(metaPath);
   const slug = meta.slug || basename(f, '.json');
 
   if (!meta.image_path) {

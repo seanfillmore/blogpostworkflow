@@ -102,6 +102,7 @@ import { fileURLToPath } from 'node:url';
 
 import { getBlogs, getArticles } from '../lib/shopify.js';
 import { compareBodies } from '../lib/content-mirror.js';
+import { requirePostMeta } from '../lib/posts.js';
 import {
   applyMirrorReconcile, decideMirrorAction, hasInjectedSchema, inDefaultScope, PINNED_MIRROR_SLUGS,
 } from '../lib/content-reconcile.js';
@@ -156,7 +157,7 @@ for (const slug of postDirs()) {
   if (onlySlug && slug !== onlySlug) continue;
 
   let meta;
-  try { meta = JSON.parse(readFileSync(join(POSTS_DIR, slug, 'meta.json'), 'utf8')); }
+  try { meta = requirePostMeta(slug); }
   catch (err) { rows.push({ slug, state: 'meta-unreadable', detail: err.message }); continue; }
 
   if (!meta.shopify_article_id) { rows.push({ slug, state: 'no-article-id' }); continue; }

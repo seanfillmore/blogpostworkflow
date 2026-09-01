@@ -42,7 +42,7 @@ import { writeFileSync, readFileSync, mkdirSync, existsSync, readdirSync, unlink
 import { join, dirname, basename, relative } from 'path';
 import { fileURLToPath } from 'url';
 import { getProducts } from '../../lib/shopify.js';
-import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT, replacePostMeta } from '../../lib/posts.js';
+import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { buildImageAlt } from '../../lib/image-alt.js';
 import { SHOT_TYPES, shotTypePool } from '../../lib/image-variety.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -753,7 +753,7 @@ function findProductImagesForPost(meta) {
 // ── generate image (with CD review + retry) ───────────────────────────────────
 
 async function generateImage(metaPath) {
-  const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+  const meta = requirePostMeta(metaPath);
   const slug = meta.slug || basename(metaPath, '.json');
 
   console.log(`\n  Post: "${meta.title}"`);
@@ -1171,7 +1171,7 @@ async function main() {
       const metaPath = getMetaPath(slug);
       if (existsSync(metaPath)) {
         try {
-          const meta = JSON.parse(readFileSync(metaPath, 'utf8'));
+          const meta = requirePostMeta(metaPath);
           meta.image_path = relative(ROOT, webpPath).replace(/\\/g, '/');
           if (!meta.image_alt) {
             meta.image_alt = buildImageAlt({ keyword: meta.target_keyword, title: meta.title });
