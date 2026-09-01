@@ -227,3 +227,10 @@ data/reports/rank-alerts/
 data/reports/reviews/
 data/reports/rum/
 data/reports/seo-opportunities/
+
+# Structured-data coverage measurements written by scripts/audit-schema-coverage.mjs.
+# The TOOLING is tracked (lib/schema-audit.js) precisely so this can be re-measured; a
+# committed snapshot is a stale reading of the live web that somebody later quotes as
+# current, which is the hazard CLAUDE.md names when it says to re-count rather than
+# carry a schema figure forward. Same reasoning as data/reports/content-mirror/.
+data/reports/schema-audit/
