@@ -91,7 +91,13 @@ test('the job is version-controlled, scheduled in UTC, and carries no write flag
   const line = cron.split('\n').find((l) => l.startsWith('DAILY_REJECTED_KEYWORDS_GATE='));
   assert.ok(line, 'the job must be in setup-cron.sh, not hand-added to the live crontab');
   assert.match(line, /check-rejected-keywords-drift\.mjs/);
-  assert.match(line, /^DAILY_REJECTED_KEYWORDS_GATE="30 12 \* \* \* /, 'UTC fields are the only thing that schedules it');
+  assert.match(line, /^DAILY_REJECTED_KEYWORDS_GATE="25 12 \* \* \* /, 'UTC fields are the only thing that schedules it');
+
+  // 12:25 because 12:30 is already check-bundle-value-stack-drift. Four cheap
+  // detectors share this window and none may share a MINUTE — a collision is
+  // only ever visible against the live crontab, never against this script.
+  const minutes = [...cron.matchAll(/^[A-Z0-9_]+="(\d+) 12 \* \* \* /gm)].map((m) => m[1]);
+  assert.equal(new Set(minutes).size, minutes.length, `two 12:xx jobs share a minute: ${minutes.join(', ')}`);
   assert.doesNotMatch(line, /--apply/, 'the scheduled line must never carry a write flag');
   assert.doesNotMatch(line, /\bTZ=/, 'a TZ= prefix schedules nothing on this host');
 
