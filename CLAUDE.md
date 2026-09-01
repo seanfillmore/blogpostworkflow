@@ -625,6 +625,26 @@ Both inconsistencies found while building this mirror are now **resolved**, and 
 
 - **`unmapped-query-promoter` — cutover finished 2026-08-23.** Its header claimed `DEPRECATED (2026-06) … no longer scheduled` while the live crontab ran it daily at `45 13 * * *`, fifteen minutes before `pipeline-prioritizer`, both writing to the same content calendar. The header was corrected first, then the schedule was retired on evidence: the prioritizer reads the **same** `gsc-opportunity.unmapped[]` feed at the **same** 500-impression floor, and the promoter's final runs qualified **zero** items (18 under the floor, 5 already covered). Retiring it removed a daily no-op, not a capability. The agent file is kept and still runs by hand.
 - **`competitor-watcher` — header corrected 2026-08-23.** It runs `0 2 * * 1` (02:00 UTC Monday) while its header claimed "weekly Sun 7:00 PM PT" — true only during PDT, silently 6 PM PT once PST resumes. **The tempting fix, a `TZ=` prefix, does not work on this host** (see the UTC-only note above), so the header now states the UTC contract and names the DST drift instead of pretending it away. A weekly competitor crawl does not care which hour it lands on.
+### The rejected-keywords drift gate — `DAILY_REJECTED_KEYWORDS_GATE`, 12:30 UTC, DETECT ONLY
+
+`data/rejected-keywords.json` is the SECOND of the two tracked files production writes on its own, and until 2026-09-01 it was the one with **no timer**. `scripts/reconcile-rejected-keywords.mjs` has always existed; it is only ever run by whoever happens to be deploying, which is exactly how **37 entries came to exist nowhere but the production box for four months** (last commit 2026-04-08) with nothing anywhere saying so. `scripts/check-rejected-keywords-drift.mjs` is the same question on a timer, routed into the 5 AM digest.
+
+**Losing an entry here does not fail loudly — it silently re-authorises spend.** Nine agents read this file and it is the last gate before `calendar-runner` commits a full paid research + writing pipeline to a topic Sean already rejected.
+
+**It can never write.** `GATE_ARGS` is frozen at `['--ref', 'origin/main']`, `--apply` is refused with exit 64, and the file contains no write of any kind (pinned by a source scan). Unioning two sides of a file that records HUMAN decisions is not something to run unattended — `scripts/triage-orphan-briefs.mjs --drop-non-earning` is what a scheduled write looks like when it is wrong.
+
+**THE SEVERITY SPLIT IS DELIBERATELY NOT THE POST-META GATE'S, and the reason is structural.** There, *any* divergence is routine, because the deploy runs a per-field 3-way merge that cannot lose a value. Here **there is no such merge** — the file's safety depends entirely on somebody running the reconcile — so the DIRECTION of drift is what carries the meaning:
+
+| state | digest `status` | why |
+|---|---|---|
+| in sync | `success` | routine |
+| **box ahead of git** | `success` | **also routine** — `content-strategist` appends from the 15:00 UTC cron and the dashboard writes from two routes, so the box growing entries is the normal state. Reported quietly, naming the count; a daily failure row for the normal state is how a digest stops being read. |
+| **git ahead of box** | `error` | the case a human genuinely needs. Either a deploy already reverted box entries, or a commit has not reached the box — both end with a rejected keyword becoming writable again. Renders in the **Failures** block. |
+
+One **deferred** `notify()`, never `immediate: true`, and the wrapper always exits 0 so cron has nothing to say the digest does not — the single exception is refusing a write flag, which is a usage error rather than a finding.
+
+**12:30 UTC, in UTC because a `TZ=` prefix schedules NOTHING on this host.** It sits in the ten-minute gap between the 12:20 content-mirror gate and the 12:40 post-meta gate, so the three cheap detectors never share a slot, and 30 minutes before the 13:00 `daily-summary` so the row lands in the SAME morning's digest. **All three tracked-data files production writes now have a timer**; before this one, rejections were the only gap.
+
 **SSH:** Key-based auth — no password from this machine.
 
 ### Deploy
@@ -730,7 +750,7 @@ A tracked file production writes on its own — one of two, the other being `dat
 
 **Nothing has been lost yet, and that is a verified fact rather than an assumption.** The 18 `content-strategist:product-scope` entries match the 18 `[SKIP] Off product scope` lines in `data/reports/scheduler/scheduler.log` one-for-one; the server's reflog (back to 2026-05-10) holds only fast-forward pulls and mixed resets, never `--hard`; and both committed keywords are still present. It survives only because **no commit has touched the file since April**, so `git pull` has never had to reconcile it — and because a broad `git add` left it (and 175 other paths) staged but uncommitted on the server. The hazard is live and un-fired, not absent.
 
-The destructive outcome is a deploy reverting those 37 and the strategist re-proposing keywords Sean already rejected — each one a full paid research + writing pipeline. So the answer is **merge**, not gitignore (it records human decisions and cannot be regenerated) and not "commit it back sometimes" (that is what did not happen for four months):
+The destructive outcome is a deploy reverting those 37 and the strategist re-proposing keywords Sean already rejected — each one a full paid research + writing pipeline. **`DAILY_REJECTED_KEYWORDS_GATE` (12:30 UTC) now watches for exactly that** — see the gate section under Server Deployment; it is detect-only, and it treats the box being AHEAD as routine while git being ahead needs a human. So the answer is **merge**, not gitignore (it records human decisions and cannot be regenerated) and not "commit it back sometimes" (that is what did not happen for four months):
 
 ```bash
 # after `git pull`, never before — same rule as any other data backfill
