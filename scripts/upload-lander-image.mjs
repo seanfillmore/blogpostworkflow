@@ -4,7 +4,7 @@
  * at it.
  *
  *   node scripts/upload-lander-image.mjs --file ~/Desktop/Headshot.jpg \
- *        --field founder_image --alt "Sean Fillmore, founder of Real Skin Care"
+ *        --field founder_image --alt "Sean Fillmore, co-founder of Real Skin Care"
  *   node scripts/upload-lander-image.mjs ... --apply
  *
  * ── WHY A SCRIPT AND NOT THREE ad-hoc API CALLS ─────────────────────────────

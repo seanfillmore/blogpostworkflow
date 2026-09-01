@@ -3,12 +3,16 @@
   "author": {
     "name": "Sean Fillmore",
     "slug": "sean-fillmore",
-    "title": "Founder, Real Skin Care",
+    "title": "Co-Founder, Real Skin Care",
     "bio": "",
     "sameAs": []
   },
   "brand_description": "natural skincare and personal care brand (deodorant, toothpaste, coconut oil, body lotion, lip balm, bar soap)",
-  "brand_terms": ["real skin care", "realskincare", "culina"],
+  "brand_terms": [
+    "real skin care",
+    "realskincare",
+    "culina"
+  ],
   "generic_keyword_blocklist": [
     "authentic skincare",
     "authentic skincare products",

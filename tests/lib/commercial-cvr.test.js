@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   normalizeLandingPath, segmentOf, aggregateCvr, assertGa4WindowClean,
-  GA4_HOLE_END, GIVEAWAY_PATHS,
+  GA4_HOLE_END, GIVEAWAY_PATHS, heroOffers,
 } from '../../lib/commercial-cvr.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,4 +149,33 @@ test('assertGa4WindowClean refuses a window starting inside the GA4 hole', () =>
 
 test('the giveaway path list is exported so callers cannot silently disagree about it', () => {
   assert.ok(GIVEAWAY_PATHS.has('/pages/free-soap-giveaway'));
+});
+
+// The offer contributions were hand-copied into scripts/commercial-page-cvr.mjs
+// and went stale: the Coconut Reset sat at "$119 / $47" while the roster had
+// repriced it to $121 with a $78.56 contribution, and the Sensitive Skin Set at
+// $25 against a real $27.95. A break-even CPC computed from a contribution 40%
+// too low tells you paid traffic is unaffordable when it is not. So the numbers
+// are now DERIVED from the same rows `bundle-economics` prints, and this is the
+// join that keeps them honest.
+test('heroOffers reads contribution off the economics rows', () => {
+  const rows = [
+    { name: 'The 90-Day Coconut Reset', price: 121, contrib: 78.56 },
+    { name: 'Sensitive Skin Moisturizing Set', price: 46.8, contrib: 27.95 },
+    { name: 'Something Else', price: 10, contrib: 1 },
+  ];
+  const offers = heroOffers(rows, ['The 90-Day Coconut Reset', 'Sensitive Skin Moisturizing Set']);
+  assert.equal(offers.length, 2);
+  assert.equal(offers[0].contribution, 78.56);
+  assert.match(offers[0].label, /Coconut Reset/);
+  assert.match(offers[0].label, /\$121/, 'the label carries the price it was computed at');
+});
+
+test('a hero offer missing from the roster THROWS rather than scoring zero', () => {
+  // Silently dropping it would print a break-even table with one column missing,
+  // which reads like the offer is unaffordable rather than absent.
+  assert.throws(
+    () => heroOffers([{ name: 'A', price: 1, contrib: 1 }], ['Not In Roster']),
+    /Not In Roster/,
+  );
 });
