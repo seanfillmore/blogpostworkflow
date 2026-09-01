@@ -1,0 +1,72 @@
+{
+  "generated_at": "2026-05-17T20:13:43.219Z",
+  "count": 11,
+  "items": [
+    {
+      "id": 337201201322,
+      "path": "/pages/about-us",
+      "target": "/pages/about",
+      "status": 404
+    },
+    {
+      "id": 337201266858,
+      "path": "/pages/contact-us",
+      "target": "/pages/contact",
+      "status": 404
+    },
+    {
+      "id": 337201430698,
+      "path": "/products/body-lotion",
+      "target": "/products/body-lotion-1",
+      "status": 404
+    },
+    {
+      "id": 396855967914,
+      "path": "/products/lightweight-coconut-lotion-8oz-copy",
+      "target": "/products/lightweight-coconut-lotion-8oz",
+      "status": 404
+    },
+    {
+      "id": 427515216042,
+      "path": "/blogs/news/best-clean-lotion-2025",
+      "target": "/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "status": 404
+    },
+    {
+      "id": 427515543722,
+      "path": "/blogs/news/best-coconut-oil-body-lotion-2025",
+      "target": "/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "status": 404
+    },
+    {
+      "id": 436875100330,
+      "path": "/blogs/news/charcoal-toothpaste-does-it-work-is-it-safe",
+      "target": "/blogs/news/charcoal-toothpaste-does-it-work-is-it-safe-2",
+      "status": 404
+    },
+    {
+      "id": 436875133098,
+      "path": "/blogs/news/what-is-castile-soap-uses-benefits-ingredients-1",
+      "target": "/blogs/news/what-is-castile-soap-uses-benefits-ingredients-2",
+      "status": 404
+    },
+    {
+      "id": 436875296938,
+      "path": "/blogs/news/dry-brushing-real-benefits-technique-what-to-expect",
+      "target": "/blogs/news/dry-brushing-skin-benefits-technique-what-to-expect-1",
+      "status": 404
+    },
+    {
+      "id": 436875493546,
+      "path": "/blogs/news/how-to-make-a-natural-moisturizer-at-home-easy-recipes",
+      "target": "/blogs/news/how-to-make-a-natural-moisturizer-at-home-easy-recipes-1",
+      "status": 404
+    },
+    {
+      "id": 444063350954,
+      "path": "/blogs/news/coconut-oil-body-lotion-that-actually-works-for-dry-skin-2025-roundup",
+      "target": "/blogs/news/best-coconut-oil-body-lotions-for-extremely-dry-skin-2025-clean-natural-picks",
+      "status": 404
+    }
+  ]
+}
