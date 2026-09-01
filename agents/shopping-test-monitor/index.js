@@ -106,11 +106,26 @@ export function computeMetrics(row) {
  */
 export function classifyCampaign(m, cfg = DEFAULTS) {
   if (m.spend === 0) return { verdict: 'no_spend', reason: 'No spend in window (paused or not yet serving).' };
-  if (m.conversions >= cfg.minConvForRoasJudgement && m.roas !== null && m.roas < cfg.deepUnprofitRoas) {
-    return { verdict: 'unprofitable', reason: `ROAS ${m.roas}× after ${m.conversions} conv — deeply below breakeven even for an LTV bet.` };
-  }
+  // A deeply unprofitable ROAS counts once EITHER floor is met: a real conversion base,
+  // or enough clicks that the reading carries information at all. The click floor is
+  // already defined above as the point a conversion outcome becomes meaningful — if 150
+  // clicks makes a ZERO meaningful, it makes 0.17× meaningful too.
+  //
+  // Why the second path had to exist: minConvForRoasJudgement is 15, and these campaigns
+  // produce roughly one conversion per five months. At that rate the threshold is not a
+  // safety check, it is an off switch — a campaign with a single lucky conversion could
+  // bleed at 0.17× forever and read 'watch' on every window and on lifetime alike, which
+  // is exactly what happened through August 2026. This branch only ever ADDS flags.
+  // Zero conversions is checked FIRST: it is the more precise description of the same
+  // problem, and the ROAS branch below would otherwise swallow every dead campaign into
+  // the vaguer 'unprofitable' label (ROAS is 0 whenever conversions are).
   if (m.clicks >= cfg.deadClicks && m.conversions === 0) {
     return { verdict: 'dead_spend', reason: `${m.clicks} clicks, 0 conversions — spend not producing sales.` };
+  }
+  const roasJudgeable = m.roas !== null
+    && (m.conversions >= cfg.minConvForRoasJudgement || m.clicks >= cfg.deadClicks);
+  if (roasJudgeable && m.roas < cfg.deepUnprofitRoas) {
+    return { verdict: 'unprofitable', reason: `ROAS ${m.roas}× on ${m.clicks} clicks / ${m.conversions} conv — deeply below breakeven even for an LTV bet.` };
   }
   if (m.roas !== null && m.roas >= cfg.watchRoas) {
     return { verdict: 'ok', reason: `ROAS ${m.roas}× — at/above the 1× target.` };
@@ -123,11 +138,44 @@ export function classifyCampaign(m, cfg = DEFAULTS) {
     `Judge on search-term quality and CTR ${pctStr(m.ctr)}, not ROAS.` };
 }
 
+const isFlagVerdict = v => v === 'dead_spend' || v === 'unprofitable';
+
+/**
+ * Classify the trailing window AND lifetime, and flag on either.
+ *
+ * Lifetime used to be aggregated for DISPLAY only and never classified, which made
+ * the gate structurally unreachable at this account's budget: at ~$7.75/day a campaign
+ * accumulates 59-67 clicks per 14-day window, always under the 150-click floor, so the
+ * verdict was permanently 'learning' while lifetime sat at 275-360 clicks and 0.2× ROAS.
+ * A campaign that spends slowly enough could never trip its own gate.
+ *
+ * A lifetime finding is only escalated for a campaign STILL SPENDING in the window —
+ * an already-paused campaign has no live bleeding to stop, and flagging it is noise.
+ */
 export function summarize(recent, lifetime, cfg = DEFAULTS) {
   const rows = recent.map(m => ({ ...m, ...classifyCampaign(m, cfg) }));
   const totals = aggregate(recent);
   const lifeTotals = aggregate(lifetime);
-  const flags = rows.filter(r => r.verdict === 'dead_spend' || r.verdict === 'unprofitable');
+
+  const flags = rows.filter(r => isFlagVerdict(r.verdict)).map(r => ({ ...r, scope: 'window' }));
+
+  const lifeByKey = new Map(lifetime.map(m => [m.id ?? m.name, m]));
+  for (const r of rows) {
+    if (isFlagVerdict(r.verdict)) continue;   // already flagged on the window; report once
+    if (!(r.spend > 0)) continue;             // not spending now — nothing left to stop
+    const life = lifeByKey.get(r.id ?? r.name);
+    if (!life) continue;
+    const v = classifyCampaign(life, cfg);
+    if (!isFlagVerdict(v.verdict)) continue;
+    flags.push({
+      ...r,
+      verdict: v.verdict,
+      scope: 'lifetime',
+      reason: `Lifetime: ${v.reason} The ${cfg.deadClicks}-click floor is never reached inside a `
+        + `single window at this budget (${r.clicks} clicks), so only lifetime can surface it.`,
+    });
+  }
+
   return { rows, totals, lifetime: lifeTotals, flags };
 }
 
@@ -223,7 +271,14 @@ async function main() {
   console.log(md);
 
   const hasSpend = report.totals.spend > 0;
-  const status = report.flags.length ? 'error' : 'info';
+  // A flagged campaign is a FINDING this agent exists to produce, not a broken agent.
+  // `status: 'error'` only controls the digest's Failures block — the part a human reads
+  // as "something crashed" — and filling it with routine findings is what makes it stop
+  // being read (see tests/agents/digest-finding-severity.test.js). The subject already
+  // carries the count, so nothing is lost by rendering this in the ordinary entry list.
+  // This matters more now than it did: before the lifetime gate above, these flags could
+  // essentially never fire, so the mislabelling was invisible.
+  const status = 'info';
   const subject = report.flags.length
     ? `Shopping test: ${report.flags.length} campaign(s) need attention`
     : hasSpend

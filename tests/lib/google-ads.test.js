@@ -27,3 +27,33 @@ assert.ok(src.includes('ad_group_criterion.resource_name'), 'must query criterio
 assert.ok(src.includes('adGroupAds'), 'snapshot must include adGroupAds array');
 
 console.log('✓ google-ads lib unit tests pass');
+
+// ── ingestConversionEvents: the zero-event early return must match the real contract ──
+//
+// Regression, 2026-09-01. The early return for an empty event list handed back
+// { accepted, errors, response } while the success path returns
+// { submitted, requestId, fieldWarnings, validateOnly, response }. Callers iterate
+// result.fieldWarnings, so a run with nothing to upload crashed with
+// "result.fieldWarnings is not iterable" — which is exactly the state the account
+// has been in since 2026-08-13 (no order carrying a Google click id). It killed
+// agents/ads-conversion-uploader on 5 consecutive nights.
+//
+// The 'accepted' key was also a leftover of the pre-PR-#447 vocabulary that was
+// removed precisely because it fabricated an acceptance count Google never gives us.
+const { ingestConversionEvents } = await import('../../lib/google-ads.js');
+
+for (const body of [{ events: [] }, {}, { events: undefined }]) {
+  const empty = await ingestConversionEvents(body);
+  assert.ok(Array.isArray(empty.fieldWarnings),
+    'zero-event return must expose an iterable fieldWarnings — callers loop over it');
+  assert.equal(empty.fieldWarnings.length, 0);
+  assert.equal(empty.submitted, 0, 'zero-event return must report submitted: 0');
+  assert.equal(empty.requestId, null, 'nothing was submitted, so there is no requestId');
+  assert.ok(!('accepted' in empty),
+    'must not resurrect the fabricated "accepted" count removed in PR #447');
+}
+
+// It must not have made a network call to learn any of that.
+assert.equal((await ingestConversionEvents({ events: [] })).response, null);
+
+console.log('✓ ingestConversionEvents zero-event contract tests pass');
