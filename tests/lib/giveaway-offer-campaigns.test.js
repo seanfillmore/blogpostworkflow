@@ -67,7 +67,14 @@ test('a deadline that drifts from the discount object is rejected', () => {
 
 test('compliance lines are each required', () => {
   const base = read('10-offer-drawday.html');
-  assert.ok(checkOfferEmail(base.replace(/\{%\s*unsubscribe\s*%\}/, '#')).some((p) => /unsubscribe/.test(p)));
+  assert.ok(checkOfferEmail(base.replace(/\{%\s*unsubscribe(_link)?\s*%\}/, '#')).some((p) => /unsubscribe/.test(p)));
+  // A tag that is PRESENT but nested in an href is the failure that actually shipped:
+  // it satisfies a presence check, defeats Klaviyo's auto-append, and renders a dead
+  // link. The gate has to catch that too, not only an absent tag.
+  assert.ok(
+    checkOfferEmail(base.replace(/href="\{%\s*unsubscribe_link\s*%\}"/, 'href="{% unsubscribe %}"'))
+      .some((p) => /unsubscribe_link/.test(p)),
+  );
   assert.ok(checkOfferEmail(base.replace(/No purchase necessary/i, 'Buy now')).some((p) => /No-purchase-necessary/.test(p)));
 });
 

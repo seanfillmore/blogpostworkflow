@@ -78,7 +78,7 @@ function shell(preheader, body) {
       <tr><td align="center" style="padding:22px 16px;font-family:Helvetica,Arial,sans-serif;font-size:12px;line-height:18px;color:#9a9385;">
         Real Skin Care · ${ADDRESS}<br/>
         Questions? Just reply, or email <a href="mailto:${SUPPORT}" style="color:#9a9385;">${SUPPORT}</a>.<br/>
-        <a href="{% unsubscribe %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a>
+        <a href="{% unsubscribe_link %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a>
       </td></tr>
     </table>
   </td></tr>

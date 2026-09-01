@@ -98,7 +98,7 @@ export function shell(preheader, body) {
         <a href="https://x.com/realskincarecom" style="color:#9a9385;">X</a> ·
         <a href="https://www.instagram.com/realskincare_com/" style="color:#9a9385;">Instagram</a> ·
         <a href="https://www.facebook.com/real.skincare1" style="color:#9a9385;">Facebook</a><br/>
-        <a href="{% unsubscribe %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a>
+        <a href="{% unsubscribe_link %}" style="color:#9a9385;text-decoration:underline;">Unsubscribe</a>
       </td></tr>
     </table>
   </td></tr>

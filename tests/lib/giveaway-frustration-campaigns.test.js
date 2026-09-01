@@ -45,7 +45,11 @@ test('every email carries the full sweepstakes disclaimer', () => {
 
 test('every email carries unsubscribe, official rules, and the entry-is-safe promise', () => {
   for (const r of renderAll()) {
-    assert.ok(r.html.includes('{% unsubscribe %}'), `${r.key}: no unsubscribe tag`);
+    // The URL-only spelling, because the tag sits inside an href. The bare
+    // `{% unsubscribe %}` expands to a whole <a> element and would render
+    // href="<a class=" — a dead link plus raw markup shown to the recipient.
+    assert.ok(r.html.includes('{% unsubscribe_link %}'), `${r.key}: no unsubscribe tag`);
+    assert.ok(!/href="\{%\s*unsubscribe\s*%\}"/.test(r.html), `${r.key}: unsubscribe tag nested in an href`);
     assert.ok(r.html.includes('/pages/giveaway-official-rules'), `${r.key}: no official rules link`);
     // §12 of the published rules. Dropping it would contradict the rules in a send.
     assert.ok(r.html.includes('unsubscribing does not forfeit your entry'), `${r.key}: no §12 line`);
