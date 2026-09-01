@@ -63,6 +63,7 @@ import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 import { loadCalendar, upsertItem } from '../../lib/calendar-store.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -100,15 +101,10 @@ function loadRejections() {
   try { return JSON.parse(readFileSync(REJECTIONS_PATH, 'utf8')); } catch { return []; }
 }
 
+// One rule, in lib/rejected-keywords.js. This was a local copy; there were seven,
+// and three of them disagreed about what `exact` means.
 function isRejected(keyword, rejections) {
-  const kw = (keyword || '').toLowerCase().trim();
-  if (!kw) return false;
-  return rejections.some((r) => {
-    const term = (r.keyword || '').toLowerCase().trim();
-    if (!term) return false;
-    if (r.matchType === 'exact') return kw === term;
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 
 /**

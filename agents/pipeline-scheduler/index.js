@@ -15,6 +15,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
+import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -31,14 +32,10 @@ export function loadRejections() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return []; }
 }
 
+// Was a local copy whose `exact` slug-normalized while content-strategist's did not.
+// Both now delegate to lib/rejected-keywords.js; re-exported for existing importers.
 export function isRejected(keyword, rejections) {
-  const kw = keyword.toLowerCase();
-  return rejections.some(r => {
-    const term = r.keyword.toLowerCase();
-    // Slug comparison normalises punctuation/casing from calendar markdown
-    if (r.matchType === 'exact') return kwToSlug(keyword) === kwToSlug(r.keyword);
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 
 function parseCalendar() {

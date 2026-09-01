@@ -41,6 +41,7 @@ import { formatPublishAt } from '../../lib/publish-schedule.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
+import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 // Re-export for back-compat: formatPublishAt used to be defined in this file; tests
 // and callers that import it from calendar-runner keep working post-extraction.
 export { formatPublishAt } from '../../lib/publish-schedule.js';
@@ -111,13 +112,10 @@ function loadRejections() {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
 }
 
+// One rule, in lib/rejected-keywords.js. This was a local copy; there were NINE,
+// and three of them disagreed about what `exact` means.
 function isRejectedKw(keyword, rejections) {
-  const kw = keyword.toLowerCase();
-  return rejections.some(r => {
-    const term = r.keyword.toLowerCase();
-    if (r.matchType === 'exact') return keywordToSlug(keyword) === keywordToSlug(r.keyword);
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 
 // ── determine item status ─────────────────────────────────────────────────────

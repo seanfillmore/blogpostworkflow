@@ -39,6 +39,7 @@ import { getMetaPath } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadPositionHistory, computeTrajectory, trendMultiplier } from '../../lib/rank-trends.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -230,16 +231,9 @@ async function main() {
   if (existsSync(rejectionsPath)) {
     try { rejections = JSON.parse(readFileSync(rejectionsPath, 'utf8')); } catch { /* ignore */ }
   }
-  const isRejected = (kw) => {
-    const k = (kw || '').toLowerCase().trim();
-    if (!k) return false;
-    return rejections.some((r) => {
-      const term = (r.keyword || '').toLowerCase().trim();
-      if (!term) return false;
-      if (r.matchType === 'exact') return k === term;
-      return k.includes(term);
-    });
-  };
+  // One rule, in lib/rejected-keywords.js. This was a local copy; there were seven,
+  // and three of them disagreed about what `exact` means.
+  const isRejected = (kw) => sharedIsRejected(kw, rejections);
 
   // Minimum post age before a post qualifies as a quick-win candidate.
   // Brand-new posts need time to be indexed and stabilize their ranking before
