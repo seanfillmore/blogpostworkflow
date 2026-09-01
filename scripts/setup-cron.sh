@@ -153,6 +153,32 @@ DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-pos
 # endangers — reporting before it runs is the whole point.
 DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-content-mirror-drift.mjs >> data/reports/scheduler/content-mirror-gate.log 2>&1"
 
+# Rejected-keywords drift — DETECT ONLY, 12:30 UTC.
+#
+# data/rejected-keywords.json is the SECOND of the two tracked files production
+# writes on its own, and it was the one with no timer. Nine agents read it and it
+# is the last gate before calendar-runner spends a full paid research + writing
+# pipeline, so a lost entry does not fail loudly — it silently re-authorises spend
+# on a topic Sean already rejected. 37 entries once existed nowhere but this box
+# for four months (last commit 2026-04-08) because the reconcile is only ever run
+# by whoever happens to be deploying.
+#
+# It can never write: --apply is refused with exit 64 and the script contains no
+# write at all. Unioning two sides of a file that records HUMAN decisions is not
+# something to run unattended.
+#
+# The severity split differs from the post-meta gate on purpose. There, drift is
+# always routine because the deploy runs a per-field 3-way merge that cannot lose
+# a value. Here there is no such merge, so DIRECTION matters: the BOX being ahead
+# is routine (content-strategist appends from the 15:00 cron), while GIT holding
+# an entry the box lacks needs a human — that is the shape a revert leaves.
+#
+# 12:30 UTC, in UTC because a TZ= prefix schedules NOTHING on this host. It sits
+# in the ten-minute gap between the 12:20 content-mirror gate and the 12:40
+# post-meta gate, so the three cheap detectors never share a slot, and 30 minutes
+# before the 13:00 daily-summary so the row lands in the SAME morning's digest.
+DAILY_REJECTED_KEYWORDS_GATE="30 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-rejected-keywords-drift.mjs >> data/reports/scheduler/rejected-keywords-gate.log 2>&1"
+
 # Bundle value-stack gate — DETECT ONLY, 12:30 UTC.
 # Asks whether every bundle's value_stack metafield totals its own Shopify
 # compare-at price. Built after the Coconut Reset lander was found stating
@@ -389,6 +415,7 @@ $DAILY_PUBLISH_DRIFT
 $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
 $DAILY_CONTENT_MIRROR_GATE
+$DAILY_REJECTED_KEYWORDS_GATE
 $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 # ── Daily digest ──
