@@ -173,11 +173,14 @@ DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # is routine (content-strategist appends from the 15:00 cron), while GIT holding
 # an entry the box lacks needs a human — that is the shape a revert leaves.
 #
-# 12:30 UTC, in UTC because a TZ= prefix schedules NOTHING on this host. It sits
-# in the ten-minute gap between the 12:20 content-mirror gate and the 12:40
-# post-meta gate, so the three cheap detectors never share a slot, and 30 minutes
-# before the 13:00 daily-summary so the row lands in the SAME morning's digest.
-DAILY_REJECTED_KEYWORDS_GATE="30 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-rejected-keywords-drift.mjs >> data/reports/scheduler/rejected-keywords-gate.log 2>&1"
+# 12:25 UTC, in UTC because a TZ= prefix schedules NOTHING on this host, and 25
+# rather than 30 because 12:30 is ALREADY TAKEN by check-bundle-value-stack-drift.
+# There are FOUR cheap detectors in this window, not three: 12:20 content-mirror,
+# 12:25 here, 12:30 value-stack, 12:40 post-meta — none sharing a slot, so a slow
+# one cannot delay the next, and all of them ahead of the 13:00 daily-summary so
+# every row lands in the SAME morning's digest. Check `crontab -l` for a free
+# minute before adding a fifth; this one was written at 12:30 and collided.
+DAILY_REJECTED_KEYWORDS_GATE="25 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-rejected-keywords-drift.mjs >> data/reports/scheduler/rejected-keywords-gate.log 2>&1"
 
 # Bundle value-stack gate — DETECT ONLY, 12:30 UTC.
 # Asks whether every bundle's value_stack metafield totals its own Shopify

@@ -643,7 +643,7 @@ Both inconsistencies found while building this mirror are now **resolved**, and 
 
 One **deferred** `notify()`, never `immediate: true`, and the wrapper always exits 0 so cron has nothing to say the digest does not — the single exception is refusing a write flag, which is a usage error rather than a finding.
 
-**12:30 UTC, in UTC because a `TZ=` prefix schedules NOTHING on this host.** It sits in the ten-minute gap between the 12:20 content-mirror gate and the 12:40 post-meta gate, so the three cheap detectors never share a slot, and 30 minutes before the 13:00 `daily-summary` so the row lands in the SAME morning's digest. **All three tracked-data files production writes now have a timer**; before this one, rejections were the only gap.
+**12:25 UTC, in UTC because a `TZ=` prefix schedules NOTHING on this host** — and 25 rather than 30 because **12:30 is already taken by `check-bundle-value-stack-drift.mjs`**. There are **FOUR** cheap detectors in this window, not three: 12:20 content-mirror, **12:25 here**, 12:30 value-stack, 12:40 post-meta — none sharing a minute, so a slow one cannot delay the next, and all ahead of the 13:00 `daily-summary` so every row lands in the SAME morning's digest. **Check `crontab -l` for a free minute before adding a fifth**: this gate was first written at 12:30 and collided, which is only visible against the LIVE crontab, never against the script. **All three tracked-data files production writes now have a timer**; before this one, rejections were the only gap.
 
 **SSH:** Key-based auth — no password from this machine.
 
