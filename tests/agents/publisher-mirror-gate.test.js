@@ -15,6 +15,8 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Safe to import: lib/refresh-writeoff.js is pure and reads nothing.
+import { EXIT_MIRROR_DIVERGED } from '../../lib/refresh-writeoff.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const src = readFileSync(join(ROOT, 'agents', 'publisher', 'index.js'), 'utf8');
@@ -40,8 +42,20 @@ test('the gate reads the live body before the update, and only on the update pat
 
 test('a refused republish exits non-zero and never reaches updateArticle', () => {
   const block = src.slice(src.indexOf('if (!verdict.allow)'), src.indexOf('process.stdout.write(`  Updating existing article'));
-  assert.match(block, /process\.exit\(1\)/);
+  // Was pinned to the literal `process.exit(1)`. The refusal now exits
+  // EXIT_MIRROR_DIVERGED (3) so refresh-runner can tell a DETERMINISTIC refusal
+  // from a transient Shopify error and write the post off rather than paying for
+  // the same refused rewrite every morning — see lib/refresh-writeoff.js. What
+  // this test is actually for is unchanged: non-zero, and no write.
+  assert.match(block, /process\.exit\(EXIT_MIRROR_DIVERGED\)/);
+  assert.notEqual(EXIT_MIRROR_DIVERGED, 0, 'the refusal must still exit non-zero');
   assert.ok(!/updateArticle/.test(block), 'the refusal branch must not write to Shopify');
+});
+
+test('the publisher imports that exit code rather than spelling its own', () => {
+  // A second copy of the number is a second copy that drifts, and the two ends
+  // of this contract live in different files.
+  assert.match(src, /import \{ EXIT_MIRROR_DIVERGED \} from '\.\.\/\.\.\/lib\/refresh-writeoff\.js'/);
 });
 
 test('--force does NOT disarm the mirror gate; --allow-divergent-mirror is its own flag', () => {

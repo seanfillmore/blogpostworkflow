@@ -38,6 +38,7 @@ import { fileURLToPath } from 'node:url';
 import { listAllSlugs, getContentPath, getPostMeta, getMetaPath } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { hasInjectedSchema } from '../../lib/injected-schema.js';
+import { excludeWrittenOff } from '../../lib/refresh-writeoff.js';
 import { getArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import {
@@ -162,10 +163,42 @@ function findLegacyPosts() {
   // Two signals: no injected schema at all (old posts built before the pipeline
   // existed), or editor-tagged needs_rebuild (posts that failed the editor this
   // week).
-  return listAllSlugs()
+  const candidates = listAllSlugs()
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
     .filter((p) => p.meta && p.meta.shopify_article_id)
     .filter((p) => isLegacy(p.slug) || p.meta.needs_rebuild);
+
+  // Drop posts whose last refresh the publisher's mirror gate REFUSED and whose
+  // mirror has not changed since. Both signals above are structurally unable to
+  // clear themselves for such a post — a refused refresh publishes nothing, so
+  // it stays schema-less and keeps its needs_rebuild — which is why this one
+  // re-selected the same posts every morning and paid for the whole chain each
+  // time: 19 refusals on production, one lotion post eight times.
+  //
+  // refresh-runner refuses these too, so this is defence in depth rather than
+  // the only guard. It is here as well because a post that reaches that refusal
+  // has still cost a getArticle and a subprocess, and shows up in the digest as
+  // a failure every day. `held` is returned so the run can say what it withheld.
+  const { kept, held } = excludeWrittenOff(candidates, {
+    mirrorFor: (slug) => {
+      try { return readFileSync(getContentPath(slug), 'utf8'); } catch { return null; }
+    },
+  });
+  writtenOff = held;
+  return kept;
+}
+
+/** Posts findLegacyPosts() withheld this run because their last refresh was refused. */
+let writtenOff = [];
+
+/** Digest/console lines naming what the write-off withheld. Empty when nothing was. */
+export function renderWrittenOffLines(held = writtenOff) {
+  if (!held.length) return [];
+  return [
+    `⏸ ${held.length} post(s) skipped — a previous refresh was refused by the mirror gate and the mirror has not changed since:`,
+    ...held.map((p) => `   · ${p.slug} — ${p.meta?.refresh_writeoff?.reason || 'refused'}`),
+    '   Re-open one with: node scripts/reconcile-content-mirrors.mjs --slug <slug> --apply',
+  ];
 }
 
 function run(cmd, label) {
@@ -336,6 +369,11 @@ async function main() {
     for (const line of renderHoldLines(held)) console.log(`  ${line}`);
     console.log('');
   }
+  // A write-off nobody can see becomes a mystery outage six weeks later — the
+  // same reasoning that puts the $0-cluster hold in the console and the digest.
+  const writtenOffLines = renderWrittenOffLines();
+  for (const line of writtenOffLines) console.log(`  ${line}`);
+  if (writtenOffLines.length) console.log('');
   const rankLines = renderEfficiencyLines(ranking, efficiency);
   for (const line of rankLines) console.log(`  ${line}`);
 
@@ -395,6 +433,7 @@ async function main() {
     body: [
       renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
       ...(held.length ? ['', ...renderHoldLines(held)] : []),
+      ...(writtenOffLines.length ? ['', ...writtenOffLines] : []),
       ...(rankLines.length ? ['', ...rankLines] : []),
       ...(hold.disagreements.length ? ['', ...renderDisagreementLines(hold)] : []),
     ].join('\n'),
