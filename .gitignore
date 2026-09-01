@@ -205,3 +205,25 @@ data/reports/theme-backups/
 # Klaviyo flow-push run records and live-body backups — machine-written, and the
 # backups are copies of live email HTML that do not belong in git.
 data/reports/klaviyo-flow-push/
+
+# Per-post local safety copies, written before an overwrite by the reconciler, the
+# refresh path and the remediation scripts. Regenerable point-in-time captures of a
+# body whose truth is live Shopify — the same reasoning as data/reports/content-mirror/.
+# NOTE: 13 of these were swept into the index by a broad `git add` before this rule
+# existed. They stay tracked deliberately: `git rm --cached` would delete them from the
+# production working tree on the next pull, and this repo does not delete backups.
+data/posts/*/backups/
+data/posts/*/content.backup-*.html
+
+# Machine-written agent run reports, all regenerable and all server-authoritative on
+# cron. Same class as the ~30 data/reports/ entries above; these had simply never been
+# added, so every one of them sat permanently untracked in `git status`.
+data/reports/pr-targets/
+data/reports/presale-terms/
+data/reports/priority-tuner/
+data/reports/publish-drift/
+data/reports/rank-alerter/
+data/reports/rank-alerts/
+data/reports/reviews/
+data/reports/rum/
+data/reports/seo-opportunities/
