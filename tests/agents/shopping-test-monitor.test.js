@@ -55,11 +55,25 @@ test('classify: 45 clicks with no conv is no longer flagged as dead spend', () =
   assert.equal(classifyCampaign(m).verdict, 'learning');
 });
 
-test('classify: deeply unprofitable only after a conversion base', () => {
+test('classify: deeply unprofitable after EITHER a conversion base or the click floor', () => {
   const deep = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 300, costMicros: 100_000_000, conversions: 20, conversionsValue: 30 } });
   assert.equal(classifyCampaign(deep).verdict, 'unprofitable'); // 0.3x after 20 conv
+
+  // DELIBERATE CHANGE, 2026-09-01. This case (300 clicks, 3 conv, 0.3x) previously
+  // asserted "too few conv to judge". It now flags, and the reason is measured rather
+  // than preferred: minConvForRoasJudgement is 15 while these campaigns produce roughly
+  // ONE conversion per five months, so the conversion floor alone is not a safety
+  // threshold — it is an off switch. A campaign with a single lucky conversion sat at
+  // 0.17x for months reading 'watch'. Clicks are an independent sufficiency signal, and
+  // 300 of them make a 0.3x reading real. The gate never auto-pauses, so a false
+  // positive costs a line in a digest while the false negative cost $139.85 in 18 days.
   const early = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 300, costMicros: 100_000_000, conversions: 3, conversionsValue: 30 } });
-  assert.notEqual(classifyCampaign(early).verdict, 'unprofitable'); // too few conv to judge
+  assert.equal(classifyCampaign(early).verdict, 'unprofitable');
+
+  // The guard that genuinely mattered survives: below the click floor, thin data still
+  // cannot condemn a campaign on either axis.
+  const thin = computeMetrics({ campaign: { name: 'x' }, metrics: { clicks: 30, costMicros: 100_000_000, conversions: 3, conversionsValue: 30 } });
+  assert.notEqual(classifyCampaign(thin).verdict, 'unprofitable');
 });
 
 test('summarize aggregates totals and collects only real flags', () => {
@@ -128,4 +142,79 @@ test('buildMarkdown escapes pipes in campaign names', () => {
   assert.ok(row.includes('RSC \\| Brand \\| Search'), `pipes not escaped: ${row}`);
   // 9 data columns => 10 pipe-delimited segments; unescaped pipes would inflate this.
   assert.equal(row.split(/(?<!\\)\|/).length - 2, 9, `wrong column count: ${row}`);
+});
+
+// ── 2026-09-01: two holes that let a slow-burning campaign bleed forever ──────────
+//
+// Found by auditing why nothing alerted while the account spent $139.85 over 18 days
+// for $0. Both campaigns read 'learning' every single day. Two independent causes:
+//
+//   1. summarize() classified ONLY the trailing window. At ~$7.75/day these campaigns
+//      accumulate 59-67 clicks per 14-day window, below the 150-click floor, so the
+//      verdict was permanently 'learning' while LIFETIME sat at 275 and 360 clicks.
+//   2. Even lifetime did not fire: dead_spend needs conversions === 0 and both
+//      campaigns had exactly ONE lucky conversion; unprofitable needs 15 conversions,
+//      which at ~1 conversion per 5 months is not a safety threshold but an off switch.
+//
+// Both fixes below only ever ADD flags. Neither can remove one that fires today.
+
+const lifeMetrics = (name, clicks, costMicros, conversions, conversionsValue) =>
+  computeMetrics({ campaign: { id: name, name, status: 'ENABLED' },
+    metrics: { impressions: 50_000, clicks, costMicros, conversions, conversionsValue } });
+
+test('classify: past the click floor, a deeply unprofitable ROAS flags without 15 conversions', () => {
+  // Real lifetime state of RSC | Shopping Test | Lotion - Coconut Breeze on 2026-08-31.
+  const m = lifeMetrics('coconut-breeze', 360, 215_110_000, 1, 37.49);
+  assert.equal(m.roas, 0.17);
+  assert.equal(classifyCampaign(m).verdict, 'unprofitable',
+    '360 clicks at 0.17x is a real finding; one lucky conversion must not shield it');
+});
+
+test('classify: below the click floor, few conversions still cannot condemn on ROAS', () => {
+  // The guard the 15-conversion floor was really protecting: too little traffic to judge.
+  const m = lifeMetrics('early', 20, 20_000_000, 1, 4);
+  assert.notEqual(classifyCampaign(m).verdict, 'unprofitable');
+});
+
+test('classify: healthy ROAS past the click floor is still ok, not flagged', () => {
+  const m = lifeMetrics('good', 400, 100_000_000, 3, 150);
+  assert.equal(classifyCampaign(m).verdict, 'ok');
+});
+
+test('summarize: lifetime dead spend flags even when the window is below the floor', () => {
+  const recent = [lifeMetrics('brand', 59, 70_290_000, 0, 0)];       // 14d: reads 'learning'
+  const lifetime = [lifeMetrics('brand', 275, 228_170_000, 1, 64)];  // lifetime: 0.28x
+  const r = summarize(recent, lifetime);
+  assert.equal(r.rows[0].verdict, 'learning', 'window verdict itself is unchanged');
+  assert.equal(r.flags.length, 1, 'lifetime must escalate what the window cannot see');
+  assert.equal(r.flags[0].scope, 'lifetime');
+  assert.match(r.flags[0].reason, /lifetime/i, 'reason must say the finding is lifetime-scoped');
+});
+
+test('summarize: a campaign not spending in the window is not escalated', () => {
+  // Already paused — there is no live bleeding to stop, and a flag here is pure noise.
+  const recent = [lifeMetrics('paused', 0, 0, 0, 0)];
+  const lifetime = [lifeMetrics('paused', 900, 500_000_000, 0, 0)];
+  assert.equal(summarize(recent, lifetime).flags.length, 0);
+});
+
+test('summarize: a window flag is not duplicated by its lifetime twin', () => {
+  const recent = [lifeMetrics('dead', 200, 100_000_000, 0, 0)];
+  const lifetime = [lifeMetrics('dead', 900, 500_000_000, 0, 0)];
+  const r = summarize(recent, lifetime);
+  assert.equal(r.flags.length, 1);
+  assert.equal(r.flags[0].scope, 'window', 'the window is the more urgent scope; report it once');
+});
+
+test('summarize: both real campaigns flag under the fixed gate', () => {
+  const recent = [
+    lifeMetrics('RSC | Brand | Search', 59, 70_290_000, 0, 0),
+    lifeMetrics('RSC | Shopping Test | Lotion - Coconut Breeze', 67, 35_440_000, 0, 0),
+  ];
+  const lifetime = [
+    lifeMetrics('RSC | Brand | Search', 275, 228_170_000, 1, 64),
+    lifeMetrics('RSC | Shopping Test | Lotion - Coconut Breeze', 360, 215_110_000, 1, 37.49),
+  ];
+  assert.equal(summarize(recent, lifetime).flags.length, 2,
+    'the exact production state on 2026-08-31 must not read as a clean run');
 });

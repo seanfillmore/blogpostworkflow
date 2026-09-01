@@ -51,3 +51,16 @@ test('RUM keeps error for NO BEACONS — that one is a real outage', () => {
   assert.match(src, /!beacons\.length \? 'error'/, 'no beacons must still raise a failure');
   assert.doesNotMatch(src, /failing\.length \|\| !beacons\.length \? 'error'/);
 });
+
+test('a flagged ad campaign is a finding, not a failure', () => {
+  // Added 2026-09-01 alongside the lifetime gate in agents/shopping-test-monitor. Until
+  // that landed the flags could essentially never fire (the 150-click floor is never
+  // reached inside one 14-day window at ~$7.75/day), so this mislabelling had never been
+  // seen. Making the gate work would have started posting two routine rows into the
+  // Failures block every morning.
+  const src = read('agents/shopping-test-monitor/index.js');
+  assert.doesNotMatch(src, /flags\.length \? 'error'/,
+    "a dead-spend verdict is a reading for a human, not a report that the agent broke");
+  assert.match(src, /const status = 'info'/);
+  assert.match(src, /campaign\(s\) need attention/, 'the subject must still carry the count');
+});
