@@ -135,7 +135,8 @@
     "keyword": "sodium lauryl sulfate",
     "reason": "no product mapping",
     "rejected_at": "2026-08-02T15:25:24.180Z",
-    "source": "content-strategist:product-scope"
+    "source": "content-strategist:product-scope",
+    "matchType": "exact"
   },
   {
     "keyword": "beef tallow for skin",

@@ -33,6 +33,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'gsc-opportunity');
 const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
+import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 
 const LOW_CTR_MIN_IMPRESSIONS = 100;
 const LOW_CTR_MAX_CTR = 0.02;
@@ -49,15 +50,10 @@ function loadRejections() {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
 }
 
+// One rule, in lib/rejected-keywords.js. This was a local copy; there were seven,
+// and three of them disagreed about what `exact` means.
 function isRejected(keyword, rejections) {
-  const kw = (keyword || '').toLowerCase().trim();
-  if (!kw) return false;
-  return rejections.some((r) => {
-    const term = (r.keyword || '').toLowerCase().trim();
-    if (!term) return false;
-    if (r.matchType === 'exact') return kw === term;
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 
 function loadCoveredKeywords() {

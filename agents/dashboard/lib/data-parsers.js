@@ -7,6 +7,7 @@ import {
   GA4_SNAPSHOTS_DIR, GOOGLE_ADS_SNAPSHOTS_DIR, CRO_REPORTS_DIR,
 } from './paths.js';
 import { kwToSlug } from './fs-helpers.js';
+import { isRejected as sharedIsRejected } from '../../../lib/rejected-keywords.js';
 import {
   listAllSlugs, getPostMeta as getPostMetaFromLib, getMetaPath, getContentPath,
   getEditorReportPath,
@@ -325,12 +326,9 @@ export function loadRejections() {
   try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return []; }
 }
 
+// One rule, in lib/rejected-keywords.js. This was a local copy; there were seven,
+// and three of them disagreed about what `exact` means.
 export function isRejectedKw(keyword, rejections) {
-  const kw = keyword.toLowerCase();
-  return rejections.some(r => {
-    const term = r.keyword.toLowerCase();
-    if (r.matchType === 'exact') return kwToSlug(keyword) === kwToSlug(r.keyword);
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 

@@ -116,8 +116,12 @@ for (const slug of listAllSlugs()) {
   if (meta?.target_keyword) publishedKeywords.push(meta.target_keyword);
 }
 
+// The ENTRIES, not their keywords. Flattening to strings discarded `matchType`,
+// so every `broad`/unset entry — 37 of the 39 live ones — degraded to an exact
+// comparison here and matched nothing, while content-strategist treated the same
+// entry as a substring. lib/brief-triage.js reads the shared rule now.
 const rejectedKeywords = (readJson(join(ROOT, 'data', 'rejected-keywords.json'), []) || [])
-  .map((r) => r.keyword).filter(Boolean);
+  .filter((r) => r && r.keyword);
 const brandTerms = (readJson(join(ROOT, 'config', 'site.json'), {}).brand_terms || []);
 
 // This flag takes paid-for research out of circulation in bulk, so it is the

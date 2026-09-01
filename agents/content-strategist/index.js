@@ -28,7 +28,7 @@ import {
   coveragePool, findCoverage, classifyClearedItems, renderClearedLines, clearedDigest,
 } from '../../lib/calendar-coverage.js';
 import { isLiveOrScheduled } from '../../lib/post-publish-state.js';
-import { appendRejection as appendRejectionEntry } from '../../lib/rejected-keywords.js';
+import { appendRejection as appendRejectionEntry, isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 import { notify } from '../../lib/notify.js';
 import { splitInventory } from '../../lib/brief-triage.js';
 import { provenDuds, clusterForText } from '../../lib/cluster-revenue.js';
@@ -384,13 +384,10 @@ function appendRejection(keyword, reason) {
   appendRejectionEntry({ keyword, reason, rejected_at: new Date().toISOString(), source: 'content-strategist:product-scope' });
 }
 
+// Was a local copy whose `exact` meant raw string equality. lib/rejected-keywords.js
+// is now the ONE rule; re-exported because callers and tests import it from here.
 export function isRejected(keyword, rejections) {
-  const kw = keyword.toLowerCase().trim();
-  return rejections.some(r => {
-    const term = r.keyword.toLowerCase().trim();
-    if (r.matchType === 'exact') return kw === term;
-    return kw.includes(term);
-  });
+  return sharedIsRejected(keyword, rejections);
 }
 
 export function buildRejectionSection(rejections) {
