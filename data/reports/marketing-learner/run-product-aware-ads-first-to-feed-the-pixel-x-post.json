@@ -1,0 +1,55 @@
+{
+  "sourceId": "run-product-aware-ads-first-to-feed-the-pixel-x-post",
+  "creator": "Khalifa (@EcomKhalifa)",
+  "title": "Run product-aware ads first to feed the pixel (X post)",
+  "summary": "A single X post arguing that new Meta advertisers sequence their creative backwards: they launch with hundreds of creatives, fifteen angles, long-form copy and native advertorial images aimed at cold, unaware audiences, which forces Meta's optimizer to discover the ideal customer from scratch while every variable moves at once. Khalifa's prescription is to open with product-aware angles instead — us-vs-them, 'why our product is different', 'if you've tried X, try this instead', 'already looking for a solution? here's ours' — because those buy from people who are already in-market and one reason away from purchasing. Those early conversions feed the pixel real purchase data, and only after that signal exists should the account expand into colder audiences, obscure pain points and curiosity hooks. The stated sequence is: low-hanging fruit → data → signal → scale.",
+  "recencySignals": "Post dated Sat Aug 29 2026. Current-era Meta references: the conversion pixel and Meta's optimizer learning from conversion data, plus a jab at 'paper-cutout AI image' creative trends — all consistent with 2026 platform mechanics.",
+  "tactics": [
+    {
+      "claim": "Open a new Meta campaign with product-aware creative angles (us-vs-them, why ours is different, 'if you've tried X, try this instead', 'already looking for a solution? here's ours') to harvest in-market buyers first, and only expand to cold audiences, obscure pain points and curiosity hooks once those conversions have given the pixel real purchase data.",
+      "mechanism": "Product-aware angles select for people who already know they have the problem and are actively comparing solutions, so they convert on the fewest touches. Those early conversions give Meta's optimizer concrete purchase events to model the buyer from, rather than making it infer the ICP from scratch while the advertiser simultaneously varies angle, format and copy. With a seeded signal, later prospecting into colder audiences delivers against a known profile instead of guessing.",
+      "evidence": "Assertion only — no account data, spend figures or before/after numbers. Reasoning from how Meta's conversion optimization is understood to work.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "Platform-mechanics class, published 2026-08-29 — two weeks old, no staleness discount. This lands directly on the live surface: a Meta account is being stood up at $30/day and paid is open as of 2026-08-17. At $30/day with ~54 orders/month, conversion events are the scarcest resource in the account, so spending the first weeks buying the cheapest, most-in-market conversions rather than cold curiosity tests is exactly the right allocation. The angles named are also the cheapest for a solo operator to produce as statics — 'if you've tried natural deodorant that quit on you, try this' and a competitor comparison card need no video, no creator and no designer. It is not a duplicate: existing paid-creative claims cover format rotation and creative-job coverage, but none of them state a launch ORDER by awareness level or tie that order to seeding the conversion signal. Scored 8 rather than 10 because the giveaway campaign currently being built optimizes for entries, not purchases, so the pixel-seeding half applies to the product campaigns that follow it.",
+        "reasoning_class": "platform mechanics"
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-paid-creative-testing",
+        "action": "edit",
+        "description": "Use when deciding what creative and which messaging angle goes into a small-budget Meta campaign and in what order — covers launching with product-aware angles (us-vs-them, 'why ours is different', 'if you've tried X, try this') to harvest in-market buyers and seed the conversion pixel before expanding to cold curiosity hooks, choosing static native formats over video, building 3-2-2 flexible ads, allocating slots between proven and experimental angles, and when a running ad is allowed to change."
+      },
+      "rejectReason": null
+    },
+    {
+      "claim": "Do not launch with 1,000 'unique' creatives, 15 different angles and whatever creative trend is hot this week — restrict the initial test to a small set of high-intent concepts.",
+      "mechanism": "Testing everything at once means no single variable can be read, and it splits limited spend so thinly that no concept accumulates enough conversions to teach the optimizer anything.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Correct for this business but already recorded. marketing-paid-creative-testing holds 'Cover distinct creative jobs rather than creative volume — a small set of concepts where several open the conversation with cold audiences in genuinely different ways and one or two close it for people already touched', and 'Allocate creative on a double 80/20 — roughly 80% of ads in proven formats and 20% experimental'. Adding a reworded volume-restraint claim would degrade triggering on that skill.",
+        "reasoning_class": "duplicate of existing claim"
+      },
+      "verdict": "reject",
+      "stage": null,
+      "targetSkill": null,
+      "rejectReason": "Duplicate of the existing marketing-paid-creative-testing claim 'Cover distinct creative jobs rather than creative volume — a small set of concepts... so no two ads chase the same person', reinforced by the double 80/20 allocation claim in the same skill. Rewording it adds no new mechanism."
+    },
+    {
+      "claim": "Avoid long-form copy and 'ugly native advertorial-style' images when you first launch a product; save those for the later cold-audience phase.",
+      "mechanism": "Native advertorial and long-form formats are built to educate unaware readers, which is the slower, more expensive audience — using them at launch delays the first conversions and the pixel signal.",
+      "evidence": "Assertion only, stated as a stylistic complaint ('ugly') rather than with data.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is not a separable tactic — it is the negative restatement of the sequencing rule already adopted above (product-aware first, cold/native/long-form later), and recording it separately would put two overlapping claims in the same skill. It also directly collides with the existing marketing-paid-creative-testing claim to build statics in eight named native formats and with marketing-copy-hooks-and-formats' long-form native story ad claim, and Khalifa offers nothing but taste to adjudicate that collision — no test, no numbers, no threshold at which the native format becomes correct.",
+        "reasoning_class": "duplicate / no independent mechanism"
+      },
+      "verdict": "reject",
+      "stage": null,
+      "targetSkill": null,
+      "rejectReason": "Restates the sequencing claim already adopted from this same post (product-aware first, colder formats later), and its only independent content — that native advertorial statics and long-form copy are 'ugly' or wrong — is unsupported taste that contradicts recorded claims in marketing-paid-creative-testing (eight native static formats) and marketing-copy-hooks-and-formats (long-form native story ad) with no mechanism or evidence to justify overturning them."
+    }
+  ]
+}

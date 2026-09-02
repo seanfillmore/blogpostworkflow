@@ -1,0 +1,46 @@
+# Micro-situation to mechanism ad framework (X post)
+
+**Creator:** Igor (@IgorWoorts)  
+**Source:** social post — `micro-situation-to-mechanism-ad-framework-x-post`  
+**Published:** 2026-08-31  
+**Inferred era cues:** Post dated 2026-08-31. No platform features, ad-product names, placement names, or algorithm behavior referenced — the content is a durable copy-structure principle, so decay does not apply.  
+
+A single X post proposing a seven-beat sequence for ad copy — micro-situation, symptom, inner reaction, failed explanation, pattern recognition, root cause, mechanism — on the argument that most ads 'start too late' by opening on the problem callout or the mechanism explanation. The claimed effect is that the reader first recognizes himself ('that's literally me'), then doubts his own causal explanation, and only then hears the mechanism, so belief is built before the product is sold. No data, no examples, no platform specifics: it is a durable copy-structure principle stated as an assertion from the author's testing.
+
+Found 4 tactics: 1 adopted, 3 rejected.
+
+## Adopted
+
+### Sequence an ad's body copy through seven ordered beats — micro-situation, symptom, inner reaction, failed explanation, pattern recognition, root cause, mechanism — instead of opening on the problem callout or the mechanism. — 8/10
+
+**Why it works:** Each beat earns a successively larger concession: the exact moment of the problem produces self-recognition, the inner reaction proves you know the buyer's head, naming the explanation he currently holds and then replacing it creates doubt in his own model, and only after that doubt exists does a mechanism read as necessary rather than as another product claim.
+
+**Evidence:** Assertion only — 'one of the BEST frameworks we've tested lately', with no numbers, no example ad, and no named account.
+
+**Fit:** Durable principle class (copy structure), so age is irrelevant and the 2026 date is moot. This is a template a solo operator can execute today with no budget: it is exactly what the Meta primary text pointing at the soap giveaway needs, and it re-runs into PDP copy, Amazon bullets and the pre-purchase nurture emails. Natural deodorant has an unusually strong micro-situation available (the arm-raise at 2pm; the shirt pulled out of the wash still smelling) and an unusually strong failed-explanation beat (buyer blames his sweat or 'natural doesn't work for me' rather than the antiperspirant transition or a bacteria mechanism). Not a duplicate: the individual beats echo recorded claims, but no existing skill records an ordered beat sequence for the body of an ad. One caution held back the last point — marketing-awareness-level-messaging already instructs cutting the root-cause education block in a saturated category, and natural deodorant is stage 4/5, so the root-cause beat must stay one belief-shifting line, not a paragraph of education.
+
+**Target skill:** `marketing-copy-hooks-and-formats` (edit)
+
+## Rejected
+
+### Open the ad on the exact micro-moment the problem occurs so the reader recognizes himself, rather than on a stated problem or a scene-setting intro. — 3/10
+
+**Rejected because:** Restates the existing claim 'Open in the middle of the action, with something already happening, rather than setting the scene first' (marketing-copy-hooks-and-formats), reinforced by 'When a segment does need naming, spend one situational opening line on it' (marketing-awareness-level-messaging). The novel part — that this moment is beat one of an ordered sequence — is already captured by the adopted framework tactic.
+
+**Fit reasoning:** Duplicate. marketing-copy-hooks-and-formats already holds 'Open in the middle of the action, with something already happening, rather than setting the scene first', and marketing-awareness-level-messaging holds 'When a segment does need naming, spend one situational opening line on it — and nothing else'. Recording this again as a standalone claim would degrade skill triggering; it is already carried inside the adopted seven-beat sequence as beat one.
+
+### Name the explanation the buyer currently believes causes his problem, show it is wrong, and replace it with a root cause before introducing your mechanism. — 3/10
+
+**Rejected because:** Restates 'Absolve the buyer of blame for their last failure in the opening lines — attribute it to a specific, truthful external cause outside their control' (marketing-conversion-copy-angles), and is already covered as beats four and six of the adopted seven-beat framework.
+
+**Fit reasoning:** Duplicate on the claim, not just the wording. marketing-conversion-copy-angles already holds 'Absolve the buyer of blame for their last failure in the opening lines — attribute it to a specific, truthful external cause outside their control (it may not be your fault, it may be your metabolism)', which is precisely the swap of a wrong self-blaming explanation for an external root cause, and 'Walk the buyer through what they have already tried and how it went — then associate the parts they disliked with the specific reason it failed'. marketing-awareness-level-messaging additionally warns against expanding the root cause into an education block in a saturated category like natural deodorant.
+
+### Include a beat that makes the reader realize the problem keeps recurring rather than being a one-off incident. — 3/10
+
+**Rejected because:** Restates 'Run the same benefit or pain through the prospect's past, present and future' (marketing-conversion-copy-angles) and 'escalate what looks occasional by showing the many everyday situations it pays off in' (marketing-problem-solution-inventory). It survives inside the adopted framework as beat five.
+
+**Fit reasoning:** Duplicate. marketing-conversion-copy-angles holds 'Run the same benefit or pain through the prospect's past, present and future — what their decisions have already cost them, what it costs them today, and what it will look like months from now', and marketing-problem-solution-inventory holds 'escalate what looks occasional by showing the many everyday situations it pays off in'. Both encode escalating a one-off into a recurring condition; recording a third near-identical claim would blunt triggering.
+
+## Skills touched
+
+- `marketing-copy-hooks-and-formats` (edit)
