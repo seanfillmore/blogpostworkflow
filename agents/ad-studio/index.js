@@ -38,6 +38,7 @@ import { selectFormats, FORMATS, formatForVariation, formatByKey } from './forma
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims, giveawayIsCitable } from './copy.js';
+import { findGoldenThread, sellingVocabulary, splitPlateZones, goldenThreadRetryNote, MIN_SELLING_VOCABULARY } from './golden-thread.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
@@ -364,8 +365,7 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
  * @returns {Promise<{ok:true, conceptSlug:string, format:object, zones:object, claims:object[]}
  *                  |{ok:false, conceptSlug:string, format:string, violations:object[], error:string}>}
  */
-export async function buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null, objective = DEFAULT_OBJECTIVE }) {
-  console.log(`Copy: ${format.key} (${format.name})...`);
+async function attemptConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews = [], variant, giveaway = null, brandKit = null, catalogEntry = null, objective = DEFAULT_OBJECTIVE, retryNote = null }) {
   // Prevention as well as detection: a review carrying disease or drug language is
   // dropped before the writer sees it, so it cannot pick one and burn a call on a choice
   // it never needed to make.
@@ -379,7 +379,7 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
   // source that does not hold it — see buildCopyPrompt's sourceBlock for the run that cost.
   const prompt = buildCopyPrompt({
     format, product, pdpBody, persona, reviews: selectQuotableReviews(reviews), variant, giveaway,
-    sourceIndex, brandKit, catalogEntry, objective,
+    sourceIndex, brandKit, catalogEntry, objective, retryNote,
   });
   const msg = await anthropic.messages.create({
     model: CREATIVE_MODELS.adStudio.copy,
@@ -434,6 +434,69 @@ export async function buildConcept({ anthropic, format, product, pdpBody, person
 }
 
 /**
+ * Generate copy for ONE concept, with a single golden-thread regeneration.
+ *
+ * The golden-thread check runs AFTER the health and sourcing gates, never before: it is the
+ * cheapest ordering (no point rewriting copy that was going to be rejected anyway) and it
+ * keeps those two hard gates the first thing that speaks about a bad draft.
+ *
+ * IT IS ADVISORY, AND THE SECOND ATTEMPT SHIPS EITHER WAY. This is a judgement about
+ * quality, not a fact about compliance, so it follows critique.js's Part B rather than
+ * health-claims.js: one regeneration with the offending premise named, then the copy is
+ * returned and the finding is recorded on the concept for run.json. Refusing the concept on
+ * a second miss would discard a paid copy call plus every render behind it over an opinion —
+ * the false-positive class that has already destroyed three paid-for briefs in this project.
+ *
+ * The retry costs one LLM call and ZERO renders, because it lands before renderTarget.
+ */
+export async function buildConcept(args) {
+  const { format, pdpBody, persona, catalogEntry = null } = args;
+  console.log(`Copy: ${format.key} (${format.name})...`);
+  // The brand kit is deliberately NOT part of this vocabulary — it is category context and
+  // is where the hooks come from. See golden-thread.js.
+  const selling = sellingVocabulary({ pdpBody, catalogEntry, persona });
+  // A disarmed gate must SAY SO rather than render byte-identically to a clean run.
+  if (selling.size < MIN_SELLING_VOCABULARY) {
+    console.warn(`  Golden-thread check is OFF for "${format.key}": only ${selling.size} selling words (needs ${MIN_SELLING_VOCABULARY}).`);
+  }
+
+  // EXACTLY TWO ATTEMPTS, and the second one ships whatever it produced. `last` is what
+  // makes that true without a third call — an earlier draft of this loop fell out of the
+  // for-loop and regenerated a third time, which is two paid calls more than the policy.
+  let finding = null;
+  let last = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const result = await attemptConcept({
+      ...args,
+      retryNote: finding ? goldenThreadRetryNote(finding) : null,
+    });
+    if (!result.ok) return result;
+    last = result;
+
+    const gt = findGoldenThread({ ...splitPlateZones(result.zones, format), selling });
+    if (!gt.goldenThread) {
+      if (finding) console.log(`  Golden thread cleared on retry for "${format.key}".`);
+      return {
+        ...result,
+        goldenThread: finding ? { resolved: true, attempts: attempt + 1, first: finding.reason } : null,
+      };
+    }
+
+    finding = gt;
+    if (attempt === 0) console.warn(`  Golden thread in "${format.key}" — regenerating once. ${gt.reason}`);
+  }
+
+  console.warn(`  Golden thread PERSISTED in "${format.key}" after one retry — shipping it and recording the finding.`);
+  return {
+    ...last,
+    goldenThread: {
+      resolved: false, attempts: 2, reason: finding.reason,
+      pivot: finding.pivot, dominance: finding.dominance, hookPremise: finding.hookPremise,
+    },
+  };
+}
+
+/**
  * Build every requested concept, isolating a claim-gate failure to the ONE concept
  * that produced it — mirrors renderVariationTargets: one bad target already couldn't
  * be allowed to discard money and work spent on the others, and a bad concept is no
@@ -448,7 +511,10 @@ export async function buildConcepts({ anthropic, formats, product, pdpBody, pers
   const rejectedConcepts = [];
   for (const format of formats) {
     const result = await buildConcept({ anthropic, format, product, pdpBody, persona, sourceIndex, reviews, variant, giveaway, brandKit, catalogEntry, objective });
-    if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims });
+    // goldenThread rides along so the finding reaches run.json — it is null on a clean
+    // first attempt, and otherwise records whether the retry cleared it. Dropping it here
+    // would make an advisory gate that nothing can ever see.
+    if (result.ok) concepts.push({ format: result.format, zones: result.zones, claims: result.claims, goldenThread: result.goldenThread ?? null });
     else rejectedConcepts.push({ conceptSlug: result.conceptSlug, format: result.format, violations: result.violations, error: result.error });
   }
   return { concepts, rejectedConcepts };
@@ -2071,7 +2137,9 @@ async function main() {
       });
     }
 
-    results.push({ conceptSlug, format: format.key, variations: variationsOut });
+    // The golden-thread finding is ADVISORY — it never blocked this concept — so run.json is
+    // the only place it can be seen. null on a clean first attempt.
+    results.push({ conceptSlug, format: format.key, variations: variationsOut, goldenThread: concept.goldenThread ?? null });
   }
 
   const report = finalizeRunReport({

@@ -6,6 +6,7 @@
 // The gate's own serializer. Imported rather than re-implemented so the text shown to the
 // writer and the text searched by claims.js cannot drift apart — see sourceText's docstring.
 import { sourceText } from './claims.js';
+import { GOLDEN_THREAD_RULE } from './golden-thread.js';
 
 /**
  * @param {{format:object, product:object, pdpBody:string, persona?:object, tactics?:string[],
@@ -272,7 +273,10 @@ export function buildClaimRules({ sourceIds, unit = 'zone' }) {
 - Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.`;
 }
 
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry, objective = DEFAULT_OBJECTIVE }) {
+// The golden-thread rule ships in the FIRST prompt, not only in the retry — same policy as
+// SEO_COPY_COMPLIANCE_RULE, and for the same reason: most runs should never need the second
+// call. See golden-thread.js for why an LLM produces this defect by default.
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry, objective = DEFAULT_OBJECTIVE, retryNote = null }) {
   const zoneList = format.zones
     .map(z => {
       const cap = format.zoneCapacity?.[z];
@@ -341,7 +345,9 @@ ${zoneList}
 RULES:
 - Write the literal strings that will be rendered into the image. No placeholders.
 - Headlines are short enough to read at phone size in one second.
+${GOLDEN_THREAD_RULE}
 ${buildClaimRules({ sourceIds })}
+${retryNote ? `\n${retryNote}\n` : ''}
 
 Respond with JSON only, no commentary:
 {
