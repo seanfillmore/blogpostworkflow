@@ -63,7 +63,7 @@ function toCanonicalUrl(meta) {
   return null;
 }
 
-import { listAllSlugs, getPostMeta as loadPostMeta, getMetaPath, POSTS_DIR, ROOT, requirePostMeta } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta as loadPostMeta, getMetaPath, POSTS_DIR, ROOT, requirePostMeta, writePostMeta } from '../../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
@@ -104,20 +104,25 @@ function ageInDays(iso) {
 }
 
 function stampPostMeta(slug, indexingState) {
-  const path = getMetaPath(slug);
-  if (!existsSync(path)) return;
+  if (!existsSync(getMetaPath(slug))) return;
   try {
-    const meta = JSON.parse(readFileSync(path, 'utf8'));
-    meta.indexing_state = {
-      state: indexingState.state,
-      coverage: indexingState.coverage_state,
-      last_checked: new Date().toISOString(),
-      last_crawled: indexingState.last_crawl,
-      google_canonical: indexingState.google_canonical,
-      canonical_mismatch: indexingState.canonical_mismatch,
-      page_fetch_state: indexingState.page_fetch_state,
-    };
-    writeFileSync(path, JSON.stringify(meta, null, 2));
+    // `indexing_state` is SERVER-owned (lib/post-meta-reconcile.js), so it belongs in
+    // the gitignored state.json. This used to read and writeFileSync meta.json raw,
+    // which put a machine field into the file git TRACKS — on cron, every morning,
+    // across 77 posts. That is precisely the tracked-file-that-cron-writes collision
+    // the meta/state split was built to end. writePostMeta routes by FIELD_OWNERS and
+    // merges, so it can neither pick the wrong file nor drop a field it never read.
+    writePostMeta(slug, {
+      indexing_state: {
+        state: indexingState.state,
+        coverage: indexingState.coverage_state,
+        last_checked: new Date().toISOString(),
+        last_crawled: indexingState.last_crawl,
+        google_canonical: indexingState.google_canonical,
+        canonical_mismatch: indexingState.canonical_mismatch,
+        page_fetch_state: indexingState.page_fetch_state,
+      },
+    });
   } catch { /* skip */ }
 }
 
@@ -232,9 +237,10 @@ async function main() {
 
   let targets = [];
   if (slugArg) {
-    const p = getMetaPath(slugArg);
-    if (!existsSync(p)) { console.error(`  No such post: ${slugArg}`); process.exit(1); }
-    const meta = JSON.parse(readFileSync(p, 'utf8'));
+    // Merged view: a raw read here saw only the AUTHORED half, so shopify_url /
+    // published_at (both server-owned) came back undefined and the target was unusable.
+    const meta = loadPostMeta(slugArg);
+    if (!meta) { console.error(`  No such post: ${slugArg}`); process.exit(1); }
     if (!meta.slug) meta.slug = slugArg;
     targets = [meta];
   } else if (urlArg) {

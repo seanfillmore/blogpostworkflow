@@ -14,7 +14,7 @@
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { getContentPath, getMetaPath, classifyPostProduct, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, classifyPostProduct, ROOT, replacePostMeta, requirePostMeta, getPostMeta } from '../../lib/posts.js';
 import { productKeyForProduct, singularize } from '../../lib/product-format.js';
 import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js';
 // The SEO tier, deliberately NOT ad-studio's `hasHealthClaim`. The ad gate
@@ -792,10 +792,10 @@ async function main() {
 
     console.log(`  Processing: ${pageHandle}`);
     // Load local meta for relevance ranking if available; fall back to article title as keyword proxy
-    const retroMetaPath = getMetaPath(pageHandle);
     let retroMeta = {};
-    if (existsSync(retroMetaPath)) {
-      try { retroMeta = JSON.parse(readFileSync(retroMetaPath, 'utf8')); } catch { /* ignore */ }
+    if (existsSync(getMetaPath(pageHandle))) {
+      // Merged view — a raw read hid target_keyword's server-side siblings.
+      try { retroMeta = getPostMeta(pageHandle) || {}; } catch { /* ignore */ }
     }
     if (!retroMeta.target_keyword) retroMeta.target_keyword = (article.title || pageHandle).toLowerCase();
     if (!retroMeta.title) retroMeta.title = article.title || pageHandle;

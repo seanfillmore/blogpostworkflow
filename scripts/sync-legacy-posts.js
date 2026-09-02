@@ -15,7 +15,7 @@ import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../lib/shopify.js';
-import { getMetaPath, getContentPath, ensurePostDir, classifyPostType, POSTS_DIR, requirePostMeta } from '../lib/posts.js';
+import { getMetaPath, getContentPath, ensurePostDir, classifyPostType, POSTS_DIR, requirePostMeta, replacePostMeta } from '../lib/posts.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -119,7 +119,10 @@ async function main() {
         };
 
         ensurePostDir(slug);
-        writeFileSync(jsonPath, JSON.stringify(meta, null, 2));
+        // Routes each field by FIELD_OWNERS. Written raw, the Shopify identity and
+        // legacy_* stamps this composes — all server-owned — landed in the git-TRACKED
+        // meta.json instead of the gitignored state.json.
+        replacePostMeta(slug, meta);
         writeFileSync(htmlPath, a.body_html || '');
         existingByArticleId.set(a.id, slug);
         written++;
