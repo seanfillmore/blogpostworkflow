@@ -38,7 +38,7 @@ import { selectFormats, FORMATS, formatForVariation, formatByKey } from './forma
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims, giveawayIsCitable } from './copy.js';
-import { findGoldenThread, sellingVocabulary, splitPlateZones, goldenThreadRetryNote, MIN_SELLING_VOCABULARY } from './golden-thread.js';
+import { findGoldenThread, sellingVocabulary, splitPlateZones, splitPrimaryText, goldenThreadRetryNote, MIN_SELLING_VOCABULARY } from './golden-thread.js';
 import { PLATFORM_TARGETS, selectTargets, variationDir, artifactName, buildSafeZoneGuide, ratioSlug, buildDemandGenAssets, renderRatioFor, cropToRatio } from './packaging.js';
 import { rankArtifacts, scoreRows, summariseRun, readBaselineFrom } from './baseline.js';
 import { sanitizePersonas, formatPersonaDrops } from '../../lib/voice-of-customer.js';
@@ -721,12 +721,41 @@ export async function writeFlexibleManifest({
     });
     return parseFlexibleCopyResponse(textOf(msg));
   };
-  let parsed;
-  try {
-    parsed = await call(null);
-  } catch (err) {
-    console.warn(`  flexible copy rejected (${err.message.split('\n')[0]}) — one retry.`);
-    parsed = await call(err.message);
+  // The golden-thread check SHARES this one retry rather than adding a second, so a flexible
+  // run still costs at most two copy calls. It is advisory exactly as on the plate path: the
+  // second attempt ships whatever it produced and the finding is recorded in the manifest.
+  //
+  // Only the PRIMARY TEXTS are checked. A headline is capped at 40 characters and is a single
+  // phrase with no body to pivot to, so there is nothing for this measure to read.
+  const selling = sellingVocabulary({ pdpBody, catalogEntry: null, persona });
+  if (selling.size < MIN_SELLING_VOCABULARY) {
+    console.warn(`  Golden-thread check is OFF for the flexible copy: only ${selling.size} selling words (needs ${MIN_SELLING_VOCABULARY}).`);
+  }
+  const findThreads = (texts) => texts
+    .map((t, i) => ({ i, t, r: findGoldenThread({ ...splitPrimaryText(t), selling }) }))
+    .filter(x => x.r.goldenThread);
+
+  let parsed = null;
+  let threads = [];
+  let note = null;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      parsed = await call(attempt === 0 ? null : note);
+    } catch (err) {
+      // Shape failures keep their original behaviour exactly: one retry, then propagate.
+      if (attempt === 1) throw err;
+      console.warn(`  flexible copy rejected (${err.message.split('\n')[0]}) — one retry.`);
+      note = err.message;
+      parsed = null;
+      continue;
+    }
+    threads = findThreads(parsed.primaryTexts);
+    if (threads.length === 0 || attempt === 1) break;
+    console.warn(`  Golden thread in flexible primary text ${threads[0].i + 1} — regenerating once. ${threads[0].r.reason}`);
+    note = `${goldenThreadRetryNote(threads[0].r)}\nThe offending primary text was: "${threads[0].t}"`;
+  }
+  if (threads.length) {
+    console.warn(`  Golden thread PERSISTED in ${threads.length} flexible primary text(s) — shipping and recording it.`);
   }
   const { primaryTexts, headlines, claims } = parsed;
 
@@ -741,6 +770,13 @@ export async function writeFlexibleManifest({
   const { json, md } = renderFlexibleManifest({
     runId, product, variant, target, plates, primaryTexts, headlines, claims,
   });
+  // Advisory, so the manifest is the only place it can be seen. Empty array on a clean run
+  // — and note this is the ONLY record, because the first real flexible run is also the
+  // first real data this check has ever had; see golden-thread.js on the synthetic corpus.
+  json.goldenThread = threads.map(x => ({
+    field: `primaryText${x.i + 1}`, text: x.t, reason: x.r.reason,
+    dominance: x.r.dominance, pivot: x.r.pivot, pivotCounted: x.r.pivotCounted,
+  }));
   writeFileSync(join(runDir, 'flexible-ad.json'), JSON.stringify(json, null, 2));
   writeFileSync(join(runDir, 'flexible-ad.md'), md);
 
