@@ -66,6 +66,28 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #3: If you see something, say something" (social post)*
 
+## Write a UGC video script so that every single sentence performs one deliberate belief-shifting job in sequence — personal credibility, specific pain, a second use case, relatability, regret/hindsight, product reveal, simplicity, mechanism, objection handling, authority citation, competitive differentiation, mechanism justification, desired outcome, scarcity transition, demand signal, availability, FOMO, CTA.
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** Each line moves the viewer one small step, so the buy decision arrives as the last in a chain of increasingly obvious realizations rather than as a pitch the viewer has to accept in one jump; nothing in the script is decorative, so there is no dead air for a scroll-away.
+
+**Evidence offered:** One annotated competitor UGC ad the creator says he studied; assertion only beyond that single teardown.
+
+**Fit here (7/10):** Natural deodorant is exactly the category where 'here is the mechanism, here is why it beats the aluminum stick, here is the objection about the transition period' maps cleanly onto these beats. Durable-principle class (script/copy structure), so its Aug-2026 age is irrelevant and its longevity is not in doubt. Parked at team because executing it means an on-camera person and an editor: the deliverable is a shot video, not a document. Trigger: when a customer-creator or an editor is available to shoot, this beat sheet is the storyboard script to hand them — it is the content of the storyboard-table component in the fixed brief list above, at the fully-prescriptive end of the brief-depth ladder. Not a duplicate of the seven-beat body sequence already in copy-hooks-and-formats — that one stops at the mechanism, this one carries through proof, differentiation, scarcity and close.
+
+*Source: Nick Theriot (@nicktheriot_) — "UGC beat structure, PDP layout, and 6-step ad copy (X posts)" (social post)*
+
+## Pull the UGC testimonial videos from your top-performing Facebook ads and embed them on the product page as social proof.
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** Ad spend has already selected those clips for persuasiveness against cold traffic, so they are pre-validated proof assets; reusing them on the PDP costs nothing extra and keeps the ad-to-page message continuous for the person who just clicked.
+
+**Evidence offered:** Assertion only, embedded as element 14 of the PDP layout.
+
+**Fit here (6/10):** Sound and cheap once the inputs exist, but both inputs are missing: there is no UGC video library (needs a creator or editor) and no run of paid creative long enough to have a proven winner to harvest. Parked at team for the video production dependency. Trigger: once at least one creator-shot clip has run on the $30/day Meta campaign and shows a clear cost-per-purchase lead, cut it onto the deodorant PDP before producing anything new. Durable-principle class; the only platform-specific element is 'Facebook', which the fleet is now live on anyway. Pairs with the customer-as-creator path above, which already names the Shopify PDP as a home for testimonial footage — the additive rule is to let ad performance, not taste, pick which clip goes there.
+
+*Source: Nick Theriot (@nicktheriot_) — "UGC beat structure, PDP layout, and 6-step ad copy (X posts)" (social post)*
+
 ## When other people on a review chain have already approved an asset, do not treat their sign-off as agreement — say the defect out loud anyway, because nobody cares about the ad's success as much as you do.
 **Stage:** team — parked until the team phase opens.
 

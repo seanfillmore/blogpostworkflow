@@ -1,0 +1,124 @@
+{
+  "sourceId": "ugc-beat-structure-pdp-layout-and-6-step-ad-copy-x-posts",
+  "creator": "Nick Theriot (@nicktheriot_)",
+  "title": "UGC beat structure, PDP layout, and 6-step ad copy (X posts)",
+  "summary": "Three short X posts from a DTC performance marketer. The first annotates a winning UGC video ad line-by-line, showing that each sentence performs exactly one belief-shifting job (curiosity, specific pain, relatability, regret, product reveal, mechanism, objection handling, authority, competitive differentiation, desired outcome, credible scarcity, FOMO, CTA). The second prescribes a 22-element ordered product page layout for subscription consumables, impulse beauty/grooming, and clinically-mechanised products — announcement bar, a specific image-gallery order starting with a benefit headline instead of a product shot, benefit-baked title, star rating above the fold, objection-killing USP bullets, bundle pricing with strike-through and free-gift unlock, guarantee and ship time at the button, UGC videos pulled from winning ads, journey-staged FAQ, results timeline, comparison table, and reviews at the bottom. The third gives a compact 6-step ad copy skeleton: problem/want → mechanism → why the mechanism is better → expected result → bridge the skepticism → CTA.",
+  "recencySignals": "Posts dated Aug 29–30 2026; references Facebook ads as the source of UGC testimonial videos; the annotated ad cites a '2017 sleep study'. No platform mechanics that could have decayed — all three posts are copy/page-structure principles.",
+  "tactics": [
+    {
+      "claim": "Write a UGC video script so that every single sentence performs one deliberate belief-shifting job in sequence — personal credibility, specific pain, a second use case, relatability, regret/hindsight, product reveal, simplicity, mechanism, objection handling, authority citation, competitive differentiation, mechanism justification, desired outcome, scarcity transition, demand signal, availability, FOMO, CTA.",
+      "mechanism": "Each line moves the viewer one small step, so the buy decision arrives as the last in a chain of increasingly obvious realizations rather than as a pitch the viewer has to accept in one jump; nothing in the script is decorative, so there is no dead air for a scroll-away.",
+      "evidence": "One annotated competitor UGC ad the creator says he studied; assertion only beyond that single teardown.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Natural deodorant is exactly the category where 'here is the mechanism, here is why it beats the aluminum stick, here is the objection about the transition period' maps cleanly onto these beats. Durable-principle class (script/copy structure), so its Aug-2026 age is irrelevant and its longevity is not in doubt. Parked at team because executing it means an on-camera person and an editor: the deliverable is a shot video, not a document. Trigger: when a customer-creator or an editor is available to shoot, this beat sheet is the storyboard script to hand them. Not a duplicate of the seven-beat body sequence already in copy-hooks-and-formats — that one stops at the mechanism, this one carries through proof, differentiation, scarcity and close."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Use when sourcing, screening, briefing or QA-ing on-camera creator/customer video for ads — covers judging delivery in the first seconds, recruiting repeat customers as creators, how prescriptive the brief should be, and the line-by-line beat structure the storyboard script itself should follow so every sentence shifts one belief."
+      }
+    },
+    {
+      "claim": "Structure ad copy on six steps: state a problem or want, show the mechanism that solves it, prove why your mechanism is better, state the result they can expect, bridge the skepticism by handling the main objection, then call to action.",
+      "mechanism": "The order matches the sequence of questions a cold reader silently asks; answering them in that order means no unanswered question is left blocking the click when the CTA arrives.",
+      "evidence": "Assertion from claimed experience scaling brands past 8 figures — no data shown.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "Directly usable this week: the Meta campaign at $30/day needs primary text for the soap giveaway entries and for the deodorant static ads, and one person can write to a six-line skeleton in an hour. Durable-principle class, no decay concern. It extends rather than restates the existing seven-beat body sequence in marketing-copy-hooks-and-formats, which stops at the mechanism and says nothing about proving mechanism superiority, the objection bridge, or the close. Runnable now — no gate."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when writing the opening and body of an ad, email, landing page or social caption — covers hooks that open an unresolved loop, headline components, momentum phrases, and the ordered body skeletons (problem → mechanism → why the mechanism wins → result → objection bridge → CTA) that carry a reader from the hook to the ask."
+      }
+    },
+    {
+      "claim": "For subscription consumables and impulse beauty/grooming products, build the product page to a fixed ordered module template: announcement bar with offer and shipping, the image stack, a title with the main benefit baked in, star rating and review count above the fold, 3-6 USP bullets written as objection-killing mini-headlines, bundle pricing, bold add-to-cart with guarantee and ship time beside it, journey-staged FAQ, an emotional desired-outcome section, named-and-photographed testimonials, a comparison table, a risk-reversal callout, and full reviews at the bottom for the skeptical scroller.",
+      "mechanism": "Each module answers the question a buyer has at that exact point in the scroll, and the ordering front-loads benefit and proof so the deciding information is never below the fold or behind a click.",
+      "evidence": "Assertion only — presented as a format the creator uses, with no test data.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Natural deodorant is precisely the 'subscription consumable with a mechanism' case the post names, the CRO gate is open, and Shopify section reordering is solo-operator work with no budget. Honest scale-down: do not rebuild all 12 SKUs — build this on the one or two PDPs the $30/day Meta traffic and the giveaway actually land on, and reuse the section order on the rest as time allows. Some modules restate claims already held (results timeline, plainly stated returns, guarantee placement, credibility at every decision point) — the new material is the specific module ORDER and the journey-staged FAQ, so the edit should add the ordering, not re-state those. The 'as seen in' row has no honest translation here (no press) and should be dropped from the template."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-conversion-friction-audit",
+        "action": "edit",
+        "description": "Use when a Shopify product page or Amazon listing gets visitors but few orders and you need to decide what to change or in what order the page should be assembled — covers instrumenting with recordings and surveys, proof and guarantee placement, variant overload, checkout friction, and the ordered module template a consumable PDP should follow from announcement bar to bottom review section."
+      }
+    },
+    {
+      "claim": "Order the product page image gallery deliberately: first image is a big benefit headline rather than a product shot, second is the product in use with a benefit overlay, third is a before/after transformation, fourth is what's inside the package, fifth is how it works in 3-4 visual steps, sixth is an us-vs-them comparison, seventh is a review screenshot with a real quote.",
+      "mechanism": "Most shoppers swipe the gallery before reading any copy, so the gallery has to carry the whole argument in order — hook with the benefit, show it working, prove the change, remove uncertainty about what arrives, explain the mechanism, differentiate, then close with proof.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "The existing product-image-stack skill holds the format ROTATION (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle) but not a prescribed slot order, and it is written mostly around Amazon. This adds the Shopify-gallery sequencing and the 'lead with a benefit headline, not the hero product shot' rule — which is the opposite of Amazon's main-image compliance rule, so the edit must scope it to Shopify and keep the Amazon main-image guardrail intact. Solo-operator producible with the AI imagery workflow already in the fleet, no budget needed, CRO gate open."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-product-image-stack",
+        "action": "edit",
+        "description": "Use when designing or reordering Amazon listing image slots or a Shopify product page gallery — covers the main image levers, one job per frame, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), the slot ORDER a Shopify gallery should run in, phone-size comprehension checks and Amazon image-compliance guardrails."
+      }
+    },
+    {
+      "claim": "Present the price as bundle tiers with a struck-through comparison price and a free gift that unlocks at a higher tier, rather than as a single unit price.",
+      "mechanism": "The strike-through reframes the comparison class so the tier looks like a saving rather than a bigger spend, and the unlockable gift gives the buyer a concrete reason to step up a tier — moving the choice from 'buy / don't buy' to 'which tier'.",
+      "evidence": "Assertion only, embedded as element 12 of the PDP layout.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "AOV is $50.46 against 12 SKUs and repeat rate is the binding constraint — a bundle tier with a free-gift unlock (e.g. lip balm free at the 3-deodorant tier) both raises order value and puts a second SKU in the box, which is the cheapest way to seed a repeat purchase. Executable today in Shopify by one person with no budget; offer-aov gate is open. Distinct from the existing buy-X-get-Y and named-tier claims because the mechanic here is a spend threshold that unlocks a gift, displayed inside the price selector."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Use when deciding what you actually sell or give away rather than how you word it — bundles, tier naming and pricing, buy-X-get-Y structures, free-gift-unlock thresholds shown in the PDP price selector, lead magnets, guarantees, discount depth and where price sits relative to the value-stacking argument."
+      }
+    },
+    {
+      "claim": "Pull the UGC testimonial videos from your top-performing Facebook ads and embed them on the product page as social proof.",
+      "mechanism": "Ad spend has already selected those clips for persuasiveness against cold traffic, so they are pre-validated proof assets; reusing them on the PDP costs nothing extra and keeps the ad-to-page message continuous for the person who just clicked.",
+      "evidence": "Assertion only, embedded as element 14 of the PDP layout.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Sound and cheap once the inputs exist, but both inputs are missing: there is no UGC video library (needs a creator or editor) and no run of paid creative long enough to have a proven winner to harvest. Parked at team for the video production dependency. Trigger: once at least one creator-shot clip has run on the $30/day Meta campaign and shows a clear cost-per-purchase lead, cut it onto the deodorant PDP before producing anything new. Durable-principle class; the only platform-specific element is 'Facebook', which the fleet is now live on anyway."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Use when sourcing, briefing, QA-ing or deploying on-camera creator/customer video — covers screening delivery, recruiting customers as creators, brief depth, rejecting clips for technical defects, and where finished creator clips get reused beyond the ad account (product pages, listings) once paid results have selected the winners."
+      }
+    },
+    {
+      "claim": "Close a UGC ad with credible scarcity built from real stock history — 'I can never find these in stock', 'sold out for two months', 'they just brought these back', 'if you're lucky enough to see this, I would not wait'.",
+      "mechanism": "A past sellout is simultaneously demand proof and a deadline, so it creates urgency without inventing a fake countdown.",
+      "evidence": "The annotated competitor ad; assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Restates a claim already held in marketing-scarcity-urgency-framing: 'Advertise the operational limits you actually have — batch size, capacity, slots — instead of hiding them', which is the same honest-scarcity mechanic applied to a small-batch consumable. Adding a reworded version would degrade triggering on that skill. Not a timing problem — it is duplication."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Duplicate of the existing marketing-scarcity-urgency-framing claim 'Advertise the operational limits you actually have — batch size, capacity, slots — instead of hiding them'. A sellout-and-restock line is that same claim in ad-copy wording, and the skill already also covers making the promotion rather than the product be the thing that expires.",
+      "targetSkill": null
+    }
+  ]
+}

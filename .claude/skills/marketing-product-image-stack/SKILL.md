@@ -1,6 +1,6 @@
 ---
 name: marketing-product-image-stack
-description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, building a nonverbal call-out that visually depicts the qualifying condition, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), how to pick comparison attributes and lifestyle avatars, keeping a consistent non-founder character or mascot across frames, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
+description: Use when designing or rewriting Amazon listing image slots (main and secondary), Shopify product page imagery and gallery order, collection tiles, or any single-frame graphic — covers prioritising the main image and its lever list, one job and one narrowly-specified buyer per frame, headline-first hierarchy checked at phone size, building a nonverbal call-out that visually depicts the qualifying condition, leading with the attribute whose result is visibly demonstrable, the required format rotation (infographic, callout, us-vs-them, transformation, step-by-step, lifestyle), the prescribed Shopify gallery slot order that opens on a benefit headline rather than a hero product shot, how to pick comparison attributes and lifestyle avatars, keeping a consistent non-founder character or mascot across frames, how to stage use so it looks effortless, how much production polish an asset needs for its price point, Amazon image-compliance guardrails, and the 1-second comprehension check before an asset ships.
 ---
 
 # Product Image Stack
@@ -26,6 +26,8 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 **Tension to reconcile:** the source stacks two or three levers into one frame, which pulls against the one-job-per-asset rule below. For RSC, pick one lever per test frame so you can reason about what changed.
 
 **Which lever to pick first:** the demonstrable-result rule below is the tie-breaker — of the levers available for a given SKU, prefer the one that puts a visible result in frame over one that merely restates an attribute. The contrast lever is also the verbal/nonverbal call-out rule below in miniature: contrast is what earns the glance, but pair it with a scene that depicts who the frame is for.
+
+**Note on channel:** this lever list governs the Amazon main image and the Shopify PDP hero *as a product shot*. On Shopify the first gallery frame is not a product shot at all — see the gallery-order rule below.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -64,7 +66,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Practical rule:** Before any slot ships, view it at actual phone dimensions. If the smallest label is not readable at a glance, the text and icons are too small — enlarge them and cut copy until they fit.
 
-**Fit here (8/10):** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Purely editorial: solo-operator executable with no budget, no tools, no traffic. Note that headline-as-focal-point applies to secondary slots and ads; on the Amazon main image, text overlay is constrained by the compliance rule below.
+**Fit here (8/10):** Durable design principle, no decay. Directly applicable to Amazon secondary images — which drive roughly two-thirds of revenue at ~$1,800/mo — and to PDP imagery. Purely editorial: solo-operator executable with no budget, no tools, no traffic. Note that headline-as-focal-point applies to secondary slots, the Shopify gallery, and ads; on the Amazon main image, text overlay is constrained by the compliance rule below.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
@@ -77,7 +79,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (7/10):** Durable creative principle and highly runnable now: the account runs static ads, the operator already produces imagery with the AI reference-photo workflow below, and a scene frame costs nothing but a prompt. Concrete forms for RSC: reapplying at 3pm in an office bathroom, a discarded stick of conventional deodorant, an armpit-check in a car mirror before a meeting, a shirt held up to the light. Additive because the format rotation below names transformation and lifestyle but never names *depicting the qualifying condition* as a job in its own right.
 
-**How it meshes with the rules above and below:** this is the 'before' frame of the transformation format used alone, as a targeting device rather than as proof — so it belongs on secondary slots, PDP imagery and paid statics, not on the Amazon main image, where the compliance rule below requires the product itself to be the subject. The one-persona rule governs *who* must recognise themselves in the scene; the contrast lever in the main-image list above is the same mechanism reduced to colour. Keep the depicted condition honest and category-safe — an agitation scene still has to be something the product actually resolves.
+**How it meshes with the rules above and below:** this is the 'before' frame of the transformation format used alone, as a targeting device rather than as proof — so it belongs on secondary slots, the Shopify gallery, PDP imagery and paid statics, not on the Amazon main image, where the compliance rule below requires the product itself to be the subject. The one-persona rule governs *who* must recognise themselves in the scene; the contrast lever in the main-image list above is the same mechanism reduced to colour. Keep the depicted condition honest and category-safe — an agitation scene still has to be something the product actually resolves.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 8 of 16))*
 
@@ -89,8 +91,24 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (8/10):** Durable principle class. This maps almost one-to-one onto an Amazon image stack: infographic (ingredients / what's not in it), benefit callout, us-vs-them comparison chart against conventional aluminum deodorant, transformation, step-by-step transition instructions, a lifestyle frame, and a grid for a 12-SKU catalog or bundle. Zero cost, no traffic required, and it improves conversion on the surface that already produces most revenue. Note that Amazon caps the slot count, so when contexts and formats compete, favour the frames doing the heaviest objection work (comparison, infographic, step-by-step) over extra variations.
 
+**This rule is the library, not the running order.** It says which formats must exist; it does not say which frame goes in slot one. On Shopify, the gallery-order rule immediately below prescribes the sequence. On Amazon, the main-image compliance guardrail below fixes slot one, and the remaining secondary slots should follow the same logical progression (in use → transformation → what's included → how it works → comparison → proof) as far as the slot cap allows.
+
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## On the Shopify product page, order the gallery deliberately: (1) a big benefit headline rather than a product shot, (2) the product in use with a benefit overlay, (3) a before/after transformation, (4) what's inside the package, (5) how it works in 3–4 visual steps, (6) an us-vs-them comparison, (7) a review screenshot with a real quote.
+
+**Why it works:** Most shoppers swipe the gallery before they read a word of copy, so the gallery has to carry the whole argument on its own and in order — hook with the benefit, show it working, prove the change, remove uncertainty about what actually arrives, explain the mechanism, differentiate against the alternative, then close with third-party proof. A gallery that opens on a hero product shot spends the highest-attention frame saying something the buyer can already see from the thumbnail.
+
+**Evidence offered:** Assertion only.
+
+**Fit here (7/10):** Durable principle class (page architecture and argument sequencing), free, and it fills a real gap: the format rotation above holds the *library* of formats but never prescribed a running order, and this skill was otherwise written mostly around Amazon. Every one of the seven frames is producible solo with the AI imagery workflow below, and RSC already has the raw material — transition steps, competitor rows, and review quotes. CRO-stage, no budget, no traffic requirement. Held at 7 because the evidence is bare assertion and, at ~54 orders/month, the resulting order is a judgement call that will not be measured.
+
+**Scope this to Shopify — do not carry frame 1 to Amazon.** 'Lead with a benefit headline, not the product' is the direct opposite of Amazon's main-image policy, where the product itself must be the subject on a plain background and no overlay text is permitted (see the compliance guardrail below). On Amazon, slot 1 stays a compliant product shot governed by the lever list above, and this sequence becomes the running order for slots 2 onward, truncated to the slot cap — which means the heavy-lifting frames (transformation, what's included, how it works, comparison) get priority over extra lifestyle contexts.
+
+**How it meshes with the rules above:** frame 1 is the headliner format under the phone-size hierarchy rule — one benefit, oversized type, readable in a second. Frame 2 is the lifestyle/in-context format staged for minimal visible effort. Frame 3 is the transformation rule below. Frame 5 is the numbered step-by-step rule below, capped at low step count. Frame 6 is capped at three or four attributes sourced from competitor reviews. Frame 7 must be a real quote screenshotted honestly, not a designed testimonial card that invents a customer.
+
+*Source: Nick Theriot (@nicktheriot_) — "UGC beat structure, PDP layout, and 6-step ad copy (X posts)" (social post)*
 
 ## Lead every visual slot with the attribute whose result you can actually show in frame — sort attributes into demonstrable and non-demonstrable, and relegate the non-demonstrable ones to text.
 
@@ -110,7 +128,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Assertion plus her observation that transformation is the biggest format gap in the ad accounts she audits; AI demo produces a pit-stain before/after she rates highly.
 
-**Fit here (6/10):** Durable principle. Genuinely executable for natural deodorant (stained shirt vs. clean shirt, pit-stain agitation) and oral care, and it belongs on Amazon/PDP images, not just ads. Scored below the format library because honest before/afters are harder to produce solo for body care than for cosmetics, and category claims need care.
+**Fit here (6/10):** Durable principle. Genuinely executable for natural deodorant (stained shirt vs. clean shirt, pit-stain agitation) and oral care, and it belongs on Amazon/PDP images, not just ads — it is the third frame in the Shopify gallery order above. Scored below the format library because honest before/afters are harder to produce solo for body care than for cosmetics, and category claims need care.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
 
@@ -120,9 +138,9 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Asserted as 'a very powerful way to increase conversions', then demonstrated as a four-step graphic; sits inside his list of roughly 22 Amazon image types. No conversion data.
 
-**Fit here (8/10):** Durable principle class — a format in the image stack, not a platform mechanic. Unusually load-bearing for RSC: misuse during the natural-deodorant transition period is the named cause of the 18–22.5% repeat rate, so a numbered 'first two weeks' usage graphic does double duty as conversion asset and retention asset. Free, solo-executable, works both as an Amazon slot and a PDP image.
+**Fit here (8/10):** Durable principle class — a format in the image stack, not a platform mechanic. Unusually load-bearing for RSC: misuse during the natural-deodorant transition period is the named cause of the 18–22.5% repeat rate, so a numbered 'first two weeks' usage graphic does double duty as conversion asset and retention asset. Free, solo-executable, works both as an Amazon slot and as the fifth frame of the Shopify gallery order above.
 
-**Keep the step count and the depicted effort low:** the minimal-effort staging rule below applies hardest here — a four-step graphic that shows scrubbing, reapplication or a tight grip undoes the simplicity the format exists to signal.
+**Keep the step count and the depicted effort low:** the minimal-effort staging rule below applies hardest here — a four-step graphic that shows scrubbing, reapplication or a tight grip undoes the simplicity the format exists to signal. Three or four steps is the ceiling.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -132,7 +150,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Assertion that 'sometimes just this one image alone can significantly increase conversions,' plus a worked example: he names wood base, non-BPA material, real ceramic body, and multicolor LED strip because he had already reviewed competitors' listing reviews to find the four things he had that they didn't. No conversion figures.
 
-**Fit here (7/10):** Durable principle class (asset content selection) on the Amazon image stack carrying the larger ~$1,800/mo channel — zero cost, no traffic, no attribution, squarely CRO-stage. Natural deodorant is one of the most comparison-shopped categories and the winnable attributes are concrete (aluminum-free, baking-soda-free option, no plastic applicator, made in USA). This refines the us-vs-them entry in the format rotation above rather than adding a format: the narrow rule is ~4 attributes max, sourced from competitor one-star reviews, which marketing-problem-solution-inventory already tells you to mine.
+**Fit here (7/10):** Durable principle class (asset content selection) on the Amazon image stack carrying the larger ~$1,800/mo channel — zero cost, no traffic, no attribution, squarely CRO-stage. Natural deodorant is one of the most comparison-shopped categories and the winnable attributes are concrete (aluminum-free, baking-soda-free option, no plastic applicator, made in USA). This refines the us-vs-them entry in the format rotation above rather than adding a format: the narrow rule is ~4 attributes max, sourced from competitor one-star reviews, which marketing-problem-solution-inventory already tells you to mine. It is the sixth frame in the Shopify gallery order above.
 
 **Note the division of labour with the demonstrable-result rule above:** non-demonstrable attributes like 'aluminium-free' or 'made in USA' are exactly what a comparison table is for — they earn a row here even though they cannot carry the hero frame.
 
@@ -168,7 +186,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** He enumerates the two main use cases for the diffuser (family room and office) and produces one image for each, noting he already has two living-room frames — one with the avatar and one without. Assertion from his own listing practice.
 
-**Fit here (6/10):** Durable principle, free, and applies to the image slots on the larger channel. Natural deodorant has enumerable contexts (morning routine at the sink, gym bag, long work shift, travel) and the problem/solution inventory already enumerates them. Held at 6 because it is closer to a coverage checklist than a mechanism, it partly overlaps the format-rotation rule above, and Amazon caps the slot count — so extra contexts compete with the comparison, infographic, and step-by-step frames that arguably do more work. Add contexts only after those slots exist.
+**Fit here (6/10):** Durable principle, free, and applies to the image slots on the larger channel. Natural deodorant has enumerable contexts (morning routine at the sink, gym bag, long work shift, travel) and the problem/solution inventory already enumerates them. Held at 6 because it is closer to a coverage checklist than a mechanism, it partly overlaps the format-rotation rule above, and Amazon caps the slot count — so extra contexts compete with the comparison, infographic, and step-by-step frames that arguably do more work. Add contexts only after those slots exist, and on Shopify only after the seven ordered gallery frames above are in place.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -192,7 +210,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Fit here (5/10):** Durable-principle class (trust psychology and positioning), so age is irrelevant. It resolves a real decision for a solo operator with no photographer and no designer: at a $50.46 AOV, phone-shot and plainly-lit imagery is the correct register, and money or time spent chasing studio polish is misallocated. Held to 5 because it is a calibration judgment rather than a revenue mechanism, the evidence is a single observed brand, and it partly overlaps the raw-phone-reference discipline already in marketing-ai-product-imagery. Additive only in giving a price-point rule for how much polish an asset needs.
 
-**How it meshes with the rules above:** this sets the ceiling on effort per frame, not the standard for clarity. Legibility at phone size, one job per frame, a visible result in the lead frame, effortless-looking use, and the compliance guardrail below are non-negotiable at every price point — 'raw is fine' licenses plain lighting and simple backgrounds, never small text, cluttered layouts, or a frame that fails the 1-second read.
+**How it meshes with the rules above:** this sets the ceiling on effort per frame, not the standard for clarity. Legibility at phone size, one job per frame, the gallery running order, a visible result in the lead frame, effortless-looking use, and the compliance guardrail below are non-negotiable at every price point — 'raw is fine' licenses plain lighting and simple backgrounds, never small text, cluttered layouts, or a frame that fails the 1-second read.
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
@@ -202,7 +220,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Stated flatly as a rule ('you can't just stamp it on the image, you'll get banned'), plus a live catch where GPT Images 2.0 rendered a screen the product does not have and he corrected it back to the reference image. Assertion from practice, no policy citation.
 
-**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly — and it keeps agitation scenes and recurring characters off the main image, where the product itself must be the subject. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
+**Fit here (8/10):** Platform-policy class rather than platform mechanics — the underlying 'main image must be the real product' rule is long-standing and the video is two months old, so no decay discount. It is load-bearing here because Amazon is the larger channel at ~$1,800/mo, and RSC's whole catalog is claim-adjacent body care where the temptation to overlay 'aluminum-free' or '24-hour' onto a frame is real. It also puts a hard guardrail on the AI generation workflow: any generated deodorant stick, cap, or label that does not match the physical unit is a compliance problem, not a style problem. This also caps the demonstrable-result rule above: the result shown must be one the real product actually produces, photographed honestly — and it keeps agitation scenes, benefit-headline frames and recurring characters off the Amazon main image, where the product itself must be the subject. The Shopify gallery order above is explicitly scoped to Shopify for exactly this reason. Free to observe, and it protects the revenue-producing channel. A non-compliant frame is never a winner, however well it performs.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
@@ -212,6 +230,6 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 
 **Evidence offered:** Live walkthrough: a first attempt got the button wrong, a prompt error ('no logos') was corrected, photo was switched to render, and the gibberish bottom-line text was fixed in Canva — whole loop asserted at 10–15 minutes. Side-by-side showing GPT Images 2.0 rendering minuscule text correctly where Nano Banana Pro produced AI gibberish. Single demonstration, no comparison against a designer.
 
-**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots and PDP heroes on both channels, at near-zero cost. The same reference-image discipline is what holds a recurring character consistent across frames. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above, at the polish level the price-point rule above calls for. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
+**Fit here (6/10):** Platform-mechanics class — specific tool names and edit affordances decay fast — but the video is two months old so no staleness penalty applies today; expect the tool names to be wrong within a year while the reference-image and edit-not-regenerate habits survive. Genuinely useful for a solo operator with no designer and 12 SKUs needing main images, secondary slots, the seven-frame Shopify gallery and PDP heroes on both channels, at near-zero cost. The same reference-image discipline is what holds a recurring character consistent across frames. Held at 6 because it is a production-speed lever rather than a revenue mechanism, and it must be run under the compliance guardrail above, at the polish level the price-point rule above calls for. The full reference-photo and correction workflow is owned by marketing-ai-product-imagery; the edit-vs-regenerate rule also exists in marketing-email-design-production for email assets.
 
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
