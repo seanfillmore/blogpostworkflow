@@ -58,32 +58,64 @@ const SOURCES = ['agents', 'lib', 'scripts']
   .flatMap((d) => walk(join(ROOT, d)))
   .map((p) => ({ rel: relative(ROOT, p), text: readFileSync(p, 'utf8') }));
 
-// A direct parse of a post's meta.json, in any of the three spellings the
-// codebase used before the migration.
-const DIRECT_READ = /JSON\.parse\(\s*readFileSync\(\s*(getMetaPath\(|metaPath\b|join\([^)]*POSTS_DIR[^)]*'meta\.json')/;
+// Find every raw touch of a post's meta.json in one file.
+//
+// ⚠️ THIS USED TO MATCH SPELLINGS AND A LOCAL VARIABLE NAME DEFEATED IT.
+// The old rule looked for `readFileSync(getMetaPath(` or `readFileSync(metaPath`.
+// agents/indexing-checker writes `const path = getMetaPath(slug)` and then
+// `readFileSync(path)` / `writeFileSync(path)` — so the guard saw nothing while
+// the agent stamped a SERVER-owned field into the git-TRACKED meta.json every
+// morning on cron. Six files were bypassing it, not one; `postMetaPath` and
+// `retroMetaPath` slipped past for the same reason (the regex anchored the name
+// immediately after the paren).
+//
+// So follow the VALUE, not the name: any local assigned from getMetaPath() is a
+// meta path, whatever it is called, and reading or writing it raw is the defect.
+function rawMetaTouches(text) {
+  const found = [];
+  if (/readFileSync\(\s*getMetaPath\(/.test(text)) found.push('read via inline getMetaPath()');
+  if (/writeFileSync\(\s*getMetaPath\(/.test(text)) found.push('write via inline getMetaPath()');
+  if (/JSON\.parse\(\s*readFileSync\(\s*join\([^)]*POSTS_DIR[^)]*'meta\.json'/.test(text)) {
+    found.push('read via a hand-built POSTS_DIR path');
+  }
+  for (const [, name] of text.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*getMetaPath\(/g)) {
+    if (new RegExp(`readFileSync\\(\\s*${name}\\b`).test(text)) found.push(`read via \`${name}\``);
+    if (new RegExp(`writeFileSync\\(\\s*${name}\\b`).test(text)) found.push(`write via \`${name}\``);
+  }
+  return [...new Set(found)];
+}
 
-test('no file parses a post meta.json directly except the four that must', () => {
+test('no file touches a post meta.json raw except the four that must', () => {
   const offenders = SOURCES
     .filter(({ rel }) => !ALLOWED_RAW.has(rel))
-    .filter(({ text }) => DIRECT_READ.test(text))
-    .map(({ rel }) => rel);
+    .map(({ rel, text }) => ({ rel, hits: rawMetaTouches(text) }))
+    .filter(({ hits }) => hits.length)
+    .map(({ rel, hits }) => `${rel} (${hits.join('; ')})`);
 
   assert.deepEqual(offenders, [],
-    'these read only the AUTHORED half — use getPostMeta / requirePostMeta:\n  ' + offenders.join('\n  '));
+    'meta.json is HALF the metadata. A raw READ sees only the authored fields; a raw\n'
+    + 'WRITE puts machine state into the file git tracks, which is the deploy collision\n'
+    + 'the split was built to end. Use getPostMeta / requirePostMeta / writePostMeta:\n  '
+    + offenders.join('\n  '));
 });
 
-test('no file writes a post meta.json directly', () => {
-  // The write side of the same rule. Before the split there was no write
-  // chokepoint at all: 20 files called writeFileSync on a meta path, which is
-  // how blog-post-writer could destroy 23 fields per redraft.
-  const DIRECT_WRITE = /writeFileSync\(\s*(getMetaPath\(|metaPath\s*,)/;
-  const offenders = SOURCES
-    .filter(({ rel }) => !ALLOWED_RAW.has(rel))
-    .filter(({ text }) => DIRECT_WRITE.test(text))
-    .map(({ rel }) => rel);
+test('the guard cannot be defeated by renaming the variable', () => {
+  // Pins the actual regression above: this is indexing-checker's exact shape.
+  const shape = `
+    const path = getMetaPath(slug);
+    const meta = JSON.parse(readFileSync(path, 'utf8'));
+    writeFileSync(path, JSON.stringify(meta, null, 2));
+  `;
+  assert.deepEqual(rawMetaTouches(shape), ['read via `path`', 'write via `path`']);
 
-  assert.deepEqual(offenders, [],
-    'these bypass the routing — use writePostMeta / replacePostMeta:\n  ' + offenders.join('\n  '));
+  // And the two names that slipped past because the old regex anchored them
+  // immediately after the opening paren.
+  assert.ok(rawMetaTouches("const postMetaPath = getMetaPath(s);\nreadFileSync(postMetaPath, 'utf8')").length);
+  assert.ok(rawMetaTouches("const retroMetaPath = getMetaPath(s);\nreadFileSync(retroMetaPath, 'utf8')").length);
+
+  // A file that only resolves the path (existsSync, logging) is NOT an offender —
+  // the rule is about reading or writing the contents.
+  assert.deepEqual(rawMetaTouches("const p = getMetaPath(s);\nif (existsSync(p)) console.log(p);"), []);
 });
 
 test('the four exceptions each still exist, so the allowlist cannot rot', () => {

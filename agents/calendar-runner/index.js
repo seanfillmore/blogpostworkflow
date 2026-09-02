@@ -122,9 +122,10 @@ function isRejectedKw(keyword, rejections) {
 
 function getPostMeta(slug) {
   // Try exact slug match first, then scan for matching target_keyword
-  const exact = getMetaPath(slug);
-  if (existsSync(exact)) {
-    try { return JSON.parse(readFileSync(exact, 'utf8')); } catch { return null; }
+  // readPostMeta IS lib/posts.js's getPostMeta (aliased). Reading the file raw here
+  // returned only the authored half, so publish state and shopify ids were invisible.
+  if (existsSync(getMetaPath(slug))) {
+    try { return readPostMeta(slug); } catch { return null; }
   }
 
   // Scan all post JSONs for matching keyword

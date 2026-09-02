@@ -47,7 +47,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticle, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta, requirePostMeta, getPostMeta } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
@@ -127,9 +127,11 @@ async function publishApprovedQueueItems() {
   let count = 0;
   for (const { file, item } of approved) {
     try {
-      const postMetaPath = getMetaPath(item.slug);
-      if (!existsSync(postMetaPath)) { console.warn(`    [skip] ${item.slug}: no post JSON`); continue; }
-      const postMeta = JSON.parse(readFileSync(postMetaPath, 'utf8'));
+      // Merged view. Read raw, this saw only the AUTHORED half — shopify_article_id is
+      // server-owned and lives in state.json — so every approved item was skipped below
+      // with "no shopify_article_id", which reads like a data problem, not a code bug.
+      const postMeta = getPostMeta(item.slug);
+      if (!postMeta) { console.warn(`    [skip] ${item.slug}: no post JSON`); continue; }
       if (!postMeta.shopify_article_id) { console.warn(`    [skip] ${item.slug}: no shopify_article_id`); continue; }
       if (!existsSync(item.refreshed_html_path)) { console.warn(`    [skip] ${item.slug}: no refreshed HTML`); continue; }
 

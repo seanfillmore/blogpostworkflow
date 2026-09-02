@@ -35,7 +35,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
-import { getMetaPath } from '../../lib/posts.js';
+import { getMetaPath, getPostMeta } from '../../lib/posts.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadPositionHistory, computeTrajectory, trendMultiplier } from '../../lib/rank-trends.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -94,9 +94,9 @@ function loadLatestSnapshot() {
 }
 
 function loadPostMeta(slug) {
-  const path = getMetaPath(slug);
-  if (!existsSync(path)) return null;
-  try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
+  // Merged view: meta.json is only the authored half since the 2026-08-31 split.
+  if (!existsSync(getMetaPath(slug))) return null;
+  try { return getPostMeta(slug); } catch { return null; }
 }
 
 /**
