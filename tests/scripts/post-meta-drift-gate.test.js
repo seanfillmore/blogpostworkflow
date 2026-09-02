@@ -130,3 +130,47 @@ test('no cron line on this host carries a TZ= prefix', () => {
     assert.ok(!/\bTZ=/.test(m[1]), `a TZ= prefix schedules nothing on this host: ${m[1].slice(0, 80)}`);
   }
 });
+
+// ── the leak check (added 2026-09-02) ────────────────────────────────────────
+//
+// The reconcile exits 0 for this condition. Measured that morning: it printed
+// "In sync. Nothing to reconcile." while 171 of 208 posts carried indexing_state
+// in the git-TRACKED meta.json, written by cron hours earlier. The migration
+// verified the data moved; nothing verified it STAYED moved, and agents/
+// indexing-checker had been undoing it nightly since 2026-08-31.
+import { findServerFieldLeaks, renderLeakLines } from '../../scripts/check-post-meta-drift.mjs';
+
+const OWNERS = { title: 'repo', target_keyword: 'repo', indexing_state: 'server', shopify_article_id: 'server' };
+
+test('leak check: a clean corpus reports nothing', () => {
+  const read = () => ({ title: 'T', target_keyword: 'k' });
+  assert.deepEqual(findServerFieldLeaks(['a', 'b'], read, OWNERS), []);
+  assert.deepEqual(renderLeakLines([]), []);
+});
+
+test('leak check: catches the REAL 2026-09-02 incident', () => {
+  // indexing-checker's exact output: authored fields plus a server field.
+  const read = (slug) => slug === 'clean'
+    ? { title: 'T' }
+    : { title: 'T', indexing_state: { state: 'indexed' } };
+
+  const leaks = findServerFieldLeaks(['clean', 'p1', 'p2'], read, OWNERS);
+  assert.equal(leaks.length, 2, 'both polluted posts, and not the clean one');
+  assert.deepEqual(leaks[0], { slug: 'p1', fields: ['indexing_state'] });
+
+  const lines = renderLeakLines(leaks).join('\n');
+  assert.match(lines, /SERVER-OWNED FIELDS IN THE TRACKED meta\.json on 2 post\(s\)/);
+  assert.match(lines, /indexing_state/, 'the FIELD is what names the culprit writer');
+  assert.match(lines, /split-post-meta\.mjs --apply/, 'and it must say how to clean up');
+});
+
+test('leak check: an unparseable file is left to exit 3, not double-reported', () => {
+  const read = (slug) => { if (slug === 'bad') throw new Error('Unexpected token'); return { title: 'T' }; };
+  assert.deepEqual(findServerFieldLeaks(['bad', 'ok'], read, OWNERS), []);
+});
+
+test('leak check: reports every server field on a post, not just the first', () => {
+  const read = () => ({ title: 'T', indexing_state: {}, shopify_article_id: 1 });
+  assert.deepEqual(findServerFieldLeaks(['p'], read, OWNERS)[0].fields,
+    ['indexing_state', 'shopify_article_id']);
+});

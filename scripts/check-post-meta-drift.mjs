@@ -129,6 +129,65 @@ export function classifyGateExit(code) {
   }
 }
 
+/**
+ * Which posts have SERVER-owned fields sitting in the git-TRACKED meta.json.
+ *
+ * ⚠️ THE RECONCILE CANNOT SEE THIS, AND THAT IS WHY THIS FUNCTION EXISTS.
+ * That script asks "does this box diverge from what a deploy will land, and can
+ * the difference be resolved mechanically?" A field only ONE side moved merges
+ * cleanly, so a machine field leaking into the tracked file is, to it, a clean
+ * merge. Measured on 2026-09-02: the gate printed "In sync. Nothing to
+ * reconcile." and exited 0 while 171 of 208 posts carried `indexing_state` in
+ * the tracked meta.json, written by cron that morning.
+ *
+ * That is the split being UNDONE, one nightly run at a time, reported as green.
+ * The migration verified the data moved; nothing verified it STAYED moved.
+ *
+ * A leak means some writer bypassed writePostMeta/replacePostMeta and wrote the
+ * file raw — recreating the tracked-file-that-cron-writes collision that
+ * corrupted production twice on 2026-08-23.
+ *
+ * Pure over an injected reader so it is testable without a corpus.
+ */
+export function findServerFieldLeaks(slugs, readMeta, fieldOwners) {
+  const leaks = [];
+  for (const slug of slugs) {
+    let raw;
+    try {
+      raw = readMeta(slug);
+    } catch {
+      continue; // unparseable is exit 3's job, not this check's
+    }
+    if (!raw || typeof raw !== 'object') continue;
+    const fields = Object.keys(raw).filter((k) => fieldOwners[k] === 'server');
+    if (fields.length) leaks.push({ slug, fields });
+  }
+  return leaks;
+}
+
+/** Roll leaks up into the digest lines — the FIELD is what names the culprit. */
+export function renderLeakLines(leaks) {
+  if (!leaks.length) return [];
+  const byField = new Map();
+  for (const { slug, fields } of leaks) {
+    for (const f of fields) {
+      if (!byField.has(f)) byField.set(f, []);
+      byField.get(f).push(slug);
+    }
+  }
+  const lines = [
+    `SERVER-OWNED FIELDS IN THE TRACKED meta.json on ${leaks.length} post(s).`,
+    'Some writer bypassed writePostMeta/replacePostMeta and wrote the file raw.',
+    'Find it by field, fix the writer, then re-run: node scripts/split-post-meta.mjs --apply',
+    '',
+  ];
+  for (const [field, slugs] of [...byField.entries()].sort((a, b) => b[1].length - a[1].length)) {
+    lines.push(`  ${String(slugs.length).padStart(4)}  ${field}`);
+    lines.push(`        e.g. ${slugs.slice(0, 3).join(', ')}${slugs.length > 3 ? ' …' : ''}`);
+  }
+  return lines;
+}
+
 /** Last N non-empty lines of the reconcile report, for the digest body. */
 function tail(text, lines = BODY_LINES) {
   const all = (text || '').trimEnd().split('\n');
@@ -167,8 +226,30 @@ async function main(argv) {
   const code = run.status ?? -1;
   const verdict = classifyGateExit(code);
 
+  // The reconcile cannot see a one-sided field addition, so ask the second
+  // question separately: is machine state leaking into the file git tracks?
+  let leaks = [];
+  let leakError = null;
+  try {
+    const [posts, owners] = await Promise.all([
+      import('../lib/posts.js'),
+      import('../lib/post-meta-reconcile.js'),
+    ]);
+    const { readFileSync } = await import('node:fs');
+    leaks = findServerFieldLeaks(
+      posts.listAllSlugs(),
+      (slug) => JSON.parse(readFileSync(posts.getMetaPath(slug), 'utf8')),
+      owners.FIELD_OWNERS,
+    );
+  } catch (err) {
+    leakError = (err.message || String(err)).slice(0, 200);
+  }
+  const leakLines = renderLeakLines(leaks);
+
   console.log(output);
   console.log(`[post-meta drift gate] exit ${code} — ${verdict.headline}`);
+  if (leakLines.length) console.log('\n' + leakLines.join('\n'));
+  if (leakError) console.log(`[post-meta drift gate] leak check could not run: ${leakError}`);
 
   const freshness = fetched
     ? 'origin/main was fetched immediately before this check.'
@@ -176,9 +257,16 @@ async function main(argv) {
       ? `git fetch FAILED (${fetchError}) — this compared against a possibly stale origin/main, so the result may UNDER-report.`
       : 'git fetch was skipped (--no-fetch) — compared against the origin/main this box already had.';
 
+  // A leak is a human's problem whatever the reconcile said — and the reconcile
+  // says "clean" for exactly this condition, which is how it hid for two days.
+  const status = leaks.length ? 'error' : verdict.status;
+  const needsHuman = verdict.needsHuman || leaks.length > 0;
+
   await notify({
-    subject: `Post-meta drift gate — exit ${code}${verdict.needsHuman ? ' (needs a human)' : ''}`,
-    status: verdict.status,
+    subject: `Post-meta drift gate — exit ${code}`
+      + (leaks.length ? ` · ${leaks.length} post(s) LEAKING server fields` : '')
+      + (needsHuman ? ' (needs a human)' : ''),
+    status,
     category: 'pipeline',
     body: [
       verdict.headline,
@@ -188,6 +276,8 @@ async function main(argv) {
       'Detector only — nothing was written. Reconcile by hand with',
       '  node scripts/reconcile-post-metas.mjs --ref origin/main',
       '',
+      ...(leakLines.length ? [...leakLines, ''] : []),
+      ...(leakError ? [`Leak check could not run: ${leakError}`, ''] : []),
       '--- scripts/reconcile-post-metas.mjs ---',
       tail(output),
     ].join('\n'),
