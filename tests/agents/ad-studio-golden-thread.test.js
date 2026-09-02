@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import {
   findGoldenThread, sellingVocabulary, splitPlateZones, splitPrimaryText, contentTokens,
   MIN_PIVOT_TOKENS, MAX_PREMISE_DOMINANCE, HOOK_ZONES, GOLDEN_THREAD_RULE, goldenThreadRetryNote,
+  MIN_BODY_TOKENS_FOR_PIVOT,
 } from '../../agents/ad-studio/golden-thread.js';
 
 // ── The two product vocabularies, from the live PDP bodies as at 2026-09-01. Inlined rather
@@ -241,4 +242,85 @@ test('golden thread: KNOWN MISS — long-form scripts are not separated by this 
   // test tells them the scope note above needs rewriting.
   assert.equal(good.goldenThread, false, 'the good close must never fire');
   assert.equal(bad.goldenThread, false, 'KNOWN: the plate-calibrated floor does not catch long-form');
+});
+
+
+// ── MEASURED 2026-09-02: the Meta 125-character primary text, and why the pivot COUNT is
+// switched off at that length. See MIN_BODY_TOKENS_FOR_PIVOT in the module header.
+//
+// There has never been a real flexible run — zero exist anywhere on the production box — so
+// unlike the plate corpus above BOTH sides here are hand-written. That is stated rather than
+// hidden: the false-positive rate is the number that costs, and it is the one with no
+// independent evidence behind it. Re-measure after the first real `--flexible` run.
+
+const GOOD_PRIMARY = [
+  "Your bar soap has 20+ ingredients. Ours has one: organic virgin coconut oil. Nothing added to irritate.",
+  "Most soap is animal fat and detergent. This is saponified coconut oil — skin feels conditioned, not stripped.",
+  "Read the back panel sometime. Then read ours: one fat, no fragrance, no sulfates, no tallow.",
+  "112 chemicals a day on the average adult. This bar is one ingredient, unscented, $11.",
+  "Fragrance is the #1 skin irritant. Pure Unscented has none — just coconut oil soap.",
+  "Tired of soap that strips? One fat, cold-pressed coconut oil, glycerin left in.",
+  "You cannot pronounce half your soap. Ours is coconut oil. That is the whole label.",
+  "Undisclosed compounds hide behind one word. We have no fragrance at all.",
+];
+
+// The hook's premise elaborated, the product's own reasons never stated.
+const BAD_PRIMARY = [
+  "112 chemicals a day on the average adult. Twelve products, dozens undisclosed. How many today?",
+  "Fragrance is the #1 skin irritant. It hides behind one word on a label. It is in almost everything.",
+  "2,200 adults were surveyed. Most could not name what they applied that morning. Most never looked.",
+  "The average shelf holds 12 products. Twelve labels. Twelve chances nobody audited.",
+  "Undisclosed compounds hide behind one word. That word is legal. That word is everywhere.",
+  "Read the back panel sometime. You will not like it. Most people never do.",
+];
+
+const scorePrimary = t => findGoldenThread({ ...splitPrimaryText(t), selling: soapVocab() });
+
+test('golden thread: a 125-char primary text is below the pivot-count floor by construction', () => {
+  // The structural gap the threshold sits in. Plate bodies are far richer than primary-text
+  // bodies, with no overlap — this is what makes one constant serve both surfaces.
+  const plateBodies = Object.values(REAL_ADS)
+    .map(z => contentTokens(splitPlateZones(z, null).body).size);
+  const primaryBodies = GOOD_PRIMARY.concat(BAD_PRIMARY)
+    .map(t => contentTokens(splitPrimaryText(t).body).size);
+
+  assert.ok(Math.max(...primaryBodies) < MIN_BODY_TOKENS_FOR_PIVOT,
+    `primary-text bodies (max ${Math.max(...primaryBodies)}) must fall below the floor`);
+  assert.ok(Math.min(...plateBodies) >= MIN_BODY_TOKENS_FOR_PIVOT,
+    `plate bodies (min ${Math.min(...plateBodies)}) must clear the floor`);
+
+  // And the consequence: the count is never consulted on a primary text.
+  for (const t of GOOD_PRIMARY.concat(BAD_PRIMARY)) {
+    const r = scorePrimary(t);
+    if (!r.exempt && !r.disarmed) assert.equal(r.pivotCounted, false, `pivot must not be counted for: ${t}`);
+  }
+});
+
+test('golden thread: ZERO false positives on good primary texts', () => {
+  // The property that makes shipping this safe on a surface with no real data: it can never
+  // regenerate copy that pivots properly. A pivot floor of 3 rejects two of these for being
+  // SHORT — which is why the count is off and the ratio decides.
+  for (const t of GOOD_PRIMARY) {
+    const r = scorePrimary(t);
+    assert.equal(r.goldenThread, false, `false positive on: ${t}\n  ${r.reason}`);
+  }
+});
+
+test('golden thread: dominance catches the unambiguous primary-text threads', () => {
+  const caught = BAD_PRIMARY.filter(t => scorePrimary(t).goldenThread);
+  // Half, not all — stated as a measurement rather than claimed as coverage. The misses are
+  // bodies that neither continue the premise nor pivot, plus hooks built entirely from our
+  // own vocabulary (which read as exempt). Both are recorded in the module header.
+  assert.ok(caught.length >= BAD_PRIMARY.length / 2,
+    `expected at least half caught, got ${caught.length}/${BAD_PRIMARY.length}`);
+  for (const t of caught) assert.match(scorePrimary(t).reason, /come from the hook's premise/);
+});
+
+test('golden thread: an exempt primary text is a structural miss, not a pass', () => {
+  // "Your bar soap has 20+ ingredients" is about a COMPETITOR but is built entirely from
+  // words our own PDP uses, so the exemption fires and the ad is never judged. Pinned so the
+  // limitation stays visible: it is the reason the catch rate is not higher.
+  const r = scorePrimary("Your bar soap has 20+ ingredients. Most are synthetic. Nobody reads the panel.");
+  assert.equal(r.exempt, true);
+  assert.equal(r.goldenThread, false);
 });

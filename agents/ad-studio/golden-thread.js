@@ -180,6 +180,27 @@ export const HOOK_ZONES = Object.freeze(new Set(['headline', 'statContext']));
 export const MIN_SELLING_VOCABULARY = 40;
 
 /**
+ * Below this many content words in the BODY, the pivot COUNT stops being evidence and only
+ * `dominance` decides. Measured 2026-09-02, and the gap is structural rather than tuned:
+ *
+ *   plate bodies (10 real shipped ads)   12, 12, 13, 15, 26, 27, 29, 32, 35, 44
+ *   primary-text bodies (125-char cap)    4,  5,  6,  6,  7,  7
+ *
+ * 10 sits centred in the 7 → 12 gap. The reason the count fails at the short end is
+ * arithmetic, not tuning: a Meta primary text is capped at 125 characters, so once the hook
+ * sentence is removed the body has four to seven content words TOTAL and cannot carry six
+ * of the product's own — a genuinely good, well-pivoting text like "You cannot pronounce
+ * half your soap. Ours is coconut oil." scores 2 and would be rejected for being SHORT.
+ * Measured over 15 hand-written good primary texts, a pivot floor of 3 rejects 2 of them.
+ *
+ * Dominance survives the length change because it is a RATIO — "of the topical words this
+ * body does have, how many continue the hook's premise?" — and a ratio does not care that
+ * the denominator is small. On the same fixtures it is the cleaner instrument by a distance:
+ * every one of the 15 good texts measures ≤ 0.20 and half the adversarial ones measure 1.00.
+ */
+export const MIN_BODY_TOKENS_FOR_PIVOT = 10;
+
+/**
  * Content words of a string, lightly stemmed.
  *
  * Stemming is a single trailing-'s' strip and nothing more. It exists so "ingredient" and
@@ -265,7 +286,11 @@ export function findGoldenThread({ hook, body, selling }) {
   const denom = bodyPremise.length + pivot;
   const dominance = denom === 0 ? 1 : bodyPremise.length / denom;
 
-  const thin = pivot < MIN_PIVOT_TOKENS;
+  // A body too short for the COUNT to mean anything is judged on the RATIO alone. See
+  // MIN_BODY_TOKENS_FOR_PIVOT — this is what stops a 125-character Meta primary text being
+  // rejected for the crime of being short.
+  const pivotCounted = bodyTokens.size >= MIN_BODY_TOKENS_FOR_PIVOT;
+  const thin = pivotCounted && pivot < MIN_PIVOT_TOKENS;
   const dominated = dominance > MAX_PREMISE_DOMINANCE;
 
   let reason = null;
@@ -278,7 +303,7 @@ export function findGoldenThread({ hook, body, selling }) {
 
   return {
     goldenThread: Boolean(reason), exempt: false, disarmed: false, reason,
-    hookPremise, pivotTokens, pivot, dominance,
+    hookPremise, pivotTokens, pivot, dominance, pivotCounted, bodyTokens: bodyTokens.size,
   };
 }
 
