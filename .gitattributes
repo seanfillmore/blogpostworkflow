@@ -1,0 +1,33 @@
+# NOTHING UNDER data/ MAY BE TEXT-MERGED BY GIT.
+#
+# WHY. `data/` holds files that are BOTH tracked in git AND rewritten by cron on
+# the production box. When a deploy pulls a commit touching one that is also dirty
+# on the server, git runs its line-based text merge and writes `<<<<<<<` markers
+# INSIDE the file. That corrupted production twice in one day (2026-08-23):
+#
+#   data/rejected-keywords.json   → 20 conflict markers in a file 9 agents parse
+#   five data/posts/*/meta.json   → all five invalid JSON on the box
+#
+# Every reader in this fleet `catch {}`s a parse failure and carries on as though
+# the data were EMPTY, so the corruption is SILENT. CLAUDE.md names the root cause
+# exactly: "Running a text merge over a machine-written data file is the bug" —
+# and no care taken while resolving the conflict prevents it, because the damage
+# happens before anyone sees it.
+#
+# WHAT `-merge` DOES. Git keeps OUR version and declares a conflict for a human to
+# resolve. The conflict is still REPORTED (`UU` in git status) — nothing is hidden
+# — but no markers are ever written into the file, so the box keeps running on
+# valid data while the deploy waits. Verified both ways: without this the JSON
+# fails to parse; with it the file is byte-intact and git still reports a conflict.
+#
+# WHY THE WHOLE DIRECTORY, not a list of the risky paths. A list of subdirectories
+# has to be updated by everyone who adds a tracked data file, and it loses its
+# protection SILENTLY when they forget — the same failure shape as the meta.json
+# "allowlist of what to keep" that quietly destroyed 23 fields per redraft. One
+# broad rule fails safe. Durable config lives in config/, not here, and an auto
+# text-merge of generated data was never semantically valid anyway.
+#
+# THE WORST CASE this covers is data/posts/*/content.html: agents/publisher
+# replaces a live article's body_html with that file, so a conflict marker there
+# becomes a conflict marker on a live indexed page.
+data/** -merge
