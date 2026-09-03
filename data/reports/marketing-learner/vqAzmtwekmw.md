@@ -1,0 +1,187 @@
+# Designing Shopify Themes Has Changed Forever (Tutorial)
+
+**Creator:** Brendan Gillen  
+**Video:** https://www.youtube.com/watch?v=vqAzmtwekmw  
+**Published:** 2026-08-27  
+
+
+
+Found 16 tactics: 12 adopted, 4 rejected.
+
+## Adopted
+
+### Push the AI-built theme to the store as a draft, unpublished theme and preview it there, never straight to live. — 8/10
+
+**Why it works:** A draft theme renders against real products and real admin data so you can see what customers would see, while the live storefront keeps selling untouched — the cost of a bad generation is zero instead of a broken checkout.
+
+**Evidence:** Demonstration: he explicitly prompts 'add it to the Shopify store as a draft unpublished theme', then finds the first version looks bad, which would have been a live outage had he published.
+
+**Fit:** The single Shopify storefront is one of only two revenue surfaces and there is no team to catch a broken PDP. A solo operator running agentic edits against a live theme is one bad prompt away from losing the ~$875/mo Shopify line. Costs nothing, runnable today.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+### Generate the persisted brand design system automatically by giving the AI design tool your live store URL plus uploaded logo colour variants and icons, and let it derive the palettes, typography, button/badge/card styles and voice rather than writing the brand guide by hand. — 7/10
+
+**Why it works:** Every later design prompt in the tool references the stored design system first, so one accurate extraction of the brand makes every subsequent asset (site, email, slide, ad frame) consistent without re-briefing; scraping the existing store is faster and more complete than a human recalling their own brand rules.
+
+**Evidence:** Demonstration — the creator runs it on his own coffee brand's URL, shows an ~8 minute build, and walks through the resulting logos, word marks, palettes, font-usage rules, buttons and layout primitives.
+
+**Fit:** Real Skin Care is a solo operator with no designer, and an existing skill already tells them to hold a persisted brand kit — this adds the cheap way to actually get one built (point the tool at the live Shopify store, upload the logo files) instead of assembling it by hand, which is the step most likely to be skipped. One-person, one-afternoon job on a normal Claude subscription, so no scale or team gate. Not a wholesale duplicate: the recorded claim covers manual assembly, this covers URL-based auto-derivation.
+
+**Target skill:** `marketing-email-design-production` (edit)
+
+**Merged from:** part 1 of 2
+
+### Do the whole storefront redesign inside the AI design canvas first — prompt it for the homepage, collection page and product page against your current site URL, state the single job of the redesign (e.g. 'convert cold traffic') and which buyer segments it is for, and list any unique page module you need preserved. — 7/10
+
+**Why it works:** The tool works from the design system plus a stated conversion objective and audience, so the layout it produces is aimed at one job rather than being generic; doing it in a design canvas means the whole site can be seen and judged before any code or theme is touched.
+
+**Evidence:** Demonstration — he runs the prompt on his own store, shows the generated homepage, collection and PDP, and compares them side by side against his current Shopify template.
+
+**Fit:** Solo operator, no designer, 12 SKUs on Shopify, and paid Meta traffic is now being pointed at the store for the giveaway — so cold traffic is about to hit a template that has never been designed for it. Stating 'convert cold traffic' as the job is exactly the brief this business needs, and the cost is a Claude subscription and an afternoon, not an agency. Scored below 9 only because Shopify is the smaller channel (~$875/mo) and existing skills already dictate PDP module order and gallery sequence, which must constrain whatever the tool produces.
+
+**Target skill:** `marketing-ai-storefront-design` (create)
+
+**Merged from:** part 1 of 2
+
+### Iterate the design by pinning element-level comments and tweaks directly onto the rendered page ('change this to a list of reviews with pagination', 'make this 2x2 instead of 3x3'), and finish every change inside the design tool before exporting anything to Shopify. — 7/10
+
+**Why it works:** Pointing at the exact element removes the ambiguity of describing it in prose, and prompting a design canvas is far cheaper to revise than editing Liquid inside a live Shopify theme — so all the expensive churn happens before code exists.
+
+**Evidence:** Demonstration — he adds comments for a flavour-comparison switch, a paginated review list, an FAQ section and a UGC carousel, then shows the revised theme after ~30 minutes of tweaking.
+
+**Fit:** This is the sequencing rule that makes an AI redesign safe for a solo operator with no developer: all reversible work happens in the canvas, and the live store is touched once. It also gives a cheap way to install the module order and proof placement the conversion-friction and product-image skills already prescribe. Runnable now on $30/day and 54 orders/month — no volume, budget or people gate.
+
+**Target skill:** `marketing-ai-storefront-design` (create)
+
+**Merged from:** part 1 of 2
+
+### When exporting the AI design to code, instruct the model to build on top of Shopify's official free base theme source files (Horizon, pulled from GitHub) rather than letting it invent a theme from scratch. — 7/10
+
+**Why it works:** Using Shopify's own source files as the base produces an officially structured theme — real sections, templates and settings that appear in the theme customiser and stay compatible with Shopify's admin and future updates — instead of a bespoke pile of Liquid that only the AI understands and nobody can edit later.
+
+**Evidence:** Demonstration of the export path (share → more formats and apps → Code → Claude Code) with the Horizon GitHub repo pasted into the instruction; the resulting build appears in the Shopify admin as a proper editable theme with addable sections.
+
+**Fit:** Directly protects a solo operator with no designer and no developer from ending up with an unmaintainable theme they cannot edit or update — the single largest risk of an AI-built storefront on a store already doing only ~$875/mo. Basing it on Shopify's own theme means the operator can still edit modules in the admin afterward without an agent in the loop. Platform-mechanics class (theme names and export paths decay fast), but the video is current, so no age discount.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 1 of 2; part 2 of 2
+
+### Never accept the agent's 'done and fully customized' report — open the store and verify, specifically checking whether the generated sections were actually assigned to the product templates rather than merely created. — 7/10
+
+**Why it works:** The agent reliably reports completion for work it only half did: it will create every section but leave the template unpopulated, or assign the design to a different custom template than the one you were looking at. Only the rendered page proves the state.
+
+**Evidence:** Demonstration: 'let's go and see whether it's telling us the truth' — the sections exist under 'add section' but are absent from the template, and the customised layout turns out to live on a different product template than the one he first opened.
+
+**Fit:** Concrete, cheap verification step for the one person who has to catch every defect themselves — no reviewer, no QA, no agency. A product page that silently rendered without its sections would quietly kill the Shopify conversion rate with the CRO gate wide open.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+### Before publishing, preview the draft theme in a browser as a shopper would see it and walk the whole purchase path page by page — add to cart, quantity selector, variant/scent switcher, one-time vs subscribe toggle, email signup — treating anything untested as broken. — 7/10
+
+**Why it works:** The theme editor renders a page but does not exercise it; interaction defects (a variant selector that stacks instead of switching, a quantity control that does nothing) only surface when a real user clicks them, and each one silently destroys orders on a page that otherwise looks fine.
+
+**Evidence:** Demonstration: he previews as a shopper, finds the two-bottle selector behaving oddly, checks the subscription toggle and email signup, and finds a missing image — all defects invisible from the admin view.
+
+**Fit:** Highly relevant: 12 SKUs with scent variants and a repeat-purchase business that wants subscription/refill cadence means the variant selector and the subscribe toggle are load-bearing revenue controls, and the CRO gate is open. One person can run this checklist in an afternoon at ~54 orders/month with no extra spend.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+### Name at least three specific stores whose design aesthetic you want borrowed, and tell the tool to combine that direction with your own design system. — 6/10
+
+**Why it works:** The model has no way to know your taste; concrete reference URLs give it a design direction to interpolate toward, while the design system keeps the output on-brand rather than a copy of the references.
+
+**Evidence:** Demonstration — he pastes three reference store URLs into the prompt and the output visibly inherits their layout conventions while keeping his own colours and logos.
+
+**Fit:** Runnable today by one person: pick three natural-deodorant / clean-body-care brands whose PDPs are known to convert and hand them over as the design direction. Durable-principle-adjacent (borrow a proven aesthetic rather than invent one) so age is not a factor. Moderate rather than high because it is one input line inside the larger redesign prompt, not a standalone lever, and choosing references by taste rather than by evidence of conversion is a real failure mode.
+
+**Target skill:** `marketing-ai-storefront-design` (create)
+
+**Merged from:** part 1 of 2
+
+### Do not ask the design tool to generate photography — ask it for a shot list and placeholders instead, and pull real images off your existing store. — 6/10
+
+**Why it works:** The design model is strong at layout, type and code but weak at photorealistic product imagery; separating the jobs keeps fake or wrong-looking product photos out of the theme while still getting a concrete brief for what photography must be produced.
+
+**Evidence:** Assertion from experience — 'Claude Design isn't actually that great at creating images... I'm going to get it to just give me a shot list' — plus he pulls existing store images into the design.
+
+**Fit:** A useful division-of-labour guardrail for a solo operator who already has an AI product-imagery workflow: the theme tool lays out the frames and names the shots needed, the image model or a phone camera fills them. Prevents shipping hallucinated deodorant/lip balm renders into a live storefront. Runnable now; scored mid because it is a guardrail rather than a revenue lever, and it is a fast-decaying platform-capability claim.
+
+**Target skill:** `marketing-ai-storefront-design` (create)
+
+**Merged from:** part 1 of 2
+
+### Expect the first build pass to get the structure right and the design wrong; correct it with a follow-up prompt that names the specific gap ('it doesn't look like the design, replicate it on the template', or a screenshot plus a description of the wrong behaviour) rather than restarting the build. — 6/10
+
+**Why it works:** The agent builds a correct skeleton before it applies visual detail, so the miss is almost always the design layer, not the architecture — a targeted correction prompt against the existing session is far cheaper than regenerating and re-approving a 19-minute build.
+
+**Evidence:** Demonstration: the first output 'doesn't look that great'; a single follow-up prompt replicates the whole design, and a screenshot-plus-description prompt fixes the stacked flavour cards in about 30 seconds.
+
+**Fit:** Directly usable by a one-person shop with 12 SKUs and no developer — it is how the storefront actually gets fixed when something looks or behaves wrong. Adjacent to the near-miss correction discipline already recorded for AI image generation, but the artifact is theme code and page behaviour, not a render, so it is not a restatement.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+### Route each fix by its class: if the thing looks wrong, change it in the design tool and sync that change into the code session; if the thing behaves wrong (clicks, switchers, stacking), change it directly in the code tool. — 5/10
+
+**Why it works:** Keeping visual changes in the design file preserves one source of truth for the design, so the two tools do not drift apart; behaviour is not represented in the design file at all, so it can only be fixed in code. Making the change in the wrong place means the next sync overwrites it.
+
+**Evidence:** Demonstration: he fixes the flavour-card switching behaviour in VS Code, then changes the FAQ section layout in Claude Design and syncs it back via design sync, and shows both landing correctly in the draft theme.
+
+**Fit:** Sound working rule for a solo operator running both tools, and it prevents rework. Scored mid because it only pays off once the operator is actually maintaining a design file alongside the theme — plenty of PDP changes at this size are single-section edits made straight in the Shopify editor. Platform-mechanics class and currently accurate.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+### Use the most capable available model at high effort for the initial full theme build sweep, then drop to a cheaper/faster model for small fixes. — 5/10
+
+**Why it works:** The first sweep sets the architecture the whole theme inherits; a weaker model produces structural mistakes that every later correction prompt has to work around, so the compute is cheapest to spend at the start.
+
+**Evidence:** Assertion only — he selects 'Fable', effort high, saying it is 'the most advanced model right now' and that he wants it 'for the first sweep'.
+
+**Fit:** Runnable today and costless in dollars for a solo operator, but it is a thin tooling preference rather than a marketing lever, and the named model is fast-decaying platform detail — the durable part is 'best model on the first structural pass, cheaper model on small fixes'.
+
+**Target skill:** `marketing-storefront-theme-build` (create)
+
+**Merged from:** part 2 of 2
+
+## Rejected
+
+### End the prompt with 'ask me any questions you need to get the best result', then answer every clarifying question as thoroughly as you would brief a real designer. — 3/10
+
+**Rejected because:** Restates an already-recorded claim in marketing-email-design-production ('keep the initial brief vague so the tool asks clarifying questions... then answer those questions instead of writing a complete brief up front'). Same tactic applied to a site instead of an email.
+
+**Fit reasoning:** Sound and applicable, but already recorded elsewhere; adds no new executable step for this business.
+
+### Use Opus for the design generation rather than a larger or smaller model. — 2/10
+
+**Rejected because:** No stated mechanism, only a personal preference, and it is a platform-mechanics claim of the fastest-decaying kind — model names and tiers turn over in months, so a recorded 'use Opus' instruction will be wrong before it is ever read.
+
+**Fit reasoning:** No mechanism, no test, and the specific model name will be stale before the note is read.
+
+### Treat the AI as a staff member — a coding partner and a design partner — and hand it anything you are not sure how to do, going back and forth like a team. — 2/10
+
+**Rejected because:** No stated mechanism that can be executed or tested — it is a mindset framing wrapped around the concrete routing rule already captured separately ('design tool for look, code tool for behaviour').
+
+**Fit reasoning:** Mindset framing with no executable step; the concrete part is already captured as the fix-routing rule.
+
+### Open a limited number of one-on-one implementation spots each month, gate applicants behind a revenue floor and an application form, and pitch it mid-content while the audience waits. — 1/10
+
+**Rejected because:** Application forms and a $30k/mo client revenue floor do not translate to a DTC consumables catalog; the one portable fragment (capped slots as honest scarcity) is already recorded in marketing-scarcity-urgency-framing.
+
+**Fit reasoning:** B2B high-ticket service selling with no honest translation to a 12-SKU consumable catalog at ~$50 AOV.
+
+## Skills touched
+
+- `marketing-email-design-production` (edit)
+- `marketing-ai-storefront-design` (create)
+- `marketing-storefront-theme-build` (create)
