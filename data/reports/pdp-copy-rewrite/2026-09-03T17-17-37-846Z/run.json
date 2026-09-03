@@ -1,0 +1,15 @@
+{
+  "at": "2026-09-03T17:17:39.107Z",
+  "applied": true,
+  "results": [
+    {
+      "handle": "coconut-lotion",
+      "outcome": "already-applied"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "outcome": "applied",
+      "product_id": 7644968911018
+    }
+  ]
+}
