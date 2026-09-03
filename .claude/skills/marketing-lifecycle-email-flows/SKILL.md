@@ -1,6 +1,6 @@
 ---
 name: marketing-lifecycle-email-flows
-description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, nurturing subscribers who joined the list but have not bought (including how to escalate offers to them on a fixed schedule), and choosing which medium carries a flow when email alone gets no response. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
+description: Use when deciding which automated email/SMS flows should exist and which one to build next — auditing flow coverage for gaps, recovering abandoned carts, setting up the first two emails that follow any opt-in (including giveaway entrants), nurturing subscribers who joined the list but have not bought (including how to escalate offers to them on a fixed schedule), and choosing which medium carries a flow when email alone gets no response. Covers the inventory and the job of each flow; the content of the post-purchase flow lives in marketing-post-purchase-onboarding and the win-back offer in marketing-retention-offers.
 ---
 
 # Lifecycle Email Flows
@@ -33,6 +33,20 @@ Two cautions. **The 30% figure will not hold at this volume** — treat it as a 
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 
+## Fix the first two emails after any opt-in: an immediate confirmation that names what they signed up for, who you are and what comes next; then a next-day email handing over your best-performing existing content on that subject.
+
+**Why it works:** The immediate email closes the loop the opt-in opened, so the subscriber does not feel stranded between signing up and hearing anything. The day-two email delivers real value with zero new production, because it reuses material that has already proven it holds attention on that topic — you are not guessing what a cold subscriber wants, you are re-serving what an audience already voted for.
+
+**Evidence offered:** Assertion — described as "easy wins" from the creator's own setup. No open, click or conversion data.
+
+**Fit here (7/10):** Directly on the critical path. The Meta campaign is driving giveaway entries right now, and every entrant needs a first touch or the paid spend buys addresses that go cold before anything is ever asked of them. Both emails are runnable today in Klaviyo by one person, and neither needs ad budget, new traffic or working attribution.
+
+The confirmation half overlaps the opt-in claim in `marketing-email-list-health` — treat that skill as the authority on consent and deliverability mechanics, and this as the content spec for the two sends. The distinct, additive instruction is the day-two rule: **seed the second email from your best-performing existing content rather than writing new material.** For this account that means the strongest existing asset on the natural-deodorant transition period or baking-soda irritation — whichever post, video or FAQ has the most engagement — not a fresh essay.
+
+Two adjustments. **The "person behind it" introduction is the load-bearing part here**, not a formality: a sub-1,000 list buying a $50.46-AOV consumable is buying trust, and the founder introduction is where it starts. **And these two emails are the front of a longer sequence, not the whole of it** — where the opt-in was a giveaway entry or a list signup with no purchase, they should hand straight into the non-buyer nurture below rather than terminating.
+
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
+
 ## Run a pre-purchase nurture flow aimed specifically at subscribers who joined the list and never bought — on a dated schedule, with each step a materially stronger offer than the last.
 
 **Why it works:** Someone who opted in is interested but not convinced — the gap is belief, not awareness. A sequence that supplies differentiation and trust closes the objection blocking them instead of re-pitching the product. And someone who declined the standard offer has not declined *every* offer: a fixed schedule of progressively stronger asks keeps testing the price and structure at which each remaining slice will move. Because the lead is already paid for, every incremental conversion is pure addition to what that lead was worth.
@@ -40,6 +54,8 @@ Two cautions. **The 30% figure will not hold at this volume** — treat it as a 
 **Evidence offered:** For the nurture half, described as sharing your story and what makes the product different so they buy when ready — assertion, no conversion data. For the escalation half, a hypothetical ladder (Day 15 push notification at 50% off, a $20/mo variant, Day 21 at 75% off, then a $9.99 light tier) with invented take rates (5%, 10%, 10%) carried through the CPL arithmetic. No account data on any step.
 
 **Fit here (6/10):** Names a real hole. Other skills cover what a welcome email should *say* by awareness level (`marketing-awareness-level-messaging`) and how to *build* it (`marketing-email-design-production`), but nothing owned the non-buyer nurture sequence as an artifact. Natural deodorant has an unusually well-defined pre-purchase objection set — the transition period, baking-soda irritation, 'it quit by noon' — and this sequence is the natural place to answer it. The escalation ladder supplies what the nurture framing lacked on its own: a schedule and a reason each message differs from the one before, applicable to giveaway entrants as well as never-bought subscribers.
+
+The sequence starts where the opt-in pair above leaves off: confirmation on day zero, best existing content on day one, then the escalating steps on their dated schedule.
 
 Held at 6 because the list is small so absolute revenue is modest, and **the content this flow carries is generated elsewhere** — by `marketing-problem-solution-inventory` and `marketing-awareness-level-messaging`. The only additive claims here are that the sequence should exist, that it should target non-buyers specifically, and that its steps should escalate on fixed days.
 

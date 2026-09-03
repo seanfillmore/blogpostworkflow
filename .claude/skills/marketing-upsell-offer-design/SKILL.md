@@ -1,6 +1,6 @@
 ---
 name: marketing-upsell-offer-design
-description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, on the confirmation page after a lead-magnet or giveaway opt-in, or in a follow-up email once the buyer has felt the problem; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
+description: Use when designing the second ask in a purchase path rather than the first — what to offer in the cart, on the Shopify post-purchase/thank-you page, on the confirmation page after a lead-magnet or giveaway opt-in, or in a follow-up email once the buyer has felt the problem; whether the front end should be a free opt-in or a low-priced tripwire that clears the transaction barrier before the real ask; how to frame a quantity or variant choice so 'don't buy' is not one of the options; which surface each cross-sell belongs on; and how to diagnose a cross-sell that is being declined.
 ---
 
 # Upsell Offer Design
@@ -31,9 +31,21 @@ description: Use when designing the second ask in a purchase path rather than th
 
 **Evidence offered:** Assertion, described as the author's own standing setup. No take-rate or revenue figures.
 
-**Fit here (8/10):** Directly applicable to a live surface: $30/day of Meta spend is pointed at soap-giveaway entries, and the entry confirmation page is currently the cheapest place to make a first sale against an AOV of $50.46. One page, one person, no budget — buildable in Shopify today, and it partially offsets paid CAC before the email flow even fires. Note this is a *pre-purchase* surface and is distinct from the post-purchase thank-you page below: the card is not on file yet, so this offer still has to carry its own checkout, and the A-or-B framing above (scent, pack size) is the right way to write it.
+**Fit here (8/10):** Directly applicable to a live surface: $30/day of Meta spend is pointed at soap-giveaway entries, and the entry confirmation page is currently the cheapest place to make a first sale against an AOV of $50.46. One page, one person, no budget — buildable in Shopify today, and it partially offsets paid CAC before the email flow even fires. Note this is a *pre-purchase* surface and is distinct from the post-purchase thank-you page below: the card is not on file yet, so this offer still has to carry its own checkout, and the A-or-B framing above (scent, pack size) is the right way to write it. That missing card is also the reason the tripwire variant below can beat this one — it is the same 'sell on the next page' move, with the transaction barrier cleared first.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 6 of 16))*
+
+## Prefer a low-priced tripwire entry ($1–$20, or free-plus-shipping) over a pure free opt-in, then present the higher-priced order immediately on the next page.
+
+**Why it works:** Paying anything, however small, converts a browser into a buyer: the trust barrier and the payment-entry friction are both cleared in one step and the buyer has banked an 'achievement'. The immediately-following larger ask therefore requires no new decision about whether to buy from you and no re-entry of card details — the only remaining question is quantity or upgrade. A free opt-in leaves both of those barriers standing, so the next-page offer has to win them from scratch.
+
+**Evidence offered:** Assertion plus historical pattern examples — 2000s free-plus-shipping book funnels that upsold software and $79 packages on the following page, agencies selling a cheap landing-page build as an entry point, ecommerce loss leaders. No take-rate or comparison figures.
+
+**Fit here (7/10):** Runnable today. The 12-SKU catalog already contains cheap units — lip balm, a single deodorant, a travel size — that can act as a paid entry, and Shopify supports the immediate next-page offer. Because the current front end is a free soap-giveaway entry, this is a live head-to-head contrast with the Meta $30/day campaign already standing up, and it changes which offer the ads point at rather than just adding copy. Durable offer-construction principle, so its age is irrelevant.
+
+Held at 7 because it overlaps the splinter-and-upsell logic above and the card-on-file claim below; the distinct, additive assertion is narrow — *paid beats free at the entry point* — and the low $50.46 AOV means tripwire margin is thin, so essentially all the profit has to come from the second offer, which is exactly what the tactic prescribes. Also Shopify-only: Amazon has no equivalent entry-plus-next-page surface.
+
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
 
 ## Don't make the buyer re-enter payment details — close on the card already on file.
 
@@ -41,7 +53,7 @@ description: Use when designing the second ask in a purchase path rather than th
 
 **Evidence offered:** Gym anecdote — 'You just wanna use the card we have on file?' — 'Yep, that's fine' — reported as a habit he still uses, plus repeated supplement-sale closes. Anecdotal, no figures.
 
-**Fit here (7/10):** The live ecommerce equivalent is current, not stale: Shopify's post-purchase / thank-you-page offer charges the card already captured with one click. That is an Offer/AOV lever distinct from the express-checkout item in the friction skill (which is about abandonment *before* the sale), it is solo-operator setup, and it raises the $50.46 AOV with no new visitors. Capped at 7 because it requires a low-cost app subscription against ~$2,700/mo revenue, it exists only on the ~$875/mo Shopify side since Amazon controls that flow entirely, and at ~54 orders/month the take rate will take months to read — a set-it-and-move-on item.
+**Fit here (7/10):** The live ecommerce equivalent is current, not stale: Shopify's post-purchase / thank-you-page offer charges the card already captured with one click. That is an Offer/AOV lever distinct from the express-checkout item in the friction skill (which is about abandonment *before* the sale), it is solo-operator setup, and it raises the $50.46 AOV with no new visitors. This is also the mechanical payoff of the tripwire entry above — the cheap first purchase exists partly to get a card into the system so this one-click close is available. Capped at 7 because it requires a low-cost app subscription against ~$2,700/mo revenue, it exists only on the ~$875/mo Shopify side since Amazon controls that flow entirely, and at ~54 orders/month the take rate will take months to read — a set-it-and-move-on item.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -71,7 +83,7 @@ description: Use when designing the second ask in a purchase path rather than th
 
 **Evidence offered:** Presented as a taxonomy plus a staging discipline ('measure in quarters, never implement the whole model at once'); assertion, no data.
 
-**Fit here (7/10):** A coverage checklist a solo operator can run in an hour at zero cost, and it maps cleanly onto a 12-SKU consumable catalog: attraction = the low-COGS lip balm or travel size, upsell = multi-unit or mixed-SKU pack above the $50.46 AOV, downsell = single unit when the bundle is declined, continuity = a refill cadence. The staging half matches the gated Tracking → CRO → Offer/AOV → Traffic sequence directly — the failure mode here is stacking a bundle, a subscription, a popup incentive and a post-purchase upsell in the same month and learning nothing at ~54 orders/month. Not higher because it is a taxonomy and a discipline, not a revenue mechanism: it tells you what is missing, not what to build.
+**Fit here (7/10):** A coverage checklist a solo operator can run in an hour at zero cost, and it maps cleanly onto a 12-SKU consumable catalog: attraction = the low-COGS lip balm or travel size (priced as a tripwire rather than given away free, per the entry-offer claim above), upsell = multi-unit or mixed-SKU pack above the $50.46 AOV, downsell = single unit when the bundle is declined, continuity = a refill cadence. The staging half matches the gated Tracking → CRO → Offer/AOV → Traffic sequence directly — the failure mode here is stacking a bundle, a subscription, a popup incentive and a post-purchase upsell in the same month and learning nothing at ~54 orders/month. Not higher because it is a taxonomy and a discipline, not a revenue mechanism: it tells you what is missing, not what to build.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 2 of 11)*
 
