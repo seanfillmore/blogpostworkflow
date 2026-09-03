@@ -35,6 +35,18 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 
 *Source: Carl Weische (@CarlWeische) — "How to actually get your pre-sell pages to outperform your PDP" (social post)*
 
+## Assign each piece of customer evidence to exactly one funnel stage and never spend the same point twice — the price rebuttal and the product mechanics stay collected but non-load-bearing in the attention ad, then become load-bearing in the next-stage ad, so the sequence completes one conversation instead of repeating it.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Sequential messaging across stages means each ad advances the buyer rather than re-arguing what the previous ad already argued. When every ad in the account carries the full case, a person who has already seen the case gets shown it again, which is spend on re-litigating a settled objection. Splitting the evidence by stage — attention ad earns the click, the next-stage ad clarifies value and kills the price objection — is what lets a funnel build cash flow instead of paying repeatedly to have the same conversation with the same person.
+
+**Evidence offered:** Demonstrated in the ring-assignment report, where mapped evidence was explicitly marked as collected-but-not-load-bearing for the current job and reserved for the clarify-value ring. Single worked artefact, no comparative performance data.
+
+**Fit here (6/10):** Right for this business eventually, but not at $30/day with everything collapsed into a single ad set. A genuine multi-stage sequence needs several ad sets and enough traffic for a retargetable pool to deliver against — order and spend volume this account does not have. Trigger for unparking: spend and traffic sufficient to run a second stage against a warmed audience, meaning a retargeting pool large enough for Meta to deliver to, plus budget beyond the single CBO ad set. The runnable-today fragment — writing down which pieces of evidence are deliberately reserved for a later stage rather than cramming them all into one ad — is already covered by the one-job rule in marketing-paid-creative-testing, so nothing is lost by parking the sequencing machinery itself.
+
+*Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
+
 ## On a small budget run only lead or sales campaign objectives — never awareness, traffic, or engagement — because Meta's optimizer is literal and will deliver exactly the cheap action you asked for.
 
 **Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
