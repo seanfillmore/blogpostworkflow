@@ -1,6 +1,6 @@
 ---
 name: marketing-warm-outreach
-description: One-to-one outreach to people who already know you: inventorying contacts, opening messages, conversation structure, offers and follow-up cadence.
+description: One-to-one outreach to people who already know you or already engaged with you: inventorying contacts, sourcing prospects from your own content's commenters, manufacturing inbound DMs with story prompts, opening messages, conversation structure, offers and follow-up cadence.
 ---
 
 # Warm Outreach
@@ -25,13 +25,33 @@ description: One-to-one outreach to people who already know you: inventorying co
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
+## The static contact list is not the only warm list: if you are producing content but getting no leads, the missing step is that you are not DMing anyone — open the profile of every person commenting on your content, qualify them from what the profile shows, and start a personalized conversation referencing what you saw.
+
+**Why it works:** Engagers are self-selected, pre-warmed prospects; their public profile supplies both a qualifying signal (location, home ownership, employer) and a personal detail, so a one-to-one opener that references it reads as social rather than as a pitch and starts a rapport-building conversation that converts far better than passive posting.
+
+**Evidence offered:** Assertion plus operator experience — the creator says his Cut 30 program trains thousands of experts and that the 'no leads from content' complaint almost always resolves to zero active DMs; cites a Pacific Northwest roofing company client as the worked example.
+
+**Fit here (6/10):** Runnable today by a solo operator at zero cost, and it is a genuine acquisition lever with a Meta giveaway campaign about to generate comments and engagement to work. Capped by economics rather than feasibility: at a $50.46 AOV, a hand-typed DM conversation buys a small ticket, so it is a supplement to paid rather than a primary channel. Extends the contact-inventory and opener claims here, which cover who you already know and how to phrase message one but not how to source fresh prospects from your own content's commenters and qualify them off their profile.
+
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
+
+## Manufacture inbound DM conversations by using Instagram Stories to ask questions and explicitly invite replies ('is anyone looking for X?', 'what's your opinion on Y?').
+
+**Why it works:** A story prompt converts passive viewers into repliers, and every reply lands in the DM inbox as an open thread with an implied conversational opening — so the operator is answering rather than cold-starting, which lowers the social friction on both sides.
+
+**Evidence offered:** Assertion only.
+
+**Fit here (5/10):** Free, takes minutes, and a solo operator can run it today; it also pairs directly with the soap giveaway (a story asking which scent people want is both a reply generator and an entry driver). Score is moderate rather than high because DM volume from a small following will not move ~$2,700/mo materially, and retention — not top-of-funnel conversation count — is the binding constraint.
+
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
+
 ## Open every warm message with something you actually know about that specific person as the reason for reaching out, and ask for nothing in the first message.
 
 **Why it works:** A personalized check-in reads as social contact rather than a pitch, so it gets a reply; asking for nothing means you have not spent any relationship capital before the conversation exists.
 
 **Evidence offered:** Assertion only, with a scripted example ('Saw you just had a baby! Congrats!').
 
-**Fit here (6/10):** Durable principle. Directly executable by a solo operator in DMs and one-to-one emails, and it is the difference between a warm list producing replies and producing blocks. Low ceiling per message but zero cost.
+**Fit here (6/10):** Durable principle. Directly executable by a solo operator in DMs and one-to-one emails, and it governs both surfaces that produce threads here — people you already know, and commenters whose personal detail you lifted off their profile. It is the difference between a warm list producing replies and producing blocks. Low ceiling per message but zero cost.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -41,7 +61,7 @@ description: One-to-one outreach to people who already know you: inventorying co
 
 **Evidence offered:** Stated benchmarks (1 in 5 reply) and the author's claim that it works 'as certainly as the sun rises'; no data shown.
 
-**Fit here (5/10):** Durable principle, but the volume prescription was calibrated to a $400 offer. At $50.46 AOV and Hormozi's own 1-customer-per-100 rate, 100 reach-outs buys about $50. The honest scale-down runnable today: 10-20 personalized touches a day aimed at lapsed buyers and personal contacts, with the same three-touch follow-up cap, since a past buyer converts far above 1%.
+**Fit here (5/10):** Durable principle, but the volume prescription was calibrated to a $400 offer. At $50.46 AOV and Hormozi's own 1-customer-per-100 rate, 100 reach-outs buys about $50. The honest scale-down runnable today: 10-20 personalized touches a day aimed at lapsed buyers, personal contacts and recent commenters, with the same three-touch follow-up cap, since a past buyer or an engager converts far above 1%.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -51,7 +71,7 @@ description: One-to-one outreach to people who already know you: inventorying co
 
 **Evidence offered:** Scripted examples across three verticals; assertion only.
 
-**Fit here (6/10):** Durable conversational principle with a concrete three-part structure — testable and runnable by one person in Instagram DMs, support email replies, and texts to past customers. Not covered by any existing skill (the copy skills govern one-to-many assets, not one-to-one threads).
+**Fit here (6/10):** Durable conversational principle with a concrete three-part structure — testable and runnable by one person in Instagram DMs (including story-reply threads), support email replies, and texts to past customers. Not covered by any existing skill (the copy skills govern one-to-many assets, not one-to-one threads).
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -71,6 +91,6 @@ description: One-to-one outreach to people who already know you: inventorying co
 
 **Evidence offered:** Template only; assertion.
 
-**Fit here (6/10):** Durable principle. Distinct from the existing value-equation audit claim in marketing-conversion-friction-audit — that one governs offer design, this is a compressed copy artifact for short one-to-one surfaces. Immediately usable in DMs, Instagram bio, and giveaway follow-up messages.
+**Fit here (6/10):** Durable principle. Distinct from the existing value-equation audit claim in marketing-conversion-friction-audit — that one governs offer design, this is a compressed copy artifact for short one-to-one surfaces. Immediately usable in DMs, Instagram bio, story-reply threads, and giveaway follow-up messages.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*

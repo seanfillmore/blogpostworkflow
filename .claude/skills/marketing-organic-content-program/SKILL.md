@@ -1,6 +1,6 @@
 ---
 name: marketing-organic-content-program
-description: Running an organic content program as one person: what to post, how it is structured, cadence, give:ask ratio, niche selection and how content supports paid and retention.
+description: Running an organic content program as one person: what to post, how it is structured, cadence, give:ask ratio, lead-magnet opt-ins as the standing CTA and measurement unit, niche selection and how content supports paid and retention.
 ---
 
 # Organic Content Program
@@ -125,15 +125,16 @@ description: Running an organic content program as one person: what to post, how
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
 
-## When you do ask, promote exactly one of two things — your core offer or your lead magnet — nothing else; when unsure use the lead magnet because it is lower risk, and make it relevant to the content that advertised it.
+## When you do ask, promote exactly one of two things — your core offer or your lead magnet — nothing else; default to the lead-magnet opt-in as the standing CTA, because it is lower risk and because emails captured are the only countable, attributable output organic content produces.
 
-**Why it works:** Restricting the ask to two destinations keeps the audience's decision simple and keeps every ask pointed at either revenue now or an engaged lead you can monetise later. The lead magnet costs the audience nothing, so it burns less goodwill than a direct sale ask, and topical relevance means the people who opt in are already qualified on that problem.
+**Why it works:** Restricting the ask to two destinations keeps the audience's decision simple and keeps every ask pointed at either revenue now or an engaged lead you can monetise later. The lead magnet costs the audience nothing, so it burns less goodwill than a direct sale ask, and topical relevance means the people who opt in are already qualified on that problem. It also fixes the measurement problem: views and follows cannot be tied back to revenue, but a free thing gated behind an email produces a countable, dated conversion per piece of content — which lets you compare posts against each other, defend the hours spent, and build a list you can sell to later.
 
-**Evidence offered:** Worked example ('I have 11 more tips… go to my site to grab a pretty visual'); assertion otherwise.
+**Evidence offered:** Worked example ('I have 11 more tips… go to my site to grab a pretty visual'); assertion otherwise. Plus the Van Group case: heavily promoted ebooks brought in thousands of leads for a six-figure-website business with a long sales cycle, where only a handful needed to convert to pay for the whole effort.
 
-**Fit here (7/10):** Durable principle landing on a live asset: the soap giveaway is a lead magnet and a Meta campaign is driving entries, so every organic ask should point at the giveaway entry or a single SKU rather than a blog post, a follow request or a generic 'shop the site'. The relevance rule means a deodorant-problem post should route to a deodorant-relevant capture, not a generic newsletter signup.
+**Fit here (7/10):** Durable principle landing on a live asset: the soap giveaway is a lead magnet and a Meta campaign is driving entries, so every organic ask should point at the giveaway entry or a single SKU rather than a blog post, a follow request or a generic 'shop the site'. The relevance rule means a deodorant-problem post should route to a deodorant-relevant capture, not a generic newsletter signup. The measurement half is the genuinely new part and is runnable today — tag the giveaway link per post and count opt-ins — but hold expectations low on the downstream revenue read while the list is sub-1,000, so opt-ins are a leading indicator, not the scoreboard.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
 
 ## Keep making free content even when paid ads are your primary channel, because content makes all your other advertising more effective — a prospect who looks you up and finds nothing is less likely to buy, one who finds lots of valuable content is more likely to — even though the lift is hard to attribute.
 
@@ -211,6 +212,6 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Author posted twice weekly for four years before the podcast charted, hitting Top 10 US business in year five.
 
-**Fit here (5/10):** The input-consistency half is sound and runnable today. The measurement half partially conflicts with the prime directive — follower and reach growth are not revenue, and dual measurement openly amounts to picking the number that feels better. Adopt with the caveat that reach is a leading indicator only and the scoreboard stays revenue.
+**Fit here (5/10):** The input-consistency half is sound and runnable today. The measurement half partially conflicts with the prime directive — follower and reach growth are not revenue, and dual measurement openly amounts to picking the number that feels better. Adopt with the caveat that reach is a leading indicator only and the scoreboard stays revenue; where a harder number is available, prefer the countable one — emails captured per post via the standing lead-magnet CTA, as recorded in the ask-destination claim above.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 6 of 16))*

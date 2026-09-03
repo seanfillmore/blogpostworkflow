@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-storefront-design
-description: Designing a Shopify storefront in an AI design canvas before touching theme code: brief, references, iteration and imagery guardrails.
+description: Designing a Shopify storefront in an AI design canvas before touching theme code: brief, swipe-file references, iteration and imagery guardrails.
 ---
 
 # Ai Storefront Design
@@ -15,15 +15,16 @@ description: Designing a Shopify storefront in an AI design canvas before touchi
 
 *Source: Brendan Gillen — "Designing Shopify Themes Has Changed Forever (Tutorial)" (vqAzmtwekmw)*
 
-## Name at least three specific stores whose design aesthetic you want borrowed, and tell the tool to combine that direction with your own design system.
+## Feed the tool references you have already collected, not references you invent on the spot: keep a running swipe file of landing pages that actually sold you (deliberately click ads, screenshot the page, drop it in a folder), then paste a screenshot in and ask the agent to recreate that layout with your own product information — and alongside it name at least three specific stores whose aesthetic you want borrowed, telling the tool to combine that direction with your own design system.
 
-**Why it works:** The model has no way to know your taste; concrete reference URLs give it a design direction to interpolate toward, while the design system keeps the output on-brand rather than a copy of the references.
+**Why it works:** The model has no way to know your taste. Named reference URLs give it a direction to interpolate toward, while the design system keeps the output on-brand rather than a copy of the references. A screenshot goes further: it is a complete brief the agent can execute directly, and because the page in your swipe file is one that actually converted *you*, you are stealing a structure with evidence behind it instead of picking by taste — which collapses the design step to a paste plus a paragraph of product copy.
 
-**Evidence offered:** Demonstration — he pastes three reference store URLs into the prompt and the output visibly inherits their layout conventions while keeping his own colours and logos.
+**Evidence offered:** Demonstration (Gillen) — he pastes three reference store URLs into the prompt and the output visibly inherits their layout conventions while keeping his own colours and logos. Demonstration (orenmeetsworld) — he hands the agent a bento-layout screenshot plus asset-placement instructions in Framer and gets back the full designed page including rollover effects.
 
-**Fit here (6/10):** Runnable today by one person: pick three natural-deodorant / clean-body-care brands whose PDPs are known to convert and hand them over as the design direction. Durable-principle-adjacent (borrow a proven aesthetic rather than invent one) so age is not a factor. Moderate rather than high because it is one input line inside the larger redesign prompt, not a standalone lever, and choosing references by taste rather than by evidence of conversion is a real failure mode.
+**Fit here (6/10):** Runnable today by one person and free: start the folder now, and click deodorant / clean-body-care ads on purpose so it fills with pages from this category. Two immediate uses — the giveaway entry page the Meta campaign needs, and PDP work on the store. The named-stores line is one input inside the larger redesign prompt rather than a standalone lever, and choosing references by taste is a real failure mode; the swipe file is the fix for exactly that, since a page only enters the folder if it already worked on a buyer. Translate off Framer to whatever canvas feeds the Shopify theme — the swipe file itself is tool-agnostic.
 
 *Source: Brendan Gillen — "Designing Shopify Themes Has Changed Forever (Tutorial)" (vqAzmtwekmw)*
+*Source: orenmeetsworld — "The only funnels guide you'll ever need (Marketing 2.0)" (-8YiaBpl3DU)*
 
 ## Iterate the design by pinning element-level comments and tweaks directly onto the rendered page ('change this to a list of reviews with pagination', 'make this 2x2 instead of 3x3'), and finish every change inside the design tool before exporting anything to Shopify.
 
