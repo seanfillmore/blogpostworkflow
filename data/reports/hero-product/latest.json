@@ -1,0 +1,87 @@
+{
+  "generated_at": "2026-09-03T16:44:43.527Z",
+  "grouped_by": "cluster",
+  "window": {
+    "since": "2015-01-01",
+    "until": "2026-09-03",
+    "censor_days": 180,
+    "first_order_since": null
+  },
+  "counts": {
+    "orders_pulled": 1319,
+    "pages": 6,
+    "purchases": 1098,
+    "excluded_non_purchase": 221,
+    "excluded_no_identity": 47,
+    "customers_total": 815,
+    "customers_censored_too_recent": 63,
+    "customers_excluded_too_old": 0,
+    "customers_excluded_multi_sku_first_order": 0,
+    "customers_in_cohort": 752
+  },
+  "overall_repeat_rate": 0.1689,
+  "min_cohort": 5,
+  "skus": [
+    {
+      "key": "c:lotion",
+      "title": "lotion",
+      "cohort": 417,
+      "repeat": 86,
+      "laterRevenue": 5218.59,
+      "firstRevenue": 11297.67,
+      "rate": 0.20623501199040767,
+      "wilson": 0.1701670872876536
+    },
+    {
+      "key": "c:soap",
+      "title": "soap",
+      "cohort": 134,
+      "repeat": 31,
+      "laterRevenue": 2401.61,
+      "firstRevenue": 3490.3,
+      "rate": 0.23134328358208955,
+      "wilson": 0.16803556563317654
+    },
+    {
+      "key": "c:lip balm",
+      "title": "lip balm",
+      "cohort": 57,
+      "repeat": 12,
+      "laterRevenue": 332.03,
+      "firstRevenue": 1608.54,
+      "rate": 0.21052631578947367,
+      "wilson": 0.12474426566891902
+    },
+    {
+      "key": "c:toothpaste",
+      "title": "toothpaste",
+      "cohort": 132,
+      "repeat": 13,
+      "laterRevenue": 553.67,
+      "firstRevenue": 2726.49,
+      "rate": 0.09848484848484848,
+      "wilson": 0.058460823028404656
+    },
+    {
+      "key": "c:deodorant",
+      "title": "deodorant",
+      "cohort": 137,
+      "repeat": 13,
+      "laterRevenue": 916.58,
+      "firstRevenue": 2598.87,
+      "rate": 0.0948905109489051,
+      "wilson": 0.05629419132076919
+    },
+    {
+      "key": "t:unclustered",
+      "title": "unclustered",
+      "cohort": 14,
+      "repeat": 0,
+      "laterRevenue": 0,
+      "firstRevenue": 511.15,
+      "rate": 0,
+      "wilson": 0
+    }
+  ],
+  "below_min_cohort": []
+}
