@@ -1,6 +1,6 @@
 ---
 name: marketing-competitor-messaging-teardown
-description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, borrowing premises from viral non-advertising content outside the category, briefing an LLM off a surviving ad to produce your own version of its structure (and why swapping your product name into a competitor's headline backfires), pulling competitor emails from public archives or your own inbox, reading competitors' own product pages for the proof assets they supply a deciding prospect, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
+description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, borrowing premises from viral non-advertising content outside the category, briefing an LLM off a surviving ad to produce your own version of its structure (and why swapping your product name into a competitor's headline backfires), pulling competitor emails from public archives or your own inbox, buying a competitor's product to map their whole customer journey including the post-purchase and win-back sequence, reading competitors' own product pages for the proof assets they supply a deciding prospect, re-scanning on a schedule because a winning lead claim decays as the category copies it, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
 ---
 
 # Competitor Messaging Teardown
@@ -113,10 +113,11 @@ One hard limit on format. A solo operator with no creator roster cannot stage a 
 
 ### Extend the same gap analysis to email, and pull the reference sends from a public archive instead of waiting on your inbox.
 
-Same practice, different channel. Take the brands you already track in the ad library — Native, Every Man Jack, Dr. Squatch, Harry's — and get their emails in front of you two ways:
+Same practice, different channel. Take the brands you already track in the ad library — Native, Every Man Jack, Dr. Squatch, Harry's — and get their emails in front of you three ways:
 
 1. **Archive first (fast).** Search the brand on a public email archive such as Milled and pull three or four actual sends whose design and structure you admire. This is the quick path: you get on-demand access to their reorder, education, and win-back emails in minutes rather than waiting for a send to land.
 2. **Subscribe too (slower, but shows sequence).** Join the lists anyway, because only your own inbox shows you the *order and timing* of a flow — welcome sequence pacing, how long until the first replenishment nudge, when win-back fires.
+3. **Buy, if you want the half nobody publishes.** Subscribing gets you the prospect-side flows only; the post-purchase, replenishment and win-back sequences fire for customers. Buying one competitor stick unlocks them — see the customer-journey section below.
 
 Keep five to ten emails you admire as explicit exemplars and hand the files to the generator as inspiration rather than describing the look in words. Read them the same way you read paid creative: which awareness level does each email target, which persona, which format (welcome, education, comparison, reorder/replenishment nudge, win-back)? The formats they send repeatedly are the ones that earn their place in a mature flow — the email-channel equivalent of the run-duration filter above — and the ones missing from your own sends are the gap to fill next. To turn a specific admired send into your own email, use the same structure-analyze-then-brief procedure above, with the same two constraints: borrow the skeleton, never the phrasing or the claims. Subject lines are where the echo-ad trap bites hardest — a competitor's subject line with your product name substituted is the exact move to avoid.
 
@@ -146,3 +147,47 @@ One honesty constraint, and it is the whole difference between this being useful
 **Fit here (5/10):** Durable competitive-reference gathering that extends a recorded practice onto a surface it does not cover — the sections above read Native, Every Man Jack, Dr. Squatch and Harry's ad libraries and email archives, but nothing reads their actual PDPs and Amazon listings for which proof assets sit on the page. Free, solo-executable, and lands on the two revenue surfaces. Capped at 5 because it is a coverage checklist rather than a revenue mechanism, it is a close cousin of the ad-library and email-archive gap analyses already recorded, and copying a much larger brand's proof stack is not honestly available here — so the output must be an honest gap list (transition-period timeline, third-party testing, certification) rather than an imitation.
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 5 of 6)*
+
+### Then buy the product and flowchart the whole journey, including the sequences only customers see.
+
+Each gap analysis above reads one surface in isolation — their ads, their emails, their pages. A funnel is a *sequence*, not a pile of assets, and the half of it that matters most here is invisible until you become the customer. So spend the price of one competitor deodorant and walk the whole path end to end.
+
+What to record, in order, as a flowchart with one node per surface:
+
+1. **Entry.** Which ad brought you in (pull it from the library so you have the creative), and what it promised.
+2. **Landing.** Where the click actually went — a pre-sell/advertorial page, or straight to the PDP. Note it either way; the source's own finding from doing this across eight-figure brands is that every one of them ran a pre-sell page rather than sending ad traffic to the product page.
+3. **Cart.** Add to cart and abandon once before buying, so the abandoned-cart flow fires and you can time it.
+4. **Retargeting.** Watch the next week of feeds and note what they re-serve you and how the message shifts from the entry ad.
+5. **Purchase and after.** Buy. Then log everything that arrives: confirmation, shipping, the education/how-to-transition sends, the first replenishment nudge and how many days out it lands, the review request, the cross-sell, the win-back and its trigger delay.
+
+The post-purchase half is the reason to run this at all. Repeat rate is 18–22.5%, so the highest-value thing on a competitor's map is their retention sequence — what they say at day 7, day 30, day 60, and what they say to someone who has not reordered. None of that is visible from the ad library, and only some of it is visible from an archive or a subscription. Lay their nodes and yours side by side; the missing nodes are the build queue.
+
+Same two constraints as everywhere above: you are borrowing the *sequence and the structure* — which surface exists, in what order, carrying which job — never the phrasing and never the claims. Turn each missing node into an asset with the four-step brief, and run anything that reads as efficacy through the specificity and body-care claim rules.
+
+**Why it works:** A winning brand's funnel is fully visible end to end to anyone willing to be its customer. Mapping the sequence rather than collecting individual assets shows you the *structure* — which surfaces exist, in what order, carrying which message — and structure is what tells you what to build next. The post-purchase and win-back flows, which are the ones aimed at this business's binding constraint, are only reachable by buying.
+
+**Evidence offered:** The creator states he ran exactly this across a set of eight-figure brands and found every one of them ran a pre-sell page — the finding that opens the piece. No performance data on the resulting builds.
+
+**Fit here (7/10):** Runnable today by a solo operator for the price of one competitor deodorant, and it aims straight at the binding constraint: repeat rate is 18–22.5%, and the highest-value thing to steal from a competitor's journey is their post-purchase and win-back sequence, which is only visible by buying. Broader than the ad-library gap analysis above, which stops at ads and never crosses into post-purchase flows, and broader than the email section, which sees sends but not the surfaces around them. Durable — becoming a customer is not a platform feature.
+
+*Source: Carl Weische (@CarlWeische) — "How to actually get your pre-sell pages to outperform your PDP" (social post)*
+
+### Put the whole scan on a recurring schedule: a winning lead claim decays as the category copies it.
+
+Everything above reads as a one-time exercise. It is not. Treat a working value proposition as perishable: the moment a claim starts converting, competitors read it off your page the same way you read theirs, and the category absorbs it. Sophistication is not a fixed reading you take once — each competitor who adopts your differentiator moves the category up a stage and neutralizes your headline, so the differentiation advantage decays unless it is deliberately refreshed.
+
+The operational version is one hour, quarterly, on the calendar:
+
+- Re-scan the Meta ad library for Native, Every Man Jack, Dr. Squatch and Harry's, plus the top organic Amazon results for "natural deodorant" and "aluminum free deodorant." Read only the leads: headline, first bullet, main image claim.
+- Compare against the lead claim RSC is currently running on the PDP and in Amazon bullet 1.
+- Write the decision down in one line: does the current lead still differentiate, or has it become table stakes? If everyone now says it, demote it to a supporting bullet — it still needs to be *present*, because it is now expected — and promote a different claim from the gap list into the lead position.
+
+The value here is defensive rather than offensive. At ~$2,700/mo nobody is copying this business specifically; what the quarterly hour catches is the category drifting past the current headline while the page stays frozen.
+
+**Why it works:** Sophistication is a moving reading. Every competitor that adopts your differentiator moves the category up a stage, and a headline tuned to the previous stage stops doing work — not because the claim became false, but because it stopped being a distinction. Scheduling the re-read is what converts a one-time gap analysis into a maintained position.
+
+**Evidence offered:** Assertion from agency experience — "the speed the market catches up in ecom is insane." No data, no worked example.
+
+**Fit here (6/10):** Durable positioning principle, so age is irrelevant. Actionable as a scheduled solo-operator task: a quarterly hour in the Meta ad library and on Amazon reading what natural deodorant competitors now lead with, plus a written decision on whether the current lead claim still differentiates. Scored below the top band only because at ~$2,700/mo revenue the differentiator is unlikely to be copied off this business specifically — the value is defensive, catching the category moving past the current headline. Distinct from the one-time gap analysis at the top of this skill, which has no recurrence or decay component.
+
+*Source: Carl Weische (@CarlWeische) — "How to actually get your pre-sell pages to outperform your PDP" (social post)*

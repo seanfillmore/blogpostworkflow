@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-product-imagery
-description: Workflow for producing listing and PDP imagery with AI image models grounded in real product reference photos, including the QA passes (hallucination audit, text proofreading) that make renders safe to ship.
+description: Workflow for producing listing, PDP, and native-ad imagery with AI image models grounded in real product reference photos, including the QA passes (hallucination audit, text proofreading) that make renders safe to ship.
 ---
 
 # Ai Product Imagery
@@ -104,6 +104,16 @@ description: Workflow for producing listing and PDP imagery with AI image models
 **Fit here (6/10):** Platform-mechanics class and current, so age is not the limiter — the cap is category risk. Amazon requires the main image to be an accurate depiction of the actual product, and for a cosmetic the render must match the real label text, cap colour and finish exactly or it is a misrepresentation and return driver on the ~$1,800/mo channel. Lifestyle scenes carry less risk and are genuinely useful for a body-care brand with no lifestyle photography. Held at 6: use AI freely for lifestyle and secondary slots, verify any hero render against the physical product pixel by pixel, and prefer a real photo for the main image where one exists.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## For a native-style social ad, have the LLM turn the already-approved story into several numbered image-generation concepts, then paste each generation prompt into the image tool — rather than briefing the image model cold or booking a shoot.
+
+**Why it works:** A native ad image has one job — look like a real photo the customer already lives in, so the scroll stops before the viewer registers it as an ad. Deriving the concepts from the finished story keeps the photo and the copy telling the same thing instead of a stock scene bolted onto a hook, and numbering the concepts gives you several independent swings to test from one story rather than one precious asset. Generating them removes the shoot, the photographer and the lead time entirely.
+
+**Evidence offered:** Assertion plus the creator's Prompt 8 and 'Final Results' examples. No test data, no comparison against a real photo.
+
+**Fit here (6/10):** Executable today by the solo operator with no team and no shoot, and it feeds the live $30/day Meta campaign and the giveaway entry ads. Marked down only because a candid native photo has to survive the authenticity test — a rendered scene that reads as AI defeats the whole point of the format, and for a ~$50 AOV body-care product a plain phone photo of the real product in a real bathroom is often the cheaper honest version. Tool-name specifics ('GPT Images 2/5') are fast-decay platform mechanics, but the source is weeks old so that is not what drove the score. Practical reconciliation with the rules above: the reference-photo and scale-reference rules still apply (the product in the candid frame must be *your* product at *your* size), the hallucination audit and the copy proofread still gate the upload, and if the winning concept is one you could shoot in your own bathroom in five minutes, shoot it instead — this tactic earns its keep on scenes you cannot stage.
+
+*Source: Lorenzo Pravata (@lorenzo_pravata) — "Native ads with GPT Images 2 + Claude (Full Playbook)" (social post)*
 
 ## Ask for a 'simple, modern, clean style' redo and explicitly specify 'mobile optimized' when generating Amazon graphics, and reject the first output if it is busy or has no clear focal point.
 
