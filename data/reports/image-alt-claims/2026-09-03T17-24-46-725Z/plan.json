@@ -1,0 +1,66 @@
+{
+  "at": "2026-09-03T17:24:46.726Z",
+  "applied": true,
+  "planned": [
+    {
+      "handle": "coconut-moisturizer",
+      "product_id": 7644968911018,
+      "image_id": 37747716325546,
+      "before": "body cream all-natural organic coconut oil jojoba oil natural healing eczema coconut",
+      "after": "body cream all-natural organic coconut oil jojoba oil coconut",
+      "tripped": [
+        "disease:eczema",
+        "therapeutic:healing"
+      ],
+      "outcome": "planned"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "product_id": 7644968911018,
+      "image_id": 37747716358314,
+      "before": "body cream all-natural organic coconut oil jojoba oil natural healing eczema lavender rose",
+      "after": "body cream all-natural organic coconut oil jojoba oil lavender rose",
+      "tripped": [
+        "disease:eczema",
+        "therapeutic:healing"
+      ],
+      "outcome": "planned"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "product_id": 7644968911018,
+      "image_id": 37747716391082,
+      "before": "body cream all-natural organic coconut oil jojoba oil natural healing eczema lavender",
+      "after": "body cream all-natural organic coconut oil jojoba oil lavender",
+      "tripped": [
+        "disease:eczema",
+        "therapeutic:healing"
+      ],
+      "outcome": "planned"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "product_id": 7644968911018,
+      "image_id": 37747716423850,
+      "before": "body cream all-natural organic coconut oil jojoba oil natural healing eczema rose petal",
+      "after": "body cream all-natural organic coconut oil jojoba oil rose petal",
+      "tripped": [
+        "disease:eczema",
+        "therapeutic:healing"
+      ],
+      "outcome": "planned"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "product_id": 7644968911018,
+      "image_id": 37747716456618,
+      "before": "body cream all-natural organic coconut oil jojoba oil natural healing eczema unscented",
+      "after": "body cream all-natural organic coconut oil jojoba oil unscented",
+      "tripped": [
+        "disease:eczema",
+        "therapeutic:healing"
+      ],
+      "outcome": "planned"
+    }
+  ]
+}

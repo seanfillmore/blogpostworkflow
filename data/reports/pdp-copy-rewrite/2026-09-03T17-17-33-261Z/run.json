@@ -1,0 +1,14 @@
+{
+  "at": "2026-09-03T17:17:33.262Z",
+  "applied": false,
+  "results": [
+    {
+      "handle": "coconut-lotion",
+      "outcome": "already-applied"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "outcome": "would-apply"
+    }
+  ]
+}
