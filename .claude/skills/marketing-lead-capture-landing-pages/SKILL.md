@@ -1,6 +1,6 @@
 ---
 name: marketing-lead-capture-landing-pages
-description: Building and wiring the opt-in / entry page an ad points at — layout simplicity, message match, the second ask, and the destination URL.
+description: Building and wiring the opt-in / entry page an ad points at — layout simplicity, end-to-end congruency from ad to entry page to offer page, the second ask, and the destination URL.
 ---
 
 # Lead Capture Landing Pages
@@ -15,15 +15,19 @@ description: Building and wiring the opt-in / entry page an ad points at — lay
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
-## Make the landing page match the ad — same look, same language, same promise — so the click-to-close experience is continuous rather than a Frankenstein of mismatched pieces.
+## Enforce congruency across the whole chain — ad, entry/pre-sell page, offer page — so the click-to-close experience reads as one continuous document rather than a Frankenstein of mismatched pieces.
 
-**Why it works:** People click because a specific benefit was promised; if the destination does not visibly restate that promise, the visitor re-evaluates from scratch and bounces, so ad spend is wasted at the handoff rather than at the ad.
+Match every hand-off on copy, angle, awareness level, imagery, colours, the exact product variant shown, and the people shown. Same look, same language, same promise. On the offer page, the headline must be a value prop, not the product name.
 
-**Evidence offered:** Assertion, with the observation that advertisers 'waste money until they remember it'.
+**Why it works:** People click because a specific benefit was promised; if the destination does not visibly restate that promise, the visitor re-evaluates from scratch and bounces, so ad spend is wasted at the handoff rather than at the ad. Each mismatch costs a second of confusion, and confusion compounds across hand-offs — a paw-licking ad landing on a grass-eating page reads as a different product.
 
-**Fit here (9/10):** Durable principle and the single highest-leverage item in this excerpt for the live situation: $30/day is being spent driving cold Meta traffic to a soap giveaway, and a promise mismatch at the entry page silently burns the whole budget. Free to fix, one person, no volume threshold required.
+**Evidence offered:** Assertion, with the observation that advertisers 'waste money until they remember it'. Also named as a top lever in scaling Nomisk, a period cramp brand, from 0 to $10M in year one, illustrated by the dog-paw-licking vs dog-eating-grass mismatch.
+
+**Fit here (9/10):** Durable principle and the single highest-leverage item for the live situation: $30/day is being spent driving cold Meta traffic through ad → giveaway entry page → offer, which is exactly the three-step chain described, and a promise mismatch anywhere in it silently burns the whole budget. Free to fix, one person, no volume threshold required. Concretely checkable: same scent/variant pictured throughout, same colours, same people, offer-page headline stating the benefit rather than the SKU name. The full 'build separate ads, pre-sell pages and offer pages for every variant' version needs multiple cells — at $30/day, scale it down to one angle carried consistently end to end.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
+
+*Source: Carl Weische (@CarlWeische) — "How to actually get your pre-sell pages to outperform your PDP" (social post)*
 
 ## Bridge the second ask to the action just taken using the consistency principle — 'now that you've done A, do B to get the most out of A' — to move more people from click to giving contact information.
 
