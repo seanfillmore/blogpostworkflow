@@ -24,7 +24,9 @@ function stubGA4(rowsFor = () => []) {
   };
 }
 
-const dimNames = (body) => body.dimensions.map((d) => d.name);
+// Defensive on `dimensions`: fetchGA4Snapshot's summary call sends none, so a stub
+// that inspects every request body would otherwise throw before the report it wants.
+const dimNames = (body) => (body.dimensions ?? []).map((d) => d.name);
 const row = (dims, mets) => ({
   dimensionValues: dims.map((value) => ({ value })),
   metricValues: mets.map((value) => ({ value: String(value) })),
@@ -84,4 +86,73 @@ test('the daily snapshot keeps 25 traffic sources, not the top 5', async () => {
   assert.equal(sources.limit, 25);
   assert.deepEqual(snap.topSources.map((s) => s.source), ['google', 'duckduckgo', 'search.brave.com']);
   assert.equal(snap.topSources[1].sessions, 50);
+});
+
+// ── country breakdown ────────────────────────────────────────────────────────
+//
+// Added 2026-09-03 after a paid-budget analysis was built on a site-wide 0.090%
+// conversion rate that was almost entirely composition: 51% of sessions landed on
+// blog posts, 38% on a giveaway page, and ~30% of PRODUCT-page sessions were non-US
+// (China 159 + Singapore 55, zero orders between them). US-only product-page CVR was
+// 1.03% — 11x the headline number. Without country on the snapshot every future CVR
+// read repeats that mistake, because the snapshot is the only copy once GA4's
+// retention window passes.
+//
+// Deliberately NOT a GA4 "data filter": those permanently drop the rows and cannot be
+// undone retroactively. Same reason data/briefs/_dropped/ moves instead of deleting.
+
+test('fetchGA4Snapshot asks for the country dimension and returns sessionsByCountry', async () => {
+  const { fetchGA4Snapshot } = await import('../../lib/ga4.js');
+  stubGA4((body) => (dimNames(body).includes('country')
+    ? [row(['United States'], [582, 6, 588]), row(['Singapore'], [135, 0, 0])]
+    : []));
+  const snap = await fetchGA4Snapshot('2026-09-01');
+  const asked = reports.some((b) => dimNames(b).includes('country'));
+  assert.equal(asked, true, 'no report asked for country');
+  assert.deepEqual(snap.sessionsByCountry, [
+    { country: 'United States', sessions: 582, conversions: 6, revenue: 588 },
+    { country: 'Singapore', sessions: 135, conversions: 0, revenue: 0 },
+  ]);
+});
+
+test('fetchGA4Snapshot derives a us block from the country rows without an extra call', async () => {
+  const { fetchGA4Snapshot } = await import('../../lib/ga4.js');
+  stubGA4((body) => (dimNames(body).includes('country')
+    ? [row(['United States'], [582, 6, 588]), row(['China'], [106, 0, 0])]
+    : []));
+  const snap = await fetchGA4Snapshot('2026-09-01');
+  assert.equal(snap.us.sessions, 582);
+  assert.equal(snap.us.conversions, 6);
+  assert.equal(snap.us.revenue, 588);
+  // 6/582 = 1.031% — the number the whole paid-media decision turns on.
+  assert.equal(snap.us.conversionRate, 1.031);
+});
+
+test('us block is zeroed, never undefined, when GA4 returns no US row', async () => {
+  const { fetchGA4Snapshot } = await import('../../lib/ga4.js');
+  stubGA4((body) => (dimNames(body).includes('country') ? [row(['Singapore'], [4, 0, 0])] : []));
+  const snap = await fetchGA4Snapshot('2026-09-01');
+  // A consumer dividing by us.sessions must get 0, not a TypeError on undefined.
+  assert.deepEqual(snap.us, { sessions: 0, conversions: 0, revenue: 0, conversionRate: 0 });
+});
+
+test('usLandingPages is filtered to the US in the REQUEST, not after the fact', async () => {
+  const { fetchGA4Snapshot } = await import('../../lib/ga4.js');
+  stubGA4(() => []);
+  await fetchGA4Snapshot('2026-09-01');
+  const filtered = reports.filter((b) => b.dimensionFilter);
+  assert.equal(filtered.length, 1, 'expected exactly one country-filtered report');
+  const f = filtered[0].dimensionFilter.filter;
+  assert.equal(f.fieldName, 'country');
+  assert.equal(f.stringFilter.value, 'United States');
+  assert.deepEqual(dimNames(filtered[0]), ['landingPage']);
+});
+
+test('the country report is not truncated below the long tail', async () => {
+  const { fetchGA4Snapshot } = await import('../../lib/ga4.js');
+  stubGA4(() => []);
+  await fetchGA4Snapshot('2026-09-01');
+  const countryReport = reports.find((b) => dimNames(b).includes('country') && !b.dimensionFilter);
+  // The Shopify cross-check hit a 1,000-row cap and lost ~3% of sessions in the tail.
+  assert.ok((countryReport.limit ?? 0) >= 250, `country limit too low: ${countryReport.limit}`);
 });
