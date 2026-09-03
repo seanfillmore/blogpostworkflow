@@ -1613,6 +1613,63 @@
           ]
         }
       ]
+    },
+    {
+      "handle": "coconut-lotion-4-pack",
+      "title": "Coconut Body Lotion — 4-Pack",
+      "status": "draft",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "lotion",
+        "ladder-tier",
+        "subscription",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "The depth play for the hero SKU. Lotion is 72% of revenue and has the largest repeat cohort (417 first-time buyers, 20.6% repurchase), yet it was the only repeat-purchase category with no quantity offer — soap, deodorant and toothpaste all had one. Priced as buy-3-get-1 ($90 against a $120 list) rather than '25% off': identical arithmetic, and the free-portion framing is the one the offer playbook prefers. One bottle is one month (config/consumption-rates.json, merchant-corrected 2026-08-30), so four bottles is a season — that is the quantity argument, and it is measured rather than invented. Built as the intended default tier for paid traffic: at ~$53 contribution it is the only lotion offer whose max CPC reaches the $0.59 actually being paid. TWO SCENTS ONLY, per the two-scent rule in lib/bundle-roster.js — Lavender & Rose has the deepest stock (28 units) and is deliberately ineligible; this bundle is the demand test that rule says it is waiting for. Ships as DRAFT: inventory supports only ~9 packs (Pure Unscented 20 + Coconut Breeze 18), about three weeks at $50/day, so stock has to be ordered before this backs a campaign. templateSuffix is null (default PDP, hide_variants: true) and must move to scoped-gallery if images carrying #scent_ alt tokens are ever added — see the deodorant 4-pack's story for what that mistake costs.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "4x Pure Unscented",
+            "4x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "4x Pure Unscented"
+          },
+          "price": 90,
+          "compareAtPrice": 120,
+          "contents": "4 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Coconut Breeze"
+          },
+          "price": 90,
+          "compareAtPrice": 120,
+          "contents": "4 × Body Lotion — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 4
+            }
+          ]
+        }
+      ]
     }
   ],
   "ladders": [
