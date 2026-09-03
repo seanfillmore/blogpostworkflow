@@ -109,7 +109,9 @@
     "check-content-mirrors": "node scripts/check-content-mirrors.mjs",
     "reconcile-content-mirrors": "node scripts/reconcile-content-mirrors.mjs",
     "ctr-program": "node agents/ctr-program/index.js",
-    "ctr-audit": "node agents/ctr-program/index.js --audit --no-write"
+    "ctr-audit": "node agents/ctr-program/index.js --audit --no-write",
+    "hero-product": "node scripts/hero-product-repurchase.mjs",
+    "claim-audit": "node scripts/claim-vocabulary-audit.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

@@ -1,0 +1,138 @@
+{
+  "generated_at": "2026-09-03T16:44:46.846Z",
+  "grouped_by": "product",
+  "window": {
+    "since": "2015-01-01",
+    "until": "2026-09-03",
+    "censor_days": 180,
+    "first_order_since": "2024-01-01"
+  },
+  "counts": {
+    "orders_pulled": 1319,
+    "pages": 6,
+    "purchases": 1098,
+    "excluded_non_purchase": 221,
+    "excluded_no_identity": 47,
+    "customers_total": 815,
+    "customers_censored_too_recent": 63,
+    "customers_excluded_too_old": 359,
+    "customers_excluded_multi_sku_first_order": 0,
+    "customers_in_cohort": 393
+  },
+  "overall_repeat_rate": 0.2468,
+  "min_cohort": 10,
+  "skus": [
+    {
+      "key": "p:7691181686954",
+      "title": "Lightweight Coconut Lotion | 8oz",
+      "cohort": 154,
+      "repeat": 45,
+      "laterRevenue": 3722.7,
+      "firstRevenue": 5059.46,
+      "rate": 0.2922077922077922,
+      "wilson": 0.22613644141526473
+    },
+    {
+      "key": "p:7644968911018",
+      "title": "Coconut Moisturizer | 4oz",
+      "cohort": 143,
+      "repeat": 33,
+      "laterRevenue": 1312.79,
+      "firstRevenue": 3515.8,
+      "rate": 0.23076923076923078,
+      "wilson": 0.16930236706477414
+    },
+    {
+      "key": "p:7644975071402",
+      "title": "Natural Coconut Oil Lip Balm | 0.15oz | Four Pack",
+      "cohort": 36,
+      "repeat": 10,
+      "laterRevenue": 259.91,
+      "firstRevenue": 891.29,
+      "rate": 0.2777777777777778,
+      "wilson": 0.15848170025813796
+    },
+    {
+      "key": "p:7644971892906",
+      "title": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "cohort": 29,
+      "repeat": 8,
+      "laterRevenue": 1495.5,
+      "firstRevenue": 1246.68,
+      "rate": 0.27586206896551724,
+      "wilson": 0.1469858133850274
+    },
+    {
+      "key": "p:7644970451114",
+      "title": "All Natural Coconut Oil Deodorant | 2oz",
+      "cohort": 39,
+      "repeat": 9,
+      "laterRevenue": 839.41,
+      "firstRevenue": 1081.26,
+      "rate": 0.23076923076923078,
+      "wilson": 0.1264566242878376
+    },
+    {
+      "key": "p:7644973465770",
+      "title": "Moisturizing Coconut Soap | 3.4oz",
+      "cohort": 21,
+      "repeat": 5,
+      "laterRevenue": 344.17,
+      "firstRevenue": 673.94,
+      "rate": 0.23809523809523808,
+      "wilson": 0.10627856389112264
+    },
+    {
+      "key": "p:7644970975402",
+      "title": "Coconut Oil Toothpaste | Fluoride Free | 4oz",
+      "cohort": 52,
+      "repeat": 9,
+      "laterRevenue": 406.36,
+      "firstRevenue": 1130.21,
+      "rate": 0.17307692307692307,
+      "wilson": 0.09382368756467781
+    }
+  ],
+  "below_min_cohort": [
+    {
+      "key": "p:8032759775402",
+      "title": "Foam Soap Refill | 32oz",
+      "cohort": 5,
+      "repeat": 3,
+      "laterRevenue": 157.33,
+      "firstRevenue": 208.35,
+      "rate": 0.6,
+      "wilson": 0.23071993220883702
+    },
+    {
+      "key": "t:Real Skin Care Organic Coconut Oil Bar Soap for Gentle Cleansing | 3.4oz Body Wash Sensitive Skin Formula",
+      "title": "Real Skin Care Organic Coconut Oil Bar Soap for Gentle Cleansing | 3.4oz Body Wash Sensitive Skin Formula",
+      "cohort": 2,
+      "repeat": 1,
+      "laterRevenue": 16.65,
+      "firstRevenue": 36.83,
+      "rate": 0.5,
+      "wilson": 0.09452865480086611
+    },
+    {
+      "key": "t:Lightweight Organic Moisturizing Lotion | 8oz",
+      "title": "Lightweight Organic Moisturizing Lotion | 8oz",
+      "cohort": 3,
+      "repeat": 1,
+      "laterRevenue": 16.65,
+      "firstRevenue": 61.02,
+      "rate": 0.3333333333333333,
+      "wilson": 0.061490315276160515
+    },
+    {
+      "key": "t:Real Skin Care Coconut Oil Toothpaste with Wildcrafted Myrrh Powder, Stevia - Fluoride Free, All Natural Organic Oral Health Solution - 4oz Cleansing Daily",
+      "title": "Real Skin Care Coconut Oil Toothpaste with Wildcrafted Myrrh Powder, Stevia - Fluoride Free, All Natural Organic Oral Health Solution - 4oz Cleansing Daily",
+      "cohort": 1,
+      "repeat": 0,
+      "laterRevenue": 0,
+      "firstRevenue": 11.33,
+      "rate": 0,
+      "wilson": 0
+    }
+  ]
+}
