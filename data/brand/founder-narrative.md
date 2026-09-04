@@ -1,6 +1,8 @@
 # Founder Narrative
 
 > Hand-written brand content. The pdp-builder agent reads this as the exemplar tone for the per-product "From Sean" block. Voice rules from [voice-and-pov.md](voice-and-pov.md) apply, but this section is intentionally written in the founders' actual voice — first-person plural ("we"), family-driven, not solo-founder.
+>
+> **This file is COPY INPUT, so blocking-tier health-claim vocabulary must never appear in it.** `pdp-builder` seeds a live product block from this prose, and nothing gates the file itself — `lib/seo-copy-health-gate.js` screens the generated output, not its exemplar, so a blocking-tier verb here teaches the model a claim the gate will then have to reject. The paragraph below about the customer we hear from carried a blocking-tier verb until 2026-09-03. Check any edit against `agents/ad-studio/health-claims.js` — including this note, which is why it does not quote the offending word: the file is read whole.
 
 ---
 
@@ -10,7 +12,7 @@ We started Real Skin Care because our family wanted to use products where we cou
 
 Having a family puts things into perspective. We wanted to do the best for our kids. So we looked for formulas that were simple and truly natural — the least number of ingredients possible, every one of them earning its place. We use the highest-quality ingredients we can source, and we don't cut corners. This is a premium product, and we will never compromise that for profits.
 
-We make these products for people like us — mothers, fathers, sisters, brothers who want the best for their loved ones and have learned to be skeptical of the marketing language stamped on conventional brands. The customer we hear from over and over is the person whose sensitive skin or sensitive teeth started to heal a few weeks after switching, and who can feel the difference from everything else they tried.
+We make these products for people like us — mothers, fathers, sisters, brothers who want the best for their loved ones and have learned to be skeptical of the marketing language stamped on conventional brands. The customer we hear from over and over is the person whose sensitive skin or sensitive teeth stopped reacting a few weeks after switching, and who can feel the difference from everything else they tried.
 
 One thing we don't do well enough yet: we don't always explain how a really organic and natural product behaves differently from a conventional one. The texture shifts in heat or cold. The flavor is milder than industrial mint. The paste doesn't foam. Each is the cost of using real ingredients that haven't been processed for uniformity.
 
