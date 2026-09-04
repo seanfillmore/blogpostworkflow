@@ -1706,6 +1706,17 @@
       "template": "product.landing-page-toothpaste.json",
       "block_id": "quantity-ladder",
       "unit_noun": "unit"
+    },
+    {
+      "base": "coconut-lotion",
+      "tiers": [
+        "coconut-lotion",
+        "coconut-lotion-4-pack"
+      ],
+      "default": "coconut-lotion-4-pack",
+      "template": "product.landing-page-lotion.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "bottle"
     }
   ]
 }
