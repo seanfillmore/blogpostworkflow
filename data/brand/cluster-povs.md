@@ -54,7 +54,7 @@ The mechanism story is short. Saponification turns coconut oil into a true soap 
 
 What's NOT in the bar matters as much as what is. No sodium tallowate (rendered animal fat, the base of most commercial bars). No SLS or SLES, the sulfate detergents that produce the squeaky-clean feel by stripping the skin barrier. No EDTA. No synthetic fragrance. No parabens. No triclosan. No dyes — the bars are the color of saponified coconut oil and the essential oils we add to it.
 
-The trade-off is honest. A single-ingredient coconut bar is harder than tallow-based commercial bars and lasts longer in a wet shower if drained between uses — give it a dry surface and it will outlast bars at twice the price. The lather is generous but different from sulfate-foam — fluffier, less aggressive, and the skin afterward feels conditioned rather than squeaky. The unscented bar has the natural light scent of saponified coconut oil; that's the soap itself, not a fragrance choice.
+The trade-off is honest. A single-ingredient coconut bar is harder than tallow-based commercial bars and lasts longer in a wet shower if drained between uses — give it a dry surface and it will last considerably longer. The lather is generous but different from sulfate-foam — fluffier, less aggressive, and the skin afterward feels conditioned rather than squeaky. The unscented bar has the natural light scent of saponified coconut oil; that's the soap itself, not a fragrance choice.
 
 ## liquid_soap
 
