@@ -1,0 +1,601 @@
+{
+  "sections": {
+    "empty-space": {
+      "type": "empty-space",
+      "settings": {
+        "desktop_height": 12,
+        "mobile_height": 8
+      }
+    },
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "9f1c5706-03b4-4175-bec0-1a0092f4b76a": {
+          "type": "custom_liquid",
+          "disabled": true,
+          "settings": {
+            "custom_liquid": "<div id=\"hero-section\">"
+          }
+        },
+        "judge_me_reviews_preview_badge_Ndfd8N": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "price_size": "large",
+            "show_badges": true,
+            "sale_badge_basis": "auto"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": true,
+            "picker_type": "dropdown",
+            "swatch_source": "variant",
+            "swatch_type": "round",
+            "enable_swatch_unavailable_click": false,
+            "size_chart": ""
+          }
+        },
+        "subscriptions_app_block_UwY7hP": {
+          "type": "shopify:\/\/apps\/subscriptions\/blocks\/app-block\/a3bfe9ec-96f8-4508-a003-df608a36d2ad",
+          "disabled": true,
+          "settings": {
+            "subscription_policy_url": "",
+            "color_text_body": "#6d7175",
+            "dividers_color": "#8f8d8d",
+            "border_thickness": 1,
+            "border_radius": 0,
+            "product": "{{product}}"
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": true,
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": false
+          }
+        },
+        "07b1ba21-9f9b-4878-bde0-91e0b54304f1": {
+          "type": "text",
+          "settings": {
+            "icon": "heart",
+            "text": "Handmade With Love in the USA",
+            "text_style": "body"
+          }
+        },
+        "27ecebf0-b2b2-4b6f-aa36-c1ea7dbe8f9b": {
+          "type": "text",
+          "settings": {
+            "icon": "star",
+            "text": "30 Day Money Back Guarantee",
+            "text_style": "body"
+          }
+        },
+        "8bdf12b4-ef3c-426f-8c12-e56911669378": {
+          "type": "text",
+          "settings": {
+            "icon": "leaf",
+            "text": "Certified Organic & Gluten Free",
+            "text_style": "body"
+          }
+        },
+        "903b5941-a126-4ddf-b14c-7c96586f6f35": {
+          "type": "collapsible_description",
+          "settings": {
+            "icon": "none",
+            "heading": "Description",
+            "keep_open": false
+          }
+        },
+        "2bf352fd-59f2-4b19-83ef-cf18481e421a": {
+          "type": "description",
+          "disabled": true,
+          "settings": {}
+        },
+        "collapsible_tab_AaLx89": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "none",
+            "heading": "Ingredients",
+            "content": "<p>{{ product.metafields.custom.ingredients | metafield_tag }}<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "4c755de5-532f-453a-99ce-5b7a845d8df0": {
+          "type": "separator",
+          "disabled": true,
+          "settings": {}
+        },
+        "sticky_cart": {
+          "type": "sticky_cart",
+          "settings": {
+            "show_quantity_selector": true
+          }
+        },
+        "recurpay-widget": {
+          "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-widget\/c600a513-dad8-4030-8697-de47c18881f2",
+          "settings": {
+            "multiply_price_with_quantity": true,
+            "show_price_in_frequency_dropdown": true
+          }
+        }
+      },
+      "block_order": [
+        "title",
+        "9f1c5706-03b4-4175-bec0-1a0092f4b76a",
+        "judge_me_reviews_preview_badge_Ndfd8N",
+        "price",
+        "variant_picker",
+        "subscriptions_app_block_UwY7hP",
+        "recurpay-widget",
+        "buy_buttons",
+        "07b1ba21-9f9b-4878-bde0-91e0b54304f1",
+        "27ecebf0-b2b2-4b6f-aa36-c1ea7dbe8f9b",
+        "8bdf12b4-ef3c-426f-8c12-e56911669378",
+        "903b5941-a126-4ddf-b14c-7c96586f6f35",
+        "2bf352fd-59f2-4b19-83ef-cf18481e421a",
+        "collapsible_tab_AaLx89",
+        "4c755de5-532f-453a-99ce-5b7a845d8df0",
+        "sticky_cart"
+      ],
+      "custom_css": [
+        ".product__tax {display: none;}",
+        ".shopify-installments-content {display: none;}"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_position": "left",
+        "media_size": "small",
+        "gallery_layout": "thumbnail_slider",
+        "image_ratio": "adapt",
+        "show_featured_media": false,
+        "show_thumbnails": true,
+        "hide_variants": true,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "mobile_image_ratio": "adapt_first",
+        "show_mobile_thumbnails": false,
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    },
+    "clean_lotion_comparison_MXRaky": {
+      "type": "clean-lotion-comparison",
+      "blocks": {
+        "ingredient_wXHRTB": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Purified Spring Water",
+            "note": ""
+          }
+        },
+        "ingredient_HgbEXQ": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Organic Virgin Coconut Oil",
+            "note": ""
+          }
+        },
+        "ingredient_A4rTzb": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Organic Jojoba Oil",
+            "note": ""
+          }
+        },
+        "ingredient_EMWmCh": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Plant-Based Emulsifying Wax",
+            "note": ""
+          }
+        },
+        "ingredient_NCFqRH": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Organic Grapefruit Seed Extract",
+            "note": ""
+          }
+        },
+        "ingredient_tMqYM9": {
+          "type": "ingredient",
+          "settings": {
+            "name": "Organic Red Palm Oil",
+            "note": ""
+          }
+        },
+        "row_KpwTCm": {
+          "type": "row",
+          "settings": {
+            "label": "Parabens",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        },
+        "row_zqkbir": {
+          "type": "row",
+          "settings": {
+            "label": "Phthalates",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        },
+        "row_FjgABX": {
+          "type": "row",
+          "settings": {
+            "label": "Synthetic Fragrance",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        },
+        "row_RPthzy": {
+          "type": "row",
+          "settings": {
+            "label": "Artificial Preservtives",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        },
+        "row_TUAVNX": {
+          "type": "row",
+          "settings": {
+            "label": "Petroleum",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        },
+        "row_DAUApB": {
+          "type": "row",
+          "settings": {
+            "label": "PEGs",
+            "ours": "no",
+            "ours_text": "6",
+            "standard": "yes",
+            "standard_text": "20–40"
+          }
+        }
+      },
+      "block_order": [
+        "ingredient_wXHRTB",
+        "ingredient_HgbEXQ",
+        "ingredient_A4rTzb",
+        "ingredient_EMWmCh",
+        "ingredient_NCFqRH",
+        "ingredient_tMqYM9",
+        "row_KpwTCm",
+        "row_zqkbir",
+        "row_FjgABX",
+        "row_RPthzy",
+        "row_TUAVNX",
+        "row_DAUApB"
+      ],
+      "name": "Clean lotion comparison",
+      "settings": {
+        "bg_color": "#efefef",
+        "eyebrow": "Most conventional lotions contain 20–40 synthetic ingredients.",
+        "heading": "What You’ll Never Find In Our Lotion",
+        "subheading": "Ours contains only 6 clean, skin-friendly ingredients.",
+        "footnote": "You shouldn’t need a chemistry degree to understand what goes on your skin.",
+        "table_left_heading": "What’s Inside the Bottle?",
+        "table_mid_heading": "Real Skin Care Lotion",
+        "table_right_heading": "Standard Lotion"
+      }
+    },
+    "coconut_oil_benefits_comparison_kDdyj8": {
+      "type": "coconut-oil-benefits-comparison",
+      "blocks": {
+        "feature_cLFX4J": {
+          "type": "feature",
+          "settings": {
+            "icon": "shield",
+            "heading": "Supports Your Skin Barrier",
+            "body": "Natural fatty acids help reinforce your skin’s protective barrier — reducing moisture loss without synthetic sealants."
+          }
+        },
+        "feature_VcqiYJ": {
+          "type": "feature",
+          "settings": {
+            "icon": "shield",
+            "heading": "Naturally Protective",
+            "body": "Coconut oil contains natural antimicrobial properties that help protect skin without harsh preservatives."
+          }
+        },
+        "feature_93GAiG": {
+          "type": "feature",
+          "settings": {
+            "icon": "drop",
+            "heading": "Deep Hydration",
+            "body": "Unlike petroleum-based moisturizers, coconut oil absorbs into the skin instead of sitting on top."
+          }
+        }
+      },
+      "block_order": [
+        "feature_cLFX4J",
+        "feature_VcqiYJ",
+        "feature_93GAiG"
+      ],
+      "name": "Coconut oil benefits + comparison",
+      "settings": {
+        "bg_color": "#ffffff",
+        "image": "shopify:\/\/shop_images\/04_1.jpg",
+        "image_alt": "Product comparison image",
+        "title": "Why Coconut Oil Works Better Than Synthetic Moisturizers",
+        "intro": "Most conventional lotions rely on petroleum-based fillers that sit on top of your skin. Coconut oil absorbs, nourishes, and supports your natural moisture barrier.",
+        "diff_heading": "Here’s The Difference",
+        "left_col_heading": "Petroleum Based Lotion",
+        "left_col_bullets": "Sits on skin\nSynthetic preservatives\n20–40 ingredients",
+        "right_col_heading": "Coconut-Oil Based Lotion",
+        "right_col_bullets": "Absorbs into skin\nNaturally protective\nOnly 6 clean ingredients",
+        "outro": "Coconut oil has been used for generations to moisturize and protect skin — long before synthetic lotions existed."
+      }
+    },
+    "jdgm_featured_reviews_3up_r9ekPA": {
+      "type": "jdgm-featured-reviews-3up",
+      "name": "Featured reviews (3-up) — Judge.me",
+      "settings": {
+        "bg_color": "#efefef",
+        "heading": "Real People. Real Results",
+        "subheading": "Over 90 5-Star Reviews From Ingredient-Conscious Customers",
+        "show_rating_pill": true,
+        "rating_value": "4.9",
+        "rating_count": "91",
+        "pill_note": "Verified Purchases Only",
+        "left_stars": "★★★★★",
+        "left_name": "Jessica V.",
+        "left_verified": true,
+        "left_title": "The best thing since sliced bread!!!",
+        "left_body": "I suffer from horrible eczema where my skin is consistently dry and my feet are always cracked. I have tried prescription strength lotions, steroids, you name it, and everything under the sun over the counter to no avail.... Until Real Skin Care!!!! I used to have to carry 3-4 different lotions or creams around with me and apply almost hourly or anytime I washed my hands.\n\nWith Real Skin Care, I apply all over 1x in the morning and 1x before bed and my skin stays hydrated all day. My feet are no longer cracked and painful to walk on! My husband who suffers from psoriasis agrees this is the first product that keeps him hydrated and stops him from being itchy all day long. 1000\/10 recommended!",
+        "top_stars": "★★★★★",
+        "top_name": "Heather D.",
+        "top_verified": true,
+        "top_title": "Cleanest & BEST lotion & creams!",
+        "top_body": "This is the cleanest & BEST lotion & creams we’ve found. It’s not greasy & really works. Esp for chronic dry skin & eczema. It’s so hard to find brands that don’t have a ton of chemicals & we’re so happy that your company exists and does such a great job! Thank you!!",
+        "bottom_stars": "★★★★★",
+        "bottom_name": "Nicole H.",
+        "bottom_verified": true,
+        "bottom_title": "Love it",
+        "bottom_body": "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!",
+        "cta_text": "",
+        "cta_url": ""
+      }
+    },
+    "collapsible-content": {
+      "type": "collapsible-content",
+      "blocks": {
+        "question-0": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is this lotion safe for sensitive skin?",
+            "row_content": "<p>Yes. Our formula was created specifically for ingredient-conscious customers with sensitive or reactive skin. With only 6 clean ingredients and no synthetic fragrance, parabens, or petroleum-based fillers, it’s gentle enough for daily use — even on dry, eczema-prone skin.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "36e98137-3c8d-4daa-b444-25afc6015ab2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Will coconut oil clog pores or feel greasy?",
+            "row_content": "<p>No. We use organic virgin coconut oil in a balanced, lightweight formula designed to absorb into the skin — not sit on top of it. Unlike heavy petroleum-based lotions, it hydrates deeply without leaving a greasy residue.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question-2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How long does one bottle last?",
+            "row_content": "<p>One 8oz bottle typically lasts 30–45 days with daily full-body use. If you're applying to smaller areas (hands, arms, legs), it may last even longer. Our 2-bottle option is ideal for consistent daily use.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "011d5801-c5f6-4979-9c43-f441e593d4c0": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is it truly fragrance-free?",
+            "row_content": "<p>Yes. Our Pure Unscented option contains no synthetic fragrance or masking agents. Any subtle scent comes naturally from the organic ingredients themselves — nothing artificial added.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question-1": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Where is it made?",
+            "row_content": "<p>All of our products are handmade in small batches in the USA. We prioritize quality control, clean sourcing, and ingredient transparency in every bottle we produce.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "8dde83c2-9053-43c1-acba-e91752159a59": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What if it doesn’t work for me?",
+            "row_content": "<p>We offer a 30-day money-back guarantee. If you’re not completely satisfied, simply contact us and we’ll make it right — no complicated returns, no hassle.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "question-0",
+        "36e98137-3c8d-4daa-b444-25afc6015ab2",
+        "question-2",
+        "011d5801-c5f6-4979-9c43-f441e593d4c0",
+        "question-1",
+        "8dde83c2-9053-43c1-acba-e91752159a59"
+      ],
+      "settings": {
+        "open_first_collapsible_row": false,
+        "narrow": true,
+        "show_divider": true,
+        "heading": "FAQs",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "enable_faq_schema": false,
+        "colors_highlight": "#ffb503",
+        "padding_top": 16,
+        "padding_bottom": 28,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "rich_text_nWg47w": {
+      "type": "rich-text",
+      "blocks": {
+        "heading_LzQexf": {
+          "type": "heading",
+          "settings": {
+            "heading": "Ready To Switch To Clean Skincare?",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "text_afRTdJ": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Only 6 clean ingredients. No synthetic fragrance. No petroleum. No harsh preservatives.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "button_6ie4PM": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Get Healthier Skin",
+            "button_link": "#GalleryViewer-template--18636284723370__main",
+            "button_style_secondary": false,
+            "button_alt_label": "",
+            "button_alt_link": "",
+            "button_alt_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_LzQexf",
+        "text_afRTdJ",
+        "button_6ie4PM"
+      ],
+      "custom_css": [
+        ".page-width {background: #efefef;}"
+      ],
+      "name": "t:sections.rich-text.presets.name",
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#000000",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#212326",
+        "colors_background": "#efefef",
+        "colors_highlight": "#ffb503",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "170542183017bc1284": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_review_widget_zM33jM": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/review_widget\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "review_data": "sample_data",
+            "max_width": 1200,
+            "show_shop_reviews": false,
+            "empty_state": "empty_widget"
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_review_widget_zM33jM"
+      ],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "product-recommendations": {
+      "type": "product-recommendations",
+      "disabled": true,
+      "settings": {
+        "product_list_limit": 4,
+        "show_divider": false,
+        "heading": "You May Also Like",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "image_ratio": "portrait",
+        "image_position": "center center",
+        "enable_image_fill": true,
+        "show_secondary_image": true,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_quick_buy": true,
+        "enable_quick_view": true,
+        "enable_color_swatches": true,
+        "enable_countdown": true,
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 36,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    }
+  },
+  "order": [
+    "empty-space",
+    "main",
+    "clean_lotion_comparison_MXRaky",
+    "coconut_oil_benefits_comparison_kDdyj8",
+    "jdgm_featured_reviews_3up_r9ekPA",
+    "collapsible-content",
+    "rich_text_nWg47w",
+    "170542183017bc1284",
+    "product-recommendations"
+  ]
+}
