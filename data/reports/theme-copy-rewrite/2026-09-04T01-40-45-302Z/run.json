@@ -1,0 +1,44 @@
+{
+  "at": "2026-09-04T01:40:45.910Z",
+  "liveThemeId": 148439367850,
+  "targetThemeId": 148439367850,
+  "preview": false,
+  "applied": false,
+  "results": [
+    {
+      "key": "templates/product.landing-page-lotion.json",
+      "id": "lotion-hook",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-lotion.json",
+      "id": "lotion-tab-details",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "id": "cream-hook",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "id": "cream-tab-details",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "id": "cream-benefit-1",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "id": "cream-faq-2-eczema",
+      "outcome": "already-applied"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "id": "cream-founder-eczema",
+      "outcome": "already-applied"
+    }
+  ]
+}
