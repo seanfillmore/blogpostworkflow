@@ -182,6 +182,17 @@ DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # minute before adding a fifth; this one was written at 12:30 and collided.
 DAILY_REJECTED_KEYWORDS_GATE="25 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-rejected-keywords-drift.mjs >> data/reports/scheduler/rejected-keywords-gate.log 2>&1"
 
+# Claims gate over the two surfaces no writer-side gate can reach: theme template
+# copy and product image alt text. Both are edited by a human in the Shopify admin,
+# so lib/seo-copy-health-gate.js never sees them — and on 2026-09-03 both carried
+# live blocking-tier disease/drug claims on pages with an Add-to-Cart button.
+# DETECT ONLY; --apply is refused with exit 64. 12:35 UTC because 12:20/12:25/12:30
+# and 12:40 are already taken (content-mirror, rejected-keywords, value-stack,
+# post-meta) and all four sit ahead of the 13:00 daily-summary so every row lands
+# in the SAME morning's digest. Check `crontab -l` for a free minute before adding
+# a sixth: this window is nearly full.
+DAILY_COPY_SURFACE_CLAIMS_GATE="35 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-copy-surface-claims.mjs >> data/reports/scheduler/copy-surface-claims-gate.log 2>&1"
+
 # Bundle value-stack gate — DETECT ONLY, 12:30 UTC.
 # Asks whether every bundle's value_stack metafield totals its own Shopify
 # compare-at price. Built after the Coconut Reset lander was found stating
@@ -419,6 +430,7 @@ $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
 $DAILY_CONTENT_MIRROR_GATE
 $DAILY_REJECTED_KEYWORDS_GATE
+$DAILY_COPY_SURFACE_CLAIMS_GATE
 $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 # ── Daily digest ──

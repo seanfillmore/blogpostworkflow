@@ -70,6 +70,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getThemes, getMainThemeId, getThemeAssetRaw, updateThemeAsset } from '../lib/shopify.js';
 import { checkSeoCopyFields } from '../lib/seo-copy-health-gate.js';
+import { applyTemplateEdits, assertParsesAsJson } from '../lib/theme-template-edit.js';
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
@@ -143,40 +144,6 @@ const PLAN = [
   },
 ];
 
-/**
- * The JSON-encoded form of a value as it sits inside the stored template text.
- *
- * Shopify serialises these templates with forward slashes escaped — `</p>` is
- * stored as `<\/p>` — which `JSON.stringify` does not do. Both forms decode to
- * the same string, so the candidate that actually occurs is the one to match on;
- * getting this wrong is a silent no-match, which is why the caller refuses on any
- * count other than exactly 1 rather than assuming a miss means "already applied".
- */
-const encodedForms = (s) => {
-  const plain = JSON.stringify(s).slice(1, -1);
-  const slashEscaped = plain.replace(/\//g, '\\/');
-  return slashEscaped === plain ? [plain] : [slashEscaped, plain];
-};
-
-/** Pick the encoding that appears in `text`, or null when neither appears exactly once. */
-function resolveEncoding(text, value) {
-  for (const form of encodedForms(value)) {
-    if (countOccurrences(text, form) === 1) return form;
-  }
-  return null;
-}
-
-function countOccurrences(haystack, needle) {
-  let n = 0;
-  let i = 0;
-  for (;;) {
-    const at = haystack.indexOf(needle, i);
-    if (at === -1) return n;
-    n += 1;
-    i = at + needle.length;
-  }
-}
-
 async function main() {
   if (APPLY && PREVIEW) throw new Error('Pass --preview or --apply, not both.');
 
@@ -224,30 +191,11 @@ async function main() {
     let text = asset.value;
     const original = text;
 
-    for (const e of t.edits) {
-      const alreadyThere = encodedForms(e.after).some((f) => text.includes(f));
-      const beforeStillThere = encodedForms(e.before).some((f) => text.includes(f));
-      if (alreadyThere && !beforeStillThere) {
-        console.log(`  ${t.key} :: ${e.id} — already applied.`);
-        results.push({ key: t.key, id: e.id, outcome: 'already-applied' });
-        continue;
-      }
-      const encBefore = resolveEncoding(text, e.before);
-      if (!encBefore) {
-        const counts = encodedForms(e.before).map((f) => countOccurrences(text, f)).join('/');
-        throw new Error(
-          `${t.key} :: ${e.id} — expected exactly 1 occurrence of the BEFORE, found ${counts} ` +
-            `across the candidate encodings. The template has changed since this plan was ` +
-            `written; refusing the whole run.`
-        );
-      }
-      // Match the encoding actually in use so the file's escaping style is preserved.
-      const encAfter = encBefore.includes('\\/')
-        ? JSON.stringify(e.after).slice(1, -1).replace(/\//g, '\\/')
-        : JSON.stringify(e.after).slice(1, -1);
-      text = text.replace(encBefore, encAfter);
-      console.log(`  ${t.key} :: ${e.id} — rewritten${e.compliance ? ' (compliance)' : ''}`);
-      results.push({ key: t.key, id: e.id, outcome: 'rewritten', compliance: Boolean(e.compliance) });
+    const applied = applyTemplateEdits(text, t.edits, { label: t.key });
+    text = applied.text;
+    for (const r of applied.results) {
+      console.log(`  ${t.key} :: ${r.id} — ${r.outcome}${r.compliance ? ' (compliance)' : ''}`);
+      results.push({ key: t.key, ...r });
     }
 
     if (text === original) {
@@ -255,13 +203,7 @@ async function main() {
       continue;
     }
 
-    // JSON.parse is a VALIDATION step only — the text pushed is the edited raw
-    // string, never a reserialisation of this object.
-    try {
-      JSON.parse(text);
-    } catch (err) {
-      throw new Error(`${t.key} — edited template is not valid JSON (${err.message}); refusing to push.`);
-    }
+    assertParsesAsJson(text, t.key);
 
     mkdirSync(dir, { recursive: true });
     const base = t.key.replace(/\//g, '__');

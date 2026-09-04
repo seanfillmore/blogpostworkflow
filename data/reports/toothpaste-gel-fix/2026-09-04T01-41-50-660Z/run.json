@@ -1,0 +1,30 @@
+{
+  "at": "2026-09-04T01:41:51.837Z",
+  "themeId": 148439367850,
+  "applied": true,
+  "results": [
+    {
+      "surface": "template",
+      "id": "howto-dry-brush",
+      "outcome": "rewritten",
+      "compliance": false
+    },
+    {
+      "surface": "template",
+      "id": "faq6-dry-brush",
+      "outcome": "rewritten",
+      "compliance": false
+    },
+    {
+      "surface": "template",
+      "id": "faq1-gel-by-design",
+      "outcome": "rewritten",
+      "compliance": false
+    },
+    {
+      "surface": "product",
+      "id": "body-dry-brush",
+      "outcome": "rewritten"
+    }
+  ]
+}
