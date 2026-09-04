@@ -1,0 +1,377 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-landing-section",
+      "name": "Hero",
+      "settings": {
+        "heading_level": "h1",
+        "heading_rte": "<p>Skincare for skin that reacts to everything else.<\/p>",
+        "subheading_rte": "<p>We make small-batch lotion, body cream, toothpaste, deodorant, and soap for people whose skin doesn't tolerate fragrance, parabens, dimethicones, or mineral oil. No exceptions, no fine print.<\/p>",
+        "subheading_bg_opacity": 0,
+        "show_rating": false,
+        "rating_value": "4.9",
+        "rating_caption": "",
+        "cta_label": "Shop the Sensitive Skin Set",
+        "cta_anchor": "\/products\/sensitive-skin-starter-set",
+        "secondary_cta_label": "Browse the full line →",
+        "secondary_cta_anchor": "\/collections\/all",
+        "bg_image_desktop": "shopify:\/\/shop_images\/homepage-hero-desktop.webp",
+        "bg_image_mobile": "shopify:\/\/shop_images\/homepage-hero-mobile.webp",
+        "bg_color": "#eef3e8",
+        "overlay_color": "#000000",
+        "overlay_opacity": 35,
+        "flip_layout": false,
+        "text_align_center_mobile": true,
+        "content_max_width": 1240,
+        "padding_top": 96,
+        "padding_bottom": 80,
+        "height_mode": "px",
+        "min_height_mobile": 600,
+        "min_height_desktop": 720,
+        "compact_spacing": false,
+        "cta_full_width_mobile": true,
+        "cta_full_width_desktop": false,
+        "gap_sub_to_bullets": 16,
+        "gap_between_bullets": 10,
+        "bullets_center": false
+      }
+    },
+    "thesis": {
+      "type": "rich-text",
+      "blocks": {
+        "thesis-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Most \"natural\" skincare still isn't built for sensitive skin.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "thesis-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We started Real Skin Care because the labels lied. \"Natural\" lotions still used petrolatum. \"Gentle\" creams still relied on dimethicones. \"Sensitive\" formulas still snuck in synthetic fragrance under names most buyers don't recognize.<\/p><p>We built every product in our line from the opposite direction — what does sensitive skin actually tolerate? — and used the shortest ingredient list that does the job. Nothing else.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "thesis-link": {
+          "type": "text",
+          "settings": {
+            "text": "<p><a href=\"#founder\"><strong>Read our founder's story →<\/strong><\/a><\/p>",
+            "text_size": "small",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "thesis-heading",
+        "thesis-body",
+        "thesis-link"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": true,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 48,
+        "padding_bottom": 40
+      }
+    },
+    "exclusion-grid": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.exclusion-band{background:#eef3e8;padding:88px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.exclusion-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.exclusion-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 12px 0;letter-spacing:-0.01em}.exclusion-band__sub{font-size:1.05rem;color:#4a4d52;margin:0 0 48px 0;font-weight:500}.exclusion-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 32px;list-style:none;padding:0;margin:0 auto 56px auto;text-align:left;max-width:1100px}.exclusion-band__list li{display:flex;align-items:center;gap:14px;font-size:1.1rem;line-height:1.3;font-weight:600;color:#1a1b18;text-align:left}.exclusion-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.6em;font-weight:800;line-height:1;flex-shrink:0}.exclusion-band__footer{font-size:clamp(2rem,3.6vw,2.7rem);font-weight:700;color:#1a1b18;max-width:920px;margin:0 auto;line-height:1.3;border-top:1px solid #c9d6c2;padding-top:48px;letter-spacing:-0.015em;font-style:italic}@media(max-width:900px){.exclusion-band__list{grid-template-columns:repeat(2,1fr);gap:14px 24px;max-width:560px}.exclusion-band__list li{font-size:1rem}}@media(max-width:480px){.exclusion-band{padding:56px 0}.exclusion-band__heading{font-size:1.625rem}.exclusion-band__list{gap:12px}.exclusion-band__list li{font-size:0.95rem}.exclusion-band__footer{font-size:1.5rem;padding-top:32px;letter-spacing:-0.01em}}<\/style><div class=\"exclusion-band\"><div class=\"exclusion-band__inner\"><h2 class=\"exclusion-band__heading\">What's not in any of our products.<\/h2><p class=\"exclusion-band__sub\">Across the entire line. Every product, every batch, every variant.<\/p><ul class=\"exclusion-band__list\"><li>Synthetic fragrance<\/li><li>Parabens<\/li><li>Phenoxyethanol<\/li><li>Petrolatum<\/li><li>Mineral oil<\/li><li>Dimethicone<\/li><li>Lanolin<\/li><li>SLS<\/li><li>Phthalates<\/li><li>Titanium dioxide<\/li><li>Aluminum<\/li><li>Synthetic preservatives<\/li><\/ul><p class=\"exclusion-band__footer\">If you can't pronounce it and we can't justify it, it's not in the bottle.<\/p><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "product-intro": {
+      "type": "rich-text",
+      "blocks": {
+        "pl-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Built for the bathroom shelf of someone who reacts.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "pl-sub": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Seven products. One philosophy. Pick what your skin needs.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": true
+          }
+        }
+      },
+      "block_order": [
+        "pl-heading",
+        "pl-sub"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": true,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 80,
+        "padding_bottom": 80
+      }
+    },
+    "product-line": {
+      "type": "multicolumn",
+      "blocks": {
+        "prod-lotion": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-lotion.webp",
+            "title": "Body Lotion",
+            "title_size": "medium",
+            "text": "<p>For skin that reacts to everyday lotions.<\/p><p><a href=\"\/products\/coconut-lotion\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        },
+        "prod-cream": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-cream.webp",
+            "title": "Body Cream",
+            "title_size": "medium",
+            "text": "<p>For dry patches, rough elbows, and overnight repair.<\/p><p><a href=\"\/products\/coconut-moisturizer\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        },
+        "prod-toothpaste": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-toothpaste.webp",
+            "title": "Toothpaste",
+            "title_size": "medium",
+            "text": "<p>For gums irritated by SLS and synthetic foaming agents.<\/p><p><a href=\"\/products\/coconut-oil-toothpaste\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        },
+        "prod-deodorant": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-deodorant.webp",
+            "title": "Deodorant",
+            "title_size": "medium",
+            "text": "<p>Aluminum-free, no synthetic fragrance, roll-on (not stick).<\/p><p><a href=\"\/products\/coconut-oil-deodorant\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        },
+        "prod-lipbalm": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-lipbalm.webp",
+            "title": "Lip Balm",
+            "title_size": "medium",
+            "text": "<p>For lips that stay chapped no matter what balm they try.<\/p><p><a href=\"\/products\/coconut-oil-lip-balm\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        },
+        "prod-soap": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/card-barsoap.webp",
+            "title": "Soap",
+            "title_size": "medium",
+            "text": "<p>Bar, liquid, and 32oz refill. No synthetic detergents or fragrance.<\/p><p><a href=\"\/collections\/soap\"><strong>Shop →<\/strong><\/a><\/p>",
+            "button_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "prod-lotion",
+        "prod-cream",
+        "prod-toothpaste",
+        "prod-deodorant",
+        "prod-soap",
+        "prod-lipbalm"
+      ],
+      "settings": {
+        "image_ratio": "square",
+        "image_position": "top",
+        "text_alignment": "center",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 3,
+        "heading": "",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "2",
+        "swipe_on_mobile": false,
+        "padding_top": 12,
+        "padding_bottom": 56
+      }
+    },
+    "featured-testimonial": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rsc-testimonial{background:#eef3e8;padding:80px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.rsc-testimonial__inner{max-width:880px;margin:0 auto;padding:0 32px}.rsc-testimonial__count{font-size:0.95rem;letter-spacing:1.5px;text-transform:uppercase;color:#4a4d52;font-weight:600;margin:0 0 28px 0}.rsc-testimonial__quote{font-size:clamp(1.5rem,3vw,2.25rem);line-height:1.3;font-weight:600;color:#1a1b18;margin:0 0 24px 0;letter-spacing:-0.005em}.rsc-testimonial__attr{font-size:0.95rem;color:#4a4d52;margin:0 0 32px 0;font-weight:500}.rsc-testimonial__link{display:inline-block;font-size:0.95rem;color:#1a1b18;font-weight:600;text-decoration:underline}@media(max-width:600px){.rsc-testimonial{padding:56px 0}.rsc-testimonial__quote{font-size:1.35rem}}<\/style><div class=\"rsc-testimonial\"><div class=\"rsc-testimonial__inner\"><p class=\"rsc-testimonial__count\">380+ verified reviews · 290+ five-star ratings<\/p><p class=\"rsc-testimonial__quote\">&ldquo;I'm obsessed with all things Real Skin Care. This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy. We use it all over and love it!&rdquo;<\/p><p class=\"rsc-testimonial__attr\">— Nicole H., verified customer<\/p><a class=\"rsc-testimonial__link\" href=\"https:\/\/judge.me\/reviews\/stores\/realskincare-com\">Read more reviews →<\/a><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "founder-anchor": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<span id=\"founder\" style=\"display:block;height:0;\"><\/span>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "founder": {
+      "type": "image-with-text",
+      "blocks": {
+        "founder-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Why we started Real Skin Care.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "founder-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our family's healthy-ingredients journey kept hitting the same wall — body creams labeled \"natural\" that still relied on petrolatum, dimethicone, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.<\/p><p>So we built one. Then we built the rest of the bathroom shelf. Every ingredient earns its place. We won't cut corners on sourcing for margin — that line doesn't move.<\/p><p><strong>— Sean Fillmore, Founder<\/strong><\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "founder-heading",
+        "founder-body"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/founder-homepage.webp",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": true,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 64,
+        "padding_bottom": 64
+      }
+    },
+    "closing-cta": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rsc-final-cta{background:#1a1b18;padding:88px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw;color:#ffffff}.rsc-final-cta__inner{max-width:760px;margin:0 auto;padding:0 32px}.rsc-final-cta__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#ffffff;margin:0 0 24px 0;letter-spacing:-0.01em}.rsc-final-cta__sub{font-size:clamp(1.1rem,1.5vw,1.25rem);line-height:1.55;color:#d8d6d3;margin:0 0 40px 0;max-width:640px;margin-left:auto;margin-right:auto}.rsc-final-cta__btn{display:inline-block;background:#AEDEAC;color:#1a1b18;font-weight:700;padding:18px 36px;border-radius:6px;text-decoration:none;font-size:1.05rem;letter-spacing:0.5px;border:1px solid #444}.rsc-final-cta__secondary{display:block;margin-top:20px;color:#d8d6d3;text-decoration:underline;font-size:0.95rem}@media(max-width:600px){.rsc-final-cta{padding:60px 0}.rsc-final-cta__btn{display:block;padding:16px 28px}}<\/style><div class=\"rsc-final-cta\"><div class=\"rsc-final-cta__inner\"><h2 class=\"rsc-final-cta__heading\">Stop reacting to your skincare.<\/h2><p class=\"rsc-final-cta__sub\">If you've been slowly building a graveyard of \"natural\" products that still made your skin react, start with the Sensitive Skin Set. Two formulas, one routine, both Pure Unscented. 30-day money-back guarantee.<\/p>{%- assign bundle = all_products['sensitive-skin-starter-set'] -%}<a class=\"rsc-final-cta__btn\" href=\"\/products\/sensitive-skin-starter-set\">Shop the Sensitive Skin Set{% if bundle.price > 0 %} — {{ bundle.price | money }}{% endif %}<\/a><a class=\"rsc-final-cta__secondary\" href=\"\/collections\/all\">Browse all products →<\/a><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "email-capture": {
+      "type": "apps",
+      "blocks": {
+        "klaviyo-form": {
+          "type": "shopify:\/\/apps\/klaviyo-email-marketing-sms\/blocks\/form-embed-block\/2632fe16-c075-4321-a88b-50b567f42507",
+          "settings": {
+            "formId": "Xr4S7X"
+          }
+        }
+      },
+      "block_order": [
+        "klaviyo-form"
+      ],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 24
+      }
+    },
+    "hero-overrides": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>#shopify-section-hero .hero-landing__content,[id$=\"__hero\"] .hero-landing__content,[id$=\"-hero\"] .hero-landing__content{text-align:center !important;margin-left:auto !important;margin-right:auto !important;max-width:760px}#shopify-section-hero .hero-landing__heading,#shopify-section-hero .hero-landing__subheading,[id$=\"__hero\"] .hero-landing__heading,[id$=\"__hero\"] .hero-landing__subheading,[id$=\"-hero\"] .hero-landing__heading,[id$=\"-hero\"] .hero-landing__subheading{color:#ffffff !important;text-shadow:0 2px 14px rgba(0,0,0,0.35) !important;}#shopify-section-hero .hero-landing__btn-secondary,[id$=\"__hero\"] .hero-landing__btn-secondary,[id$=\"-hero\"] .hero-landing__btn-secondary{color:#ffffff !important;text-shadow:0 1px 8px rgba(0,0,0,0.3) !important;}#shopify-section-hero .hero-landing__bullets,[id$=\"__hero\"] .hero-landing__bullets,[id$=\"-hero\"] .hero-landing__bullets{justify-items:center !important}@media(max-width:749px){#shopify-section-hero .hero-landing__content,[id$=\"__hero\"] .hero-landing__content,[id$=\"-hero\"] .hero-landing__content{padding:0 16px}}#shopify-section-hero a.hero-landing__btn,[id$=\"__hero\"] a.hero-landing__btn,[id$=\"-hero\"] a.hero-landing__btn{background:#AEDEAC !important;background-color:#AEDEAC !important;color:#1a1b18 !important;border:none !important;font-weight:700 !important;padding:14px 8px !important;}#shopify-section-hero a.hero-landing__btn--full-m,[id$=\"__hero\"] a.hero-landing__btn--full-m,[id$=\"-hero\"] a.hero-landing__btn--full-m{max-width:calc(100% - 50px) !important;margin-left:auto !important;margin-right:auto !important;}#shopify-section-hero a.hero-landing__btn:hover,[id$=\"__hero\"] a.hero-landing__btn:hover,[id$=\"-hero\"] a.hero-landing__btn:hover{background:#9bcf99 !important;background-color:#9bcf99 !important;}#shopify-section-thesis .page-width,[id$=\"__thesis\"] .page-width,#shopify-section-product-intro .page-width,[id$=\"__product-intro\"] .page-width{background-color:#faf7f0;position:relative;}#shopify-section-thesis .page-width::before,[id$=\"__thesis\"] .page-width::before,#shopify-section-product-intro .page-width::before,[id$=\"__product-intro\"] .page-width::before{content:\"\";position:absolute;top:0;bottom:0;left:calc(-50vw + 50%);right:calc(-50vw + 50%);background-color:#faf7f0;z-index:-1;}#shopify-section-product-line .multicolumn-list,[id$=\"__product-line\"] .multicolumn-list{justify-content:center !important;row-gap:32px !important;}#shopify-section-product-line .multicolumn-list .grid__item,[id$=\"__product-line\"] .multicolumn-list .grid__item{flex-grow:0 !important;}@media(min-width:990px){#shopify-section-founder .image-with-text__content,[id$=\"__founder\"] .image-with-text__content{max-width:none !important;padding-inline-start:5rem !important;padding-inline-end:3rem !important;}#shopify-section-founder .image-with-text__grid > .grid__item:first-child,[id$=\"__founder\"] .image-with-text__grid > .grid__item:first-child{flex:0 0 38% !important;max-width:38% !important;}#shopify-section-founder .image-with-text__grid > .grid__item:last-child,[id$=\"__founder\"] .image-with-text__grid > .grid__item:last-child{flex:0 0 62% !important;max-width:62% !important;}}@media(min-width:1200px){[id$=\"__hero\"] .hero-landing{min-height:760px !important}}@media(min-width:1600px){[id$=\"__hero\"] .hero-landing{min-height:840px !important}}@media(min-width:2000px){[id$=\"__hero\"] .hero-landing{min-height:920px !important}}<\/style>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "email-intro": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rsc-email-intro{text-align:center;padding:64px 24px 16px 24px;max-width:680px;margin:0 auto}.rsc-email-intro__heading{font-size:clamp(1.75rem,3.2vw,2.5rem);line-height:1.1;font-weight:700;color:#1a1b18;margin:0 0 14px 0;letter-spacing:-0.01em}.rsc-email-intro__sub{font-size:1.05rem;line-height:1.5;color:#4a4d52;margin:0;font-weight:500}.rsc-email-finepr{text-align:center;font-size:0.85rem;color:#6d7175;margin:14px auto 0 auto;max-width:520px}[class*=\"klaviyo-form\"] button,[class*=\"klaviyo-form\"] button[type=\"submit\"]{background-color:#AEDEAC !important;color:#1a1b18 !important;border-color:#AEDEAC !important;font-weight:700 !important;}[class*=\"klaviyo-form\"] button:hover{background-color:#9bcf99 !important}<\/style><div class=\"rsc-email-intro\"><h2 class=\"rsc-email-intro__heading\">Get 30% off your first order.<\/h2><p class=\"rsc-email-intro__sub\">Plus early access to new scents and restocks. No spam, no sponsored newsletters, no third-party data sharing.<\/p><\/div>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "email-fineprint": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<p style=\"text-align:center;font-size:0.85rem;color:#6d7175;margin:0 auto;max-width:520px;padding:0 24px;\">Unsubscribe anytime. We don't sell your email.<\/p>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 56
+      }
+    },
+    "reset-banner": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rbn{background:#f6f8f3;border-top:1px solid #e2ead9;border-bottom:1px solid #e2ead9;padding:26px 18px}.rbn__i{max-width:900px;margin:0 auto;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}.rbn__t{margin:0;font-size:clamp(17px,2.2vw,21px);font-weight:700;color:#1a1b18;line-height:1.35}.rbn__s{margin:5px 0 0;font-size:14px;color:#4a4a4a}.rbn__c{background:#4a8b3c;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;white-space:nowrap}<\/style><div class=\"rbn\"><div class=\"rbn__i\"><div><p class=\"rbn__t\">Tired of running out? Get ninety days of both formulas.<\/p><p class=\"rbn__s\">3 Body Lotions + 3 Body Creams — about $1.34 a day.<\/p><\/div><a class=\"rbn__c\" href=\"\/products\/99-coconut-reset-digital\">See the 90-Day Reset<\/a><\/div><\/div>"
+      }
+    }
+  },
+  "order": [
+    "hero-overrides",
+    "hero",
+    "reset-banner",
+    "thesis",
+    "exclusion-grid",
+    "product-intro",
+    "product-line",
+    "featured-testimonial",
+    "founder-anchor",
+    "founder",
+    "closing-cta",
+    "email-intro",
+    "email-capture",
+    "email-fineprint"
+  ]
+}

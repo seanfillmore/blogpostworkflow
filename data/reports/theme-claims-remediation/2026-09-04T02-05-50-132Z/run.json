@@ -1,0 +1,71 @@
+{
+  "at": "2026-09-04T02:05:51.492Z",
+  "themeId": 148439367850,
+  "applied": false,
+  "results": [
+    {
+      "key": "templates/product.landing-page-99-coconut-reset.json",
+      "action": "delete",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-claims-remediation/2026-09-04T02-05-50-132Z/templates__product.landing-page-99-coconut-reset.json"
+    },
+    {
+      "key": "templates/product.default-product-lotion.json",
+      "action": "delete",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-claims-remediation/2026-09-04T02-05-50-132Z/templates__product.default-product-lotion.json"
+    },
+    {
+      "key": "templates/index.json",
+      "action": "rewrite",
+      "id": "homepage-founder-eczema",
+      "outcome": "rewritten",
+      "compliance": false
+    },
+    {
+      "key": "templates/product.landing-page-sensitive-skin-set-lander.json",
+      "action": "rewrite",
+      "id": "hero-lander-eczema-usage",
+      "outcome": "rewritten",
+      "compliance": false
+    }
+  ],
+  "acknowledged_keeps": [
+    {
+      "field": "templates/product.landing-page-sensitive-skin-set-lander.json/sections/collapsible-content/blocks/faq-eczema/settings/heading",
+      "why": "A question the customer asks. CLAUDE.md names \"Can I use unscented products if I have eczema?\" among the headings that stay."
+    },
+    {
+      "field": "templates/product.landing-page-sensitive-skin-set-lander.json/sections/collapsible-content/blocks/faq-eczema/settings/row_content",
+      "why": "Opens with an explicit disclaimer (\"We can't make medical claims and don't sell our products as treatments\") and attributes the outcome to CUSTOMERS reporting, not to the product acting. Softening it would make the page less accurate for the exact buyer asking — the stretch-mark hedging precedent."
+    },
+    {
+      "field": "templates/product.landing-page-sensitive-skin-set-lander.json/sections/collapsible-content/blocks/faq-baby/settings/row_content",
+      "why": "A SAFETY REFERRAL — \"if your child has a diagnosed skin condition, ask their provider\". Removing it removes safety guidance, the same class as \"Signs of Infection — When to See a Doctor\"."
+    },
+    {
+      "field": "templates/product.landing-page-sensitive-skin-set-lander.json/sections/stats-hero/settings/custom_liquid",
+      "why": "False positive on a CITATION: \"North American Contact Dermatitis Group Patch Test Results, 2021-2022\" is the name of the organisation publishing the data."
+    },
+    {
+      "field": "templates/product.landing-page-lip-balm.json/sections/main/blocks/tab-details/settings/content",
+      "why": "Subject is COMPETING balms and the sentence DENIES a therapeutic effect — \"add menthol to feel 'treated' — that's mild irritation, not healing\". Debunking framing."
+    },
+    {
+      "field": "templates/product.landing-page-lip-balm.json/sections/collapsible-content/blocks/faq-5/settings/row_content",
+      "why": "Same debunking framing about competitors' menthol, with \"treated\" in scare quotes."
+    },
+    {
+      "field": "templates/product.landing-page-lotion.json/sections/collapsible-content/blocks/faq-2/settings/row_content",
+      "why": "A cited third-party fact about SYNTHETIC FRAGRANCE as a category, not a claim about our product."
+    },
+    {
+      "field": "templates/product.landing-page-lotion.json/sections/collapsible-content/blocks/faq-3/settings/row_content",
+      "why": "Suitability for a skin type (\"if you're acne-prone, the unscented variation is the most conservative choice\"), which CLAUDE.md keeps."
+    },
+    {
+      "field": "templates/product.landing-page-cream.json/sections/collapsible-content/blocks/faq-6/settings/row_content",
+      "why": "PRESERVATION, not therapy: grapefruit seed extract inhibiting growth IN THE JAR, in an answer about shelf life."
+    }
+  ]
+}

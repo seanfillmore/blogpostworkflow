@@ -39,6 +39,7 @@
 
 import { getMainThemeId, listThemeAssets, getThemeAssetRaw, getProducts } from '../lib/shopify.js';
 import { checkSeoCopyFields } from '../lib/seo-copy-health-gate.js';
+import { ACKNOWLEDGED_KEEPS } from '../lib/theme-claim-keeps.js';
 
 const AS_JSON = process.argv.includes('--json');
 const ALL_STRINGS = process.argv.includes('--all-strings');
@@ -116,6 +117,22 @@ async function main() {
     }
   }
 
+  // Split judged-and-kept findings out of `blocking`, so the daily gate reports what
+  // is NEW. A keep whose field no longer appears anywhere is reported STALE rather
+  // than dropped — otherwise the list rots into a rule nobody can check.
+  const ackByField = new Map(ACKNOWLEDGED_KEEPS.map((k) => [k.field, k]));
+  const seenFields = new Set(findings.blocking.map((f) => f.field));
+  const acknowledged = [];
+  const stillBlocking = [];
+  for (const f of findings.blocking) {
+    const ack = ackByField.get(f.field);
+    if (ack) acknowledged.push({ ...f, why: ack.why });
+    else stillBlocking.push(f);
+  }
+  findings.blocking = stillBlocking;
+  findings.acknowledged = acknowledged;
+  findings.stale_keeps = ACKNOWLEDGED_KEEPS.filter((k) => !seenFields.has(k.field)).map((k) => k.field);
+
   const result = { generated_at: new Date().toISOString(), theme_id: themeId, counts, findings };
   if (AS_JSON) {
     console.log(JSON.stringify(result, null, 2));
@@ -127,8 +144,14 @@ async function main() {
     );
     console.log(`Product images: ${counts.imagesWithAlt} of ${counts.images} carry alt text\n`);
 
-    console.log(`BLOCKING (${findings.blocking.length})`);
+    console.log(`BLOCKING — NEW (${findings.blocking.length})`);
     for (const f of findings.blocking) console.log(`  [${f.category}] ${f.field}\n      "${f.match}"`);
+    console.log(`\nACKNOWLEDGED KEEPS (${findings.acknowledged.length}) — judged and deliberately kept`);
+    for (const f of findings.acknowledged) console.log(`  [${f.category}] ${f.field}\n      ${f.why}`);
+    if (findings.stale_keeps.length) {
+      console.log(`\nSTALE KEEPS (${findings.stale_keeps.length}) — no longer present; prune from lib/theme-claim-keeps.js`);
+      for (const f of findings.stale_keeps) console.log(`  ${f}`);
+    }
     console.log(`\nADVISORY (${findings.advisory.length})`);
     for (const f of findings.advisory.slice(0, 25)) console.log(`  [${f.category}] ${f.field} — "${f.match}"`);
     if (findings.advisory.length > 25) console.log(`  … and ${findings.advisory.length - 25} more`);
