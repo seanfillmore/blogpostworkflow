@@ -1,0 +1,102 @@
+{
+  "at": "2026-09-04T02:32:15.968Z",
+  "themeId": 148439367850,
+  "applied": false,
+  "pruned": [
+    {
+      "key": "templates/article.blog-post-template.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__article.blog-post-template.json"
+    },
+    {
+      "key": "templates/page.about-2.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.about-2.json"
+    },
+    {
+      "key": "templates/page.about-modern.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.about-modern.json"
+    },
+    {
+      "key": "templates/page.contact-with-map.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.contact-with-map.json"
+    },
+    {
+      "key": "templates/page.faq.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.faq.json"
+    },
+    {
+      "key": "templates/page.plant-drop.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.plant-drop.json"
+    },
+    {
+      "key": "templates/page.reverse-pdp.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.reverse-pdp.json"
+    },
+    {
+      "key": "templates/page.sidebar.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.sidebar.json"
+    },
+    {
+      "key": "templates/page.store-locator.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.store-locator.json"
+    },
+    {
+      "key": "templates/page.visit.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__page.visit.json"
+    },
+    {
+      "key": "templates/product.fragrance.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.fragrance.json"
+    },
+    {
+      "key": "templates/product.gift-card.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.gift-card.json"
+    },
+    {
+      "key": "templates/product.landing-page-body-cream.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.landing-page-body-cream.json"
+    },
+    {
+      "key": "templates/product.landing-page-body-lotion.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.landing-page-body-lotion.json"
+    },
+    {
+      "key": "templates/product.landing-page-foaming-soap.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.landing-page-foaming-soap.json"
+    },
+    {
+      "key": "templates/product.pre-order.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.pre-order.json"
+    },
+    {
+      "key": "templates/product.product-landing.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.product-landing.json"
+    },
+    {
+      "key": "templates/product.replo.c40ef49b-92b4-4808-aed2-474ef9e331c9.liquid",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.replo.c40ef49b-92b4-4808-aed2-474ef9e331c9.liquid"
+    },
+    {
+      "key": "templates/product.skincare.json",
+      "outcome": "would-delete",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-32-07-209Z/templates__product.skincare.json"
+    }
+  ]
+}

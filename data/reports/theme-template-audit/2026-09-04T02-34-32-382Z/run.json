@@ -1,0 +1,102 @@
+{
+  "at": "2026-09-04T02:34:50.262Z",
+  "themeId": 148439367850,
+  "applied": true,
+  "pruned": [
+    {
+      "key": "templates/article.blog-post-template.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__article.blog-post-template.json"
+    },
+    {
+      "key": "templates/page.about-2.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.about-2.json"
+    },
+    {
+      "key": "templates/page.about-modern.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.about-modern.json"
+    },
+    {
+      "key": "templates/page.contact-with-map.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.contact-with-map.json"
+    },
+    {
+      "key": "templates/page.faq.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.faq.json"
+    },
+    {
+      "key": "templates/page.plant-drop.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.plant-drop.json"
+    },
+    {
+      "key": "templates/page.reverse-pdp.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.reverse-pdp.json"
+    },
+    {
+      "key": "templates/page.sidebar.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.sidebar.json"
+    },
+    {
+      "key": "templates/page.store-locator.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.store-locator.json"
+    },
+    {
+      "key": "templates/page.visit.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__page.visit.json"
+    },
+    {
+      "key": "templates/product.fragrance.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.fragrance.json"
+    },
+    {
+      "key": "templates/product.gift-card.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.gift-card.json"
+    },
+    {
+      "key": "templates/product.landing-page-body-cream.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.landing-page-body-cream.json"
+    },
+    {
+      "key": "templates/product.landing-page-body-lotion.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.landing-page-body-lotion.json"
+    },
+    {
+      "key": "templates/product.landing-page-foaming-soap.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.landing-page-foaming-soap.json"
+    },
+    {
+      "key": "templates/product.pre-order.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.pre-order.json"
+    },
+    {
+      "key": "templates/product.product-landing.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.product-landing.json"
+    },
+    {
+      "key": "templates/product.replo.c40ef49b-92b4-4808-aed2-474ef9e331c9.liquid",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.replo.c40ef49b-92b4-4808-aed2-474ef9e331c9.liquid"
+    },
+    {
+      "key": "templates/product.skincare.json",
+      "outcome": "deleted",
+      "backup": "data/reports/theme-template-audit/2026-09-04T02-34-32-382Z/templates__product.skincare.json"
+    }
+  ]
+}
