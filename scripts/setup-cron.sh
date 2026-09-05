@@ -139,6 +139,32 @@ DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-pos
 # customer copy, where the right fix is a judgement about what the product does.
 DAILY_THEME_CLAIMS_GATE="45 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-theme-claims-drift.mjs >> data/reports/scheduler/theme-claims-gate.log 2>&1"
 
+# Scheduler heartbeat (daily, DETECT ONLY) — did the daily pipeline actually
+# FINISH? This is the one thing the 5 AM digest structurally cannot tell you.
+#
+# The digest reports what agents notify(). A process that never exits never
+# notifies, so a WEDGED run is invisible to it by construction — not a missing
+# row, a row that can never exist. On 2026-09-01 scheduler.js hung inside
+# theme-seo-auditor's Lighthouse call and was still running on 2026-09-05; every
+# monthly step after it silently never ran, and its orphaned Chrome tree held
+# ~334 MB on a 961 MB box until the OOM killer took seo-dashboard down 642 times.
+# The operator found out from a Cloudflare 502, four days later.
+#
+# 12:50 UTC: after ALL SIX existing detectors (12:20 content-mirror, 12:25
+# rejected-keywords, 12:30 value-stack, 12:35 copy-surface, 12:40 post-meta,
+# 12:45 theme-claims) so none share a minute, and 10 minutes before the 13:00
+# daily-summary so the row lands in the SAME morning's digest. UTC because a
+# TZ= prefix schedules nothing on this host. (CLAUDE.md said "four detectors"
+# in this window; it was already six when this was added — count against the
+# LIVE crontab, never against that note.)
+#
+# DETECT ONLY and it must stay that way: it may never kill or restart a run. A
+# scheduler mid-publish is holding live Shopify writes, and reaping it from a
+# timer on a duration heuristic is how a half-published post happens at 4 AM.
+# It reports; a human kills. A test pins that the only command it can spawn is
+# `ps`.
+DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-scheduler-heartbeat.mjs >> data/reports/scheduler/scheduler-heartbeat.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -456,6 +482,7 @@ $DAILY_COPY_SURFACE_CLAIMS_GATE
 $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 $DAILY_THEME_CLAIMS_GATE
+$DAILY_SCHEDULER_HEARTBEAT
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -512,6 +539,7 @@ echo "  11:00 UTC — indexing-checker"
 echo "  11:30 UTC — indexing-fixer"
 echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
+echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
