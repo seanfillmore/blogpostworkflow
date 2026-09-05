@@ -1,7 +1,7 @@
 // Every case here is a real thing that was live on 2026-09-05.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle } from '../../lib/theme-claim-audit.js';
+import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments } from '../../lib/theme-claim-audit.js';
 
 test('parses the shapes the real templates actually use', () => {
   assert.deepEqual(parseDurationClaim('A jar lasts about 12 weeks of nightly use — roughly $0.30 per day.'),
@@ -116,4 +116,17 @@ test('text with no product.handle conditional is returned untouched', () => {
   // An unrelated Liquid tag must not be mangled.
   const other = '{{ product.price | money }} lasts about a month';
   assert.equal(branchForHandle(other, 'x'), other);
+});
+
+test('a per-day figure inside a Liquid comment is documentation, not a claim', () => {
+  // Live 2026-09-05: the bar-soap template documents its own arithmetic in a
+  // {% comment %}, including $0.16 from an older price. The gate mixed that with
+  // the rendered "3 weeks" and reported a defect that did not exist.
+  const raw = "{%- comment -%} 25 days is the merchant figure; $0.16 per day at the old price {%- endcomment -%}<p>A bar lasts about 3 weeks of daily use.</p>";
+  const clean = stripLiquidComments(raw);
+  assert.doesNotMatch(clean, /0\.16/);
+  const c = parseDurationClaim(clean);
+  assert.equal(c.days, 21);
+  assert.equal(c.perDay, null, 'no per-day survives, so no coherence check fires');
+  assert.equal(auditClaim({ claim: c, rateDays: 25, price: 11 }).verdict, 'ok');
 });

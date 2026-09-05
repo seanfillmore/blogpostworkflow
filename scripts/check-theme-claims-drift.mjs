@@ -32,7 +32,7 @@
  * this surface is a live page telling a customer something untrue.
  */
 import { getMainThemeId, getThemeAssetRaw, listThemeAssets, shopifyGraphQL } from '../lib/shopify.js';
-import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle } from '../lib/theme-claim-audit.js';
+import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments } from '../lib/theme-claim-audit.js';
 import { bindingDuration } from '../lib/supply-duration.js';
 import { notify } from '../lib/notify.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
@@ -91,7 +91,7 @@ export async function audit() {
       for (const raw of strings(tpl)) {
         // Resolve per-product Liquid branches first, or one product's copy is
         // reported as another product's defect.
-        const s = branchForHandle(raw, p.handle);
+        const s = branchForHandle(stripLiquidComments(raw), p.handle);
         const claim = parseDurationClaim(s);
         if (!claim) continue;
         const r = auditClaim({ claim, rateDays: rateFor(p.handle), price });
