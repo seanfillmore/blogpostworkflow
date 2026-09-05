@@ -80,10 +80,18 @@
       "perUnitNote": "Sean 2026-09-05: ~30 days for the 8oz bottle, \"depending on usage\"."
     },
     "foam-soap-refill-32oz": {
-      "daysPerUnit": 120,
+      "daysPerUnit": 30,
+      "rangeDays": [
+        30,
+        120
+      ],
       "intervals": 0,
-      "confidence": "derived from volume",
-      "perUnitNote": "Not a merchant figure. 32oz is 4x the 8oz bottle Sean estimated at 30 days, so 4 x 30 = 120. Volume-derived, weaker than a merchant estimate — put it to the merchant before leaning on it."
+      "confidence": "merchant estimate",
+      "perUnitNote": "A REFILL IS NOT CONSUMED LIKE A BOTTLE, so a single figure cannot describe it. 32oz tops up the 8oz pump four times, and how fast that is used depends entirely on how many pumps the household is refilling. Sean, 2026-09-05: \"It is a refill. If someone is refilling four pumps it is gone right away. If someone is refilling one pump it lasts longer.\" So: 4 pumps -> ~30 days, 2 pumps -> ~60, 1 pump -> ~120. daysPerUnit carries the SHORT end because this file's own rule is that overstating supply costs the customer and is the documented reason RSC subscribers churned - when uncertain, claim SHORT. Use rangeDays to state the upside; never state 120 as the duration.",
+      "supersedes": {
+        "daysPerUnit": 120,
+        "why": "120 was 4 x the 8oz bottle's 30 days, which silently assumes a ONE-pump household. It was already flagged in this file as volume-derived and 'put it to the merchant before leaning on it'; the merchant's answer was that the premise is wrong, not the arithmetic. The 120 had already reached the storefront as 'A 32oz refill lasts about four months', which lib/theme-claim-audit.js PASSED because it was checking the copy against this number."
+      }
     }
   },
   "_no_data": {

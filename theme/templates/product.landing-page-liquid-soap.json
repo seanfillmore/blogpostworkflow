@@ -21,7 +21,7 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">{%- if product.handle == 'foam-soap-refill-32oz' -%}A 32oz refill lasts about four months of multi-daily handwashing — roughly $0.22 a day.{%- else -%}An 8oz foaming bottle lasts about a month of multi-daily handwashing — roughly $0.43 a day.{%- endif -%}<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">{%- if product.handle == 'foam-soap-refill-32oz' -%}{%- assign pump = all_products['organic-foaming-hand-soap'] -%}{%- assign per_bottle = product.price | divided_by: 4 -%}A 32oz refill tops up an 8oz bottle four times — it lasts about a month if you are refilling four bottles, up to four months for one. That is {{ per_bottle | money }} a bottle against {{ pump.price | money }} new.{%- else -%}An 8oz foaming bottle lasts about a month of multi-daily handwashing — roughly $0.43 a day.{%- endif -%}<\/p>"
           }
         },
         "benefit-1": {
