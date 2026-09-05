@@ -117,6 +117,28 @@ DAILY_PERFORMANCE_ENGINE="30 7 * * * cd \"$PROJECT_DIR\" && $NODE agents/perform
 # JSON files) and shares the slot with nothing.
 DAILY_POST_META_GATE="40 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-post-meta-drift.mjs >> data/reports/scheduler/post-meta-gate.log 2>&1"
 
+# Theme-claim integrity gate (daily, DETECT ONLY) — does every landing page tell
+# the truth about how long the product lasts, and does every templateSuffix
+# actually resolve?
+#
+# lib/supply-duration.js guards BUNDLE copy; nothing guarded a theme template. An
+# audit on 2026-09-05 found FOUR overstated supply claims live (cream and the
+# sensitive-skin set at 2.80x, lotion 1.87x, toothpaste 1.24x), two pages claiming
+# a duration for products with no measured rate, a per-day figure stale from an old
+# price, and coconut-soap pointing at a templateSuffix whose asset was NOT on the
+# theme — a 200 that silently served the default product template. Months live,
+# because nobody runs an audit nobody scheduled.
+#
+# 12:45 UTC: after the four existing detectors (12:20 content-mirror, 12:25
+# rejected-keywords, 12:30 value-stack, 12:40 post-meta) so none share a minute,
+# and 15 minutes before the 13:00 daily-summary so the row lands in the SAME
+# morning's digest. UTC because a TZ= prefix schedules nothing on this host.
+#
+# DETECT ONLY and it must stay that way: update-theme-asset.mjs can now CREATE an
+# asset, so a write mode here would be a nightly unattended rewrite of live
+# customer copy, where the right fix is a judgement about what the product does.
+DAILY_THEME_CLAIMS_GATE="45 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-theme-claims-drift.mjs >> data/reports/scheduler/theme-claims-gate.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -433,6 +455,7 @@ $DAILY_REJECTED_KEYWORDS_GATE
 $DAILY_COPY_SURFACE_CLAIMS_GATE
 $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
+$DAILY_THEME_CLAIMS_GATE
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
