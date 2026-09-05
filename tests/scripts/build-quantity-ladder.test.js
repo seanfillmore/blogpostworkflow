@@ -247,7 +247,7 @@ test('the sticky bar posts the SELECTED tier, never a form of its own', () => {
   // Counted on `fetch(` rather than the bare path, which also appears in a
   // comment -- a prose mention is not a second code path.
   assert.equal((out.match(/fetch\('\/cart\/add\.js'/g) ?? []).length, 1);
-  assert.match(out, /function addToCart\(\)/);
+  assert.match(out, /function addToCart\(evt\)/);
   assert.match(out, /cta\.addEventListener\('click', addToCart\)/);
   assert.match(out, /stickyCta\.addEventListener\('click', addToCart\)/);
   // The bar must NOT build a product form -- that is the stock block's bug.
@@ -291,4 +291,50 @@ test('a failed add re-enables BOTH buttons via syncCta', () => {
   // would leave the sticky one stuck disabled after a network error.
   assert.doesNotMatch(out, /errorEl\.hidden = false;\s*cta\.disabled = false;/);
   assert.match(out, /errorEl\.hidden = false;\s*\/\/[\s\S]{0,200}?syncCta\(\);/);
+});
+
+// Cart drawer. The add stays on the page and opens the theme's drawer instead
+// of redirecting to /cart. The properties that matter are all about what
+// happens when the drawer ISN'T there — the add has already succeeded by then,
+// so a failure must fall back silently, never surface an error.
+
+test('the add drives the theme drawer through its own handshake', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // <mini-cart> is the drawer element in this theme (assets/cart-drawer.js);
+  // <cart-drawer> is only its outer shell and has no renderContents.
+  assert.match(out, /document\.querySelector\('mini-cart'\)/);
+  assert.doesNotMatch(out, /document\.querySelector\('cart-drawer'\)/);
+  // Bundled section rendering: ask for the drawer's OWN section ids, so the
+  // list cannot drift from whatever the theme decides to re-render.
+  assert.match(out, /payload\.sections = drawer\.getSectionsToRender\(\)/);
+  assert.match(out, /payload\.sections_url = window\.location\.pathname/);
+  assert.match(out, /drawer\.renderContents\(state\)/);
+  // Focus return, same as the theme's own product forms.
+  assert.match(out, /drawer\.setActiveElement\(evt\.currentTarget\)/);
+});
+
+test('the drawer is feature-detected, never assumed', () => {
+  const out = renderBlock(TIERS, LADDER);
+  assert.match(out, /typeof el\.getSectionsToRender === 'function'/);
+  assert.match(out, /typeof el\.renderContents === 'function'/);
+});
+
+test('every post-add failure falls back to /cart and surfaces NO error', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // The item is already in the cart once we have a 2xx. Reporting a failure
+  // there invites a double order, so all three degraded paths redirect.
+  assert.match(out, /if \(!drawer \|\| !state \|\| !state\.sections\) \{ window\.location\.href = '\/cart'; return; \}/);
+  // renderContents() can throw: its open() dereferences the <cart-drawer>
+  // shell, which a template could be missing.
+  assert.match(out, /try \{\s*drawer\.renderContents\(state\);\s*\} catch \(e\) \{\s*window\.location\.href = '\/cart';\s*return;\s*\}/);
+  // Exactly one error-surfacing site, and it is the network/HTTP catch.
+  assert.equal((out.match(/errorEl\.hidden = false;/g) ?? []).length, 1);
+});
+
+test('a drawer add re-enables both buttons, since the page does not navigate', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // Two syncCta() calls in the add path: the success-stayed-on-page one and
+  // the network-failure one. Without the first, a shopper who adds via the
+  // drawer is left with two dead buttons.
+  assert.match(out, /drawer\.renderContents\(state\);[\s\S]{0,400}?syncCta\(\);/);
 });
