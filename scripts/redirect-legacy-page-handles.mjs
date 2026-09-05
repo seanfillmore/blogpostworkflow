@@ -58,6 +58,13 @@ const STORE = 'https://www.realskincare.com';
 const PLAN = [
   { path: '/pages/about', target: '/pages/about-us-1', handle: 'about' },
   { path: '/pages/contact', target: '/pages/contact-1', handle: 'contact' },
+  // Added 2026-09-05. Same shape as the two above, found by following the one
+  // inbound link they had. `faq` is an unpublished 155-character stub on a dead
+  // GemPages template (`gem-46224867363-template`) whose entire body is one
+  // sentence pointing at /pages/contact — it holds no FAQ content, so nothing is
+  // lost by redirecting it. The real page is `faqs`, which is live, carries the
+  // Q&A, and is what the site footer already links on every page.
+  { path: '/pages/faq', target: '/pages/faqs', handle: 'faq' },
 ];
 
 async function status(url) {
