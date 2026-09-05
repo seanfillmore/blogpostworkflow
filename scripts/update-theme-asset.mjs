@@ -37,7 +37,12 @@ const rest = async (path, init) => {
     headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json', ...(init?.headers ?? {}) },
     signal: AbortSignal.timeout(60_000),
   });
-  const j = await r.json();
+  // A 404 for a missing asset comes back with an EMPTY body, so r.json() threw
+  // before the status was ever inspected — the caller saw "Unexpected end of JSON
+  // input" instead of "not found". Read as text and parse defensively.
+  const raw = await r.text();
+  let j = {};
+  if (raw) { try { j = JSON.parse(raw); } catch { j = { _raw: raw.slice(0, 300) }; } }
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${JSON.stringify(j).slice(0, 300)}`);
   return j;
 };
@@ -46,8 +51,23 @@ const { themes } = await rest('themes.json');
 const theme = themes.find((t) => t.role === 'main');
 console.log(`theme: ${theme.name} (${theme.id})`);
 
-const current = (await rest(`themes/${theme.id}/assets.json?asset[key]=${encodeURIComponent(key)}`)).asset?.value;
-if (current === undefined) throw new Error(`asset not found: ${key}`);
+// A missing asset 404s. For `get` that is still an error, but for `put` it is the
+// CREATE case — restoring a template that was dropped from the theme, which is how
+// coconut-soap ended up silently rendering the default product template on
+// 2026-09-05 while returning 200. Treat absence as empty and let `put` proceed.
+let current;
+try {
+  current = (await rest(`themes/${theme.id}/assets.json?asset[key]=${encodeURIComponent(key)}`)).asset?.value;
+} catch (err) {
+  if (!/HTTP 404/.test(err.message)) throw err;
+  current = undefined;
+}
+const isCreate = current === undefined;
+if (isCreate && mode !== 'put') throw new Error(`asset not found: ${key}`);
+if (isCreate) {
+  console.log(`asset does not exist on this theme — this is a CREATE, not an update.`);
+  current = '';
+}
 
 if (mode === 'get') {
   const out = file ?? join(ROOT, 'theme', 'backup', key);
@@ -85,7 +105,11 @@ if (!APPLY) { console.log('\ndry run — pass --apply to write'); process.exit(0
 // previous edit, and the way back is gone. Later writes get a timestamped copy.
 const pristine = join(ROOT, 'theme', 'backup', key);
 mkdirSync(dirname(pristine), { recursive: true });
-if (!existsSync(pristine)) {
+if (isCreate) {
+  // Nothing to back up, and writing an empty "pristine" file would poison the
+  // real backup for every later write to this key.
+  console.log('\nno live copy to back up (create).');
+} else if (!existsSync(pristine)) {
   writeFileSync(pristine, current);
   console.log(`\nbacked up pristine live copy → ${pristine.replace(ROOT + '/', '')}`);
 } else {
