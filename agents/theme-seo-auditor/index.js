@@ -33,6 +33,7 @@ import {
 } from '../../lib/shopify.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { checkIndexable } from '../../lib/indexability.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -120,22 +121,22 @@ async function selectUrls() {
 
   // Blog post
   //
-  // KNOWN DEFECT, found 2026-09-05 and deliberately NOT fixed here: this takes
-  // `articles[0]` without checking the article is PUBLISHED. `getArticles`
-  // returns drafts too, and on the live store today that first article is not
-  // publicly reachable — the URL 404s, so this template's audit is measuring
-  // Shopify's 404 page (which is why it reports `canonical:
-  // https://www.realskincare.com/404`, a finding about the 404 page and not
-  // about any blog post). The blog_post row has therefore been meaningless for
-  // as long as it has existed.
+  // KNOWN DEFECT, still here: this takes `articles[0]` without checking the
+  // article is PUBLISHED. `getArticles` returns drafts too, and on the live
+  // store that first article 404s.
   //
-  // Not fixed in the Lighthouse-removal change because it alters WHAT this
-  // agent measures rather than what it costs, and picking the representative
-  // article is its own decision (newest published? highest traffic?). The same
-  // question applies to the product/collection/page selections above, which
-  // were not audited for this. See lib/post-publish-state.js — `isLivePost` is
-  // the fleet's one answer to "is this actually live", and any fix belongs on
-  // top of it rather than re-deriving a fourth rule.
+  // As of 2026-09-05 the SYMPTOM is handled downstream — `checkIndexable` skips
+  // the URL rather than auditing Shopify's 404 page and reporting its
+  // `canonical: .../404` as a finding about a blog post. So the agent no longer
+  // produces misleading output, but it also produces NO blog_post row at all,
+  // and the run says so explicitly rather than leaving the gap silent.
+  //
+  // Fixing the SELECTION is a separate decision with its own blast radius —
+  // "newest published"? "highest traffic"? — and the same question applies to
+  // the product/collection/page picks above, which have never been audited for
+  // it. See `lib/post-publish-state.js`: `isLivePost` is the fleet's one answer
+  // to "is this actually live", and any fix belongs on top of it rather than
+  // re-deriving a fourth publish-state rule.
   try {
     const blogs = await getBlogs();
     if (blogs.length > 0) {
@@ -316,8 +317,9 @@ async function main() {
 
       // Render page with Puppeteer
       const page = await browser.newPage();
+      let response;
       try {
-        await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
+        response = await page.goto(url, { waitUntil: 'networkidle0', timeout: 30000 });
       } catch (e) {
         console.warn(`    Page load error: ${e.message}`);
         await page.close();
@@ -325,7 +327,21 @@ async function main() {
         continue;
       }
       const html = await page.content();
+      const status = response?.status() ?? null;
+      const headers = response?.headers() ?? {};
       await page.close();
+
+      // DON'T AUDIT WHAT SEARCH ENGINES IGNORE. Auditing a 404 or a noindex
+      // page as an SEO surface produces findings about a page that cannot rank
+      // — and this agent was reporting exactly that as its only CRITICAL issue.
+      // Skipping is reported, never silent: a template we could not audit is
+      // itself worth seeing, since it means the URL PICK above needs attention.
+      const { indexable, reason } = checkIndexable({ status, html, headers });
+      if (!indexable) {
+        console.log(`    SKIPPED — not indexable (${reason})`);
+        results[templateType] = { url, skipped: reason };
+        continue;
+      }
 
       // DOM audits
       const headings = auditHeadings(html);
@@ -385,6 +401,20 @@ async function main() {
       continue;
     }
 
+    // A skipped template is reported, never dropped. Silently omitting it would
+    // make "we could not audit this template" indistinguishable from "this
+    // template is clean" — and the skip is itself the finding worth acting on,
+    // because it means the URL PICK for this template needs attention.
+    if (data.skipped) {
+      lines.push(`> **Skipped — not indexable:** ${data.skipped}`);
+      lines.push('>');
+      lines.push('> Search engines will not index this URL, so auditing it as an SEO surface would');
+      lines.push('> produce findings about a page that cannot rank. Check which URL this template');
+      lines.push('> selects (see `selectUrls`) rather than the page itself.');
+      lines.push('');
+      continue;
+    }
+
     // DOM summary
     lines.push('### DOM Audit');
     lines.push(`| Check | Result |`);
@@ -423,6 +453,16 @@ async function main() {
   const totalIssues = Object.values(results).reduce((sum, r) => sum + (r.issues?.length || 0), 0);
   const criticalIssues = Object.values(results).reduce((sum, r) => sum + (r.issues?.filter((i) => i.severity === 'critical').length || 0), 0);
   console.log(`\n  Total issues: ${totalIssues} (${criticalIssues} critical)`);
+
+  // Say how many templates were NOT audited, and name them. An issue count is
+  // only honest alongside its denominator: "0 critical" across five templates
+  // and "0 critical" across three mean different things, and the difference is
+  // the URL picks that need fixing.
+  const skipped = Object.entries(results).filter(([, r]) => r.skipped);
+  if (skipped.length) {
+    console.log(`  ${skipped.length} of ${Object.keys(results).length} template(s) NOT audited (not indexable):`);
+    for (const [type, r] of skipped) console.log(`    ${type} — ${r.skipped}`);
+  }
 }
 
 // Guarded: importing this module must not run the agent (live writes, paid
