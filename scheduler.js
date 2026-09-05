@@ -435,8 +435,25 @@ if (new Date().getDay() === 0) {
     runStep('regate-live-posts', `"${NODE}" scripts/regate-live-posts.js`, { indent: '    ' });
   }
 
-  // Step 8c: AI citation tracking across LLMs
-  runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js`, { indent: '    ' });
+  // Step 8c: AI citation tracking across LLMs.
+  //
+  // `--runs 3 --core 20` because AI answers are non-deterministic and one run
+  // per cell is an anecdote, not a rate — which is what the ~2% mention figure
+  // quoted everywhere actually was, and it is the number `pr-target-finder`
+  // (step 8d, below) ranks its PR targets from.
+  //
+  // THE COST IS BOUNDED ON PURPOSE, and the ceiling is what picked the numbers.
+  // 75 prompts x 5 sources = 375 calls at one run each, measured across 62 real
+  // runs at 1,774s (29.6 min) — already the third-slowest step in the fleet.
+  // Repeating all 75 would be 1,125 calls, ~89 min, which makes this the
+  // slowest step there is and leaves little margin under STEP_TIMEOUT_MS (150
+  // min). Repeating only the first 20 is 575 calls, ~45 min, ~3.3x margin.
+  //
+  // A stable PREFIX rather than a scored selection: a trend needs the same
+  // prompts every week, and any rule that read current results would re-pick
+  // the set whenever visibility moved — the one thing a trend cannot survive.
+  // Weekly, so this is +200 calls per week, not per day.
+  runStep('ai-citation-tracker', `"${NODE}" agents/ai-citation-tracker/index.js --runs 3 --core 20`, { indent: '    ' });
 
   // Step 8d: turn the citation data into a ranked PR target list (runs AFTER the
   // tracker so it consumes the freshest snapshot, with full citation URLs).

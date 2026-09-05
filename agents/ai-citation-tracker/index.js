@@ -9,6 +9,17 @@
  * Usage:
  *   node agents/ai-citation-tracker/index.js              # full run
  *   node agents/ai-citation-tracker/index.js --limit 3    # test with fewer prompts
+ *   node agents/ai-citation-tracker/index.js --runs 3     # sample each cell 3x
+ *   node agents/ai-citation-tracker/index.js --runs 3 --core 20   # repeat only the first 20
+ *
+ * SAMPLING. AI answers are non-deterministic, so one run per prompt is an
+ * anecdote and not a measurement. `--runs N` samples each prompt x engine cell
+ * N times and reports the RATE with its sample size. Rates are computed over
+ * runs, so `--runs 1` reproduces every pre-2026-09 figure exactly and no
+ * historical snapshot is re-based — see lib/citation-sampling.js for why that
+ * constraint drove the design. `--core K` limits repetition to the first K
+ * prompts, because repeating all 75 multiplies a paid unattended bill by N and
+ * a trend only needs the same prompts each week.
  *
  * Output:
  *   data/reports/ai-citations/YYYY-MM-DD.json        — daily snapshot
@@ -22,6 +33,12 @@ import { fileURLToPath } from 'url';
 import { ALL_SOURCES } from '../../lib/llm-clients.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import {
+  aggregateRuns,
+  summarizeSources,
+  runsForPrompt,
+  samplingMeta,
+} from '../../lib/citation-sampling.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -31,8 +48,23 @@ const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'
 const promptsConfig = JSON.parse(readFileSync(join(ROOT, 'config', 'ai-citation-prompts.json'), 'utf8'));
 
 const args = process.argv.slice(2);
-const limitIdx = args.indexOf('--limit');
-const limit = limitIdx !== -1 ? parseInt(args[limitIdx + 1], 10) : Infinity;
+const numericArg = (flag, fallback) => {
+  const i = args.indexOf(flag);
+  if (i === -1) return fallback;
+  const n = parseInt(args[i + 1], 10);
+  // A typo'd value must not silently become NaN and disable the flag (or, for
+  // --runs, quietly multiply a paid bill by garbage). Refuse rather than guess.
+  if (!Number.isFinite(n)) throw new Error(`${flag} requires a number, got: ${args[i + 1]}`);
+  return n;
+};
+
+const limit = numericArg('--limit', Infinity);
+// Default 1 — identical to the pre-2026-09 behaviour. Repetition is opt-in
+// because it multiplies an unattended paid API bill, and the scheduled run
+// passes its own value explicitly so the cost is visible where it is chosen
+// rather than buried in a default here.
+const runs = Math.max(1, numericArg('--runs', 1));
+const coreSize = Math.max(0, numericArg('--core', 0));
 
 // ── Detection helpers ────────────────────────────────────────────────────────
 
@@ -79,49 +111,75 @@ async function main() {
   const today = new Date().toISOString().slice(0, 10);
   const sourceNames = ALL_SOURCES.map(s => s.name);
 
-  console.log(`[ai-citation-tracker] Running ${prompts.length} prompts across ${sourceNames.length} sources...`);
+  const sampling = samplingMeta({
+    prompts: prompts.length,
+    sources: sourceNames.length,
+    runs,
+    coreSize,
+  });
+
+  console.log(
+    `[ai-citation-tracker] Running ${prompts.length} prompts across ${sourceNames.length} sources`
+    + ` at ${sampling.runs_per_core_cell} run(s) per cell`
+    + (sampling.tail_prompts ? ` (core ${sampling.core_prompts}, tail ${sampling.tail_prompts} at 1 run)` : '')
+    + ` — ${sampling.total_calls} calls.`,
+  );
 
   const results = [];
 
   for (let i = 0; i < prompts.length; i++) {
     const prompt = prompts[i];
-    console.log(`  [${i + 1}/${prompts.length}] "${prompt}"`);
+    const promptRuns = runsForPrompt(i, { runs, coreSize });
+    console.log(`  [${i + 1}/${prompts.length}] "${prompt}"${promptRuns > 1 ? ` (${promptRuns} runs)` : ''}`);
 
     const responses = {};
 
     for (const source of ALL_SOURCES) {
-      const { text, citations, error } = await source.fn(prompt);
+      const sampled = [];
 
-      if (error) {
-        console.log(`    ${source.name}: ERROR — ${error}`);
-        responses[source.name] = {
-          cited: null,
-          mentioned: false,
-          citations: [],
-          competitor_mentions: [],
-          competitor_citations: [],
-          error,
-        };
-        continue;
+      for (let run = 0; run < promptRuns; run++) {
+        const { text, citations, error } = await source.fn(prompt);
+
+        if (error) {
+          console.log(`    ${source.name}: ERROR — ${error}`);
+          sampled.push({
+            cited: null,
+            mentioned: false,
+            citations: [],
+            citation_urls: [],
+            competitor_mentions: [],
+            competitor_citations: [],
+            error,
+          });
+          continue;
+        }
+
+        const citationDomains = citations.map(url => {
+          try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+        });
+
+        sampled.push({
+          cited: citations.length > 0 ? detectBrandCited(citations) : null,
+          mentioned: detectBrandMentioned(text),
+          citations: citationDomains,
+          // Full URLs preserved alongside the domains so downstream agents
+          // (pr-target-finder) can fetch the actual article for its author byline
+          // and pinpoint specific Reddit threads — not just the homepage.
+          citation_urls: citations,
+          competitor_mentions: detectCompetitorMentions(text),
+          competitor_citations: detectCompetitorCitations(citations),
+        });
       }
 
-      const citationDomains = citations.map(url => {
-        try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
-      });
+      // Collapse the runs into the per-source record the snapshot format already
+      // uses, so lib/pr-targets.js reads exactly the fields it always has.
+      responses[source.name] = aggregateRuns(sampled);
 
-      responses[source.name] = {
-        cited: citations.length > 0 ? detectBrandCited(citations) : null,
-        mentioned: detectBrandMentioned(text),
-        citations: citationDomains,
-        // Full URLs preserved alongside the domains so downstream agents
-        // (pr-target-finder) can fetch the actual article for its author byline
-        // and pinpoint specific Reddit threads — not just the homepage.
-        citation_urls: citations,
-        competitor_mentions: detectCompetitorMentions(text),
-        competitor_citations: detectCompetitorCitations(citations),
-      };
-
-      console.log(`    ${source.name}: cited=${responses[source.name].cited}, mentioned=${responses[source.name].mentioned}`);
+      const r = responses[source.name];
+      const detail = r.runs > 1
+        ? ` (cited ${r.cited_runs}/${r.runs_with_citations}, mentioned ${r.mentioned_runs}/${r.runs})`
+        : '';
+      console.log(`    ${source.name}: cited=${r.cited}, mentioned=${r.mentioned}${detail}`);
     }
 
     results.push({ prompt, responses });
@@ -129,60 +187,21 @@ async function main() {
 
   // ── Build summary ────────────────────────────────────────────────────────
 
-  const citationRate = {};
-  const mentionRate = {};
-  const competitorMentionCounts = {};
-  const competitorCitationCounts = {};
-
-  for (const source of sourceNames) {
-    let citedCount = 0;
-    let citedTotal = 0;
-    let mentionedCount = 0;
-
-    for (const r of results) {
-      const resp = r.responses[source];
-      if (!resp) continue;
-
-      if (resp.cited !== null) {
-        citedTotal++;
-        if (resp.cited) citedCount++;
-      }
-
-      if (resp.mentioned) mentionedCount++;
-
-      for (const comp of resp.competitor_mentions) {
-        competitorMentionCounts[comp] = (competitorMentionCounts[comp] || 0) + 1;
-      }
-      for (const comp of resp.competitor_citations) {
-        competitorCitationCounts[comp] = (competitorCitationCounts[comp] || 0) + 1;
-      }
-    }
-
-    if (citedTotal > 0) {
-      citationRate[source] = parseFloat((citedCount / citedTotal).toFixed(4));
-    }
-    mentionRate[source] = parseFloat((mentionedCount / results.length).toFixed(4));
-  }
-
-  // Sort competitors by count descending
-  const topMentions = Object.fromEntries(
-    Object.entries(competitorMentionCounts).sort((a, b) => b[1] - a[1])
-  );
-  const topCitations = Object.fromEntries(
-    Object.entries(competitorCitationCounts).sort((a, b) => b[1] - a[1])
-  );
+  // Rates are computed over RUNS, so at 1 run per cell this is identical to
+  // what the old inline block produced and every prior snapshot stays
+  // comparable. See lib/citation-sampling.js.
+  const summary = summarizeSources(results, sourceNames);
+  const citationRate = summary.citation_rate;
+  const mentionRate = summary.mention_rate;
 
   const snapshot = {
     date: today,
     prompts_run: prompts.length,
     sources: sourceNames,
+    // Absent on pre-2026-09 snapshots, and that absence means 1 run per cell.
+    sampling,
     results,
-    summary: {
-      citation_rate: citationRate,
-      mention_rate: mentionRate,
-      top_competitor_mentions: topMentions,
-      top_competitor_citations: topCitations,
-    },
+    summary,
   };
 
   // ── Save snapshot ────────────────────────────────────────────────────────
@@ -211,9 +230,15 @@ async function main() {
       ? `Not cited, but mentioned in ${mentionedSources.join(', ')}.`
       : `Not cited or mentioned in any source across ${prompts.length} prompts.`;
 
+  // The sample size travels with the finding into the 5 AM digest. Without it
+  // a reader gets a visibility verdict and no way to weigh it.
+  const samplingLine = sampling.runs_per_core_cell > 1
+    ? `Sampled ${sampling.runs_per_core_cell}x per cell (${sampling.total_calls} calls).`
+    : 'Sampled 1x per cell — single observations, not rates.';
+
   await notify({
     subject: `AI Citation Tracker — ${today}`,
-    body: summaryLine,
+    body: `${summaryLine} ${samplingLine}`,
     status: 'info',
     category: 'seo',
   });
@@ -224,7 +249,8 @@ async function main() {
 // ── Report generation ────────────────────────────────────────────────────────
 
 function generateReport(snapshot) {
-  const { date, prompts_run, sources, results, summary } = snapshot;
+  const { date, prompts_run, sources, results, summary, sampling } = snapshot;
+  const perCell = sampling?.runs_per_core_cell ?? 1;
   const lines = [];
 
   lines.push(`# AI Citation Report — ${date}`);
@@ -232,19 +258,34 @@ function generateReport(snapshot) {
   lines.push(`**Brand:** ${brand.name} (${brand.domain})`);
   lines.push(`**Prompts run:** ${prompts_run}`);
   lines.push(`**Sources:** ${sources.join(', ')}`);
+  lines.push(`**Sampling:** ${perCell} run(s) per prompt×source cell`
+    + (sampling?.tail_prompts ? `, core ${sampling.core_prompts} repeated / ${sampling.tail_prompts} at 1 run` : ''));
   lines.push('');
+  if (perCell === 1) {
+    // Say it plainly rather than leaving a reader to infer precision from a
+    // percentage. A single run is an anecdote — this is the caveat that was
+    // missing while "~2% mention" was being quoted as a measurement.
+    lines.push('> **One run per cell — these are single observations, not rates.** '
+      + 'AI answers are non-deterministic, so a move between two snapshots at this '
+      + 'sampling cannot be told from noise. Re-run with `--runs 3` to read a rate.');
+    lines.push('');
+  }
 
-  // Citation & mention rate table
+  // Citation & mention rate table. Every rate carries its denominator: a
+  // percentage without its n is what let a single observation be read as a
+  // measurement for months.
   lines.push('## Citation & Mention Rates');
   lines.push('');
-  lines.push('| Source | Citation Rate | Mention Rate |');
-  lines.push('|--------|-------------|-------------|');
+  lines.push('| Source | Citation Rate | n | Mention Rate | n |');
+  lines.push('|--------|-------------|---|-------------|---|');
   for (const source of sources) {
     const cite = summary.citation_rate[source] != null
       ? `${(summary.citation_rate[source] * 100).toFixed(1)}%`
       : 'n/a';
+    const citeN = summary.citation_rate_n?.[source] ?? '—';
     const mention = `${((summary.mention_rate[source] || 0) * 100).toFixed(1)}%`;
-    lines.push(`| ${source} | ${cite} | ${mention} |`);
+    const mentionN = summary.mention_rate_n?.[source] ?? '—';
+    lines.push(`| ${source} | ${cite} | ${citeN} | ${mention} | ${mentionN} |`);
   }
   lines.push('');
 
@@ -280,6 +321,16 @@ function generateReport(snapshot) {
     lines.push('## Week-over-Week Comparison');
     lines.push('');
     lines.push(`Previous snapshot: ${previous.date}`);
+    const prevPerCell = previous.sampling?.runs_per_core_cell ?? 1;
+    if (prevPerCell !== perCell) {
+      // Both sides are computed over runs so they ARE comparable, but the
+      // precision is not, and a reader deciding whether a move is real needs
+      // to know which side is the thin one.
+      lines.push('');
+      lines.push(`> Sampling differs: previous ${prevPerCell} run(s) per cell, now ${perCell}. `
+        + 'Both rates are computed over runs so they are on the same basis, but the '
+        + `${prevPerCell < perCell ? 'previous' : 'current'} side carries the larger error bar.`);
+    }
     lines.push('');
     lines.push('| Source | Citation Rate (prev) | Citation Rate (now) | Mention Rate (prev) | Mention Rate (now) |');
     lines.push('|--------|---------------------|--------------------|--------------------|-------------------|');
