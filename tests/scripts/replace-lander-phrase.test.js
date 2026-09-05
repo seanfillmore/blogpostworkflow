@@ -53,5 +53,9 @@ test('the sweep covers the prose fields and every lander', () => {
   for (const k of ['founder_note', 'stats', 'subheading', 'whats_in_it_note', 'buybox_bullets']) {
     assert.ok(TEXT_FIELDS.includes(k), `${k} holds prose and must be swept`);
   }
-  assert.equal(Object.keys(LANDERS).length, 6, 'all six bundle landers');
+  // Five since 2026-09-05: the Hand Soap Set's lander went with the product,
+  // which is now two plain ladder rungs on the liquid soap PDP and has no
+  // lander of its own. Its metaobject (230811271338) is left on Shopify
+  // unreferenced rather than deleted.
+  assert.equal(Object.keys(LANDERS).length, 5, 'all five bundle landers');
 });

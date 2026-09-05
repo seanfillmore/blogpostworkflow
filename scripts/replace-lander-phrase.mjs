@@ -34,7 +34,6 @@ export const LANDERS = Object.freeze({
   '90-day-clean-swap': 'gid://shopify/Metaobject/219195736234',
   'head-to-toe': 'gid://shopify/Metaobject/219322482858',
   'gift-box': 'gid://shopify/Metaobject/219719565482',
-  'hand-soap-set': 'gid://shopify/Metaobject/230811271338',
   '99-coconut-reset-digital': 'gid://shopify/Metaobject/220166586538',
 });
 

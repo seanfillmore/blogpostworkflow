@@ -26,9 +26,11 @@
  * and the FAQ. That is the "giant open space", and it is on every bundle lander
  * but one.
  *
- * `whats-in-it` has the identical flaw and is included: `hand-soap-set` carries
- * no `value_stack` rows on any variant, so its "What's in the box" renders as
- * empty padding too.
+ * `whats-in-it` has the identical flaw and is included: `hand-soap-set` carried
+ * no `value_stack` rows on any variant, so its "What's in the box" rendered as
+ * empty padding too. (That product was retired on 2026-09-05 and replaced by a
+ * quantity ladder on the liquid soap PDP — the flaw it demonstrated is real and
+ * still guarded here; only the example is gone.)
  *
  * ── THE FIX, AND WHY IT IS CSS AND NOT LIQUID ───────────────────────────────
  * The wrapper belongs to the theme's section, so Liquid inside the section

@@ -107,11 +107,12 @@ export const MANIFEST = {
     insertAfter: { 'trust-line': 'buy_buttons' },
   },
   'product.landing-page-liquid-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
-    drop: [],
-        // NO tier on this page carries a selling plan (neither pump nor refill).
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+        // NO tier on this page carries a selling plan (neither pump, 2-pack,
+        // 4-pack nor refill) — the one ladder page that is not subscribable.
     subscribable: false,
-    insertAfter: { 'trust-line': 'buy_buttons' },
+    insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
   // they get no trust-line: a second copy under the button would be a
