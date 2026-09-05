@@ -26,14 +26,14 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">A jar lasts about a month of nightly use — under $1 a day.<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">An 8oz bottle lasts about a month of daily use — about $1 a day.<\/p>"
           }
         },
         "benefit-1": {
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Thick enough for hands, knees and feet. A little goes a long way.",
+            "text": "Organic coconut oil and jojoba. Both are close to what your skin makes.",
             "text_style": "body"
           }
         },
@@ -41,7 +41,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Coconut oil and jojoba soak in. Petroleum jelly just sits there.",
+            "text": "Made by hand in small batches, right here in the USA.",
             "text_style": "body"
           }
         },
@@ -49,7 +49,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Red palm oil, unrefined. It brings vitamin E along with it.",
+            "text": "Six things in the bottle. You can read the label in four seconds.",
             "text_style": "body"
           }
         },
@@ -57,7 +57,15 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No petroleum jelly, no mineral oil, no silicones, no lanolin.",
+            "text": "Soaks in fast, so you can get dressed without waiting around.",
+            "text_style": "body"
+          }
+        },
+        "benefit-5": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "No added fragrance. No parabens. Nothing you can&#39;t say out loud.",
             "text_style": "body"
           }
         },
@@ -78,15 +86,15 @@
             "custom_liquid": "<style>\n.vqr-row{display:flex;gap:12px;align-items:flex-end;justify-content:flex-start;margin:14px 0}\n.vqr-col{display:flex;flex-direction:column}\n.vqr-col--variant{flex:0 0 32%;min-width:140px}\n.vqr-col--qty{flex:0 0 auto;width:130px}\n.vqr-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px 0;font-weight:500;color:#1a1b18}\n.vqr-select{padding:11px 12px;border:1px solid #d3d3d3;border-radius:6px;background:#fff;font-size:14px;color:#1a1b18;height:42px}\n.vqr-stepper{display:flex;align-items:stretch;border:1px solid #d3d3d3;border-radius:6px;overflow:hidden;background:#fff;height:42px}\n.vqr-stepper button{background:#fff;border:none;padding:0 10px;font-size:18px;cursor:pointer;color:#1a1b18;line-height:1}\n.vqr-stepper button:hover{background:#f5f5f5}\n.vqr-stepper input{flex:1;text-align:center;border:none;padding:0 2px;font-size:14px;font-weight:500;-moz-appearance:textfield;min-width:0;background:#fff}\n.vqr-stepper input::-webkit-outer-spin-button,.vqr-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}\n.product-form__input--variant-picker,.product-form__input.variant-input-wrapper,variant-selects:not([data-vqr-skip]){display:none !important}\n<\/style>\n<div class=\"vqr-row\">\n  {%- if product.variants.size > 1 -%}\n  <div class=\"vqr-col vqr-col--variant\">\n    <label class=\"vqr-label\" for=\"vqr-variant-{{ product.id }}\">{{ product.options[0] | default: 'Scent' }}<\/label>\n    <select class=\"vqr-select\" id=\"vqr-variant-{{ product.id }}\" data-vqr-variant>\n      {%- for v in product.variants -%}\n        <option value=\"{{ v.id }}\"{% if v == product.selected_or_first_available_variant %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>\n          {{- v.title }}{% unless v.available %} - Sold out{% endunless -%}\n        <\/option>\n      {%- endfor -%}\n    <\/select>\n  <\/div>\n  {%- endif -%}\n  <div class=\"vqr-col vqr-col--qty\">\n    <label class=\"vqr-label\" for=\"vqr-qty-{{ product.id }}\">Quantity<\/label>\n    <div class=\"vqr-stepper\">\n      <button type=\"button\" data-vqr-qty-minus aria-label=\"Decrease quantity\">&minus;<\/button>\n      <input id=\"vqr-qty-{{ product.id }}\" type=\"number\" name=\"quantity\" value=\"1\" min=\"1\" data-vqr-qty form=\"product-form-{{ section.id }}\">\n      <button type=\"button\" data-vqr-qty-plus aria-label=\"Increase quantity\">+<\/button>\n    <\/div>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  \/\/ Bound once. Dawn replaces the product info container on every variant change, so the\n  \/\/ picker and stepper are new DOM nodes each time — listeners bound to the elements\n  \/\/ themselves die after the first switch. Inline scripts in replaced markup do not run,\n  \/\/ so nothing re-binds. Delegation on document is what makes this survive.\n  if(window.__vqrDelegated){ return; }\n  window.__vqrDelegated = true;\n\n  \/\/ variant id -> its option values. Covers multi-option bundles (Configuration + Scent),\n  \/\/ not just the first select.\n  var VQR_OPTION_VALUES = {\n    {%- for v in product.variants -%}\n    \"{{ v.id }}\": [{% for o in v.options %}{{ o | json }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}\n    {%- endfor -%}\n  };\n\n  document.addEventListener('change', function(e){\n    var pick = e.target;\n    if(!pick || !pick.matches || !pick.matches('select[data-vqr-variant]')){ return; }\n    var opts = VQR_OPTION_VALUES[pick.value];\n    if(!opts){ return; }\n\n    var root = document.querySelector('variant-selects:not([data-vqr-skip])');\n    var selects = root ? root.querySelectorAll('select') : [];\n    if(selects.length){\n      \/\/ Assign the OPTION VALUE, never the variant id — an id matches no option, so the\n      \/\/ select silently empties and the gallery never updates.\n      for(var i = 0; i < selects.length; i++){\n        if(opts[i] != null){ selects[i].value = opts[i]; }\n      }\n      selects[selects.length - 1].dispatchEvent(new Event('change', { bubbles: true }));\n      return;\n    }\n    var radios = document.querySelectorAll('variant-radios input[type=\"radio\"]');\n    radios.forEach(function(r){\n      if(opts.indexOf(r.value) !== -1){ r.checked = true; r.dispatchEvent(new Event('change',{bubbles:true})); }\n    });\n  });\n\n  document.addEventListener('click', function(e){\n    var btn = e.target.closest && e.target.closest('[data-vqr-qty-minus], [data-vqr-qty-plus]');\n    if(!btn){ return; }\n    var wrap = btn.closest('.vqr-stepper') || btn.parentElement;\n    var qty = wrap && wrap.querySelector('input');\n    if(!qty){ return; }\n    var v = parseInt(qty.value, 10) || 1;\n    var next = btn.hasAttribute('data-vqr-qty-minus') ? Math.max(1, v - 1) : v + 1;\n    if(next !== v){ qty.value = next; qty.dispatchEvent(new Event('change',{bubbles:true})); }\n  });\n})();\n<\/script>"
           }
         },
+        "recurpay_subscriptions_app_recurpay_app_block_widget_38KtCi": {
+          "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-app-block-widget\/c600a513-dad8-4030-8697-de47c18881f2",
+          "settings": {}
+        },
         "discount-callout": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<style>.product__text svg, .product__text svg path { color: #4a8b3c; fill: #4a8b3c; } .multicolumn-card strong { color: #FFB503; letter-spacing: 2px; font-size: 1.15em; } .product__tax { display: none !important; } shopify-payment-terms, .shopify-payment-terms, [data-shopify=\"payment-terms\"] { display: none !important; } .rich-text { position: relative; } .rich-text::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: rgb(var(--color-background)); z-index: -1; } [id*=\"hero-ingredient-cards\"] { background-color: #faf7f0; position: relative; } [id*=\"hero-ingredient-cards\"]::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: #faf7f0; z-index: -1; } [id*=\"free-from\"] .rte ul, [id*=\"free-from\"] ul { list-style: none; padding: 0; margin: 0; } [id*=\"free-from\"] li { font-size: 17px; line-height: 1.35; padding: 1px 0; font-weight: 500; color: #1a1b18; } [id*=\"free-from\"] li::before { content: \"✗\"; color: #4a8b3c; margin-right: 10px; font-weight: 700; }<\/style>"
+            "custom_liquid": "<style>.product__text svg, .product__text svg path { color: #4a8b3c; fill: #4a8b3c; } .multicolumn-card strong { color: #FFB503; letter-spacing: 2px; font-size: 1.15em; } @media screen and (max-width: 749px) { .grid--1-col-mobile > .grid__item { width: 100% !important; max-width: 100% !important; flex: 0 0 100% !important; } } .rich-text { position: relative; } .rich-text::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: rgb(var(--color-background)); z-index: -1; } shopify-payment-terms, .shopify-payment-terms, [data-shopify=\"payment-terms\"] { display: none !important; } [id$=\"testimonial-quotes\"] .multicolumn-list { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; gap: 1.5rem; padding-bottom: 1rem; scrollbar-width: thin; } [id$=\"testimonial-quotes\"] .multicolumn-list > .grid__item { flex: 0 0 calc((100% - 3rem) \/ 3) !important; max-width: calc((100% - 3rem) \/ 3) !important; scroll-snap-align: start; } @media (max-width: 749px) { [id$=\"testimonial-quotes\"] .multicolumn-list > .grid__item { flex: 0 0 85% !important; max-width: 85% !important; } } .product__tax { display: none !important; } [id*=\"hero-ingredient-cards\"] { background-color: #faf7f0; position: relative; } [id*=\"hero-ingredient-cards\"]::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: #faf7f0; z-index: -1; } [id*=\"free-from\"] .rte ul, [id*=\"free-from\"] ul { list-style: none; padding: 0; margin: 0; } [id*=\"free-from\"] li { font-size: 17px; line-height: 1.35; padding: 1px 0; font-weight: 500; color: #1a1b18; } [id*=\"free-from\"] li::before { content: \"✗\"; color: #4a8b3c; margin-right: 10px; font-weight: 700; }<\/style>"
           }
-        },
-        "recurpay_subscriptions_app_recurpay_app_block_widget_BtRC8E": {
-          "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-app-block-widget\/c600a513-dad8-4030-8697-de47c18881f2",
-          "settings": {}
         },
         "buy_buttons": {
           "type": "buy_buttons",
@@ -96,12 +104,18 @@
             "show_gift_card_recipient": false
           }
         },
+        "trust-line": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p><p style=\"font-size:14px;color:#555;font-style:italic;line-height:1.5;margin:0 0 10px 0;\">&ldquo;As soon as you put it on it just ABSORBS. My hands are in water a lot at my job and this locks moisture in better than any Bath &amp; Body Works or Body Shop product.&rdquo; &mdash; Ariel M.<\/p>"
+          }
+        },
         "tab-ingredients": {
           "type": "collapsible_tab",
           "settings": {
             "icon": "check_mark",
             "heading": "Ingredients",
-            "content": "<p>Purified spring water, organic virgin coconut oil, plant-based emulsifying wax, palm stearic, grapefruit seed extract, organic beeswax, organic red palm oil.<\/p><p><strong>Variation essential oils:<\/strong><\/p><ul><li><strong>Coconut Breeze:<\/strong> organic coconut oil extract<\/li><li><strong>Lavender &amp; Rose:<\/strong> lavender, rose, roman chamomile, geranium<\/li><li><strong>Calming Lavender:<\/strong> lavender<\/li><li><strong>Rose Petal:<\/strong> rose, ylang ylang<\/li><li><strong>Pure Unscented:<\/strong> none<\/li><\/ul>",
+            "content": "<p>Purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil.<\/p><p><strong>Variation essential oils:<\/strong><\/p><ul><li><strong>Pure Unscented:<\/strong> none<\/li><li><strong>Coconut Breeze:<\/strong> organic coconut oil extract<\/li><li><strong>Rose Petal:<\/strong> rose, ylang ylang<\/li><li><strong>Lavender & Rose:<\/strong> lavender, rose, roman chamomile, geranium<\/li><li><strong>Calming Lavender:<\/strong> lavender<\/li><\/ul>",
             "page": "",
             "custom_liquid": "",
             "keep_open": true
@@ -112,7 +126,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>Thick, but it does not sit on you.<\/strong> It goes on like butter and works in — heavy enough for rough spots, without the slick film.<\/p><p><strong>Built for the places a lotion does not fix.<\/strong> Hands, knees, legs and feet, extreme dryness, post-shower routines, overnight.<\/p><p><strong>A little goes a long way.<\/strong> A tiny bit covers more than a pump of lotion does.<\/p><p><strong>Honest trade-off.<\/strong> Closer to a balm than a pump cream. It firms in cold weather because beeswax does. Not a fast-absorbing daytime lotion.<\/p>",
+            "content": "<p><strong>It soaks in.<\/strong> Goes on smooth and absorbs quickly, without the slick film that makes you wait before getting dressed.<\/p><p><strong>Six ingredients.<\/strong> No mineral oil, no petrolatum, no synthetic fragrance — none of the filler most commercial lotions are mostly made of.<\/p><p><strong>The scent is the oils, not added fragrance.<\/strong> Light, and it fades. Pure Unscented is the same formula with none at all.<\/p><p><strong>Honest trade-off.<\/strong> The texture shifts a little batch to batch, and it firms below 76°F. Shake the bottle before the first pump if it has been stored cool.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -123,7 +137,18 @@
           "settings": {
             "icon": "clipboard",
             "heading": "How to Use",
-            "content": "<p>Warm a small amount between your fingers to soften, then apply to dry skin. Best at night for overnight occlusion or after a bath. Pay extra attention to elbows, hands, and feet — areas where most lotions don't last long enough.<\/p>",
+            "content": "<p>Apply to clean, dry skin and massage in fully — the formula should absorb within minutes without sticky residue. If the lotion is firm in cold weather, warm a small amount between your palms before applying.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "tab-expect": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "check_mark",
+            "heading": "What to expect",
+            "content": "<p>Skin takes a little time. Here&#39;s the usual pattern.<\/p><ul><li><strong>First few days:<\/strong> your skin stops feeling tight after a shower.<\/li><li><strong>First week:<\/strong> you&#39;ll reach for it less often than your old lotion.<\/li><li><strong>By week three:<\/strong> dry patches on elbows, heels and hands have usually settled down.<\/li><\/ul><p>Cold weather slows this down. So does washing your hands all day.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -143,19 +168,13 @@
         "ymal-recommendations": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<style>\n.ymal-section{margin:24px 0 8px 0;padding-top:24px;border-top:1px solid #e5e5e5}\n.ymal-section h3{font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin:0 0 16px 0;color:#1a1b18}\n.ymal-cards{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin:0 -4px;align-items:stretch}\n.ymal-cards::-webkit-scrollbar{height:6px}\n.ymal-cards::-webkit-scrollbar-thumb{background:#d3d3d3;border-radius:3px}\n.ymal-card{flex:0 0 calc(40% - 7px);scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}\n.ymal-card-img{display:block;background:#f5f5f5;border-radius:8px;overflow:hidden;aspect-ratio:1\/1}\n.ymal-card-img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-card-title{font-size:14px;font-weight:500;color:#1a1b18;text-decoration:none;line-height:1.3;margin-top:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.6em}\n.ymal-card-variant{font-size:11px;letter-spacing:0.8px;text-transform:uppercase;color:#6d7175;min-height:1.2em;display:block}\n.ymal-card-add{margin-top:auto;padding:10px;background:#eef3e8;border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#2d5a2d;cursor:pointer;transition:background 0.15s}\n.ymal-card-add:hover{background:#AEDEAC}\n.ymal-card-add:disabled{opacity:0.6;cursor:default}\n@media(min-width:990px){.ymal-card{flex:0 0 calc(32% - 8px)}}\n\n.ymal-modal{position:fixed;inset:0;background:rgba(26,27,24,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s}\n.ymal-modal[data-open=\"true\"]{display:flex;opacity:1}\n.ymal-modal__panel{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:20px 22px 22px 22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25)}\n.ymal-modal__close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#6d7175;padding:4px 8px}\n.ymal-modal__close:hover{color:#1a1b18}\n.ymal-modal__hd{display:flex;gap:12px;align-items:center;margin-bottom:16px}\n.ymal-modal__img{width:72px;height:72px;background:#f5f5f5;border-radius:8px;overflow:hidden;flex-shrink:0}\n.ymal-modal__img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-modal__title{font-size:16px;font-weight:600;color:#1a1b18;margin:0 24px 4px 0;line-height:1.3}\n.ymal-modal__price{font-size:14px;color:#1a1b18;font-weight:500}\n.ymal-modal__opt-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#1a1b18;font-weight:700;margin:0 0 8px 0}\n.ymal-modal__variants{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}\n.ymal-modal__variant{padding:8px 12px;background:#fff;border:2px solid #d3d3d3;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#1a1b18;transition:all 0.15s;-webkit-tap-highlight-color:transparent}\n.ymal-modal__variant:hover{border-color:#4a8b3c}\n.ymal-modal__variant[data-selected=\"true\"]{border-color:#4a8b3c;background:#eef3e8;color:#2d5a2d}\n.ymal-modal__variant[data-soldout=\"true\"]{opacity:0.45;text-decoration:line-through;cursor:not-allowed}\n.ymal-modal__add{width:100%;padding:14px;background:#1a1b18;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.15s}\n.ymal-modal__add:hover{background:#000}\n.ymal-modal__add:disabled{opacity:0.6;cursor:default}\n.ymal-modal__add[data-state=\"added\"]{background:#4a8b3c}\n<\/style>\n<div class=\"ymal-section\" id=\"ymal-{{ product.id }}\" style=\"display:none\">\n  <h3>You may also like<\/h3>\n  <div class=\"ymal-cards\" id=\"ymal-cards-{{ product.id }}\"><\/div>\n<\/div>\n<div class=\"ymal-modal\" id=\"ymal-modal-{{ product.id }}\" data-open=\"false\" role=\"dialog\" aria-modal=\"true\">\n  <div class=\"ymal-modal__panel\">\n    <button type=\"button\" class=\"ymal-modal__close\" aria-label=\"Close\">×<\/button>\n    <div class=\"ymal-modal__hd\">\n      <div class=\"ymal-modal__img\"><img alt=\"\"><\/div>\n      <div>\n        <h4 class=\"ymal-modal__title\"><\/h4>\n        <div class=\"ymal-modal__price\"><\/div>\n      <\/div>\n    <\/div>\n    <p class=\"ymal-modal__opt-label\"><\/p>\n    <div class=\"ymal-modal__variants\"><\/div>\n    <button type=\"button\" class=\"ymal-modal__add\" data-state=\"idle\">ADD TO CART<\/button>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  var pid = {{ product.id }};\n  var section = document.getElementById('ymal-'+pid);\n  var container = document.getElementById('ymal-cards-'+pid);\n  var modal = document.getElementById('ymal-modal-'+pid);\n  if(!section || !container || !modal) return;\n  var productsCache = {};\n\n  function imgUrl(src, size){\n    if(!src) return '';\n    return src.replace(\/(\\.[^.?]+)(\\?.*)?$\/, '_'+size+'$1$2');\n  }\n  function fmtMoney(cents){\n    return '$' + (cents\/100).toFixed(2);\n  }\n  function escapeHtml(s){\n    return String(s).replace(\/[&<>\"']\/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});\n  }\n\n  function openModal(prod){\n    var v = prod.variants.find(function(x){return x.available;}) || prod.variants[0];\n    var optName = (prod.options && prod.options[0]) || 'Option';\n    var img = prod.featured_image || (prod.images && prod.images[0] && prod.images[0].src) || '';\n    modal.querySelector('.ymal-modal__img img').src = imgUrl(img, '160x160');\n    modal.querySelector('.ymal-modal__img img').alt = prod.title;\n    modal.querySelector('.ymal-modal__title').textContent = prod.title;\n    modal.querySelector('.ymal-modal__price').textContent = fmtMoney(v.price);\n    modal.querySelector('.ymal-modal__opt-label').textContent = (typeof optName === 'string' ? optName : (optName.name || 'Option'));\n    var picker = modal.querySelector('.ymal-modal__variants');\n    picker.innerHTML = prod.variants.map(function(x){\n      return '<button type=\"button\" class=\"ymal-modal__variant\" data-vid=\"'+x.id+'\" data-price=\"'+x.price+'\" data-soldout=\"'+(!x.available)+'\">'+escapeHtml(x.title)+'<\/button>';\n    }).join('');\n    var btns = picker.querySelectorAll('.ymal-modal__variant');\n    btns.forEach(function(b){\n      b.addEventListener('click', function(){\n        if(b.dataset.soldout === 'true') return;\n        btns.forEach(function(x){ x.dataset.selected = 'false'; });\n        b.dataset.selected = 'true';\n        modal.querySelector('.ymal-modal__price').textContent = fmtMoney(parseInt(b.dataset.price, 10));\n      });\n    });\n    var firstAvail = picker.querySelector('.ymal-modal__variant:not([data-soldout=\"true\"])');\n    if(firstAvail) firstAvail.dataset.selected = 'true';\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.dataset.state = 'idle';\n    addBtn.disabled = false;\n    addBtn.textContent = 'ADD TO CART';\n    modal.dataset.open = 'true';\n    document.body.style.overflow = 'hidden';\n  }\n  function closeModal(){\n    modal.dataset.open = 'false';\n    document.body.style.overflow = '';\n  }\n\n  modal.querySelector('.ymal-modal__close').addEventListener('click', closeModal);\n  modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });\n  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.dataset.open === 'true') closeModal(); });\n\n  modal.querySelector('.ymal-modal__add').addEventListener('click', function(){\n    var sel = modal.querySelector('.ymal-modal__variant[data-selected=\"true\"]');\n    if(!sel) return;\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.disabled = true;\n    addBtn.textContent = 'ADDING...';\n    fetch('\/cart\/add.js', {\n      method: 'POST',\n      headers: {'Content-Type': 'application\/json'},\n      body: JSON.stringify({ id: sel.dataset.vid, quantity: 1 })\n    }).then(function(r){\n      if(!r.ok) throw new Error();\n      addBtn.dataset.state = 'added';\n      addBtn.textContent = 'ADDED ✓';\n      document.dispatchEvent(new CustomEvent('cart:refresh'));\n      setTimeout(closeModal, 800);\n    }).catch(function(){\n      addBtn.disabled = false;\n      addBtn.textContent = 'ADD TO CART';\n    });\n  });\n\n  fetch('\/recommendations\/products.json?product_id='+pid+'&limit=6&intent=related')\n    .then(function(r){ return r.json(); })\n    .then(function(data){\n      var products = (data && data.products) || [];\n      if(!products.length) return;\n      products.forEach(function(p){ productsCache[p.id] = p; });\n      section.style.display = 'block';\n      container.innerHTML = products.map(function(p){\n        var v = p.variants[0];\n        var img = p.featured_image || (p.images && p.images[0] && p.images[0].src) || '';\n        var url = imgUrl(img, '400x400');\n        var variant = v.title === 'Default Title' ? '' : v.title;\n        var multi = p.variants.length > 1;\n        return '<div class=\"ymal-card\"><a class=\"ymal-card-img\" href=\"'+p.url+'\"><img src=\"'+url+'\" alt=\"'+escapeHtml(p.title)+'\" loading=\"lazy\"><\/a><a class=\"ymal-card-title\" href=\"'+p.url+'\">'+escapeHtml(p.title)+'<\/a><div class=\"ymal-card-variant\">'+escapeHtml(variant)+'<\/div><button class=\"ymal-card-add\" data-pid=\"'+p.id+'\" data-vid=\"'+v.id+'\" data-multi=\"'+multi+'\">ADD<\/button><\/div>';\n      }).join('');\n      container.querySelectorAll('.ymal-card-add').forEach(function(btn){\n        btn.addEventListener('click', function(){\n          var multi = btn.dataset.multi === 'true';\n          var prod = productsCache[btn.dataset.pid];\n          if(multi && prod){\n            openModal(prod);\n            return;\n          }\n          btn.disabled = true;\n          btn.textContent = 'ADDING...';\n          fetch('\/cart\/add.js', {\n            method: 'POST',\n            headers: {'Content-Type': 'application\/json'},\n            body: JSON.stringify({ id: btn.dataset.vid, quantity: 1 })\n          }).then(function(r){\n            if(!r.ok) throw new Error();\n            btn.textContent = 'ADDED ✓';\n            document.dispatchEvent(new CustomEvent('cart:refresh'));\n            setTimeout(function(){ btn.textContent = 'ADD'; btn.disabled = false; }, 2000);\n          }).catch(function(){\n            btn.textContent = 'ADD';\n            btn.disabled = false;\n          });\n        });\n      });\n    })\n    .catch(function(e){ console.warn('YMAL fetch failed', e); });\n})();\n<\/script>\n"
+            "custom_liquid": "<style>\n.ymal-section{margin:24px 0 8px 0;padding-top:24px;border-top:1px solid #e5e5e5}\n.ymal-section h3{font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin:0 0 16px 0;color:#1a1b18}\n.ymal-cards{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin:0 -4px;align-items:stretch}\n.ymal-cards::-webkit-scrollbar{height:6px}\n.ymal-cards::-webkit-scrollbar-thumb{background:#d3d3d3;border-radius:3px}\n.ymal-card{flex:0 0 calc(40% - 7px);scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}\n.ymal-card-img{display:block;background:#f5f5f5;border-radius:8px;overflow:hidden;aspect-ratio:1\/1}\n.ymal-card-img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-card-title{font-size:14px;font-weight:500;color:#1a1b18;text-decoration:none;line-height:1.3;margin-top:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.6em}\n.ymal-card-variant{font-size:11px;letter-spacing:0.8px;text-transform:uppercase;color:#6d7175;min-height:1.2em;display:block}\n.ymal-card-add{margin-top:auto;padding:10px;background:#eef3e8;border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#2d5a2d;cursor:pointer;transition:background 0.15s}\n.ymal-card-add:hover{background:#AEDEAC}\n.ymal-card-add:disabled{opacity:0.6;cursor:default}\n@media(min-width:990px){.ymal-card{flex:0 0 calc(32% - 8px)}}\n\n.ymal-modal{position:fixed;inset:0;background:rgba(26,27,24,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s}\n.ymal-modal[data-open=\"true\"]{display:flex;opacity:1}\n.ymal-modal__panel{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:20px 22px 22px 22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25)}\n.ymal-modal__close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#6d7175;padding:4px 8px}\n.ymal-modal__close:hover{color:#1a1b18}\n.ymal-modal__hd{display:flex;gap:12px;align-items:center;margin-bottom:16px}\n.ymal-modal__img{width:72px;height:72px;background:#f5f5f5;border-radius:8px;overflow:hidden;flex-shrink:0}\n.ymal-modal__img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-modal__title{font-size:16px;font-weight:600;color:#1a1b18;margin:0 24px 4px 0;line-height:1.3}\n.ymal-modal__price{font-size:14px;color:#1a1b18;font-weight:500}\n.ymal-modal__opt-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#1a1b18;font-weight:700;margin:0 0 8px 0}\n.ymal-modal__variants{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}\n.ymal-modal__variant{padding:8px 12px;background:#fff;border:2px solid #d3d3d3;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#1a1b18;transition:all 0.15s;-webkit-tap-highlight-color:transparent}\n.ymal-modal__variant:hover{border-color:#4a8b3c}\n.ymal-modal__variant[data-selected=\"true\"]{border-color:#4a8b3c;background:#eef3e8;color:#2d5a2d}\n.ymal-modal__variant[data-soldout=\"true\"]{opacity:0.45;text-decoration:line-through;cursor:not-allowed}\n.ymal-modal__add{width:100%;padding:14px;background:#1a1b18;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.15s}\n.ymal-modal__add:hover{background:#000}\n.ymal-modal__add:disabled{opacity:0.6;cursor:default}\n.ymal-modal__add[data-state=\"added\"]{background:#4a8b3c}\n<\/style>\n<div class=\"ymal-section\" id=\"ymal-{{ product.id }}\" style=\"display:none\">\n  <h3>You may also like<\/h3>\n  <div class=\"ymal-cards\" id=\"ymal-cards-{{ product.id }}\"><\/div>\n<\/div>\n<div class=\"ymal-modal\" id=\"ymal-modal-{{ product.id }}\" data-open=\"false\" role=\"dialog\" aria-modal=\"true\">\n  <div class=\"ymal-modal__panel\">\n    <button type=\"button\" class=\"ymal-modal__close\" aria-label=\"Close\">×<\/button>\n    <div class=\"ymal-modal__hd\">\n      <div class=\"ymal-modal__img\"><img alt=\"\"><\/div>\n      <div>\n        <h4 class=\"ymal-modal__title\"><\/h4>\n        <div class=\"ymal-modal__price\"><\/div>\n      <\/div>\n    <\/div>\n    <p class=\"ymal-modal__opt-label\"><\/p>\n    <div class=\"ymal-modal__variants\"><\/div>\n    <button type=\"button\" class=\"ymal-modal__add\" data-state=\"idle\">ADD TO CART<\/button>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  var pid = {{ product.id }};\n  var section = document.getElementById('ymal-'+pid);\n  var container = document.getElementById('ymal-cards-'+pid);\n  var modal = document.getElementById('ymal-modal-'+pid);\n  if(!section || !container || !modal) return;\n  var productsCache = {};\n\n  function imgUrl(src, size){\n    if(!src) return '';\n    return src.replace(\/(\\.[^.?]+)(\\?.*)?$\/, '_'+size+'$1$2');\n  }\n  function fmtMoney(cents){\n    return '$' + (cents\/100).toFixed(2);\n  }\n  function escapeHtml(s){\n    return String(s).replace(\/[&<>\"']\/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});\n  }\n\n  function openModal(prod){\n    var v = prod.variants.find(function(x){return x.available;}) || prod.variants[0];\n    var optName = (prod.options && prod.options[0]) || 'Option';\n    var img = prod.featured_image || (prod.images && prod.images[0] && prod.images[0].src) || '';\n    modal.querySelector('.ymal-modal__img img').src = imgUrl(img, '160x160');\n    modal.querySelector('.ymal-modal__img img').alt = prod.title;\n    modal.querySelector('.ymal-modal__title').textContent = prod.title;\n    modal.querySelector('.ymal-modal__price').textContent = fmtMoney(v.price);\n    modal.querySelector('.ymal-modal__opt-label').textContent = (typeof optName === 'string' ? optName : (optName.name || 'Option'));\n    var picker = modal.querySelector('.ymal-modal__variants');\n    picker.innerHTML = prod.variants.map(function(x){\n      return '<button type=\"button\" class=\"ymal-modal__variant\" data-vid=\"'+x.id+'\" data-price=\"'+x.price+'\" data-soldout=\"'+(!x.available)+'\">'+escapeHtml(x.title)+'<\/button>';\n    }).join('');\n    var btns = picker.querySelectorAll('.ymal-modal__variant');\n    btns.forEach(function(b){\n      b.addEventListener('click', function(){\n        if(b.dataset.soldout === 'true') return;\n        btns.forEach(function(x){ x.dataset.selected = 'false'; });\n        b.dataset.selected = 'true';\n        modal.querySelector('.ymal-modal__price').textContent = fmtMoney(parseInt(b.dataset.price, 10));\n      });\n    });\n    var firstAvail = picker.querySelector('.ymal-modal__variant:not([data-soldout=\"true\"])');\n    if(firstAvail) firstAvail.dataset.selected = 'true';\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.dataset.state = 'idle';\n    addBtn.disabled = false;\n    addBtn.textContent = 'ADD TO CART';\n    modal.dataset.open = 'true';\n    document.body.style.overflow = 'hidden';\n  }\n  function closeModal(){\n    modal.dataset.open = 'false';\n    document.body.style.overflow = '';\n  }\n\n  modal.querySelector('.ymal-modal__close').addEventListener('click', closeModal);\n  modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });\n  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.dataset.open === 'true') closeModal(); });\n\n  modal.querySelector('.ymal-modal__add').addEventListener('click', function(){\n    var sel = modal.querySelector('.ymal-modal__variant[data-selected=\"true\"]');\n    if(!sel) return;\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.disabled = true;\n    addBtn.textContent = 'ADDING...';\n    fetch('\/cart\/add.js', {\n      method: 'POST',\n      headers: {'Content-Type': 'application\/json'},\n      body: JSON.stringify({ id: sel.dataset.vid, quantity: 1 })\n    }).then(function(r){\n      if(!r.ok) throw new Error();\n      addBtn.dataset.state = 'added';\n      addBtn.textContent = 'ADDED ✓';\n      document.dispatchEvent(new CustomEvent('cart:refresh'));\n      setTimeout(closeModal, 800);\n    }).catch(function(){\n      addBtn.disabled = false;\n      addBtn.textContent = 'ADD TO CART';\n    });\n  });\n\n  fetch('\/recommendations\/products.json?product_id='+pid+'&limit=6&intent=related')\n    .then(function(r){ return r.json(); })\n    .then(function(data){\n      var products = (data && data.products) || [];\n      if(!products.length) return;\n      products.forEach(function(p){ productsCache[p.id] = p; });\n      section.style.display = 'block';\n      container.innerHTML = products.map(function(p){\n        var v = p.variants[0];\n        var img = p.featured_image || (p.images && p.images[0] && p.images[0].src) || '';\n        var url = imgUrl(img, '400x400');\n        var variant = v.title === 'Default Title' ? '' : v.title;\n        var multi = p.variants.length > 1;\n        return '<div class=\"ymal-card\"><a class=\"ymal-card-img\" href=\"'+p.url+'\"><img src=\"'+url+'\" alt=\"'+escapeHtml(p.title)+'\" loading=\"lazy\"><\/a><a class=\"ymal-card-title\" href=\"'+p.url+'\">'+escapeHtml(p.title)+'<\/a><div class=\"ymal-card-variant\">'+escapeHtml(variant)+'<\/div><button class=\"ymal-card-add\" data-pid=\"'+p.id+'\" data-vid=\"'+v.id+'\" data-multi=\"'+multi+'\">ADD<\/button><\/div>';\n      }).join('');\n      container.querySelectorAll('.ymal-card-add').forEach(function(btn){\n        btn.addEventListener('click', function(){\n          var multi = btn.dataset.multi === 'true';\n          var prod = productsCache[btn.dataset.pid];\n          if(multi && prod){\n            openModal(prod);\n            return;\n          }\n          btn.disabled = true;\n          btn.textContent = 'ADDING...';\n          fetch('\/cart\/add.js', {\n            method: 'POST',\n            headers: {'Content-Type': 'application\/json'},\n            body: JSON.stringify({ id: btn.dataset.vid, quantity: 1 })\n          }).then(function(r){\n            if(!r.ok) throw new Error();\n            btn.textContent = 'ADDED ✓';\n            document.dispatchEvent(new CustomEvent('cart:refresh'));\n            setTimeout(function(){ btn.textContent = 'ADD'; btn.disabled = false; }, 2000);\n          }).catch(function(){\n            btn.textContent = 'ADD';\n            btn.disabled = false;\n          });\n        });\n      });\n    })\n    .catch(function(e){ console.warn('YMAL fetch failed', e); });\n})();\n<\/script>"
           }
         },
         "sticky_cart": {
           "type": "sticky_cart",
           "settings": {
             "show_quantity_selector": false
-          }
-        },
-        "trust-line": {
-          "type": "custom_liquid",
-          "settings": {
-            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p>"
           }
         }
       },
@@ -168,15 +187,17 @@
         "benefit-2",
         "benefit-3",
         "benefit-4",
+        "benefit-5",
         "variant_picker",
         "vqr-combo",
+        "recurpay_subscriptions_app_recurpay_app_block_widget_38KtCi",
         "discount-callout",
-        "recurpay_subscriptions_app_recurpay_app_block_widget_BtRC8E",
         "buy_buttons",
         "trust-line",
         "tab-ingredients",
         "tab-details",
         "tab-howto",
+        "tab-expect",
         "tab-shipping",
         "ymal-recommendations",
         "sticky_cart"
@@ -213,7 +234,7 @@
         "hook-heading": {
           "type": "heading",
           "settings": {
-            "heading": "Built around what locks moisture in — not what seals it out.",
+            "heading": "Built around oils your skin actually recognizes.",
             "heading_size": "h1",
             "heading_tag": "h2",
             "enable_highlight": false,
@@ -223,7 +244,7 @@
         "hook-text": {
           "type": "text",
           "settings": {
-            "text": "<p>Thicker than a lotion — closer to a balm. It goes on like butter and works in, and reviewers reach for it on hands, knees, legs and feet. A little covers more than you expect.<\/p>",
+            "text": "<p>Most lotions sit on top of your skin — water and a thickener, and you can still feel one there an hour later. This one soaks in. Reviewers keep coming back to the same two things: how fast it absorbs, and that it does not leave them greasy.<\/p>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -262,10 +283,10 @@
             "background_color": "#f2f2f2",
             "heading_color": "#000000",
             "text_color": "#333333",
-            "image": "shopify:\/\/shop_images\/Wax.webp",
-            "title": "Organic Beeswax",
+            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
+            "title": "Organic Virgin Coconut Oil",
             "title_size": "medium",
-            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable barrier that locks moisture in without sealing pores the way petrolatum does. Its long-chain fatty acids and esters create a flexible film that holds skin's own water content while still allowing gas exchange. Petrolatum is cheaper and shelf-stable forever — it also fully occludes. We pay more for beeswax.<\/p>",
+            "text": "<p><em>Absorbing moisturizer.<\/em> Cold-pressed and unrefined, this oil keeps its full lauric acid and medium-chain fatty acid profile. The MCFAs absorb into the skin barrier instead of forming a film on top of it. Refined coconut oil is uniform and shelf-stable because the lab strips out the variation — and most of what makes the oil work.<\/p>",
             "show_popup": false,
             "popup_image_position": "top",
             "justify_text": false,
@@ -282,10 +303,10 @@
             "background_color": "#f2f2f2",
             "heading_color": "#000000",
             "text_color": "#333333",
-            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
-            "title": "Organic Virgin Coconut Oil",
+            "image": "shopify:\/\/shop_images\/Jojoba.webp",
+            "title": "Organic Jojoba",
             "title_size": "medium",
-            "text": "<p><em>Fatty-acid nourishment.<\/em> Cold-pressed virgin coconut oil keeps its full lauric acid content — roughly 50% of its fatty acid profile. The medium-chain fatty acids absorb into the skin barrier rather than sitting on top. Refined coconut oil is cheaper and uniform batch-to-batch because the lab strips the variation out, along with most of the lauric acid.<\/p>",
+            "text": "<p><em>Skin-mirroring carrier oil.<\/em> Jojoba is technically a wax ester, not an oil — its molecular structure is close enough to human sebum that skin recognizes and absorbs it without forming an occlusive film. That's why this lotion isn't greasy. Mineral oil and dimethicone are cheaper and form a more uniform film. They also seal everything else underneath them.<\/p>",
             "show_popup": false,
             "popup_image_position": "top",
             "justify_text": false,
@@ -305,7 +326,7 @@
             "image": "shopify:\/\/shop_images\/red-palm-fruit.webp",
             "title": "Organic Red Palm Oil",
             "title_size": "medium",
-            "text": "<p><em>Vitamin E and beta-carotene source.<\/em> Unrefined red palm oil contributes naturally occurring vitamin E and tocotrienols — antioxidants that nourish the skin barrier the cream is built to protect. The deep red-orange color comes from the carotenoids, not added pigment. RSPO-certified sourcing.<\/p>",
+            "text": "<p><em>Vitamin E and beta-carotene source.<\/em> Unrefined red palm oil delivers naturally occurring vitamin E and tocotrienols — antioxidants that support the skin barrier and help protect cells from oxidative stress. The deep red-orange color is the carotenoids themselves, not added pigment. Sustainably sourced from RSPO-certified supply chains.<\/p>",
             "show_popup": false,
             "popup_image_position": "top",
             "justify_text": false,
@@ -351,7 +372,7 @@
         "free-from-heading": {
           "type": "heading",
           "settings": {
-            "heading": "What's NOT in this jar",
+            "heading": "What's NOT in this bottle",
             "heading_size": "h1",
             "heading_tag": "h2",
             "enable_highlight": false,
@@ -361,7 +382,7 @@
         "free-from-body": {
           "type": "text",
           "settings": {
-            "text": "<ul><li>No petroleum jelly<\/li><li>No mineral oil<\/li><li>No silicones<\/li><li>No lanolin<\/li><li>No synthetic fragrance<\/li><li>No parabens<\/li><li>No preservatives you&#39;d need to look up<\/li><\/ul>",
+            "text": "<ul><li>No mineral oil or petroleum jelly. That&#39;s the cheap base most lotions are built on.<\/li><li>No silicones, so nothing seals your skin under a film.<\/li><li>No parabens.<\/li><li>No synthetic fragrance. The only smell is the oils themselves.<\/li><li>No preservatives you&#39;d need to look up.<\/li><\/ul>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -374,9 +395,9 @@
         "free-from-body"
       ],
       "settings": {
-        "image": "shopify:\/\/shop_images\/cream-free-from.webp",
+        "image": "shopify:\/\/shop_images\/lotion-free-from.webp",
         "image_position": "center center",
-        "layout": "image_first",
+        "layout": "text_first",
         "text_box_position": "middle",
         "text_alignment": "left",
         "image_ratio": "adapt",
@@ -400,7 +421,7 @@
         "padding_bottom": 36
       }
     },
-    "judgeme_carousel_cream": {
+    "17778503329c046778": {
       "type": "apps",
       "blocks": {
         "judge_me_reviews_cards_carousel_mXDirj": {
@@ -462,7 +483,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>During our family's healthy-ingredients journey, we kept finding body creams labeled \"natural\" that still relied on petrolatum, dimethicone, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.<\/p><p>Every ingredient in this jar earns its place. We won't cut corners on sourcing for margin — that line doesn't move.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>We started Real Skin Care because our family wanted products where every ingredient earned its place. The lotion aisle was where this hit hardest — bottle after bottle of mineral oil, undisclosed fragrance, and parabens, marketed as nourishing.<\/p><p>We wanted something our kids could use that absorbed instead of coated. Every oil in this bottle is cold-pressed and unrefined. That's the line we drew, and we won't cross it for profit.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -507,8 +528,8 @@
         "faq-0": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why is this cream so thick?",
-            "row_content": "<p>This is closer to a balm than a pump cream. Beeswax and palm stearic give it the body — both are doing real work as a moisture-lock barrier and a natural thickener. Conventional creams use synthetic thickeners and silicones to feel light and fast-absorbing. We left those out. Warm a small amount between your fingers before applying and it softens immediately.<\/p>",
+            "heading": "Why does the texture change between bottles — or even within the same bottle?",
+            "row_content": "<p>Cold-pressed virgin coconut oil firms below 76°F. In a cool bathroom the lotion thickens; in a warm one it loosens. Give the bottle a shake before the first pump if it's been stored cool. Refined oils are uniform precisely because the lab strips out the variation — along with most of what makes the oil work. We accept the inconsistency because the absorption is the point.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -517,8 +538,8 @@
         "faq-1": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why does it firm up in cold weather?",
-            "row_content": "<p>Beeswax and coconut oil both firm up below about 76°F — that's the ingredients behaving the way real ingredients behave. Conventional creams stay uniform across temperatures because synthetic thickeners hold the texture artificially. If your jar feels firm, scoop a small amount and warm it between your fingers; it softens in seconds.<\/p>",
+            "heading": "Is the Pure Unscented variation actually unscented?",
+            "row_content": "<p>There's a faint coconut and jojoba scent — that's the actual ingredients, not added fragrance, and it fades within minutes of application. We don't add masking agents to neutralize it, because masking agents are themselves fragrance compounds. If you're sensitive to synthetic fragrance, this is the variation to start with.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -527,8 +548,8 @@
         "faq-2": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Can I use this on my face?",
-            "row_content": "<p>Most customers use this as a body cream, on hands and feet, or on dry patches — it's heavier than a daytime facial moisturizer. If your face is extremely dry, a thin layer at night can work well. We'd suggest patch-testing first if you have reactive skin, even though we formulated this without common irritants like lanolin or synthetic fragrance.<\/p>",
+            "heading": "Why no synthetic fragrance?",
+            "row_content": "<p>Synthetic fragrance is the leading cause of contact dermatitis in personal-care products. \"Fragrance\" or \"parfum\" is a regulatory umbrella that can hide hundreds of undisclosed compounds — the customer reading the label has no way to know what's in there. Our scented variations use named organic essential oils only, listed individually on the back panel.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -537,8 +558,8 @@
         "faq-3": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why use beeswax instead of petrolatum?",
-            "row_content": "<p>Petrolatum is the petroleum-derived occlusive that seals skin without feeding it — cheap, shelf-stable forever, and fully occlusive. Beeswax forms a breathable barrier instead. It locks moisture in while still allowing gas exchange at the molecular level. The trade-off is real: beeswax costs more, and the cream firms up in cold weather. We accept both.<\/p>",
+            "heading": "Will this clog my pores?",
+            "row_content": "<p>Jojoba is structurally close to skin's own sebum and absorbs without forming an occlusive film, which is why we built the formula around it. Mineral oil and petrolatum — the cheap moisturizing bases in most commercial lotion — sit on top of skin and can trap debris underneath. We don't use them. If you're acne-prone, the unscented variation is the most conservative choice.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -547,8 +568,8 @@
         "faq-4": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why is the cream tinted?",
-            "row_content": "<p>The color comes from the unrefined red palm oil — beta-carotene and tocotrienols give it that red-orange tone. Refined palm oil is bleached white and stripped of those antioxidants. Since the antioxidants are why we're using palm oil at all, we use the unrefined version and accept the color. The Pure Unscented variation has the same tint for the same reason.<\/p>",
+            "heading": "How is this preserved without parabens?",
+            "row_content": "<p>Organic grapefruit seed extract acts as a broad-spectrum natural preservative — the active polyphenol fraction inhibits bacterial and fungal growth in water-containing formulas. Parabens and phenoxyethanol are cheaper and more shelf-stable, which is why nearly every commercial lotion uses them. Both are also the most-asked-about ingredients by label-reading customers, which tells you something.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -557,8 +578,8 @@
         "faq-5": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Is the unscented version actually fragrance-free?",
-            "row_content": "<p>No essential oils are added to the Pure Unscented variation. You'll still detect a faint scent of beeswax and coconut — that's the ingredients themselves, not added fragrance. If you've reacted to \"unscented\" products in the past, that's often because they contain masking fragrance to neutralize a base odor. We don't use masking fragrance.<\/p>",
+            "heading": "Why is the lotion slightly tinted?",
+            "row_content": "<p>That's the unrefined red palm oil. It retains its naturally occurring beta-carotene, which gives the oil its red-orange color and contributes antioxidant activity to the formula. Refined palm oil is bleached white and stripped of the carotenes — cheaper, color-neutral, and missing the compounds we're using it for. The tint doesn't transfer to skin or clothing.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -567,8 +588,8 @@
         "faq-6": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "How long does a jar last?",
-            "row_content": "<p>Grapefruit seed extract is our natural preservative — it inhibits bacterial and fungal growth without parabens or phenoxyethanol. Unopened, the cream is shelf-stable for about 12 months. Once opened, use within 6 months and keep the lid sealed. Use clean fingers or a small spatula to scoop; introducing water or contaminants will shorten shelf life.<\/p>",
+            "heading": "Can I use this on my face?",
+            "row_content": "<p>Yes. The oils are non-occlusive and the ingredient list is short enough that there's nothing in here we'd hesitate to put on facial skin. That said, this is formulated as a body lotion — if you have a dedicated facial routine, it'll integrate fine, but we don't make claims about it replacing a targeted face product.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -650,21 +671,12 @@
         "highlight_style": "marker"
       }
     },
-    "1784947094cd521d1f": {
-      "type": "apps",
-      "settings": {
-        "include_margins": true,
-        "show_divider": false,
-        "padding_top": 36,
-        "padding_bottom": 36
-      }
-    },
     "complete-the-routine": {
       "type": "complete-the-routine",
       "settings": {
         "product": "sensitive-skin-starter-set",
         "heading": "Complete the routine",
-        "blurb": "Pair the cream with the body lotion — the full sensitive-skin routine.",
+        "blurb": "Pair it with the gentle cleanser — the full sensitive-skin routine.",
         "cta_label": "View the set",
         "accent_color": "#4a8b3c",
         "background_color": "#faf8f4",
@@ -680,11 +692,10 @@
     "hook-rich-text",
     "hero-ingredient-cards",
     "free-from-block",
-    "judgeme_carousel_cream",
+    "17778503329c046778",
     "founder-block",
     "collapsible-content",
     "loox-product-reviews-app-section",
-    "product-recommendations",
-    "1784947094cd521d1f"
+    "product-recommendations"
   ]
 }

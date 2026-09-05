@@ -147,6 +147,12 @@
         "recurpay-widget": {
           "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-widget\/c600a513-dad8-4030-8697-de47c18881f2",
           "settings": {}
+        },
+        "trust-line": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p>"
+          }
         }
       },
       "block_order": [
@@ -163,6 +169,7 @@
         "discount-callout",
         "recurpay-widget",
         "buy_buttons",
+        "trust-line",
         "tab-ingredients",
         "tab-details",
         "tab-howto",

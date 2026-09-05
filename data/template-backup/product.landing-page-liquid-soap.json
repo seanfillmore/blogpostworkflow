@@ -153,12 +153,6 @@
           "settings": {
             "custom_liquid": "<style>\n.rxl{display:flex;gap:12px;align-items:center;margin:14px 0 4px 0;padding:12px 14px;background:#eef3e8;border:1px solid #AEDEAC;border-radius:8px;text-decoration:none;transition:background .15s}\n.rxl:hover{background:#e2ecd9}\n.rxl__img{flex:0 0 52px;width:52px;height:52px;background:#fff;border-radius:6px;overflow:hidden}\n.rxl__img img{width:100%;height:100%;object-fit:contain;display:block}\n.rxl__body{flex:1;min-width:0}\n.rxl__kicker{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#4a8b3c;font-weight:700;margin-bottom:2px}\n.rxl__title{display:block;font-size:14px;font-weight:600;color:#1a1b18;line-height:1.3}\n.rxl__sub{display:block;font-size:12px;color:#6d7175;margin-top:2px}\n.rxl__price{flex:0 0 auto;text-align:right}\n.rxl__amt{display:block;font-size:15px;font-weight:700;color:#1a1b18;white-space:nowrap}\n.rxl__go{display:block;font-size:11px;color:#4a8b3c;font-weight:600;white-space:nowrap;margin-top:2px}\n<\/style>\n{%- liquid\n  assign pump = all_products['organic-foaming-hand-soap']\n  assign refill = all_products['foam-soap-refill-32oz']\n  assign scent = product.selected_or_first_available_variant.option1\n\n  if product.handle == 'organic-foaming-hand-soap'\n    assign target = refill\n    assign kicker = 'Refill and save'\n    assign title = 'Foam Soap Refill — 32 oz'\n    assign sub = 'Refills your pump 4 times — 50% less per ounce'\n  elsif product.handle == 'foam-soap-refill-32oz'\n    assign target = pump\n    assign kicker = 'Need a pump?'\n    assign title = 'Foaming Hand Soap Pump — 8 oz'\n    assign sub = 'The bottle this refills'\n  endif\n-%}\n{%- if target != blank and target.available -%}\n  {%- liquid\n    assign href = target.url\n    assign price = target.price\n    for v in target.variants\n      if v.option1 == scent and v.available\n        assign href = target.url | append: '?variant=' | append: v.id\n        assign price = v.price\n        break\n      endif\n    endfor\n  -%}\n  <a class=\"rxl\" href=\"{{ href }}\">\n    <span class=\"rxl__img\">\n      {%- if target.featured_image -%}\n        <img src=\"{{ target.featured_image | image_url: width: 160 }}\" alt=\"{{ target.title | escape }}\" loading=\"lazy\" width=\"52\" height=\"52\">\n      {%- endif -%}\n    <\/span>\n    <span class=\"rxl__body\">\n      <span class=\"rxl__kicker\">{{ kicker }}<\/span>\n      <span class=\"rxl__title\">{{ title }}<\/span>\n      <span class=\"rxl__sub\">{{ sub }}<\/span>\n    <\/span>\n    <span class=\"rxl__price\">\n      <span class=\"rxl__amt\">{{ price | money }}<\/span>\n      <span class=\"rxl__go\">Shop &rsaquo;<\/span>\n    <\/span>\n  <\/a>\n{%- endif -%}\n"
           }
-        },
-        "trust-line": {
-          "type": "custom_liquid",
-          "settings": {
-            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p>"
-          }
         }
       },
       "block_order": [
@@ -175,7 +169,6 @@
         "discount-callout",
         "recurpay-widget",
         "buy_buttons",
-        "trust-line",
         "refill-crosslink",
         "tab-ingredients",
         "tab-details",

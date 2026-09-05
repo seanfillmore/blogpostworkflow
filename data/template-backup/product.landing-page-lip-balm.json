@@ -21,14 +21,14 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">{%- if product.handle == 'foam-soap-refill-32oz' -%}A 32oz refill lasts about four months of multi-daily handwashing — roughly $0.22 a day.{%- else -%}An 8oz foaming bottle lasts about a month of multi-daily handwashing — roughly $0.43 a day.{%- endif -%}<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">Four tubes, about a month of daily use each — roughly $0.13 a day.<\/p>"
           }
         },
         "benefit-1": {
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "One ingredient in the base: organic coconut oil, turned into soap.",
+            "text": "Organic beeswax — true breathable barrier, locks moisture against the lips",
             "text_style": "body"
           }
         },
@@ -36,7 +36,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Real soap, not a detergent.",
+            "text": "Cold-pressed coconut oil that soaks into your lips.",
             "text_style": "body"
           }
         },
@@ -44,7 +44,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Designed for the foaming dispenser — less product per wash",
+            "text": "Red palm oil, unrefined, for the vitamin E it carries.",
             "text_style": "body"
           }
         },
@@ -52,7 +52,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No sulfates. No parabens. No harsh foaming agents.",
+            "text": "No petroleum jelly, no lanolin, no added flavor, no menthol.",
             "text_style": "body"
           }
         },
@@ -95,7 +95,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>Built for the foaming dispenser.<\/strong> Designed for a foamer pump, not a standard pump. Aerates a small amount into a generous lather — less product per wash.<\/p><p><strong>Same single-ingredient soap as the bar.<\/strong> Saponified organic virgin coconut oil. No SLS, SLES, cocamidopropyl betaine, propylene glycol, parabens, or triclosan.<\/p><p><strong>True soap, not a surfactant cocktail.<\/strong> Cleansing comes from coconut soap molecules lifting oil and dirt — not sulfate detergents stripping skin's lipid layer.<\/p><p><strong>Honest trade-off.<\/strong> Thinner than commercial pump soap. The 32oz refill is concentrated; check the dilution instructions before refilling.<\/p>",
+            "content": "<p><strong>Three ingredients, three jobs.<\/strong> Beeswax (true breathable barrier), virgin coconut oil (medium-chain fatty acids that nourish), unrefined red palm oil (vitamin E and tocotrienols).<\/p><p><strong>No petroleum jelly, no lanolin, no synthetic flavoring.<\/strong> The chronic-chap problem we usually trace to one of those three ingredients.<\/p><p><strong>No menthol cooling sensation.<\/strong> Many commercial balms add menthol to feel \"treated\" — that's mild irritation, not healing.<\/p><p><strong>Honest trade-off.<\/strong> Firmer than a petrolatum-based balm because beeswax sets harder than petroleum wax. Apply with light pressure rather than a smear.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -106,7 +106,7 @@
           "settings": {
             "icon": "check_mark",
             "heading": "Ingredients",
-            "content": "<p>Saponified organic virgin coconut oil.<\/p><p><strong>Variation essential oils:<\/strong><\/p><ul><li><strong>Orange Zest:<\/strong> orange, bergamot, spearmint, lemon, grapefruit<\/li><li><strong>Coconut Breeze:<\/strong> organic coconut oil extract<\/li><li><strong>Calming Lavender:<\/strong> lavender<\/li><li><strong>Pure Unscented:<\/strong> none<\/li><\/ul>",
+            "content": "<p>Organic virgin coconut oil, organic beeswax, organic red palm oil.<\/p><p><strong>Variation essential oils:<\/strong><\/p><ul><li><strong>Vanilla Dream:<\/strong> organic vanilla extract<\/li><li><strong>Sweet Tangerine:<\/strong> tangerine, orange, lemon<\/li><li><strong>Coconut Breeze:<\/strong> organic coconut oil extract<\/li><li><strong>Pure Unscented:<\/strong> none<\/li><\/ul>",
             "page": "",
             "custom_liquid": "",
             "keep_open": true
@@ -117,7 +117,7 @@
           "settings": {
             "icon": "clipboard",
             "heading": "How to Use",
-            "content": "<p>Use only with a foaming dispenser — a regular pump will dispense as runny liquid and waste most of it. Pump into hand, lather, and rinse. The 32oz refill is concentrated; dilute per the label instructions before refilling your foamer.<\/p>",
+            "content": "<p>Apply with light pressure to the lips — let the warmth of the lips soften the balm into place. Reapply throughout the day, especially in dry weather.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -147,18 +147,6 @@
         "recurpay-widget": {
           "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-widget\/c600a513-dad8-4030-8697-de47c18881f2",
           "settings": {}
-        },
-        "refill-crosslink": {
-          "type": "custom_liquid",
-          "settings": {
-            "custom_liquid": "<style>\n.rxl{display:flex;gap:12px;align-items:center;margin:14px 0 4px 0;padding:12px 14px;background:#eef3e8;border:1px solid #AEDEAC;border-radius:8px;text-decoration:none;transition:background .15s}\n.rxl:hover{background:#e2ecd9}\n.rxl__img{flex:0 0 52px;width:52px;height:52px;background:#fff;border-radius:6px;overflow:hidden}\n.rxl__img img{width:100%;height:100%;object-fit:contain;display:block}\n.rxl__body{flex:1;min-width:0}\n.rxl__kicker{display:block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#4a8b3c;font-weight:700;margin-bottom:2px}\n.rxl__title{display:block;font-size:14px;font-weight:600;color:#1a1b18;line-height:1.3}\n.rxl__sub{display:block;font-size:12px;color:#6d7175;margin-top:2px}\n.rxl__price{flex:0 0 auto;text-align:right}\n.rxl__amt{display:block;font-size:15px;font-weight:700;color:#1a1b18;white-space:nowrap}\n.rxl__go{display:block;font-size:11px;color:#4a8b3c;font-weight:600;white-space:nowrap;margin-top:2px}\n<\/style>\n{%- liquid\n  assign pump = all_products['organic-foaming-hand-soap']\n  assign refill = all_products['foam-soap-refill-32oz']\n  assign scent = product.selected_or_first_available_variant.option1\n\n  if product.handle == 'organic-foaming-hand-soap'\n    assign target = refill\n    assign kicker = 'Refill and save'\n    assign title = 'Foam Soap Refill — 32 oz'\n    assign sub = 'Refills your pump 4 times — 50% less per ounce'\n  elsif product.handle == 'foam-soap-refill-32oz'\n    assign target = pump\n    assign kicker = 'Need a pump?'\n    assign title = 'Foaming Hand Soap Pump — 8 oz'\n    assign sub = 'The bottle this refills'\n  endif\n-%}\n{%- if target != blank and target.available -%}\n  {%- liquid\n    assign href = target.url\n    assign price = target.price\n    for v in target.variants\n      if v.option1 == scent and v.available\n        assign href = target.url | append: '?variant=' | append: v.id\n        assign price = v.price\n        break\n      endif\n    endfor\n  -%}\n  <a class=\"rxl\" href=\"{{ href }}\">\n    <span class=\"rxl__img\">\n      {%- if target.featured_image -%}\n        <img src=\"{{ target.featured_image | image_url: width: 160 }}\" alt=\"{{ target.title | escape }}\" loading=\"lazy\" width=\"52\" height=\"52\">\n      {%- endif -%}\n    <\/span>\n    <span class=\"rxl__body\">\n      <span class=\"rxl__kicker\">{{ kicker }}<\/span>\n      <span class=\"rxl__title\">{{ title }}<\/span>\n      <span class=\"rxl__sub\">{{ sub }}<\/span>\n    <\/span>\n    <span class=\"rxl__price\">\n      <span class=\"rxl__amt\">{{ price | money }}<\/span>\n      <span class=\"rxl__go\">Shop &rsaquo;<\/span>\n    <\/span>\n  <\/a>\n{%- endif -%}\n"
-          }
-        },
-        "trust-line": {
-          "type": "custom_liquid",
-          "settings": {
-            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p>"
-          }
         }
       },
       "block_order": [
@@ -175,8 +163,6 @@
         "discount-callout",
         "recurpay-widget",
         "buy_buttons",
-        "trust-line",
-        "refill-crosslink",
         "tab-ingredients",
         "tab-details",
         "tab-howto",
@@ -215,7 +201,7 @@
         "hook-heading": {
           "type": "heading",
           "settings": {
-            "heading": "True soap, foaming dispenser, no detergents.",
+            "heading": "Three ingredients. Barrier, nourishment, antioxidant.",
             "heading_size": "h1",
             "heading_tag": "h2"
           }
@@ -223,7 +209,7 @@
         "hook-text": {
           "type": "text",
           "settings": {
-            "text": "<p>Soap works by surrounding oil and dirt with soap molecules so water can rinse them away — no sulfate detergents required. The foaming dispenser stretches a small amount of true coconut soap into a full lather, so your hands aren't hit with concentrated surfactant on every wash.<\/p>",
+            "text": "<p>Beeswax locks moisture in without occluding. Coconut oil absorbs and feeds the thin skin of the lips. Unrefined red palm oil contributes tocotrienols and beta-carotene — antioxidants that protect the barrier the balm is meant to build.<\/p>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -255,30 +241,30 @@
         "ingredient-card-1": {
           "type": "column",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
-            "title": "Saponified Organic Virgin Coconut Oil",
+            "image": "shopify:\/\/shop_images\/Wax.webp",
+            "title": "Organic Beeswax",
             "title_size": "medium",
-            "text": "<p><em>The base.<\/em> Cold-pressed virgin coconut oil reacted with potassium hydroxide produces soap molecules and naturally occurring glycerin — the entire cleansing system, with no added surfactants. Coconut-based soap is naturally high in lauric and capric acid soap chains, which lather well and lift oil and dirt without stripping the skin's lipid layer the way SLS does.<\/p>",
+            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable film on the lips that holds moisture in without occluding the way petrolatum does. Its long-chain fatty acids and esters give the balm its stick structure and let it stay put through wear. Petrolatum and microcrystalline wax are cheaper and more occlusive — we chose beeswax because the lips can still exchange.<\/p>",
             "button_label": ""
           }
         },
         "ingredient-card-2": {
           "type": "column",
           "settings": {
-            "image": "shopify:\/\/shop_images\/Spring_Water.webp",
-            "title": "Built for the Foaming Dispenser",
+            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
+            "title": "Organic Virgin Coconut Oil",
             "title_size": "medium",
-            "text": "<p><em>Diluted, not weakened.<\/em> The same coconut-oil saponification as the bar — diluted to foaming-pump consistency and designed for the foaming dispenser, not a standard pump. The pump aerates a small amount into a generous lather, which means less product per wash than conventional pump soap. A regular pump will dispense it as a runny liquid and waste most of it.<\/p>",
+            "text": "<p><em>Nourishing fatty acid base.<\/em> Cold-pressed virgin coconut oil delivers medium-chain fatty acids — roughly half of which is lauric acid — into the thin skin of the lips. Where petrolatum sits on top, virgin coconut oil absorbs and feeds. Refined coconut oil is cheaper and more uniform, but the deodorizing process strips out the lauric acid that does the work.<\/p>",
             "button_label": ""
           }
         },
         "ingredient-card-3": {
           "type": "column",
           "settings": {
-            "image": "shopify:\/\/shop_images\/essential-oils.webp",
-            "title": "Variation Essential Oils",
+            "image": "shopify:\/\/shop_images\/red-palm-fruit.webp",
+            "title": "Organic Red Palm Oil",
             "title_size": "medium",
-            "text": "<p><em>Scent without synthetic fragrance.<\/em> Each variation has a different blend of organic essential oils, named individually on the back panel — never a \"fragrance\" umbrella hiding undisclosed compounds. Orange Zest is orange, bergamot, spearmint, lemon, and grapefruit oils. Coconut Breeze is organic coconut oil extract. Calming Lavender is lavender oil. Pure Unscented has no oils added — just the natural light scent of saponified coconut oil.<\/p>",
+            "text": "<p><em>Vitamin E and beta-carotene source.<\/em> Unrefined red palm oil delivers naturally occurring vitamin E and tocotrienols to the thin skin of the lips — antioxidants that support tissue health where it shows fastest. The deep red-orange color is the carotenoids themselves. RSPO-certified sourcing.<\/p>",
             "button_label": ""
           }
         }
@@ -295,7 +281,7 @@
         "show_divider": false,
         "image_width": "full",
         "columns_desktop": 3,
-        "heading": "One base. Three things to know.",
+        "heading": "Three ingredients, three jobs",
         "heading_size": "h2",
         "heading_alignment": "center",
         "heading_tag": "h2",
@@ -319,7 +305,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>When we started reading the back panels of foaming hand soaps marketed to families, we kept finding the same surfactant cocktails under a plant on the front label. We wanted a soap our kids could use a dozen times a day without their hands cracking by November.<\/p><p>One ingredient saponified, diluted for the foaming dispenser, scented with named essential oils or nothing at all. That's the whole formula.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>We started Real Skin Care because our family wanted products where we could confirm every ingredient. With lip balm, that meant flipping over the tube and asking why petrolatum, paraffin, and undisclosed flavoring were in something we put on our kids' lips every day.<\/p><p>We took it down to three ingredients that each do real work, and we won't compromise that for cost.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -358,7 +344,7 @@
         "free-from-heading": {
           "type": "heading",
           "settings": {
-            "heading": "What's NOT in this bottle",
+            "heading": "What's NOT in this tube",
             "heading_size": "h1",
             "heading_tag": "h2"
           }
@@ -366,7 +352,7 @@
         "free-from-body": {
           "type": "text",
           "settings": {
-            "text": "<ul><li>No SLS or SLES<\/li><li>No harsh foaming agents<\/li><li>No preservatives you&#39;d need to look up<\/li><li>No parabens<\/li><li>No triclosan<\/li><li>No synthetic fragrance<\/li><li>No chemical stabilizers<\/li><li>No dyes<\/li><\/ul>",
+            "text": "<ul><li>No petroleum jelly<\/li><li>No petroleum wax<\/li><li>No mineral oil<\/li><li>No lanolin<\/li><li>No added flavor<\/li><li>No parabens<\/li><li>No numbing agents<\/li><li>No menthol<\/li><\/ul>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -377,9 +363,9 @@
         "free-from-body"
       ],
       "settings": {
-        "image": "shopify:\/\/shop_images\/liquid-soap-free-from.webp",
+        "image": "shopify:\/\/shop_images\/lip-balm-free-from.webp",
         "image_position": "center center",
-        "layout": "image_first",
+        "layout": "text_first",
         "text_box_position": "middle",
         "text_alignment": "left",
         "image_ratio": "adapt",
@@ -405,56 +391,64 @@
         "faq-0": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why does this only work in a foaming dispenser?",
-            "row_content": "<p>The formula is intentionally thinner than conventional pump soap because the foaming dispenser does the work — it aerates a small amount of liquid into a full lather on contact. A standard pump will dispense it as a runny liquid and waste most of it down the drain. If you're refilling from the 32oz, use a foaming pump bottle, not a regular one.<\/p>",
+            "heading": "Why does this balm feel firmer than the lip balm I'm used to?",
+            "row_content": "<p>Beeswax sets harder than petroleum-based waxes like paraffin and microcrystalline wax. Apply with light pressure rather than a smear, and let the warmth of your lips soften the layer into place. After a few seconds it spreads easily. The trade-off for the firmer set is a balm that stays on the lips through wear instead of wiping off in minutes.<\/p>",
             "page": ""
           }
         },
         "faq-1": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "What's actually in this soap?",
-            "row_content": "<p>Saponified organic virgin coconut oil, water, and — depending on the variation — named organic essential oils. That's it. Saponification is the chemical reaction between coconut oil and potassium hydroxide that produces soap molecules and naturally occurring glycerin. The lye fully reacts during the process; no free alkali remains in the finished soap.<\/p>",
+            "heading": "Why no lanolin? Most natural balms use it.",
+            "row_content": "<p>Lanolin is a common allergen and a frequent driver of the chronic-chap problem this balm is designed to solve. Customers who've tracked their chapping back to a previous balm often find lanolin in the ingredient list. We use beeswax for the barrier role and skip lanolin entirely so this balm works for sensitive lips that have reacted to it before.<\/p>",
             "page": ""
           }
         },
         "faq-2": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why doesn't it foam as densely as my old hand soap?",
-            "row_content": "<p>Conventional foaming soaps use cocamidopropyl betaine and SLS as secondary surfactants to build a thick, stable foam. We don't include either. The foam you get here is true coconut soap aerated by the dispenser — generous and lifting, but lighter than detergent foam. Foam isn't cleaning; the soap molecules are. Your hands are getting just as clean.<\/p>",
+            "heading": "Why doesn't the unscented version smell like nothing?",
+            "row_content": "<p>The Pure Unscented variation has the natural scent of beeswax and coconut oil — that's what those ingredients smell like. Unscented means no added essential oils, not an absence of scent. A truly odorless balm requires deodorized, refined oils, and the deodorizing process strips out the fatty acids and antioxidants that make the formula work.<\/p>",
             "page": ""
           }
         },
         "faq-3": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Is this safe for kids and sensitive hands?",
-            "row_content": "<p>We formulated it for exactly that customer. No SLS, no synthetic fragrance, no propylene glycol, no dyes — the most common triggers in pump soap. The Pure Unscented variation is the most conservative choice for reactive skin. Many families with frequently washed kid hands tell us their cracked-knuckle problem eased after switching off detergent-based soaps.<\/p>",
+            "heading": "What's the light color in the variations from?",
+            "row_content": "<p>Unrefined red palm oil. It's naturally red-orange because of its beta-carotene content — the same antioxidant that makes the oil worth using. Refined palm oil is bleached white and stripped of carotenes. The light tint you see in the tube is the carotenoids in their natural form, not added pigment.<\/p>",
             "page": ""
           }
         },
         "faq-4": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why does the Unscented version smell faintly like coconut?",
-            "row_content": "<p>That's the soap itself, not added fragrance. Cold-pressed virgin coconut oil keeps a natural scent through saponification — refined oil wouldn't, because the deodorizing process strips it out along with the lauric acid. The scent is light and fades on the rinse. If you want truly zero scent, no soap made from real virgin oil will give you that.<\/p>",
+            "heading": "Will this balm melt in a hot car or my pocket?",
+            "row_content": "<p>Beeswax has a higher melt point than petroleum waxes, so the balm holds its shape better in heat than most. That said, prolonged exposure to direct sun or a hot car can soften any natural balm. If it softens, let it cool upright — the ingredients are unchanged, only the texture shifts. Coconut oil also firms up below 76°F.<\/p>",
             "page": ""
           }
         },
         "faq-5": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "How is this different from 'natural' foaming soaps at the grocery store?",
-            "row_content": "<p>Read the back panel. Many soaps marketed as natural still contain sodium lauryl sulfate, cocamidopropyl betaine, propylene glycol, parabens, or synthetic fragrance under the umbrella term \"parfum.\" The word natural isn't regulated in personal-care labeling. Our differentiation isn't natural-vs-conventional — it's a specific, short ingredient list you can read against any alternative on the shelf.<\/p>",
+            "heading": "Why no menthol or cooling sensation?",
+            "row_content": "<p>The cooling sensation in commercial balms is produced by menthol mildly irritating the lips so they feel \"treated.\" That irritation is exactly what sensitive lips don't need. We left menthol out. The lips feel softer and more comfortable because the barrier is intact and the skin underneath is being fed — not because something on the surface is signaling a sensation.<\/p>",
             "page": ""
           }
         },
         "faq-6": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "How do I refill from the 32oz?",
-            "row_content": "<p>The 32oz is the same concentration as the bottle — pour directly into your foaming pump dispenser, no dilution needed. If you've used the soap before, rinse residue from the pump mechanism so it doesn't clog. Shake gently before use if the bottle has been sitting; coconut-based soap can settle slightly without separating.<\/p>",
+            "heading": "How is this different from the \"natural\" lip balms at the drugstore?",
+            "row_content": "<p>Many balms labeled natural still contain petrolatum, paraffin, lanolin, or \"natural flavor\" listed as one word — a regulatory umbrella that can hide dozens of compounds. Our ingredient list is three base ingredients plus named essential oils where applicable. Each ingredient is on the label by its specific name, so you can verify what you're putting on your lips.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-palm-oil": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is the red palm oil sustainably sourced?",
+            "row_content": "<p>Yes — we use RSPO-certified red palm oil. The Roundtable on Sustainable Palm Oil certifies the palm comes from operations meeting strict standards: no deforestation, no peatland conversion, fair labor. The \"red\" matters too — refined palm oil is cheaper but the refining strips out the carotenoids and tocotrienols we use it for. Unrefined keeps the antioxidants intact.<\/p>",
             "page": ""
           }
         }
@@ -466,7 +460,8 @@
         "faq-3",
         "faq-4",
         "faq-5",
-        "faq-6"
+        "faq-6",
+        "faq-palm-oil"
       ],
       "settings": {
         "open_first_collapsible_row": false,
@@ -514,7 +509,7 @@
         "padding_bottom": 36
       }
     },
-    "judgeme_carousel_liquid_soap": {
+    "judgeme_carousel_lip_balm": {
       "type": "apps",
       "blocks": {
         "judge_me_reviews_cards_carousel_mXDirj": {
@@ -558,29 +553,15 @@
         "padding_top": 36,
         "padding_bottom": 36
       }
-    },
-    "complete-the-routine": {
-      "type": "complete-the-routine",
-      "settings": {
-        "product": "hand-soap-set",
-        "heading": "A pump for every sink",
-        "blurb": "Build a set of foaming soaps and save against buying them singly.",
-        "cta_label": "View the set",
-        "accent_color": "#4a8b3c",
-        "background_color": "#faf8f4",
-        "padding_top": 16,
-        "padding_bottom": 16
-      }
     }
   },
   "order": [
     "main",
-    "complete-the-routine",
     "judgeme_section_review_widget_f881",
     "hook-rich-text",
     "hero-ingredient-cards",
     "free-from-block",
-    "judgeme_carousel_liquid_soap",
+    "judgeme_carousel_lip_balm",
     "founder-block",
     "collapsible-content",
     "loox-product-reviews-app-section",
