@@ -3,7 +3,7 @@ name: marketing-amazon-ppc-management
 description: Use when running, pruning or restructuring Amazon Sponsored Products campaigns for a small catalog — covers reading the search term report, negating zero-order spenders as negative exact and negative product targets, harvesting converting search terms into a manual exact campaign, splitting auto campaigns as discovery from manual campaigns as the proven-keyword vault, and using AI agents or rule-set automation to run that hygiene without opening the Ads console daily.
 ---
 
-# Amazon Ppc Management
+# Amazon PPC Management
 
 ## Pull the last 30 days of search terms for a campaign, isolate every term with at least a couple of clicks and meaningful spend but zero orders, and negate them as negative exact — plus negate any ASINs that appear as negative product targets.
 
