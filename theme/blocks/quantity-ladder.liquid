@@ -319,19 +319,67 @@
   // ONE add path for both buttons. The sticky bar deliberately does not build
   // a <form> of its own -- that is precisely what makes the theme's stock
   // sticky_cart wrong here (it posts the page's product, not the chosen tier).
-  function addToCart() {
+  // The theme's cart drawer element is <mini-cart> (defined in
+  // assets/cart-drawer.js, NOT <cart-drawer>, which is its outer shell).
+  // assets/product-form.js drives it with a three-step handshake, and this
+  // reuses that rather than toggling classes: ask for the drawer's own
+  // sections on the add, hand the response to renderContents(), and let it
+  // call open(). That way the drawer's line items, subtotal and BOTH icon
+  // bubbles are re-rendered by the theme's own code, which is what keeps this
+  // block working when the drawer markup changes.
+  //
+  // Feature-detected rather than assumed: a theme without the drawer (or with
+  // a renamed element) must fall back, not throw.
+  function cartDrawer() {
+    var el = document.querySelector('mini-cart');
+    if (!el) return null;
+    return typeof el.getSectionsToRender === 'function'
+      && typeof el.renderContents === 'function' ? el : null;
+  }
+
+  function addToCart(evt) {
     var v = selectedVariant();
     if (!v) return;
     errorEl.hidden = true;
     cta.disabled = true;
     if (sticky) stickyCta.disabled = true;
+
+    // Bundled section rendering: /cart/add.js returns the rendered HTML for
+    // the requested sections under `sections`, keyed by the ids we pass.
+    var drawer = cartDrawer();
+    var payload = { items: [{ id: v.id, quantity: 1 }] };
+    if (drawer) {
+      payload.sections = drawer.getSectionsToRender().map(function (s) { return s.id; }).join(',');
+      payload.sections_url = window.location.pathname;
+      // Focus returns here when the drawer closes, same as the theme's forms.
+      if (typeof drawer.setActiveElement === 'function' && evt && evt.currentTarget) {
+        drawer.setActiveElement(evt.currentTarget);
+      }
+    }
+
     fetch('/cart/add.js', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: [{ id: v.id, quantity: 1 }] }),
+      body: JSON.stringify(payload),
     })
       .then(function (r) { if (!r.ok) throw new Error('Could not add to cart'); return r.json(); })
-      .then(function () { window.location.href = '/cart'; })
+      .then(function (state) {
+        // Past this point the item IS in the cart. So every failure here falls
+        // back to the cart PAGE and none of them may surface an error --
+        // telling a shopper the add failed when it succeeded is how you get a
+        // double order. Covers: no drawer element, a response without
+        // `sections`, and renderContents() throwing (its open() dereferences
+        // the <cart-drawer> shell, which a template could be missing).
+        if (!drawer || !state || !state.sections) { window.location.href = '/cart'; return; }
+        try {
+          drawer.renderContents(state);
+        } catch (e) {
+          window.location.href = '/cart';
+          return;
+        }
+        // Staying on the page, so both buttons have to come back.
+        syncCta();
+      })
       .catch(function (err) {
         errorEl.textContent = err.message + '. Please try again.';
         errorEl.hidden = false;
