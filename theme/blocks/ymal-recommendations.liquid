@@ -1,0 +1,182 @@
+<style>
+.ymal-section{margin:24px 0 8px 0;padding-top:24px;border-top:1px solid #e5e5e5}
+.ymal-section h3{font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin:0 0 16px 0;color:#1a1b18}
+.ymal-cards{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin:0 -4px;align-items:stretch}
+.ymal-cards::-webkit-scrollbar{height:6px}
+.ymal-cards::-webkit-scrollbar-thumb{background:#d3d3d3;border-radius:3px}
+.ymal-card{flex:0 0 calc(40% - 7px);scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}
+.ymal-card-img{display:block;background:#f5f5f5;border-radius:8px;overflow:hidden;aspect-ratio:1/1}
+.ymal-card-img img{width:100%;height:100%;object-fit:cover;display:block}
+.ymal-card-title{font-size:14px;font-weight:500;color:#1a1b18;text-decoration:none;line-height:1.3;margin-top:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.6em}
+.ymal-card-variant{font-size:11px;letter-spacing:0.8px;text-transform:uppercase;color:#6d7175;min-height:1.2em;display:block}
+.ymal-card-add{margin-top:auto;padding:10px;background:#eef3e8;border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#2d5a2d;cursor:pointer;transition:background 0.15s}
+.ymal-card-add:hover{background:#AEDEAC}
+.ymal-card-add:disabled{opacity:0.6;cursor:default}
+@media(min-width:990px){.ymal-card{flex:0 0 calc(32% - 8px)}}
+
+.ymal-modal{position:fixed;inset:0;background:rgba(26,27,24,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s}
+.ymal-modal[data-open="true"]{display:flex;opacity:1}
+.ymal-modal__panel{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:20px 22px 22px 22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25)}
+.ymal-modal__close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#6d7175;padding:4px 8px}
+.ymal-modal__close:hover{color:#1a1b18}
+.ymal-modal__hd{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.ymal-modal__img{width:72px;height:72px;background:#f5f5f5;border-radius:8px;overflow:hidden;flex-shrink:0}
+.ymal-modal__img img{width:100%;height:100%;object-fit:cover;display:block}
+.ymal-modal__title{font-size:16px;font-weight:600;color:#1a1b18;margin:0 24px 4px 0;line-height:1.3}
+.ymal-modal__price{font-size:14px;color:#1a1b18;font-weight:500}
+.ymal-modal__opt-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#1a1b18;font-weight:700;margin:0 0 8px 0}
+.ymal-modal__variants{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.ymal-modal__variant{padding:8px 12px;background:#fff;border:2px solid #d3d3d3;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#1a1b18;transition:all 0.15s;-webkit-tap-highlight-color:transparent}
+.ymal-modal__variant:hover{border-color:#4a8b3c}
+.ymal-modal__variant[data-selected="true"]{border-color:#4a8b3c;background:#eef3e8;color:#2d5a2d}
+.ymal-modal__variant[data-soldout="true"]{opacity:0.45;text-decoration:line-through;cursor:not-allowed}
+.ymal-modal__add{width:100%;padding:14px;background:#1a1b18;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.15s}
+.ymal-modal__add:hover{background:#000}
+.ymal-modal__add:disabled{opacity:0.6;cursor:default}
+.ymal-modal__add[data-state="added"]{background:#4a8b3c}
+</style>
+<div class="ymal-section" id="ymal-{{ product.id }}" style="display:none">
+  <h3>You may also like</h3>
+  <div class="ymal-cards" id="ymal-cards-{{ product.id }}"></div>
+</div>
+<div class="ymal-modal" id="ymal-modal-{{ product.id }}" data-open="false" role="dialog" aria-modal="true">
+  <div class="ymal-modal__panel">
+    <button type="button" class="ymal-modal__close" aria-label="Close">×</button>
+    <div class="ymal-modal__hd">
+      <div class="ymal-modal__img"><img alt=""></div>
+      <div>
+        <h4 class="ymal-modal__title"></h4>
+        <div class="ymal-modal__price"></div>
+      </div>
+    </div>
+    <p class="ymal-modal__opt-label"></p>
+    <div class="ymal-modal__variants"></div>
+    <button type="button" class="ymal-modal__add" data-state="idle">ADD TO CART</button>
+  </div>
+</div>
+<script>
+(function(){
+  var pid = {{ product.id }};
+  var section = document.getElementById('ymal-'+pid);
+  var container = document.getElementById('ymal-cards-'+pid);
+  var modal = document.getElementById('ymal-modal-'+pid);
+  if(!section || !container || !modal) return;
+  var productsCache = {};
+
+  function imgUrl(src, size){
+    if(!src) return '';
+    return src.replace(/(\.[^.?]+)(\?.*)?$/, '_'+size+'$1$2');
+  }
+  function fmtMoney(cents){
+    return '$' + (cents/100).toFixed(2);
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});
+  }
+
+  function openModal(prod){
+    var v = prod.variants.find(function(x){return x.available;}) || prod.variants[0];
+    var optName = (prod.options && prod.options[0]) || 'Option';
+    var img = prod.featured_image || (prod.images && prod.images[0] && prod.images[0].src) || '';
+    modal.querySelector('.ymal-modal__img img').src = imgUrl(img, '160x160');
+    modal.querySelector('.ymal-modal__img img').alt = prod.title;
+    modal.querySelector('.ymal-modal__title').textContent = prod.title;
+    modal.querySelector('.ymal-modal__price').textContent = fmtMoney(v.price);
+    modal.querySelector('.ymal-modal__opt-label').textContent = (typeof optName === 'string' ? optName : (optName.name || 'Option'));
+    var picker = modal.querySelector('.ymal-modal__variants');
+    picker.innerHTML = prod.variants.map(function(x){
+      return '<button type="button" class="ymal-modal__variant" data-vid="'+x.id+'" data-price="'+x.price+'" data-soldout="'+(!x.available)+'">'+escapeHtml(x.title)+'</button>';
+    }).join('');
+    var btns = picker.querySelectorAll('.ymal-modal__variant');
+    btns.forEach(function(b){
+      b.addEventListener('click', function(){
+        if(b.dataset.soldout === 'true') return;
+        btns.forEach(function(x){ x.dataset.selected = 'false'; });
+        b.dataset.selected = 'true';
+        modal.querySelector('.ymal-modal__price').textContent = fmtMoney(parseInt(b.dataset.price, 10));
+      });
+    });
+    var firstAvail = picker.querySelector('.ymal-modal__variant:not([data-soldout="true"])');
+    if(firstAvail) firstAvail.dataset.selected = 'true';
+    var addBtn = modal.querySelector('.ymal-modal__add');
+    addBtn.dataset.state = 'idle';
+    addBtn.disabled = false;
+    addBtn.textContent = 'ADD TO CART';
+    modal.dataset.open = 'true';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal(){
+    modal.dataset.open = 'false';
+    document.body.style.overflow = '';
+  }
+
+  modal.querySelector('.ymal-modal__close').addEventListener('click', closeModal);
+  modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.dataset.open === 'true') closeModal(); });
+
+  modal.querySelector('.ymal-modal__add').addEventListener('click', function(){
+    var sel = modal.querySelector('.ymal-modal__variant[data-selected="true"]');
+    if(!sel) return;
+    var addBtn = modal.querySelector('.ymal-modal__add');
+    addBtn.disabled = true;
+    addBtn.textContent = 'ADDING...';
+    fetch('/cart/add.js', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ id: sel.dataset.vid, quantity: 1 })
+    }).then(function(r){
+      if(!r.ok) throw new Error();
+      addBtn.dataset.state = 'added';
+      addBtn.textContent = 'ADDED ✓';
+      document.dispatchEvent(new CustomEvent('cart:refresh'));
+      setTimeout(closeModal, 800);
+    }).catch(function(){
+      addBtn.disabled = false;
+      addBtn.textContent = 'ADD TO CART';
+    });
+  });
+
+  fetch('/recommendations/products.json?product_id='+pid+'&limit=6&intent=related')
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var products = (data && data.products) || [];
+      if(!products.length) return;
+      products.forEach(function(p){ productsCache[p.id] = p; });
+      section.style.display = 'block';
+      container.innerHTML = products.map(function(p){
+        var v = p.variants[0];
+        var img = p.featured_image || (p.images && p.images[0] && p.images[0].src) || '';
+        var url = imgUrl(img, '400x400');
+        var variant = v.title === 'Default Title' ? '' : v.title;
+        var multi = p.variants.length > 1;
+        return '<div class="ymal-card"><a class="ymal-card-img" href="'+p.url+'"><img src="'+url+'" alt="'+escapeHtml(p.title)+'" loading="lazy"></a><a class="ymal-card-title" href="'+p.url+'">'+escapeHtml(p.title)+'</a><div class="ymal-card-variant">'+escapeHtml(variant)+'</div><button class="ymal-card-add" data-pid="'+p.id+'" data-vid="'+v.id+'" data-multi="'+multi+'">ADD</button></div>';
+      }).join('');
+      container.querySelectorAll('.ymal-card-add').forEach(function(btn){
+        btn.addEventListener('click', function(){
+          var multi = btn.dataset.multi === 'true';
+          var prod = productsCache[btn.dataset.pid];
+          if(multi && prod){
+            openModal(prod);
+            return;
+          }
+          btn.disabled = true;
+          btn.textContent = 'ADDING...';
+          fetch('/cart/add.js', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id: btn.dataset.vid, quantity: 1 })
+          }).then(function(r){
+            if(!r.ok) throw new Error();
+            btn.textContent = 'ADDED ✓';
+            document.dispatchEvent(new CustomEvent('cart:refresh'));
+            setTimeout(function(){ btn.textContent = 'ADD'; btn.disabled = false; }, 2000);
+          }).catch(function(){
+            btn.textContent = 'ADD';
+            btn.disabled = false;
+          });
+        });
+      });
+    })
+    .catch(function(e){ console.warn('YMAL fetch failed', e); });
+})();
+</script>
