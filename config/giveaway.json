@@ -53,9 +53,20 @@
     "sendAt": "2026-08-25T14:00:00+00:00",
     "templateId": "VxJnPd",
     "audienceSegmentId": "X7atwC",
-    "status": "scheduled"
+    "status": "sent",
+    "sentAt": "2026-08-25T14:00:00+00:00",
+    "results": {
+      "recipients": 489,
+      "delivered": 487,
+      "opensUnique": 133,
+      "clicksUnique": 33,
+      "unsubscribes": 4,
+      "spamComplaints": 1,
+      "bounced": 2,
+      "measuredAt": "2026-09-05"
+    }
   },
-  "_confirmReminderNote": "DRAFT — a campaign created via the API stores its send date but queues NO send job; it does not send until Schedule is clicked in the UI (same trap as deadlineCampaigns). Reuses the confirm-request template VxJnPd rather than new copy, so it inherits that template’s already-passed content gates and its update_property_link button. SCHEDULED by the operator for 2026-08-25 14:00 UTC (drafted for the 27th; the operator moved it in). That is ~34h after the backfill send, clear of Klaviyo smart sending’s 16h window, so it will not be suppressed. Dated after the backfill on purpose: every backfilled entrant received the confirm email at subscribe time, so a same-day reminder would be redundant and smart sending would suppress it anyway.",
+  "_confirmReminderNote": "SENT 2026-08-25 14:00 UTC (the runbook long said DRAFT; it was scheduled by the operator and went). Reuses confirm-request template VxJnPd so it inherits that template's content gates and its update_property_link button. Measured: 33 of 487 delivered clicked, and a click IS a confirmation on flow_link, so 6.8% is the recovery rate any future reminder must be sized from. The 1-in-487 spam complaint (0.21%) is the number that actually governs whether another is safe — above Google/Yahoo's 0.1% target, below the 0.3% enforcement line.",
   "offerTemplates": {
     "10-offer-drawday.html": "WTXm4d",
     "11-offer-reminder.html": "RmrbPY",
@@ -102,5 +113,17 @@
         "sendAt": "2026-09-01T14:00:00+00:00"
       }
     }
-  }
+  },
+  "confirmReminderCampaign2": {
+    "id": "01M1SNWVSB1ZMF6V8K2VBW2BTY",
+    "messageId": "01M1SNWVSQJC38E0T9SWRSS5BS",
+    "templateId": "VxJnPd",
+    "clonedTemplateId": "XRXNZA",
+    "audienceSegmentId": "X7atwC",
+    "excludeSegmentId": "YuYRCd",
+    "sendAt": "2026-09-05T21:59:10+00:00",
+    "status": "scheduled",
+    "dueCount": 1174
+  },
+  "_confirmReminderNote2": "Reminder #2, built by scripts/giveaway/send-confirm-reminder.mjs. Audience is X7atwC MINUS exclusion segment YuYRCd (created before 2026-08-25T14:00:01Z = already reminded, OR created in the last 48h = confirm flow still working, OR gv_test = our own inboxes). Set subtraction rather than a rebuilt segment because profile-group-membership takes LISTS not segments, and restating X7atwC's confirmed logic would put a second copy of a rule that lives in exactly one place. 1,174 due; projected ~80 confirmations, ~10 unsubscribes, ~2 complaints from reminder #1's own rates."
 }

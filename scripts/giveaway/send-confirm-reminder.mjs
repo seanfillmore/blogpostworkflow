@@ -5,6 +5,7 @@
  *   node scripts/giveaway/send-confirm-reminder.mjs           # dry run, read only
  *   node scripts/giveaway/send-confirm-reminder.mjs --apply   # create the segment + DRAFT campaign
  *   node scripts/giveaway/send-confirm-reminder.mjs --send    # queue the send job (with --apply)
+ *   node scripts/giveaway/send-confirm-reminder.mjs --send-campaign <id>   # send a verified draft
  *
  * THREE GATES, DELIBERATELY. Dry by default; `--apply` builds a draft that mails
  * nobody; `--send` is the only thing that reaches a real inbox. An outward-facing
@@ -56,7 +57,7 @@ try {
 const { klaviyoRequest, createCampaign, getCampaign, assignTemplateToCampaignMessage } =
   await import('../../lib/klaviyo.js');
 const { resolveMechanism, CONFIRM_MECHANISMS } = await import('../../lib/giveaway/reconcile.js');
-const { selectReminderTargets, projectReminderOutcome, FIRST_REMINDER } =
+const { selectReminderTargets, projectReminderOutcome, FIRST_REMINDER, MIN_HOURS_SINCE_ENTRY } =
   await import('../../lib/giveaway/confirm-reminder.js');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -116,7 +117,56 @@ async function fetchSegmentProfiles(segmentId) {
   return out;
 }
 
+/**
+ * Queue the send job for an existing campaign, then re-read it.
+ *
+ * `attributes.id`, NOT `campaign_id` — the campaign-send-job resource names it
+ * `id`, and `campaign_id` is rejected outright. Measured against the live API
+ * 2026-09-05; the shape matches scripts/giveaway/repair-scheduled-campaign-unsub.mjs.
+ *
+ * A success log is not a send. The Draft trap means a campaign can accept every
+ * call and still sit there mailing nobody, so the status is re-read and polled:
+ * a scheduled campaign settles on "Queued without Recipients" (Klaviyo computes
+ * recipients at send time) and only a campaign still reading "Draft" has failed.
+ */
+async function sendCampaign(id) {
+  await klaviyoRequest('POST', '/campaign-send-jobs/', {
+    data: { type: 'campaign-send-job', attributes: { id } },
+  });
+  let status = 'Draft';
+  for (let i = 0; i < 6 && status === 'Draft'; i++) {
+    await new Promise((r) => setTimeout(r, 5000));
+    status = (await getCampaign(id)).status;
+  }
+  console.log(`\n  send job posted. campaign status is now: ${status}`);
+  if (status === 'Draft') {
+    console.error('  STILL DRAFT — the send job did not take. Nothing was mailed.');
+    process.exit(1);
+  }
+  return status;
+}
+
 async function main() {
+  // Send a draft a previous --apply already built and a human has since
+  // verified. Without this the only way to send is another --apply, which
+  // orphans the verified draft and creates a second exclusion segment — which
+  // is exactly what happened on the first live run.
+  const sendExisting = args.indexOf('--send-campaign');
+  if (sendExisting !== -1) {
+    const id = args[sendExisting + 1];
+    if (!id) { console.error('--send-campaign requires a campaign id'); process.exit(64); }
+    const before = await getCampaign(id);
+    console.log(`Sending existing campaign ${id}`);
+    console.log(`  status now : ${before.status}`);
+    console.log(`  audiences  : ${JSON.stringify(before.audiences)}`);
+    if (before.status !== 'Draft') {
+      console.error(`  Refusing: campaign is "${before.status}", not Draft. Nothing to queue.`);
+      process.exit(64);
+    }
+    await sendCampaign(id);
+    return;
+  }
+
   const mechanism = resolveMechanism(config);
   if (mechanism !== CONFIRM_MECHANISMS.FLOW_LINK) {
     // Under double_opt_in the entrant is NOT subscribed, so a marketing campaign
@@ -204,38 +254,93 @@ async function main() {
     return;
   }
 
-  // The audience is expressed as a SEGMENT because campaigns take a list or a
-  // segment and nothing else. Conditions live in their own condition_groups:
-  // Klaviyo ANDs across groups and ORs within one, which is the inverse of what
-  // the nesting reads like and has cost this project a wrong audience before.
-  const segmentName = `Giveaway 2026-09 — Unconfirmed, never reminded (${now.toISOString().slice(0, 10)})`;
+  // THE AUDIENCE IS X7atwC MINUS AN EXCLUSION, NOT A REBUILT SEGMENT.
+  //
+  // The obvious construction — one segment saying "in X7atwC AND created after
+  // the cutoff" — is impossible: `profile-group-membership` takes LISTS, not
+  // segments ("Group X7atwC does not exist for company", measured). The
+  // alternative, restating X7atwC's own confirmed-vs-subscribed logic inline,
+  // would put a second copy of the rule that `confirmedEmailSet` deliberately
+  // owns alone into a script that mails people — exactly the drift that had
+  // `p.subscribed` meaning "confirmed" in six places.
+  //
+  // So the campaign INCLUDES the maintained segment and EXCLUDES a cheap,
+  // purely-date-and-flag one. Set subtraction, no duplicated logic, and X7atwC
+  // stays the single definition of "unconfirmed".
+  //
+  // All three conditions sit in ONE group because Klaviyo ORs within a group and
+  // ANDs across them — the inverse of what the nesting reads like, and a trap
+  // that has already produced a wrong audience on this account. OR is what is
+  // wanted here: exclude anyone matching ANY of these.
+  const cutoff = new Date(FIRST_REMINDER_SENT_AT.getTime() + 1000);
+  const tooRecent = new Date(now.getTime() - MIN_HOURS_SINCE_ENTRY * 3_600_000);
+  const segmentName = `Giveaway 2026-09 — Confirm reminder #2 EXCLUSIONS (${now.toISOString().slice(0, 10)})`;
   const seg = await klaviyoRequest('POST', '/segments/', {
     data: {
       type: 'segment',
       attributes: {
         name: segmentName,
         definition: {
-          condition_groups: [
-            { conditions: [{ type: 'profile_group_membership', group_ids: [UNCONFIRMED_SEGMENT], is_member: true, timeframe_filter: null }] },
-            { conditions: [{ type: 'profile_created', datetime_filter: { operator: 'after', date: FIRST_REMINDER_SENT_AT.toISOString() } }] },
-          ],
+          condition_groups: [{
+            conditions: [
+              // Already received the first reminder. +1s so a profile created at
+              // the exact send instant is excluded, matching the `<=` the policy
+              // module uses — the boundary must never be mailed twice.
+              { type: 'profile-property', property: 'created', filter: { type: 'date', operator: 'before', date: cutoff.toISOString() } },
+              // Entered too recently — the confirm flow's own email is still working.
+              { type: 'profile-property', property: 'created', filter: { type: 'date', operator: 'after', date: tooRecent.toISOString() } },
+              // Our own test inboxes, which live inside X7atwC and dilute every
+              // rate measured off a send to it.
+              { type: 'profile-property', property: "properties['gv_test']", filter: { type: 'boolean', operator: 'equals', value: true } },
+            ],
+          }],
         },
       },
     },
   });
-  console.log(`\n  segment created: ${seg.data.id} — ${segmentName}`);
+  console.log(`\n  exclusion segment: ${seg.data.id} — ${segmentName}`);
+  console.log(`    excludes: created before ${cutoff.toISOString()} (already reminded)`);
+  console.log(`              created after  ${tooRecent.toISOString()} (confirm flow still working)`);
+  console.log('              gv_test = true (our own inboxes)');
   console.log('  VERIFY BY MEMBERSHIP, NOT COUNT — a segment can report a plausible count and');
-  console.log('  hold the wrong people. Spot-check a few profiles before sending.');
+  console.log('  hold the wrong people.');
 
-  const campaign = await createCampaign({
-    name: `Giveaway — Confirm reminder #2 (${now.toISOString().slice(0, 10)})`,
-    audienceId: seg.data.id,
-    // Static, absolute: a deadline is one moment worldwide.
-    sendAt: new Date(now.getTime() + 3_600_000).toISOString(),
-    subject: 'Your 2 bonus entries are still unclaimed',
-    preview: 'One click, and they are on your entry.',
-    ...FROM,
+  // createCampaign hardcodes `excluded: []`, so the campaign is built directly
+  // here rather than widening that helper for one caller.
+  const campaignName = `Giveaway — Confirm reminder #2 (${now.toISOString().slice(0, 10)})`;
+  const created = await klaviyoRequest('POST', '/campaigns/', {
+    data: {
+      type: 'campaign',
+      attributes: {
+        name: campaignName,
+        audiences: { included: [UNCONFIRMED_SEGMENT], excluded: [seg.data.id] },
+        // Static, absolute: a deadline is one moment worldwide, not a local hour.
+        send_strategy: { method: 'static', datetime: new Date(now.getTime() + 3_600_000).toISOString(), options: { is_local: false } },
+        send_options: { use_smart_sending: true },
+        'campaign-messages': {
+          data: [{
+            type: 'campaign-message',
+            attributes: {
+              definition: {
+                channel: 'email',
+                label: campaignName,
+                content: {
+                  subject: 'Your 2 bonus entries are still unclaimed',
+                  preview_text: 'One click, and they are on your entry.',
+                  from_email: FROM.fromEmail,
+                  from_label: FROM.fromLabel,
+                },
+              },
+            },
+          }],
+        },
+      },
+    },
   });
+  const campaign = {
+    id: created.data.id,
+    messageIds: (created.data.relationships?.['campaign-messages']?.data || []).map((m) => m.id),
+  };
   console.log(`  campaign created: ${campaign.id} (DRAFT — no send job queued)`);
 
   // Attach the confirm-request template. Without it the campaign sends an empty
@@ -253,17 +358,7 @@ async function main() {
     return;
   }
 
-  await klaviyoRequest('POST', '/campaign-send-jobs/', {
-    data: { type: 'campaign-send-job', attributes: { campaign_id: campaign.id } },
-  });
-  // A success log is not a send. Re-read the campaign and report what Klaviyo
-  // actually believes — this is the Draft trap's only reliable detector.
-  const after = await getCampaign(campaign.id);
-  console.log(`\n  send job posted. campaign status is now: ${after.status}`);
-  if (after.status === 'Draft') {
-    console.error('  STILL DRAFT — the send job did not take. Nothing was mailed.');
-    process.exit(1);
-  }
+  await sendCampaign(campaign.id);
 }
 
 main().catch((err) => {
