@@ -1,0 +1,19 @@
+{
+  "at": "2026-09-05T15:21:44.878Z",
+  "results": [
+    {
+      "path": "/pages/about",
+      "target": "/pages/about-us-1",
+      "handle": "about",
+      "outcome": "created",
+      "id": 460036047018
+    },
+    {
+      "path": "/pages/contact",
+      "target": "/pages/contact-1",
+      "handle": "contact",
+      "outcome": "created",
+      "id": 460036079786
+    }
+  ]
+}
