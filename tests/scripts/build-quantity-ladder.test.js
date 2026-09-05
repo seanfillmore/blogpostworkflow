@@ -222,3 +222,73 @@ test('the badge sits inside the same element as the quantity label, not beside t
   assert.doesNotMatch(block, /grid-template-rows/,
     'the row-height reservation hack should be removed now that the badge renders inline with the quantity label');
 });
+
+// The sticky buy bar. It exists because the theme's own `sticky_cart` block
+// cannot be used on a ladder template: that block renders
+// `{% form 'product', product %}` against the PAGE's product, which is always
+// the single-unit SKU, while a ladder tier is a DIFFERENT product. A shopper
+// who chose the 3-pack and then used that bar would be sold one tube. These
+// assertions pin the properties that keep the ladder's own bar honest.
+
+test('the sticky bar ships with the block and starts hidden', () => {
+  const out = renderBlock(TIERS, LADDER);
+  assert.match(out, /data-qty-sticky\b/);
+  // `hidden` on the element, not a JS-applied style: with no JS, or no
+  // IntersectionObserver, the bar must never appear.
+  assert.match(out, /<div class="qty-ladder-sticky" data-qty-sticky hidden>/);
+  // And the attribute alone must actually hide it against the display rule.
+  assert.match(out, /\.qty-ladder-sticky\[hidden\]\{display:none\}/);
+});
+
+test('the sticky bar posts the SELECTED tier, never a form of its own', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // One shared add path: exactly one real /cart/add.js CALL SITE in the whole
+  // block, reached by both buttons. Two would be two chances to diverge.
+  // Counted on `fetch(` rather than the bare path, which also appears in a
+  // comment -- a prose mention is not a second code path.
+  assert.equal((out.match(/fetch\('\/cart\/add\.js'/g) ?? []).length, 1);
+  assert.match(out, /function addToCart\(\)/);
+  assert.match(out, /cta\.addEventListener\('click', addToCart\)/);
+  assert.match(out, /stickyCta\.addEventListener\('click', addToCart\)/);
+  // The bar must NOT build a product form -- that is the stock block's bug.
+  // The <noscript> fallback is the one legitimate form. Counted on `endform`,
+  // which only ever closes a REAL form; the opening tag is also quoted inside
+  // the explanatory comment above the bar.
+  assert.equal((out.match(/\{%-? ?endform/g) ?? []).length, 1);
+});
+
+test('the sticky bar bakes no price: it reads the rendered tier card', () => {
+  const out = renderBlock(TIERS, LADDER);
+  assert.match(out, /\.qty-ladder__price/);
+  assert.match(out, /stickyPrice\.textContent = priceEl \? priceEl\.textContent\.trim\(\)/);
+  // Covered by the no-baked-price test above too, but state it at this seam:
+  // a bar that formatted its own price could drift from the tier card.
+  assert.doesNotMatch(out, /\$\d/);
+});
+
+test('the sticky bar is revealed only after the CTA scrolls ABOVE the viewport', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // `!isIntersecting` alone is also false on load while the CTA is still
+  // BELOW the fold, which would float the bar over the hero.
+  assert.match(out, /entry\.isIntersecting \|\| entry\.boundingClientRect\.top > 0/);
+  assert.match(out, /'IntersectionObserver' in window/);
+});
+
+test('a template built before the bar existed still works', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // Every sticky reference is guarded, so a block whose markup lacks the bar
+  // degrades to the single-CTA behaviour instead of throwing and taking the
+  // main Add to cart down with it.
+  assert.match(out, /var sticky = root\.querySelector\('\[data-qty-sticky\]'\);/);
+  assert.match(out, /if \(!sticky\) return;/);
+  assert.match(out, /if \(sticky\) stickyCta\.disabled = true;/);
+  assert.match(out, /if \(sticky\) \{/);
+});
+
+test('a failed add re-enables BOTH buttons via syncCta', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // The original catch did `cta.disabled = false`, which with two buttons
+  // would leave the sticky one stuck disabled after a network error.
+  assert.doesNotMatch(out, /errorEl\.hidden = false;\s*cta\.disabled = false;/);
+  assert.match(out, /errorEl\.hidden = false;\s*\/\/[\s\S]{0,200}?syncCta\(\);/);
+});
