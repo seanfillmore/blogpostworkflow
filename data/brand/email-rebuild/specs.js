@@ -473,6 +473,29 @@ export const specs = {
         type: 'p',
         html: 'If it worked, a review helps the next person with the same problem find it. If it did not, I would rather hear that directly — reply to this email and tell me what happened.',
       },
+      // Chases ONE named gap. Measured 2026-09-02 across all 390 Judge.me reviews:
+      // the joint-biggest objection in data/context/voice-of-customer.md — coconut oil
+      // is comedogenic, "it will break me out", 6 mentions — is answered by NOTHING.
+      // Only 5 reviews mention pores or breaking out at all and none is usable, so no
+      // amount of curation fixes it: the evidence does not exist yet and has to be asked
+      // for. This is marketing-review-mining's own rule — an empty objection slot is a
+      // prompt for the review request, not something to fabricate — and it is the honest
+      // alternative to writing a non-comedogenic claim nothing in brand-kit.json,
+      // product-catalog.json or config/ingredients.json can source.
+      //
+      // "either way" is load-bearing and must not be edited out. Soliciting only the
+      // favourable answer is review fraud and violates the platforms' terms, which is the
+      // same rule as the no-rating-gate and no-incentive notes above. It is also asked
+      // ONLY of lotion and cream buyers — the cluster whose base is organic virgin
+      // coconut oil, and the only place the objection bites.
+      {
+        type: 'raw',
+        html: `${ITEMS_OPEN}{% if "Lotion" in items or "Coconut Moisturizer" in items %}
+<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td>
+<p style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#000000;margin:0;">One thing in particular would help: coconut oil has a reputation for clogging pores, and I have no honest answer for people who ask. If you have a view either way, say so in your review — that is the question I get most and cannot answer.</p>
+</td></tr></table>
+{% endif %}${ITEMS_CLOSE}`,
+      },
       {
         type: 'raw',
         html: byCategory(

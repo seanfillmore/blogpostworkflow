@@ -71,11 +71,12 @@
     "flowName": "Product Review / Cross-Sell (RSC v2)",
     "messageId": "RME4Mz",
     "actionId": "112416895",
-    "servingTemplateId": "ThdZ8y",
-    "updatedAt": "2026-08-31T05:23:08.632Z",
+    "servingTemplateId": "UjTyVe",
     "stranded": [
-      "TA5Wi4"
-    ]
+      "TA5Wi4",
+      "ThdZ8y"
+    ],
+    "updatedAt": "2026-09-05T15:28:33.017Z"
   },
   "ThCS7T": {
     "flowId": "UxEXm9",

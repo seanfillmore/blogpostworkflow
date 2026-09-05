@@ -29,6 +29,11 @@
 <h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Did it work?</h1>
 <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }} — your order has had a couple of weeks to earn its place. Long enough to know.</p>
 <p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">If it worked, a review helps the next person with the same problem find it. If it did not, I would rather hear that directly — reply to this email and tell me what happened.</p>
+{% with items=event.Items|join:", " %}{% if "Lotion" in items or "Coconut Moisturizer" in items %}
+<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td>
+<p style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:1.6;color:#000000;margin:0;">One thing in particular would help: coconut oil has a reputation for clogging pores, and I have no honest answer for people who ask. If you have a view either way, say so in your review — that is the question I get most and cannot answer.</p>
+</td></tr></table>
+{% endif %}{% endwith %}
 {% with items=event.Items|join:", " %}{% if "Deodorant" in items or "Toothpaste" in items or "Soap" in items or "Lotion" in items or "Coconut Moisturizer" in items or "Lip" in items %}
 {% if "Deodorant" in items %}<table cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 20px;" width="100%"><tr><td align="center">
 <a href="https://www.realskincare.com/products/coconut-oil-deodorant#reviews" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:15px;font-weight:600;color:#000000;text-decoration:underline;">Review your Coconut Oil Deodorant →</a>
