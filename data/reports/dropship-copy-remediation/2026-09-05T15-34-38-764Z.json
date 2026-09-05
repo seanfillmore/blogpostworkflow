@@ -1,0 +1,21 @@
+{
+  "at": "2026-09-05T15:34:39.487Z",
+  "backupDir": "data/reports/dropship-copy-remediation/backups/2026-09-05T15-34-38-764Z",
+  "rows": [
+    {
+      "id": "faq-whole-body",
+      "outcome": "applied",
+      "page_id": 93868261546
+    },
+    {
+      "id": "shipping-policy-whole-body",
+      "outcome": "applied",
+      "page_id": 93868392618
+    },
+    {
+      "id": "track-order-tracking-lag",
+      "outcome": "applied",
+      "page_id": 93868294314
+    }
+  ]
+}
