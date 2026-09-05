@@ -21,7 +21,7 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">An 8oz foaming bottle lasts about 2 months of multi-daily handwashing — roughly $0.20 per day.<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">{%- if product.handle == 'foam-soap-refill-32oz' -%}A 32oz refill lasts about four months of multi-daily handwashing — roughly $0.22 a day.{%- else -%}An 8oz foaming bottle lasts about a month of multi-daily handwashing — roughly $0.43 a day.{%- endif -%}<\/p>"
           }
         },
         "benefit-1": {
