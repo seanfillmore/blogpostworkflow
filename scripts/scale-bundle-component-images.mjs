@@ -76,7 +76,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isDirectRun } from '../lib/is-direct-run.js';
-import { alreadyPadded, LIVE_THEME_ID } from './scale-theme-component-image.mjs';
+import { alreadyPadded } from './scale-theme-component-image.mjs';
+import { resolveLiveThemeId, UNRESOLVED_LIVE_THEME_REASON } from '../lib/shopify-live-theme.js';
 
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -135,10 +136,11 @@ export function parseArgs(argv) {
   return a;
 }
 
-export function validate(a) {
+export function validate(a, liveThemeId) {
   if (!a.theme) return { ok: false, reason: '--theme is required — this never guesses a target' };
-  if (String(a.theme) === LIVE_THEME_ID) {
-    return { ok: false, reason: `theme ${LIVE_THEME_ID} is LIVE. This rewrites 15 assets at once; preview it first. There is no override.` };
+  if (!liveThemeId) return { ok: false, reason: UNRESOLVED_LIVE_THEME_REASON };
+  if (String(a.theme) === String(liveThemeId)) {
+    return { ok: false, reason: `theme ${liveThemeId} is LIVE. This rewrites 15 assets at once; preview it first. There is no override.` };
   }
   return { ok: true };
 }
@@ -147,7 +149,10 @@ async function main(argv) {
   let a;
   try { a = parseArgs(argv); } catch (e) { console.error(e.message); return 1; }
   if (a.help) { console.log('Usage: --theme <preview id> [--only <asset key>]... [--apply]'); return 0; }
-  const v = validate(a);
+  // Resolved from the API, never a constant. A failure yields null, which
+  // makes validate() REFUSE rather than write to an unverified target.
+  const liveThemeId = await resolveLiveThemeId();
+  const v = validate(a, liveThemeId);
   if (!v.ok) { console.error(`REFUSED: ${v.reason}`); return 64; }
 
   const sharp = (await import('sharp')).default;

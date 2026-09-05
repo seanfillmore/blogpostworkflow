@@ -46,11 +46,38 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { resolveLiveThemeId, UNRESOLVED_LIVE_THEME_REASON } from '../lib/shopify-live-theme.js';
 
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
 
 /** The live theme on this store. Named so the guard can recognise it by id. */
-export const LIVE_THEME_ID = '147480051882';
+/**
+ * THIS FILE HOLDS NO HARDCODED LIVE THEME ID, and that absence is the fix
+ * rather than an omission. It used to pin one as a constant; the store was
+ * republished on 2026-09-01, that theme became an unpublished backup, and the
+ * guard went on protecting a dead theme while waving through the real one.
+ * See `lib/shopify-live-theme.js` for the full account. The published theme is
+ * resolved from the API at call time by `role === 'main'`, which is the only
+ * thing that cannot go stale.
+ */
+
+/**
+ * Every spelling the Shopify CLI accepts for "target this theme id".
+ * `indexOf('--theme')` alone missed `--theme=<id>` entirely, which is the
+ * form a scripted caller naturally writes — the second half of the same bug.
+ */
+export function targetedThemeIds(argv) {
+  const ids = [];
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = String(argv[i]);
+    const eq = a.match(/^(?:--theme|-t)=(.+)$/);
+    if (eq) { ids.push(eq[1]); continue; }
+    if (a === '--theme' || a === '-t') {
+      if (argv[i + 1] !== undefined) ids.push(String(argv[i + 1]));
+    }
+  }
+  return ids;
+}
 
 /**
  * Arguments that could point a write at the published theme.
@@ -61,9 +88,12 @@ export const LIVE_TARGETING_FLAGS = Object.freeze([
 ]);
 
 /**
+ * @param {string[]} argv
+ * @param {string|null} liveThemeId  resolved at call time; `null` means "could
+ *   not determine", which REFUSES an id-targeting push rather than allowing it.
  * @returns {{ok:true, argv:string[]}|{ok:false, reason:string}}
  */
-export function guardArgs(argv) {
+export function guardArgs(argv, liveThemeId) {
   const allowLive = argv.includes('--allow-live-theme');
   const rest = argv.filter((a) => a !== '--allow-live-theme');
 
@@ -74,9 +104,16 @@ export function guardArgs(argv) {
       return { ok: false, reason: `${flag} targets the published theme` };
     }
   }
-  const themeIdx = rest.indexOf('--theme');
-  if (themeIdx !== -1 && String(rest[themeIdx + 1] || '').includes(LIVE_THEME_ID)) {
-    return { ok: false, reason: `--theme ${LIVE_THEME_ID} is the LIVE theme` };
+
+  const targeted = targetedThemeIds(rest);
+  if (targeted.length > 0) {
+    // Unknown live id + an explicit target = refuse. The failure direction has
+    // to be "we declined to push", never "we pushed to production because we
+    // could not check". A `--unpublished` push needs no id and is unaffected.
+    if (!liveThemeId) return { ok: false, reason: UNRESOLVED_LIVE_THEME_REASON };
+    if (targeted.some((id) => id === String(liveThemeId))) {
+      return { ok: false, reason: `--theme ${liveThemeId} is the LIVE theme` };
+    }
   }
   // A bare `push` with no target reuses the last-used theme, which on this store
   // is the live one. Make the safe choice explicit rather than inherited.
@@ -101,7 +138,19 @@ async function main(argv) {
     return 0;
   }
 
-  const guard = guardArgs(argv);
+  // Resolved from the API, never from a constant — see resolveLiveThemeId.
+  // A failure here yields null, which makes the guard refuse rather than allow.
+  let liveThemeId = null;
+  try {
+    liveThemeId = await resolveLiveThemeId();
+  } catch {
+    liveThemeId = null;
+  }
+  if (!liveThemeId) {
+    console.error('WARNING: could not resolve the live theme id from the API.');
+  }
+
+  const guard = guardArgs(argv, liveThemeId);
   if (!guard.ok) {
     console.error(`REFUSED: ${guard.reason}.`);
     console.error('This wrapper exists so theme changes are not tested in production.');
