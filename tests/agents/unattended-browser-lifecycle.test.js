@@ -70,29 +70,41 @@ for (const rel of UNATTENDED_BROWSER_AGENTS) {
   });
 }
 
-test('theme-seo-auditor bounds the Lighthouse call', () => {
+test('Lighthouse is GONE from the fleet — the whole hazard class, not just its timeout', () => {
+  // Removed 2026-09-05. The 180s ceiling this test used to pin was the right
+  // fix for a call that had to exist; measuring it showed it did not.
+  // PERFORMANCE was duplicated by agents/pagespeed-monitor AND contradicted by
+  // first-party RUM (lab 39 / LCP 6109ms vs RUM mobile LCP p75 1.33s green),
+  // SEO scored 100/100 with sub-checks the DOM audits already cover, and
+  // ACCESSIBILITY — the one unique number — had no consumer and had never been
+  // read, because data/reports/theme-seo-audit/ has never existed on
+  // production. Deleting the call deletes the hang, the ~334 MB of orphaned
+  // Chrome and ~34 of the 36 seconds of a run.
+  //
+  // Bounding a call is a weaker guarantee than not making it. This asserts the
+  // stronger property.
+  assert.ok(
+    !read('agents/theme-seo-auditor/index.js').match(/^\s*import .*['"]lighthouse['"]/m),
+    'theme-seo-auditor must not import lighthouse — see the note above compileIssues for what was measured.',
+  );
+
+  // It was the only consumer in the repo, so the dependency goes too. A package
+  // left in place is an invitation to re-add the import.
+  const pkg = JSON.parse(read('package.json'));
+  assert.ok(
+    !pkg.dependencies?.lighthouse && !pkg.devDependencies?.lighthouse,
+    'the lighthouse dependency must not return without a consumer that justifies it',
+  );
+});
+
+test('the browser-close ceiling survives the Lighthouse removal', () => {
+  // withTimeout stays, because browser.close() can itself hang on a wedged
+  // Chrome — that guarantee is independent of what the browser was used for.
   const src = read('agents/theme-seo-auditor/index.js');
-
-  assert.match(
-    src,
-    /LIGHTHOUSE_TIMEOUT_MS/,
-    'theme-seo-auditor must declare a Lighthouse wall-clock ceiling — a stall is not an error and its try/catch cannot see one.',
-  );
-
-  // The ceiling has to actually wrap the lighthouse() call, not merely exist.
-  assert.match(
-    src,
-    /withTimeout\(\s*lighthouse\(/,
-    'the LIGHTHOUSE_TIMEOUT_MS ceiling must wrap the lighthouse() call itself.',
-  );
-
-  const ms = Number(/const LIGHTHOUSE_TIMEOUT_MS = ([\d_]+)/.exec(src)?.[1]?.replace(/_/g, ''));
-  assert.ok(Number.isFinite(ms), 'LIGHTHOUSE_TIMEOUT_MS must be a numeric literal');
-  // Generous against the only healthy sample in 52 days of scheduler logs
-  // (5.7s), but far inside the scheduler's own step ceiling so the agent
-  // degrades its own report rather than being killed from outside.
-  assert.ok(ms >= 60_000, `LIGHTHOUSE_TIMEOUT_MS ${ms}ms is too tight — a slow cold run on a 1-vCPU box would fail spuriously.`);
-  assert.ok(ms <= 600_000, `LIGHTHOUSE_TIMEOUT_MS ${ms}ms is too loose to bound a hang usefully.`);
+  const ms = Number(/const BROWSER_CLOSE_TIMEOUT_MS = ([\d_]+)/.exec(src)?.[1]?.replace(/_/g, ''));
+  assert.ok(Number.isFinite(ms) && ms > 0, 'BROWSER_CLOSE_TIMEOUT_MS must remain a numeric literal');
+  assert.match(src, /withTimeout\(browser\.close\(\)/, 'browser.close() must stay bounded');
+  assert.match(src, /SIGKILL/, 'a close that times out must still fall back to killing the process');
 });
 
 test('theme-seo-auditor exits explicitly on success', () => {

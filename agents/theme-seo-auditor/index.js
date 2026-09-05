@@ -4,7 +4,11 @@
  *
  * Crawls one representative URL per Shopify template type (homepage, product,
  * collection, blog post, page) using Puppeteer for full JS rendering, then
- * audits DOM structure and runs Lighthouse for performance/SEO/accessibility.
+ * audits DOM structure: heading hierarchy, canonical/viewport/OG/Twitter meta,
+ * image alt coverage and JSON-LD presence.
+ *
+ * NO LIGHTHOUSE. It was removed on 2026-09-05 — see the note above compileIssues
+ * for what was measured and why none of it was worth the cost.
  *
  * Usage:
  *   node agents/theme-seo-auditor/index.js
@@ -19,7 +23,6 @@ import { readFileSync, writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import puppeteer from 'puppeteer';
-import lighthouse from 'lighthouse';
 import {
   getProducts,
   getCustomCollections,
@@ -116,6 +119,23 @@ async function selectUrls() {
   }
 
   // Blog post
+  //
+  // KNOWN DEFECT, found 2026-09-05 and deliberately NOT fixed here: this takes
+  // `articles[0]` without checking the article is PUBLISHED. `getArticles`
+  // returns drafts too, and on the live store today that first article is not
+  // publicly reachable — the URL 404s, so this template's audit is measuring
+  // Shopify's 404 page (which is why it reports `canonical:
+  // https://www.realskincare.com/404`, a finding about the 404 page and not
+  // about any blog post). The blog_post row has therefore been meaningless for
+  // as long as it has existed.
+  //
+  // Not fixed in the Lighthouse-removal change because it alters WHAT this
+  // agent measures rather than what it costs, and picking the representative
+  // article is its own decision (newest published? highest traffic?). The same
+  // question applies to the product/collection/page selections above, which
+  // were not audited for this. See lib/post-publish-state.js — `isLivePost` is
+  // the fleet's one answer to "is this actually live", and any fix belongs on
+  // top of it rather than re-deriving a fourth rule.
   try {
     const blogs = await getBlogs();
     if (blogs.length > 0) {
@@ -143,7 +163,47 @@ async function selectUrls() {
 
 // ── Issue compilation ────────────────────────────────────────────────────────
 
-function compileIssues(headings, meta, images, structuredDataCount, lighthouseScores) {
+// LIGHTHOUSE WAS REMOVED HERE ON 2026-09-05. The evidence, so nobody re-adds it:
+//
+// It cost everything and returned nothing. It was the sole reason this agent
+// launched a Chrome it could hang inside — on 2026-09-01 it stalled for FOUR
+// DAYS, orphaning six Chrome processes that held ~334 MB on a 961 MB box and
+// drove the OOM killer onto `seo-dashboard` 642 times. Measured on the same
+// single-template run before and after removal, it was also more than half the
+// wall clock: 36.1s → 16.0s. Against that, each of its three categories was
+// measured:
+//
+//   PERFORMANCE — duplicated AND contradicted. `agents/pagespeed-monitor`
+//   already collects it (lib/pagespeed.js requests `category=performance`),
+//   and it is a LAB measurement: this scored the homepage 39 with LCP 6109ms
+//   while first-party RUM had mobile LCP p75 at 1.33s, green. That gap is
+//   exactly why CLAUDE.md demoted pagespeed-monitor's regressions to `info`.
+//   Its `performance < 50` warning would have fired forever and meant nothing.
+//
+//   SEO — scored 100/100, and its sub-checks (meta description present,
+//   crawlable links, viewport) are things this file's own DOM audits and
+//   `agents/technical-seo` already cover. Nothing actionable, ever.
+//
+//   ACCESSIBILITY — the one genuinely unique number (93/100), and it is stated
+//   plainly that this is what the removal costs. It went anyway: nothing in the
+//   fleet consumes it, no threshold acts on it, a11y is not the revenue/SEO
+//   remit this project has, and — decisively — `data/reports/theme-seo-audit/`
+//   HAS NEVER EXISTED ON PRODUCTION, so no human has ever read the score. If it
+//   is wanted, it belongs in an agent whose job is accessibility, with a
+//   consumer, not as a passenger on a template audit.
+//
+// The DOM checks below are kept because they are the opposite case: unique to
+// this agent (nothing else audits the TEMPLATE layer — `agents/technical-seo`
+// works from crawl CSVs and article bodies), and they found a real defect on
+// their first honest run — two <h1> elements on the live homepage, verified
+// against the rendered page rather than trusted from the regex.
+//
+// NOTE what removal does NOT fix: puppeteer still launches, so a run is still
+// 16s and ~324 MB peak. The browser hazard is bounded (try/finally + SIGKILL
+// fallback) but not gone. Whether a plain fetch would produce identical audit
+// results — and let the browser go entirely — is a separate, measurable
+// question, deliberately not answered here.
+function compileIssues(headings, meta, images, structuredDataCount) {
   const issues = [];
 
   if (headings.h1_count === 0) {
@@ -181,36 +241,10 @@ function compileIssues(headings, meta, images, structuredDataCount, lighthouseSc
     issues.push({ severity: 'warning', message: 'No JSON-LD structured data found' });
   }
 
-  if (lighthouseScores) {
-    if (lighthouseScores.performance < 50) {
-      issues.push({ severity: 'warning', message: `Lighthouse performance score ${lighthouseScores.performance}/100` });
-    }
-    if (lighthouseScores.seo < 80) {
-      issues.push({ severity: 'warning', message: `Lighthouse SEO score ${lighthouseScores.seo}/100` });
-    }
-    if (lighthouseScores.accessibility < 80) {
-      issues.push({ severity: 'warning', message: `Lighthouse accessibility score ${lighthouseScores.accessibility}/100` });
-    }
-  }
-
   return issues;
 }
 
-// ── Lighthouse ───────────────────────────────────────────────────────────────
-
-// Lighthouse has NO internal wall-clock ceiling, and a stall is not an error —
-// the try/catch below cannot see one. On 2026-09-01 this hung for FOUR DAYS on
-// the production box, holding ~334 MB (a node process plus six orphaned Chrome
-// processes) on a 1 GB droplet with no swap, which is what drove the OOM killer
-// to kill `seo-dashboard` 642 times and take the dashboard off the air. Every
-// monthly job after this one (content-gap, device weights) silently never ran,
-// and nothing reported it, because the process never exited to record a failure.
-//
-// 180s is ~30x the only healthy sample in 52 days of scheduler logs (5.7s) and
-// well past a slow cold Lighthouse run on a 1-vCPU box. A timeout DEGRADES the
-// report (that template loses its `lighthouse` block, the DOM audits are kept)
-// rather than failing the run — same shape as the existing catch.
-const LIGHTHOUSE_TIMEOUT_MS = 180_000;
+// ── Browser lifecycle ────────────────────────────────────────────────────────
 
 function withTimeout(promise, ms, label) {
   let timer;
@@ -238,39 +272,6 @@ async function closeBrowser(browser) {
     } catch (killErr) {
       console.warn(`  Could not kill browser process: ${killErr.message}`);
     }
-  }
-}
-
-async function runLighthouse(url, browserPort) {
-  try {
-    const result = await withTimeout(
-      lighthouse(url, {
-        port: browserPort,
-        output: 'json',
-        onlyCategories: ['performance', 'seo', 'accessibility'],
-        formFactor: 'mobile',
-        screenEmulation: { mobile: true, width: 375, height: 812, deviceScaleFactor: 2 },
-      }),
-      LIGHTHOUSE_TIMEOUT_MS,
-      `Lighthouse for ${url}`,
-    );
-
-    const lhr = result.lhr;
-    return {
-      performance: Math.round((lhr.categories.performance?.score || 0) * 100),
-      seo: Math.round((lhr.categories.seo?.score || 0) * 100),
-      accessibility: Math.round((lhr.categories.accessibility?.score || 0) * 100),
-      lcp_ms: Math.round(lhr.audits['largest-contentful-paint']?.numericValue || 0),
-      cls: parseFloat((lhr.audits['cumulative-layout-shift']?.numericValue || 0).toFixed(3)),
-      tbt_ms: Math.round(lhr.audits['total-blocking-time']?.numericValue || 0),
-      failures: Object.values(lhr.audits)
-        .filter((a) => a.score === 0 && a.title && a.details?.type !== 'debugdata')
-        .map((a) => a.title)
-        .slice(0, 10),
-    };
-  } catch (e) {
-    console.warn(`  Lighthouse failed for ${url}: ${e.message}`);
-    return null;
   }
 }
 
@@ -302,7 +303,6 @@ async function main() {
 
   // Launch browser
   const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox'] });
-  const browserPort = parseInt(new URL(browser.wsEndpoint()).port);
 
   const results = {};
 
@@ -338,17 +338,8 @@ async function main() {
       console.log(`    Images: ${images.image_count} (${Math.round(images.alt_coverage * 100)}% alt coverage)`);
       console.log(`    JSON-LD blocks: ${structuredDataCount}`);
 
-      // Lighthouse
-      console.log('    Running Lighthouse...');
-      const lighthouseScores = await runLighthouse(url, browserPort);
-
-      if (lighthouseScores) {
-        console.log(`    Perf: ${lighthouseScores.performance}  SEO: ${lighthouseScores.seo}  A11y: ${lighthouseScores.accessibility}`);
-        console.log(`    LCP: ${lighthouseScores.lcp_ms}ms  CLS: ${lighthouseScores.cls}  TBT: ${lighthouseScores.tbt_ms}ms`);
-      }
-
       // Compile issues
-      const issues = compileIssues(headings, meta, images, structuredDataCount, lighthouseScores);
+      const issues = compileIssues(headings, meta, images, structuredDataCount);
       console.log(`    Issues: ${issues.length} (${issues.filter((i) => i.severity === 'critical').length} critical)\n`);
 
       results[templateType] = {
@@ -357,7 +348,6 @@ async function main() {
         meta,
         images,
         structured_data_count: structuredDataCount,
-        lighthouse: lighthouseScores,
         issues,
       };
     }
@@ -409,26 +399,6 @@ async function main() {
     lines.push(`| JSON-LD blocks | ${data.structured_data_count} |`);
     lines.push('');
 
-    // Lighthouse summary
-    if (data.lighthouse) {
-      lines.push('### Lighthouse Scores');
-      lines.push(`| Metric | Value |`);
-      lines.push(`|---|---|`);
-      lines.push(`| Performance | ${data.lighthouse.performance}/100 |`);
-      lines.push(`| SEO | ${data.lighthouse.seo}/100 |`);
-      lines.push(`| Accessibility | ${data.lighthouse.accessibility}/100 |`);
-      lines.push(`| LCP | ${data.lighthouse.lcp_ms}ms |`);
-      lines.push(`| CLS | ${data.lighthouse.cls} |`);
-      lines.push(`| TBT | ${data.lighthouse.tbt_ms}ms |`);
-      lines.push('');
-
-      if (data.lighthouse.failures.length > 0) {
-        lines.push('**Failed audits:**');
-        data.lighthouse.failures.forEach((f) => lines.push(`- ${f}`));
-        lines.push('');
-      }
-    }
-
     // Issues
     if (data.issues.length > 0) {
       lines.push('### Issues');
@@ -460,7 +430,7 @@ async function main() {
 if (isDirectRun(import.meta.url)) {
   main()
     .then(() => notifyLatestReport('Theme SEO Audit completed', REPORTS_DIR))
-    // Exit EXPLICITLY on success. Lighthouse and Chrome can leave an open
+    // Exit EXPLICITLY on success. Chrome can leave an open
     // handle behind, and node will not exit while one is pending — so a run
     // that finished its work and wrote its report could still sit forever
     // holding memory, which is what `scheduler.js` was waiting on. The report
