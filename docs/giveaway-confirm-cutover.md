@@ -190,18 +190,45 @@ after a "successful" subscribe. Ninety seconds after the first batch it looked e
 a silent failure; it was not. **Wait before concluding a subscribe did not happen** — same
 class as `/{pixel}/stats` lag in [[project_traffic_gate_open]].
 
+## Resolved since (verified against live Klaviyo 2026-09-05)
+
+1. **The confirm reminder campaign `01M0RZM53084R8VEM8A2MS63PZ` SENT.** It was scheduled by
+   the operator and went out **2026-08-25 14:00 UTC** to segment `X7atwC`. Measured:
+   **489 recipients, 487 delivered, 133 opened (27.3%), 33 clicked (6.8%), 4 unsubscribes,
+   1 spam complaint, 2 bounced.** A click IS a confirmation on this mechanism
+   (`update_property_link` writes `gv_confirmed`), so **33/487 = 6.8% is the recovery rate**
+   and it is the only estimate any future reminder can be sized from.
+
+   **The complaint rate is the number to carry forward, not the yield.** 1 in 487 is
+   **0.21%** — above Google/Yahoo's 0.1% bulk-sender target and two-thirds of the way to the
+   0.3% enforcement line. Domain reputation is shared with every other Klaviyo send this
+   store makes, so a third reminder is a reputation decision before it is an entries
+   decision.
+
+2. **`flow_link` beats double opt-in, but not by as much as hoped.** Confirmation stands at
+   **1,820 confirmed / 2,131 unconfirmed** (46%) against the ~30% double-opt-in rate. The
+   cutover was worth doing and the remaining 54% is still the largest single loss in the
+   funnel.
+
+3. **`nudge-unconfirmed` was RETIRED from cron on 2026-08-24**, from both the live crontab
+   and `scripts/setup-cron.sh` in the same change (retiring a job means both sides, or the
+   next `setup-cron.sh` run reinstalls it). Verified absent from `crontab -l` 2026-09-05.
+   The script itself is kept and still refuses to run under `flow_link`.
+
 ## Still outstanding
 
-1. **The confirm reminder campaign `01M0RZM53084R8VEM8A2MS63PZ` is DRAFT.** A campaign
-   created via the API stores its send date but queues **no send job** — it needs Schedule
-   clicked in the UI, the same trap the deadline campaigns had.
-2. **Watch the confirmation rate over the next few days.** 215 of 734 confirmed at the time
-   of the backfill; the 510 just-mailed entrants are the population that decides whether
-   `flow_link` actually beats the 30% double-opt-in rate. That number is the whole point of
-   the cutover, and it is the one thing not yet measurable.
-3. **`nudge-unconfirmed` is still on cron at 16:00 UTC** and correctly no-ops under
-   `flow_link`. It is now dead weight — the reminder campaign replaces it. Retire the cron
-   line when convenient (see the UTC-only cron rules in CLAUDE.md).
+1. **A second reminder is BUILT but NOT SENT** — `scripts/giveaway/send-confirm-reminder.mjs`
+   (PR #803), with the policy in `lib/giveaway/confirm-reminder.js`. It targets only
+   entrants who have never been asked, using the first reminder's send instant as the
+   cutoff. Dry run 2026-09-05: **1,173 due** of 2,131 unconfirmed (917 already reminded, 27
+   too recent, 14 test profiles), projecting ~79 confirmations, ~10 unsubscribes, ~2
+   complaints. Three gates — dry, `--apply` (draft), `--send`. Entries close
+   **2026-09-14 23:59:59 PT**.
+
+2. **Test inboxes are inside segment `X7atwC`** (`gv_test: true`, 14 of them). The giveaway
+   REPORT excludes them (`excludedTestProfiles`); the SEGMENT does not, so every campaign
+   aimed at it has mailed them and every rate measured off that segment is diluted. The new
+   script filters them; a segment-level fix would help anything else pointed there.
 
 ## Rollback
 
