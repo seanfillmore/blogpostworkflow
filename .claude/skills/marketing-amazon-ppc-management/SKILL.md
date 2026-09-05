@@ -55,7 +55,9 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 **Evidence offered:** Demonstrated three separate times in the video — 'show me the plan' before negating, before harvesting, and before creating the automation rules. Presented as the presenter's standing habit, not tested against an alternative.
 
-**Fit here (7/10):** Runnable today and cheap, and it generalizes beyond Amazon to any agent given write access to a live marketing surface — including the Meta account now being stood up on $30/day, where a bad automated edit also restarts the learning phase. A solo operator with no one to catch errors needs the plan-then-approve step more, not less. Durable-principle class; nothing here depends on which vendor's MCP server is in use.
+**Fit here (7/10):** Runnable today and cheap. Durable-principle class; nothing here depends on which vendor's MCP server is in use. A solo operator with no one to catch errors needs the plan-then-approve step more, not less.
+
+**SCOPE — operator ruling, Sean 2026-09-05: PAID ADS PLATFORMS ONLY.** It binds any agent with write access to Meta, Amazon Ads, TikTok, Google Ads or a comparable ad account, and it does **not** generalize to every live marketing surface. The reason the line sits there is that an ad-account write spends money on a schedule you did not personally approve and cannot un-spend, and on Meta it also restarts the learning phase — so the cost of a wrong write is unbounded and partly irreversible. A Shopify, Klaviyo or CMS write is reversible, already carries its own gates and backups in this repo (`lib/queue-apply.js` captures a pre-write backup and stamps a `revert_plan`), and putting a human approval step in front of every one of those would stall the autonomy this fleet is built on. **Do not widen this to "any live marketing surface" without a fresh ruling** — an earlier draft of this note did exactly that and was narrowed.
 
 *Source: Orange Klik (interview with Kartik, QuickMetrics) — "Amazon PPC: From Weekly Checks to Daily Rules (YouTube 2yqq9J9_1IE)" (transcript)*
 
