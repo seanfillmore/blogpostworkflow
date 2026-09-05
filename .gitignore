@@ -258,3 +258,10 @@ data/posts/*/state.json
 # Pre-write backups from scripts/split-post-meta.mjs — machine-written, and a
 # tracked copy of a meta.json would recreate the exact hazard the split removes.
 data/reports/post-meta-split/
+
+# Pre-write copies of live theme templates, written by
+# scripts/build-product-templates.mjs. Redundant with git history --
+# theme/templates/*.json is tracked, so every prior version is already
+# recoverable. (Unlike data/briefs/_dropped/, which holds paid work that
+# exists nowhere else and is deliberately tracked.)
+data/template-backup/
