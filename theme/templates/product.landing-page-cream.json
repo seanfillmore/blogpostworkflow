@@ -26,7 +26,7 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">A jar lasts about 12 weeks of nightly use — roughly $0.30 per day.<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">A jar lasts about a month of nightly use — under $1 a day.<\/p>"
           }
         },
         "benefit-1": {

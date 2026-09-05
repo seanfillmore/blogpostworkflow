@@ -21,7 +21,7 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">Each tube lasts about 8 weeks of twice-daily use — roughly $0.23 per day.<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">Each tube lasts about 6 weeks of twice-daily use — roughly $0.31 per day.<\/p>"
           }
         },
         "benefit-1": {
