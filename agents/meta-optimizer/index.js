@@ -44,7 +44,7 @@ import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
 import { assessDistinctness } from '../../lib/ctr-copy-distinctness.js';
-import { holdMetaCandidates, excludeHoldout } from './lib/hold.js';
+import { holdMetaCandidates, excludeHoldout, prioritiseTreatment } from './lib/hold.js';
 import {
   rankClusters, renderEfficiencyLines, efficiencyBanner,
 } from '../../lib/cluster-efficiency.js';
@@ -457,7 +457,34 @@ async function main() {
     console.log('');
   }
 
-  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(notHeldOut, hold, {
+  // ── CTR-program TREATMENT arm, applied BEFORE the cap and before the ──────
+  // cluster-efficiency sort. The wave's treatment arm is what the experiment
+  // exists to rewrite, and until 2026-09-05 nothing read it: measured against
+  // the 2026-08-31 wave, ONE of its ten treatment pages was treated, and only
+  // one was even selectable, because candidates are QUERIES from
+  // gsc-opportunity while the wave designates PAGES. An untreated arm makes the
+  // difference-in-differences report "no effect" whatever the rewrites did.
+  //
+  // This is not a bypass of the efficiency ordering below: agents/ctr-program
+  // built the arm with lib/ctr-opportunity.js, which already ranks by
+  // recoverable clicks x what the cluster earns using the same ordinals.
+  // Sorting it by cluster a second time is what displaced it out of the cap.
+  const { ordered: waveOrdered, designated } = prioritiseTreatment(notHeldOut, {
+    root: ROOT,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+    pool: quickWinPages,
+  });
+  if (designated.length) {
+    const synth = designated.filter((d) => d.synthesised).length;
+    console.log(`  CTR-program wave: ${designated.length} candidate(s) prioritised as designated work`
+      + (synth ? ` (${synth} synthesised — the page is in the wave but no candidate query reached it)` : ''));
+    for (const d of designated.slice(0, 10)) {
+      console.log(`    · [${d.arm}] "${d.keyword}" → ${String(d.url || '').split('/').pop()}${d.synthesised ? '  (synthesised)' : ''}`);
+    }
+    console.log('');
+  }
+
+  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(waveOrdered, hold, {
     includeHeld: INCLUDE_HELD,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
     ranking,
@@ -496,7 +523,14 @@ async function main() {
     if (processed >= limitArg) break;
 
     const { keyword, impressions, ctr, position } = item;
-    const pageUrl = kwToPage.get(keyword);
+    // A SYNTHESISED wave candidate carries its own target page and that must
+    // win. `kwToPage` is first-wins over the GSC quick-win rows, so a query can
+    // resolve to a DIFFERENT page than the one the synthesiser meant: measured
+    // 2026-09-05, the query "sls free toothpaste" resolves to
+    // toothpaste-without-sls-what-to-know-best-options while the wave wanted it
+    // as the entry point for best-toothpaste-without-sls-2025. Trusting the map
+    // there would rewrite the wrong page — and one already being treated.
+    const pageUrl = item.url || kwToPage.get(keyword);
 
     if (!pageUrl) continue; // can't map keyword to a URL
     if (!pageUrl.includes('/blogs/')) continue; // only blog posts for now

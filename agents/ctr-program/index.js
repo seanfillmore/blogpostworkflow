@@ -75,8 +75,12 @@ import { assignCluster } from '../../lib/keyword-index/cluster.js';
 import { loadClusterHold, partitionHeld } from '../../lib/cluster-hold.js';
 import { rankClusters } from '../../lib/cluster-efficiency.js';
 import { rankOpportunities } from '../../lib/ctr-opportunity.js';
-import { assignCohorts, partitionByPower, DEFAULT_COHORT_SIZE } from '../../lib/ctr-cohort.js';
+import {
+  assignCohorts, partitionByPower, DEFAULT_COHORT_SIZE,
+  differenceInDifferences, cohortVerdict,
+} from '../../lib/ctr-cohort.js';
 import { assessPower, DEFAULT_TARGET_RELATIVE_LIFT } from '../../lib/ctr-power.js';
+import { waveState, MEASUREMENT_WINDOW_DAYS } from '../../lib/ctr-wave.js';
 import { concentration, byCluster, reDecideTracker } from './lib/summarise.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -93,6 +97,9 @@ const cohortSize = parseInt(getArg('--size') ?? String(DEFAULT_COHORT_SIZE), 10)
 const windowDays = parseInt(getArg('--days') ?? '90', 10);
 const auditOnly = args.includes('--audit');
 const write = !args.includes('--no-write');
+// Replaces an in-flight wave. Typed by a human who has read why the arms are
+// frozen; nothing scheduled passes it.
+const forceReplan = args.includes('--force-replan');
 
 // ── page-level source ────────────────────────────────────────────────────────
 
@@ -178,6 +185,114 @@ function auditTracker() {
   return reDecideTracker(tracker);
 }
 
+
+// ── wave lifecycle ───────────────────────────────────────────────────────────
+
+const WAVE_PATH = join(REPORTS_DIR, 'wave.json');
+
+function readWave() {
+  if (!existsSync(WAVE_PATH)) return null;
+  try { return JSON.parse(readFileSync(WAVE_PATH, 'utf8')); } catch { return null; }
+}
+
+/** Raw tracker entries — `auditTracker` re-decides them; coverage needs them as they are. */
+function loadTrackerEntries() {
+  if (!existsSync(TRACKER_PATH)) return [];
+  try {
+    const t = JSON.parse(readFileSync(TRACKER_PATH, 'utf8'));
+    return Array.isArray(t) ? t : [];
+  } catch { return []; }
+}
+
+/**
+ * Measure a wave that has reached the end of its window, and say plainly when
+ * it cannot be measured.
+ *
+ * The `underdosed` branch is the point. A difference-in-differences over an arm
+ * that was only partly rewritten compares a diluted treatment against a full
+ * control and reports "no effect" — a FALSE NEGATIVE that would retire a
+ * program which was never actually tried. `lib/ctr-wave.js` derives the floor
+ * from the wave's own power block (mde / targetAbsoluteLift) rather than a
+ * constant somebody could later tune toward the answer they wanted.
+ *
+ * Writes `concluded-<date>.json` beside the wave so the record outlives the
+ * wave file it describes, which is about to be overwritten.
+ */
+function concludeWave(wave, state) {
+  const stamp = new Date().toISOString().slice(0, 10);
+  const base = {
+    concluded_at: new Date().toISOString(),
+    wave_generated_at: wave?.generated_at ?? null,
+    window_days: MEASUREMENT_WINDOW_DAYS,
+    coverage: state.coverage,
+    required_coverage: state.required,
+  };
+
+  if (!state.concludable) {
+    console.log(`\n  ⚠ NOT CONCLUDED — ${state.reason}`);
+    const rec = { ...base, verdict: 'underdosed', reason: state.reason };
+    if (write) {
+      mkdirSync(REPORTS_DIR, { recursive: true });
+      writeFileSync(join(REPORTS_DIR, `concluded-${stamp}.json`), JSON.stringify(rec, null, 2));
+    }
+    notify({
+      category: 'ctr-program',
+      status: 'success',
+      subject: `CTR wave UNDERDOSED — ${state.coverage.treated}/${state.coverage.total} of the treatment arm was rewritten`,
+      body: `${state.reason}\n\nNo verdict was recorded: a partly-treated arm against a full control reports `
+        + '"no effect" whatever the rewrites did, and acting on that would retire a program that was never tried.\n\n'
+        + `Never rewritten:\n${(state.coverage.untreatedPages || []).map((h) => `  · ${h}`).join('\n')}`,
+    });
+    return;
+  }
+
+  // Both arms are re-measured over the window that has just closed, on the same
+  // basis, from the same snapshots — which is what makes this a difference in
+  // differences rather than two unrelated before/after readings.
+  const now = aggregateFromSnapshots(MEASUREMENT_WINDOW_DAYS);
+  if (!now) {
+    console.log('\n  ⚠ NOT CONCLUDED — no usable GSC snapshots to measure the closing window.');
+    return;
+  }
+  const metrics = new Map(finalise(now).map((p) => [String(p.url).split('/').pop(), p]));
+  const armTotals = (arm) => {
+    let imps = 0; let clicks = 0;
+    for (const p of arm || []) {
+      const m = metrics.get(String(p.url).split('/').pop());
+      if (!m) continue;
+      imps += m.impressions || 0; clicks += m.clicks || 0;
+    }
+    return { imps, clicks, ctr: imps ? clicks / imps : 0 };
+  };
+
+  const did = differenceInDifferences({
+    treatmentBefore: wave.treatment_totals,
+    holdoutBefore: wave.holdout_totals,
+    treatmentAfter: armTotals(wave.treatment),
+    holdoutAfter: armTotals(wave.holdout),
+  });
+  const verdict = cohortVerdict(did, { targetRelativeLift: wave.target_relative_lift });
+
+  console.log(`\n  WAVE VERDICT: ${String(verdict?.verdict ?? 'unknown').toUpperCase()}`);
+  console.log(`    treatment ${(did?.treatmentDelta * 100 || 0).toFixed(3)}pp, holdout ${(did?.holdoutDelta * 100 || 0).toFixed(3)}pp`
+    + `, difference ${(did?.did * 100 || 0).toFixed(3)}pp`);
+
+  const rec = { ...base, verdict: verdict?.verdict ?? 'unknown', did, detail: verdict };
+  if (write) {
+    mkdirSync(REPORTS_DIR, { recursive: true });
+    writeFileSync(join(REPORTS_DIR, `concluded-${stamp}.json`), JSON.stringify(rec, null, 2));
+  }
+  notify({
+    category: 'ctr-program',
+    status: 'success',
+    subject: `CTR wave concluded — ${verdict?.verdict ?? 'unknown'}`,
+    body: `${state.reason}\n\nTreatment moved ${(did?.treatmentDelta * 100 || 0).toFixed(3)}pp and the holdout `
+      + `${(did?.holdoutDelta * 100 || 0).toFixed(3)}pp over the same window; the difference-in-differences is `
+      + `${(did?.did * 100 || 0).toFixed(3)}pp. The holdout is what separates this from corpus drift — blog-wide CTR `
+      + 'tripled across six 28-day blocks with nobody touching most of those pages.',
+  });
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -199,6 +314,41 @@ async function main() {
 
   if (auditOnly) {
     if (write) writeReport({ audit });
+    return;
+  }
+
+  // ── IS A WAVE ALREADY IN FLIGHT? ──────────────────────────────────────────
+  // This cron is weekly but a wave measures over 28 days, and until 2026-09-05
+  // `writeWave` overwrote wave.json unconditionally — so the arms reshuffled
+  // six days into every measurement and no cohort ever survived long enough to
+  // be read. Freezing the arms IS the experiment; re-planning is what destroys
+  // it. `--force-replan` is the override, typed by a human who means it.
+  const existingWave = readWave();
+  const state = waveState(existingWave, loadTrackerEntries(), { now: Date.now() });
+  console.log(`\n  Wave status: ${state.status.toUpperCase()}`);
+  console.log(`  ${state.reason}`);
+
+  if (state.status === 'due') {
+    // Measure it BEFORE it is replaced. A wave that expires unread is the whole
+    // reason `differenceInDifferences` sat unit-tested and uncalled.
+    concludeWave(existingWave, state);
+  }
+
+  if (!state.replan && !forceReplan) {
+    if (state.coverage?.untreatedPages?.length) {
+      console.log('\n  Still to rewrite in this wave:');
+      for (const h of state.coverage.untreatedPages) console.log(`    · ${h}`);
+    }
+    notify({
+      category: 'ctr-program',
+      status: 'success',
+      subject: `CTR wave in flight — ${state.coverage.treated}/${state.coverage.total} treated, day ${state.ageDays.toFixed(0)} of ${MEASUREMENT_WINDOW_DAYS}`,
+      body: `${state.reason}\n\nArms are frozen until the window closes; re-planning now would reshuffle the cohort `
+        + 'mid-measurement. agents/meta-optimizer rewrites the treatment arm at its weekly cap.'
+        + (state.coverage.untreatedPages.length
+          ? `\n\nStill to rewrite:\n${state.coverage.untreatedPages.map((h) => `  · ${h}`).join('\n')}`
+          : ''),
+    });
     return;
   }
 

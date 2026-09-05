@@ -113,3 +113,132 @@ export function excludeHoldout(candidates, { root, pageForKeyword = () => null }
   }
   return { kept, excluded };
 }
+
+/**
+ * THE OTHER HALF OF THE WAVE, AND IT WAS MISSING ENTIRELY.
+ *
+ * `excludeHoldout` above enforces what must NOT be rewritten. Nothing enforced
+ * what must BE rewritten — `wave.treatment` was read by no code anywhere, even
+ * though `writeWave`'s own comment calls the two lists "what to rewrite, and
+ * what it must refuse to rewrite".
+ *
+ * Measured on production 2026-09-05 against the wave planned 2026-08-31: of the
+ * five weekly slots, two went to the `individual` pages (correct — those take
+ * the ordinary per-page path), two went to pages the wave had explicitly
+ * DEFERRED, and exactly ONE landed in the treatment arm. **1 of 10.**
+ *
+ * That was structural, not bad luck. Candidates come from `gsc-opportunity`'s
+ * top-20 low-CTR QUERIES; the wave designates PAGES. Only 1 of the 10 treatment
+ * pages was reachable from that list at all, so no amount of reordering could
+ * have treated the arm — which is why this also SYNTHESISES a candidate for a
+ * designated page that has no query in the list. 9 of the 10 sit in the
+ * quick-win pool the optimiser already fetches; they just never survive into
+ * the top-20.
+ *
+ * ORDERING: designated work goes FIRST, ahead of the cluster-efficiency sort.
+ * That is not a bypass of the efficiency rule — `agents/ctr-program` built the
+ * treatment arm with `lib/ctr-opportunity.js`, which ranks by recoverable
+ * clicks × what the cluster earns, reusing `lib/cluster-efficiency.js`'s own
+ * ordinals. The arm is ALREADY efficiency-ordered. Re-sorting it by cluster a
+ * second time is what displaced it out of the cap.
+ *
+ * `individual` is prioritised alongside `treatment` because those pages are the
+ * wave's other half — powered enough to test alone, so they take the ordinary
+ * per-page A/B path. Both are the program's work; everything else is filler.
+ *
+ * FAILS OPEN, exactly like `excludeHoldout`: no wave file, an unreadable one,
+ * or an empty treatment arm leaves the list exactly as it came in. A planner
+ * that has not run must never stop the optimiser working.
+ *
+ * @param {Array<{keyword:string}>} candidates already holdout-filtered
+ * @param {object} opts
+ * @param {string} opts.root
+ * @param {(kw:string)=>string|null} opts.pageForKeyword
+ * @param {Array<{keyword:string,url:string,impressions?:number,ctr?:number}>} [opts.pool]
+ *   the quick-win pool, used to synthesise a candidate for a designated page
+ *   that no candidate query points at.
+ * @returns {{ordered:Array, designated:Array<{keyword:string,url:string,arm:string,synthesised:boolean}>}}
+ */
+export function prioritiseTreatment(candidates, { root, pageForKeyword = () => null, pool = [] } = {}) {
+  const list = Array.isArray(candidates) ? candidates : [];
+  let wave = null;
+  try {
+    const p = join(root ?? '.', 'data', 'reports', 'ctr-program', 'wave.json');
+    if (!existsSync(p)) return { ordered: list, designated: [] };
+    wave = JSON.parse(readFileSync(p, 'utf8'));
+  } catch {
+    return { ordered: list, designated: [] };
+  }
+
+  const handle = (u) => String(u || '').replace(/[?#].*$/, '').replace(/\/+$/, '').split('/').pop();
+  // Order matters: the wave lists treatment in its own ranked order, and
+  // `individual` pages are the highest-traffic pages on the site, so they lead.
+  const designatedOrder = [];
+  const armOf = new Map();
+  for (const [arm, key] of [['individual', 'individual'], ['treatment', 'treatment']]) {
+    for (const p of Array.isArray(wave?.[key]) ? wave[key] : []) {
+      const h = handle(p?.url);
+      if (!h || armOf.has(h)) continue;
+      armOf.set(h, arm);
+      designatedOrder.push(h);
+    }
+  }
+  if (designatedOrder.length === 0) return { ordered: list, designated: [] };
+
+  // ONE CANDIDATE PER PAGE. The cap is a budget of PAGES — a rewrite mutates a
+  // page, not a query — and this list is QUERIES, several of which routinely
+  // land on the same page. Simulated against the live wave, `toothpaste-without-
+  // sls-what-to-know-best-options` took TWO of the five slots, halving the
+  // wave's weekly throughput for no second effect. Keep the page's biggest
+  // query, the same rule the synthesis below uses.
+  const rank = new Map(designatedOrder.map((h, i) => [h, i]));
+  const bestForPage = new Map();
+  const rest = [];
+  const dupes = [];
+  for (const c of list) {
+    const h = handle(pageForKeyword(c?.keyword));
+    if (!h || !rank.has(h)) { rest.push(c); continue; }
+    const prev = bestForPage.get(h);
+    if (!prev) { bestForPage.set(h, c); continue; }
+    // The loser is DEMOTED TO THE VERY END, not merely behind its twin: sitting
+    // next in line it still lands inside a cap of five, which is the whole
+    // defect. It is never DROPPED, though — the page it points at is being
+    // rewritten anyway, and this repo does not make candidates disappear.
+    if ((c?.impressions ?? 0) > (prev?.impressions ?? 0)) { bestForPage.set(h, c); dupes.push(prev); }
+    else dupes.push(c);
+  }
+  const covered = new Set(bestForPage.keys());
+  const first = [...bestForPage.values()]
+    .sort((a, b) => rank.get(handle(pageForKeyword(a.keyword))) - rank.get(handle(pageForKeyword(b.keyword))));
+
+  // Synthesise a candidate for each designated page no query reached. Pick the
+  // page's highest-impression query from the pool: that is the query most of
+  // its traffic is actually earned on, so the rewrite is judged against the
+  // demand it really has rather than a long-tail phrase.
+  const synthetic = [];
+  const byHandle = new Map();
+  for (const row of Array.isArray(pool) ? pool : []) {
+    const h = handle(row?.url);
+    if (!h || !rank.has(h) || covered.has(h)) continue;
+    const prev = byHandle.get(h);
+    if (!prev || (row?.impressions ?? 0) > (prev.impressions ?? 0)) byHandle.set(h, row);
+  }
+  // A synthesised candidate must not reuse a keyword an existing candidate
+  // already carries: the A/B tracker keys on keyword, and two rows sharing one
+  // are indistinguishable in it. The page still gets treated on a later wave
+  // through its own next-biggest query.
+  const usedKeywords = new Set(list.map((c) => c?.keyword).filter(Boolean));
+  for (const h of designatedOrder) {
+    const row = byHandle.get(h);
+    if (!row || usedKeywords.has(row.keyword)) continue;
+    usedKeywords.add(row.keyword);
+    synthetic.push({ ...row, from_wave: armOf.get(h) });
+  }
+
+  const ordered = [...first, ...synthetic, ...rest, ...dupes];
+  const designated = [...first.map((c) => ({ keyword: c.keyword, url: pageForKeyword(c.keyword), synthesised: false })),
+    ...synthetic.map((c) => ({ keyword: c.keyword, url: c.url, synthesised: true }))]
+    .map((d) => ({ ...d, arm: armOf.get(handle(d.url)) || 'unknown' }));
+
+  return { ordered, designated };
+}
