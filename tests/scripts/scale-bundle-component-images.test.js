@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import {
   PRODUCTS, GAMMA, modelHeights, targetFractions, kindOf, parseArgs, validate,
 } from '../../scripts/scale-bundle-component-images.mjs';
-import { LIVE_THEME_ID } from '../../scripts/scale-theme-component-image.mjs';
+
+// A FIXTURE, not an import — see the note in scale-theme-component-image.test.js.
+const LIVE_THEME_ID = '148439367850';
 
 // The fractions are DERIVED (volume + tight-crop aspect), not chosen. These tests
 // pin the derivation against reality, so a change to the model has to keep
@@ -60,15 +62,18 @@ test('every kind in PRODUCTS gets a fraction, and lipbalm is added on top', () =
 });
 
 test('the live theme is refused with NO override', () => {
-  const r = validate({ theme: LIVE_THEME_ID });
+  const r = validate({ theme: LIVE_THEME_ID }, LIVE_THEME_ID);
   assert.equal(r.ok, false);
   assert.match(r.reason, /LIVE/);
+  // And an unresolvable live id refuses too — this rewrites 15 assets at once,
+  // so "we could not check" must never resolve to "go ahead".
+  assert.equal(validate({ theme: '145536778410' }, null).ok, false);
   // Unlike the single-image scaler there is deliberately no --allow-live-theme:
   // this rewrites 15 assets in one pass and must be eyeballed on a preview.
   assert.throws(() => parseArgs(['--allow-live-theme']), /unknown argument/);
 });
 
 test('a target theme is never guessed', () => {
-  assert.equal(validate({}).ok, false);
-  assert.equal(validate({ theme: '999' }).ok, true);
+  assert.equal(validate({}, LIVE_THEME_ID).ok, false);
+  assert.equal(validate({ theme: '999' }, LIVE_THEME_ID).ok, true);
 });

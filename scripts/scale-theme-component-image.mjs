@@ -45,9 +45,12 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { resolveLiveThemeId, UNRESOLVED_LIVE_THEME_REASON } from '../lib/shopify-live-theme.js';
 
 const ROOT = process.env.SEO_CLAUDE_ROOT || join(dirname(fileURLToPath(import.meta.url)), '..');
-export const LIVE_THEME_ID = '147480051882';
+// No hardcoded live theme id — it goes stale the next time somebody clicks
+// Publish, which is exactly what happened on 2026-09-01. Resolved from the API
+// by `role === 'main'`; see lib/shopify-live-theme.js.
 
 export function parseArgs(argv) {
   const a = { allowLive: false };
@@ -63,14 +66,21 @@ export function parseArgs(argv) {
   return a;
 }
 
-/** @returns {{ok:true}|{ok:false, reason:string}} */
-export function validate(a) {
+/**
+ * @param {object} a parsed args
+ * @param {string|null} liveThemeId resolved at call time; `null` means "could
+ *   not determine", which REFUSES rather than allows — `--theme` is required
+ *   here, so an unverifiable target is never written to.
+ * @returns {{ok:true}|{ok:false, reason:string}}
+ */
+export function validate(a, liveThemeId) {
   if (!a.key) return { ok: false, reason: '--key is required' };
   if (!Number.isFinite(a.fraction)) return { ok: false, reason: '--fraction is required' };
   if (a.fraction <= 0 || a.fraction > 1) return { ok: false, reason: '--fraction must be in (0, 1]' };
   if (!a.theme) return { ok: false, reason: '--theme is required — this never guesses a target' };
-  if (String(a.theme) === LIVE_THEME_ID && !a.allowLive) {
-    return { ok: false, reason: `theme ${LIVE_THEME_ID} is LIVE; pass --allow-live-theme if you mean it` };
+  if (!liveThemeId) return { ok: false, reason: UNRESOLVED_LIVE_THEME_REASON };
+  if (String(a.theme) === String(liveThemeId) && !a.allowLive) {
+    return { ok: false, reason: `theme ${liveThemeId} is LIVE; pass --allow-live-theme if you mean it` };
   }
   return { ok: true };
 }
@@ -94,7 +104,10 @@ async function main(argv) {
     console.log('Usage: --key <asset> --fraction <0..1> --theme <id> [--allow-live-theme]');
     return 0;
   }
-  const v = validate(a);
+  // Resolved from the API, never a constant. A failure yields null, which
+  // makes validate() REFUSE rather than write to an unverified target.
+  const liveThemeId = await resolveLiveThemeId();
+  const v = validate(a, liveThemeId);
   if (!v.ok) { console.error(`REFUSED: ${v.reason}`); return 64; }
 
   const sharp = (await import('sharp')).default;

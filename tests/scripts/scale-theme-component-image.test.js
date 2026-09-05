@@ -2,8 +2,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
 import {
-  parseArgs, validate, alreadyPadded, LIVE_THEME_ID,
+  parseArgs, validate, alreadyPadded,
 } from '../../scripts/scale-theme-component-image.mjs';
+
+// A FIXTURE, not an import. This used to be a constant in the module and it went
+// stale when the store was republished on 2026-09-01 — the guard then protected
+// an unpublished backup and waved the real live theme straight through. The id
+// is resolved from the API at call time now and passed in.
+const LIVE_THEME_ID = '148439367850';
 
 // `object-fit: contain` scales each image to fit ITS OWN box, so a grid of
 // components reads at whatever fraction of its canvas each product happens to
@@ -21,23 +27,29 @@ test('parseArgs reads the three inputs and rejects an unknown flag', () => {
 
 test('the live theme is refused unless the override is typed', () => {
   const base = { key: 'assets/x.webp', fraction: 0.4 };
-  const r = validate({ ...base, theme: LIVE_THEME_ID });
+  const r = validate({ ...base, theme: LIVE_THEME_ID }, LIVE_THEME_ID);
   assert.equal(r.ok, false);
   assert.match(r.reason, /LIVE/);
-  assert.equal(validate({ ...base, theme: LIVE_THEME_ID, allowLive: true }).ok, true);
+  assert.equal(validate({ ...base, theme: LIVE_THEME_ID, allowLive: true }, LIVE_THEME_ID).ok, true);
+});
+
+test('an UNRESOLVED live id refuses rather than writing to an unverified theme', () => {
+  const r = validate({ key: 'assets/x.webp', fraction: 0.4, theme: '145536778410' }, null);
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /could not resolve/);
 });
 
 test('a target theme is never guessed', () => {
-  const r = validate({ key: 'assets/x.webp', fraction: 0.4 });
+  const r = validate({ key: 'assets/x.webp', fraction: 0.4 }, LIVE_THEME_ID);
   assert.equal(r.ok, false);
   assert.match(r.reason, /--theme is required/);
 });
 
 test('the fraction must be a real proportion', () => {
   for (const f of [0, -0.2, 1.5, Number.NaN]) {
-    assert.equal(validate({ key: 'a', theme: '1', fraction: f }).ok, false, `fraction ${f}`);
+    assert.equal(validate({ key: 'a', theme: '1', fraction: f }, LIVE_THEME_ID).ok, false, `fraction ${f}`);
   }
-  assert.equal(validate({ key: 'a', theme: '1', fraction: 1 }).ok, true, 'exactly 1 is a no-op but legal');
+  assert.equal(validate({ key: 'a', theme: '1', fraction: 1 }, LIVE_THEME_ID).ok, true, 'exactly 1 is a no-op but legal');
 });
 
 test('alreadyPadded is false for a tight crop and true for a padded canvas', async () => {
