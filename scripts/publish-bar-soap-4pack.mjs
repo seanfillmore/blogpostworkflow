@@ -106,7 +106,7 @@ const DESCRIPTION = `
 
 const SEO_TITLE = 'Coconut Bar Soap 4-Pack — Four Months of Natural Soap';
 const SEO_DESCRIPTION =
-  'Four bars of cold-pressed coconut oil soap: one of each scent, or four of your favourite. About four months of daily use, with a 4-month refill subscription at 15% off.';
+  'Four bars of cold-pressed coconut oil soap: one of each scent, or four of your favorite. About four months of daily use, with a 4-month refill subscription at 15% off.';
 
 // --------------------------------------------------------------------------
 

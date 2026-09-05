@@ -55,7 +55,7 @@ const ALL_PRODUCTS_LEAD_LINKS = `<p><a href="/collections/non-toxic-body-lotion"
 
 const ALL_PRODUCTS_BODY = `${ALL_PRODUCTS_LEAD_LINKS}
 <p>Every Real Skin Care product in one place: coconut-oil body
-lotion and body cream, fluoride-free toothpaste, aluminium-free deodorant, bar and foaming
+lotion and body cream, fluoride-free toothpaste, aluminum-free deodorant, bar and foaming
 hand soap, and lip balm. Small-batch, made for skin that reacts to fragrance, parabens and
 harsh preservatives.</p>`;
 
