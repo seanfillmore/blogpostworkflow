@@ -112,3 +112,34 @@ test('buildSnapshot flags lowStock when hero lotion below threshold', () => {
   const inv2 = { rscFulfillable: 80, heroLotion: [{ asin: 'B08LOTION', itemName: 'Lotion', fulfillable: 80 }] };
   assert.equal(buildSnapshot('2026-07-22', { postedAfter: 'x' }, agg, inv2).lowStock, false);
 });
+
+test('Culina carries per-ASIN detail, UNCAPPED, so PPC spend can be paired against sales', () => {
+  // The Culina Amazon account is managed by a paid agency; auditing it needs
+  // per-ASIN sales as the denominator for per-campaign ad spend. RSC's topAsins
+  // is a top-5 display feed; Culina's must NOT be capped, or the ASINs a campaign
+  // is spending on can silently fall off the end (the `topProducts[]` mistake).
+  const manyListings = [];
+  const shipItems = [];
+  for (let i = 0; i < 9; i++) {
+    const sku = `CUL-${i}`;
+    manyListings.push({ sku, summaries: [{ asin: `B08CAST${i}`, itemName: `Culina Cast Iron Item ${i}` }] });
+    shipItems.push({
+      SellerSKU: sku, QuantityShipped: 1,
+      ItemChargeList: [{ ChargeType: 'Principal', ChargeAmount: { CurrencyAmount: 10 + i } }],
+      ItemFeeList: [{ FeeType: 'Commission', FeeAmount: { CurrencyAmount: -1 } }],
+    });
+  }
+  const agg = aggregateFinance({ ShipmentEventList: [{ ShipmentItemList: shipItems }] }, buildSkuBrandMap(manyListings));
+  const snap = buildSnapshot('2026-09-05', { postedAfter: 'x' }, agg, { rscFulfillable: 0, heroLotion: [] });
+
+  assert.equal(snap.culina.asins.length, 9, 'all 9 ASINs present — never sliced to 5');
+  assert.equal(snap.culina.activeAsins, 9);
+  assert.equal(snap.culina.units, 9);
+  // Same fee breakdown RSC gets, so TACoS/margin math needs no second source.
+  assert.equal(snap.culina.referral, -9);
+  assert.ok(typeof snap.culina.feePct === 'number');
+  // Sorted by net descending, like RSC's.
+  assert.equal(snap.culina.asins[0].asin, 'B08CAST8');
+  // The three original fields are unchanged, so no existing reader breaks.
+  assert.ok(typeof snap.culina.gross === 'number' && typeof snap.culina.net === 'number' && typeof snap.culina.netPct === 'number');
+});

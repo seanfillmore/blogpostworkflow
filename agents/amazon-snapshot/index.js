@@ -24,6 +24,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getClient, request, getMarketplaceId } from '../../lib/amazon/sp-api-client.js';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..', '..');
@@ -52,7 +53,8 @@ const amt = (x) => Number(x?.CurrencyAmount || 0);
 const r2 = (n) => Math.round(n * 100) / 100;
 
 /**
- * Aggregate financialEvents into per-brand totals + per-ASIN net for RSC.
+ * Aggregate financialEvents into per-brand totals + per-ASIN net for EVERY brand
+ * (it always did compute byAsin for all three; only RSC's used to reach the file).
  * Fees arrive negative. Returns { RSC, Culina, Unknown } each with
  * { gross, referral, fba, otherFee, refund, units, net, feePct, netPct, byAsin }.
  */
@@ -183,7 +185,21 @@ export function buildSnapshot(date, finance, agg, inv) {
       referral: rsc.referral, fba: rsc.fba, activeAsins: rsc.byAsin.length,
       topAsins: rsc.byAsin.slice(0, 5),
     },
-    culina: { gross: agg.Culina.gross, net: agg.Culina.net, netPct: agg.Culina.netPct },
+    // Culina carries the SAME shape as RSC, and its ASIN list is UNCAPPED where
+    // RSC's is a top-5 display feed. That asymmetry is deliberate: this feed is
+    // the sales denominator for the Culina PPC audit (an agency is paid >$1K/mo
+    // to manage that account), and per-ASIN sales only mean anything paired
+    // against per-campaign ad spend — a capped list silently drops the ASINs a
+    // campaign is spending on. CLAUDE.md already records what a top-N cap cost
+    // once: `topProducts[]` put toothpaste at $39.00/90d where the raw line
+    // items said $71.50. There are ~10 Culina ASINs, so uncapped is free.
+    culina: {
+      gross: agg.Culina.gross, net: agg.Culina.net, feePct: agg.Culina.feePct,
+      netPct: agg.Culina.netPct, units: agg.Culina.units,
+      referral: agg.Culina.referral, fba: agg.Culina.fba,
+      activeAsins: agg.Culina.byAsin.length,
+      asins: agg.Culina.byAsin,
+    },
     inventory: { rscFulfillable: inv.rscFulfillable, heroLotion },
     lowStock,
   };
@@ -220,12 +236,12 @@ async function main() {
     `RSC (30d): gross $${snap.rsc.gross}, net $${snap.rsc.net} (${snap.rsc.netPct}% net, ${snap.rsc.feePct}% fees), ${snap.rsc.units} units, ${snap.rsc.activeAsins} active ASINs.`,
     `Top ASINs by net: ${snap.rsc.topAsins.map((a) => `${a.itemName?.slice(0, 32)} $${a.net}`).join(' · ')}`,
     `Hero-lotion fulfillable: ${heroStr}${snap.lowStock ? ` — BELOW ${LOW_STOCK_UNITS}u, restock` : ''}.`,
-    `Culina (context): gross $${snap.culina.gross}, net $${snap.culina.net}.`,
+    `Culina (context): gross $${snap.culina.gross}, net $${snap.culina.net} (${snap.culina.netPct}% net), ${snap.culina.units} units, ${snap.culina.activeAsins} active ASINs.`,
   ].join('\n');
   console.log(body);
   await notify({ subject, body, status: snap.lowStock ? 'error' : 'info', category: 'collector' });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectRun(import.meta.url)) {
   main().catch((err) => { console.error('Amazon snapshot failed:', err.message); process.exit(1); });
 }
