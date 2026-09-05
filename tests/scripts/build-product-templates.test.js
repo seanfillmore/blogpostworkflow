@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { MANIFEST, applyManifest, blockSource, templateNick, serialize } from '../../scripts/build-product-templates.mjs';
+import { MANIFEST, applyManifest, blockSource, templateNick, serialize, settingsKey, SUBSCRIPTION_CLAUSE } from '../../scripts/build-product-templates.mjs';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), 'utf8') : null);
@@ -99,16 +99,66 @@ test('the two landers are deliberately excluded from the guarantee line', () => 
   }
 });
 
-test('neither Recurpay nor tab-shipping is unified anywhere', () => {
-  // Both were mistaken for drift. recurpay-widget and recurpay-app-block-widget
-  // are DIFFERENT app blocks; tab-shipping differs by a real shipping claim.
+test('Recurpay is never unified — they are two DIFFERENT app blocks', () => {
+  // recurpay-widget (7 pages) and recurpay-app-block-widget (cream, lotion)
+  // differ by `type`, not just id. Collapsing them changes which subscription
+  // widget renders on lotion, which is 72% of revenue.
   for (const spec of Object.values(MANIFEST)) {
-    const touched = [...spec.shared, ...spec.drop, ...Object.keys(spec.insertAfter)];
-    for (const n of touched) {
+    for (const n of [...spec.shared, ...spec.drop, ...Object.keys(spec.insertAfter)]) {
       assert.ok(!/recurpay/i.test(n), `recurpay must not be unified: ${n}`);
-      assert.notEqual(n, 'tab-shipping');
     }
   }
+});
+
+test('tab-shipping is one paragraph with ONE token, not two forked copies', () => {
+  // The clause is a CLAIM, so the two variants must never be two hand-kept
+  // strings that can drift apart in wording while differing in claim.
+  const src = read('theme/blocks/tab-shipping.liquid');
+  assert.equal((src.match(/%%SUBSCRIPTION%%/g) ?? []).length, 1);
+  assert.doesNotMatch(src, /subscription order/);
+  const on = blockSource('tab-shipping', 'product.landing-page-lotion.json', read);
+  const off = blockSource('tab-shipping', 'product.landing-page-lip-balm.json', read);
+  assert.match(on, /\$45\+ and on every subscription order\./);
+  assert.match(off, /\$45\+\. Standard/);
+  // Identical everywhere else: the ONLY difference is the clause.
+  assert.equal(on.replace(SUBSCRIPTION_CLAUSE, ''), off);
+  // No token may survive into shipped copy.
+  for (const f of Object.keys(MANIFEST)) {
+    for (const n of MANIFEST[f].shared) {
+      assert.doesNotMatch(blockSource(n, f, read), /%%\w+%%/, `${f}/${n}`);
+    }
+  }
+});
+
+test('the subscription claim appears exactly where something IS subscribable', () => {
+  // Measured live 2026-09-05 per page, across EVERY tier the page sells --
+  // the three ladder pages qualify only because a multipack TIER carries the
+  // selling plan while the single unit does not.
+  const SUBSCRIBABLE = {
+    toothpaste: true,          // coconut-toothpaste-3-pack
+    deodorant: true,           // coconut-deodorant-4-pack
+    'bar-soap': true,          // coconut-bar-soap-4-pack
+    lotion: true,
+    cream: true,
+    'sensitive-skin-set-lander': true,
+    'lip-balm': false,         // no tier has a plan
+    'liquid-soap': false,      // neither pump nor refill
+    'bundle-landing': false,   // none of its six bundles
+  };
+  for (const [f, spec] of Object.entries(MANIFEST)) {
+    assert.equal(spec.subscribable, SUBSCRIBABLE[templateNick(f)], `${f} subscribable flag`);
+    if (!spec.shared.includes('tab-shipping')) continue;
+    const out = blockSource('tab-shipping', f, read);
+    assert.equal(/subscription order/.test(out), spec.subscribable, `${f} claim/flag mismatch`);
+  }
+});
+
+test('bundle-landing has no tab-shipping to unify', () => {
+  // It uses a single `tabs` block and carries no shipping copy at all, so the
+  // flag there governs nothing -- stated as a test so a later reader does not
+  // "fix" the omission.
+  assert.ok(!MANIFEST['product.bundle-landing.json'].shared.includes('tab-shipping'));
+  assert.equal(tpl('product.bundle-landing.json').sections.main.blocks['tab-shipping'], undefined);
 });
 
 test('serialize round-trips every committed template byte-identically', () => {
