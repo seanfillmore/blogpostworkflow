@@ -34,19 +34,50 @@ function log(msg) {
 
 const failures = [];
 
-function runStep(name, cmd, { retries = 0, critical = false, indent = '  ' } = {}) {
+// A HUNG STEP USED TO WEDGE THE WHOLE PIPELINE FOREVER, because `execSync` has
+// no timeout by default. On 2026-09-01 `theme-seo-auditor` — the FIRST monthly
+// job — stalled inside Lighthouse and this process was still sitting on it four
+// days later: every monthly step after it never ran, no failure was ever
+// recorded (the process never exited to record one), and its orphaned Chrome
+// tree held ~334 MB on a 1 GB box until the OOM killer took the dashboard down
+// 642 times instead. The per-agent fix is in that agent; this is the backstop,
+// so the NEXT agent that learns to hang costs one step rather than a pipeline.
+//
+// MEASURED, NOT PICKED. Across 62 real runs in `scheduler.log` (2026-07-15 →
+// 2026-09-05) the slowest healthy step is `publish-due` at 5,205s (86.8 min),
+// then `cannibalization-resolver` at 3,679s (61.3 min) and `ai-citation-tracker`
+// at 1,774s (29.6 min). A 45-minute ceiling — the number guessed before
+// measuring — would have KILLED the first two on a normal day. 150 min is 1.7x
+// the slowest observed run, so nothing that has ever completed here can trip it,
+// while a genuine hang is bounded well inside the 24h until the next run.
+//
+// A timeout kills with SIGTERM and makes `execSync` throw, so it lands in the
+// existing catch and is recorded as an ordinary step failure — visible in the
+// digest — rather than needing a second reporting path. `killSignal` is left at
+// the default deliberately: SIGTERM lets an agent's own finally blocks run and
+// close its browser, which is the whole point of the agent-side fix above.
+const STEP_TIMEOUT_MS = 150 * 60 * 1000;
+
+function runStep(name, cmd, { retries = 0, critical = false, indent = '  ', timeout = STEP_TIMEOUT_MS } = {}) {
   log(`${indent}${cmd}`);
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      execSync(cmd, { stdio: 'inherit', cwd: __dirname });
+      execSync(cmd, { stdio: 'inherit', cwd: __dirname, timeout });
       log(`${indent}✓ ${name} complete`);
       return true;
     } catch (e) {
+      // `execSync` reports a timeout as `code: 'ETIMEDOUT'` with `status: null`
+      // and `signal: 'SIGTERM'` — verified on both Node 22 (the server) and 25.
+      // Key off `code`, not the signal: a step killed by an operator's SIGTERM
+      // looks identical on signal+status alone. Saying "exit null" here would
+      // send somebody hunting for a crash that never happened.
+      const timedOut = e.code === 'ETIMEDOUT';
+      const why = timedOut ? `timed out after ${Math.round(timeout / 60000)}m` : `exit ${e.status}`;
       if (attempt < retries) {
-        log(`${indent}⚠ ${name} failed (attempt ${attempt + 1}/${retries + 1}), retrying...`);
+        log(`${indent}⚠ ${name} failed (${why}, attempt ${attempt + 1}/${retries + 1}), retrying...`);
       } else {
-        log(`${indent}✗ ${name} failed (exit ${e.status})`);
-        failures.push({ name, critical, error: e.message || `exit ${e.status}` });
+        log(`${indent}✗ ${name} failed (${why})`);
+        failures.push({ name, critical, error: timedOut ? why : e.message || `exit ${e.status}` });
       }
     }
   }
@@ -107,9 +138,9 @@ if (!dryFlag) {
     for (const { slug, onShopify } of brokenItems) {
       log(`    Repairing: ${slug}`);
       try {
-        execSync(`"${NODE}" agents/link-repair/index.js ${slug}`, { stdio: 'inherit', cwd: __dirname });
+        execSync(`"${NODE}" agents/link-repair/index.js ${slug}`, { stdio: 'inherit', cwd: __dirname, timeout: STEP_TIMEOUT_MS });
         // Re-run editor to refresh the verdict (clears the blocker on the dashboard/digest).
-        execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname });
+        execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname, timeout: STEP_TIMEOUT_MS });
         if (onShopify) {
           // Already live on Shopify — push the repaired body back up.
           // --force skips the editor gate since the post is already published.
@@ -118,7 +149,7 @@ if (!dryFlag) {
           const meta = getPostMeta(slug);
           const futurePublishAt = meta.shopify_publish_at && new Date(meta.shopify_publish_at) > new Date()
             ? ` --publish-at "${meta.shopify_publish_at}"` : '';
-          execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}/meta.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname });
+          execSync(`"${NODE}" agents/publisher/index.js data/posts/${slug}/meta.json --force${futurePublishAt}`, { stdio: 'inherit', cwd: __dirname, timeout: STEP_TIMEOUT_MS });
           log(`    ✓ ${slug} repaired and re-uploaded`);
         } else {
           // Not yet on Shopify — repair complete; the normal publish pipeline
@@ -126,7 +157,9 @@ if (!dryFlag) {
           log(`    ✓ ${slug} repaired (will publish via calendar-runner)`);
         }
       } catch (e) {
-        log(`    ✗ ${slug} repair failed (exit ${e.status})`);
+        // Same ETIMEDOUT distinction as runStep: "exit null" would send a
+        // reader hunting for a crash that never happened.
+        log(`    ✗ ${slug} repair failed (${e.code === 'ETIMEDOUT' ? `timed out after ${Math.round(STEP_TIMEOUT_MS / 60000)}m` : `exit ${e.status}`})`);
       }
     }
   } else {
