@@ -1529,10 +1529,10 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Subscription vehicle for toothpaste. Three flavours means a three-pack: one of each, or three of one.",
+      "story": "Subscription vehicle for toothpaste. Three flavors means a three-pack: one of each, or three of one.",
       "options": [
         {
-          "name": "Flavour",
+          "name": "Flavor",
           "values": [
             "Variety — one of each",
             "3x Fresh Mint",
@@ -1544,7 +1544,7 @@
       "variants": [
         {
           "options": {
-            "Flavour": "Variety — one of each"
+            "Flavor": "Variety — one of each"
           },
           "price": 34,
           "compareAtPrice": 39,
@@ -1569,7 +1569,7 @@
         },
         {
           "options": {
-            "Flavour": "3x Fresh Mint"
+            "Flavor": "3x Fresh Mint"
           },
           "price": 34,
           "compareAtPrice": 39,
@@ -1584,7 +1584,7 @@
         },
         {
           "options": {
-            "Flavour": "3x All Natural"
+            "Flavor": "3x All Natural"
           },
           "price": 34,
           "compareAtPrice": 39,
@@ -1599,7 +1599,7 @@
         },
         {
           "options": {
-            "Flavour": "3x Cinnamon Spice"
+            "Flavor": "3x Cinnamon Spice"
           },
           "price": 34,
           "compareAtPrice": 39,
