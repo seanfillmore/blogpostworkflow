@@ -78,6 +78,39 @@
   <p class="qty-ladder__error" data-qty-error hidden></p>
 
   {%- comment -%}
+    Sticky buy bar. The theme's own `sticky_cart` block CANNOT be used on a
+    ladder template: it renders `{% form 'product', product %}` against the
+    PAGE's product, which is always the single-unit SKU, while a ladder tier
+    is a DIFFERENT product (coconut-oil-toothpaste vs
+    coconut-toothpaste-3-pack). A shopper who picked the 3-pack and then used
+    that bar would silently be sold one tube. Hence this bar, which shares
+    selectedVariant() and addToCart() with the main CTA rather than building a
+    form of its own -- there is one selection and one add path, so the two
+    buttons cannot disagree.
+
+    Starts `hidden`, so with no JS (or no IntersectionObserver) it never
+    appears and the page degrades to exactly its current behaviour.
+
+    Prices are NOT baked here: they are read out of the rendered tier card,
+    which Liquid already filled from all_products. Same rule as the rest of
+    this block -- a reprice must never leave a stale number on the page.
+  {%- endcomment -%}
+  <div class="qty-ladder-sticky" data-qty-sticky hidden>
+    <div class="qty-ladder-sticky__inner">
+      <div class="qty-ladder-sticky__meta">
+        <span class="qty-ladder-sticky__title">{{ base_product.title | truncate: 46 }}</span>
+        <span class="qty-ladder-sticky__line">
+          <span class="qty-ladder-sticky__tier" data-qty-sticky-tier></span>
+          <span class="qty-ladder-sticky__price" data-qty-sticky-price></span>
+        </span>
+      </div>
+      <button type="button" class="qty-ladder-sticky__cta button button--secondary" data-qty-sticky-cta disabled>
+        <span>Add to cart</span>
+      </button>
+    </div>
+  </div>
+
+  {%- comment -%}
     Variant data per tier, for the option selector. Commas are emitted BEFORE
     each entry (guarded by a printed-flag, not `forloop.last`), because the
     outer loop skips handles missing from all_products -- `unless
@@ -138,6 +171,31 @@
     is set on the injected <select> itself (see the IIFE below), not here.
   {%- endcomment -%}
   .qty-ladder__error{color:#b3261e;font-size:.9em;margin:8px 0 0}
+
+  /* Sticky buy bar. [hidden] is a class+attribute selector, so it outranks the
+     display:flex above and the attribute alone is enough to hide the bar --
+     no JS style writing, and no chance of the bar being stranded visible if
+     the observer never runs. */
+  .qty-ladder-sticky{position:fixed;left:0;right:0;bottom:0;z-index:40;background:#fff;
+    border-top:1px solid #e0ded8;box-shadow:0 -2px 12px rgba(0,0,0,.08);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
+  .qty-ladder-sticky[hidden]{display:none}
+  .qty-ladder-sticky__inner{display:flex;align-items:center;gap:16px;
+    max-width:1200px;margin:0 auto}
+  .qty-ladder-sticky__meta{display:flex;flex-direction:column;min-width:0;flex:1 1 auto}
+  .qty-ladder-sticky__title{font-size:.85em;color:#5c5f5a;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .qty-ladder-sticky__line{display:flex;align-items:baseline;gap:8px;white-space:nowrap}
+  .qty-ladder-sticky__tier{font-weight:600}
+  .qty-ladder-sticky__price{font-weight:600}
+  .qty-ladder-sticky__cta{flex:0 0 auto;width:auto;margin:0}
+  /* Below 750px the product title is the first thing to go: the tier, the
+     price and the button are the only parts that carry a decision. */
+  @media screen and (max-width:749px){
+    .qty-ladder-sticky__title{display:none}
+    .qty-ladder-sticky__inner{gap:12px}
+    .qty-ladder-sticky__cta{padding-left:18px;padding-right:18px}
+  }
 </style>
 
 <script>
@@ -154,6 +212,16 @@
   var ctaLabel = cta.querySelector('span');
   var errorEl = root.querySelector('[data-qty-error]');
   var chosenOption = null;
+
+  // Sticky bar. Every one of these may be absent on a template built before
+  // the bar existed, so each use is guarded -- a missing bar must degrade to
+  // the pre-existing single-CTA behaviour, never throw and take the whole
+  // IIFE (and with it the main Add to cart) down with it.
+  var sticky = root.querySelector('[data-qty-sticky]');
+  var stickyCta = sticky && sticky.querySelector('[data-qty-sticky-cta]');
+  var stickyCtaLabel = stickyCta && stickyCta.querySelector('span');
+  var stickyTier = sticky && sticky.querySelector('[data-qty-sticky-tier]');
+  var stickyPrice = sticky && sticky.querySelector('[data-qty-sticky-price]');
 
   // Display-only label transform: the tier card already says "12-pack" /
   // "4-pack", so repeating the count in the option text is redundant. Strips
@@ -220,8 +288,23 @@
 
   function syncCta() {
     var v = selectedVariant();
-    cta.disabled = !v || !v.available;
-    ctaLabel.textContent = v && !v.available ? 'Sold out' : 'Add to cart';
+    var soldOut = !!v && !v.available;
+    var label = soldOut ? 'Sold out' : 'Add to cart';
+    cta.disabled = !v || soldOut;
+    ctaLabel.textContent = label;
+
+    // The sticky bar mirrors the SAME selection rather than tracking its own.
+    if (!sticky) return;
+    stickyCta.disabled = cta.disabled;
+    stickyCtaLabel.textContent = label;
+    // Tier name and price are read out of the rendered tier card, so the bar
+    // can never show a price Liquid did not print (no baked prices here).
+    var checked = root.querySelector('input[name="qty-tier"]:checked');
+    var card = checked && checked.closest('.qty-ladder__tier');
+    var qtyEl = card && card.querySelector('.qty-ladder__qty');
+    var priceEl = card && card.querySelector('.qty-ladder__price');
+    stickyTier.textContent = qtyEl ? qtyEl.textContent.trim() : '';
+    stickyPrice.textContent = priceEl ? priceEl.textContent.trim() : '';
   }
 
   root.querySelectorAll('input[name="qty-tier"]').forEach(function (input) {
@@ -233,11 +316,15 @@
     });
   });
 
-  cta.addEventListener('click', function () {
+  // ONE add path for both buttons. The sticky bar deliberately does not build
+  // a <form> of its own -- that is precisely what makes the theme's stock
+  // sticky_cart wrong here (it posts the page's product, not the chosen tier).
+  function addToCart() {
     var v = selectedVariant();
     if (!v) return;
     errorEl.hidden = true;
     cta.disabled = true;
+    if (sticky) stickyCta.disabled = true;
     fetch('/cart/add.js', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -248,9 +335,30 @@
       .catch(function (err) {
         errorEl.textContent = err.message + '. Please try again.';
         errorEl.hidden = false;
-        cta.disabled = false;
+        // syncCta re-derives BOTH buttons from the current selection, so a
+        // failed add cannot leave one of them stuck disabled.
+        syncCta();
       });
-  });
+  }
+
+  cta.addEventListener('click', addToCart);
+
+  if (sticky) {
+    stickyCta.addEventListener('click', addToCart);
+
+    // Reveal the bar only once the main CTA has scrolled ABOVE the viewport.
+    // `!isIntersecting` alone is not enough: it is also false on load, while
+    // the CTA is still below the fold, which would show the bar over the hero
+    // before the shopper has seen the ladder at all. boundingClientRect.top
+    // is what distinguishes "scrolled past" from "not yet reached".
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          sticky.hidden = entry.isIntersecting || entry.boundingClientRect.top > 0;
+        });
+      }, { threshold: 0 }).observe(cta);
+    }
+  }
 
   renderOptions();
 })();
