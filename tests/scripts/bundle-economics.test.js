@@ -109,9 +109,18 @@ test('roster-derived bundles reproduce the known contributions', () => {
   assert.equal(giftBox.contrib, 34.32, 'Gift Box after its $1 box');
 });
 
-test('the Hand Soap Set produces three ladder rows', () => {
-  const rows = BUNDLES.filter(b => b.name.startsWith('Hand Soap Set'));
-  assert.equal(rows.length, 3);
-  assert.deepEqual(rows.map(r => r.price), [44, 59, 72], 'rows must read as a ladder');
-  assert.deepEqual(ev(rows[2]).items, { pump: 4, lotion: 1 });
+test('the hand soap ladder produces one row per rung, pump-only', () => {
+  // Was "the Hand Soap Set produces three ladder rows" ($44 / $59 / $72, the
+  // top rung carrying a body lotion). That product sold 0 units in 365 days and
+  // was retired on 2026-09-05 for a plain quantity ladder on the liquid soap
+  // PDP. The row COUNT is the property worth keeping and it now says something
+  // sharper: economicsRows collapses variants that share a basket, so a rung
+  // whose four scents are all N-of-one-pump must produce exactly ONE row. Two
+  // rows here means two rungs; three would mean a rung had grown a second
+  // basket — which is how the Set started.
+  const rows = BUNDLES.filter(b => b.name.startsWith('Coconut Hand Soap'));
+  assert.equal(rows.length, 2, 'one row per rung, not one per scent');
+  assert.deepEqual(rows.map(r => r.price), [24, 44], 'rows must read as a ladder');
+  assert.deepEqual(ev(rows[0]).items, { pump: 2 });
+  assert.deepEqual(ev(rows[1]).items, { pump: 4 });
 });

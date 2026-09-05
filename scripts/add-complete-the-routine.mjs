@@ -62,10 +62,10 @@ const PLAN = [
   {
     template: 'templates/product.landing-page-liquid-soap.json',
     pdp: 'organic-foaming-hand-soap',
-    product: 'hand-soap-set',
-    heading: 'A pump for every sink',
-    blurb: 'Build a set of foaming soaps and save against buying them singly.',
-    cta_label: 'View the set',
+    product: 'coconut-hand-soap-4-pack',
+    heading: 'Stock up and save',
+    blurb: 'Four of the same foaming pump, at a lower price each.',
+    cta_label: 'View the 4-pack',
   },
   {
     template: 'templates/product.landing-page-deodorant.json',

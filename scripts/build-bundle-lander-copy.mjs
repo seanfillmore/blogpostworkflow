@@ -169,18 +169,6 @@ export function copyFor(handle, f) {
       ],
     };
 
-    case 'hand-soap-set': return {
-      founder_note:
-        'Buying hand soap a bottle at a time means the guest sink is always the empty one. '
-        + 'This is the whole house in a single order — same 8oz bottles we sell singly, one scent decision made once.',
-      stats: [
-        stat(f.distinctIngredients, 'ingredient: saponified coconut oil'),
-        stat('8oz', 'bottles, not travel sizes'),
-        stat(30, 'day money-back guarantee'),
-        stat(`$${f.savings}`, 'less than four singles'),
-      ],
-    };
-
     default: throw new Error(`no copy written for ${handle}`);
   }
 }
@@ -190,7 +178,6 @@ export const LANDERS = Object.freeze({
   '90-day-clean-swap': 'gid://shopify/Metaobject/219195736234',
   'head-to-toe': 'gid://shopify/Metaobject/219322482858',
   'gift-box': 'gid://shopify/Metaobject/219719565482',
-  'hand-soap-set': 'gid://shopify/Metaobject/230811271338',
 });
 
 /** Every string this plan would publish, named, for the health gate. */

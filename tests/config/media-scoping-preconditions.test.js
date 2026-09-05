@@ -73,20 +73,18 @@ test('every Hand Soap Set media is scoped, and a Scent frame leads', () => {
   assert.equal(cfg.scope[names[0]].option, 'Scent');
 });
 
-test('the Hand Soap Set offers no Variety, and nothing promises one', () => {
+test('no Hand Soap Set asset promises a Variety that does not exist', () => {
   // Removed 2026-08-02. The risk is not the option — it is the COPY that
   // outlived it: "pick one scent, or one of each" and the SEO description's
   // "one scent or one of each" were both false the moment the variants went.
-  const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
-  const b = bundles.find((x) => x.handle === 'hand-soap-set');
-  const scent = b.options.find((o) => o.name === 'Scent');
-  assert.ok(!scent.values.some((v) => /variety/i.test(v)), 'Variety is back on the Scent option');
-  assert.equal(b.variants.length, scent.values.length * b.options.find((o) => o.name === 'Configuration').values.length,
-    'variant count no longer equals Configuration × Scent');
-  for (const v of b.variants) {
-    assert.ok(!/variety/i.test(JSON.stringify(v.options)), `variant ${JSON.stringify(v.options)} is on Variety`);
-  }
-  // No frame or manifest may still offer a mixed set.
+  //
+  // The `hand-soap-set` ROSTER entry itself is gone as of 2026-09-05 — that
+  // product was retired and replaced by two plain ladder rungs on the liquid
+  // soap PDP, and the no-Variety property for those lives in
+  // tests/lib/bundle-roster.test.js. These media files stay: they are the
+  // archived gallery of a real product and the fixture tests 3 and 5 above
+  // read for the two-option scope form. What must not happen is a later pass
+  // reviving "one of each" copy in them and feeding it to a new product.
   for (const f of ['hss-frames.mjs', 'hss-common.mjs']) {
     const src = readFileSync(join(ROOT, 'data', 'brand', 'frames', 'hand-soap-set', f), 'utf8');
     assert.ok(!/one of each/i.test(src), `${f} still says "one of each"`);

@@ -58,7 +58,7 @@ test('the 90-day box never claims ninety days of SOAP', () => {
 test('a lander with no honest duration story gets NO timeline', () => {
   // Inventing a timeline for a discovery box or a gift is exactly the
   // manufactured-duration-claim failure this repo already has an incident for.
-  for (const h of ['head-to-toe', 'gift-box', 'hand-soap-set']) {
+  for (const h of ['head-to-toe', 'gift-box']) {
     assert.equal(copyFor(h, factsFor(h)).timeline, undefined, `${h} should not have a timeline`);
   }
   for (const h of ['clean-swap', '90-day-clean-swap']) {

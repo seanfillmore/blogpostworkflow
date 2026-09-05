@@ -121,42 +121,53 @@ test('packaging and status carry onto every row', () => {
 
 test('the real roster has all eight bundles', () => {
   const handles = loadRoster().bundles.map(b => b.handle);
-  for (const h of ['hand-soap-set', 'clean-swap', 'gift-box', '90-day-clean-swap',
+  for (const h of ['coconut-hand-soap-4-pack', 'clean-swap', 'gift-box', '90-day-clean-swap',
                    'head-to-toe', '99-coconut-reset-digital', 'coconut-bar-soap-4-pack',
                    'sensitive-skin-starter-set']) {
     assert.ok(handles.includes(h), `roster is missing ${h}`);
   }
 });
 
-test('the Hand Soap Set grid is complete and lotion is paired correctly', () => {
-  const b = loadRoster().bundles.find(x => x.handle === 'hand-soap-set');
-  // Derived, not literal. This read 15 until Variety was dropped on 2026-08-02,
-  // and a hardcoded count fails on a deliberate merchandising change while
-  // saying nothing about the thing that matters — that the grid is COMPLETE.
-  const configs = b.options.find(o => o.name === 'Configuration').values;
-  const scents = b.options.find(o => o.name === 'Scent').values;
-  assert.equal(b.variants.length, configs.length * scents.length,
-    `the grid must be complete: ${configs.length} configurations × ${scents.length} scents`);
-  for (const c of configs) for (const s of scents) {
-    assert.ok(b.variants.some(v => v.options.Configuration === c && v.options.Scent === s),
-      `no variant for ${c} / ${s}`);
-  }
+test('the hand soap ladder tiers are pump-only and complete on scent', () => {
+  // Replaced the Hand Soap Set's Configuration × Scent grid on 2026-09-05. That
+  // product was a SET — it carried "3 pumps + body lotion" and "4 pumps + body
+  // lotion" configurations — and it sold nothing in 365 days. It is now two
+  // plain ladder rungs on the liquid soap PDP, matching bar soap / deodorant /
+  // toothpaste, so the property worth asserting changed shape with it: a rung
+  // holds N of ONE product, one variant per scent, and nothing else.
+  const roster = loadRoster();
+  const ladder = roster.ladders.find(l => l.base === 'organic-foaming-hand-soap');
+  assert.ok(ladder, 'the liquid soap PDP must have a ladder');
 
-  for (const v of b.variants) {
-    const config = v.options.Configuration;
-    const pumps = v.components.filter(c => c.product === 'organic-foaming-hand-soap');
-    const total = pumps.reduce((s, c) => s + c.qty, 0);
-    assert.equal(total, config.startsWith('3 pumps') ? 3 : 4,
-      `${config} / ${v.options.Scent} must contain the right number of pumps`);
+  for (const handle of ladder.tiers.filter(h => h !== ladder.base)) {
+    const b = roster.bundles.find(x => x.handle === handle);
+    assert.ok(b, `roster is missing ladder tier ${handle}`);
 
-    const lotion = v.components.filter(c => c.product === 'coconut-lotion');
-    if (config.includes('body lotion')) {
-      assert.equal(lotion.length, 1, `${config} must carry a lotion`);
-      const expected = v.options.Scent === 'Coconut Breeze' ? 'Coconut Breeze' : 'Pure Unscented';
-      assert.equal(lotion[0].variant, expected,
-        `${v.options.Scent} must pair with ${expected} lotion`);
-    } else {
-      assert.equal(lotion.length, 0, `${config} must not carry a lotion`);
+    // Derived from the handle, not a literal: a repricing or a renamed rung
+    // must not be able to pass by quietly changing what "4-pack" contains.
+    const units = Number(handle.match(/-(\d+)-pack$/)[1]);
+    const scents = b.options.find(o => o.name === 'Scent').values;
+    assert.equal(b.options.length, 1, `${handle} must have exactly one option axis`);
+    assert.equal(b.variants.length, scents.length,
+      `${handle} must offer one variant per scent`);
+
+    for (const v of b.variants) {
+      assert.ok(scents.includes(v.options.Scent), `${handle}: stray variant ${v.options.Scent}`);
+
+      // Pump-only. Anything else here would make the rung a set again, and the
+      // ladder's per-unit price ("$11.00 each") would be describing a basket.
+      const others = v.components.filter(c => c.product !== 'organic-foaming-hand-soap');
+      assert.equal(others.length, 0,
+        `${handle} / ${v.options.Scent} carries a non-pump component: ${others.map(c => c.product).join(', ')}`);
+
+      const total = v.components.reduce((s, c) => s + c.qty, 0);
+      assert.equal(total, units, `${handle} / ${v.options.Scent} must contain ${units} pumps`);
+
+      // Sean, 2026-08-02 (90f13d7a): "don't offer variety at all" — about hand
+      // soap specifically. The three sibling tier products keep their
+      // "Variety — one of each"; these must not grow one back.
+      assert.ok(!/variety|one of each/i.test(v.options.Scent),
+        `${handle} is offering a mixed set again: ${v.options.Scent}`);
     }
   }
 });
