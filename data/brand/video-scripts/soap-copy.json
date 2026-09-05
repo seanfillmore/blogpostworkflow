@@ -1,0 +1,98 @@
+{
+  "bar": {
+    "hooks": [
+      { "n": 1, "body": "A", "text": "Most bar soap starts as rendered animal fat. I'm not being rude about it — that's what soap has been for four thousand years, and there's a reason it's still the default." },
+      { "n": 2, "body": "A", "text": "There is one fat in this bar. Not one main ingredient. One." },
+      { "n": 3, "body": "A", "text": "People ask what's in the base and the answer is short enough that it makes them suspicious." },
+      { "n": 4, "body": "A", "text": "Soap is a chemical reaction, not a recipe. Once you know which reaction, the back panel of most bars stops making sense." },
+      { "n": 5, "body": "B", "text": "A customer told us our bar was a third gone after a week and eleven dollars was excessive. They were right about the week." },
+      { "n": 6, "body": "B", "text": "Eleven dollars for a bar of soap. The complaint we actually get isn't the price — it's how fast it goes. Those are two different problems and only one of them is ours." },
+      { "n": 7, "body": "B", "text": "Our bar dissolves faster than the one in your shower right now. That's not a defect, and I can tell you exactly what it's buying you." },
+      { "n": 8, "body": "B", "text": "The most common thing people get wrong about this bar costs them about six weeks of it." },
+      { "n": 9, "body": "C", "text": "If your skin reacts to things you probably won't switch from body wash to a bar. You're right to be careful — most bars earned that." },
+      { "n": 10, "body": "C", "text": "That squeaky-clean feeling you were taught to want is the sound of something being removed." },
+      { "n": 11, "body": "C", "text": "Our bar leaves a slightly grippy feel and some people hate it. I'd rather explain what that is before you order than after." },
+      { "n": 12, "body": "C", "text": "We leave something in this soap that almost every commercial soapmaker takes out — and then sells separately, because it's worth more on its own." }
+    ],
+    "bodies": [
+      { "id": "A", "name": "One fat", "lines": [
+        "Most bar soap starts as rendered animal fat — tallow — held together with synthetic detergents and something the label just calls fragrance.",
+        "That isn't a scandal. Tallow is cheap, it's stable, and it makes a hard bar that survives a wet soap dish. Every one of those is a real advantage and we gave all three up.",
+        "We use one fat. Organic virgin coconut oil, cold-pressed, unrefined, saponified — that's the reaction that turns an oil into soap.",
+        "Refined coconut oil would be cheaper and it wouldn't vary batch to batch. Unrefined keeps what refining strips out, so we pay more and we live with the variation.",
+        "And we leave the glycerin in. Saponification produces glycerin as a byproduct, and most commercial soapmakers pull it out and sell it, because it's worth more on its own and the bar lasts longer without it.",
+        "Ours stays. That's why the bar feels the way it does afterward, and it's also why it doesn't last as long. One decision, both consequences.",
+        "One fat. Four bars. The scent is a named essential oil on the back panel, or nothing at all."
+      ]},
+      { "id": "B", "name": "Three weeks, or three months", "lines": [
+        "A customer told us the bar was a third gone after a week and eleven dollars was excessive. I want to take that seriously, because they were not wrong about the week.",
+        "Our bar dissolves faster than a tallow bar. That's the glycerin we left in, and glycerin pulls in water — which is exactly what you want against your skin and exactly what you don't want on a wet dish.",
+        "So the thing that decides how long this bar lasts isn't really the bar. It's drainage.",
+        "A coconut bar sitting in a puddle is gone in a fortnight. The same bar on something that drains lasts considerably longer. Same soap. Nothing changed but where you put it.",
+        "If you want the cost per bar down anyway, the four-pack works out at nine seventy-five and the twelve-pack at seven thirty-three.",
+        "I'm not going to tell you it's the cheapest soap you can buy. I'm telling you that almost everyone who told us it vanished was storing it in water."
+      ]},
+      { "id": "C", "name": "Conditioned, not stripped", "lines": [
+        "If your skin reacts to things, you have probably never switched from body wash to a bar. You're right to be careful. Most bars earned that reputation honestly.",
+        "The squeak you get from a conventional bar is detergent lifting the oil off your skin. You were taught that squeak means clean. It means removed.",
+        "There's no detergent in ours. No sulfates. No rendered fat in the base. Saponified coconut oil and the glycerin that reaction made.",
+        "So it leaves a slightly grippy feel instead of a squeak, and some people genuinely don't like that. I'd rather you hear it from me.",
+        "Pure Unscented has no oils in it at all — not a masked scent, just nothing there — which is where I'd start if you react to things.",
+        "And one thing that's hard to find on any label, so I'll say it here: our Nourishing Tea Tree and our Refreshing Lemongrass both contain tea tree oil. If you avoid it, take the Calming Lavender or the Pure Unscented."
+      ]}
+    ],
+    "ctas": [
+      { "id": "1", "name": "The plain ask, presale stated", "text": "It's the Moisturizing Coconut Soap at realskincare.com. One thing first: we're between batches, so bars are on presale and everything ships by October the first. Most go sooner, and we email tracking the day yours leaves. Go and get it." },
+      { "id": "2", "name": "The multipack", "text": "If the price is what's stopping you, don't buy one bar. The four-pack is nine seventy-five a bar and the twelve-pack is seven thirty-three. Same soap, priced for how fast you'll actually go through it." },
+      { "id": "3", "name": "The risk reversal", "text": "Thirty days. If you don't like it, email us and we'll refund you, and you don't send it back. That matters here more than on anything else we make, because a bar either suits your skin or it doesn't, and I'd rather you find that out on us." }
+    ]
+  },
+  "liquid": {
+    "hooks": [
+      { "n": 1, "body": "A", "text": "The pump by your kitchen sink probably isn't soap. That's not an insult — it's a category, and the difference is on the back panel." },
+      { "n": 2, "body": "A", "text": "Go and read your hand soap. If cocamidopropyl betaine is on it, you don't have soap. You have a detergent." },
+      { "n": 3, "body": "A", "text": "We make a hand soap with one ingredient in the base, and the hardest part was convincing people that's allowed." },
+      { "n": 4, "body": "A", "text": "There's a reason your hands feel tight about thirty seconds after you wash them, and it isn't the water." },
+      { "n": 5, "body": "B", "text": "Nurses, chefs, bartenders, dishwashers, anybody with a newborn — you all send us the same message." },
+      { "n": 6, "body": "B", "text": "A customer wrote that this locks moisture in better than anything they'd bought from the big bath chains. I want to explain the boring reason that's true." },
+      { "n": 7, "body": "B", "text": "We built this for hands that wash so often they've started to react. That's a smaller group than you'd think, until you ask a kitchen." },
+      { "n": 8, "body": "B", "text": "If you wash your hands thirty times a shift, the thing you're managing stopped being dirt a long time ago." },
+      { "n": 9, "body": "C", "text": "Our hand soap is thinner than what you're used to and people tell us it feels watered down. Let me explain what thickness in hand soap actually is." },
+      { "n": 10, "body": "C", "text": "Put this in a normal pump and it comes out as a runny liquid and you'll think we sent you a bad batch. Thirty seconds on why." },
+      { "n": 11, "body": "C", "text": "Thirteen dollars for eight ounces. Twenty-six for thirty-two. I'll show you why we priced the refill that way, because it isn't the obvious reason." },
+      { "n": 12, "body": "C", "text": "The most sustainable thing we make isn't a product. It's that you only buy the bottle once." }
+    ],
+    "bodies": [
+      { "id": "A", "name": "Soap, not detergent", "lines": [
+        "The pump by your kitchen sink probably isn't soap. That's not an insult — most of them are surfactant blends, and there's a real distinction underneath the word.",
+        "Look for cocamidopropyl betaine. Or SLS, or SLES. Those are detergents. They're cheap, they foam beautifully, and they are extremely good at their job.",
+        "Their job is lifting oil. All of it, including the oil your skin put there on purpose. That's the tight feeling thirty seconds later.",
+        "Ours is saponified organic virgin coconut oil — one ingredient in the base — diluted to the consistency a foaming pump needs.",
+        "It lifts oil and dirt without that stripping feel. Not because it's gentle in some vague way. Because it's different chemistry doing the lifting.",
+        "No SLS. No SLES. No cocamidopropyl betaine. No propylene glycol, no parabens, no triclosan, no EDTA, no dyes.",
+        "And every scent is a named essential oil on the back panel. There's no fragrance line hiding anything."
+      ]},
+      { "id": "B", "name": "Hands in water all day", "lines": [
+        "We built this for hands that wash constantly. Nurses, chefs, bartenders, dishwashers, massage therapists, anyone with a newborn.",
+        "A customer put it better than we ever have — their hands are in water all day at work, and they said this locks moisture in better than anything they'd bought from the big bath chains.",
+        "Here's the boring reason. A detergent lifts every oil it meets, so thirty washes a shift is thirty strippings, and skin can't refill that fast.",
+        "There's no detergent in this bottle. It's saponified coconut oil, and the glycerin that reaction produces stays in rather than getting pulled out and sold.",
+        "So what you're managing after the tenth wash isn't dirt any more. It's what the first nine took off you.",
+        "One pump is enough. People tell us that constantly, which is why the eight-ounce goes further than eight ounces sounds like it should."
+      ]},
+      { "id": "C", "name": "Why it's thin, and the refill", "lines": [
+        "Our hand soap is thinner than what you're used to. People tell us it feels watered down, so let me explain what thickness in a hand soap actually is.",
+        "In most commercial soap it's a thickener, added for one reason: you associate thick with concentrated. It does no cleaning whatsoever.",
+        "Ours is diluted to what a foaming pump needs, because the foamer does that work — it aerates a small amount into a full lather.",
+        "Which means one real warning. Put this in a standard pump and it comes out as a runny liquid and you'll think we sent you a bad batch. It has to be the foamer.",
+        "Thirteen dollars for the eight-ounce. Twenty-six for the thirty-two-ounce refill — four times the soap for twice the money.",
+        "We would rather sell you the refill. You buy the bottle once, and after that you're only buying soap, which is the only part you wanted."
+      ]}
+    ],
+    "ctas": [
+      { "id": "1", "name": "The plain ask", "text": "Foaming Liquid Coconut Oil Soap, realskincare.com. Pure Unscented if you react to things, Orange Zest if you don't. It's in stock and it ships now." },
+      { "id": "2", "name": "The refill", "text": "Buy the eight-ounce once, for the foamer. Then buy the thirty-two-ounce refill from then on — twice the money for four times the soap, and you stop buying bottles." },
+      { "id": "3", "name": "The first-order nudge", "text": "First order, use SHIPFREE at checkout — shipping's free over twenty-five dollars. The eight-ounce is thirteen and the refill is twenty-six, so take both and you're covered." }
+    ]
+  }
+}
