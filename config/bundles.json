@@ -699,7 +699,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "The 2-pack rung of the liquid-soap ladder. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
+      "story": "The entry rung of the liquid-soap ladder, and the one with no sibling precedent — no other ladder in the roster has a 2. It is a $2 step, so the thing to watch is WHICH rung it takes from: converting singles is the point, taking share from the 4-pack costs money. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
       "options": [
         {
           "name": "Scent",
@@ -787,7 +787,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "The 4-pack rung of the liquid-soap ladder. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
+      "story": "The top rung of the liquid-soap ladder, and the ladder STOPS HERE. Sean, 2026-09-05, asked why bar soap runs 1/4/12 while this runs 1/2/4: \"Bar soap makes sense with 12 packs, bars are easier to store. 12 liquid pump soaps does not make sense.\" The binding constraint is the BUYER'S SHELF, not the economics — a carton of twelve 8oz pump bottles is something nobody has anywhere to put, so the per-unit saving that carries the bar soap 12-pack cannot rescue it. Do not add a 12-pack here on the grounds that bar soap has one. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
       "options": [
         {
           "name": "Scent",
