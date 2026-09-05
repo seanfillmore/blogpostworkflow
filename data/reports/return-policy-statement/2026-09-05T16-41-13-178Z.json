@@ -1,0 +1,19 @@
+{
+  "at": "2026-09-05T16:41:17.080Z",
+  "backupDir": "data/reports/return-policy-statement/backups/2026-09-05T16-41-13-178Z",
+  "rows": [
+    {
+      "id": "faq-return-answer",
+      "outcome": "already-applied"
+    },
+    {
+      "id": "faq-cancel-answer",
+      "outcome": "already-applied"
+    },
+    {
+      "id": "refund-policy-return-shipping",
+      "outcome": "applied",
+      "page_id": 94499012778
+    }
+  ]
+}
