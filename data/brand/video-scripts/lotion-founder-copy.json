@@ -1,0 +1,67 @@
+{
+  "hooks": [
+    { "n": 1, "body": "A", "mech": "We-paid-more", "text": "We could make this lotion for a fraction of what it costs us. There's one ingredient we'd have to swap to do it.", "evidence": "Animating question from voice-and-pov.md: 'If a cheaper substitute would do the same job, would we use it?'" },
+    { "n": 2, "body": "A", "mech": "Failed explanation", "text": "Every lotion that ever felt greasy on you had the same ingredient doing it, and it wasn't the one you think.", "evidence": "jojoba entry: mineral oil and petrolatum 'form an occlusive film'. Withholds the carrier for the script." },
+    { "n": 3, "body": "A", "mech": "Mid-action, mechanism", "text": "Watch my hand. I want to show you what an emulsifier actually does, because nobody explains this part.", "evidence": "Mechanism-forward is the house tone. Pure demo, no claim in the hook." },
+    { "n": 4, "body": "A", "mech": "Yes-opener", "text": "People ask why our lotion doesn't feel like the drugstore one. That's not an accident. It's a decision, and it cost us margin.", "evidence": "'we paid more for X because Y' — the signature construction" },
+    { "n": 5, "body": "A", "mech": "Trade-off owned", "text": "There's an ingredient we get asked to add every year. It would make this cheaper, more consistent and more shelf-stable. We keep saying no.", "evidence": "jojoba + emulsifying wax entries: cheaper substitutes are 'more uniform', 'more shelf-stable'" },
+    { "n": 6, "body": "A", "mech": "Concede, don't argue", "text": "Somebody commented that coconut oil is comedogenic. They're right, and I'm not going to argue with them. I'd rather tell you what's actually in the bottle.", "evidence": "Comedogenic fear — 6 mentions. Voice rule: don't moralize, trust the customer to draw conclusions." },
+    { "n": 7, "body": "A", "mech": "Disqualify", "text": "If coconut oil reliably breaks you out, don't buy our lotion. I'd rather say that now than take the order.", "evidence": "'Who we're not for' — 5 mentions. Founder integrity does what a customer disclaimer can't." },
+    { "n": 8, "body": "B", "mech": "Fact hook + refusal", "text": "The average person puts a hundred and twelve different ingredients on their skin before leaving the house. I'm not going to tell you that's dangerous. I'm going to tell you what it makes impossible.", "evidence": "EWG / Morning Consult, 2,200 US adults, 2023, via brand-kit category_ingredient_load" },
+    { "n": 9, "body": "B", "mech": "Count + authority", "text": "There are six things in this bottle and I can tell you why every one of them is in there. It's the sixth that people ask about.", "evidence": "Founder narrative: 'the least number of ingredients possible, every one of them earning its place'" },
+    { "n": 10, "body": "B", "mech": "Origin moment", "text": "This company exists because I turned over a box in my own bathroom and read the warning on the back.", "evidence": "Sean's actual origin story, verbatim from founder-narrative.md — the toothpaste 'do not swallow' moment" },
+    { "n": 11, "body": "B", "mech": "Origin, withholds", "text": "Our family wanted products where we could confirm every single ingredient. That turned out to be much harder to buy than to make.", "evidence": "founder-narrative.md, opening paragraph" },
+    { "n": 12, "body": "B", "mech": "Conflict", "text": "Unscented and fragrance-free are not the same word. One of them means something was added, and we had to pick one.", "evidence": "Scent appears in ~26 reviews; 4 mentions of buying for a scent-intolerant person" },
+    { "n": 13, "body": "B", "mech": "The natural trap", "text": "We don't put the word natural on this bottle. There are products labeled natural with SLS in them — the word isn't regulated and it doesn't do any work.", "evidence": "voice-and-pov.md, 'The natural trap'. Competitor deliberately not named — the point survives without the fight." },
+    { "n": 14, "body": "B", "mech": "Flaw first, owned", "text": "The texture of our lotion shifts batch to batch and we're not going to fix it. It costs us reviews and we're keeping it.", "evidence": "Live PDP + coconut oil entry: 'texture variation is a downstream cost of using oil that hasn't been stripped'" },
+    { "n": 15, "body": "C", "mech": "Yes-opener on price", "text": "Thirty dollars for a bottle of body lotion. I know exactly how that sounds. Give me forty seconds and I'll tell you where it goes.", "evidence": "Hard budget ceiling around $15 — 4 mentions" },
+    { "n": 16, "body": "C", "mech": "We-paid-more", "text": "We could make more money on this bottle tomorrow. There are four ingredients we'd swap, and most people wouldn't notice for a month.", "evidence": "All four cheap substitutes named in ingredient-stories.json: refined coconut oil, mineral oil, PEG emulsifier, parabens" },
+    { "n": 17, "body": "C", "mech": "One-thing", "text": "Out of everything our family makes, one product brings back more repeat customers than all the others put together. It wasn't the one we expected.", "evidence": "Measured: 29.2% first-time-buyer repurchase, more returning revenue than every other SKU combined" },
+    { "n": 18, "body": "C", "mech": "Call-out by name", "text": "Nurses, chefs, dishwashers, massage therapists — you all send us the same message, and it changed what we recommend.", "evidence": "Occupational trigger — 4 mentions, including a massage therapist's review" },
+    { "n": 19, "body": "C", "mech": "Mid-action, seasonal", "text": "Every October our inbox changes. Same message, different people, and it starts the week it gets cold.", "evidence": "Cold weather is when the search starts — 5 mentions" },
+    { "n": 20, "body": "C", "mech": "Borrowed verbatim", "text": "A customer wrote that ours is THE moisturizer for Wisconsin winters for her whole family. I didn't write that line, and I couldn't have.", "evidence": "Real review, quoted exactly" }
+  ],
+  "bodies": [
+    {
+      "id": "A", "name": "The oil we didn't use",
+      "lines": [
+        "Most lotion is mostly water and a thickener. That's why you can still feel it on your skin an hour later — it never went anywhere.",
+        "The cheap way to fix that is mineral oil, or petrolatum. A fraction of the cost, perfectly uniform every batch, and it would do very good things for our margins.",
+        "It also sits on top of your skin. That film is the thing you're feeling. It's extremely good at making a lotion seem like it's working.",
+        "We use jojoba instead. Jojoba is technically a wax ester, and its structure is close enough to what your own skin already makes that skin takes it in rather than wearing it.",
+        "That's the whole difference. It was never the coconut oil. It's the carrier.",
+        "Thirty seconds, and I can put a shirt on.",
+        "If a cheaper ingredient did the same job, we'd use it. That one doesn't."
+      ]
+    },
+    {
+      "id": "B", "name": "Six things, and why each one is there",
+      "lines": [
+        "The average adult uses twelve personal care products a day, made with as many as a hundred and twelve different ingredients. That's EWG and Morning Consult, twenty-two hundred US adults, 2023.",
+        "I'm not going to tell you that's dangerous. I don't know that, and neither does anybody selling you the alternative.",
+        "What I'll tell you is that our family couldn't verify a hundred and twelve of anything. That's the actual reason this company exists.",
+        "So there are six. Purified spring water. Organic virgin coconut oil. Organic jojoba. A plant-based emulsifying wax. Organic grapefruit seed extract. Organic red palm oil.",
+        "The wax is the one worth explaining. The industry standard is a PEG emulsifier — cheaper, more shelf-stable, easier to formulate with. We use a plant-derived one that costs us more to do the identical job.",
+        "And the red palm oil is unrefined, which is why it has a colour. Refined palm oil is bleached white, and the antioxidants come out with the colour. If we used that, there'd be no reason to have palm oil in here at all.",
+        "Six things. You can read the whole label in about four seconds. That was the brief."
+      ]
+    },
+    {
+      "id": "C", "name": "Where thirty dollars goes",
+      "lines": [
+        "Thirty dollars for body lotion. The number in most people's head is fifteen, so let me do this properly.",
+        "Most lotion is mostly water. You are paying for dilution, and a thickener that makes it feel like more than it is.",
+        "We could get this bottle cheaper tomorrow. Refined coconut oil instead of cold-pressed. Mineral oil instead of jojoba. A PEG emulsifier. Parabens instead of grapefruit seed extract.",
+        "Every one of those is cheaper, more consistent and more shelf-stable than what we use. Most people wouldn't notice for a month.",
+        "We didn't make those swaps. This is a premium product and we're not going to compromise that for margin.",
+        "Here's the number I actually care about. Of everyone who bought this as their first order, twenty-nine percent came back and bought it again — the highest of anything we make.",
+        "And you get thirty days. If you don't like it, email us and we refund you. You don't send it back."
+      ]
+    }
+  ],
+  "ctas": [
+    { "id": "1", "name": "The plain ask", "text": "We make it, we ship it, it's on realskincare.com. Pure Unscented if you react to things, Coconut Breeze if you don't. Go and get it." },
+    { "id": "2", "name": "The risk reversal", "text": "Take thirty days with it. If you don't like it, email us and we'll refund you — and you don't have to send it back. We'd rather do that than keep an order you regret. Link's in my bio." },
+    { "id": "3", "name": "The first-order nudge", "text": "If it's your first order, use SHIPFREE at checkout — shipping's free over twenty-five dollars and this is thirty, so you're covered. realskincare.com, link's in the bio." }
+  ]
+}
