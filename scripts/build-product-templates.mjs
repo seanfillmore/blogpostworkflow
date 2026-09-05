@@ -14,15 +14,24 @@
  * pages. This is the same source-of-truth pattern build-quantity-ladder.mjs
  * already applies to the ladder: edit one file, regenerate every template.
  *
- * WHAT IT DELIBERATELY DOES NOT UNIFY, because neither is drift:
+ * WHAT IT DELIBERATELY DOES NOT UNIFY, because it is not drift:
  *
  *   - The Recurpay widget. `recurpay-widget` (7 pages) and
  *     `recurpay-app-block-widget` (cream, lotion) are DIFFERENT app blocks
  *     from the same app, not one block under two ids. Collapsing them would
  *     change which subscription widget renders on lotion — 72% of revenue.
- *   - `tab-shipping`. Three pages say "and on every subscription order"; five
- *     do not. That is a shipping CLAIM, not formatting. Unifying it by
- *     majority either publishes a false claim or drops a real benefit.
+ *
+ * `tab-shipping` IS unified, but by a FLAG rather than a majority vote. The
+ * clause "and on every subscription order" is a CLAIM, and it is true on a
+ * page exactly when something that page sells can be subscribed to. Verified
+ * live 2026-09-05: the "Subscription Free Shipping" automatic discount is
+ * ACTIVE, appliesOnSubscription, no minimum, recurringCycleLimit 0 (Shopify:
+ * "applies indefinitely"), US-only, maximumShippingPrice $7.00 — which the
+ * $5.99 Standard rate clears and every subscribable SKU is far under 5 lb.
+ * `subscribable` per template is measured, not assumed: it is true on the
+ * three LADDER pages because a multipack TIER carries the selling plan even
+ * though the single unit does not, and false on lip-balm and liquid-soap,
+ * where no tier has a plan at all.
  *
  * PER-TEMPLATE EXTRAS. A block may be core + page-specific additions, e.g.
  * lotion's `discount-callout` carries extra CSS for a testimonial section
@@ -58,51 +67,66 @@ export const serialize = (t) => `${JSON.stringify(t, null, 2).replace(/\//g, '\\
  */
 export const MANIFEST = {
   'product.landing-page-toothpaste.json': {
-    shared: ['ymal-recommendations', 'discount-callout'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+        // subscribable via the 3-pack TIER; the single tube has no plan.
+    subscribable: true,
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-deodorant.json': {
-    shared: ['ymal-recommendations', 'discount-callout'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+        // subscribable via the 4-pack TIER; the single bottle has no plan.
+    subscribable: true,
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-bar-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+        // subscribable via the 4-pack TIER (the 12-pack has no plan).
+    subscribable: true,
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-lotion.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line'],
+    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping'],
     drop: [],
+        subscribable: true,
     insertAfter: {},
   },
   'product.landing-page-cream.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo'],
+    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
     drop: [],
+        subscribable: true,
     insertAfter: { 'trust-line': 'buy_buttons' },
   },
   'product.landing-page-lip-balm.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo'],
+    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
     drop: [],
+        // NO tier on this page carries a selling plan.
+    subscribable: false,
     insertAfter: { 'trust-line': 'buy_buttons' },
   },
   'product.landing-page-liquid-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo'],
+    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
     drop: [],
+        // NO tier on this page carries a selling plan (neither pump nor refill).
+    subscribable: false,
     insertAfter: { 'trust-line': 'buy_buttons' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
   // they get no trust-line: a second copy under the button would be a
   // duplicate promise, not reinforcement.
   'product.landing-page-sensitive-skin-set-lander.json': {
-    shared: ['discount-callout', 'vqr-combo'],
+    shared: ['discount-callout', 'vqr-combo', 'tab-shipping'],
     drop: [],
+        subscribable: true,
     insertAfter: {},
   },
   'product.bundle-landing.json': {
     shared: ['discount-callout', 'vqr-combo'],
     drop: [],
+        // no tab-shipping block, and none of its six bundles is subscribable.
+    subscribable: false,
     insertAfter: {},
   },
 };
@@ -112,22 +136,41 @@ export function templateNick(file) {
   return file.replace(/^product\.(landing-page-)?/, '').replace(/\.json$/, '');
 }
 
+/**
+ * The one claim token in a shared source. `%%SUBSCRIPTION%%` expands to the
+ * free-subscription-shipping clause on a page where something IS subscribable
+ * and to nothing where it is not — so both variants come from ONE paragraph
+ * and cannot drift apart in wording while differing in claim.
+ */
+export const SUBSCRIPTION_CLAUSE = ' and on every subscription order';
+
 /** Core source plus this template's extras, if any. */
 export function blockSource(name, file, read) {
   const core = read(`theme/blocks/${name}.liquid`);
   const extraPath = `theme/blocks/${name}.${templateNick(file)}.liquid`;
+  const sub = MANIFEST[file]?.subscribable ? SUBSCRIPTION_CLAUSE : '';
+  const withClaim = (t) => t.split('%%SUBSCRIPTION%%').join(sub);
   const extra = read(extraPath);
-  if (extra == null) return core;
+  if (extra == null) return withClaim(core);
   // CSS extras append INSIDE the wrapper; markup extras simply follow.
-  return core.trimEnd().endsWith('</style>')
+  return withClaim(core.trimEnd().endsWith('</style>')
     ? `${core.trimEnd().slice(0, -'</style>'.length)}${extra}</style>`
-    : `${core}${extra}`;
+    : `${core}${extra}`);
 }
 
 /**
  * Apply the manifest to one parsed template. Pure: no I/O, so the decisions
  * are testable without a theme.
  */
+/**
+ * Which settings key holds a block's text. A `collapsible_tab` keeps it in
+ * `content`; writing `custom_liquid` there would leave the tab unchanged AND
+ * silently add a second, unrendered copy of the paragraph.
+ */
+export function settingsKey(block) {
+  return block.type === 'collapsible_tab' ? 'content' : 'custom_liquid';
+}
+
 export function applyManifest(parsed, file, read) {
   const spec = MANIFEST[file];
   if (!spec) throw new Error(`no manifest entry for ${file}`);
@@ -138,10 +181,11 @@ export function applyManifest(parsed, file, read) {
   for (const name of spec.shared) {
     const blk = main.blocks[name];
     if (!blk) throw new Error(`${file}: shared block "${name}" is not in the template`);
+    const key = settingsKey(blk);
     const next = blockSource(name, file, read);
-    if (blk.settings.custom_liquid !== next) {
+    if (blk.settings[key] !== next) {
       notes.push(`unified ${name}`);
-      blk.settings.custom_liquid = next;
+      blk.settings[key] = next;
     }
   }
 
