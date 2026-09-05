@@ -21,7 +21,7 @@
         "per-day-anchor": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">A tube lasts about 3 months of daily use — roughly $0.10 per day.<\/p>"
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">Four tubes, about a month of daily use each — roughly $0.13 a day.<\/p>"
           }
         },
         "benefit-1": {

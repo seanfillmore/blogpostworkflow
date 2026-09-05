@@ -66,6 +66,24 @@
         "daysPerUnit": 90,
         "why": "That 90 was a median REORDER GAP over 8 intervals, not consumption. Sean, 2026-08-02: 'There is no way a 2oz deodorant roll on lasts 3 months, six weeks max.' A 42-day use period followed by ~7 weeks of not getting round to reordering produces a 90-day gap exactly, so the measurement and the correction do not conflict — the measurement was always an upper bound and this is the actual figure."
       }
+    },
+    "coconut-oil-lip-balm": {
+      "daysPerUnit": 120,
+      "intervals": 0,
+      "confidence": "merchant estimate",
+      "perUnitNote": "Sean 2026-09-05: ~30 days per TUBE, \"depending on usage\". The PRODUCT is a four-pack (0.15oz x4), and daysPerUnit is per unit PURCHASED, so 4 x 30 = 120. If the pack is ever split into single tubes this must become 30."
+    },
+    "organic-foaming-hand-soap": {
+      "daysPerUnit": 30,
+      "intervals": 0,
+      "confidence": "merchant estimate",
+      "perUnitNote": "Sean 2026-09-05: ~30 days for the 8oz bottle, \"depending on usage\"."
+    },
+    "foam-soap-refill-32oz": {
+      "daysPerUnit": 120,
+      "intervals": 0,
+      "confidence": "derived from volume",
+      "perUnitNote": "Not a merchant figure. 32oz is 4x the 8oz bottle Sean estimated at 30 days, so 4 x 30 = 120. Volume-derived, weaker than a merchant estimate — put it to the merchant before leaning on it."
     }
   },
   "_no_data": {

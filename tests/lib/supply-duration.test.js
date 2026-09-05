@@ -10,10 +10,12 @@ import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { bindingDuration, assertDurationClaim } from '../../lib/supply-duration.js';
+import { SKU_BY_HANDLE } from '../../lib/bundle-roster.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
 const componentsOf = (handle) => bundles.find((b) => b.handle === handle).variants[0].components;
+const { rates: RATES } = JSON.parse(readFileSync(join(ROOT, 'config', 'consumption-rates.json'), 'utf8'));
 
 test('a box is limited by the FIRST thing to run out, not the average or the longest', () => {
   const r = bindingDuration(componentsOf('head-to-toe'));
@@ -84,19 +86,39 @@ test('the guard still accepts a claim the contents do support', () => {
   assert.doesNotThrow(() => assertDurationClaim(150, componentsOf('coconut-deodorant-4-pack'), 'Deodorant 4-Pack'));
 });
 
+// These two used `organic-foaming-hand-soap` and `coconut-oil-lip-balm` as stand-ins
+// for "a product with no measured rate". On 2026-09-05 both were given merchant
+// estimates, which made every real component product rated and broke both tests —
+// the fixtures went stale, the behaviour did not. They now use a handle that is not
+// in the catalogue at all, so rating a real SKU can never break them again.
+const UNRATED = 'not-a-real-product-handle';
+
 test('a claim with no evidence behind it fails rather than passing quietly', () => {
   assert.throws(
-    () => assertDurationClaim(30, [{ product: 'organic-foaming-hand-soap', qty: 1 }], 'hypothetical'),
+    () => assertDurationClaim(30, [{ product: UNRATED, qty: 1 }], 'hypothetical'),
     /no component has a measured consumption rate/,
   );
 });
 
 test('components with no measured rate are reported, not silently ignored', () => {
-  const r = bindingDuration(componentsOf('head-to-toe'));
-  assert.deepEqual(r.unknown.sort(), ['coconut-oil-lip-balm', 'organic-foaming-hand-soap']);
+  const r = bindingDuration([
+    { product: 'coconut-lotion', qty: 1 },
+    { product: UNRATED, qty: 1 },
+  ]);
+  assert.deepEqual(r.unknown, [UNRATED]);
   // Silence here would be the dangerous answer: the true binding component could
-  // be one of these and the returned figure would be too generous.
+  // be the unrated one and the returned figure would be too generous.
   assert.ok(r.unknown.length > 0);
+  assert.equal(r.days, 30, 'the rated component still yields a figure, flagged as partial');
+});
+
+test('every product in SKU_BY_HANDLE has a consumption rate', () => {
+  // The condition that broke the two tests above, asserted directly: as of
+  // 2026-09-05 every component product is rated. If a NEW product is added to the
+  // roster without a rate, any duration claim involving it is unevidenced — which
+  // is exactly how lip balm and liquid soap carried unsupported claims for months.
+  const missing = Object.keys(SKU_BY_HANDLE).filter((h) => !RATES[h]);
+  assert.deepEqual(missing, [], `no consumption rate for: ${missing.join(', ')}`);
 });
 
 test('a malformed claim is rejected before any rate lookup', () => {
