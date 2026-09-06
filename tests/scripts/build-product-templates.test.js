@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { MANIFEST, applyManifest, blockSource, templateNick, serialize, settingsKey, SUBSCRIPTION_CLAUSE, ladderTiers, isRedundantCrossSell } from '../../scripts/build-product-templates.mjs';
+import { MANIFEST, applyManifest, blockSource, templateNick, serialize, settingsKey, SUBSCRIPTION_CLAUSE, ladderTiers, isRedundantCrossSell, expandSubscription, isPerProduct } from '../../scripts/build-product-templates.mjs';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), 'utf8') : null);
@@ -142,14 +142,23 @@ test('the subscription claim appears exactly where something IS subscribable', (
     cream: true,
     'sensitive-skin-set-lander': true,
     'lip-balm': false,         // no tier has a plan
-    'liquid-soap': false,      // neither pump nor refill
+    // Per-PRODUCT: the pump and its 2-/4-pack tiers have no plan; the 32oz
+    // refill gained Recurpay plan 11152263 (1/2/3/4-month) on 2026-09-05.
+    'liquid-soap': ['foam-soap-refill-32oz'],
     'bundle-landing': false,   // none of its six bundles
   };
   for (const [f, spec] of Object.entries(MANIFEST)) {
-    assert.equal(spec.subscribable, SUBSCRIBABLE[templateNick(f)], `${f} subscribable flag`);
+    assert.deepEqual(spec.subscribable, SUBSCRIBABLE[templateNick(f)], `${f} subscribable flag`);
     if (!spec.shared.includes('tab-shipping')) continue;
     const out = blockSource('tab-shipping', f, read);
-    assert.equal(/subscription order/.test(out), spec.subscribable, `${f} claim/flag mismatch`);
+    if (isPerProduct(spec.subscribable)) {
+      // The claim must be present but GATED, never unconditional.
+      assert.match(out, /\{%- if product\.handle/, `${f}: per-product flag but no conditional`);
+      assert.match(out, /subscription order/, `${f}: per-product flag but no claim at all`);
+    } else {
+      assert.equal(/subscription order/.test(out), spec.subscribable, `${f} claim/flag mismatch`);
+      assert.doesNotMatch(out, /\{%- if product\.handle/, `${f}: page-level flag should not gate`);
+    }
   }
 });
 
@@ -255,4 +264,52 @@ test('ladderTiers reads the baked handles, and is empty without a ladder', () =>
     ['coconut-oil-toothpaste', 'coconut-toothpaste-3-pack'],
   );
   assert.deepEqual(ladderTiers(tpl('product.landing-page-lotion.json')), []);
+});
+
+// Per-PRODUCT subscribability. The liquid-soap template serves the foaming
+// pump and its ladder tiers (no selling plan) AND the 32oz refill, which
+// gained Recurpay plan 11152263 on 2026-09-05. A page-level flag cannot be
+// right for both.
+
+test('a per-product template emits a handle conditional, not a flat claim', () => {
+  const out = blockSource('tab-shipping', 'product.landing-page-liquid-soap.json', read);
+  assert.match(out, /\{%- if product\.handle == 'foam-soap-refill-32oz' -%\}/);
+  const refill = out.replace(/\{%- if [^%]*-%\}([\s\S]*?)\{%- else -%\}[\s\S]*?\{%- endif -%\}/, '$1');
+  const pump = out.replace(/\{%- if [^%]*-%\}[\s\S]*?\{%- else -%\}([\s\S]*?)\{%- endif -%\}/, '$1');
+  assert.match(refill, /\$45\+ and on every subscription order\./);
+  assert.match(pump, /\$45\+\. Standard/);
+  // Same paragraph either way — the ONLY difference is the clause.
+  assert.equal(refill.replace(SUBSCRIPTION_CLAUSE, ''), pump);
+});
+
+test('Liquid copy lands in custom_liquid, plain copy in content', () => {
+  // `content` is richtext: Liquid in it is printed to the page verbatim. That
+  // is the failure this routing exists to prevent.
+  const tab = { type: 'collapsible_tab' };
+  assert.equal(settingsKey(tab, '<p>plain</p>'), 'content');
+  assert.equal(settingsKey(tab, "{%- if product.handle == 'x' -%}a{%- else -%}b{%- endif -%}"), 'custom_liquid');
+  assert.equal(settingsKey(tab, '<p>{{ product.price | money }}</p>'), 'custom_liquid');
+  assert.equal(settingsKey({ type: 'custom_liquid' }, '<p>plain</p>'), 'custom_liquid');
+});
+
+test('a tab never carries copy in BOTH fields — the theme renders both', () => {
+  // {{ content }}{{ page.content }}{{ custom_liquid }} are output in sequence,
+  // so leaving the old field populated shows the paragraph twice.
+  for (const [f, spec] of Object.entries(MANIFEST)) {
+    if (!spec.shared.includes('tab-shipping')) continue;
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const s = t.sections.main.blocks['tab-shipping'].settings;
+    const filled = ['content', 'custom_liquid'].filter((k) => (s[k] ?? '') !== '');
+    assert.equal(filled.length, 1, `${f}: tab-shipping filled in ${filled.join(' + ')}`);
+  }
+});
+
+test('expandSubscription: flat for a boolean, conditional for a list', () => {
+  const core = 'A%%SUBSCRIPTION%%B';
+  assert.equal(expandSubscription(core, true), `A${SUBSCRIPTION_CLAUSE}B`);
+  assert.equal(expandSubscription(core, false), 'AB');
+  assert.match(expandSubscription(core, ['x', 'y']), /product\.handle == 'x' or product\.handle == 'y'/);
+  // A source with no token is untouched whatever the flag says.
+  assert.equal(expandSubscription('<p>no token</p>', ['x']), '<p>no token</p>');
 });
