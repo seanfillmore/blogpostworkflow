@@ -7,6 +7,10 @@
  *   node scripts/giveaway/send-confirm-reminder.mjs --send    # queue the send job (with --apply)
  *   node scripts/giveaway/send-confirm-reminder.mjs --send-campaign <id>   # send a verified draft
  *
+ * REFUSES when the projected spam-complaint rate is above Google/Yahoo's 0.3%
+ * enforcement line, which the measured sends now exceed. --accept-complaint-risk
+ * is the override, and it is deliberately verbose to type.
+ *
  * THREE GATES, DELIBERATELY. Dry by default; `--apply` builds a draft that mails
  * nobody; `--send` is the only thing that reaches a real inbox. An outward-facing
  * send to ~1,600 people is not something to acquire by typing one flag, and the
@@ -57,7 +61,8 @@ try {
 const { klaviyoRequest, createCampaign, getCampaign, assignTemplateToCampaignMessage } =
   await import('../../lib/klaviyo.js');
 const { resolveMechanism, CONFIRM_MECHANISMS } = await import('../../lib/giveaway/reconcile.js');
-const { selectReminderTargets, projectReminderOutcome, FIRST_REMINDER, MIN_HOURS_SINCE_ENTRY } =
+const { selectReminderTargets, projectReminderOutcome, FIRST_REMINDER, REMINDER_SENDS,
+        SPAM_COMPLAINT_ENFORCEMENT_RATE, MIN_HOURS_SINCE_ENTRY } =
   await import('../../lib/giveaway/confirm-reminder.js');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -65,6 +70,10 @@ const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'u
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
 const SEND = args.includes('--send');
+// The ONLY way past a projected complaint rate above the enforcement line.
+// Typed by a human who has read the projection and decided the entries are
+// worth the domain reputation anyway.
+const OVERRIDE_COMPLAINTS = args.includes('--accept-complaint-risk');
 
 // Ids come from config, never from a literal here: config/giveaway.json is the
 // single source of truth for this promotion's ids and dates, and a second copy
@@ -189,7 +198,11 @@ async function main() {
   console.log('Confirm reminder #2');
   console.log(`  mechanism      : ${mechanism}`);
   console.log(`  entry closes   : ${deadline.toISOString()} (${((deadline - now) / 86400000).toFixed(1)} days)`);
-  console.log(`  first reminder : ${FIRST_REMINDER.sentAt} — ${FIRST_REMINDER.clicksUnique}/${FIRST_REMINDER.delivered} confirmed`);
+  for (const r of REMINDER_SENDS) {
+    console.log(`  sent ${r.label.padEnd(3)}: ${r.sentAt.slice(0, 10)} — ${r.clicksUnique}/${r.delivered} confirmed `
+      + `(${(r.clicksUnique / r.delivered * 100).toFixed(2)}%), ${r.spamComplaints} complaints `
+      + `(${(r.spamComplaints / r.delivered * 100).toFixed(3)}%)`);
+  }
   console.log('');
 
   const unconfirmed = await fetchSegmentProfiles(UNCONFIRMED_SEGMENT);
@@ -237,7 +250,7 @@ async function main() {
   }
 
   const p = projectReminderOutcome(due.length);
-  console.log('\n  Projected, from the first reminder\'s own measured rates:');
+  console.log('\n  Projected — yield from the LATEST send, complaints from the WORST:');
   console.log(`    confirmations  ~${p.expectedConfirmations}  (${(p.confirmRate * 100).toFixed(1)}%)`);
   console.log(`    unsubscribes   ~${p.expectedUnsubscribes}`);
   console.log(`    spam complaints ~${p.expectedSpamComplaints}  (${(p.spamRate * 100).toFixed(2)}%)`);
@@ -247,7 +260,21 @@ async function main() {
     console.log('    !  Above the 0.1% target rate. Domain reputation is shared with every');
     console.log('       other Klaviyo send this store makes; weigh that against the entries.');
   }
-  console.log('    (n=1 on the complaint estimate — one complaint in 487. Directional only.)');
+  console.log(`    basis: yield from send ${p.basis.yieldFrom}, complaints from the WORST send (${p.basis.complaintsFrom}), n=${p.basis.sends}`);
+
+  // Fail closed on the WRITE. A projection above the enforcement line means the
+  // next send is expected to damage a domain reputation shared with every flow,
+  // deadline campaign and post-purchase email this store runs — a slow, expensive
+  // and store-wide loss traded against a handful of giveaway entries.
+  if (p.aboveComplaintEnforcement && (APPLY || SEND) && !OVERRIDE_COMPLAINTS) {
+    console.error('\n  REFUSING: projected complaint rate ' + (p.spamRate * 100).toFixed(3)
+      + '% is at or above the ' + (SPAM_COMPLAINT_ENFORCEMENT_RATE * 100).toFixed(1) + '% Google/Yahoo enforcement line.');
+    console.error('  Measured, not projected: ' + REMINDER_SENDS.map((s) =>
+      `${s.label} ${(s.spamComplaints / s.delivered * 100).toFixed(3)}%`).join(', ') + '.');
+    console.error('  Sending again is a store-wide deliverability decision, not a giveaway one.');
+    console.error('  Override with --accept-complaint-risk if the entries are worth it anyway.');
+    process.exit(65);
+  }
 
   if (!APPLY) {
     console.log('\nDry run. Re-run with --apply to create the segment and a DRAFT campaign.');

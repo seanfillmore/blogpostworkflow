@@ -5,6 +5,8 @@ import {
   selectReminderTargets,
   projectReminderOutcome,
   FIRST_REMINDER,
+  REMINDER_SENDS,
+  LATEST_REMINDER,
   MIN_HOURS_SINCE_ENTRY,
   MIN_HOURS_BEFORE_DEADLINE,
 } from '../../lib/giveaway/confirm-reminder.js';
@@ -115,24 +117,57 @@ test('a run comfortably before the deadline does not halt', () => {
   assert.equal(halted, null);
 });
 
-test('the projection reports the complaint rate against the published thresholds', () => {
-  const out = projectReminderOutcome(1600);
+test('yield is sized from the LATEST send, not the first or an average', () => {
+  const out = projectReminderOutcome(1000);
 
-  // 33/487 clicked, and a click IS the confirmation on this mechanism.
-  assert.equal(out.expectedConfirmations, Math.round(1600 * (33 / 487)));
-  assert.ok(out.expectedConfirmations > 100 && out.expectedConfirmations < 120,
-    `expected ~108 confirmations, got ${out.expectedConfirmations}`);
+  // #2 confirmed 22/896 = 2.46%, less than half #1's 6.78%. Each reminder mails
+  // a colder cohort, so the newest number is the only one describing who is left.
+  assert.equal(out.basis.yieldFrom, '#2');
+  assert.equal(out.expectedConfirmations, Math.round(1000 * (22 / 896)));
+  assert.ok(out.expectedConfirmations > 20 && out.expectedConfirmations < 30,
+    `expected ~25 per 1,000, got ${out.expectedConfirmations}`);
 
-  // 1/487 = 0.205% — above the 0.1% target, below the 0.3% enforcement line.
-  assert.equal(out.aboveComplaintTarget, true);
-  assert.equal(out.aboveComplaintEnforcement, false,
-    'the first send was under the enforcement threshold; if this flips, do not send');
+  // Sizing from #1 would have promised ~68 — nearly 3x what the last send produced.
+  const fromFirstOnly = projectReminderOutcome(1000, [REMINDER_SENDS[0]]);
+  assert.ok(fromFirstOnly.expectedConfirmations > out.expectedConfirmations * 2.5,
+    'the old single-send basis over-promised by well over 2x');
 });
 
-test('the measured first-reminder numbers are pinned, since every projection rests on them', () => {
-  assert.equal(FIRST_REMINDER.recipients, 489);
-  assert.equal(FIRST_REMINDER.delivered, 487);
-  assert.equal(FIRST_REMINDER.clicksUnique, 33);
-  assert.equal(FIRST_REMINDER.spamComplaints, 1);
-  assert.equal(FIRST_REMINDER.campaignId, '01M0RZM53084R8VEM8A2MS63PZ');
+test('complaints are sized from the WORST send, because the risk is asymmetric', () => {
+  const out = projectReminderOutcome(1000);
+
+  // Both sends, worst wins: 3/896 = 0.335% beats 1/487 = 0.205%.
+  assert.equal(out.basis.complaintsFrom, '#2');
+  assert.equal(out.spamRate, 3 / 896);
+
+  // Order must not matter — it is a max, not "the last one".
+  const reversed = projectReminderOutcome(1000, [REMINDER_SENDS[1], REMINDER_SENDS[0]]);
+  assert.equal(reversed.spamRate, out.spamRate, 'worst-send selection is order-independent');
+});
+
+test('the enforcement flag fires on current evidence — the whole point of the change', () => {
+  const now = projectReminderOutcome(1000);
+  assert.equal(now.aboveComplaintTarget, true);
+  assert.equal(now.aboveComplaintEnforcement, true,
+    '0.335% is above the 0.3% Google/Yahoo line; the guard must say so');
+
+  // The defect being fixed: sized from #1 alone it reported "below enforcement",
+  // under-warning at exactly the moment it mattered.
+  const oldBasis = projectReminderOutcome(1000, [REMINDER_SENDS[0]]);
+  assert.equal(oldBasis.aboveComplaintEnforcement, false,
+    'reproduces the under-warning the single-send basis produced');
+});
+
+test('the measured sends are pinned, since every projection rests on them', () => {
+  assert.equal(REMINDER_SENDS.length, 2);
+  assert.equal(FIRST_REMINDER, REMINDER_SENDS[0], 'back-compatible alias still points at #1');
+  assert.equal(LATEST_REMINDER, REMINDER_SENDS[1]);
+
+  assert.equal(REMINDER_SENDS[0].delivered, 487);
+  assert.equal(REMINDER_SENDS[0].clicksUnique, 33);
+  assert.equal(REMINDER_SENDS[0].spamComplaints, 1);
+
+  assert.equal(REMINDER_SENDS[1].delivered, 896);
+  assert.equal(REMINDER_SENDS[1].clicksUnique, 22);
+  assert.equal(REMINDER_SENDS[1].spamComplaints, 3);
 });

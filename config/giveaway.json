@@ -122,8 +122,18 @@
     "audienceSegmentId": "X7atwC",
     "excludeSegmentId": "YuYRCd",
     "sendAt": "2026-09-05T21:59:10+00:00",
-    "status": "scheduled",
-    "dueCount": 1174
+    "status": "sent",
+    "dueCount": 1174,
+    "results": {
+      "recipients": 901,
+      "delivered": 896,
+      "opensUnique": 109,
+      "clicksUnique": 22,
+      "unsubscribes": 6,
+      "spamComplaints": 3,
+      "bounced": 5,
+      "measuredAt": "2026-09-06"
+    }
   },
-  "_confirmReminderNote2": "Reminder #2, built by scripts/giveaway/send-confirm-reminder.mjs. Audience is X7atwC MINUS exclusion segment YuYRCd (created before 2026-08-25T14:00:01Z = already reminded, OR created in the last 48h = confirm flow still working, OR gv_test = our own inboxes). Set subtraction rather than a rebuilt segment because profile-group-membership takes LISTS not segments, and restating X7atwC's confirmed logic would put a second copy of a rule that lives in exactly one place. 1,174 due; projected ~80 confirmations, ~10 unsubscribes, ~2 complaints from reminder #1's own rates."
+  "_confirmReminderNote2": "Reminder #2, built by scripts/giveaway/send-confirm-reminder.mjs. Audience is X7atwC MINUS exclusion segment YuYRCd (created before 2026-08-25T14:00:01Z = already reminded, OR created in the last 48h = confirm flow still working, OR gv_test = our own inboxes). Set subtraction rather than a rebuilt segment because profile-group-membership takes LISTS not segments, and restating X7atwC's confirmed logic would put a second copy of a rule that lives in exactly one place. 1,174 due; projected ~80 confirmations, ~10 unsubscribes, ~2 complaints from reminder #1's own rates. SENT 2026-09-05 21:59 UTC. Measured: 22 of 896 delivered confirmed (2.46%) against reminder #1's 6.78% — each reminder mails a colder cohort. 3 spam complaints = 0.335%, ABOVE the 0.3% Google/Yahoo enforcement line (#1 was 0.205%). Confirmed segment moved 1820 -> 1847. A third reminder is refused by scripts/giveaway/send-confirm-reminder.mjs on that complaint rate and needs --accept-complaint-risk; it is a store-wide deliverability decision, not a giveaway one."
 }
