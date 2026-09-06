@@ -968,7 +968,14 @@ async function fromGscMode() {
           { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
           topQueries, c.gsc, ground, constraint,
         ),
-        { extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description }), required: ['title'] },
+        {
+          extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description }),
+          required: ['title'],
+          // `meta` is the SERP snippet; the truncation check rides inside the
+          // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
+          // declared — the theme appends a suffix to the rendered <title>.
+          lengths: { meta: 'description' },
+        },
       );
       if (!gated.ok) {
         if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
@@ -1092,6 +1099,10 @@ async function pagesFromGscMode() {
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, 'page summary': p?.summary }),
           required: ['title'],
+          // `meta` is the SERP snippet; the truncation check rides inside the
+          // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
+          // declared — the theme appends a suffix to the rendered <title>.
+          lengths: { meta: 'description' },
         },
       );
       if (!gated.ok) {
@@ -1249,6 +1260,10 @@ No explanation, no markdown fences.`,
   const gated = await gateGeneratedCopy(generateFaq, {
     extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, 'faq body': p?.body_html }),
     required: ['title', 'faq body'],
+    // `meta` is the SERP snippet; the truncation check rides inside the
+    // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
+    // declared — the theme appends a suffix to the rendered <title>.
+    lengths: { meta: 'description' },
   });
   if (!gated.ok) {
     const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
@@ -1633,6 +1648,10 @@ async function main() {
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
           required: ['title', 'body'],
+          // `meta` is the SERP snippet; the truncation check rides inside the
+          // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
+          // declared — the theme appends a suffix to the rendered <title>.
+          lengths: { meta: 'description' },
         },
       );
       if (!gated.ok) {

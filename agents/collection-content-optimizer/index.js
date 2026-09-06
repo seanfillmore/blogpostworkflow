@@ -614,6 +614,12 @@ async function main() {
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
           required: ['title', 'body'],
+          // `meta` is the SERP snippet; the truncation check rides inside the
+          // existing two-attempt budget (lib/seo-copy-length.js). `body` is a
+          // 450-650 word collection description with no SERP limit, and `title`
+          // is not declared because the theme appends a suffix to the rendered
+          // <title> — a flat 60 here would certify titles that truncate.
+          lengths: { meta: 'description' },
         },
       );
 
