@@ -51,5 +51,11 @@ export async function gateProposedCopy(generate) {
   return gateGeneratedCopy(generate, {
     extract: (r) => ({ title: r?.title, meta: r?.meta_description }),
     required: ['title'],
+    // `meta` is a real SERP snippet, so it carries the truncation check. `title`
+    // is NOT declared: the theme appends " – Real Skin Care" to every rendered
+    // <title>, so a flat 60-character rule here would certify titles that
+    // truncate — see lib/seo-copy-length.js for the measurement and why fixing
+    // that is a separate change.
+    lengths: { meta: 'description' },
   });
 }
