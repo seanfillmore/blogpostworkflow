@@ -1,0 +1,18 @@
+{
+  "_note": "Operator-supplied cost of goods per Culina ASIN, keyed on ASIN. Sean provided these on 2026-09-03; they lived only in a session scratchpad until 2026-09-05, which is why they are committed here. COGS is the number that decides whether an ACoS is profitable, and it exists nowhere else in this repo.",
+  "_scope": "CULINA ONLY. Culina is out of scope for this codebase's Shopify/content/SEO pipelines (see CLAUDE.md); the one standing exception is the Amazon PPC audit, because an outside agency is paid >$1K/mo to manage that account. Nothing in the content fleet reads this file.",
+  "_basis": "Landed unit cost as supplied by the operator. `price` is the list price at the time of supply and is context only — the P&L uses real per-unit revenue from SP-API finance line items, never this figure.",
+  "_supplied_at": "2026-09-03",
+  "_source": "operator sheet",
+  "cogs": {
+    "B08BTQK5Z9": { "cogs": 7.30, "price": 24.99, "name": "Supreme Care Set (scrub+soap+oil)" },
+    "B08BTVXLXN": { "cogs": 2.63, "price": 14.99, "name": "Cleaning & Restoring Scrub" },
+    "B071SGF6GT": { "cogs": 1.73, "price": 9.99, "name": "Cleaning Soap 8oz" },
+    "B077LYR5SF": { "cogs": 4.50, "price": 17.99, "name": "Cleaning Kit (cleanser+conditioner)" },
+    "B0771WC1Q1": { "cogs": 1.99, "price": 9.99, "name": "Conditioner Oil 8oz" },
+    "B08KHGYYKQ": { "cogs": 10.12, "price": 49.99, "name": "Soap+stick+oil+scrubber+brush" },
+    "B08K892JQG": { "cogs": 9.35, "price": 29.99, "name": "Seasoning Stick+soap+oil+scrub" },
+    "B0984W3SG3": { "cogs": 10.62, "price": 54.99, "name": "Soap+stick+oil+scrubber+brush+scrapers" },
+    "B08CQMQQ1K": { "cogs": 2.21, "price": 9.99, "name": "Seasoning Stick" }
+  }
+}

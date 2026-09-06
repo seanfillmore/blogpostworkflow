@@ -265,3 +265,8 @@ data/reports/post-meta-split/
 # recoverable. (Unlike data/briefs/_dropped/, which holds paid work that
 # exists nowhere else and is deliberately tracked.)
 data/template-backup/
+
+# Culina PPC audit — a raw SP-API finance cache (order-level money) plus the
+# generated report. Regenerable, never reviewed as a diff, and the cache holds
+# financial line items that have no business in git.
+data/reports/culina-ppc/
