@@ -48,7 +48,7 @@ try {
 const { extractQuestions, assignQuestionsToProducts, formatQuestionAnswer, renderSupplementalTsv, MAX_PAIRS_PER_PRODUCT } =
   await import('../lib/merchant-qa.js');
 const { assignCluster } = await import('../lib/keyword-index/cluster.js');
-const { checkSeoCopyFields, SEO_COPY_COMPLIANCE_RULE } = await import('../lib/seo-copy-health-gate.js');
+const { checkSeoCopyFields, SEO_COPY_COMPLIANCE_RULE, plainText } = await import('../lib/seo-copy-health-gate.js');
 const { gateGeneratedCopy } = await import('../lib/seo-copy-gate-loop.js');
 
 const args = process.argv.slice(2);
@@ -88,11 +88,48 @@ function loadGscQuestions() {
   return { questions: extractQuestions(rows), days: files.length, rows: rows.length };
 }
 
-async function draftAnswers(handle, product, questions) {
+/**
+ * Live PDP facts, indexed by handle.
+ *
+ * WHY THIS EXISTS: the first live run drafted ten answers that all restated
+ * "coconut oil is the base ingredient" in different words, because
+ * data/brand/product-catalog.json carries only title, price and url — no
+ * ingredients, no description, nothing a buyer question is actually about. The
+ * catalogue is a price list, not product knowledge.
+ *
+ * It DEGRADES rather than failing: no credentials or a dead API means
+ * catalogue-only facts, which still produce valid answers. But it says so
+ * loudly, because thin answers that look fine are exactly what this run
+ * produced before and the difference is invisible in the output.
+ */
+async function loadPdpFacts() {
+  try {
+    const { getProducts } = await import('../lib/shopify.js');
+    const products = await getProducts();
+    const byHandle = {};
+    for (const p of products ?? []) {
+      if (!p?.handle) continue;
+      byHandle[p.handle] = {
+        description: plainText(p.body_html ?? '').slice(0, 4000),
+        product_type: p.product_type || undefined,
+        tags: p.tags || undefined,
+        // Variants answer a whole class of question the description never does
+        // — size, scent, count. Titles only; no prices, which the catalogue has.
+        variants: (p.variants ?? []).map((v) => v.title).filter((t) => t && t !== 'Default Title'),
+      };
+    }
+    return { byHandle, ok: true };
+  } catch (e) {
+    return { byHandle: {}, ok: false, error: e.message };
+  }
+}
+
+async function draftAnswers(handle, product, questions, pdp) {
   const { default: Anthropic } = await import('../lib/anthropic.js');
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const facts = JSON.stringify({ handle, ...product }, null, 1);
+  // The PDP description is the substance; the catalogue is the price list.
+  const facts = JSON.stringify({ handle, ...product, ...(pdp ?? {}) }, null, 1);
 
   // DERIVED from the work, never flat. A fixed ceiling is the defect that
   // truncated most cannibalization merges: 4,000 tokens looked generous and
@@ -153,6 +190,12 @@ async function main() {
 
   const catalog = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'product-catalog.json'), 'utf8'));
   const products = catalog.products ?? catalog;
+  const pdp = APPLY ? await loadPdpFacts() : { byHandle: {}, ok: null };
+  if (APPLY && !pdp.ok) {
+    console.log(`\n!! LIVE PDP FETCH FAILED (${pdp.error}) — answers will be drafted from the`);
+    console.log('   catalogue alone, which holds only title/price/url. Expect thin, repetitive');
+    console.log('   answers. Fix the credentials rather than shipping these.\n');
+  }
   const { questions, days, rows } = loadGscQuestions();
   const clusters = productClusters(products);
   const { byHandle, unassigned } = assignQuestionsToProducts(questions, clusters);
@@ -175,7 +218,11 @@ async function main() {
 
     if (!APPLY) continue;
 
-    const gated = await draftAnswers(handle, product, qs);
+    const facts = pdp.byHandle[handle];
+    if (APPLY && pdp.ok && !facts?.description) {
+      console.log('   no live PDP description for this handle — answers will be thin.');
+    }
+    const gated = await draftAnswers(handle, product, qs, facts);
     if (!gated.ok) {
       // Named, counted, and NOT written. The producing run can be repeated; the
       // work is not discarded.
