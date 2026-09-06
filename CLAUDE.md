@@ -569,6 +569,22 @@ Rules:
 - If the filter removes all broken links for a page, skip that page.
 - Add a note in the audit report explaining how many pages were filtered and why.
 
+### Ahrefs Site Audit — a third-party crawl nothing in this repo reads, and its two standing FALSE POSITIVES
+
+**Ahrefs Site Audit crawls `realskincare.com` weekly and emails the diff to the operator (project 6404711). No agent ingests it.** It is the only independent crawl of the site, and it measures defect classes the fleet's own tools do not — which is genuinely useful, and is how the meta-description length gate was found. But **two of its headline numbers are artifacts, and both were re-investigated from scratch on 2026-09-06 because nothing recorded that they had been settled.** Do not repeat that investigation.
+
+**`Page has links to broken page` — 198 URLs, growing ~+5/week — IS `cdn-cgi/l/email-protection`, the same false positive documented directly above.** The tell is the ratio: Ahrefs reports only **5 broken pages** but **198 pages linking to them**, which is the signature of one link in a shared template, not 198 mistakes. Measured over 39 sitemap-sampled pages on 2026-09-06, the Cloudflare anchor is present in **rendered** markup on **33/39 (85%)**, projecting to **~201 pages against the 198 reported** — a tight match. **The growth is the publishing cadence**, not a regression: each new article carries the same footer email, so ~5-7 posts a week add ~5-7 pages.
+
+**It is NOT the navigation, measured.** Every rendered nav and footer link was pulled from the homepage with `<script>` blocks stripped and tested: **18 of 18 return 200**. A nav restructure was the natural suspicion and it is wrong.
+
+**The near-miss worth knowing: `${recurpay_domain}`.** Recurpay's app embed ships an **uninterpolated JavaScript template literal** — the string `<a href='${recurpay_domain}'>` sits in the page source of **38/39 (97%)** of pages, inside a `<script>`, in a preview banner that only fires under `?template=premium|seasonal|ai_generated`. A crawler that extracted hrefs from raw HTML without stripping scripts would count it, and **that is how this was first misdiagnosed.** It is ruled out by arithmetic: it would project to **~231** pages, not 198, so Ahrefs is correctly ignoring script contents — as does Google. It is also **not in `theme/`**; it comes from `shopify://apps/recurpay-subscriptions-app/…` and cannot be fixed here.
+
+**The jump that started it was probably not the site.** Errors went **16 → 195 in the week of 2026-07-19 → 07-26** — but the crawl size **halved in the same week, 967 → 521 URLs**. A site change does not do both at once; that is the shape of an Ahrefs crawl-configuration change. Unconfirmed: the Ahrefs connector needs an OAuth flow, so its own list of the 5 broken targets could not be read.
+
+**What in that feed IS real:** `Meta description too long` (173 URLs — now gated for newly generated copy by `lib/seo-copy-length.js`) and `Title too long` (66 URLs — the theme's conditional ` – Real Skin Care` suffix; see the SEO-copy length gate section above).
+
+**A trap for anyone auditing the live site by hand: Cloudflare rate-limits hard.** A crawl at ~6 concurrent requests earned a `429` on every subsequent request from that IP, and it persisted past a two-minute cooldown. Nine live articles were briefly recorded as broken purely because of it. **Run bulk live-site checks from the production server, or pace them to ~1 request/second, and verify any 4xx from a second IP before believing it.**
+
 ## Project Conventions
 
 - All agents operate on a single configured Shopify site (config in `config/site.json`).
