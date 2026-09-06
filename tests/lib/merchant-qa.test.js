@@ -120,3 +120,32 @@ test('a tab or newline inside a value cannot shift the columns', () => {
   assert.equal(rows.length, 2, 'header plus exactly one row');
   assert.equal(rows[1].split('\t').length, 2);
 });
+
+test('paraphrases of one question collapse to one slot, with impressions summed', () => {
+  // Verbatim from the first live --apply run, which spent EIGHT of ten slots on
+  // one question and produced eight near-identical answers.
+  const paraphrases = [
+    'can you use coconut oil as deodorant',
+    'can coconut oil be used as deodorant',
+    'can i use coconut oil as deodorant',
+    'does coconut oil work as deodorant',
+    'is coconut oil a good deodorant',
+    'can you use coconut oil for deodorant',
+  ];
+  const out = extractQuestions(paraphrases.map((q, i) => ({ query: q, impressions: 100 - i, clicks: 0 })));
+
+  assert.equal(out.length, 1, 'six phrasings of one question take one slot');
+  assert.equal(out[0].query, 'can you use coconut oil as deodorant', 'the highest-impression phrasing survives');
+  assert.equal(out[0].impressions, 585, 'demand is summed onto it — 100+99+98+97+96+95');
+});
+
+test('genuinely different questions are NOT merged', () => {
+  const distinct = [
+    'can you use coconut oil as deodorant',
+    'how to select a deodorant with a clean formula free from parabens, phthalates, and aluminum?',
+    'are there natural deodorants safe for sensitive underarms?',
+    'is antibacterial soap good for body odor',
+  ];
+  const out = extractQuestions(distinct.map((q, i) => ({ query: q, impressions: 100 - i, clicks: 0 })));
+  assert.equal(out.length, 4, 'over-merging would waste a real question, which is the failure that matters');
+});
