@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { MANIFEST, applyManifest, blockSource, templateNick, serialize, settingsKey, SUBSCRIPTION_CLAUSE } from '../../scripts/build-product-templates.mjs';
+import { MANIFEST, applyManifest, blockSource, templateNick, serialize, settingsKey, SUBSCRIPTION_CLAUSE, ladderTiers, isRedundantCrossSell } from '../../scripts/build-product-templates.mjs';
 
 const ROOT = join(import.meta.dirname, '..', '..');
 const read = (p) => (existsSync(join(ROOT, p)) ? readFileSync(join(ROOT, p), 'utf8') : null);
@@ -173,4 +173,86 @@ test('serialize round-trips every committed template byte-identically', () => {
 test('templateNick maps both template naming shapes', () => {
   assert.equal(templateNick('product.landing-page-lotion.json'), 'lotion');
   assert.equal(templateNick('product.bundle-landing.json'), 'bundle-landing');
+});
+
+// The `complete-the-routine` card. Removing it from four pages is the one
+// change here a shopper sees, so what governs it is a RULE derived from each
+// template, never a hand-kept list that can drift from the ladders.
+
+test('redundancy is judged from the template, not asserted', () => {
+  // Redundant exactly when the card points at a product the page's own ladder
+  // already sells as a tier. This has to hold BOTH before the drop has been
+  // applied and after it, because the repo templates are the builder's own
+  // output — an assertion that only holds pre-apply fails the moment it works.
+  for (const [f, spec] of Object.entries(MANIFEST)) {
+    const t = tpl(f);
+    const dropping = (spec.dropSections ?? []).includes('complete-the-routine');
+    if (t.sections['complete-the-routine']) {
+      // Still present: the manifest must agree with the rule about it.
+      assert.equal(dropping, isRedundantCrossSell(t, 'complete-the-routine'),
+        `${f}: dropSections disagrees with the redundancy rule`);
+    } else if (dropping) {
+      // Already applied. The only thing left to check is that nothing dangles:
+      // a key left in `order` renders nothing and shows as a broken section in
+      // the theme editor.
+      assert.ok(!(t.order ?? []).includes('complete-the-routine'),
+        `${f}: section removed but still referenced in order`);
+    }
+  }
+});
+
+test('a page that keeps its card still sells something the ladder does not', () => {
+  // The positive half of the rule, stated independently of the manifest: every
+  // surviving card points OUTSIDE its page's ladder.
+  for (const f of Object.keys(MANIFEST)) {
+    const t = tpl(f);
+    const card = t.sections['complete-the-routine'];
+    if (!card) continue;
+    const target = card.settings?.product;
+    assert.ok(target, `${f}: card with no product`);
+    assert.ok(!ladderTiers(t).includes(target),
+      `${f}: card points at "${target}", which the ladder already sells`);
+  }
+});
+
+test('the genuine cross-sells are KEPT', () => {
+  // cream and lotion both point at the Sensitive Skin Set, which neither page
+  // sells — that is a real conversion path, not a duplicate.
+  for (const f of ['product.landing-page-cream.json', 'product.landing-page-lotion.json']) {
+    const t = tpl(f);
+    assert.equal(t.sections['complete-the-routine'].settings.product, 'sensitive-skin-starter-set');
+    assert.equal(isRedundantCrossSell(t, 'complete-the-routine'), false);
+    assert.ok(!(MANIFEST[f].dropSections ?? []).includes('complete-the-routine'));
+    applyManifest(t, f, read);
+    assert.ok(t.sections['complete-the-routine'], `${f}: cross-sell was removed`);
+    assert.ok(t.order.includes('complete-the-routine'));
+  }
+});
+
+test('applyManifest REFUSES to drop a section that is not redundant', () => {
+  const f = 'product.landing-page-lotion.json';
+  const spec = MANIFEST[f];
+  const saved = spec.dropSections;
+  spec.dropSections = ['complete-the-routine'];   // lotion's card is a real cross-sell
+  try {
+    assert.throws(() => applyManifest(tpl(f), f, read), /does not point at a ladder tier/);
+  } finally { spec.dropSections = saved; }
+});
+
+test('dropping a section removes it from BOTH sections and order', () => {
+  // Leaving the key in `order` renders nothing but leaves a dangling reference
+  // the theme editor then shows as a broken section.
+  const f = 'product.landing-page-bar-soap.json';
+  const t = tpl(f);
+  applyManifest(t, f, read);
+  assert.equal(t.sections['complete-the-routine'], undefined);
+  assert.ok(!t.order.includes('complete-the-routine'));
+});
+
+test('ladderTiers reads the baked handles, and is empty without a ladder', () => {
+  assert.deepEqual(
+    ladderTiers(tpl('product.landing-page-toothpaste.json')),
+    ['coconut-oil-toothpaste', 'coconut-toothpaste-3-pack'],
+  );
+  assert.deepEqual(ladderTiers(tpl('product.landing-page-lotion.json')), []);
 });
