@@ -13,7 +13,15 @@ import assert from 'node:assert';
 
 import { gateProposedCopy } from '../../agents/meta-optimizer/lib/gate.js';
 
-const CLEAN = { title: 'Best Soap for Tattoos: Clean, Gentle, Fragrance-Free', meta_description: 'Washing new ink calls for a fragrance-free, dye-free bar. See what to look for.' };
+// CLEAN must be clean on EVERY gate this loop runs, which since 2026-09-06
+// includes the SERP length check. The title here is 37 characters, so the
+// theme's appended " – Real Skin Care" brings the RENDERED title to 54 — under
+// the 60 limit. The previous fixture was the real live title
+// 'Best Soap for Tattoos: Clean, Gentle, Fragrance-Free' (51 chars), which
+// renders at 68 and genuinely truncates in Google; it is pinned as a
+// regression case below rather than quietly relaxed.
+const CLEAN = { title: 'Best Soap for Tattoos: Fragrance-Free', meta_description: 'Washing new ink calls for a fragrance-free, dye-free bar. See what to look for.' };
+const LIVE_OVERLONG_TITLE = 'Best Soap for Tattoos: Clean, Gentle, Fragrance-Free';
 const DIRTY = { title: 'Best Soap for Tattoos: Clean Ingredients That Heal', meta_description: 'Supports real healing on new ink.' };
 
 describe('meta-optimizer gate — happy path', () => {
@@ -24,6 +32,23 @@ describe('meta-optimizer gate — happy path', () => {
     assert.deepEqual(r.proposed, CLEAN);
     assert.equal(r.attempts, 1);
     assert.deepEqual(calls, ['']);
+  });
+
+  test('a real live title that OVERFLOWS once the theme appends the brand is retried', async () => {
+    // 51 authored characters looks fine and is what shipped; the storefront
+    // renders it at 68. This is the defect the length gate exists to catch, and
+    // it is a title this site actually served.
+    const calls = [];
+    const r = await gateProposedCopy(async (c) => {
+      calls.push(c);
+      return calls.length === 1
+        ? { ...CLEAN, title: LIVE_OVERLONG_TITLE }
+        : CLEAN;
+    });
+    assert.equal(r.attempts, 2, 'the overlong rendered title costs exactly one retry');
+    assert.match(calls[1], /Real Skin Care/, 'the retry explains the appended brand');
+    assert.equal(r.ok, true);
+    assert.deepEqual(r.proposed, CLEAN);
   });
 
   test('the generator is not asked to retry when only advisory language is present', async () => {

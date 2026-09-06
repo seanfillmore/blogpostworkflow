@@ -55,6 +55,7 @@ import {
   SEO_COPY_COMPLIANCE_RULE, checkSeoCopyFields,
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
+import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -270,13 +271,15 @@ Write a comprehensive collection page description that:
     - Cluster-mate queries to surface for: ${clusterMatesBlock ? 'see CLUSTER-MATE QUERIES above' : 'n/a — weave in natural variants of the top query'}
 
 Also write:
-- seo_title (50-60 chars, includes top keyword, format: "[Category] | ${config.name}")
+- seo_title (includes top keyword, format: "[Category] | ${config.name}" — see LENGTH LIMITS below)
 - seo_description (140-155 chars, benefit-driven, includes top keyword)
 - what_changed: 1-sentence summary of what was added
 - why: 1-sentence explanation of why this should improve rankings
 - projected_impact: 1-sentence estimate of expected improvement
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -619,7 +622,7 @@ async function main() {
           // 450-650 word collection description with no SERP limit, and `title`
           // is not declared because the theme appends a suffix to the rendered
           // <title> — a flat 60 here would certify titles that truncate.
-          lengths: { meta: 'description' },
+          lengths: { title: 'title', meta: 'description' },
         },
       );
 
