@@ -151,9 +151,42 @@ ${facts}
 
 RULES:
 - Answer ONLY from the product facts above. If a question cannot be answered from them, return an empty answer string for it and it will be dropped — inventing a spec is worse than skipping the question.
-- 1-3 sentences. Plain, specific, no marketing adjectives.
+- 2-4 sentences. Plain, specific, no marketing adjectives.
 - Write the way you would want an AI assistant to repeat it back to a shopper.
 - These are real search queries, so some are about the CATEGORY rather than this product. Answer about this product where you honestly can.
+
+SHAPE — match how Google's AI Overview actually answers these queries. Pulled
+live on 2026-09-06 for three of these exact questions, every overview ran the
+same four beats, in this order:
+  1. DIRECT ANSWER first, in one short sentence.
+  2. WHY it works — the mechanism, at the INGREDIENT level.
+  3. THE DISTINCTION that resolves the confusion behind the question.
+  4. THE PRACTICAL CAVEAT a buyer needs, stated plainly rather than avoided.
+
+Beat 3 is usually deodorant vs antiperspirant, and Google leads with it: "Coconut
+oil is a deodorant, not an antiperspirant. You will still sweat normally, but you
+will smell fresh." Make that distinction explicitly whenever it is relevant. It is
+also this brand's own rule — you may describe antiperspirants as a CATEGORY, and
+must never call this product one.
+
+Beat 4 is where most product copy cheats. Google's overview volunteers the
+downsides — coconut oil can leave grease spots on clothes, and baking soda can
+irritate sensitive skin. If the product facts above answer such an objection (a
+roll-on applicator, a patch-test instruction, an aluminum-free formulation), say
+so directly. Do NOT pretend the objection does not exist; an answer that dodges a
+concern Google itself raises is the one a model will not repeat.
+
+CLAIMS — narrower than Google's overview, deliberately:
+- Google writes "lauric acid kills the bacteria that cause odour". You may state a
+  mechanism about an INGREDIENT in general terms, but this product must never be
+  the subject of a kills/treats/heals/prevents verb. "Coconut oil is used in
+  deodorants for odour control" is fine; "this deodorant kills bacteria" is not.
+- Never claim or imply aluminium is unsafe. Google's own overview says major
+  health organisations do NOT consider it harmful, so an implied danger claim is
+  both a regulatory problem and factually out of step with the answer we want to
+  appear beside. Frame aluminium-free as what a buyer may PREFER — including the
+  non-health reason Google itself gives, that aluminium reacts with sweat to
+  yellow-stain white fabric.
 
 ${SEO_COPY_COMPLIANCE_RULE}
 ${constraint}
