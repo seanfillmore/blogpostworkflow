@@ -62,8 +62,10 @@ export const serialize = (t) => `${JSON.stringify(t, null, 2).replace(/\//g, '\\
  * so removing them cannot change a page. On the three ladder templates these
  * are the buy-box blocks the ladder replaced.
  *
- * `insertAfter` places a block that the template does not have yet. It is the
- * ONLY field here that changes what a shopper sees.
+ * `insertAfter` places a block that the template does not have yet, and
+ * `dropSections` removes a whole top-level section. Those two are the fields
+ * that change what a shopper sees; `dropSections` refuses anything the page's
+ * own ladder does not already make redundant (see isRedundantCrossSell).
  */
 export const MANIFEST = {
   'product.landing-page-toothpaste.json': {
@@ -71,6 +73,7 @@ export const MANIFEST = {
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
         // subscribable via the 3-pack TIER; the single tube has no plan.
     subscribable: true,
+    dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-deodorant.json': {
@@ -78,6 +81,7 @@ export const MANIFEST = {
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
         // subscribable via the 4-pack TIER; the single bottle has no plan.
     subscribable: true,
+    dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-bar-soap.json': {
@@ -85,6 +89,7 @@ export const MANIFEST = {
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
         // subscribable via the 4-pack TIER (the 12-pack has no plan).
     subscribable: true,
+    dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-lotion.json': {
@@ -112,6 +117,7 @@ export const MANIFEST = {
         // NO tier on this page carries a selling plan (neither pump, 2-pack,
         // 4-pack nor refill) — the one ladder page that is not subscribable.
     subscribable: false,
+    dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
@@ -168,6 +174,33 @@ export function blockSource(name, file, read) {
  * `content`; writing `custom_liquid` there would leave the tab unchanged AND
  * silently add a second, unrendered copy of the paragraph.
  */
+/**
+ * The tier handles a page's quantity ladder already sells, read off the baked
+ * `ladder_handles` assign. Empty when the page has no ladder.
+ */
+export function ladderTiers(parsed) {
+  const liquid = parsed.sections?.main?.blocks?.['quantity-ladder']?.settings?.custom_liquid;
+  const m = typeof liquid === 'string' && liquid.match(/ladder_handles = "([^"]+)"/);
+  return m ? m[1].split(',').map((h) => h.trim()).filter(Boolean) : [];
+}
+
+/**
+ * A `complete-the-routine` card is REDUNDANT when it points at a product the
+ * page's own ladder already sells as a tier — the shopper is being cross-sold
+ * something already in the buy box a few hundred pixels above. It is a genuine
+ * cross-sell when it points anywhere else (cream and lotion both point at the
+ * Sensitive Skin Set, which neither page sells).
+ *
+ * Derived from the template rather than listed, so the manifest cannot drift
+ * from the rule and a future ladder change re-decides it automatically.
+ */
+export function isRedundantCrossSell(parsed, sectionKey) {
+  const sec = parsed.sections?.[sectionKey];
+  if (!sec) return false;
+  const target = sec.settings?.product;
+  return Boolean(target) && ladderTiers(parsed).includes(target);
+}
+
 export function settingsKey(block) {
   return block.type === 'collapsible_tab' ? 'content' : 'custom_liquid';
 }
@@ -199,6 +232,19 @@ export function applyManifest(parsed, file, read) {
     }
     delete main.blocks[name];
     notes.push(`dropped orphan ${name}`);
+  }
+
+  for (const name of spec.dropSections ?? []) {
+    if (!(name in (parsed.sections ?? {}))) continue;
+    // Only ever remove a card the page's own ladder makes redundant. A section
+    // is whole-page markup; deleting a real cross-sell would silently remove a
+    // conversion path, which is the opposite of the Prime Directive.
+    if (!isRedundantCrossSell(parsed, name)) {
+      throw new Error(`${file}: refusing to drop section "${name}" — it does not point at a ladder tier`);
+    }
+    delete parsed.sections[name];
+    parsed.order = (parsed.order ?? []).filter((k) => k !== name);
+    notes.push(`dropped redundant section ${name}`);
   }
 
   for (const [name, after] of Object.entries(spec.insertAfter)) {

@@ -526,24 +526,10 @@
         "padding_top": 36,
         "padding_bottom": 36
       }
-    },
-    "complete-the-routine": {
-      "type": "complete-the-routine",
-      "settings": {
-        "product": "coconut-deodorant-4-pack",
-        "heading": "Stock up and save",
-        "blurb": "Four of the same deodorant, at a lower price each.",
-        "cta_label": "View the 4-pack",
-        "accent_color": "#4a8b3c",
-        "background_color": "#faf8f4",
-        "padding_top": 16,
-        "padding_bottom": 16
-      }
     }
   },
   "order": [
     "main",
-    "complete-the-routine",
     "judgeme_section_review_widget_f881",
     "hook-rich-text",
     "hero-ingredient-cards",
