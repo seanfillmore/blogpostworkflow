@@ -114,9 +114,13 @@ export const MANIFEST = {
   'product.landing-page-liquid-soap.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // NO tier on this page carries a selling plan (neither pump, 2-pack,
-        // 4-pack nor refill) — the one ladder page that is not subscribable.
-    subscribable: false,
+    // PER-PRODUCT, not per-page — the only template that needs it. It serves
+    // the foaming pump and its ladder tiers (pump, 2-pack, 4-pack), none of
+    // which has a selling plan, AND the 32oz refill, which gained Recurpay
+    // plan 11152263 (1/2/3/4-month) on 2026-09-05. A page-level flag would
+    // either advertise subscription shipping on three products that cannot be
+    // subscribed to, or withhold it from the one that can.
+    subscribable: ['foam-soap-refill-32oz'],
     dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
@@ -151,12 +155,35 @@ export function templateNick(file) {
  */
 export const SUBSCRIPTION_CLAUSE = ' and on every subscription order';
 
+/** True when a template's `subscribable` names specific handles rather than the whole page. */
+export const isPerProduct = (v) => Array.isArray(v);
+
+/**
+ * Expand `%%SUBSCRIPTION%%` for a template.
+ *
+ * `subscribable: true|false` covers a template that serves ONE product. The
+ * liquid-soap template serves two with different answers — the foaming pump
+ * (and its ladder tiers) cannot be subscribed to, while the 32oz refill can —
+ * so `subscribable` may instead be a LIST of handles, which emits a
+ * `product.handle` conditional. That is the same shape the per-day anchor on
+ * that very template already uses.
+ */
+export function expandSubscription(core, subscribable) {
+  if (!core.includes('%%SUBSCRIPTION%%')) return core;
+  if (!isPerProduct(subscribable)) {
+    return core.split('%%SUBSCRIPTION%%').join(subscribable ? SUBSCRIPTION_CLAUSE : '');
+  }
+  const test = subscribable.map((h) => `product.handle == '${h}'`).join(' or ');
+  const on = core.split('%%SUBSCRIPTION%%').join(SUBSCRIPTION_CLAUSE);
+  const off = core.split('%%SUBSCRIPTION%%').join('');
+  return `{%- if ${test} -%}${on}{%- else -%}${off}{%- endif -%}`;
+}
+
 /** Core source plus this template's extras, if any. */
 export function blockSource(name, file, read) {
   const core = read(`theme/blocks/${name}.liquid`);
   const extraPath = `theme/blocks/${name}.${templateNick(file)}.liquid`;
-  const sub = MANIFEST[file]?.subscribable ? SUBSCRIPTION_CLAUSE : '';
-  const withClaim = (t) => t.split('%%SUBSCRIPTION%%').join(sub);
+  const withClaim = (t) => expandSubscription(t, MANIFEST[file]?.subscribable);
   const extra = read(extraPath);
   if (extra == null) return withClaim(core);
   // CSS extras append INSIDE the wrapper; markup extras simply follow.
@@ -201,8 +228,22 @@ export function isRedundantCrossSell(parsed, sectionKey) {
   return Boolean(target) && ladderTiers(parsed).includes(target);
 }
 
-export function settingsKey(block) {
-  return block.type === 'collapsible_tab' ? 'content' : 'custom_liquid';
+/**
+ * Which settings key holds a block's text.
+ *
+ * A `collapsible_tab` has BOTH, and they are not interchangeable: `content` is
+ * type `richtext`, so Liquid inside it is printed to the page literally, while
+ * `custom_liquid` is type `liquid` and IS evaluated. The theme outputs them in
+ * sequence — `{{ content }}{{ page.content }}{{ custom_liquid }}` — so filling
+ * both renders the paragraph TWICE, which is why the writer blanks the other.
+ *
+ * The key therefore follows the SOURCE, not just the block type: copy carrying
+ * a Liquid tag has to land in `custom_liquid` or it ships as visible
+ * `{%- if ... -%}` text on a live page.
+ */
+export function settingsKey(block, source = '') {
+  if (block.type !== 'collapsible_tab') return 'custom_liquid';
+  return /\{%|\{\{/.test(source) ? 'custom_liquid' : 'content';
 }
 
 export function applyManifest(parsed, file, read) {
@@ -215,11 +256,16 @@ export function applyManifest(parsed, file, read) {
   for (const name of spec.shared) {
     const blk = main.blocks[name];
     if (!blk) throw new Error(`${file}: shared block "${name}" is not in the template`);
-    const key = settingsKey(blk);
     const next = blockSource(name, file, read);
-    if (blk.settings[key] !== next) {
+    const key = settingsKey(blk, next);
+    const other = key === 'content' ? 'custom_liquid' : 'content';
+    const needsBlank = blk.type === 'collapsible_tab' && (blk.settings[other] ?? '') !== '';
+    if (blk.settings[key] !== next || needsBlank) {
       notes.push(`unified ${name}`);
       blk.settings[key] = next;
+      // Both fields render, so the one we are not using must be emptied or the
+      // tab shows the paragraph twice.
+      if (blk.type === 'collapsible_tab') blk.settings[other] = '';
     }
   }
 

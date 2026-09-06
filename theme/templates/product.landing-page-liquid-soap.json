@@ -106,9 +106,9 @@
           "settings": {
             "icon": "box",
             "heading": "Shipping & Returns",
-            "content": "<p>Free shipping on orders $45+. Standard delivery 2 business days within the US. Expedited shipping available at checkout.<\/p><p>Not loving your purchase? Email us within 30 days of receipt for a full refund — you don't need to send the product back. See our <a href=\"\/policies\/shipping-policy\">Shipping Policy<\/a> and <a href=\"\/policies\/refund-policy\">Return Policy<\/a> for full details.<\/p>",
+            "content": "",
             "page": "",
-            "custom_liquid": "",
+            "custom_liquid": "{%- if product.handle == 'foam-soap-refill-32oz' -%}<p>Free shipping on orders $45+ and on every subscription order. Standard delivery 2 business days within the US. Expedited shipping available at checkout.<\/p><p>Not loving your purchase? Email us within 30 days of receipt for a full refund — you don't need to send the product back. See our <a href=\"\/policies\/shipping-policy\">Shipping Policy<\/a> and <a href=\"\/policies\/refund-policy\">Return Policy<\/a> for full details.<\/p>{%- else -%}<p>Free shipping on orders $45+. Standard delivery 2 business days within the US. Expedited shipping available at checkout.<\/p><p>Not loving your purchase? Email us within 30 days of receipt for a full refund — you don't need to send the product back. See our <a href=\"\/policies\/shipping-policy\">Shipping Policy<\/a> and <a href=\"\/policies\/refund-policy\">Return Policy<\/a> for full details.<\/p>{%- endif -%}",
             "keep_open": false
           }
         },
