@@ -168,11 +168,14 @@ async function main() {
       // Named, counted, and NOT written. The producing run can be repeated; the
       // work is not discarded.
       console.log(`   GATED after ${gated.attempts} attempt(s) — not written.`);
-      for (const c of gated.check?.claims ?? []) console.log(`     ${c.field}: "${c.match}" (${c.category})`);
-      review.push({ handle, gated: true, claims: gated.check?.claims ?? [] });
+      // gateGeneratedCopy returns { ok, proposed, rejected, violations, advisory,
+      // attempts } — `violations` on the failure path, `proposed` on success.
+      for (const v of gated.violations ?? []) console.log(`     ${v.field}: "${v.match}" (${v.category})`);
+      review.push({ handle, gated: true, claims: gated.violations ?? [] });
       continue;
     }
-    const pairs = gated.value;
+    const pairs = gated.proposed ?? [];
+    if (!pairs.length) { console.log('   generator returned no usable pairs — skipped.'); continue; }
     const value = formatQuestionAnswer(pairs);
     feedRows.push({ id: handle, questionAndAnswer: value });
     review.push({ handle, pairs });
