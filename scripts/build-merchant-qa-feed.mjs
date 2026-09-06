@@ -93,10 +93,18 @@ async function draftAnswers(handle, product, questions) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const facts = JSON.stringify({ handle, ...product }, null, 1);
+
+  // DERIVED from the work, never flat. A fixed ceiling is the defect that
+  // truncated most cannibalization merges: 4,000 tokens looked generous and
+  // could not hold 30 pairs, because each one echoes its question VERBATIM
+  // (some GSC questions run 20+ words) plus a 1-3 sentence answer plus JSON
+  // syntax. Measured against the real 30-question deodorant batch, that is
+  // ~150 tokens a pair; 200 leaves room for the long tail.
+  const maxTokens = Math.min(16000, 600 + questions.length * 200);
   const generate = async (constraint) => {
     const msg = await client.messages.create({
       model: 'claude-sonnet-5',
-      max_tokens: 4000,
+      max_tokens: maxTokens,
       messages: [{
         role: 'user',
         content: `You are writing Google Merchant Center Q&A answers for a Real Skin Care product.
@@ -119,7 +127,11 @@ QUESTIONS:
 ${questions.map((q, i) => `[${i}] ${q.query}`).join('\n')}`,
       }],
     });
-    if (msg.stop_reason === 'max_tokens') throw new Error('answer generation truncated at max_tokens');
+    // Throw, never save — truncated JSON cannot be repaired by a retry against
+    // the same ceiling, and half a batch of answers is not a partial success.
+    if (msg.stop_reason === 'max_tokens') {
+      throw new Error(`answer generation truncated at max_tokens (${maxTokens} for ${questions.length} questions)`);
+    }
     const text = msg.content.map((c) => c.text ?? '').join('');
     const json = text.slice(text.indexOf('['), text.lastIndexOf(']') + 1);
     return JSON.parse(json).filter((p) => p?.question && p?.answer?.trim());
