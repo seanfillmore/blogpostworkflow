@@ -159,6 +159,43 @@ data/reports/ctr-program/
 # behind for someone's `git add .`
 data/reports/queue-autoapply/
 
+# Agent `latest.json` run reports — server-authoritative, and TRACKING THEM IS AN
+# ACTIVE HAZARD, not just untidiness. These 13 were tracked until 2026-09-06.
+# Every one is rewritten on the production box; a tracked copy means a deploy can
+# revert live data to whatever was last committed, and git can text-merge a
+# machine-written JSON file into conflict markers that every reader `catch {}`s
+# as "no data". That is the same defect class as `data/rejected-keywords.json`
+# and `data/posts/*/meta.json`, and on 2026-09-06 it fired: a `git stash push`
+# during a deploy was never popped, and `data/reports/quick-wins/latest.json`
+# sat at its 2026-04-14 committed value — `candidate_count: 1` — for 145 days
+# while `quick-win-targeter` ran cleanly every Monday and wrote a dated .md
+# beside it. Seven agents read that file, so the biggest CTR opportunity on the
+# site (the tattoo-soap winner, 43,827 impressions at 0.5% CTR) was invisible to
+# the quick-win pool for five months. `gsc-opportunity/latest.json` had the same
+# disease but self-healed daily at 13:30 UTC — which is AFTER `daily-summary`
+# reads it at 13:00, so the digest reported April data every morning.
+#
+# These are regenerable machine output, which is what separates them from
+# `data/rejected-keywords.json` (human decisions, not regenerable, stays tracked
+# and reconciled by union) and `data/briefs/_dropped/` (an archive whose whole
+# point is that an untracked copy is what made the original loss unrecoverable).
+# Their siblings — health-claim-remediation, antiperspirant-remediation,
+# pagespeed, cannibalization, theme-seo-audit — were already untracked; these 13
+# were the anomaly. Pinned by tests/repo/server-reports-untracked.test.js.
+data/reports/bing-keyword-gap/latest.json
+data/reports/claim-audit/latest.json
+data/reports/competitor-watcher/latest.json
+data/reports/device-weights/latest.json
+data/reports/dropship-copy-remediation/latest.json
+data/reports/gsc-opportunity/latest.json
+data/reports/hero-product/latest.json
+data/reports/indexing/latest.json
+data/reports/post-performance/latest.json
+data/reports/quick-wins/latest.json
+data/reports/return-policy-statement/latest.json
+data/reports/shopping-test-monitor/latest.json
+data/reports/voice-of-customer/latest.json
+
 # Ad Studio run output — one default run writes ~137 MB of 2K renders (a single
 # variation is ~7.6 MB × 6 platform targets). Regenerable and reviewed as images, never
 # in a diff. Scoped to the ad-studio subtree so the already-tracked data/creatives/
