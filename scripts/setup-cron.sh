@@ -223,12 +223,37 @@ DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 #
 # 12:25 UTC, in UTC because a TZ= prefix schedules NOTHING on this host, and 25
 # rather than 30 because 12:30 is ALREADY TAKEN by check-bundle-value-stack-drift.
-# There are FOUR cheap detectors in this window, not three: 12:20 content-mirror,
-# 12:25 here, 12:30 value-stack, 12:40 post-meta — none sharing a slot, so a slow
-# one cannot delay the next, and all of them ahead of the 13:00 daily-summary so
-# every row lands in the SAME morning's digest. Check `crontab -l` for a free
-# minute before adding a fifth; this one was written at 12:30 and collided.
+# COUNT THE DETECTORS AGAINST THE LIVE CRONTAB, NEVER AGAINST THIS COMMENT — it
+# said FOUR and was already EIGHT by 2026-09-06: 12:15 pdp-template, 12:20
+# content-mirror, 12:25 here, 12:30 value-stack, 12:35 copy-surface, 12:40
+# post-meta, 12:45 theme-claims, 12:50 scheduler-heartbeat. None share a slot,
+# so a slow one cannot delay the next, and all sit ahead of the 13:00
+# daily-summary so every row lands in the SAME morning's digest. Check
+# `crontab -l` for a free minute before adding another; this one was written at
+# 12:30 and collided, which is only visible against the LIVE crontab.
 DAILY_REJECTED_KEYWORDS_GATE="25 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-rejected-keywords-drift.mjs >> data/reports/scheduler/rejected-keywords-gate.log 2>&1"
+
+# PDP TEMPLATE DRIFT GATE — 12:15 UTC, DETECT ONLY.
+#
+# scripts/build-product-templates.mjs is run by whoever happens to be changing a
+# template. Between those runs the CATALOGUE moves underneath it, and twice in
+# one week that silently invalidated a decision the manifest had recorded
+# correctly: PR #805's hand-soap ladder made that page's complete-the-routine
+# card redundant the moment it shipped, and Recurpay plan 11152263 turned
+# `subscribable: false` on the liquid-soap template into a WITHHELD true claim
+# within 24 hours. Neither shows in a diff, because no repo file changed.
+#
+# It can never fix anything: BUILDER_ARGS is a frozen empty list, --apply is
+# refused with exit 64, and the only thing it spawns is the builder's DRY run
+# (a test counts the invocations). The builder writes to the LIVE theme.
+#
+# 12:15 UTC because the six detectors after it are full — 12:20 content-mirror,
+# 12:25 rejected-keywords, 12:30 value-stack, 12:35 copy-surface, 12:40
+# post-meta, 12:45 theme-claims, 12:50 scheduler-heartbeat — and everything in
+# this window must land before the 13:00 daily-summary so its row reaches the
+# SAME morning's digest. Check `crontab -l` for a free minute before adding
+# another; the rejected-keywords gate was written at 12:30 and collided.
+DAILY_PDP_TEMPLATE_GATE="15 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-pdp-template-drift.mjs >> data/reports/scheduler/pdp-template-gate.log 2>&1"
 
 # Claims gate over the two surfaces no writer-side gate can reach: theme template
 # copy and product image alt text. Both are edited by a human in the Shopify admin,
@@ -477,6 +502,7 @@ $DAILY_PUBLISH_DRIFT
 $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
 $DAILY_CONTENT_MIRROR_GATE
+$DAILY_PDP_TEMPLATE_GATE
 $DAILY_REJECTED_KEYWORDS_GATE
 $DAILY_COPY_SURFACE_CLAIMS_GATE
 $DAILY_VALUE_STACK_GATE
