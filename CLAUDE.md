@@ -428,7 +428,40 @@ Measured read-only over **1,389 live strings** (204 articles, 19 products, 89 co
 
 **It is ADVISORY and never blocks a write** — following `golden-thread.js`, not `health-claims.js`, and the difference is the consequence of being wrong. A health claim is regulatory and refusing is correct. A 163-character description is a truncated snippet, and REFUSING it leaves the OLD description live — usually worse, because the page was selected for a rewrite precisely because its current copy underperforms. So: one retry naming the exact overage, then SHIP and record. It costs **no extra model calls** — it rides inside the two attempts `gateGeneratedCopy` already budgets, and a health hit and a length hit are argued in the SAME retry. `overlong` comes back on the result with `ok: true`, which is the normal intended case.
 
-**TITLES ARE DELIBERATELY NOT GATED, and the obvious rule would have been WRONG.** "Title at most 60" is what Ahrefs flags, but **the theme appends ` – Real Skin Care` (17 chars) to every rendered `<title>`** — verified by fetching live pages: `title_tag` `"SLS Free Toothpaste: Gentle Formulas That Actually Clean"` (55) renders at **72**. So the effective budget is ~43 while every prompt in the fleet asks for **50–60**, meaning the instruction itself guarantees truncation — which is why Ahrefs reports 66 `Title too long` against only ~10% of `title_tag` exceeding 60 alone (n=122, median 40, p90 60, max 65). Fixing that means changing the stated target in five agents' prompts AND making the limit suffix-aware; `title` is therefore **absent from `LENGTH_LIMITS`** rather than present with a number that is wrong in one direction or fires on every run in the other. **Do not "complete" the module by adding a flat 60.**
+**TITLES ARE MEASURED ON THE RENDERED TITLE, AND A FLAT "at most 60" WOULD HAVE BEEN WRONG (2026-09-06).** 60 is what Ahrefs flags and roughly where Google truncates — but counting the AUTHORED string certifies titles that truncate on the live page. `layout/theme.liquid` (standard Dawn, read from the live theme asset rather than inferred) renders:
+
+```liquid
+<title>
+  {{ page_title }}
+  {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+</title>
+```
+
+So ` – Real Skin Care` (**17 characters**, an EN DASH) is appended **UNLESS the title already contains the shop name.** That conditional is the whole subtlety, and it is why a naive count looks clean: `title_tag` measures n=122, median 40, p90 60, max 65 — barely anything over 60 — while Ahrefs reports **`Title too long` on 66 URLs**.
+
+**Measured on the RENDERED title across 67 live pages sampled from the sitemap (2026-09-06), the leak is far bigger than Ahrefs' own number suggests:**
+
+| | over 60 rendered |
+|---|--:|
+| **all pages** | **50 / 67 (75%)** |
+| **articles** | **49 / 53 (92%)** |
+| products | 1 / 7 (14%) |
+| collections | 0 / 2 |
+| pages | 0 / 5 |
+
+Rendered length: median **67**, p75 70, p90 75, max 77. **96% of titles omit the brand** and therefore take the suffix. And the decisive number: **50 of the 50 overages are caused ONLY by the suffix** — every one has an authored title that fits inside 60 and a rendered title that does not. Products, collections and pages are largely clean precisely because their prompts already use the `format: "[Category] | ${config.name}"` idiom.
+
+**A second, separate defect is visible in that data and is NOT fixed here.** Two live titles read `…Actually Works for Dry Skin | R – Real Skin Care` and `…What to Look For & Why It | | Real – Real Skin Care` — a writer tried to include `| Real Skin Care`, something hard-truncated the authored string at exactly 60 characters mid-word, and the theme then appended the full suffix anyway *because the mangled remnant no longer contains the shop name*. That is a producer truncating at the old, wrong budget, and it damages the title twice. Find and fix that cap separately.
+
+`lib/seo-copy-length.js`'s **`renderTitle`** reproduces that Liquid exactly and `checkCopyLength` measures its output. **Liquid's `contains` is a case-SENSITIVE substring test**, so a title carrying "real skin care" in lower case still gets the suffix on the live page — the helper uses `String.includes` and not a case-insensitive compare, and a test pins that, because getting it wrong under-reports. `SHOP_NAME` is hardcoded to keep the module pure (the same choice `lib/product-category-terms.js` makes) with a test pinning it against `config/site.json`.
+
+**The budget has two shapes and a writer may use either:** omit the brand and write at most **43** (43 + 17 = 60), or include the brand and write at most **60** with no suffix appended.
+
+**THE PROMPT CHANGE IS THE LOAD-BEARING HALF, and the two had to land together.** Every prompt asked for "50–60 characters" while the real budget was 43 — *the instruction itself guaranteed truncation*. Gating without fixing the prompt would trip nearly every generation and buy a second model call per page for nothing; fixing the prompt without gating leaves it unverified. The stale numbers are gone from `meta-optimizer`, `product-optimizer` (five prompts) and `collection-content-optimizer`, replaced by **`SEO_COPY_LENGTH_RULE` interpolated into each prompt** so the budget has one source and cannot drift again. Note the prompts already carrying `format: "[Category] | ${config.name}"` were **always correct** — the brand is inside, so no suffix is appended; that shape is now the documented safe idiom.
+
+**The gate stays ADVISORY here too** — a truncated title is a CTR leak, and refusing it leaves the older title live on a page selected for rewrite precisely because its current copy underperforms. One retry, and the constraint **explains the suffix rule rather than just naming a number**, because "shorten it" is advice a model satisfies by trimming four characters off an already-short title and still landing over.
+
+**Deliberately NOT changed:** `agents/product-optimizer`'s `rewriteProductTitle` declares no length — that field is the product's actual NAME, not a SERP title, and capping a product name at 43 would be wrong. `agents/pdp-builder` has its own `LENGTH_BOUNDS` (`seoTitle` 50–70) and is not on the shared gate; its prompt format includes the brand so no suffix is appended, but **70 still exceeds 60** — a latent truncation source on PDPs, and its own change. `agents/technical-seo --fix-meta` remains ungated, as already recorded above.
 
 **An UNDECLARED field is never measured** — the same whitelist doctrine as `PRODUCT_NOUNS`: these callers legitimately pass a 450-650 word collection body, a product `body_html` and FAQ answers through the same field map, and an unrecognised input can only ever produce a MISS. Wired into `meta-optimizer`, `collection-content-optimizer` and the four `product-optimizer` call sites that emit a `seo_description`; the title-only `rewriteProductTitle` site declares nothing. **Still unmeasured and each its own change:** `agents/publisher`'s `summary_html` (written from the post's `meta_description` — and the theme's fallback for the **178 of 215 articles carrying no `description_tag` at all**, which is where most of Ahrefs' 173 actually live), `technical-seo --fix-meta`, `collection-creator`, and `blog-post-writer`, whose `meta_description` comes from the brief rather than from a gated generation.
 

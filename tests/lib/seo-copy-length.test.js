@@ -7,9 +7,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import {
   LENGTH_LIMITS, LENGTH_KINDS, checkCopyLength, lengthConstraint,
-  renderLengthLines, SEO_COPY_LENGTH_RULE,
+  renderLengthLines, SEO_COPY_LENGTH_RULE, renderTitle, SHOP_NAME, TITLE_SUFFIX,
 } from '../../lib/seo-copy-length.js';
 import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
 
@@ -20,15 +24,83 @@ test('the ceiling is 160 — Ahrefs Site Audit\'s own "meta description too long
   assert.equal(MAX, 160);
 });
 
-test('titles are NOT a declarable kind', () => {
-  // The theme appends " – Real Skin Care" (17 chars) to every rendered <title>,
-  // so a flat 60 would pass titles that truncate and a suffix-aware limit (~43)
-  // would fight every prompt in the fleet, which all ask for 50–60. Adding
-  // `title` here means changing those prompts in the same PR.
-  assert.deepEqual(LENGTH_KINDS, ['description']);
-  assert.equal(LENGTH_LIMITS.title, undefined);
-  assert.ok(!/\btitle\b/.test(SEO_COPY_LENGTH_RULE),
-    'the first-prompt rule must not state a title limit while none is enforced');
+test('the shop name matches config/site.json — a rename must not drift silently', () => {
+  const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+  const site = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
+  assert.equal(SHOP_NAME, site.name,
+    'SHOP_NAME is hardcoded to keep this module pure; it must equal config/site.json .name');
+});
+
+test('the suffix is 17 characters and uses an EN DASH, as the theme emits', () => {
+  // layout/theme.liquid writes `&ndash;` — one code point, not a hyphen.
+  assert.equal(TITLE_SUFFIX, ' \u2013 Real Skin Care');
+  assert.equal([...TITLE_SUFFIX].length, 17);
+});
+
+test('renderTitle reproduces the theme: suffix UNLESS the title contains the shop name', () => {
+  // The real live pair that motivated this whole change.
+  assert.equal(
+    renderTitle('SLS Free Toothpaste: Gentle Formulas That Actually Clean'),
+    'SLS Free Toothpaste: Gentle Formulas That Actually Clean \u2013 Real Skin Care',
+  );
+  // A live page whose own title carries the brand gets NOTHING appended.
+  assert.equal(
+    renderTitle('FAQs \u2013 Real Skin Care Natural Products'),
+    'FAQs \u2013 Real Skin Care Natural Products',
+  );
+  assert.equal(
+    renderTitle('Coconut Oil Deodorant for Sensitive Skin | Real Skin Care'),
+    'Coconut Oil Deodorant for Sensitive Skin | Real Skin Care',
+  );
+});
+
+test('Liquid `contains` is CASE-SENSITIVE, so lower case still gets the suffix', () => {
+  // Getting this wrong under-reports: the live page really does append here.
+  assert.equal(renderTitle('the best real skin care lotion').endsWith(TITLE_SUFFIX), true);
+  assert.equal(renderTitle('Shop Real Skin Care Lotion').endsWith(TITLE_SUFFIX), false);
+});
+
+test('a title is measured on its RENDERED form, not the authored string', () => {
+  const authored = 'a'.repeat(50); // fits 60 on its own; 67 once the theme appends
+  const { ok, overlong } = checkCopyLength({ title: authored }, { title: 'title' });
+  assert.equal(ok, false, '50 authored + 17 suffix = 67, over 60');
+  assert.equal(overlong[0].length, 67);
+  assert.equal(overlong[0].authoredLength, 50);
+  assert.match(overlong[0].rendered, /Real Skin Care$/);
+});
+
+test('the same length PASSES when the writer includes the brand itself', () => {
+  // 60 characters total, brand inside => no suffix => exactly at the limit.
+  const authored = `${'a'.repeat(60 - SHOP_NAME.length - 1)} ${SHOP_NAME}`;
+  assert.equal([...authored].length, 60);
+  assert.equal(checkCopyLength({ title: authored }, { title: 'title' }).ok, true);
+});
+
+test('43 authored characters is the no-brand budget, and 44 is not', () => {
+  assert.equal(checkCopyLength({ title: 'a'.repeat(43) }, { title: 'title' }).ok, true);
+  assert.equal(checkCopyLength({ title: 'a'.repeat(44) }, { title: 'title' }).ok, false);
+});
+
+test('the title constraint explains the SUFFIX RULE, not just a number', () => {
+  // "shorten it" is advice a model satisfies by trimming four characters off an
+  // already-short title and still landing over the limit.
+  const { overlong } = checkCopyLength({ title: 'a'.repeat(50) }, { title: 'title' });
+  const c = lengthConstraint(overlong);
+  assert.match(c, /storefront renders it as/);
+  assert.match(c, /appends " \u2013 Real Skin Care"/);
+  assert.match(c, /at most 43 characters WITHOUT the brand/);
+  assert.match(c, /at most 60 characters WITH it/);
+});
+
+test('the first-prompt rule states the real budget, not the old 50-60', () => {
+  assert.match(SEO_COPY_LENGTH_RULE, /at most 43 characters/);
+  assert.match(SEO_COPY_LENGTH_RULE, /AUTOMATICALLY appends/);
+  assert.ok(!/50.60/.test(SEO_COPY_LENGTH_RULE),
+    'the prompt must not still quote the budget that caused the truncation');
+});
+
+test('both kinds are declarable', () => {
+  assert.deepEqual([...LENGTH_KINDS].sort(), ['description', 'title']);
 });
 
 test('at the limit passes; one over fails', () => {
@@ -36,7 +108,13 @@ test('at the limit passes; one over fails', () => {
 
   const over = checkCopyLength({ meta: desc(MAX + 1) }, { meta: 'description' });
   assert.equal(over.ok, false);
-  assert.deepEqual(over.overlong, [{ field: 'meta', kind: 'description', length: MAX + 1, max: MAX, over: 1 }]);
+  assert.deepEqual(over.overlong, [{
+    field: 'meta', kind: 'description', length: MAX + 1, max: MAX, over: 1,
+    // A description has no render step, so authored and rendered are the same
+    // and `rendered` stays undefined — that is what tells a report not to
+    // explain a suffix rule that did not apply.
+    authoredLength: MAX + 1, rendered: undefined,
+  }]);
 });
 
 test('an UNDECLARED field is never measured, however long', () => {

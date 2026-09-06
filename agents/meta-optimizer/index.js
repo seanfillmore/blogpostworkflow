@@ -57,6 +57,7 @@ import { gateProposedCopy } from './lib/gate.js';
 import {
   SEO_COPY_COMPLIANCE_RULE, renderGateSkipLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
+import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -167,11 +168,12 @@ Write an improved title and meta description that:
 - Includes the target keyword naturally near the start
 - Is specific, benefit-driven, and creates curiosity or urgency
 - Matches the search intent (someone researching "${keyword}")
-- Title: 50–60 characters
-- Meta description: 140–155 characters
+- Title and meta description: see the LENGTH LIMITS below — they are hard.
 - Sounds like ${config.name}'s voice: clean, expert, trustworthy, not salesy
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object with this exact structure:
 {

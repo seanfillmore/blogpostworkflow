@@ -75,6 +75,7 @@ import {
   SEO_COPY_COMPLIANCE_RULE, checkSeoCopyFields,
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
+import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -403,10 +404,12 @@ Write an improved product description that:
    - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
 
 Also write:
-- SEO title (50–60 chars, includes keyword)
-- Meta description (140–155 chars, benefit-driven, includes keyword)
+- SEO title (see LENGTH LIMITS below — the storefront appends the brand)
+- Meta description (benefit-driven, includes keyword — see LENGTH LIMITS below)
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -459,10 +462,12 @@ Write an improved collection page description that:
    - Avoid uniform sentence patterns like "Whether you..." or "If you're looking for..."
 
 Also write:
-- SEO title (50–60 chars, includes keyword, format: "[Category] | ${config.name}")
-- Meta description (140–155 chars, benefit-driven, includes keyword)
+- SEO title (format: "[Category] | ${config.name}" — see LENGTH LIMITS below)
+- Meta description (benefit-driven, includes keyword — see LENGTH LIMITS below)
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -526,7 +531,7 @@ ${queriesFormatted}
 ${groundingBlock}
 Write improved meta tags only (no body content):
 - SEO title (50–60 chars, includes top keyword naturally)
-- Meta description (140–155 chars, benefit-driven, includes keyword, ends with call-to-action or value prop)
+- Meta description (benefit-driven, includes keyword, ends with a call-to-action or value prop — see LENGTH LIMITS below)
 
 Also provide:
 - what_changed: 1-sentence summary of what you changed
@@ -534,6 +539,8 @@ Also provide:
 - projected_impact: 1-sentence estimate of expected improvement
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -581,7 +588,7 @@ ${queriesFormatted}
 
 Write improved meta tags and summary for this static page:
 - SEO title (50–60 chars, includes top keyword naturally)
-- Meta description (140–155 chars, benefit-driven, includes keyword, ends with call-to-action or value prop)
+- Meta description (benefit-driven, includes keyword, ends with a call-to-action or value prop — see LENGTH LIMITS below)
 - Summary: a 1–2 sentence page summary suitable for Shopify's summary_html field
 
 Also provide:
@@ -590,6 +597,8 @@ Also provide:
 - projected_impact: 1-sentence estimate of expected improvement
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -651,6 +660,8 @@ DO NOT:
 - Make it longer than 70 characters
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -974,7 +985,7 @@ async function fromGscMode() {
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
-          lengths: { meta: 'description' },
+          lengths: { title: 'title', meta: 'description' },
         },
       );
       if (!gated.ok) {
@@ -1102,7 +1113,7 @@ async function pagesFromGscMode() {
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
-          lengths: { meta: 'description' },
+          lengths: { title: 'title', meta: 'description' },
         },
       );
       if (!gated.ok) {
@@ -1232,12 +1243,14 @@ Expand this FAQ page by:
 
 Also write:
 - SEO title (50–60 chars, includes "FAQ" naturally)
-- Meta description (140–155 chars, mentions FAQ and key topics)
+- Meta description (mentions FAQ and key topics — see LENGTH LIMITS below)
 - what_changed: summary of questions added
 - why: why these additions should improve search visibility
 - projected_impact: expected improvement
 
 ${SEO_COPY_COMPLIANCE_RULE}
+
+${SEO_COPY_LENGTH_RULE}
 ${constraint ? `\n${constraint}\n` : ''}
 Return ONLY a JSON object:
 {
@@ -1263,7 +1276,7 @@ No explanation, no markdown fences.`,
     // `meta` is the SERP snippet; the truncation check rides inside the
     // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
     // declared — the theme appends a suffix to the rendered <title>.
-    lengths: { meta: 'description' },
+    lengths: { title: 'title', meta: 'description' },
   });
   if (!gated.ok) {
     const words = [...new Set(gated.violations.map((v) => `${v.field}: "${v.match}"`))].join(', ');
@@ -1651,7 +1664,7 @@ async function main() {
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
-          lengths: { meta: 'description' },
+          lengths: { title: 'title', meta: 'description' },
         },
       );
       if (!gated.ok) {
