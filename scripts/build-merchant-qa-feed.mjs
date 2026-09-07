@@ -154,7 +154,23 @@ async function draftAnswers(handle, product, questions, pdp) {
   // ceiling buys is this failure. It is set at ~1.7x the worst measured pair,
   // and the run now logs the output tokens it really used so the next revision
   // is measured rather than re-guessed.
-  const TOKENS_PER_PAIR = 400;
+  // 400 WAS ALSO TOO LOW, AND THAT IS THE POINT OF THIS NUMBER'S HISTORY. Three
+  // successive ceilings were derived from the latest measurement and two of them
+  // truncated a live run: 200/pair (from a batch that answered 7 of 30), then
+  // 400/pair, which `coconut-bar-soap-4-pack` blew through at **427/pair on 30
+  // questions**. The measured spread across one corpus is 181 -> 472 per pair,
+  // so a rate set near the observed mean is a rate that fails a few times a year
+  // on an unattended run. 700 DOMINATES the whole observed range rather than
+  // chasing the last observation.
+  //
+  // It is free to be generous, and there is a hard reason it cannot run away:
+  // `MAX_SIDE_CHARS` truncates each answer at 1,000 characters (~250 tokens)
+  // regardless, so a pair can only ever USE ~310 tokens — ~250 of answer, ~50 of
+  // verbatim question, ~10 of JSON. A model writing 472/pair is already
+  // producing prose the formatter silently trims. 700 is therefore ~2.2x the
+  // useful maximum, and the excess is a ceiling nobody is billed for rather than
+  // output anybody reads.
+  const TOKENS_PER_PAIR = 700;
   // AND A FLOOR, BECAUSE THE PER-PAIR COST RISES AS THE BATCH SHRINKS. A purely
   // linear ceiling is structurally wrong at small n and the same `--all` run
   // proved it in both directions: `coconut-oil-deodorant` measured 182/pair at
@@ -170,7 +186,11 @@ async function draftAnswers(handle, product, questions, pdp) {
   // everything at n <= 13, where the linear term is too thin. It is free: an
   // unbilled ceiling can only ever cost a failure it did not prevent.
   const MIN_MAX_TOKENS = 6000;
-  const maxTokens = Math.min(16000, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
+  // The outer clamp has to sit ABOVE the rate at the maximum batch or it quietly
+  // becomes the real ceiling and the derivation above is decoration: at the
+  // Google cap of 30 pairs, 800 + 30*700 = 21,800, and 16,000 would have clamped
+  // it back under the value that just failed.
+  const maxTokens = Math.min(24000, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
   const generate = async (constraint) => {
     const msg = await client.messages.create({
       model: 'claude-sonnet-5',
