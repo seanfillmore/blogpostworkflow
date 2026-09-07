@@ -125,8 +125,16 @@ async function main() {
 
   // Plan first, verify second, write third — nothing is written until every
   // proposed value has passed both gates.
+  // A title_tag carrying markup or a URL is CORRUPT, not merely long — one live
+  // article's reads `Can You Use <a href=https://www.realskincare.com/blogs/ne`.
+  // Trimming that produces shorter garbage, so it is refused and named. Only a
+  // rewrite fixes it.
+  const CORRUPT = /[<>]|https?:\/\//;
+  const corrupt = writable.filter((c) => CORRUPT.test(c.titleTag));
+  const trimmable = writable.filter((c) => !CORRUPT.test(c.titleTag));
+
   const plan = [];
-  for (const c of writable) {
+  for (const c of trimmable) {
     const proposed = shortenToRenderedLimit(c.titleTag);
     if (!proposed || proposed === c.titleTag) continue;
 
@@ -144,12 +152,19 @@ async function main() {
   }
 
   console.log(`  REWRITABLE (have a title_tag) : ${plan.length}`);
+  console.log(`  CORRUPT (markup/URL in title_tag — refused, needs a rewrite) : ${corrupt.length}`);
   console.log(`  SKIPPED (no title_tag — would have to CREATE one) : ${skipped.length}\n`);
 
   for (const c of plan.slice(0, LIST_ONLY ? plan.length : 40)) {
     console.log(`  ${String(c.renderedLen).padStart(3)} → ${String(len(c.proposedRendered)).padStart(3)}  [${c.kind}] ${c.handle}`);
     console.log(`        was: ${c.rendered}`);
     console.log(`        now: ${c.proposedRendered}`);
+  }
+
+  if (corrupt.length) {
+    console.log(`\n  REFUSED — the title_tag itself is corrupt (markup or a URL). Trimming`);
+    console.log(`  would only make it shorter garbage. These need a rewrite:`);
+    for (const c of corrupt) console.log(`    [${c.kind}] ${c.handle}\n        ${c.titleTag}`);
   }
 
   if (skipped.length) {
@@ -171,6 +186,7 @@ async function main() {
     scanned: all.length,
     over: over.length,
     rewritable: plan.length,
+    refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
     skipped_no_title_tag: skipped.map((c) => ({ kind: c.kind, handle: c.handle, rendered: c.rendered, renderedLen: c.renderedLen })),
     changes: plan.map((c) => ({
       kind: c.kind, handle: c.handle, resource: c.resource, id: c.id,

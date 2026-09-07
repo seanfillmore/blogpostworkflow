@@ -287,12 +287,22 @@ test('a repaired title never ends mid-brand, which is the defect being fixed', (
 
 test('a repaired title never ends on a dangling connective', () => {
   // "Benefits, Ingredients &" and "Deodorant for" are word boundaries and still
-  // read as damage.
-  const out = shortenToRenderedLimit('Goat Milk Soap: Benefits, Ingredients & Natural Alternatives \u2013 Real Skin Care');
-  assert.equal(out, 'Goat Milk Soap: Benefits, Ingredients');
+  // read as damage, so the cut prefers a CLAUSE boundary where one exists.
+  assert.equal(
+    shortenToRenderedLimit('Goat Milk Soap: Benefits, Ingredients & Natural Alternatives \u2013 Real Skin Care'),
+    'Goat Milk Soap: Benefits',
+  );
+  // No comma or colon in range here, so it falls back to a word boundary and
+  // then strips the dangling "for".
   assert.equal(
     shortenToRenderedLimit('Best Hypoallergenic Deodorant for Sensitive Skin (2026) \u2013 Real Skin Care'),
     'Best Hypoallergenic Deodorant',
+  );
+  // The case that motivated preferring a clause boundary: cutting at the last
+  // SPACE leaves "…Soft Skin, Zero", which reads as damage.
+  assert.equal(
+    shortenToRenderedLimit('Best Clean Body Lotion: Soft Skin, Zero Toxins | Real | | Re \u2013 Real Skin Care'),
+    'Best Clean Body Lotion: Soft Skin',
   );
 });
 
