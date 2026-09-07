@@ -177,13 +177,22 @@ async function main() {
   // resource's own title. Without it they are only reported.
   const mintable = MINT ? skipped : [];
 
+  // AN OVERRIDE IS A WORDING DECISION, NOT A LENGTH FIX, so it is drawn from
+  // EVERY surface rather than from the over-limit set. `best-boka-alternatives-2025`
+  // is why: an earlier sweep had already trimmed it to a passing-but-awkward 56
+  // characters, so it was no longer "over" and the operator's replacement could
+  // never fire. Scoping overrides to the defect they happen to accompany is how
+  // a hand-authored decision silently stops being applied.
+  const considered = new Set([...trimmable, ...mintable].map((c) => c.handle));
+  const overrideOnly = all.filter((c) => hasOverride(c) && !considered.has(c.handle));
+
   const plan = [];
   const healthBlocked = [];
-  for (const c of [...trimmable, ...mintable]) {
+  for (const c of [...trimmable, ...mintable, ...overrideOnly]) {
     const source = c.titleTag ?? c.fallback ?? '';
     const override = OVERRIDES[c.handle];
     const proposed = override ? override.title : shortenToRenderedLimit(source);
-    if (!proposed || proposed === c.titleTag) continue;
+    if (!proposed || proposed === c.titleTag) continue; // already correct
 
     // A LENGTH failure is a bug in the shortener — abort rather than write a
     // partial sweep on top of broken arithmetic.
