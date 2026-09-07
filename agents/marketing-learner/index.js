@@ -739,10 +739,19 @@ async function runRegate({ client, args }) {
     (failed ? ` ${failed} skill(s) refused — see above.` : ''));
   syncContextMirror();
 
-  // This runs unattended on the 1st and mutates every skill it touches. A parked tactic
-  // disappears from the live projection, so a run that reports nothing is a change nobody
-  // can trace six weeks later — the same reasoning the cluster-hold agents follow.
-  // Deferred, never immediate: parking is the policy working, not a failure.
+  // NOT SCHEDULED — verified against the live crontab and scripts/setup-cron.sh on
+  // 2026-09-07, and NEITHER carries any marketing-learner line at all. This comment used to
+  // read "runs unattended on the 1st", which was simply false, and it was believed: it is
+  // why `--regate` was described as an unattended monthly job that could un-park tactics
+  // on its own. Same class of error as `unmapped-query-promoter`'s header claiming it was
+  // deprecated while cron ran it daily, inverted — a header asserting a schedule that does
+  // not exist. Read `crontab -l`, never a comment.
+  //
+  // It still notifies, because it is hand-run rarely and mutates every skill it touches: a
+  // parked tactic disappears from the live projection, and an un-parked one appears in it,
+  // so a run that reports nothing is a change nobody can trace six weeks later — the same
+  // reasoning the cluster-hold agents follow. Deferred, never immediate: re-gating is the
+  // policy working, not a failure.
   await notify({
     subject: `Marketing re-gate: ${parked.length} parked, ${unparked.length} un-parked`
       + (reparked.length ? `, ${reparked.length} re-gated` : '')
