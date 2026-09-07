@@ -128,12 +128,62 @@ identical but for the country name. `stripAssistantScaffolding` in
 demand, and cleaning also lets it dedupe against its naturally-typed twins.
 Anything not matching the known shape passes through byte-identical.
 
-**Still open, and it is a judgement rather than a bug: 2 of 153 pairs answer a
-non-English question in English.** One Vietnamese, one Indonesian, both routed
-and answered competently — but a Vietnamese question with an English answer is a
-poor pair to publish. Nobody has decided whether the feed should drop non-English
-questions, and a language filter has its own blast radius, so they are named here
-rather than silently filtered.
+**Non-English questions STAY — decided by Sean, 2026-09-07: "people can translate
+the answers."** Two of the 174 pairs answer a non-English question (one
+Vietnamese, one Indonesian) in English. Do not add a language filter. The
+questions are real measured demand, the answers are competent, and every surface
+that renders them — browser, phone, the assistant reading the feed — translates.
+A filter would drop demand to fix a problem the reader does not have.
+
+### The answers WERE checked against Google — `npm run compare-qa-to-overviews`
+
+Nothing had done this before 2026-09-07. The four beats were derived by reading
+overviews once, by hand, in an earlier session; **no run ever compared the
+ANSWERS to them.** That was a verification gap on copy going to Google under the
+brand's name, and it is free to close — the citation measurement already captures
+`overview_text` for every question it pulls, so the check is a join of two
+reports that already exist and costs no API call.
+
+`scripts/compare-qa-to-overviews.mjs` prints our answer next to Google's for
+every question in both. **15 of 174 answers were checkable on 2026-09-07** — the
+overlap is small by construction, since the measurement samples ~30 questions
+site-wide while the feed answers up to 30 per product; raise it with `--limit` on
+the measurement, at $0.002 a pull.
+
+**Zero factual contradictions.** Every answer is consistent with Google's account
+of the same question, and beat 3 — the distinction that resolves the confusion —
+is running WELL: our fragrance-free answer draws the same fragrance-free vs
+"unscented" line Google draws, and the deodorant answers hold the
+deodorant-vs-antiperspirant distinction Google itself leads with.
+
+**Beat 4 is the one that regresses, exactly as this checklist predicted — and it
+clusters: 8 of 9 flags are toothpaste.** The failure is not a false claim, it is
+an INVERTED FRAME. On *"are coconut oil toothpastes effective for everyday use?"*
+and *"is coconut oil toothpaste worth it?"* Google LEADS with the limitation —
+"should not replace fluoride toothpaste for cavity protection", "Without it, you
+may have a higher risk of tooth decay" — while our answer presents fluoride-free
+as a clean-ingredients feature and never names the trade-off. Same fact, opposite
+direction. **The prompt already forbids this**: *"Do NOT pretend the objection
+does not exist; an answer that dodges a concern Google itself raises is the one a
+model will not repeat."* So this is an instruction not being followed, not a
+missing instruction — which is why the fix is not simply more prompt text.
+
+**THAT ONE IS A DECISION FOR THE OPERATOR, NOT A BUG TO PATCH.** Whether Real
+Skin Care's own product feed should tell a shopper that fluoride-free carries a
+higher cavity risk is a commercial and regulatory judgement, and it brushes the
+health-claim gate from the other side. Do not have an agent decide it.
+
+**One answer answers a different question.** *"is coconut oil toothpaste worth
+it?"* routed to `coconut-toothpaste-3-pack` and came back about PRICE ($34 vs
+$39 for three tubes) where Google answers efficacy. Bundle products draw the
+cluster's questions and answer them as bundles; worth watching whenever a bundle
+takes a substance question.
+
+**Two mechanical flags, and neither is a verdict.** The script marks an answer
+with no caveat language at all, and one under a quarter of the overview's length.
+They point at pairs worth reading. **No flags is not a pass** — the inverted
+frame above trips neither, because it is fluent, specific and wrong only in
+emphasis, which no regex sees.
 
 **Thin products are working as designed, not failing.** `hand-soap-set` and
 `head-to-toe` produced 2 answers each, `coconut-oil-lip-balm`,

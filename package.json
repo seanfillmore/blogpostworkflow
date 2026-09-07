@@ -107,6 +107,7 @@
     "creatives-budget": "node scripts/creatives-budget.mjs",
     "cluster-holds": "node scripts/cluster-holds.mjs",
     "measure-ai-overview-citations": "node scripts/measure-ai-overview-citations.mjs",
+    "compare-qa-to-overviews": "node scripts/compare-qa-to-overviews.mjs",
     "check-content-mirrors": "node scripts/check-content-mirrors.mjs",
     "reconcile-content-mirrors": "node scripts/reconcile-content-mirrors.mjs",
     "ctr-program": "node agents/ctr-program/index.js",
