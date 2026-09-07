@@ -102,22 +102,47 @@ test('extractAiOverview unions item-level and element-level references', () => {
   assert.deepEqual(extractAiOverview(itemsTopOnly).domains, ['realskincare.com']);
 });
 
-test('extractAiOverview reports NO OVERVIEW and AN UNRESOLVED one as different states', () => {
+test('extractAiOverview reports NO OVERVIEW and AN UNDELIVERED one as different states', () => {
   const none = extractAiOverview([{ type: 'organic', rank_group: 1, domain: 'x.com' }]);
   assert.equal(none.present, false);
-  assert.equal(none.asynchronous, false);
+  assert.equal(none.resolved, false);
   assert.deepEqual(none.domains, []);
 
-  // `asynchronous_ai_overview: true` means the content was NOT delivered in this
-  // response. Counting that as "an overview with no references" manufactures a
-  // false zero — it has to be excluded from the denominator instead.
-  const pending = extractAiOverview([{ type: 'ai_overview', asynchronous_ai_overview: true, items: [], references: [] }]);
-  assert.equal(pending.present, true);
-  assert.equal(pending.asynchronous, true);
-  assert.deepEqual(pending.domains, []);
+  // The live shape of an overview Google loaded asynchronously, on a request
+  // that did NOT ask for it: every content field is null. Counting that as "an
+  // overview with no references" manufactures a false zero.
+  const undelivered = extractAiOverview([{ type: 'ai_overview', asynchronous_ai_overview: true, markdown: null, items: null, references: null }]);
+  assert.equal(undelivered.present, true);
+  assert.equal(undelivered.asynchronous, true);
+  assert.equal(undelivered.resolved, false);
+  assert.deepEqual(undelivered.domains, []);
 
   assert.equal(extractAiOverview([]).present, false);
   assert.equal(extractAiOverview(null).present, false);
+});
+
+test('THE ASYNC FLAG IS NOT THE TEST — content delivered is', () => {
+  // With `load_async_ai_overview: true` on the request, the SAME item comes back
+  // carrying its content and the flag STILL reads true. Keying "unresolved" off
+  // the flag threw away 46% of a live 90-run sample that was in fact readable —
+  // and the discarded queries were not random (toothpaste and long-tail), so it
+  // biased the rate rather than merely thinning it.
+  const loaded = extractAiOverview([{
+    type: 'ai_overview',
+    asynchronous_ai_overview: true,
+    markdown: '...',
+    items: [{ type: 'ai_overview_element', text: 'x', references: null }],
+    references: [{ domain: 'www.realskincare.com' }, { domain: 'www.reddit.com' }],
+  }]);
+  assert.equal(loaded.asynchronous, true);
+  assert.equal(loaded.resolved, true, 'the flag says HOW it loaded, not WHETHER we got it');
+  assert.deepEqual(loaded.domains, ['realskincare.com', 'reddit.com']);
+
+  // An overview that genuinely cites nobody arrives as an empty ARRAY, and that
+  // is a measured zero rather than a missing measurement.
+  const empty = extractAiOverview([{ type: 'ai_overview', asynchronous_ai_overview: false, items: [], references: [] }]);
+  assert.equal(empty.resolved, true);
+  assert.deepEqual(empty.domains, []);
 });
 
 test('organicRankOf finds our rank through the www prefix, or reports null', () => {
@@ -129,9 +154,9 @@ test('organicRankOf finds our rank through the www prefix, or reports null', () 
 
 test('summarizeQueryRuns rates citations against RESOLVED overviews, not against runs', () => {
   const runs = [
-    { present: true, asynchronous: false, domains: ['realskincare.com', 'healthline.com'], organic_rank: 5 },
-    { present: true, asynchronous: false, domains: ['healthline.com'], organic_rank: 5 },
-    { present: false, asynchronous: false, domains: [], organic_rank: 6 },
+    { present: true, resolved: true, asynchronous: false, domains: ['realskincare.com', 'healthline.com'], organic_rank: 5 },
+    { present: true, resolved: true, asynchronous: false, domains: ['healthline.com'], organic_rank: 5 },
+    { present: false, resolved: false, asynchronous: false, domains: [], organic_rank: 6 },
   ];
   const s = summarizeQueryRuns(runs, 'realskincare.com');
   assert.equal(s.runs, 3);
@@ -145,8 +170,8 @@ test('summarizeQueryRuns rates citations against RESOLVED overviews, not against
 
 test('summarizeQueryRuns excludes an unresolved overview from the denominator', () => {
   const s = summarizeQueryRuns([
-    { present: true, asynchronous: true, domains: [], organic_rank: null },
-    { present: true, asynchronous: false, domains: ['realskincare.com'], organic_rank: null },
+    { present: true, resolved: false, asynchronous: true, domains: [], organic_rank: null },
+    { present: true, resolved: true, asynchronous: false, domains: ['realskincare.com'], organic_rank: null },
   ], 'realskincare.com');
   assert.equal(s.overviews_resolved, 1);
   assert.equal(s.citation_rate, 1, 'not 0.5 — the pending one was never a chance to be cited');
@@ -158,7 +183,7 @@ test('summarizeQueryRuns returns a null rate rather than a zero when nothing res
   // whole point of the task is a rate with an n behind it, so the two must not
   // collapse — the same reason a stale seo-impact report disarms a gate loudly
   // instead of reading as a clean run.
-  const s = summarizeQueryRuns([{ present: false, asynchronous: false, domains: [], organic_rank: null }], 'realskincare.com');
+  const s = summarizeQueryRuns([{ present: false, resolved: false, asynchronous: false, domains: [], organic_rank: null }], 'realskincare.com');
   assert.equal(s.overviews_resolved, 0);
   assert.equal(s.citation_rate, null);
   assert.equal(s.ever_cited, false);

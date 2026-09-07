@@ -118,7 +118,22 @@ async function serp(keyword, auth) {
   const res = await fetch('https://api.dataforseo.com/v3/serp/google/organic/live/advanced', {
     method: 'POST',
     headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify([{ keyword, location_code: 2840, language_code: 'en', depth: 10, device: 'desktop' }]),
+    body: JSON.stringify([{
+      keyword,
+      location_code: 2840,
+      language_code: 'en',
+      depth: 10,
+      device: 'desktop',
+      // WITHOUT THIS, HALF THE SAMPLE IS UNREADABLE. Google loads many overviews
+      // asynchronously; a plain request returns the `ai_overview` item with
+      // `markdown`, `items` and `references` all null. Measured on the first live
+      // 90-run pull, that was 41 runs — and not at random: 14 queries failed on
+      // all 3 rounds, concentrated in toothpaste and long-tail phrasings, so
+      // dropping them biases the rate rather than merely thinning it.
+      // Costs an extra $0.002 only when it actually loads one, refunded when the
+      // element is absent or was synchronous anyway.
+      load_async_ai_overview: true,
+    }]),
   });
   if (!res.ok) throw new Error(`DataForSEO ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
