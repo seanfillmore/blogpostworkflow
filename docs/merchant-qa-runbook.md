@@ -1,9 +1,13 @@
 # Merchant Center Q&A feed — runbook
 
-**BOTH TASKS WERE DONE ON 2026-09-07.** Task 1 produced a complete 16-product
-feed (`data/reports/merchant-qa/supplemental-qa-2026-09-07.tsv`, 153 answers, 0
-gated) which is **reviewed and not yet submitted** — submitting it by hand is the
-one thing still outstanding. Task 2 shipped
+**BOTH TASKS WERE DONE ON 2026-09-07.** Task 1 produced a **15-product feed with
+174 answers** (`data/reports/merchant-qa/supplemental-qa-2026-09-07.tsv`), 0
+failed and **1 gated** — `hand-soap-set` was withheld by the health gate on
+`"medicated"` (drug) and `"treatment"` (therapeutic), across FOUR attempts in two
+separate runs. That is persistent rather than stochastic, so it is the source
+copy that needs fixing, not another re-run; the gate is working. The feed is
+**reviewed and not yet submitted** — submitting it by hand is the one thing still
+outstanding. Task 2 shipped
 `scripts/measure-ai-overview-citations.mjs` and its answer:
 **83.3% of commercial questions (20/24), 80.6% by run (54/67)**, with
 `realskincare.com` the most-cited domain in the sample. The finding is written up
@@ -84,9 +88,9 @@ Three properties the answers already have, verified rather than assumed:
 
 ## Task 1 — run `--all` and review — DONE 2026-09-07
 
-**Result: 16 products, 153 answers, 0 gated, 0 failed.** Three defects had to be
-fixed to get there, and all three are now in the code rather than in a reader's
-memory.
+**Result: 15 products in the feed, 174 answers, 0 failed, 1 gated.** Four defects
+had to be fixed to get there, and all four are now in the code rather than in a
+reader's memory.
 
 **1. One product's truncation discarded the whole run, including work already
 paid for.** The first `--all` died on the SECOND of 16 products: a truncated
@@ -95,8 +99,15 @@ were never attempted and the first product's LLM call — already spent — was
 thrown away, because the feed is written after the loop. Failures are now caught
 per product, named in the console and in the review file, and the run continues.
 
-**2. The token ceiling was derived from the wrong batch, and needed a FLOOR as
-well as a rate.** 200/pair came from a run where the model answered 7 of 30
+**2. The token ceiling is bounded on BOTH sides, and both bounds bit.** Too low
+truncates; too high is refused outright — **the SDK rejects a non-streaming
+request whose `max_tokens` implies a call over ten minutes**, and raising the
+rate to 700/pair put a 30-question batch at 21,800 where all 14 large products
+failed at once. Probed live: 16,000 OK, 18,000 OK, 20,000 OK, **21,800
+REFUSED**. So `max_tokens` is `min(20000, max(6000, 800 + n*700))`, and more
+headroom than that needs streaming or a smaller batch, not a bigger number.
+
+**2b. Within that window it needed a FLOOR as well as a rate.** 200/pair came from a run where the model answered 7 of 30
 questions and left 23 empty (~1,900 tokens against a 6,600 ceiling — generous
 looking, and not). Measured properly the per-pair cost **rises as the batch
 shrinks**: 182/pair at n=30, 285/pair at the corpus peak, but **472/pair at
