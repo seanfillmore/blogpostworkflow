@@ -155,7 +155,22 @@ async function draftAnswers(handle, product, questions, pdp) {
   // and the run now logs the output tokens it really used so the next revision
   // is measured rather than re-guessed.
   const TOKENS_PER_PAIR = 400;
-  const maxTokens = Math.min(16000, 800 + questions.length * TOKENS_PER_PAIR);
+  // AND A FLOOR, BECAUSE THE PER-PAIR COST RISES AS THE BATCH SHRINKS. A purely
+  // linear ceiling is structurally wrong at small n and the same `--all` run
+  // proved it in both directions: `coconut-oil-deodorant` measured 182/pair at
+  // n=30 and the peak across the corpus was 285/pair, while
+  // `coconut-oil-lip-balm` measured **472/pair at n=7** and truncated against
+  // its own 3,600. Two causes, both structural rather than bad luck: the fixed
+  // preamble amortises over fewer pairs, and — the larger one — a short list
+  // gets answered in FULL, where a 30-question list is mostly questions this
+  // product cannot honestly answer and the model correctly returns them empty.
+  // Fewer questions therefore means MORE prose per question, not less.
+  //
+  // 6,000 is ~1.8x the worst small batch measured (3,304 at n=7) and governs
+  // everything at n <= 13, where the linear term is too thin. It is free: an
+  // unbilled ceiling can only ever cost a failure it did not prevent.
+  const MIN_MAX_TOKENS = 6000;
+  const maxTokens = Math.min(16000, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
   const generate = async (constraint) => {
     const msg = await client.messages.create({
       model: 'claude-sonnet-5',

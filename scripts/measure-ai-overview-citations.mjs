@@ -193,13 +193,19 @@ async function main() {
           round,
           at: new Date().toISOString(),
           present: aio.present,
+          // `resolved` is what every denominator keys on — see the lib header.
+          // Recording `asynchronous` alone read as unresolved everywhere and
+          // reported `0/0 commercial` over a run that had CITED on the console.
+          resolved: aio.resolved,
           asynchronous: aio.asynchronous,
           domains: aio.domains,
           references: aio.references,
           organic_rank: organicRankOf(items, TARGET_DOMAIN),
           overview_text: aio.text.slice(0, 2000),
         });
-        const mark = !aio.present ? 'no overview' : aio.asynchronous ? 'UNRESOLVED' : cited ? 'CITED' : 'not cited';
+        // Labelled on `resolved`, never on `asynchronous`: with
+        // `load_async_ai_overview` set, most asynchronous overviews DO arrive.
+        const mark = !aio.present ? 'no overview' : !aio.resolved ? 'UNRESOLVED' : cited ? 'CITED' : 'not cited';
         console.log(`   ${mark.padEnd(11)} ${q.query.slice(0, 70)}`);
       } catch (e) {
         // Counted and named. A failed call is not a "not cited" — folding it in
