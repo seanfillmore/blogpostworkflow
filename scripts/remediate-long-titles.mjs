@@ -111,6 +111,22 @@ const OVERRIDES = {
     title: 'Boka Toothpaste Alternative',
     why: 'mechanical trim ended on the dangling adjective "With Cleaner"',
   },
+  // The health gate refused to mint this one from its own title, correctly:
+  // "Best Body Lotion for Eczema" names a disease, and a cosmetic positioned for
+  // a disease is an unapproved drug. It is a DRAFT (published_at: null), so
+  // there is no live exposure — this entry exists so it cannot ACQUIRE one by
+  // being published later. "Dry, Irritated Skin" describes a skin STATE, which
+  // is the standard cosmetic framing CLAUDE.md already allows ("Oily or
+  // Acne-Prone Skin"), and it collides with no existing lotion title.
+  //
+  // **THE TITLE IS THE SMALLEST PART OF THIS PAGE'S PROBLEM.** Its body carries
+  // 75 mentions of eczema above a working buy box, and CLAUDE.md is explicit
+  // that RSC sells no eczema product and may not target one. A compliant title
+  // on a non-compliant body is defence-in-depth, NOT a clearance to publish.
+  'best-body-lotion-for-eczema-natural-ingredients-that-help': {
+    title: 'Best Body Lotion for Dry, Irritated Skin',
+    why: 'draft; its own title names a disease, which the health gate refuses to mint — body still targets eczema and must not publish as-is',
+  },
 };
 
 async function seoTitleTag(resource, id) {
