@@ -129,8 +129,6 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 
 ## When you find a breakthrough ad, dissect it into components to understand exactly why it works, then produce many deliberate iterations of it instead of testing new concepts.
 
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
-
 **Why it works:** An angle that works has a finite audience per execution; once you know which component is doing the work, you can multiply reach by re-delivering the same working logic in new wrappers rather than gambling on fresh concepts. The age, gender and placement breakdowns on the winner are part of that dissection: they turn an unexplained winner into a stated audience or format hypothesis for the next asset.
 
 **Evidence offered:** Walkthrough of four Pet Lab Co. ads built on the same 'dog eats grass' angle, plus the creator's own account going from $1,700/day to $65,000/day after taking iteration 'way more seriously'. No isolated test of iteration vs. new-concept testing.
@@ -164,8 +162,6 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 *Source: Fedot (@FedotOff90) — "Native static ad formats that do not look like ads (X post)" (social post)*
 
 ## Take your best-performing organic short-form videos and run them as paid ads, because creative that worked with no spend usually works with spend.
-
-**Stage:** team — parked until the team phase opens.
 
 **Why it works:** Organic performance is a free pre-test of the hook and the message. A clip that held attention with zero distribution behind it has already cleared the hardest bar, so paid spend is buying reach for creative whose core question — does this stop and hold someone — is answered rather than gambled on.
 

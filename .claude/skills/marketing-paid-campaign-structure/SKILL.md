@@ -25,8 +25,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 
 ## Insert an advertorial or listicle pre-sell page between the ad and the product page so paid traffic can be opened to colder, non-in-market audiences the PDP cannot convert.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** A PDP assumes the reader is already problem- and product-aware; a pre-sell page does the education and belief-building work first, so the ad can target people who were previously unsellable. That is what expands the addressable pool once the in-market buyers are exhausted — the constraint stops being creative quality and becomes how much of the market the landing surface is capable of converting.
 
 **Evidence offered:** Reverse-engineered customer journeys of a set of eight-figure brands — the creator states every one of them ran some form of pre-sell page — plus seven years of building them. No per-variant test data.
@@ -48,8 +46,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 *Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
 
 ## On a small budget run only lead or sales campaign objectives — never awareness, traffic, or engagement — because Meta's optimizer is literal and will deliver exactly the cheap action you asked for.
-
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** The objective tells the algorithm which event to find people likely to perform. Ask for engagement and it finds commenters; ask for traffic and it finds clickers who never buy; ask for purchases and it optimizes toward purchases. With no budget to spare, every campaign must point directly at the conversion event you actually want.
 
@@ -151,8 +147,6 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 
 ## Once a campaign is live, make no major changes for at least 7 days — 10-14 at low conversion volume — because every edit restarts Meta's learning phase.
 
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
-
 **Why it works:** The learning phase is where Meta tests placements, frequency, and which users inside the audience convert; it exits on accumulated conversions. A small budget produces few conversions, so learning is already slow, and each edit resets the counter — meaning a constantly-tinkered account never reaches stable optimized delivery. Analysis and creative prep can continue in the meantime; only the account edits are frozen.
 
 **Evidence offered:** Agency claims the client results shown were achieved within a 30-day window but only after longer ramp periods; otherwise practitioner assertion, no account screenshots or exit-rate data.
@@ -184,8 +178,6 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 *Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
 
 ## Aim to break even on the first purchase from paid ads rather than turn a profit, because the email and SMS backend converts that customer into profit later — win on day 30, not day 1.
-
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** If the backend flows reliably generate repeat purchases, a break-even first order means the customer was acquired for free and all subsequent lifetime value is margin.
 

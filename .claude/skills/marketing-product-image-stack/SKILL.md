@@ -32,7 +32,7 @@ description: Use when designing or rewriting Amazon listing image slots (main an
 *Source: Chris Rawlings — "Using Claude to Make my Amazon Product Images (2026 Tutorial)" (SOaXUiLyx2M)*
 
 ## Validate every image change with a continuously running Amazon Experiments A/B test — version A vs version B, scheduled, read the metric delta — and always keep one new variant in test.
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
+**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
 
 **Why it works:** Continuous data-backed iteration compounds: each proven winner becomes the new control, so a seller running experiments constantly pulls permanently ahead of competitors who set an image once and leave it. The cadence is the mechanism, not any single winning frame.
 

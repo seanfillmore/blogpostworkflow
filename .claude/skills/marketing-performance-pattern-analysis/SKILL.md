@@ -141,8 +141,6 @@ The corollary matters more here than in an agency: the length of the chain deter
 
 ## Step 10 — Read an unusually high conversion rate as a narrow-funnel symptom, not a win: when you widen the top, expect the rate to fall while absolute orders rise, and optimise for total sales rather than the percentage.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** A narrow funnel is a filter. Only prospects with the tenacity to self-qualify ever reach the offer, and very few people have that tenacity, so the ones who arrive convert at a flattering rate on a tiny base. Widening the lure admits more unqualified people *and* more qualified ones; the denominator grows faster than the numerator, so the percentage drops even as absolute sales climb. Reading the falling rate as damage is the failure mode — it leads to re-narrowing the funnel and shrinking the business to protect a vanity ratio. This is the same attribution discipline as the rest of this skill applied to a rate rather than an asset: name which variable moved (audience composition) before concluding anything about quality. It is also the one place where the largest-drop-off rule in Step 4 needs care — a step's rate can fall for compositional reasons while throughput rises.
 
 **Evidence offered:** IT support company client anecdote — more leads, lower sales conversion rate, treated as the expected and correct outcome. Anecdote, no figures.

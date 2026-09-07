@@ -1,6 +1,6 @@
 ---
 name: marketing-competitor-messaging-teardown
-description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, borrowing premises from viral non-advertising content outside the category, briefing an LLM off a surviving ad to produce your own version of its structure (and why swapping your product name into a competitor's headline backfires), pulling competitor emails from public archives or your own inbox, buying a competitor's product to map their whole customer journey including the post-purchase and win-back sequence, reading competitors' own product pages for the proof assets they supply a deciding prospect, re-scanning on a schedule because a winning lead claim decays as the category copies it, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
+description: Use when deciding what angle to lead with on a product page, Amazon listing, Meta primary text, or email campaign and you want evidence instead of a guess — covers reading competitor ad libraries and ranking what you find by how long each ad has been running, mining decades-old direct-response classics for portable structures, borrowing premises from viral non-advertising content outside the category, assembling a named watch list of the accounts serving your avatar by mining who a close-fit competitor follows, building a tagged hook swipe file and a screened top-50 topic list from the category's top-performing organic short-form, skipping any topic where you have no edge, plotting the niche's outliers on a structure-by-visual format matrix, researching a chosen topic inside a corpus of proven videos rather than a web search, briefing an LLM off a surviving ad to produce your own version of its structure (and why swapping your product name into a competitor's headline backfires), pulling competitor emails from public archives or your own inbox, buying a competitor's product to map their whole customer journey including the post-purchase and win-back sequence, reading competitors' own product pages for the proof assets they supply a deciding prospect, re-scanning on a schedule because a winning lead claim decays as the category copies it, and auditing your own assets for missing angles, formats, and awareness levels in the natural deodorant and body care category.
 ---
 
 # Competitor Messaging Teardown
@@ -111,6 +111,132 @@ One hard limit on format. A solo operator with no creator roster cannot stage a 
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #4: Steal Like a Winner" (social post)*
 
+### Before reading organic short-form at all, build a named watch list of the accounts serving your avatar.
+
+Every organic read in the sections that follow — which hooks recur, which topics earn views, which format cells are crowded — needs a fixed set of accounts to read. Whoever the algorithm happens to serve you that day is not a competitive set. So assemble one explicitly and keep it in a named sheet tab.
+
+Start with the obvious: Native, Every Man Jack, Dr. Squatch, Harry's, plus the natural-deodorant, body-care and oral-care creators you already know. The obvious ones run out fast — maybe eight accounts. Three moves extend the list past them:
+
+1. **Keyword-search the category with a size filter** — "natural deodorant," "aluminum free," "pit detox," "baking soda rash" — and keep accounts in a follower band you can actually learn from rather than only the giants.
+2. **Re-sort against one perfect-fit account.** Take the single account whose audience is closest to RSC's buyer and use it as the seed for "similar accounts" / suggested-for-you, which surfaces its nearest neighbours.
+3. **Open that close-fit competitor's *following* list and harvest their colleagues.** An account deep in a niche follows other accounts in that niche. Scroll past the friends, the brands they buy from and the celebrities, and pull the ones who are working the same audience.
+
+Target roughly 20 accounts for RSC. That is about an hour with an Instagram and a TikTok login, no subscription. Maintain it — add an account whenever one shows up in a competitive read, drop the ones that go dormant — because the list's value is that the same names get re-read every quarter.
+
+**Why it works:** An account deep in a niche follows other accounts in that niche, so its following list is a pre-curated directory of competitors that keyword search and recommendation algorithms miss. A named, maintained list is what makes every later competitive read — topics covered, formats used, hooks working — repeatable instead of ad hoc.
+
+**Evidence offered:** Demonstrated on screen — the creator opens a facial-surgery account's following list, scrolls past irrelevant accounts and finds colleagues, then adds them to the list. Assertion on the value.
+
+**Fit here (7/10):** Pure free manual work: one person with an Instagram and TikTok login can build a 20-account natural-deodorant/body-care watch list this way in an hour, no subscription needed. It feeds the competitor teardown work already recorded here, and the "mine who they follow" step is a concrete sourcing mechanism nothing above supplies — the ad-library gap analysis assumes you already know which four brands to read, and says nothing about assembling the competitive set for organic short-form.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+### Close the last pool: build a tagged hook swipe file from the category's top organic short-form.
+
+The pools above are paid competitor creative, decades-old direct response, and viral content from outside the category. The one that is left is organic short-form *inside* it — the accounts on the watch list you just built, whose videos earned reach with no media budget behind them. Run duration is the survivor signal in the ad library; outperformance against a creator's own baseline view count is the equivalent signal here, and it is free to read.
+
+Scaled to a solo operator, this is 20–30 videos, not 400. Work the watch list rather than the feed: pull each account's best-performing videos, and for each one write the **hook verbatim** — the first sentence or two, exactly as spoken or captioned — into one spreadsheet row. Then tag the row:
+
+- **Format** — talking head, POV, demo, list, reaction, text-on-screen only.
+- **Strategy/angle** — curiosity gap, contrarian claim, callout of a named audience, problem statement, result-first, confession.
+- **Visuals** — what is on screen in the first two seconds.
+- **On-screen text** — the words burned into frame, which are often not the spoken words.
+- **Audio** — spoken, trending sound, silence.
+
+The tagging is the whole point; a folder of saved videos is not a swipe file. Once thirty rows are tagged you can sort by any column and the recurring patterns become visible — which openings this audience reliably stops for, and which are just one creator's tic. From there, hook writing stops being invention and becomes recombination: pull a pattern that recurs, fill it with your own topic and RSC facts, and write several variants off the same pattern.
+
+**Run this audit on channels that are not yours.** The instinct is to audit your own topics, hooks and formats against your own view counts, but RSC's posting history is far too thin to read — a handful of posts and a sub-1,000 list is not a sample. Another account's public post performance is a free read on which topics and hook frames the *shared* audience rewards, at a sample size you will not have for a year. Sorting a larger natural-deodorant creator's Reels grid by views is the manual version of exactly the audit you would run on your own channel, and it is the higher-yield one.
+
+Run each candidate through the four-step brief above with the same two constraints. The first one bites hardest here: a category hook with the product name swapped in is the echo trap, and because these videos are *inside* your category your buyers have already seen the originals. Borrow the pattern, write your own line. Run anything that reads as efficacy through the specificity and body-care claim rules — creators make claims a brand cannot.
+
+Route the output at the first line of anything live: Meta primary text on the $30/day giveaway campaign, email subject lines, Amazon bullet 1 and the PDP headline.
+
+**Why it works:** Hooks that already won attention in your category encode the patterns that work on that specific audience. Tagging converts a pile of examples into a queryable corpus, so you can see which patterns recur across creators rather than copying one video — and once the patterns are named, writing a hook is filling a proven pattern with your own topic rather than starting from a blank line. Reading someone else's channel rather than your own is what makes the sample large enough to show a pattern at all.
+
+**Evidence offered:** The creator claims to have built a 400-video tagged database this way and derived hook frameworks from it. The database and method are his paid product, so no worked example and no performance data are shown. The run-it-on-someone-else's-channel extension is stated as a capability of his tool — "you can run this audit on any channel, it doesn't have to just be yours" — with no results shown.
+
+**Fit here (6/10):** Runnable today in the scaled-down form — one person, a phone and a spreadsheet, no editor, roster or spend. Durable: reading organic content and tagging it is not a platform feature. Scored mid rather than high because RSC's binding constraint is retention, not attention volume, and because this extends the ad-library gap analysis at the top of this skill onto organic short-form rather than opening new ground — the tagging discipline, the in-category source pool, and the borrow-someone-else's-sample move are the genuinely additive parts.
+
+*Source: Kallaway — "Give me 15 mins, and I'll make your hooks impossible to skip" (2byPP_9F0-Q)*
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+### Rank their subjects too: build a screened top-50 list of validated topics, not just hooks.
+
+The swipe file above captures *how* category videos open. This captures *what they are about*, which is the decision that comes first — the operator writes his own scripts and needs to know which natural-deodorant and body-care subjects already earn views before he spends a filming session on one.
+
+Run the watch list over roughly the last 180 days. Pull each account's top-performing posts, then **screen out everything off-niche before ranking**: lifestyle vlogs, unrelated personal content, and adjacent products RSC does not sell. A hit that pulls the wrong audience is worse than no hit, because copying it wins you views from people who will never buy a deodorant.
+
+What survives goes in one doc as a working top-50, each row carrying:
+
+- **Topic bucket** — transition period, baking-soda irritation, ingredient explainer, myth-bust, application technique, sweat vs odour, scent, packaging/waste.
+- **Views and outlier score** — raw views, plus views measured against that account's own baseline, so a 50k video from a 20k-follower account outranks a 200k video from a brand with two million.
+- **Link** to the original.
+
+Sorted that way, the topic buckets that systematically outperform in this niche become visible, and they are rarely the ones you would have guessed. Scaled honestly for a solo operator: 8–12 accounts, sort each Reels or TikTok grid by view count, log the rows by hand. No paid analysis tool is required to get the ranking that matters.
+
+**Why it works:** Certain topic categories systematically outperform inside a given niche because of what the average viewer in that niche cares about, so a ranked list of already-validated topics beats guessing which subject matters. Screening the off-niche outliers out *first* stops you from copying a hit that attracts the wrong audience.
+
+**Evidence offered:** Worked run: 400 videos on the watch list over 180 days, top 130 screened, 73 qualified, 57 excluded as lifestyle vlogs or wrong-procedure, leaving a top-50 doc with topic bucket, outlier score and link per video. No performance data on the videos subsequently made from it.
+
+**Fit here (8/10):** The highest-leverage organic read available here: it tells the person who writes and films everything which subjects already earn views in this category before he commits a session. Free and solo-executable in the scaled-down form — the demo's paid analysis tool speeds up ranking, it does not create the signal. Extends the gap analysis at the top of this skill, which reads competitor *ad libraries* rather than a ranked, niche-screened organic outlier set, and it precedes the hook swipe file rather than repeating it: topic first, then opening line.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+### Then walk the list and skip every topic where you have no edge — you only need seven out of fifty.
+
+A validated topic is not automatically yours to make. Go down the top-50 one row at a time and ask a single question: can I say something **different, better, or more interesting** than the video that already won on this topic? If the honest answer is no, strike it and move to the next row. A remix with no edge is a worse copy of an existing video — it neither earns reach nor converts, and it costs a filming session.
+
+Passing is free, which is the point of building a list far longer than the quota. Fifty validated topics against a realistic output of a handful a week means you can strike ten in a row without anxiety and re-run the remainder next week.
+
+For RSC the filter has real discriminating power, because the edge is unusually concrete and unusually narrow. Genuine edge: formulation trade-offs, why a given ingredient is in or out, why natural deodorants stop working after a few weeks, what the transition period actually is and how long it runs, baking-soda irritation, what a formulator sees in a competitor's ingredient deck. No edge: generic beauty trends, scent hauls, routine-of-the-day content, anything where the advantage belongs to a face with a following rather than to the person who makes the product. Strike those on sight even when the outlier score is high.
+
+Everything that survives still goes through the four-step brief and the specificity and body-care claim rules — "I know more about this than the creator did" is exactly the state in which an unsubstantiated efficacy claim gets typed confidently.
+
+**Why it works:** A remix with no edge is a worse copy of an existing video, so it neither ranks nor converts. Because the list is far longer than the weekly quota, passing costs nothing, and the topics that survive the filter are precisely the ones where your own substance is the advantage.
+
+**Evidence offered:** Live demonstration — the creator strikes out ten consecutive topics as off-topic, too transactional or nothing-new before selecting number eleven, then explains he only needs seven a week and can re-run the list next week. No performance data on the selected topics.
+
+**Fit here (7/10):** A cheap, concrete screening rule protecting the scarcest resource in this business — one person's filming and editing time. Runnable today with no volume or budget requirement, and it completes the topic list above, which otherwise hands you fifty subjects with no rule for choosing among them. Held at 7 because it is a decision not to act rather than a revenue mechanism, and nothing about it is measurable at ~54 orders/month.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+### Choose the format off a two-axis matrix of the niche's outliers, not off your own back catalogue.
+
+The gap analysis at the top of this skill audits which formats are missing from *your* rotation. This audits which are crowded and which are empty across *the niche*, which is the read you need when picking how to shoot a topic that survived the edge filter.
+
+A format is structure plus visualisation, so plot the outliers on two axes:
+
+- **Storytelling structure** — case study, Q&A, problem-solution, myth-bust, ranked list, reaction/teardown.
+- **Visual execution** — talking head, podcast clip, marking or drawing on the subject, side-by-side comparison, product demo, bench/process shot.
+
+Tag 30–40 competitor outliers from the watch list by structure and visual, then count the cells. Dense cells are proven — you can run them knowing the audience accepts the shape. Empty cells are either a bad idea or an opening, and the test that separates them is whether *you* have a physical ability to execute it that competitors do not.
+
+That test is the whole value here, because the operator is his own videographer and editor and the brand is formulator-owned. Cells a reseller brand cannot easily fill: cutting a deodorant stick open on camera, side-by-side pit swatches on the same person, a formulation-bench walkthrough, an end-of-day wear test filmed at 6pm. A white-space cell that is hard for others and easy for you is defensible in a way that another talking head is not.
+
+**Why it works:** A format is just structure plus visualisation; the matrix shows where competitors are crowded and where a combination nobody is running sits. A white-space cell that is hard for others but easy for you is defensible, which is why an execution only the practitioner can film is worth more than another talking head.
+
+**Evidence offered:** Worked matrix from analysed competitor videos showing outlier density per cell and an empty "mirror drawing" cell recommended because the practitioner had already said he was good at it. No performance data on videos made in the recommended cell.
+
+**Fit here (7/10):** Buildable by hand today — tag 30–40 competitor outliers by structure and visual and count the cells; no tool required. Distinct from the format-gap claim at the top of this skill, which audits formats missing from your own rotation rather than from the niche, and it uses a selection criterion nothing above records: pick for what you can physically execute better than the competitive set. Held at 7 because it selects a format rather than moving revenue, and organic reach is not this business's binding constraint.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+### Research the chosen topic inside a corpus of proven videos rather than a general web search — and keep it separate from the customer-evidence corpus.
+
+Topic chosen, format chosen; now the substance. The default move is to search the web and read articles, which returns article-grade information — accurate, comprehensive, and silent on what actually held attention on this topic in short-form.
+
+Instead, research inside the proven material. Search the exact topic on TikTok and YouTube, watch the top five performers, and transcribe onto one page: the specific claims each makes, the framings they use to open, the objections they anticipate, and the order they cover things in. Then add your own take in a column beside them — the thing the edge filter said you could say better. That one-pager is the script brief.
+
+One boundary, and it matters more than the technique. **This corpus is competitor-performance-derived: it tells you what held attention, not what is true and not what your customers say.** It must not displace the customer-evidence corpus as the source of claims — review mining and customer language remain the input for what RSC asserts about its own product. Creators say things a brand legally cannot, and a claim that earned two million views is not thereby substantiated. Run every line that reads as efficacy through the specificity and body-care claim rules before it reaches a script, a listing or a PDP.
+
+**Why it works:** General web research returns article-grade information that does not tell you what already held attention on this topic; a corpus of proven videos surfaces the claims, framings and objections that demonstrably worked in short-form, which is the raw material a script needs.
+
+**Evidence offered:** Demonstrated with the tool searching prior deep-analysed videos plus a global video database into a research report and substance sheet. No performance data on the resulting scripts.
+
+**Fit here (6/10):** Sound in principle and the scaled-down version is runnable today with no subscription — search the topic, watch the top five performers, transcribe their claims into a doc next to your own take. Scores mid because it partly restates the top-50 scan above at a per-video level, and the tool-native version depends on a paid analysis database this business would not buy at ~$2,700/mo revenue. The separation rule is load-bearing: this is a *performance* corpus and must not become the source of product claims in place of the customer-evidence work.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
 ### Extend the same gap analysis to email, and pull the reference sends from a public archive instead of waiting on your inbox.
 
 Same practice, different channel. Take the brands you already track in the ad library — Native, Every Man Jack, Dr. Squatch, Harry's — and get their emails in front of you three ways:
@@ -179,6 +305,7 @@ Everything above reads as a one-time exercise. It is not. Treat a working value 
 The operational version is one hour, quarterly, on the calendar:
 
 - Re-scan the Meta ad library for Native, Every Man Jack, Dr. Squatch and Harry's, plus the top organic Amazon results for "natural deodorant" and "aluminum free deodorant." Read only the leads: headline, first bullet, main image claim.
+- Re-run the organic watch list at the same time: refresh the account list (drop the dormant, add anything new that surfaced), and re-sort the top-50 topic doc against the last 180 days. Topic buckets go stale the same way lead claims do.
 - Compare against the lead claim RSC is currently running on the PDP and in Amazon bullet 1.
 - Write the decision down in one line: does the current lead still differentiate, or has it become table stakes? If everyone now says it, demote it to a supporting bullet — it still needs to be *present*, because it is now expected — and promote a different claim from the gap list into the lead position.
 
