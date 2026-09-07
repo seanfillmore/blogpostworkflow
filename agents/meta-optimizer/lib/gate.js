@@ -33,6 +33,7 @@
 // meta-optimizer's: the mapping from THIS agent's rewriter shape
 // ({title, meta_description}) onto the gate's named fields.
 import { gateGeneratedCopy } from '../../../lib/seo-copy-gate-loop.js';
+import { EDITORIAL_SURFACE } from '../../../lib/seo-copy-health-gate.js';
 
 /**
  * @param {(constraint: string) => Promise<{title?:string, meta_description?:string}|null>} generate
@@ -56,5 +57,10 @@ export async function gateProposedCopy(generate) {
     // it — so `renderTitle` in lib/seo-copy-length.js reproduces that Liquid
     // rather than counting the authored string.
     lengths: { title: 'title', meta: 'description' },
+    // Blog SERP copy is EDITORIAL: these titles and metas describe an article,
+    // so they may name a skin condition the article is about. Cure-talk still
+    // blocks. Product and collection writers keep the strict default — see
+    // EDITORIAL_SURFACE in lib/seo-copy-health-gate.js.
+    surface: EDITORIAL_SURFACE,
   });
 }
