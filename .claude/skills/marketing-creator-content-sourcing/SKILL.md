@@ -6,7 +6,7 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 # Creator Content Sourcing
 
 ## Activate creator content through Meta partnership ads because the delivery starts with the creator's own seed audience and expands from there, reaching net-new people your pixel keeps missing.
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
+**Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
 
 **Why it works:** A partnership ad is served first to the creator's engaged followers and then to lookalikes of them, so it escapes the audience rut an account develops after years of optimizing against its own pixel — and Meta's persona-based Andromeda targeting rewards content that maps to new personas.
 
@@ -67,8 +67,6 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 *Source: Stefan Georgi — "Secret of the DTC Universe #3: If you see something, say something" (social post)*
 
 ## Write a UGC video script so that every single sentence performs one deliberate belief-shifting job in sequence — personal credibility, specific pain, a second use case, relatability, regret/hindsight, product reveal, simplicity, mechanism, objection handling, authority citation, competitive differentiation, mechanism justification, desired outcome, scarcity transition, demand signal, availability, FOMO, CTA.
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** Each line moves the viewer one small step, so the buy decision arrives as the last in a chain of increasingly obvious realizations rather than as a pitch the viewer has to accept in one jump; nothing in the script is decorative, so there is no dead air for a scroll-away.
 
 **Evidence offered:** One annotated competitor UGC ad the creator says he studied; assertion only beyond that single teardown.
@@ -89,8 +87,6 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 *Source: Nick Theriot (@nicktheriot_) — "UGC beat structure, PDP layout, and 6-step ad copy (X posts)" (social post)*
 
 ## Let the ad's job dictate the format, and when the job is earning attention with a testimonial, that means a phone-shot vertical UGC video under 25 seconds with no colour grade.
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** Format is a delivery decision downstream of the job, not a starting preference — you name what the ad has to accomplish first, then pick the cheapest form that accomplishes it. When the job is earning attention from a cold audience, a raw, ungraded, vertically-shot phone video reads as a real person's account rather than as advertising, so polish actively works against the job.
 
 **Evidence offered:** Demonstrated: the builder committed to video only after the job was set, named UGC testimonial as the form, stated explicitly what a static could have done instead, and specified three executions all under 25 seconds, vertical, phone-shot. Single worked example, no performance comparison against a graded or longer cut.
@@ -188,7 +184,7 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
 ## Compensate creators on backend performance rather than upfront fees when you are starting out or want volume without strict brand guidelines — the model performance-pay UGC platforms (Tribe, Influy) are built on.
-**Stage:** scale — parked until the scale phase opens.
+**Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
 
 **Why it works:** Shifting creator compensation to the back end removes the upfront cash barrier, so a low-budget brand can accumulate content volume it could not otherwise afford; the creator carries the risk in exchange for upside.
 

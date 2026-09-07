@@ -363,8 +363,6 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 ## Get adjacent non-competing businesses to contribute their products and services as bonuses in exchange for exposure to your customers, then negotiate group discounts and referral commissions so the bonuses become revenue streams.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** Your customer list is the currency: partners get free access to pre-qualified buyers, you get high-value bonuses at zero cost, and referral commissions can turn the bonus stack into profit on top of the core sale.
 
 **Evidence offered:** Detailed pain-clinic worked example (massage, chiro, food discounts, gym, pharmacy) totalling more than the $400 offer price, plus his Prestige Labs sponsored-athlete discount-and-commission arrangement. Anecdotal.
@@ -386,8 +384,6 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 *Source: undefined — "undefined" (100m-offers)*
 
 ## Run a giveaway as a front-end attraction offer, then call every non-winner and give them a 'second place' consolation discount.
-
-**Stage:** team — parked until the team phase opens.
 
 **Why it works:** The giveaway lowers the cost of getting contact information because entering is free, and the consolation framing converts the losing majority by giving them a reason to feel they won something.
 

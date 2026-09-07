@@ -1,6 +1,6 @@
 ---
 name: marketing-advertising-cadence-planning
-description: Planning and protecting the daily marketing work: one-page plans, outcome quotas and a protected production block.
+description: Planning and protecting the daily marketing work: one-page plans, outcome quotas, a protected production block, and nested strategy/production/review cadences.
 ---
 
 # Advertising Cadence Planning
@@ -34,3 +34,13 @@ description: Planning and protecting the daily marketing work: one-page plans, o
 **Fit here (5/10):** The 4am / 12-hour-day framing does not translate, but the scaled-down version does and matches this business's shape: a solo operator who packs orders, answers support and runs Amazon will otherwise never ship the ad creative or the retention flow. Adopt the translated version — one protected block per day, ops after — and drop the wake-time prescription. Scored 5 because it is time management, not a mechanism that moves AOV, repeat rate or CAC.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 16 of 16))*
+
+## Run three nested cadences rather than one: refresh the full strategy every 30 days, run the topic-and-script workflow once per asset, and review performance every 7 days.
+
+**Why it works:** Separating the three loops stops strategy from being re-litigated on every post and stops performance review from being skipped; each decision type is made at the frequency at which new information actually arrives. It also gives the daily commitment above a home: the one-page plan is the 30-day artefact, the protected block is where the per-asset workflow runs, and the weekly review is the only place the plan is allowed to change.
+
+**Evidence offered:** Assertion — 'that is kind of the sequence that I recommend running'.
+
+**Fit here (6/10):** A scheduling discipline one person can adopt immediately, and it maps cleanly onto how a solo operator already blocks time. It extends the other cadence claims here — the one-page plan, the outcome quota and the protected production block — with a three-tier review frequency they do not specify: rewrite the one page monthly, ship assets inside the daily block, and read the numbers once a week instead of every morning (which at $30/day is mostly noise). Durable-principle class; scored 6 because it is organising rather than revenue-producing on its own.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
