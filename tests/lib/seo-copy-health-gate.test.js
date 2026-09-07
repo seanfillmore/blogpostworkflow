@@ -105,11 +105,15 @@ describe('seo-copy-health-gate — what must NOT be blocked', () => {
 });
 
 describe('seo-copy-health-gate — category tiers', () => {
-  test('the five blocking categories are the unapproved-drug ones', () => {
+  test('the unconditional blocking categories are the unapproved-drug ones', () => {
+    // `disease` is deliberately NOT here since 2026-09-07: naming a condition is
+    // advisory, claiming to fix it is blocking, and that is decided per string
+    // by CURE_CONTEXT rather than by category membership.
     assert.deepEqual(
       [...BLOCKING_CATEGORIES].sort(),
-      ['disease', 'drug', 'substantiation', 'systemic-absorption', 'therapeutic'].sort(),
+      ['drug', 'substantiation', 'systemic-absorption', 'therapeutic'].sort(),
     );
+    assert.ok(!BLOCKING_CATEGORIES.has('disease'));
   });
 
   test('toxicity is advisory, never blocking', () => {
@@ -117,10 +121,19 @@ describe('seo-copy-health-gate — category tiers', () => {
     assert.ok(!BLOCKING_CATEGORIES.has('toxicity'));
   });
 
-  test('disease names block', () => {
-    const r = checkSeoCopy({ meta: 'It also helps several skin disorders, including eczema and psoriasis.' });
+  test('a disease name WITHOUT a cure claim is advisory, not blocking', () => {
+    // Changed deliberately on 2026-09-07. "helps with" is the operator's own
+    // framing ("our products can help") and is not a claim to fix anything.
+    const r = checkSeoCopy({ meta: 'It also helps several skin disorders, including eczema and psoriasis.' }, { surface: 'editorial' });
+    assert.equal(r.ok, true);
+    assert.ok(r.advisory.some((a) => a.match.toLowerCase() === 'eczema'),
+      'the condition is still REPORTED, just not blocked');
+  });
+
+  test('a disease name WITH a cure claim blocks', () => {
+    const r = checkSeoCopy({ meta: 'Clears up eczema and psoriasis in days.' });
     assert.equal(r.ok, false);
-    assert.equal(r.blocking[0].category, 'disease');
+    assert.ok(r.blocking.some((b) => b.category === 'disease'));
   });
 
   test('drug language blocks', () => {
@@ -256,4 +269,85 @@ describe('seo-copy-health-gate — product-category accuracy', () => {
     assert.match(SEO_COPY_COMPLIANCE_RULE, /antiperspirant/i);
     assert.match(SEO_COPY_COMPLIANCE_RULE, /deodorant/i);
   });
+});
+
+// ── NAMING a condition vs CLAIMING TO CURE IT (operator rule, 2026-09-07) ──────
+//
+// "We shouldn't outright reject eczema as a topic, our products can help. We
+// just need to limit the conversation to prevent it from talking about curing."
+//
+// Measured before the change: of 447 live sentences naming a condition, 406
+// (91%) were editorial or positional and only 35 (8%) carried a therapeutic
+// verb — and most of THOSE were hedges ("It's not a cure", "Not a medical
+// treatment"). Blocking the noun forbade the 91% to catch a 9% the therapeutic
+// category already blocks.
+
+const EDITORIAL = { surface: 'editorial' };
+
+test('naming a condition is ADVISORY on an EDITORIAL surface — the topic is allowed', () => {
+  for (const t of [
+    'Best Body Lotion for Eczema',
+    'Can I use unscented products if I have eczema?',
+    'Gentle Soap for Psoriasis-Prone Skin',
+    'What Dermatitis Does to Your Skin Barrier',
+  ]) {
+    assert.equal(checkSeoCopy({ title: t }, EDITORIAL).ok, true, `${t} should pass`);
+  }
+});
+
+test('CLAIMING TO CURE it still BLOCKS — that is the whole line', () => {
+  for (const t of [
+    'Body Lotion That Heals Eczema',
+    'Eczema Treatment Lotion',
+    'Clears Up Psoriasis Fast',
+    'Prevents Dermatitis Flare-Ups',
+  ]) {
+    assert.equal(checkSeoCopy({ title: t }, EDITORIAL).ok, false, `${t} should block even editorially`);
+  }
+});
+
+test('"remedy" beside a named condition is re-promoted to BLOCKING', () => {
+  // The one leak that opened when `disease` became advisory: "remedy" is
+  // demoted to advisory, so "eczema remedy" would have been fully advisory and
+  // shipped — exactly the cure-talk the rule forbids.
+  assert.equal(checkSeoCopy({ title: 'Natural Eczema Remedy' }, EDITORIAL).ok, false);
+  // …but "remedy" on its own keeps its documented demotion.
+  assert.equal(checkSeoCopy({ title: 'A remedy shoppers often ask about' }, EDITORIAL).ok, true);
+});
+
+test('the 2026-08-22 incident still blocks — this change must not reopen it', () => {
+  assert.equal(checkSeoCopy({
+    title: 'Best Soap for Tattoos: Clean Ingredients That Heal',
+    meta: 'A gentle bar that supports real healing on new ink.',
+  }).ok, false);
+});
+
+test('the compliance prompt tells the writer the RULE, not the old blanket ban', () => {
+  // The prompt used to say "never name a skin disease", which contradicted the
+  // tier it now ships with — a gate that instructs one thing and enforces
+  // another teaches the retry to delete the wrong half.
+  assert.ok(!/never name a skin disease/i.test(SEO_COPY_COMPLIANCE_RULE));
+  assert.match(SEO_COPY_COMPLIANCE_RULE, /You MAY name a skin condition/);
+  assert.match(SEO_COPY_COMPLIANCE_RULE, /claiming to cure it is/i);
+});
+
+
+test('COMMERCIAL is the default, and it still blocks a named condition', () => {
+  // The three prior remediations this tier had to keep valid. All are the
+  // PRODUCT speaking, none contains a cure verb, and all must still block.
+  for (const t of [
+    'For dry patches, eczema, and overnight repair.',
+    'It also helps several skin disorders, including eczema and psoriasis.',
+  ]) {
+    assert.equal(checkSeoCopy({ meta: t }).ok, false, `${t} must block on a commercial surface`);
+    // …and the SAME string is allowed when an article is discussing it.
+    assert.equal(checkSeoCopy({ meta: t }, { surface: 'editorial' }).ok, true, `${t} should be editorial-safe`);
+  }
+});
+
+test('an undeclared surface gets the STRICT answer', () => {
+  // Fail-closed: a caller that forgets to declare itself must not silently get
+  // the permissive tier on a page with a buy button.
+  assert.equal(checkSeoCopy({ title: 'Best Body Lotion for Eczema' }).ok, false);
+  assert.equal(checkSeoCopy({ title: 'Best Body Lotion for Eczema' }, { surface: 'editorial' }).ok, true);
 });
