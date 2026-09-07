@@ -32,18 +32,38 @@
  * prompt to regenerate from — the same reason `lib/queue-apply.js` refuses
  * rather than dismisses.
  *
- * **Articles carrying no `title_tag` are SKIPPED, not created.** 178 of 215
- * articles have none, so their rendered title comes from `article.title` — the
- * headline a reader sees on the page and in the blog listing, not just a SERP
- * string. Minting a `title_tag` for them is a different, larger decision
- * (it decouples two things that are currently one) and is left to a human.
- * That is why this sweep is smaller than the 92% figure implies, and saying so
- * is the point.
+ * ── --mint: THE 177 PAGES WITH NO `title_tag` AT ALL ──────────────────────────
+ *
+ * 176 articles and 1 page render their `<title>` straight from the resource's
+ * own title, because no `title_tag` metafield exists. They are 85% of the leak
+ * (rendered median 68, max 86) and the trim path cannot touch them — there is
+ * nothing to trim.
+ *
+ * `--mint` CREATES the metafield, set to the shortened form of the resource's
+ * own title. **This deliberately DECOUPLES two things that are currently one:**
+ * afterwards the SERP shows the shortened `title_tag` while the on-page `<h1>`
+ * and the blog listing keep the full `article.title`, untouched. That is the
+ * entire point — the headline a reader sees is not the string Google truncates,
+ * and they should not have to be the same. It is also why minting is opt-in
+ * rather than part of the default sweep.
+ *
+ * Reversible: the run record stores `before: null` for every minted field, so
+ * deleting those metafields restores the previous behaviour exactly.
+ *
+ * ── OVERRIDES: hand-authored titles for cases a shortener must not touch ──────
+ *
+ * A fixed, reviewed table, in the same shape as the health-claim remediation
+ * plans. It exists for input a trim cannot repair — a `title_tag` carrying raw
+ * HTML, or one whose mechanical trim ends on a dangling adjective. Each entry
+ * carries the operator-approved replacement and why. They are gated exactly
+ * like every other value.
  *
  * Usage:
- *   node scripts/remediate-long-titles.mjs                 # dry run, all surfaces
+ *   node scripts/remediate-long-titles.mjs                 # dry run, trims only
  *   node scripts/remediate-long-titles.mjs --list          # just show what is over
- *   node scripts/remediate-long-titles.mjs --apply         # write
+ *   node scripts/remediate-long-titles.mjs --apply         # write the trims
+ *   node scripts/remediate-long-titles.mjs --mint          # dry run incl. minting
+ *   node scripts/remediate-long-titles.mjs --mint --apply
  *   node scripts/remediate-long-titles.mjs --limit 10 --apply
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
@@ -67,12 +87,31 @@ const MAX = LENGTH_LIMITS.title.max;
 const argv = process.argv.slice(2);
 const APPLY = argv.includes('--apply');
 const LIST_ONLY = argv.includes('--list');
+const MINT = argv.includes('--mint');
 const LIMIT = (() => {
   const i = argv.indexOf('--limit');
   return i === -1 ? Infinity : Number(argv[i + 1]) || Infinity;
 })();
 
 const len = (s) => [...String(s ?? '')].length;
+
+/**
+ * Hand-authored replacements, approved by the operator on 2026-09-07. A trim
+ * cannot produce either of these, which is exactly why they are here rather
+ * than in the shortener: the first input is corrupt (raw HTML in the title),
+ * the second trims to a dangling adjective ("…With Cleaner") that no general
+ * rule can detect. Keyed by handle; applied on any surface, gated like the rest.
+ */
+const OVERRIDES = {
+  'can-you-use-coconut-oil-as-toothpaste': {
+    title: 'Coconut Oil As A Toothpaste',
+    why: 'live title_tag held a raw HTML anchor truncated mid-URL; a trim only yields shorter garbage',
+  },
+  'best-boka-alternatives-2025': {
+    title: 'Boka Toothpaste Alternative',
+    why: 'mechanical trim ended on the dangling adjective "With Cleaner"',
+  },
+};
 
 async function seoTitleTag(resource, id) {
   try {
@@ -130,35 +169,75 @@ async function main() {
   // Trimming that produces shorter garbage, so it is refused and named. Only a
   // rewrite fixes it.
   const CORRUPT = /[<>]|https?:\/\//;
-  const corrupt = writable.filter((c) => CORRUPT.test(c.titleTag));
-  const trimmable = writable.filter((c) => !CORRUPT.test(c.titleTag));
+  const hasOverride = (c) => Object.hasOwn(OVERRIDES, c.handle);
+  const corrupt = writable.filter((c) => CORRUPT.test(c.titleTag) && !hasOverride(c));
+  const trimmable = writable.filter((c) => !CORRUPT.test(c.titleTag) || hasOverride(c));
+
+  // `--mint` brings in the pages with no title_tag at all, shortened from the
+  // resource's own title. Without it they are only reported.
+  const mintable = MINT ? skipped : [];
+
+  // AN OVERRIDE IS A WORDING DECISION, NOT A LENGTH FIX, so it is drawn from
+  // EVERY surface rather than from the over-limit set. `best-boka-alternatives-2025`
+  // is why: an earlier sweep had already trimmed it to a passing-but-awkward 56
+  // characters, so it was no longer "over" and the operator's replacement could
+  // never fire. Scoping overrides to the defect they happen to accompany is how
+  // a hand-authored decision silently stops being applied.
+  const considered = new Set([...trimmable, ...mintable].map((c) => c.handle));
+  const overrideOnly = all.filter((c) => hasOverride(c) && !considered.has(c.handle));
 
   const plan = [];
-  for (const c of trimmable) {
-    const proposed = shortenToRenderedLimit(c.titleTag);
-    if (!proposed || proposed === c.titleTag) continue;
+  const healthBlocked = [];
+  for (const c of [...trimmable, ...mintable, ...overrideOnly]) {
+    const source = c.titleTag ?? c.fallback ?? '';
+    const override = OVERRIDES[c.handle];
+    const proposed = override ? override.title : shortenToRenderedLimit(source);
+    if (!proposed || proposed === c.titleTag) continue; // already correct
 
+    // A LENGTH failure is a bug in the shortener — abort rather than write a
+    // partial sweep on top of broken arithmetic.
     const lenCheck = checkCopyLength({ title: proposed }, { title: 'title' });
-    const health = checkSeoCopy({ title: proposed });
     if (!lenCheck.ok) {
       console.error(`  ABORT — proposed title still over the limit for ${c.handle}: "${proposed}"`);
       process.exitCode = 1; return;
     }
+    // A HEALTH failure is a property of copy that is ALREADY LIVE, not a defect
+    // in this run: we are deriving from a title somebody else wrote. Refuse that
+    // one page and name it — aborting 176 good mints over one pre-existing claim
+    // would be the gate deciding the work is worthless, which is the mistake
+    // that destroyed three paid-for briefs on 2026-08-19.
+    const health = checkSeoCopy({ title: proposed });
     if (!health.ok) {
-      console.error(`  ABORT — proposed title trips the health gate for ${c.handle}: ${JSON.stringify(health.blocking)}`);
-      process.exitCode = 1; return;
+      healthBlocked.push({ kind: c.kind, handle: c.handle, proposed, blocking: health.blocking });
+      continue;
     }
-    plan.push({ ...c, proposed, proposedRendered: renderTitle(proposed) });
+    plan.push({
+      ...c, proposed, proposedRendered: renderTitle(proposed),
+      action: c.titleTag == null ? 'mint' : 'trim',
+      override: override ? override.why : undefined,
+    });
   }
 
-  console.log(`  REWRITABLE (have a title_tag) : ${plan.length}`);
-  console.log(`  CORRUPT (markup/URL in title_tag — refused, needs a rewrite) : ${corrupt.length}`);
-  console.log(`  SKIPPED (no title_tag — would have to CREATE one) : ${skipped.length}\n`);
+  const trims = plan.filter((p) => p.action === 'trim');
+  const mints = plan.filter((p) => p.action === 'mint');
+  console.log(`  TRIM  (shorten an existing title_tag) : ${trims.length}`);
+  console.log(`  MINT  (create a title_tag)            : ${mints.length}${MINT ? '' : `   [--mint to enable; ${skipped.length} candidates]`}`);
+  console.log(`  OVERRIDE (hand-authored)              : ${plan.filter((p) => p.override).length}`);
+  console.log(`  CORRUPT (refused — needs a rewrite)   : ${corrupt.length}`);
+  console.log(`  HEALTH-BLOCKED (pre-existing claim)   : ${healthBlocked.length}\n`);
 
   for (const c of plan.slice(0, LIST_ONLY ? plan.length : 40)) {
     console.log(`  ${String(c.renderedLen).padStart(3)} → ${String(len(c.proposedRendered)).padStart(3)}  [${c.kind}] ${c.handle}`);
     console.log(`        was: ${c.rendered}`);
     console.log(`        now: ${c.proposedRendered}`);
+  }
+
+  if (healthBlocked.length) {
+    console.log(`\n  REFUSED — the existing title already carries a blocking health claim, so`);
+    console.log(`  this run will not copy it into a new field. Rewrite the page instead:`);
+    for (const h of healthBlocked) {
+      console.log(`    [${h.kind}] ${h.handle}\n        "${h.proposed}"  (${h.blocking.map((b) => b.match).join(', ')})`);
+    }
   }
 
   if (corrupt.length) {
@@ -186,10 +265,15 @@ async function main() {
     scanned: all.length,
     over: over.length,
     rewritable: plan.length,
+    mint_enabled: MINT,
     refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
+    refused_health: healthBlocked,
     skipped_no_title_tag: skipped.map((c) => ({ kind: c.kind, handle: c.handle, rendered: c.rendered, renderedLen: c.renderedLen })),
     changes: plan.map((c) => ({
       kind: c.kind, handle: c.handle, resource: c.resource, id: c.id,
+      action: c.action, override_reason: c.override,
+      // `before: null` marks a MINT — deleting that metafield restores the
+      // previous behaviour exactly.
       before: c.titleTag, after: c.proposed,
       before_rendered: c.rendered, after_rendered: c.proposedRendered,
       before_len: c.renderedLen, after_len: len(c.proposedRendered),
@@ -200,14 +284,14 @@ async function main() {
   console.log(`\n  Run record (includes every BEFORE value, so this is the backup): data/reports/long-title-remediation/${stamp}.json`);
 
   if (LIST_ONLY) { console.log('\n  --list: nothing written.\n'); return; }
-  if (!APPLY) { console.log(`\n  DRY RUN — re-run with --apply to write ${plan.length} title(s).\n`); return; }
+  if (!APPLY) { console.log(`\n  DRY RUN — re-run with --apply to write ${plan.length} title(s) (${trims.length} trim, ${mints.length} mint).\n`); return; }
 
   let written = 0;
   for (const c of plan.slice(0, LIMIT)) {
     try {
       await upsertMetafield(c.resource, c.id, 'global', 'title_tag', c.proposed);
       written++;
-      console.log(`  ✓ ${c.handle}`);
+      console.log(`  ✓ ${c.action === 'mint' ? 'minted ' : 'trimmed'} ${c.handle}`);
     } catch (e) {
       console.error(`  ✗ ${c.handle}: ${e.message}`);
     }

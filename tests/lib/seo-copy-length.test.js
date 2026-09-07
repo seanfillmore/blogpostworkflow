@@ -394,3 +394,42 @@ test('every rule composes without ever exceeding the limit or emptying the title
     assert.equal(shortenToRenderedLimit(out), out, `"${out}" is not idempotent`);
   }
 });
+
+test('the hand-authored title overrides fit and are compliant', async () => {
+  // Pinned here rather than trusted at run time: these two are the cases a
+  // shortener must not touch (raw HTML in the tag; a trim ending on a dangling
+  // adjective), so they are hand-authored — and a hand-authored value still has
+  // to clear the same gates as a generated one.
+  const { checkSeoCopy } = await import('../../lib/seo-copy-health-gate.js');
+  for (const t of ['Coconut Oil As A Toothpaste', 'Boka Toothpaste Alternative']) {
+    assert.equal(checkCopyLength({ title: t }, { title: 'title' }).ok, true, `${t} is too long rendered`);
+    assert.equal(checkSeoCopy({ title: t }).ok, true, `${t} trips the health gate`);
+    // And they must be stable under the shortener — a later sweep must not
+    // re-trim an operator's chosen wording.
+    assert.equal(shortenToRenderedLimit(t), t, `${t} is not stable under the shortener`);
+  }
+});
+
+test('a title-cased pronoun or article at the end is dangling in ANY case', () => {
+  // These are real minted-title outputs. "Your", "You" and "How" are capitalised
+  // by title case, so the lower-case-only list cannot see them — hence the
+  // second, case-insensitive list.
+  assert.equal(
+    shortenToRenderedLimit('The Ultimate Guide To Moisturizing Your Skin Every Day – Real Skin Care'),
+    'The Ultimate Guide To Moisturizing',
+  );
+  assert.equal(
+    shortenToRenderedLimit('Natural Soap Bar: The Clean Skin Guide You Have Been Missing – Real Skin Care'),
+    'Natural Soap Bar: The Clean Skin Guide',
+  );
+});
+
+test('the always-dangling list must NOT swallow a real particle', () => {
+  // The counter-check that bounds the list above. "for" is deliberately absent
+  // from it, so "What to Look For" survives; adding "for" would silently start
+  // producing "…What to Look".
+  assert.equal(
+    shortenToRenderedLimit('Best Organic Toothpaste: What to Look For & Why It | | Real – Real Skin Care'),
+    'Best Organic Toothpaste: What to Look For',
+  );
+});
