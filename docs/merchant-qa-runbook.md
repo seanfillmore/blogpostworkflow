@@ -1,7 +1,14 @@
-# Merchant Center Q&A feed — runbook and two open tasks
+# Merchant Center Q&A feed — runbook
 
-Handoff for a fresh session. Everything below is built, deployed and verified on
-production as of **2026-09-06**; the two tasks at the end are what is left.
+**BOTH TASKS WERE DONE ON 2026-09-07.** Task 1 produced a complete 16-product
+feed (`data/reports/merchant-qa/supplemental-qa-2026-09-07.tsv`, 153 answers, 0
+gated) which is **reviewed and not yet submitted** — submitting it by hand is the
+one thing still outstanding. Task 2 shipped
+`scripts/measure-ai-overview-citations.mjs` and its answer:
+**83.3% of commercial questions (20/24), 80.6% by run (54/67)**, with
+`realskincare.com` the most-cited domain in the sample. The finding is written up
+in `marketing-ai-search-visibility`; both task sections below are kept as the
+record of what was run and what it cost.
 
 ## What exists
 
@@ -75,10 +82,56 @@ Three properties the answers already have, verified rather than assumed:
   toned down. The prompt permits ingredient-level mechanism and forbids the
   product being the subject of kills/treats/heals/prevents.
 
-## Task 1 — run `--all` and review
+## Task 1 — run `--all` and review — DONE 2026-09-07
 
-15 products remain. One LLM call each; the questions are already measured, so
-there is no SERP spend here.
+**Result: 16 products, 153 answers, 0 gated, 0 failed.** Three defects had to be
+fixed to get there, and all three are now in the code rather than in a reader's
+memory.
+
+**1. One product's truncation discarded the whole run, including work already
+paid for.** The first `--all` died on the SECOND of 16 products: a truncated
+batch threw out of the per-product loop to `main().catch()`, so the 14 behind it
+were never attempted and the first product's LLM call — already spent — was
+thrown away, because the feed is written after the loop. Failures are now caught
+per product, named in the console and in the review file, and the run continues.
+
+**2. The token ceiling was derived from the wrong batch, and needed a FLOOR as
+well as a rate.** 200/pair came from a run where the model answered 7 of 30
+questions and left 23 empty (~1,900 tokens against a 6,600 ceiling — generous
+looking, and not). Measured properly the per-pair cost **rises as the batch
+shrinks**: 182/pair at n=30, 285/pair at the corpus peak, but **472/pair at
+n=7**, because a short list gets answered in full while a 30-question list is
+mostly questions the product cannot honestly answer and correctly comes back
+empty. Now `max(6000, 800 + n*400)`, and every run prints the tokens it actually
+used so the constant stays measured. `max_tokens` is a ceiling, not a
+reservation — an unused token is not billed, so a tight one buys nothing but this
+failure.
+
+**3. FOUR products shipped a Q&A pair whose "question" was AI-assistant
+plumbing.** The feed carried, verbatim and customer-facing:
+`context: location: united states (not for language). do not include location
+references in your response. question: i'm sensitive to strong fragrance—…`.
+Measured over the same 28 snapshots, **20 GSC queries carry that shape**,
+identical but for the country name. `stripAssistantScaffolding` in
+`lib/merchant-qa.js` strips it and keeps the real question — it is measured
+demand, and cleaning also lets it dedupe against its naturally-typed twins.
+Anything not matching the known shape passes through byte-identical.
+
+**Still open, and it is a judgement rather than a bug: 2 of 153 pairs answer a
+non-English question in English.** One Vietnamese, one Indonesian, both routed
+and answered competently — but a Vietnamese question with an English answer is a
+poor pair to publish. Nobody has decided whether the feed should drop non-English
+questions, and a language filter has its own blast radius, so they are named here
+rather than silently filtered.
+
+**Thin products are working as designed, not failing.** `hand-soap-set` and
+`head-to-toe` produced 2 answers each, `coconut-oil-lip-balm`,
+`99-coconut-reset-digital` and `organic-foaming-hand-soap` 4 each. The prompt
+tells the model to return an empty answer rather than invent a spec, so a thin
+PDP produces few answers — the fix is the PDP.
+
+**To re-run** (one LLM call per product; the questions are already measured, so
+there is no SERP spend):
 
 ```bash
 ssh root@137.184.119.230 'cd ~/seo-claude && node scripts/build-merchant-qa-feed.mjs --all --apply'
@@ -114,7 +167,37 @@ product-relevant question ran the same structure, so the prompt targets it:
 availability, or it overwrites the primary feed's live values. Merchant Center →
 Data sources → add a supplemental source.
 
-## Task 2 — measure the AI Overview citation rate
+## Task 2 — measure the AI Overview citation rate — DONE 2026-09-07
+
+**`npm run measure-ai-overview-citations` — dry by default, `--apply` spends
+~$0.25 (30 questions × 3 runs).** Pure logic in `lib/ai-overview-citations.js`
+(12 tests), network and I/O in `scripts/measure-ai-overview-citations.mjs`,
+report to `data/reports/ai-overview-citations/<date>.{json,md}` (gitignored).
+
+**The answer: 83.3% by query (20/24 commercial), 80.6% by run (54/67).**
+`realskincare.com` is the most-cited domain in the whole sample — 32 overviews
+against `reddit.com`'s 26. The withheld classes score **0/15**, which
+independently validates `isUnsuitableQuestion`: competitor-fact overviews cite
+the competitor and DIY overviews cite recipe blogs, so the questions this feed
+refuses are the ones we are never cited on anyway.
+
+**It does not contradict the ~2%, and the reason must be stated whenever either
+number is quoted.** They are different RUNGS: the tracker runs branded and
+category *shortlisting* prompts against standalone LLM APIs (the **recommended**
+rung), this runs informational questions we already rank for against Google AI
+Overviews (the **cited** rung). Full write-up, including the two other findings
+— citation is not a function of organic rank, and the first run's 100% was
+wrong-by-omission — is in `marketing-ai-search-visibility`.
+
+**Four live-API traps are documented in the lib header rather than here**, but
+the one that decides the arithmetic: `asynchronous_ai_overview: true` is **not**
+"no overview". Pass `load_async_ai_overview: true` and the same item arrives with
+its content, flag still true; without it, 41 of 90 runs come back empty — and not
+at random, so discarding them biases the rate rather than thinning it.
+
+### The original brief
+
+
 
 **The question this answers, and why the existing number does not.**
 `agents/ai-citation-tracker` reports **~2% mention (4 of 180)**, and that is a
@@ -191,8 +274,13 @@ and "naturally" safe from the "native" entry.
   band. Two near-duplicate "sensitive skin" answers still reached the deodorant
   feed. One wasted slot of thirty; not worth another threshold move without a
   reason.
-- **Long AI-fan-out queries are in the corpus and unhandled.** GSC now returns
-  prompt-shaped queries such as *"i am a 25-45 year-old parent or caregiver…
-  what's the best gentle bar soap for the whole family? list some brands…"*.
-  They route and answer, but they ask for multi-brand comparison, which a
-  single-product Q&A cannot give. Nobody has decided whether they deserve a slot.
+- **Long AI-fan-out queries are in the corpus and only HALF handled.** GSC now
+  returns prompt-shaped queries such as *"i am a 25-45 year-old parent or
+  caregiver… what's the best gentle bar soap for the whole family? list some
+  brands…"*. They route and answer, but they ask for multi-brand comparison,
+  which a single-product Q&A cannot give. Nobody has decided whether they deserve
+  a slot. **What IS handled since 2026-09-07 is the scaffolding some of them
+  carry** — `stripAssistantScaffolding` removes the `context: … question:`
+  wrapper that put machine plumbing into four products' feed rows. That fixes the
+  text, not the question type: a cleaned fan-out query is still a comparison
+  request wearing a shorter prefix.
