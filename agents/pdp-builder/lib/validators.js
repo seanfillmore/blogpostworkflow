@@ -1,5 +1,8 @@
 // agents/pdp-builder/lib/validators.js
 import { readFileSync } from 'node:fs';
+import { renderTitle, LENGTH_LIMITS } from '../../../lib/seo-copy-length.js';
+const TITLE_MAX = LENGTH_LIMITS.title.max;
+
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { findHealthClaims } from '../../ad-studio/health-claims.js';
@@ -36,7 +39,11 @@ const COMPETITOR_TERMS = (() => {
 
 // ── Length bounds — these are tuned from the competitor research in the spec.
 const LENGTH_BOUNDS = {
-  seoTitle:        { min: 50, max: 70, unit: 'chars' },
+  // Measured on the RENDERED title (see `validateLengths`): layout/theme.liquid
+  // appends " – Real Skin Care" unless the title already contains the shop name,
+  // so an authored 70 became 87 on any title that omitted the brand. The ceiling
+  // is imported rather than spelled, so it cannot drift from the shared gate.
+  seoTitle:        { min: 50, max: TITLE_MAX, unit: 'rendered chars' },
   metaDescription: { min: 140, max: 160, unit: 'chars' },
   bodyHtml:        { min: 120, max: 180, unit: 'words' },
   ingredientStory: { min: 40, max: 60, unit: 'words' },
@@ -118,9 +125,15 @@ export function validateIngredients({ cluster, claimedIngredients, ingredientsBy
 export function validateLengths(content) {
   const errors = [];
   if (content.seoTitle != null) {
-    const len = content.seoTitle.length;
+    // The storefront, not the model, decides the final title: measure what it
+    // renders. A 60-character title that omits the brand is really 77.
+    const rendered = renderTitle(content.seoTitle);
+    const len = [...rendered].length;
     const b = LENGTH_BOUNDS.seoTitle;
-    if (len < b.min || len > b.max) errors.push(`seoTitle ${len} ${b.unit} outside ${b.min}-${b.max}`);
+    if (len < b.min || len > b.max) {
+      const note = rendered === content.seoTitle ? '' : ` (rendered as "${rendered}")`;
+      errors.push(`seoTitle ${len} ${b.unit} outside ${b.min}-${b.max}${note}`);
+    }
   }
   if (content.metaDescription != null) {
     const len = content.metaDescription.length;

@@ -65,7 +65,10 @@ test('bundle mode does not weaken the shared seoTitle/metaDescription bounds', (
   // Regression guard: adding bundle mode must not have relaxed product-mode bounds.
   const tooLong = validateLengths({ seoTitle: 'X'.repeat(80), metaDescription: 'A'.repeat(150) });
   assert.equal(tooLong.valid, false);
-  const ok = validateLengths({ seoTitle: 'X'.repeat(60), metaDescription: 'A'.repeat(150) });
+  // Bounds are measured on the RENDERED title since 2026-09-06, so a passing
+  // fixture has to carry the brand exactly as the prompt's mandated format does
+  // — 43 + " | Real Skin Care" = 60, with nothing appended by the theme.
+  const ok = validateLengths({ seoTitle: `${'X'.repeat(43)} | Real Skin Care`, metaDescription: 'A'.repeat(150) });
   assert.equal(ok.valid, true);
 });
 

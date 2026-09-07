@@ -45,7 +45,8 @@ test('assembleProduct: returns needs_rework when seoTitle too long', async () =>
     claudeClient: mockClient,
   });
   assert.equal(result.status, 'needs_rework');
-  assert.match(JSON.stringify(result.validation.errors), /seoTitle.*80/);
+  // 80 authored characters render as 97 — the theme appends the brand.
+  assert.match(JSON.stringify(result.validation.errors), /seoTitle.*97/);
 });
 
 test('assembleProduct: rejects competitor name in body_html', async () => {

@@ -123,7 +123,23 @@ test('validateLengths: SEO title 80 chars fails', () => {
     seoTitle: 'X'.repeat(80),
   });
   assert.equal(result.valid, false);
-  assert.match(result.errors.join(' '), /seoTitle.*80.*70/);
+  // Measured on the RENDERED title since 2026-09-06: this fixture carries no
+  // brand, so the theme appends " – Real Skin Care" and 80 becomes 97 against a
+  // ceiling of 60.
+  assert.match(result.errors.join(' '), /seoTitle.*97.*50-60/);
+});
+
+test('validateLengths: a title that FITS only because it carries the brand passes', () => {
+  // 43 + " | Real Skin Care" (17) = 60 rendered, and the theme appends nothing
+  // because the title already contains the shop name. This is the format the
+  // pdp-builder prompt mandates, and the reason products measured clean while
+  // 92% of articles did not.
+  const withBrand = `${'X'.repeat(43)} | Real Skin Care`;
+  assert.equal(withBrand.length, 60);
+  assert.equal(validateLengths({ seoTitle: withBrand }).valid, true);
+
+  // The same length WITHOUT the brand renders at 77 and must fail.
+  assert.equal(validateLengths({ seoTitle: 'X'.repeat(60) }).valid, false);
 });
 
 test('validateLengths: meta description 145-160 chars passes', () => {

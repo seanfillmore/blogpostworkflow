@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import {
   LENGTH_LIMITS, LENGTH_KINDS, checkCopyLength, lengthConstraint,
   renderLengthLines, SEO_COPY_LENGTH_RULE, renderTitle, SHOP_NAME, TITLE_SUFFIX,
+  shortenToRenderedLimit,
 } from '../../lib/seo-copy-length.js';
 import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
 
@@ -249,4 +250,79 @@ test('a blocking health claim still FAILS the gate even when length is clean', a
   );
   assert.equal(res.ok, false, 'adding the length check must not weaken the health gate');
   assert.ok(res.violations.length > 0);
+});
+
+// ── shortenToRenderedLimit — the repair path ──────────────────────────────────
+
+// The four titles below are REAL and were live on 2026-09-06. Each was produced
+// by `technical-seo`'s old shortener, which cut to 57, re-added the brand, then
+// hard-cut at 60 — landing inside the brand.
+const LIVE_DAMAGED = [
+  'Coconut Oil Body Lotion That Actually Works for Dry Skin | R \u2013 Real Skin Care',
+  'Best Organic Toothpaste: What to Look For & Why It | | Real \u2013 Real Skin Care',
+  'Fluoride Free Toothpaste: Benefits, How It Works & Best | Re \u2013 Real Skin Care',
+  'Goat Milk Soap: Benefits, Ingredients & Natural Alternatives \u2013 Real Skin Care',
+];
+
+test('every repaired title RENDERS within the limit — the property that matters', () => {
+  for (const t of LIVE_DAMAGED) {
+    const out = shortenToRenderedLimit(t);
+    const rendered = [...renderTitle(out)].length;
+    assert.ok(rendered <= LENGTH_LIMITS.title.max,
+      `"${t}" repaired to "${out}" still renders at ${rendered}`);
+  }
+});
+
+test('a repaired title never ends mid-brand, which is the defect being fixed', () => {
+  for (const t of LIVE_DAMAGED) {
+    const out = shortenToRenderedLimit(t);
+    // The old shortener produced "| R" and "| | Real". A repair must leave
+    // either the WHOLE brand or none of it.
+    for (const fragment of ['| R', '| Re', '| Real', '| | Real', '\u2013 Real Skin']) {
+      assert.ok(!out.endsWith(fragment), `"${out}" ends with the partial brand "${fragment}"`);
+    }
+    assert.ok(!/[|\u2013\u2014\-:;,&]\s*$/.test(out), `"${out}" ends on a dangling separator`);
+  }
+});
+
+test('a repaired title never ends on a dangling connective', () => {
+  // "Benefits, Ingredients &" and "Deodorant for" are word boundaries and still
+  // read as damage, so the cut prefers a CLAUSE boundary where one exists.
+  assert.equal(
+    shortenToRenderedLimit('Goat Milk Soap: Benefits, Ingredients & Natural Alternatives \u2013 Real Skin Care'),
+    'Goat Milk Soap: Benefits',
+  );
+  // No comma or colon in range here, so it falls back to a word boundary and
+  // then strips the dangling "for".
+  assert.equal(
+    shortenToRenderedLimit('Best Hypoallergenic Deodorant for Sensitive Skin (2026) \u2013 Real Skin Care'),
+    'Best Hypoallergenic Deodorant',
+  );
+  // The case that motivated preferring a clause boundary: cutting at the last
+  // SPACE leaves "…Soft Skin, Zero", which reads as damage.
+  assert.equal(
+    shortenToRenderedLimit('Best Clean Body Lotion: Soft Skin, Zero Toxins | Real | | Re \u2013 Real Skin Care'),
+    'Best Clean Body Lotion: Soft Skin',
+  );
+});
+
+test('a title that already fits is returned UNCHANGED', () => {
+  // A repair path must be a no-op on healthy input, or a sweep rewrites the
+  // whole corpus for nothing.
+  for (const t of ['Coconut Bar Soap \u2013 Real Skin Care', 'Best Soap for Tattoos', 'FAQs | Real Skin Care']) {
+    assert.equal(shortenToRenderedLimit(t), t);
+  }
+});
+
+test('it is idempotent — running the sweep twice changes nothing the second time', () => {
+  for (const t of LIVE_DAMAGED) {
+    const once = shortenToRenderedLimit(t);
+    assert.equal(shortenToRenderedLimit(once), once);
+  }
+});
+
+test('empty and nullish input never throw on a repair path', () => {
+  for (const v of [null, undefined, '', '   ']) {
+    assert.equal(shortenToRenderedLimit(v), '');
+  }
 });

@@ -154,6 +154,12 @@ data/reports/seo-impact/
 # no wave at all, because the holdout it protects would be last month's.
 data/reports/ctr-program/
 
+# Long-title remediation run records — server-authoritative machine output, and
+# each one embeds every live BEFORE value, so a tracked copy would be both a
+# deploy-revert hazard (the class PR #825 removed) and a growing blob of
+# duplicated live copy. The record IS the backup; it belongs on the box.
+data/reports/long-title-remediation/
+
 # Queue auto-apply run reports — same reasoning as seo-impact above: cron owns
 # them on the server, and a local dry run would otherwise leave untracked files
 # behind for someone's `git add .`
