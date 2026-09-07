@@ -285,12 +285,29 @@ test('a repaired title never ends mid-brand, which is the defect being fixed', (
   }
 });
 
+test('a CAPITALISED particle is kept — the list is lower case only', () => {
+  // Title case makes the distinction usable: a trailing lower-case connective is
+  // dangling, a capitalised one is usually part of the phrase. Matching
+  // case-insensitively turned "…What to Look For" into "…What to Look".
+  assert.equal(
+    shortenToRenderedLimit('Best Organic Toothpaste: What to Look For & Why It | | Real \u2013 Real Skin Care'),
+    'Best Organic Toothpaste: What to Look For',
+  );
+});
+
+test('an unclosed bracket is dropped with whatever followed it', () => {
+  assert.equal(
+    shortenToRenderedLimit('Best Aluminum Free Deodorant in 2026 (That Actually | | Real \u2013 Real Skin Care'),
+    'Best Aluminum Free Deodorant in 2026',
+  );
+});
+
 test('a repaired title never ends on a dangling connective', () => {
   // "Benefits, Ingredients &" and "Deodorant for" are word boundaries and still
   // read as damage, so the cut prefers a CLAUSE boundary where one exists.
   assert.equal(
     shortenToRenderedLimit('Goat Milk Soap: Benefits, Ingredients & Natural Alternatives \u2013 Real Skin Care'),
-    'Goat Milk Soap: Benefits',
+    'Goat Milk Soap: Benefits, Ingredients',
   );
   // No comma or colon in range here, so it falls back to a word boundary and
   // then strips the dangling "for".
