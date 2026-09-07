@@ -266,6 +266,21 @@ data: that config holds five natural-DTC brands for content monitoring and only
 mass-market names it was never meant to cover. Word boundaries keep "natural"
 and "naturally" safe from the "native" entry.
 
+## Two traps found on 2026-09-07 that are NOT fixed
+
+- **A single-product `--apply` OVERWRITES the whole day's feed.** The TSV is named
+  `supplemental-qa-<date>.tsv` and written from that run's rows alone, so
+  `--product X --apply` after an `--all` leaves a one-row file where a sixteen-row
+  one was. It cost a re-run here. Do the `--all` last, or copy the feed aside
+  before a single-product run.
+- **Answers are being written past the limit Google will keep.**
+  `MAX_SIDE_CHARS` truncates each answer at 1,000 characters (~250 tokens), and
+  measured output runs 181-472 tokens per pair — so the longest answers are
+  already being trimmed by `formatQuestionAnswer` after the model was paid to
+  write them. Nothing in the prompt states the 1,000-character limit. Telling it
+  would cut spend and stop silent trimming, but it changes the shape of every
+  answer, so it is a content decision rather than a fix to bolt on.
+
 ## Two limits that are open, not solved
 
 - **The paraphrase dedupe stops at 2, not 1.** `SAME_QUESTION_THRESHOLD` is

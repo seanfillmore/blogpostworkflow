@@ -186,11 +186,26 @@ async function draftAnswers(handle, product, questions, pdp) {
   // everything at n <= 13, where the linear term is too thin. It is free: an
   // unbilled ceiling can only ever cost a failure it did not prevent.
   const MIN_MAX_TOKENS = 6000;
-  // The outer clamp has to sit ABOVE the rate at the maximum batch or it quietly
-  // becomes the real ceiling and the derivation above is decoration: at the
-  // Google cap of 30 pairs, 800 + 30*700 = 21,800, and 16,000 would have clamped
-  // it back under the value that just failed.
-  const maxTokens = Math.min(24000, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
+  // THE OUTER CLAMP IS A HARD API BOUNDARY, NOT A BUDGET CHOICE, AND IT IS THE
+  // REASON "just raise it, tokens are free" is wrong. The SDK REFUSES a
+  // non-streaming request whose `max_tokens` implies a call that could run past
+  // ten minutes: "Streaming is required for operations that may take longer than
+  // 10 minutes." Raising the rate to 700 put a 30-question batch at 21,800 and
+  // **every one of the 14 large products failed that way in one run** — the
+  // ceiling stopped being a ceiling and became a refusal.
+  //
+  // Probed live on 2026-09-07 against `claude-sonnet-5`: 16,000 OK, 18,000 OK,
+  // 20,000 OK, 21,800 REFUSED. So 20,000 is the measured wall and is used as-is.
+  //
+  // It binds from n >= 28, where it yields 667/pair — still above the worst
+  // measured 472 — so the derivation governs every real batch and the wall only
+  // trims the very top. What this means honestly: on this API an occasional
+  // truncation on a 30-question batch is POSSIBLE rather than impossible, and
+  // the per-product isolation above is what keeps that a skipped product instead
+  // of a lost run. Getting more headroom than this needs streaming or a smaller
+  // batch, not a bigger number.
+  const NON_STREAMING_MAX_TOKENS = 20000;
+  const maxTokens = Math.min(NON_STREAMING_MAX_TOKENS, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
   const generate = async (constraint) => {
     const msg = await client.messages.create({
       model: 'claude-sonnet-5',
