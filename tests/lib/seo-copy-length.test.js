@@ -343,3 +343,54 @@ test('empty and nullish input never throw on a repair path', () => {
     assert.equal(shortenToRenderedLimit(v), '');
   }
 });
+
+test('an ORPHANED one-word clause is dropped; a substantial one is kept', () => {
+  // "– Natural" is the stub of "– Natural, Fragrance-Free & Gentle" that the cut
+  // left behind. Once the theme appends its own " – Real Skin Care" it reads as
+  // two dangling dashes, so short debris goes.
+  assert.equal(
+    shortenToRenderedLimit('Best Soap for Tattoos – Natural, Fragrance-Free & Gentle – Real Skin Care'),
+    'Best Soap for Tattoos',
+  );
+  assert.equal(
+    shortenToRenderedLimit('Coconut Oil Soap Benefits | Natural & Nourishing for | | Rea – Real Skin Care'),
+    'Coconut Oil Soap Benefits',
+  );
+  // But a trailing clause carrying real information stays — dropping it would be
+  // a rewrite, not a tidy, and it wastes budget the title is entitled to use.
+  assert.equal(
+    shortenToRenderedLimit('Best Clean Lotion – Non-Toxic, Organic & Fragrance-Free Picks – Real Skin Care'),
+    'Best Clean Lotion – Non-Toxic, Organic',
+  );
+  assert.equal(
+    shortenToRenderedLimit('Best Clean Body Lotion: Soft Skin, Zero Toxins | Real | | Re – Real Skin Care'),
+    'Best Clean Body Lotion: Soft Skin',
+  );
+});
+
+test('a CAPITALISED always-dangling word is still stripped', () => {
+  // The case-sensitive connective list keeps "What to Look For", but "That" and
+  // "Actually" are dangling in any case — hence a second, case-insensitive list.
+  assert.equal(
+    shortenToRenderedLimit('Coconut Oil Body Lotion That Actually Works for Dry Skin | R – Real Skin Care'),
+    'Coconut Oil Body Lotion',
+  );
+});
+
+test('every rule composes without ever exceeding the limit or emptying the title', () => {
+  const corpus = [
+    'Best Soap for Tattoos – Natural, Fragrance-Free & Gentle – Real Skin Care',
+    'Coconut Oil Soap Benefits | Natural & Nourishing for | | Rea – Real Skin Care',
+    'Best Clean Body Lotion: Soft Skin, Zero Toxins | Real | | Re – Real Skin Care',
+    'Coconut Bar Soap 4-Pack — Four Months of Clean, One Box – Real Skin Care',
+    'Coconut Oil Body Lotion That Actually Works for Dry Skin | R – Real Skin Care',
+    'Best Organic Toothpaste: What to Look For & Why It | | Real – Real Skin Care',
+    'Best Aluminum Free Deodorant in 2026 (That Actually | | Real – Real Skin Care',
+  ];
+  for (const t of corpus) {
+    const out = shortenToRenderedLimit(t);
+    assert.ok(out.length >= 12, `"${t}" was trimmed to nothing: "${out}"`);
+    assert.ok([...renderTitle(out)].length <= LENGTH_LIMITS.title.max, `"${out}" renders too long`);
+    assert.equal(shortenToRenderedLimit(out), out, `"${out}" is not idempotent`);
+  }
+});
