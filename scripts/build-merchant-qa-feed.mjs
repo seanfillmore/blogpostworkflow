@@ -231,10 +231,20 @@ async function main() {
   }
   const { questions, days, rows } = loadGscQuestions();
   const clusters = productClusters(products);
-  const { byHandle, unassigned } = assignQuestionsToProducts(questions, clusters);
+  const { byHandle, unassigned, unsuitable } = assignQuestionsToProducts(questions, clusters);
 
   console.log(`GSC: ${rows} query rows over ${days} snapshots -> ${questions.length} distinct questions`);
   console.log(`Routed to ${byHandle.size} products; ${unassigned.length} matched no product cluster.`);
+  if (unsuitable.length) {
+    const by = {};
+    for (const u of unsuitable) (by[u.reason] ??= []).push(u);
+    // Named and counted, never silently dropped — these carry 42% of question
+    // impressions, so a reader has to be able to see what was withheld.
+    for (const [reason, list] of Object.entries(by)) {
+      const imp = list.reduce((s, x) => s + x.impressions, 0);
+      console.log(`  withheld (${reason}): ${list.length} question(s), ${imp} imp — e.g. "${list[0].query.slice(0, 60)}"`);
+    }
+  }
 
   const handles = ALL ? [...byHandle.keys()] : [productArg];
   const feedRows = [];

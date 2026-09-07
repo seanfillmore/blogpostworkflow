@@ -10,6 +10,7 @@ import {
   renderSupplementalTsv,
   MAX_PAIRS_PER_PRODUCT,
   MAX_SIDE_CHARS,
+  isUnsuitableQuestion,
 } from '../../lib/merchant-qa.js';
 
 test('question detection takes an interrogative opener OR a question mark', () => {
@@ -148,4 +149,59 @@ test('genuinely different questions are NOT merged', () => {
   ];
   const out = extractQuestions(distinct.map((q, i) => ({ query: q, impressions: 100 - i, clicks: 0 })));
   assert.equal(out.length, 4, 'over-merging would waste a real question, which is the failure that matters');
+});
+
+test('competitor-fact and DIY questions never take a slot', () => {
+  // Verbatim from the corpus. The first three are toothpaste's TOP THREE by
+  // impressions, so unfiltered they would take the best three slots.
+  const rows = [
+    { query: 'does sensodyne have sodium lauryl sulfate', impressions: 1249, clicks: 0 },
+    { query: 'is sensodyne sls free', impressions: 905, clicks: 0 },
+    { query: 'how to make natural moisturizer', impressions: 3165, clicks: 0 },
+    { query: 'is coconut oil a good moisturizer', impressions: 704, clicks: 2 },
+  ];
+  const { byHandle, unsuitable } = assignQuestionsToProducts(
+    extractQuestions(rows),
+    { lotion: ['coconut-lotion'], toothpaste: ['coconut-oil-toothpaste'] },
+  );
+
+  assert.equal(unsuitable.length, 3);
+  assert.deepEqual([...new Set(unsuitable.map((u) => u.reason))].sort(), ['competitor-fact', 'diy']);
+  assert.deepEqual((byHandle.get('coconut-lotion') ?? []).map((q) => q.query), ['is coconut oil a good moisturizer'],
+    'the one answerable question survives — and it is NOT the highest-impression one');
+  assert.ok(!byHandle.has('coconut-oil-toothpaste'), 'toothpaste is left with nothing rather than three rival lookups');
+});
+
+test('the filter runs BEFORE the cap, so it frees the best slots not the worst', () => {
+  // 30 ordinary questions plus one huge competitor question. Filtering after
+  // the cap would let the competitor one take slot 1 and push a real question
+  // out entirely.
+  // Genuinely distinct questions — a first attempt used "concern number 0..29"
+  // and the 0.35 paraphrase dedupe correctly collapsed all thirty into one,
+  // which is the dedupe working rather than a bug.
+  const distinct = [
+    'is coconut oil toothpaste safe to swallow',
+    'does fluoride free toothpaste prevent cavities',
+    'why does my toothpaste not foam',
+    'can children use natural toothpaste',
+    'how long does a tube of toothpaste last',
+  ];
+  const rows = [
+    { query: 'does colgate have sls', impressions: 99999, clicks: 0 },
+    ...distinct.map((q, i) => ({ query: q, impressions: 100 - i, clicks: 0 })),
+  ];
+  const { byHandle } = assignQuestionsToProducts(extractQuestions(rows), { toothpaste: ['t'] });
+  const kept = byHandle.get('t') ?? [];
+  assert.ok(kept.length >= 4, `expected the distinct questions to survive, got ${kept.length}`);
+  assert.ok(!kept.some((q) => /colgate/i.test(q.query)), 'the rival question never reaches a slot');
+  assert.ok(kept[0].impressions < 99999, 'the top slot goes to a real question, not the rival one');
+});
+
+test('our own product language is never mistaken for a competitor', () => {
+  // "native" is a tracked competitor AND an ordinary English word; word
+  // boundaries are what keep "all natural" and "naturally" safe.
+  for (const q of ['are natural bar soaps better for men', 'is naturally derived soap gentler', 'what is a natural deodorant']) {
+    assert.equal(isUnsuitableQuestion(q), null, `"${q}" must not be filtered`);
+  }
+  assert.equal(isUnsuitableQuestion('is native deodorant better'), 'competitor-fact');
 });
