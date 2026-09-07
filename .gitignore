@@ -54,6 +54,13 @@ data/reports/editor/
 # exists to fix — a tracked file that cron writes, colliding with the next pull.
 data/reports/post-meta-reconcile/
 
+# AI Overview citation measurements. Server-written (DataForSEO is IP-whitelisted
+# to the box) and bulky — a run carries every overview's text and reference list.
+# The DURABLE record of a run is the rate written into
+# `.claude/skills/marketing-ai-search-visibility/`, not this directory: an
+# individual pull is a non-deterministic sample and is not the finding.
+data/reports/ai-overview-citations/
+
 # Generated agent reports (regenerable; not tracked)
 data/reports/ai-citations/
 data/reports/legacy-triage/

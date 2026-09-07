@@ -135,9 +135,77 @@ async function draftAnswers(handle, product, questions, pdp) {
   // truncated most cannibalization merges: 4,000 tokens looked generous and
   // could not hold 30 pairs, because each one echoes its question VERBATIM
   // (some GSC questions run 20+ words) plus a 1-3 sentence answer plus JSON
-  // syntax. Measured against the real 30-question deodorant batch, that is
-  // ~150 tokens a pair; 200 leaves room for the long tail.
-  const maxTokens = Math.min(16000, 600 + questions.length * 200);
+  // syntax.
+  //
+  // 200 TOKENS A PAIR WAS TOO TIGHT AND IT COST A WHOLE RUN (2026-09-06). It was
+  // derived from the FIRST live batch, where the model answered 7 of 30
+  // questions and left 23 empty — ~1,900 output tokens against a 6,600 ceiling,
+  // which reads as generous and was not. The very next product,
+  // `coconut-deodorant-4-pack`, drew the same 30 questions off the same cluster,
+  // answered far more of them, and truncated. Measure the ceiling against a
+  // batch that ANSWERS, never against one that mostly declined.
+  //
+  // Re-derived from the answers actually written: a 4-beat answer runs 550-700
+  // characters (~140-175 tokens), a verbatim GSC question up to 180 characters
+  // (~45 tokens), plus ~10 of JSON syntax — so a worst-case pair is ~230 tokens.
+  //
+  // 400 IS DELIBERATE HEADROOM, NOT A BUDGET. `max_tokens` is a ceiling, not a
+  // reservation: an unused token is not billed, so the only thing a tight
+  // ceiling buys is this failure. It is set at ~1.7x the worst measured pair,
+  // and the run now logs the output tokens it really used so the next revision
+  // is measured rather than re-guessed.
+  // 400 WAS ALSO TOO LOW, AND THAT IS THE POINT OF THIS NUMBER'S HISTORY. Three
+  // successive ceilings were derived from the latest measurement and two of them
+  // truncated a live run: 200/pair (from a batch that answered 7 of 30), then
+  // 400/pair, which `coconut-bar-soap-4-pack` blew through at **427/pair on 30
+  // questions**. The measured spread across one corpus is 181 -> 472 per pair,
+  // so a rate set near the observed mean is a rate that fails a few times a year
+  // on an unattended run. 700 DOMINATES the whole observed range rather than
+  // chasing the last observation.
+  //
+  // It is free to be generous, and there is a hard reason it cannot run away:
+  // `MAX_SIDE_CHARS` truncates each answer at 1,000 characters (~250 tokens)
+  // regardless, so a pair can only ever USE ~310 tokens — ~250 of answer, ~50 of
+  // verbatim question, ~10 of JSON. A model writing 472/pair is already
+  // producing prose the formatter silently trims. 700 is therefore ~2.2x the
+  // useful maximum, and the excess is a ceiling nobody is billed for rather than
+  // output anybody reads.
+  const TOKENS_PER_PAIR = 700;
+  // AND A FLOOR, BECAUSE THE PER-PAIR COST RISES AS THE BATCH SHRINKS. A purely
+  // linear ceiling is structurally wrong at small n and the same `--all` run
+  // proved it in both directions: `coconut-oil-deodorant` measured 182/pair at
+  // n=30 and the peak across the corpus was 285/pair, while
+  // `coconut-oil-lip-balm` measured **472/pair at n=7** and truncated against
+  // its own 3,600. Two causes, both structural rather than bad luck: the fixed
+  // preamble amortises over fewer pairs, and — the larger one — a short list
+  // gets answered in FULL, where a 30-question list is mostly questions this
+  // product cannot honestly answer and the model correctly returns them empty.
+  // Fewer questions therefore means MORE prose per question, not less.
+  //
+  // 6,000 is ~1.8x the worst small batch measured (3,304 at n=7) and governs
+  // everything at n <= 13, where the linear term is too thin. It is free: an
+  // unbilled ceiling can only ever cost a failure it did not prevent.
+  const MIN_MAX_TOKENS = 6000;
+  // THE OUTER CLAMP IS A HARD API BOUNDARY, NOT A BUDGET CHOICE, AND IT IS THE
+  // REASON "just raise it, tokens are free" is wrong. The SDK REFUSES a
+  // non-streaming request whose `max_tokens` implies a call that could run past
+  // ten minutes: "Streaming is required for operations that may take longer than
+  // 10 minutes." Raising the rate to 700 put a 30-question batch at 21,800 and
+  // **every one of the 14 large products failed that way in one run** — the
+  // ceiling stopped being a ceiling and became a refusal.
+  //
+  // Probed live on 2026-09-07 against `claude-sonnet-5`: 16,000 OK, 18,000 OK,
+  // 20,000 OK, 21,800 REFUSED. So 20,000 is the measured wall and is used as-is.
+  //
+  // It binds from n >= 28, where it yields 667/pair — still above the worst
+  // measured 472 — so the derivation governs every real batch and the wall only
+  // trims the very top. What this means honestly: on this API an occasional
+  // truncation on a 30-question batch is POSSIBLE rather than impossible, and
+  // the per-product isolation above is what keeps that a skipped product instead
+  // of a lost run. Getting more headroom than this needs streaming or a smaller
+  // batch, not a bigger number.
+  const NON_STREAMING_MAX_TOKENS = 20000;
+  const maxTokens = Math.min(NON_STREAMING_MAX_TOKENS, Math.max(MIN_MAX_TOKENS, 800 + questions.length * TOKENS_PER_PAIR));
   const generate = async (constraint) => {
     const msg = await client.messages.create({
       model: 'claude-sonnet-5',
@@ -199,9 +267,14 @@ ${questions.map((q, i) => `[${i}] ${q.query}`).join('\n')}`,
     });
     // Throw, never save — truncated JSON cannot be repaired by a retry against
     // the same ceiling, and half a batch of answers is not a partial success.
+    // The CALLER catches this per product; it must not take the run with it.
     if (msg.stop_reason === 'max_tokens') {
       throw new Error(`answer generation truncated at max_tokens (${maxTokens} for ${questions.length} questions)`);
     }
+    // Print what the ceiling was actually asked to hold, so the constant above
+    // stays a measurement instead of ageing back into a guess.
+    const used = msg.usage?.output_tokens;
+    if (used) console.log(`   ${used} output tokens of ${maxTokens} (${(used / questions.length).toFixed(0)}/pair)`);
     const text = msg.content.map((c) => c.text ?? '').join('');
     const json = text.slice(text.indexOf('['), text.lastIndexOf(']') + 1);
     return JSON.parse(json).filter((p) => p?.question && p?.answer?.trim());
@@ -265,7 +338,22 @@ async function main() {
     if (APPLY && pdp.ok && !facts?.description) {
       console.log('   no live PDP description for this handle — answers will be thin.');
     }
-    const gated = await draftAnswers(handle, product, qs, facts);
+    // ONE PRODUCT'S FAILURE MUST NOT TAKE THE RUN WITH IT. Until 2026-09-06 it
+    // did: a truncated batch on the SECOND of 16 products threw out of the loop
+    // to `main().catch()`, so the run exited 1, the 14 products behind it were
+    // never attempted, and — worse — the first product's LLM call had already
+    // been paid for and was discarded unwritten, because the feed is written
+    // after the loop. Skipped and counted, never silently dropped: the same rule
+    // the cluster-hold gates follow.
+    let gated;
+    try {
+      gated = await draftAnswers(handle, product, qs, facts);
+    } catch (e) {
+      console.log(`   FAILED: ${e.message}`);
+      console.log('   skipped — the run continues and this product is named in the review.');
+      review.push({ handle, failed: e.message });
+      continue;
+    }
     if (!gated.ok) {
       // Named, counted, and NOT written. The producing run can be repeated; the
       // work is not discarded.
@@ -288,25 +376,36 @@ async function main() {
     console.log('\nDry run. Re-run with --apply to draft answers (one LLM call per product) and write the feed.');
     return;
   }
-  if (!feedRows.length) { console.log('\nNothing to write.'); return; }
+  // A run where every product gated or failed still has to leave a record. The
+  // FEED is skipped when there is nothing to submit; the REVIEW is not, or the
+  // only account of what went wrong is a console nobody kept.
+  if (!feedRows.length && !review.length) { console.log('\nNothing to write.'); return; }
 
   mkdirSync(OUT_DIR, { recursive: true });
   const stamp = new Date().toISOString().slice(0, 10);
-  const tsv = join(OUT_DIR, `supplemental-qa-${stamp}.tsv`);
-  writeFileSync(tsv, renderSupplementalTsv(feedRows));
+  // No feed file when there is nothing in it: a header-only TSV is a file
+  // somebody can submit, and submitting it would push an empty attribute.
+  const tsv = feedRows.length ? join(OUT_DIR, `supplemental-qa-${stamp}.tsv`) : null;
+  if (tsv) writeFileSync(tsv, renderSupplementalTsv(feedRows));
   const md = join(OUT_DIR, `review-${stamp}.md`);
   writeFileSync(md, [
     `# Merchant Center Q&A — ${stamp}`, '',
     'Review before submitting. Supplemental feed: `id` + `question_and_answer` ONLY —',
     'it must not restate title, price or availability, or it overwrites the primary feed.', '',
-    ...review.flatMap((r) => r.gated
-      ? [`## ${r.handle} — GATED, not in the feed`, ...r.claims.map((c) => `- ${c.field}: "${c.match}" (${c.category})`), '']
-      : [`## ${r.handle} (${r.pairs.length})`, ...r.pairs.map((p) => `- **${p.question}**\n  ${p.answer}`), '']),
+    ...review.flatMap((r) => {
+      if (r.failed) return [`## ${r.handle} — FAILED, not in the feed`, `- ${r.failed}`, ''];
+      if (r.gated) return [`## ${r.handle} — GATED, not in the feed`, ...r.claims.map((c) => `- ${c.field}: "${c.match}" (${c.category})`), ''];
+      return [`## ${r.handle} (${r.pairs.length})`, ...r.pairs.map((p) => `- **${p.question}**\n  ${p.answer}`), ''];
+    }),
   ].join('\n'));
 
-  console.log(`\nfeed:   ${tsv}`);
+  const failed = review.filter((r) => r.failed);
+  const gatedOut = review.filter((r) => r.gated);
+  console.log(`\n${feedRows.length} product(s) in the feed · ${gatedOut.length} gated · ${failed.length} failed`);
+  for (const r of failed) console.log(`   FAILED ${r.handle}: ${r.failed}`);
+  console.log(`\nfeed:   ${tsv ?? '(none — no product produced a usable answer set)'}`);
   console.log(`review: ${md}`);
-  console.log('NOT UPLOADED. Review the answers, then submit the TSV as a supplemental feed in Merchant Center.');
+  if (tsv) console.log('NOT UPLOADED. Review the answers, then submit the TSV as a supplemental feed in Merchant Center.');
 }
 
 main().catch((e) => { console.error('[build-merchant-qa-feed]', e.message); process.exit(1); });
