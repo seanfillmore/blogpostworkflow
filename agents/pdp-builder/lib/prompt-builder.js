@@ -1,3 +1,6 @@
+import { LENGTH_LIMITS, SHOP_NAME as SHOP } from '../../../lib/seo-copy-length.js';
+const TITLE_MAX = LENGTH_LIMITS.title.max;
+
 // agents/pdp-builder/lib/prompt-builder.js
 
 /**
@@ -196,7 +199,8 @@ export function buildBundleSystemPrompt({ foundation, facts }) {
     ...voiceOfCustomerSection(foundation),
     `# Your task`,
     `Write the Shopify product description for this bundle. Output JSON with keys:`,
-    `  seoTitle:        string, STRICTLY 50-70 characters INCLUSIVE — count carefully.`,
+    `  seoTitle:        string, STRICTLY 50-${TITLE_MAX} characters INCLUSIVE as RENDERED — count carefully.`,
+    `                   The storefront appends " \u2013 ${SHOP}" unless your title already contains "${SHOP}".`,
     `  metaDescription: string, STRICTLY 140-160 characters INCLUSIVE — count carefully.`,
     `  bodyHtml:        string of HTML, 150-320 words of body text.`,
     ``,
@@ -275,7 +279,8 @@ export function buildProductSystemPrompt({ foundation, clusterName, product }) {
     ...voiceOfCustomerSection(foundation),
     `# Your task`,
     `Generate per-SKU content for this product's PDP. Output JSON with keys:`,
-    `  seoTitle:           string, STRICTLY 50-70 characters INCLUSIVE — count the characters carefully before output. Format: "[Variant/Type] [Product] | [Differentiator] | Real Skin Care"`,
+    `  seoTitle:           string, STRICTLY 50-${TITLE_MAX} characters INCLUSIVE — count carefully. Format: "[Variant/Type] [Product] | [Differentiator] | ${SHOP}"`,
+    "                      Keeping the brand INSIDE the title is what stops the storefront appending it again.",
     `  metaDescription:    string, STRICTLY 140-160 characters INCLUSIVE — count carefully.`,
     `  bodyHtml:           string (HTML; 120-180 words of marketing prose: hook + 4 benefit bullets). When mentioning ingredients we DON'T use as a contrast point, frame them with explicit negation ("unlike X", "instead of X", "no X") so the validator recognizes the comparison.`,
     `  metafieldOverrides: object (optional; only include if SKU-specific data warrants overriding cluster defaults; keys: hero_ingredients_override, faq_additional, free_from, sensitive_skin_notes, scent_notes)`,

@@ -30,6 +30,7 @@
  */
 
 import Anthropic from '../../lib/anthropic.js';
+import { shortenToRenderedLimit, renderTitle, LENGTH_LIMITS } from '../../lib/seo-copy-length.js';
 import * as cheerio from 'cheerio';
 import { notify } from '../../lib/notify.js';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';
@@ -2073,17 +2074,19 @@ async function fixTitles({ dryRun = false } = {}) {
     const path = urlPath(url);
     const currentTitle = row.title || '';
 
-    if (currentTitle.length <= 60) continue; // already fine
+    // The crawl export's `title` is the RENDERED <title>, so it already carries
+    // whatever layout/theme.liquid appended. Judge it on the rendered form.
+    if ([...renderTitle(currentTitle)].length <= LENGTH_LIMITS.title.max) continue;
 
-    // Generate a shorter title (truncate smartly at word boundary, add ellipsis or brand)
-    let newTitle = currentTitle.slice(0, 57);
-    const lastSpace = newTitle.lastIndexOf(' ');
-    if (lastSpace > 40) newTitle = newTitle.slice(0, lastSpace);
-    // Don't add ellipsis — just let it be a clean cut with brand
-    if (!newTitle.includes(config.name)) newTitle += ' | ' + config.name;
-    if (newTitle.length > 60) newTitle = newTitle.slice(0, 60);
+    // Shared, tested shortener. The hand-rolled version this replaces cut to 57,
+    // re-added the brand, then hard-cut at 60 — landing INSIDE the brand and
+    // leaving live titles ending "| R" and "| | Real". Because the remnant no
+    // longer contained the shop name, the theme then appended the full suffix on
+    // top, making the page worse than the defect being fixed.
+    const newTitle = shortenToRenderedLimit(currentTitle);
+    if (!newTitle || newTitle === currentTitle) continue;
 
-    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path}: "${currentTitle.slice(0, 50)}..." → "${newTitle}"`);
+    console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path}: "${currentTitle.slice(0, 50)}..." → "${newTitle}" (renders ${[...renderTitle(newTitle)].length})`);
 
     if (!dryRun) {
       try {
