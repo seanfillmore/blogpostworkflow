@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import {
   parsePublishedFlags,
   buildConstraintBlock,
+  GROWTH_INTENT_RULE,
   assertPaidStatusFresh,
   PAID_STATUS_AS_OF,
   PAID_STATUS_MAX_AGE_DAYS,
@@ -2755,3 +2756,34 @@ console.log('✓ marketing-learner stream-deadline tests pass');
   assert.throws(() => assertPaidStatusFresh(wellPast), /past the \d+-day limit/);
 }
 console.log('\u2713 marketing-learner paid-status freshness tests pass');
+
+// ── the block must lead with the GOAL, never let today's figures cap a score ───────────
+{
+  const block = buildConstraintBlock();
+
+  // Sean, 2026-08-25 and again 2026-09-08: current figures are a starting line, not a
+  // ceiling. 64 Fit rationales across 19 skills had been capping scores on volume/budget —
+  // forbidden by the stage rules' own words, and those scores reach the copy agent.
+  assert.ok(block.includes(GROWTH_INTENT_RULE),
+    'the growth-intent rule must be interpolated into the constraint block');
+  assert.match(block, /NEVER LOWER A SCORE BECAUSE OF CURRENT VOLUME, BUDGET OR MEASURABILITY/,
+    'the ban on volume-capping a score must be stated outright');
+  assert.match(block, /Timing is recorded in\s+exactly one place/,
+    'the block must say the stage marker is the ONLY place timing is recorded');
+
+  // The goal has to appear BEFORE the current figures, or it reads as a caveat on them.
+  assert.ok(block.indexOf('as large as possible') < block.indexOf('Shopify revenue'),
+    'the growth intent must lead, not trail the current-state numbers');
+
+  // ~54/month is Shopify PLUS Amazon; Shopify alone is ~16. Reasoning about the Shopify
+  // funnel on 54 overstates it ~3x, and 142 occurrences in the corpus did exactly that.
+  assert.match(block, /Shopify ~16 orders\/month/,
+    'the block must give the Shopify-only order figure');
+  assert.match(block, /~54\/month is Shopify PLUS Amazon/,
+    'and must say plainly what the combined figure is, so the two are not confused');
+
+  // $30/day may be used for arithmetic, never as a ceiling.
+  assert.match(block, /NOT a ceiling on ambition and\s+never a reason to discount a tactic/,
+    'the reference budget must be labelled as arithmetic, not a limit');
+}
+console.log('\u2713 marketing-learner growth-intent tests pass');
