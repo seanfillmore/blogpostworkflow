@@ -55,3 +55,17 @@ caught and corrected included a bottle rendered "3 fl. oz" when the product is
 drawing a rectangular soap bar when the real bar is round, and an invented sage
 band on a lip balm cap. One frame was rejected outright for rendering five tubes
 under a "FOUR TUBES PER PACK" headline.
+
+### `coconut-lotion/`
+
+`lotion-how-to-use.ORIGINAL.png` — the 1400x1400 how-to frame that was live on
+the coconut-lotion PDP until 2026-09-08. Its step 2 drew a PUMP DISPENSER and
+read "Pump a small amount"; the product is a squeeze bottle with a flip-top disc
+cap and has no pump. Replaced by `lotion-how-to-use-v2.png`, which is composed
+FROM this file by `scripts/compose-howto-fix.sh` — only the step-2 pictogram and
+the words "Pump a" are replaced, so the two are recoverable from each other.
+Archived because removing the old frame from the product destroyed its CDN file.
+
+`step-icon-refs/` — crops of the original used as generation references:
+`step1-icon.png` (the correct bottle, used as the style and product reference)
+and `step2-icon-WRONG.png` (the pump, kept so the defect stays legible).
