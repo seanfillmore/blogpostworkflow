@@ -46,6 +46,7 @@ import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../..
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
 import { partitionInternalLinkIssues, indexLinkResults } from '../../lib/internal-link-validation.js';
 import { productKeyFromLinks, resolveProductKey, soapFormatIsExplicit } from '../../lib/product-format.js';
+import { variantIngredients } from '../../lib/product-variant.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -1041,11 +1042,23 @@ async function runEditor(htmlPath) {
   // ACCURACY check downstream — comparing a DIY hair-mask post against the
   // body lotion ingredient spec produces meaningless false-positive blockers.
   // The post still gets full editorial review on every other dimension.
+  // SCOPED TO THE VARIANT THE POST IS ABOUT — see lib/product-variant.js.
+  // This used to union EVERY variant's essential oils into one "ingredients"
+  // list, so a correct post about `Pure Unscented` (6 ingredients, zero oils)
+  // was fact-checked against the four SCENTED variants' oils and blocked for
+  // "contains N essential oils but claims fragrance-free". It could not pass at
+  // any quality of writing — a refused-rebuild loop burning a paid generation
+  // per attempt. Scoping only ever REMOVES ingredients from the comparison, so
+  // it can only turn a false blocker into a pass; an unresolved variant still
+  // falls back to the union, which is the old behaviour exactly.
   function flattenProduct(p) {
     if (!p) return null;
-    const base = p.base_ingredients || p.ingredients || [];
-    const oils = (p.variations || []).flatMap((v) => v.essential_oils || []);
-    return { name: p.name, format: p.format, ingredients: [...new Set([...base, ...oils])] };
+    const { ingredients, variant } = variantIngredients(p, `${keyword} ${slug}`);
+    return {
+      name: variant ? `${p.name} — ${variant.name}` : p.name,
+      format: p.format,
+      ingredients,
+    };
   }
   // Load context data
   const sitemap = loadSitemap();
