@@ -35,7 +35,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
-import { listAllSlugs, getPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta, getMetaPath, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -362,7 +362,13 @@ async function main() {
 
     if (updated) {
       meta.performance_review = existing;
-      writeFileSync(file, JSON.stringify(meta, null, 2));
+      // MERGE through the chokepoint — never write the raw path back.
+      // `meta` here came from getPostMeta(), which returns meta.json AND
+      // state.json merged, so writing it back raw put every server-owned field
+      // (word_count, tokens_used, shopify_article_id, …) into the git-TRACKED
+      // meta.json. That is the deploy collision PR #737 split the files to end,
+      // and this agent re-created it on 24 posts in two days, once per 13:30 run.
+      writePostMeta(meta.slug, { performance_review: existing });
     }
 
     // Collect any outstanding flops (BLOCKED/REFRESH/DEMOTE) for the digest.

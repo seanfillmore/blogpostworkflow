@@ -36,7 +36,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { loadCalendar } from '../../lib/calendar-store.js';
-import { getMetaPath, getContentPath, getPostMeta as readPostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
+import { getMetaPath, getContentPath, getPostMeta as readPostMeta, writePostMeta, getEditorReportPath, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { formatPublishAt } from '../../lib/publish-schedule.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
@@ -666,7 +666,15 @@ async function publishDueArticles() {
       await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { published: true });
       meta.shopify_status = 'published';
       meta.published_at = new Date().toISOString();
-      writeFileSync(path, JSON.stringify(meta, null, 2));
+      // MERGE through the chokepoint. `meta` came from getPostMeta(), which
+      // returns meta.json AND state.json merged, so writing it back to the raw
+      // path put every server-owned field into the git-TRACKED meta.json — the
+      // deploy collision PR #737 split the files to end. Both fields set above
+      // are server-owned, so they belong in state.json, not in the tracked file.
+      writePostMeta(slug, {
+        shopify_status: meta.shopify_status,
+        published_at: meta.published_at,
+      });
       console.log('✓ live');
 
       // Post-publish feedback loop

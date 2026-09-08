@@ -406,7 +406,11 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
   await notify({
     subject: `Queue auto-apply: ${applied.length} applied, ${dismissed.length} dismissed${healthGated.length ? `, ${healthGated.length} health-claim refused` : ''}${dryRun ? ' (dry run)' : ''}`,
     body: lines.join('\n'),
-    status: failed.length ? 'error' : 'success',
+    // ALWAYS 'success'. One item failing to apply is a FINDING (named in the body
+    // above), not the agent breaking — "1 applied, 1 failed" is a working run.
+    // Same rule as blocked-post-resolver and refresh-runner; genuine breakage is
+    // the catch in main().
+    status: 'success',
     category: 'pipeline',
   });
 

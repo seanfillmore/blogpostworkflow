@@ -29,7 +29,8 @@ import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
-import { readUsage, summarizeRecords, listUsageDates } from '../../lib/llm-usage.js';
+// lib/llm-usage.js still meters every call; the digest just no longer renders a
+// dollar row from it. See the LLM cost block removal note below.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -792,27 +793,22 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
-  let costSection = '';
-  try {
-    // Injected like every other read in this function — otherwise the cost section
-    // resolves the real repo's usage dir and the digest stops being deterministic.
-    const usageDir = join(dataRoot, 'data', 'reports', 'llm-usage');
-    const dayRecs = readUsage(targetDate, usageDir);
-    if (dayRecs.length) {
-      const day = summarizeRecords(dayRecs);
-      const weekDates = listUsageDates(usageDir).slice(-7);
-      const week = summarizeRecords(weekDates.flatMap((d) => readUsage(d, usageDir)));
-      const runRate = weekDates.length ? (week.totalCost / weekDates.length) * 7 : 0;
-      const overBudget = runRate > 20;
-      const topAgents = day.byAgent.slice(0, 3).map((a) => `${esc(a.key)} $${a.cost.toFixed(2)}`).join(' &middot; ');
-      // Only a needle-mover when spend is over target; otherwise stays off the digest.
-      if (overBudget) costSection = `<div class="section"><div class="section-title">&#128176; LLM Cost</div>`
-        + `<p style="font-size:13px;margin:0 0 6px 0;"><strong>$${day.totalCost.toFixed(2)}</strong> on ${esc(targetDate)} &middot; ${day.totalCalls} calls</p>`
-        + `<p style="font-size:12px;color:${overBudget ? '#b91c1c' : '#6b7280'};margin:0 0 6px 0;">Last ${weekDates.length}d: <strong>$${week.totalCost.toFixed(2)}</strong> &middot; projected run-rate <strong>$${runRate.toFixed(2)}/wk</strong>${overBudget ? ' &#9888;&#65039; over $20 target' : ''}</p>`
-        + (topAgents ? `<p style="font-size:12px;color:#6b7280;margin:0;">Top: ${topAgents}</p>` : '')
-        + `</div>`;
-    }
-  } catch { /* cost section is best-effort */ }
+  // ── LLM cost block REMOVED 2026-09-08, on the operator's instruction ────────
+  // The fleet moved off per-token API billing onto the monthly subscription, so
+  // agent run cost is no longer a constraint on any decision and a dollar figure
+  // is no longer an argument for or against doing work. Sean, verbatim: "Remove
+  // this all together, it is no longer a concern now that we switched from the
+  // API to the monthly subscription."
+  //
+  // Its last appearance was also a false alarm, which is the shape to remember:
+  // it flagged "$34.03/wk ⚠️ over $20 target" when $11.54 of the $17.19 day was
+  // ONE hand-run local script, not fleet spend at all. A budget line that counts
+  // a human's ad-hoc run against an unattended-fleet target cannot be read.
+  //
+  // `lib/llm-usage.js` still METERS every call — that data is useful for volume
+  // and debugging and is untouched. What is gone is the digest's dollar row and
+  // the $20/wk budget verdict. Do not reinstate either without asking first.
+  const costSection = '';
 
   // ── Lean digest: only what moved the needle (revenue-first) ───────────────
   // Every agent still runs and its full output is on the dashboard. The digest
@@ -884,7 +880,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     decisionsBody,       // unrealized revenue awaiting a click
     verdictSection,      // did our changes work
     abTestSection,       // CTR bets concluded
-    costSection,         // only present when over budget
+    costSection,         // always '' — LLM cost block removed 2026-09-08
   ].filter(Boolean);
 
   return `<!DOCTYPE html>

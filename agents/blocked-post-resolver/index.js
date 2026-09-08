@@ -372,7 +372,12 @@ async function main() {
     body,
     // Deferred, per the digest convention in CLAUDE.md — never immediate. An
     // exhausted post is a note, not an outage: the page is still live.
-    status: failed.length ? 'error' : 'info',
+    // ALWAYS 'info'. A per-item failure is a FINDING this agent exists to report,
+    // not the agent breaking — the run above resolved posts successfully. Flipping
+    // the whole row to 'error' on one bad item put "3 resolved" in the digest's
+    // Failures block, which is how that block stops being read. Genuine breakage
+    // is the catch at the bottom of main(), which is still 'error'.
+    status: 'info',
     category: 'pipeline',
   }).catch(() => {});
 }
