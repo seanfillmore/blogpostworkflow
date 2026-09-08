@@ -428,7 +428,10 @@ async function main() {
     ].join('\n'),
     // A hold is the same class of thing as a skip: the guard doing its job, not
     // a failure. It never moves the status off 'info'.
-    status: failed.length ? 'error' : 'info',
+    // ALWAYS 'info'. A post whose publish was refused (a divergent mirror, a
+    // failing editor gate) is a FINDING named in the body, not the agent
+    // breaking. Same rule as blocked-post-resolver and queue-autoapply.
+    status: 'info',
     category: 'pipeline',
   }).catch(() => {});
 }

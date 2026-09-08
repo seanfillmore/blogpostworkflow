@@ -64,3 +64,38 @@ test('a flagged ad campaign is a finding, not a failure', () => {
   assert.match(src, /const status = 'info'/);
   assert.match(src, /campaign\(s\) need attention/, 'the subject must still carry the count');
 });
+
+// ── Added 2026-09-08 ────────────────────────────────────────────────────────
+// Three more agents shared ONE shape: `status: failed.length ? 'error' : …`, so a
+// single bad item flipped a run that had otherwise SUCCEEDED into the Failures
+// block. The 2026-09-07 digest is the evidence — 7 failure rows, of which
+// "Blocked Post Resolver: 3 resolved, 0 written off, 1 failed" and
+// "Queue auto-apply: 1 applied, 0 dismissed" are both agents doing their job.
+//
+// The rule these restore is the one at the top of this file: `error` means a
+// human should go fix the AGENT. A per-item failure is a finding, named in the
+// body, that a human should READ. Genuine breakage in all three is the catch in
+// main(), which still sets 'error' and is asserted here so demoting the summary
+// row cannot silently demote the crash handler with it.
+
+test('a blocked-post-resolver item failure is a finding, not a failure', () => {
+  const src = read('agents/blocked-post-resolver/index.js');
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/,
+    '3 resolved and 1 failed is a working run, not a broken agent');
+  assert.match(src, /'Blocked Post Resolver failed'[\s\S]{0,160}status: 'error'/,
+    'the crash handler must keep error');
+});
+
+test('a queue-autoapply item failure is a finding, not a failure', () => {
+  const src = read('agents/queue-autoapply/index.js');
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/,
+    '1 applied and 1 failed is a working run');
+});
+
+test('a refresh-runner publish refusal is a finding, not a failure', () => {
+  const src = read('agents/refresh-runner/index.js');
+  // A refusal here is usually a GATE working — a divergent content mirror, or a
+  // failing editor gate. Reporting the publisher's correct refusal as a broken
+  // agent is precisely backwards.
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/);
+});

@@ -84,28 +84,30 @@ test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', ()
   assert.ok(/1 task ran/.test(html), 'activity line still present');
 });
 
-// LLM spend was the last read escaping dataRoot: readUsage/listUsageDates resolve a
-// module-level USAGE_DIR, so the cost section rendered from the real repo no matter
-// what root was passed. On the server that section fires (spend is over the $20/wk
-// target), which kept the quiet-day assertion above failing there even after the
-// other seven reads were injectable.
-test('buildDigestHtml: LLM cost is read from the injected root, and only shows over budget', () => {
+// THE LLM COST BLOCK WAS REMOVED 2026-09-08, on the operator's instruction: the
+// fleet moved off per-token API billing onto the monthly subscription, so agent run
+// cost no longer constrains any decision. This test used to assert the block
+// RENDERED; it now asserts it does not, so the section cannot be reinstated without
+// somebody deliberately deleting this.
+//
+// Its last real appearance was also a false alarm, which is why nobody should miss
+// it: the 2026-09-07 digest warned "$34.03/wk ⚠️ over $20 target" when $11.54 of the
+// $17.19 day was ONE hand-run local script. A budget line that counts a human's
+// ad-hoc run against an unattended-fleet target cannot be read correctly.
+test('buildDigestHtml: the LLM cost block is gone, even with over-budget spend on disk', () => {
   const root = mkdtempSync(join(tmpdir(), 'digest-cost-'));
   const usage = join(root, 'data', 'reports', 'llm-usage');
   mkdirSync(usage, { recursive: true });
-  // Token fields are deliberately omitted. recordCost recomputes cost from tokens
-  // whenever any token field is present and only falls back to est_cost_usd when
-  // none are — so a record carrying both would price off the model table and make
-  // this fixture's total depend on pricing data that changes.
   const rec = (cost) => JSON.stringify({ ts: '2026-07-20T10:00:00Z', agent: 'spendy', model: 'claude-opus-5', est_cost_usd: cost });
-  // $30 in one day → a run-rate far above the $20/wk target.
+  // $30 in one day — a run-rate far above the old $20/wk target, so this fixture
+  // would have rendered the block under every previous version of the digest.
   writeFileSync(join(usage, '2026-07-20.jsonl'), [rec(30)].join('\n') + '\n');
 
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
   const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
 
-  assert.ok(html.includes('LLM Cost'), 'over-budget spend from the injected root renders');
-  assert.ok(!html.includes('Nothing moved the needle'), 'over-budget spend is a needle-mover');
+  assert.ok(!html.includes('LLM Cost'), 'the cost block must not render');
+  assert.ok(!html.includes('over $20 target'), 'the budget verdict must not render');
 });
 
 // The counterpart. This is exactly the server's state — data/meta-tests holds 9
