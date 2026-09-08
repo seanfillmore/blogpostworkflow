@@ -99,6 +99,9 @@ import {
   assertNewSkillGating,
   liveTacticHeadings,
   regateAdopted,
+  findCappedScores,
+  rescoreCapped,
+  raiseFitScore,
   insertStageMarker,
   removeStageMarker,
   validateSkillEdit,
@@ -121,7 +124,7 @@ const REPORT_DIR = join(ROOT, 'data', 'reports', 'marketing-learner');
 
 const FLAGS = {
   '--extract-only': 'extractOnly', '--no-pr': 'noPr', '--refetch': 'refetch',
-  '--readjudicate': 'readjudicate', '--all': 'all', '--regate': 'regate', '--apply': 'apply',
+  '--readjudicate': 'readjudicate', '--all': 'all', '--regate': 'regate', '--rescore': 'rescore', '--apply': 'apply',
   '--parked': 'parked',
 };
 
@@ -152,7 +155,7 @@ export function parseArgs(argv) {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
     falsify: null, claim: null, reason: null, staged: null, regate: false, apply: false,
     file: null, author: null, title: null, chunkWords: 4500, splitOn: null, sourceKind: null,
-    readjudicate: false, all: false, parked: false,
+    readjudicate: false, all: false, parked: false, rescore: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -187,7 +190,14 @@ export function parseArgs(argv) {
     }
     return out;
   }
-  if (out.apply) throw new Error('--apply is only valid with --regate.');
+  // `--rescore` is checked BEFORE this guard, since it is the second mode that writes.
+  if (out.rescore) {
+    if (out.urls.length || out.file || out.falsify || out.staged || out.readjudicate || out.regate) {
+      throw new Error('--rescore cannot be combined with URLs, --file, --falsify, --staged, --readjudicate or --regate — it is a separate mode over the live skills.');
+    }
+    return out; // a mode, like --regate: it takes no source and must not fall through
+  }
+  if (out.apply) throw new Error('--apply is only valid with --regate or --rescore.');
 
   if (out.readjudicate) {
     if (out.urls.length || out.file || out.falsify || out.staged) {
@@ -197,7 +207,6 @@ export function parseArgs(argv) {
   }
   if (out.all) throw new Error('--all is only valid with --readjudicate.');
   if (out.parked && !out.regate) throw new Error('--parked is only valid with --regate.');
-
   if (out.staged) {
     if (out.staged !== 'all' && !STAGES.includes(out.staged)) {
       throw new Error(`--staged takes one of: ${STAGES.join(', ')} (or no value for all). Got "${out.staged}".`);
@@ -612,6 +621,110 @@ const READJUDICATE_BATCH = 25;
  * 25 matches the readjudicate batch, which is the only size with production evidence.
  */
 const REGATE_BATCH = 25;
+const RESCORE_BATCH = 20;
+
+/**
+ * Repair scores that were LOWERED for reasons the stage rules forbid — current volume,
+ * budget, list size, or "we could not measure it at this scale".
+ *
+ * 63 live tactics across 19 skills carry that defect. It is not cosmetic: the scores reach
+ * the fleet projection creative-packager reads as its copy-tactic menu, and adopted tactics
+ * sort by score, so a tactic capped at 5 instead of 8 is buried twice — once behind its gate
+ * and once down the list.
+ *
+ * ONE-DIRECTIONAL BY CONSTRUCTION. `rescoreCapped` throws if the model returns a lower
+ * score and only returns risers; `raiseFitScore` refuses a downward move. This repairs a
+ * specific systematic error — it is not a licence to re-judge the corpus.
+ *
+ * The capping sentence is deliberately LEFT IN THE FILE. It is the record of why the score
+ * was wrong, and a reader who meets "held at 6 … at this volume" beside an 8/10 can see the
+ * cap was overruled. Deleting it would erase the evidence of the repair.
+ *
+ * CONSEQUENCE, STATED RATHER THAN DISCOVERED: because that sentence stays, `findCappedScores`
+ * still returns the same 63 sections after a successful run — so this mode is NOT idempotent
+ * the way `--regate` is. A second run re-judges the same set, and while the prompt asks for a
+ * merit-only score (which should come back unchanged), nothing stops a model ratcheting 8 → 9.
+ * **Run it once after a constraint-block change, not on a schedule, and read the dry run.**
+ * The clean fix is a marker on a repaired section that the detector skips; that is a separate
+ * change, and inventing an untested marker mechanism inside this repair was not worth it.
+ */
+async function runRescore({ client, args }) {
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const capped = findCappedScores(inventory);
+  console.log(`${capped.length} live tactics carry a score capped on volume, budget or `
+    + `measurability, across ${new Set(capped.map((c) => c.skill)).size} skills.`);
+  if (!capped.length) return;
+
+  const risen = [];
+  for (let i = 0; i < capped.length; i += RESCORE_BATCH) {
+    const batch = capped.slice(i, i + RESCORE_BATCH);
+    process.stdout.write(`  batch ${Math.floor(i / RESCORE_BATCH) + 1}/${Math.ceil(capped.length / RESCORE_BATCH)}: ${batch.length} tactics… `);
+    const got = await rescoreCapped({ items: batch, client });
+    risen.push(...got);
+    console.log(`${got.length} raised`);
+  }
+
+  if (!risen.length) {
+    console.log('\nNo score moved — every cap turned out to rest on a real merit judgement.');
+    return;
+  }
+
+  const bySkill = {};
+  for (const r of risen) (bySkill[r.skill] ??= []).push(r);
+  for (const [name, list] of Object.entries(bySkill)) {
+    console.log(`\n── ${name} ──`);
+    for (const r of list) {
+      console.log(`  ${r.score} → ${r.newScore}   ${r.claim.slice(0, 88)}`);
+      console.log(`            ↳ ${r.reasoning}`);
+    }
+  }
+  const delta = risen.reduce((s, r) => s + (r.newScore - r.score), 0);
+  console.log(`\n${risen.length} of ${capped.length} tactics would rise, +${delta} points total.`);
+
+  if (!args.apply) {
+    console.log('\nDry run — pass --apply to write.');
+    return;
+  }
+
+  let written = 0, failed = 0;
+  for (const [name, list] of Object.entries(bySkill)) {
+    const path = join(SKILLS_DIR, name, 'SKILL.md');
+    const before = readFileSync(path, 'utf8');
+    let after = before;
+    try {
+      for (const r of list) after = raiseFitScore(after, r.claim, r.score, r.newScore);
+      // No `supersedes`: this touches a digit in a Fit heading and nothing else, so every
+      // guard — the graveyard, the stage markers, the shrink floor — must still hold.
+      validateSkillEdit(before, after);
+    } catch (err) {
+      console.error(`  ✗ ${name}: ${err.message}`);
+      failed++;
+      continue;
+    }
+    writeFileSync(path, after);
+    written += list.length;
+    console.log(`  ✓ ${name}: ${list.length} score(s) raised`);
+  }
+  console.log(`\nRaised ${written} scores across ${Object.keys(bySkill).length - failed} skills.`
+    + (failed ? ` ${failed} skill(s) refused — see above.` : ''));
+  syncContextMirror();
+
+  await notify({
+    subject: `Marketing re-score: ${written} capped score${written === 1 ? '' : 's'} repaired`
+      + (failed ? ` (${failed} skill${failed === 1 ? '' : 's'} refused)` : ''),
+    body: [
+      `${capped.length} tactics carried a score capped on volume, budget or measurability;`,
+      `${risen.length} were judged higher on merit alone (+${delta} points).`,
+      '',
+      ...Object.entries(bySkill).map(([name, list]) =>
+        `${name}:\n` + list.map((r) => `  - ${r.score} → ${r.newScore}  ${r.claim.slice(0, 80)}`).join('\n')),
+      '',
+      'Timing belongs in the `stage` marker, never in the score. The capping sentences are',
+      'left in place as the record of what was overruled.',
+    ].join('\n'),
+    status: failed ? 'error' : 'ok',
+  });
+}
 
 /**
  * Add stage markers to tactics that are already adopted and live but were never eligible
@@ -1163,6 +1276,10 @@ async function main() {
 
   if (args.regate) {
     return runRegate({ client, args });
+  }
+
+  if (args.rescore) {
+    return runRescore({ client, args });
   }
 
   if (args.readjudicate) {

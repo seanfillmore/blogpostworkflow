@@ -53,7 +53,7 @@ Held at 7 because it overlaps the splinter-and-upsell logic above and the card-o
 
 **Evidence offered:** Gym anecdote — 'You just wanna use the card we have on file?' — 'Yep, that's fine' — reported as a habit he still uses, plus repeated supplement-sale closes. Anecdotal, no figures.
 
-**Fit here (7/10):** The live ecommerce equivalent is current, not stale: Shopify's post-purchase / thank-you-page offer charges the card already captured with one click. That is an Offer/AOV lever distinct from the express-checkout item in the friction skill (which is about abandonment *before* the sale), it is solo-operator setup, and it raises the $50.46 AOV with no new visitors. This is also the mechanical payoff of the tripwire entry above — the cheap first purchase exists partly to get a card into the system so this one-click close is available. Capped at 7 because it requires a low-cost app subscription against ~$2,700/mo revenue, it exists only on the ~$875/mo Shopify side since Amazon controls that flow entirely, and at ~54 orders/month the take rate will take months to read — a set-it-and-move-on item.
+**Fit here (8/10):** The live ecommerce equivalent is current, not stale: Shopify's post-purchase / thank-you-page offer charges the card already captured with one click. That is an Offer/AOV lever distinct from the express-checkout item in the friction skill (which is about abandonment *before* the sale), it is solo-operator setup, and it raises the $50.46 AOV with no new visitors. This is also the mechanical payoff of the tripwire entry above — the cheap first purchase exists partly to get a card into the system so this one-click close is available. Capped at 7 because it requires a low-cost app subscription against ~$2,700/mo revenue, it exists only on the ~$875/mo Shopify side since Amazon controls that flow entirely, and at ~54 orders/month the take rate will take months to read — a set-it-and-move-on item.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -63,7 +63,7 @@ Held at 7 because it overlaps the splinter-and-upsell logic above and the card-o
 
 **Evidence offered:** Stated as a three-item failure list; assertion only.
 
-**Fit here (7/10):** This is the timing rule that decides which surface each cross-sell belongs on: 'more of the same' (a multipack) belongs in the cart because the problem is running out, while a residue remover or body wash belongs in a post-purchase email 2–3 weeks in, once the transition period has actually been experienced. That sequencing is free, needs no attribution, and aims at the 18–22.5% repeat rate. Not higher because at ~54 orders/month RSC can't A/B the timing and must place offers by judgment.
+**Fit here (8/10):** This is the timing rule that decides which surface each cross-sell belongs on: 'more of the same' (a multipack) belongs in the cart because the problem is running out, while a residue remover or body wash belongs in a post-purchase email 2–3 weeks in, once the transition period has actually been experienced. That sequencing is free, needs no attribution, and aims at the 18–22.5% repeat rate. Not higher because at ~54 orders/month RSC can't A/B the timing and must place offers by judgment.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -73,7 +73,7 @@ Held at 7 because it overlaps the splinter-and-upsell logic above and the card-o
 
 **Evidence offered:** Rental-counter and service-business examples; framing asserted from practice, no conversion data.
 
-**Fit here (7/10):** RSC has 12 SKUs but no structured second ask anywhere in the purchase path — no cart cross-sell, no post-purchase offer. Writing cart/checkout add-on copy with hassle-removal framing (a travel size so you don't repack, a two-pack so you don't run out mid-transition) is free and solo-executable on Shopify at the Offer/AOV stage. Capped at 7 because Amazon (~$1,800/mo, the larger channel) offers almost no sequenced-offer surface, at ~54 orders/month the lift will never be statistically readable, and the rental-counter version relies on a human reading the customer live.
+**Fit here (8/10):** RSC has 12 SKUs but no structured second ask anywhere in the purchase path — no cart cross-sell, no post-purchase offer. Writing cart/checkout add-on copy with hassle-removal framing (a travel size so you don't repack, a two-pack so you don't run out mid-transition) is free and solo-executable on Shopify at the Offer/AOV stage. Capped at 7 because Amazon (~$1,800/mo, the larger channel) offers almost no sequenced-offer surface, at ~54 orders/month the lift will never be statistically readable, and the rental-counter version relies on a human reading the customer live.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 1 of 11)*
 

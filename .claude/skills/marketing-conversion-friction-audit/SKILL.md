@@ -63,7 +63,7 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 
 **Evidence offered:** Personal preference plus assertion; no conversion data.
 
-**Fit here (7/10):** This is platform-mechanics class, so normally suspect — but the specific mechanics named (Shop Pay, guest checkout toggles) are still live Shopify settings in 2024-era and later, so the 2024 publish date does not undermine it. Squarely inside the CRO stage of the gated sequence: a one-time settings change by the solo operator, zero cost, no ad budget, and it operates on the Shopify side where revenue is weakest at ~$875/mo. Capped at 7 because at roughly 54 orders/month the lift will never be measurable, so it is a do-it-and-move-on item, not a test.
+**Fit here (8/10):** This is platform-mechanics class, so normally suspect — but the specific mechanics named (Shop Pay, guest checkout toggles) are still live Shopify settings in 2024-era and later, so the 2024 publish date does not undermine it. Squarely inside the CRO stage of the gated sequence: a one-time settings change by the solo operator, zero cost, no ad budget, and it operates on the Shopify side where revenue is weakest at ~$875/mo. Capped at 7 because at roughly 54 orders/month the lift will never be measurable, so it is a do-it-and-move-on item, not a test.
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
@@ -93,7 +93,7 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 
 **Evidence offered:** Ecommerce Alley: assertion posed as a self-audit question, no data. Schwartz: assertion with the three-dimension framework laid out, no worked example and no data.
 
-**Fit here (6/10):** Durable CRO/copy-structure class, zero cost, purely editorial, solo-executable. The three-job test is what the trimming instruction was missing — it sits in real tension with several adopted tactics that add page content (results timeline, guarantee, returns toggle, proof stack, the dedicated top-objection section), and the test resolves that tension by showing each of those is load-bearing on belief, so the useful form is 'order by decision-relevance and collapse the rest,' not 'delete.' Held at 6 because it is a length heuristic rather than a revenue mechanism, it overlaps the one-job-per-asset and headline-hierarchy rules already in marketing-product-image-stack (though those govern single frames rather than page length), and at ~54 orders/month page length will be judged rather than measured.
+**Fit here (7/10):** Durable CRO/copy-structure class, zero cost, purely editorial, solo-executable. The three-job test is what the trimming instruction was missing — it sits in real tension with several adopted tactics that add page content (results timeline, guarantee, returns toggle, proof stack, the dedicated top-objection section), and the test resolves that tension by showing each of those is load-bearing on belief, so the useful form is 'order by decision-relevance and collapse the rest,' not 'delete.' Held at 6 because it is a length heuristic rather than a revenue mechanism, it overlaps the one-job-per-asset and headline-hierarchy rules already in marketing-product-image-stack (though those govern single frames rather than page length), and at ~54 orders/month page length will be judged rather than measured.
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
