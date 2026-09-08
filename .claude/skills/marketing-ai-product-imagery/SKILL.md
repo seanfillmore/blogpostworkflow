@@ -1,9 +1,19 @@
 ---
 name: marketing-ai-product-imagery
-description: Workflow for producing listing, PDP, and native-ad imagery with AI image models grounded in real product reference photos, including the QA passes (hallucination audit, text proofreading) that make renders safe to ship.
+description: Workflow for producing listing, PDP, and native-ad imagery with AI image models grounded in real product reference photos — including the plan-first research step, anti-fabrication prompt guardrails, and the QA passes (hallucination audit, text proofreading, export verification) that make renders safe to ship.
 ---
 
 # Ai Product Imagery
+
+## Before generating anything, run a setup prompt that points the model at your live product page URL and makes it research the product, inspect the real packaging photos, name one buyer and their specific frustration and desired outcome, collect only verified benefits/offer terms/reviews, fix a brand visual identity, and return a written six-frame creative plan with source links — generate nothing until that plan is approved.
+
+**Why it works:** Six attractive images can still leave six unanswered questions. Forcing the research and a frame-by-frame plan first means each frame is assigned a distinct buying question to answer, and grounding the plan in the live page's own facts and packaging photos stops the model inventing product details before a single render is spent.
+
+**Evidence offered:** Demonstrated end-to-end on a real brand (Winks) with the full prompt published; the creator states this plan-first step is 'the biggest improvement in this workflow'. No conversion data — he explicitly calls the outputs hypotheses, not tested winners.
+
+**Fit here (8/10):** The solo operator *is* the designer and already generates listing imagery with AI, but nothing in this workflow previously forced a job-per-frame plan before rendering. With conversion rate the binding constraint across 12 SKUs on Shopify PDPs and Amazon listings, a step that makes every frame earn a distinct job is directly on the CRO path and runnable today at zero cost. Pairs with the reference-photo rule below rather than replacing it: the plan supplies *what each frame must say*, the phone photos supply *what the product actually looks like* — the page's own packaging photos are a research input, not a substitute for your own multi-angle shots. Which slot owns which job is still governed by marketing-product-image-stack; use that as the check on the model's proposed six frames.
+
+*Source: Oliver Kenyon (@oliverkenyon, ConversionWise) — "How to Generate High-Converting Ecom Product Images with ChatGPT's Astra Update" (social post)*
 
 ## Ground every generation in your own raw phone photos of the actual product: shoot several angles, several zoom distances, and deliberate close-ups of any fine detail (engraved text, buttons, labels), and re-upload that same set at the start of every fresh chat.
 
@@ -31,9 +41,19 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 
 **Evidence offered:** Asserted as 'the first tip', then demonstrated — a one-sentence prompt plus four photos produced a usable primary image on the first attempt.
 
-**Fit here (6/10):** Platform-mechanics class and current, so age is not the limiter. Free, and it removes a real time sink for a solo operator with no design help — the first attempt costs a sentence, not a prompt-writing session. Held at 6 because it is a workflow efficiency habit, not a revenue mechanism, and prompt-length norms are exactly the model-specific detail unlikely to survive the next model generation.
+**Fit here (6/10):** Platform-mechanics class and current, so age is not the limiter. Free, and it removes a real time sink for a solo operator with no design help — the first attempt costs a sentence, not a prompt-writing session. Held at 6 because it is a workflow efficiency habit, not a revenue mechanism, and prompt-length norms are exactly the model-specific detail unlikely to survive the next model generation. Note the exception: the anti-fabrication rules and the output-format spec below are standing prompt text worth carrying every time — brevity applies to *creative direction*, not to guardrails.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
+
+## Write anti-fabrication rules into the generation prompt itself: no invented testimonials, review counts, press logos, certifications, scarcity or before-and-after evidence; show only ingredients and components actually present; and never portray a generated person as the author of a real review or as a verified customer.
+
+**Why it works:** Image models will happily render plausible five-star badges, award logos and 'customers' to fill a composition. Banning those categories up front in the prompt keeps every proof element on the frame traceable to something real, so the listing survives a compliance check and the buyer is not being asked to trust fabricated evidence. An attractive generated person holding the product is decoration, not proof — and must not be allowed to stand in for it.
+
+**Evidence offered:** Stated as shared requirements across all six prompts, plus per-frame reminders ('an attractive person holding the product must not substitute for evidence'). Assertion only.
+
+**Fit here (7/10):** Extends the guardrails already here rather than repeating them: the hallucination audit below owns the *rendered product* (invented features, wrong scale, cross-panel inconsistency) and marketing-product-image-stack requires any metric or claim to live on the actual packaging. Neither covered fabricated third-party proof — badges, review counts, certifications, press logos — or generated humans implied to be real customers. That is precisely the failure mode for a solo operator generating natural-deodorant frames on Amazon, where a fabricated certification or review count is not just a trust problem but grounds for the listing being pulled on the ~$1,800/mo channel. Free, runnable today as standing prompt text, and it prevents defects instead of catching them at audit.
+
+*Source: Oliver Kenyon (@oliverkenyon, ConversionWise) — "How to Generate High-Converting Ecom Product Images with ChatGPT's Astra Update" (social post)*
 
 ## When a chat stops improving — specifically, when two corrective prompts fail to move the image — abandon it entirely, open a fresh chat, and re-upload the original reference photos (or the last good image) with the same instruction rather than continuing to course-correct.
 
@@ -41,7 +61,7 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 
 **Evidence offered:** Multiple demonstrations: two rounds of correction on a bad features graphic returned 'basically the exact same thing', while a brand-new chat with the same original photos produced a graphic he called ready to upload; likewise the too-large lifestyle shot and the 'death ash black' diffuser were both fixed by starting a new chat with the last good image and the identical prompt. Anecdotal pattern, no controlled comparison.
 
-**Fit here (7/10):** Platform-mechanics class but contemporaneous with the model, so no decay discount. This is the highest-value operational rule in the video for a solo operator: without it, the failure mode is spending an hour arguing with a stuck chat and concluding the tool does not work, and on a ~$20/mo tier wasted rounds are wasted usage. Free, no traffic or attribution needed, applies every time an Amazon A+ or PDP image is built. Note it is the counterpart to the direct-edit rule in marketing-email-design-production — reconciliation: targeted edit when the output is close, fresh chat when it has plateaued after two tries.
+**Fit here (7/10):** Platform-mechanics class but contemporaneous with the model, so no decay discount. This is the highest-value operational rule in the video for a solo operator: without it, the failure mode is spending an hour arguing with a stuck chat and concluding the tool does not work, and on a ~$20/mo tier wasted rounds are wasted usage. Free, no traffic or attribution needed, applies every time an Amazon A+ or PDP image is built. Note it is the counterpart to the direct-edit rule in marketing-email-design-production — reconciliation: targeted edit when the output is close, fresh chat when it has plateaued after two tries. When you do open the fresh chat, re-paste the anti-fabrication rules and the output-format spec along with the references; guardrails do not survive the chat you abandoned.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -51,7 +71,7 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 
 **Evidence offered:** Demonstrated: after a good features graphic, the single prompt 'create a similar graphic but for benefits' returned a matching benefits graphic with correct button engravings and correct LED colors, with no further specification.
 
-**Fit here (7/10):** Platform-mechanics class, current. Directly useful because an Amazon listing needs six or seven visually consistent slots across 12 SKUs — a solo operator with no designer has no other way to hold a house style across ~80 images. Free, no traffic or budget required, operates on the larger ~$1,800/mo channel. Not higher because it is a consistency and speed lever rather than something that changes what the images say; the job of each slot is owned by marketing-product-image-stack.
+**Fit here (7/10):** Platform-mechanics class, current. Directly useful because an Amazon listing needs six or seven visually consistent slots across 12 SKUs — a solo operator with no designer has no other way to hold a house style across ~80 images. Free, no traffic or budget required, operates on the larger ~$1,800/mo channel. Not higher because it is a consistency and speed lever rather than something that changes what the images say; the job of each slot is owned by marketing-product-image-stack, and the approved creative plan from the setup prompt tells you which frame to derive next.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -81,7 +101,7 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 
 **Evidence offered:** Worked through live: he rejects a lifestyle shot for wrong scale and 'too perfect' feel, rejects an otherwise-good instructions graphic because the same diffuser renders tall in one panel and wide in another, and twice corrects an invented orange glow with 'remove the orange glow from the body of the product — only the thin line between the ceramic and the wooden base actually glows.' Judgement calls and demonstrated fixes, no data on buyer reaction.
 
-**Fit here (8/10):** Durable-principle class (asset QA), and the stakes are higher for Real Skin Care than in the source. These are cosmetics on Amazon: an image showing a texture, colour, applicator or label that does not match the shipped product is an accuracy violation on the ~$1,800/mo channel and a driver of the 'this isn't what I bought' disappointment behind the 18–22.5% repeat rate. Free, purely editorial, no traffic or budget needed, and nothing in the existing image or copy skills owns hallucination review. Practical rule: AI renders are safe for infographic, comparison and instructional slots; for the main image, verify the render matches the real label, cap and colour exactly, or use a real photo. This audit covers the *rendered product*; the companion rule below covers the *rendered text* on the frame — run both before anything uploads.
+**Fit here (8/10):** Durable-principle class (asset QA), and the stakes are higher for Real Skin Care than in the source. These are cosmetics on Amazon: an image showing a texture, colour, applicator or label that does not match the shipped product is an accuracy violation on the ~$1,800/mo channel and a driver of the 'this isn't what I bought' disappointment behind the 18–22.5% repeat rate. Free, purely editorial, no traffic or budget needed, and nothing in the existing image or copy skills owns hallucination review. Practical rule: AI renders are safe for infographic, comparison and instructional slots; for the main image, verify the render matches the real label, cap and colour exactly, or use a real photo. This audit covers the *rendered product*; the anti-fabrication rules above cover *invented third-party proof and fake customers*, and the companion rule below covers the *rendered text* on the frame — run all three, plus the export check, before anything uploads.
 
 *Source: Chris Rawlings — "Nano Banana Pro for Product Photography (Step by Step 2026 Guide)" (12pQ0W2bCDE)*
 
@@ -94,6 +114,16 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 **Fit here (6/10):** Durable QA principle (asset review), age irrelevant. Additive in a narrow direction: the hallucination audit above owns invented product features, scale and cross-panel inconsistency, and marketing-product-image-stack covers garbled *small* text patched in Canva — but nothing owned proofreading legible, full-size copy on a generated frame. Stakes are real here: this catalogue literally sells deodorant, and a misspelled 'deodorant' on a secondary slot is a credibility problem on the larger ~$1,800/mo Amazon channel. Free, purely editorial, solo-executable. Capped at 6 because it is a checklist item close in spirit to the hallucination audit rather than a revenue mechanism — read the words letter by letter, out loud if needed, on every frame before upload.
 
 *Source: Dara Denney — "AI Static Ads Masterclass (FULL GUIDE)" (5C5VhqW9HCc)*
+
+## Specify the output format in the prompt (a consistent 1:1 square at a fixed pixel target, essential content held comfortably inside the edges for mobile), then verify the actual exported dimensions of the downloaded original rather than trusting the size you asked for, and optimise file size before publishing.
+
+**Why it works:** The model complies with a requested size in words but not in pixels — prompts asked for 2000x2000 and the delivered files came back 1254x1254 — so an unverified export ships soft or upscaled imagery. And content sitting near the frame edge gets cropped by mobile carousel and thumbnail rendering, so the safe-margin instruction has to be in the prompt, not discovered after upload. A requested size is not a verified export size.
+
+**Evidence offered:** Direct observation of the mismatch in his own outputs, stated as a caution, plus the shared prompt requirement to keep essential content inside the edges.
+
+**Fit here (6/10):** Concrete pre-ship mechanics nothing else here held — the hallucination audit and the copy proofread cover what the frame *says*, not whether the file is big enough, cropped safely or light enough to load. Amazon has hard minimum pixel dimensions for main-image zoom and the Shopify PDP is mobile-first, so a soft or edge-cropped render costs conversion on exactly the surface where the binding constraint sits. Free, one person, today. Capped at 6 because it is a file-hygiene checklist rather than a revenue mechanism — but it belongs in the same pre-upload gate as the two audits above: check dimensions of the downloaded original, check nothing critical is within the crop margin, compress, then publish. It also pairs with the mobile-optimised style rule below: that one makes the *design* legible at thumbnail size, this one makes the *file* survive the platform.
+
+*Source: Oliver Kenyon (@oliverkenyon, ConversionWise) — "How to Generate High-Converting Ecom Product Images with ChatGPT's Astra Update" (social post)*
 
 ## Generate the primary white-background hero render and the lifestyle-in-a-room shot with the AI model instead of hiring a photographer or 3D rendering artist.
 
@@ -111,7 +141,7 @@ description: Workflow for producing listing, PDP, and native-ad imagery with AI 
 
 **Evidence offered:** Assertion plus the creator's Prompt 8 and 'Final Results' examples. No test data, no comparison against a real photo.
 
-**Fit here (6/10):** Executable today by the solo operator with no team and no shoot, and it feeds the live $30/day Meta campaign and the giveaway entry ads. Marked down only because a candid native photo has to survive the authenticity test — a rendered scene that reads as AI defeats the whole point of the format, and for a ~$50 AOV body-care product a plain phone photo of the real product in a real bathroom is often the cheaper honest version. Tool-name specifics ('GPT Images 2/5') are fast-decay platform mechanics, but the source is weeks old so that is not what drove the score. Practical reconciliation with the rules above: the reference-photo and scale-reference rules still apply (the product in the candid frame must be *your* product at *your* size), the hallucination audit and the copy proofread still gate the upload, and if the winning concept is one you could shoot in your own bathroom in five minutes, shoot it instead — this tactic earns its keep on scenes you cannot stage.
+**Fit here (6/10):** Executable today by the solo operator with no team and no shoot, and it feeds the live $30/day Meta campaign and the giveaway entry ads. Marked down only because a candid native photo has to survive the authenticity test — a rendered scene that reads as AI defeats the whole point of the format, and for a ~$50 AOV body-care product a plain phone photo of the real product in a real bathroom is often the cheaper honest version. Tool-name specifics ('GPT Images 2/5') are fast-decay platform mechanics, but the source is weeks old so that is not what drove the score. Practical reconciliation with the rules above: the reference-photo and scale-reference rules still apply (the product in the candid frame must be *your* product at *your* size), the anti-fabrication rules apply with extra force here — a generated person in a native ad must never be framed as a real customer or reviewer — and the hallucination audit, the copy proofread and the export check still gate the upload. If the winning concept is one you could shoot in your own bathroom in five minutes, shoot it instead; this tactic earns its keep on scenes you cannot stage.
 
 *Source: Lorenzo Pravata (@lorenzo_pravata) — "Native ads with GPT Images 2 + Claude (Full Playbook)" (social post)*
 
