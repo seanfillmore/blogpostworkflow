@@ -5,6 +5,9 @@ import { join } from 'node:path';
 import {
   parsePublishedFlags,
   buildConstraintBlock,
+  assertPaidStatusFresh,
+  PAID_STATUS_AS_OF,
+  PAID_STATUS_MAX_AGE_DAYS,
   parseFrontmatter,
   scanSkillInventory,
   renderSkillMarkdown,
@@ -2723,3 +2726,32 @@ console.log('✓ marketing-learner required-stage tests pass');
 }
 
 console.log('✓ marketing-learner stream-deadline tests pass');
+
+// ── the constraint block's paid-spend status must be re-verified, not left to rot ──────
+{
+  // This block scores every tactic the fleet ingests, and it has gone stale silently
+  // before: it read "traffic gate OPEN ... $30/day" for nine days after spend was paused.
+  // Prose in a template cannot expire on its own, so this is what expires it.
+  assertPaidStatusFresh();
+
+  const block = buildConstraintBlock();
+  assert.match(block, /PAID SPEND IS CURRENTLY PAUSED/,
+    'the block must state the current spend status outright');
+  assert.match(block, new RegExp(PAID_STATUS_AS_OF),
+    'the stated status must carry the date it was verified');
+
+  // The carve-out that stops this correction re-causing the 2026-08-16 failure, where six
+  // Meta tactics scored 4/10 because paid "was not a thing yet". A paused budget is not a
+  // closed gate: the account, pixel and creative exist, and restarting is one API call.
+  assert.match(block, /traffic gate is OPEN/,
+    'a paused budget must NOT be allowed to read as a closed traffic gate');
+  assert.match(block, /park THAT behind `scale`, never `traffic`/,
+    'the block must say which gate a spend-blocked tactic belongs behind');
+
+  const asOf = new Date(`${PAID_STATUS_AS_OF}T00:00:00Z`);
+  const justInside = new Date(asOf.getTime() + PAID_STATUS_MAX_AGE_DAYS * 86400000);
+  const wellPast = new Date(asOf.getTime() + (PAID_STATUS_MAX_AGE_DAYS + 30) * 86400000);
+  assert.doesNotThrow(() => assertPaidStatusFresh(justInside));
+  assert.throws(() => assertPaidStatusFresh(wellPast), /past the \d+-day limit/);
+}
+console.log('\u2713 marketing-learner paid-status freshness tests pass');
