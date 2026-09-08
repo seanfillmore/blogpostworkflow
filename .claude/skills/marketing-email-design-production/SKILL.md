@@ -67,7 +67,7 @@ The cheap way to get one built: give the AI design tool your live store URL plus
 
 **Evidence offered:** Two practitioners in direct conflict. O'Connor's agency rules were "at least three CTAs, images doing most of the selling, exactly one offer or ask per email" — internally contradictory on link count, and asserted from agency practice with no figures. Hormozi reports the opposite for his own sends ("if we put more money stuff in an email it tends to get a higher percentage in the promo tab") and pushes back explicitly on one-link orthodoxy, also without controlled data. Neither ran a test; the reconciliation below is ours, not either source's.
 
-**Fit here (7/10):** The split is what makes both usable. Real Skin Care's highest-value email work is a small set of post-purchase and reorder flows whose whole point is explaining the natural-deodorant transition period — exactly the content that dies as an image-led promo layout, and exactly where the 18–22.5% repeat rate is decided. Promo campaigns for a launch or a bundle still want the designed treatment. Raised above the original 6 because resolving the contradiction is worth more than either rule alone; not higher because link-level performance is unreadable at ~54 orders/month, so this is a default to build on, not a tested result.
+**Fit here (8/10):** The split is what makes both usable. Real Skin Care's highest-value email work is a small set of post-purchase and reorder flows whose whole point is explaining the natural-deodorant transition period — exactly the content that dies as an image-led promo layout, and exactly where the 18–22.5% repeat rate is decided. Promo campaigns for a launch or a bundle still want the designed treatment. Raised above the original 6 because resolving the contradiction is worth more than either rule alone; not higher because link-level performance is unreadable at ~54 orders/month, so this is a default to build on, not a tested result.
 
 *Sources: Jordan O'Connor — "how to design klaviyo emails with claude design (full playbook)" (JTwdMs_rqxA); Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
 
@@ -107,7 +107,7 @@ The cheap way to get one built: give the AI design tool your live store URL plus
 
 **Evidence offered:** Asserted as rules ("not having a PS statement is PS stupid"), demonstrated in teardowns of two of his own sends. No open-rate or click data.
 
-**Fit here (7/10):** Durable reading-behaviour principle, age irrelevant, free. It also fits the content this catalog actually needs: the transition-period, storage and oral-care usage emails are naturally "one usable thing per send," and the PS is a concrete addition to the skeleton above, which ended at a footer CTA — not the same as an ask carried in body copy. Not higher because the effect surfaces as open rate on a small list, which is both noisy and, post-ATT, unreliable to read.
+**Fit here (8/10):** Durable reading-behaviour principle, age irrelevant, free. It also fits the content this catalog actually needs: the transition-period, storage and oral-care usage emails are naturally "one usable thing per send," and the PS is a concrete addition to the skeleton above, which ended at a footer CTA — not the same as an ask carried in body copy. Not higher because the effect surfaces as open rate on a small list, which is both noisy and, post-ATT, unreliable to read.
 
 *Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
 
@@ -117,6 +117,6 @@ The cheap way to get one built: give the AI design tool your live store URL plus
 
 **Evidence offered:** Assertion plus his own examples of matching each video's CTA to its audience, and a self-critique of an email that pitched a workshop after a testimonial lesson — though he notes that email "still did really well," so there is no clean comparison.
 
-**Fit here (6/10):** Concretely: a transition-period education email bridges to the specific deodorant reorder or refill bundle, not a generic "shop all" — which matters because a page that earns attention with no matching buy path is the exact failure the Prime Directive calls a bug. Held at 6 because the skill already enforces one ask and its placement; the additive claim is narrower (the bridge sentence and the destination must follow the email's subject matter), and nothing here is measurable at ~54 orders/month.
+**Fit here (7/10):** Concretely: a transition-period education email bridges to the specific deodorant reorder or refill bundle, not a generic "shop all" — which matters because a page that earns attention with no matching buy path is the exact failure the Prime Directive calls a bug. Held at 6 because the skill already enforces one ask and its placement; the additive claim is narrower (the bridge sentence and the destination must follow the email's subject matter), and nothing here is measurable at ~54 orders/month.
 
 *Source: Alex Hormozi — "Learn Email Marketing in 39 Minutes!" (pLhQOYMGa88)*
