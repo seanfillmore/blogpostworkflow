@@ -153,8 +153,25 @@ ${original}`;
 const isDirectRun = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isDirectRun) {
   main().catch((err) => {
-    notify({ subject: 'Content Remediator failed', body: err.message || String(err), status: 'error' }).catch(() => {});
+    // A dropped-link refusal is the GUARD WORKING, not the agent breaking.
+    // `reviseWithLinkGuard` already spent its one retry with the missing anchors
+    // named in the prompt; a second sample that still drops a link is refused and
+    // the live page is left exactly as it was. Reporting that in the digest's
+    // Failures block tells a human to go fix an agent that has nothing wrong with
+    // it — the same mistake as filing the publisher's mirror-gate refusal as a
+    // broken run. `'info'` renders the identical body in the ordinary entry list.
+    // Every other throw here IS breakage and keeps `'error'`.
+    const guardRefusal = Array.isArray(err.droppedLinks) && err.droppedLinks.length > 0;
+    notify({
+      subject: guardRefusal
+        ? `Content Remediator: revision refused — would have dropped ${err.droppedLinks.length} link(s)`
+        : 'Content Remediator failed',
+      body: err.message || String(err),
+      status: guardRefusal ? 'info' : 'error',
+    }).catch(() => {});
     console.error(`  content-remediator error: ${err.message}`);
+    // Exit 1 either way: the revision was NOT saved, and the caller's re-gate must
+    // not read this as "content changed".
     process.exit(1);
   });
 }

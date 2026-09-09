@@ -99,3 +99,38 @@ test('a refresh-runner publish refusal is a finding, not a failure', () => {
   // agent is precisely backwards.
   assert.doesNotMatch(src, /status: failed\.length \? 'error'/);
 });
+
+// ── Added 2026-09-09 ────────────────────────────────────────────────────────
+// The 2026-09-08 digest carried "Content Remediator failed / Revision dropped 1
+// link — refusing to save: Shop Now" in the Failures block, twice. That is the
+// link-drop guard in lib/content-revision.js doing exactly its job: it had
+// already spent its one retry with the missing anchor named in the prompt, and a
+// second sample that still drops the CTA is refused so the live page is left as
+// it was. Filing a working guard as a broken agent is the same mistake as the
+// refresh-runner row above.
+//
+// Unlike the three demotions above, this one is inside the catch in main() — so
+// the split has to be made ON THE ERROR rather than by removing a ternary. The
+// dropped-link error is the only one carrying `.droppedLinks`; every other throw
+// is still breakage and still sets 'error'.
+
+test('a content-remediator link-drop refusal is a finding, not a failure', () => {
+  const src = read('agents/content-remediator/index.js');
+  assert.match(src, /guardRefusal[\s\S]{0,200}droppedLinks/,
+    'the refusal must be distinguished by the error the guard actually throws');
+  assert.match(src, /status: guardRefusal \? 'info' : 'error'/,
+    "a refused revision is 'info'; anything else is still 'error'");
+  assert.match(src, /would have dropped \$\{err\.droppedLinks\.length\} link\(s\)/,
+    'the subject must still name what was refused and how many');
+  assert.match(src, /process\.exit\(1\)/,
+    'exit 1 must survive: nothing was saved, so the caller must not re-gate as changed');
+});
+
+test('the link-drop error still carries the property that severity split reads', () => {
+  // The demotion above is only correct because validateRevision tags the error.
+  // If that property is ever renamed, the remediator silently reports every
+  // refusal as breakage again — which is the state this test exists to end.
+  const src = read('lib/content-revision.js');
+  assert.match(src, /err\.droppedLinks = dropped/,
+    'validateRevision must keep tagging the dropped-link error');
+});
