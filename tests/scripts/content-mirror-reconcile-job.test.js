@@ -85,29 +85,58 @@ test('a HOLD is still reported whatever the scope', () => {
 // ── Severity: doing the work is not a failure ───────────────────────────────
 
 test('reconciling mirrors is success, not a failure row', () => {
-  const done = classifyReconcileExit(0, { reconciled: 12, held: 2 });
+  const done = classifyReconcileExit(0, { reconciled: 12, held: 0 });
   assert.equal(done.status, 'success');
   assert.equal(done.needsHuman, false);
   assert.match(done.headline, /Reconciled 12/);
-  assert.match(done.headline, /held 2 back/);
 
   const quiet = classifyReconcileExit(0, { reconciled: 0, held: 0 });
   assert.equal(quiet.status, 'success');
   assert.match(quiet.headline, /No different-article mirrors/);
 });
 
-test('a reconciler that could not run IS a failure', () => {
-  for (const code of [1, 2, 70, -1]) {
-    const v = classifyReconcileExit(code, {});
-    assert.equal(v.status, 'error', `exit ${code} means the tier is not being repaired`);
-    assert.equal(v.needsHuman, true);
-  }
+test('a HOLD is the guards working, never a failure', () => {
+  // Found by DRY-RUNNING THIS JOB AGAINST PRODUCTION, which exited 1 with two
+  // `local-ahead` holds — the standing residual state — and the first version of
+  // this classifier called that breakage. `local-ahead` means the local file
+  // holds text live does not, usually an unpublished edit, so refusing to
+  // overwrite it is the most important thing this job does. Reporting it as a
+  // broken agent is precisely backwards, and is the same defect PR #850 and #851
+  // fixed elsewhere in the fleet.
+  const held = classifyReconcileExit(1, { reconciled: 0, held: 2 });
+  assert.equal(held.status, 'success');
+  assert.equal(held.needsHuman, false);
+  assert.match(held.headline, /Held 2 back/);
+  assert.match(held.headline, /policy working/);
+});
+
+test('an UNREADABLE post is a real failure — that split is the point', () => {
+  // exit 3, not 1. A file nobody can read is silent otherwise: every reader in
+  // the fleet catch{}s it and carries on as though it were empty.
+  const unreadable = classifyReconcileExit(3, { reconciled: 0, held: 0 });
+  assert.equal(unreadable.status, 'error');
+  assert.equal(unreadable.needsHuman, true);
+  assert.match(unreadable.headline, /could not be READ/);
+});
+
+test('a refused argument and an unknown exit are failures', () => {
   assert.equal(classifyReconcileExit(64, {}).status, 'error');
   assert.match(classifyReconcileExit(64, {}).headline, /SCOPE_ARGS is a frozen/);
+  for (const code of [2, 70, -1]) {
+    assert.equal(classifyReconcileExit(code, {}).status, 'error', `exit ${code} is unclassifiable`);
+  }
+});
+
+test('the classifier matches the reconciler’s ACTUAL exit codes', () => {
+  // The mapping above is only correct while the reconciler still means what it
+  // meant. Pin the source line rather than trusting a comment.
+  const src = read('scripts/reconcile-content-mirrors.mjs');
+  assert.match(src, /process\.exitCode = unreadable\.length \? 3 : held\.length \? 1 : 0/,
+    'if these codes move, classifyReconcileExit must move with them');
 });
 
 test('nothing here is ever immediate', () => {
-  for (const code of [0, 1, 64]) {
+  for (const code of [0, 1, 3, 64]) {
     assert.equal(classifyReconcileExit(code, {}).immediate, false);
   }
 });
