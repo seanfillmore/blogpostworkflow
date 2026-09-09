@@ -63,6 +63,9 @@ import {
   decideHeldMergeRedirect, findLoserClicks, shapeCannibalizationPage,
   urlPath, slugFromPath,
 } from './redirect-decision.js';
+import {
+  buildReachableIndex, filterReachableRows, reachabilityBanner,
+} from '../../lib/reachable-pages.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
@@ -911,8 +914,43 @@ async function main() {
 
   // Fetch GSC data
   process.stdout.write('  Fetching GSC query+page data... ');
-  const queryPageRows = await getAllQueryPageRows(5000, days);
-  console.log(`${queryPageRows.length} rows`);
+  const rawQueryPageRows = await getAllQueryPageRows(5000, days);
+  console.log(`${rawQueryPageRows.length} rows`);
+
+  // REACHABILITY, BEFORE ANY CONFLICT IS FORMED.
+  //
+  // GSC reports impressions for a drafted or redirected URL for weeks after it
+  // stops being reachable, and this agent creates 301s and merges live article
+  // bodies off that data. Measured on production 2026-09-09, 7 of its 20 stored
+  // decisions named a WINNER that is a draft behind a redirect — 3 of them on
+  // lotion, 62% of store revenue — and a LIVE page with 26,860 impressions was
+  // marked REDIRECT in four decisions in favour of a dead one. Filtering here
+  // rather than after triage means the model never sees an unreachable URL and
+  // so cannot name one, and a group left with fewer than two reachable pages is
+  // not a conflict at all.
+  //
+  // Degrades rather than blocks: a failed fetch leaves the index null and every
+  // row passes, exactly as before this check existed.
+  process.stdout.write('  Checking reachability (drafts + redirects)... ');
+  let reachIndex = null;
+  try {
+    const [reachArticles, reachRedirects] = await Promise.all([
+      (async () => {
+        const out = [];
+        for (const blog of await getBlogs()) {
+          for (const a of await getArticles(blog.id)) out.push({ handle: a.handle, published_at: a.published_at });
+        }
+        return out;
+      })(),
+      getRedirects(),
+    ]);
+    reachIndex = buildReachableIndex({ articles: reachArticles, redirects: reachRedirects });
+    console.log(`${reachArticles.length} articles, ${reachRedirects.length} redirects`);
+  } catch (err) {
+    console.log(`FAILED (${err.message.split('\n')[0]}) — proceeding unfiltered`);
+  }
+  const { kept: queryPageRows, dropped: unreachable } = filterReachableRows(rawQueryPageRows, reachIndex);
+  console.log(reachabilityBanner({ index: reachIndex, dropped: unreachable }));
 
   // Detect blog-vs-blog cannibalization
   process.stdout.write('  Detecting blog-vs-blog cannibalization... ');
