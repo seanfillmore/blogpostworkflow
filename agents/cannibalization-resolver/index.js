@@ -425,8 +425,8 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   // winner's body, applied sequentially, so merge N builds on merge N-1. The
   // cap bounds that. It DEFERS rather than dismisses — detection is re-derived
   // from live GSC every run, so a held-back merge simply re-proposes next time.
-  const { apply: capped, deferred: cappedOut, perWinner } = capMergesPerWinner(decisions);
-  for (const line of mergeCapLines({ deferred: cappedOut, perWinner })) console.log(`  ${line}`);
+  const { apply: capped, deferred: cappedOut, duplicates: dupPairs, perWinner } = capMergesPerWinner(decisions);
+  for (const line of mergeCapLines({ deferred: cappedOut, duplicates: dupPairs, perWinner })) console.log(`  ${line}`);
 
   for (const decision of capped) {
     if (decision.confidence !== 'HIGH') continue;
