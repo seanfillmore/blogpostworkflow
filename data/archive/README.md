@@ -69,3 +69,21 @@ Archived because removing the old frame from the product destroyed its CDN file.
 `step-icon-refs/` — crops of the original used as generation references:
 `step1-icon.png` (the correct bottle, used as the style and product reference)
 and `step2-icon-WRONG.png` (the pump, kept so the defect stays legible).
+
+### `coconut-soap/`
+
+`bar-soap-how-to-use.ORIGINAL.png` — live on the coconut-soap PDP until
+2026-09-09. Its footnote read *"A coconut bar on a dry surface outlasts tallow
+bars at twice the price"* — an unsubstantiated comparative claim on two axes at
+once (performance and price) against a competitor class we have measured nothing
+about. Replaced by `bar-soap-how-to-use-v2.png`, which is that file with the
+footnote erased and nothing else changed. No replacement copy was invented; the
+title and three steps already carry the "make it last" message.
+
+### `coconut-moisturizer/`
+
+`body-cream-how-to-use.ORIGINAL.png` — live until 2026-09-09. Its footnote read
+*"Thicker than a pump lotion"*, implying a comparison to our own lotion, which is
+a squeeze bottle with a flip-top cap. Replaced by `body-cream-how-to-use-v2.png`,
+built by cutting the word out of the ORIGINAL PIXELS and re-centring the line —
+see `scripts/compose-footnote-fixes.sh` for why it was not re-typeset.
