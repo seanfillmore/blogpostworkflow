@@ -86,13 +86,50 @@ test('empty and malformed input do not throw', () => {
   }
 });
 
-test('buildPageMetricsMap keeps quick-win rows over top-page rows', () => {
+test('buildPageMetricsMap UNIONS the two sources — it does not rank them', () => {
+  // Half the original bug. The first version aggregated each source then let a
+  // quick-win entry win the page outright. Measured on production right after
+  // deploying it: quick-win held 1 impression on the clean URL, top-pages held
+  // 10,628 across 8 variant rows, and the map served ONE — so the hero product
+  // still scored below toothpaste and was still never selected.
   const m = buildPageMetricsMap(
-    [{ url: `${B}/products/a`, impressions: 10, position: 7, keyword: 'quick win kw' }],
-    [{ page: `${B}/products/a`, impressions: 999, position: 2 }],
+    [{ url: `${B}/products/coconut-lotion`, impressions: 1, position: 26, keyword: 'coconut body lotion' }],
+    [
+      { page: `${B}/products/coconut-lotion?variant=1&utm_content=sag_organic`, impressions: 201, clicks: 3, position: 1 },
+      { page: `${B}/products/coconut-lotion?variant=2&utm_content=sag_organic`, impressions: 206, clicks: 1, position: 1 },
+    ],
   );
-  assert.equal(m.get(`${B}/products/a`).keyword, 'quick win kw');
-  assert.equal(m.get(`${B}/products/a`).impressions, 10, 'quick-win row wins outright, as before');
+  const e = m.get(`${B}/products/coconut-lotion`);
+  assert.equal(e.impressions, 408, '1 + 201 + 206 — neither source may shadow the other');
+  assert.ok(e.position < 2, 'weighted by the impressions that actually exist');
+});
+
+test('a URL present in BOTH sources is counted ONCE', () => {
+  // getQuickWinPages and getTopPages are two views of one dataset, so the same
+  // URL can appear in both. Summing the two aggregates would double-count it.
+  const m = buildPageMetricsMap(
+    [{ url: `${B}/products/a`, impressions: 500, clicks: 5, position: 7, keyword: 'kw' }],
+    [{ page: `${B}/products/a`, impressions: 500, clicks: 5, position: 7 }],
+  );
+  assert.equal(m.get(`${B}/products/a`).impressions, 500, 'not 1000');
+  assert.equal(m.get(`${B}/products/a`).rows, 1);
+});
+
+test('the KEYWORD still comes from the quick-win side', () => {
+  // That half of the old precedence was about NAMING, not counting, and it
+  // survives: the quick-win query is the one that makes a page actionable.
+  const m = buildPageMetricsMap(
+    [{ url: `${B}/products/b`, impressions: 5, position: 8, keyword: 'the ranking query' }],
+    [{ page: `${B}/products/b?variant=1`, impressions: 900, position: 2, keyword: 'a top-page label' }],
+  );
+  const e = m.get(`${B}/products/b`);
+  assert.equal(e.keyword, 'the ranking query');
+  assert.equal(e.impressions, 905, 'naming precedence must not become counting precedence');
+});
+
+test('a page only in topPages still gets a usable keyword', () => {
+  const m = buildPageMetricsMap([], [{ page: `${B}/products/coconut-lotion?variant=1`, impressions: 50, position: 3 }]);
+  assert.equal(m.get(`${B}/products/coconut-lotion`).keyword, 'coconut lotion');
 });
 
 test('buildPageMetricsMap reads topPages from `page`, not `url`', () => {
