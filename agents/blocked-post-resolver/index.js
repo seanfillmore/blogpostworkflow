@@ -138,6 +138,31 @@ export function selectBlockedPosts(entries, opts = {}) {
 }
 
 /**
+ * Statuses that mean the post has been taken OUT OF CIRCULATION deliberately —
+ * consolidated into a winner, or unpublished. `resolvePublishStatus` folds all
+ * of these into 'unknown', which is not specific enough to route on: a post with
+ * an unparseable date is also 'unknown' and DOES still deserve an attempt. So
+ * the recorded field is read directly.
+ */
+const OUT_OF_CIRCULATION = new Set(['redirected', 'unpublished', 'archived']);
+
+/**
+ * Is this error Shopify telling us the post's own article no longer exists?
+ *
+ * A consolidated loser's article is DELETED and its handle 301s to the winner,
+ * so there is no live body to pull and never will be again. That is not the
+ * agent breaking — it is the cannibalization resolver's merge having worked —
+ * and it must not reach the `failed` bucket. Matched on the article id as well
+ * as the status so an unrelated 404 elsewhere in a run cannot be swallowed.
+ */
+export function isDeletedArticleError(err, meta) {
+  const msg = err?.message || String(err ?? '');
+  if (!/\b404\b/.test(msg)) return false;
+  const id = meta?.shopify_article_id;
+  return Boolean(id) && msg.includes(String(id));
+}
+
+/**
  * What to do with one selected post. A post with no Shopify article has no LIVE
  * body to pull, so remediate-live-post.js exits 1 on it immediately — that post
  * belongs to calendar-runner's publish pipeline, not here.
@@ -146,6 +171,18 @@ export function planPost(entry) {
   const meta = entry?.meta || {};
   if (!meta.shopify_article_id || !meta.shopify_blog_id) {
     return { slug: entry.slug, action: 'skip', reason: 'not on Shopify (no article/blog id) — owned by the publish pipeline' };
+  }
+  // Same reasoning, one step later: the id is recorded but the article behind it
+  // was deleted when the post was merged away. Skipping on the RECORDED state
+  // costs no API call; the 404 guard in the run loop is the safety net for a
+  // deletion nobody has recorded yet.
+  const status = typeof meta.shopify_status === 'string' ? meta.shopify_status.toLowerCase() : '';
+  if (OUT_OF_CIRCULATION.has(status)) {
+    return {
+      slug: entry.slug,
+      action: 'skip',
+      reason: `${status} — the article was merged away; there is no live body to remediate`,
+    };
   }
   return { slug: entry.slug, action: 'remediate', reason: null };
 }
@@ -359,6 +396,17 @@ async function main() {
       if (settled.outcome === 'resolved') resolved.push({ slug: entry.slug, softened: true });
       else exhausted.push({ slug: entry.slug, reasons: settled.reasons });
     } catch (err) {
+      // The article is GONE, not broken — a merge loser whose deletion was never
+      // recorded locally. Nothing here can repair a page that does not exist, and
+      // telling a human to go fix this agent sends them to the wrong place. The
+      // slug is named so the meta can be corrected (shopify_status: 'redirected').
+      if (isDeletedArticleError(err, entry.meta)) {
+        const reason = `article ${entry.meta.shopify_article_id} no longer exists on Shopify (404) — `
+          + 'likely merged away; record shopify_status: "redirected" on this post';
+        skipped.push({ slug: entry.slug, reason });
+        console.log(`  [skip] ${entry.slug}: ${reason}`);
+        continue;
+      }
       failed.push({ slug: entry.slug, reason: (err.message || String(err)).split('\n')[0] });
       console.error(`  [fail] ${entry.slug}: ${err.message}`);
     }

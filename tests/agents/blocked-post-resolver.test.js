@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  selectBlockedPosts, planPost, metaAfterSuccess, metaAfterExhaustion,
+  selectBlockedPosts, planPost, isDeletedArticleError, metaAfterSuccess, metaAfterExhaustion,
   renderResolverSummary,
 } from '../../agents/blocked-post-resolver/index.js';
 import { reportFingerprint } from '../../lib/blocked-posts.js';
@@ -119,4 +119,61 @@ test('renderResolverSummary labels a dry run as a dry run', () => {
   const body = renderResolverSummary({ resolved: [], exhausted: [], skipped: [], failed: [], dryRun: true, candidates: [{ slug: 'a' }] });
   assert.match(body, /dry run/i);
   assert.match(body, /\ba\b/);
+});
+
+// ── Added 2026-09-09 ────────────────────────────────────────────────────────
+// `best-sls-free-toothpaste-2025` failed this agent every single day: its
+// recorded article 563289653418 was DELETED when the cannibalization resolver
+// merged it into `toothpaste-without-sls-what-to-know-best-options` (its handle
+// 301s there, verified 200), but the local meta still said `published` with the
+// dead id. planPost only skipped on a MISSING id, so the dead one sailed through
+// to the Shopify call and 404'd into the `failed` bucket every run.
+//
+// Three of its four siblings in that state were already recorded as
+// `redirected` by hand on 2026-08-31; this one was missed. Both guards exist
+// because the two cases are genuinely different: the recorded one costs no API
+// call, and the 404 net catches a deletion nobody has written down yet — which
+// is exactly the state this post was in.
+
+test('a post recorded as merged away is skipped without an API call', () => {
+  for (const status of ['redirected', 'unpublished', 'archived', 'REDIRECTED']) {
+    const plan = planPost({
+      slug: 'best-sls-free-toothpaste-2025',
+      meta: { shopify_article_id: 563289653418, shopify_blog_id: 48998449187, shopify_status: status },
+    });
+    assert.equal(plan.action, 'skip', `${status} has no live body to remediate`);
+    assert.match(plan.reason, /merged away/);
+  }
+});
+
+test('an ordinary published post is still remediated', () => {
+  // The guard must not widen into "skip anything unusual" — that would silently
+  // switch the agent off, which is worse than the failure being fixed.
+  for (const status of ['published', undefined, '', 'scheduled']) {
+    const plan = planPost({
+      slug: 'a',
+      meta: { shopify_article_id: 1, shopify_blog_id: 2, shopify_status: status },
+    });
+    assert.equal(plan.action, 'remediate', `status ${JSON.stringify(status)} must still be attempted`);
+  }
+});
+
+test('a 404 naming the post’s own article is a deletion, not a broken agent', () => {
+  const meta = { shopify_article_id: 563289653418, shopify_blog_id: 48998449187 };
+  const real = new Error(
+    'Shopify API GET /blogs/48998449187/articles/563289653418.json → HTTP 404: {"errors":"Not Found"}',
+  );
+  assert.equal(isDeletedArticleError(real, meta), true);
+});
+
+test('an unrelated 404 is NOT swallowed as a deletion', () => {
+  const meta = { shopify_article_id: 563289653418, shopify_blog_id: 48998449187 };
+  // Matching on the status alone would bury any 404 the run happened to hit —
+  // a missing product, a bad collection handle — as "the article was merged away".
+  assert.equal(
+    isDeletedArticleError(new Error('Shopify API GET /products/999.json → HTTP 404'), meta),
+    false,
+  );
+  assert.equal(isDeletedArticleError(new Error('HTTP 500 upstream'), meta), false);
+  assert.equal(isDeletedArticleError(new Error('HTTP 404'), {}), false, 'no id recorded → cannot attribute');
 });
