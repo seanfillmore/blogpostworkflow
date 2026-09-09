@@ -199,6 +199,26 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # gate, so the two cheap detectors do not share a slot; and ~2h40m before the
 # 15:00 UTC scheduler, whose link-repair step is the very republish this drift
 # endangers — reporting before it runs is the whole point.
+# Content-mirror RECONCILE — APPLIES, 11:45 UTC. The one scheduled writer here.
+#
+# The different-article tier is an OUTAGE, not a tidiness problem: agents/publisher
+# refuses to republish such a mirror, so every refresh, link repair, buy-box rebuild
+# and schema injection aimed at that post is silently refused. It regrows on its own
+# (0 on 2026-08-24 -> 28 by 2026-09-08, every one "both-moved"), so it is maintenance
+# on a timer rather than an investigation somebody remembers to open.
+#
+# It is scoped to that tier ALONE (--only-different-article, frozen in SCOPE_ARGS and
+# refused in combination with --all/--slug). The 0.25-0.75 warn band is deliberately
+# excluded: that is where an in-flight refresh-runner rewrite can live, and
+# overwriting one destroys a paid LLM call. The deepest real refresh measured 0.775;
+# the different-article ceiling is 0.25, a 3x margin, which is why this scope and only
+# this scope is safe unattended.
+#
+# 11:45 is 3h15m before the 15:00 scheduler (so refresh-runner is nowhere near) and
+# 35 min before the 12:20 detector (so the detector grades what this left behind).
+# UTC, like every job here — a TZ= prefix schedules nothing on this host.
+DAILY_CONTENT_MIRROR_RECONCILE="45 11 * * * cd \"$PROJECT_DIR\" && $NODE scripts/reconcile-content-mirrors-nightly.mjs >> data/reports/scheduler/content-mirror-reconcile.log 2>&1"
+
 DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-content-mirror-drift.mjs >> data/reports/scheduler/content-mirror-gate.log 2>&1"
 
 # Rejected-keywords drift — DETECT ONLY, 12:30 UTC.
@@ -501,6 +521,7 @@ $DAILY_PUBLISH_DRIFT
 # ── Performance engine (daily) ──
 $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
+$DAILY_CONTENT_MIRROR_RECONCILE
 $DAILY_CONTENT_MIRROR_GATE
 $DAILY_PDP_TEMPLATE_GATE
 $DAILY_REJECTED_KEYWORDS_GATE
