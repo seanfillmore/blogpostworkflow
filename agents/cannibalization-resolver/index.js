@@ -410,7 +410,12 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   console.log(`  Live collections available for linking: ${liveCollections.length}`);
 
   const hold = loadClusterHold({ root: ROOT });
-  for (const line of holdBanner(hold)) console.log(`  ${line}`);
+  // holdBanner returns a STRING, not an array. `for...of` over it iterates
+  // CHARACTERS — this printed the $0-cluster gate's banner one letter per line,
+  // which is how a safety banner stops being read. Every other caller in the
+  // fleet does exactly this; this agent was the only one that did not.
+  const banner = holdBanner(hold);
+  if (banner) console.log(banner);
   const heldRecords = [];
 
   // MERGE CAP — how many times may ONE page be rewritten in a single run?
