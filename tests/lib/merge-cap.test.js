@@ -13,11 +13,17 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const FLAGSHIP = '/blogs/news/toothpaste-without-sls-what-to-know-best-options';
 const LOTION = '/blogs/news/best-unscented-lotion-clean-fragrance-free-picks';
 
+// Each merge names a DISTINCT loser. Modelling N merges as N copies of one
+// (loser -> winner) pair is the bug the dedupe below fixes, not the shape of a
+// real pool — a real pool is many different duplicates of one winner.
+let loserSeq = 0;
 const merge = (winner, query = 'q') => ({
-  query, winner, confidence: 'HIGH', losers: [{ path: '/blogs/news/x', action: 'CONSOLIDATE' }],
+  query, winner, confidence: 'HIGH',
+  losers: [{ path: `/blogs/news/loser-${++loserSeq}`, action: 'CONSOLIDATE' }],
 });
 const redirectOnly = (winner) => ({
-  query: 'r', winner, confidence: 'HIGH', losers: [{ path: '/blogs/news/y', action: 'REDIRECT' }],
+  query: 'r', winner, confidence: 'HIGH',
+  losers: [{ path: `/blogs/news/redir-${++loserSeq}`, action: 'REDIRECT' }],
 });
 
 test('one winner cannot be rewritten more than the cap in a single run', () => {
@@ -113,4 +119,89 @@ test('the resolver applies the CAPPED list, not the raw decisions', () => {
   assert.doesNotMatch(src, /for \(const decision of decisions\)\s*\{\s*\n\s*if \(decision\.confidence !== 'HIGH'\)/,
     'iterating the uncapped list would restore the 17-rewrite run');
   assert.match(src, /mergeCapLines\(/, 'the run must report what it deferred');
+});
+
+// ── Added 2026-09-09, from the live --apply run ─────────────────────────────
+// The cap allowed 3 merges and ALL THREE were the same (loser -> winner) pair,
+// reached from three different queries: three paid Claude merges of one page.
+// The run then reported "2 held for review", sending a human to look at two
+// superseded attempts at work the third had already completed.
+
+const pair = (winner, loser, query) => ({
+  query, winner, confidence: 'HIGH', losers: [{ path: loser, action: 'CONSOLIDATE' }],
+});
+
+test('the same (loser -> winner) pair is merged ONCE, however many queries propose it', () => {
+  const decisions = [
+    pair(FLAGSHIP, '/blogs/news/best-toothpaste-without-sls-2025', 'sls free toothpaste'),
+    pair(FLAGSHIP, '/blogs/news/best-toothpaste-without-sls-2025', 'toothpaste without sls'),
+    pair(FLAGSHIP, '/blogs/news/best-toothpaste-without-sls-2025', 'best toothpaste without sls'),
+  ];
+  const { apply, duplicates } = capMergesPerWinner(decisions);
+  assert.equal(apply.length, 1, 'one pair is one piece of work');
+  assert.equal(duplicates.length, 2);
+});
+
+test('deduping happens BEFORE the cap, so the cap buys real merges', () => {
+  // Otherwise three slots are spent on one page and two genuinely different
+  // duplicates are deferred behind repeats of it.
+  const decisions = [
+    pair(FLAGSHIP, '/blogs/news/dup', 'q1'),
+    pair(FLAGSHIP, '/blogs/news/dup', 'q2'),
+    pair(FLAGSHIP, '/blogs/news/dup', 'q3'),
+    pair(FLAGSHIP, '/blogs/news/other-a', 'q4'),
+    pair(FLAGSHIP, '/blogs/news/other-b', 'q5'),
+  ];
+  const { apply, deferred } = capMergesPerWinner(decisions);
+  assert.equal(apply.length, 3, 'dup + other-a + other-b all fit in the cap of 3');
+  assert.equal(deferred.length, 0);
+  const losers = apply.flatMap((d) => d.losers.map((l) => l.path));
+  assert.deepEqual(losers.sort(), ['/blogs/news/dup', '/blogs/news/other-a', '/blogs/news/other-b']);
+});
+
+test('a repeat pair is dropped from a decision without dropping its other work', () => {
+  const first = pair(FLAGSHIP, '/blogs/news/dup', 'q1');
+  const mixed = {
+    query: 'q2',
+    winner: FLAGSHIP,
+    confidence: 'HIGH',
+    losers: [
+      { path: '/blogs/news/dup', action: 'CONSOLIDATE' },   // already merged
+      { path: '/blogs/news/fresh', action: 'CONSOLIDATE' }, // still to do
+      { path: '/blogs/news/r', action: 'REDIRECT' },        // untouched
+    ],
+  };
+  const { apply, duplicates } = capMergesPerWinner([first, mixed]);
+  assert.equal(duplicates.length, 1);
+  const second = apply[1];
+  assert.deepEqual(second.losers.map((l) => l.path), ['/blogs/news/fresh', '/blogs/news/r']);
+  assert.notEqual(second, mixed, 'the original decision object is not mutated');
+  assert.equal(mixed.losers.length, 3, 'caller-owned input stays intact');
+});
+
+test('a decision whose every merge is a repeat, and nothing else, is dropped whole', () => {
+  const { apply } = capMergesPerWinner([
+    pair(FLAGSHIP, '/blogs/news/dup', 'q1'),
+    pair(FLAGSHIP, '/blogs/news/dup', 'q2'),
+  ]);
+  assert.equal(apply.length, 1);
+});
+
+test('the same loser merged into a DIFFERENT winner is not a duplicate', () => {
+  const { apply, duplicates } = capMergesPerWinner([
+    pair(FLAGSHIP, '/blogs/news/x', 'q1'),
+    pair(LOTION, '/blogs/news/x', 'q2'),
+  ]);
+  assert.equal(duplicates.length, 0);
+  assert.equal(apply.length, 2);
+});
+
+test('the run reports what it deduped', () => {
+  const { deferred, duplicates, perWinner } = capMergesPerWinner([
+    pair(FLAGSHIP, '/blogs/news/dup', 'q1'),
+    pair(FLAGSHIP, '/blogs/news/dup', 'q2'),
+  ]);
+  const lines = mergeCapLines({ deferred, duplicates, perWinner }).join('\n');
+  assert.match(lines, /Deduped 1 repeat merge/);
+  assert.match(lines, /one piece of work/);
 });
