@@ -1,9 +1,39 @@
 ---
 name: marketing-amazon-ppc-management
-description: Use when running, pruning or restructuring Amazon Sponsored Products campaigns for a small catalog — covers account structure (one portfolio per parent product, one ad group per campaign, a fixed naming convention, de-duplicating keyword+match-type across campaigns), reading the search term and placement reports, negating zero-order spenders and unprofitable low-order converters as negative exact and negative product targets, bidding down instead of negating inside exact and product-target campaigns, raising budgets on budget-capped winners, capping and relaunching starved keywords, auditing ad-group ASIN approval and which variation you advertise, running auto campaigns as discovery against manual campaigns as the proven-keyword vault, harvesting converting search terms out of auto into a manual exact campaign, connecting Seller Central and Ads data to an LLM through an MCP server, converting a repeated manual pass into a scheduled rule-set automation with explicit thresholds and auditing those rules periodically, and requiring plan-then-approve before any AI agent writes to a paid ads account.
+description: Use when running, pruning or restructuring Amazon Sponsored Products campaigns for a small catalog — covers diagnosing whether the problem is PPC or the listing by comparing paid against organic conversion rate and routing on a four-quadrant read, pulling category conversion benchmarks and search terms from Brand Analytics Search Query Performance, account structure (one portfolio per parent product, one ad group per campaign, a fixed naming convention, de-duplicating keyword+match-type across campaigns), reading the search term and placement reports, negating zero-order spenders and unprofitable low-order converters as negative exact and negative product targets, pre-emptively negating attribute-qualifier searches the formula does not satisfy, treating a cheap ACoS on a poorly matched broad term as a delayed returns-and-reviews cost, bidding down instead of negating inside exact and product-target campaigns, raising budgets on budget-capped winners, capping and relaunching starved keywords, auditing ad-group ASIN approval and which variation you advertise, writing one ad creative per search intent (including the console's AI creative generation), gating which qualifier terms you bid on by whether the listing can confirm the qualifier, running auto campaigns as discovery against manual campaigns as the proven-keyword vault, and requiring plan-then-approve before any AI agent writes to a paid ads account.
 ---
 
 # Amazon PPC Management
+
+## Diagnose whether your Amazon problem is PPC or the listing by comparing the listing's paid conversion rate against its organic conversion rate, because the listing, price and reviews are identical and only the path the shopper took differs.
+
+**Why it works:** Holding every variable constant except traffic source isolates the cause: if paid converts far worse than organic, the mismatch is in targeting or ad promise; if both convert badly, the listing itself is failing every visitor regardless of how they arrived. Spending optimization effort on bids and negations when the listing is the bottleneck buys nothing.
+
+**Evidence offered:** Assertion plus a reasoned control argument (same listing, price, reviews); creator cites 10 years and 3,000 brands, and a client conversation that prompted the video.
+
+**Fit here (8/10):** Amazon is the larger of the two channels (~$1,800/mo of ~$2,700) and the binding constraint named for the business is conversion rate, not traffic. This is exactly a conversion-vs-acquisition split and the CRO gate is open. Per-search-term paid-vs-organic rates need more term-level volume than the account has, so run the honest scaled-down version now: compare paid CVR to organic CVR at whole-ASIN level per parent product, which Seller Central already reports, and move to term level as spend and units grow.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
+## Place the listing in one of four quadrants — bad PPC/bad organic, good PPC/bad organic, bad PPC/good organic, good PPC/good organic — and let the quadrant dictate the next action.
+
+**Why it works:** Each combination has a different cheapest fix: bad/bad means every step of the framework pays, good PPC/bad organic means the listing is throttling an already-working ad, bad PPC/good organic means the foundation is sound and the job is putting correct spend behind it, and good/good means iterate against category drift.
+
+**Evidence offered:** Assertion only; framework presented from the creator's client work.
+
+**Fit here (7/10):** A concrete routing rule for a two-surface Amazon account, and it prevents the classic error of spending on ads to fix a listing problem — the exact sequencing spine (Tracking → CRO → Offer/AOV → Traffic) this business runs on. Scored lower than the underlying paid-vs-organic comparison because the quadrant labels depend on category benchmarks that must be sourced separately — see the Brand Analytics Search Query Performance section below for where those benchmarks come from.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
+## Get brand-registered and mine the Brand Analytics Search Query Performance report for your category's real conversion benchmarks and for what shoppers search more broadly in your category, rather than importing a generic 'good conversion rate' number.
+
+**Why it works:** What counts as a good conversion rate varies hugely by category, and the report shows impressions, clicks, cart-adds and purchases per search term for your own ASINs and the category — so it supplies both the benchmark and the term list without guessing.
+
+**Evidence offered:** Assertion; creator calls the report 'an absolute goldmine' and gives the exact navigation path (Seller Central → Brands → Brand Analytics → Search Query Performance).
+
+**Fit here (8/10):** This business sells its own branded 12-SKU line on Amazon, so the report is available and free once registry is in place — a one-person admin step, not a headcount or budget one. It also directly answers the benchmark question the quadrant diagnosis above needs, and complements the imported-claim vetting rule already in marketing-performance-pattern-analysis by replacing borrowed benchmarks with own-category data. Platform mechanics class, and the report and menu path are current as of the 2026 publication.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
 
 ## Group Amazon campaigns into portfolios with one portfolio per parent product so per-product ad performance is readable at a glance.
 
@@ -77,6 +107,28 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 *Source: Mina Elias — "Amazon Ads: How to Optimize PPC (Step-by-Step System)" (x20JtHcz3Fk)*
 
+## Proactively build a negative-keyword list of attribute-qualifier searches your formula does not satisfy — sourced from category keyword research, before the search-term report shows any waste.
+
+**Why it works:** Broad targeting sweeps you into qualifier searches where the shopper has a hard, non-negotiable criterion ('silicone-free' when the product contains silicones). Serving them costs clicks you cannot convert, and the ones who do buy discover the mismatch at home — producing returns and negative reviews. Negating the mismatched qualifier up front prevents both.
+
+**Evidence offered:** Demonstrated live: Neutrogena and MediCube ads served on 'silicone-free SPF' for silicone-heavy products, plus a silicone sun-patch and a non-SPF silicone gel appearing on the same query.
+
+**Fit here (9/10):** Near-perfect fit for this exact catalogue: natural deodorant, soap and toothpaste searches are dominated by qualifier terms — 'aluminum-free', 'baking soda free', 'fluoride-free', 'unscented', 'plastic free'. Any of those the products do not satisfy should be a standing negative before spend touches it. Runnable today at $30/day-scale Amazon spend by one person in an afternoon; the Brand Analytics Search Query Performance report above is the cheapest place to source the category's qualifier terms.
+
+**Scope note:** distinct from the two negation sections above, which negate on observed data after the fact. This one negates on formula mismatch before any data exists, and the harm it prevents is review damage, not wasted clicks. The mirror-image case — a qualifier term worth having that the listing cannot yet confirm — is a listing task, not a negation; see the keyword/listing gate below.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
+## Treat a cheap-looking ACoS on a broad, poorly-matched keyword as an artificial signal carrying a delayed cost, not as a win.
+
+**Why it works:** Broad match buys volume at low CPCs, so surface metrics look good. But the orders it produces come from shoppers who assumed a criterion was met; when the product arrives and it is not, the cost lands later as returns, one-star reviews and a damaged listing — which then depresses both paid and organic conversion. The ACoS column cannot see any of that.
+
+**Evidence offered:** Reasoned scenario walked through in detail (customer assumes silicone-free, gets home, skin reacts, leaves review); assertion, no numbers.
+
+**Fit here (7/10):** The negation sections above handle zero-order and high-ACoS low-order terms; this is the opposite and otherwise unrecorded case — a term that looks profitable and is not. For a low-review natural-deodorant catalogue where reviews are the main proof asset and switching from conventional deodorant already produces a rocky transition period, one wave of mismatched buyers is disproportionately expensive. Practically: before scaling any cheap-ACoS broad term, read the actual search terms under it and check they do not carry a criterion the product fails. Durable-principle class, so age is irrelevant.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
 ## In one-to-one campaigns (manual exact and product targeting), respond to unprofitable spend by lowering the bid rather than negating the target.
 
 **Why it works:** An exact keyword or ASIN target triggers for only that one thing, so the bid is a clean lever: lowering it pushes the ad further down the page, where the shopper who still scrolls and clicks carries higher intent. You either find a lower position where the target is profitable, or the target quietly stops spending — without permanently discarding a term that might work at a cheaper price. The same move is impossible in broad/auto campaigns, where one bid governs many terms, which is why negation is the instrument there.
@@ -123,7 +175,7 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 **Evidence offered:** Assertion with reasoning; points to the Search Query Performance report as the data source and defers the detail to another video.
 
-**Fit here (5/10):** The principle — do not pay more for impressions you already have — is durable and correct, and Search Query Performance is available to brand-registered sellers, which a 12-SKU private-label catalog should be. Scored mid because the video only gestures at the method, and because at ~$1,800/mo Amazon revenue there are relatively few targets profitable enough to be candidates for a bid raise in the first place. Runnable today as a check before any bid increase.
+**Fit here (5/10):** The principle — do not pay more for impressions you already have — is durable and correct, and Search Query Performance is available to brand-registered sellers, which a 12-SKU private-label catalog should be (see the Brand Analytics section above for the navigation path and what else the report supplies). Scored mid because the video only gestures at the method, and because at ~$1,800/mo Amazon revenue there are relatively few targets profitable enough to be candidates for a bid raise in the first place. Runnable today as a check before any bid increase.
 
 *Source: Mina Elias — "Amazon Ads: How to Optimize PPC (Step-by-Step System)" (x20JtHcz3Fk)*
 
@@ -147,6 +199,36 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 *Source: Mina Elias — "Amazon Ads: How to Optimize PPC (Step-by-Step System)" (x20JtHcz3Fk)*
 
+## Write ad creative for one specific search intent and reinforce that the shopper's exact criterion is met, instead of one general line built to survive every query the campaign might match.
+
+**Why it works:** A shopper typing a qualifier search has already fixed their criteria; an ad that restates the criterion confirms 'you are in the right place' and wins the click at lower effort, whereas a broad line ('SPF 50 with no cast, just glow') speaks to a different desire and is ignored by everyone whose criterion it does not name.
+
+**Evidence offered:** Live walkthrough of MediCube's no-white-cast creative appearing against 'silicone-free' searches, and a 'goodbye to oily sunscreen' ad taking top placement on 'no white cast sunscreen' — the wrong promise for that query.
+
+**Fit here (8/10):** Directly runnable: Sponsored Brands headlines and Sponsored Display creative are per-campaign, and campaigns here already sort by parent product. The one-creative-per-intent rule pairs with the existing awareness-level messaging skill but is not recorded anywhere else as a paid-Amazon rule, and the operator writes all copy himself, so headline variants per keyword theme are today's work, not a hiring problem. Practically: one campaign per qualifier theme ('aluminum-free', 'baking soda free', 'unscented'), each with a headline that names that criterion.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
+## Use the AI creative generation built into the Amazon advertising console to produce many intent-specific ad creatives cheaply, instead of defaulting to one general creative because targeted creative is too expensive to produce.
+
+**Why it works:** The reason brands ship broad creative is production cost per variant; generating variants inside the ads console collapses that cost, so per-search-term creative becomes affordable without a design budget. It is what makes the one-creative-per-intent rule above economically possible for a solo operator.
+
+**Evidence offered:** Assertion; creator points to the feature existing natively in the Amazon ads console with its creative partner.
+
+**Fit here (6/10):** Real and runnable — a solo operator with no design budget is the exact case it exists for. Scored moderate because marketing-ai-product-imagery already owns the broader 'generate assets with AI rather than hiring a photographer' workflow with much stronger anti-fabrication and QA guardrails; this only adds the console surface, and those guardrails still have to be applied by hand to anything it outputs (no invented product attributes, no claims the listing cannot confirm). Platform mechanics class — the feature is named as of 2026 and should be re-verified before it is relied on.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
+## Let keyword selection and listing content constrain each other: only target a qualifier search term if the listing can confirm that qualifier fast, and when a term is worth having, fix the listing to confirm it before scaling spend on it.
+
+**Why it works:** PPC and the listing are one journey — the term states the criterion, the creative promises it, the listing must confirm it. Bidding on a term the listing cannot confirm converts the click into a bounce back to the search results; conversely, a term you want and cannot yet confirm is a listing task, not a bid task.
+
+**Evidence offered:** Reasoned from the two demonstrations (mismatched ads, Kiehl's unconfirmable claim); creator states PPC strategy should inform listing strategy and vice versa.
+
+**Fit here (8/10):** This is the sequencing rule the business already runs on — CRO before traffic — expressed as a concrete Amazon gate rather than a principle, and it gives a specific ordering for the 12-SKU catalogue: harvest the qualifier terms the products genuinely win on, build the confirmation into images/bullets/A+ (above the fold, not buried in the description), then bid. Runnable now at current Amazon spend by one person; nothing here needs volume, budget or another pair of hands.
+
+*Source: Marketing by Emma — "It’s Boring, but It Will Fix 99% of Your Amazon PPC Problems" (twDUexmWaws)*
+
 ## Never let an AI agent write to your ad account directly — ask it for the plan first, review the full list of write actions (which keywords, which match types, which ASINs, which bid, which ad group), then approve execution as a separate step.
 
 **Why it works:** Negations and bid changes are hard or tedious to reverse and are applied against live spend; forcing the agent to enumerate its intended writes turns an opaque action into a reviewable diff, catching wrong-ad-group or over-broad negations before they cost money.
@@ -167,7 +249,7 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 **Evidence offered:** Demo showed two search terms at 7.2% and 4.6% ACoS being moved to the manual exact campaign at a bid of ₹8.45 with negative-exact applied to the auto campaign. Assertion plus one account's screen.
 
-**Fit here (7/10):** Correct Amazon architecture and worth doing — but it needs a readable positive signal at the individual search term level: two or more orders on one term inside a 30-day window. At ~54 orders/month spread across 12 SKUs and two channels, almost every search term will sit at zero or one order, so a harvest rule fires on noise or never fires at all. Park behind scale. Trigger: one hero ASIN's auto campaign is producing enough monthly orders that single search terms clear 2+ orders in a 30-day lookback — then harvest that term and only that term. When it opens, apply the de-duplication rule above: expand the harvested term into one match type at a time and confirm no other campaign already holds that keyword+match type.
+**Fit here (7/10):** Correct Amazon architecture and worth doing — but it needs a readable positive signal at the individual search term level: two or more orders on one term inside a 30-day window. At ~54 orders/month spread across 12 SKUs and two channels, almost every search term will sit at zero or one order, so a harvest rule fires on noise or never fires at all. Park behind scale. Trigger: one hero ASIN's auto campaign is producing enough monthly orders that single search terms clear 2+ orders in a 30-day lookback — then harvest that term and only that term. When it opens, apply the de-duplication rule above: expand the harvested term into one match type at a time and confirm no other campaign already holds that keyword+match type. Also apply the keyword/listing gate above before scaling spend on a harvested qualifier term.
 
 *Source: Orange Klik (interview with Kartik, QuickMetrics) — "Amazon PPC: From Weekly Checks to Daily Rules (YouTube 2yqq9J9_1IE)" (transcript)*
 
