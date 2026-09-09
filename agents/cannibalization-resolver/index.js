@@ -60,7 +60,7 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import {
-  decideHeldMergeRedirect, findLoserClicks, shapeCannibalizationPage,
+  decideHeldMergeRedirect, decideLoserDisposition, findLoserClicks, shapeCannibalizationPage,
   urlPath, slugFromPath,
 } from './redirect-decision.js';
 import {
@@ -588,6 +588,30 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
             await createRedirect(loserPath, winnerPath);
             existingPaths.add(loserPath);
             results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', reason: redirectDecisionReason });
+
+            // A Shopify redirect only fires when the path does not already
+            // resolve. Leaving the loser PUBLISHED left every 301 this agent
+            // ever created inert, with both pages still competing — see
+            // decideLoserDisposition. Unpublish, never delete: reversible, and
+            // deletion is not required for a 301.
+            const disposition = decideLoserDisposition({ createRedirect: allowRedirect, reason: redirectDecisionReason });
+            if (disposition.unpublish) {
+              const loserArticle = articleIndex.get(slugFromPath(loserPath));
+              if (!loserArticle) {
+                results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'unpublish_skipped_no_article' });
+              } else {
+                try {
+                  await updateArticle(loserArticle.blogId, loserArticle.articleId, { published: false });
+                  console.log(`    Unpublished loser "${slugFromPath(loserPath)}" — the redirect can now fire.`);
+                  results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'loser_unpublished', reason: disposition.reason });
+                } catch (e) {
+                  // The redirect exists and is inert. Say so loudly rather than
+                  // letting the run read as a completed consolidation.
+                  console.error(`    ⚠ Redirect created but loser "${slugFromPath(loserPath)}" is STILL LIVE (${e.message}) — the 301 will not fire until it is unpublished.`);
+                  results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'unpublish_error', error: e.message });
+                }
+              }
+            }
           } catch (e) {
             results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_error', error: e.message });
           }
@@ -665,6 +689,9 @@ function buildReport(groups, decisions, results) {
     for (const r of results) {
       const icon = {
         redirect_created: '✅↩️',
+        loser_unpublished: '✅🚫',
+        unpublish_error: '⚠️',
+        unpublish_skipped_no_article: '⚠️',
         published: '✅📤',
         draft_needs_review: '📝',
         draft_saved: '📝',
