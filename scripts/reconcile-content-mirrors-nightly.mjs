@@ -101,17 +101,44 @@ const BODY_LINES = 40;
  */
 export function classifyReconcileExit(code, { reconciled = 0, held = 0 } = {}) {
   const base = { immediate: false };
+  const did = reconciled
+    ? `Reconciled ${reconciled} different-article mirror(s) from live Shopify. Those posts can be republished again.`
+    : 'No different-article mirrors to reconcile.';
+
+  // 0 = clean, 1 = something was HELD, 3 = a post could not be READ, 64 = refused
+  // argument. See `process.exitCode = unreadable.length ? 3 : held.length ? 1 : 0`
+  // in scripts/reconcile-content-mirrors.mjs.
   if (code === 0) {
+    return { ...base, status: 'success', needsHuman: false, headline: did };
+  }
+
+  // A HOLD IS THE GUARDS WORKING, NOT A FAILURE. `local-ahead` means the local
+  // file holds text live does not — most often an unpublished edit — so refusing
+  // to overwrite it is the single most important thing this job does. Reporting
+  // that as breakage would send a human to fix an agent that just protected
+  // their work, and would train them to stop reading the Failures block. The
+  // held posts are still named in the body.
+  if (code === 1) {
     return {
       ...base,
       status: 'success',
       needsHuman: false,
-      headline: reconciled
-        ? `Reconciled ${reconciled} different-article mirror(s) from live Shopify`
-          + `${held ? `, held ${held} back` : ''}. Those posts can be republished again.`
-        : 'No different-article mirrors. Every local content.html still holds the article that is live.',
+      headline: `${did} Held ${held || 'some'} back — the reconciler's own guards refused those, which is the `
+        + 'policy working; they are named below.',
     };
   }
+
+  if (code === 3) {
+    return {
+      ...base,
+      status: 'error',
+      needsHuman: true,
+      headline:
+        'REFUSED: a local content.html could not be READ. Every reader in the fleet treats a read failure as an '
+        + 'empty file and carries on, so this is silent until something needs the data. The files are named below.',
+    };
+  }
+
   if (code === 64) {
     return {
       ...base,
@@ -123,14 +150,15 @@ export function classifyReconcileExit(code, { reconciled = 0, held = 0 } = {}) {
         + 'particular that the scope is still different-article only.',
     };
   }
+
   return {
     ...base,
     status: 'error',
     needsHuman: true,
     headline:
-      `scripts/reconcile-content-mirrors.mjs exited ${code}. Mirrors in the different-article tier are NOT being `
-      + 'repaired, which means the posts in that tier cannot be republished at all — every refresh and link repair '
-      + 'aimed at them is being silently refused. Read the output below.',
+      `scripts/reconcile-content-mirrors.mjs exited ${code}, which this job cannot classify. Mirrors in the `
+      + 'different-article tier may NOT be being repaired, which would mean those posts cannot be republished at '
+      + 'all — every refresh and link repair aimed at them silently refused. Read the output below.',
   };
 }
 
