@@ -104,7 +104,7 @@ import { getBlogs, getArticles } from '../lib/shopify.js';
 import { compareBodies } from '../lib/content-mirror.js';
 import { requirePostMeta } from '../lib/posts.js';
 import {
-  applyMirrorReconcile, decideMirrorAction, hasInjectedSchema, inDefaultScope, PINNED_MIRROR_SLUGS,
+  applyMirrorReconcile, decideMirrorAction, hasInjectedSchema, inDefaultScope, inOutageScope, PINNED_MIRROR_SLUGS,
 } from '../lib/content-reconcile.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -115,12 +115,20 @@ const args = process.argv.slice(2);
 const apply = args.includes('--apply');
 const asJson = args.includes('--json');
 const sweepAll = args.includes('--all');
+// The only scope allowed to run unattended: the `different-article` tier alone.
+// See `inOutageScope` in lib/content-reconcile.js for why the warn band is not
+// in it — that is where an in-flight refresh-runner rewrite can live.
+const outageOnly = args.includes('--only-different-article');
 const reinjectSchema = !args.includes('--no-reinject-schema');
 const onlySlug = (() => {
   const i = args.indexOf('--slug');
   return i !== -1 ? args[i + 1] : null;
 })();
 
+if (outageOnly && (sweepAll || onlySlug)) {
+  console.error('--only-different-article cannot be combined with --all or --slug: it IS a scope.');
+  process.exit(64);
+}
 if (onlySlug && sweepAll) {
   console.error('reconcile-content-mirrors: --slug and --all are mutually exclusive.');
   process.exit(64);
@@ -183,7 +191,10 @@ for (const slug of postDirs()) {
   // written, and the one post on this corpus that is genuinely AHEAD of live
   // (`best-toothpaste-for-sensitive-teeth-2025`, similarity 0.991) sits above
   // the warn band — scoping holds would be the one arrangement that hides it.
-  if (!inDefaultScope(comparison) && !onlySlug && !sweepAll && decision.action !== 'hold') continue;
+  const inScope = outageOnly ? inOutageScope(comparison) : inDefaultScope(comparison);
+  // A HOLD is always reported whatever the scope — scoping holds away is the one
+  // arrangement that hides the genuinely-ahead post this tool exists to protect.
+  if (!inScope && !onlySlug && !sweepAll && decision.action !== 'hold') continue;
 
   rows.push({
     slug,
@@ -258,7 +269,10 @@ const unreadable = rows.filter((r) => r.state === 'meta-unreadable' || r.state =
 const summary = {
   generated_at: new Date().toISOString(),
   mode: apply ? 'apply' : 'dry',
-  scope: onlySlug ? `slug:${onlySlug}` : sweepAll ? 'all-drifted' : 'flagged (different-article + 0.25-0.75 warn band)',
+  scope: onlySlug ? `slug:${onlySlug}`
+    : sweepAll ? 'all-drifted'
+    : outageOnly ? 'different-article only (unattended-safe)'
+    : 'flagged (different-article + 0.25-0.75 warn band)',
   reinject_schema: reinjectSchema,
   considered: considered.length,
   reconciled: reconciled.length,
