@@ -43,6 +43,7 @@
  */
 
 import Anthropic from '../../lib/anthropic.js';
+import { buildPageMetricsMap, canonicalPageKey } from '../../lib/gsc-url-aggregate.js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -681,7 +682,7 @@ No explanation, no markdown fences.`,
 function selectTitleCandidates(products, gscMap, activeQueueSlugs) {
   return products
     .map((p) => {
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 50) return null;
       if (activeQueueSlugs.has(p.handle)) return null;
@@ -722,13 +723,8 @@ async function optimizeTitlesMode() {
   const topPages = await gsc.getTopPages(500, 90);
   console.log('done');
 
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   const active = activeSlugs();
   const filtered = productPages.filter((p) => !EXCLUDED_HANDLES.has(p.handle));
@@ -850,7 +846,7 @@ function productIndexContext(product, idx) {
 function selectProductMetaCandidates(products, gscMap, activeQueueSlugs) {
   return products
     .map((p) => {
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 100) return null;
       if (gscEntry.ctr >= 0.01) return null;
@@ -920,13 +916,8 @@ async function fromGscMode() {
   console.log('done');
 
   // Build URL → GSC map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // Filter candidates
   const active = activeSlugs();
@@ -1038,13 +1029,8 @@ async function pagesFromGscMode() {
   console.log('done');
 
   // Build URL → GSC map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // Non-commercial pages that should never be rewritten for SEO
   const SKIP_HANDLES = new Set([
@@ -1064,7 +1050,7 @@ async function pagesFromGscMode() {
   const candidates = pageEntries
     .map((p) => {
       if (SKIP_HANDLES.has(p.handle)) return null;
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 50) return null;
       if (gscEntry.ctr >= 0.02) return null;
@@ -1565,15 +1551,17 @@ async function main() {
   const topPages = await gsc.getTopPages(500, 90);
   console.log('done');
 
-  // Build URL → best keyword + metrics map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  // Fill in any remaining with top pages data
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // Build URL → best keyword + metrics map.
+  //
+  // AGGREGATED BY PAGE, not first-wins on the exact URL. A Shopify product has
+  // many URLs — Shopify's product_sync rows carry ?variant=…&utm_content=
+  // sag_organic — and first-wins kept whichever arrived first. Measured on
+  // production 2026-09-09 that made the HERO PRODUCT invisible: coconut-lotion
+  // (65% of store revenue) scored on its clean URL's 1 impression / position 26
+  // while 407 impressions at position 1 sat on its variant URLs, so it ranked
+  // below six products from the two least efficient clusters and had never been
+  // selected. See lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // ── Score and select candidates ────────────────────────────────────────────
 
@@ -1587,7 +1575,7 @@ async function main() {
     })
     .map((page) => {
       const wc = wordCount(page.body_html);
-      const gscEntry = gscMap.get(page.url);
+      const gscEntry = gscMap.get(canonicalPageKey(page.url));
       const isThin = wc < minWords;
       const hasGscData = !!gscEntry;
       // Prioritize: thin content with impressions > thin without > thick with very low CTR
