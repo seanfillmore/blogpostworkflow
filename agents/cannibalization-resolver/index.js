@@ -66,6 +66,7 @@ import {
 import {
   buildReachableIndex, filterReachableRows, reachabilityBanner,
 } from '../../lib/reachable-pages.js';
+import { capMergesPerWinner, mergeCapLines, MAX_MERGES_PER_WINNER } from '../../lib/merge-cap.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
@@ -412,7 +413,17 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   for (const line of holdBanner(hold)) console.log(`  ${line}`);
   const heldRecords = [];
 
-  for (const decision of decisions) {
+  // MERGE CAP — how many times may ONE page be rewritten in a single run?
+  //
+  // Measured 2026-09-09: 17 of 21 proposed merges targeted the SAME winner, the
+  // biggest page on the blog. Each CONSOLIDATE is a full Claude rewrite of that
+  // winner's body, applied sequentially, so merge N builds on merge N-1. The
+  // cap bounds that. It DEFERS rather than dismisses — detection is re-derived
+  // from live GSC every run, so a held-back merge simply re-proposes next time.
+  const { apply: capped, deferred: cappedOut, perWinner } = capMergesPerWinner(decisions);
+  for (const line of mergeCapLines({ deferred: cappedOut, perWinner })) console.log(`  ${line}`);
+
+  for (const decision of capped) {
     if (decision.confidence !== 'HIGH') continue;
 
     // Judge the cluster on the WINNER — that is the page a merge would rewrite.
