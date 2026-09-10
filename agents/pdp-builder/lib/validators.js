@@ -191,7 +191,32 @@ export function validateNoFabricatedIngredients({ text }) {
     // an ingredient we explicitly don't use. Same for "instead of" and "rather than" substitution patterns.
     'unlike ', 'instead of ', 'rather than ',
   ];
+  /**
+   * Forbidden EVEN WHEN NEGATED — the negation carve-out above does not apply.
+   *
+   * Operator ruling, Sean 2026-09-09: "I have never heard a human being say petrolatum
+   * or dimethicone" → "Do not use those words." The carve-out is right for the rest of
+   * the blocklist: "fluoride-free" and "SLS-free" are claims customers genuinely search
+   * and this brand genuinely earns. It is wrong for these four, on three counts —
+   *
+   *   1. UNSOURCED. agents/ad-studio/claims.js accepts pdpBody as a claim source, so
+   *      the Amazon bullet cited the PDP and the PDP cited nothing.
+   *   2. NO BACKING for the implied harm. CIR, the FDA, EU regulators and Health Canada
+   *      assess cosmetic-grade mineral oil and petrolatum as safe and non-comedogenic;
+   *      Germany's BfR concludes health risks "are not to be expected". The cancer
+   *      association belongs to UNREFINED INDUSTRIAL grades. (Dimethicone is also a
+   *      category error — a silicone, not a petroleum derivative.)
+   *   3. NO AUDIENCE. Across 3,841 real customer search terms in the 30 days to
+   *      2026-09-01: "petrolatum" 0, "dimethicone" 0. Shoppers say "silicone" (6) and
+   *      "vaseline" (2).
+   *
+   * Say what IS in the product, or use the word a shopper actually uses.
+   */
+  const FORBIDDEN_EVEN_NEGATED = new Set([
+    'mineral oil', 'petroleum', 'petrolatum', 'dimethicone',
+  ]);
   const FABRICATION_BLOCKLIST = [
+    'dimethicone',
     'fluoride',
     'sodium fluoride',
     'stannous fluoride',
@@ -236,7 +261,8 @@ export function validateNoFabricatedIngredients({ text }) {
       const winStart = Math.max(0, idx - 40);
       const winEnd = Math.min(lower.length, idx + term.length + 20);
       const window = lower.slice(winStart, winEnd);
-      const negated = NEGATION_MARKERS.some((mk) => window.includes(mk));
+      const negated = NEGATION_MARKERS.some((mk) => window.includes(mk))
+        && !FORBIDDEN_EVEN_NEGATED.has(term);
       if (!negated) {
         // Capture readable context for the report
         const ctxStart = Math.max(0, idx - 30);
