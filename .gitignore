@@ -316,3 +316,6 @@ data/reports/culina-ppc/
 
 # Hand-run Amazon paid-vs-organic CVR diagnosis — regenerable from the ads exports
 data/reports/amazon-cvr-diagnosis/
+
+# Hand-run Amazon 3-second-test listing audit — regenerable from the ads exports
+data/reports/listing-3-second-audit/
