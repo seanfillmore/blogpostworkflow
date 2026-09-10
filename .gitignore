@@ -313,3 +313,6 @@ data/template-backup/
 # generated report. Regenerable, never reviewed as a diff, and the cache holds
 # financial line items that have no business in git.
 data/reports/culina-ppc/
+
+# Hand-run Amazon paid-vs-organic CVR diagnosis — regenerable from the ads exports
+data/reports/amazon-cvr-diagnosis/
