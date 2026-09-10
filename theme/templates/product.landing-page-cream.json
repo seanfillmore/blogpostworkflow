@@ -41,7 +41,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Coconut oil and jojoba soak in. Petroleum jelly just sits there.",
+            "text": "Coconut oil and jojoba soak in. A cheap barrier base just sits there.",
             "text_style": "body"
           }
         },
@@ -57,7 +57,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No petroleum jelly, no mineral oil, no silicones, no lanolin.",
+            "text": "No silicones, no lanolin, no synthetic fragrance, no parabens.",
             "text_style": "body"
           }
         },
@@ -265,7 +265,7 @@
             "image": "shopify:\/\/shop_images\/Wax.webp",
             "title": "Organic Beeswax",
             "title_size": "medium",
-            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable barrier that locks moisture in without sealing pores the way petrolatum does. Its long-chain fatty acids and esters create a flexible film that holds skin's own water content while still allowing gas exchange. Petrolatum is cheaper and shelf-stable forever — it also fully occludes. We pay more for beeswax.<\/p>",
+            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable barrier that locks moisture in without sealing pores shut. Its long-chain fatty acids and esters create a flexible film that holds skin's own water content while still allowing gas exchange. Cheap barrier waxes are shelf-stable forever and fully occlusive. We pay more for beeswax.<\/p>",
             "show_popup": false,
             "popup_image_position": "top",
             "justify_text": false,
@@ -361,7 +361,7 @@
         "free-from-body": {
           "type": "text",
           "settings": {
-            "text": "<ul><li>No petroleum jelly<\/li><li>No mineral oil<\/li><li>No silicones<\/li><li>No lanolin<\/li><li>No synthetic fragrance<\/li><li>No parabens<\/li><li>No preservatives you&#39;d need to look up<\/li><\/ul>",
+            "text": "<ul><li>No silicones<\/li><li>No lanolin<\/li><li>No synthetic fragrance<\/li><li>No parabens<\/li><li>No preservatives you&#39;d need to look up<\/li><\/ul>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -462,7 +462,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>During our family's healthy-ingredients journey, we kept finding body creams labeled \"natural\" that still relied on petrolatum, dimethicone, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.<\/p><p>Every ingredient in this jar earns its place. We won't cut corners on sourcing for margin — that line doesn't move.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>During our family's healthy-ingredients journey, we kept finding body creams labeled \"natural\" that still relied on cheap fillers, silicones, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.<\/p><p>Every ingredient in this jar earns its place. We won't cut corners on sourcing for margin — that line doesn't move.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -537,8 +537,8 @@
         "faq-3": {
           "type": "collapsible_row",
           "settings": {
-            "heading": "Why use beeswax instead of petrolatum?",
-            "row_content": "<p>Petrolatum is the petroleum-derived occlusive that seals skin without feeding it — cheap, shelf-stable forever, and fully occlusive. Beeswax forms a breathable barrier instead. It locks moisture in while still allowing gas exchange at the molecular level. The trade-off is real: beeswax costs more, and the cream firms up in cold weather. We accept both.<\/p>",
+            "heading": "Why use beeswax as the barrier?",
+            "row_content": "<p>The usual barrier waxes seal skin without feeding it — cheap, shelf-stable forever, and fully occlusive. Beeswax forms a breathable barrier instead. It locks moisture in while still allowing gas exchange at the molecular level. The trade-off is real: beeswax costs more, and the cream firms up in cold weather. We accept both.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"

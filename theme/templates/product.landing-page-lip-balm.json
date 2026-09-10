@@ -52,7 +52,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No petroleum jelly, no lanolin, no added flavor, no menthol.",
+            "text": "No lanolin, no added flavor, no menthol, no parabens.",
             "text_style": "body"
           }
         },
@@ -95,7 +95,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>Three ingredients, three jobs.<\/strong> Beeswax (true breathable barrier), virgin coconut oil (medium-chain fatty acids that nourish), unrefined red palm oil (vitamin E and tocotrienols).<\/p><p><strong>No petroleum jelly, no lanolin, no synthetic flavoring.<\/strong> The chronic-chap problem we usually trace to one of those three ingredients.<\/p><p><strong>No menthol cooling sensation.<\/strong> Many commercial balms add menthol to feel \"treated\" — that's mild irritation, not healing.<\/p><p><strong>Honest trade-off.<\/strong> Firmer than a petrolatum-based balm because beeswax sets harder than petroleum wax. Apply with light pressure rather than a smear.<\/p>",
+            "content": "<p><strong>Three ingredients, three jobs.<\/strong> Beeswax (true breathable barrier), virgin coconut oil (medium-chain fatty acids that nourish), unrefined red palm oil (vitamin E and tocotrienols).<\/p><p><strong>No lanolin, no synthetic flavoring, no numbing agents.<\/strong> The chronic-chap problem we usually trace to one of those three.<\/p><p><strong>No menthol cooling sensation.<\/strong> Many commercial balms add menthol to feel \"treated\" — that's mild irritation, not healing.<\/p><p><strong>Honest trade-off.<\/strong> Firmer than a drugstore balm because beeswax sets harder than the waxes they use. Apply with light pressure rather than a smear.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -251,7 +251,7 @@
             "image": "shopify:\/\/shop_images\/Wax.webp",
             "title": "Organic Beeswax",
             "title_size": "medium",
-            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable film on the lips that holds moisture in without occluding the way petrolatum does. Its long-chain fatty acids and esters give the balm its stick structure and let it stay put through wear. Petrolatum and microcrystalline wax are cheaper and more occlusive — we chose beeswax because the lips can still exchange.<\/p>",
+            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable film on the lips that holds moisture in without sealing the lips shut. Its long-chain fatty acids and esters give the balm its stick structure and let it stay put through wear. The waxes most balms use are cheaper and more occlusive — we chose beeswax because the lips can still exchange.<\/p>",
             "button_label": ""
           }
         },
@@ -261,7 +261,7 @@
             "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
             "title": "Organic Virgin Coconut Oil",
             "title_size": "medium",
-            "text": "<p><em>Nourishing fatty acid base.<\/em> Cold-pressed virgin coconut oil delivers medium-chain fatty acids — roughly half of which is lauric acid — into the thin skin of the lips. Where petrolatum sits on top, virgin coconut oil absorbs and feeds. Refined coconut oil is cheaper and more uniform, but the deodorizing process strips out the lauric acid that does the work.<\/p>",
+            "text": "<p><em>Nourishing fatty acid base.<\/em> Cold-pressed virgin coconut oil delivers medium-chain fatty acids — roughly half of which is lauric acid — into the thin skin of the lips. Where a barrier wax sits on top, virgin coconut oil absorbs and feeds. Refined coconut oil is cheaper and more uniform, but the deodorizing process strips out the lauric acid that does the work.<\/p>",
             "button_label": ""
           }
         },
@@ -312,7 +312,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>We started Real Skin Care because our family wanted products where we could confirm every ingredient. With lip balm, that meant flipping over the tube and asking why petrolatum, paraffin, and undisclosed flavoring were in something we put on our kids' lips every day.<\/p><p>We took it down to three ingredients that each do real work, and we won't compromise that for cost.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>We started Real Skin Care because our family wanted products where we could confirm every ingredient. With lip balm, that meant flipping over the tube and asking why paraffin and undisclosed flavoring were in something we put on our kids' lips every day.<\/p><p>We took it down to three ingredients that each do real work, and we won't compromise that for cost.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -359,7 +359,7 @@
         "free-from-body": {
           "type": "text",
           "settings": {
-            "text": "<ul><li>No petroleum jelly<\/li><li>No petroleum wax<\/li><li>No mineral oil<\/li><li>No lanolin<\/li><li>No added flavor<\/li><li>No parabens<\/li><li>No numbing agents<\/li><li>No menthol<\/li><\/ul>",
+            "text": "<ul><li>No lanolin<\/li><li>No added flavor<\/li><li>No parabens<\/li><li>No numbing agents<\/li><li>No menthol<\/li><\/ul>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -447,7 +447,7 @@
           "type": "collapsible_row",
           "settings": {
             "heading": "How is this different from the \"natural\" lip balms at the drugstore?",
-            "row_content": "<p>Many balms labeled natural still contain petrolatum, paraffin, lanolin, or \"natural flavor\" listed as one word — a regulatory umbrella that can hide dozens of compounds. Our ingredient list is three base ingredients plus named essential oils where applicable. Each ingredient is on the label by its specific name, so you can verify what you're putting on your lips.<\/p>",
+            "row_content": "<p>Many balms labeled natural still contain paraffin, lanolin, or \"natural flavor\" listed as one word — a regulatory umbrella that can hide dozens of compounds. Our ingredient list is three base ingredients plus named essential oils where applicable. Each ingredient is on the label by its specific name, so you can verify what you're putting on your lips.<\/p>",
             "page": ""
           }
         },

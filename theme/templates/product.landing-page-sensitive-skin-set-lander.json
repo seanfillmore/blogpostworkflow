@@ -16,7 +16,7 @@
           "settings": {
             "icon_source": "preset",
             "icon_preset": "check",
-            "text_rte": "<p>Built for skin that reacts to fragrance, parabens, and mineral oil<\/p>"
+            "text_rte": "<p>Built for skin that reacts to fragrance, parabens, and silicones<\/p>"
           }
         },
         "bullet-3": {
@@ -118,7 +118,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Built for skin that reacts to fragrance, parabens, mineral oil",
+            "text": "Built for skin that reacts to fragrance, parabens, silicones",
             "text_style": "body"
           }
         },
@@ -134,7 +134,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No added fragrance, no petroleum jelly, no silicones, no lanolin.",
+            "text": "No added fragrance, no silicones, no lanolin, no parabens.",
             "text_style": "body"
           }
         },
@@ -171,7 +171,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>Two formulas for a complete routine.<\/strong> Daily Pure Unscented Lotion for fast-absorbing moisture; Pure Unscented Cream for overnight occlusion and dry patches.<\/p><p><strong>Built around what sensitive skin recognizes.<\/strong> Cold-pressed virgin coconut oil, organic jojoba, organic beeswax — ingredients with a long track record of NOT triggering reactive skin.<\/p><p><strong>No common irritants.<\/strong> No mineral oil, petrolatum, dimethicone, or lanolin. No parabens, phenoxyethanol, or synthetic fragrance. No essential oils added (Pure Unscented).<\/p><p><strong>First-subscription bonus.<\/strong> Subscribe and your first order ships with a free Pure Unscented Lip Balm and a free Unscented Bar Soap.<\/p>",
+            "content": "<p><strong>Two formulas for a complete routine.<\/strong> Daily Pure Unscented Lotion for fast-absorbing moisture; Pure Unscented Cream for overnight occlusion and dry patches.<\/p><p><strong>Built around what sensitive skin recognizes.<\/strong> Cold-pressed virgin coconut oil, organic jojoba, organic beeswax — ingredients with a long track record of NOT triggering reactive skin.<\/p><p><strong>What we leave out.<\/strong> No silicones or lanolin. No parabens, phenoxyethanol, or synthetic fragrance. No essential oils added (Pure Unscented).<\/p><p><strong>First-subscription bonus.<\/strong> Subscribe and your first order ships with a free Pure Unscented Lip Balm and a free Unscented Bar Soap.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -404,7 +404,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>During our family's healthy-ingredients journey, the customer who came back to us most often was the one with sensitive skin — the person whose skin reacts to fragrance, parabens, dimethicone, or mineral oil. We built every formula from there.<\/p><p>The Sensitive Skin Moisturizing Set pairs our two most reactive-skin-friendly products: a daily lotion and an overnight cream. Pure Unscented in both.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>During our family's healthy-ingredients journey, the customer who came back to us most often was the one with sensitive skin — the person whose skin reacts to fragrance, parabens, or silicones. We built every formula from there.<\/p><p>The Sensitive Skin Moisturizing Set pairs our two most reactive-skin-friendly products: a daily lotion and an overnight cream. Pure Unscented in both.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false
           }
@@ -440,7 +440,7 @@
     "free-from-block": {
       "type": "custom-liquid",
       "settings": {
-        "custom_liquid": "<style>.free-from-band{background:#eef3e8;padding:72px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.free-from-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.free-from-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 48px 0;letter-spacing:-0.01em}.free-from-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px 32px;list-style:none;padding:0;margin:0;max-width:1100px;margin-left:auto;margin-right:auto}.free-from-band__list li{display:flex;align-items:center;justify-content:flex-start;gap:14px;font-size:1.2rem;line-height:1.25;font-weight:600;color:#1a1b18;text-align:left}.free-from-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.7em;font-weight:800;line-height:1;flex-shrink:0}@media(max-width:900px){.free-from-band__list{grid-template-columns:repeat(2,1fr);gap:18px 24px;max-width:520px}}@media(max-width:480px){.free-from-band__list{grid-template-columns:1fr;gap:14px;max-width:280px}.free-from-band{padding:48px 0}.free-from-band__heading{font-size:1.625rem;margin-bottom:32px}}<\/style><div class=\"free-from-band\"><div class=\"free-from-band__inner\"><h2 class=\"free-from-band__heading\">What's NOT in either jar or bottle<\/h2><ul class=\"free-from-band__list\"><li>Mineral oil or petroleum jelly<\/li><li>Petrolatum<\/li><li>Silicones<\/li><li>Lanolin<\/li><li>Parabens<\/li><li>Preservatives you&#39;d need to look up<\/li><li>Synthetic fragrance<\/li><li>Essential oils (Pure Unscented)<\/li><\/ul><\/div><\/div>",
+        "custom_liquid": "<style>.free-from-band{background:#eef3e8;padding:72px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.free-from-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.free-from-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 48px 0;letter-spacing:-0.01em}.free-from-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px 32px;list-style:none;padding:0;margin:0;max-width:1100px;margin-left:auto;margin-right:auto}.free-from-band__list li{display:flex;align-items:center;justify-content:flex-start;gap:14px;font-size:1.2rem;line-height:1.25;font-weight:600;color:#1a1b18;text-align:left}.free-from-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.7em;font-weight:800;line-height:1;flex-shrink:0}@media(max-width:900px){.free-from-band__list{grid-template-columns:repeat(2,1fr);gap:18px 24px;max-width:520px}}@media(max-width:480px){.free-from-band__list{grid-template-columns:1fr;gap:14px;max-width:280px}.free-from-band{padding:48px 0}.free-from-band__heading{font-size:1.625rem;margin-bottom:32px}}<\/style><div class=\"free-from-band\"><div class=\"free-from-band__inner\"><h2 class=\"free-from-band__heading\">What's NOT in either jar or bottle<\/h2><ul class=\"free-from-band__list\"><li>Silicones<\/li><li>Lanolin<\/li><li>Parabens<\/li><li>Preservatives you&#39;d need to look up<\/li><li>Synthetic fragrance<\/li><li>Essential oils (Pure Unscented)<\/li><\/ul><\/div><\/div>",
         "full_width": true,
         "show_divider": false,
         "padding_top": 0,
@@ -450,14 +450,6 @@
     "collapsible-content": {
       "type": "collapsible-content",
       "blocks": {
-        "faq-eczema": {
-          "type": "collapsible_row",
-          "settings": {
-            "heading": "Will this work if I have eczema, rosacea, or perioral dermatitis?",
-            "row_content": "<p>We can't make medical claims and don't sell our products as treatments. What we can tell you: we built the set around what reactive skin most often doesn't tolerate — synthetic fragrance, parabens, mineral oil, dimethicone, lanolin. Many of our customers with eczema, rosacea, or perioral dermatitis report fewer reactions on this set than on conventional drugstore lotions. If you've reacted to multiple products before, the lotion + cream pairing is the closest thing we offer to a clean-slate routine.<\/p>",
-            "page": ""
-          }
-        },
         "faq-results": {
           "type": "collapsible_row",
           "settings": {
@@ -494,7 +486,7 @@
           "type": "collapsible_row",
           "settings": {
             "heading": "Can I use this on my baby or kids?",
-            "row_content": "<p>Many parents use the lotion on kids — fragrance-free, dye-free, no lanolin, no dimethicone. The cream is heavier and works well on kids' dry patches and chapped hands. As with anything new on baby skin, patch test on a small area first. We aren't pediatricians; if your child has a diagnosed skin condition, ask their provider before adding anything new.<\/p>",
+            "row_content": "<p>Many parents use the lotion on kids — fragrance-free, dye-free, no lanolin, no silicones. The cream is heavier and works well on kids' dry patches and chapped hands. As with anything new on baby skin, patch test on a small area first. We aren't pediatricians; if your child has a diagnosed skin condition, ask their provider before adding anything new.<\/p>",
             "page": ""
           }
         },
@@ -516,7 +508,6 @@
         }
       },
       "block_order": [
-        "faq-eczema",
         "faq-results",
         "faq-patch-test",
         "faq-react",
@@ -559,7 +550,7 @@
         "point-2": {
           "type": "point",
           "settings": {
-            "text": "Petrolatum & mineral oil — occlusive but not breathable",
+            "text": "Heavy barrier bases — occlusive but not breathable",
             "icon_source": "built_in"
           }
         },
@@ -816,19 +807,19 @@
             "why": "<p>Essential oils are still fragrance compounds. Many sensitive-skin folks react to them. The Pure Unscented variation has none.<\/p>"
           }
         },
-        "row-petrolatum": {
+        "row-barrier": {
           "type": "row",
           "settings": {
-            "feature": "<p>No petrolatum or mineral oil<\/p>",
+            "feature": "<p>No heavy barrier bases<\/p>",
             "us_has": true,
             "others_has": false,
-            "why": "<p>Petrolatum seals skin without feeding it. We use organic beeswax instead — breathable barrier, real ingredient.<\/p>"
+            "why": "<p>A sealing barrier holds water in without feeding skin. We use organic beeswax instead — breathable, and a real ingredient.<\/p>"
           }
         },
-        "row-dimethicone": {
+        "row-silicones": {
           "type": "row",
           "settings": {
-            "feature": "<p>No dimethicone<\/p>",
+            "feature": "<p>No silicones<\/p>",
             "us_has": true,
             "others_has": false,
             "why": "<p>Silicones make creams feel slippery and absorb fast — a texture trick. We skip it.<\/p>"
@@ -865,8 +856,8 @@
       "block_order": [
         "row-fragrance",
         "row-essential-oils",
-        "row-petrolatum",
-        "row-dimethicone",
+        "row-barrier",
+        "row-silicones",
         "row-parabens",
         "row-coldpressed",
         "row-usa"

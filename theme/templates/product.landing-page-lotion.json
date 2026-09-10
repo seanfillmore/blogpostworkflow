@@ -126,7 +126,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>It soaks in.<\/strong> Goes on smooth and absorbs quickly, without the slick film that makes you wait before getting dressed.<\/p><p><strong>Six ingredients.<\/strong> No mineral oil, no petrolatum, no synthetic fragrance — none of the filler most commercial lotions are mostly made of.<\/p><p><strong>The scent is the oils, not added fragrance.<\/strong> Light, and it fades. Pure Unscented is the same formula with none at all.<\/p><p><strong>Honest trade-off.<\/strong> The texture shifts a little batch to batch, and it firms below 76°F. Shake the bottle before the first pump if it has been stored cool.<\/p>",
+            "content": "<p><strong>It soaks in.<\/strong> Goes on smooth and absorbs quickly, without the slick film that makes you wait before getting dressed.<\/p><p><strong>Six ingredients.<\/strong> No synthetic fragrance, no parabens, no filler — you can read the whole list and recognize every line of it.<\/p><p><strong>The scent is the oils, not added fragrance.<\/strong> Light, and it fades. Pure Unscented is the same formula with none at all.<\/p><p><strong>Honest trade-off.<\/strong> The texture shifts a little batch to batch, and it firms below 76°F. Shake the bottle before the first pump if it has been stored cool.<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -306,7 +306,7 @@
             "image": "shopify:\/\/shop_images\/Jojoba.webp",
             "title": "Organic Jojoba",
             "title_size": "medium",
-            "text": "<p><em>Skin-mirroring carrier oil.<\/em> Jojoba is technically a wax ester, not an oil — its molecular structure is close enough to human sebum that skin recognizes and absorbs it without forming an occlusive film. That's why this lotion isn't greasy. Mineral oil and dimethicone are cheaper and form a more uniform film. They also seal everything else underneath them.<\/p>",
+            "text": "<p><em>Skin-mirroring carrier oil.<\/em> Jojoba is technically a wax ester, not an oil — its molecular structure is close enough to human sebum that skin recognizes and absorbs it without forming an occlusive film. That's why this lotion isn't greasy. The cheaper bases most lotions are built on form a more uniform film, and seal everything else underneath them.<\/p>",
             "show_popup": false,
             "popup_image_position": "top",
             "justify_text": false,
@@ -382,7 +382,7 @@
         "free-from-body": {
           "type": "text",
           "settings": {
-            "text": "<ul><li>No mineral oil or petroleum jelly. That&#39;s the cheap base most lotions are built on.<\/li><li>No silicones, so nothing seals your skin under a film.<\/li><li>No parabens.<\/li><li>No synthetic fragrance. The only smell is the oils themselves.<\/li><li>No preservatives you&#39;d need to look up.<\/li><\/ul>",
+            "text": "<ul><li>No cheap filler base — the stuff most lotions are mostly made of.<\/li><li>No silicones, so nothing seals your skin under a film.<\/li><li>No parabens.<\/li><li>No synthetic fragrance. The only smell is the oils themselves.<\/li><li>No preservatives you&#39;d need to look up.<\/li><\/ul>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -483,7 +483,7 @@
         "founder-body": {
           "type": "text",
           "settings": {
-            "text": "<p>We started Real Skin Care because our family wanted products where every ingredient earned its place. The lotion aisle was where this hit hardest — bottle after bottle of mineral oil, undisclosed fragrance, and parabens, marketed as nourishing.<\/p><p>We wanted something our kids could use that absorbed instead of coated. Every oil in this bottle is cold-pressed and unrefined. That's the line we drew, and we won't cross it for profit.<\/p><p>— Sean Fillmore<\/p>",
+            "text": "<p>We started Real Skin Care because our family wanted products where every ingredient earned its place. The lotion aisle was where this hit hardest — bottle after bottle of undisclosed fragrance and parabens, marketed as nourishing.<\/p><p>We wanted something our kids could use that absorbed instead of coated. Every oil in this bottle is cold-pressed and unrefined. That's the line we drew, and we won't cross it for profit.<\/p><p>— Sean Fillmore<\/p>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -549,7 +549,7 @@
           "type": "collapsible_row",
           "settings": {
             "heading": "Why no synthetic fragrance?",
-            "row_content": "<p>Synthetic fragrance is the leading cause of contact dermatitis in personal-care products. \"Fragrance\" or \"parfum\" is a regulatory umbrella that can hide hundreds of undisclosed compounds — the customer reading the label has no way to know what's in there. Our scented variations use named organic essential oils only, listed individually on the back panel.<\/p>",
+            "row_content": "<p>Synthetic fragrance is the leading cause of allergic skin reactions to personal-care products. \"Fragrance\" or \"parfum\" is a regulatory umbrella that can hide hundreds of undisclosed compounds — the customer reading the label has no way to know what's in there. Our scented variations use named organic essential oils only, listed individually on the back panel.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"
@@ -559,7 +559,7 @@
           "type": "collapsible_row",
           "settings": {
             "heading": "Will this clog my pores?",
-            "row_content": "<p>Jojoba is structurally close to skin's own sebum and absorbs without forming an occlusive film, which is why we built the formula around it. Mineral oil and petrolatum — the cheap moisturizing bases in most commercial lotion — sit on top of skin and can trap debris underneath. We don't use them. If you're acne-prone, the unscented variation is the most conservative choice.<\/p>",
+            "row_content": "<p>Jojoba is structurally close to skin's own sebum and absorbs without forming an occlusive film, which is why we built the formula around it. The cheap moisturizing bases in most commercial lotion sit on top of skin and can trap debris underneath. We don't use them. If you're acne-prone, the unscented variation is the most conservative choice.<\/p>",
             "page": "",
             "enable_highlight": false,
             "highlight_style": "marker"

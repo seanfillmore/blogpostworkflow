@@ -389,3 +389,30 @@ test("validateNoFabricatedIngredients: contraction \"don't use X\" treats X as n
   });
   assert.equal(result.valid, true);
 });
+
+test('validateNoFabricatedIngredients: petrolatum family is forbidden EVEN WHEN NEGATED', () => {
+  // Operator ruling 2026-09-09 — "do not use those words". The negation carve-out is
+  // right for the rest of the blocklist and wrong for these four: unsourced, no
+  // regulatory backing for the implied harm, and 0 of 3,841 real customer search terms.
+  for (const text of [
+    'No mineral oil, no petrolatum, no synthetic fragrance.',
+    'Contains no dimethicone.',
+    'Beeswax breathes, unlike petrolatum.',
+    'We use beeswax instead of petroleum jelly.',
+  ]) {
+    const r = validateNoFabricatedIngredients({ text });
+    assert.equal(r.valid, false, `should refuse: ${text}`);
+  }
+});
+
+test('validateNoFabricatedIngredients: the carve-out still holds for claims we genuinely make', () => {
+  // "fluoride-free" and "SLS-free" are searched, earned, and must keep working —
+  // widening the forbidden set to the whole blocklist would delete real claims.
+  for (const text of [
+    'Fluoride-free toothpaste with no SLS.',
+    'No glycerin, no sorbitol, no titanium dioxide.',
+    'Aluminum-free deodorant.',
+  ]) {
+    assert.equal(validateNoFabricatedIngredients({ text }).valid, true, `should allow: ${text}`);
+  }
+});
