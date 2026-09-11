@@ -197,7 +197,7 @@ export function validateNoFabricatedIngredients({ text }) {
    * Operator ruling, Sean 2026-09-09: "I have never heard a human being say petrolatum
    * or dimethicone" → "Do not use those words." The carve-out is right for the rest of
    * the blocklist: "fluoride-free" and "SLS-free" are claims customers genuinely search
-   * and this brand genuinely earns. It is wrong for these four, on three counts —
+   * and this brand genuinely earns. It is wrong for these three, on three counts —
    *
    *   1. UNSOURCED. agents/ad-studio/claims.js accepts pdpBody as a claim source, so
    *      the Amazon bullet cited the PDP and the PDP cited nothing.
@@ -211,9 +211,15 @@ export function validateNoFabricatedIngredients({ text }) {
    *      "vaseline" (2).
    *
    * Say what IS in the product, or use the word a shopper actually uses.
+   *
+   * "petroleum" is deliberately NOT in this set. Operator ruling, 2026-09-11: "petroleum
+   * jelly" and "petroleum wax" are not covered — they are the words a shopper actually
+   * uses (Vaseline), which is the very test the ruling applies. So "petroleum" keeps the
+   * ordinary negation carve-out: "no petroleum jelly" is an absence claim, while a
+   * product described as containing it is still a fabricated ingredient.
    */
   const FORBIDDEN_EVEN_NEGATED = new Set([
-    'mineral oil', 'petroleum', 'petrolatum', 'dimethicone',
+    'mineral oil', 'petrolatum', 'dimethicone',
   ]);
   const FABRICATION_BLOCKLIST = [
     'dimethicone',

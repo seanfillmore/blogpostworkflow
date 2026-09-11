@@ -50,8 +50,8 @@
  * commercial surface, the ad-copy health gate, the SERP length check, the
  * ingredient-absence check against the template's OWN Ingredients tab, and the
  * operator's FORBIDDEN_EVEN_NEGATED terms, read from agents/pdp-builder/lib/
- * validators.js rather than restated (never name mineral oil, petrolatum,
- * dimethicone or petroleum — not even as "no …"). Quotes are verbatim Judge.me
+ * validators.js rather than restated (never name mineral oil, petrolatum or
+ * dimethicone — not even as "no …"; "petroleum jelly" is allowed, ruling 2026-09-11). Quotes are verbatim Judge.me
  * reviews OF THE PRODUCT WHOSE PAGE SHOWS THEM; REVIEWS records each review id.
  *
  * SAFETY. Dry by default. A value matching neither BEFORE nor AFTER is DRIFT and
