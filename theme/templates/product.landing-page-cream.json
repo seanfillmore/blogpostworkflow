@@ -213,7 +213,7 @@
         "hook-heading": {
           "type": "heading",
           "settings": {
-            "heading": "Built around what locks moisture in — not what seals it out.",
+            "heading": "A coconut oil body cream thick enough for heels, hands and elbows.",
             "heading_size": "h1",
             "heading_tag": "h2",
             "enable_highlight": false,
@@ -229,11 +229,22 @@
             "enable_highlight": false,
             "highlight_style": "marker"
           }
+        },
+        "hook-proof": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>&ldquo;This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy.&rdquo;<\/em> &mdash; Nicole H., verified buyer<\/p><p><em>&ldquo;Incredibly soft. Doesn’t make you feel greasy or sticky after use.&rdquo;<\/em> &mdash; Ella M., verified buyer<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
         }
       },
       "block_order": [
         "hook-heading",
-        "hook-text"
+        "hook-text",
+        "hook-proof"
       ],
       "settings": {
         "text_alignment": "center",

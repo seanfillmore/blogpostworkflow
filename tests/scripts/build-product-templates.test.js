@@ -50,7 +50,11 @@ test('the ported guarantee carries NO product-specific testimonial', () => {
   // lotion keeps its own, as an extra rather than a second copy of the promise
   const lotion = blockSource('trust-line', 'product.landing-page-lotion.json', read);
   assert.ok(lotion.startsWith(g));
-  assert.match(lotion, /Ariel/);
+  // A coconut-lotion review (Judge.me 593827114). The Ariel M. "ABSORBS" quote
+  // that sat here until 2026-09-11 is filed under coconut-moisturizer — it was
+  // the cream's endorsement shown as the lotion's.
+  assert.match(lotion, /Mike G\./);
+  assert.doesNotMatch(lotion, /Ariel|ABSORBS/);
 });
 
 test('applyManifest REFUSES to drop a block the page actually renders', () => {
