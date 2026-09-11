@@ -40,6 +40,11 @@
  *     It carries `nonRuledReason`, and a test pins that it is the only such entry.
  *   · hand-soap-set is ARCHIVED. Fixed anyway: harmless now, and it would otherwise bring
  *     the words back the day someone unarchives it.
+ *   · PRODUCT METAFIELDS were not in the first cut and should have been. After the first
+ *     apply, /products/99-coconut-reset-digital still rendered "Mineral oil" — from a
+ *     `bundle.comparison_rows` json metafield, which no body or lander scan can see. A scan
+ *     of all 336 metafields on all 23 products then found exactly that one hit outside
+ *     Judge.me's review widgets. Scan the metafields, not just the fields you expect copy in.
  *
  * MECHANICS, copied from the reviewed-plan pattern (scripts/remediate-petrolatum-avoidance-
  * claim.mjs, whose `decideEntry` is IMPORTED, never re-declared): literal BEFORE, literal
@@ -182,6 +187,18 @@ export const PLAN = [
     reason: 'Hero bullet.',
   },
 
+  // ── Product metafields (found by a full scan of every product metafield) ─────────────
+  {
+    id: 'reset-digital-comparison-mineral-oil-row', kind: 'product-metafield', handle: '99-coconut-reset-digital',
+    ownerId: 'gid://shopify/Product/8566372303018', namespace: 'bundle', key: 'comparison_rows', type: 'json',
+    expectedOccurrences: 1,
+    before: '"Synthetic \\"fragrance\\""},{"attribute":"Mineral oil","us":"None","them":"Common"},{"attribute":"Made in"',
+    after: '"Synthetic \\"fragrance\\""},{"attribute":"Made in"',
+    reason: 'Removes the "Mineral oil / None / Common" comparison row. REMOVED rather than renamed to '
+      + '"Petroleum jelly", so the table makes no comparison claim it did not already make. Anchored on '
+      + 'the neighbouring rows so the literal is unique and a rerun reads already-applied.',
+  },
+
   // ── Theme assets (raw JSON text: quotes are \" and closing tags <\/li>) ─────────────
   {
     id: 'homepage-hero-subheading', kind: 'theme-asset', key: 'templates/index.json', expectedOccurrences: 1,
@@ -241,7 +258,8 @@ export function groupByTarget(plan) {
   for (const e of plan) {
     const t = e.kind === 'product' ? `product:${e.productId}`
       : e.kind === 'metaobject' ? `metaobject:${e.metaobjectId}:${e.key}`
-        : `theme:${e.key}`;
+        : e.kind === 'product-metafield' ? `metafield:${e.ownerId}:${e.namespace}.${e.key}`
+          : `theme:${e.key}`;
     if (!groups.has(t)) groups.set(t, []);
     groups.get(t).push(e);
   }
@@ -275,7 +293,12 @@ async function readBackUntil(read, predicate, { tries = 4, delayMs = 1500, sleep
   return { verified: false };
 }
 
-export async function main({ api, argv = process.argv, sleep = (ms) => new Promise((r) => setTimeout(r, ms)) } = {}) {
+/**
+ * `outDir` is injectable so tests never write into the real report directory. They did,
+ * once: stub `--apply` runs left backups of FAKE body_html beside the real apply run's
+ * backups, and a restore from one of those would have written stub copy onto a live page.
+ */
+export async function main({ api, argv = process.argv, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), outDir = OUT_DIR } = {}) {
   const apply = flag(argv, '--apply');
   const themeId = argValue(argv, '--theme-id');
   const allowLive = flag(argv, '--allow-live-theme');
@@ -288,7 +311,7 @@ export async function main({ api, argv = process.argv, sleep = (ms) => new Promi
   }
 
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const backupDir = join(OUT_DIR, 'backups', stamp);
+  const backupDir = join(outDir, 'backups', stamp);
   const results = [];
   const backup = (name, value) => {
     mkdirSync(backupDir, { recursive: true });
@@ -351,6 +374,37 @@ export async function main({ api, argv = process.argv, sleep = (ms) => new Promi
       continue;
     }
 
+    if (kind === 'product-metafield') {
+      const { ownerId, namespace, key: mfKey, type, handle } = entries[0];
+      const readMf = async () => {
+        const r = await shopify.shopifyGraphQL(
+          'query($id: ID!, $ns: String!, $key: String!) { product(id: $id) { metafield(namespace: $ns, key: $key) { value type } } }',
+          { id: ownerId, ns: namespace, key: mfKey });
+        return (r?.product ?? r?.data?.product)?.metafield?.value;
+      };
+      const live = await readMf();
+      const { next, decisions, changed } = applyGroup(entries, live);
+      if (changed && type === 'json') {
+        try { JSON.parse(next); } catch { throw new Error(`ABORT — ${target}: result is no longer valid JSON`); }
+      }
+      results.push({ target, handle, decisions, changed, written: false });
+      report(target, decisions);
+      if (!changed || !apply) continue;
+      backup(`metafield-${handle}.${namespace}.${mfKey}.json`, live);
+      const w = await shopify.shopifyGraphQL(
+        'mutation($m: [MetafieldsSetInput!]!) { metafieldsSet(metafields: $m) { metafields { id } userErrors { field message } } }',
+        { m: [{ ownerId, namespace, key: mfKey, type, value: next }] });
+      const errs = (w?.metafieldsSet ?? w?.data?.metafieldsSet)?.userErrors ?? [];
+      if (errs.length) throw new Error(`metafieldsSet ${target} refused: ${JSON.stringify(errs)}`);
+      // Shopify may re-serialise a json metafield, so compare parsed values, not bytes.
+      const canon = (s) => { try { return JSON.stringify(JSON.parse(s)); } catch { return s; } };
+      const rb = await readBackUntil(readMf, (v) => typeof v === 'string' && canon(v) === canon(next), { sleep });
+      results.at(-1).written = true;
+      results.at(-1).verified = rb.verified;
+      console.log(`  ✓ written${rb.verified ? ', read back identical' : ' — READ-BACK NOT YET IDENTICAL, re-check'}`);
+      continue;
+    }
+
     // Theme asset.
     const key = entries[0].key;
     if (!themeId) {
@@ -382,10 +436,10 @@ export async function main({ api, argv = process.argv, sleep = (ms) => new Promi
     console.log(`  ✓ written${rb.verified ? ', read back identical' : ' — READ-BACK NOT YET IDENTICAL, re-check'}`);
   }
 
-  mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(outDir, { recursive: true });
   const record = { generated_at: new Date().toISOString(), applied: apply, themeId, results };
-  writeFileSync(join(OUT_DIR, `run-${stamp}.json`), JSON.stringify(record, null, 2));
-  console.log(`\nRun record: ${join(OUT_DIR, `run-${stamp}.json`)}`);
+  writeFileSync(join(outDir, `run-${stamp}.json`), JSON.stringify(record, null, 2));
+  console.log(`\nRun record: ${join(outDir, `run-${stamp}.json`)}`);
   return record;
 }
 

@@ -1,8 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import {
   PLAN, RULED_WORDS, DISEASE_WORDS, gateAfter, gateText, groupByTarget, applyGroup, main,
 } from '../../scripts/remediate-ruled-ingredient-words.mjs';
+
+// Every main() call writes into a throwaway directory. Stub --apply runs once wrote
+// backups of fake body_html into the real report directory, beside the real ones.
+const tmpOut = () => mkdtempSync(join(tmpdir(), 'ruled-words-test-'));
 
 // Real live spans, copied read-only on 2026-09-11.
 const CREAM_BODY = '<li>\n<strong>A little goes a long way.</strong> A tiny bit covers more than a pump of lotion does.</li>\n'
@@ -21,7 +28,7 @@ test('the plan is a fixed, fully-specified table', () => {
     for (const k of ['id', 'kind', 'before', 'after', 'reason', 'expectedOccurrences']) {
       assert.ok(e[k] !== undefined && e[k] !== '', `${e.id} needs ${k}`);
     }
-    assert.ok(['product', 'metaobject', 'theme-asset'].includes(e.kind), `${e.id} kind`);
+    assert.ok(['product', 'metaobject', 'product-metafield', 'theme-asset'].includes(e.kind), `${e.id} kind`);
     assert.notEqual(e.before, e.after);
     assert.ok(!ids.has(e.id), `duplicate id ${e.id}`);
     ids.add(e.id);
@@ -94,6 +101,20 @@ test('a metaobject list field stays valid JSON after the swap', () => {
   assert.deepEqual(JSON.parse(next).at(-1), 'No synthetic fragrance, no parabens, no SLS');
 });
 
+// The real live bundle.comparison_rows value on 99-coconut-reset-digital, read 2026-09-11.
+const RESET_ROWS = '[{"attribute":"Ingredient count","us":"8","them":"34"},{"attribute":"Preservative","us":"Grapefruit seed","them":"Parabens / phenoxyethanol"},{"attribute":"Fragrance","us":"Essential oil or none","them":"Synthetic \\"fragrance\\""},{"attribute":"Mineral oil","us":"None","them":"Common"},{"attribute":"Made in","us":"USA, small batch","them":"Contract manufactured"}]';
+
+test('the comparison-table row is removed and the other four rows survive as valid JSON', () => {
+  const g = groupByTarget(PLAN).get('metafield:gid://shopify/Product/8566372303018:bundle.comparison_rows');
+  assert.ok(g, 'metafield entry grouped by owner + namespace.key');
+  const { next, changed, decisions } = applyGroup(g, RESET_ROWS);
+  assert.equal(changed, true);
+  assert.equal(decisions[0].action, 'apply');
+  assert.deepEqual(JSON.parse(next).map((r) => r.attribute), ['Ingredient count', 'Preservative', 'Fragrance', 'Made in']);
+  assert.doesNotMatch(next, RULED_WORDS);
+  assert.equal(applyGroup(g, next).decisions[0].action, 'already-applied');
+});
+
 test('SKIPS a target whose copy has moved since the plan was written', () => {
   const g = groupByTarget(PLAN).get('product:7644968911018');
   const moved = CREAM_BODY.replace('No petrolatum, no mineral oil,', 'No petrolatum or mineral oil,');
@@ -121,20 +142,20 @@ function stubApi({ themeLiveId = 1, assets = {} } = {}) {
 
 test('DRY RUN performs no Shopify write of any kind', async () => {
   const { api, writes } = stubApi({ assets: { '1:templates/index.json': HOMEPAGE, '2:templates/index.json': HOMEPAGE } });
-  await main({ api, argv: ['node', 's', '--theme-id', '2'], sleep: async () => {} });
+  await main({ api, argv: ['node', 's', '--theme-id', '2'], sleep: async () => {}, outDir: tmpOut() });
   assert.equal(writes.length, 0);
 });
 
 test('REFUSES the live theme without --allow-live-theme, even with --apply', async () => {
   const { api, writes } = stubApi({ assets: { '1:templates/index.json': HOMEPAGE } });
-  await assert.rejects(main({ api, argv: ['node', 's', '--apply', '--theme-id', '1'], sleep: async () => {} }), /LIVE theme/);
+  await assert.rejects(main({ api, argv: ['node', 's', '--apply', '--theme-id', '1'], sleep: async () => {}, outDir: tmpOut() }), /LIVE theme/);
   assert.equal(writes.filter((w) => w[0] === 'theme').length, 0);
 });
 
 test('a preview write is built from the LIVE asset, not the preview copy', async () => {
   const stalePreview = HOMEPAGE.replace('No exceptions.', 'STALE PREVIEW TEXT.');
   const { api, writes } = stubApi({ assets: { '1:templates/index.json': HOMEPAGE, '2:templates/index.json': stalePreview } });
-  await main({ api, argv: ['node', 's', '--apply', '--theme-id', '2'], sleep: async () => {} });
+  await main({ api, argv: ['node', 's', '--apply', '--theme-id', '2'], sleep: async () => {}, outDir: tmpOut() });
   const themeWrite = writes.find((w) => w[0] === 'theme' && w[2] === 'templates/index.json');
   assert.ok(themeWrite, 'expected a preview write');
   assert.equal(themeWrite[1], 2);
