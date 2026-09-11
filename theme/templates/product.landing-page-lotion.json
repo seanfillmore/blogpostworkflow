@@ -107,7 +107,7 @@
         "trust-line": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p><p style=\"font-size:14px;color:#555;font-style:italic;line-height:1.5;margin:0 0 10px 0;\">&ldquo;As soon as you put it on it just ABSORBS. My hands are in water a lot at my job and this locks moisture in better than any Bath &amp; Body Works or Body Shop product.&rdquo; &mdash; Ariel M.<\/p>"
+            "custom_liquid": "<p style=\"font-size:15px;color:#4a8b3c;font-weight:600;margin:14px 0 6px 0;\">Try it for 30 days. If you don&#39;t like it, email us and we&#39;ll refund you. You don&#39;t even have to send it back.<\/p><p style=\"font-size:14px;color:#555;font-style:italic;line-height:1.5;margin:0 0 10px 0;\">&ldquo;It absorbs quickly, is not greasy like some lotions can be, and has a great scent.&rdquo; &mdash; Mike G.<\/p>"
           }
         },
         "tab-ingredients": {
@@ -234,7 +234,7 @@
         "hook-heading": {
           "type": "heading",
           "settings": {
-            "heading": "Built around oils your skin actually recognizes.",
+            "heading": "Will a coconut oil lotion leave you greasy?",
             "heading_size": "h1",
             "heading_tag": "h2",
             "enable_highlight": false,
@@ -244,7 +244,17 @@
         "hook-text": {
           "type": "text",
           "settings": {
-            "text": "<p>Most lotions sit on top of your skin — water and a thickener, and you can still feel one there an hour later. This one soaks in. Reviewers keep coming back to the same two things: how fast it absorbs, and that it does not leave them greasy.<\/p>",
+            "text": "<p>It's the fair question. Straight coconut oil can sit on your skin for a long time. This isn't straight oil — it's a lotion built on coconut oil and jojoba, which is close to the oil your skin makes. Reviewers keep coming back to how quickly it soaks in.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "hook-proof": {
+          "type": "text",
+          "settings": {
+            "text": "<p><em>&ldquo;It absorbs quickly yet is effective all day.&rdquo;<\/em> &mdash; Nicole H., verified buyer<\/p><p><em>&ldquo;…even my husband, who doesn’t like lotions, loved how easily this soaked into his dry skin.&rdquo;<\/em> &mdash; Suzy<\/p>",
             "text_size": "typeset",
             "secondary_color": false,
             "enable_highlight": false,
@@ -254,7 +264,8 @@
       },
       "block_order": [
         "hook-heading",
-        "hook-text"
+        "hook-text",
+        "hook-proof"
       ],
       "settings": {
         "text_alignment": "center",

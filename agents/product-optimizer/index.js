@@ -57,7 +57,12 @@ import {
   updateCustomCollection,
   updateSmartCollection,
   upsertMetafield,
+  getMainThemeId,
+  getThemeAsset,
 } from '../../lib/shopify.js';
+import {
+  ingredientAbsenceCheck, ingredientPromptBlock, ingredientTextFromTemplate,
+} from '../../lib/ingredient-absence-claims.js';
 import * as gsc from '../../lib/gsc.js';
 import { getKeywordIdeas } from '../../lib/dataforseo.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
@@ -355,9 +360,41 @@ async function pickBestKeyword(url, fallbackTitle) {
   return { keyword: (fallbackTitle || '').toLowerCase(), gscData: null, source: 'title-fallback' };
 }
 
+// ── ingredient grounding ──────────────────────────────────────────────────────
+//
+// On 2026-09-10 this agent published "no water" / "no water padding" for
+// coconut-lotion, whose Ingredients tab lists purified spring water first. The
+// prompt carried no ingredient list, so the model guessed. Every product prompt
+// now carries the list the shopper reads on the live page, and every product
+// generation is gated against denying any of it (lib/ingredient-absence-claims.js).
+// It is read from the product's LIVE template because that is the copy a shopper
+// can check; a product with no Ingredients tab gets no check and a prompt that
+// forbids guessing.
+
+let themeIdPromise = null;
+const templateIngredients = new Map();
+
+async function productIngredients(product) {
+  const suffix = product?.template_suffix;
+  if (!suffix) return null;
+  if (!templateIngredients.has(suffix)) {
+    templateIngredients.set(suffix, (async () => {
+      try {
+        themeIdPromise ??= getMainThemeId();
+        const raw = await getThemeAsset(await themeIdPromise, `templates/product.${suffix}.json`);
+        return ingredientTextFromTemplate(raw);
+      } catch (e) {
+        console.warn(`  (ingredient list unavailable for template "${suffix}": ${e.message})`);
+        return null;
+      }
+    })());
+  }
+  return templateIngredients.get(suffix);
+}
+
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
-async function rewriteProduct(product, keyword, gscData, constraint = '') {
+async function rewriteProduct(product, keyword, gscData, constraint = '', ingredients = null) {
   const currentDesc = stripHtml(product.body_html).slice(0, 2000);
   const currentWords = wordCount(product.body_html);
   const gscNote = gscData?.impressions > 0
@@ -388,6 +425,8 @@ PRODUCT: ${product.title}
 TARGET KEYWORD: "${keyword}"
 CURRENT DESCRIPTION (${currentWords} words): ${currentDesc || '(none)'}
 ${gscNote}${reviewNote}
+
+${ingredientPromptBlock(ingredients)}
 
 Write an improved product description that:
 1. Opens with a compelling hook that includes the target keyword naturally
@@ -504,7 +543,7 @@ function formatGroundingBlock(ground) {
   return lines.length ? `\n${lines.join('\n')}\n` : '';
 }
 
-async function rewriteProductMeta(product, topQueries, gscData, ground, constraint = '') {
+async function rewriteProductMeta(product, topQueries, gscData, ground, constraint = '', ingredients = null) {
   const queriesFormatted = topQueries.slice(0, 5)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}, ${(q.ctr * 100).toFixed(1)}%`)
     .join('\n');
@@ -530,6 +569,8 @@ GSC DATA (last 90 days):
 TOP QUERIES:
 ${queriesFormatted}
 ${groundingBlock}
+${ingredientPromptBlock(ingredients)}
+
 Write improved meta tags only (no body content):
 - SEO title (50–60 chars, includes top keyword naturally)
 - Meta description (benefit-driven, includes keyword, ends with a call-to-action or value prop — see LENGTH LIMITS below)
@@ -621,7 +662,7 @@ No explanation, no markdown fences.`,
 
 // ── product title rewriter (GSC-driven keyword enrichment) ──────────────────
 
-async function rewriteProductTitle(product, topQueries, gscData, ground, constraint = '') {
+async function rewriteProductTitle(product, topQueries, gscData, ground, constraint = '', ingredients = null) {
   const queriesFormatted = topQueries.slice(0, 8)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}`)
     .join('\n');
@@ -646,6 +687,7 @@ GSC DATA (last 90 days for this product page):
 TOP SEARCH QUERIES (what people search to find this product):
 ${queriesFormatted}
 ${groundingBlock}
+${ingredientPromptBlock(ingredients)}
 
 Write an improved product title that:
 1. Includes the highest-volume relevant keyword naturally
@@ -764,6 +806,7 @@ async function optimizeTitlesMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
+      const ingredients = await productIngredients(c.raw);
 
       // ── health-claim gate ────────────────────────────────────────────────
       // The single highest-exposure string this fleet writes: a PRODUCT TITLE
@@ -771,8 +814,12 @@ async function optimizeTitlesMode() {
       // Shopify puts in the <title> tag, and it is what a shopper reads first.
       // Nothing checked it before 2026-08-24.
       const gated = await gateGeneratedCopy(
-        (constraint) => rewriteProductTitle(c, topQueries, c.gsc, ground, constraint),
-        { extract: (p) => ({ 'product title': p?.new_title }), required: ['product title'] },
+        (constraint) => rewriteProductTitle(c, topQueries, c.gsc, ground, constraint, ingredients),
+        {
+          extract: (p) => ({ 'product title': p?.new_title }),
+          required: ['product title'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
+        },
       );
       if (!gated.ok) {
         if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
@@ -965,14 +1012,16 @@ async function fromGscMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
+      const ingredients = await productIngredients(c.raw);
       const gated = await gateGeneratedCopy(
         (constraint) => rewriteProductMeta(
           { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
-          topQueries, c.gsc, ground, constraint,
+          topQueries, c.gsc, ground, constraint, ingredients,
         ),
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description }),
           required: ['title'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
@@ -1642,13 +1691,15 @@ async function main() {
       // SEO fields. Measured against the current live copy on 2026-08-24: 1 of
       // 19 product bodies and 32 of 82 collection bodies carry blocking-tier
       // language today, so the retry earns its keep here.
+      const ingredients = candidate.type === 'product' ? await productIngredients(candidate.raw) : null;
       const gated = await gateGeneratedCopy(
         (constraint) => (candidate.type === 'product'
-          ? rewriteProduct(candidate.raw, keyword, gscData, constraint)
+          ? rewriteProduct(candidate.raw, keyword, gscData, constraint, ingredients)
           : rewriteCollection(candidate.raw, keyword, gscData, constraint)),
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
           required: ['title', 'body'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
