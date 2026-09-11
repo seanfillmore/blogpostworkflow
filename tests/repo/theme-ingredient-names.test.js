@@ -1,9 +1,13 @@
 /**
- * The theme templates may not name petrolatum, dimethicone, mineral oil or petroleum
- * jelly, and may not name a skin disease.
+ * The theme templates may not name petrolatum, dimethicone or mineral oil, and may not
+ * name a skin disease.
  *
  * Operator ruling, Sean 2026-09-09: "I have never heard a human being say petrolatum or
  * dimethicone" → "Do not use those words."
+ *
+ * Operator ruling, 2026-09-11: "petroleum jelly" and "petroleum wax" are NOT covered.
+ * They are the words a shopper actually uses, which is the test the first ruling applies,
+ * so they are the permitted plain-language replacement rather than a fourth banned term.
  *
  * The evidence behind it, so nobody re-adds the words believing they were a position
  * we merely lost our nerve on:
@@ -32,7 +36,7 @@ const TEMPLATES = join(ROOT, 'theme', 'templates');
 const liveTemplates = () =>
   readdirSync(TEMPLATES).filter((f) => f.endsWith('.json')).map((f) => join(TEMPLATES, f));
 
-const INGREDIENT_NAMES = /petrolatum|dimethicone|mineral oil|petroleum jelly/gi;
+const INGREDIENT_NAMES = /petrolatum|dimethicone|mineral oil/gi;
 
 /**
  * The one permitted disease string is a SOURCE CITATION — the name of a real research
@@ -42,7 +46,7 @@ const INGREDIENT_NAMES = /petrolatum|dimethicone|mineral oil|petroleum jelly/gi;
 const CITATION_ALLOWLIST = ['North American Contact Dermatitis Group'];
 const DISEASE_NAMES = /eczema|psoriasis|rosacea|dermatitis/gi;
 
-test('no live theme template names petrolatum, dimethicone, mineral oil or petroleum jelly', () => {
+test('no live theme template names petrolatum, dimethicone or mineral oil', () => {
   const offenders = [];
   for (const path of liveTemplates()) {
     const hits = (readFileSync(path, 'utf8').match(INGREDIENT_NAMES) || []);

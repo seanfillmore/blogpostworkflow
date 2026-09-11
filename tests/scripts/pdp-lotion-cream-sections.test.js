@@ -27,7 +27,9 @@ describe('what may be published', () => {
 
   test('the never-name list is read from the pdp-builder validator, not restated', () => {
     const f = forbiddenEvenNegated();
-    for (const w of ['mineral oil', 'petrolatum', 'dimethicone', 'petroleum']) assert.ok(f.includes(w), w);
+    for (const w of ['mineral oil', 'petrolatum', 'dimethicone']) assert.ok(f.includes(w), w);
+    // Operator ruling 2026-09-11: "petroleum jelly" / "petroleum wax" are NOT covered.
+    assert.ok(!f.includes('petroleum'), 'petroleum was removed from the never-name list');
   });
 
   test('a plan string naming a forbidden term would be refused', () => {

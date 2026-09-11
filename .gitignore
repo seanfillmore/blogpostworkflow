@@ -322,3 +322,9 @@ data/reports/listing-3-second-audit/
 
 # Petrolatum-claim remediation run records + live-value backups (restore path)
 data/reports/petrolatum-claim-remediation/
+
+# Pass-two ruled-ingredient-word remediation run records + live-value backups (restore path)
+data/reports/ruled-ingredient-words/
+
+# Amazon toothpaste bullet replacement run records (validation-preview and submission results)
+data/reports/amazon-toothpaste-bullets/
