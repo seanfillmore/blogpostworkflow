@@ -40,7 +40,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { GoogleGenAI } from '@google/genai';
 import { renderVariation } from '../agents/ad-studio/render.js';
-import { sharedRequirements, blankFineTextRule } from '../lib/pdp-frame-prompts.js';
+import { FRAME_BUILDERS } from '../lib/pdp-frame-prompts.js';
 
 const ROOT = process.cwd();
 const OUT = join(ROOT, 'data', 'creatives', 'pdp-frames-batch2');
@@ -104,73 +104,11 @@ A short WHITE ROLL-ON bottle, 2 fl. oz., with a large smooth WHITE ROLLER BALL s
   },
 };
 
-function offerPrompt(p) {
-  const checks = p.offer.checks.map(c => `"${c}"`).join(' and ');
-  return `Create a premium ecommerce carousel frame whose single job is to state the OFFER.
-
-${p.product}
-
-LAYOUT: The product sits in the right third of the frame on a plain seamless white ground with a soft contact shadow. The left two thirds carry the offer as clean typography on the same white ground.
-
-EXACT TEXT, rendered precisely and spelled correctly:
-- Large bold headline, the biggest element in the frame: "${p.offer.headline}"
-- Beneath it, very large: "${p.offer.price}"
-- Directly under that, small: "${p.offer.sub}"
-- Two short supporting lines lower down, each with a simple thin check mark: ${checks}
-
-No other text anywhere. No sale starbursts, no percentage badges, no urgency banners, no countdown.
-
-${SHARED}`;
-}
-
-function proofPrompt(p) {
-  const attribution = p.proof.label
-    ? `- Beneath the quote, smaller: "${p.proof.who}"\n- Directly beneath that, smallest: "${p.proof.label}"`
-    : `- Beneath the quote, smaller: "${p.proof.who}" — and NOTHING else. Do not add a verification line, a date, a location or a star count anywhere near it.`;
-  return `Create a premium ecommerce carousel frame whose single job is TRUST, built around one real customer quote.
-
-${p.product}
-
-LAYOUT: A clean editorial layout on a plain seamless white ground. The quote is the hero and sits across the upper two thirds, set large. The product sits smaller in the lower right with a soft contact shadow. Quiet and typographic — no styling props whatsoever.
-
-EXACT TEXT, rendered precisely and spelled correctly:
-- A row of exactly five small filled black stars, above the quote.
-- The quote, large, in matching curly typographic quotation marks at BOTH ends: "${p.proof.quote}"
-${attribution}
-
-THE QUOTE IS A REAL CUSTOMER'S WORDS AND MUST BE REPRODUCED EXACTLY — every word, in order, none dropped, none repeated, none substituted. It is ${p.proof.quote.split(/\s+/).length} words long. Earlier attempts at this frame DROPPED a word ("The unscented an excellent choice" for "The unscented is an excellent choice") and REPEATED one ("The scents are enjoyable enjoyable and not over powering"). Set the quote, then read it back word by word against the line above before finishing. Altering a customer's words is the worst defect this frame can have.
-
-${blankFineTextRule()}
-
-No other text anywhere. Do NOT add a review count, a numeric rating, an average score, a press logo or any badge. Do NOT show a person — no human face or body — because the reviewer must never be portrayed by a generated model.
-
-${SHARED}`;
-}
-
-function comparePrompt(p) {
-  const rows = p.compare.rows.map(([a, b], i) => `${i + 1}. "${a}" / "${b}"`).join('\n');
-  return `Create a premium ecommerce carousel frame that is a clean two-column comparison chart.
-
-${p.product}
-
-LAYOUT: A simple, uncluttered two-column table occupying the UPPER TWO THIRDS of the frame on a plain seamless white ground, mobile-optimized, generous spacing, thin light rules only — no heavy boxes, no drop shadows on the table. The product sits small in the BOTTOM THIRD, centred, with a soft contact shadow.
-
-The product must sit ENTIRELY BELOW the table with clear empty space between the table's lowest rule and the top of the product. It must NOT overlap, intersect or sit behind the table. An earlier attempt placed the bottle in the MIDDLE of the table, so the centre column divider ran down through it and it covered the text of the lower rows — never do that. Shrink the product and move it down until the whole table is clear of it.
-
-Left column header: "Real Skin Care". Right column header: "${p.compare.them}".
-Left column cells each carry a small green check mark. Right column cells each carry a small grey cross.
-
-EXACT TEXT for the four rows, rendered precisely and spelled correctly, left cell then right cell:
-${rows}
-
-No other text anywhere. Do NOT name, show or imply any competitor brand, logo or packaging. Do NOT add a headline, footnote or call to action.
-
-${blankFineTextRule()}
-
-${SHARED}`;
-}
-
-const BUILDERS = { offer: offerPrompt, proof: proofPrompt, compare: comparePrompt };
+// The three builders moved to lib/pdp-frame-prompts.js when batch 3 needed them,
+// so the prompts have one source rather than a hand-copy that drifts. Behaviour
+// here is unchanged: the builders default to p.product, which is what this script
+// passes.
+const BUILDERS = FRAME_BUILDERS;
 
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : null;
 const attempt = process.argv.includes('--attempt') ? process.argv[process.argv.indexOf('--attempt') + 1] : '1';
