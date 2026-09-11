@@ -29,6 +29,7 @@ of imagery.
 | `legacy-amazon-heroes/` | The five original Amazon hero images | Four are still live on the CDN and embedded in ~20 blog posts; the lip balm one was removed from its product. |
 | `replaced-lotion-frames/` | The six older shared PDP frames replaced on `coconut-lotion` | No — deleted from the product, so the CDN files are gone. |
 | `generated-pdp-frames/` | The 24 shared PDP frames generated for 6 SKUs | Live on the CDN, but **not reproducible** — image generation is non-deterministic, so re-running the same prompt returns a different picture. |
+| `forbidden-ingredient-frames-2026-09-10/` | The five PDP gallery frames (lotion, body cream, deodorant, lip balm not-in-it frames + the lotion compare frame) replaced because their pixels named mineral oil, petrolatum or dimethicone — see `scripts/publish-forbidden-ingredient-frames.mjs`. `clean-compare.jpg` is the q90 source; `clean-compare.LIVE-CDN.jpg` is Shopify's q63 re-encode that was actually live | No — deleted from the products, so the CDN files are gone. The replacements are rebuilt from these files by `scripts/compose-forbidden-ingredient-frames.sh`. |
 | `orphan-drafts-2026-08-22/` | Full Shopify article objects (incl. `body_html`) for 15 abandoned duplicate blog drafts, archived before deletion | No — deleted via the Shopify Admin API, which has no undelete. See that folder's README for the four-criteria evidence and how to restore one. |
 
 ## Provenance of `generated-pdp-frames/`

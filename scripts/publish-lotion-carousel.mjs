@@ -56,8 +56,11 @@ const ADD = [
     alt: 'Subscribe and save 15% on Real Skin Care coconut body lotion — $25.50 per 8 oz bottle, free shipping on every subscription order, pause, skip or cancel anytime' },
   { file: 'clean-proof.jpg', position: 8,
     alt: 'Five-star customer review of Real Skin Care coconut body lotion — the perfect moisturizer for kids in the summer, absorbs quickly yet is effective all day' },
+  // clean-compare.jpg was replaced by clean-compare-v2.jpg on 2026-09-10 (its row naming
+  // mineral oil / petrolatum removed) — see scripts/publish-forbidden-ingredient-frames.mjs.
+  // Do not re-run this entry.
   { file: 'clean-compare.jpg', position: 11,
-    alt: 'Real Skin Care coconut body lotion compared with conventional lotion — six readable ingredients and no mineral oil, petrolatum, silicones or parabens' },
+    alt: 'Real Skin Care coconut body lotion compared with conventional lotion — six ingredients you can read, no silicones or parabens, and it absorbs in without leaving a film' },
 ];
 
 const product = (await getProducts({ handle: 'coconut-lotion' }))?.[0];

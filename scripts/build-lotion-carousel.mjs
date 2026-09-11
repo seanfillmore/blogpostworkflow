@@ -159,8 +159,11 @@ ${SHARED}`,
   },
   {
     id: 'compare',
-    source: 'Rows sourced from the live PDP frames: product title "Made With Only 6 Clean Ingredients"; "not in it" frame (no mineral oil, no petroleum jelly, no silicones, no parabens); mechanism frame ("absorb into skin instead of sitting on top of it"). Comparison column is the generic category — no competitor brand is named.',
-    strings: ['Real Skin Care', 'Conventional lotion', '6 ingredients you can read', '20+ ingredient list', 'No mineral oil or petrolatum', 'Mineral oil, petrolatum', 'No silicones or parabens', 'Silicones, parabens', 'Absorbs in, leaves no film', 'Sits on top of skin'],
+    // The row naming mineral oil / petrolatum was REMOVED 2026-09-10 (Sean's ruling:
+    // never name those words, even negated). The live frame is clean-compare-v2.jpg,
+    // composited from this render's pixels by scripts/compose-forbidden-ingredient-frames.sh.
+    source: 'Rows sourced from the live PDP frames: product title "Made With Only 6 Clean Ingredients"; "not in it" frame (no silicones, no parabens); mechanism frame ("absorb into skin instead of sitting on top of it"). Comparison column is the generic category — no competitor brand is named.',
+    strings: ['Real Skin Care', 'Conventional lotion', '6 ingredients you can read', '20+ ingredient list', 'No silicones or parabens', 'Silicones, parabens', 'Absorbs in, leaves no film', 'Sits on top of skin'],
     prompt: `Create a premium ecommerce carousel frame that is a clean two-column comparison chart.
 
 ${PRODUCT}
@@ -172,11 +175,10 @@ The bottle must sit ENTIRELY BELOW the table with clear empty space between the 
 Left column header: "Real Skin Care". Right column header: "Conventional lotion".
 Left column cells each carry a small green check mark. Right column cells each carry a small grey cross.
 
-EXACT TEXT for the four rows, rendered precisely and spelled correctly, left cell then right cell:
+EXACT TEXT for the three rows, rendered precisely and spelled correctly, left cell then right cell:
 1. "6 ingredients you can read" / "20+ ingredient list"
-2. "No mineral oil or petrolatum" / "Mineral oil, petrolatum"
-3. "No silicones or parabens" / "Silicones, parabens"
-4. "Absorbs in, leaves no film" / "Sits on top of skin"
+2. "No silicones or parabens" / "Silicones, parabens"
+3. "Absorbs in, leaves no film" / "Sits on top of skin"
 
 No other text anywhere. Do NOT name, show or imply any competitor brand, logo or packaging. Do NOT add a headline, footnote or call to action.
 
