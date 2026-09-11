@@ -28,14 +28,21 @@
     cannot be credited as anyone's referrer. So the headline now names the step that is
     still outstanding, and the base entry is reassurance underneath rather than the
     headline. Do not restore a headline that implies completion.
+
+    That is only true on a FIRST visit. Every nurture and reminder email links back here
+    with ?e=, so most returning visitors confirmed weeks ago — and on 2026-09-11 one of
+    them was told "we just sent a confirmation link", waited, and wrote in because it never
+    came. giveaway.js swaps these three for confirmed copy when GET /entries reports
+    breakdown.confirmed. The default stays the pending copy, because a new entrant is the
+    visit this headline exists for and the lookup can fail.
   {%- endcomment -%}
-  <h1>One more step — check your email.</h1>
-  <p class="gv-lead">
+  <h1 data-gv-headline>One more step — check your email.</h1>
+  <p class="gv-lead" data-gv-lead>
     We just sent a confirmation link. <strong>Click it and you get 2 bonus entries</strong> —
     three times what entering just earned you. It can take a minute to arrive, and it
     sometimes lands in spam or Promotions.
   </p>
-  <p class="gv-lead-sub">Your entry is already counted. Confirming is what multiplies it.</p>
+  <p class="gv-lead-sub" data-gv-lead-sub>Your entry is already counted. Confirming is what multiplies it.</p>
 
   {%- comment -%}
     Shown ONLY to someone who named a referrer, and only while they are still

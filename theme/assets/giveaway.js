@@ -266,11 +266,32 @@
     referralStake.hidden = !(named && !confirmed);
   }
 
+  // The shipped headline tells a NEW entrant a confirmation link was just sent.
+  // Every nurture and reminder email also lands here, so a returning entrant
+  // who confirmed weeks ago was told to wait for an email that will never come
+  // (reported by an entrant 2026-09-11). Swap the copy only on a positive
+  // `confirmed` — any failed or partial lookup leaves the pending copy, which is
+  // correct for the first visit. Text is replaced, never hidden: hiding a line
+  // after the fetch is an unprovoked layout shift, and this page has a measured
+  // CLS history (see the survey submit handler).
+  function showConfirmedState(body) {
+    if (!(body && body.breakdown && body.breakdown.confirmed)) return;
+    var headline = root.querySelector('[data-gv-headline]');
+    var lead = root.querySelector('[data-gv-lead]');
+    var leadSub = root.querySelector('[data-gv-lead-sub]');
+    var rung = root.querySelector('[data-rung="confirm"]');
+    if (headline) headline.textContent = 'You’re confirmed — your entries are banked.';
+    if (lead) lead.textContent = 'Your email is already confirmed, so there is nothing to wait for in your inbox. Your 2 bonus entries are included in the total below.';
+    if (leadSub) leadSub.textContent = 'Anything below you haven’t done yet still adds entries.';
+    if (rung) rung.innerHTML = 'Email confirmed — <strong>+2</strong> banked';
+  }
+
   fetch(endpoint + '/entries?email=' + encodeURIComponent(email))
     .then(function (r) { return r.ok ? r.json() : null; })
     .then(function (body) {
       showLadder(body && typeof body.entries === 'number' ? body.entries : null);
       showReferralStake(body);
+      showConfirmedState(body);
     })
     .catch(function () { showLadder(null); });
 
