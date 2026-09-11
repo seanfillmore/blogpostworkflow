@@ -37,7 +37,8 @@ test('the plan is a fixed, fully-specified table', () => {
 
 test('every entry removes a ruled word or disease claim — except the one declared non-ruled row', () => {
   const nonRuled = PLAN.filter((e) => e.nonRuledReason).map((e) => e.id);
-  assert.deepEqual(nonRuled, ['cream-pump-comparison'], 'growth here must be a visible decision');
+  assert.deepEqual(nonRuled, ['cream-pump-comparison', 'replo-offer-page-hair-care-claim'],
+    'growth here must be a visible decision');
   for (const e of PLAN) {
     const hits = RULED_WORDS.test(gateText(e.before)) || DISEASE_WORDS.test(gateText(e.before));
     if (e.nonRuledReason) assert.equal(hits, false, `${e.id} carries nonRuledReason but trips a rule`);
@@ -61,6 +62,22 @@ test('no AFTER introduces a new absence claim that was not in its BEFORE', () =>
     const before = claims(e.before);
     for (const c of claims(e.after)) assert.ok(before.has(c), `${e.id} adds "${c}"`);
   }
+});
+
+test('the offer-page chunk: the disease claim stays applied and the hair-care paragraph goes, in one write', () => {
+  // Real live span after the 2026-09-11 psoriasis removal, read from the live theme.
+  const LIVE = '<p>Our soap ingredients are natural and safe for skin and hair. All of our bars can be used on the face however, '
+    + 'we recommend using a zero grit bar when applying to the face. Check out our favorite bars for daily use here.</p>'
+    + "<p><br>Although our bars can be used on hair and face, we also offer hair care products that are specially formulated "
+    + "to provide a variety of benefits specifically for one's hair and scalp. Check out our hair care products here.</p></span>";
+  const g = groupByTarget(PLAN).get('theme:snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.2.liquid');
+  assert.equal(g.length, 2);
+  const { next, decisions } = applyGroup(g, LIVE);
+  assert.deepEqual(decisions.map((d) => d.action), ['already-applied', 'apply']);
+  assert.doesNotMatch(next, /hair care/i);
+  assert.match(next, /safe for skin and hair/, 'the ingredient sentence is not the claim and stays');
+  assert.match(next, /Check out our favorite bars for daily use here\.<\/p><\/span>$/);
+  assert.deepEqual(applyGroup(g, next).decisions.map((d) => d.action), ['already-applied', 'already-applied']);
 });
 
 test('the pump fix removes the pump and keeps the comparison', () => {

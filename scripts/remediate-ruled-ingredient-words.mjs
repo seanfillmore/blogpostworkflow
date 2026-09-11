@@ -235,6 +235,17 @@ export const PLAN = [
       + 'republish this chunk from its editor, so re-check after any Replo publish.',
     appliedLive: '2026-09-11',
   },
+  {
+    id: 'replo-offer-page-hair-care-claim', kind: 'theme-asset', key: REPLO_OFFER_CHUNK, expectedOccurrences: 1,
+    before: "Check out our favorite bars for daily use here.</p><p><br>Although our bars can be used on hair and face, "
+      + "we also offer hair care products that are specially formulated to provide a variety of benefits specifically "
+      + "for one's hair and scalp. Check out our hair care products here.</p>",
+    after: 'Check out our favorite bars for daily use here.</p>',
+    reason: 'Removes the paragraph advertising hair care products on /pages/offer-page. Operator approved 2026-09-11.',
+    nonRuledReason: 'Product accuracy, not a ruled word: RSC sells no hair care products (CLAUDE.md; '
+      + 'lib/keyword-index/cluster.js maps "hair" to no product family), so the paragraph and its '
+      + '"Check out our hair care products here" point a shopper at something that does not exist.',
+  },
 ];
 
 /** Plain text for the gate: unescape theme JSON, then tags → spaces. */
