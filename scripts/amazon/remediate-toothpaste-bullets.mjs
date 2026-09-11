@@ -145,7 +145,8 @@ function envValue(key) {
   } catch { return null; }
 }
 
-export async function main({ spapi, argv = process.argv, sellerId } = {}) {
+/** `outDir` is injectable so tests never write run records into the real report directory. */
+export async function main({ spapi, argv = process.argv, sellerId, outDir = OUT_DIR } = {}) {
   const apply = argv.includes('--apply');
   const sp = spapi ?? await import('../../lib/amazon/sp-api-client.js');
   const client = await sp.getClient();
@@ -180,11 +181,11 @@ export async function main({ spapi, argv = process.argv, sellerId } = {}) {
     for (const i of res?.issues ?? []) console.log(`    [${i.severity}] ${i.code}: ${i.message}`);
   }
 
-  mkdirSync(OUT_DIR, { recursive: true });
+  mkdirSync(outDir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const record = { generated_at: new Date().toISOString(), applied: apply, results };
-  writeFileSync(join(OUT_DIR, `run-${stamp}.json`), JSON.stringify(record, null, 2));
-  console.log(`\nRun record: ${join(OUT_DIR, `run-${stamp}.json`)}`);
+  writeFileSync(join(outDir, `run-${stamp}.json`), JSON.stringify(record, null, 2));
+  console.log(`\nRun record: ${join(outDir, `run-${stamp}.json`)}`);
   return { ...record, failed };
 }
 

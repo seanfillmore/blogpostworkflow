@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -101,7 +102,7 @@ test('DRY RUN sends only validation-preview PATCHes', async () => {
       return { status: 'VALID', issues: [] };
     },
   };
-  const r = await main({ spapi, argv: ['node', 's'], sellerId: 'S' });
+  const r = await main({ spapi, argv: ['node', 's'], sellerId: 'S', outDir: mkdtempSync(join(tmpdir(), 'tp-bullets-test-')) });
   const patches = calls.filter(([m]) => m === 'PATCH');
   assert.equal(patches.length, 3);
   for (const [, path] of patches) assert.match(path, /mode=VALIDATION_PREVIEW/);
