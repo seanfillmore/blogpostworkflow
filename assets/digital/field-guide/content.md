@@ -255,7 +255,7 @@ Parents do use it across the household, and we will not make a claim about any p
 
 It is formulated without it. That is a statement about what is in the tube, not a position on fluoride, and your dentist is the right person to ask about your own teeth.
 
-:::image product=coconut-lotion image=lotion-mechanism.png size=full caption="Water first, cold-pressed coconut oil second. The whole formula is six ingredients before the scent."
+:::image product=coconut-lotion image=coconut-lotion-ingredients-pdp.jpg size=full caption="Water first, cold-pressed coconut oil second. The whole formula is six ingredients before the scent."
 
 ## One last thing
 
