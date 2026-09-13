@@ -1,10 +1,33 @@
 # Theme Update + App-Scoping Perf Plan — Real Skin Care
 
-**Owner:** Sean · **Created:** 2026-07-24 · **Status:** foundation set; execution pending theme update
+**Owner:** Sean · **Created:** 2026-07-24 · **Refreshed:** 2026-09-12 · **Status:** update 9.2.0 → newest is due with the next theme change
 
 This is the durable pick-up doc for two linked pieces of work:
 1. **Update the Shopify theme** (several versions behind, with significant upstream improvements).
 2. **App-scoping perf work** — deferred until the theme is current, because the update changes the perf picture.
+
+---
+
+## 2026-09-12 refresh: read this before the sections below
+
+The theme facts further down date from 2026-07-24 and are **out of date**. Current state:
+
+| | 2026-07-24 (below) | 2026-09-12 (current) |
+|---|---|---|
+| Live theme | v8.3.2, id `145536778410` | **v9.2.0, id `148439367850`**, created 2026-08-31 |
+| Newest Be Yours | not recorded | **v9.4.0** (2026-08-24, Shopify Theme Store listing) |
+| Other themes | two stale 8.3.2 copies | **none.** Backups `145536778410`, `147480051882` and `148432814250` were deleted 2026-09-12, and every file that differed from live was archived first |
+| Replo | installed | **retired**, with all pages 301'd and all 19 theme files deleted |
+
+**Operator rule (Sean, 2026-09-12):** update to the newest version *whenever we make the next
+change* to the theme. Changing resource data (a product or article `templateSuffix`) does not
+count as a theme change.
+
+Adjustments to Part 1 below:
+- **1a is mandatory, and there is nothing else to fall back on.** Duplicate live with the Admin GraphQL `themeDuplicate` mutation before anything else.
+- **1c's customization list predates 9.2.0.** Re-derive it by diffing live against the new stock copy. Don't trust the list.
+- **Push path:** do not rely on `npm run theme -- push` alone. It printed success while uploading nothing (fixed to require `--only` plus a read-back, PR #875). Write changed files with an asset PUT and read each one back.
+- The "…pilot-draft" naming question in 1e and the checklist is moot: that theme is gone.
 
 ---
 
