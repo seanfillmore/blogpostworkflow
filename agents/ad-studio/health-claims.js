@@ -49,7 +49,14 @@ export const HEALTH_CLAIM_PATTERNS = [
   {
     category: 'disease',
     why: 'names a medical condition — a cosmetic that claims to address a disease is an unapproved drug',
-    pattern: /\b(eczema|psoriasis|dermatitis|rosacea|acne|keratosis|ichthyosis|hives|shingles|impetigo|cellulitis|ringworm|scabies|melanoma|infection|infected|fungal|fungus|staph|wound|wounds|ulcer|lesion|lesions)\b/i,
+    // DENTAL CONDITIONS added 2026-09-13. Cavities and gum disease are diseases, and a
+    // toothpaste positioned against them is making the anticaries / antigingivitis claim
+    // that only an OTC drug (21 CFR Part 355, the fluoride monograph) may make. RSC's
+    // toothpaste is a fluoride-free cosmetic. In the SEO gate these inherit the surface
+    // rule every other condition has: an ARTICLE may name them, product copy may not, and
+    // claiming to fix them blocks everywhere. Measured before adding: 0 of 1,251 live
+    // gated strings and 0 of 12 live persona angles carry any of them.
+    pattern: /\b(eczema|psoriasis|dermatitis|rosacea|acne|keratosis|ichthyosis|hives|shingles|impetigo|cellulitis|ringworm|scabies|melanoma|infection|infected|fungal|fungus|staph|wound|wounds|ulcer|lesion|lesions|cavity|cavities|tooth\s+decay|dental\s+caries|caries|gingivitis|gum\s+disease|periodontitis|periodontal\s+disease|inflamed\s+gums|gum\s+inflammation)\b/i,
   },
   {
     category: 'drug',
@@ -60,6 +67,20 @@ export const HEALTH_CLAIM_PATTERNS = [
     category: 'therapeutic',
     why: 'claims a therapeutic effect — cosmetics may say what they do to skin\'s appearance and feel, never what they treat, heal, cure or prevent',
     pattern: /\b(heals?|healed|healing|cures?|cured|curing|treats?|treated|treating|treatment|remedy|remedies|reverses?|reversed|reversing|prevents?|prevented|preventing|prevention|therapeutic|therapy|diagnos\w*)\b/i,
+  },
+  {
+    category: 'oral-drug-claim',
+    why: 'claims an anticaries or enamel-repair effect — remineralizing, rebuilding or strengthening enamel and protecting against cavities are what the FDA fluoride monograph permits an OTC DRUG to claim; a fluoride-free cosmetic toothpaste may clean, polish and freshen, not repair teeth',
+    // ADDED 2026-09-13, after "Support natural remineralization with Real Skin Care's…"
+    // sat in a live buy-box CTA and "supports natural remineralization" in a live SERP
+    // description. Neither tripped anything: no word here was in the vocabulary, and the
+    // one that looks closest ("prevent") catches "prevents cavities" but not "supports
+    // remineralization" or "rebuilds enamel".
+    //
+    // Deliberately NARROW. "gentle on enamel", "softer than enamel", "polishes" and
+    // "neutralizes acid" are ordinary cosmetic toothpaste language and are not matched —
+    // only a claim that the product ADDS mineral back or protects against decay.
+    pattern: /\b(remineraliz\w*|remineralis\w*|(?:rebuild|repair|restor|regrow|regenerat|strengthen|harden)\w*\s+(?:your\s+|the\s+|tooth\s+|teeth\s+)?enamel|enamel\s+(?:repair|rebuild\w*|regrowth|restoration)|anti-?cavity|anticaries|cavity[-\s]+(?:protection|fighting)|protects?\s+against\s+(?:cavities|tooth\s+decay|gum\s+disease))\b/i,
   },
   {
     category: 'systemic-absorption',

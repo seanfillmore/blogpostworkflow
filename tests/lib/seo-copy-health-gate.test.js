@@ -109,9 +109,11 @@ describe('seo-copy-health-gate — category tiers', () => {
     // `disease` is deliberately NOT here since 2026-09-07: naming a condition is
     // advisory, claiming to fix it is blocking, and that is decided per string
     // by CURE_CONTEXT rather than by category membership.
+    // `oral-drug-claim` joined 2026-09-13: enamel repair and anticavity are the fluoride
+    // monograph's OTC drug claims — see tests/lib/seo-copy-oral-care-gate.test.js.
     assert.deepEqual(
       [...BLOCKING_CATEGORIES].sort(),
-      ['drug', 'substantiation', 'systemic-absorption', 'therapeutic'].sort(),
+      ['drug', 'oral-drug-claim', 'substantiation', 'systemic-absorption', 'therapeutic'].sort(),
     );
     assert.ok(!BLOCKING_CATEGORIES.has('disease'));
   });
