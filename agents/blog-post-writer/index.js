@@ -286,7 +286,7 @@ Brand voice: Helpful, warm, conversational. Write like a trusted friend explaini
 
 Reading level rules:
 - Use short sentences. Break long ones in two.
-- Choose the plain word over the clinical one: "sore mouth" not "oral tissue irritation", "cleans teeth" not "facilitates plaque removal", "helps with cavities" not "supports enamel remineralization"
+- Choose the plain word over the clinical one: "sore mouth" not "oral tissue irritation", "cleans teeth" not "facilitates plaque removal", "freshens your breath" not "reduces volatile sulfur compounds" (never say our toothpaste helps with cavities or enamel — that is a drug claim)
 - Never use jargon without immediately explaining it in plain language
 - Vary sentence length — mix short punchy sentences with slightly longer ones to keep rhythm
 - Write paragraphs of 2–4 sentences max. If a paragraph runs longer, break it up.
