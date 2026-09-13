@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   classifyOrder, attributionRows, shopifyRevenueByPage, channelRollup, SEARCH_HOSTS, AI_ASSISTANT_HOSTS,
+  isSearchHost,
 } from '../../lib/order-attribution.js';
 
 // Fixtures lifted verbatim from live orders on 2026-08-17 so the classifier is
@@ -135,6 +136,33 @@ test('brave and duckduckgo count as organic search', () => {
   assert.equal(ddg.channel, 'organic-search');
   assert.equal(ddg.referrerHost, 'duckduckgo.com');
   assert.ok(SEARCH_HOSTS.has('duckduckgo.com'));
+});
+
+test('a duckduckgo subdomain referrer counts as organic search', () => {
+  // Order #2350 (2026-09-10) arrived from DuckDuckGo's no-AI results page and was
+  // filed as `referral`, dropping a blog-entry toothpaste order out of organic revenue.
+  const c = classifyOrder({
+    id: 9, name: '#2350', created_at: '2026-09-10T00:30:26-06:00', total_price: '25.59',
+    source_name: 'web', landing_site: '/blogs/news/whole-foods-toothpaste-best-natural-options-to-try',
+    referring_site: 'https://noai.duckduckgo.com/', discount_codes: [], note_attributes: [],
+  });
+  assert.equal(c.channel, 'organic-search');
+  assert.equal(c.referrerHost, 'noai.duckduckgo.com', 'the raw referrer is kept as evidence');
+  for (const host of ['html.duckduckgo.com', 'lite.duckduckgo.com', 'start.duckduckgo.com']) {
+    assert.equal(isSearchHost(host), true, host);
+  }
+});
+
+test('search-family matching stays narrow: google subdomains and lookalikes are not search', () => {
+  const via = (referring_site) => classifyOrder({ ...BLOG_BRAVE, referring_site }).channel;
+  // Real referrers from the order history that suffix-matching google.com would mislabel.
+  assert.equal(via('https://mail.google.com/'), 'email');
+  assert.equal(via('https://tagassistant.google.com/'), 'referral');
+  assert.equal(via('https://gemini.google.com/'), 'ai-assistant');
+  // A family only matches on a dot boundary.
+  assert.equal(via('https://notduckduckgo.com/'), 'referral');
+  assert.equal(via('https://duckduckgo.com.example.net/'), 'referral');
+  assert.equal(isSearchHost(null), false);
 });
 
 test('null referrer is direct, not organic', () => {
