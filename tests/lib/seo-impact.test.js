@@ -66,6 +66,16 @@ test('isSearchEngineSource: recognises hosts from order-attribution SEARCH_HOSTS
   assert.equal(isSearchEngineSource(null), false);
 });
 
+test('isSearchEngineSource: a duckduckgo subdomain source is organic, like its orders', () => {
+  // GA4 reported `noai.duckduckgo.com` as a source on 2026-09-09; the order side counts
+  // that referrer as organic, so the session side must too or the page shows organic
+  // dollars with zero organic sessions.
+  assert.equal(isSearchEngineSource('noai.duckduckgo.com'), true);
+  assert.equal(isOrganicSessionRow({ channel: 'Referral', source: 'noai.duckduckgo.com' }), true);
+  assert.equal(isSearchEngineSource('tagassistant.google.com'), false);
+  assert.equal(isSearchEngineSource('mail.google.com'), false);
+});
+
 test('isSearchEngineSource is driven by SEARCH_HOSTS, not a second hardcoded list', () => {
   // Every host the order classifier calls organic must also make its sessions organic,
   // or a page shows revenue with no traffic behind it.
