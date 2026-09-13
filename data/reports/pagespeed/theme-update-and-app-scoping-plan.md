@@ -1,10 +1,56 @@
 # Theme Update + App-Scoping Perf Plan — Real Skin Care
 
-**Owner:** Sean · **Created:** 2026-07-24 · **Refreshed:** 2026-09-12 · **Status:** update 9.2.0 → newest is due with the next theme change
+**Owner:** Sean · **Created:** 2026-07-24 · **Refreshed:** 2026-09-13 · **Status:** Part 1 DONE (Be Yours 9.4.0 published 2026-09-13); Part 2 (app scoping) is next
 
 This is the durable pick-up doc for two linked pieces of work:
 1. **Update the Shopify theme** (several versions behind, with significant upstream improvements).
 2. **App-scoping perf work** — deferred until the theme is current, because the update changes the perf picture.
+
+---
+
+## 2026-09-13: Part 1 done. Be Yours 9.4.0 is live
+
+| | |
+|---|---|
+| Live theme | **Be Yours 9.4.0, id `148782940330`**, "Real Skin Care — Live (Be Yours 9.4.0)", published 2026-09-13 23:06 UTC |
+| Rollback | **9.2.0, id `148439367850`**, "Rollback — Be Yours 9.2.0 (unpublished 2026-09-13)". To roll back, run `themePublish` on it |
+
+**The admin "Update theme" copy was NOT ready to publish as delivered.** It kept every custom
+file, every product lander, the homepage template and the theme-editor settings. But it
+overwrote every *stock* file we had edited, and it changed some templates and settings. 11
+fixes were needed before publishing:
+
+- **`layout/theme.liquid`:** the Clarity snippet and the `rsc-rum` and `rsc-click-id` renders were gone.
+- **`sections/rich-text.liquid` and `sections/multicolumn.liquid`:** the bundle price-token Liquid was gone, so the bundle landers rendered literal `[[PRICE]]`, `[[CTA]]` and similar.
+- **`assets/product-info.js`:** both scroll fixes were reverted.
+- **All 4 `templates/page.giveaway*.json`:** reset to the stock `main-page` section, so the entry form was gone.
+- **`product.bundle-landing.json` and the sensitive-skin lander:** a stock "You May Also Like" section had been inserted.
+- **`config/settings_data.json`:**
+  - the announcement bar and a footer block read "Are you 18 years old or older?";
+  - the `offer-40-subscribe` settings were dropped.
+
+**Also changed at publish:**
+- `templates/llms.txt.liquid` was carried over from live, because `llms-txt-generator` rewrote it after the comparison.
+- The blog tag filter was turned off (`templates/blog.json` `show_tag_filter: false`), Sean-approved, because it exposed internal tags such as TOF and MOF.
+
+**Verification:**
+- **Before publishing:**
+  - every file compared by checksum;
+  - 53 live URLs rendered through a preview cookie jar, with literal-token, script-marker and button-label checks;
+  - a headless-browser pass: add to cart and the drawer, plus variant switches on gang-scoped products.
+- **After publishing:**
+  - 53/53 pages match the pre-publish fingerprints;
+  - Clarity, RUM and click-ID fire in a real browser;
+  - add to cart works and the giveaway form renders;
+  - 0 literal tokens.
+
+Scripts, draft backups, patched files, screenshots and reports are in
+`data/reports/theme-update-9.4.0/2026-09-13/` in the main checkout (untracked).
+
+**For the next update, add these to 1d:**
+- Diff every file against live and re-apply our edits to stock files. The updater does not carry them.
+- Preview the *live* theme through the same cookie jar as a control. The consent banner and the blog tag bar appear only in preview.
+- Re-check live `updated_at` immediately before `themePublish`, because agents write to the live theme on their own schedule.
 
 ---
 
