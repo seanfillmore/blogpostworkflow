@@ -435,9 +435,26 @@ DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE
 # The script is deliberately KEPT: it is still correct under double_opt_in, which
 # is the documented rollback path. Re-add this line ONLY as part of that rollback.
 
-# Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
-# PATCH /flows accepts only status, so the boundary is enforced from outside.
-# Idempotent.
+# Pre-close reconcile: one extra reconcile-referrals run BEFORE entries close.
+#
+# The draw snapshot counts a confirmation only if its gv_confirmed_at stamp is at
+# or before entryClosesAt, and the reconciler stamps the time IT RUNS. The daily
+# run is 08:30 UTC and the snapshot is 08:05 UTC on Sep 15, so without this every
+# confirmation clicked after 01:30 PT on Sep 14 would enter the draw unconfirmed —
+# 1 entry instead of 3+, referral credit zeroed. 19 entrants were in exactly that
+# state at 19:44 PT on 2026-09-12. A run AFTER the close cannot fix it: it would
+# stamp those confirmations with a post-close time.
+#
+# 06:55 UTC = 23:55 PDT Sep 14, five minutes before the close; a normal run takes
+# about a minute. Clicks in the last five minutes are still missed, which is the
+# stated residual. The missing year field means it fires again in 2027, where it
+# is one more idempotent reconcile. No TZ= prefix — one schedules nothing here.
+GIVEAWAY_PRE_CLOSE_RECONCILE="55 6 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/reconcile-referrals.mjs --apply >> data/reports/scheduler/giveaway-reconcile.log 2>&1"
+
+# Entry Period close: stop the nurture and confirm flows, then freeze the draw
+# pool. Klaviyo has no flow end date, and PATCH /flows accepts only status, so
+# the boundary is enforced from outside. Idempotent, refuses to run before the
+# close, and never retakes an existing snapshot.
 #
 # TIMING, AND THE TRAP IT SPENT THREE DAYS IN:
 # Entries close 2026-09-14T23:59:59-07:00 (config/giveaway.json entryClosesAt),
@@ -560,6 +577,7 @@ $MONTHLY_PRIORITY_TUNER
 $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REFERRAL_AUDIT
 $DAILY_GIVEAWAY_REPORT
+$GIVEAWAY_PRE_CLOSE_RECONCILE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 $GIVEAWAY_PUBLISH_OFFER_PAGE
 "
@@ -628,6 +646,7 @@ echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ tra
 echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
 echo "  08:40 UTC — giveaway referral audit (why a referral isn't paying; reports near-misses)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
+echo "  06:55 UTC 2026-09-15 — giveaway pre-close reconcile (stamps confirmations inside the Entry Period)"
 echo "  08:05 UTC 2026-09-15 — giveaway close-entry-period (~1h AFTER entries close; UTC clock, no TZ prefix)"
 echo ""
 echo "View with: crontab -l"

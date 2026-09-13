@@ -77,6 +77,8 @@
     "11-offer-reminder.html": "01M0V7JAARVYV05VJ9S62KR59X",
     "12-offer-final.html": "01M0V7JFJ9QP4JDY0N64RN91NT"
   },
+  "offerExclusionListId": "UigAyc",
+  "_offerExclusionNote": "Giveaway 2026-09 — Drawn winners (offer exclusion). A STATIC list, excluded from all three offerCampaigns on 2026-09-12 by scripts/giveaway/exclude-drawn-winners.mjs --setup --apply (each campaign reverted, audiences edited, requeued; all three read back Scheduled with the list excluded and send times unchanged). Every offer send targets the whole entrant list Y2ukbE and the draw-day one opens 'We drew the winner. It wasn't you.', so without it the winner and the referral-prize winner are told they lost three hours after being told they won. It is EMPTY until the draw: `exclude-drawn-winners.mjs --winners --apply` adds them from data/giveaway/draw-result.json, and must run before 15:00 PT Sep 16. A list rather than a property segment because membership is immediate and verifiable; adding a profile to a list grants no consent.",
   "frustrationCampaigns": {
     "sendAt": "2026-09-01T14:00:00+00:00",
     "segments": {

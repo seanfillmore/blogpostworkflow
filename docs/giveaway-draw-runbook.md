@@ -6,15 +6,32 @@ Design: `docs/superpowers/specs/2026-08-22-giveaway-draw-design.md`
 
 ## Before September 14 (HARD DEADLINE)
 
-- [ ] **Seed commitment copy live on the giveaway page.** Text is the appendix of
+- [x] **Seed commitment copy live on the giveaway page.** Text is the appendix of
       the design doc. Announcing the method *after* entries close defeats its
-      purpose, so this is the one step with no recovery.
+      purpose, so this is the one step with no recovery. (Verified live 2026-09-12.)
+- [x] **Winners excluded from the consolation sends.** All three offer campaigns
+      target the whole entrant list, and the draw-day one opens "We drew the
+      winner. It wasn't you." `exclude-drawn-winners.mjs --setup --apply` attached
+      the exclusion list (`offerExclusionListId`) to all three. Re-check any time:
+
+      node scripts/giveaway/exclude-drawn-winners.mjs --setup
+
+## The close — automatic, nothing to run
+
+Entries close **2026-09-14 23:59:59 PT (06:59:59 UTC Sep 15)**. All times below are
+the server's UTC cron; there is no `TZ=` prefix and one would schedule nothing.
+
+| UTC, Sep 15 | PT | what |
+|---|---|---|
+| 06:55 | 23:55 Sep 14 | `reconcile-referrals.mjs --apply` — stamps confirmations INSIDE the Entry Period. Without it every confirmation after the 08:30 UTC Sep 14 run would enter the draw unconfirmed. Clicks in the last ~5 minutes are the stated residual. |
+| 06:59:59 | 23:59:59 Sep 14 | The storefront entry form shows "entries are closed", the entered page drops the survey and bonus forms, and `/api/giveaway/enter`, `/answers`, `/upload` answer **410**. |
+| 08:05 | 01:05 | `close-entry-period.mjs --apply` — drafts the nurture **and** confirm flows, then takes the snapshot. It refuses before the close and never retakes an existing snapshot. The snapshot drops any entrant whose `gv_entered_at` is after the close. |
 
 ## September 15 — snapshot
 
-- [ ] `close-entry-period.mjs` runs 05:05 PT (`TZ=America/Los_Angeles`) and takes
-      the snapshot as its last step. Confirm the **immediate** email arrived — it
-      does not wait for the 5 AM digest.
+- [ ] Confirm the **immediate** "Giveaway draw snapshot taken" email arrived — it
+      does not wait for the 5 AM digest. Its `excluded` line now carries
+      `lateEntries`; expect a handful at most.
 - [ ] Sanity-check the totals in that email against the last `report.mjs` before
       the close. A large unexplained move means stop and investigate, not draw.
 - [ ] Pull the file down and **commit it**:
@@ -31,7 +48,10 @@ Design: `docs/superpowers/specs/2026-08-22-giveaway-draw-design.md`
 - [ ] If markets were unexpectedly closed, the published copy commits us to the
       next day they close. Do not improvise a different source.
 
-## September 16 — the drawing
+## September 16 — the drawing (finish by 14:30 PT)
+
+The draw-day consolation email sends at **15:00 PT (22:00 UTC)** and tells everyone
+not excluded that they lost. Everything below must be done before it.
 
 - [ ] Dry run:
 
@@ -44,18 +64,28 @@ Design: `docs/superpowers/specs/2026-08-22-giveaway-draw-design.md`
       node scripts/giveaway/draw.mjs --seed <value> --apply
 
 - [ ] Commit `data/giveaway/draw-result.json`.
+- [ ] **Exclude the winners from the consolation sends**, and read the ✓ line:
+
+      node scripts/giveaway/exclude-drawn-winners.mjs --winners --apply
+
 - [ ] Draft and send the notification:
 
       node scripts/giveaway/draft-winner-email.mjs
 
       Read `data/giveaway/winner-email-draft.md`, then send it **by hand**.
       §8 requires notification within 48 hours of the drawing.
+- [ ] **If the draw is not done by 14:30 PT**, the draw-day email would announce a
+      winner who has not been drawn. Revert that campaign to Draft and reschedule
+      it (`PATCH /campaign-send-jobs/{id}` `action: revert` — never `cancel`, which
+      is permanent). See `scripts/giveaway/repair-scheduled-campaign-unsub.mjs` for
+      the cycle.
 
 ## If the winner does not respond by the §8 deadline
 
 - [ ] The alternate is already in `draw-result.json` → `ordering[1]`. **No new
       draw.** The ordering was fixed by the published seed, so the alternate is
-      exactly as provable as the winner was.
+      exactly as provable as the winner was. The alternate has already received
+      the consolation email — that was true when it was sent.
 
 ## If someone asks how the winner was chosen
 

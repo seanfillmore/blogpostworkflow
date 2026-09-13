@@ -2,10 +2,36 @@
 // Entry submission. On success, hand off to the entered page, which is where
 // the survey and the entry ladder live. There is NO offer on that page --
 // the BOGO is the day-30 consolation prize.
+
+// --- Entry Period close ---
+//
+// MIRRORS config/giveaway.json `entryClosesAt`. Shopify serves this file with no
+// build step, so it cannot read the config; tests/theme/giveaway-closed-state.test.js
+// fails if the two instants drift. The server refuses writes after this instant
+// too (agents/dashboard/routes/giveaway.js), so this is what the entrant SEES,
+// not the enforcement. A page left open across the deadline shows the server's
+// "closed" message on submit.
+(function () {
+  var ENTRY_CLOSES_AT = '2026-09-14T23:59:59-07:00';
+  var closes = Date.parse(ENTRY_CLOSES_AT);
+  window.RSC_GIVEAWAY_CLOSED = isFinite(closes) && Date.now() > closes;
+})();
+
 (function () {
   var endpoint = window.RSC_GIVEAWAY_ENDPOINT;
   var form = document.querySelector('.gv-form');
   if (!form || !endpoint) return;
+
+  if (window.RSC_GIVEAWAY_CLOSED === true) {
+    var notice = document.createElement('p');
+    notice.className = 'gv-sub';
+    notice.setAttribute('data-gv-closed', '');
+    notice.setAttribute('role', 'status');
+    notice.textContent = 'Entries for this giveaway are closed. The winner is drawn on September 16, 2026 — thank you to everyone who entered.';
+    form.parentNode.insertBefore(notice, form);
+    form.hidden = true;
+    return;
+  }
   var errorEl = form.querySelector('.gv-error');
   var button = form.querySelector('button[type="submit"]');
 
@@ -239,6 +265,32 @@
       count.parentNode.hidden = true;
     }
     ladder.hidden = false;
+  }
+
+  // After the close nothing here can add an entry, so offering the survey (+3),
+  // the rungs and the bonus form (+3, +10) would be promising entries the frozen
+  // pool never counts. Show what they hold and keep the buy path. Runs before the
+  // confirmed-state swap below, which would otherwise put "your entries are
+  // banked" copy back over the closed headline.
+  if (window.RSC_GIVEAWAY_CLOSED === true) {
+    var closedHeadline = root.querySelector('[data-gv-headline]');
+    var closedLead = root.querySelector('[data-gv-lead]');
+    var closedLeadSub = root.querySelector('[data-gv-lead-sub]');
+    if (closedHeadline) closedHeadline.textContent = 'Entries are closed — thank you for entering.';
+    if (closedLead) closedLead.textContent = 'The winner is drawn on September 16, 2026.';
+    if (closedLeadSub) closedLeadSub.textContent = 'No new entries or bonus entries can be added now.';
+    survey.hidden = true;
+    var closedBonus = root.querySelector('[data-gv-bonus]');
+    if (closedBonus) closedBonus.hidden = true;
+    var rungs = ladder.querySelectorAll('ul');
+    for (var r = 0; r < rungs.length; r++) rungs[r].hidden = true;
+    if (next) next.hidden = false;
+    if (!email) { showLadder(null); return; }
+    fetch(endpoint + '/entries?email=' + encodeURIComponent(email))
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .then(function (body) { showLadder(body && typeof body.entries === 'number' ? body.entries : null); })
+      .catch(function () { showLadder(null); });
+    return;
   }
 
   // Without an email we cannot attribute answers. Show the ladder's actions so
