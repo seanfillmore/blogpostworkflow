@@ -25,10 +25,15 @@
  *      toothpaste may clean, polish and freshen, and may not claim to rebuild enamel or
  *      address cavities.
  *   2. SAFETY claims for children — "Real Skin Care's formula is safe for kids", "safe if
- *      swallowed", "safe for children old enough to spit". Unsubstantiated, and the
- *      formula contains essential oils (clove, cinnamon, peppermint). Replaced with
- *      "ask your pediatric dentist" and supervision guidance, never with a different
- *      safety assertion.
+ *      swallowed", "safe for children old enough to spit". Replaced with "ask your
+ *      pediatric dentist" and supervision guidance.
+ *
+ *      ⚠️  REVERSED 2026-09-13. The operator overruled this premise the next day: "Are
+ *      these products safe for kids is a resounding yes for every single product." The
+ *      15 kids-wording entries were RETIRED from the PLAN below and undone on the live
+ *      posts by scripts/restore-toothpaste-kids-wording.mjs, which reuses this file's
+ *      `runPlan`. Only the remineralization, cavity and enamel entries remain here, so a
+ *      re-run of this script can no longer soften kids wording.
  *
  * Neither is in `lib/seo-copy-health-gate.js`'s vocabulary, which is why nothing caught
  * them; that gate also does not screen article bodies.
@@ -81,12 +86,9 @@ export const MIRROR_FILES = ['content.html', 'content-refreshed.html'];
 
 export const ARTICLES = {
   'why-glycerin-free-toothpaste-matters': { blogId: BLOG_ID, articleId: 562341380266 },
-  'best-natural-toothpaste-for-families-2025': { blogId: BLOG_ID, articleId: 562335973546 },
   'best-fluoride-free-toothpaste-2025': { blogId: BLOG_ID, articleId: 562334367914 },
   '7-ingredients-to-avoid-in-natural-toothpaste': { blogId: BLOG_ID, articleId: 562341347498 },
   'best-organic-toothpaste-what-to-look-for-why-it-matters': { blogId: BLOG_ID, articleId: 563324649642 },
-  'best-sls-free-toothpaste-for-kids-safe-natural': { blogId: BLOG_ID, articleId: 564154826922 },
-  'discover-the-power-of-coconut-whitening-toothpaste': { blogId: BLOG_ID, articleId: 561045405866 },
   'best-natural-toothpaste-2025': { blogId: BLOG_ID, articleId: 562322768042 },
   'can-you-use-coconut-oil-as-toothpaste': { blogId: BLOG_ID, articleId: 561115168938 },
 };
@@ -118,24 +120,6 @@ export const PLAN = [
     reason: 'First of the "5 reasons to switch" promised enamel repair. Replaced rather than removed, so the title\'s count of five still holds.',
   },
   {
-    id: 'glycerin-formula-safe-for-kids',
-    handle: 'why-glycerin-free-toothpaste-matters',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: "It's safe for kids, gentle on gums, and works well for people with sensitivity.",
-    after: "It's gentle on gums and a good fit for sensitive mouths.",
-    reason: 'Unsubstantiated child-safety claim about our formula, which contains essential oils. Suitability for sensitive mouths is kept.',
-  },
-  {
-    id: 'glycerin-list-safe-for-kids',
-    handle: 'why-glycerin-free-toothpaste-matters',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: "<li>You want fewer synthetic ingredients in your daily routine</li>\n  <li>You're looking for a clean option that's safe for kids</li>",
-    after: '<li>You want fewer synthetic ingredients in your daily routine</li>',
-    reason: 'Removes the "safe for kids" reason to switch; the neighbouring list item is kept as the anchor.',
-  },
-  {
     id: 'glycerin-list-cavities',
     handle: 'why-glycerin-free-toothpaste-matters',
     surface: 'body',
@@ -154,15 +138,6 @@ export const PLAN = [
     reason: 'Same shape as the list above, inside the FAQ.',
   },
   {
-    id: 'glycerin-faq-kids',
-    handle: 'why-glycerin-free-toothpaste-matters',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: "<p>Yes, and it's often the better choice. Kids swallow more toothpaste than adults. A formula with fewer synthetic ingredients — no SLS, no fluoride, no glycerin — is gentler and safer if they happen to swallow some. Real Skin Care's formula is safe for kids. Just use a pea-sized amount, the same as you would with any toothpaste.</p>",
-    after: "<p>Ask your pediatric dentist which toothpaste suits your child's age, especially since young kids tend to swallow some. Whatever you choose, use a pea-sized amount and supervise brushing.</p>",
-    reason: '"Real Skin Care\'s formula is safe for kids" and "safer if they swallow some" — both unsubstantiated safety claims.',
-  },
-  {
     id: 'glycerin-description-tag',
     handle: 'why-glycerin-free-toothpaste-matters',
     surface: 'description_tag',
@@ -170,35 +145,6 @@ export const PLAN = [
     before: 'Learn why many dentists recommend glycerin-free toothpaste. Discover the benefits for remineralization, sensitivity, and clean oral care—featuring Real Skin Care’s all-natural formula.',
     after: 'What glycerin does in toothpaste, how to spot it on a label, and what to look for in a glycerin-free formula like Real Skin Care’s.',
     reason: 'SERP snippet claimed remineralization benefits and an unsourced "many dentists recommend". The old value was also 185 characters, over the 160 limit.',
-  },
-
-  // ── best-natural-toothpaste-for-families-2025
-  {
-    id: 'families-product-safe-if-swallowed',
-    handle: 'best-natural-toothpaste-for-families-2025',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: 'it’s mild, safe if swallowed, and supports natural remineralization.',
-    after: 'it’s a mild, short-ingredient formula.',
-    reason: 'Product description of our toothpaste claimed both ingestion safety and remineralization.',
-  },
-  {
-    id: 'families-faq-toddlers',
-    handle: 'best-natural-toothpaste-for-families-2025',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: 'Yes — especially when fluoride-free and free of SLS. Real Skin Care’s formula is safe if swallowed.',
-    after: 'Ask your pediatric dentist which toothpaste suits your toddler’s age. Whatever you choose, use a tiny smear and supervise brushing.',
-    reason: 'Toddler FAQ answered "yes" and asserted our formula is safe if swallowed.',
-  },
-  {
-    id: 'families-description-tag',
-    handle: 'best-natural-toothpaste-for-families-2025',
-    surface: 'description_tag',
-    expectedOccurrences: 1,
-    before: 'Discover the best natural toothpaste for families in 2025. Safe for kids and adults, Real Skin Care’s All Natural formula offers clean, effective oral care without harsh ingredients.',
-    after: 'Discover the best natural toothpaste for families in 2025. Real Skin Care’s All Natural formula offers clean, effective oral care without harsh ingredients.',
-    reason: 'SERP snippet carried "Safe for kids and adults" about our formula. The old value was also 184 characters.',
   },
 
   // ── best-fluoride-free-toothpaste-2025
@@ -211,26 +157,8 @@ export const PLAN = [
     after: "No toothpaste does that alone — brushing habits and diet matter most. Among fluoride-free ingredients, hydroxyapatite has the most research behind it; if you're cavity-prone, ask your dentist whether fluoride is right for you.",
     reason: 'Answered "does it prevent cavities?" with "yes" and credited baking soda, an ingredient in our formula, with no anticaries evidence.',
   },
-  {
-    id: 'fluoride-free-faq-kids',
-    handle: 'best-fluoride-free-toothpaste-2025',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: "A fluoride-free, SLS-free formula like Real Skin Care's Coconut Oil Toothpaste is safe for children old enough to spit (generally age 3 and up).",
-    after: "If you're considering a fluoride-free, SLS-free formula like Real Skin Care's Coconut Oil Toothpaste for a child, check with your pediatric dentist first.",
-    reason: 'Named our product as safe for children from age 3.',
-  },
 
   // ── 7-ingredients-to-avoid-in-natural-toothpaste
-  {
-    id: 'seven-ingredients-cta-safe-for-kids',
-    handle: '7-ingredients-to-avoid-in-natural-toothpaste',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: 'Safe for kids, free of foaming agents, and supportive of enamel and gum health.',
-    after: 'No foaming agents, and gentle enough for everyday brushing.',
-    reason: 'Buy-box copy for our toothpaste claimed child safety and enamel/gum health support.',
-  },
   {
     id: 'seven-ingredients-baking-soda-remineralizing',
     handle: '7-ingredients-to-avoid-in-natural-toothpaste',
@@ -250,73 +178,6 @@ export const PLAN = [
     before: 'It also alkalizes your mouth, disrupting the acid environment bacteria need to thrive — the practical core of what "remineralizing toothpaste" actually means.',
     after: 'It also helps neutralize acidity in your mouth.',
     reason: 'Framed the baking soda in "this formula" (ours) as what makes a remineralizing toothpaste. The later category sentence "baking soda alkalizes your mouth" is kept.',
-  },
-
-  // ── best-sls-free-toothpaste-for-kids-safe-natural (FAQ appears in prose AND inert JSON-LD)
-  {
-    id: 'sls-kids-faq-coconut-oil-safe',
-    handle: 'best-sls-free-toothpaste-for-kids-safe-natural',
-    surface: 'body',
-    expectedOccurrences: 2,
-    before: " is a gentle, naturally antibacterial ingredient appropriate for all ages. It is a core ingredient in Real Skin Care's formula and is well-tolerated even by young children.",
-    after: " is a gentle base ingredient in Real Skin Care's formula. For young children, ask your pediatric dentist which toothpaste suits their age.",
-    reason: '"Is coconut oil toothpaste safe for kids?" answered with a child-tolerance claim about our formula. Both copies — visible FAQ and JSON-LD — in one entry so they cannot drift.',
-  },
-  {
-    id: 'sls-kids-faq-yes-prose',
-    handle: 'best-sls-free-toothpaste-for-kids-safe-natural',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '<p>Yes. Organic coconut oil is a gentle',
-    after: '<p>Organic coconut oil is a gentle',
-    reason: 'Drops the leading "Yes." so the visible answer no longer asserts safety.',
-  },
-  {
-    id: 'sls-kids-faq-yes-jsonld',
-    handle: 'best-sls-free-toothpaste-for-kids-safe-natural',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '"text": "Yes. <a href="https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin"',
-    after: '"text": "<a href="https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin"',
-    reason: 'Same "Yes." inside the JSON-LD copy of the answer.',
-  },
-
-  // ── discover-the-power-of-coconut-whitening-toothpaste (FAQ in prose AND JSON-LD, worded differently)
-  {
-    id: 'whitening-faq-question-prose',
-    handle: 'discover-the-power-of-coconut-whitening-toothpaste',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '<h3>Is it safe for kids?</h3>',
-    after: '<h3>Can kids use it?</h3>',
-    reason: '"It" is our whitening toothpaste; the question framed the answer as a safety verdict.',
-  },
-  {
-    id: 'whitening-faq-answer-prose',
-    handle: 'discover-the-power-of-coconut-whitening-toothpaste',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '<p>Yes, when used as directed. Supervise brushing and use a pea-size amount. Remind kids to spit and rinse thoroughly.</p>',
-    after: '<p>Ask your pediatric dentist first, especially for young children. If you do use it, supervise brushing, use a pea-size amount, and remind kids to spit and rinse thoroughly.</p>',
-    reason: 'Answered "yes" to child safety for our product. Supervision guidance kept.',
-  },
-  {
-    id: 'whitening-faq-question-jsonld',
-    handle: 'discover-the-power-of-coconut-whitening-toothpaste',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '"name":"Is it safe for kids?"',
-    after: '"name":"Can kids use it?"',
-    reason: 'JSON-LD copy of the question.',
-  },
-  {
-    id: 'whitening-faq-answer-jsonld',
-    handle: 'discover-the-power-of-coconut-whitening-toothpaste',
-    surface: 'body',
-    expectedOccurrences: 1,
-    before: '"text":"Yes, when used as directed. Supervise brushing, use a pea-size amount, and remind children to spit and rinse thoroughly."',
-    after: '"text":"Ask your pediatric dentist first, especially for young children. If you do use it, supervise brushing, use a pea-size amount, and remind children to spit and rinse thoroughly."',
-    reason: 'JSON-LD copy of the answer, which is worded differently from the prose.',
   },
 
   // ── best-natural-toothpaste-2025
@@ -363,27 +224,44 @@ export function gateEntry(entry) {
   return problems;
 }
 
-export async function main({ shopify, argv = process.argv.slice(2), root = ROOT, log = console.log } = {}) {
+/** Runs this script's own plan through the shared runner below. */
+export function main(opts = {}) {
+  return runPlan({
+    plan: PLAN,
+    articles: ARTICLES,
+    reportDir: 'toothpaste-claim-remediation',
+    backupTag: 'toothpaste-claims',
+    ...opts,
+  });
+}
+
+/**
+ * Apply a fixed BEFORE/AFTER plan to live article bodies, their SERP descriptions and their
+ * local mirrors. Dry unless `argv` carries `--apply`. Exported so a later plan against the
+ * same posts (scripts/restore-toothpaste-kids-wording.mjs) reuses these mechanics instead of
+ * carrying a second copy.
+ */
+export async function runPlan({ plan, articles, reportDir, backupTag, shopify, argv = process.argv.slice(2), root = ROOT, log = console.log }) {
   const apply = argv.includes('--apply');
   const slugAt = argv.indexOf('--slug');
   const onlySlug = slugAt >= 0 ? argv[slugAt + 1] : null;
-  if (slugAt >= 0 && !ARTICLES[onlySlug]) throw new Error(`--slug ${onlySlug} is not in the plan`);
+  if (slugAt >= 0 && !articles[onlySlug]) throw new Error(`--slug ${onlySlug} is not in the plan`);
 
-  for (const entry of PLAN) {
+  for (const entry of plan) {
     const problems = gateEntry(entry);
     if (problems.length) throw new Error(`ABORT — entry ${entry.id}: ${problems.join('; ')}`);
   }
 
   const api = shopify ?? await import('../lib/shopify.js');
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const outDir = join(root, 'data', 'reports', 'toothpaste-claim-remediation');
+  const outDir = join(root, 'data', 'reports', reportDir);
   const results = [];
 
-  const handles = Object.keys(ARTICLES).filter((h) => !onlySlug || h === onlySlug);
+  const handles = Object.keys(articles).filter((h) => !onlySlug || h === onlySlug);
   for (const handle of handles) {
-    const { blogId, articleId } = ARTICLES[handle];
-    const bodyEntries = PLAN.filter((e) => e.handle === handle && e.surface === 'body');
-    const metaEntries = PLAN.filter((e) => e.handle === handle && e.surface === 'description_tag');
+    const { blogId, articleId } = articles[handle];
+    const bodyEntries = plan.filter((e) => e.handle === handle && e.surface === 'body');
+    const metaEntries = plan.filter((e) => e.handle === handle && e.surface === 'description_tag');
     log(`\n== ${handle}`);
 
     if (bodyEntries.length) {
@@ -430,7 +308,7 @@ export async function main({ shopify, argv = process.argv.slice(2), root = ROOT,
         log(`  mirror ${file}: ${rows.map((r) => `${r.id}=${r.action}${r.count ? `×${r.count}` : ''}`).join(', ')}`);
         if (changed && apply) {
           mkdirSync(join(root, 'data', 'posts', handle, 'backups'), { recursive: true });
-          writeFileSync(join(root, 'data', 'posts', handle, 'backups', `toothpaste-claims-${stamp}-${file}`), original);
+          writeFileSync(join(root, 'data', 'posts', handle, 'backups', `${backupTag}-${stamp}-${file}`), original);
           writeFileSync(path, text);
           log(`  ✓ mirror ${file} written`);
         }

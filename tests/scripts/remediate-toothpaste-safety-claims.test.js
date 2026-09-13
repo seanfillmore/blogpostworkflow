@@ -96,7 +96,7 @@ test('entries on one article apply in sequence to the synthetic body without int
 });
 
 test('a mirror is replaced wherever the BEFORE occurs, and reports what it does not carry', () => {
-  const e = PLAN.find((x) => x.id === 'glycerin-formula-safe-for-kids');
+  const e = PLAN.find((x) => x.id === 'glycerin-faq-cavities');
   const d = decideMirror(e, `<p>${e.before}</p><p>${e.before}</p>`);
   assert.equal(d.action, 'apply');
   assert.equal(d.count, 2);
@@ -130,7 +130,7 @@ test('--apply writes one update per article, the metafields, and the mirrors —
   const mirrorDir = join(root, 'data', 'posts', 'why-glycerin-free-toothpaste-matters');
   mkdirSync(mirrorDir, { recursive: true });
   writeFileSync(join(mirrorDir, 'content.html'), state.bodies[glycerin]);
-  const oneEntry = PLAN.find((x) => x.id === 'glycerin-formula-safe-for-kids');
+  const oneEntry = PLAN.find((x) => x.id === 'glycerin-faq-cavities');
   writeFileSync(join(mirrorDir, 'content-refreshed.html'), `<p>older refresh</p><p>${oneEntry.before}</p>`);
 
   await main({ shopify: api, argv: ['--apply'], root, log: quiet });
