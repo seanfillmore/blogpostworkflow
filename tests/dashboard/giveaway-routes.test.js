@@ -5,6 +5,7 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
   validateEntryPayload, mergeBreakdown, answerProperties, createEntriesHandler, entryProperties,
+  createGiveawayRoutes,
 } from '../../agents/dashboard/routes/giveaway.js';
 
 /** Minimal http.ServerResponse stand-in: captures status + body, nothing else. */
@@ -274,4 +275,52 @@ test('an oversized upload answers 413 instead of resetting the connection into a
     destroyedAt === null || destroyedAt > responseAt,
     `the socket must not be destroyed before the response is written (destroyed at ${destroyedAt}, responded at ${responseAt})`,
   );
+});
+
+// --- the Entry Period close ---
+//
+// Nothing closed the form at 23:59:59 PT on Sep 14. The snapshot runs an hour
+// later, so an entry in that hour landed in the draw, and every entry after it
+// was told it had entries and sent a confirm email promising more. The routes
+// now refuse the three WRITE paths once the period is closed. GET /entries stays
+// open: an entrant may still look at what they hold.
+
+const CLOSES = '2026-09-14T23:59:59-07:00';
+const closedReq = (path) => ({
+  method: 'POST',
+  url: path,
+  headers: { origin: 'https://www.realskincare.com', 'x-forwarded-for': '203.0.113.9' },
+  socket: { remoteAddress: '203.0.113.9' },
+  // An empty body stream: readJsonBody resolves {} once 'end' fires.
+  on(event, cb) { if (event === 'end') setImmediate(cb); },
+  destroy() {},
+});
+
+function routeFor(routes, method, path) {
+  return routes.find((r) => r.method === method && r.match(path));
+}
+
+for (const path of ['/api/giveaway/enter', '/api/giveaway/answers', '/api/giveaway/upload']) {
+  test(`${path} answers 410 once the Entry Period has closed`, async () => {
+    const routes = createGiveawayRoutes({ now: () => Date.parse('2026-09-15T07:00:00Z'), closesAt: () => CLOSES });
+    const res = makeRes();
+    await routeFor(routes, 'POST', path).handler(closedReq(path), res);
+    assert.equal(res.statusCode, 410);
+    const body = JSON.parse(res.body);
+    assert.equal(body.ok, false);
+    assert.equal(body.closed, true);
+    assert.match(body.error, /closed/i);
+  });
+}
+
+test('at the closing instant the entry route is still open (the guard does not answer)', async () => {
+  const routes = createGiveawayRoutes({ now: () => Date.parse('2026-09-15T06:59:59Z'), closesAt: () => CLOSES });
+  const res = makeRes();
+  // An open period falls through to body reading; a request with no body stream
+  // fails there, which is a 400 — anything but the 410 proves the guard let it by.
+  await routeFor(routes, 'POST', '/api/giveaway/enter').handler(
+    { ...closedReq('/api/giveaway/enter'), headers: { ...closedReq('').headers, 'x-forwarded-for': '203.0.113.77' } },
+    res,
+  ).catch(() => {});
+  assert.notEqual(res.statusCode, 410);
 });

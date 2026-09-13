@@ -31,6 +31,7 @@ import {
   subscribeToList, getProfileByEmail, updateProfileProperties,
 } from '../../../lib/klaviyo-profiles.js';
 import { sendLeadEvent } from '../../../lib/meta-capi.js';
+import { isEntryPeriodClosed } from '../../../lib/giveaway/entry-period.js';
 
 const MAX_BODY_BYTES = 4 * 1024;
 const UPLOAD_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -284,12 +285,48 @@ const json = (res, req, status, body) => {
   res.end(JSON.stringify(body));
 };
 
+const entryClosesAt = () => JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8')).entryClosesAt;
+
+export const ENTRIES_CLOSED_MESSAGE = 'Entries for this giveaway have closed. Thank you for entering!';
+
+/**
+ * Refuse a WRITE once the Entry Period has closed.
+ *
+ * The storefront form stayed open past 23:59:59 PT on Sep 14, and the snapshot
+ * is taken about an hour later — so an entry in that hour was drawn, and every
+ * entry after it was told it held entries and sent a confirm email promising
+ * more. 410 Gone, with `closed: true` so the theme can tell a closed giveaway
+ * from a failed request. giveaway.js shows `error` on any non-2xx, so even a
+ * page loaded before the close shows this message rather than a generic failure.
+ *
+ * Runs OUTSIDE the rate limiter, so a closed request never spends an entrant's
+ * budget. An unreadable config fails OPEN: the entry is taken and the snapshot's
+ * own late-entry filter still keeps it out of the draw.
+ */
+export function withEntryPeriod(handler, { now, closesAt }) {
+  return async (req, res) => {
+    let closed = false;
+    try {
+      closed = isEntryPeriodClosed(now(), closesAt());
+    } catch (e) {
+      console.error('[giveaway] entry period unreadable — accepting', e.message);
+    }
+    if (closed) return json(res, req, 410, { ok: false, closed: true, error: ENTRIES_CLOSED_MESSAGE });
+    return handler(req, res);
+  };
+}
+
 // Route objects are matched by `dispatch()` in agents/dashboard/lib/router.js,
 // which reads `route.match` — NOT `route.path`. And when `match` is a string it
 // compares against the full `req.url`, query string included, so an exact-string
 // match breaks any route that takes query params. Both reasons to use a function
 // that strips the query, exactly as routes/rum.js does.
-export default [
+//
+// A factory so the clock and the close date are injectable in tests; the
+// dashboard mounts the default export, which uses the real ones.
+export function createGiveawayRoutes({ now = () => Date.now(), closesAt = entryClosesAt } = {}) {
+  const period = { now, closesAt };
+  return [
   {
     method: 'OPTIONS',
     match: (url) => url.split('?')[0].startsWith('/api/giveaway/'),
@@ -298,7 +335,7 @@ export default [
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/enter',
-    handler: withRateLimit(enterLimiter, async (req, res) => {
+    handler: withEntryPeriod(withRateLimit(enterLimiter, async (req, res) => {
       let parsed;
       try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
@@ -342,12 +379,12 @@ export default [
         console.error('[giveaway] enter failed', e.message);
         return json(res, req, 502, { ok: false, error: 'could not record entry' });
       }
-    }),
+    }), period),
   },
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/answers',
-    handler: withRateLimit(mutateLimiter, async (req, res) => {
+    handler: withEntryPeriod(withRateLimit(mutateLimiter, async (req, res) => {
       let parsed;
       try { parsed = await readJsonBody(req, { maxBytes: MAX_BODY_BYTES, destroyOnOverflow: false }); }
       catch (e) { return refuseBody(req, res, e, 'that request is too large'); }
@@ -362,19 +399,23 @@ export default [
         console.error('[giveaway] answers failed', e.message);
         return json(res, req, 502, { ok: false, error: 'could not save answers' });
       }
-    }),
+    }), period),
   },
   {
     method: 'POST',
     match: (url) => url.split('?')[0] === '/api/giveaway/upload',
-    handler: withRateLimit(mutateLimiter, createUploadHandler()),
+    handler: withEntryPeriod(withRateLimit(mutateLimiter, createUploadHandler()), period),
   },
   {
+    // Deliberately NOT guarded: an entrant may still read what they hold.
     method: 'GET',
     match: (url) => url.split('?')[0] === '/api/giveaway/entries',
     handler: withRateLimit(entriesLimiter, createEntriesHandler()),
   },
-];
+  ];
+}
+
+export default createGiveawayRoutes();
 
 // Factory for the same reason as createEntriesHandler below: the ORDER of the
 // two side effects here is the thing worth testing, and it cannot be observed

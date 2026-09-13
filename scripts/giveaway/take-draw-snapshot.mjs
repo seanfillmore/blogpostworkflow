@@ -14,7 +14,7 @@
  * The notify is immediate: the 5 AM digest is the wrong latency for the one
  * artefact the drawing depends on.
  */
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,11 +31,21 @@ try {
 const { listProfilesWithConsent, listEntrantProfiles } = await import('../../lib/klaviyo-profiles.js');
 const { mergeEntrantProfiles } = await import('../../lib/giveaway/referral-audit.js');
 const { buildSnapshot } = await import('../../lib/giveaway/draw-snapshot.js');
+const { snapshotWriteRefusal } = await import('../../lib/giveaway/entry-period.js');
 const { notify } = await import('../../lib/notify.js');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
 const apply = process.argv.includes('--apply');
 const OUT = join(ROOT, 'data', 'giveaway', 'draw-snapshot.json');
+
+// The frozen pool is the evidence the drawing rests on. Retaking it later reads
+// live Klaviyo again and can silently draw from a different set than the one
+// taken at the close, so an existing file is never overwritten without --force.
+const refusal = snapshotWriteRefusal({ exists: existsSync(OUT), force: process.argv.includes('--force') });
+if (apply && refusal) {
+  console.error(`Refusing: ${refusal}`);
+  process.exit(1);
+}
 
 // BOTH populations: the Klaviyo list only ever holds confirmed entrants, and the
 // operator determination is that unconfirmed entrants are in the draw.

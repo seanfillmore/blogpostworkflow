@@ -46,6 +46,35 @@ test('REGRESSION: a confirmation made AFTER entries closed does not count', () =
   assert.equal(r.entries, 1, 'they keep their base entry and nothing more');
 });
 
+test('REGRESSION: an entrant who SUBMITTED after entries closed is not in the pool', () => {
+  // Nothing closes the form at the deadline and the snapshot runs an hour
+  // later, so someone entering at 00:30 PT used to land in the draw with a base
+  // entry. §8 draws only from entries "received during the Entry Period".
+  const snap = buildSnapshot([
+    profile('ontime@x.com'),
+    profile('late@x.com', { gv_entered_at: '2026-09-15T07:30:00.000Z' }),
+  ], opts);
+  assert.equal(row(snap, 'late@x.com'), undefined);
+  assert.ok(row(snap, 'ontime@x.com'));
+  assert.equal(snap.excluded.lateEntries, 1);
+  assert.equal(snap.totals.entrants, 1);
+});
+
+test('an entry submitted exactly AT the closing instant is in the pool', () => {
+  const snap = buildSnapshot([
+    profile('edge@x.com', { gv_entered_at: '2026-09-15T06:59:59.000Z' }),
+  ], opts);
+  assert.ok(row(snap, 'edge@x.com'));
+  assert.equal(snap.excluded.lateEntries, 0);
+});
+
+test('an entrant with NO entry stamp is kept — absence is not proof of a late entry', () => {
+  const p = profile('unstamped@x.com');
+  delete p.properties.gv_entered_at;
+  const snap = buildSnapshot([p], opts);
+  assert.ok(row(snap, 'unstamped@x.com'));
+});
+
 test('a confirmation exactly AT the closing instant counts', () => {
   const snap = buildSnapshot([
     profile('edge@x.com', {
