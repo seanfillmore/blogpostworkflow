@@ -6,7 +6,9 @@
 // they won. These pin the two pure halves of the fix.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { withExcludedList, drawnWinnerEmails } from '../../lib/giveaway/offer-exclusion.js';
+import {
+  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership,
+} from '../../lib/giveaway/offer-exclusion.js';
 
 test('the exclusion list is added and the included audience is left exactly as it was', () => {
   const out = withExcludedList({ included: ['Y2ukbE'], excluded: [] }, 'WIN123');
@@ -46,4 +48,65 @@ test('an unawarded referral prize excludes the winner only', () => {
 
 test('a result with no winner is refused rather than excluding nobody', () => {
   assert.throws(() => drawnWinnerEmails({ referralPrize: { awarded: false } }), /winner/);
+});
+
+// ---------------------------------------------------------------------------
+// §5-disqualified entrants are excluded from the consolation sends too.
+//
+// The three offer campaigns target the whole entrant list. 2,948 of its members
+// are the automated cohort disqualified from the drawing (PR #889) — they will
+// never buy, they confirmed at 0.14%, and mailing them flattens every rate the
+// offer is measured on. They go onto the SAME list the winners go onto, which is
+// already excluded on all three campaigns, so nothing has to edit a scheduled
+// send.
+// ---------------------------------------------------------------------------
+
+test('disqualifiedEmails reads the committed evidence record', () => {
+  const emails = disqualifiedEmails({
+    disqualified: [{ email: 'Bot1@Outlook.com' }, { email: 'bot2@outlook.com' }],
+  });
+  assert.deepEqual(emails, ['bot1@outlook.com', 'bot2@outlook.com'], 'normalized');
+});
+
+test('disqualifiedEmails dedupes', () => {
+  const emails = disqualifiedEmails({
+    disqualified: [{ email: 'bot@outlook.com' }, { email: 'BOT@outlook.com' }],
+  });
+  assert.deepEqual(emails, ['bot@outlook.com']);
+});
+
+test('disqualifiedEmails NEVER returns an exempt entrant', () => {
+  // The exemptions are the whole reason the rule is safe. An exempt entrant
+  // leaking into the exclusion list would silently withhold the offer from
+  // someone the rule deliberately spared.
+  const rec = {
+    disqualified: [{ email: 'bot@outlook.com' }],
+    exempt: [{ email: 'real@gmail.com', exempt_because: 'confirmed' }],
+  };
+  const emails = disqualifiedEmails(rec);
+  assert.ok(!emails.includes('real@gmail.com'));
+  assert.deepEqual(emails, ['bot@outlook.com']);
+});
+
+test('disqualifiedEmails refuses a record with no disqualified array', () => {
+  assert.throws(() => disqualifiedEmails({}), /disqualified/);
+  assert.throws(() => disqualifiedEmails({ disqualified: 'nope' }), /disqualified/);
+});
+
+test('disqualifiedEmails refuses a row with no usable email', () => {
+  assert.throws(() => disqualifiedEmails({ disqualified: [{ email: '' }] }), /email/);
+});
+
+test('missingFromMembership compares against the WHOLE membership, not one page', () => {
+  // The bug this exists to stop: the read-back paged at 100 while the list now
+  // holds thousands, so the winners were reported absent right after being added.
+  const members = Array.from({ length: 250 }, (_, i) => `f${i}@x.com`);
+  members.push('winner@x.com');
+  assert.deepEqual(missingFromMembership(['winner@x.com'], members), []);
+  assert.deepEqual(missingFromMembership(['winner@x.com'], members.slice(0, 100)), ['winner@x.com']);
+});
+
+test('missingFromMembership is case-insensitive on both sides', () => {
+  assert.deepEqual(missingFromMembership(['Winner@X.com'], ['winner@x.com']), []);
+  assert.deepEqual(missingFromMembership(['winner@x.com'], ['WINNER@X.COM']), []);
 });
