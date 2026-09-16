@@ -67,26 +67,44 @@ test('fetchLandingPagesByChannel orders and limits by sessions, not by modelled 
 // ── landing-page segments (country-aware) ────────────────────────────────────
 //
 // A SECOND report rather than a fourth dimension on fetchLandingPagesByChannel,
-// because that one feeds agents/seo-impact (the revenue gate) and
-// scripts/growth-scoreboard.mjs, and adding a dimension multiplies its row count.
+// because that one feeds agents/seo-impact (the revenue gate), and adding a
+// dimension multiplies its row count. (scripts/growth-scoreboard.mjs moved here
+// from fetchLandingPagesByChannel on 2026-09-16.)
 // See lib/commercial-cvr.js for why the commercial-CVR denominator needs country.
 
 test('fetchLandingPageSegments asks for country alongside landing page and source', async () => {
   const { fetchLandingPageSegments } = await import('../../lib/ga4.js');
   stubGA4((body) => (dimNames(body).includes('country')
-    ? [row(['/products/lotion', 'Organic Search', 'google', 'United States'], [400])]
+    ? [row(['/products/lotion', 'Organic Search', 'google', 'United States'], [400, 3])]
     : []));
 
   const rows = await fetchLandingPageSegments('2026-08-17', '2026-09-13');
   const body = reports.at(-1);
 
   assert.deepEqual(dimNames(body), ['landingPage', 'sessionDefaultChannelGroup', 'sessionSource', 'country']);
-  assert.deepEqual(body.metrics, [{ name: 'sessions' }]);
+  // `sessions` stays FIRST: the orderBy and every consumer's `sessions` read depend on it.
+  assert.deepEqual(body.metrics, [{ name: 'sessions' }, { name: 'ecommercePurchases' }]);
   assert.equal(body.orderBys[0].metric.metricName, 'sessions');
   assert.deepEqual(rows, [{
     page: '/products/lotion', channel: 'Organic Search', source: 'google',
-    country: 'United States', sessions: 400,
+    country: 'United States', sessions: 400, purchases: 3,
   }]);
+});
+
+test('fetchLandingPageSegments carries GA4 purchases as an ADDITIVE field', async () => {
+  // Added 2026-09-16 for scripts/growth-scoreboard.mjs's tracking cross-check
+  // (GA4 purchases vs Shopify session-driven orders). A metric does not change row
+  // cardinality, so sessions per row are unchanged, and scripts/commercial-page-cvr.mjs
+  // ignores fields it does not read. Named ecommercePurchases explicitly rather than
+  // `conversions`, whose meaning changed around 2026-08-01 (key events → purchases).
+  const { fetchLandingPageSegments } = await import('../../lib/ga4.js');
+  stubGA4(() => [
+    row(['/', 'Direct', '(direct)', 'United States'], [120, 0]),
+    // GA4 can omit a trailing metric value; that is zero purchases, never NaN.
+    { dimensionValues: ['/x', 'Referral', 'a.com', 'Canada'].map((value) => ({ value })), metricValues: [{ value: '7' }] },
+  ]);
+  const rows = await fetchLandingPageSegments('2026-08-17', '2026-09-13');
+  assert.deepEqual(rows.map((r) => [r.sessions, r.purchases]), [[120, 0], [7, 0]]);
 });
 
 test('fetchLandingPageSegments THROWS on a truncated response rather than under-reporting', async () => {

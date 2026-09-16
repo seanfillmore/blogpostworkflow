@@ -26,6 +26,14 @@
 import { fetchLandingPageSegments } from '../lib/ga4.js';
 import { getAllOrders } from '../lib/shopify.js';
 import { attributionRows } from '../lib/order-attribution.js';
+// Pacific day bounds for the order fetch — the same helper agents/seo-impact uses.
+// getAllOrders() interpolates its arguments straight into created_at_min/max, and a
+// BARE date end is read as midnight, so the window's whole final day of orders was
+// silently dropped (verified live 2026-09-16: 2026-09-12 → 2026-09-12 returned 0
+// orders while #2352 was created that morning). Pacific rather than the shop's own
+// America/Denver because the DENOMINATOR is GA4, whose property runs on
+// America/Los_Angeles: sessions and orders must be bucketed by the same day.
+import { ptDayBounds } from '../agents/shopify-collector/index.js';
 import {
   aggregateCvr, assertGa4WindowClean, breakevenCostPerSession, requiredCvr,
   heroOffers, GA4_HOLE_END,
@@ -98,7 +106,7 @@ async function main() {
 
   const [ga4Rows, ordersRes] = await Promise.all([
     fetchLandingPageSegments(start, end),
-    getAllOrders(start, end),
+    getAllOrders(ptDayBounds(start).dayStart, ptDayBounds(end).dayEnd),
   ]);
 
   // getAllOrders returns {orders, pages, truncated} — NOT an array. attributionRows
