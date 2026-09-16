@@ -32,7 +32,7 @@ import { fileURLToPath } from 'node:url';
 import { klaviyoRequest } from '../../lib/klaviyo.js';
 import { getProfileByEmail } from '../../lib/klaviyo-profiles.js';
 import { disqualifiedEmails } from '../../lib/giveaway/offer-exclusion.js';
-import { suppressionBatches, assertSafeToSuppress } from '../../lib/giveaway/suppression.js';
+import { suppressionBatches, assertSafeToSuppress, verificationSample } from '../../lib/giveaway/suppression.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const APPLY = process.argv.includes('--apply');
@@ -92,7 +92,7 @@ async function suppressionState(email) {
 }
 
 async function reportSample(label, list) {
-  const sample = list.slice(0, SAMPLE);
+  const sample = verificationSample(list, SAMPLE);
   console.log(`\n${label} (sample of ${sample.length}):`);
   let yes = 0; let no = 0; let unknown = 0;
   for (const email of sample) {
