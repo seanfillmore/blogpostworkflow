@@ -4,7 +4,7 @@ import {
   normalizeLandingPath, segmentOf, aggregateCvr, assertGa4WindowClean,
   sessionExclusion, orderExclusion, isSweepstakesReferrer, isGiveawayPath,
   GA4_HOLE_END, GIVEAWAY_PATHS, EXCLUSION_REASONS, US_GA4_COUNTRY, US_COUNTRY_CODES,
-  heroOffers,
+  heroOffers, wilsonInterval,
 } from '../../lib/commercial-cvr.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -495,4 +495,63 @@ test('a hero offer missing from the roster THROWS rather than scoring zero', () 
     () => heroOffers([{ name: 'A', price: 1, contrib: 1 }], ['Not In Roster']),
     /Not In Roster/,
   );
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// wilsonInterval — the honest answer at single-digit order counts.
+//
+// agents/campaign-analyzer turns these intervals into the CVR range a paid
+// proposal must fall inside. At 4 orders a point estimate is a coin toss; the
+// interval is what the sample can actually support. Reference values are
+// Newcombe (1998), "Two-sided confidence intervals for the single proportion",
+// Statistics in Medicine 17:857-872, Table I, method 3 (Wilson score, no
+// continuity correction) — published figures, not re-derived here.
+// ─────────────────────────────────────────────────────────────────────────────
+const close4 = (actual, expected, label) =>
+  assert.ok(Math.abs(actual - expected) < 0.00005, `${label}: ${actual} vs ${expected}`);
+
+test('wilsonInterval matches Newcombe 1998 Table I (Wilson score, no correction)', () => {
+  for (const [x, n, lo, hi] of [
+    [81, 263, 0.2553, 0.3662],
+    [15, 148, 0.0624, 0.1605],
+    [0, 20, 0.0000, 0.1611],
+    [1, 29, 0.0061, 0.1718],
+  ]) {
+    const w = wilsonInterval(x, n);
+    close4(w.lower, lo, `${x}/${n} lower`);
+    close4(w.upper, hi, `${x}/${n} upper`);
+    assert.equal(w.point, x / n);
+    assert.equal(w.orders, x);
+    assert.equal(w.sessions, n);
+  }
+});
+
+test('wilsonInterval with zero orders has a lower bound of exactly 0 and a real upper bound', () => {
+  const w = wilsonInterval(0, 126); // the measured clean collection segment, 2026-08-20 -> 09-15
+  assert.equal(w.lower, 0);
+  assert.equal(w.point, 0);
+  assert.ok(w.upper > 0.02 && w.upper < 0.04, `upper ${w.upper}`);
+});
+
+test('wilsonInterval with orders == sessions has an upper bound of exactly 1', () => {
+  const w = wilsonInterval(5, 5);
+  assert.equal(w.upper, 1);
+  assert.ok(w.lower > 0.5 && w.lower < 1);
+});
+
+test('wilsonInterval returns null when there is nothing to divide by, or the inputs are incoherent', () => {
+  assert.equal(wilsonInterval(0, 0), null);
+  assert.equal(wilsonInterval(3, 0), null);
+  // More orders than sessions happens when GA4 and Shopify attribute a purchase to
+  // different landing pages. It is not a rate, and clamping it to 100% would be the
+  // most optimistic possible lie — so it is no evidence at all.
+  assert.equal(wilsonInterval(4, 3), null);
+  assert.equal(wilsonInterval(-1, 10), null);
+  assert.equal(wilsonInterval(NaN, 10), null);
+});
+
+test('wilsonInterval on the measured clean commercial pool brackets the point estimate', () => {
+  const w = wilsonInterval(4, 567);
+  assert.ok(w.lower < w.point && w.point < w.upper);
+  assert.ok(w.lower > 0.002 && w.upper < 0.02, JSON.stringify(w));
 });

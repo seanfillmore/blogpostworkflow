@@ -5385,6 +5385,70 @@ function formatRationale(text) {
   return html;
 }
 
+/**
+ * The "no viable campaigns" card, from data/campaigns/aov-barrier.json.
+ *
+ * Break-even CPC is shown at the MEASURED clean commercial CVR the analyzer wrote
+ * (breakEvenCpcMeasured + measuredCvr, since 2026-09-16). It used to show "Max CPC
+ * @ 2% CVR" and "@ 3% CVR" — benchmark rates 3-4x the store's measured ~0.7%, so
+ * every CPC it called affordable was 3-4x too high.
+ *
+ * An OLD barrier file carries only those benchmark thresholds. They are NOT
+ * rendered: the card says the break-even was not measured and to re-run the
+ * analyzer, rather than resurrecting numbers that were never true.
+ */
+function renderAovBarrierHtml(aovBarrier) {
+  var b = aovBarrier || {};
+  var money = function(n) { return (typeof n === 'number' && isFinite(n)) ? '$' + n.toFixed(2) : '—'; };
+  var pctText = function(n) { return (typeof n === 'number' && isFinite(n)) ? (n * 100).toFixed(2) + '%' : '—'; };
+  var m = b.measuredCvr;
+  var cpc = b.breakEvenCpcMeasured;
+  var measured = !!(m && cpc && typeof m.point === 'number');
+  var metric = function(label, value, note) {
+    return '<div class="metric"><div class="metric-label">' + esc(label) + '</div><div class="metric-value">' + esc(value) + '</div><div class="metric-note">' + esc(note) + '</div></div>';
+  };
+  var sample = measured
+    ? m.orders + ' orders / ' + m.sessions + ' sessions, ' + (m.window ? m.window.start + ' → ' + m.window.end : '')
+    : '';
+
+  var metrics =
+    metric('Store AOV', money(b.aov), '90-day average') +
+    metric('Min ROAS', b.minRoas != null ? String(b.minRoas) + '×' : '—', 'Required threshold') +
+    metric('Max CPA', money(b.breakEvenCpa), 'at ' + (b.minRoas != null ? b.minRoas : '—') + '× ROAS');
+  if (measured) {
+    metrics +=
+      metric('Measured CVR', pctText(m.point), '95% range ' + pctText(m.lower) + '–' + pctText(m.upper)) +
+      metric('Max CPC @ measured CVR', money(cpc.atPoint), 'range ' + money(cpc.atLower) + '–' + money(cpc.atUpper));
+  } else {
+    metrics += metric('Max CPC', 'not measured', 'barrier from ' + (b.date || 'unknown date') + ' predates measured CVR — re-run the analyzer');
+  }
+
+  // An old barrier's message quotes CPC at 2%/3% CVR in its own prose, so it is
+  // withheld too — showing it would put the benchmark numbers straight back.
+  var message = measured
+    ? (b.message || '')
+    : 'All ' + (b.proposalsAnalyzed != null ? b.proposalsAnalyzed : '') + ' proposals rejected (' + (b.date || 'unknown date') + '). This barrier predates measured CVR: its break-even CPC was computed at assumed benchmark conversion rates and is not shown.';
+
+  var recs = [];
+  if (measured) {
+    recs.push('Break-even is measured on clean US commercial traffic (' + sample + ') — a small sample, so read the range, not the point');
+    recs.push('At the measured rate, keywords above ' + money(cpc.atPoint) + ' CPC lose money at ' + b.minRoas + '× ROAS');
+    if (m.point > 0 && b.minRoas) {
+      recs.push('A $1.00 CPC needs AOV of ' + money(1 * b.minRoas / m.point) + ' at this CVR — or a higher-converting commercial page');
+    }
+  }
+  recs.push('Brand search is exempt from the measured range; its CVR is an industry benchmark, not measured on this store');
+  recs.push('See CRO brief for detailed AOV and conversion improvement recommendations');
+
+  return '<div style="padding:4px 0 12px">' +
+      '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">No viable campaigns at current AOV</div>' +
+      '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px">' + esc(message) + '</div>' +
+      '<div class="metrics-row" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">' + metrics + '</div>' +
+      '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Recommendations</div>' +
+      '<div style="font-size:12px;color:var(--text);line-height:1.8">' + recs.map(function(r) { return '• ' + esc(r); }).join('<br>') + '</div>' +
+    '</div>';
+}
+
 function renderCampaignCards(campaigns, aovBarrier) {
   // --- Proposals ---
   const proposals = campaigns.filter(c => (c.status === 'proposed' || c.status === 'approved') && !c.clarificationNeeded);
@@ -5393,25 +5457,7 @@ function renderCampaignCards(campaigns, aovBarrier) {
   if (proposals.length === 0 && aovBarrier) {
     propCard.style.display = '';
     document.getElementById('campaign-proposals-note').textContent = 'Paid search readiness';
-    propBody.innerHTML =
-      '<div style="padding:4px 0 12px">' +
-        '<div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">No viable campaigns at current AOV</div>' +
-        '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:16px">' + esc(aovBarrier.message) + '</div>' +
-        '<div class="metrics-row" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:16px">' +
-          '<div class="metric"><div class="metric-label">Store AOV</div><div class="metric-value">$' + esc(String(aovBarrier.aov.toFixed(2))) + '</div><div class="metric-note">90-day average</div></div>' +
-          '<div class="metric"><div class="metric-label">Min ROAS</div><div class="metric-value">' + esc(String(aovBarrier.minRoas)) + '×</div><div class="metric-note">Required threshold</div></div>' +
-          '<div class="metric"><div class="metric-label">Max CPA</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpa)) + '</div><div class="metric-note">at ' + esc(String(aovBarrier.minRoas)) + '× ROAS</div></div>' +
-          '<div class="metric"><div class="metric-label">Max CPC @ 2% CVR</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpc?.at2pctCvr)) + '</div><div class="metric-note">long-tail threshold</div></div>' +
-          '<div class="metric"><div class="metric-label">Max CPC @ 3% CVR</div><div class="metric-value">$' + esc(String(aovBarrier.breakEvenCpc?.at3pctCvr)) + '</div><div class="metric-note">branded threshold</div></div>' +
-        '</div>' +
-        '<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:6px">Recommendations</div>' +
-        '<div style="font-size:12px;color:var(--text);line-height:1.8">' +
-          '• Current AOV supports keywords up to $' + esc(String((aovBarrier.aov * 0.03 / aovBarrier.minRoas).toFixed(2))) + ' CPC at 3% CVR — target long-tail terms in that range<br>' +
-          '• Push AOV to ~$42 via bundles or upsells to unlock $1.50 CPC keywords<br>' +
-          '• Brand search is the best near-term bet — CPCs $0.30–0.50, CVR 8–15%<br>' +
-          '• See CRO brief for detailed AOV improvement recommendations' +
-        '</div>' +
-      '</div>';
+    propBody.innerHTML = renderAovBarrierHtml(aovBarrier);
   } else if (proposals.length > 0) {
     propCard.style.display = '';
     document.getElementById('campaign-proposals-note').textContent = proposals.length + ' pending';
