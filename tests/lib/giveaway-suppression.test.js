@@ -10,7 +10,7 @@
 // email — so the guards have to be arithmetic, not vigilance.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { suppressionBatches, assertSafeToSuppress } from '../../lib/giveaway/suppression.js';
+import { suppressionBatches, assertSafeToSuppress, verificationSample } from '../../lib/giveaway/suppression.js';
 
 const pool = (emails) => ({ entrants: emails.map((email) => ({ email })) });
 
@@ -73,4 +73,24 @@ test('comparison is case-insensitive, so a recased address cannot slip through',
 
 test('REFUSES an empty suppression list rather than reporting a vacuous success', () => {
   assert.throws(() => assertSafeToSuppress([], pool(['a@b.com']), 0), /empty/);
+});
+
+test('a verification sample SPREADS across the whole list, not just its head', () => {
+  // The flaw this closes, found by verifying the real run rather than trusting
+  // it: taking the first N addresses samples only the FIRST batch, so a 25-of-25
+  // pass confirmed one batch of 100 and inferred the other twenty-nine.
+  const emails = Array.from({ length: 2948 }, (_, i) => `b${i}@outlook.com`);
+  const picked = verificationSample(emails, 25);
+  assert.equal(picked.length, 25);
+  assert.equal(picked[0], emails[0], 'includes the first');
+  assert.equal(picked.at(-1), emails.at(-1), 'includes the LAST — the final batch is the one most likely to be cut short');
+  const spread = new Set(picked.map((e) => Math.floor(emails.indexOf(e) / 100)));
+  assert.ok(spread.size >= 20, `should touch many batches, touched ${spread.size}`);
+});
+
+test('a verification sample of a short list is the whole list, without duplicates', () => {
+  const emails = ['a@x.com', 'b@x.com', 'c@x.com'];
+  const picked = verificationSample(emails, 25);
+  assert.deepEqual(picked, emails);
+  assert.equal(new Set(picked).size, picked.length);
 });
