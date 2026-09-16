@@ -157,6 +157,15 @@ export const PLAN = [
     after: "No toothpaste does that alone — brushing habits and diet matter most. Among fluoride-free ingredients, hydroxyapatite has the most research behind it; if you're cavity-prone, ask your dentist whether fluoride is right for you.",
     reason: 'Answered "does it prevent cavities?" with "yes" and credited baking soda, an ingredient in our formula, with no anticaries evidence.',
   },
+  {
+    id: 'fluoride-free-tip-remineralizing-agents',
+    handle: 'best-fluoride-free-toothpaste-2025',
+    surface: 'body',
+    expectedOccurrences: 1,
+    before: 'Letting toothpaste residue sit on your teeth gives active ingredients time to work—especially important with remineralizing agents like baking soda or hydroxyapatite.',
+    after: "Spitting instead of rinsing leaves a thin layer of toothpaste on your teeth a little longer. If you're cavity-prone, ask your dentist about hydroxyapatite or fluoride.",
+    reason: 'Added 2026-09-16 (missed on 2026-09-12). A brushing tip called baking soda, an ingredient in our formula, a "remineralizing agent" with "active ingredients" — the same shape seven-ingredients-baking-soda-remineralizing fixed. Baking soda is not one. The tip itself is kept. The later "Nano-hydroxyapatite — remineralizes enamel" alternatives line is a category fact about an ingredient RSC does not sell, and stays.',
+  },
 
   // ── 7-ingredients-to-avoid-in-natural-toothpaste
   {
