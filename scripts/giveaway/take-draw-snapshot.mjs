@@ -57,11 +57,23 @@ const snapshot = buildSnapshot(mergeEntrantProfiles(listed, submitted), {
   entryClosesAt: config.entryClosesAt,
   includeUnconfirmed: config.drawIncludesUnconfirmedEntrants === true,
   takenAt: new Date().toISOString(),
+  // §5 disqualification of automated entries. Declared in config so the reason
+  // travels with the committed snapshot rather than living in this script.
+  fraudWindows: Array.isArray(config.disqualifiedEntryWindows) ? config.disqualifiedEntryWindows : [],
 });
 
 console.log(`${snapshot.totals.entrants} entrants | ${snapshot.totals.entries} entries`);
 console.log(`  confirmed: ${snapshot.totals.confirmed} | unconfirmed: ${snapshot.totals.unconfirmed}`);
 console.log(`  excluded: ${JSON.stringify(snapshot.excluded)}`);
+
+// A disqualification is the loudest thing this script can report: it removes real
+// rows from a $1,072.80 drawing. Never let it sit inside the excluded blob alone.
+for (const w of snapshot.determinations.fraudWindows) {
+  console.log(`  §5 window ${w.from} .. ${w.to} — ${w.reason}`);
+}
+if (snapshot.excluded.fraudulent > 0) {
+  console.log(`  §5 DISQUALIFIED ${snapshot.excluded.fraudulent} entrant(s) as automated.`);
+}
 
 if (!apply) { console.log('\nDry run — pass --apply to write.'); process.exit(0); }
 
@@ -75,6 +87,10 @@ await notify({
     `Snapshot written to data/giveaway/draw-snapshot.json at ${snapshot.takenAt}.`,
     `Confirmed ${snapshot.totals.confirmed}, unconfirmed ${snapshot.totals.unconfirmed}.`,
     `Excluded: ${JSON.stringify(snapshot.excluded)}.`,
+    ...(snapshot.excluded.fraudulent > 0
+      ? ['', `§5: ${snapshot.excluded.fraudulent} entrant(s) DISQUALIFIED as automated.`,
+        ...snapshot.determinations.fraudWindows.map((w) => `  ${w.from} .. ${w.to} — ${w.reason}`)]
+      : []),
     '',
     'ACTION REQUIRED before the drawing: pull this file down and COMMIT it.',
     'draw.mjs refuses to run against an uncommitted snapshot.',
