@@ -154,3 +154,119 @@ test('two builds of the same input are byte-identical', () => {
     'the snapshot is the evidence record; it must not vary run to run',
   );
 });
+
+// ---------------------------------------------------------------------------
+// §5 fraudulent-entry disqualification.
+//
+// On 2026-09-15 an automated cohort submitted 2,948 base entries in the final
+// three hours of the Entry Period — 40% of the entrant pool, 12.9% of the
+// tickets. The aggregate evidence is overwhelming (5,920 of 5,930 requests on a
+// single user-agent string across 2,792 IPs, 3 distinct UAs against 70 over the
+// preceding five days, a 0.14% confirm rate against the campaign's 47%,
+// machine-generated addresses concentrated on one mail domain). Rules §5:
+// "Sponsor reserves the right to disqualify any entry it reasonably believes to
+// be fraudulent, automated, or otherwise made in violation of these Official
+// Rules."
+//
+// The user agent is never persisted on a profile (it is forwarded to Meta's CAPI
+// and dropped), so the per-entrant predicate is the entry stamp. Email-pattern
+// classification was measured and REJECTED: the strongest single feature was the
+// mail domain at 65.5% of the suspect cohort against 2.1% of the known-good one,
+// which is nowhere near the recall needed to disqualify on.
+// ---------------------------------------------------------------------------
+
+const FRAUD_WINDOW = {
+  from: '2026-09-15T03:59:00.000Z',
+  to: '2026-09-15T06:50:00.000Z',
+  reason: 'automated entry wave; see data/giveaway/evidence/2026-09-15-entry-fraud/',
+};
+const dqOpts = { ...opts, fraudWindows: [FRAUD_WINDOW] };
+
+test('an unengaged entry inside a fraud window is disqualified and counted', () => {
+  const snap = buildSnapshot([
+    profile('bot@outlook.com', { gv_entered_at: '2026-09-15T05:00:00.000Z' }),
+  ], dqOpts);
+  assert.equal(row(snap, 'bot@outlook.com'), undefined);
+  assert.equal(snap.excluded.fraudulent, 1);
+  assert.equal(snap.totals.entrants, 0);
+});
+
+test('a CONFIRMED entrant inside a fraud window is KEPT — confirming is a human act', () => {
+  const snap = buildSnapshot([
+    profile('real@x.com', {
+      gv_entered_at: '2026-09-15T05:00:00.000Z',
+      ...confirmedAt('2026-09-15T06:00:00.000Z'),
+      gv_breakdown: { confirmed: true, survey: false, referrals: 0, instagram: false, upload: false },
+    }),
+  ], dqOpts);
+  assert.ok(row(snap, 'real@x.com'), 'a confirmation rescues an in-window entrant');
+  assert.equal(snap.excluded.fraudulent, 0);
+});
+
+test('an in-window entrant who did the survey is KEPT', () => {
+  const snap = buildSnapshot([
+    profile('survey@x.com', {
+      gv_entered_at: '2026-09-15T05:00:00.000Z',
+      gv_breakdown: { confirmed: false, survey: true, referrals: 0, instagram: false, upload: false },
+    }),
+  ], dqOpts);
+  assert.ok(row(snap, 'survey@x.com'));
+  assert.equal(snap.excluded.fraudulent, 0);
+});
+
+test('an in-window entrant with an Instagram post, an upload or a referral is KEPT', () => {
+  for (const rung of ['instagram', 'upload']) {
+    const snap = buildSnapshot([
+      profile(`${rung}@x.com`, {
+        gv_entered_at: '2026-09-15T05:00:00.000Z',
+        gv_breakdown: { confirmed: false, survey: false, referrals: 0, instagram: false, upload: false, [rung]: true },
+      }),
+    ], dqOpts);
+    assert.ok(row(snap, `${rung}@x.com`), `${rung} is human engagement`);
+  }
+  const ref = buildSnapshot([
+    profile('ref@x.com', {
+      gv_entered_at: '2026-09-15T05:00:00.000Z',
+      ...confirmedAt('2026-09-15T06:00:00.000Z'),
+      gv_breakdown: { confirmed: true, survey: false, referrals: 2, instagram: false, upload: false },
+    }),
+  ], dqOpts);
+  assert.ok(row(ref, 'ref@x.com'), 'a credited referral is human engagement');
+});
+
+test('an unengaged entry OUTSIDE the fraud window is untouched', () => {
+  const snap = buildSnapshot([
+    profile('legit@x.com', { gv_entered_at: '2026-09-14T22:00:00.000Z' }),
+  ], dqOpts);
+  assert.ok(row(snap, 'legit@x.com'));
+  assert.equal(snap.excluded.fraudulent, 0);
+});
+
+test('the fraud window is inclusive of `from` and exclusive of `to`', () => {
+  const at = (iso) => buildSnapshot([profile('e@x.com', { gv_entered_at: iso })], dqOpts);
+  assert.equal(at('2026-09-15T03:58:59.999Z').excluded.fraudulent, 0, 'one ms before onset is clean');
+  assert.equal(at('2026-09-15T03:59:00.000Z').excluded.fraudulent, 1, 'the onset minute is inside');
+  assert.equal(at('2026-09-15T06:49:59.999Z').excluded.fraudulent, 1, 'the last attack ms is inside');
+  assert.equal(at('2026-09-15T06:50:00.000Z').excluded.fraudulent, 0, 'the window closes before the final 10 minutes');
+});
+
+test('an entrant with NO entry stamp is never disqualified — absence is not evidence', () => {
+  const p = profile('unstamped@x.com');
+  delete p.properties.gv_entered_at;
+  const snap = buildSnapshot([p], dqOpts);
+  assert.ok(row(snap, 'unstamped@x.com'), 'disqualification must fail OPEN');
+  assert.equal(snap.excluded.fraudulent, 0);
+});
+
+test('with no fraudWindows nothing is disqualified and the count is still reported', () => {
+  const snap = buildSnapshot([
+    profile('bot@outlook.com', { gv_entered_at: '2026-09-15T05:00:00.000Z' }),
+  ], opts);
+  assert.ok(row(snap, 'bot@outlook.com'), 'the default build is unchanged');
+  assert.equal(snap.excluded.fraudulent, 0);
+});
+
+test('the snapshot records the fraud windows it was built under', () => {
+  const snap = buildSnapshot([profile('a@x.com')], dqOpts);
+  assert.deepEqual(snap.determinations.fraudWindows, [FRAUD_WINDOW]);
+});
