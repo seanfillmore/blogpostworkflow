@@ -15,7 +15,7 @@
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../lib/anthropic.js';
 import { getMetaPath, requirePostMeta } from '../lib/posts.js';
 import { upsertMetafield } from '../lib/shopify.js';
 
