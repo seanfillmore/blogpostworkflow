@@ -24,6 +24,7 @@ const usd = (n) => '$' + n.toFixed(2);
 console.log(`\nLLM cost — ${dates[0]}${dates.length > 1 ? ` … ${dates[dates.length - 1]}` : ''}`);
 console.log('='.repeat(52));
 console.log(`Total: ${usd(s.totalCost)}  |  ${s.totalCalls} calls  |  ${(s.totalInputTokens / 1e6).toFixed(2)}M in / ${(s.totalOutputTokens / 1e6).toFixed(2)}M out`);
+console.log(`Transport: ${s.apiCalls} API calls (billed per token)  |  ${s.subscriptionCalls} subscription calls ($0)`);
 
 console.log('\nBy model:');
 for (const m of s.byModel) console.log(`  ${usd(m.cost).padStart(9)}  ${String(m.calls).padStart(5)} calls  ${m.key}`);

@@ -20,7 +20,7 @@
  * from the blog template (author byline).
  */
 
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from '../lib/anthropic.js';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

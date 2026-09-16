@@ -17,6 +17,9 @@ import { join } from 'node:path';
 
 const USAGE_DIR = mkdtempSync(join(tmpdir(), 'llm-usage-test-'));
 process.env.LLM_USAGE_DIR = USAGE_DIR;
+// These tests exercise the API transport's metering; pin it so a configured
+// CLAUDE_CODE_OAUTH_TOKEN in .env cannot route them through the CLI.
+process.env.LLM_TRANSPORT = 'api';
 
 const { default: RealAnthropic } = await import('@anthropic-ai/sdk');
 const { default: Anthropic } = await import('../../lib/anthropic.js');
