@@ -6,6 +6,8 @@
  *   node scripts/giveaway/exclude-drawn-winners.mjs --setup --apply     # create the list, exclude it on every offer campaign
  *   node scripts/giveaway/exclude-drawn-winners.mjs --winners           # report who would be added
  *   node scripts/giveaway/exclude-drawn-winners.mjs --winners --apply   # add the drawn winners to the list
+ *   node scripts/giveaway/exclude-drawn-winners.mjs --disqualified          # report the §5 cohort
+ *   node scripts/giveaway/exclude-drawn-winners.mjs --disqualified --apply  # add the §5 cohort to the list
  *
  * WHY. All three consolation campaigns target the whole entrant list, and the
  * draw-day send (15:00 PT Sep 16) opens "We drew the winner. It wasn't you."
@@ -32,21 +34,63 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { klaviyoRequest } from '../../lib/klaviyo.js';
 import { findListByName, createList, getProfileByEmail } from '../../lib/klaviyo-profiles.js';
-import { withExcludedList, drawnWinnerEmails } from '../../lib/giveaway/offer-exclusion.js';
+import {
+  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership,
+} from '../../lib/giveaway/offer-exclusion.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
 const APPLY = process.argv.includes('--apply');
 const SETUP = process.argv.includes('--setup');
 const WINNERS = process.argv.includes('--winners');
+const DISQUALIFIED = process.argv.includes('--disqualified');
 const LIST_NAME = 'Giveaway 2026-09 — Drawn winners (offer exclusion)';
 const OUT = join(ROOT, 'data', 'reports', 'giveaway-offer-exclusion');
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-if (SETUP === WINNERS) {
-  console.error('Pass exactly one of --setup or --winners.');
+if ([SETUP, WINNERS, DISQUALIFIED].filter(Boolean).length !== 1) {
+  console.error('Pass exactly one of --setup, --winners or --disqualified.');
   process.exit(64);
+}
+
+/**
+ * Every email on the list, following `links.next` to the end.
+ *
+ * Paginated because the exclusion list now holds thousands of §5-disqualified
+ * entrants alongside the two winners. The single-page read this replaces would
+ * report a winner absent immediately after adding them.
+ */
+async function listMemberEmails(listId) {
+  const emails = [];
+  let url = `/lists/${listId}/profiles/?fields%5Bprofile%5D=email&page%5Bsize%5D=100`;
+  for (let guard = 0; url && guard < 500; guard += 1) {
+    const d = await klaviyoRequest('GET', url);
+    for (const m of d.data || []) emails.push(String(m.attributes?.email || '').toLowerCase());
+    const next = d.links?.next || null;
+    url = next ? next.replace(/^https:\/\/[^/]+\/api/, '') : null;
+  }
+  return emails;
+}
+
+/** Add profiles to the exclusion list in chunks, then verify membership. */
+async function addToExclusionList(listId, emails, profileIds) {
+  for (let i = 0; i < profileIds.length; i += 100) {
+    const chunk = profileIds.slice(i, i + 100);
+    await klaviyoRequest('POST', `/lists/${listId}/relationships/profiles/`, {
+      data: chunk.map((id) => ({ type: 'profile', id })),
+    });
+    console.log(`  added ${i + chunk.length}/${profileIds.length}`);
+  }
+  // A 204 says the call succeeded, not that they are on it.
+  const missing = missingFromMembership(emails, await listMemberEmails(listId));
+  if (missing.length) {
+    console.error(`!! ${missing.length} not on the list after adding (first few: ${missing.slice(0, 5).join(', ')})`);
+    process.exitCode = 1;
+    return false;
+  }
+  console.log(`✓ verified: all ${emails.length} on list ${listId} — excluded from every offer send`);
+  return true;
 }
 
 async function campaign(id) {
@@ -172,21 +216,69 @@ async function winners() {
   }
   if (!APPLY) { console.log('\nDry run — pass --apply to add them to the exclusion list.'); return; }
 
-  await klaviyoRequest('POST', `/lists/${listId}/relationships/profiles/`, {
-    data: profiles.map((p) => ({ type: 'profile', id: p.id })),
-  });
+  await addToExclusionList(listId, emails, profiles.map((p) => p.id));
+}
 
-  // Read the membership back. A 204 says the call succeeded, not that they are on it.
-  const d = await klaviyoRequest('GET', `/lists/${listId}/profiles/?fields%5Bprofile%5D=email&page%5Bsize%5D=100`);
-  const members = new Set((d.data || []).map((m) => String(m.attributes?.email || '').toLowerCase()));
-  const missing = emails.filter((e) => !members.has(e));
-  if (missing.length) {
-    console.error(`!! not on the list after adding: ${missing.join(', ')}`);
-    process.exitCode = 1;
-    return;
+/**
+ * Keep the §5-disqualified automated cohort out of the consolation sends.
+ *
+ * They confirmed at 0.14% and will never buy, so mailing them flattens every
+ * rate the offer is measured on. They go onto the SAME list the winners go onto,
+ * which all three campaigns already exclude — so this never edits a scheduled
+ * send, which is the one thing that could cost the campaign its revenue event.
+ *
+ * Resolving each profile one at a time is deliberate: a bulk add by email would
+ * CREATE a profile for an address Klaviyo does not have, and inventing profiles
+ * while excluding people is exactly backwards.
+ */
+async function disqualified() {
+  const evPath = join(ROOT, 'data', 'giveaway', 'evidence', '2026-09-15-entry-fraud', 'disqualified-entrants.json');
+  if (!existsSync(evPath)) {
+    console.error(`Refusing: no evidence record at ${evPath}`);
+    process.exit(1);
   }
-  console.log(`✓ verified: ${emails.join(', ')} on list ${listId} — excluded from every offer send`);
+  const listId = config.offerExclusionListId;
+  if (!listId) {
+    console.error('Refusing: config/giveaway.json has no offerExclusionListId. Run --setup --apply first.');
+    process.exit(1);
+  }
+
+  // A list nobody excludes does nothing. Say so before adding thousands to it.
+  for (const [file, id] of Object.entries(config.offerCampaigns || {})) {
+    const attrs = (await campaign(id)).data.attributes;
+    if (!(attrs.audiences?.excluded || []).includes(listId) && attrs.status !== 'Sent') {
+      console.error(`WARNING: ${file} (${attrs.status}) does NOT exclude ${listId} — run --setup --apply`);
+      process.exitCode = 1;
+    }
+  }
+
+  const emails = disqualifiedEmails(JSON.parse(readFileSync(evPath, 'utf8')));
+  console.log(`${emails.length} disqualified entrant(s) to exclude from the offer sends`);
+
+  const already = new Set(await listMemberEmails(listId));
+  const todo = emails.filter((e) => !already.has(e));
+  console.log(`  already on the list: ${emails.length - todo.length} · to add: ${todo.length}`);
+  if (!todo.length) { console.log('✓ nothing to do — all already excluded'); return; }
+
+  // Kept as PAIRS: a profile Klaviyo does not have drops out of both halves at
+  // once, so the verification set can never drift out of step with what was sent.
+  const resolved = [];
+  const noProfile = [];
+  for (const email of todo) {
+    const p = await getProfileByEmail(email);
+    if (!p) { noProfile.push(email); continue; }
+    resolved.push({ email, id: p.id });
+  }
+  // Absent from Klaviyo means nothing can mail them, so there is nothing to
+  // exclude — a warning, never a refusal.
+  if (noProfile.length) console.log(`  ${noProfile.length} have no Klaviyo profile (nothing to exclude)`);
+  console.log(`  resolved ${resolved.length} profile(s)`);
+  if (!resolved.length) { console.log('✓ nothing addressable to add'); return; }
+
+  if (!APPLY) { console.log('\nDry run — pass --apply to add them to the exclusion list.'); return; }
+  await addToExclusionList(listId, resolved.map((r) => r.email), resolved.map((r) => r.id));
 }
 
 if (SETUP) await setup();
-else await winners();
+else if (WINNERS) await winners();
+else await disqualified();
