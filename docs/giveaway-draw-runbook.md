@@ -27,41 +27,57 @@ the server's UTC cron; there is no `TZ=` prefix and one would schedule nothing.
 | 06:59:59 | 23:59:59 Sep 14 | The storefront entry form shows "entries are closed", the entered page drops the survey and bonus forms, and `/api/giveaway/enter`, `/answers`, `/upload` answer **410**. |
 | 08:05 | 01:05 | `close-entry-period.mjs --apply` — drafts the nurture **and** confirm flows, then takes the snapshot. It refuses before the close and never retakes an existing snapshot. The snapshot drops any entrant whose `gv_entered_at` is after the close. |
 
-## September 15 — snapshot
+## September 15 — snapshot — DONE
 
-- [ ] Confirm the **immediate** "Giveaway draw snapshot taken" email arrived — it
-      does not wait for the 5 AM digest. Its `excluded` line now carries
-      `lateEntries`; expect a handful at most.
-- [ ] Sanity-check the totals in that email against the last `report.mjs` before
-      the close. A large unexplained move means stop and investigate, not draw.
-- [ ] Pull the file down and **commit it**:
+- [x] The snapshot was taken automatically at 08:06 UTC: **7,367 entrants /
+      22,803 entries**, `lateEntries: 0`.
+- [x] **The sanity check FIRED, and it was right to.** Entrants had moved
+      4,205 → 7,282 in a single day against a trend of +20-50. That is the step
+      that says "stop and investigate, not draw", and investigating found an
+      **automated entry wave** in the final three hours — see below.
+- [x] **§5 disqualification applied** (PR #889). 2,948 automated entries removed,
+      8 rescued by the engagement exemption. Pool **4,419 entrants / 19,855
+      entries**. Evidence committed in
+      `data/giveaway/evidence/2026-09-15-entry-fraud/` with its own README.
+- [x] Snapshot re-taken with the rule applied and **committed** (PR #890), blob
+      `7f4d58117b8c`. `draw.mjs` verified it runs against it.
 
-      scp root@137.184.119.230:~/seo-claude/data/giveaway/draw-snapshot.json data/giveaway/
+### The wave, in one table
 
-- [ ] Branch, PR, merge. `draw.mjs` refuses on an uncommitted or edited snapshot,
-      so skipping this produces a refusal rather than an unprovable draw.
+| | baseline (Sep 10–14) | wave (Sep 15 03:59–06:50 UTC) |
+|---|--:|--:|
+| rate | ~10 / hour | 1,084 / 1,103 / 778 per hour |
+| distinct user agents | **70** | **3** (5,920 of 5,930 on one string, 2,792 IPs) |
+| mail domains | gmail 28.1% of pool | 1,939 outlook + 1,007 hotmail, **2 gmail** |
+| confirm rate | 47% | **0.14%** |
 
-## September 15, after US markets close
+**§6 is unaffected** — zero of the 2,948 named a referrer.
 
-- [ ] Record the **Dow Jones Industrial Average closing value**. That is the seed.
-      Write it down somewhere that is not this terminal.
-- [ ] If markets were unexpectedly closed, the published copy commits us to the
-      next day they close. Do not improvise a different source.
+## September 15, after US markets close — DONE
+
+- [x] **Seed = 52,093.11** — the DJIA close for Tuesday 2026-09-15 (−328.09,
+      −0.63%), confirmed against two independent sources. Markets were open, so
+      the published fallback ("the next day they close") does not apply.
 
 ## September 16 — the drawing (finish by 14:30 PT)
 
 The draw-day consolation email sends at **15:00 PT (22:00 UTC)** and tells everyone
 not excluded that they lost. Everything below must be done before it.
 
-- [ ] Dry run:
+- [x] **Consolation sends already exclude the automated cohort** — run 2026-09-15,
+      so the 2,948 are not told they lost an entry they never legitimately held:
 
-      node scripts/giveaway/draw.mjs --seed <value>
+      node scripts/giveaway/exclude-drawn-winners.mjs --disqualified --apply
+
+- [ ] Dry run (seed is **52093.11**):
+
+      node scripts/giveaway/draw.mjs --seed 52093.11
 
 - [ ] Read the winner and the §6 determination. If the referral prize is refused,
       confirm the stated reason matches the rules before continuing.
 - [ ] Commit the result:
 
-      node scripts/giveaway/draw.mjs --seed <value> --apply
+      node scripts/giveaway/draw.mjs --seed 52093.11 --apply
 
 - [ ] Commit `data/giveaway/draw-result.json`.
 - [ ] **Exclude the winners from the consolation sends**, and read the ✓ line:
