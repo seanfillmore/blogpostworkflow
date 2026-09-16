@@ -338,3 +338,31 @@ test('channelRollup reports ai-assistant separately', () => {
   assert.equal(ai.revenue, 35.99);
   assert.equal(r.find((x) => x.channel === 'organic-search').revenue, 62.40);
 });
+
+// ── country ──────────────────────────────────────────────────────────────────
+//
+// Added 2026-09-15. Orders carried no country at all, so lib/commercial-cvr.js
+// could filter non-US traffic out of the SESSIONS denominator while keeping
+// every order in the numerator — CVR would read too HIGH, the dangerous
+// direction. A country CODE is coarse and non-identifying, unlike the `sku` and
+// `properties` fields the record comment above deliberately excludes.
+
+test('country comes off the shipping address, upper-cased', () => {
+  const c = classifyOrder({
+    ...DIRECT, shipping_address: { country_code: 'us' }, billing_address: { country_code: 'CA' },
+  });
+  assert.equal(c.country, 'US', 'shipping wins, and the code is normalized');
+});
+
+test('country falls back to the billing address', () => {
+  const c = classifyOrder({ ...DIRECT, billing_address: { country_code: 'SG' } });
+  assert.equal(c.country, 'SG');
+});
+
+test('country is null when the order names neither address', () => {
+  // Null, never guessed: an unknown country must not be read as non-US, because
+  // excluding a real order shrinks the numerator and makes CVR read too low.
+  assert.equal(classifyOrder(DIRECT).country, null);
+  assert.equal(classifyOrder({ ...DIRECT, shipping_address: {} }).country, null);
+  assert.equal(classifyOrder({ ...DIRECT, shipping_address: { country_code: '' } }).country, null);
+});
