@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Conversion rate by landing-page type — read-only.
+ * Conversion rate by landing-page type, on CLEAN US SHOPPABLE traffic — read-only.
  *
  *   npm run commercial-cvr
  *   npm run commercial-cvr -- --start 2026-08-04 --end 2026-08-29
@@ -8,7 +8,13 @@
  *
  * Answers the question the site-wide CVR cannot: would paid traffic to a
  * commercial page pay for itself? See lib/commercial-cvr.js for the measured
- * baseline and why the GA4 window is guarded.
+ * baseline, the exclusion ladder, and why the GA4 window is guarded.
+ *
+ * The ladder prints BEFORE the segment table on purpose. Anyone quoting the
+ * commercial rate has to be able to see how the raw session count became the
+ * clean one without running anything else — the previous version of this report
+ * printed 0.40% with no hint that its denominator held bots and sweepstakes
+ * traffic, and that figure was used for paid-media arithmetic.
  *
  * Exit codes:
  *   0  measured
@@ -17,7 +23,7 @@
  *   3  Shopify pagination truncated — orders are missing, CVR would read too low
  *   4  zero orders in window — a fetch failure, not a finding
  */
-import { fetchLandingPagesByChannel } from '../lib/ga4.js';
+import { fetchLandingPageSegments } from '../lib/ga4.js';
 import { getAllOrders } from '../lib/shopify.js';
 import { attributionRows } from '../lib/order-attribution.js';
 import {
@@ -61,6 +67,17 @@ function defaultWindow() {
 const money = (n) => '$' + Number(n).toFixed(2);
 const pct = (n) => (n === null ? 'n/a' : (n * 100).toFixed(2) + '%');
 
+// Human labels for the ladder. The reason strings themselves live in
+// lib/commercial-cvr.js and are what --json emits; these only name them on screen.
+const EXCLUSION_LABELS = {
+  'non-us': 'non-US (cannot buy — US shipping only)',
+  'no-source': 'US, sessionSource (not set) — bot signature',
+  'sweepstakes-referrer': 'US sweepstakes-aggregator referrers',
+  // The whole funnel — lander, entered, confirmed, rules — not just the lander.
+  'giveaway-lander': 'US giveaway funnel, other sources',
+};
+const EXCLUSION_LABEL_W = Math.max(...Object.values(EXCLUSION_LABELS).map((s) => s.length)) + 4;
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.help) {
@@ -80,7 +97,7 @@ async function main() {
   }
 
   const [ga4Rows, ordersRes] = await Promise.all([
-    fetchLandingPagesByChannel(start, end),
+    fetchLandingPageSegments(start, end),
     getAllOrders(start, end),
   ]);
 
@@ -107,6 +124,22 @@ async function main() {
   console.log(`Commercial-page CVR   window ${start} → ${end}   (GA4 hole ends ${GA4_HOLE_END})`);
   console.log(`${ordersRes.orders.length} raw orders fetched, ${orderRows.filter((r) => r.countsAsRevenue).length} count as revenue\n`);
 
+  // ── the exclusion ladder, FIRST ────────────────────────────────────────────
+  // Nobody may quote the rate below without seeing what left the denominator.
+  console.log('EXCLUSION LADDER — how the raw session count becomes the measurable one');
+  const rung = (label, b, extra = '') => console.log(
+    `  ${label.padEnd(EXCLUSION_LABEL_W)}${String(b.sessions).padStart(9)}` +
+    `${String(b.orders).padStart(8)} ${b.orders === 1 ? 'order ' : 'orders'}${extra}`
+  );
+  rung('all sessions', result.rawTotals);
+  for (const r of result.excluded) {
+    rung(`− ${EXCLUSION_LABELS[r.reason] || r.reason}`, r, r.revenue ? `   ${money(r.revenue)}` : '');
+  }
+  rung('= CLEAN US SHOPPABLE', result.totals);
+  console.log('  Unknown country or unknown source is KEPT: excluding real traffic would');
+  console.log('  shrink the denominator and make CVR read too HIGH.\n');
+
+  console.log('CLEAN US SHOPPABLE traffic only — every rung above is already removed');
   console.log('segment            sessions   orders       CVR      revenue    rev/session');
   console.log('─'.repeat(76));
   for (const s of result.segments) {
@@ -121,7 +154,7 @@ async function main() {
   }
   console.log('─'.repeat(76));
   console.log(
-    'TOTAL'.padEnd(18) +
+    'CLEAN TOTAL'.padEnd(18) +
     String(result.totals.sessions).padStart(8) +
     String(result.totals.orders).padStart(9) +
     pct(result.totals.cvr).padStart(10) +
@@ -129,7 +162,11 @@ async function main() {
   );
 
   const { commercial, blog } = result;
-  console.log('\nCOMMERCIAL (product + collection) — what a paid campaign would target');
+  console.log('\nCOMMERCIAL, CLEAN US SHOPPABLE (product + collection) — what a paid campaign would target');
+  console.log('  This is NOT the figure this report printed before 2026-09-15. That one');
+  console.log('  divided the same orders by a denominator holding bots, sweepstakes and');
+  console.log('  non-US traffic: measured on 2026-08-17 → 09-13 it read 0.40% against');
+  console.log('  0.68% here, understating the affordable cost-per-click by 1.7x.');
   console.log(`  ${commercial.sessions} sessions → ${commercial.orders} orders = ${pct(commercial.cvr)}   ${money(commercial.revenue)}`);
   console.log(`  blog for contrast: ${blog.sessions} sessions → ${blog.orders} orders = ${pct(blog.cvr)}`);
   if (commercial.cvr && blog.cvr) {
@@ -142,7 +179,7 @@ async function main() {
     console.log(`\n  ⚠ ${commercial.orders} commercial orders — directional only, not a point estimate.`);
   }
 
-  console.log('\nPAID BREAKEVEN at the measured commercial rate');
+  console.log('\nPAID BREAKEVEN at the clean US shoppable commercial rate');
   // Column width follows the longest offer NAME. It used to be a fixed 22, which
   // silently ran the headings together the moment the names came from the roster
   // instead of being hand-shortened here.

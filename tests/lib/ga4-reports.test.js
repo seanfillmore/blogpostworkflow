@@ -64,6 +64,60 @@ test('fetchLandingPagesByChannel orders and limits by sessions, not by modelled 
   assert.ok(body.limit >= 10000, `limit must leave headroom for the extra dimension, got ${body.limit}`);
 });
 
+// ── landing-page segments (country-aware) ────────────────────────────────────
+//
+// A SECOND report rather than a fourth dimension on fetchLandingPagesByChannel,
+// because that one feeds agents/seo-impact (the revenue gate) and
+// scripts/growth-scoreboard.mjs, and adding a dimension multiplies its row count.
+// See lib/commercial-cvr.js for why the commercial-CVR denominator needs country.
+
+test('fetchLandingPageSegments asks for country alongside landing page and source', async () => {
+  const { fetchLandingPageSegments } = await import('../../lib/ga4.js');
+  stubGA4((body) => (dimNames(body).includes('country')
+    ? [row(['/products/lotion', 'Organic Search', 'google', 'United States'], [400])]
+    : []));
+
+  const rows = await fetchLandingPageSegments('2026-08-17', '2026-09-13');
+  const body = reports.at(-1);
+
+  assert.deepEqual(dimNames(body), ['landingPage', 'sessionDefaultChannelGroup', 'sessionSource', 'country']);
+  assert.deepEqual(body.metrics, [{ name: 'sessions' }]);
+  assert.equal(body.orderBys[0].metric.metricName, 'sessions');
+  assert.deepEqual(rows, [{
+    page: '/products/lotion', channel: 'Organic Search', source: 'google',
+    country: 'United States', sessions: 400,
+  }]);
+});
+
+test('fetchLandingPageSegments THROWS on a truncated response rather than under-reporting', async () => {
+  // Silent truncation drops sessions from the DENOMINATOR, so CVR reads too
+  // high — the same failure direction assertGa4WindowClean refuses. The measured
+  // window produces ~2,200 rows against a 25,000 limit, so this is headroom
+  // rather than a live constraint; it fires only if that stops being true.
+  const { fetchLandingPageSegments } = await import('../../lib/ga4.js');
+  reports = [];
+  globalThis.fetch = async (url, opts = {}) => {
+    if (String(url).includes('oauth2.googleapis.com/token')) {
+      return { ok: true, status: 200, json: async () => ({ access_token: 'stub', expires_in: 3600 }) };
+    }
+    reports.push(JSON.parse(opts.body));
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        rowCount: 30000,
+        rows: [row(['/x', 'Direct', '(direct)', 'United States'], [1])],
+      }),
+    };
+  };
+
+  await assert.rejects(
+    () => fetchLandingPageSegments('2026-08-17', '2026-09-13'),
+    /truncat/i,
+  );
+  assert.ok((reports.at(-1).limit ?? 0) >= 25000, `limit too low: ${reports.at(-1).limit}`);
+});
+
 test('the daily snapshot keeps 25 traffic sources, not the top 5', async () => {
   // At limit 5 the stored 90-day history showed DuckDuckGo at 19 sessions where the
   // live API said 50 — every source outside the top 5 was silently discarded.
