@@ -69,18 +69,22 @@ not excluded that they lost. Everything below must be done before it.
 
       node scripts/giveaway/exclude-drawn-winners.mjs --disqualified --apply
 
-- [ ] Dry run (seed is **52093.11**):
+- [x] Dry run (seed is **52093.11**):
 
       node scripts/giveaway/draw.mjs --seed 52093.11
 
-- [ ] Read the winner and the §6 determination. If the referral prize is refused,
-      confirm the stated reason matches the rules before continuing.
-- [ ] Commit the result:
+- [x] Read the winner and the §6 determination. Referral prize **NOT AWARDED** —
+      the winner named no referrer at entry, a stated condition rather than a
+      judgement call.
+- [x] Result written and **committed** (PR #893):
 
       node scripts/giveaway/draw.mjs --seed 52093.11 --apply
 
-- [ ] Commit `data/giveaway/draw-result.json`.
-- [ ] **Exclude the winners from the consolation sends**, and read the ✓ line:
+      **WINNER: `aiyaamy166@gmail.com`** (6 entries, confirmed). Drawn
+      2026-09-16T02:29Z against snapshot `7f4d58117b8c`. Ordering holds 4,419
+      unique addresses — so alternate 1 is `angela.knight25@gmail.com` and NO new
+      draw is ever needed.
+- [x] **Winner excluded from the consolation sends**, ✓ line read:
 
       node scripts/giveaway/exclude-drawn-winners.mjs --winners --apply
 
@@ -113,3 +117,19 @@ Everything needed to re-derive the result is public or committed:
 
 The method: every entry is one ticket, tickets are shuffled with a seeded
 Fisher-Yates, and each address's first appearance sets the order.
+
+## Post-draw housekeeping — DONE 2026-09-15
+
+- [x] **The 2,948 disqualified profiles are SUPPRESSED in Klaviyo**, which takes
+      them off the bill (Klaviyo charges on active profiles; suppressed ones do
+      not count) and stops any future send reaching them:
+
+      node scripts/giveaway/suppress-disqualified.mjs --apply
+
+      Verified after: winner and alternate 1 both `suppression: []` /
+      `consent: SUBSCRIBED`, so the guard against suppressing the draw pool held.
+
+- [ ] **Still open: send the winner email.** `data/giveaway/winner-email-draft.md`
+      is written and committed. §8 gives 48 hours from the drawing to notify and
+      the winner 7 days to respond — respond-by **2026-09-23**. Nothing in this
+      repo sends it.
