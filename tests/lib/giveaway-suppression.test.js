@@ -10,7 +10,9 @@
 // email — so the guards have to be arithmetic, not vigilance.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { suppressionBatches, assertSafeToSuppress, verificationSample } from '../../lib/giveaway/suppression.js';
+import {
+  suppressionBatches, assertSafeToSuppress, verificationSample, submitSuppressionJobs,
+} from '../../lib/giveaway/suppression.js';
 
 const pool = (emails) => ({ entrants: emails.map((email) => ({ email })) });
 
@@ -93,4 +95,36 @@ test('a verification sample of a short list is the whole list, without duplicate
   const picked = verificationSample(emails, 25);
   assert.deepEqual(picked, emails);
   assert.equal(new Set(picked).size, picked.length);
+});
+
+test('submitSuppressionJobs polls each job and SURFACES skipped_count', async () => {
+  // The silent-loss case: the queue accepts 200 addresses and quietly skips 15.
+  // Without polling that is invisible, which is exactly what happened on the real
+  // 1,402-address prune (~8% never took, nothing errored).
+  const calls = [];
+  const deps = {
+    sleep: async () => {},
+    log: (m) => calls.push(m),
+    request: async (method, path) => {
+      if (method === 'POST') return { data: { id: `job-${calls.length}` } };
+      return { data: { attributes: { status: 'complete', total_count: 100, completed_count: 93, skipped_count: 7 } } };
+    },
+  };
+  const emails = Array.from({ length: 200 }, (_, i) => `b${i}@x.com`);
+  const r = await submitSuppressionJobs({ emails, deps });
+  assert.equal(r.submitted, 200);
+  assert.equal(r.batches, 2);
+  assert.equal(r.completed, 186);
+  assert.equal(r.skipped, 14, 'the skipped addresses must be counted, not lost');
+  assert.equal(r.unpollable, 0);
+});
+
+test('submitSuppressionJobs reports batches it cannot poll rather than assuming success', async () => {
+  const deps = {
+    sleep: async () => {}, log: () => {},
+    request: async (method) => (method === 'POST' ? { ok: true } : { data: { attributes: {} } }),
+  };
+  const r = await submitSuppressionJobs({ emails: ['a@x.com'], deps });
+  assert.equal(r.unpollable, 1, 'a job with no id is unverifiable and must be said so');
+  assert.equal(r.completed, 0);
 });

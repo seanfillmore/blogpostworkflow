@@ -27,7 +27,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { klaviyoRequest } from '../../lib/klaviyo.js';
 import { planPrune } from '../../lib/giveaway/audience-prune.js';
-import { suppressionBatches, verificationSample } from '../../lib/giveaway/suppression.js';
+import { verificationSample, submitSuppressionJobs } from '../../lib/giveaway/suppression.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
@@ -121,17 +121,16 @@ writeFileSync(recordPath, `${JSON.stringify({
 }, null, 2)}\n`);
 console.log(`\nrun record (the set is reconstructable from this): ${recordPath}`);
 
-let sent = 0;
-for (const [i, batch] of suppressionBatches(emails).entries()) {
-  await klaviyoRequest('POST', '/profile-suppression-bulk-create-jobs/', {
-    data: {
-      type: 'profile-suppression-bulk-create-job',
-      attributes: { profiles: { data: batch.map((email) => ({ type: 'profile', attributes: { email } })) } },
-    },
-  });
-  sent += batch.length;
-  console.log(`  batch ${i + 1} accepted · ${sent}/${emails.length}`);
-}
+// Submit AND poll. Firing the job and walking away hides partial failure: the
+// first real run of this accepted 1,402 addresses and ~8% silently never took.
+const jobs = await submitSuppressionJobs({
+  emails,
+  deps: { request: klaviyoRequest, sleep: (ms) => new Promise((r) => setTimeout(r, ms)), log: (m) => console.log(m) },
+});
+console.log(`\nsubmitted ${jobs.submitted} in ${jobs.batches} batch(es) · completed ${jobs.completed} · SKIPPED ${jobs.skipped}`);
+if (jobs.skipped) console.error(`!! Klaviyo SKIPPED ${jobs.skipped} — re-run to sweep them`);
+if (jobs.incomplete) console.error(`!! ${jobs.incomplete} job(s) did not reach complete`);
+if (jobs.unpollable) console.error(`!! ${jobs.unpollable} address(es) were in batches with no job id — unverifiable`);
 
 // Async job: a 2xx says queued, not suppressed. Sample SPREAD across the batches.
 console.log('\nqueued — waiting before verifying');
