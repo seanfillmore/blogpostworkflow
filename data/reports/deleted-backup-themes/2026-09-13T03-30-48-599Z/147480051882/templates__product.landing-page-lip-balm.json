@@ -1,0 +1,570 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "price_size": "medium",
+            "show_badges": true
+          }
+        },
+        "per-day-anchor": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<p style=\"font-size:16px;color:#4a8b3c;font-weight:600;margin:6px 0 14px 0;\">A tube lasts about 3 months of daily use — roughly $0.10 per day.<\/p>"
+          }
+        },
+        "benefit-1": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "Organic beeswax — true breathable barrier, locks moisture against the lips",
+            "text_style": "body"
+          }
+        },
+        "benefit-2": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "Cold-pressed coconut oil that soaks into your lips.",
+            "text_style": "body"
+          }
+        },
+        "benefit-3": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "Red palm oil, unrefined, for the vitamin E it carries.",
+            "text_style": "body"
+          }
+        },
+        "benefit-4": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "No petroleum jelly, no lanolin, no added flavor, no menthol.",
+            "text_style": "body"
+          }
+        },
+        "discount-callout": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.product__text svg, .product__text svg path { color: #4a8b3c; fill: #4a8b3c; } .multicolumn-card strong { color: #FFB503; letter-spacing: 2px; font-size: 1.15em; } .product__tax { display: none !important; } shopify-payment-terms, .shopify-payment-terms, [data-shopify=\"payment-terms\"] { display: none !important; } .rich-text { position: relative; } .rich-text::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: rgb(var(--color-background)); z-index: -1; } [id*=\"hero-ingredient-cards\"] { background-color: #faf7f0; position: relative; } [id*=\"hero-ingredient-cards\"]::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: #faf7f0; z-index: -1; } [id*=\"free-from\"] .rte ul, [id*=\"free-from\"] ul { list-style: none; padding: 0; margin: 0; } [id*=\"free-from\"] li { font-size: 17px; line-height: 1.35; padding: 1px 0; font-weight: 500; color: #1a1b18; } [id*=\"free-from\"] li::before { content: \"✗\"; color: #4a8b3c; margin-right: 10px; font-weight: 700; }<\/style>"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": true,
+            "picker_type": "dropdown",
+            "swatch_type": "round",
+            "size_chart": ""
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": false,
+            "show_dynamic_checkout": true
+          }
+        },
+        "sticky_cart": {
+          "type": "sticky_cart",
+          "settings": {
+            "show_quantity_selector": false
+          }
+        },
+        "ymal-recommendations": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.ymal-section{margin:24px 0 8px 0;padding-top:24px;border-top:1px solid #e5e5e5}\n.ymal-section h3{font-size:14px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin:0 0 16px 0;color:#1a1b18}\n.ymal-cards{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:8px;margin:0 -4px;align-items:stretch}\n.ymal-cards::-webkit-scrollbar{height:6px}\n.ymal-cards::-webkit-scrollbar-thumb{background:#d3d3d3;border-radius:3px}\n.ymal-card{flex:0 0 calc(40% - 7px);scroll-snap-align:start;display:flex;flex-direction:column;gap:6px}\n.ymal-card-img{display:block;background:#f5f5f5;border-radius:8px;overflow:hidden;aspect-ratio:1\/1}\n.ymal-card-img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-card-title{font-size:14px;font-weight:500;color:#1a1b18;text-decoration:none;line-height:1.3;margin-top:8px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:2.6em}\n.ymal-card-variant{font-size:11px;letter-spacing:0.8px;text-transform:uppercase;color:#6d7175;min-height:1.2em;display:block}\n.ymal-card-add{margin-top:auto;padding:10px;background:#eef3e8;border:none;border-radius:6px;font-size:12px;font-weight:700;letter-spacing:1px;color:#2d5a2d;cursor:pointer;transition:background 0.15s}\n.ymal-card-add:hover{background:#AEDEAC}\n.ymal-card-add:disabled{opacity:0.6;cursor:default}\n@media(min-width:990px){.ymal-card{flex:0 0 calc(32% - 8px)}}\n\n.ymal-modal{position:fixed;inset:0;background:rgba(26,27,24,0.55);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s}\n.ymal-modal[data-open=\"true\"]{display:flex;opacity:1}\n.ymal-modal__panel{background:#fff;border-radius:12px;max-width:420px;width:100%;max-height:90vh;overflow-y:auto;padding:20px 22px 22px 22px;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.25)}\n.ymal-modal__close{position:absolute;top:12px;right:12px;background:none;border:none;font-size:24px;line-height:1;cursor:pointer;color:#6d7175;padding:4px 8px}\n.ymal-modal__close:hover{color:#1a1b18}\n.ymal-modal__hd{display:flex;gap:12px;align-items:center;margin-bottom:16px}\n.ymal-modal__img{width:72px;height:72px;background:#f5f5f5;border-radius:8px;overflow:hidden;flex-shrink:0}\n.ymal-modal__img img{width:100%;height:100%;object-fit:cover;display:block}\n.ymal-modal__title{font-size:16px;font-weight:600;color:#1a1b18;margin:0 24px 4px 0;line-height:1.3}\n.ymal-modal__price{font-size:14px;color:#1a1b18;font-weight:500}\n.ymal-modal__opt-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#1a1b18;font-weight:700;margin:0 0 8px 0}\n.ymal-modal__variants{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}\n.ymal-modal__variant{padding:8px 12px;background:#fff;border:2px solid #d3d3d3;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;color:#1a1b18;transition:all 0.15s;-webkit-tap-highlight-color:transparent}\n.ymal-modal__variant:hover{border-color:#4a8b3c}\n.ymal-modal__variant[data-selected=\"true\"]{border-color:#4a8b3c;background:#eef3e8;color:#2d5a2d}\n.ymal-modal__variant[data-soldout=\"true\"]{opacity:0.45;text-decoration:line-through;cursor:not-allowed}\n.ymal-modal__add{width:100%;padding:14px;background:#1a1b18;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:background 0.15s}\n.ymal-modal__add:hover{background:#000}\n.ymal-modal__add:disabled{opacity:0.6;cursor:default}\n.ymal-modal__add[data-state=\"added\"]{background:#4a8b3c}\n<\/style>\n<div class=\"ymal-section\" id=\"ymal-{{ product.id }}\" style=\"display:none\">\n  <h3>You may also like<\/h3>\n  <div class=\"ymal-cards\" id=\"ymal-cards-{{ product.id }}\"><\/div>\n<\/div>\n<div class=\"ymal-modal\" id=\"ymal-modal-{{ product.id }}\" data-open=\"false\" role=\"dialog\" aria-modal=\"true\">\n  <div class=\"ymal-modal__panel\">\n    <button type=\"button\" class=\"ymal-modal__close\" aria-label=\"Close\">×<\/button>\n    <div class=\"ymal-modal__hd\">\n      <div class=\"ymal-modal__img\"><img alt=\"\"><\/div>\n      <div>\n        <h4 class=\"ymal-modal__title\"><\/h4>\n        <div class=\"ymal-modal__price\"><\/div>\n      <\/div>\n    <\/div>\n    <p class=\"ymal-modal__opt-label\"><\/p>\n    <div class=\"ymal-modal__variants\"><\/div>\n    <button type=\"button\" class=\"ymal-modal__add\" data-state=\"idle\">ADD TO CART<\/button>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  var pid = {{ product.id }};\n  var section = document.getElementById('ymal-'+pid);\n  var container = document.getElementById('ymal-cards-'+pid);\n  var modal = document.getElementById('ymal-modal-'+pid);\n  if(!section || !container || !modal) return;\n  var productsCache = {};\n\n  function imgUrl(src, size){\n    if(!src) return '';\n    return src.replace(\/(\\.[^.?]+)(\\?.*)?$\/, '_'+size+'$1$2');\n  }\n  function fmtMoney(cents){\n    return '$' + (cents\/100).toFixed(2);\n  }\n  function escapeHtml(s){\n    return String(s).replace(\/[&<>\"']\/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',\"'\":'&#39;'}[c];});\n  }\n\n  function openModal(prod){\n    var v = prod.variants.find(function(x){return x.available;}) || prod.variants[0];\n    var optName = (prod.options && prod.options[0]) || 'Option';\n    var img = prod.featured_image || (prod.images && prod.images[0] && prod.images[0].src) || '';\n    modal.querySelector('.ymal-modal__img img').src = imgUrl(img, '160x160');\n    modal.querySelector('.ymal-modal__img img').alt = prod.title;\n    modal.querySelector('.ymal-modal__title').textContent = prod.title;\n    modal.querySelector('.ymal-modal__price').textContent = fmtMoney(v.price);\n    modal.querySelector('.ymal-modal__opt-label').textContent = (typeof optName === 'string' ? optName : (optName.name || 'Option'));\n    var picker = modal.querySelector('.ymal-modal__variants');\n    picker.innerHTML = prod.variants.map(function(x){\n      return '<button type=\"button\" class=\"ymal-modal__variant\" data-vid=\"'+x.id+'\" data-price=\"'+x.price+'\" data-soldout=\"'+(!x.available)+'\">'+escapeHtml(x.title)+'<\/button>';\n    }).join('');\n    var btns = picker.querySelectorAll('.ymal-modal__variant');\n    btns.forEach(function(b){\n      b.addEventListener('click', function(){\n        if(b.dataset.soldout === 'true') return;\n        btns.forEach(function(x){ x.dataset.selected = 'false'; });\n        b.dataset.selected = 'true';\n        modal.querySelector('.ymal-modal__price').textContent = fmtMoney(parseInt(b.dataset.price, 10));\n      });\n    });\n    var firstAvail = picker.querySelector('.ymal-modal__variant:not([data-soldout=\"true\"])');\n    if(firstAvail) firstAvail.dataset.selected = 'true';\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.dataset.state = 'idle';\n    addBtn.disabled = false;\n    addBtn.textContent = 'ADD TO CART';\n    modal.dataset.open = 'true';\n    document.body.style.overflow = 'hidden';\n  }\n  function closeModal(){\n    modal.dataset.open = 'false';\n    document.body.style.overflow = '';\n  }\n\n  modal.querySelector('.ymal-modal__close').addEventListener('click', closeModal);\n  modal.addEventListener('click', function(e){ if(e.target === modal) closeModal(); });\n  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && modal.dataset.open === 'true') closeModal(); });\n\n  modal.querySelector('.ymal-modal__add').addEventListener('click', function(){\n    var sel = modal.querySelector('.ymal-modal__variant[data-selected=\"true\"]');\n    if(!sel) return;\n    var addBtn = modal.querySelector('.ymal-modal__add');\n    addBtn.disabled = true;\n    addBtn.textContent = 'ADDING...';\n    fetch('\/cart\/add.js', {\n      method: 'POST',\n      headers: {'Content-Type': 'application\/json'},\n      body: JSON.stringify({ id: sel.dataset.vid, quantity: 1 })\n    }).then(function(r){\n      if(!r.ok) throw new Error();\n      addBtn.dataset.state = 'added';\n      addBtn.textContent = 'ADDED ✓';\n      document.dispatchEvent(new CustomEvent('cart:refresh'));\n      setTimeout(closeModal, 800);\n    }).catch(function(){\n      addBtn.disabled = false;\n      addBtn.textContent = 'ADD TO CART';\n    });\n  });\n\n  fetch('\/recommendations\/products.json?product_id='+pid+'&limit=6&intent=related')\n    .then(function(r){ return r.json(); })\n    .then(function(data){\n      var products = (data && data.products) || [];\n      if(!products.length) return;\n      products.forEach(function(p){ productsCache[p.id] = p; });\n      section.style.display = 'block';\n      container.innerHTML = products.map(function(p){\n        var v = p.variants[0];\n        var img = p.featured_image || (p.images && p.images[0] && p.images[0].src) || '';\n        var url = imgUrl(img, '400x400');\n        var variant = v.title === 'Default Title' ? '' : v.title;\n        var multi = p.variants.length > 1;\n        return '<div class=\"ymal-card\"><a class=\"ymal-card-img\" href=\"'+p.url+'\"><img src=\"'+url+'\" alt=\"'+escapeHtml(p.title)+'\" loading=\"lazy\"><\/a><a class=\"ymal-card-title\" href=\"'+p.url+'\">'+escapeHtml(p.title)+'<\/a><div class=\"ymal-card-variant\">'+escapeHtml(variant)+'<\/div><button class=\"ymal-card-add\" data-pid=\"'+p.id+'\" data-vid=\"'+v.id+'\" data-multi=\"'+multi+'\">ADD<\/button><\/div>';\n      }).join('');\n      container.querySelectorAll('.ymal-card-add').forEach(function(btn){\n        btn.addEventListener('click', function(){\n          var multi = btn.dataset.multi === 'true';\n          var prod = productsCache[btn.dataset.pid];\n          if(multi && prod){\n            openModal(prod);\n            return;\n          }\n          btn.disabled = true;\n          btn.textContent = 'ADDING...';\n          fetch('\/cart\/add.js', {\n            method: 'POST',\n            headers: {'Content-Type': 'application\/json'},\n            body: JSON.stringify({ id: btn.dataset.vid, quantity: 1 })\n          }).then(function(r){\n            if(!r.ok) throw new Error();\n            btn.textContent = 'ADDED ✓';\n            document.dispatchEvent(new CustomEvent('cart:refresh'));\n            setTimeout(function(){ btn.textContent = 'ADD'; btn.disabled = false; }, 2000);\n          }).catch(function(){\n            btn.textContent = 'ADD';\n            btn.disabled = false;\n          });\n        });\n      });\n    })\n    .catch(function(e){ console.warn('YMAL fetch failed', e); });\n})();\n<\/script>\n"
+          }
+        },
+        "tab-details": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "leaf",
+            "heading": "Details",
+            "content": "<p><strong>Three ingredients, three jobs.<\/strong> Beeswax (true breathable barrier), virgin coconut oil (medium-chain fatty acids that nourish), unrefined red palm oil (vitamin E and tocotrienols).<\/p><p><strong>No petroleum jelly, no lanolin, no synthetic flavoring.<\/strong> The chronic-chap problem we usually trace to one of those three ingredients.<\/p><p><strong>No menthol cooling sensation.<\/strong> Many commercial balms add menthol to feel \"treated\" — that's mild irritation, not healing.<\/p><p><strong>Honest trade-off.<\/strong> Firmer than a petrolatum-based balm because beeswax sets harder than petroleum wax. Apply with light pressure rather than a smear.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "tab-ingredients": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "check_mark",
+            "heading": "Ingredients",
+            "content": "<p>Organic virgin coconut oil, organic beeswax, organic red palm oil.<\/p><p><strong>Variation essential oils:<\/strong><\/p><ul><li><strong>Vanilla Dream:<\/strong> organic vanilla extract<\/li><li><strong>Sweet Tangerine:<\/strong> tangerine, orange, lemon<\/li><li><strong>Coconut Breeze:<\/strong> organic coconut oil extract<\/li><li><strong>Pure Unscented:<\/strong> none<\/li><\/ul>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": true
+          }
+        },
+        "tab-howto": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "clipboard",
+            "heading": "How to Use",
+            "content": "<p>Apply with light pressure to the lips — let the warmth of the lips soften the balm into place. Reapply throughout the day, especially in dry weather.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "tab-shipping": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "box",
+            "heading": "Shipping & Returns",
+            "content": "<p>Free shipping on orders $45+. Standard delivery 2 business days within the US. Expedited shipping available at checkout.<\/p><p>Not loving your purchase? Email us within 30 days of receipt for a full refund — you don't need to send the product back. See our <a href=\"\/policies\/shipping-policy\">Shipping Policy<\/a> and <a href=\"\/policies\/refund-policy\">Return Policy<\/a> for full details.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "vqr-combo": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.vqr-row{display:flex;gap:12px;align-items:flex-end;justify-content:flex-start;margin:14px 0}\n.vqr-col{display:flex;flex-direction:column}\n.vqr-col--variant{flex:0 0 32%;min-width:140px}\n.vqr-col--qty{flex:0 0 auto;width:130px}\n.vqr-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px 0;font-weight:500;color:#1a1b18}\n.vqr-select{padding:11px 12px;border:1px solid #d3d3d3;border-radius:6px;background:#fff;font-size:14px;color:#1a1b18;height:42px}\n.vqr-stepper{display:flex;align-items:stretch;border:1px solid #d3d3d3;border-radius:6px;overflow:hidden;background:#fff;height:42px}\n.vqr-stepper button{background:#fff;border:none;padding:0 10px;font-size:18px;cursor:pointer;color:#1a1b18;line-height:1}\n.vqr-stepper button:hover{background:#f5f5f5}\n.vqr-stepper input{flex:1;text-align:center;border:none;padding:0 2px;font-size:14px;font-weight:500;-moz-appearance:textfield;min-width:0;background:#fff}\n.vqr-stepper input::-webkit-outer-spin-button,.vqr-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}\n.product-form__input--variant-picker,.product-form__input.variant-input-wrapper,variant-selects:not([data-vqr-skip]){display:none !important}\n<\/style>\n<div class=\"vqr-row\">\n  {%- if product.variants.size > 1 -%}\n  <div class=\"vqr-col vqr-col--variant\">\n    <label class=\"vqr-label\" for=\"vqr-variant-{{ product.id }}\">{{ product.options[0] | default: 'Scent' }}<\/label>\n    <select class=\"vqr-select\" id=\"vqr-variant-{{ product.id }}\" data-vqr-variant>\n      {%- for v in product.variants -%}\n        <option value=\"{{ v.id }}\"{% if v == product.selected_or_first_available_variant %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>\n          {{- v.title }}{% unless v.available %} - Sold out{% endunless -%}\n        <\/option>\n      {%- endfor -%}\n    <\/select>\n  <\/div>\n  {%- endif -%}\n  <div class=\"vqr-col vqr-col--qty\">\n    <label class=\"vqr-label\" for=\"vqr-qty-{{ product.id }}\">Quantity<\/label>\n    <div class=\"vqr-stepper\">\n      <button type=\"button\" data-vqr-qty-minus aria-label=\"Decrease quantity\">&minus;<\/button>\n      <input id=\"vqr-qty-{{ product.id }}\" type=\"number\" name=\"quantity\" value=\"1\" min=\"1\" data-vqr-qty form=\"product-form-{{ section.id }}\">\n      <button type=\"button\" data-vqr-qty-plus aria-label=\"Increase quantity\">+<\/button>\n    <\/div>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  \/\/ Bound once. Dawn replaces the product info container on every variant change, so the\n  \/\/ picker and stepper are new DOM nodes each time — listeners bound to the elements\n  \/\/ themselves die after the first switch. Inline scripts in replaced markup do not run,\n  \/\/ so nothing re-binds. Delegation on document is what makes this survive.\n  if(window.__vqrDelegated){ return; }\n  window.__vqrDelegated = true;\n\n  \/\/ variant id -> its option values. Covers multi-option bundles (Configuration + Scent),\n  \/\/ not just the first select.\n  var VQR_OPTION_VALUES = {\n    {%- for v in product.variants -%}\n    \"{{ v.id }}\": [{% for o in v.options %}{{ o | json }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}\n    {%- endfor -%}\n  };\n\n  document.addEventListener('change', function(e){\n    var pick = e.target;\n    if(!pick || !pick.matches || !pick.matches('select[data-vqr-variant]')){ return; }\n    var opts = VQR_OPTION_VALUES[pick.value];\n    if(!opts){ return; }\n\n    var root = document.querySelector('variant-selects:not([data-vqr-skip])');\n    var selects = root ? root.querySelectorAll('select') : [];\n    if(selects.length){\n      \/\/ Assign the OPTION VALUE, never the variant id — an id matches no option, so the\n      \/\/ select silently empties and the gallery never updates.\n      for(var i = 0; i < selects.length; i++){\n        if(opts[i] != null){ selects[i].value = opts[i]; }\n      }\n      selects[selects.length - 1].dispatchEvent(new Event('change', { bubbles: true }));\n      return;\n    }\n    var radios = document.querySelectorAll('variant-radios input[type=\"radio\"]');\n    radios.forEach(function(r){\n      if(opts.indexOf(r.value) !== -1){ r.checked = true; r.dispatchEvent(new Event('change',{bubbles:true})); }\n    });\n  });\n\n  document.addEventListener('click', function(e){\n    var btn = e.target.closest && e.target.closest('[data-vqr-qty-minus], [data-vqr-qty-plus]');\n    if(!btn){ return; }\n    var wrap = btn.closest('.vqr-stepper') || btn.parentElement;\n    var qty = wrap && wrap.querySelector('input');\n    if(!qty){ return; }\n    var v = parseInt(qty.value, 10) || 1;\n    var next = btn.hasAttribute('data-vqr-qty-minus') ? Math.max(1, v - 1) : v + 1;\n    if(next !== v){ qty.value = next; qty.dispatchEvent(new Event('change',{bubbles:true})); }\n  });\n})();\n<\/script>"
+          }
+        },
+        "judgeme_preview_badge": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {}
+        },
+        "recurpay-widget": {
+          "type": "shopify:\/\/apps\/recurpay-subscriptions-app\/blocks\/recurpay-widget\/c600a513-dad8-4030-8697-de47c18881f2",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "judgeme_preview_badge",
+        "title",
+        "price",
+        "per-day-anchor",
+        "benefit-1",
+        "benefit-2",
+        "benefit-3",
+        "benefit-4",
+        "variant_picker",
+        "vqr-combo",
+        "discount-callout",
+        "recurpay-widget",
+        "buy_buttons",
+        "tab-ingredients",
+        "tab-details",
+        "tab-howto",
+        "tab-shipping",
+        "ymal-recommendations",
+        "sticky_cart"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_position": "left",
+        "media_size": "medium",
+        "gallery_layout": "thumbnail_slider",
+        "image_ratio": "adapt",
+        "show_thumbnails": true,
+        "hide_variants": true,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "mobile_image_ratio": "adapt_first",
+        "show_mobile_thumbnails": true,
+        "padding_top": 0,
+        "padding_bottom": 72
+      }
+    },
+    "judgeme_section_review_widget_f881": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "hook-rich-text": {
+      "type": "rich-text",
+      "blocks": {
+        "hook-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Three ingredients. Barrier, nourishment, antioxidant.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "hook-text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Beeswax locks moisture in without occluding. Coconut oil absorbs and feeds the thin skin of the lips. Unrefined red palm oil contributes tocotrienols and beta-carotene — antioxidants that protect the barrier the balm is meant to build.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "hook-heading",
+        "hook-text"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "hero-ingredient-cards": {
+      "type": "multicolumn",
+      "blocks": {
+        "ingredient-card-1": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/Wax.webp",
+            "title": "Organic Beeswax",
+            "title_size": "medium",
+            "text": "<p><em>Moisture-lock barrier.<\/em> Beeswax forms a breathable film on the lips that holds moisture in without occluding the way petrolatum does. Its long-chain fatty acids and esters give the balm its stick structure and let it stay put through wear. Petrolatum and microcrystalline wax are cheaper and more occlusive — we chose beeswax because the lips can still exchange.<\/p>",
+            "button_label": ""
+          }
+        },
+        "ingredient-card-2": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
+            "title": "Organic Virgin Coconut Oil",
+            "title_size": "medium",
+            "text": "<p><em>Nourishing fatty acid base.<\/em> Cold-pressed virgin coconut oil delivers medium-chain fatty acids — roughly half of which is lauric acid — into the thin skin of the lips. Where petrolatum sits on top, virgin coconut oil absorbs and feeds. Refined coconut oil is cheaper and more uniform, but the deodorizing process strips out the lauric acid that does the work.<\/p>",
+            "button_label": ""
+          }
+        },
+        "ingredient-card-3": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/red-palm-fruit.webp",
+            "title": "Organic Red Palm Oil",
+            "title_size": "medium",
+            "text": "<p><em>Vitamin E and beta-carotene source.<\/em> Unrefined red palm oil delivers naturally occurring vitamin E and tocotrienols to the thin skin of the lips — antioxidants that support tissue health where it shows fastest. The deep red-orange color is the carotenoids themselves. RSPO-certified sourcing.<\/p>",
+            "button_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "ingredient-card-1",
+        "ingredient-card-2",
+        "ingredient-card-3"
+      ],
+      "settings": {
+        "image_ratio": "adapt",
+        "image_position": "top",
+        "text_alignment": "left",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 3,
+        "heading": "Three ingredients, three jobs",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": false,
+        "padding_top": 12,
+        "padding_bottom": 36
+      }
+    },
+    "founder-block": {
+      "type": "image-with-text",
+      "blocks": {
+        "founder-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "From The Founder",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "founder-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We started Real Skin Care because our family wanted products where we could confirm every ingredient. With lip balm, that meant flipping over the tube and asking why petrolatum, paraffin, and undisclosed flavoring were in something we put on our kids' lips every day.<\/p><p>We took it down to three ingredients that each do real work, and we won't compromise that for cost.<\/p><p>— Sean Fillmore<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "founder-heading",
+        "founder-body"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/founder-landscape.webp",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "free-from-block": {
+      "type": "image-with-text",
+      "blocks": {
+        "free-from-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "What's NOT in this tube",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "free-from-body": {
+          "type": "text",
+          "settings": {
+            "text": "<ul><li>No petroleum jelly<\/li><li>No petroleum wax<\/li><li>No mineral oil<\/li><li>No lanolin<\/li><li>No added flavor<\/li><li>No parabens<\/li><li>No numbing agents<\/li><li>No menthol<\/li><\/ul>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "free-from-heading",
+        "free-from-body"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/lip-balm-free-from.webp",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#eef3e8",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "collapsible-content": {
+      "type": "collapsible-content",
+      "blocks": {
+        "faq-0": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Why does this balm feel firmer than the lip balm I'm used to?",
+            "row_content": "<p>Beeswax sets harder than petroleum-based waxes like paraffin and microcrystalline wax. Apply with light pressure rather than a smear, and let the warmth of your lips soften the layer into place. After a few seconds it spreads easily. The trade-off for the firmer set is a balm that stays on the lips through wear instead of wiping off in minutes.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-1": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Why no lanolin? Most natural balms use it.",
+            "row_content": "<p>Lanolin is a common allergen and a frequent driver of the chronic-chap problem this balm is designed to solve. Customers who've tracked their chapping back to a previous balm often find lanolin in the ingredient list. We use beeswax for the barrier role and skip lanolin entirely so this balm works for sensitive lips that have reacted to it before.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Why doesn't the unscented version smell like nothing?",
+            "row_content": "<p>The Pure Unscented variation has the natural scent of beeswax and coconut oil — that's what those ingredients smell like. Unscented means no added essential oils, not an absence of scent. A truly odorless balm requires deodorized, refined oils, and the deodorizing process strips out the fatty acids and antioxidants that make the formula work.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-3": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What's the light color in the variations from?",
+            "row_content": "<p>Unrefined red palm oil. It's naturally red-orange because of its beta-carotene content — the same antioxidant that makes the oil worth using. Refined palm oil is bleached white and stripped of carotenes. The light tint you see in the tube is the carotenoids in their natural form, not added pigment.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-4": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Will this balm melt in a hot car or my pocket?",
+            "row_content": "<p>Beeswax has a higher melt point than petroleum waxes, so the balm holds its shape better in heat than most. That said, prolonged exposure to direct sun or a hot car can soften any natural balm. If it softens, let it cool upright — the ingredients are unchanged, only the texture shifts. Coconut oil also firms up below 76°F.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-5": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Why no menthol or cooling sensation?",
+            "row_content": "<p>The cooling sensation in commercial balms is produced by menthol mildly irritating the lips so they feel \"treated.\" That irritation is exactly what sensitive lips don't need. We left menthol out. The lips feel softer and more comfortable because the barrier is intact and the skin underneath is being fed — not because something on the surface is signaling a sensation.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-6": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How is this different from the \"natural\" lip balms at the drugstore?",
+            "row_content": "<p>Many balms labeled natural still contain petrolatum, paraffin, lanolin, or \"natural flavor\" listed as one word — a regulatory umbrella that can hide dozens of compounds. Our ingredient list is three base ingredients plus named essential oils where applicable. Each ingredient is on the label by its specific name, so you can verify what you're putting on your lips.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-palm-oil": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is the red palm oil sustainably sourced?",
+            "row_content": "<p>Yes — we use RSPO-certified red palm oil. The Roundtable on Sustainable Palm Oil certifies the palm comes from operations meeting strict standards: no deforestation, no peatland conversion, fair labor. The \"red\" matters too — refined palm oil is cheaper but the refining strips out the carotenoids and tocotrienols we use it for. Unrefined keeps the antioxidants intact.<\/p>",
+            "page": ""
+          }
+        }
+      },
+      "block_order": [
+        "faq-0",
+        "faq-1",
+        "faq-2",
+        "faq-3",
+        "faq-4",
+        "faq-5",
+        "faq-6",
+        "faq-palm-oil"
+      ],
+      "settings": {
+        "open_first_collapsible_row": false,
+        "narrow": true,
+        "show_divider": false,
+        "heading": "FAQs",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "padding_top": 36,
+        "padding_bottom": 72
+      }
+    },
+    "loox-product-reviews-app-section": {
+      "type": "apps",
+      "settings": {
+        "include_margins": false,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "product-recommendations": {
+      "type": "product-recommendations",
+      "disabled": true,
+      "settings": {
+        "show_divider": false,
+        "heading": "You May Also Like",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "image_ratio": "portrait",
+        "image_position": "center center",
+        "enable_image_fill": true,
+        "show_secondary_image": true,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_quick_buy": true,
+        "enable_quick_view": true,
+        "enable_color_swatches": true,
+        "enable_countdown": true,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "judgeme_carousel_lip_balm": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_cards_carousel_mXDirj": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/cards_carousel\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "show_sample_reviews": false,
+            "reviews_selection": "current_product",
+            "products": [],
+            "star_rating": "4_to_5_star",
+            "show_review_media": true,
+            "display_order": "media_first",
+            "no_image_fallback": "review_text_only",
+            "max_reviews": 20,
+            "review_length": "medium",
+            "text_size": "medium",
+            "image_ratio": "1",
+            "reviews_shown": 4,
+            "show_reviewer_name": true,
+            "show_product_name": true,
+            "hide_arrows_mobile": true,
+            "arrows_position": "sides",
+            "max_width": 1100,
+            "corner_styling": "soft",
+            "header_text_color": "#000000",
+            "text_color": "#000000",
+            "card_color": "#F9F9F9",
+            "stars_color": "",
+            "arrows_color": "#000000",
+            "transition_speed": 5,
+            "header_text": "What customers are saying",
+            "show_average_rating": false
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_cards_carousel_mXDirj"
+      ],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "main",
+    "judgeme_section_review_widget_f881",
+    "hook-rich-text",
+    "hero-ingredient-cards",
+    "free-from-block",
+    "judgeme_carousel_lip_balm",
+    "founder-block",
+    "collapsible-content",
+    "loox-product-reviews-app-section",
+    "product-recommendations"
+  ]
+}

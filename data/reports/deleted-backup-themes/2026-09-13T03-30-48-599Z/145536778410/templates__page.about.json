@@ -1,0 +1,404 @@
+{
+  "sections": {
+    "image-banner": {
+      "type": "image-banner",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "About us",
+            "heading_size": "h0",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p>Share information about your brand with your customers.<\/p>",
+            "text_size": "typeset3",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.jpg",
+        "image_position": "top center",
+        "text_box_position": "bottom-center",
+        "text_alignment": "center",
+        "image_ratio": "550px",
+        "show_text_box": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_text_alignment": "center",
+        "mobile_image_ratio": "400px",
+        "stack_images_on_mobile": false,
+        "show_text_below": false,
+        "colors_button_label": "#1a1b18",
+        "colors_button_background": "#ffffff",
+        "colors_text": "#ffffff",
+        "colors_overlay": "#000000",
+        "colors_overlay_opacity": 4,
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "narrow": true,
+        "padding_top": 60,
+        "padding_bottom": 72
+      }
+    },
+    "rich-text-0": {
+      "type": "rich-text",
+      "blocks": {
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Founded in 2000, we started with a vision to produce the simplest, cleanest, and purest skin care available.<\/p>",
+            "text_size": "typeset3",
+            "secondary_color": false
+          }
+        },
+        "d3a04910-295f-4188-8134-e20d4b528989": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We began our development using organic virgin coconut oil as a base for all our blends. Coconut oil contains great moisturizing characteristics, increases skin elasticity, revitalizes pores, and promotes anti-aging effects by being a natural antioxidant. Being a natural antioxidant, it also helps to protect skin from free radical damage.<\/p><p>From there we diligently worked to develop gently scented products that would not only create pleasant aromas, but would significantly enhance the health of our skin. Using touches of the essential oils of Lavender, Rose, Ylang Ylang, and others we were able to develop wonderful blends that soothe and refresh the skin as well as brighten the heart through fresh aroma.<\/p><p>Over the years we have worked closely with small family farms of coconut harvesters to produce small batches of coconut oil for our skin care line. We have traveled to England and France to work closely with small batch distilleries in selecting and sourcing our essential oils. We started with a desire to produce the simplest, cleanest, and purest skin care available and this vision has continued to this day.<\/p><p>We are confident that our skin care products are among the purest, cleanest, and most innovative natural blends available today. These incredible blends were not created in some chemical laboratory using harsh toxins and artificial preservatives, but rather they were discovered through careful complimentary design and development applying decades of research with rich historical\/ancient roots. We hope that you will enjoy these products and be blessed as you use them!<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "text",
+        "d3a04910-295f-4188-8134-e20d4b528989"
+      ],
+      "settings": {
+        "text_alignment": "left",
+        "mobile_text_alignment": "left",
+        "horizontal_content": false,
+        "narrow": true,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "rich-text-1": {
+      "type": "rich-text",
+      "blocks": {
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We began our development using organic virgin coconut oil as a base for all our blends. Coconut oil contains great moisturizing characteristics, increases skin elasticity, revitalizes pores, and promotes anti-aging effects by being a natural antioxidant. Being a natural antioxidant, it also helps to protect skin from free radical damage.<\/p><p>From there we diligently worked to develop gently scented products that would not only create pleasant aromas, but would significantly enhance the health of our skin. Using touches of the essential oils of Lavender, Rose, Ylang Ylang, and others we were able to develop wonderful blends that soothe and refresh the skin as well as brighten the heart through fresh aroma.<\/p><p>Over the years we have worked closely with small family farms of coconut harvesters to produce small batches of coconut oil for our skin care line. We have traveled to England and France to work closely with small batch distilleries in selecting and sourcing our essential oils. We started with a desire to produce the simplest, cleanest, and purest skin care available and this vision has continued to this day.<\/p><p>We are confident that our skin care products are among the purest, cleanest, and most innovative natural blends available today. These incredible blends were not created in some chemical laboratory using harsh toxins and artificial preservatives, but rather they were discovered through careful complimentary design and development applying decades of research with rich historical\/ancient roots. We hope that you will enjoy these products and be blessed as you use them!<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "text"
+      ],
+      "disabled": true,
+      "settings": {
+        "text_alignment": "left",
+        "mobile_text_alignment": "left",
+        "horizontal_content": false,
+        "narrow": true,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-0": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Image with text",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": true
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-1": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Image with text",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": true
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-2": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Image with text",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": true
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-overlay": {
+      "type": "image-with-text-overlay",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Image with text overlay",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Pair text with an image to focus on your chosen product, collection, or blog post. Add details on availability, style, or even provide a review.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": false
+          }
+        },
+        "button": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Button label",
+            "button_link": "",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text",
+        "button"
+      ],
+      "disabled": true,
+      "settings": {
+        "image_position": "center center",
+        "text_box_position": "flex-start",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "full_width": true,
+        "show_divider": false,
+        "mobile_text_box_position": "image_first",
+        "mobile_text_alignment": "center",
+        "mobile_image_ratio": "500px",
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_overlay": "#f3f3f3",
+        "colors_overlay_opacity": 92,
+        "padding_top": 36,
+        "padding_bottom": 0
+      }
+    },
+    "empty-space": {
+      "type": "empty-space",
+      "disabled": true,
+      "settings": {
+        "desktop_height": 68,
+        "mobile_height": 68
+      }
+    },
+    "b2aeb8a0-2fff-4a55-812b-ff2f28d2f625": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "All Natural Hydration",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our body lotions are made with the highest quality, natural ingredients.  Our products are scented with organic essential oils, you will never see the word \"Fragrance\" on any of our labels.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": false
+          }
+        },
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-2": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Buy Now",
+            "button_link": "shopify:\/\/products\/coconut-lotion",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-0",
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-1",
+        "template--16085901246634__b2aeb8a0-2fff-4a55-812b-ff2f28d2f625-16864220338747d08a-2"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/AMZ_RealSkin_Hero-Coconut_JRA_2000x2000_001_70c20fbb-56f5-4e4d-8d62-c082b20bd142.jpg",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "600px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "image-banner",
+    "main",
+    "rich-text-0",
+    "rich-text-1",
+    "image-with-text-0",
+    "image-with-text-1",
+    "image-with-text-2",
+    "image-with-text-overlay",
+    "empty-space",
+    "b2aeb8a0-2fff-4a55-812b-ff2f28d2f625"
+  ]
+}

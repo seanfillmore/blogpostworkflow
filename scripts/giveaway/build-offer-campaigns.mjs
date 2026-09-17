@@ -106,6 +106,17 @@ async function main() {
       config.offerTemplates[send.file] = tpl.id;
 
       const campaign = await getCampaign(campaignId);
+
+      // A SENT campaign cannot be re-templated and must not be attempted. The
+      // sends are ordered 10 → 11 → 12, so once the first has gone out an
+      // unguarded loop throws on it and the two that are still SCHEDULED — the
+      // only ones a body change can still reach — never get updated. Skipping is
+      // also honest: the email in somebody's inbox is not editable.
+      if (campaign.status === 'Sent' || campaign.status === 'Sending') {
+        console.log(`  SKIP ${send.file}: already ${campaign.status} — its body is final`);
+        continue;
+      }
+
       const messageIds = (campaign.included || []).filter((x) => x.type === 'campaign-message').map((x) => x.id);
       if (!messageIds.length) { console.error(`  SKIP ${send.file}: campaign ${campaignId} has no message`); continue; }
       for (const messageId of messageIds) {

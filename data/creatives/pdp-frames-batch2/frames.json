@@ -1,0 +1,47 @@
+[
+  {
+    "id": "bar-soap/offer",
+    "handle": "coconut-soap",
+    "source": "Live catalogue 2026-09-10: coconut-soap $11.00; coconut-bar-soap-4-pack $39.00 (3 of 5 variants in stock); coconut-bar-soap-12-pack $88.00 (3 of 5 in stock). 39/4 = 9.75; 4x11 = 44, saving 5. 88/12 = 7.33."
+  },
+  {
+    "id": "bar-soap/proof",
+    "handle": "coconut-soap",
+    "source": "Judge.me, coconut-soap, Stephen, 5 stars, verified-purchase, verbatim first two sentences. No review count shown — the product has 8 reviews and an unreconciled widget count, so no number is published."
+  },
+  {
+    "id": "bar-soap/compare",
+    "handle": "coconut-soap",
+    "source": "Rows taken verbatim from the live bar-soap-not-in-it.png frame. Comparison column is the generic category; no competitor named."
+  },
+  {
+    "id": "foaming/offer",
+    "handle": "organic-foaming-hand-soap",
+    "source": "Live catalogue 2026-09-10: organic-foaming-hand-soap $13.00; coconut-hand-soap-4-pack $44.00, 4 of 4 variants in stock. 44/4 = 11; 4x13 = 52, saving 8."
+  },
+  {
+    "id": "foaming/proof",
+    "handle": "organic-foaming-hand-soap",
+    "source": "Judge.me, organic-foaming-hand-soap, Laura S., 5 stars, verbatim. Judge.me records this reviewer as \"buyer\" rather than \"verified-purchase\", so NO verification label is shown — attribution only."
+  },
+  {
+    "id": "foaming/compare",
+    "handle": "organic-foaming-hand-soap",
+    "source": "Rows taken verbatim from the live foaming-soap-whats-not-in-it.png frame. Comparison column is the generic category; no competitor named."
+  },
+  {
+    "id": "deodorant/offer",
+    "handle": "coconut-oil-deodorant",
+    "source": "Live catalogue 2026-09-10: coconut-oil-deodorant $15.00; coconut-deodorant-4-pack $53.00, 2 of 5 variants in stock (both single-scent, so the copy says \"four of your scent\" rather than mix-and-match, which is the OUT-OF-STOCK Variety variant). 53/4 = 13.25; 4x15 = 60, saving 7."
+  },
+  {
+    "id": "deodorant/proof",
+    "handle": "coconut-oil-deodorant",
+    "source": "Judge.me, coconut-oil-deodorant, Mike Gray, 5 stars, verified-purchase. EXCERPTED deliberately: the full review says \"I use this in the evening ... when I don't need anti-perspirant\", and that word must not appear on an RSC product frame even in a customer's mouth. The two sentences quoted are verbatim and contiguous."
+  },
+  {
+    "id": "deodorant/compare",
+    "handle": "coconut-oil-deodorant",
+    "source": "First three rows verbatim from the live deodorant-not-in-it.png frame. The fourth and the column header come from the live PDP body: \"Organic jojoba soaks in instead of leaving a film, unlike the petroleum jelly and silicones in conventional sticks.\" That body uses \"antiperspirant\" zero times."
+  }
+]

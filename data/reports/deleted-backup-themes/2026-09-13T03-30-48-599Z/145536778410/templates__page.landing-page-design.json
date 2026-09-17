@@ -1,0 +1,565 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "narrow": true,
+        "padding_top": 60,
+        "padding_bottom": 72
+      }
+    },
+    "hero_landing_section_kbaVkG": {
+      "type": "hero-landing-section",
+      "blocks": {
+        "bullet_bpqdtA": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>All-natural ingredients<\/p>"
+          }
+        },
+        "bullet_emAGCR": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>Handmade in the USA<\/p>"
+          }
+        },
+        "bullet_Vjz8Mg": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>No artificial fragrances<\/p>"
+          }
+        },
+        "guarantee_LqY9j7": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "text": "Free Shipping"
+          }
+        },
+        "guarantee_tdWWxH": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "text": "Free Shipping"
+          }
+        }
+      },
+      "block_order": [
+        "bullet_bpqdtA",
+        "bullet_emAGCR",
+        "bullet_Vjz8Mg",
+        "guarantee_LqY9j7",
+        "guarantee_tdWWxH"
+      ],
+      "name": "Landing • Hero",
+      "settings": {
+        "heading_level": "h2",
+        "heading_rte": "<p>SAY HELLO TO HAPPY SKIN<\/p>",
+        "subheading_rte": "<p>100% ORGANIC COCONUT OIL BASED BODY LOTION <\/p>",
+        "subheading_bg_opacity": 15,
+        "show_rating": true,
+        "rating_value": "4.9",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "cta_label": "Unlock Healthy Skin",
+        "cta_anchor": "#buy-box",
+        "bg_color": "#aedeac",
+        "overlay_color": "#000000",
+        "overlay_opacity": 0,
+        "flip_layout": true,
+        "text_align_center_mobile": true,
+        "content_max_width": 1200,
+        "padding_top": 48,
+        "padding_bottom": 48,
+        "height_mode": "auto",
+        "min_height_mobile": 480,
+        "min_height_desktop": 600,
+        "vh_height": 70,
+        "compact_spacing": false,
+        "cta_full_width_mobile": true,
+        "cta_full_width_desktop": false,
+        "gap_sub_to_bullets": 8,
+        "gap_between_bullets": 8,
+        "bullets_center": true
+      }
+    },
+    "landing_health_image_aRHKWE": {
+      "type": "landing-health-image",
+      "blocks": {
+        "point_UnDQng": {
+          "type": "point",
+          "settings": {
+            "text": "Synthetic fragrances",
+            "icon_source": "built_in",
+            "custom_svg": "",
+            "icon_size": 22
+          }
+        },
+        "point_QCLgia": {
+          "type": "point",
+          "settings": {
+            "text": "Petroleum-based ingredients that irritate the skin",
+            "icon_source": "built_in",
+            "custom_svg": "",
+            "icon_size": 22
+          }
+        },
+        "point_NyV6Kr": {
+          "type": "point",
+          "settings": {
+            "text": "Ingredients covered in glyphosate",
+            "icon_source": "built_in",
+            "custom_svg": "",
+            "icon_size": 22
+          }
+        }
+      },
+      "block_order": [
+        "point_UnDQng",
+        "point_QCLgia",
+        "point_NyV6Kr"
+      ],
+      "name": "Health – Root Cause",
+      "settings": {
+        "image_side": "left",
+        "h2_text": "They don’t want you to know they use synthetic ingredients",
+        "h2_size": "h2--lg",
+        "h3_text": "They use low cost ingredients like",
+        "h3_size": "h3--lg",
+        "image_1": "shopify:\/\/shop_images\/Acure_f8c7a5af-d97d-454d-a0c9-5da4a4421258.webp",
+        "image_1_alt": "",
+        "image_2": "shopify:\/\/shop_images\/Kopari.webp",
+        "image_2_alt": "",
+        "image_3": "shopify:\/\/shop_images\/SLS_Free_Toothpaste-FreshMint.png",
+        "image_3_alt": "",
+        "bg_color": "rgba(0,0,0,0)",
+        "icon_color": "#e5484d"
+      }
+    },
+    "landing_ingredients_nd9fBX": {
+      "type": "landing-ingredients",
+      "blocks": {
+        "ingredient_dDkGgh": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Purified Spring Water",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/Spring_Water.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Essential building block of life<\/p>"
+          }
+        },
+        "ingredient_UKJhjt": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Virgin Coconut Oil",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/coconut_oil.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Locks in moisture and strengthens the skin barrier<\/p>"
+          }
+        },
+        "ingredient_FiBGXb": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Jojoba Oil",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/Jojoba.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Similar to the skin's natural oil<\/p>"
+          }
+        },
+        "ingredient_MKWxjt": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Plant-Based Emulsifying Wax",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/Wax.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Organic binding agent<\/p>"
+          }
+        },
+        "ingredient_wmqftj": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Grapefruit Seed Extract",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/Grapefruit.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Naturally antimicrobial and a natural preservative<\/p>"
+          }
+        },
+        "ingredient_zQk6cX": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Red Palm Oil",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/red-palm-oil.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Protect the skin from free radical damage<\/p>"
+          }
+        },
+        "ingredient_JFmgbL": {
+          "type": "ingredient",
+          "settings": {
+            "title": "Coconut Oil Extract",
+            "icon_source": "preset",
+            "icon_preset": "badge",
+            "image": "shopify:\/\/shop_images\/Coconut_Oil_Extract.webp",
+            "image_alt": "",
+            "desc_rte": "<p>Additional Vitamin E and a great scent<\/p>"
+          }
+        }
+      },
+      "block_order": [
+        "ingredient_dDkGgh",
+        "ingredient_UKJhjt",
+        "ingredient_FiBGXb",
+        "ingredient_MKWxjt",
+        "ingredient_wmqftj",
+        "ingredient_zQk6cX",
+        "ingredient_JFmgbL"
+      ],
+      "name": "Landing • Ingredients Grid",
+      "settings": {
+        "anchor_id": "ingredients",
+        "heading_level": "h2",
+        "heading_rte": "<p>Real Skin Care's Organic Body Lotion has THE CLEANEST ingredients of any lotion brand<\/p>",
+        "subheading_rte": "<p>Here's why we hand-picked these ingredients<\/p>",
+        "content_max_width": 1200,
+        "padding_top": 16,
+        "padding_bottom": 16,
+        "grid_gap": 12,
+        "card_border_color": "#d72c0d",
+        "card_border_opacity": 85,
+        "card_border_thickness": 1,
+        "card_radius": 6,
+        "header_bg": "#aedeac",
+        "card_title_text_color": "#ffffff",
+        "desc_bg": "#87adf5",
+        "card_desc_text_color": "#282828"
+      }
+    },
+    "landing_compare_table_7mtpbR": {
+      "type": "landing-compare-table",
+      "blocks": {
+        "row_6gL47P": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>All-Natural Ingredients<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Why use synthetic chemicals ?<\/p>"
+          }
+        },
+        "row_z4k66K": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>Handmade in the USA<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>We maintain strict quality controls<\/p>"
+          }
+        },
+        "row_zNKEVV": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No Synthetic Fragrances<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>They are know to cause skin irritation<\/p>"
+          }
+        },
+        "row_QJADEJ": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No Alcohols<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Another known skin irritant<\/p>"
+          }
+        },
+        "row_3bXzTJ": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>Family Owned and Operated<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>We will never sell you out!<\/p>"
+          }
+        }
+      },
+      "block_order": [
+        "row_6gL47P",
+        "row_z4k66K",
+        "row_zNKEVV",
+        "row_QJADEJ",
+        "row_3bXzTJ"
+      ],
+      "name": "Landing • Comparison Table",
+      "settings": {
+        "anchor_id": "comparison",
+        "heading": "<p>How Are We Different?<\/p>",
+        "subheading": "",
+        "us_image": "shopify:\/\/shop_images\/body_lotion_unscented.webp",
+        "us_image_alt": "Our product",
+        "content_max_width": 1200,
+        "padding_top": 0,
+        "padding_bottom": 36,
+        "text_color": "#0d0d3a",
+        "border_color": "#ffb503",
+        "divider_color": "#d72c0d",
+        "header_bg_color": "#ffffff",
+        "us_bg_color": "#aedeac",
+        "us_border_color": "#ffb503",
+        "aria_label": "Product comparison"
+      }
+    },
+    "landing_reels_row_XeAzyj": {
+      "type": "landing-reels-row",
+      "blocks": {
+        "reel_hYmaHc": {
+          "type": "reel",
+          "settings": {
+            "brand": "ELITEXCEL",
+            "subtitle": "testimonial",
+            "a11y_label": "Social clip",
+            "mp4_url": "https:\/\/cdn.shopify.com\/videos\/c\/o\/v\/d11b770fc1fd4bf7b8d9bc736f867e0d.mp4"
+          }
+        },
+        "reel_EgiYUP": {
+          "type": "reel",
+          "settings": {
+            "brand": "ELITEXCEL",
+            "subtitle": "testimonial",
+            "a11y_label": "Social clip",
+            "mp4_url": ""
+          }
+        },
+        "reel_gEiy6a": {
+          "type": "reel",
+          "settings": {
+            "brand": "ELITEXCEL",
+            "subtitle": "testimonial",
+            "a11y_label": "Social clip",
+            "mp4_url": "https:\/\/cdn.shopify.com\/videos\/c\/o\/v\/970188e60a9247d3a695ca394e9ead58.mp4"
+          }
+        },
+        "reel_PV4KbD": {
+          "type": "reel",
+          "settings": {
+            "brand": "ELITEXCEL",
+            "subtitle": "testimonial",
+            "a11y_label": "Social clip",
+            "mp4_url": ""
+          }
+        }
+      },
+      "block_order": [
+        "reel_hYmaHc",
+        "reel_EgiYUP",
+        "reel_gEiy6a",
+        "reel_PV4KbD"
+      ],
+      "name": "Landing • Reels Row",
+      "settings": {
+        "anchor_id": "reels",
+        "heading_level": "h2",
+        "heading": "See It In Action",
+        "subheading": "",
+        "max_width": 1200,
+        "padding_top": 24,
+        "padding_bottom": 24,
+        "bg_color_1": "#aedeac",
+        "bg_color_2": "#c7d2fe",
+        "phone_color": "#d2d5d9",
+        "phone_bezel": "#0f0f12",
+        "tint": "#f2fbff"
+      }
+    },
+    "buy_box_compare_LY3mrw": {
+      "type": "buy-box-compare",
+      "blocks": {
+        "usp_Lxwkxi": {
+          "type": "usp",
+          "settings": {
+            "apply_to": "onetime",
+            "icon": "check",
+            "text": "30-day supply",
+            "value": ""
+          }
+        },
+        "usp_zTeFkL": {
+          "type": "usp",
+          "settings": {
+            "apply_to": "subscribe",
+            "icon": "check",
+            "text": "30-day supply",
+            "value": ""
+          }
+        },
+        "usp_LARp8J": {
+          "type": "usp",
+          "settings": {
+            "apply_to": "onetime",
+            "icon": "check",
+            "text": "$6.99 Flat-rate shipping",
+            "value": ""
+          }
+        }
+      },
+      "block_order": [
+        "usp_Lxwkxi",
+        "usp_zTeFkL",
+        "usp_LARp8J"
+      ],
+      "name": "Buy Box • One-time vs Subscribe",
+      "settings": {
+        "anchor_id": "buy-box",
+        "product": "coconut-lotion",
+        "variant_id": "45828179165354",
+        "selling_plan_id": "2262139050",
+        "show_header": true,
+        "header_title": "Join Real Skin Care Today",
+        "header_subcopy": "has a high risk of selling out",
+        "show_arrows": true,
+        "header_bg_color": "#ffffff",
+        "purchases_min": 40,
+        "purchases_max": 120,
+        "subscribe_discount": 25,
+        "sub_free_shipping": true,
+        "sub_glow": true,
+        "sub_badge": "Limited Time Offer",
+        "sub_title": "1 Month Supply — Subscribe & Save",
+        "sub_subtitle": "Save automatically on every delivery",
+        "sub_cta": "Add to Cart",
+        "sub_shipping_text": "Free USA Shipping",
+        "sub_footnote": "Delivered every 30 days. Manage or cancel anytime.",
+        "ot_title": "One-Time Purchase",
+        "ot_subtitle": "No subscription — just today’s order",
+        "ot_cta": "Add to Cart",
+        "ot_footnote": "30-day guarantee. Ships fast.",
+        "per_unit_label": "Per bottle",
+        "oos_text": "Out of Stock",
+        "sub_g1_text": "Delivered monthly.",
+        "sub_g2_text": "30 Day Guarantee.",
+        "sub_g3_text": "Online portal for easy cancel, skip, or pause.",
+        "ot_g1_text": "One-time purchase.",
+        "ot_g2_text": "30 Day Guarantee.",
+        "ot_g3_text": "Ships fast across the USA."
+      }
+    },
+    "17573909027b478695": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_review_widget_homepage_MMf6nt": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/review_widget_homepage\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "product": "coconut-lotion",
+            "review_data": "real_data",
+            "max_width": 1200
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_review_widget_homepage_MMf6nt"
+      ],
+      "disabled": true,
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "faq_nf6UKF": {
+      "type": "faq",
+      "blocks": {
+        "question_mXgjxG": {
+          "type": "question",
+          "settings": {
+            "title": "Frequently asked question",
+            "text": "<p>Use this text to answer questions in as much detail as possible for your customers.<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question_kRNEMF": {
+          "type": "question",
+          "settings": {
+            "title": "Frequently asked question",
+            "text": "<p>Use this text to answer questions in as much detail as possible for your customers.<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "question_mXgjxG",
+        "question_kRNEMF"
+      ],
+      "disabled": true,
+      "name": "t:sections.faq.presets.name",
+      "settings": {
+        "narrow": false,
+        "secondary_background": false,
+        "show_divider": false,
+        "heading": "FAQs",
+        "heading_size": "h1",
+        "heading_alignment": "left",
+        "heading_tag": "h2",
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 36,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "rsc_buybox_card_jpeFNh": {
+      "type": "rsc-buybox-card",
+      "name": "RSC • Buy Box Card",
+      "settings": {
+        "pad_top": 24,
+        "pad_bottom": 24,
+        "product_override": "coconut-lotion",
+        "ribbon": "Limited Time Offer",
+        "title": "Buy More, Save More",
+        "subtitle": "Discounts Applied at Checkout",
+        "bullet1": "30-day supply",
+        "bullet2": "Free USA Shipping",
+        "bullet3": "All-Natural Ingredients",
+        "enable_subscription": false,
+        "selling_plan_id": "",
+        "cta_label": "Add to cart",
+        "ship_note": "Ships in 24 hours from our USA warehouse.",
+        "mirror_selector": "#Option-template--17205286142122__main-0"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "hero_landing_section_kbaVkG",
+    "landing_health_image_aRHKWE",
+    "landing_ingredients_nd9fBX",
+    "landing_compare_table_7mtpbR",
+    "landing_reels_row_XeAzyj",
+    "buy_box_compare_LY3mrw",
+    "17573909027b478695",
+    "faq_nf6UKF",
+    "rsc_buybox_card_jpeFNh"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "reason": "operator rule: never name mineral oil/petrolatum/dimethicone/petroleum even negated (PR #865/#866); my 04:12Z correction reintroduced it",
+  "product_id": 7691181686954,
+  "before": {
+    "body_html": "<p>Six ingredients, and here is every one: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract and organic red palm oil. No mineral oil, no silicones, no synthetic fragrance, no parabens.</p><p>It absorbs. Many conventional lotions lean on mineral oil or silicones, which leave a film on the surface. This one is built on coconut oil and jojoba, which is close to the oil your skin makes, so it works in within a few minutes instead of sitting on top.</p><p>The scent comes from the oils themselves — light, natural, fades after a few minutes. Four scents to choose from, or Pure Unscented if you prefer nothing at all.</p><p>Two things to know: shake before the first pump if the bottle has been stored somewhere cool — coconut oil firms below 76°F. And texture shifts slightly batch to batch, because real oil does.</p><p>Clean ingredients, small batches, nothing hidden in the formula.</p>"
+  },
+  "after": {
+    "body_html": "<p>Six ingredients, and here is every one: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract and organic red palm oil. No synthetic fragrance, no parabens.</p><p>It absorbs. It is built on coconut oil and jojoba, which is close to the oil your skin makes, so it works in within a few minutes instead of sitting on top.</p><p>The scent comes from the oils themselves — light, natural, fades after a few minutes. Four scents to choose from, or Pure Unscented if you prefer nothing at all.</p><p>Two things to know: shake before the first pump if the bottle has been stored somewhere cool — coconut oil firms below 76°F. And texture shifts slightly batch to batch, because real oil does.</p><p>Clean ingredients, small batches, nothing hidden in the formula.</p>"
+  }
+}

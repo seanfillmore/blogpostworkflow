@@ -1,0 +1,64 @@
+{
+  "data": {
+    "type": "campaign",
+    "id": "01M0V7JAARVYV05VJ9S62KR59X",
+    "attributes": {
+      "name": "Giveaway — Consolation offer (day 3)",
+      "status": "Scheduled",
+      "archived": false,
+      "audiences": {
+        "included": [
+          "Y2ukbE"
+        ],
+        "excluded": []
+      },
+      "send_options": {
+        "use_smart_sending": true,
+        "ignore_unsubscribes": false
+      },
+      "tracking_options": {
+        "add_tracking_params": false,
+        "custom_tracking_params": [],
+        "is_tracking_clicks": true,
+        "is_tracking_opens": true
+      },
+      "send_strategy": {
+        "method": "static",
+        "datetime": "2026-09-19T22:00:00+00:00",
+        "options": {
+          "is_local": false
+        }
+      },
+      "created_at": "2026-08-25T01:11:45.244484+00:00",
+      "scheduled_at": "2026-09-01T16:27:39.863331+00:00",
+      "updated_at": "2026-09-01T16:27:40.123004+00:00",
+      "send_time": "2026-09-19T22:00:00+00:00"
+    },
+    "relationships": {
+      "campaign-messages": {
+        "data": [
+          {
+            "type": "campaign-message",
+            "id": "01M0V7JAB3C9QVY52Y7HMK1TPE"
+          }
+        ],
+        "links": {
+          "self": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/relationships/campaign-messages/",
+          "related": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/campaign-messages/"
+        }
+      },
+      "tags": {
+        "links": {
+          "self": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/relationships/tags/",
+          "related": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/tags/"
+        }
+      }
+    },
+    "links": {
+      "self": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/"
+    }
+  },
+  "links": {
+    "self": "https://a.klaviyo.com/api/campaigns/01M0V7JAARVYV05VJ9S62KR59X/"
+  }
+}

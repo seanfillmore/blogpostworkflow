@@ -1,0 +1,77 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "narrow": false,
+        "padding_top": 60,
+        "padding_bottom": 0
+      }
+    },
+    "store_locator_6Yt84i": {
+      "type": "store-locator",
+      "blocks": {
+        "location_PkVNU7": {
+          "type": "location",
+          "settings": {
+            "title": "Massachusetts",
+            "address": "Fenway Park, Boston, US",
+            "button_label": "Fresh Picks!",
+            "button_link": ""
+          }
+        },
+        "location_TXxrbJ": {
+          "type": "location",
+          "settings": {
+            "title": "Connecticut",
+            "address": "Mystic Seaport, US",
+            "button_label": "",
+            "button_link": ""
+          }
+        },
+        "location_znKQHk": {
+          "type": "location",
+          "settings": {
+            "title": "Rhode Island",
+            "address": "The Breakers, Newport, US",
+            "button_label": "Contact us",
+            "button_link": ""
+          }
+        },
+        "location_EwBxeb": {
+          "type": "location",
+          "settings": {
+            "title": "New York",
+            "address": "Statue of Liberty, New York City, US",
+            "button_label": "",
+            "button_link": ""
+          }
+        }
+      },
+      "block_order": [
+        "location_PkVNU7",
+        "location_TXxrbJ",
+        "location_znKQHk",
+        "location_EwBxeb"
+      ],
+      "settings": {
+        "map_api_key": "",
+        "map_zoom": 7,
+        "image_ratio": "650px",
+        "full_width": false,
+        "show_divider": false,
+        "mobile_image_ratio": "100vh",
+        "colors_overlay": "#ffeec4",
+        "colors_text": "#212121",
+        "colors_button_label": "#1a1b18",
+        "colors_border": "#e0e0e0",
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "main",
+    "store_locator_6Yt84i"
+  ]
+}

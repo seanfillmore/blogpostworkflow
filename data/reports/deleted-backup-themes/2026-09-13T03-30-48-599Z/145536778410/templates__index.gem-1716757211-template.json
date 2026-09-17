@@ -1,0 +1,948 @@
+{
+  "sections": {
+    "slideshow": {
+      "type": "slideshow",
+      "blocks": {
+        "slide-0": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/1350_Banner_1.jpg",
+            "image_position": "center center",
+            "text_box_position": "middle-center",
+            "subheading": "",
+            "subheading_size": "h5",
+            "heading": "Be Confident in Your Skin with Pure Organic Skincare Solutions You Can Trust",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "text": "100% organic coconut oil based skincare products made in the USA.",
+            "text_size": "typeset2",
+            "button_label": "Get Healthier skin",
+            "button_link": "shopify:\/\/collections\/live-collection",
+            "button_size": "medium",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "slide-0"
+      ],
+      "settings": {
+        "slideshow_type": "legacy",
+        "text_alignment": "center",
+        "image_ratio": "650px",
+        "autorotate": false,
+        "autorotate_speed": 5,
+        "full_width": true,
+        "image_behavior": "none",
+        "mobile_text_alignment": "center",
+        "mobile_image_ratio": "600px",
+        "show_text_below": false,
+        "colors_button_label": "#000000",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#ffffff",
+        "colors_background": "#ffffff",
+        "colors_overlay": "#5b5d57",
+        "colors_overlay_opacity": 40,
+        "colors_navigation_text": "#ffffff",
+        "colors_navigation_background": "#1a1b18",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "4fc35a50-fccf-471d-9940-8faeca19c918": {
+      "type": "scrolling-promotion",
+      "blocks": {
+        "be86ee54-0e1d-4ee5-9cc2-3a7f4a4b09c0": {
+          "type": "announcement",
+          "settings": {
+            "icon": "none",
+            "icon_size": "small",
+            "custom_icon": "",
+            "text": "Certified Organic",
+            "text_size": 18,
+            "link": ""
+          }
+        },
+        "d2e74a51-14b0-4255-ad4c-97519c0c1810": {
+          "type": "announcement",
+          "settings": {
+            "icon": "none",
+            "icon_size": "small",
+            "custom_icon": "",
+            "text": "Gluten Free",
+            "text_size": 18,
+            "link": ""
+          }
+        },
+        "f777d007-0ddb-4edc-9654-853d89187ce4": {
+          "type": "announcement",
+          "settings": {
+            "icon": "none",
+            "icon_size": "small",
+            "custom_icon": "",
+            "text": "No Harmful Ingredients",
+            "text_size": 18,
+            "link": ""
+          }
+        },
+        "fa3c3f87-21e0-4eff-a405-3044c0c46bce": {
+          "type": "announcement",
+          "settings": {
+            "icon": "none",
+            "icon_size": "small",
+            "custom_icon": "",
+            "text": "Sensitive Skin Friendly",
+            "text_size": 18,
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "be86ee54-0e1d-4ee5-9cc2-3a7f4a4b09c0",
+        "d2e74a51-14b0-4255-ad4c-97519c0c1810",
+        "f777d007-0ddb-4edc-9654-853d89187ce4",
+        "fa3c3f87-21e0-4eff-a405-3044c0c46bce"
+      ],
+      "disabled": true,
+      "custom_css": [],
+      "settings": {
+        "direction": "left",
+        "speed": 2.5,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_icon": "#212326",
+        "colors_text": "#ffffff",
+        "colors_background": "#000000",
+        "gradient_background": "",
+        "padding_top": 20,
+        "padding_bottom": 20
+      }
+    },
+    "cdb06753-b4e1-4189-b9f2-7f25332d3713": {
+      "type": "featured-collection",
+      "settings": {
+        "collection": "best-sellers",
+        "products_to_show": 4,
+        "horizontal_scroll": false,
+        "show_view_all": false,
+        "show_divider": false,
+        "heading": "BEST SELLERS",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "2",
+        "swipe_on_mobile": false,
+        "image_ratio": "square",
+        "image_position": "center center",
+        "enable_image_fill": false,
+        "show_secondary_image": false,
+        "secondary_image_max": 1,
+        "show_vendor": false,
+        "show_rating": false,
+        "show_quick_buy": false,
+        "enable_quick_view": true,
+        "enable_color_swatches": false,
+        "enable_countdown": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "70b08095-b5d5-46fd-91bb-f83b8016c841": {
+      "type": "image-banner",
+      "blocks": {
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-heading-1": {
+          "type": "heading",
+          "settings": {
+            "heading": "The coconut scent is very light, you barely smell it and the body cream makes your skin feel soft and not dry. ~ Rochelle B.",
+            "heading_size": "h2",
+            "heading_tag": "h2"
+          }
+        },
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-text-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Luxury Skincare For Sensitive Skin<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": false
+          }
+        },
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-button-1": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Lets get you healthy",
+            "button_link": "shopify:\/\/collections\/all",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-heading-1",
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-text-1",
+        "template--16176679256234__70b08095-b5d5-46fd-91bb-f83b8016c841-button-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/1225_Banner.jpg",
+        "image_position": "center center",
+        "text_box_position": "middle-center",
+        "text_alignment": "center",
+        "image_ratio": "550px",
+        "show_text_box": false,
+        "full_width": true,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_text_alignment": "center",
+        "mobile_image_ratio": "auto",
+        "stack_images_on_mobile": false,
+        "show_text_below": false,
+        "colors_button_label": "#000000",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#ffffff",
+        "colors_overlay": "#000000",
+        "colors_overlay_opacity": 40,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "guarantees": {
+      "type": "guarantees",
+      "blocks": {
+        "guarantee-1": {
+          "type": "guarantee",
+          "disabled": true,
+          "settings": {
+            "icon": "leaf",
+            "icon_size": "large",
+            "custom_icon": "",
+            "title": "100% Organic",
+            "title_size": "h3",
+            "text": "<p>Certified organic & gluten free<\/p>"
+          }
+        },
+        "guarantee-3": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "truck",
+            "icon_size": "large",
+            "custom_icon": "",
+            "title": "Fast Shipping",
+            "title_size": "h3",
+            "text": "<p>Within 2 business days<\/p>"
+          }
+        },
+        "guarantee-2": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "star",
+            "icon_size": "large",
+            "custom_icon": "",
+            "title": "Easy Returns",
+            "title_size": "h3",
+            "text": "<p>30 day money back guarantee<\/p>"
+          }
+        },
+        "guarantee-0": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "map_pin",
+            "icon_size": "large",
+            "custom_icon": "",
+            "title": "US Product",
+            "title_size": "h3",
+            "text": "<p>Handmade with love in USA<\/p>"
+          }
+        }
+      },
+      "block_order": [
+        "guarantee-1",
+        "guarantee-3",
+        "guarantee-2",
+        "guarantee-0"
+      ],
+      "settings": {
+        "layout": "default",
+        "column_alignment": "center",
+        "horizontal_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "columns_desktop": 3,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_tag": "h2",
+        "columns_mobile": "2",
+        "swipe_on_mobile": false,
+        "use_custom_colors": true,
+        "colors_icon": "#aedeac",
+        "colors_text": "#1a1b18",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 0,
+        "padding_bottom": 16
+      }
+    },
+    "e434f46e-5b68-428b-bbed-a9d4906ae000": {
+      "type": "quotes",
+      "blocks": {
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-1": {
+          "type": "quote",
+          "settings": {
+            "icon": "5",
+            "text": "<p>The best thing about Coconut breeze is that it's made from all organic, non-GMO, and vegan ingredients. It is a great moisturizer and leaves my skin feeling so soft. I love the scent too. It's not too strong or overpowering like some lotions I have tried in the past.<\/p>",
+            "author": "Philip"
+          }
+        },
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-2": {
+          "type": "quote",
+          "settings": {
+            "icon": "5",
+            "text": "<p>I am in love with this lotion. It smells great, is not greasy, and the price is perfect. I highly recommend you buy one for yourself.<\/p>",
+            "author": "Savannah"
+          }
+        },
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-3": {
+          "type": "quote",
+          "settings": {
+            "icon": "5",
+            "text": "<p>This is a very natural toothpaste with good quality ingredients. Cinnamon had a pleasant, Christmas-like taste. It does not foam up at all so if you hate foamy toothpastes, you'll love this one!<\/p>",
+            "author": "Outdoorsy B."
+          }
+        },
+        "03cf0b0a-e39a-4583-b563-06a33dc6e0a9": {
+          "type": "quote",
+          "disabled": true,
+          "settings": {
+            "icon": "5",
+            "text": "<p>Add customer reviews and quotes to showcase your store's happy customers.<\/p>",
+            "author": "Author"
+          }
+        }
+      },
+      "block_order": [
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-1",
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-2",
+        "template--16176679256234__e434f46e-5b68-428b-bbed-a9d4906ae000-quote-3",
+        "03cf0b0a-e39a-4583-b563-06a33dc6e0a9"
+      ],
+      "custom_css": [
+        ".quote__blockquote {padding: 10px; background-color: #eee;}",
+        "@media (min-width: 990px) {.quote__item {width: 33.33%; max-width: 33.33%; opacity: 1; text-align: center; }}"
+      ],
+      "settings": {
+        "show_divider": false,
+        "heading": "Love from our customers",
+        "heading_size": "h1",
+        "heading_tag": "h2",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "0da64890-5d29-47d7-80e4-2b96f3f3b701": {
+      "type": "featured-product",
+      "blocks": {
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-0": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "title_tag": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-1": {
+          "type": "rating",
+          "disabled": true,
+          "settings": {}
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-2": {
+          "type": "countdown",
+          "disabled": true,
+          "settings": {
+            "heading": "Hurry up ! Sale end in:",
+            "number_size": "compact",
+            "colors_heading": "#da3f3f",
+            "colors_text": "#da3f3f",
+            "colors_background": "#feeeee"
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-3": {
+          "type": "price",
+          "settings": {
+            "price_size": "medium",
+            "show_badges": true,
+            "sale_badge_basis": "auto"
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-4": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": false,
+            "picker_type": "dropdown",
+            "swatch_type": "round",
+            "enable_swatch_unavailable_click": false,
+            "size_chart": ""
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-5": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": false,
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": false
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-6": {
+          "type": "share",
+          "disabled": true,
+          "settings": {
+            "share_label": "Share"
+          }
+        },
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-7": {
+          "type": "read_more",
+          "settings": {
+            "show_icon": true
+          }
+        }
+      },
+      "block_order": [
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-0",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-1",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-2",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-3",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-4",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-5",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-6",
+        "template--16074544677034__0da64890-5d29-47d7-80e4-2b96f3f3b701-16768287198b985354-7"
+      ],
+      "custom_css": [
+        ".featured-product {align-items: center;}",
+        ".product-form__submit {--shadow-opacity: 0.3;}"
+      ],
+      "settings": {
+        "product": "coconut-lotion",
+        "layout": "text_first",
+        "full_width": false,
+        "show_divider": false,
+        "show_featured_media": false,
+        "hide_variants": false,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "image_ratio": "square",
+        "image_position": "center center",
+        "enable_layered_images": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "b2e1e67e-2547-4703-93ed-8f1159d7fca7": {
+      "type": "multicolumn",
+      "blocks": {
+        "template--16176679256234__b2e1e67e-2547-4703-93ed-8f1159d7fca7-column-1": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green01.png",
+            "title": "For All Skin Types",
+            "title_size": "h3",
+            "text": "<p>Our products were designed for sensitive skin. We only use the highest quality ingredients and organic essential oils. NO FRAGRANCES!<\/p>",
+            "button_label": "",
+            "button_link": "",
+            "button_style_secondary": false
+          }
+        },
+        "396e1257-e9c0-4d76-9310-5e3b163bfb63": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green03.png",
+            "title": "No Harmful Additives",
+            "title_size": "h3",
+            "text": "<p>We carefully selected each and every ingredient for each one of our products. We do not use any harmful preservatives.<\/p>",
+            "button_label": "",
+            "button_link": "",
+            "button_style_secondary": false
+          }
+        },
+        "5cb13185-f239-4cc3-9877-44a73b2a472e": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green04.png",
+            "title": "Handmade By Us",
+            "title_size": "h3",
+            "text": "<p>Our products are all handmade, by us, right here in the United States. We take great pride in preparing each product for our customers.<\/p>",
+            "button_label": "",
+            "button_link": "",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16176679256234__b2e1e67e-2547-4703-93ed-8f1159d7fca7-column-1",
+        "396e1257-e9c0-4d76-9310-5e3b163bfb63",
+        "5cb13185-f239-4cc3-9877-44a73b2a472e"
+      ],
+      "custom_css": [
+        ".multicolumn-list__item {background-color: #eee; padding: 20px 15px;}",
+        ".media-wrapper {background-color: transparent;}",
+        ".media {padding-bottom: 110px;}",
+        ".media > img {max-width: 108px; width: 108px; height: 108px; right: 0; margin: 0 auto;}"
+      ],
+      "settings": {
+        "image_ratio": "landscape",
+        "image_position": "center center",
+        "text_alignment": "center",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 3,
+        "open_in_new_tab": false,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_alignment": "left",
+        "heading_tag": "h2",
+        "mobile_text_alignment": "center",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-1": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Pure Organic Skincare",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We know that your body's well-being is a top priority for you. That's why we aim to offer the cleanest, most straightforward, and purest products for your skin. Explore our collection of skincare items that are 100% organic, gluten-free, perfect for sensitive skin, and free from harmful chemicals<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "button": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Soften Your Skin",
+            "button_link": "shopify:\/\/collections\/live-collection",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text",
+        "button"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/lotion_patch.png",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "250px",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "7cf38346-b1ca-4fff-a8cf-a1a39d25b795": {
+      "type": "rich-text",
+      "blocks": {
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-heading-1": {
+          "type": "heading",
+          "settings": {
+            "heading": "Real Skin Care",
+            "heading_size": "h2",
+            "heading_tag": "h2"
+          }
+        },
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-text-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We began our development using organic virgin coconut oil as a base for all our blends. Coconut oil contains great moisturizing characteristics, increases skin elasticity, revitalizes pores, and promotes anti-aging effects by being a natural antioxidant. <\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-button-1": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Find Out More",
+            "button_link": "shopify:\/\/pages\/about",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-heading-1",
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-text-1",
+        "template--16176679256234__7cf38346-b1ca-4fff-a8cf-a1a39d25b795-button-1"
+      ],
+      "disabled": true,
+      "custom_css": [
+        ".rich-text {background-color: #000; padding-left: 15px; padding-right: 15px;}",
+        ".rich-text__heading,.rte {color: #fff;}",
+        ".button {--shadow-opacity: 0.3;}"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#000000",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "colors_highlight": "#bbff00",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "image-with-text-0": {
+      "type": "image-with-text",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Our Guarantee",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We created our products because we wanted to use fewer chemicals that can be bad for our bodies. We truly believe that high-quality skincare doesn't need fake or artificial stuff in it.<\/p><p>If you try our products and decide they're not for you, no worries! Just let us know within 30 days, and we'll give you your money back. We stand by the quality and safety of what we make, and we want you to be happy with your purchase.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "button": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "get healthier skin",
+            "button_link": "shopify:\/\/collections\/best-sellers",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text",
+        "button"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.jpg",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "250px",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "fd81f7fe-d570-4b8a-b43c-e8f6e498093f": {
+      "type": "featured-blog",
+      "blocks": {
+        "template--16074544677034__fd81f7fe-d570-4b8a-b43c-e8f6e498093f-16768202274afbabb9-0": {
+          "type": "title",
+          "settings": {
+            "show_date": true,
+            "show_author": false,
+            "show_comment_count": false
+          }
+        },
+        "template--16074544677034__fd81f7fe-d570-4b8a-b43c-e8f6e498093f-16768202274afbabb9-1": {
+          "type": "summary",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "template--16074544677034__fd81f7fe-d570-4b8a-b43c-e8f6e498093f-16768202274afbabb9-0",
+        "template--16074544677034__fd81f7fe-d570-4b8a-b43c-e8f6e498093f-16768202274afbabb9-1"
+      ],
+      "disabled": true,
+      "custom_css": [
+        ".blog__post {background-color: #eee;}",
+        ".article-card__info {padding-left: 10px; padding-right: 10px; padding-bottom: 10px;}",
+        "@media (max-width: 749px) {.blog__posts {padding-bottom: 5px; }}"
+      ],
+      "settings": {
+        "blog": "news",
+        "post_limit": 3,
+        "show_view_all": false,
+        "show_divider": false,
+        "heading": "Latest Blog",
+        "heading_size": "h1",
+        "heading_alignment": "left",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "show_image": true,
+        "image_ratio": "landscape",
+        "image_position": "center center",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "gallery": {
+      "type": "gallery",
+      "blocks": {
+        "image-3": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/326110571_208733864873017_461393024583259274_n.jpg",
+            "image_position": "center center",
+            "subheading": "",
+            "subheading_size": "h5",
+            "heading": "",
+            "heading_size": "h3",
+            "link": "https:\/\/www.instagram.com\/realskincare_com\/",
+            "text_box_position": "middle-center"
+          }
+        },
+        "image-0": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/329526509_917534992926979_9032814574446152390_n.jpg",
+            "image_position": "center center",
+            "subheading": "",
+            "subheading_size": "h5",
+            "heading": "",
+            "heading_size": "h3",
+            "link": "https:\/\/www.instagram.com\/realskincare_com\/",
+            "text_box_position": "middle-center"
+          }
+        },
+        "image-2": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/331017393_488116543533022_8521738618190239167_n.jpg",
+            "image_position": "center center",
+            "subheading": "",
+            "subheading_size": "h5",
+            "heading": "",
+            "heading_size": "h3",
+            "link": "https:\/\/www.instagram.com\/realskincare_com\/",
+            "text_box_position": "middle-center"
+          }
+        },
+        "image-1": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/331131147_224540946684253_3951891755113244575_n.jpg",
+            "image_position": "center center",
+            "subheading": "",
+            "subheading_size": "h4",
+            "heading": "",
+            "heading_size": "h3",
+            "link": "https:\/\/www.instagram.com\/realskincare_com\/",
+            "text_box_position": "middle-center"
+          }
+        }
+      },
+      "block_order": [
+        "image-3",
+        "image-0",
+        "image-2",
+        "image-1"
+      ],
+      "disabled": true,
+      "settings": {
+        "per_row": 4,
+        "spacing_images": 8,
+        "image_height": 240,
+        "apply_overlay": true,
+        "full_width": false,
+        "show_divider": false,
+        "heading": "Join the revolution on Instagram",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "2",
+        "swipe_on_mobile": true,
+        "mobile_image_height": 160,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "81d18df6-f588-4480-b736-1cd620e80977": {
+      "type": "image-banner",
+      "blocks": {
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-heading-1": {
+          "type": "heading",
+          "settings": {
+            "heading": "Join the revolution on Instagram",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-text-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Follow <a href=\"https:\/\/www.instagram.com\/realskincare_com\/\" target=\"_blank\" title=\"https:\/\/www.instagram.com\/realskincare_com\">@realskincare_com<\/a> to see more products and promotions.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": false
+          }
+        },
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-button-1": {
+          "type": "button",
+          "settings": {
+            "button_size": "medium",
+            "button_label": "Follow us",
+            "button_link": "https:\/\/www.instagram.com\/realskincare_com\/",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-heading-1",
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-text-1",
+        "template--16176679256234__81d18df6-f588-4480-b736-1cd620e80977-button-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/1237_Banner.jpg",
+        "image_position": "center center",
+        "text_box_position": "middle-center",
+        "text_alignment": "center",
+        "image_ratio": "500px",
+        "show_text_box": false,
+        "full_width": true,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_text_alignment": "center",
+        "mobile_image_ratio": "auto",
+        "stack_images_on_mobile": false,
+        "show_text_below": false,
+        "colors_button_label": "#000000",
+        "colors_button_background": "#aedeac",
+        "colors_text": "#ffffff",
+        "colors_overlay": "#000000",
+        "colors_overlay_opacity": 40,
+        "padding_top": 36,
+        "padding_bottom": 0
+      }
+    },
+    "0607a886-73dc-4c65-b616-f793cb0f0715": {
+      "type": "newsletter",
+      "blocks": {
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-heading-1": {
+          "type": "heading",
+          "settings": {
+            "heading": "Subscribe to our emails",
+            "heading_tag": "h2"
+          }
+        },
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-paragraph-1": {
+          "type": "paragraph",
+          "settings": {
+            "paragraph": "<p>Be the first to know about new collections and exclusive offers.<\/p>"
+          }
+        },
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-email_form-1": {
+          "type": "email_form",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-heading-1",
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-paragraph-1",
+        "template--16176679256234__0607a886-73dc-4c65-b616-f793cb0f0715-email_form-1"
+      ],
+      "disabled": true,
+      "settings": {
+        "return_url": "",
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "full_width": true,
+        "show_divider": false,
+        "colors_text": "#000000",
+        "colors_border": "#000000",
+        "colors_background": "#aedeac",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 0
+      }
+    },
+    "1691766665471bd7b7": {
+      "type": "apps",
+      "blocks": {
+        "18b00b81-d2b2-4397-81b8-f76a415798ad": {
+          "type": "shopify:\/\/apps\/klaviyo-email-marketing-sms\/blocks\/form-embed-block\/2632fe16-c075-4321-a88b-50b567f42507",
+          "settings": {
+            "formId": "WzAQZX"
+          }
+        }
+      },
+      "block_order": [
+        "18b00b81-d2b2-4397-81b8-f76a415798ad"
+      ],
+      "custom_css": [],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "slideshow",
+    "4fc35a50-fccf-471d-9940-8faeca19c918",
+    "cdb06753-b4e1-4189-b9f2-7f25332d3713",
+    "70b08095-b5d5-46fd-91bb-f83b8016c841",
+    "guarantees",
+    "e434f46e-5b68-428b-bbed-a9d4906ae000",
+    "0da64890-5d29-47d7-80e4-2b96f3f3b701",
+    "b2e1e67e-2547-4703-93ed-8f1159d7fca7",
+    "image-with-text-1",
+    "7cf38346-b1ca-4fff-a8cf-a1a39d25b795",
+    "image-with-text-0",
+    "fd81f7fe-d570-4b8a-b43c-e8f6e498093f",
+    "gallery",
+    "81d18df6-f588-4480-b736-1cd620e80977",
+    "0607a886-73dc-4c65-b616-f793cb0f0715",
+    "1691766665471bd7b7"
+  ]
+}
