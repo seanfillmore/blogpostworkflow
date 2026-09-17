@@ -7,7 +7,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
-  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership, withIncludedAudience,
+  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership, withIncludedAudience, assertAudienceViable,
 } from '../../lib/giveaway/offer-exclusion.js';
 
 test('the exclusion list is added and the included audience is left exactly as it was', () => {
@@ -152,4 +152,14 @@ test('REFUSES an audience that is also EXCLUDED — it would send to nobody', ()
 test('replaces MULTIPLE included audiences with the single engaged one', () => {
   const out = withIncludedAudience({ included: ['Y2ukbE', 'Tamb9u'], excluded: ['UigAyc'] }, 'ENG123');
   assert.deepEqual(out.audiences.included, ['ENG123']);
+});
+
+test('assertAudienceViable REFUSES a collapsed audience', () => {
+  // A brand-new Klaviyo segment reads 0 members until it materialises, which took
+  // minutes here. Re-pointing during that window would hand the campaign an empty
+  // audience and it would send to NOBODY at its scheduled time, reporting zero
+  // recipients as though that were the answer.
+  assert.throws(() => assertAudienceViable(0, 1000), /0 member/);
+  assert.throws(() => assertAudienceViable(37, 1000), /below the floor/);
+  assert.equal(assertAudienceViable(2457, 1000), true);
 });
