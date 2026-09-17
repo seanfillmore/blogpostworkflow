@@ -1,0 +1,140 @@
+{
+  "theme": 148439367850,
+  "at": "2026-09-13T02:47:23.358Z",
+  "reason": "Operator 2026-09-12: delete leftover Replo theme files (Replo uninstalled; all Replo pages unpublished + 301). Restore: PUT each file back with updateThemeAsset(theme, key, value).",
+  "assets": [
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.0.liquid",
+      "size": 256000,
+      "checksum": "543fd357d862ac297f053dd14ba34288",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.1.liquid",
+      "size": 256016,
+      "checksum": "e45229862634f623308da4f0fc910913",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.2.liquid",
+      "size": 63697,
+      "checksum": "5deb9af1b62859c2374a8e520214a14d",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-09-11T14:28:58-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.0.liquid",
+      "size": 256000,
+      "checksum": "5386dfa231e5b36870a0bd0d9e45522c",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.1.liquid",
+      "size": 256000,
+      "checksum": "0adc6233b465141d4c978466901d9109",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.2.liquid",
+      "size": 256022,
+      "checksum": "d8eee967655c92e23c9dbebf24878491",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.3.liquid",
+      "size": 29073,
+      "checksum": "15f8064c12c0032f66e2dcf9b4b37e2b",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.0.liquid",
+      "size": 256000,
+      "checksum": "cd9111bc1ecaed654f57e4d898216f64",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.1.liquid",
+      "size": 59046,
+      "checksum": "0316fd3cdbf9e7a5175fd5b6226c24ed",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.0.liquid",
+      "size": 256000,
+      "checksum": "17c6b9b1ed2410cdf8be1ecdc9b571fe",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.1.liquid",
+      "size": 256000,
+      "checksum": "81f7e29961ec2bf5d1f8efcfe86408c2",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.2.liquid",
+      "size": 184198,
+      "checksum": "de0555b45374d70bcbdd687ee5e50569",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.0.liquid",
+      "size": 256000,
+      "checksum": "06de6de8b7a237c1d20e4f6084d32835",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.1.liquid",
+      "size": 256000,
+      "checksum": "2313e78e32793289768e7904e29e2eb7",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.2.liquid",
+      "size": 211212,
+      "checksum": "41d3c0c49892348944da4683e6eb2e48",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "templates/page.replo.00d6760b-fed1-4b86-a9d3-2380b64564e2.liquid",
+      "size": 379,
+      "checksum": "6095b3ac748d05212941a6e53285cd13",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "templates/page.replo.0a3e8697-323d-4e20-a348-9e7ce6d58009.liquid",
+      "size": 444,
+      "checksum": "9d0f4eb8846c0dc629d8c93adb6ad04c",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "templates/page.replo.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.liquid",
+      "size": 314,
+      "checksum": "475c3091d12d0c7e91a1f951f8e1e6ec",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    },
+    {
+      "key": "templates/page.replo.c4df50a5-9548-4c2c-a740-703ce2552298.liquid",
+      "size": 379,
+      "checksum": "03ef34bf99b9f069e6845cd58aa1e735",
+      "content_type": "application/x-liquid",
+      "updated_at": "2026-08-31T20:38:41-06:00"
+    }
+  ]
+}

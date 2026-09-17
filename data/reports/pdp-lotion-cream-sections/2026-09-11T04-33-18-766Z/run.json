@@ -1,0 +1,39 @@
+{
+  "at": "2026-09-11T04:33:25.422Z",
+  "results": [
+    {
+      "file": "product.landing-page-lotion.json",
+      "theme": 148727070890,
+      "notes": [
+        "unified trust-line",
+        "hook-heading.heading",
+        "hook-text.text",
+        "inserted hook-proof after hook-text"
+      ],
+      "outcome": "applied",
+      "readback": true
+    },
+    {
+      "file": "product.landing-page-cream.json",
+      "theme": 148727070890,
+      "notes": [
+        "hook-heading.heading",
+        "inserted hook-proof after hook-text"
+      ],
+      "outcome": "applied",
+      "readback": true
+    },
+    {
+      "field": "coconut-moisturizer.title_tag",
+      "before": "Coconut Moisturizer – Real Skin Care",
+      "outcome": "applied",
+      "readback": true
+    },
+    {
+      "field": "coconut-moisturizer.description_tag",
+      "before": "A thicker cream with beeswax, coconut oil and red palm oil. No petroleum jelly, no silicones, no added fragrance. For skin that needs more than a lotion.",
+      "outcome": "applied",
+      "readback": true
+    }
+  ]
+}

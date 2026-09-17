@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "main": {
+      "type": "giveaway-entry",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

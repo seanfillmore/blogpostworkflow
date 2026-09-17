@@ -1,0 +1,38 @@
+[
+  {
+    "id": "cream/offer",
+    "handle": "coconut-moisturizer",
+    "ref": "cream-pure-unscented.png",
+    "source": "Live catalogue 2026-09-10: sensitive-skin-starter-set \"Sensitive Skin Moisturizing Set\" $46.80 (available; body: \"Eight ingredients across two products\" — the Body Lotion and the Body Cream); coconut-lotion $30.00; coconut-moisturizer $28.00. 30 + 28 = 58; 58 - 46.80 = 11.20. Free shipping: live announcement bar \"Free Shipping on Orders Over $45\" and the PDP \"Free shipping on orders $45+\"."
+  },
+  {
+    "id": "cream/proof",
+    "handle": "coconut-moisturizer",
+    "ref": "cream-coconut-breeze.png",
+    "source": "Judge.me, coconut-moisturizer, Nicole Hoopman, 5 stars, verified-purchase, 2025-02-13, \"Phenomenal winter moisturizer\". Verbatim, contiguous: the review's second and third sentences. Surname shortened to an initial. No review count shown."
+  },
+  {
+    "id": "cream/compare",
+    "handle": "coconut-moisturizer",
+    "ref": "cream-coconut-breeze.png",
+    "source": "First three rows from the live body-cream-not-in-it-v2.png frame (no synthetic fragrance, no lanolin, no parabens). The fourth from the live PDP body: \"It goes on like butter and works in — heavy enough for rough spots, without the slick film.\" Comparison column is the generic category; no competitor named."
+  },
+  {
+    "id": "lip-balm/offer",
+    "handle": "coconut-oil-lip-balm",
+    "ref": "lip-balm-four-ref.png",
+    "source": "Live catalogue 2026-09-10: coconut-oil-lip-balm \"Natural Coconut Oil Lip Balm | 0.15oz | Four Pack\" $15.00, 5 of 5 variants in stock (Pure Unscented, Vanilla Dream, Sweet Tangerine, Coconut Breeze, Variety Pack). 15 / 4 = 3.75. \"Three ingredients\" from the live body (\"Three ingredients, three jobs\") and the live lip-balm-mechanism.png frame."
+  },
+  {
+    "id": "lip-balm/proof",
+    "handle": "coconut-oil-lip-balm",
+    "ref": "tube-coconut-breeze.png",
+    "source": "Judge.me, coconut-oil-lip-balm, Hendrika, 5 stars, verified-purchase, 2023-01-29, \"So moisturizing\". Verbatim, contiguous: the review's second and third sentences. No review count shown."
+  },
+  {
+    "id": "lip-balm/compare",
+    "handle": "coconut-oil-lip-balm",
+    "ref": "tube-coconut-breeze.png",
+    "source": "First three rows from the live lip-balm-not-in-it-v2.png frame (no paraffin, no lanolin, no menthol). The fourth from the live PDP body: \"no synthetic flavoring\". Comparison column is the generic category; no competitor named."
+  }
+]

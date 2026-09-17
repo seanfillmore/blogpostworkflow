@@ -1,0 +1,250 @@
+{
+  "home": {
+    "template": "template-index",
+    "apps": {
+      "theme": {
+        "jsKb": 58,
+        "cssKb": 49,
+        "files": 55
+      },
+      "klaviyo": {
+        "jsKb": 235,
+        "cssKb": 9,
+        "files": 30
+      },
+      "shop-js": {
+        "jsKb": 40,
+        "cssKb": 0,
+        "files": 21
+      },
+      "recurpay": {
+        "jsKb": 10,
+        "cssKb": 2,
+        "files": 3
+      },
+      "judge.me": {
+        "jsKb": 3,
+        "cssKb": 0,
+        "files": 1
+      },
+      "zigpoll": {
+        "jsKb": 5,
+        "cssKb": 0,
+        "files": 2
+      },
+      "ocu": {
+        "jsKb": 608,
+        "cssKb": 28,
+        "files": 13
+      },
+      "paypal": {
+        "jsKb": 98,
+        "cssKb": 0,
+        "files": 1
+      }
+    },
+    "addForms": [],
+    "quickAdd": 0
+  },
+  "collection": {
+    "template": "template-collection",
+    "apps": {
+      "theme": {
+        "jsKb": 57,
+        "cssKb": 53,
+        "files": 56
+      },
+      "shop-js": {
+        "jsKb": 40,
+        "cssKb": 0,
+        "files": 21
+      },
+      "recurpay": {
+        "jsKb": 10,
+        "cssKb": 2,
+        "files": 3
+      },
+      "zigpoll": {
+        "jsKb": 65,
+        "cssKb": 0,
+        "files": 5
+      },
+      "judge.me": {
+        "jsKb": 3,
+        "cssKb": 0,
+        "files": 1
+      },
+      "klaviyo": {
+        "jsKb": 133,
+        "cssKb": 0,
+        "files": 21
+      },
+      "ocu": {
+        "jsKb": 608,
+        "cssKb": 28,
+        "files": 13
+      },
+      "paypal": {
+        "jsKb": 98,
+        "cssKb": 0,
+        "files": 1
+      }
+    },
+    "addForms": [],
+    "quickAdd": 0
+  },
+  "pdp-lotion": {
+    "template": "template-product",
+    "apps": {
+      "theme": {
+        "jsKb": 64,
+        "cssKb": 58,
+        "files": 65
+      },
+      "shop-js": {
+        "jsKb": 78,
+        "cssKb": 0,
+        "files": 36
+      },
+      "recurpay": {
+        "jsKb": 10,
+        "cssKb": 2,
+        "files": 3
+      },
+      "zigpoll": {
+        "jsKb": 65,
+        "cssKb": 0,
+        "files": 5
+      },
+      "judge.me": {
+        "jsKb": 89,
+        "cssKb": 21,
+        "files": 51
+      },
+      "klaviyo": {
+        "jsKb": 133,
+        "cssKb": 0,
+        "files": 21
+      },
+      "ocu": {
+        "jsKb": 608,
+        "cssKb": 28,
+        "files": 13
+      },
+      "paypal": {
+        "jsKb": 98,
+        "cssKb": 0,
+        "files": 1
+      }
+    },
+    "addForms": [
+      {
+        "section": "shopify-section-main",
+        "visible": true
+      },
+      {
+        "section": "shopify-section-main",
+        "visible": true
+      },
+      {
+        "section": "shopify-section-main",
+        "visible": true
+      }
+    ],
+    "quickAdd": 0
+  },
+  "article": {
+    "template": "template-article",
+    "apps": {
+      "theme": {
+        "jsKb": 58,
+        "cssKb": 45,
+        "files": 51
+      },
+      "shop-js": {
+        "jsKb": 40,
+        "cssKb": 0,
+        "files": 21
+      },
+      "recurpay": {
+        "jsKb": 10,
+        "cssKb": 2,
+        "files": 3
+      },
+      "judge.me": {
+        "jsKb": 3,
+        "cssKb": 0,
+        "files": 1
+      },
+      "klaviyo": {
+        "jsKb": 133,
+        "cssKb": 0,
+        "files": 21
+      },
+      "zigpoll": {
+        "jsKb": 5,
+        "cssKb": 0,
+        "files": 2
+      },
+      "ocu": {
+        "jsKb": 227,
+        "cssKb": 12,
+        "files": 6
+      },
+      "paypal": {
+        "jsKb": 98,
+        "cssKb": 0,
+        "files": 1
+      }
+    },
+    "addForms": [],
+    "quickAdd": 0
+  },
+  "page-faqs": {
+    "template": "template-page",
+    "apps": {
+      "theme": {
+        "jsKb": 57,
+        "cssKb": 44,
+        "files": 50
+      },
+      "shop-js": {
+        "jsKb": 40,
+        "cssKb": 0,
+        "files": 21
+      },
+      "recurpay": {
+        "jsKb": 10,
+        "cssKb": 2,
+        "files": 3
+      },
+      "judge.me": {
+        "jsKb": 3,
+        "cssKb": 0,
+        "files": 1
+      },
+      "klaviyo": {
+        "jsKb": 133,
+        "cssKb": 0,
+        "files": 21
+      },
+      "zigpoll": {
+        "jsKb": 5,
+        "cssKb": 0,
+        "files": 2
+      },
+      "ocu": {
+        "jsKb": 608,
+        "cssKb": 28,
+        "files": 13
+      },
+      "paypal": {
+        "jsKb": 98,
+        "cssKb": 0,
+        "files": 1
+      }
+    },
+    "addForms": [],
+    "quickAdd": 0
+  }
+}

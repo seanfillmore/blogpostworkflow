@@ -1,0 +1,26 @@
+{%- unless hl_enable -%}
+  {{- hl_input -}}
+{%- elsif hl_input != blank and hl_style != blank -%}
+  {%- liquid
+    if hl_phrases != blank
+      assign highlight_phrases = hl_phrases | newline_to_br | split: '<br />'
+      for highlight_phrase in highlight_phrases
+        assign highlight_phrase_strip = highlight_phrase | strip 
+        assign highlight_phrase_formatted = highlight_phrase_strip | prepend: '<em>' | append: '</em>'
+        assign hl_input = hl_input | replace: highlight_phrase_strip, highlight_phrase_formatted
+      endfor
+    endif
+  -%}
+  {%- capture begin_tag -%}<em class="highlighted-text" is="highlighted-text" data-style="{{ hl_style }}">{%- endcapture -%}
+  {%- assign content = hl_input | replace: '<em>', begin_tag -%}
+
+  {%- if hl_style == 'circle' or hl_style == 'modern-underline' or hl_style == 'sketch-underline' or hl_style == 'squiggle' or hl_style == 'heavy-squiggle' -%}
+    {%- capture end_tag -%}{% render 'icon-scribble', icon: hl_style %}</em>{%- endcapture -%}
+    {%- assign content = content | replace: '</em>', end_tag -%}
+  {%- endif -%}
+
+  {%- if hl_animateWrap == true -%}
+		{%- assign content = content | prepend: '<use-animate>' | append: '</use-animate>' -%}
+	{%- endif -%}
+  {{- content -}}
+{%- endunless -%}

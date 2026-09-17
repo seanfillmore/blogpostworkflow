@@ -1,0 +1,87 @@
+{%- assign text_direction = 'localization.text_direction_trigger' | t | downcase -%}
+<!doctype html>
+<html class="no-js" lang="{{ request.locale.iso_code }}"
+  {%- if text_direction == 'rtl' %} dir="rtl"{% endif -%}
+>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <link rel="preconnect" href="https://cdn.shopify.com" crossorigin>
+
+    {%- if settings.favicon != blank -%}
+      <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}">
+    {%- endif -%}
+
+    {%- unless settings.type_header_font.system? and settings.type_body_font.system? -%}
+      <link rel="preconnect" href="https://fonts.shopifycdn.com" crossorigin>
+    {%- endunless -%}
+
+    <title>
+      {{ page_title }}
+      {%- if current_tags %} &ndash; tagged "{{ current_tags | join: ', ' }}"{% endif -%}
+      {%- if current_page != 1 %} &ndash; Page {{ current_page }}{% endif -%}
+      {%- unless page_title contains shop.name %} &ndash; {{ shop.name }}{% endunless -%}
+    </title>
+
+    {%- if page_description -%}
+      <meta name="description" content="{{ page_description | escape }}">
+    {%- endif -%}
+
+    {% render 'meta-tags' %}
+
+    <script src="{{ 'vendor-v4.js' | asset_url | split: '?' | first }}" defer="defer"></script>
+    <script src="{{ 'pubsub.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'global.js' | asset_url }}" defer="defer"></script>
+
+    {{ content_for_header }}
+
+    {%- liquid
+      render 'css-variables'
+      echo 'base.css' | asset_url | stylesheet_tag: preload: true
+      
+      if text_direction == 'rtl'
+        echo 'rtl.css' | asset_url | stylesheet_tag
+      endif
+    -%}
+
+    <link rel="stylesheet" href="{{ 'apps.css' | asset_url }}" media="print" fetchpriority="low" onload="this.media='all'">
+
+    {%- unless settings.type_body_font.system? -%}
+      <link rel="preload" as="font" href="{{ settings.type_body_font | font_url }}" type="font/woff2" crossorigin>
+    {%- endunless -%}
+    {%- unless settings.type_header_font.system? -%}
+      <link rel="preload" as="font" href="{{ settings.type_header_font | font_url }}" type="font/woff2" crossorigin>
+    {%- endunless -%}
+    
+    {%- if settings.predictive_search_enabled -%}
+      <link rel="stylesheet" href="{{ 'component-predictive-search.css' | asset_url }}" media="print" onload="this.media='all'">
+    {%- endif -%}
+    {%- if settings.quick_view_enabled -%}
+      <link rel="stylesheet" href="{{ 'component-quick-view.css' | asset_url }}" media="print" onload="this.media='all'">
+    {%- endif -%}
+    {%- if settings.color_swatches_enabled -%}
+      <link rel="stylesheet" href="{{ 'component-color-swatches.css' | asset_url }}" media="print" onload="this.media='all'">
+    {%- endif -%}
+    {%- if linklists.gift-wrapping.links != blank and linklists.gift-wrapping.links.first.type == 'product_link' -%}
+      <link rel="stylesheet" href="{{ 'component-gift-wrapping.css' | asset_url }}" media="print" onload="this.media='all'">
+      <noscript>{{ 'component-gift-wrapping.css' | asset_url | stylesheet_tag }}</noscript>
+    {%- endif -%}
+
+    {%- render 'js-variables' -%}
+  {% render 'gp-head' %}
+</head>
+
+  <body class="template-{{ request.page_type }}{% if request.design_mode %} shopify-design-mode{% endif %}"
+    {%- if settings.image_zoom_effect_enabled %} data-animate-image{% endif -%}
+    {%- if settings.image_loading_bar_enabled %} data-lazy-image{% endif -%}
+    {%- if settings.heading_capitalize %} data-heading-capitalize{% endif -%}
+    {%- if settings.heading_center %} data-heading-center{% endif -%}
+    {%- if settings.price_superscript %} data-price-superscript{% endif -%}
+    {%- if settings.button_corner_radius > 0 %} data-button-round{% endif -%}
+  ><main id="MainContent" class="content-for-layout focus-none shopify-section" role="main" tabindex="-1">
+          {{ content_for_layout }}
+        </main></body>
+</html>
