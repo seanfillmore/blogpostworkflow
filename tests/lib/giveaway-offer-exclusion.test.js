@@ -7,7 +7,7 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
-  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership,
+  withExcludedList, drawnWinnerEmails, disqualifiedEmails, missingFromMembership, withIncludedAudience,
 } from '../../lib/giveaway/offer-exclusion.js';
 
 test('the exclusion list is added and the included audience is left exactly as it was', () => {
@@ -109,4 +109,47 @@ test('missingFromMembership compares against the WHOLE membership, not one page'
 test('missingFromMembership is case-insensitive on both sides', () => {
   assert.deepEqual(missingFromMembership(['Winner@X.com'], ['winner@x.com']), []);
   assert.deepEqual(missingFromMembership(['winner@x.com'], ['WINNER@X.COM']), []);
+});
+
+// ---------------------------------------------------------------------------
+// Re-pointing a scheduled campaign's INCLUDED audience.
+//
+// The draw-day send went to `--audience all` — the whole entrant list, including
+// the ~2,283 who never confirmed anything. It returned 0.31% CTR and a 4.32%
+// unsubscribe rate. The two remaining sends move to an engaged segment.
+//
+// Replacing the included audience is more dangerous than adding an exclusion:
+// get it wrong and the campaign sends to NOBODY, silently, at its scheduled time.
+// ---------------------------------------------------------------------------
+
+test('the included audience is replaced and the exclusions are preserved', () => {
+  const out = withIncludedAudience({ included: ['Y2ukbE'], excluded: ['UigAyc'] }, 'ENG123');
+  assert.deepEqual(out.audiences, { included: ['ENG123'], excluded: ['UigAyc'] });
+  assert.equal(out.changed, true);
+});
+
+test('re-pointing to the audience already targeted is a no-op', () => {
+  // Must not revert and requeue a scheduled campaign for nothing.
+  const out = withIncludedAudience({ included: ['ENG123'], excluded: ['UigAyc'] }, 'ENG123');
+  assert.equal(out.changed, false);
+  assert.deepEqual(out.audiences, { included: ['ENG123'], excluded: ['UigAyc'] });
+});
+
+test('REFUSES an empty audience id — that would send to nobody', () => {
+  assert.throws(() => withIncludedAudience({ included: ['Y2ukbE'], excluded: [] }, ''), /required/);
+  assert.throws(() => withIncludedAudience({ included: ['Y2ukbE'], excluded: [] }, null), /required/);
+});
+
+test('REFUSES an audience that is also EXCLUDED — it would send to nobody', () => {
+  // The exact shape that produces a silent zero-recipient send: the exclusion
+  // wins, so the campaign goes out to an empty audience and simply reports 0.
+  assert.throws(
+    () => withIncludedAudience({ included: ['Y2ukbE'], excluded: ['ENG123'] }, 'ENG123'),
+    /excluded/i,
+  );
+});
+
+test('replaces MULTIPLE included audiences with the single engaged one', () => {
+  const out = withIncludedAudience({ included: ['Y2ukbE', 'Tamb9u'], excluded: ['UigAyc'] }, 'ENG123');
+  assert.deepEqual(out.audiences.included, ['ENG123']);
 });
