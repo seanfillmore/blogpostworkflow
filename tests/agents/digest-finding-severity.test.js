@@ -48,8 +48,15 @@ test('RUM keeps error for NO BEACONS — that one is a real outage', () => {
   // The split is the point: an empty beacon stream means the storefront stopped
   // reporting and nothing else in the fleet would say so. Poor vitals on one
   // page/device pair is a reading.
-  assert.match(src, /!beacons\.length \? 'error'/, 'no beacons must still raise a failure');
-  assert.doesNotMatch(src, /failing\.length \|\| !beacons\.length \? 'error'/);
+  assert.match(src, /!received\.length \? 'error'/, 'no beacons must still raise a failure');
+  assert.doesNotMatch(src, /failing\.length \|\| !received\.length \? 'error'/);
+
+  // Added 2026-09-18 with the bot filter: the outage test reads what ARRIVED, and
+  // must never read the post-filter human count. A window whose every beacon was a
+  // machine means nobody visited — a reading — and keying 'error' on the filtered
+  // count would manufacture an outage row out of one quiet day.
+  assert.doesNotMatch(src, /!beacons\.length \? 'error'/,
+    'the outage test must not key on the bot-filtered count');
 });
 
 test('a flagged ad campaign is a finding, not a failure', () => {

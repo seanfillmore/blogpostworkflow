@@ -19,6 +19,7 @@ import { appendFileSync, mkdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT } from '../lib/paths.js';
 import { readJsonBody } from '../lib/responses.js';
+import { classifyUserAgent, clientLabel } from '../../../lib/rum-bot.js';
 
 // NB: paths.js exports SNAPSHOTS_DIR as data/rank-snapshots, which is a
 // different tree. RUM belongs with the daily metric feeds under data/snapshots.
@@ -129,6 +130,15 @@ export function validateBeacon(payload, { ua = '' } = {}) {
     ? Math.round(payload.vw)
     : null;
 
+  // Stamped at ingest because the user agent is the one thing only the server
+  // sees, and a beacon that arrives without it can never be judged later. The
+  // raw UA and the IP are deliberately NOT stored — these files go offsite
+  // weekly, so they carry a coarse client family exactly as the Shopify order
+  // snapshots carry a product title but never a sku. The flag is advisory:
+  // lib/rum-bot.js decides what a percentile is computed over, and nothing here
+  // refuses a beacon for being a bot.
+  const { bot, reason } = classifyUserAgent(ua);
+
   return {
     ts: new Date().toISOString(),
     path,
@@ -137,6 +147,9 @@ export function validateBeacon(payload, { ua = '' } = {}) {
     vw,
     conn: str(payload.conn, 12),
     saveData: payload.saveData === true,
+    client: clientLabel(ua),
+    bot,
+    ...(bot ? { botReason: reason } : {}),
     metrics,
   };
 }

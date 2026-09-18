@@ -26,6 +26,8 @@ import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, unlink
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'url';
 import { notify } from '../../lib/notify.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
+import { partitionBeacons, exclusionLine } from '../../lib/rum-bot.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -159,14 +161,26 @@ function renderTable(rows, label) {
   return lines.join('\n');
 }
 
-function renderMarkdown({ date, days, beacons, byDevice, byPage, worst }) {
-  // `beacons` is a count, not the array — the payload carries beacons.length.
+function renderMarkdown({ date, days, beacons, beaconsTotal, botFilter, byDevice, byPage, worst }) {
+  // `beacons` is a count, not the array — it is the HUMAN count the figures below
+  // are computed from. `beaconsTotal` is everything that arrived.
   const out = [`# RUM — Core Web Vitals from real users — ${date}`, ''];
-  out.push(`**Window:** trailing ${days} days · **Beacons:** ${beacons}`, '');
+  out.push(`**Window:** trailing ${days} days · **Beacons:** ${beacons} real-visitor`
+    + (beaconsTotal !== beacons ? ` (of ${beaconsTotal} received)` : ''), '');
 
-  if (!beacons) {
+  // Never silent: a filter nobody can see is indistinguishable from a broken one.
+  if (botFilter?.line) out.push(botFilter.line, '');
+
+  if (!beaconsTotal) {
     out.push('No beacons received yet. If the snippet is installed, check that');
     out.push('`/api/rum` is reachable from the storefront and not blocked.');
+    return out.join('\n');
+  }
+
+  if (!beacons) {
+    out.push('**Every beacon in this window was machine traffic**, so there are no');
+    out.push('real-visitor figures to report. The collector is working — nothing here');
+    out.push('is broken; no measurable human visits landed in the window.');
     return out.join('\n');
   }
 
@@ -211,7 +225,19 @@ async function main() {
     return;
   }
 
-  const beacons = readBeacons(datesBack(days, new Date(`${date}T00:00:00Z`)));
+  // Machines are filtered BEFORE any percentile is taken. On the 14 days to
+  // 2026-09-18 they were 47% of all beacons and almost entirely desktop, which
+  // alone moved desktop TTFB p75 from 845ms to 1488ms — see lib/rum-bot.js.
+  const received = readBeacons(datesBack(days, new Date(`${date}T00:00:00Z`)));
+  const split = partitionBeacons(received);
+  const beacons = split.human;
+  const botFilter = {
+    line: exclusionLine(split),
+    excluded: split.machine.length,
+    reasons: split.reasons,
+    burstMin: split.min,
+    bursts: split.bursts.slice(0, 10),
+  };
   const byDevice = aggregate(beacons, (b) => b.device || 'unknown');
   const byPage = aggregate(beacons, (b) => b.path);
 
@@ -228,7 +254,16 @@ async function main() {
   }
   worst.sort((a, b) => CORE.indexOf(a.metric) - CORE.indexOf(b.metric));
 
-  const payload = { date, days, beacons: beacons.length, byDevice, byPage, worst };
+  const payload = {
+    date,
+    days,
+    beacons: beacons.length,       // what the figures below are computed from
+    beaconsTotal: received.length, // what arrived, machines included
+    botFilter,
+    byDevice,
+    byPage,
+    worst,
+  };
   const md = renderMarkdown(payload);
 
   mkdirSync(REPORTS_DIR, { recursive: true });
@@ -238,8 +273,10 @@ async function main() {
 
   const failing = worst.filter((w) => !w.provisional);
   await notify({
-    subject: beacons.length
-      ? `RUM: ${beacons.length} beacons, ${failing.length} failing Core Web Vitals`
+    subject: received.length
+      ? `RUM: ${beacons.length} real-visitor beacons`
+        + (botFilter.excluded ? ` (${botFilter.excluded} bot beacons excluded)` : '')
+        + `, ${failing.length} failing Core Web Vitals`
       : 'RUM: no beacons received',
     body: md,
     // NO BEACONS is a real outage — the storefront stopped reporting, or the
@@ -248,11 +285,16 @@ async function main() {
     // 2026-08-29 row read "2 failing Core Web Vitals" while every device and
     // page in the table was green except tablet INP on 761 views, and it landed
     // in the Failures block looking like a crash.
-    status: !beacons.length ? 'error' : failing.length ? 'info' : 'success',
+    //
+    // The outage test is on what ARRIVED, never on what survived the bot filter:
+    // a window in which every beacon was a machine means nobody visited, which is
+    // a reading. Keying `error` on the human count would turn the filter itself
+    // into a fake outage on the first quiet day.
+    status: !received.length ? 'error' : failing.length ? 'info' : 'success',
     category: 'performance',
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (isDirectRun(import.meta.url)) {
   main().catch((err) => { console.error(err); process.exit(1); });
 }
