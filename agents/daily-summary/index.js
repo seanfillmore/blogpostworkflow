@@ -235,17 +235,34 @@ function loadCompetitorActivity() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
-function loadPerformanceQueue() {
-  const queueDir = join(ROOT, 'data', 'performance-queue');
-  if (!existsSync(queueDir)) return [];
-  try {
-    return readdirSync(queueDir)
-      .filter(f => f.endsWith('.json') && f !== 'indexing-submissions.json')
-      .map(f => { try { return JSON.parse(readFileSync(join(queueDir, f), 'utf8')); } catch { return null; } })
-      .filter(i => i && i.status === 'pending')
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  } catch { return []; }
-}
+// The digest deliberately does NOT read data/performance-queue/.
+//
+// It used to: `loadPerformanceQueue()` returned every `status: 'pending'` item
+// and the digest rendered them as an indigo "N items ready for review" block
+// headed "Approve on the dashboard to push the updated content to Shopify".
+//
+// `agents/queue-autoapply` took that chore over — it runs daily with --apply as
+// scheduler step 4d and drains the queue unattended — but the block was never
+// removed, and the cron clock makes it a guaranteed false alarm:
+//
+//   07:30 UTC  performance-engine   FILLS the queue
+//   13:00 UTC  daily-summary        READ it and emailed it as a to-do list
+//   15:00 UTC  queue-autoapply      DRAINS it, no human involved
+//
+// So the email showed work a robot finished two hours later, every morning,
+// forever. Measured on production 2026-09-18, the five rows that day were one
+// phantom (a post consolidated away, re-queued nightly and dismissed the same
+// afternoon), three on the self-clearing 30-day cooldown, and one genuinely
+// parked item the block gave no distinguishing treatment.
+//
+// Sean, verbatim: "I don't want to see the optimization queue. That should be
+// handled automatically and should never surface as a manual task."
+//
+// What the queue DID is still reported: queue-autoapply fires its own deferred
+// notify() every run. An item automation can never clear (gate_attempts >= 3,
+// an unrecognised schema, a trigger outside AUTO_APPLY_TRIGGERS) is a gap in
+// the AUTOMATION and belongs in a health/ops row, not in a review queue —
+// see tests/agents/daily-summary.test.js, which pins that this block stays gone.
 
 /**
  * Build the HTML email body.
@@ -307,12 +324,12 @@ export function formatBodyHtml(text) {
 
 /**
  * `dataRoot` exists because this function reads five paths off disk in addition to
- * its thirteen injected arguments. That made its output machine-dependent: the same
+ * its twelve injected arguments. That made its output machine-dependent: the same
  * inputs produced a "quiet day" digest on a laptop with no data/reports and a full
  * one on the server, so a test asserting the quiet path passed locally and failed in
  * production. Defaulting to ROOT keeps every caller unchanged.
  */
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -613,30 +630,8 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       </div>`;
   }
 
-  // Optimization queue — items from the performance engine awaiting review
-  let queueSection = '';
-  if (perfQueue && perfQueue.length > 0) {
-    const rows = perfQueue.map(i => {
-      const triggerLabel = { 'flop-refresh': 'Refresh (flop)', 'quick-win': 'Quick win', 'low-ctr-meta': 'Meta rewrite' }[i.trigger] || i.trigger;
-      return `
-        <div style="background:white;border:1px solid #c7d2fe;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
-          <div style="font-size:10px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${esc(triggerLabel)}</div>
-          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px;">${esc(i.title)}</div>
-          <div style="font-size:12px;color:#374151;line-height:1.5;">
-            <p style="margin:4px 0;"><strong>What changed:</strong> ${esc(i.summary?.what_changed || '')}</p>
-            <p style="margin:4px 0;"><strong>Why:</strong> ${esc(i.summary?.why || '')}</p>
-            <p style="margin:4px 0;"><strong>Projected impact:</strong> ${esc(i.summary?.projected_impact || '')}</p>
-          </div>
-          <a href="${esc(dashboardUrl)}/#optimize" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#6366f1;color:white;text-decoration:none;border-radius:6px;font-size:12px;font-weight:600;">Review on dashboard &rarr;</a>
-        </div>`;
-    }).join('');
-    queueSection = `
-      <div class="section" style="background:#eef2ff;border:1px solid #c7d2fe;">
-        <div class="section-title" style="color:#312e81;border-bottom-color:#c7d2fe;">&#9881;&#65039; Optimization Queue &mdash; ${perfQueue.length} item${perfQueue.length > 1 ? 's' : ''} ready for review</div>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">The performance engine ran overnight and refreshed these posts. Approve on the dashboard to push the updated content to Shopify.</p>
-        ${rows}
-      </div>`;
-  }
+  // (No optimization-queue section — see the note above loadPerformanceQueue's
+  // former home. queue-autoapply owns that work; the digest does not ask.)
 
   // Reviews section — surfaces new reviews from review-monitor
   let reviewSection = '';
@@ -790,7 +785,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
   }
 
-  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
   // ── LLM cost block REMOVED 2026-09-08, on the operator's instruction ────────
@@ -862,8 +857,10 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     }
   }
 
-  // Decisions awaiting you — pending optimization queue + posts blocked from publish.
-  const decisionsBody = `${queueSection}${blockedSection}`;
+  // Decisions awaiting you — posts blocked from publish. A hard-blocked post
+  // genuinely needs a person and nothing else reports it; the optimization
+  // queue used to share this slot and no longer does.
+  const decisionsBody = blockedSection;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;
@@ -1024,10 +1021,13 @@ async function main() {
   const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
   const competitors = loadCompetitorActivity();
-  const perfQueue = loadPerformanceQueue();
 
-  // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length) && !perfQueue.length) {
+  // If nothing happened at all, still send a "quiet day" email.
+  // A pending performance-queue used to count as "something happened" here.
+  // It no longer does: queue-autoapply drains that queue two hours after this
+  // runs, so a queue-only day has nothing to show a human and must fall through
+  // to the quiet-day copy rather than emailing an empty shell.
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
     log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked, ${quickWins?.top?.length || 0} quick-wins.`);
@@ -1050,7 +1050,7 @@ async function main() {
     }).catch(() => {});
   }
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues, seoImpact, prioritizer);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
