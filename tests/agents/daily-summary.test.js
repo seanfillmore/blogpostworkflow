@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { previewBody, formatBodyHtml, buildDigestHtml, log } from '../../agents/daily-summary/index.js';
@@ -18,7 +18,7 @@ test('buildDigestHtml: surfaces revenue + failures, drops the routine listing', 
     window: { start: '2026-06-21', end: '2026-07-18' },
     top_revenue: [{ revenue: 132, path: '/', conversions: 5, sessions: 45 }],
   };
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], seoImpact, null);
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], seoImpact, null);
 
   assert.ok(html.includes('Organic Revenue'), 'revenue block shown');
   assert.ok(html.includes('$157'), 'revenue number shown');
@@ -51,7 +51,7 @@ const CLUSTER_DIGEST = {
 };
 
 test('the digest prints what each category sold, not what landed on pages named after it', () => {
-  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('Sold by category'), 'the label says which question it answers');
   assert.ok(html.includes('$755.30'), 'all-channel product revenue shown');
   assert.ok(html.includes('$357.00'), 'organic product revenue shown');
@@ -64,22 +64,22 @@ test('a report written before product attribution still renders its old cluster 
       product_organic_revenue, product_revenue_all_channels, ...c
     }) => c),
   };
-  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], legacy, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, 'https://dash', [], legacy, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('By cluster (entry-page organic)'), 'labelled as the entry-page view');
   assert.ok(html.includes('$313.49'));
   assert.ok(!html.includes('Sold by category'));
 });
 
-// buildDigestHtml takes 13 injected arguments but ALSO read five paths off disk
+// buildDigestHtml takes 12 injected arguments but ALSO read five paths off disk
 // under the repo root. That made it machine-dependent: this test passed on a laptop
 // with no data/reports and failed on the server, where those files exist — the same
 // inputs producing different HTML. dataRoot makes the last five inputs injectable
-// like the other thirteen, so both directions below are pinned on any machine.
+// like the other twelve, so both directions below are pinned on any machine.
 const emptyRoot = mkdtempSync(join(tmpdir(), 'digest-empty-'));
 
 test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', () => {
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('Nothing moved the needle'), 'quiet-day message shown');
   assert.ok(/1 task ran/.test(html), 'activity line still present');
 });
@@ -104,7 +104,7 @@ test('buildDigestHtml: the LLM cost block is gone, even with over-budget spend o
   writeFileSync(join(usage, '2026-07-20.jsonl'), [rec(30)].join('\n') + '\n');
 
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: root });
 
   assert.ok(!html.includes('LLM Cost'), 'the cost block must not render');
   assert.ok(!html.includes('over $20 target'), 'the budget verdict must not render');
@@ -121,7 +121,7 @@ test('buildDigestHtml: an active A/B test makes the day non-quiet', () => {
   }));
 
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: root });
 
   assert.ok(html.includes('Meta A/B Tests'), 'the on-disk test renders its section');
   assert.ok(/1 active test\b/.test(html), 'the active count comes from disk');
@@ -235,4 +235,88 @@ test('log writes exactly one line per call', () => {
   log('Daily summary sent.', (l) => written.push(l));
   assert.equal(written.length, 1);
   assert.match(written[0], /^\[\d{4}-\d{2}-\d{2}T[\d:.]+Z\] Daily summary sent\.$/);
+});
+
+// ── the Optimization Queue is NOT a human's to-do list ───────────────────────
+//
+// The digest used to render every `status: 'pending'` item in
+// data/performance-queue/ as an indigo "N items ready for review" block headed
+// "Approve on the dashboard to push the updated content to Shopify".
+//
+// `agents/queue-autoapply` took that chore over: it runs daily with --apply as
+// scheduler step 4d and drains the queue unattended. The block was never
+// removed, and the cron clock guarantees it advertises work a robot finishes
+// two hours later — performance-engine FILLS the queue at 07:30 UTC,
+// daily-summary READS it at 13:00 UTC, queue-autoapply DRAINS it at 15:00 UTC.
+//
+// Measured on production 2026-09-18, the five rows that morning's email
+// presented as "ready for review" were: one phantom (best-sls-free-toothpaste-2025,
+// a post consolidated away whose Shopify article no longer exists, re-queued
+// nightly and dismissed the same afternoon), three sitting on the self-clearing
+// 30-day cooldown, and one genuinely parked item (gate_attempts: 3) that the
+// block gave no distinguishing treatment. Four of five were never a human's task.
+//
+// Sean, verbatim: "I don't want to see the optimization queue. That should be
+// handled automatically and should never surface as a manual task."
+//
+// This is a SOURCE SCAN rather than a render assertion because the strongest
+// guarantee available is that the digest no longer reads the queue at all —
+// `buildDigestHtml` does not take a perfQueue argument and `main()` does not
+// load one. A render test could only pin the shape of a call that cannot be
+// made. Same idiom as tests/lib/post-meta-readers-merged.test.js.
+test('the daily digest never reads or renders the optimization queue', () => {
+  const src = readFileSync(
+    join(import.meta.dirname, '..', '..', 'agents', 'daily-summary', 'index.js'),
+    'utf8',
+  );
+  // Strip comments: the explanatory note above the former block names these
+  // strings on purpose, and the rule documenting itself is not a regression.
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*)/.test(l))
+    .join('\n');
+
+  assert.ok(!/performance-queue/.test(code), 'must not read data/performance-queue/');
+  assert.ok(!/loadPerformanceQueue/.test(code), 'the loader must stay deleted');
+  assert.ok(!/Optimization Queue/.test(code), 'no Optimization Queue heading');
+  assert.ok(!/ready for review/.test(code), 'nothing advertised as awaiting review');
+  assert.ok(!/Approve on the dashboard/.test(code), 'no approve-on-the-dashboard instruction');
+  assert.ok(!/#optimize/.test(code), 'no deep link into the queue tab');
+});
+
+test('buildDigestHtml no longer accepts a performance queue', () => {
+  // Arity is the structural half of the guard above: re-adding the parameter
+  // is the first move anyone reinstating the block would make.
+  assert.equal(buildDigestHtml.length, 9, 'targetDate..dashboardUrl, then defaulted args');
+});
+
+test('a day whose only activity is a pending queue reads as a quiet day', () => {
+  // Regression guard on the send gate: `perfQueue.length` used to be one of the
+  // conditions that made a day count as "something happened". With the block
+  // gone, a queue-only day has nothing to show a human, so it must fall through
+  // to the quiet-day copy rather than emailing an empty shell.
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.match(html, /Nothing moved the needle yesterday/, 'quiet-day copy shown');
+});
+
+test('blocked posts still reach the human — dropping the queue block kept that arm', () => {
+  // decisionsBody was `queueSection + blockedSection`. Removing the queue half
+  // must not take the blocked-post half with it: a post hard-blocked in the
+  // editorial gate genuinely does need a person, and nothing else reports it.
+  const blocked = [{
+    slug: 'some-post',
+    title: 'A Hard-Blocked Post',
+    blockers: 'no_product_cta',
+    reportPath: 'data/posts/some-post/editor-report.md',
+  }];
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], blocked, null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.ok(html.includes('A Hard-Blocked Post'), 'blocked posts still surface');
+  assert.ok(html.includes('Action Required'), 'under its own Action Required heading');
 });
