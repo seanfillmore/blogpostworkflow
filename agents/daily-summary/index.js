@@ -29,6 +29,10 @@ import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
+// The A/B dead-band and its classifier come from the module that OWNS the
+// decision. Never re-declare 0.005 here — same single-source rule as
+// AWARENESS_LEVELS and HEALTH_CLAIM_PATTERNS.
+import { classifyCtrDelta, DEFAULT_REGRESS_THRESHOLD } from '../../lib/meta-ab-decision.js';
 // lib/llm-usage.js still meters every call; the digest just no longer renders a
 // dollar row from it. See the LLM cost block removal note below.
 
@@ -766,10 +770,36 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       if (active.length > 0) {
         abTestSection += `<p>${active.length} active test${active.length > 1 ? 's' : ''} running</p>`;
       }
+      if (recentConcluded.length > 0) {
+        // LABEL the two sets. The active count and these rows are different
+        // tests, and printing the count immediately above unlabelled rows read
+        // as though the rows WERE the active tests.
+        abTestSection += `<p style="font-size:12px;color:#6b7280;margin:12px 0 4px 0;">`
+          + `Recently concluded &mdash; a move under &plusmn;${(DEFAULT_REGRESS_THRESHOLD * 100).toFixed(1)}pp is inside the noise floor and counts as no change.`
+          + `</p>`;
+      }
       for (const t of recentConcluded) {
-        const delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
-        const color = t.winner === 'B' ? '#10b981' : '#ef4444';
-        abTestSection += `<p><strong>${esc(t.slug)}</strong>: Variant ${t.winner} wins (<span style="color:${color}">${delta}</span>)</p>`;
+        // Prefer a STORED outcome; only classify when the record has none.
+        // The legacy tracker writes `outcome`; the newer data/meta-tests/*.json
+        // files carry only `winner` + `currentDelta`, and deriving a label from
+        // `winner` alone is what made a -1.26pp regression read as a win —
+        // decideOutcome sets winner='A' for BOTH `flat` and `regressed`.
+        const verdict = t.outcome || classifyCtrDelta(t.currentDelta);
+        const label = {
+          improved: 'improved',
+          flat: 'no change',
+          regressed: 'REGRESSED',
+          confounded: 'confounded &mdash; not concluded',
+          underpowered: 'underpowered &mdash; not concluded',
+        }[verdict] || 'not measured';
+        const color = verdict === 'improved' ? '#10b981'
+          : verdict === 'regressed' ? '#ef4444'
+            : '#6b7280';
+        const delta = t.currentDelta != null
+          ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp'
+          : 'n/a';
+        abTestSection += `<p><strong>${esc(t.slug)}</strong>: `
+          + `<span style="color:${color}">${label}</span> (${delta})</p>`;
       }
       abTestSection += '</div>';
     }
