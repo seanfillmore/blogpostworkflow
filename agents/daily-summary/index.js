@@ -637,6 +637,54 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // (No optimization-queue section — see the note above loadPerformanceQueue's
   // former home. queue-autoapply owns that work; the digest does not ask.)
 
+  // Work the AUTOMATION has permanently given up on.
+  //
+  // This is the narrow case that survived removing the Optimization Queue block,
+  // and the two properties below are what stop it becoming that block again:
+  //
+  //   1. It reads queue-autoapply's REPORT — what the robot says it abandoned —
+  //      never data/performance-queue/, which is the fleet's workspace. Reading
+  //      the queue is what produced a daily to-do list of work finished two
+  //      hours later.
+  //   2. Only `needs_decision[]` renders, and `decide()` puts an item there only
+  //      when NO automated run will ever clear it. A cooldown, an over-cap item
+  //      and an unresolvable product count are absent by construction.
+  //
+  // It states the DECISION, not the item: "rewrite it, or write it off" rather
+  // than "approve this". Measured on production 2026-09-18 this is one item of
+  // four pending, and it is silent when empty.
+  let decisionSection = '';
+  try {
+    const qaPath = join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json');
+    if (existsSync(qaPath)) {
+      const qa = JSON.parse(readFileSync(qaPath, 'utf8'));
+      const stuck = Array.isArray(qa?.needs_decision) ? qa.needs_decision : [];
+      if (stuck.length) {
+        const rows = stuck.map((d) => {
+          const age = d.created_at
+            ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000)
+            : null;
+          const why = d.last_gate_reason
+            ? `<div style="font-size:12px;color:#6b7280;margin-top:6px;">${esc(previewBody(d.last_gate_reason, { maxLines: 2, maxChars: 200 }))}</div>`
+            : '';
+          return `
+            <div class="blocked-post">
+              <div class="title">${esc(d.title || d.slug || 'untitled')}</div>
+              <div class="blockers"><strong>${esc(d.label || d.reason || '')}</strong></div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:4px;">${esc(d.trigger || '')}${age != null ? ` &middot; stuck ${age} day${age === 1 ? '' : 's'}` : ''}</div>
+              ${why}
+            </div>`;
+        }).join('');
+        decisionSection = `
+          <div class="action-required">
+            <div class="section-title">&#129300; Needs your decision &mdash; ${stuck.length} item${stuck.length > 1 ? 's' : ''} the automation gave up on</div>
+            <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Not a review queue &mdash; everything routine is applied automatically. These are the items no further run will ever clear.</p>
+            ${rows}
+          </div>`;
+      }
+    }
+  } catch { /* best-effort: a missing or unreadable report is silence, never an error */ }
+
   // Reviews section — surfaces new reviews from review-monitor
   let reviewSection = '';
   const reviewPath = join(dataRoot, 'data', 'reports', 'reviews', 'latest.json');
@@ -815,7 +863,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
   }
 
-  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !decisionSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
   // ── LLM cost block REMOVED 2026-09-08, on the operator's instruction ────────
@@ -890,7 +938,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // Decisions awaiting you — posts blocked from publish. A hard-blocked post
   // genuinely needs a person and nothing else reports it; the optimization
   // queue used to share this slot and no longer does.
-  const decisionsBody = blockedSection;
+  const decisionsBody = `${decisionSection}${blockedSection}`;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;
