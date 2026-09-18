@@ -63,6 +63,13 @@ import {
   listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, getRefreshedPath, POSTS_DIR,
 } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+// lib/live-articles.js is pure and safe to import at module scope.
+// lib/shopify.js is NOT — it reads .env and THROWS at import time without
+// credentials, and tests/agents/cluster-hold-wiring.test.js imports this file
+// for `holdCandidates`. So the Shopify read is a dynamic import inside main(),
+// which only ever runs on a direct run. Same reasoning that makes
+// lib/queue-apply.js take its Shopify functions by injection.
+import { fetchLiveArticleIds, isArticleLive } from '../../lib/live-articles.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -219,6 +226,26 @@ function pickMetaRewrites(blocked, hold, held, ctx) {
     // Skip posts that aren't on Shopify yet — the publish step would fail
     // because findPostMeta requires shopify_article_id to update the article.
     if (!match.shopify_article_id) continue;
+    // Skip posts whose live article is GONE. A consolidated-away post keeps its
+    // stale shopify_article_id in local meta, so the guard directly above lets
+    // it through; queue-autoapply then dismisses it at 15:07 and `activeSlugs()`
+    // — which deliberately treats `dismissed` as NOT active — lets this picker
+    // re-queue it at 07:31 the next morning. Measured on production, that ran
+    // every day from 2026-09-08 to 2026-09-18 on best-sls-free-toothpaste-2025
+    // (article 563289653418), paying for a content-refresher run and a Claude
+    // summary each time and putting a phantom row in the 5 AM digest.
+    //
+    // BEFORE the cap, per CLAUDE.md: filtering after the slice would let a dead
+    // article eat the single MAX_META slot and leave the run doing nothing.
+    //
+    // Fails open — a Shopify outage makes liveArticleIds null, which filters
+    // NOTHING rather than silently emptying the pick list.
+    if (!isArticleLive(ctx?.liveArticleIds, match.shopify_article_id)) {
+      if (Array.isArray(ctx?.deadArticles)) {
+        ctx.deadArticles.push({ slug: match.slug, articleId: String(match.shopify_article_id) });
+      }
+      continue;
+    }
     if (eligible.some((e) => e.slug === match.slug)) continue;
     eligible.push({
       slug: match.slug,
@@ -354,7 +381,22 @@ async function main() {
   const rankBanner = efficiencyBanner(ranking);
   if (rankBanner) console.log(`${rankBanner}\n`);
   const moves = [];
-  const ctx = { ranking, moves };
+
+  // Which live articles still EXIST. One bulk read for the whole run, shared by
+  // the pickers so they cannot disagree, and threaded through ctx exactly like
+  // `ranking` — the pickers are sync, so this has to be resolved here.
+  // Degrades rather than blocking: null means "could not tell", nothing is
+  // filtered, and the run SAYS so instead of looking like a clean one.
+  const deadArticles = [];
+  const { getBlogs, getArticles } = await import('../../lib/shopify.js');
+  const liveArticleIds = await fetchLiveArticleIds({ getBlogs, getArticles });
+  if (liveArticleIds) {
+    console.log(`  Live Shopify articles: ${liveArticleIds.size}`);
+  } else {
+    console.log('  ⚠ Could not read live Shopify articles — NOT filtering dead ones this run.');
+  }
+
+  const ctx = { ranking, moves, liveArticleIds, deadArticles };
 
   const blocked = activeSlugs();
   const flops = pickFlops(blocked, hold, held, ctx);
@@ -374,6 +416,20 @@ async function main() {
   const rankLines = renderEfficiencyLines(ranking, mergeMoves(moves));
   for (const line of rankLines) console.log(`    ${line}`);
 
+  // A skipped dead article must be COUNTED and NAMED, never silently dropped —
+  // same rule as the $0-cluster hold. A filter nobody can see becomes a mystery
+  // six weeks later, and this one is meant to be rare: a non-empty list means a
+  // post's local meta still carries a shopify_article_id for an article that no
+  // longer exists, which is worth someone knowing about.
+  const deadLines = deadArticles.length
+    ? [`Skipped ${deadArticles.length} post${deadArticles.length === 1 ? '' : 's'} whose live Shopify article is GONE (stale shopify_article_id in local meta):`,
+      ...deadArticles.map((d) => `  - ${d.slug} (article ${d.articleId})`)]
+    : [];
+  for (const line of deadLines) console.log(`    ${line}`);
+  if (!liveArticleIds) {
+    deadLines.push('⚠ Could not read live Shopify articles this run — dead-article filtering was OFF.');
+  }
+
   if (candidates.length === 0 && feedbackCount === 0) {
     console.log('\n  Nothing to do.');
     // A run that did nothing BECAUSE everything was held must still say so.
@@ -382,7 +438,7 @@ async function main() {
     if (held.length) {
       await notify({
         subject: `Performance Engine: 0 items queued, ${held.length} held ($0 cluster)`,
-        body: [...renderHoldLines(held), ...rankLines, ...renderDisagreementLines(hold)].join('\n'),
+        body: [...renderHoldLines(held), ...rankLines, ...deadLines, ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -442,6 +498,7 @@ async function main() {
       queued.length === 0 ? 'No new items this run.' : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
       ...renderHoldLines(held),
       ...rankLines,
+      ...deadLines,
       ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the policy working, not an error — it stays 'info' and deferred.
