@@ -320,3 +320,106 @@ test('blocked posts still reach the human — dropping the queue block kept that
   assert.ok(html.includes('A Hard-Blocked Post'), 'blocked posts still surface');
   assert.ok(html.includes('Action Required'), 'under its own Action Required heading');
 });
+
+// ── the A/B block must state the VERDICT, not who "wins" ─────────────────────
+//
+// Two defects, both visible in the 2026-09-18 email:
+//
+// 1. "3 active tests running" sat directly above FIVE rows that were
+//    recentConcluded — two different sets, no label between them, so the rows
+//    read as though they were the active tests.
+//
+// 2. Every concluded row rendered `Variant <winner> wins`, derived from
+//    `winner` alone. That collapses `flat` and `regressed` into one label,
+//    because decideOutcome sets winner='A' for both. Measured on the real
+//    production entries, EVERY concluded row was mislabelled:
+//
+//      fluoride-free-toothpaste   delta  0.0000  → "Variant A wins"
+//      mens-natural-soap          delta  0.0000  → "Variant A wins"
+//      natural-body-lotion        delta  0.0000  → "Variant A wins"
+//      sls-free-toothpaste        delta  0.0000  → "Variant A wins"
+//      unscented-lotion           delta +0.0009  → "Variant B wins" (GREEN)
+//      vegan-body-lotion          delta +0.0006  → "Variant B wins" (GREEN)
+//      best-non-toxic-body-lotion delta -0.0007  → "Variant A wins"
+//      coconut oil as deodorant   delta -0.0126  → "Variant A wins"
+//
+//    The last one is a REAL regression past the 0.5pp dead-band, rendered as a
+//    win. The two greens are noise inside the band, rendered as the rewrite
+//    working — which is exactly what `npm run ctr-audit` says is not true of
+//    any test on record.
+//
+// The dead-band is imported from lib/meta-ab-decision.js (classifyCtrDelta),
+// never re-declared here.
+const AB_ROOT_FIXTURES = [
+  // exactly zero — the four-of-five case
+  { slug: 'fluoride-free-toothpaste', status: 'concluded', winner: 'A', currentDelta: 0, concludedDate: '2026-08-09' },
+  // positive but inside the ±0.5pp noise floor
+  { slug: 'unscented-lotion', status: 'concluded', winner: 'B', currentDelta: 0.0009195065586043028, concludedDate: '2026-08-09' },
+  // a genuine regression, well past the band
+  { slug: 'coconut-oil-as-deodorant', status: 'concluded', winner: 'A', currentDelta: -0.0126, concludedDate: '2026-08-08' },
+  // an active test, to pin the active/concluded split
+  { slug: 'foaming-hand-soap', status: 'active', currentDelta: -0.002016848718497894 },
+];
+
+function abDigest() {
+  const root = mkdtempSync(join(tmpdir(), 'digest-ab-verdict-'));
+  mkdirSync(join(root, 'data', 'meta-tests'), { recursive: true });
+  for (const t of AB_ROOT_FIXTURES) {
+    writeFileSync(join(root, 'data', 'meta-tests', `${t.slug}.json`), JSON.stringify(t));
+  }
+  const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-09-17T22:00:00Z' }];
+  return buildDigestHtml(
+    '2026-09-17', entries, [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: root },
+  );
+}
+
+// Scoped to the A/B section: the digest's CSS legitimately carries a
+// `quick-wins` class for an unrelated block, so asserting over the whole
+// document would fail on a feature this change has nothing to do with.
+function abSection(html) {
+  const start = html.indexOf('Meta A/B Tests');
+  assert.ok(start > -1, 'the A/B section must render');
+  const end = html.indexOf('<div class="footer">', start);
+  return html.slice(start, end > -1 ? end : undefined);
+}
+
+test('the A/B block never calls a dead-band delta a win', () => {
+  const block = abSection(abDigest());
+  assert.ok(!/wins/i.test(block), 'the word "wins" must not appear in the A/B block');
+  assert.ok(!/Variant A/i.test(block), 'no bare "Variant A" verdict');
+  assert.ok(!/Variant B/i.test(block), 'no bare "Variant B" verdict');
+});
+
+test('a delta of exactly 0.00pp reads as no change', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('fluoride-free-toothpaste')) || html;
+  assert.match(row, /no change/i, 'a zero delta is no change, not a win');
+});
+
+test('a noise-level positive delta is not reported as an improvement', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('unscented-lotion')) || html;
+  assert.match(row, /no change/i, '+0.09pp is inside the ±0.5pp dead band');
+  assert.ok(!/improved/i.test(row), 'must not claim the rewrite improved anything');
+});
+
+test('a real regression is reported as a regression', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('coconut-oil-as-deodorant')) || html;
+  assert.match(row, /regressed/i, '-1.26pp is past the dead band and must say so');
+});
+
+test('the active count is labelled separately from the concluded rows', () => {
+  const html = abDigest();
+  assert.match(html, /1 active test\b/, 'active count still shown');
+  assert.match(html, /concluded/i, 'the concluded rows carry their own label');
+  // The active test must not appear as a concluded row.
+  const concludedHalf = html.slice(html.search(/concluded/i));
+  assert.ok(!concludedHalf.includes('foaming-hand-soap'), 'an ACTIVE test is never listed as concluded');
+});
+
+test('the noise floor is stated so a reader can judge the deltas', () => {
+  const html = abDigest();
+  assert.match(html, /0\.5pp/, 'the dead-band width is named in the block');
+});
