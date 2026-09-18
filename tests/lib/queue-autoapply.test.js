@@ -205,3 +205,105 @@ test('planRun on an empty or missing queue is a no-op', () => {
     assert.deepEqual([plan.apply.length, plan.dismiss.length, plan.skip.length], [0, 0, 0]);
   }
 });
+
+// ── which skips will NEVER clear on their own ───────────────────────────────
+//
+// `decide()` returns action 'skip' for several reasons and they are not alike.
+// Some clear themselves — a 30-day cooldown expires, an over-cap item is picked
+// up on the next run, an unresolvable product count resolves when Shopify comes
+// back. Others are PERMANENT: no automated run will ever change the verdict, the
+// item stays `pending` forever, and it was indistinguishable in the report from
+// an item that simply had to wait.
+//
+// The worst case is an item that TRANSITIONS: while gate_attempts < 3 it sits in
+// `gated[]`, which the digest describes as "stays pending for the repair loop".
+// At 3 it silently moves into `skipped[]` with no field change — from "the loop
+// owns this" to "nobody owns this", invisibly.
+//
+// Sean asked for exactly these to surface as a decision he makes. Measured on
+// production 2026-09-18, that is ONE item of four pending, which is what makes
+// it appropriate for the digest at all.
+const gapItem = (over = {}) => ({
+  slug: 'g', trigger: 'collection-gap', status: 'pending',
+  created_at: '2026-07-20T00:00:00Z', ...over,
+});
+
+test('an exhausted editor gate needs a human decision', () => {
+  const d = decide(pending({ autoapply: { gate_attempts: 3 } }), { clusters: CLUSTERS });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, 'editor-gate-exhausted');
+  assert.match(d.reason, /needs a human/);
+});
+
+test('a trigger outside the auto-apply policy needs a human decision', () => {
+  const d = decide(pending({ trigger: 'faq-expansion' }), { clusters: CLUSTERS });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, 'not-auto-appliable');
+});
+
+test('a collection-gap that passes both gates needs a human decision', () => {
+  const d = decide(gapItem(), {
+    clusters: CLUSTERS,
+    productCounts: new Map([['g', 4]]),
+  });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, 'create-page');
+});
+
+test('a health-claim refusal needs a human decision — it cannot regenerate here', () => {
+  const d = decide(
+    pending({ proposed_meta: { seo_title: 'Cures Eczema Fast' } }),
+    { clusters: CLUSTERS },
+  );
+  assert.equal(d.action, 'skip');
+  assert.equal(d.gate, 'health-claim');
+  assert.equal(d.decision, 'health-claim');
+});
+
+// ── the self-clearing skips must NOT be marked ──────────────────────────────
+//
+// Marking these would rebuild the to-do list the digest just stopped printing.
+
+test('a cooldown skip is NOT a decision — it clears itself in 30 days', () => {
+  const d = decide(pending(), { clusters: CLUSTERS, cooldown: new Set(['s']) });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, undefined);
+});
+
+test('an over-cap skip is NOT a decision — the next run picks it up', () => {
+  const items = Array.from({ length: 8 }, (_, i) => pending({ slug: `s${i}` }));
+  const { skip } = planRun(items, { clusters: CLUSTERS });
+  const capped = skip.filter((s) => /over the per-run cap/.test(s.reason));
+  assert.ok(capped.length > 0, 'the fixture must actually exceed the cap');
+  for (const s of capped) assert.equal(s.decision, undefined);
+});
+
+test('an unresolvable product count is NOT a decision — Shopify may come back', () => {
+  const d = decide(gapItem(), { clusters: CLUSTERS, productCounts: new Map() });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, undefined);
+});
+
+test('another producer\'s schema is NOT a decision — pdp-builder owns it', () => {
+  const d = decide({ type: 'pdp-product', slug: 'x', status: 'pending' }, { clusters: CLUSTERS });
+  assert.equal(d.action, 'skip');
+  assert.equal(d.decision, undefined, 'a pdp-builder artifact is not a queue decision');
+});
+
+test('a dismissal is a verdict, not a decision awaiting one', () => {
+  const d = decide(gapItem(), { clusters: CLUSTERS, productCounts: new Map([['g', 1]]) });
+  assert.equal(d.action, 'dismiss');
+  assert.equal(d.decision, undefined);
+});
+
+test('planRun collects the decisions it found', () => {
+  const items = [
+    pending({ slug: 'stuck', autoapply: { gate_attempts: 3 } }),
+    pending({ slug: 'fine' }),
+    pending({ slug: 'waiting' }),
+  ];
+  const { decisions } = planRun(items, { clusters: CLUSTERS, cooldown: new Set(['waiting']) });
+  assert.equal(decisions.length, 1, 'only the permanently-stuck item');
+  assert.equal(decisions[0].item.slug, 'stuck');
+  assert.equal(decisions[0].decision, 'editor-gate-exhausted');
+});

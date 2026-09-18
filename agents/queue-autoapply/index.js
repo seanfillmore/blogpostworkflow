@@ -54,7 +54,7 @@ import { execFileSync } from 'node:child_process';
 import { listQueueItems, writeItem } from '../performance-engine/lib/queue.js';
 import { getContentPath, ROOT as POSTS_ROOT } from '../../lib/posts.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
-import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN } from '../../lib/queue-autoapply.js';
+import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN, DECISION_LABELS } from '../../lib/queue-autoapply.js';
 import { applyItem, findPostMeta, matchProductsForGap } from '../../lib/queue-apply.js';
 import { revertPlanFor } from '../../lib/queue-revert.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
@@ -386,6 +386,25 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     health_gated: healthGated,
     failed,
     skipped: plan.skip.map(({ item, reason }) => ({ slug: item?.slug || null, trigger: item?.trigger || item?.type || null, reason })),
+    // The skips no automated run will ever clear — see DECISION_LABELS in
+    // lib/queue-autoapply.js. `skipped[]` above flattens these together with
+    // cooldowns and over-cap items, so "waiting" and "the robot gave up" read
+    // identically there; this array is the one the 5 AM digest reads.
+    //
+    // The digest reads THIS REPORT, never data/performance-queue/ — the queue is
+    // the fleet's workspace and reading it directly is what produced a daily
+    // to-do list of work a robot finished two hours later (PR #907).
+    needs_decision: plan.decisions.map(({ item, decision, reason }) => ({
+      slug: item?.slug || null,
+      title: item?.title || null,
+      trigger: item?.trigger || item?.type || null,
+      created_at: item?.created_at || null,
+      decision,
+      reason,
+      label: DECISION_LABELS[decision] || null,
+      gate_attempts: Number(item?.autoapply?.gate_attempts) || 0,
+      last_gate_reason: item?.autoapply?.last_gate_reason || null,
+    })),
   };
   mkdirSync(REPORT_DIR, { recursive: true });
   writeFileSync(join(REPORT_DIR, 'latest.json'), JSON.stringify(report, null, 2));

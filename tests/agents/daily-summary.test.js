@@ -423,3 +423,91 @@ test('the noise floor is stated so a reader can judge the deltas', () => {
   const html = abDigest();
   assert.match(html, /0\.5pp/, 'the dead-band width is named in the block');
 });
+
+// ── decisions the AUTOMATION has given up on ────────────────────────────────
+//
+// PR #907 removed the Optimization Queue block: the digest stopped reading
+// data/performance-queue/ because it was printing a to-do list of work
+// queue-autoapply finishes two hours later, every morning.
+//
+// This is the narrow case that survived. An item where the robot has
+// permanently abandoned the work is not routine — no run will ever clear it,
+// and before this it was indistinguishable in the report from an item merely
+// waiting out a 30-day cooldown.
+//
+// Sean: "That should surface as a decision that needs to be made by me."
+//
+// TWO PROPERTIES KEEP THIS FROM BECOMING THE OLD BLOCK AGAIN:
+//   1. It reads queue-autoapply's REPORT — what the robot says it gave up on —
+//      never the queue directory, which is the fleet's workspace.
+//   2. Only `needs_decision[]` renders. A cooldown, an over-cap item and an
+//      unresolvable product count are absent from that array by construction.
+//
+// The fixture is the real production item, 2026-09-18: one of four pending.
+const DECISION_ROOT = mkdtempSync(join(tmpdir(), 'digest-decisions-'));
+function withDecisions(needsDecision) {
+  const dir = join(DECISION_ROOT, String(Math.random()).slice(2));
+  mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+  writeFileSync(
+    join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+    JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: needsDecision }),
+  );
+  return dir;
+}
+
+const STUCK = [{
+  slug: 'seo-opp-best-organic-toothpaste-what-to-look-for-why-it-matters',
+  title: 'SEO opportunity: best organic toothpaste',
+  trigger: 'seo-opportunity',
+  created_at: '2026-08-10T14:10:08Z',
+  decision: 'editor-gate-exhausted',
+  reason: 'editor gate has failed 3 times — needs a human',
+  label: 'The editor gate failed 3 times — rewrite it, or write it off',
+  gate_attempts: 3,
+  last_gate_reason: 'the factual concerns blocker must be resolved: missing citations for USDA 95%/70% thresholds.',
+}];
+
+test('an item the automation gave up on reaches the human', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: withDecisions(STUCK) },
+  );
+  assert.ok(html.includes('SEO opportunity: best organic toothpaste'), 'the item is named');
+  assert.match(html, /rewrite it, or write it off/, 'the DECISION is stated, not just the item');
+  assert.match(html, /failed 3 times/i, 'why the automation stopped');
+  assert.ok(!/ready for review/i.test(html), 'never framed as a review queue');
+  assert.ok(!/Approve on the dashboard/i.test(html), 'never framed as an approval');
+});
+
+test('the block is silent when nothing is stuck', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: withDecisions([]) },
+  );
+  assert.ok(!/gave up|Needs your decision/i.test(html), 'no empty section');
+  assert.match(html, /Nothing moved the needle yesterday/, 'an empty queue is a quiet day');
+});
+
+test('a missing queue-autoapply report is silent, not an error', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.match(html, /Nothing moved the needle yesterday/);
+});
+
+test('the digest still never reads the performance queue directly', () => {
+  // The guard from PR #907, restated against this change: surfacing stuck items
+  // must come from the agent's report, never from the queue directory.
+  const src = readFileSync(
+    join(import.meta.dirname, '..', '..', 'agents', 'daily-summary', 'index.js'),
+    'utf8',
+  );
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*)/.test(l))
+    .join('\n');
+  assert.ok(!/performance-queue/.test(code), 'must not read data/performance-queue/');
+  assert.ok(!/ready for review/.test(code), 'the old framing must not return');
+});
