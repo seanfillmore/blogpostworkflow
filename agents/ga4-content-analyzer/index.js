@@ -14,6 +14,7 @@
  */
 
 import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'fs';
+import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
@@ -87,6 +88,14 @@ async function main() {
     console.error('  Run ga4-collector first to populate snapshot data.');
     process.exit(1);
   }
+
+  // Identified automated-traffic days are skipped before anything is aggregated.
+  // Without this the 2026-09-14 wave's 3,145 sessions on /pages/free-soap-giveaway
+  // — zero conversions — classify as the site's biggest "high-traffic,
+  // low-conversion" page, a phantom finding in the one report a human reads.
+  const botSplit = partitionSnapshotDays(snapshotFiles, { dataset: 'ga4' });
+  snapshotFiles = botSplit.kept;
+  console.log(`  ${exclusionLine(botSplit)}`);
 
   if (snapshotFiles.length === 0) {
     console.log('  No snapshot files found in the date range. Nothing to analyze.');
