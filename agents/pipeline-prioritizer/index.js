@@ -32,6 +32,7 @@ import { isInProductScope } from '../../lib/product-scope.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
 import { notify } from '../../lib/notify.js';
 import { appendAttribution, readAttribution, buildProductionRecords, dedupeAgainst, PRODUCTION_STATUSES } from '../../lib/attribution-log.js';
+import { isFlagged, duplicateEvidence, evidenceLine } from '../../lib/duplicate-flag.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -79,12 +80,23 @@ function collectSignals(today) {
   const out = [];
 
   // 1) surging unmapped queries → inject NEW
+  //
+  // A row carrying `possible_duplicate` (lib/ranked-coverage.js, via
+  // agents/gsc-opportunity) is still collected and still injected — it is
+  // DEMOTED below every clean idea in computePlan's `rank`, never dropped.
+  // Dropping it here would make this agent a second place that can silently
+  // delete a topic, and ordering is the only thing a ranker should do with a
+  // heuristic it cannot resolve. See lib/duplicate-flag.js.
   if (fresh('gsc-opportunity', 5, today)) {
     const g = readJson(reportPath('gsc-opportunity'));
     for (const u of (g?.unmapped || [])) {
       if ((u.impressions || 0) < cfg.signals.unmapped.minImpressions) continue;
+      const flagged = isFlagged(u);
       out.push({ type: 'unmapped', key: u.keyword, taskType: 'new', cluster: null,
-        targetSlug: null, strength: u.impressions, label: `unmapped ${u.impressions} impr`,
+        targetSlug: null, strength: u.impressions,
+        label: `unmapped ${u.impressions} impr${flagged ? ' · possible duplicate' : ''}`,
+        possibleDuplicate: flagged,
+        duplicateOf: flagged ? duplicateEvidence(u) : null,
         raw: { position: u.position } });
     }
   }
@@ -215,6 +227,11 @@ async function main() {
         impressions: it.impressions ?? null,
         task_type: it.source === 'refresh' ? 'refresh' : 'new',
         source: it.source, status_override: it.status_override || null,
+        // Persisted on the calendar item by this agent's own injection and by
+        // agents/gsc-opportunity's ideas-inbox push. Carried into the backlog so
+        // the demotion holds on every later run, not only the run that flagged it.
+        possible_duplicate: Boolean(it.possible_duplicate),
+        duplicate_of: it.ranked_match ?? it.duplicate_of ?? null,
       });
     }
   }
@@ -224,6 +241,11 @@ async function main() {
   const prevState = readJson(SIGNAL_STATE_PATH) || {};
   const { active, state } = applyHysteresis(rawSignals, prevState, today, cfg);
   console.log(`  Signals: ${rawSignals.length} raw → ${active.length} active (after hysteresis)`);
+  const flaggedSignals = active.filter((s) => s.possibleDuplicate);
+  if (flaggedSignals.length) {
+    console.log(`  ${flaggedSignals.length} signal(s) carry possible_duplicate — DEMOTED below every clean idea, never dropped:`);
+    for (const s of flaggedSignals) console.log(`    "${s.key}" — ${evidenceLine(s.duplicateOf)}`);
+  }
   console.log(`  Backlog ideas: ${backlog.length} | buffer ready: ${bufferReady}/${cfg.buffer.target}`);
 
   const plan = computePlan({
@@ -238,10 +260,16 @@ async function main() {
     backlog_depth: backlog.length + plan.injections.length,
     buffer_ready: bufferReady,
     buffer_target: cfg.buffer.target,
-    injections: plan.injections.map((i) => ({ slug: i.slug, keyword: i.keyword, source: i.source, priority_score: i.priority_score, why: i.priority_provenance })),
+    injections: plan.injections.map((i) => ({ slug: i.slug, keyword: i.keyword, source: i.source, priority_score: i.priority_score, why: i.priority_provenance, possible_duplicate: Boolean(i.possible_duplicate) })),
     promotions: plan.promotions,
     top_backlog: [...plan.scored].sort((a, b) => b.priority_score - a.priority_score).slice(0, 15)
-      .map((i) => ({ slug: i.slug, keyword: i.keyword, priority_score: i.priority_score, why: i.priority_provenance })),
+      .map((i) => ({ slug: i.slug, keyword: i.keyword, priority_score: i.priority_score, why: i.priority_provenance, possible_duplicate: Boolean(i.possible_duplicate) })),
+    // A demotion nobody can see is a demotion nobody can audit. Named here and in
+    // the markdown report so a flagged idea that never promotes is explicable
+    // rather than a mystery six weeks later.
+    demoted_possible_duplicates: plan.scored
+      .filter((i) => i.possible_duplicate)
+      .map((i) => ({ slug: i.slug, keyword: i.keyword, priority_score: i.priority_score, evidence: evidenceLine(i.duplicate_of) })),
     suggestions: plan.suggestions,
     alerts: plan.alerts,
   };
@@ -270,6 +298,10 @@ async function main() {
       kd: null, volume: null, impressions: idea.impressions ?? null,
       source: idea.source, topical_hub: idea.cluster || null,
       priority_score: idea.priority_score, status_override: null,
+      // `ranked_match` is the field name agents/gsc-opportunity already stamps on
+      // an ideas-inbox item, so the calendar carries ONE spelling of this evidence.
+      possible_duplicate: Boolean(idea.possible_duplicate),
+      ranked_match: idea.duplicate_of ?? null,
     });
   }
 
@@ -355,6 +387,13 @@ function buildReport(p) {
   L.push(`**Backlog depth:** ${p.backlog_depth} | **Buffer:** ${p.buffer_ready}/${p.buffer_target}`, '');
   if (p.promotions.length) { L.push('## Promoted (written next)'); for (const x of p.promotions) L.push(`- \`${x.slug}\` → ${x.publish_date.slice(0,10)} (${x.reason})`); L.push(''); }
   if (p.injections.length) { L.push('## Injected ideas'); for (const x of p.injections) L.push(`- \`${x.slug}\` — ${x.why}`); L.push(''); }
+  if (p.demoted_possible_duplicates?.length) {
+    L.push('## Demoted — possible duplicates (still queued, ranked last)');
+    L.push('These are NOT dropped. An existing page already ranks for a query inside each one, so they sort below every clean idea inside the same cap.');
+    L.push('');
+    for (const x of p.demoted_possible_duplicates) L.push(`- \`${x.slug}\` — ${x.evidence}`);
+    L.push('');
+  }
   if (p.suggestions.length) { L.push('## Suggested (weak signals — confirm)'); for (const x of p.suggestions) L.push(`- ${x.key} (${x.type}, ${x.reason})`); L.push(''); }
   if (p.alerts.length) { L.push('## Alerts'); for (const a of p.alerts) L.push(`- ${a}`); }
   return L.join('\n');
