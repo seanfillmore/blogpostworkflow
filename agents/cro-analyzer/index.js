@@ -15,6 +15,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { notify } from '../../lib/notify.js';
 import { compactJson, headArray, fitSections } from '../../lib/prompt-budget.js';
+import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -30,11 +31,22 @@ const REPORTS_DIR  = join(ROOT, 'data', 'reports', 'cro');
 // tokens, so the useful ceiling is nowhere near the API's.
 const PROMPT_CHAR_CAP = 600_000;
 
-function loadRecentSnapshots(dir, days = 7) {
+// `dataset` opts a feed into the identified-bot-day exclusions. It is passed for
+// GA4 only: this agent hands its snapshots to an LLM, and a day carrying 3,380
+// sessions at a 5.7% bounce rate (the 2026-09-14 wave) against a ~250-session
+// norm does not produce a slightly-off analysis, it produces a confident one
+// about traffic that never existed.
+function loadRecentSnapshots(dir, days = 7, { dataset = null } = {}) {
   if (!existsSync(dir)) return [];
-  return readdirSync(dir)
+  let files = readdirSync(dir)
     .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f))
-    .sort().reverse()
+    .sort().reverse();
+  if (dataset) {
+    const split = partitionSnapshotDays(files, { dataset });
+    files = split.kept;
+    if (split.excluded.length || !split.available) console.log(`  ${exclusionLine(split)}`);
+  }
+  return files
     .slice(0, days)
     .map(f => JSON.parse(readFileSync(join(dir, f), 'utf8')));
 }
@@ -60,7 +72,7 @@ async function main() {
   const claritySnaps  = loadRecentSnapshots(CLARITY_DIR);
   const shopifySnaps  = loadRecentSnapshots(SHOPIFY_DIR);
   const gscSnaps      = loadRecentSnapshots(GSC_DIR);
-  const ga4Snaps      = loadRecentSnapshots(GA4_DIR);
+  const ga4Snaps      = loadRecentSnapshots(GA4_DIR, 7, { dataset: 'ga4' });
   const adsSnaps      = loadRecentSnapshots(GOOGLE_ADS_DIR);
 
   console.log(`  Clarity snapshots:  ${claritySnaps.length}`);

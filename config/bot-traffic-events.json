@@ -1,0 +1,35 @@
+{
+  "_note": "IDENTIFIED automated-traffic events, declared with their evidence so every analysis excludes the SAME periods. Read only through lib/bot-traffic.js. This is a HAND-REVIEWED record, never a heuristic: the site's real paid-giveaway campaign (2026-08-19 -> 08-29) ran at 3.5x-15x the median day, so any rule keyed on volume alone would discard a real campaign. An event belongs here only when something other than its size identifies it.",
+  "_ga4_timezone": "America/Los_Angeles — a GA4 snapshot day is a PACIFIC day, which is why the 2026-09-15 UTC wave lands on the 2026-09-14 GA4 file. Convert before adding ga4_days.",
+  "_fail_open": "A missing, unreadable or empty file excludes NOTHING and every consumer says so. Losing real data to a bad exclusion is worse than leaving a known bot day in.",
+  "events": [
+    {
+      "id": "giveaway-entry-bot-wave-2026-09-15",
+      "window_utc": { "start": "2026-09-15T03:59:00Z", "end": "2026-09-15T06:49:00Z" },
+      "ga4_days": ["2026-09-14"],
+      "affects": ["ga4", "rum"],
+      "what": "The automated entry wave that took 40% of the giveaway entrant pool. 2,948 entries were disqualified under Official Rules §5.",
+      "evidence": [
+        "5,920 of 5,930 entry requests on ONE user-agent string across 2,792 distinct IPs, against 70 distinct agents over the preceding five days.",
+        "GA4 2026-09-14: 3,380 sessions against a 123-session 90-day median (27.5x), of which 3,150 are (direct)/(none) and 3,145 landed on /pages/free-soap-giveaway.",
+        "96% desktop against a 57% normal median, and a 5.7% bounce rate against a 26.8% median — no real cohort looks like that.",
+        "1 conversion on 3,380 sessions."
+      ],
+      "not_excluded_because_of_size": "The size is corroboration, not the identifier. The identifier is the single-UA/2,792-IP fan-out in the entry logs plus the 96%-desktop, 5.7%-bounce, single-landing-page signature."
+    },
+    {
+      "id": "product-page-sweep-2026-09-17",
+      "window_utc": { "start": "2026-09-17T16:00:00Z", "end": "2026-09-17T18:00:00Z" },
+      "ga4_days": [],
+      "affects": ["rum"],
+      "what": "A sweep of every product page and the top blog post, from a residential-proxy pool.",
+      "evidence": [
+        "339 distinct IPs sending EXACTLY 2 requests each (13 sent 1), all sharing one Chrome/145 macOS user agent.",
+        "686 RUM beacons in a single UTC hour from one viewport (1366px), against a 19-beacon site-wide median hour.",
+        "TTFB p50 2,455ms against 500-850ms for real visitors."
+      ],
+      "ga4_days_empty_because": "GA4 snapshots only run through 2026-09-16 at the time this was written, and nothing in the 90-day GA4 series crossed 3x the median on 09-17. Add a day here only if a snapshot later shows it.",
+      "not_excluded_because_of_size": "1,000 beacons is an ordinary busy day here. The identifier is the exactly-2-per-IP uniformity across 339 IPs."
+    }
+  ]
+}
