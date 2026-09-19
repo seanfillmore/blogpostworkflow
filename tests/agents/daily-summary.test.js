@@ -511,3 +511,83 @@ test('the digest still never reads the performance queue directly', () => {
   assert.ok(!/performance-queue/.test(code), 'must not read data/performance-queue/');
   assert.ok(!/ready for review/.test(code), 'the old framing must not return');
 });
+
+// ── the indexing-fixer is the SECOND producer of that block ─────────────────
+//
+// Its submission-count escalation is the same class of finding as an exhausted
+// editor gate: once a post crosses two DELIVERED Indexing API submissions the
+// fixer stamps indexing_blocked and never submits that URL again, so no further
+// run can change the verdict.
+//
+// It reached a cron log and nothing else. Measured on production 2026-09-19:
+// five posts, re-stamped every morning since 2026-08-30, named in no digest
+// ever — and a notify body alone would not have fixed it, because previewBody()
+// cuts an entry at eight lines and that run's body carried 14 [tier1] lines
+// before anything else.
+function withIndexingDecisions(needsDecision, queueDecisions = []) {
+  const dir = join(DECISION_ROOT, String(Math.random()).slice(2));
+  mkdirSync(join(dir, 'data', 'reports', 'indexing-fixer'), { recursive: true });
+  writeFileSync(
+    join(dir, 'data', 'reports', 'indexing-fixer', 'latest.json'),
+    JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: needsDecision }),
+  );
+  if (queueDecisions.length) {
+    mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+    writeFileSync(
+      join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+      JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: queueDecisions }),
+    );
+  }
+  return dir;
+}
+
+const ESCALATED = [{
+  slug: 'healthiest-toothpaste',
+  title: 'The Healthiest Toothpaste',
+  trigger: 'indexing: crawled_not_indexed',
+  created_at: '2026-08-30T03:31:00Z',
+  decision: 'indexing-api-exhausted',
+  reason: '3 prior Indexing API submissions, still not indexed',
+  label: 'Google has ignored repeated Indexing API submissions — investigate the page, or accept it stays unindexed',
+  last_gate_reason: '3 Indexing API submissions were delivered to Google and the page is still not indexed. Nothing in this pipeline will submit it again.',
+}];
+
+const digestFor = (root) => buildDigestHtml(
+  '2026-09-19', [], [], [], null, null, null, null,
+  'https://dash', [], null, null, { dataRoot: root },
+);
+
+test('an indexing escalation reaches the human', () => {
+  const html = digestFor(withIndexingDecisions(ESCALATED));
+  assert.ok(html.includes('The Healthiest Toothpaste'), 'the page is named');
+  assert.match(html, /investigate the page, or accept it stays unindexed/, 'the DECISION is stated');
+  assert.match(html, /still not indexed/i, 'why the automation stopped');
+  assert.match(html, /Needs your decision/i);
+});
+
+test('both producers render through ONE section, not two', () => {
+  const html = digestFor(withIndexingDecisions(ESCALATED, STUCK));
+  assert.equal((html.match(/Needs your decision/g) || []).length, 1, 'one block, not a parallel one');
+  assert.match(html, /2 items the automation gave up on/);
+  assert.ok(html.includes('The Healthiest Toothpaste'));
+  assert.ok(html.includes('SEO opportunity: best organic toothpaste'));
+});
+
+test('an escalation still renders when the queue report is absent', () => {
+  // The two reports are independent; one missing must not hide the other.
+  const html = digestFor(withIndexingDecisions(ESCALATED));
+  assert.ok(html.includes('The Healthiest Toothpaste'));
+});
+
+test('an unreadable report hides neither the other producer nor the digest', () => {
+  const dir = withIndexingDecisions(ESCALATED);
+  mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+  writeFileSync(join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'), '{ not json');
+  const html = digestFor(dir);
+  assert.ok(html.includes('The Healthiest Toothpaste'), 'a broken sibling report must not swallow this one');
+});
+
+test('an empty indexing escalation set is silent', () => {
+  const html = digestFor(withIndexingDecisions([]));
+  assert.ok(!/Needs your decision/i.test(html), 'no empty section');
+});

@@ -13,9 +13,25 @@
  *     Posts flagged verdict.action === 'submit_indexing_api' are submitted
  *     directly to the Google Indexing API. No human approval step.
  *
- *   Tier 3 — Manual investigation flag
- *     Posts with >= 2 prior Tier 2 submissions that remain not-indexed at
- *     30+ days get indexing_blocked: true on their post JSON.
+ *   Tier 3 — Manual investigation flag. TWO INDEPENDENT PATHS, counted and
+ *   reported separately because the remedies are different:
+ *
+ *     (a) escalated — submission-count escalation. A post with >= 2 prior
+ *         DELIVERED Indexing API submissions (lib/indexing-escalation.js) that
+ *         is STILL not indexed gets indexing_blocked: true on its post JSON.
+ *         There is no age condition: the trigger is the delivered-submission
+ *         count alone. (This docstring claimed an additional 30-day age
+ *         condition until 2026-09-19; no such check has ever existed in the
+ *         code, and adding one would be a behaviour change.)
+ *
+ *     (b) critical — a true technical misconfiguration (noindex tag, robots.txt
+ *         block, canonical conflict, page fetch failure). Neither resubmission
+ *         nor a refresh can fix these, so they go straight to the manual flag.
+ *
+ *     Both land in the run's notify() subject and body. They were NOT both
+ *     surfaced until 2026-09-19: the escalations were printed to a cron log and
+ *     nowhere else, so five posts were re-stamped indexing_blocked every morning
+ *     and never once appeared in the 5 AM digest.
  *
  * crawled_not_indexed — Content quality path (separate from the tiers above)
  *     Google crawled the page but declined to index it, signalling a content
@@ -35,10 +51,6 @@
  *     Indexing API submission cost nothing but a Google quota, and a hold is a
  *     spend pause, never a deindexing. Held pages stay live and stay submitted.
  *
- * True critical verdicts (noindex tag, robots.txt block, canonical conflict,
- * page fetch failure) go straight to manual flag — these are technical
- * misconfigurations that neither resubmission nor refresh can fix.
- *
  * Cron: daily 3:30 AM PT (after indexing-checker at 3:00 AM PT).
  *
  * Usage:
@@ -54,7 +66,9 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { resubmitSitemap, submitUrlForIndexing, getQuotaStatus } from '../../lib/gsc-indexing.js';
-import { isInfraError, countDeliveredSubmissions } from '../../lib/indexing-escalation.js';
+import {
+  isInfraError, countDeliveredSubmissions, escalationDecisions,
+} from '../../lib/indexing-escalation.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
@@ -63,6 +77,11 @@ import { getMetaPath, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing');
+// This agent's OWN report — the checker owns REPORTS_DIR above. The digest reads
+// `needs_decision[]` out of this file rather than scanning post metadata, the
+// same rule PR #911 established: what a human sees is what the robot SAYS it
+// gave up on, never the fleet's working state.
+const FIXER_REPORTS_DIR = join(ROOT, 'data', 'reports', 'indexing-fixer');
 const QUEUE_DIR = join(ROOT, 'data', 'performance-queue');
 const QUEUE_FILE = join(QUEUE_DIR, 'indexing-submissions.json');
 
@@ -149,6 +168,82 @@ export function holdContentQuality(results, hold, { includeHeld = false, getMeta
       url: r?.url,
     }),
   });
+}
+
+/**
+ * Compose the run's digest subject, body and severity.
+ *
+ * Exported for test, and pure on purpose: the notify() call it feeds sits inside
+ * processNormalRun, which reads a report off disk and talks to the Indexing API,
+ * so the only way to pin what the 5 AM digest actually SAYS is to make the
+ * composition itself a function with no I/O.
+ *
+ * The severity rule is the fleet rule (CLAUDE.md): `status: 'error'` means the
+ * AGENT BROKE, never "the agent found something bad". `escalated` is deliberately
+ * NOT in the ternary — a page Google declines to index is a finding a human
+ * should read, not a report that this agent is broken. `critical` and
+ * `tierTwoFailed` keep the behaviour they already had; changing either is a
+ * separate decision.
+ *
+ * @returns {{parts: string[], subject: string, body: string, status: string}}
+ *          `parts` empty means the run had nothing to report and no notification
+ *          should be sent.
+ */
+export function buildRunNotification({
+  infraFailure = null,
+  tierOne = [],
+  tierTwoSucceeded = [],
+  tierTwoFailed = [],
+  contentQuality = [],
+  heldRefreshes = [],
+  escalated = [],
+  critical = [],
+  holdLines = [],
+  disagreementLines = [],
+} = {}) {
+  const parts = [];
+  if (infraFailure) parts.push('⚠ Indexing API infra failure — submissions aborted (re-auth/quota check needed)');
+  if (tierOne.length) parts.push(`Sitemap pinged (${tierOne.length} URLs)`);
+  if (tierTwoSucceeded.length || tierTwoFailed.length) {
+    const sub = [];
+    if (tierTwoSucceeded.length) sub.push(`${tierTwoSucceeded.length} submitted to Indexing API`);
+    if (tierTwoFailed.length) sub.push(`${tierTwoFailed.length} Indexing API submissions FAILED`);
+    parts.push(sub.join(', '));
+  }
+  if (contentQuality.length) parts.push(`${contentQuality.length} content-quality refresh triggered`);
+  // Named in the subject so a held cluster is visible in the 5 AM digest rather
+  // than showing up as a run that mysteriously stopped doing anything.
+  if (heldRefreshes.length) parts.push(`${heldRefreshes.length} held ($0 cluster)`);
+  // Worded so it cannot be read as the `critical` count beside it: these are two
+  // different findings with two different remedies.
+  if (escalated.length) parts.push(`${escalated.length} escalated (repeat submissions, still not indexed)`);
+  if (critical.length) parts.push(`${critical.length} flagged for manual fix`);
+
+  // ORDER IS LOAD-BEARING, and this is the second half of the visibility fix.
+  // agents/daily-summary renders an entry body through previewBody(), which cuts
+  // at EIGHT LINES. The run that hid the escalations carried 14 [tier1] lines
+  // and 13 [refresh] lines, so anything appended after them was truncated away
+  // before a human could see it — moving the escalated set into the body alone
+  // would have changed the subject and nothing else. What no further run will
+  // ever clear goes first; the routine, self-clearing work goes last.
+  const body = [
+    ...(infraFailure ? [`[INFRA] Indexing API failure: ${String(infraFailure).slice(0, 160)} — Tier 2 aborted; remaining posts will retry next run.`] : []),
+    ...escalated.map((r) => `[escalated] ${r.slug}: ${r.prior_indexing_submissions} prior Indexing API submissions, still not indexed (state: ${r.state})`),
+    ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict?.action}`),
+    ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${String(r.error).slice(0, 120)}`),
+    ...holdLines,
+    ...disagreementLines,
+    ...tierOne.map((r) => `[tier1] ${r.slug}: sitemap pinged (${r.age_days}d old, ${r.state})`),
+    ...tierTwoSucceeded.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
+    ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
+  ].join('\n');
+
+  return {
+    parts,
+    subject: `Indexing Fixer: ${parts.join(', ')}`,
+    body,
+    status: (critical.length > 0 || tierTwoFailed.length > 0) ? 'error' : 'info',
+  };
 }
 
 function stampPostMeta(slug, patch) {
@@ -255,7 +350,13 @@ async function processNormalRun() {
   console.log(`  Tier 2 (indexing API — auto):        ${tierTwo.length}`);
   console.log(`  Content quality (auto-refresh):      ${contentQuality.length}`);
   if (heldRefreshes.length) console.log(`  Content quality (HELD, $0 cluster):  ${heldRefreshes.length}`);
-  console.log(`  Tier 3 (manual investigation):       ${critical.length}\n`);
+  // Tier 3 has two paths and this block could only ever see one of them: the
+  // submission-count escalations are decided inside the Tier 2 loop below, so
+  // they are counted and printed there. This line used to be labelled "manual
+  // investigation" and printed 0 on mornings when five escalations fired six
+  // lines further down.
+  console.log(`  Tier 3a (misconfiguration — manual):  ${critical.length}`);
+  console.log(`  Tier 3b (repeat submissions):         counted below\n`);
 
   for (const h of renderHoldLines(heldRefreshes)) console.log(`  ${h}`);
   if (heldRefreshes.length) console.log('');
@@ -290,6 +391,10 @@ async function processNormalRun() {
   // ── Tier 2: auto-submit to Indexing API ───────────────────────────────────
   const tierTwoSucceeded = [];
   const tierTwoFailed = [];
+  // Tier 3b. Collected rather than only logged: every one of these stamps
+  // indexing_blocked on a live post, and until 2026-09-19 none of them reached
+  // the digest — five posts were re-stamped every morning in silence.
+  const escalated = [];
   let infraFailure = null; // set if an account-wide auth/quota/network error hits
   for (const r of tierTwo) {
     // An account-wide infra failure (auth/scope/quota/network) means every
@@ -306,7 +411,15 @@ async function processNormalRun() {
     // Errored submissions (e.g. an auth outage) never reached the index pipeline,
     // so they must not push a post toward a permanent block.
     if (priorIndexing >= 2) {
-      console.log(`  Tier 3 flag: ${r.slug} — ${priorIndexing} prior Indexing API submissions, still not indexed`);
+      console.log(`  Tier 3b escalation: ${r.slug} — ${priorIndexing} prior Indexing API submissions, still not indexed`);
+      escalated.push({
+        slug: r.slug,
+        title: r.title,
+        url: r.url,
+        state: r.state,
+        age_days: r.age_days,
+        prior_indexing_submissions: priorIndexing,
+      });
       if (!DRY_RUN) {
         stampPostMeta(r.slug, {
           indexing_blocked: true,
@@ -376,6 +489,13 @@ async function processNormalRun() {
     }
   }
 
+  // The count the summary block above could not know yet.
+  console.log(`\n  Tier 3b (repeat submissions — escalated): ${escalated.length}`);
+  for (const e of escalated) {
+    console.log(`    [escalated] ${e.slug}: ${e.prior_indexing_submissions} prior Indexing API submissions, still not indexed (state: ${e.state})`);
+  }
+  console.log('');
+
   // ── Content quality: auto-refresh via refresh-runner ──────────────────────
   // Google crawled but declined to index — content quality is the fix, not
   // resubmission. Trigger refresh-runner if not refreshed in the last 30 days.
@@ -402,10 +522,10 @@ async function processNormalRun() {
     }
   }
 
-  // ── Tier 3: true technical misconfigurations ───────────────────────────────
+  // ── Tier 3a: true technical misconfigurations ──────────────────────────────
   for (const r of critical) {
     const reason = handleCriticalVerdict(r);
-    console.log(`  Tier 3 critical: ${r.slug} — ${r.verdict.action}`);
+    console.log(`  Tier 3a critical: ${r.slug} — ${r.verdict.action}`);
     console.log(`    ${reason}`);
     if (!DRY_RUN) {
       stampPostMeta(r.slug, {
@@ -416,38 +536,58 @@ async function processNormalRun() {
     }
   }
 
-  // ── Daily digest notification ────────────────────────────────────────────
-  const summary = [];
-  if (infraFailure) summary.push(`⚠ Indexing API infra failure — submissions aborted (re-auth/quota check needed)`);
-  if (tierOne.length) summary.push(`Sitemap pinged (${tierOne.length} URLs)`);
-  if (tierTwoSucceeded.length || tierTwoFailed.length) {
-    const parts = [];
-    if (tierTwoSucceeded.length) parts.push(`${tierTwoSucceeded.length} submitted to Indexing API`);
-    if (tierTwoFailed.length) parts.push(`${tierTwoFailed.length} Indexing API submissions FAILED`);
-    summary.push(parts.join(', '));
+  // ── The run's own report ─────────────────────────────────────────────────
+  // `needs_decision[]` is what agents/daily-summary renders in "Needs your
+  // decision" — the same field, the same row shape and the same renderer as
+  // queue-autoapply's (PR #911), because it is the same class of finding: a skip
+  // no automated run will ever clear. Written even when empty, so a downstream
+  // staleness check can tell "ran, found nothing" from "did not run".
+  //
+  // Written on a DRY run too: it records what the run decided, and a dry run
+  // decides exactly the same thing. Nothing here touches a post or Shopify.
+  const needsDecision = escalationDecisions(escalated, loadPostMeta);
+  try {
+    mkdirSync(FIXER_REPORTS_DIR, { recursive: true });
+    writeFileSync(join(FIXER_REPORTS_DIR, 'latest.json'), JSON.stringify({
+      generated_at: new Date().toISOString(),
+      dry_run: DRY_RUN,
+      tier_one: tierOne.length,
+      tier_two_submitted: tierTwoSucceeded.length,
+      tier_two_failed: tierTwoFailed.length,
+      content_quality_refreshed: contentQuality.length,
+      content_quality_held: heldRefreshes.length,
+      escalated: escalated.length,
+      critical: critical.length,
+      needs_decision: needsDecision,
+    }, null, 2));
+  } catch (err) {
+    // Best-effort: failing to write a report must never take down a run that
+    // already did its work.
+    console.error(`  ⚠ could not write indexing-fixer report: ${err.message}`);
   }
-  if (contentQuality.length) summary.push(`${contentQuality.length} content-quality refresh triggered`);
-  // Named in the subject so a held cluster is visible in the 5 AM digest rather
-  // than showing up as a run that mysteriously stopped doing anything.
-  if (heldRefreshes.length) summary.push(`${heldRefreshes.length} held ($0 cluster)`);
-  if (critical.length) summary.push(`${critical.length} flagged for manual fix`);
 
-  if (summary.length > 0) {
+  // ── Daily digest notification ────────────────────────────────────────────
+  // Composition lives in the pure buildRunNotification so it can be tested; a
+  // hold and an escalation are both routine housekeeping working as designed, so
+  // neither moves this off 'info' — only a real failure does. Deferred either way.
+  const notification = buildRunNotification({
+    infraFailure,
+    tierOne,
+    tierTwoSucceeded,
+    tierTwoFailed,
+    contentQuality,
+    heldRefreshes,
+    escalated,
+    critical,
+    holdLines: renderHoldLines(heldRefreshes),
+    disagreementLines: renderDisagreementLines(hold),
+  });
+
+  if (notification.parts.length > 0) {
     await notify({
-      subject: `Indexing Fixer: ${summary.join(', ')}`,
-      body: [
-        ...(infraFailure ? [`[INFRA] Indexing API failure: ${String(infraFailure).slice(0, 160)} — Tier 2 aborted; remaining posts will retry next run.`] : []),
-        ...tierOne.map((r) => `[tier1] ${r.slug}: sitemap pinged (${r.age_days}d old, ${r.state})`),
-        ...tierTwoSucceeded.map((r) => `[tier2] ${r.slug}: submitted to Indexing API (${r.age_days}d old)`),
-        ...tierTwoFailed.map((r) => `[tier2-FAIL] ${r.slug}: ${r.error.slice(0, 120)}`),
-        ...contentQuality.map((r) => `[refresh] ${r.slug}: refresh-runner triggered (crawled_not_indexed)`),
-        ...renderHoldLines(heldRefreshes),
-        ...renderDisagreementLines(hold),
-        ...critical.map((r) => `[critical] ${r.slug}: ${r.verdict.action}`),
-      ].join('\n'),
-      // A hold is routine housekeeping working as designed, so it never moves
-      // this off 'info' — only a real failure does. Deferred either way.
-      status: (critical.length > 0 || tierTwoFailed.length > 0) ? 'error' : 'info',
+      subject: notification.subject,
+      body: notification.body,
+      status: notification.status,
       category: 'seo',
     }).catch(() => {});
   }

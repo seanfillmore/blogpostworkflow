@@ -165,6 +165,12 @@ data/reports/long-title-remediation/
 # behind for someone's `git add .`
 data/reports/queue-autoapply/
 
+# Indexing-fixer run reports — same reasoning and the same `needs_decision[]`
+# contract as queue-autoapply above. Note the neighbouring
+# data/reports/indexing/latest.json (the CHECKER's report) is a separate,
+# already-ignored file; this directory is the FIXER's own.
+data/reports/indexing-fixer/
+
 # Agent `latest.json` run reports — server-authoritative, and TRACKING THEM IS AN
 # ACTIVE HAZARD, not just untidiness. These 13 were tracked until 2026-09-06.
 # Every one is rewritten on the production box; a tracked copy means a deploy can
