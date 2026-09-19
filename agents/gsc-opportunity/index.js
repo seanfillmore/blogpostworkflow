@@ -22,21 +22,33 @@
  * Retired in PR #912.
  *
  * `lib/ranked-coverage.js` adds the second question — does an existing page
- * already RANK for this? — in two tiers, and only one of them acts:
+ * already RANK for this? — and the third — does this look like something
+ * somebody has already DECIDED to write? Three tiers, and only one of them acts:
  *
  *   AUTO-COVERED        the candidate IS a ranked query for another page above
  *                       both floors. Treated as mapped, silently. Measured
  *                       false-positive rate on the live calendar: zero.
- *   POSSIBLE DUPLICATE  a ranked query is a substring of the candidate. The
- *                       row is KEPT, stamped with its evidence, demoted below
- *                       the clean rows, and reported in its own section — two
- *                       measured false positives make this a decision a human
- *                       takes, not one this agent takes. See that module's
- *                       header for both, and for why no lexical rule separates
- *                       them from the tattoo case.
+ *   POSSIBLE DUPLICATE  (a) a ranked query is a substring of the candidate, or
+ *                       (b) the candidate is a near-duplicate of a
+ *                       `target_keyword` authored on an existing brief or post.
+ *                       The row is KEPT, stamped with its evidence and WHICH
+ *                       TIER fired, demoted below the clean rows, and reported
+ *                       in its own section — the measured false positives in
+ *                       both tiers make this a decision a human takes, not one
+ *                       this agent takes.
  *
- * Neither tier may drop a candidate, and a missing/empty/unreadable snapshot set
- * degrades to the authored-keyword behaviour this agent has always had.
+ * Tier (b) exists because the ranked tiers leave a measured hole:
+ * "best soap to clean new tattoo" differs from the tattoo flagship's authored
+ * keyword "best soap to use on new tattoo" by ONE WORD IN THE MIDDLE, so no
+ * substring rule in either direction sees it. See that module's header for the
+ * threshold table and for why no lexical rule separates the false positives from
+ * the tattoo case.
+ *
+ * No tier may drop a candidate, and each degrades independently: no GSC
+ * snapshots switches (a) off, no authored keywords switches (b) off, and either
+ * way the run says so rather than looking like a clean sweep. A day with zero
+ * CLEAN candidates is an honest answer on a 206-page corpus — the report, the
+ * subject line and `latest.json` all distinguish it from a check that never ran.
  *
  * Outputs:
  *   data/reports/gsc-opportunity/YYYY-MM-DD.md — human-readable report
@@ -65,14 +77,25 @@ import { isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 import {
   aggregateRankedQueries,
   buildRankedIndex,
+  buildAuthoredIndex,
   classifyRankedCoverage,
+  describeMatch,
   renderRankedCoverageLines,
+  slugifyKeyword,
   AUTO_COVERED,
   POSSIBLE_DUPLICATE,
   RANKED_WINDOW_DAYS,
   RANKED_POS_MAX,
   RANKED_MIN_IMPRESSIONS,
+  SEMANTIC_THRESHOLD,
+  TIER_AUTHORED_SEMANTIC,
 } from '../../lib/ranked-coverage.js';
+
+// Re-exported rather than re-declared: the self-match test compares a
+// candidate's slug against an authored entry's keyword slugified the same way,
+// so both sides have to be ONE spelling. See the note on `slugifyKeyword` in
+// lib/ranked-coverage.js.
+export { slugifyKeyword };
 
 const LOW_CTR_MIN_IMPRESSIONS = 100;
 const LOW_CTR_MAX_CTR = 0.02;
@@ -97,24 +120,41 @@ function isRejected(keyword, rejections) {
   return sharedIsRejected(keyword, rejections);
 }
 
-function loadCoveredKeywords() {
-  // Build a set of keywords already targeted by an existing brief or post.
-  const keywords = new Set();
-  if (existsSync(BRIEFS_DIR)) {
-    for (const f of readdirSync(BRIEFS_DIR).filter((x) => x.endsWith('.json'))) {
+/**
+ * Every `target_keyword` a human AUTHORED, with the slug it was authored on.
+ *
+ * One walk, two consumers: `isMapped` wants the bare keyword set it has always
+ * had, and the semantic tier wants the slug beside each keyword so a brief can
+ * recognise itself. Deriving both from one scan is what stops the two drifting.
+ *
+ * The `.endsWith('.json')` filter on the briefs directory is load-bearing and is
+ * the same convention `tests/lib/briefs-dir-readers.test.js` pins across all six
+ * readers: it is what makes `data/briefs/_dropped/` invisible, so an archived
+ * brief can never flag a live candidate as a duplicate of work we deliberately
+ * took out of circulation.
+ */
+export function loadAuthoredCoverage({ briefsDir = BRIEFS_DIR, slugs = null } = {}) {
+  const entries = [];
+  if (existsSync(briefsDir)) {
+    for (const f of readdirSync(briefsDir).filter((x) => x.endsWith('.json'))) {
       try {
-        const b = JSON.parse(readFileSync(join(BRIEFS_DIR, f), 'utf8'));
-        if (b.target_keyword) keywords.add(b.target_keyword.toLowerCase());
+        const b = JSON.parse(readFileSync(join(briefsDir, f), 'utf8'));
+        if (b.target_keyword) entries.push({ keyword: b.target_keyword, slug: b.slug || f.replace(/\.json$/, ''), source: 'brief' });
       } catch { /* ignore */ }
     }
   }
-  for (const slug of listAllSlugs()) {
+  for (const slug of (slugs ?? listAllSlugs())) {
     try {
       const p = getPostMeta(slug);
-      if (p?.target_keyword) keywords.add(p.target_keyword.toLowerCase());
+      if (p?.target_keyword) entries.push({ keyword: p.target_keyword, slug, source: 'post' });
     } catch { /* ignore */ }
   }
-  return keywords;
+  return entries;
+}
+
+function loadCoveredKeywords(entries) {
+  // Build a set of keywords already targeted by an existing brief or post.
+  return new Set((entries ?? loadAuthoredCoverage()).map((e) => String(e.keyword).toLowerCase()));
 }
 
 function isMapped(keyword, covered) {
@@ -125,11 +165,6 @@ function isMapped(keyword, covered) {
     if (target.includes(kw) || kw.includes(target)) return true;
   }
   return false;
-}
-
-/** The slug a candidate query would be filed under — the same normalisation the ideas inbox uses. */
-export function slugifyKeyword(str) {
-  return String(str ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
 
 /**
@@ -187,20 +222,25 @@ export function loadRankedIndex({ dir = GSC_SNAPSHOT_DIR, days = RANKED_WINDOW_D
  * flag; `sortUnmapped` then demotes them below the clean rows so the inbox slice
  * fills with genuinely-uncovered topics first. Demote, never drop — the same rule
  * `lib/ctr-opportunity.js` applies to a cluster it wants to discourage.
+ *
+ * Both flagged tiers land in the same list and the same field, distinguished by
+ * `ranked_match.tier` — extending the evidence shape rather than growing a
+ * parallel one, so nothing downstream has to join two arrays to learn that a row
+ * is contested.
  */
-export function applyRankedCoverage(rows = [], index, { selfSlugFor = slugifyKeyword } = {}) {
+export function applyRankedCoverage(rows = [], index, { selfSlugFor = slugifyKeyword, authored = null } = {}) {
   const unmapped = [];
   const autoCovered = [];
   const flagged = [];
   for (const row of rows) {
-    const verdict = classifyRankedCoverage(row.keyword, index, { selfSlug: selfSlugFor(row.keyword) });
+    const verdict = classifyRankedCoverage(row.keyword, index, { selfSlug: selfSlugFor(row.keyword), authored });
     if (verdict.status === AUTO_COVERED) {
       autoCovered.push({ ...row, ranked_match: verdict.match });
       continue;
     }
     if (verdict.status === POSSIBLE_DUPLICATE) {
-      const out = { ...row, possible_duplicate: true, ranked_match: verdict.match };
-      flagged.push({ keyword: row.keyword, match: verdict.match });
+      const out = { ...row, possible_duplicate: true, duplicate_tier: verdict.tier, ranked_match: verdict.match };
+      flagged.push({ keyword: row.keyword, tier: verdict.tier, match: verdict.match });
       unmapped.push(out);
       continue;
     }
@@ -258,7 +298,8 @@ async function main() {
   console.log(`    ${page2.length} page-2 queries (positions 11-20)${page2Raw.length !== page2.length ? ` — ${page2Raw.length - page2.length} filtered` : ''}`);
 
   console.log('  Computing unmapped opportunities...');
-  const covered = loadCoveredKeywords();
+  const authoredEntries = loadAuthoredCoverage();
+  const covered = loadCoveredKeywords(authoredEntries);
   // Unmapped = any low-CTR query above the impression floor that no
   // existing brief/post targets. These are net-new topic candidates.
   const authoredUnmapped = lowCTR
@@ -272,7 +313,18 @@ async function main() {
   } else {
     console.log(`    ranked-query coverage: ${rankedIndex.byQuery.size} queries from ${rankedIndex.files} snapshot(s), position <= ${RANKED_POS_MAX}, >= ${RANKED_MIN_IMPRESSIONS} impressions/${RANKED_WINDOW_DAYS}d`);
   }
-  const ranked = applyRankedCoverage(authoredUnmapped, rankedIndex);
+  // Third coverage question: does this look like something somebody has already
+  // DECIDED to write? Independent of the ranked index — an unbriefed topic ranks
+  // for nothing, so the two corpora fail for different reasons and degrade
+  // separately.
+  const authoredIndex = buildAuthoredIndex(authoredEntries);
+  if (authoredIndex.disarmed) {
+    console.log(`    ⚠ ${authoredIndex.disarmed}`);
+  } else {
+    console.log(`    semantic coverage: ${authoredIndex.entries.length} authored target keyword(s), similarity >= ${SEMANTIC_THRESHOLD}`);
+  }
+
+  const ranked = applyRankedCoverage(authoredUnmapped, rankedIndex, { authored: authoredIndex });
   if (ranked.autoCovered.length) {
     console.log(`    ${ranked.autoCovered.length} dropped as already-ranked (exact ranked query for an existing page)`);
   }
@@ -289,6 +341,21 @@ async function main() {
   // Amazon band is applied by the second call below, once they are.)
   const unmapped = sortUnmapped(ranked.unmapped).slice(0, 25);
   console.log(`    ${unmapped.length} unmapped high-impression queries${ranked.flagged.length ? ` (${unmapped.filter((r) => r.possible_duplicate).length} of them flagged as possible duplicates)` : ''}`);
+
+  // "NOTHING CLEAN TO PROPOSE" AND "THE CHECK IS OFF" MUST NOT READ ALIKE. On a
+  // 206-page corpus it is an honest, expected answer that every current
+  // candidate collides with something — but an empty-looking feed is also
+  // exactly what a broken agent produces, so the run states which one it is
+  // every time, here and in the report and the digest. Same reasoning as
+  // `hold.disarmed`: never infer "clean" from a count of zero.
+  const cleanCount = ranked.unmapped.filter((r) => !r.possible_duplicate).length;
+  const gatesOff = [rankedIndex.disarmed, authoredIndex.disarmed].filter(Boolean);
+  const emptyVerdict = gatesOff.length === 2
+    ? `BOTH coverage checks were OFF this run — an empty feed here is a fault, not a finding: ${gatesOff.join(' / ')}`
+    : cleanCount === 0 && authoredUnmapped.length > 0
+      ? `0 clean candidates: all ${authoredUnmapped.length} collided with existing work (${ranked.autoCovered.length} already ranked, ${ranked.flagged.length} flagged). The checks RAN — this is the corpus being well covered, not a broken feed.`
+      : null;
+  if (emptyVerdict) console.log(`    ${emptyVerdict}`);
 
   const idx = loadIndex(ROOT);
   const lowCTRTagged = annotateRows(lowCTR, idx);
@@ -358,19 +425,26 @@ async function main() {
   // found nothing" can be told from "did not run" — the same reasoning
   // impression-leaks.json already carries.
   lines.push(`## Possible Duplicates (a decision, not a verdict)`);
-  if (rankedIndex.disarmed) {
-    lines.push(`_Ranked-query coverage was OFF this run: ${rankedIndex.disarmed}. Candidates were judged on authored \`target_keyword\`s alone — the behaviour that produced the \`…-safe-healing-3\` duplicate on 2026-09-06._`);
-  } else {
-    lines.push(`An existing page already ranks for a query CONTAINED IN these candidates (position ≤${RANKED_POS_MAX}, ≥${RANKED_MIN_IMPRESSIONS} impressions over ${RANKED_WINDOW_DAYS} days). They are still listed above and still reach the ideas inbox — demoted, never dropped — because two measured false positives make this a call a human takes. ${ranked.autoCovered.length} further candidate(s) were removed outright as EXACT ranked queries for an existing page.`);
+  lines.push('');
+  lines.push(`- **Ranked-query tier** — an existing page already ranks for a query CONTAINED IN the candidate (position ≤${RANKED_POS_MAX}, ≥${RANKED_MIN_IMPRESSIONS} impressions over ${RANKED_WINDOW_DAYS} days). ${rankedIndex.disarmed ? `**OFF this run: ${rankedIndex.disarmed}**` : `On: ${rankedIndex.byQuery.size} ranked queries.`}`);
+  lines.push(`- **Semantic tier** — the candidate is a near-duplicate of a \`target_keyword\` somebody already AUTHORED on a brief or post (core-token similarity ≥${SEMANTIC_THRESHOLD}). ${authoredIndex.disarmed ? `**OFF this run: ${authoredIndex.disarmed}**` : `On: ${authoredIndex.entries.length} authored keywords.`}`);
+  lines.push('');
+  lines.push(`Flagged rows are still listed above and still reach the ideas inbox — demoted, never dropped — because the measured false positives in both tiers make this a call a human takes. ${ranked.autoCovered.length} further candidate(s) were removed outright as EXACT ranked queries for an existing page.`);
+  lines.push('');
+  if (emptyVerdict) {
+    lines.push(`**${emptyVerdict}**`);
     lines.push('');
-    if (!ranked.flagged.length) {
-      lines.push('_No candidate collided with a ranked query this run._');
-    } else {
-      lines.push('| Candidate | Ranked query | Page | Position | Impressions |');
-      lines.push('|-----------|--------------|------|----------|-------------|');
-      for (const f of ranked.flagged) {
-        lines.push(`| ${f.keyword} | ${f.match.query} | ${f.match.slug || f.match.page} | ${f.match.position.toFixed(1)} | ${f.match.impressions} |`);
-      }
+  }
+  if (!ranked.flagged.length) {
+    lines.push(gatesOff.length === 2
+      ? '_Neither tier ran, so nothing could be flagged._'
+      : '_No candidate collided with existing work this run._');
+  } else {
+    lines.push('| Candidate | Signal | Matched | Where | Evidence |');
+    lines.push('|-----------|--------|---------|-------|----------|');
+    for (const f of ranked.flagged) {
+      const d = describeMatch(f.match);
+      lines.push(`| ${f.keyword} | ${d.signal} | ${d.matched} | ${d.where} | ${d.evidence} |`);
     }
   }
   lines.push('');
@@ -395,6 +469,20 @@ async function main() {
       disarmed: rankedIndex.disarmed,
       snapshots_read: rankedIndex.files ?? 0,
       ranked_queries: rankedIndex.byQuery?.size ?? 0,
+      // The semantic tier reports itself separately, because it can be ON while
+      // the ranked one is OFF and vice versa. A reader must never take one
+      // `disarmed: null` as evidence that both checks ran.
+      semantic: {
+        threshold: SEMANTIC_THRESHOLD,
+        available: authoredIndex.available,
+        disarmed: authoredIndex.disarmed,
+        authored_keywords: authoredIndex.entries.length,
+      },
+      // `clean_unmapped` is what stops an honest "everything collided" reading
+      // as a broken feed; `empty_verdict` says which of the two it is in words.
+      candidates_considered: authoredUnmapped.length,
+      clean_unmapped: cleanCount,
+      empty_verdict: emptyVerdict,
       auto_covered: ranked.autoCovered.map((r) => ({ keyword: r.keyword, impressions: r.impressions, match: r.ranked_match })),
       possible_duplicates: ranked.flagged,
     },
@@ -423,6 +511,7 @@ async function main() {
       // Carried onto the inbox item so the human clicking Approve sees the
       // collision, not just the report's reader.
       possible_duplicate: Boolean(r.possible_duplicate),
+      duplicate_tier: r.duplicate_tier ?? null,
       ranked_match: r.ranked_match ?? null,
     });
     inboxAdded++;
@@ -432,14 +521,24 @@ async function main() {
   // One DEFERRED notification, `status: 'info'` — a flagged candidate is the
   // policy working, not a broken agent, so it never goes in the Failures block
   // and never emails at call time.
-  const duplicateBody = rankedIndex.disarmed
-    ? ['', `⚠ Ranked-query coverage was OFF this run: ${rankedIndex.disarmed}`, 'Candidates were judged on authored target_keywords alone — the behaviour that produced the "…-safe-healing-3" duplicate on 2026-09-06.']
-    : ranked.flagged.length
-      ? ['', `${ranked.flagged.length} candidate(s) may duplicate a page that already ranks — kept and demoted, NOT dropped. Decide before drafting:`, ...renderRankedCoverageLines(ranked.flagged, { max: 10 })]
-      : [];
+  const semanticFlagged = ranked.flagged.filter((f) => f.tier === TIER_AUTHORED_SEMANTIC).length;
+  const duplicateBody = [
+    ...(rankedIndex.disarmed ? ['', `⚠ Ranked-query coverage was OFF this run: ${rankedIndex.disarmed}`] : []),
+    ...(authoredIndex.disarmed ? ['', `⚠ Semantic duplicate detection was OFF this run: ${authoredIndex.disarmed}`] : []),
+    ...(gatesOff.length === 2
+      ? ['Candidates were judged on the authored-keyword substring rule alone — the behaviour that produced the "…-safe-healing-3" duplicate on 2026-09-06.']
+      : []),
+    ...(emptyVerdict ? ['', emptyVerdict] : []),
+    ...(ranked.flagged.length
+      ? ['', `${ranked.flagged.length} candidate(s) may duplicate existing work (${ranked.flagged.length - semanticFlagged} already-ranked page, ${semanticFlagged} authored keyword) — kept and demoted, NOT dropped. Decide before drafting:`, ...renderRankedCoverageLines(ranked.flagged, { max: 10 })]
+      : []),
+  ];
 
   await notify({
-    subject: `GSC Opportunities: ${lowCTRTagged.length} low-CTR, ${page2Tagged.length} page-2, ${unmappedSorted.length} unmapped${ranked.flagged.length ? `, ${ranked.flagged.length} possible duplicate(s)` : ''}`,
+    // The subject carries the CLEAN count as well as the total, so a day where
+    // every candidate collided cannot be misread as a day the agent found
+    // nothing to look at.
+    subject: `GSC Opportunities: ${lowCTRTagged.length} low-CTR, ${page2Tagged.length} page-2, ${unmappedSorted.length} unmapped (${cleanCount} clean)${ranked.flagged.length ? `, ${ranked.flagged.length} possible duplicate(s)` : ''}`,
     body: [
       `Top low-CTR queries:\n${lowCTRTagged.slice(0, 5).map((r) => `  ${sourceSymbol(r.validation_source)} ${r.keyword} — ${r.impressions} impr, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}`,
       '',
