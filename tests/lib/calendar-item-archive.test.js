@@ -109,9 +109,11 @@ test('one bad item does not abandon the rest of the run half-archived', () => {
 // ── the calendar write ──────────────────────────────────────────────────────
 
 test('writeCalendarItems keeps every item it was not asked to remove, byte for byte', () => {
-  // Including fields lib/calendar-store.js's normalising writeCalendar would
-  // silently drop — `possible_duplicate` and `ranked_match` are exactly the
-  // flags PR #921 wired into the prioritizer and the strategist.
+  // Including `possible_duplicate` and `ranked_match`, the flags PR #921 wired
+  // into the prioritizer and the strategist. lib/calendar-store.js's
+  // writeCalendar used to drop those (it is preserve-by-default now); this
+  // module's promise is stronger and independent of that — every kept item is
+  // written back byte for byte, `last_updated` and all.
   const flagged = item('flagged', { possible_duplicate: true, ranked_match: { tier: 'ranked_phrase', query: 'soap for tattoos' }, custom: 42 });
   const root = tmpRoot([item('a'), flagged, item('c')]);
   const cal = readCalendar(root);
