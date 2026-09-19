@@ -661,11 +661,20 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // log and nothing else: five posts re-stamped every morning since 2026-08-30,
   // named in no digest, ever. Both reports carry the SAME `needs_decision[]` row
   // shape on purpose, so this renderer stays one renderer.
+  //
+  // THIRD PRODUCER: agents/content-strategist. A topic an existing page already
+  // ranks for is WITHHELD rather than auto-proposed (lib/duplicate-flag.js), and
+  // "write it anyway, or drop the topic" is a call automation is not allowed to
+  // make — the flag is a measured heuristic with known false positives, which is
+  // why nothing upstream ever drops on it. Same row shape again, so this stays
+  // ONE renderer; a withheld topic that appeared nowhere would be the silent
+  // drop this whole path exists to prevent.
   let decisionSection = '';
   try {
     const stuck = [
       join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
       join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
     ].flatMap((p) => {
       if (!existsSync(p)) return [];
       try {

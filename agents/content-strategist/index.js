@@ -38,6 +38,10 @@ import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 import { loadIndex, lookupByKeyword, validationTag, unmappedIndexEntries } from '../../lib/keyword-index/consumer.js';
 import { isInProductScope, PRODUCT_SCOPE_TERMS } from '../../lib/product-scope.js';
+import {
+  buildDuplicateIndex, committedTopics, decideProposal, duplicateDecisions, lookupDuplicate,
+  renderWithheldLines, withheldDigest, evidenceLine, isFlagged as isDuplicateFlagged,
+} from '../../lib/duplicate-flag.js';
 // Re-export so existing importers of these from content-strategist keep working.
 export { isInProductScope, PRODUCT_SCOPE_TERMS };
 
@@ -699,6 +703,37 @@ export function buildValidatedDemandSection(unmapped) {
   return `\n${lines.join('\n')}`;
 }
 
+/**
+ * Tell the planner about candidates an existing page may already rank for.
+ *
+ * These rows are REMOVED from the "strong new-topic candidates" list above and
+ * named here instead. Two reasons, and the second is the load-bearing one:
+ *
+ *   1. Inviting the planner to propose a topic we will then refuse is a wasted
+ *      LLM proposal and a wasted slot in an 8-week plan.
+ *   2. The hard filter below matches a proposal to a flagged candidate by EXACT
+ *      keyword or slug and nothing looser, because widening a coverage match is
+ *      how planned content gets killed silently. A reworded variant therefore
+ *      slips past it — so the cheapest defence against the rewording is to stop
+ *      the planner reaching for the topic in the first place.
+ *
+ * The prompt is a request, never a guarantee; the filter is the guarantee.
+ */
+export function buildPossibleDuplicateSection(flagged) {
+  if (!flagged || flagged.length === 0) return '';
+  const lines = [
+    '## Possible duplicates — DO NOT propose these',
+    'An existing page already ranks for a query contained in each of the following. Proposing one is how we published a third-generation duplicate of our best-ranking page. If you believe one is genuinely a distinct topic, say so in the notes — do NOT put it on the schedule.',
+    '',
+  ];
+  for (const f of flagged.slice(0, 15)) {
+    lines.push(`- "${f.keyword}" — ${evidenceLine(f.evidence)}`);
+  }
+  if (flagged.length > 15) lines.push(`- (+${flagged.length - 15} more)`);
+  lines.push('');
+  return `\n${lines.join('\n')}`;
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -730,6 +765,26 @@ async function main() {
   if (existsSync(gscOppPath)) {
     try { gscOpps = JSON.parse(readFileSync(gscOppPath, 'utf8')); } catch { /* ignore */ }
   }
+
+  // Candidates an existing page may already rank for (lib/ranked-coverage.js,
+  // carried on the row by agents/gsc-opportunity). This agent turns a topic into
+  // a calendar item and therefore into a full paid pipeline, so it is the one
+  // place where acting on the flag prevents the spend: a flagged topic is not
+  // auto-proposed, it is WITHHELD and routed to the digest's decision surface.
+  //
+  // FAILS OPEN. A missing, unreadable or pre-PR#919 report yields an empty index
+  // and nothing is withheld — exactly today's behaviour. No age check: see the
+  // staleness note in lib/duplicate-flag.js for why lib/seo-impact-freshness.js
+  // does not govern this report and why no second policy is invented here.
+  const duplicateIndex = buildDuplicateIndex(gscOpps);
+  if (duplicateIndex.disarmed) {
+    console.log(`  ⚠ ${duplicateIndex.disarmed}`);
+  } else if (duplicateIndex.count) {
+    console.log(`  ${duplicateIndex.count} candidate(s) flagged as possible duplicates upstream — these will not be auto-proposed`);
+  }
+  const flaggedCandidates = (gscOpps?.unmapped || [])
+    .filter((r) => isDuplicateFlagged(r))
+    .map((r) => ({ keyword: r.keyword, evidence: lookupDuplicate(r.keyword, duplicateIndex)?.evidence ?? null }));
 
   // Load latest competitor activity (cluster boosts when competitors recently published)
   let competitorSignals = null;
@@ -786,7 +841,8 @@ ${buildPrepaidSection(inventory.prepaid)}
 ${buildClusterWeightSection(clusterPerf)}
 ${buildNonEarningSection(clusterRevenue)}
 ${competitorSignals && Object.keys(competitorSignals.cluster_boosts || {}).length ? `\n## Competitor Activity Signals\nCompetitors have recently published in the following clusters. Treat these as a +1 priority boost — keep our cluster fresh and reinforce authority before the competitor post gains traction.\n${Object.entries(competitorSignals.cluster_boosts).map(([cl, n]) => `- **${cl}** — ${n} new competitor post${n > 1 ? 's' : ''}`).join('\n')}\n` : ''}
-${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
+${gscOpps && (gscOpps.unmapped?.length || gscOpps.low_ctr?.length) ? `\n## GSC Opportunity Signals\nUse these to inform new-topic and rewrite priorities.\n\n**Unmapped high-impression queries (no current page targets these — strong new-topic candidates):**\n${(gscOpps.unmapped || []).filter((r) => !isDuplicateFlagged(r)).slice(0, 15).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, position ${r.position.toFixed(1)}`).join('\n')}\n\n**Low-CTR queries (existing pages need title/meta rewrites — do not schedule as new posts):**\n${(gscOpps.low_ctr || []).slice(0, 10).map((r) => `- "${r.keyword}" — ${r.impressions} impressions, ${(r.ctr * 100).toFixed(1)}% CTR`).join('\n')}\n` : ''}
+${buildPossibleDuplicateSection(flaggedCandidates)}
 ${buildValidatedDemandSection(unmappedFromIndex)}
 ${rankReport ? `RANK PERFORMANCE DATA (from latest rank tracker snapshot):
 Use this to inform cluster prioritization — double down on clusters with page-1 posts, prioritize quick wins for internal link boosts, and deprioritize clusters with no rankings yet unless high strategic value.
@@ -894,6 +950,18 @@ ${calendarMd}`;
   // on 2026-08-19/21 with nobody able to say which ones, or why.
   const skips = [];
 
+  // Topics withheld because an existing page already ranks for a query inside
+  // them. WITHHELD IS NOT DISCARDED: every one is named on the console, in a
+  // deferred notification, and as a `needs_decision[]` row in the digest's one
+  // "Needs your decision" block. Nothing here deletes a brief, a post or a
+  // calendar item.
+  const withheldDuplicates = [];
+  // Flagged topics this agent deliberately left alone because they are ALREADY
+  // committed to the calendar — withholding one would CLEAR it on this run, and
+  // clearing is lib/calendar-coverage.js's job, not this change's.
+  const exemptDuplicates = [];
+  const committed = committedTopics(existingCalendarItems);
+
   let briefQueue = [];
   try {
     const raw = extractResponse.content[0].text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
@@ -943,6 +1011,29 @@ ${calendarMd}`;
         console.log(`  [SKIP] ${detail}: "${item.keyword}"`);
         skips.push({ keyword: item.keyword, reason: 'cluster_dud', detail });
         return false;
+      }
+      // An existing page already ranks for a query inside this topic. Withheld,
+      // not discarded — see `withheldDuplicates` above. This runs LAST of the
+      // filters on purpose: a topic that is rejected, branded, off-scope,
+      // already covered or in a $0 cluster is refused for a reason automation
+      // can state, and there is no decision left for a human to take on it.
+      //
+      // Note what is deliberately NOT recorded on the skip: `matchedSlug`.
+      // `classifyClearedItems` joins a skip to a cleared calendar item by that
+      // field, so setting it to the RANKED page's slug could attribute an
+      // unrelated disappearance to this filter. The skip is still recorded so
+      // that a clearing this filter somehow caused could never be filed as
+      // "no reason recorded".
+      const dup = decideProposal(item, duplicateIndex, { committed });
+      if (dup.withhold) {
+        console.log(`  [WITHHELD] possible duplicate: "${item.keyword}" — ${evidenceLine(dup.evidence)}`);
+        withheldDuplicates.push({ keyword: item.keyword, slug: item.slug || null, evidence: dup.evidence });
+        skips.push({ keyword: item.keyword, reason: 'possible_duplicate', detail: evidenceLine(dup.evidence) });
+        return false;
+      }
+      if (dup.flagged) {
+        console.log(`  [KEPT] "${item.keyword}" is flagged as a possible duplicate but is ALREADY on the calendar — left alone (this agent changes what is proposed, never what is cleared)`);
+        exemptDuplicates.push({ keyword: item.keyword, evidence: dup.evidence, exempt: dup.exempt });
       }
       return true;
     });
@@ -1011,6 +1102,44 @@ ${calendarMd}`;
     if (digest) await notify(digest);
   } else {
     console.log('  Nothing was cleared from the calendar by this re-plan.');
+  }
+
+  // ── Possible duplicates: the run's own account of what it withheld ──────────
+  //
+  // Written on EVERY run, including one that withheld nothing, so a consumer can
+  // tell "ran, withheld nothing" from "did not run" — the same reasoning
+  // impression-leaks.json and the gsc-opportunity duplicates section already
+  // carry. `needs_decision[]` is the field agents/daily-summary renders in its
+  // single "Needs your decision" block, in the shape lib/queue-autoapply.js
+  // (PR #911) and lib/indexing-escalation.js (PR #914) established.
+  const needsDecision = duplicateDecisions(withheldDuplicates);
+  mkdirSync(REPORTS_DIR, { recursive: true });
+  writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({
+    generated_at: new Date().toISOString(),
+    proposed: briefQueue.length,
+    calendar_items: calendarItems.length,
+    possible_duplicates: {
+      available: duplicateIndex.available,
+      disarmed: duplicateIndex.disarmed,
+      flagged_upstream: duplicateIndex.count,
+      withheld: withheldDuplicates,
+      // Flagged, but already committed to the calendar — reported so that
+      // "we looked and left it" is distinguishable from "we never looked".
+      left_alone_already_scheduled: exemptDuplicates,
+    },
+    needs_decision: needsDecision,
+  }, null, 2));
+
+  if (withheldDuplicates.length) {
+    console.log(`\n  WITHHELD — ${withheldDuplicates.length} topic(s) not proposed because an existing page already ranks for a query inside them:`);
+    for (const line of renderWithheldLines(withheldDuplicates)) console.log(line);
+    console.log('  None of them was deleted. Each is in the digest under "Needs your decision".');
+    // Deferred, `info`, never `immediate: true` and never `status: 'error'` —
+    // withholding a duplicate is the policy working, not the agent breaking.
+    // Beside the needs_decision row rather than instead of it: the digest reads
+    // yesterday's reports, so this is what makes the withholding visible today.
+    const digest = withheldDigest(withheldDuplicates, { proposed: briefQueue.length, exempt: exemptDuplicates });
+    if (digest) await notify(digest);
   }
 
   // ── Step 4: Generate briefs (optional) ───────────────────────────────────────
