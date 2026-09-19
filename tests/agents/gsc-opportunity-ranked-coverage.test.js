@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { applyRankedCoverage, sortUnmapped, loadRankedIndex, slugifyKeyword } from '../../agents/gsc-opportunity/index.js';
-import { buildRankedIndex } from '../../lib/ranked-coverage.js';
+import { applyRankedCoverage, sortUnmapped, loadRankedIndex, slugifyKeyword, loadAuthoredCoverage } from '../../agents/gsc-opportunity/index.js';
+import { buildRankedIndex, buildAuthoredIndex, TIER_AUTHORED_SEMANTIC, TIER_RANKED_PHRASE } from '../../lib/ranked-coverage.js';
 
 // The wiring half of PR: `lib/ranked-coverage.js` decides, this agent has to act
 // on the decision in the one way the design permits — auto-covered rows leave
@@ -89,6 +89,78 @@ test('sortUnmapped is unchanged when nothing is flagged', () => {
     { keyword: 'q4', impressions: 300, validation_source: 'gsc_ga4' },
   ];
   assert.deepEqual(sortUnmapped(rows).map((r) => r.keyword), ['q2', 'q3', 'q4', 'q1']);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tier 3 wiring
+// ─────────────────────────────────────────────────────────────────────────────
+
+const AUTHORED = buildAuthoredIndex([
+  { keyword: 'best soap to use on new tattoo', slug: 'best-soap-for-tattoos', source: 'post' },
+]);
+
+test('a semantically-duplicate candidate STAYS in the unmapped list, tier recorded', () => {
+  const kw = 'best soap to clean new tattoo';
+  const { unmapped, autoCovered, flagged } = applyRankedCoverage([row(kw, 400)], INDEX, { authored: AUTHORED });
+  assert.equal(unmapped.length, 1, 'never dropped');
+  assert.equal(autoCovered.length, 0, 'the semantic tier may never cover');
+  assert.equal(unmapped[0].possible_duplicate, true);
+  assert.equal(unmapped[0].duplicate_tier, TIER_AUTHORED_SEMANTIC);
+  assert.equal(unmapped[0].ranked_match.keyword, 'best soap to use on new tattoo');
+  assert.equal(flagged[0].tier, TIER_AUTHORED_SEMANTIC);
+});
+
+test('a ranked-phrase hit still wins over a semantic one, and says which fired', () => {
+  const kw = 'best soap for tattoos what to use for safe healing';
+  const { flagged } = applyRankedCoverage([row(kw, 400)], INDEX, { authored: AUTHORED });
+  assert.equal(flagged[0].tier, TIER_RANKED_PHRASE);
+  assert.equal(flagged[0].match.query, 'best soap for tattoos');
+});
+
+test('FAIL OPEN: both indexes disarmed changes nothing — every row stays, unflagged', () => {
+  const rows = [row('best soap to clean new tattoo', 400), row('anything', 100)];
+  const { unmapped, autoCovered, flagged } = applyRankedCoverage(rows, buildRankedIndex([]), { authored: buildAuthoredIndex([]) });
+  assert.equal(unmapped.length, 2);
+  assert.equal(autoCovered.length, 0);
+  assert.equal(flagged.length, 0);
+  assert.equal(unmapped[0].possible_duplicate, undefined);
+});
+
+test('the semantic tier runs even when the ranked index is disarmed', () => {
+  const { unmapped, flagged } = applyRankedCoverage([row('best soap to clean new tattoo', 400)], buildRankedIndex([]), { authored: AUTHORED });
+  assert.equal(flagged.length, 1);
+  assert.equal(unmapped[0].duplicate_tier, TIER_AUTHORED_SEMANTIC);
+});
+
+test('self-match: a candidate is not flagged against the brief it came from', () => {
+  // `selfSlugFor` defaults to slugifying the candidate's own keyword, and
+  // `buildAuthoredIndex` slugifies each authored keyword the same way — which is
+  // what lets an existing brief recognise ITSELF rather than reading as a
+  // false positive. Both of the candidates that first looked like false
+  // positives on the live pool were exactly this.
+  const kw = 'coconut oil deodorant for men';
+  const authored = buildAuthoredIndex([{ keyword: kw, slug: 'coconut-oil-deodorant-for-men', source: 'brief' }]);
+  const { unmapped, flagged } = applyRankedCoverage([row(kw, 400)], buildRankedIndex([]), { authored });
+  assert.equal(flagged.length, 0);
+  assert.equal(unmapped[0].possible_duplicate, undefined);
+});
+
+test('loadAuthoredCoverage fails open on a briefs directory that does not exist', () => {
+  const entries = loadAuthoredCoverage({ briefsDir: '/nonexistent/briefs', slugs: [] });
+  assert.deepEqual(entries, []);
+  assert.equal(buildAuthoredIndex(entries).available, false);
+});
+
+test('loadAuthoredCoverage carries the slug beside every keyword', () => {
+  // Without the slug there is no self-match, and without self-match the tier
+  // flags every existing brief against itself.
+  const entries = loadAuthoredCoverage({ slugs: [] });
+  for (const e of entries) {
+    assert.equal(typeof e.keyword, 'string');
+    assert.ok(e.keyword.length > 0);
+    assert.equal(typeof e.slug, 'string');
+    assert.equal(e.source, 'brief');
+  }
 });
 
 test('lib/calendar-coverage.js is NOT reachable from this agent', () => {
