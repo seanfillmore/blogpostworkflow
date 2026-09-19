@@ -338,3 +338,15 @@ data/reports/amazon-toothpaste-bullets/
 
 # Invalid article template_suffix clearing — before-values (restore path) + run records
 data/reports/article-template-suffix/
+
+# Backlog duplicate-sweep run records (scripts/sweep-duplicate-backlog.mjs).
+# Per-run and regenerable; the DURABLE record of what was dropped is
+# data/calendar/_dropped/, which is deliberately TRACKED — same reasoning as
+# data/briefs/_dropped/: an untracked archive is what made the 2026-08-19 brief
+# loss unrecoverable.
+data/reports/calendar-backlog-sweep/
+
+# Whole-file calendar backups taken before any sweep or restore write. The
+# calendar itself is tracked, so these are a belt-and-braces copy of a file git
+# already holds; they are never pruned by anything.
+data/calendar/backups/
