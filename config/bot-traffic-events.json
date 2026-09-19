@@ -2,16 +2,20 @@
   "_note": "IDENTIFIED automated-traffic events, declared with their evidence so every analysis excludes the SAME periods. Read only through lib/bot-traffic.js. This is a HAND-REVIEWED record, never a heuristic: the site's real paid-giveaway campaign (2026-08-19 -> 08-29) ran at 3.5x-15x the median day, so any rule keyed on volume alone would discard a real campaign. An event belongs here only when something other than its size identifies it.",
   "_ga4_timezone": "America/Los_Angeles — a GA4 snapshot day is a PACIFIC day, which is why the 2026-09-15 UTC wave lands on the 2026-09-14 GA4 file. Convert before adding ga4_days.",
   "_fail_open": "A missing, unreadable or empty file excludes NOTHING and every consumer says so. Losing real data to a bad exclusion is worse than leaving a known bot day in.",
+  "_clarity_timezone": "Clarity buckets by UTC, so the SAME wave lands on a DIFFERENT day than GA4 does — 2026-09-15 in Clarity, 2026-09-14 in GA4 (Pacific). This is exactly why every dataset declares its own days and a window never implies one.",
+  "_never_shopify": "NO EVENT MAY EVER DECLARE shopify_days, and a test enforces it. Shopify snapshots are ORDERS, and bots buy nothing — the 2026-09-14 and 09-15 files carry 1 real order each ($130.90, $9.35). Excluding one would delete real revenue from analysis to remove zero bot contamination, and order data feeds the $0-cluster gate that pauses spend on a category. That is strictly worse than doing nothing.",
   "events": [
     {
       "id": "giveaway-entry-bot-wave-2026-09-15",
       "window_utc": { "start": "2026-09-15T03:59:00Z", "end": "2026-09-15T06:49:00Z" },
       "ga4_days": ["2026-09-14"],
-      "affects": ["ga4", "rum"],
+      "clarity_days": ["2026-09-15"],
+      "affects": ["ga4", "clarity", "rum"],
       "what": "The automated entry wave that took 40% of the giveaway entrant pool. 2,948 entries were disqualified under Official Rules §5.",
       "evidence": [
         "5,920 of 5,930 entry requests on ONE user-agent string across 2,792 distinct IPs, against 70 distinct agents over the preceding five days.",
         "GA4 2026-09-14: 3,380 sessions against a 123-session 90-day median (27.5x), of which 3,150 are (direct)/(none) and 3,145 landed on /pages/free-soap-giveaway.",
+        "Clarity 2026-09-15 (UTC): 3,154 sessions against a ~90-270 norm, PC 3,055 against Mobile 92. Clarity's OWN bot detection caught only 123 of them, which is why this list is needed on top of it.",
         "96% desktop against a 57% normal median, and a 5.7% bounce rate against a 26.8% median — no real cohort looks like that.",
         "1 conversion on 3,380 sessions."
       ],

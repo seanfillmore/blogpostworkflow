@@ -69,7 +69,10 @@ function loadEnv() {
 async function main() {
   console.log('CRO Analyzer\n');
 
-  const claritySnaps  = loadRecentSnapshots(CLARITY_DIR);
+  const claritySnaps  = loadRecentSnapshots(CLARITY_DIR, 7, { dataset: 'clarity' });
+  // Shopify is deliberately NOT opted in: these snapshots are ORDERS, and bots
+  // buy nothing. Excluding a bot day here would delete real revenue (the two
+  // wave days carry a real order each) to remove zero contamination.
   const shopifySnaps  = loadRecentSnapshots(SHOPIFY_DIR);
   const gscSnaps      = loadRecentSnapshots(GSC_DIR);
   const ga4Snaps      = loadRecentSnapshots(GA4_DIR, 7, { dataset: 'ga4' });
