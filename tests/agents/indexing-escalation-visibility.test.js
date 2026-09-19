@@ -123,18 +123,29 @@ test('the escalation is collected, not only logged, and is deferred', () => {
   assert.doesNotMatch(src, /immediate: true/, 'this notification must stay deferred');
 });
 
-test('the docstring no longer claims a 30-day condition the code has never had', () => {
+test('the docstring describes the escalation the code actually performs', () => {
+  // This test tracked a docstring/code disagreement in BOTH directions. The
+  // header claimed a 30-day condition the code had never implemented; PR #914
+  // corrected the header, and the retry-cooldown change made the code match the
+  // original design instead. What is pinned is the agreement, not either side.
   const src = readFileSync(join(ROOT, 'agents/indexing-fixer/index.js'), 'utf8');
   const header = src.slice(0, src.indexOf("import {"));
-  assert.doesNotMatch(header, /remain not-indexed at/, 'there is no age check anywhere in this agent');
-  assert.doesNotMatch(header, /30\+ days/);
-  // The real trigger, stated: the delivered-submission count alone.
+
+  // The trigger, both halves of it: delivered, and independent.
   assert.match(header, /delivered/i);
-  assert.match(header, /no such check has ever existed/i, 'say what was wrong, not just the right thing');
-  // And the code still has no age condition: the trigger is the whole predicate.
-  // (The record it pushes carries age_days for the reader; that is reporting,
-  // not a gate.) Adding an age check is a behaviour change, not a doc fix.
+  assert.match(header, /INDEPENDENT/, 'the header must say the count is of independent attempts');
+  assert.match(header, /RETRY_COOLDOWN_DAYS/, 'and name the constant rather than spelling a number');
+  // The header must not go back to claiming a raw tally.
+  assert.doesNotMatch(header, /the delivered-submission count alone/);
+  assert.doesNotMatch(header, /There is no age condition/);
+
+  // And the code: the give-up budget is the cooldown-aware count, not the raw
+  // one. `deliveredIndexing` is still computed, for the record and the log line,
+  // and must never be what the escalation reads.
   assert.match(src, /^\s*if \(priorIndexing >= 2\) \{$/m);
+  assert.match(src, /const priorIndexing = countRetryBudgetSubmissions\(subs, 'indexing_api'\);/);
+  assert.doesNotMatch(src, /const priorIndexing = countDeliveredSubmissions/,
+    'the raw tally is what condemned five healthy pages; it must not decide this again');
 });
 
 // ── the body alone was not enough, and this is why ──────────────────────────
