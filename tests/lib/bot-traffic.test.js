@@ -121,6 +121,44 @@ test('exclusionLine names the days it skipped, and says so when it skipped none'
   assert.match(exclusionLine(none), /none applied/);
 });
 
+test('Clarity declares its OWN day, and it is not the GA4 day', () => {
+  // Clarity buckets by UTC and GA4 by Pacific, so the same 03:59Z-06:49Z wave
+  // lands on 09-15 in one and 09-14 in the other. Getting this wrong excludes a
+  // clean day and keeps the dirty one — which is why a window never implies a day.
+  const { events } = loadBotTrafficEvents();
+  const ga4 = contaminatedDays(events, 'ga4');
+  const clarity = contaminatedDays(events, 'clarity');
+  assert.ok(clarity.has('2026-09-15'), 'the Clarity wave is on the UTC day');
+  assert.ok(ga4.has('2026-09-14'), 'the GA4 wave is on the Pacific day');
+  assert.equal(clarity.has('2026-09-14'), false, 'the GA4 day must not leak into Clarity');
+  assert.equal(ga4.has('2026-09-15'), false, 'the Clarity day must not leak into GA4');
+});
+
+test('NO event may ever declare shopify days — bots buy nothing', () => {
+  // Shopify snapshots are ORDERS. The two wave days carry one real order each
+  // ($130.90, $9.35), so excluding either deletes real revenue to remove zero
+  // contamination — and order data feeds the $0-cluster gate that pauses spend.
+  const { events } = loadBotTrafficEvents();
+  for (const e of events) {
+    assert.equal(e.shopify_days, undefined, `${e.id} must not declare shopify_days`);
+    assert.equal((e.affects || []).includes('shopify'), false, `${e.id} must not affect shopify`);
+  }
+  assert.equal(contaminatedDays(events, 'shopify').size, 0);
+});
+
+test('cro-analyzer opts Clarity in and leaves Shopify alone', () => {
+  const src = readFileSync(join(ROOT, 'agents/cro-analyzer/index.js'), 'utf8');
+  assert.match(src, /CLARITY_DIR, 7, \{ dataset: 'clarity' \}/, 'Clarity must be gated');
+  assert.doesNotMatch(src, /SHOPIFY_DIR[^)]*dataset/, 'Shopify must NOT be gated');
+});
+
+test('the single-file picker in cro-deep-dive-content is gated', () => {
+  // It reads exactly ONE snapshot, so a bot day is the whole analysis.
+  const src = readFileSync(join(ROOT, 'agents/cro-deep-dive-content/index.js'), 'utf8');
+  assert.match(src, /from '\.\.\/\.\.\/lib\/bot-traffic\.js'/);
+  assert.match(src, /mostRecentFile\(CLARITY_DIR, \{ dataset: 'clarity' \}\)/);
+});
+
 test('the three wired consumers read the exclusions, and commercial-cvr does NOT', () => {
   // A source scan: importing these agents runs them. commercial-cvr already
   // excludes the whole giveaway funnel by landing page, so adding this there

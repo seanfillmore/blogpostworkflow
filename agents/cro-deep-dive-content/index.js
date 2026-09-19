@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -57,9 +58,19 @@ const client = new Anthropic({ apiKey });
 
 // ── data loading ──────────────────────────────────────────────────────────────
 
-function mostRecentFile(dir) {
+// `dataset` skips days on the identified-bot-traffic list. It matters more here
+// than in a multi-day average: this picks exactly ONE file, so landing on a bot
+// day means the whole deep-dive describes machine behaviour. Clarity bucketed
+// the 2026-09-15 wave as 3,055 PC sessions against 92 mobile and caught only
+// 123 of them as bots itself.
+function mostRecentFile(dir, { dataset = null } = {}) {
   if (!existsSync(dir)) return null;
-  const files = readdirSync(dir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  let files = readdirSync(dir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  if (dataset) {
+    const split = partitionSnapshotDays(files, { dataset });
+    files = split.kept;
+    if (split.excluded.length || !split.available) console.log(`  ${exclusionLine(split)}`);
+  }
   return files.length ? join(dir, files[files.length - 1]) : null;
 }
 
@@ -225,7 +236,7 @@ async function main() {
 
   // Load Clarity snapshot for site-wide scroll depth
   let scrollDepth = null;
-  const clarityFile = mostRecentFile(CLARITY_DIR);
+  const clarityFile = mostRecentFile(CLARITY_DIR, { dataset: 'clarity' });
   if (clarityFile) {
     try {
       const snap = JSON.parse(readFileSync(clarityFile, 'utf8'));
