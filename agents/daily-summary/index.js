@@ -653,35 +653,48 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // It states the DECISION, not the item: "rewrite it, or write it off" rather
   // than "approve this". Measured on production 2026-09-18 this is one item of
   // four pending, and it is silent when empty.
+  //
+  // SECOND PRODUCER, 2026-09-19: agents/indexing-fixer. Its submission-count
+  // escalation is the same class of finding — once a post crosses two delivered
+  // Indexing API submissions the fixer stamps it and never submits that URL
+  // again, so no further run can change the verdict. It had been reaching a cron
+  // log and nothing else: five posts re-stamped every morning since 2026-08-30,
+  // named in no digest, ever. Both reports carry the SAME `needs_decision[]` row
+  // shape on purpose, so this renderer stays one renderer.
   let decisionSection = '';
   try {
-    const qaPath = join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json');
-    if (existsSync(qaPath)) {
-      const qa = JSON.parse(readFileSync(qaPath, 'utf8'));
-      const stuck = Array.isArray(qa?.needs_decision) ? qa.needs_decision : [];
-      if (stuck.length) {
-        const rows = stuck.map((d) => {
-          const age = d.created_at
-            ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000)
-            : null;
-          const why = d.last_gate_reason
-            ? `<div style="font-size:12px;color:#6b7280;margin-top:6px;">${esc(previewBody(d.last_gate_reason, { maxLines: 2, maxChars: 200 }))}</div>`
-            : '';
-          return `
+    const stuck = [
+      join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
+    ].flatMap((p) => {
+      if (!existsSync(p)) return [];
+      try {
+        const report = JSON.parse(readFileSync(p, 'utf8'));
+        return Array.isArray(report?.needs_decision) ? report.needs_decision : [];
+      } catch { return []; } // one unreadable report must not hide the other
+    });
+    if (stuck.length) {
+      const rows = stuck.map((d) => {
+        const age = d.created_at
+          ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000)
+          : null;
+        const why = d.last_gate_reason
+          ? `<div style="font-size:12px;color:#6b7280;margin-top:6px;">${esc(previewBody(d.last_gate_reason, { maxLines: 2, maxChars: 200 }))}</div>`
+          : '';
+        return `
             <div class="blocked-post">
               <div class="title">${esc(d.title || d.slug || 'untitled')}</div>
               <div class="blockers"><strong>${esc(d.label || d.reason || '')}</strong></div>
               <div style="font-size:11px;color:#9ca3af;margin-top:4px;">${esc(d.trigger || '')}${age != null ? ` &middot; stuck ${age} day${age === 1 ? '' : 's'}` : ''}</div>
               ${why}
             </div>`;
-        }).join('');
-        decisionSection = `
+      }).join('');
+      decisionSection = `
           <div class="action-required">
             <div class="section-title">&#129300; Needs your decision &mdash; ${stuck.length} item${stuck.length > 1 ? 's' : ''} the automation gave up on</div>
             <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Not a review queue &mdash; everything routine is applied automatically. These are the items no further run will ever clear.</p>
             ${rows}
           </div>`;
-      }
     }
   } catch { /* best-effort: a missing or unreadable report is silence, never an error */ }
 
