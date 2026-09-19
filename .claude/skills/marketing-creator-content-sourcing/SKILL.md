@@ -1,6 +1,6 @@
 ---
 name: marketing-creator-content-sourcing
-description: How a solo operator sources, screens, briefs, QAs and deploys on-camera creator/customer content — judging on-camera delivery in the first 2-3 seconds, recruiting repeat customers as creators for product alone, scaling brief depth to creator experience, building fully prescriptive briefs from a fixed component list, rejecting finished clips for motion and stability defects before they ship, and running the Meta partnership-ad delivery mechanism that pushes such content to net-new audiences.
+description: How a solo operator sources, screens, briefs, QAs and deploys on-camera creator/customer content — judging on-camera delivery in the first 2-3 seconds, recruiting repeat customers as creators for product alone, scaling brief depth to creator experience, building fully prescriptive briefs from a fixed component list, writing a UGC script where every sentence does one belief-shifting job, specifying the sub-25-second vertical phone-shot format, rejecting finished clips for motion and stability defects before they ship, and running the Meta partnership-ad delivery mechanism that pushes such content to net-new audiences.
 ---
 
 # Creator Content Sourcing
@@ -139,6 +139,17 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
+## When you need someone who can conceive visual ideas, recruit outside the people who label themselves creative strategists or marketers — songwriters, entertainment and script writers conceptualise progression and imagery in a way trained marketers often cannot.
+**Stage:** team — parked until the team phase opens.
+
+**Why it works:** The scarce skill is originating the idea, not prompting the tool or knowing ad formats — AI has collapsed the execution cost but not the conception cost. People trained in narrative and lyric craft habitually visualise progression and emotional escalation, which is exactly the input a static needs, and they are not competing for marketing salaries.
+
+**Evidence offered:** Sarah reports she now tells brands to look outside self-labelled creative strategists and knows people hiring entertainment scriptwriters over traditional marketers; Nate attributes his best copy ideas to two years spent around songwriters. Assertion from practice, no performance data.
+
+**Fit here (6/10):** Sound principle with a real mechanism, and it names a sourcing pool this skill did not have — the existing entries cover UGC creators, influencers and actor networks, i.e. people who can *perform* an idea, while this one sources the person who *originates* it (the actor-network entry above is the performance-side analogue). Parked behind `team` because carrying it out to its stated outcome means engaging and paying another person: the operator can shortlist writers alone, but the tactic only lands when someone is hired. Trigger: when concept origination, rather than production or media buying, is the demonstrated bottleneck on creative output — which is a later problem than today's conversion-rate constraint. When it unparks, this is the 'cold outreach' arm of the four-channel recruiting frame below, aimed at a non-marketing talent pool.
+
+*Source: Seb Valiente (@sebastian_dtc), with Sarah Levinger (@SarahLevinger) and Nate Lagos — "Brain Driven Brands podcast — what makes a good static ad (X post 2100971197039366619)" (transcript, part 1 of 2)*
+
 ## Recruit help through the same four awareness channels you use to get customers — ask your network (warm), reach out directly (cold), post the job openly (content), and pay to promote the posting (paid ads) — plus employee referrals and staffing sources.
 **Stage:** team — parked until the team phase opens.
 
@@ -157,7 +168,7 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 
 **Evidence offered:** A worked example for a website build (CSS + video editing, ex-graphic-designer and ex-webmaster) with the literal query string and three named results, plus a Firefox extension recommendation. No hit-rate data.
 
-**Fit here (4/10):** Platform-mechanics class for the execution detail — a 2008 Google resume-search string and a Firefox extension are ~18 years old and the pool of freelancers with indexed HTML resumes has moved to LinkedIn, Upwork and portfolio sites — so the recipe must be rebuilt rather than trusted. What survives is the durable kernel: derive the exact skill combination and prior-role path from the job before searching, and search for that combination rather than for a category. Parked under `team` because it exists only to hire someone who is not the solo operator. Trigger: the first time there is budget for a paid outside asset (a product photographer, or the video editor implied by the static-first rule in marketing-paid-creative-testing). Scored on the merit it will have then: a narrow sourcing heuristic that overlaps the TikTok-browsing and Backstage entries above, and that is best used as the 'cold outreach' arm of the four-channel recruiting frame above rather than as the whole search. It pairs usefully with the track-the-winners rule below — the search defines who gets a first shot, the track record decides who gets the next one.
+**Fit here (4/10):** Platform-mechanics class for the execution detail — a 2008 Google resume-search string and a Firefox extension are ~18 years old and the pool of freelancers with indexed HTML resumes has moved to LinkedIn, Upwork and portfolio sites — so the recipe must be rebuilt rather than trusted. What survives is the durable kernel: derive the exact skill combination and prior-role path from the job before searching, and search for that combination rather than for a category. Parked under `team` because it exists only to hire someone who is not the solo operator. Trigger: the first time there is budget for a paid outside asset (a product photographer, or the video editor implied by the static-first rule in marketing-paid-creative-testing). Scored on the merit it will have then: a narrow sourcing heuristic that overlaps the TikTok-browsing and Backstage entries above, and that is best used as the 'cold outreach' arm of the four-channel recruiting frame above rather than as the whole search. Note that the skill-combination step is where the non-marketing talent-pool rule above applies: the prior career path you write down need not be a marketing one. It pairs usefully with the track-the-winners rule below — the search defines who gets a first shot, the track record decides who gets the next one.
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 4 of 6)*
 
