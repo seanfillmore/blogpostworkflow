@@ -5,6 +5,7 @@ import {
   renderResolverSummary,
 } from '../../agents/blocked-post-resolver/index.js';
 import { reportFingerprint } from '../../lib/blocked-posts.js';
+import { RETIRED_STATUSES } from '../../lib/post-publish-state.js';
 
 const NEEDS_WORK = '## OVERALL QUALITY\nVERDICT: Needs Work\n\n## BLOCKERS\n1. Factual concerns: an uncited statistic.\n';
 const PASSING = '## OVERALL QUALITY\nVERDICT: Good\n\n## BLOCKERS\nNone.\n';
@@ -19,6 +20,33 @@ test('a live post with a fresh Needs Work report is selected — the live page i
   assert.equal(picked.length, 1);
   assert.equal(picked[0].slug, 'a');
   assert.equal(picked[0].live, true);
+});
+
+// A retired post never reaches planPost at all now: classifyBlockedReport drops
+// it during selection. That matters for the BUDGET, not just the card — the
+// `--limit 5` slice happens inside selectBlockedPosts, before planPost's skip
+// runs, so a retired candidate used to consume one of the five daily slots and
+// leave a genuinely blocked post untouched for another day.
+test('a RETIRED post is never even a candidate — it cannot eat a slot of the cap', () => {
+  for (const status of RETIRED_STATUSES) {
+    const meta = live({ shopify_status: status });
+    assert.deepEqual(
+      selectBlockedPosts([{ slug: 'a', meta, report: NEEDS_WORK, reportAgeDays: 1 }], { now }),
+      [],
+      status,
+    );
+  }
+});
+
+test('a retired post cannot displace a live one inside the cap', () => {
+  const entries = [
+    ...[...RETIRED_STATUSES].map((status, i) => ({
+      slug: `retired-${i}`, meta: live({ shopify_status: status }), report: NEEDS_WORK, reportAgeDays: 1,
+    })),
+    { slug: 'real', meta: live(), report: NEEDS_WORK, reportAgeDays: 1 },
+  ];
+  const picked = selectBlockedPosts(entries, { now, limit: 1 });
+  assert.deepEqual(picked.map((p) => p.slug), ['real']);
 });
 
 test('a passing post is never selected', () => {
