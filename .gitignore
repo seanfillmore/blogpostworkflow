@@ -160,6 +160,12 @@ data/reports/ctr-program/
 # duplicated live copy. The record IS the backup; it belongs on the box.
 data/reports/long-title-remediation/
 
+# Meta-description remediation run records — identical reasoning to
+# long-title-remediation directly above: each record embeds the live BEFORE
+# value of a field the script overwrote, and its latest.json is exactly the
+# shape tests/repo/server-reports-untracked.test.js exists to keep out of git.
+data/reports/meta-description-remediation/
+
 # Queue auto-apply run reports — same reasoning as seo-impact above: cron owns
 # them on the server, and a local dry run would otherwise leave untracked files
 # behind for someone's `git add .`

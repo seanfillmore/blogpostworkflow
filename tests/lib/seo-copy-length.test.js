@@ -401,7 +401,16 @@ test('the hand-authored title overrides fit and are compliant', async () => {
   // adjective), so they are hand-authored — and a hand-authored value still has
   // to clear the same gates as a generated one.
   const { checkSeoCopy } = await import('../../lib/seo-copy-health-gate.js');
-  for (const t of ['Coconut Oil As A Toothpaste', 'Boka Toothpaste Alternative', 'Best Body Lotion for Dry, Irritated Skin']) {
+  for (const t of [
+    'Coconut Oil As A Toothpaste',
+    'Boka Toothpaste Alternative',
+    'Best Body Lotion for Dry, Irritated Skin',
+    // Added 2026-09-20 — both trim to a dangling fragment ("…What They",
+    // "…Best Natural, Affordable") that tidyTail cannot reach, because these
+    // titles are title case and its word list is lower-case by design.
+    'Coconut Oil Fatty Acids Explained',
+    'Best Cheap Natural Lip Balms',
+  ]) {
     assert.equal(checkCopyLength({ title: t }, { title: 'title' }).ok, true, `${t} is too long rendered`);
     assert.equal(checkSeoCopy({ title: t }).ok, true, `${t} trips the health gate`);
     // And they must be stable under the shortener — a later sweep must not
