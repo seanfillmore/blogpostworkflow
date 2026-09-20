@@ -37,7 +37,7 @@ import { fileURLToPath } from 'node:url';
 import {
   getCustomCollections,
   getSmartCollections,
-  getRedirects,
+  getAllRedirects,
   updateCustomCollection,
   updateSmartCollection,
   upsertMetafield,
@@ -567,7 +567,7 @@ async function main() {
   // reachability check — `published_at` still applies — and never blocks a run.
   let redirectedHandles = new Set();
   try {
-    const redirects = await getRedirects();
+    const redirects = await getAllRedirects();
     redirectedHandles = new Set(
       redirects
         .map((r) => /^\/collections\/([^/?#]+)$/.exec(r.path || '')?.[1])
