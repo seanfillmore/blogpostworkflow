@@ -58,6 +58,7 @@ import { fileURLToPath } from 'node:url';
 import {
   listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-posts.js';
+import { RETIRED_STATUSES } from '../../lib/post-publish-state.js';
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
 import {
@@ -138,13 +139,14 @@ export function selectBlockedPosts(entries, opts = {}) {
 }
 
 /**
- * Statuses that mean the post has been taken OUT OF CIRCULATION deliberately —
- * consolidated into a winner, or unpublished. `resolvePublishStatus` folds all
- * of these into 'unknown', which is not specific enough to route on: a post with
- * an unparseable date is also 'unknown' and DOES still deserve an attempt. So
- * the recorded field is read directly.
+ * This agent used to keep its own copy of the out-of-circulation status list.
+ * It is now `RETIRED_STATUSES` in lib/post-publish-state.js, imported above —
+ * a second copy of a vocabulary is a second copy that drifts, and this one had
+ * already drifted from what `resolvePublishStatus` recognised: the comment here
+ * claimed the resolver folded all three into 'unknown', when in fact only
+ * 'redirected' did, which is exactly the hole that let a retired post render as
+ * ACTION REQUIRED on the dashboard (fixed 2026-09-20).
  */
-const OUT_OF_CIRCULATION = new Set(['redirected', 'unpublished', 'archived']);
 
 /**
  * Is this error Shopify telling us the post's own article no longer exists?
@@ -176,8 +178,13 @@ export function planPost(entry) {
   // was deleted when the post was merged away. Skipping on the RECORDED state
   // costs no API call; the 404 guard in the run loop is the safety net for a
   // deletion nobody has recorded yet.
+  //
+  // Since 2026-09-20 `classifyBlockedReport` drops a retired post before it can
+  // become a candidate, so on the scheduled path this is belt-and-braces. It is
+  // KEPT: `planPost` is exported and unit-tested on its own, and a guard that
+  // costs one Set lookup is not worth removing to make a diff smaller.
   const status = typeof meta.shopify_status === 'string' ? meta.shopify_status.toLowerCase() : '';
-  if (OUT_OF_CIRCULATION.has(status)) {
+  if (RETIRED_STATUSES.has(status)) {
     return {
       slug: entry.slug,
       action: 'skip',
