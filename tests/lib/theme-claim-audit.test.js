@@ -1,7 +1,7 @@
 // Every case here is a real thing that was live on 2026-09-05.
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments } from '../../lib/theme-claim-audit.js';
+import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments, auditShareImage } from '../../lib/theme-claim-audit.js';
 
 test('parses the shapes the real templates actually use', () => {
   assert.deepEqual(parseDurationClaim('A jar lasts about 12 weeks of nightly use — roughly $0.30 per day.'),
@@ -129,4 +129,73 @@ test('a per-day figure inside a Liquid comment is documentation, not a claim', (
   assert.equal(c.days, 21);
   assert.equal(c.perDay, null, 'no per-day survives, so no coherence check fires');
   assert.equal(auditClaim({ claim: c, rateDays: 25, price: 11 }).verdict, 'ok');
+});
+
+// ── og:image fallback drift ──────────────────────────────────────────────────
+//
+// All three files this guards are STOCK theme files, and this theme's updater
+// has already overwritten every edited stock file once. The fix is therefore
+// not permanent, its loss is silent, and the only symptom is a missing social
+// preview image nobody screenshots — a drift check by definition.
+
+test('a snippet that lost the settings.share_image fallback is a finding', () => {
+  const problems = auditShareImage({
+    metaTagsLiquid: '{%- if page_image -%}<meta property="og:image" content="x">{%- endif -%}',
+    settingsDataJson: JSON.stringify({ current: { share_image: 'shopify://shop_images/a.jpg' } }),
+  });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /no longer references settings\.share_image/);
+});
+
+test('an intact fallback with a set image is clean', () => {
+  assert.deepEqual(
+    auditShareImage({
+      metaTagsLiquid: 'assign og_image = page_image\nunless og_image\nassign og_image = settings.share_image\nendunless',
+      settingsDataJson: JSON.stringify({ current: { share_image: 'shopify://shop_images/a.jpg' } }),
+    }),
+    [],
+  );
+});
+
+test('a set-but-EMPTY share_image is a finding, not a pass', () => {
+  // This is what the customizer writes when somebody clears the picker, and at
+  // render time it is indistinguishable from never having been set.
+  for (const value of ['', '   ']) {
+    const problems = auditShareImage({
+      metaTagsLiquid: 'settings.share_image',
+      settingsDataJson: JSON.stringify({ current: { share_image: value } }),
+    });
+    assert.equal(problems.length, 1, `empty value ${JSON.stringify(value)} must be caught`);
+    assert.match(problems[0], /EMPTY/);
+  }
+});
+
+test('an absent share_image key is a finding', () => {
+  const problems = auditShareImage({
+    metaTagsLiquid: 'settings.share_image',
+    settingsDataJson: JSON.stringify({ current: {} }),
+  });
+  assert.equal(problems.length, 1);
+  assert.match(problems[0], /not set on the live theme/);
+});
+
+test('an UNREADABLE asset is reported as unchecked, never as absent', () => {
+  // Same rule as lib/post-lock.js's four states and the UNREADABLE sentinel in
+  // remediate-long-titles: "I could not read it" is its own answer.
+  const problems = auditShareImage({ metaTagsLiquid: null, settingsDataJson: null });
+  assert.equal(problems.length, 2);
+  assert.ok(problems.every((p) => /could not be read|unchecked/.test(p)), problems.join(' | '));
+});
+
+test('share-image findings sort BELOW a live untrue claim', () => {
+  // A customer being told something untrue outranks a missing preview image.
+  const both = summarize({
+    claims: [{ verdict: 'overstates', handle: 'x', detail: 'd', text: 't' }],
+    shareImage: ['gone'],
+  });
+  assert.equal(both.code, 1, 'a bad claim must still decide the exit code');
+  const onlyShare = summarize({ shareImage: ['gone'] });
+  assert.equal(onlyShare.code, 4);
+  assert.equal(summarize({}).code, 0);
+  assert.deepEqual(summarize({}).shareImage, []);
 });

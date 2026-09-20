@@ -111,22 +111,23 @@ const OVERRIDES = {
     title: 'Boka Toothpaste Alternative',
     why: 'mechanical trim ended on the dangling adjective "With Cleaner"',
   },
-  // The health gate refused to mint this one from its own title, correctly:
-  // "Best Body Lotion for Eczema" names a disease, and a cosmetic positioned for
-  // a disease is an unapproved drug. It is a DRAFT (published_at: null), so
-  // there is no live exposure — this entry exists so it cannot ACQUIRE one by
-  // being published later. "Dry, Irritated Skin" describes a skin STATE, which
-  // is the standard cosmetic framing CLAUDE.md already allows ("Oily or
-  // Acne-Prone Skin"), and it collides with no existing lotion title.
+  // `best-body-lotion-for-eczema-natural-ingredients-that-help` USED to sit here,
+  // with a note calling it a draft that a compliant title would protect if it
+  // were ever published. **That note was wrong and the entry was doing nothing
+  // useful.** Re-checked 2026-09-20: the page had been PUBLISHED on 2026-09-07
+  // and was returning HTTP 200 in the sitemap with 160 rendered eczema mentions
+  // above a working Add to Cart — a cosmetic positioned FOR a disease, live,
+  // while this file described it as a safely-parked draft. It earned 0 clicks
+  // and 0 impressions in 90 days, so it was deleted and 301'd to
+  // /collections/non-toxic-body-lotion by operator decision that day, and the
+  // product-for-a-disease phrasings are in data/rejected-keywords.json.
   //
-  // **THE TITLE IS THE SMALLEST PART OF THIS PAGE'S PROBLEM.** Its body carries
-  // 75 mentions of eczema above a working buy box, and CLAUDE.md is explicit
-  // that RSC sells no eczema product and may not target one. A compliant title
-  // on a non-compliant body is defence-in-depth, NOT a clearance to publish.
-  'best-body-lotion-for-eczema-natural-ingredients-that-help': {
-    title: 'Best Body Lotion for Dry, Irritated Skin',
-    why: 'draft; its own title names a disease, which the health gate refuses to mint — body still targets eczema and must not publish as-is',
-  },
+  // The lesson is the reason this comment exists at all: **an OVERRIDES entry
+  // asserting a page's publish state goes stale silently.** The entry cannot
+  // detect that its own premise has changed, and a reader (human or agent)
+  // trusts the comment instead of the site. If you add an entry that leans on
+  // live-ness, re-verify it rather than quoting this file.
+
   // Added 2026-09-20 after the Ahrefs crawl of the same morning put "Title too
   // long" back on the board. Both are MINT candidates whose mechanical trim
   // lands on a dangling fragment, the same failure mode as
