@@ -133,10 +133,10 @@
   },
   {
     "keyword": "sodium lauryl sulfate",
+    "matchType": "exact",
     "reason": "no product mapping",
     "rejected_at": "2026-08-02T15:25:24.180Z",
-    "source": "content-strategist:product-scope",
-    "matchType": "exact"
+    "source": "content-strategist:product-scope"
   },
   {
     "keyword": "beef tallow for skin",
@@ -249,5 +249,41 @@
     "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
     "rejected_at": "2026-08-23T14:00:04.540Z",
     "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "lotion for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "cream for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "moisturizer for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "soap for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "eczema lotion",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "eczema cream",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
   }
 ]
