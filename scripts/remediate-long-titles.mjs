@@ -127,13 +127,43 @@ const OVERRIDES = {
     title: 'Best Body Lotion for Dry, Irritated Skin',
     why: 'draft; its own title names a disease, which the health gate refuses to mint — body still targets eczema and must not publish as-is',
   },
+  // Added 2026-09-20 after the Ahrefs crawl of the same morning put "Title too
+  // long" back on the board. Both are MINT candidates whose mechanical trim
+  // lands on a dangling fragment, the same failure mode as
+  // 'best-boka-alternatives-2025' above. `tidyTail` cannot reach either: its
+  // case-sensitive list is lower-case by design (these titles are title case,
+  // so "They" and "Affordable" read as real words), and widening it to match
+  // capitalised words would start eating legitimate particles like "What to
+  // Look For". A reviewed override is the cheaper, safer instrument.
+  'coconut-oil-fatty-acids-what-they-are-why-they-matter': {
+    title: 'Coconut Oil Fatty Acids Explained',
+    why: 'mechanical trim ended on the dangling pronoun "What They"',
+  },
+  'cheap-lip-balms-best-natural-affordable-picks-for-soft-lips': {
+    title: 'Best Cheap Natural Lip Balms',
+    why: 'mechanical trim ended on the dangling adjective "Best Natural, Affordable"',
+  },
 };
+
+/**
+ * "I could not read it" is NOT "it does not have one" — the same distinction
+ * `lib/post-lock.js` draws between its `unreadable` and `unlocked` states.
+ *
+ * This used to `catch { return null }`, and null means "no title_tag", which
+ * sends the surface down the MINT path — where `upsertMetafield` OVERWRITES.
+ * So one transient metafield read failure silently replaced a good, live SERP
+ * title with a mechanical trim of the resource's own title. Observed on
+ * 2026-09-20: two dry runs four minutes apart disagreed about
+ * `best-soap-for-new-tattoo`, which has carried the perfectly good title_tag
+ * "Best Soap for New Tattoo" throughout.
+ */
+export const UNREADABLE = Symbol('title_tag unreadable');
 
 async function seoTitleTag(resource, id) {
   try {
     const mf = await getMetafields(resource, id);
     return mf.find((m) => m.namespace === 'global' && m.key === 'title_tag')?.value ?? null;
-  } catch { return null; }
+  } catch { return UNREADABLE; }
 }
 
 /** Every live surface, with the field the storefront actually renders as page_title. */
@@ -158,6 +188,14 @@ async function collectCandidates() {
 
   for (const c of out) {
     c.titleTag = await seoTitleTag(c.resource, c.id);
+    // An unreadable title_tag makes this surface unjudgeable: we cannot know
+    // what the storefront renders, so we neither measure nor touch it.
+    if (c.titleTag === UNREADABLE) {
+      c.pageTitle = '';
+      c.rendered = '';
+      c.renderedLen = 0;
+      continue;
+    }
     // page_title is the title_tag when set, else the resource's own title.
     c.pageTitle = c.titleTag ?? c.fallback ?? '';
     c.rendered = renderTitle(c.pageTitle);
@@ -170,9 +208,19 @@ async function main() {
   console.log(`\n  Long-title remediation — ${APPLY ? 'APPLY' : 'DRY RUN'}  (limit ${MAX} rendered chars)\n`);
 
   const all = await collectCandidates();
-  const over = all.filter((c) => c.renderedLen > MAX);
+  // A surface whose title_tag could not be read is excluded from the sweep
+  // entirely and COUNTED — never silently folded in as "has no title_tag",
+  // which is the path that overwrites a good live title. A quiet skip is how a
+  // safety rule stops working, so it is printed even when the count is zero.
+  const unreadable = all.filter((c) => c.titleTag === UNREADABLE);
+  const readable = all.filter((c) => c.titleTag !== UNREADABLE);
+  const over = readable.filter((c) => c.renderedLen > MAX);
 
   console.log(`  surfaces scanned : ${all.length}`);
+  console.log(`  title_tag unreadable (excluded) : ${unreadable.length}`);
+  if (unreadable.length) {
+    for (const c of unreadable) console.log(`      ? ${c.kind} ${c.handle} — could not read title_tag; not measured, not touched`);
+  }
   console.log(`  over ${MAX} rendered : ${over.length}\n`);
 
   const writable = over.filter((c) => c.titleTag != null);
@@ -284,6 +332,9 @@ async function main() {
     mint_enabled: MINT,
     refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
     refused_health: healthBlocked,
+    // Excluded before measurement — see the UNREADABLE note above. Recorded so
+    // a run that quietly saw less of the site than it thought is legible later.
+    excluded_unreadable: unreadable.map((c) => ({ kind: c.kind, handle: c.handle })),
     skipped_no_title_tag: skipped.map((c) => ({ kind: c.kind, handle: c.handle, rendered: c.rendered, renderedLen: c.renderedLen })),
     changes: plan.map((c) => ({
       kind: c.kind, handle: c.handle, resource: c.resource, id: c.id,
