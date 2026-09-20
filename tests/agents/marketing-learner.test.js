@@ -14,6 +14,7 @@ import {
   renderSkillMarkdown,
   validateSkillEdit,
 } from '../../lib/marketing-learner.js';
+import { AOV_TRAILING_90D } from '../../lib/business-baseline.js';
 
 const TODAY = '2026-07-27';
 
@@ -80,7 +81,11 @@ assert.throws(() => parsePublishedFlags(['a'], ['2026-07-28'], { today: TODAY })
 // ── constraint block ────────────────────────────────────────────────────────
 {
   const block = buildConstraintBlock();
-  assert.match(block, /50\.46/, 'carries the settled AOV, not the stale $19 figure');
+  // Asserted against the shared constant, never a literal: this assertion spelled
+  // `50.46` and so went stale in lockstep with the figure it was guarding, which is
+  // how a test stops being able to catch the thing it was written for.
+  assert.ok(block.includes(`$${AOV_TRAILING_90D.toFixed(2)}`),
+    'carries the measured AOV, not the stale $19 figure');
   assert.ok(!block.includes('$19'), 'must not cite the all-time AOV');
   assert.match(block, /retention/i, 'names retention as the binding constraint');
   assert.match(block, /solo operator/i, 'states the staffing constraint');
@@ -250,7 +255,7 @@ const VIDEO = {
   assert.match(p, /Retention Playbook/, 'includes the title');
   assert.match(p, /Some Operator/, 'includes the creator');
   assert.match(p, /2026-03-14/, 'includes the publish date');
-  assert.match(p, /50\.46/, 'embeds the constraint block');
+  assert.ok(p.includes(`$${AOV_TRAILING_90D.toFixed(2)}`), 'embeds the constraint block');
   assert.match(p, /sixty percent of the consumption cycle/, 'includes the transcript');
   assert.match(p, /recencySignals/, 'asks for the fallback recency field');
 }
@@ -2144,7 +2149,7 @@ Body.`,
   assert.ok(!/durable principle rather than platform mechanics/.test(video));
   assert.ok(/durable principle rather than platform mechanics/.test(file));
   for (const b of [video, file]) {
-    assert.ok(/\$50\.46/.test(b), 'AOV survives in both');
+    assert.ok(b.includes(`$${AOV_TRAILING_90D.toFixed(2)}`), 'AOV survives in both');
     assert.ok(/Platform mechanics/.test(b), 'decay table survives in both');
   }
 }
