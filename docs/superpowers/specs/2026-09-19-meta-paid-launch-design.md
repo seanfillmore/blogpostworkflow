@@ -86,8 +86,8 @@ All cheap, all needed regardless of whether this campaign runs.
 
 | # | task | why | write? |
 |--:|---|---|:--:|
-| 1 | **Re-grant the Meta token** | `FACEBOOK_ACCESS_TOKEN` expires **2026-10-19** — day 30 of a 30-day campaign. Note `META_USER_ACCESS_TOKEN` is a system-user token that never expires and carries `catalog_management`; prefer it for catalog work | yes |
-| 2 | **Confirm and fix Purchase deduplication** | 29 pixel Purchases vs 17 Shopify orders, ~2× on 11 of 12 days. Browser pixel and server CAPI landing without a shared `event_id`. Every ROAS figure is unreliable until fixed | yes |
+| 1 | ~~Re-grant the Meta token~~ | ✅ **DONE 2026-09-19 (PR #928)** — `lib/meta-token.js` falls back to `META_USER_ACCESS_TOKEN`, a system-user token that never expires. The 2026-10-19 expiry is now a no-op | — |
+| 2 | ~~Fix Purchase deduplication~~ | ✅ **RETRACTED 2026-09-20 — THERE IS NO DUPLICATION.** See the correction below | — |
 | 3 | **Publish the 13 bundles + `sensitive-skin-starter-set` to Facebook & Instagram** | 15 of 23 products are missing from the channel — also ~20% of ViewContent that builds zero retargeting signal. Fixes the catalog gap and the pre-sell-page gap in one setting | yes |
 | 4 | **Build the retargeting audience now, leave it unused** | US-only, PageView + ViewContent, 180-day retention. Costs nothing and accrues from day one. The existing one (`23855316387760172`) is a **stale 2023 prefill** reading 20 people, never recomputed because never used | yes |
 | 5 | **Build a purchaser suppression audience** | 801 all-time purchasers. Stops paying to re-acquire existing customers | yes |
@@ -97,12 +97,57 @@ All cheap, all needed regardless of whether this campaign runs.
 
 **Never upload the raw Shopify customer list.** 2,948 of 8,611 records are the disqualified giveaway bots, every one flagged `subscribed`. Only 953 of 8,669 have ever ordered. Any customer-list audience must be built from **"has ever placed a revenue-counting order"** (`classifyOrder` / `countsAsRevenue`), which excludes them by construction — and the overlap should be asserted as a check, not assumed.
 
+### ⚠️ CORRECTION 2026-09-20 — the Purchase "double-count" was a MISREADING
+
+**The pixel is clean. `Events Manager → Total events` is a PRE-DEDUPLICATION sum and must never be read as a conversion count.**
+
+Measured against the right denominator — **web-eligible** orders, i.e. excluding the 2 Recurpay renewals that fire no web event:
+
+| | | |
+|---|--:|---|
+| **BROWSER Purchases ÷ web-eligible orders** | **15 ÷ 15 = 1.00×** | **exactly one browser event per order** |
+| SERVER Purchases ÷ orders | 14 ÷ 15 = 0.93× | CAPI coverage 93%, above Meta's 75% target |
+| raw total ÷ orders | 29 ÷ 15 = 1.93× | the figure originally quoted as "2× duplication" |
+
+15 browser + 14 server = 29 — **one pixel event and one CAPI event per order**, exactly what Shopify's Enhanced/Maximum data sharing is designed to produce. A genuine second pixel would inflate the **browser** side alone (~30 browser, ~15 server); the browser side is 1.00×, so nothing extra is firing.
+
+**Meta's own help pages, fetched 2026-09-20:**
+
+> **Events Received:** Total events from your Conversions API or pixel *before processing*. When using both, this is the sum from both sources, **not deduplicated**.
+
+> **Ads Manager and Ads Reporting:** Events are deduplicated. **Events Manager, Data sources page: Events are not deduplicated in the Total events count.**
+
+> The events shared through the Meta Pixel **are also shared through the Meta-enabled Conversions API and are automatically deduplicated.**
+
+> Partner Integrations: Many platforms (e.g., **Shopify**, WooCommerce) automatically handle deduplication parameters.
+
+Deduplication requires `eventID`(browser) = `event_id`(server) **AND** `event` = `event_name`, within a **48-hour** window; Meta keeps the event received first.
+
+**So "every ROAS figure is unreliable" was WRONG** — Ads Manager is deduplicated *and* attributed, and was never affected. The fix is a reporting habit, not a pixel change.
+
+**The GA4 cross-check that supported the wrong conclusion was weak evidence** and should not be repeated: `view_item` ≠ `ViewContent` (Meta fires on collection pages too) and `begin_checkout` ≠ `InitiateCheckout` (which legitimately repeats when a shopper re-enters checkout). Purchase-vs-Shopify-orders is the only ratio here measured against ground truth.
+
+### What remains — a 5-minute verification, not a fix
+
+1. **Ads Manager**, website Purchases for the window. **≈15 or below = done.** It reads *below* 15 because it excludes organic; that is correct.
+2. **Events Manager → Data sources → the pixel → `Diagnostics` tab FIRST.** Look specifically for **"Mismatches in currency and/or value parameters"** — Meta warns that a value mismatch between pixel and CAPI means *the retained event after dedup may carry the wrong value*, silently skewing ROAS. **This is the one genuinely plausible finding**, because 2 of the 29 events carry neither `value` nor `currency`. Note Diagnostics is detection-driven ("issues detected in the last 24 hours") and says nothing about historical events.
+3. `Purchase` row → `View details` → **`Event deduplication`** tab. High **Overlap** + high **Deduplication keys** usage = working. **Near-zero key usage is the only reading that means something is broken.**
+4. `Event coverage` tab: CAPI should match or exceed pixel. Ours is 93%.
+
+**Do NOT mistake the diagnostic "Redundant purchase events" for a dedup warning** — it is pixel-only and requires 4+ events for a single purchase. Meta publishes **no** pixel-vs-CAPI dedup diagnostic at all.
+
+**Do NOT use Meta's Pixel Helper (now Ads Data Advisor) to audit a Shopify store** — app pixels run in a strict sandbox and "no pixel found" is a known false negative. Shopify's own `Settings → Customer events → App pixels → ⋯ → Test` works inside the sandbox.
+
+**A never-fired dataset is invisible to Meta's tooling.** `675675011457496` ("Shopify Pixel", created 2025-08-24) has never received an event, and Meta's diagnostics only report issues *detected in received traffic* — so nothing will ever flag it. The 2-year auto-archive covers custom conversions only, not pixels. Auditing an 8-pixel estate is a manual pass through **Business Suite → Settings → Data Sources**, and nothing prompts it.
+
+**Two open threads, neither blocking:** `shop.app` appears as the host on 10 of 29 events, though Shopify staff state events do not fire in the Shop Pay view — most likely the CAPI event's `event_source_url`, worth a host × source crosstab to confirm no *browser* event carries it. And the 2 value-less events match the 2 Recurpay renewals exactly; if renewals emit a zero-value server Purchase, the real browser-to-order ratio is cleaner still.
+
 ### Which prerequisites need a human
 
 Three of the eight cannot be done from this repo and need Sean:
 
 - **#1 token re-grant** — OAuth consent requires a browser. Scopes are fixed at grant time, so an existing token cannot be widened. Use `auth_type=rerequest` when widening, or Facebook silently returns a token with the OLD scopes while reporting success.
-- **#2 Purchase deduplication** — the duplicate is between the Shopify Facebook & Instagram channel's browser pixel and its own server-side copy, landing without a shared `event_id`. `lib/meta-capi.js` sends **only `Lead`** and is not the cause, so there is nothing in this repo to fix. Settle it in **Events Manager → Purchase → Deduplication**.
+- **#2 Purchase deduplication — RETRACTED. There is no duplication.** See the correction below; the only remaining action is a 5-minute verification.
 - **#7 `content_ids` on InitiateCheckout** — same origin: the FB/IG channel's sandboxed web pixel, not theme code (the theme is deliberately tag-free). Likely not controllable from here at all.
 
 **#8** is not really a defect: those 8 catalog items are genuinely out of stock. They resolve on restock, not by a config change.
