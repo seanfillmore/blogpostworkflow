@@ -95,7 +95,17 @@ All cheap, all needed regardless of whether this campaign runs.
 | 7 | **Fire `content_ids` on InitiateCheckout** | Currently 0 matched *and* 0 unmatched — the parameter is absent entirely | yes |
 | 8 | **Fix 8 of 34 catalog items reading `PRODUCT_OUT_OF_STOCK`** | MUST_FIX; excluded from dynamic ads | yes |
 
-**Never upload the raw Shopify customer list.** 2,948 of 8,611 records are the disqualified giveaway bots, every one flagged `subscribed`. Only 953 of 8,669 have ever ordered.
+**Never upload the raw Shopify customer list.** 2,948 of 8,611 records are the disqualified giveaway bots, every one flagged `subscribed`. Only 953 of 8,669 have ever ordered. Any customer-list audience must be built from **"has ever placed a revenue-counting order"** (`classifyOrder` / `countsAsRevenue`), which excludes them by construction — and the overlap should be asserted as a check, not assumed.
+
+### Which prerequisites need a human
+
+Three of the eight cannot be done from this repo and need Sean:
+
+- **#1 token re-grant** — OAuth consent requires a browser. Scopes are fixed at grant time, so an existing token cannot be widened. Use `auth_type=rerequest` when widening, or Facebook silently returns a token with the OLD scopes while reporting success.
+- **#2 Purchase deduplication** — the duplicate is between the Shopify Facebook & Instagram channel's browser pixel and its own server-side copy, landing without a shared `event_id`. `lib/meta-capi.js` sends **only `Lead`** and is not the cause, so there is nothing in this repo to fix. Settle it in **Events Manager → Purchase → Deduplication**.
+- **#7 `content_ids` on InitiateCheckout** — same origin: the FB/IG channel's sandboxed web pixel, not theme code (the theme is deliberately tag-free). Likely not controllable from here at all.
+
+**#8** is not really a defect: those 8 catalog items are genuinely out of stock. They resolve on restock, not by a config change.
 
 ---
 
@@ -126,12 +136,34 @@ At this volume the final ROAS will be noise. These will not be. **Each failure p
 
 ## What this costs and what it buys
 
-| | |
-|---|--:|
-| 30 days | $1,500 — ~1,100 clicks; a first read on CPM and CTR. **Not enough to know CAC** |
-| 90 days | **$4,500** — a measured CAC, a validated angle, a retargeting pool of several thousand |
+**The budget is GATED, not committed.** Authorised 2026-09-19: **Phase 1 only, $700.** Phases 2 and 3 require their gate to pass and a separate authorisation.
 
-Against ~$2,700/mo revenue this is real money. The honest expectation is a **loss across the window**, and the deliverable is the three assets above rather than a positive ROAS. Name the acceptable loss before launching; do not rediscover it in month two.
+| phase | spend | days | impressions @$20 CPM | clicks @1.5% | what it can measure | what it cannot |
+|---|--:|--:|--:|--:|---|---|
+| **1** | **$700** | 14 | ~35,000 | ~525 | **CPM and link CTR**, with confidence | cost per ATC, CVR, CAC |
+| **2** | $1,500 | 30 | ~75,000 | ~1,125 | **cost per ATC** (~79 events) | CAC (~10 purchases — noise) |
+| **3** | $2,250 | 45 | ~110,000 | ~1,650 | **CAC, directionally**; pool reaches 3,000–5,000 | a significant ROAS |
+| total | **$4,500** | 90 | | ~2,800 cumulative | | |
+
+**Maximum exposure if it dies at the first gate: $700.** That is the design requirement, not pessimism — four prior paid campaigns across two platforms all landed between **0.02 and 0.17 ROAS**, so an affordable failure is the point.
+
+### Gate conditions
+
+| gate | must pass | if it fails |
+|---|---|---|
+| **1 → 2** | CPM < $25 **and** link CTR > 1% | one creative rebuild, then **STOP**. $700 spent, question answered |
+| **2 → 3** | cost per ATC < $5 | the offer or the landing page is wrong — fix before spending more |
+| **3 → scale** | CAC within reach of contribution; pool > 3,000 | re-decide the whole program on real data |
+
+**Phase 2 must not start until the add-to-cart → checkout leak is fixed.** Optimizing for AddToCart while 70.8% of carts die means paying Meta to find people who add to cart and leave — scaling the leak. Phase 1 is exempt because CPM and link CTR are **pre-click** metrics and do not care what the cart does; that is precisely why Phase 1 can run first and answer something real.
+
+Against ~$2,700/mo revenue the full $4,500 is 55% of a quarter's revenue. The honest expectation is a **loss across the window**; the deliverable is a measured CAC, a validated angle and a retargeting pool, not a positive ROAS.
+
+### Why phasing beats both alternatives
+
+- **Against committing $4,500 up front:** the same information arrives in the same order, but a creative failure costs $700 instead of $4,500.
+- **Against "fix the funnel first, launch in 45 days":** CPM and link CTR are independent of the funnel. If this brand's creative cannot earn attention at a reasonable CPM, no amount of cart or ladder work fixes it — and you would have spent 45 days not knowing. It also avoids the launch that never quite arrives because there is always one more fix.
+- **Against halving the daily budget** ($25/day over 90 days): rejected. At $25/day even a $20 CPM yields ~18 clicks/day, too thin to read anything and unable to clear learning on any event. Halving the budget more than halves the information.
 
 ---
 
