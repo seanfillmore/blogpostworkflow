@@ -40,7 +40,7 @@ import { API_VERSION } from '../../lib/shopify-api-version.js';
 import {
   getBlogs, getArticles, getArticle, updateArticle,
   getPages, getPage, updatePage,
-  getRedirects, createRedirect, deleteRedirect,
+  getAllRedirects, createRedirect, deleteRedirect,
   upsertMetafield,
   getProducts, getProduct, updateProduct, updateProductImage,
   getCustomCollections, getSmartCollections,
@@ -742,7 +742,7 @@ async function createRedirects({ dryRun = false } = {}) {
   console.log(`  ${pagesWithLinks.length} broken pages with inbound links`);
 
   console.log('\n  Loading Shopify state + product clusters...');
-  const existing = await getRedirects();
+  const existing = await getAllRedirects();
   const existingPaths = new Set(existing.map((r) => r.path));
   const articleIdx = await getArticleIndex();
   const productIdx = await getProductIndex();
@@ -864,7 +864,7 @@ async function pruneZombies({ dryRun = false } = {}) {
   }
 
   console.log('\n  Loading redirect table from Shopify...');
-  let redirects = await getRedirects();
+  let redirects = await getAllRedirects();
   if (onlyPaths) {
     redirects = redirects.filter((r) => onlyPaths.has(r.path));
     console.log(`    Filtered to ${redirects.length} of ${onlyPaths.size} requested paths`);
@@ -990,7 +990,7 @@ async function pruneZombies({ dryRun = false } = {}) {
 
 async function flattenChains({ dryRun = false } = {}) {
   console.log('\n  Loading redirect table...');
-  const all = await getRedirects();
+  const all = await getAllRedirects();
   const byPath = new Map(all.map((r) => [r.path, r]));
   console.log(`    ${all.length} redirects loaded`);
 
@@ -1440,7 +1440,7 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
 
   // Load existing Shopify redirects to build resolution map
   console.log('  Loading Shopify redirect table...');
-  const redirects = await getRedirects();
+  const redirects = await getAllRedirects();
   const redirectMap = {};
   for (const r of redirects) {
     redirectMap[r.path] = r.target.startsWith('http') ? r.target : `${config.url}${r.target}`;

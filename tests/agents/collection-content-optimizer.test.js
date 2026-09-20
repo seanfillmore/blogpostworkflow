@@ -185,7 +185,12 @@ test('the agent skips DRAFT collections — published_at is checked', () => {
 
 test('the agent skips REDIRECTED collection handles', () => {
   assert.match(AGENT_SRC, /redirectedHandles\.has\(c\.handle\)/);
-  assert.match(AGENT_SRC, /getRedirects/, 'the redirect table must actually be fetched');
+  // getAllRedirects, not getRedirects: Shopify caps a page at 250 rows and the
+  // table passed that on 2026-09-20 (282 rows). A single page silently omitted
+  // the newest 32 redirects, so this gate could again queue a 450-650 word body
+  // for a collection sitting behind one — the exact defect it was added for.
+  assert.match(AGENT_SRC, /getAllRedirects/, 'the WHOLE redirect table must be fetched, paged');
+  assert.ok(!/await getRedirects\(\s*\)/.test(AGENT_SRC), 'a single unpaginated page truncates at 250');
   // Degrade, never block: a failed redirect fetch still leaves the published_at
   // half of the check working. Ranking/display degrades; it destroys nothing.
   assert.match(AGENT_SRC, /Redirect table unavailable/,

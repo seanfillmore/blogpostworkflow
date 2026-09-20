@@ -70,7 +70,7 @@ import { capMergesPerWinner, mergeCapLines, MAX_MERGES_PER_WINNER } from '../../
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
-  getRedirects, createRedirect,
+  getAllRedirects, createRedirect,
   getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
@@ -985,7 +985,7 @@ async function main() {
         }
         return out;
       })(),
-      getRedirects(),
+      getAllRedirects(),
     ]);
     reachIndex = buildReachableIndex({ articles: reachArticles, redirects: reachRedirects });
     console.log(`${reachArticles.length} articles, ${reachRedirects.length} redirects`);
@@ -1037,7 +1037,7 @@ async function main() {
     process.stdout.write('\n  Loading Shopify articles and redirects... ');
     const [articleIndex, existingRedirects] = await Promise.all([
       buildArticleIndex(),
-      getRedirects(),
+      getAllRedirects(),
     ]);
     console.log(`${articleIndex.size} articles, ${existingRedirects.length} existing redirects`);
 

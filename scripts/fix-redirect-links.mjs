@@ -46,7 +46,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { getBlogs, getArticles, updateArticle, getRedirects } from '../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getAllRedirects } from '../lib/shopify.js';
 import { rewriteRedirectLinks, buildRedirectMap } from '../lib/redirect-links.js';
 import { compareBodies } from '../lib/content-mirror.js';
 import { getContentPath, listAllSlugs, getPostMeta } from '../lib/posts.js';
@@ -113,7 +113,7 @@ function buildMirrorIndex() {
 async function main() {
   console.log(`\nRedirect-link fixer — ${APPLY ? 'APPLY' : 'DRY RUN'}\n`);
 
-  const redirectRows = await getRedirects();
+  const redirectRows = await getAllRedirects();
   const map = buildRedirectMap(redirectRows);
   console.log(`  Redirect table: ${map.size} source paths`);
 

@@ -31,7 +31,7 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
-import { getBlogs, getArticles, updateArticle, getRedirects, shopifyGraphQL } from '../../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getAllRedirects, shopifyGraphQL } from '../../lib/shopify.js';
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { loadRoster } from '../../lib/bundle-roster.js';
 import { findPublishDrift, findProductPublishDrift, reconcileEverPublishedLedger, crawlDraftDriftRecords } from '../../lib/publish-drift.js';
@@ -90,7 +90,7 @@ async function loadIntentionalUnpublishes() {
   // safety guard that lets the ledger watch every ever-published article without
   // un-retiring posts that cannibalization/manual cleanup redirected away.
   try {
-    for (const r of (await getRedirects()) || []) {
+    for (const r of (await getAllRedirects()) || []) {
       const h = handleOf(r.path);
       if (h) set.add(h);
     }
