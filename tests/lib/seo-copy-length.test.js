@@ -404,7 +404,9 @@ test('the hand-authored title overrides fit and are compliant', async () => {
   for (const t of [
     'Coconut Oil As A Toothpaste',
     'Boka Toothpaste Alternative',
-    'Best Body Lotion for Dry, Irritated Skin',
+    // 'Best Body Lotion for Dry, Irritated Skin' was here until 2026-09-20. Its
+    // page was deleted and 301'd that day — it was live (not the draft the
+    // override claimed) and positioned a cosmetic FOR a disease.
     // Added 2026-09-20 — both trim to a dangling fragment ("…What They",
     // "…Best Natural, Affordable") that tidyTail cannot reach, because these
     // titles are title case and its word list is lower-case by design.
