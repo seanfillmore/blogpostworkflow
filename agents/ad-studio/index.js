@@ -35,6 +35,7 @@ import { renderVariation, buildRenderPrompt, buildCompPrompt, selectReferencePho
 import { buildVerifyPrompt, parseVerifyResponse, verdictFor, selectVolumeStrings } from './verify.js';
 import { buildCritiquePrompt, parseCritiqueResponse, critiqueVerdict } from './critique.js';
 import { selectFormats, FORMATS, formatForVariation, formatByKey } from './formats.js';
+import { findDuplicatePlates, renderDistinctnessLines } from './plate-distinctness.js';
 import { buildSourceIndex, assertClaimsSourced, validateClaims } from './claims.js';
 import { assertNoHealthClaims, selectQuotableReviews } from './health-claims.js';
 import { buildCopyPrompt, parseCopyResponse, enforceZoneCapacity, expectedStrings, assertNoSupplyDurationClaims, giveawayIsCitable } from './copy.js';
@@ -542,7 +543,7 @@ export async function buildConcepts({ anthropic, formats, product, pdpBody, pers
  * production time cannot be reconstructed afterwards, so a run with no brief reports
  * `attribution: null` — never a half-filled stub that would look like data.
  */
-export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [], scoreSummary = null, attribution = null }) {
+export function buildRunReport({ runId, product, results, renders = 0, budget = null, rejectedConcepts = [], scoreSummary = null, attribution = null, plateDistinctness = null }) {
   let accepted = 0;
   let rejected = 0;
   const conceptsWithNoAcceptedVariation = [];
@@ -596,6 +597,11 @@ export function buildRunReport({ runId, product, results, renders = 0, budget = 
     product: { handle: product.handle, title: product.title },
     models: CREATIVE_MODELS.adStudio,
     attribution,
+    // Advisory on this path, never a refusal. A plate's look is fixed by its format, so an
+    // operator who named `--formats` explicitly has already made the choice; refusing here
+    // would throw away a run over a judgement. `--flexible` is the one path that refuses,
+    // because there the three plates share ONE learning pool by construction.
+    plateDistinctness,
     totals: {
       accepted, rejected, concepts: results.length, requested: results.length + rejectedConcepts.length,
       artifacts: {
@@ -789,7 +795,7 @@ export async function writeFlexibleManifest({
   return json;
 }
 
-export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, attribution = null, root = ROOT }) {
+export function finalizeRunReport({ runDir, runId, product, results, renders, budget, rejectedConcepts, concepts, attribution = null, plateDistinctness = null, root = ROOT }) {
   // The rolling baseline is READ before this run's rows are appended, so a run is never
   // compared against a baseline that already contains it.
   const scoresFile = join(root, SCORES_PATH);
@@ -801,7 +807,7 @@ export function finalizeRunReport({ runDir, runId, product, results, renders, bu
   const rows = scoreRows({ runId, product, results, attribution });
   const scoreSummary = summariseRun(rows, baseline);
 
-  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts, scoreSummary, attribution });
+  const report = buildRunReport({ runId, product, results, renders, budget, rejectedConcepts, scoreSummary, attribution, plateDistinctness });
   writeFileSync(join(runDir, 'run.json'), JSON.stringify(report, null, 2));
 
   // Append-only, and a few bytes per frame — this file is the score history and must
@@ -1831,6 +1837,7 @@ async function main() {
   // them at their empty defaults and never reaches that code (a brief carries one approved
   // concept; --flexible needs three, and parseArgs rejects the combination by name).
   let formats, concepts, rejectedConcepts;
+  let plateDistinctness = null;
   let reviews = [], giveaway = null, sourceIndex = {};
   if (brief) {
     // Skip concept generation ENTIRELY — no buildConcepts, no copy model call. The
@@ -1905,6 +1912,15 @@ async function main() {
     sourceIndex = buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews, giveaway: giveaway?.text });
 
     formats = selectFormats(args.formats.length ? args.formats : undefined);
+
+    // Will this batch produce visually distinct ADS, or one ad several times? Meta treats
+    // near-identical creatives as a single delivery entity, so plates sharing a fingerprint
+    // share a learning pool and a fatigue curve however different their copy is. This runs
+    // BEFORE any render — a plate's look comes from its format's fixed plateBrief, so the
+    // answer is knowable for free — and it is ADVISORY here: it prints, it lands in
+    // run.json, and it never refuses a set the operator asked for by name.
+    plateDistinctness = findDuplicatePlates(formats, { variations: args.variations });
+    for (const line of renderDistinctnessLines(plateDistinctness)) console.log(`  ${line}`);
 
     // THE ONE COMBINATION THAT CANNOT MEAN ANYTHING. A `requiresGiveaway` format's whole
     // layoutBrief asks for an entry — a prize, a deadline, "no purchase necessary", and no
@@ -2181,7 +2197,7 @@ async function main() {
   const report = finalizeRunReport({
     runDir, runId, product, results, renders: budget.used(),
     budget: { maxRenders: budget.max, stopped: skippedArtifacts.length > 0, skipped: skippedArtifacts },
-    rejectedConcepts, concepts, attribution,
+    rejectedConcepts, concepts, attribution, plateDistinctness,
   });
   job.finish({ runId, totals: { ...report.totals, renders: budget.used() } });
 
