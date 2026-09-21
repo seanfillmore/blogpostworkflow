@@ -1,0 +1,64 @@
+{
+  "_comment": "FAKE DATA ONLY. Every name and address here is invented, and every address is on example.com. The real book lives at data/press/contacts.json, which is gitignored because this repository is public.",
+  "version": 1,
+  "concepts": {
+    "intro-2026-09": "Brand introduction: short ingredient lists"
+  },
+  "contacts": [
+    {
+      "id": "ada-writer",
+      "name": "Ada Writer",
+      "kind": "journalist",
+      "status": "active",
+      "outlets": ["Example Mag"],
+      "domains": ["www.examplemag.com"],
+      "role": "Beauty editor",
+      "channels": [
+        { "type": "email", "address": "ada@example.com", "verified": true, "source": "https://examplemag.com/author/ada", "verified_on": "2026-09-21" }
+      ],
+      "fit": ["lotion", "soap"],
+      "cautions": [],
+      "pitches": [
+        { "date": "2026-09-21", "concept": "intro-2026-09", "products": ["lotion"], "channel": "email", "subject": "Hello", "outcome": "sent", "follow_up_due": "2026-10-01" }
+      ]
+    },
+    {
+      "id": "bo-creator",
+      "name": "Bo Creator",
+      "kind": "creator",
+      "status": "active",
+      "outlets": ["Bo's Blog"],
+      "domains": ["boblog.example.com"],
+      "channels": [
+        { "type": "instagram", "address": "@bo.example", "verified": true, "source": "https://instagram.com/bo.example" }
+      ],
+      "fit": ["deodorant"],
+      "pitches": []
+    },
+    {
+      "id": "cy-gone",
+      "name": "Cy Gone",
+      "kind": "journalist",
+      "status": "left_outlet",
+      "outlets": ["Old Mag"],
+      "domains": ["oldmag.example.com"],
+      "channels": [
+        { "type": "email", "address": "cy@example.com", "verified": false }
+      ],
+      "fit": ["lotion"],
+      "pitches": []
+    },
+    {
+      "id": "dee-nofit",
+      "name": "Dee Nofit",
+      "kind": "journalist",
+      "status": "unverified",
+      "outlets": ["Example Mag"],
+      "domains": ["examplemag.com"],
+      "channels": [
+        { "type": "contact_form", "address": "https://deenofit.example.com/contact", "verified": false }
+      ],
+      "pitches": []
+    }
+  ]
+}
