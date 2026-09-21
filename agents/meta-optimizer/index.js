@@ -44,7 +44,10 @@ import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
 import { assessDistinctness } from '../../lib/ctr-copy-distinctness.js';
-import { holdMetaCandidates, excludeHoldout, prioritiseTreatment } from './lib/hold.js';
+import {
+  holdMetaCandidates, excludeHoldout, prioritiseTreatment,
+  readWaveDesignated, designatedMissingFromPool, openTestHandles, excludeOpenTests,
+} from './lib/hold.js';
 import {
   rankClusters, renderEfficiencyLines, efficiencyBanner,
 } from '../../lib/cluster-efficiency.js';
@@ -471,11 +474,44 @@ async function main() {
   // built the arm with lib/ctr-opportunity.js, which already ranks by
   // recoverable clicks x what the cluster earns using the same ordinals.
   // Sorting it by cluster a second time is what displaced it out of the cap.
-  const { ordered: waveOrdered, designated } = prioritiseTreatment(notHeldOut, {
+  // Pages with a RUNNING A/B test — never rewritten until meta-ab-checker
+  // concludes them (see excludeOpenTests). Read here because the reach step
+  // below skips them too.
+  let openHandles = new Set();
+  try {
+    const trackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
+    if (existsSync(trackerPath)) openHandles = openTestHandles(JSON.parse(readFileSync(trackerPath, 'utf8')));
+  } catch { /* unreadable tracker: nothing withheld, same fail-open as the holdout */ }
+
+  // Reach every designated page. The synthesiser can only draw on the
+  // quick-win pool; a designated page outside it had no candidate at all.
+  // Fetch its own top query so it can be treated.
+  const pool = [...quickWinPages];
+  const unreachable = designatedMissingFromPool(readWaveDesignated(ROOT), pool, { skipHandles: openHandles });
+  for (const d of unreachable) {
+    try {
+      const [top] = await gsc.getPageKeywords(d.url, 1, 90);
+      if (top) {
+        pool.push({ keyword: top.keyword, url: d.url, position: top.position, impressions: top.impressions, clicks: top.clicks, ctr: top.ctr });
+        console.log(`  Wave page outside the quick-win pool, reached by its own top query: "${top.keyword}" → ${d.handle}`);
+      }
+    } catch (err) {
+      console.log(`  ⚠ Could not read top query for wave page ${d.handle}: ${err.message}`);
+    }
+  }
+
+  const { ordered: waveReady, designated } = prioritiseTreatment(notHeldOut, {
     root: ROOT,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
-    pool: quickWinPages,
+    pool,
   });
+  const { kept: waveOrdered, excluded: openExcluded } = excludeOpenTests(waveReady, {
+    openHandles,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  if (openExcluded.length) {
+    console.log(`  Open A/B tests: ${openExcluded.length} candidate(s) withheld until their test concludes (${[...new Set(openExcluded.map((e) => e.handle))].length} page(s))`);
+  }
   if (designated.length) {
     const synth = designated.filter((d) => d.synthesised).length;
     console.log(`  CTR-program wave: ${designated.length} candidate(s) prioritised as designated work`
