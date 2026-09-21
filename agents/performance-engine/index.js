@@ -190,10 +190,27 @@ function pickFlops(blocked, hold, held, ctx) {
     }));
 }
 
+/**
+ * A locked winner refuses a BODY rewrite, and every trigger this engine queues
+ * runs content-refresher, which is a body rewrite. So a locked post must never
+ * reach a picker's cap: it cannot succeed, a refusal writes no queue item, and
+ * the post comes back to take the same slot tomorrow. Measured 2026-09-21 on
+ * production: after the flop picker was fixed, the quick-win and meta pickers
+ * still spent 3 of 6 daily slots on locked winners (both tattoo-soap pages and
+ * toothpaste-without-sodium-lauryl-sulfate). Filtered BEFORE the cap, and
+ * counted into the digest rather than dropped silently.
+ */
+function unlocked(slug, ctx) {
+  const lock = mayRewriteBody(slug);
+  if (lock?.allowed) return true;
+  if (Array.isArray(ctx?.lockedSkips) && !ctx.lockedSkips.includes(slug)) ctx.lockedSkips.push(slug);
+  return false;
+}
+
 function pickQuickWins(blocked, hold, held, ctx) {
   const qw = readJsonSafe(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
   if (!qw) return [];
-  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug)), hold, held, { ...ctx, cap: MAX_QUICK_WINS })
+  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug) && unlocked(c.slug, ctx)), hold, held, { ...ctx, cap: MAX_QUICK_WINS })
     .slice(0, MAX_QUICK_WINS)
     .map(c => ({
       slug: c.slug,
@@ -229,6 +246,8 @@ function pickMetaRewrites(blocked, hold, held, ctx) {
       return tk && (q.keyword.toLowerCase().includes(tk) || tk.includes(q.keyword.toLowerCase()));
     });
     if (!match || blocked.has(match.slug)) continue;
+    // low-ctr-meta runs a full content refresh here, so the body lock applies.
+    if (!unlocked(match.slug, ctx)) continue;
     // Only pick posts that actually have HTML — no point refreshing a stub
     if (!existsSync(getContentPath(match.slug))) continue;
     // Skip posts that aren't on Shopify yet — the publish step would fail
@@ -277,7 +296,7 @@ function pickLegacyFlops(blocked, hold, held, ctx) {
   const triage = readJsonSafe(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   if (!triage) return [];
   return heldAware((triage.results || [])
-    .filter(r => r.bucket === 'flop' && !blocked.has(r.slug))
+    .filter(r => r.bucket === 'flop' && !blocked.has(r.slug) && unlocked(r.slug, ctx))
     .filter(r => {
       const existing = listQueueItems().find(i => i.slug === r.slug);
       return !existing || existing.status === 'dismissed';
@@ -405,7 +424,8 @@ async function main() {
   }
 
   const flopSkips = [];
-  const ctx = { ranking, moves, liveArticleIds, deadArticles, flopSkips };
+  const lockedSkips = [];
+  const ctx = { ranking, moves, liveArticleIds, deadArticles, flopSkips, lockedSkips };
 
   const blocked = activeSlugs();
   const flops = pickFlops(blocked, hold, held, ctx);
@@ -436,6 +456,9 @@ async function main() {
     : [];
   for (const line of deadLines) console.log(`    ${line}`);
   const flopSkipLines = renderFlopSkipLines(flopSkips);
+  if (lockedSkips.length) {
+    flopSkipLines.push(`Locked winners skipped by the quick-win/meta/legacy pickers (a body refresh would be refused): ${lockedSkips.join(', ')}.`);
+  }
   for (const line of flopSkipLines) console.log(`    ${line}`);
   deadLines.push(...flopSkipLines);
   if (!liveArticleIds) {
