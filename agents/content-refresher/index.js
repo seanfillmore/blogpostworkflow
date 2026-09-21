@@ -35,7 +35,7 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getPostMeta, getRefreshedPath, ensurePostDir, resolvePostSlug, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
@@ -341,11 +341,34 @@ Return only the bullet points, no preamble.`,
  * refresh that had in fact been generated, and the orphan directory — with no
  * content.html in it — went on to feed queue-autoapply's repair loop.
  *
- * `resolvePostSlug` is the canonical mapping and documents its own resolution
- * order; it is injected here so the wiring is testable without a filesystem.
+ * `resolveArticleHandle` is the canonical handle→post mapping (it does not trust
+ * a directory NAMED for the handle when that dir holds a different article); it
+ * is injected here so the wiring is testable without a filesystem.
  */
-export function writeTargetSlug(handle, resolve = resolvePostSlug) {
-  return resolve(handle) || handle;
+export function writeTargetSlug(handle, resolve = resolveArticleHandle, getMeta = getPostMeta) {
+  const resolved = resolve(handle);
+  if (resolved) return resolved;
+  // No post claims this article. Falling back to a dir named for the handle is
+  // right for a genuinely new article — and wrong when that dir already holds a
+  // DIFFERENT article (the `<handle>-2` collision). Refuse rather than write
+  // one article's refresh into another article's directory.
+  if (declaresOtherArticle(getMeta(handle), handle)) return null;
+  return handle;
+}
+
+/**
+ * Which Shopify article a `--slug` names. A post dir's DECLARED handle wins
+ * over its directory name: `organic-coconut-oil-types-uses-benefits-for-skin/`
+ * holds article `…-2`, and looking its name up as a handle refreshed the other
+ * article. Only a dir that declares nothing is looked up by its name.
+ */
+export function articleForSlugArg(slugArg, byHandle, getMeta = getPostMeta) {
+  const meta = getMeta(slugArg);
+  for (const h of declaredHandles(meta)) {
+    if (byHandle.get(h)) return byHandle.get(h);
+  }
+  if (declaresOtherArticle(meta, slugArg)) return null;
+  return byHandle.get(slugArg) || null;
 }
 
 async function main() {
@@ -366,14 +389,8 @@ async function main() {
   const MAX_KEYWORD_LEN = 80;
 
   if (slugArg) {
-    // Single-post mode — try slug directly, then fall back to shopify_handle from meta
-    let article = byHandle.get(slugArg);
-    if (!article) {
-      const meta = getPostMeta(slugArg);
-      if (meta?.shopify_handle && meta.shopify_handle !== slugArg) {
-        article = byHandle.get(meta.shopify_handle);
-      }
-    }
+    // Single-post mode — the post's declared article first, its dir name second.
+    const article = articleForSlugArg(slugArg, byHandle);
     if (!article) {
       console.error(`Article not found in Shopify: ${slugArg}`);
       process.exit(1);
@@ -387,6 +404,9 @@ async function main() {
 
     targets = [{
       article,
+      // The caller named the post; write there. Re-deriving it from the
+      // article handle is how a refresh landed in another post's directory.
+      slug: getPostMeta(slugArg) ? slugArg : null,
       keyword: topKw?.keyword || slugArg.replace(/-/g, ' '),
       position: topKw?.position ?? gscData.position ?? 30,
       impressions: gscData.impressions ?? 0,
@@ -464,7 +484,11 @@ async function main() {
 
   for (let i = 0; i < targets.length; i++) {
     const { article, keyword, position, impressions, relatedKeywords, userConcerns = [] } = targets[i];
-    const slug = writeTargetSlug(article.handle);
+    const slug = targets[i].slug || writeTargetSlug(article.handle);
+    if (!slug) {
+      console.log(`    [skip] ${article.handle}: no local post owns this article, and data/posts/${article.handle}/ holds a different one — refusing to write into it.`);
+      continue;
+    }
 
     // Winner protection — a refresh rewrites the BODY, which is exactly what the
     // lock exists to prevent on a page that already ranks. See lib/post-lock.js

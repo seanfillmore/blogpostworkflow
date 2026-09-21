@@ -37,6 +37,8 @@ import { notify } from '../../lib/notify.js';
 
 import { listAllSlugs, getPostMeta, getMetaPath, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
+import { flopAction, countByAction, FLOP_ACTIONS } from '../../lib/flop-candidates.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -56,6 +58,63 @@ function ageInDays(iso) {
   if (Number.isNaN(then)) return null;
   return Math.floor((Date.now() - then) / (24 * 60 * 60 * 1000));
 }
+
+/**
+ * When a post's review clock starts: the later of its publish date and its last
+ * BODY refresh.
+ *
+ * A 30/60/90-day verdict is a statement about a page. Once the body is replaced
+ * that page no longer exists, so the verdict cannot stay "Action Required" —
+ * and until 2026-09-21 it did, forever: `all-natural-lotion` was refreshed and
+ * republished on 2026-08-30 and still sat on the dashboard three weeks later
+ * with its July "0 clicks" verdict. `last_refreshed_at` is stamped by
+ * lib/queue-apply.js and refresh-runner; `refreshed_at` by legacy-rebuilder.
+ */
+export function reviewClockStart(meta) {
+  let best = null;
+  for (const iso of [meta?.published_at, meta?.last_refreshed_at, meta?.refreshed_at]) {
+    const t = iso ? new Date(iso).getTime() : NaN;
+    if (!Number.isNaN(t) && (best == null || t > best.t)) best = { iso, t };
+  }
+  return best ? best.iso : null;
+}
+
+/**
+ * Split a post's stored reviews into those still describing the current page
+ * and those made before the clock restarted. The superseded ones are kept as
+ * history, never deleted — "this page flopped, was refreshed, and…" is exactly
+ * what someone will want to read six weeks later.
+ */
+export function supersedeStaleReviews(reviews, clockStart) {
+  const start = clockStart ? new Date(clockStart).getTime() : NaN;
+  const current = {};
+  const superseded = [];
+  for (const [key, review] of Object.entries(reviews || {})) {
+    const at = review?.reviewed_at ? new Date(review.reviewed_at).getTime() : NaN;
+    if (!Number.isNaN(start) && !Number.isNaN(at) && at < start) {
+      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: clockStart });
+    } else {
+      current[key] = review;
+    }
+  }
+  return { current, superseded };
+}
+
+/**
+ * The post's CURRENT verdict: the most recent milestone reviewed, and only if
+ * that one is not ON_TRACK. Every non-ON_TRACK milestone used to be listed, so
+ * one post filled up to three rows and a 30-day BLOCKED stayed listed after the
+ * same post's 60-day review had come back fine.
+ */
+export function currentFlop(reviews, milestones = MILESTONES) {
+  for (const m of [...milestones].sort((a, b) => b - a)) {
+    const r = reviews?.[`${m}d`];
+    if (r) return r.verdict !== 'ON_TRACK' ? { milestone: m, review: r } : null;
+  }
+  return null;
+}
+
+const HISTORY_CAP = 12;
 
 function loadBriefTrafficPotential(slug) {
   const path = join(BRIEFS_DIR, `${slug}.json`);
@@ -317,14 +376,26 @@ async function main() {
   const todayReviews = []; // reviews produced this run
   const allFlops = [];      // any outstanding flops across all posts
 
+  let supersededCount = 0;
   for (const { file, meta } of posts) {
-    const age = ageInDays(meta.published_at);
-    if (age == null || age < MILESTONES[0]) continue;
+    const clockStart = reviewClockStart(meta);
+    const { current: existing, superseded } = supersedeStaleReviews(meta.performance_review, clockStart);
+    let history = null;
+    if (superseded.length) {
+      history = [...(meta.performance_review_history || []), ...superseded].slice(-HISTORY_CAP);
+      supersededCount += superseded.length;
+      console.log(`  [reset] ${meta.slug}: body refreshed ${String(clockStart).slice(0, 10)} — ${superseded.length} earlier verdict(s) superseded, review clock restarted.`);
+    }
 
-    const existing = meta.performance_review || {};
+    const age = ageInDays(clockStart);
+    if (age == null || age < MILESTONES[0]) {
+      if (history) writePostMeta(meta.slug, { performance_review: existing, performance_review_history: history });
+      continue;
+    }
+
     const trafficPotential = loadBriefTrafficPotential(meta.slug);
     let metricsByDays = {};
-    let updated = false;
+    let updated = Boolean(history);
 
     for (const milestone of MILESTONES) {
       if (age < milestone) continue;
@@ -368,23 +439,30 @@ async function main() {
       // (word_count, tokens_used, shopify_article_id, …) into the git-TRACKED
       // meta.json. That is the deploy collision PR #737 split the files to end,
       // and this agent re-created it on 24 posts in two days, once per 13:30 run.
-      writePostMeta(meta.slug, { performance_review: existing });
+      writePostMeta(meta.slug, history
+        ? { performance_review: existing, performance_review_history: history }
+        : { performance_review: existing });
     }
 
-    // Collect any outstanding flops (BLOCKED/REFRESH/DEMOTE) for the digest.
-    for (const milestone of MILESTONES) {
-      const r = existing[`${milestone}d`];
-      if (r && r.verdict !== 'ON_TRACK') {
-        allFlops.push({
-          slug: meta.slug,
-          title: meta.title,
-          url: meta.shopify_url,
-          milestone,
-          verdict: r.verdict,
-          reason: r.reason,
-          reviewed_at: r.reviewed_at,
-        });
-      }
+    // One row per post: its CURRENT verdict (see currentFlop).
+    const flop = currentFlop(existing);
+    if (flop) {
+      allFlops.push({
+        slug: meta.slug,
+        title: meta.title,
+        url: meta.shopify_url,
+        milestone: flop.milestone,
+        verdict: flop.review.verdict,
+        reason: flop.review.reason,
+        reviewed_at: flop.review.reviewed_at,
+        clock_start: clockStart,
+      });
+      const row = allFlops[allFlops.length - 1];
+      row.action = flopAction(row, { mayRewriteBody });
+      // Carried on the row so the dashboard and digest render one vocabulary
+      // without a browser-side copy of it.
+      row.action_label = FLOP_ACTIONS[row.action].label;
+      row.automated = FLOP_ACTIONS[row.action].automated;
     }
   }
 
@@ -395,9 +473,12 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({
     generated_at: new Date().toISOString(),
     reviews_today: todayReviews.length,
+    // What happens next to each flop — see FLOP_ACTIONS in lib/flop-candidates.js.
+    by_action: countByAction(allFlops),
     action_required: allFlops,
   }, null, 2));
 
+  if (supersededCount) console.log(`\n  ${supersededCount} verdict(s) superseded by a body refresh.`);
   console.log(`\n  ${todayReviews.length} new review${todayReviews.length === 1 ? '' : 's'} this run, ${allFlops.length} outstanding flop${allFlops.length === 1 ? '' : 's'}.`);
 
   if (todayReviews.length > 0) {

@@ -569,21 +569,38 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     prioritizerSection = phtml;
   }
 
-  // Post performance flops — surfaced as Action Required (below blockers, above quick-wins)
+  // Post performance flops. One row per post, split by what happens NEXT
+  // (post-performance stamps `action`). Only the flops no agent handles are
+  // listed as cards, capped; the automated ones are a count. This section used
+  // to print every flop as an "Action Required" card — 159 of them on
+  // 2026-09-21, most either already queued for refresh, locked winners, or
+  // owned by indexing-fixer — which is how a section stops being read.
   let flopSection = '';
   const flops = (postPerformance && postPerformance.action_required) || [];
   if (flops.length > 0) {
-    const cards = flops.map((f) => `
+    const FLOP_CARDS_SHOWN = 10;
+    const manual = flops.filter((f) => f.automated !== true);
+    const auto = flops.filter((f) => f.automated === true);
+    const autoCounts = {};
+    for (const f of auto) {
+      const label = f.action_label || f.action;
+      autoCounts[label] = (autoCounts[label] || 0) + 1;
+    }
+    const autoLine = Object.entries(autoCounts).map(([label, n]) => `${esc(label)}: ${n}`).join(' &middot; ');
+    const cards = manual.slice(0, FLOP_CARDS_SHOWN).map((f) => `
       <div class="blocked-post">
         <div class="title">${esc(f.title || f.slug)} &mdash; ${esc(f.verdict)} (${f.milestone}d)</div>
-        <div class="blockers">${esc(f.reason || '')}</div>
+        <div class="blockers">${esc(f.action_label ? `${f.action_label}. ` : '')}${esc(f.reason || '')}</div>
         <div class="report-link">data/reports/post-performance/${esc(f.slug)}-${f.milestone}d.md</div>
       </div>`).join('');
+    const more = manual.length > FLOP_CARDS_SHOWN
+      ? `<p style="font-size:12px;color:#6b7280;margin:8px 0 0 0;">+${manual.length - FLOP_CARDS_SHOWN} more on the dashboard.</p>`
+      : '';
     flopSection = `
-      <div class="action-required">
-        <div class="section-title">&#9888;&#65039; Action Required &mdash; ${flops.length} underperforming post${flops.length > 1 ? 's' : ''}</div>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Posts that have failed a 30/60/90 day performance check. Investigate (BLOCKED), refresh (REFRESH), or retire (DEMOTE).</p>
-        ${cards}
+      <div class="${manual.length ? 'action-required' : 'section'}">
+        <div class="section-title">Underperforming posts &mdash; ${manual.length} need a decision, ${auto.length} handled automatically</div>
+        ${autoLine ? `<p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Handled automatically: ${autoLine}.</p>` : ''}
+        ${cards}${more}
       </div>`;
   }
 
@@ -1156,8 +1173,10 @@ async function main() {
   const imageCount = pipelineImages.length;
   const parts = [];
   if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
-  const flopCount = postPerformance?.action_required?.length || 0;
-  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''}`);
+  // Only flops a human must decide count in the subject; the automated ones
+  // are the fleet working, not news.
+  const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
+  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
