@@ -54,13 +54,13 @@ describe('supersedeStaleReviews', () => {
     assert.equal(supersedeStaleReviews(JULY, null).superseded.length, 0);
   });
 
-  test('a review scored before the GSC URL fix is superseded whatever its date', () => {
+  test('a review scored on an older basis (e.g. before the GSC URL fix) is superseded whatever its date', () => {
     // Every pre-fix review queried the myshopify host and read 0/0 — e.g.
     // antibacterial-body-soap "BLOCKED" on 0 impressions while it had 21,835.
     const old = { '30d': { verdict: 'BLOCKED', reviewed_at: '2026-09-07T13:30:03.709Z', impressions: 0 } };
     const { current, superseded } = supersedeStaleReviews(old, '2026-08-05T00:00:00Z');
     assert.deepEqual(current, {});
-    assert.equal(superseded[0].superseded_by, 'gsc-measurement-fix');
+    assert.equal(superseded[0].superseded_by, 'basis-change');
   });
 });
 
@@ -87,4 +87,28 @@ test('queue-apply stamps last_refreshed_at when it replaces a body', () => {
   const fn = src.slice(src.indexOf('export async function publishBlogRefresh'), src.indexOf('export class SeoCopyClaimError'));
   assert.match(fn, /last_refreshed_at/);
   assert.ok(fn.indexOf('last_refreshed_at') > fn.indexOf('updateArticle('), 'stamp only after the live write');
+});
+
+import { evaluateMilestone } from '../../agents/post-performance/index.js';
+
+describe('evaluateMilestone — peer-yield basis', () => {
+  const BANDS = { '7-10': 0.0046, '11-20': 0.0036 };
+  test('no brief projection is read; the target is expected clicks from real demand', () => {
+    const r = evaluateMilestone({ milestone: 90, age: 120, metrics: { clicks: 1, impressions: 7321, position: 7.9 }, slug: 'x', bandCtr: BANDS });
+    assert.equal(r.verdict, 'REFRESH');
+    assert.equal(r.gsc_basis, GSC_BASIS);
+    assert.ok(r.projection > 30 && r.projection < 40);
+  });
+
+  test('90d low demand is its own verdict; 60d never is', () => {
+    const m = { clicks: 0, impressions: 50, position: 12 };
+    assert.equal(evaluateMilestone({ milestone: 90, age: 120, metrics: m, slug: 'x', bandCtr: BANDS }).verdict, 'LOW_DEMAND');
+    assert.equal(evaluateMilestone({ milestone: 60, age: 120, metrics: m, slug: 'x', bandCtr: BANDS }).verdict, 'ON_TRACK');
+  });
+
+  test('30d zero is still BLOCKED, or NOT_INDEXED when indexing-checker says so', () => {
+    const z = { clicks: 0, impressions: 0, position: null };
+    assert.equal(evaluateMilestone({ milestone: 30, age: 40, metrics: z, slug: 'x' }).verdict, 'BLOCKED');
+    assert.equal(evaluateMilestone({ milestone: 30, age: 40, metrics: z, slug: 'x', externalCtx: { indexingStateBySlug: { x: 'crawled_not_indexed' } } }).verdict, 'NOT_INDEXED');
+  });
 });
