@@ -60,3 +60,30 @@ test('meta-ab-checker reverts SERP-field entries through their metafields', () =
   const src = readFileSync(join(ROOT, 'agents/meta-ab-checker/index.js'), 'utf8');
   assert.match(src, /if \(entry\.serpFields\)[\s\S]*serpRevertOps/);
 });
+
+import { stripEmDashes, isEchoedDescription, parsePagesArg } from '../../lib/serp-copy.js';
+
+describe('published-copy hygiene', () => {
+  test('no em dashes: colon in a title, comma in a description; ranges survive', () => {
+    assert.equal(stripEmDashes('Best Soap for Tattoos — No SLS or Fragrance', { kind: 'title' }), 'Best Soap for Tattoos: No SLS or Fragrance');
+    assert.equal(stripEmDashes('Clean ink—and the ones to avoid.'), 'Clean ink, and the ones to avoid.');
+    assert.equal(stripEmDashes('Results in 2–3 weeks'), 'Results in 2–3 weeks');
+  });
+
+  test('the 2026-09-21 echo: a proposal that is the current body text is not a rewrite', () => {
+    const current = 'Reviewed by the Real Skin Care editorial team Making a natural moisturizer at home means combining simple, skin-friendly ingredients like';
+    assert.equal(isEchoedDescription(current, current), true);
+    assert.equal(isEchoedDescription('Reviewed by the Real Skin Care editorial team Making a natural moisturizer at home means', current), true);
+    assert.equal(isEchoedDescription('Four easy DIY moisturizer recipes by skin type.', current), false);
+  });
+
+  test('--pages accepts handles or URLs', () => {
+    assert.deepEqual([...parsePagesArg('a-b, https://www.realskincare.com/blogs/news/c-d/')], ['a-b', 'c-d']);
+  });
+});
+
+test('meta-optimizer never writes an echoed description, and normalises dashes before the gates', () => {
+  const src = readFileSync(join(ROOT, 'agents/meta-optimizer/index.js'), 'utf8');
+  assert.match(src, /if \(!echoed\) await upsertMetafield\('articles', article\.id, 'global', DESCRIPTION_TAG/);
+  assert.match(src, /title: stripEmDashes\(parsed\.title, \{ kind: 'title' \}\)/);
+});
