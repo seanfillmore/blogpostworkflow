@@ -457,6 +457,16 @@ if (new Date().getDay() === 0) {
 
   // Step 8d: turn the citation data into a ranked PR target list (runs AFTER the
   // tracker so it consumes the freshest snapshot, with full citation URLs).
+  //
+  // No `--enrich` is passed on purpose: the agent's own default (150, raised
+  // from 20 on 2026-09-20) is the one place that number lives. Enrichment is
+  // one plain GET per target — serial, 8s timeout, so ~2.5 min typical and
+  // ~20 min worst case against this step's own 150-min STEP_TIMEOUT_MS. It
+  // buys the byline, the publication AND the article's own last-modified date,
+  // without which a target's currency is never checked at all.
+  //
+  // This agent has NO crontab line of its own — it rides this scheduler run —
+  // so a change to that budget deploys with `git pull`, not `setup-cron.sh`.
   runStep('pr-target-finder', `"${NODE}" agents/pr-target-finder/index.js`, { indent: '    ' });
 
   // Step 8e: generate llms.txt for LLM crawlers

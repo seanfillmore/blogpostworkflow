@@ -8,11 +8,27 @@
  * (Reddit/community). PR effort goes where it actually moves LLM rankings.
  *
  * Mines existing data only (data/reports/ai-citations/*.json) — no fresh LLM
- * queries. Enriches the top pitch targets by fetching the page for its byline.
+ * queries. Enriches the top pitch targets by fetching the page for its byline
+ * AND its publication/modification date.
+ *
+ * TARGET CURRENCY (2026-09-20). An audit of 13 ranked targets found 6 unusable:
+ * two sat on articles nobody had touched since 2021 and 2023, two carried a
+ * masthead ("Better Goods Team") in the author field, and the extractor was
+ * returning bare URLs as authors on four other domains. A byline captured once
+ * and never re-checked is how an outreach hour gets spent on a dead page. Two
+ * of those three causes are answerable from the page we ALREADY fetch, so both
+ * are checked here; each is a FLAG that demotes, never a filter that drops.
+ *
+ * WHAT THIS DELIBERATELY DOES NOT DO: verify the named author still works at
+ * that outlet. Four of the six bad targets had moved (Nicole Saunders left
+ * BestProducts, Tatjana Freund left Elle, Emily Goldman's Hearst address is
+ * dead, Masha Vapnitchnaia inactive since ~2023). Answering that needs a
+ * per-author lookup against a source we do not have here — its own change,
+ * with its own blast radius and its own cost.
  *
  * Usage:
  *   node agents/pr-target-finder/index.js              # full run (weekly)
- *   node agents/pr-target-finder/index.js --weeks 4 --enrich 20
+ *   node agents/pr-target-finder/index.js --weeks 4 --enrich 150
  *   node agents/pr-target-finder/index.js --no-enrich   # skip page fetches (fast)
  *
  * Output:
@@ -24,6 +40,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rankTargets } from '../../lib/pr-targets.js';
 import { extractByline, pageMentionsBrand, looksLikeStore } from '../../lib/html-byline.js';
+import { extractArticleDates, articleAgeDays, isStaleArticle, STALE_ARTICLE_DAYS } from '../../lib/article-freshness.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -48,7 +65,23 @@ const OUT_DIR = join(ROOT, 'data', 'reports', 'pr-targets');
 const args = process.argv.slice(2);
 const argVal = (name, def) => { const i = args.indexOf(name); return i !== -1 ? args[i + 1] : def; };
 const WEEKS = parseInt(argVal('--weeks', '4'), 10);
-const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '20'), 10);
+// ENRICH is the number of top-ranked pitch targets we FETCH — the only rows
+// that get a byline, a publication and (since 2026-09-20) an article date.
+//
+// It defaulted to 20, which meant 20 of ~349 ranked targets were ever checked
+// and everything below rank 20 shipped as a bare domain with a templated angle.
+// 150 is the default now. The cost is one GET per row, serial, with an 8s
+// timeout — so a worst case of ~20 min and a measured typical of ~1s/page
+// (~2.5 min). This runs inside scheduler.js step 8d, whose STEP_TIMEOUT_MS is
+// 150 min and whose slowest neighbour (ai-citation-tracker) already takes ~45,
+// so the worst case still fits. Do NOT raise it much further without making
+// the fetches concurrent: past ~150 the serial worst case starts competing
+// with the step timeout rather than with the budget.
+const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '150'), 10);
+
+// One clock for the whole run, so every row's age is measured against the same
+// instant rather than drifting across a 150-page fetch loop.
+const NOW = Date.now();
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'ai-citation-prompts.json'), 'utf8'));
 const { brand, competitors } = config;
@@ -140,10 +173,39 @@ async function enrichPitchTargets(rows, reviewProof = {}) {
     // that's where the real byline lives. Fall back to the homepage.
     const fetchTarget = row.top_url || `https://${row.domain}/`;
     row.pitch_url = row.top_url || null;
+    row.enriched = true;
     const html = await fetchPage(fetchTarget);
-    const { author, publication } = extractByline(html, { domain: row.domain });
+    const { author, publication, author_raw, author_rejected } = extractByline(html, { domain: row.domain });
     row.author = author;
     row.publication = publication || row.domain;
+    // A byline we REFUSED is a different finding from a byline we could not
+    // find, and the report has to be able to tell them apart — "Better Goods
+    // Team" was being pitched as a person. Kept, never dropped.
+    row.author_raw = author_raw || null;
+    row.author_rejected = author_rejected || null;
+
+    // Is the ARTICLE still maintained? Derived from the page we just fetched —
+    // no extra request. Note what this does NOT answer: whether the named
+    // author still works there (4 of the 6 bad targets in the 2026-09-20 audit
+    // had moved outlets). That needs a per-author lookup and is deliberately a
+    // separate change.
+    //
+    // FRESHNESS IS ONLY READ FROM A REAL ARTICLE URL, and that is the whole
+    // guard. When a snapshot carries no `top_url` this loop falls back to the
+    // HOMEPAGE — 87 of the 106 rows on the 2026-07-02 report — and a homepage's
+    // `dateModified` is the SITE's, which is always fresh. Measured live
+    // 2026-09-20: `bettergoods.org/` reports dateModified 2026-04-10 (163 days)
+    // even though the audit's Better Goods ARTICLE was last touched 2023-08-12,
+    // and `thefiltery.com/` reports yesterday. Reading those as article
+    // freshness would silently certify exactly the dead targets this check
+    // exists to demote — worse than having no check at all, because it reads
+    // as evidence. So an unknown stays unknown.
+    row.article_date_source = row.top_url ? 'article' : 'homepage';
+    const dates = row.top_url ? extractArticleDates(html, { now: NOW }) : { published: null, modified: null };
+    row.article_published = dates.published;
+    row.article_modified = dates.modified;
+    row.article_age_days = articleAgeDays(dates, { now: NOW });
+    row.stale_article = row.top_url ? isStaleArticle(dates, { now: NOW }) : null;
     // Two DISTINCT signals, kept separate to avoid the false "already lists us":
     //  - llm_names_us_here (from tracker): the LLM already names RSC for some of
     //    these prompts (we partly win them) — useful context, not "on this page".
@@ -157,12 +219,39 @@ async function enrichPitchTargets(rows, reviewProof = {}) {
     // we don't track, not a pitch target. Flag it so it drops out of the list.
     row.likely_store = looksLikeStore(html);
   }
-  // attach a templated angle to the un-enriched remainder too
+  // attach a templated angle to the un-enriched remainder too. The currency
+  // fields are set to null EXPLICITLY rather than left absent: "we did not
+  // check this row" and "we checked and found nothing" must not look the same
+  // to whoever reads latest.json.
   for (const row of rows.slice(ENRICH)) {
     row.publication = row.domain;
     row.angle = buildAngle(row, reviewProof);
+    row.enriched = false;
+    row.author_raw = null;
+    row.author_rejected = null;
+    row.article_published = null;
+    row.article_modified = null;
+    row.article_age_days = null;
+    row.stale_article = null;
+    row.article_date_source = null;
   }
   return rows;
+}
+
+// A target is DEMOTED, never dropped, when the page we fetched says the work
+// cannot land: the article is abandoned, or the byline is a masthead rather
+// than a person. Sorting rather than filtering is the CLAUDE.md rule — a gate
+// skips and counts, it never silently deletes work.
+function isDemoted(row) {
+  return row.stale_article === true || row.author_rejected != null;
+}
+
+function sortByUsability(rows) {
+  // Stable sort: rank order (already score-descending) is preserved inside
+  // each band, so this only ever moves unusable rows to the bottom.
+  return rows.map((r, i) => [r, i])
+    .sort((a, b) => (isDemoted(a[0]) - isDemoted(b[0])) || (a[1] - b[1]))
+    .map(([r]) => r);
 }
 
 async function main() {
@@ -193,9 +282,26 @@ async function main() {
     await enrichPitchTargets(pitch, reviewProof);
     const stores = pitch.filter((t) => t.likely_store);
     if (stores.length) console.log(`  Dropped ${stores.length} ecommerce/brand site(s): ${stores.map((s) => s.domain).join(', ')}`);
-    finalPitch = pitch.filter((t) => !t.likely_store);
+    finalPitch = sortByUsability(pitch.filter((t) => !t.likely_store));
   } else {
     for (const row of pitch) { row.publication = row.domain; row.angle = buildAngle(row, reviewProof); }
+  }
+  const stale = finalPitch.filter((t) => t.stale_article === true);
+  const nonPerson = finalPitch.filter((t) => t.author_rejected != null);
+  const withAuthor = finalPitch.filter((t) => t.author).length;
+  // Checkable = enriched AND we had a real article URL. The rest were only ever
+  // compared against a homepage, so their freshness is UNKNOWN, not fresh —
+  // counted out loud so nobody reads "0 stale" as "0 dead".
+  const checkable = finalPitch.filter((t) => t.article_date_source === 'article');
+  const unknownFreshness = finalPitch.filter((t) => t.enriched && t.article_date_source !== 'article');
+  if (ENRICH > 0) {
+    console.log(`  Byline: ${withAuthor} named person(s), ${nonPerson.length} rejected (${
+      [...new Set(nonPerson.map((t) => t.author_rejected))].join(', ') || '—'})`);
+    console.log(`  Freshness: ${stale.length} of ${checkable.length} checkable article(s) past ${STALE_ARTICLE_DAYS}d${
+      stale.length ? ` — ${stale.slice(0, 5).map((t) => `${t.domain} (${t.article_age_days}d)`).join(', ')}` : ''}`);
+    if (unknownFreshness.length) {
+      console.log(`  Freshness UNKNOWN for ${unknownFreshness.length} target(s): no article URL in the citation data, homepage only.`);
+    }
   }
   for (const row of engage) {
     row.thread_url = row.top_url || null;
@@ -206,7 +312,20 @@ async function main() {
   const report = {
     generated_at: new Date().toISOString(),
     weeks_covered: snapshots.length,
-    summary: { pitch: finalPitch.length, engage: engage.length, excluded },
+    summary: {
+      pitch: finalPitch.length,
+      engage: engage.length,
+      excluded,
+      // Skip-and-count, never a silent drop: every demoted target is still in
+      // pitch_targets[], just sorted below the usable ones.
+      enriched: finalPitch.filter((t) => t.enriched).length,
+      with_person_byline: withAuthor,
+      non_person_bylines: nonPerson.length,
+      stale_articles: stale.length,
+      freshness_checkable: checkable.length,
+      freshness_unknown: unknownFreshness.length,
+      stale_article_days: STALE_ARTICLE_DAYS,
+    },
     pitch_targets: finalPitch,
     community_targets: engage,
   };
@@ -215,19 +334,45 @@ async function main() {
   console.log(`  Saved: ${join(OUT_DIR, 'latest.json')}`);
 
   const top = finalPitch[0];
+  const currency = ENRICH > 0
+    ? `\n\nCurrency: ${withAuthor} named-person byline(s), ${nonPerson.length} rejected as team/URL, ${stale.length} of ${checkable.length} checkable article(s) untouched for over ${STALE_ARTICLE_DAYS} days (${unknownFreshness.length} unknown — homepage only). Demoted, never dropped.`
+    : '';
   await notify({
+    // A demotion is the policy working, so this stays 'info' on the normal
+    // deferred path — never 'error', never immediate.
     subject: `PR Targets: ${pitch.length} pitch + ${engage.length} community`,
-    body: top ? `Top target: ${top.publication || top.domain} for "${top.prompts[0]}" (cited by ${top.engines.join(', ')}; lists ${top.competitors.slice(0, 2).join(', ')}).` : 'No addressable targets this run.',
+    body: (top ? `Top target: ${top.publication || top.domain} for "${top.prompts[0]}" (cited by ${top.engines.join(', ')}; lists ${top.competitors.slice(0, 2).join(', ')}).` : 'No addressable targets this run.') + currency,
     status: 'info', category: 'seo',
   }).catch(() => {});
 }
 
 function renderMarkdown(r) {
   const lines = [`# PR Targets — where to focus`, ``, `_${r.weeks_covered} weeks of AI-citation data · ${r.summary.pitch} pitch · ${r.summary.engage} community · generated ${r.generated_at.slice(0, 10)}_`, ``];
+  const s = r.summary || {};
+  if (s.stale_articles != null || s.non_person_bylines != null) {
+    lines.push(`_Currency: ${s.with_person_byline ?? 0} named-person byline(s) · ${s.non_person_bylines ?? 0} byline(s) rejected as a team/URL · ${s.stale_articles ?? 0} of ${s.freshness_checkable ?? 0} checkable article(s) untouched for over ${s.stale_article_days ?? '?'} days · ${s.freshness_unknown ?? 0} with no article URL to check. **Nothing is dropped** — demoted targets sort to the bottom._`, '');
+  }
   lines.push(`## Pitch targets (editorial — get added)`, '');
   for (const t of r.pitch_targets.slice(0, 25)) {
-    lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}`);
-    lines.push(`- **Author:** ${t.author || '_(no byline found — pitch the editor)_'}`);
+    // Flag the two reasons a target is unpitchable in the heading, so a human
+    // scanning the report sees WHY it was demoted without opening the JSON.
+    const flags = [];
+    if (t.stale_article === true) flags.push(`⚠ STALE (${t.article_age_days}d)`);
+    if (t.author_rejected) flags.push(`⚠ NO PERSON (${t.author_rejected})`);
+    lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}${flags.length ? `  ·  ${flags.join('  ·  ')}` : ''}`);
+    lines.push(`- **Author:** ${t.author
+      || (t.author_rejected
+        ? `_(byline "${t.author_raw}" is not a person — ${t.author_rejected}; find a named editor before pitching)_`
+        : '_(no byline found — pitch the editor)_')}`);
+    if (t.article_modified || t.article_published) {
+      lines.push(`- **Article last updated:** ${(t.article_modified || t.article_published).slice(0, 10)}${
+        t.article_age_days != null ? ` (${t.article_age_days} days ago)` : ''}${
+        t.stale_article ? ' — **likely abandoned; verify before spending an outreach hour**' : ''}`);
+    } else if (t.enriched) {
+      lines.push(`- **Article last updated:** ${t.article_date_source === 'homepage'
+        ? '_(no article URL in the citation data — only the homepage was fetched, and a homepage date says nothing about the article. Freshness UNKNOWN.)_'
+        : '_(page states no date — freshness unknown, not assumed stale)_'}`);
+    }
     if (t.pitch_url) lines.push(`- **Article:** ${t.pitch_url}`);
     lines.push(`- **Why:** cited by ${t.engines.join(', ')} for ${t.prompts.map((p) => `_${p}_`).join(', ')}`);
     lines.push(`- **Competitors it surfaces:** ${t.competitors.join(', ') || '—'}${t.homepage_mentions_us ? ' · note: homepage references RSC — verify' : ''}${t.llm_names_us_here ? ' · (we already win some of these prompts)' : ''}`);
