@@ -56,6 +56,7 @@ data/reports/post-meta-reconcile/
 
 # Generated agent reports (regenerable; not tracked)
 data/reports/ai-citations/
+data/reports/ai-citation-baseline/
 data/reports/legacy-triage/
 data/reports/llms-txt/
 data/reports/plan6-cutover/
