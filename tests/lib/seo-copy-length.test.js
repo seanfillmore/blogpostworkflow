@@ -444,3 +444,28 @@ test('the always-dangling list must NOT swallow a real particle', () => {
     'Best Organic Toothpaste: What to Look For',
   );
 });
+
+import { shortenToRenderedLimit as shortenQ, renderTitle as renderQ } from '../../lib/seo-copy-length.js';
+
+// 2026-09-21: 11 live title_tags minted by this shortener ended in a title-case
+// question stub — "SLS Free Toothpaste: Top Picks & What" on the biggest page.
+test('no title ends in an orphaned question stub after a clause break', () => {
+  for (const t of [
+    'Is Aluminum in Deodorant Dangerous? What You Need to Know',
+    'Turmeric Soap: Benefits, Uses & What to Look For',
+    'Probiotic Deodorant: What It Is & How It Works',
+    'Natural Antiperspirant: What Works & Why It Matters',
+    'Unscented Deodorant: What It Is and Why It Works',
+    'Charcoal Toothpaste: Does It Work & Is It Safe?',
+    'No Fluoride Toothpaste: What to Use & Why It Works',
+  ]) {
+    const s = shortenQ(t);
+    assert.doesNotMatch(s, /(?:[&,?]|\band)\s*(?:what|why|how|is|does)(?:\s+it)?$/i, `${t} → ${s}`);
+    assert.ok(renderQ(s).length <= 60, s);
+  }
+});
+
+test('a complete "What to Look For" phrase is never stripped', () => {
+  assert.equal(shortenQ('Best Organic Toothpaste: What to Look For & Why It Matters'), 'Best Organic Toothpaste: What to Look For');
+  assert.equal(shortenQ('Is Aluminum in Deodorant Dangerous? What You Need to Know'), 'Is Aluminum in Deodorant Dangerous?');
+});
