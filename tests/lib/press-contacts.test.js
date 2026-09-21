@@ -5,7 +5,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   validateContacts, loadContacts, contactsByDomain, dueFollowUps, eligibleFor,
-  recordPitch, setOutcome, normalizeDomain, addDays, lastPitch,
+  recordPitch, setOutcome, normalizeDomain, addDays, lastPitch, splitDomainHits,
   DEFAULT_COOLDOWN_DAYS, PITCHABLE_STATUSES,
 } from '../../lib/press-contacts.js';
 
@@ -68,7 +68,7 @@ test('contactsByDomain merges www and bare spellings onto one outlet', () => {
   assert.equal(mag.length, 2, 'www.examplemag.com and examplemag.com are the same outlet');
   assert.deepEqual(mag.map((x) => x.id).sort(), ['ada-writer', 'dee-nofit']);
   assert.equal(mag.find((x) => x.id === 'ada-writer').last_pitched, '2026-09-21');
-  // A departed contact still maps — the outlet WAS approached.
+  // A departed contact still maps, so the flag can show their status.
   assert.equal(map.get('oldmag.example.com')[0].status, 'left_outlet');
 });
 
@@ -120,6 +120,19 @@ test('recordPitch appends, defaults outcome and follow-up, and never mutates its
   assert.equal(p.follow_up_due, '2026-11-12');
   assert.throws(() => recordPitch(before, 'nobody', { date: '2026-11-02', concept: 'x' }), /no contact/);
   assert.throws(() => recordPitch(before, 'bo-creator', { date: '11/02', concept: 'x' }), /invalid/);
+});
+
+test('splitDomainHits: a researched-but-unpitched contact is NOT "already pitched"', () => {
+  // The live bug on 2026-09-21: an outlet whose writer was only researched read
+  // as already pitched, which would steer outreach away from an unpitched target.
+  const map = contactsByDomain(doc().contacts);
+  const mag = splitDomainHits(map.get('examplemag.com'));
+  assert.deepEqual(mag.pitched.map((h) => h.id), ['ada-writer']);
+  assert.deepEqual(mag.onFile.map((h) => h.id), ['dee-nofit']);
+  const old = splitDomainHits(map.get('oldmag.example.com'));
+  assert.equal(old.pitched.length, 0, 'never pitched');
+  assert.equal(old.onFile[0].status, 'left_outlet', 'status carried so the flag can show it');
+  assert.deepEqual(splitDomainHits(undefined), { pitched: [], onFile: [] });
 });
 
 test('only active and unverified contacts can be pitched', () => {
