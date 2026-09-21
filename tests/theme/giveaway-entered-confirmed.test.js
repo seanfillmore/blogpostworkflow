@@ -17,7 +17,13 @@
 // a failed lookup → the page is left exactly as shipped, because the default
 // copy is the right one for the conversion-critical first-visit case.
 import { strict as assert } from 'node:assert';
-import { test, before, after } from 'node:test';
+import { test as nodeTest, before as nodeBefore, after as nodeAfter } from 'node:test';
+import { entryPeriodGate } from '../helpers/giveaway-entry-period.js';
+
+// Skips itself while the Entry Period is closed. The HOOKS are gated too: this
+// suite launches a real browser in `before`, and node:test runs a file's hooks
+// even when every test in it is skipped.
+const { test, before, after } = entryPeriodGate({ test: nodeTest, before: nodeBefore, after: nodeAfter });
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
