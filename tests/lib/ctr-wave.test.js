@@ -39,7 +39,7 @@ const waveOf = (over = {}) => ({
   ...over,
 });
 
-const entry = (h, testedAt) => ({ pageUrl: u(h), testedAt });
+const entry = (h, testedAt) => ({ pageUrl: u(h), testedAt, serpFields: true });
 
 // ── the derived floor ────────────────────────────────────────────────────────
 
@@ -96,7 +96,7 @@ test('THE REAL TRACKER FORMAT: testedAt is DATE-ONLY and must still count', () =
   // uses full ISO strings, which is exactly why they all passed.
   const cov = treatmentCoverage(
     waveOf({ generated_at: '2026-08-31T14:55:02.682Z' }),
-    [{ pageUrl: u('a'), testedAt: '2026-08-31' }],
+    [{ pageUrl: u('a'), testedAt: '2026-08-31', serpFields: true }],
   );
   assert.equal(cov.treated, 1, 'a same-day date-only rewrite counts toward the wave');
 });
@@ -104,7 +104,7 @@ test('THE REAL TRACKER FORMAT: testedAt is DATE-ONLY and must still count', () =
 test('a date-only rewrite from BEFORE the wave still does not count', () => {
   const cov = treatmentCoverage(
     waveOf({ generated_at: '2026-08-31T14:55:02.682Z' }),
-    [{ pageUrl: u('a'), testedAt: '2026-08-30' }],
+    [{ pageUrl: u('a'), testedAt: '2026-08-30', serpFields: true }],
   );
   assert.equal(cov.treated, 0);
 });
@@ -227,4 +227,17 @@ test('handleOf survives query strings, fragments and trailing slashes', () => {
     'https://www.realskincare.com/blogs/news/best-unscented-lotion?utm=x',
     'https://rsc.myshopify.com/blogs/news/best-unscented-lotion#faq',
   ]) assert.equal(handleOf(v), want, v);
+});
+
+test('a rewrite that never reached the SERP does not count as treatment', () => {
+  // Before 2026-09-21 meta-optimizer wrote article.title / summary_html, which
+  // the SERP does not render (lib/serp-copy.js). Counting those entries would
+  // let a wave conclude "no effect" on a treatment that never happened.
+  const w = waveOf({ treatment: [{ url: u('a') }, { url: u('b') }] });
+  const cov = treatmentCoverage(w, [
+    { pageUrl: u('a'), testedAt: '2026-09-01' },
+    { pageUrl: u('b'), testedAt: '2026-09-01', serpFields: true },
+  ]);
+  assert.equal(cov.treated, 1);
+  assert.deepEqual(cov.untreatedPages, ['a']);
 });

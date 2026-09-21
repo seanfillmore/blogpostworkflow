@@ -25,7 +25,8 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getMetafields, upsertMetafield, deleteMetafield } from '../../lib/shopify.js';
+import { serpRevertOps } from '../../lib/serp-copy.js';
 import { decideOutcome, pickBaselineCtr } from '../../lib/meta-ab-decision.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
@@ -248,9 +249,19 @@ async function main() {
           revertError = `could not resolve article for ${entry.pageUrl}`;
         } else {
           try {
-            const fields = { title: entry.originalTitle };
-            if (entry.originalMeta != null) fields.summary_html = entry.originalMeta;
-            await updateArticle(art.blogId, art.id, fields);
+            if (entry.serpFields) {
+              // The rewrite wrote the title_tag / description_tag metafields
+              // (lib/serp-copy.js), so the revert restores THOSE: prior value,
+              // or delete where no tag existed before.
+              for (const op of serpRevertOps(entry, await getMetafields('articles', art.id))) {
+                if (op.op === 'set') await upsertMetafield('articles', art.id, 'global', op.key, op.value);
+                else await deleteMetafield(op.id);
+              }
+            } else {
+              const fields = { title: entry.originalTitle };
+              if (entry.originalMeta != null) fields.summary_html = entry.originalMeta;
+              await updateArticle(art.blogId, art.id, fields);
+            }
             reverted = true;
           } catch (e) {
             revertError = e.message;

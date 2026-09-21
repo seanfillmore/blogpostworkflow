@@ -34,7 +34,8 @@ import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getMetafields, upsertMetafield } from '../../lib/shopify.js';
+import { renderedSerp, unsupportedNumbers, TITLE_TAG, DESCRIPTION_TAG } from '../../lib/serp-copy.js';
 import { getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayTestMetadata } from '../../lib/post-lock.js';
 import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
@@ -591,8 +592,18 @@ async function main() {
       console.log(`  [winner] "${keyword}": ${metaLock.slug} is a locked winner — metadata test allowed, body untouched`);
     }
 
-    const currentTitle = article.title || '';
-    const currentMeta = article.summary_html?.replace(/<[^>]+>/g, '').trim() || '';
+    // What the SERP actually renders — the title_tag / description_tag
+    // metafields, falling back to article.title and the body. Rewriting
+    // article.title / summary_html never reached it (lib/serp-copy.js).
+    let serp;
+    try {
+      serp = renderedSerp({ article, metafields: await getMetafields('articles', article.id) });
+    } catch (e) {
+      console.log(`  ⚠ "${keyword}": could not read SEO metafields (${e.message}) — skipped, page unchanged`);
+      continue;
+    }
+    const currentTitle = serp.title;
+    const currentMeta = serp.description;
 
     const indexEntry = lookupByKeyword(idx, keyword);
     const ground = buildPromptGrounding(indexEntry, clusterMatesFor(idx, indexEntry, { limit: 6 }));
@@ -665,9 +676,9 @@ async function main() {
       if (!distinct.ok) {
         const constraint = `The previous attempt was rejected as a cosmetic rewrite: ${distinct.reasons.join('; ')}. `
           + `Produce a materially DIFFERENT title, not a reordering or a synonym swap. It must introduce at least one `
-          + `concrete new element the current title lacks — a count ("7 Picks"), a year, a bracketed qualifier, a named `
-          + `audience ("for Sensitive Skin"), a timeframe, or an explicit exclusion ("Without SLS"). Keep the target `
-          + `keyword intact and keep it under 60 characters.`;
+          + `concrete new element the current title lacks — a count ONLY if the article really contains that many items, `
+          + `a year, a bracketed qualifier, a named audience ("for Sensitive Skin"), a timeframe, or an explicit exclusion `
+          + `("Without SLS"). Never invent a number. Keep the target keyword intact and keep it under 60 characters.`;
         const retry = await gateProposedCopy((c) =>
           rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground,
             [constraint, c].filter(Boolean).join(' ')));
@@ -694,6 +705,42 @@ async function main() {
         gateSkipped.push({
           keyword, pageUrl, violations: [], attempts: distinctAttempts,
           distinctness: distinct.reasons,
+          rejectedTitle: proposed.title || '', rejectedMeta: proposed.meta_description || '',
+        });
+        if (gateSkipped.length >= limitArg) {
+          console.log(`  Gate skips: ${gateSkipped.length} — at the skip budget, stopping.`);
+          break;
+        }
+        continue;
+      }
+
+      // ── number grounding ─────────────────────────────────────────────────
+      // A count in a title is a promise. On 2026-09-21 four live rewrites
+      // claimed "7 Picks" / "5 Recipes" on pages with no such list. One retry
+      // naming the unsupported numbers, then skip — same shape as the gates
+      // above and counted against the same skip budget.
+      let invented = unsupportedNumbers(`${proposed.title} ${proposed.meta_description}`, article.body_html);
+      let numberAttempts = 1;
+      if (invented.length) {
+        const constraint = `The previous attempt used the number(s) ${invented.join(', ')}, which the article does not contain. `
+          + 'Do not state any count, quantity or number the article does not literally contain.';
+        const retry = await gateProposedCopy((c) =>
+          rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground, [constraint, c].filter(Boolean).join(' ')));
+        numberAttempts = 2;
+        if (retry.ok) {
+          const retryInvented = unsupportedNumbers(`${retry.proposed.title} ${retry.proposed.meta_description}`, article.body_html);
+          const retryDistinct = assessDistinctness({
+            originalTitle: currentTitle, proposedTitle: retry.proposed.title,
+            originalMeta: currentMeta, proposedMeta: retry.proposed.meta_description,
+          });
+          if (!retryInvented.length && retryDistinct.ok) { proposed = retry.proposed; distinct = retryDistinct; invented = []; }
+        }
+      }
+      if (invented.length) {
+        console.log('invented number');
+        console.log(`    ⊘ number grounding: ${invented.join(', ')} not in the article — skipped after ${numberAttempts} attempt(s), page unchanged`);
+        gateSkipped.push({
+          keyword, pageUrl, violations: [], attempts: numberAttempts, unsupportedNumbers: invented,
           rejectedTitle: proposed.title || '', rejectedMeta: proposed.meta_description || '',
         });
         if (gateSkipped.length >= limitArg) {
@@ -748,12 +795,12 @@ async function main() {
         }
 
         try {
-          await updateArticle(article.blogId, article.id, {
-            title: proposed.title,
-            summary_html: proposed.meta_description,
-          });
+          // The SERP fields, not article.title / summary_html — see
+          // lib/serp-copy.js. The on-page H1 and excerpt are left alone.
+          await upsertMetafield('articles', article.id, 'global', TITLE_TAG, proposed.title);
+          await upsertMetafield('articles', article.id, 'global', DESCRIPTION_TAG, proposed.meta_description);
           result.applied = true;
-          console.log(`    ✓ Updated in Shopify`);
+          console.log(`    ✓ Updated in Shopify (title_tag + description_tag)`);
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
         }
@@ -769,6 +816,9 @@ async function main() {
             pagePosition,
             pageImpressions,
             locked: metaLock.state === 'locked',
+            serpFields: true,
+            originalTitleTag: serp.titleTag,
+            originalDescriptionTag: serp.descriptionTag,
           }));
           try {
             mkdirSync(abTrackerDir, { recursive: true });
