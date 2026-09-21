@@ -458,12 +458,15 @@ if (new Date().getDay() === 0) {
   // Step 8d: turn the citation data into a ranked PR target list (runs AFTER the
   // tracker so it consumes the freshest snapshot, with full citation URLs).
   //
-  // No `--enrich` is passed on purpose: the agent's own default (150, raised
-  // from 20 on 2026-09-20) is the one place that number lives. Enrichment is
-  // one plain GET per target — serial, 8s timeout, so ~2.5 min typical and
-  // ~20 min worst case against this step's own 150-min STEP_TIMEOUT_MS. It
-  // buys the byline, the publication AND the article's own last-modified date,
-  // without which a target's currency is never checked at all.
+  // No `--enrich` and no `--concurrency` are passed on purpose: the agent's own
+  // defaults (400 targets at pool width 6, raised from a serial 150 on
+  // 2026-09-21) are the one place those numbers live. Enrichment is one plain
+  // GET per target, 8s timeout, bounded per publisher — measured at ~62s
+  // typical and ~9 min worst case against this step's own 150-min
+  // STEP_TIMEOUT_MS, which is faster in BOTH directions than the serial pass at
+  // 150 was. It buys the byline, the publication AND the article's own
+  // last-modified date, without which a target's currency is never checked at
+  // all — and on 2026-09-21 only 103 of 502 ranked targets had any of it.
   //
   // This agent has NO crontab line of its own — it rides this scheduler run —
   // so a change to that budget deploys with `git pull`, not `setup-cron.sh`.

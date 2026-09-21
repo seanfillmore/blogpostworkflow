@@ -37,12 +37,28 @@ test('the check is capped, and a skipped row is counted rather than assumed fine
 });
 
 test('author pages are fetched at most once each per run', () => {
-  // Measured on the live 150-target report: 65 rows with an author URL resolve
-  // to 40 distinct pages, so without the cache the check costs 60% more
-  // requests for byte-identical answers.
-  assert.match(SRC, /authorCache/);
-  assert.match(SRC, /cache\.get\(authorUrl\)/);
-  assert.match(SRC, /cache\.set\(authorUrl/);
+  // Several ranked rows can name the same author archive page, and one request
+  // answers all of them. The dedupe used to be an in-loop cache; since the
+  // fetches became concurrent (2026-09-21) it is the grouping inside
+  // `planAuthorChecks`, which is tested BEHAVIOURALLY in
+  // tests/lib/pr-target-enrich.test.js rather than by scanning for a literal.
+  // All this scan has to establish is that the agent uses it.
+  assert.match(SRC, /from '\.\.\/\.\.\/lib\/pr-target-enrich\.js'/);
+  assert.match(SRC, /planAuthorChecks/);
+  // One pool pass over the funded GROUPS, never one per row.
+  assert.match(SRC, /runPool\(funded/);
+});
+
+test('the author budget is spent in RANK order, not in arrival order', () => {
+  // Racing the article fetches would otherwise make "which bylines did we
+  // verify" depend on which publisher answered first, so two runs over
+  // identical inputs could disagree. The plan is computed before any author
+  // page is fetched — the same "decide before the cap" rule the $0-cluster
+  // hold follows.
+  assert.match(SRC, /planAuthorChecks\(top, \{ budget: AUTHOR_CHECKS \}\)/);
+  const planAt = SRC.indexOf('planAuthorChecks(top');
+  const poolAt = SRC.indexOf('runPool(funded');
+  assert.ok(planAt > -1 && poolAt > planAt, 'the budget must be planned before the fetching starts');
 });
 
 test('the counts reach the console, the summary block AND the notify body', () => {
@@ -88,6 +104,20 @@ test('a demotion is reported as the policy working — never an error, never imm
 test('the second fetch can distinguish a 404 from an unreachable page', () => {
   // Both are UNKNOWN and neither demotes, but only one of them is worth
   // printing as a finding — so the fetch helper must not flatten them.
-  assert.match(SRC, /fetchPageResult/);
-  assert.match(SRC, /'not-found'/);
+  // `legacyStatus` is the narrowing, and tests/lib/fetch-pool.test.js pins that
+  // it preserves `not-found` while folding every other failure to `error`.
+  assert.match(SRC, /legacyStatus/);
+  assert.match(SRC, /fetchStatus: legacyStatus\(outcome\)/);
+});
+
+test('an ARTICLE we never received is not reported as a page with no author', () => {
+  // Before 2026-09-21 a 403, a 429, a timeout and a DNS failure all produced
+  // `html = null`, and the row shipped as `no-author-page-found` — which claims
+  // we read the article and it named nobody. Measured over 240 live target
+  // URLs, ~12% of these fetches never see a page.
+  assert.match(SRC, /unreachableCurrencyReason/);
+  assert.match(SRC, /row\.enrich_fetch/);
+  // The outcome is carried into the reason, so the digest's histogram names the
+  // real cause (`article-blocked`, `article-timeout`, …).
+  assert.match(SRC, /unreachableCurrencyReason\(row\.enrich_fetch\)/);
 });
