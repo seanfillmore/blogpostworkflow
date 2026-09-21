@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1200px;height:630px}
+  body{font-family:Jost,-apple-system,Helvetica,Arial,sans-serif;background:#fff;color:#1a1a1a;
+       position:relative;overflow:hidden}
+  .stage{position:absolute;top:40px;left:0;right:0;text-align:center}
+  .wordmark{font-size:58px;font-weight:400;letter-spacing:-.01em;line-height:1}
+  .wordmark b{font-weight:500;letter-spacing:.06em}
+  .rule{width:56px;height:2px;background:#1a1a1a;opacity:.2;margin:20px auto 18px}
+  .tagline{font-size:27px;font-weight:300;color:#2b2b2b}
+  .sub{font-size:15px;font-weight:400;letter-spacing:.19em;text-transform:uppercase;
+       color:#8f8f8f;margin-top:12px}
+  /* Geometry, computed rather than eyeballed — the first two attempts had the
+     lineup covering the text. Text block: top 40 + wordmark 58 + rule 40 +
+     tagline 38 + sub 33 ends at y=209. Lineup is 1200x660, so at 58% width
+     (696px) it is 383px tall; flush to the bottom it starts at y=247. That is
+     38px of clear air, and the labels are not clipped. */
+  .lineup{position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+          width:58%;display:block}
+</style></head>
+<body>
+  <div class="stage">
+    <div class="wordmark">real <b>SKIN CARE</b></div>
+    <div class="rule"></div>
+    <div class="tagline">Natural coconut oil skin care</div>
+    <div class="sub">Handmade in the USA</div>
+  </div>
+  <img class="lineup" src="LINEUP_SRC" alt="">
+</body></html>

@@ -356,3 +356,9 @@ data/reports/calendar-backlog-sweep/
 # calendar itself is tracked, so these are a belt-and-braces copy of a file git
 # already holds; they are never pruned by anything.
 data/calendar/backups/
+
+# Authored-title run records — same reasoning as long-title-remediation above:
+# each record embeds the live BEFORE value of a field the script overwrote, and
+# its latest.json is the shape tests/repo/server-reports-untracked.test.js keeps
+# out of git.
+data/reports/authored-titles/
