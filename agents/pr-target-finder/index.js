@@ -19,12 +19,13 @@
  * of those three causes are answerable from the page we ALREADY fetch, so both
  * are checked here; each is a FLAG that demotes, never a filter that drops.
  *
- * WHAT THIS DELIBERATELY DOES NOT DO: verify the named author still works at
- * that outlet. Four of the six bad targets had moved (Nicole Saunders left
- * BestProducts, Tatjana Freund left Elle, Emily Goldman's Hearst address is
- * dead, Masha Vapnitchnaia inactive since ~2023). Answering that needs a
- * per-author lookup against a source we do not have here — its own change,
- * with its own blast radius and its own cost.
+ * AUTHOR CURRENCY (2026-09-20) is the follow-up that note deferred: four of the
+ * six bad targets had MOVED OUTLET (Nicole Saunders left BestProducts, Tatjana
+ * Freund left Elle, Emily Goldman's Hearst address is dead, Masha Vapnitchnaia
+ * inactive since ~2023), and a byline captured once is how an outreach hour
+ * gets spent on somebody else's ex-employer. `lib/author-currency.js` answers
+ * it from the outlet's OWN author page — see that module's header for why a
+ * recency signal was measured and rejected, and for what it still cannot see.
  *
  * Usage:
  *   node agents/pr-target-finder/index.js              # full run (weekly)
@@ -45,6 +46,7 @@ import {
 } from '../../lib/citation-redirects.js';
 import { extractByline, pageMentionsBrand, looksLikeStore } from '../../lib/html-byline.js';
 import { extractArticleDates, articleAgeDays, isStaleArticle, STALE_ARTICLE_DAYS } from '../../lib/article-freshness.js';
+import { extractAuthorUrl, classifyAuthorCurrency } from '../../lib/author-currency.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -82,6 +84,24 @@ const WEEKS = parseInt(argVal('--weeks', '4'), 10);
 // the fetches concurrent: past ~150 the serial worst case starts competing
 // with the step timeout rather than with the budget.
 const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '150'), 10);
+
+// AUTHOR_CHECKS caps the SECOND fetch — the author's own archive page, which is
+// the only way to ask whether the named byline still works at that outlet.
+//
+// MEASURED against the live 150-target production report on 2026-09-20, three
+// full passes: 60 of 150 rows carry a named-person byline, 65 expose an author
+// URL in the article's markup, and those 65 collapse to **40 UNIQUE author
+// pages** (a Hearst roundup names the same two editors over and over), so the
+// cache below is doing real work. Cost of those 40 fetches: **7.7 seconds**,
+// against 51.5s for the 150 article fetches the pass already made. Typical
+// added runtime is therefore ~8s on a step whose STEP_TIMEOUT_MS is 150 min.
+//
+// 80 is 2x the measured demand, which bounds the pathological case rather than
+// the normal one: 80 x the 8s timeout is ~10.7 min worst case, so even stacked
+// on the article pass's own ~20 min worst case the step has ~5x headroom. A
+// row past the budget is SKIPPED AND COUNTED (`author-check-budget-spent`),
+// never silently treated as checked-and-fine.
+const AUTHOR_CHECKS = args.includes('--no-author-check') ? 0 : parseInt(argVal('--author-checks', '80'), 10);
 
 // Gemini cites through an opaque redirector, so without this pass one of the
 // five engines contributes nothing at all and its 3,796 citations pile onto a
@@ -123,7 +143,11 @@ function categoryFromPrompts(prompts) {
   return 'clean personal-care product';
 }
 
-async function fetchPage(url, timeoutMs = 8000) {
+// Returns { status, html }. `status` is 'ok' | 'not-found' | 'error', because
+// the author-currency check needs to tell a page the outlet has REMOVED from a
+// page we simply could not reach — see lib/author-currency.js, where neither
+// one demotes but only one of them is worth printing as a finding.
+async function fetchPageResult(url, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -131,10 +155,15 @@ async function fetchPage(url, timeoutMs = 8000) {
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; RSC-PR-Research/1.0)' },
       redirect: 'follow', signal: controller.signal,
     });
-    if (!res.ok) return null;
-    return (await res.text()).slice(0, 400_000);
-  } catch { return null; }
+    if (res.status === 404 || res.status === 410) return { status: 'not-found', html: null };
+    if (!res.ok) return { status: 'error', html: null };
+    return { status: 'ok', html: (await res.text()).slice(0, 400_000) };
+  } catch { return { status: 'error', html: null }; }
   finally { clearTimeout(timer); }
+}
+
+async function fetchPage(url, timeoutMs = 8000) {
+  return (await fetchPageResult(url, timeoutMs)).html;
 }
 
 // Per-category review proof from Judge.me (real counts + ratings), keyed by the
@@ -179,8 +208,59 @@ function buildAngle(row, reviewProof = {}) {
   return `Pitch to be added to their "${prompt}" coverage alongside ${competitor}. Hook: Real Skin Care's coconut-oil ${category} is a clean, aluminum-free alternative — ${proof}.`;
 }
 
+// One fetch per DISTINCT author page per run. Measured on the live report, 65
+// rows with an author URL collapse to 40 distinct pages — a Hearst roundup
+// names the same two editors across half a dozen targets — so without this the
+// check would cost 60% more requests for byte-identical answers.
+async function checkAuthorCurrency(row, html, cache, budget) {
+  const authorUrl = extractAuthorUrl(html, {
+    domain: row.domain, author: row.author, authorRaw: row.author_raw,
+  });
+  row.author_url = authorUrl;
+
+  // Nothing to check: no person to place, or the article names no archive page.
+  // Both are UNKNOWN with a reason, never a demotion.
+  if (!row.author || !authorUrl) {
+    const verdict = classifyAuthorCurrency({
+      author: row.author, domain: row.domain, publication: row.publication,
+      authorUrl, fetchStatus: null, html: null,
+    });
+    return applyCurrency(row, verdict);
+  }
+
+  let page = cache.get(authorUrl);
+  if (!page) {
+    if (budget.spent >= AUTHOR_CHECKS) {
+      // Skip and count. A budget-capped row is explicitly NOT "checked and
+      // fine" — it is one we never looked at, and the report says so.
+      return applyCurrency(row, {
+        state: 'unknown', reason: 'author-check-budget-spent',
+        evidence: null, author_url: authorUrl,
+      });
+    }
+    budget.spent += 1;
+    page = await fetchPageResult(authorUrl);
+    cache.set(authorUrl, page);
+  }
+  const verdict = classifyAuthorCurrency({
+    author: row.author, domain: row.domain, publication: row.publication,
+    authorUrl, fetchStatus: page.status, html: page.html,
+  });
+  return applyCurrency(row, verdict);
+}
+
+function applyCurrency(row, verdict) {
+  row.author_currency = verdict.state;
+  row.author_currency_reason = verdict.reason || null;
+  row.author_currency_evidence = verdict.evidence || null;
+  row.author_bio_excerpt = verdict.bio_excerpt || null;
+  return row;
+}
+
 async function enrichPitchTargets(rows, reviewProof = {}) {
   const top = rows.slice(0, ENRICH);
+  const authorCache = new Map();
+  const authorBudget = { spent: 0 };
   for (const row of top) {
     // Fetch the actual cited ARTICLE when we have its URL (newer snapshots) —
     // that's where the real byline lives. Fall back to the homepage.
@@ -231,6 +311,16 @@ async function enrichPitchTargets(rows, reviewProof = {}) {
     // A single-brand ecommerce store cited for "best X" prompts is a competitor
     // we don't track, not a pitch target. Flag it so it drops out of the list.
     row.likely_store = looksLikeStore(html);
+
+    // Does the named byline still work HERE? Answered from the outlet's own
+    // author page (a second GET, deduped and capped). Fails open in every
+    // branch it cannot answer — see lib/author-currency.js.
+    if (AUTHOR_CHECKS > 0) {
+      await checkAuthorCurrency(row, html, authorCache, authorBudget);
+    } else {
+      applyCurrency(row, { state: 'unknown', reason: 'author-check-disabled' });
+      row.author_url = null;
+    }
   }
   // attach a templated angle to the un-enriched remainder too. The currency
   // fields are set to null EXPLICITLY rather than left absent: "we did not
@@ -247,6 +337,8 @@ async function enrichPitchTargets(rows, reviewProof = {}) {
     row.article_age_days = null;
     row.stale_article = null;
     row.article_date_source = null;
+    row.author_url = null;
+    applyCurrency(row, { state: 'unknown', reason: 'not-enriched' });
   }
   return rows;
 }
@@ -256,7 +348,9 @@ async function enrichPitchTargets(rows, reviewProof = {}) {
 // than a person. Sorting rather than filtering is the CLAUDE.md rule — a gate
 // skips and counts, it never silently deletes work.
 function isDemoted(row) {
-  return row.stale_article === true || row.author_rejected != null;
+  return row.stale_article === true
+    || row.author_rejected != null
+    || row.author_currency === 'departed';
 }
 
 function sortByUsability(rows) {
@@ -333,6 +427,17 @@ async function main() {
   // counted out loud so nobody reads "0 stale" as "0 dead".
   const checkable = finalPitch.filter((t) => t.article_date_source === 'article');
   const unknownFreshness = finalPitch.filter((t) => t.enriched && t.article_date_source !== 'article');
+  // Author currency. `unknown` is BY FAR the biggest bucket and that is the
+  // design — most rows carry no person byline at all — so the three states are
+  // counted separately and the unknown REASONS are printed. A run reporting
+  // "0 moved" must never be readable as "every author was verified".
+  const authorDeparted = finalPitch.filter((t) => t.author_currency === 'departed');
+  const authorCurrent = finalPitch.filter((t) => t.author_currency === 'current');
+  const authorUnknown = finalPitch.filter((t) => t.enriched && t.author_currency === 'unknown');
+  const unknownWhy = authorUnknown.reduce((m, t) => {
+    const r = t.author_currency_reason || 'unspecified';
+    m[r] = (m[r] || 0) + 1; return m;
+  }, {});
   if (ENRICH > 0) {
     console.log(`  Byline: ${withAuthor} named person(s), ${nonPerson.length} rejected (${
       [...new Set(nonPerson.map((t) => t.author_rejected))].join(', ') || '—'})`);
@@ -340,6 +445,11 @@ async function main() {
       stale.length ? ` — ${stale.slice(0, 5).map((t) => `${t.domain} (${t.article_age_days}d)`).join(', ')}` : ''}`);
     if (unknownFreshness.length) {
       console.log(`  Freshness UNKNOWN for ${unknownFreshness.length} target(s): no article URL in the citation data, homepage only.`);
+    }
+    console.log(`  Author currency: ${authorDeparted.length} MOVED OUTLET, ${authorCurrent.length} still there, ${authorUnknown.length} unknown${
+      authorDeparted.length ? ` — ${authorDeparted.slice(0, 5).map((t) => `${t.author} @ ${t.domain}`).join(', ')}` : ''}`);
+    if (authorUnknown.length) {
+      console.log(`    could not check: ${Object.entries(unknownWhy).sort((a, b) => b[1] - a[1]).map(([r, n]) => `${r} ${n}`).join(', ')}`);
     }
   }
   for (const row of engage) {
@@ -364,6 +474,14 @@ async function main() {
       freshness_checkable: checkable.length,
       freshness_unknown: unknownFreshness.length,
       stale_article_days: STALE_ARTICLE_DAYS,
+      // Author currency. `author_currency_unknown_reasons` is the fail-open
+      // record: it is what makes a disarmed check distinguishable from a clean
+      // one, the same job `hold.disarmed` does for the $0-cluster gate.
+      authors_moved_outlet: authorDeparted.length,
+      authors_still_there: authorCurrent.length,
+      author_currency_unknown: authorUnknown.length,
+      author_currency_unknown_reasons: unknownWhy,
+      author_page_fetch_budget: AUTHOR_CHECKS,
       // How many pitch rows carry a real article URL — the precondition for the
       // freshness check above meaning anything. Reported so "0 stale" can never
       // be read as "0 dead" when the real answer is "nothing was checkable".
@@ -384,7 +502,11 @@ async function main() {
 
   const top = finalPitch[0];
   const currency = ENRICH > 0
-    ? `\n\nCurrency: ${withAuthor} named-person byline(s), ${nonPerson.length} rejected as team/URL, ${stale.length} of ${checkable.length} checkable article(s) untouched for over ${STALE_ARTICLE_DAYS} days (${unknownFreshness.length} unknown — homepage only). Demoted, never dropped.`
+    ? `\n\nCurrency: ${withAuthor} named-person byline(s), ${nonPerson.length} rejected as team/URL, ${stale.length} of ${checkable.length} checkable article(s) untouched for over ${STALE_ARTICLE_DAYS} days (${unknownFreshness.length} unknown — homepage only).`
+      + `\nAuthor moved outlet: ${authorDeparted.length}${authorDeparted.length ? ` (${authorDeparted.slice(0, 5).map((t) => `${t.author} @ ${t.domain}`).join('; ')})` : ''}`
+      + ` · ${authorCurrent.length} confirmed still there · ${authorUnknown.length} could not be checked`
+      + `${authorUnknown.length ? ` (${Object.entries(unknownWhy).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([r, n]) => `${r} ${n}`).join(', ')})` : ''}.`
+      + `\nEverything flagged is demoted, never dropped.`
     : '';
   await notify({
     // A demotion is the policy working, so this stays 'info' on the normal
@@ -401,6 +523,11 @@ function renderMarkdown(r) {
   if (s.stale_articles != null || s.non_person_bylines != null) {
     lines.push(`_Currency: ${s.with_person_byline ?? 0} named-person byline(s) · ${s.non_person_bylines ?? 0} byline(s) rejected as a team/URL · ${s.stale_articles ?? 0} of ${s.freshness_checkable ?? 0} checkable article(s) untouched for over ${s.stale_article_days ?? '?'} days · ${s.freshness_unknown ?? 0} with no article URL to check. **Nothing is dropped** — demoted targets sort to the bottom._`, '');
   }
+  if (s.authors_moved_outlet != null) {
+    const why = Object.entries(s.author_currency_unknown_reasons || {})
+      .sort((a, b) => b[1] - a[1]).map(([r, n]) => `${r} ${n}`).join(', ');
+    lines.push(`_Author currency: **${s.authors_moved_outlet} byline(s) have MOVED OUTLET** · ${s.authors_still_there ?? 0} confirmed still there · ${s.author_currency_unknown ?? 0} could not be checked${why ? ` (${why})` : ''}. An unchecked author is **not** a verified one._`, '');
+  }
   lines.push(`## Pitch targets (editorial — get added)`, '');
   for (const t of r.pitch_targets.slice(0, 25)) {
     // Flag the two reasons a target is unpitchable in the heading, so a human
@@ -408,11 +535,21 @@ function renderMarkdown(r) {
     const flags = [];
     if (t.stale_article === true) flags.push(`⚠ STALE (${t.article_age_days}d)`);
     if (t.author_rejected) flags.push(`⚠ NO PERSON (${t.author_rejected})`);
+    if (t.author_currency === 'departed') flags.push(`⚠ AUTHOR MOVED (${t.author_currency_reason})`);
     lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}${flags.length ? `  ·  ${flags.join('  ·  ')}` : ''}`);
     lines.push(`- **Author:** ${t.author
       || (t.author_rejected
         ? `_(byline "${t.author_raw}" is not a person — ${t.author_rejected}; find a named editor before pitching)_`
         : '_(no byline found — pitch the editor)_')}`);
+    if (t.author_currency === 'departed') {
+      lines.push(`- **⚠ This person has LEFT ${t.publication || t.domain}:** ${t.author_currency_evidence || t.author_currency_reason}. **Do not pitch them here** — find their replacement on the desk.${
+        t.author_url ? ` (${t.author_url})` : ''}`);
+      if (t.author_bio_excerpt) lines.push(`  > ${t.author_bio_excerpt}`);
+    } else if (t.author && t.author_currency === 'current') {
+      lines.push(`- **Author currency:** ${t.author_currency_evidence || 'the outlet still lists them'}.`);
+    } else if (t.author && t.enriched) {
+      lines.push(`- **Author currency:** _not verified (${t.author_currency_reason || 'unknown'}) — confirm they still work there before pitching._`);
+    }
     if (t.article_modified || t.article_published) {
       lines.push(`- **Article last updated:** ${(t.article_modified || t.article_published).slice(0, 10)}${
         t.article_age_days != null ? ` (${t.article_age_days} days ago)` : ''}${
@@ -428,6 +565,23 @@ function renderMarkdown(r) {
     lines.push(`- **Angle:** ${t.angle}`);
     lines.push('');
   }
+  // DEMOTION WORKS AGAINST VISIBILITY, so the demoted rows get named here.
+  // `sortByUsability` pushes a flagged target below every unflagged one, and
+  // the section above only renders the top 25 — measured on the live report a
+  // departed byline lands at rank 257 of 285, so its ⚠ flag is never seen.
+  // The whole point of skip-and-count is that the count reaches a human.
+  const moved = (r.pitch_targets || []).filter((t) => t.author_currency === 'departed');
+  if (moved.length) {
+    lines.push(`## ⚠ Bylines that have MOVED OUTLET — do not pitch these people here`, '');
+    lines.push(`_Each of these is still in the list above (demoted to the bottom, never dropped). The PUBLICATION may still be worth pitching — find whoever holds that desk now._`, '');
+    for (const t of moved) {
+      lines.push(`- **${t.author}** — named on ${t.publication || t.domain}, but ${t.author_currency_evidence || t.author_currency_reason}.${
+        t.author_url ? ` [author page](${t.author_url})` : ''}`);
+      if (t.pitch_url) lines.push(`  - article: ${t.pitch_url}`);
+    }
+    lines.push('');
+  }
+
   lines.push(`## Community targets (Reddit/forums — engage)`, '');
   for (const t of r.community_targets.slice(0, 15)) {
     lines.push(`- **${t.thread_url || t.domain}** — ${t.note}`);
