@@ -67,6 +67,7 @@ import {
   planAuthorChecks, articleDateSource, unreachableCurrencyReason, enrichmentCounts,
 } from '../../lib/pr-target-enrich.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
+import { loadContacts, contactsByDomain, normalizeDomain, PRESS_CONTACTS_PATH } from '../../lib/press-contacts.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
@@ -525,6 +526,24 @@ async function main() {
   } else {
     for (const row of pitch) { row.publication = row.domain; row.angle = buildAngle(row, reviewProof); }
   }
+  // ALREADY PITCHED. The contact book (data/press/contacts.json — gitignored,
+  // this repo is public) records every outlet we have approached. Flag, never
+  // drop: a pitched outlet can still hold another writer worth reaching, and
+  // the flag is what stops the same person being cold-pitched twice. A missing
+  // book is the normal state off the server, so it disarms the flag and SAYS so
+  // rather than rendering as "nothing here was pitched".
+  const press = loadContacts(join(ROOT, PRESS_CONTACTS_PATH), { readFile: (p) => readFileSync(p, 'utf8') });
+  const pitchedByDomain = press.available ? contactsByDomain(press.contacts) : new Map();
+  for (const row of finalPitch) {
+    const hits = pitchedByDomain.get(normalizeDomain(row.domain)) || [];
+    row.already_contacted = hits.length ? hits : null;
+  }
+  const alreadyContacted = finalPitch.filter((t) => t.already_contacted);
+  console.log(press.available
+    ? `  Contact book: ${alreadyContacted.length} target outlet(s) already pitched${
+      alreadyContacted.length ? ` — ${alreadyContacted.slice(0, 6).map((t) => t.domain).join(', ')}` : ''}`
+    : `  Contact book NOT checked this run: ${press.reason}`);
+
   const counts = enrichmentCounts(finalPitch);
   const stale = finalPitch.filter((t) => t.stale_article === true);
   const nonPerson = finalPitch.filter((t) => t.author_rejected != null);
@@ -639,6 +658,11 @@ async function main() {
       redirects_resolved: resolvedUrls.size,
       redirects_unresolved: redirectStats ? redirectStats.failed : null,
       redirect_resolution: RESOLVE ? 'on' : 'off',
+      // Contact-book coverage. `press_contacts_disarmed` is the fail-open record:
+      // a run with no book must not read as "no target was ever pitched".
+      already_contacted: press.available ? alreadyContacted.length : null,
+      press_contacts: press.available ? press.contacts.length : null,
+      press_contacts_disarmed: press.available ? null : press.reason,
     },
     pitch_targets: finalPitch,
     community_targets: engage,
@@ -666,11 +690,14 @@ async function main() {
       + `${authorUnknown.length ? ` (${Object.entries(unknownWhy).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([r, n]) => `${r} ${n}`).join(', ')})` : ''}.`
       + `\nEverything flagged is demoted, never dropped.`
     : '';
+  const pitched = press.available
+    ? `\n\nAlready pitched: ${alreadyContacted.length} target outlet(s) are in the contact book — flagged, not removed.`
+    : `\n\nContact book NOT checked: ${press.reason}. Targets you have already pitched are not flagged this run.`;
   await notify({
     // A demotion is the policy working, so this stays 'info' on the normal
     // deferred path — never 'error', never immediate.
     subject: `PR Targets: ${pitch.length} pitch + ${engage.length} community`,
-    body: (top ? `Top target: ${top.publication || top.domain} for "${top.prompts[0]}" (cited by ${top.engines.join(', ')}; lists ${top.competitors.slice(0, 2).join(', ')}).` : 'No addressable targets this run.') + coverage + currency,
+    body: (top ? `Top target: ${top.publication || top.domain} for "${top.prompts[0]}" (cited by ${top.engines.join(', ')}; lists ${top.competitors.slice(0, 2).join(', ')}).` : 'No addressable targets this run.') + coverage + currency + pitched,
     status: 'info', category: 'seo',
   }).catch(() => {});
 }
@@ -691,6 +718,11 @@ function renderMarkdown(r) {
   if (s.stale_articles != null || s.non_person_bylines != null) {
     lines.push(`_Currency: ${s.with_person_byline ?? 0} named-person byline(s) · ${s.non_person_bylines ?? 0} byline(s) rejected as a team/URL · ${s.stale_articles ?? 0} of ${s.freshness_checkable ?? 0} checkable article(s) untouched for over ${s.stale_article_days ?? '?'} days · ${s.freshness_unknown ?? 0} unknown (${s.freshness_unknown_homepage ?? 0} with no article URL to check, ${s.freshness_unknown_unreachable ?? 0} whose page we never received). **Nothing is dropped** — demoted targets sort to the bottom._`, '');
   }
+  if (s.press_contacts_disarmed) {
+    lines.push(`> ✉ **Contact book NOT checked this run:** ${s.press_contacts_disarmed}. Outlets you have already pitched are not flagged below.`, '');
+  } else if (s.already_contacted != null) {
+    lines.push(`_Contact book: **${s.already_contacted} target outlet(s) already pitched** (marked ✉ below; flagged, never removed) · ${s.press_contacts} contacts on record._`, '');
+  }
   if (s.authors_moved_outlet != null) {
     const why = Object.entries(s.author_currency_unknown_reasons || {})
       .sort((a, b) => b[1] - a[1]).map(([r, n]) => `${r} ${n}`).join(', ');
@@ -706,6 +738,7 @@ function renderMarkdown(r) {
     if (t.author_currency === 'departed') flags.push(`⚠ AUTHOR MOVED (${t.author_currency_reason})`);
     const unreached = t.enriched && t.enrich_fetch && t.enrich_fetch !== 'ok' ? t.enrich_fetch : null;
     if (unreached) flags.push(`⚠ NOT CHECKED (${unreached})`);
+    if (t.already_contacted) flags.push(`✉ ALREADY PITCHED (${t.already_contacted.map((c) => c.name).join(', ')})`);
     lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}${flags.length ? `  ·  ${flags.join('  ·  ')}` : ''}`);
     // "We fetched the page and it names nobody" and "the publisher would not
     // give us the page" are different instructions to a human. Before

@@ -363,3 +363,9 @@ data/calendar/backups/
 # its latest.json is the shape tests/repo/server-reports-untracked.test.js keeps
 # out of git.
 data/reports/authored-titles/
+
+# PR contact book — named people's addresses, several of them personal. This
+# repository is PUBLIC, so the book must never be committed. Server-authoritative,
+# backed up offsite by scripts/backup-snapshots-offsite.sh (set `press`).
+# Pinned by tests/repo/press-contacts-private.test.js.
+data/press/

@@ -15,7 +15,7 @@
 #   are the only surviving record and cannot be re-fetched. Everything else is one
 #   25 GB droplet whose disk filled once and silently killed cron for four days.
 #
-# TWO SETS, ONE UPLOAD PATH
+# THREE SETS, ONE UPLOAD PATH
 #   `snapshots`  — the tree above.
 #   `post-state` — data/posts/*/state.json, the server-owned half of the post
 #                  metadata split out of meta.json. It is GITIGNORED, so unlike
@@ -28,7 +28,15 @@
 #                  reliable. Backing it up is a PRECONDITION of that split, not a
 #                  follow-up to it.
 #
-#   The two sets are archived and pruned independently but share one upload,
+#   `press`      — data/press/contacts.json, the PR contact book (added
+#                  2026-09-21). GITIGNORED because this repository is PUBLIC and
+#                  the book holds named people's addresses, so — exactly like
+#                  state.json — this job is its only copy. It records who was
+#                  pitched, when, and what they said; losing it means re-doing
+#                  hours of verified contact research. Only the book itself is
+#                  archived, never data/press/backups/, which is local undo.
+#
+#   The sets are archived and pruned independently but share one upload,
 #   verify and prune path — a second copy of that logic is a second copy that
 #   drifts, and this is the one script whose output matters exactly when nobody
 #   is watching.
@@ -51,6 +59,7 @@ readonly SRC="$ROOT/data/snapshots"
 readonly KEEP_REMOTE=12          # ~3 months of weekly archives, ~72 MB total
 readonly PREFIX="snapshots"
 readonly STATE_PREFIX="post-state"   # data/posts/*/state.json — tiny; same retention
+readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR contact book
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -80,7 +89,7 @@ export RCLONE_CONFIG_SPACES_SECRET_ACCESS_KEY="$SPACES_SECRET"
 export RCLONE_CONFIG_SPACES_ENDPOINT="${SPACES_REGION}.digitaloceanspaces.com"
 export RCLONE_CONFIG_SPACES_ACL=private
 
-# ── one upload path, shared by both sets ─────────────────────────────────────
+# ── one upload path, shared by every set ─────────────────────────────────────
 # Verify the archive is readable, upload it, confirm it is actually listed and
 # byte-identical remotely, then prune that prefix to KEEP_REMOTE.
 #
@@ -160,4 +169,17 @@ else
   state_archive="$tmp/${STATE_PREFIX}-${stamp}.tar.gz"
   tar czf "$state_archive" -C "$ROOT" -T "$state_list"
   push_archive "$STATE_PREFIX" "$state_archive" "$state_count"
+fi
+
+# ── set 3: the PR contact book ───────────────────────────────────────────────
+# One file, gitignored because the repository is public. Skipped with a notice
+# when absent — every box except the server legitimately has none, and failing
+# here would take the other two backups down with it.
+PRESS_BOOK="data/press/contacts.json"
+if [[ -f "$ROOT/$PRESS_BOOK" ]]; then
+  press_archive="$tmp/${PRESS_PREFIX}-${stamp}.tar.gz"
+  tar czf "$press_archive" -C "$ROOT" "$PRESS_BOOK"
+  push_archive "$PRESS_PREFIX" "$press_archive" 1
+else
+  echo "[$PRESS_PREFIX] no $PRESS_BOOK — nothing to back up."
 fi
