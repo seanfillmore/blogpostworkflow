@@ -152,7 +152,7 @@ black box. `scoreBrief()` sums four components, each capped:
 |---|---|---|
 | `persona`    | 30  | Evidence count + emotional intensity behind the persona (voice-of-customer's own fields). |
 | `proof`      | 25  | Whether the angle's `source_quotes` actually appear in real reviews. **25** on a match, **6** when the quotes match nothing, and 0 only when the angle carries no `source_quotes` at all — which `agents/voice-of-customer` never writes, so the zero branch is unreachable on real data. |
-| `commercial` | 25  | Whether the product's cluster is earning, per `seo-impact`'s latest report; neutral (12) with no matching cluster, and **also neutral when a matched cluster carries $0 revenue and no revenueDelta in either direction** — that combination is a no-signal state, not a zero-value one (see `lib/ad-brief-score.js`'s `scoreCommercial` header). A matched cluster with genuine negative momentum (revenueDelta < 0) is a real signal and is not neutralised — it scores at the bottom of the range instead. |
+| `commercial` | 25  | What the product's category **SOLD** — `product_revenue_all_channels` on `seo-impact`'s latest report, migrated off entry-page attribution 2026-09-21. All-channel because an ad is not organic search. 20 points of revenue saturating at a ceiling **derived in ORDERS** (`CEILING_ORDERS` 7.5 × the measured AOV, ≈$410) so an AOV re-measurement cannot silently re-tune it, plus 5 for a growing cluster. Neutral (12) with no matching cluster, and **also neutral when a matched cluster carries $0 and no delta in either direction** — a no-signal state, not a zero-value one. Genuine negative momentum is a real signal and is NOT neutralised; it scores at the bottom of the range instead. See `lib/ad-brief-score.js`'s `scoreCommercial` header for the derivation and its blast radius. |
 | `headroom`   | 20  | Awareness headroom — broad `unaware`/`problem-aware` angles convert slower but keep running longer than narrow `product-aware` ones, which harvest fast and exhaust fast. |
 
 **The score never kills a brief.** There is no ad-performance data behind any of these
@@ -179,21 +179,27 @@ than their weights suggest:
   the product handle alone, and briefs are only ever listed and ranked for one product at a
   time. Those 25 points are therefore a fixed offset on every row of every list — they move
   the totals up or down together and never change the order.
-- **Today it is close to a constant ACROSS products too, and that is expected, not a bug.**
+- **IT NOW DISCRIMINATES ACROSS PRODUCTS, which it did not before 2026-09-21.** On the
+  entry-page basis every RSC cluster attributed $0 for long stretches, so `commercial`
+  landed on the 12 neutral for most products and the live discriminators were really
+  `headroom` and `proof`. The product basis has signal where the entry-page one had none:
+  measured on the 2026-09-20 report, soap 21, lotion 17, toothpaste 10, deodorant 2,
+  lip balm 0 — a genuine spread rather than a column of 12s.
+- **The no-signal rule below is unchanged and still load-bearing.**
   Fixed 2026-08-17: `scoreCommercial` used to score a matched cluster with $0 revenue as a
   flat 0 — reading "commercially worthless" out of what is actually a no-signal state, since
   seo-impact's organic-revenue attribution is directional only (see
   `project_revenue_attribution_unreliable.md`) and every RSC cluster attributed $0 on the
   server the day this was caught. It now scores that combination at the same neutral (12) as
-  no match at all. The observable consequence: with every relevant cluster still at $0,
-  `commercial` lands on 12 for most products right now, and the live discriminators really
-  are `headroom` and `proof`, same conclusion as before the fix, reached honestly instead of
-  by accident. The one live exception is informative rather than a leftover bug: a cluster
-  that attributes $0 revenue but carries a real `revenueDelta` (the server's "body lotion"
-  cluster was -25.2 the day this was found) is not neutralised — `coconut-lotion` scores 0 on
-  `commercial`, correctly below every product whose matched cluster shows no movement at all.
-  This will stop being nearly-constant automatically, with no further code change, the day
-  `seo-impact` starts attributing real organic revenue to these clusters.
+  no match at all. `coconut oil` is the live example that still lands there — RSC ships no
+  coconut-oil product, so its product fields are `undefined` forever — genuinely
+  no-signal rather than worthless.
+- **Negative momentum is NOT neutralised, and that carve-out survived the migration.** A
+  cluster carrying $0 with a real delta is evidence, not silence: `lip balm` on the
+  2026-09-20 report is all-channel $0 with an organic delta of -60, and scores **0** on
+  `commercial` — correctly below every product whose matched cluster shows no movement at
+  all. Momentum reads `product_organic_revenue_delta`, the only product-basis delta the
+  report emits, and only its SIGN, so pairing it with an all-channel level is safe.
 - **`persona` (30) compresses.** After Task 1's recalibration set the ceilings where the real
   data tops out (15 reviews, intensity 9.0), all five personas on file score **24–30 of 30**.
   Six points of spread across the whole roster.
