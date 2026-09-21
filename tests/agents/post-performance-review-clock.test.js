@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { reviewClockStart, supersedeStaleReviews, currentFlop } from '../../agents/post-performance/index.js';
+import { reviewClockStart, supersedeStaleReviews, currentFlop, GSC_BASIS } from '../../agents/post-performance/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -11,8 +11,8 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 // 60d REFRESH), refreshed and republished by queue-autoapply on 2026-08-30, and
 // still sat on the dashboard as "Action Required" three weeks later.
 const JULY = {
-  '30d': { milestone: 30, verdict: 'BLOCKED', reviewed_at: '2026-07-10T13:30:00.000Z' },
-  '60d': { milestone: 60, verdict: 'REFRESH', reviewed_at: '2026-07-28T13:30:00.000Z' },
+  '30d': { milestone: 30, verdict: 'BLOCKED', reviewed_at: '2026-07-10T13:30:00.000Z', gsc_basis: GSC_BASIS },
+  '60d': { milestone: 60, verdict: 'REFRESH', reviewed_at: '2026-07-28T13:30:00.000Z', gsc_basis: GSC_BASIS },
 };
 
 describe('reviewClockStart', () => {
@@ -44,7 +44,7 @@ describe('supersedeStaleReviews', () => {
   });
 
   test('a review made after the clock start stands', () => {
-    const later = { '30d': { verdict: 'ON_TRACK', reviewed_at: '2026-09-29T00:00:00Z' } };
+    const later = { '30d': { verdict: 'ON_TRACK', reviewed_at: '2026-09-29T00:00:00Z', gsc_basis: GSC_BASIS } };
     const { current, superseded } = supersedeStaleReviews({ ...JULY, ...later }, '2026-08-30T07:33:29.659Z');
     assert.deepEqual(Object.keys(current), ['30d']);
     assert.equal(superseded.length, 1);
@@ -52,6 +52,15 @@ describe('supersedeStaleReviews', () => {
 
   test('no clock start supersedes nothing', () => {
     assert.equal(supersedeStaleReviews(JULY, null).superseded.length, 0);
+  });
+
+  test('a review scored before the GSC URL fix is superseded whatever its date', () => {
+    // Every pre-fix review queried the myshopify host and read 0/0 — e.g.
+    // antibacterial-body-soap "BLOCKED" on 0 impressions while it had 21,835.
+    const old = { '30d': { verdict: 'BLOCKED', reviewed_at: '2026-09-07T13:30:03.709Z', impressions: 0 } };
+    const { current, superseded } = supersedeStaleReviews(old, '2026-08-05T00:00:00Z');
+    assert.deepEqual(current, {});
+    assert.equal(superseded[0].superseded_by, 'gsc-measurement-fix');
   });
 });
 

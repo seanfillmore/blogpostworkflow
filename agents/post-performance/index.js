@@ -91,7 +91,9 @@ export function supersedeStaleReviews(reviews, clockStart) {
   const superseded = [];
   for (const [key, review] of Object.entries(reviews || {})) {
     const at = review?.reviewed_at ? new Date(review.reviewed_at).getTime() : NaN;
-    if (!Number.isNaN(start) && !Number.isNaN(at) && at < start) {
+    if (review && review.gsc_basis !== GSC_BASIS) {
+      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: 'gsc-measurement-fix' });
+    } else if (!Number.isNaN(start) && !Number.isNaN(at) && at < start) {
       superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: clockStart });
     } else {
       current[key] = review;
@@ -115,6 +117,16 @@ export function currentFlop(reviews, milestones = MILESTONES) {
 }
 
 const HISTORY_CAP = 12;
+
+/**
+ * The GSC measurement basis a review was scored on. Every review written before
+ * 2026-09-21 queried `meta.shopify_url`, which is on the myshopify host for all
+ * 183 posts, and an exact page filter on that host matches nothing — so every
+ * one of those reviews was scored on 0 clicks / 0 impressions (see
+ * lib/gsc-page-url.js). A review without this stamp is superseded exactly as a
+ * pre-refresh one is, and the milestone is re-measured on the real URL.
+ */
+export const GSC_BASIS = 'canonical-host-2026-09-21';
 
 function loadBriefTrafficPotential(slug) {
   const path = join(BRIEFS_DIR, `${slug}.json`);
@@ -295,6 +307,7 @@ function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, ke
     projection,
     verdict,
     reason,
+    gsc_basis: GSC_BASIS,
   };
 }
 
@@ -384,7 +397,7 @@ async function main() {
     if (superseded.length) {
       history = [...(meta.performance_review_history || []), ...superseded].slice(-HISTORY_CAP);
       supersededCount += superseded.length;
-      console.log(`  [reset] ${meta.slug}: body refreshed ${String(clockStart).slice(0, 10)} — ${superseded.length} earlier verdict(s) superseded, review clock restarted.`);
+      console.log(`  [reset] ${meta.slug}: ${superseded.length} earlier verdict(s) superseded (${[...new Set(superseded.map((r) => (r.superseded_by === 'gsc-measurement-fix' ? 'measured on the wrong URL' : 'body refreshed')))].join(', ')}).`);
     }
 
     const age = ageInDays(clockStart);
