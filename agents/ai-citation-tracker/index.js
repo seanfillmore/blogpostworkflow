@@ -11,6 +11,15 @@
  *   node agents/ai-citation-tracker/index.js --limit 3    # test with fewer prompts
  *   node agents/ai-citation-tracker/index.js --runs 3     # sample each cell 3x
  *   node agents/ai-citation-tracker/index.js --runs 3 --core 20   # repeat only the first 20
+ *   node agents/ai-citation-tracker/index.js --no-resolve # skip Gemini redirect resolution
+ *
+ * GEMINI'S REDIRECTOR. Every Gemini citation is an opaque
+ * `vertexaisearch.cloud.google.com/grounding-api-redirect/<token>` URL — 8,400
+ * of 8,400 across every stored snapshot — so brand and competitor citation
+ * detection was impossible for that engine and `citation_rate.gemini` read 0 by
+ * construction. Redirects are resolved (HEAD only, no API money) BEFORE
+ * detection; `--no-resolve` restores the old behaviour and the snapshot's
+ * `redirect_resolution` block says which mode ran. See lib/citation-detect.js.
  *
  * SAMPLING. AI answers are non-deterministic, so one run per prompt is an
  * anecdote and not a measurement. `--runs N` samples each prompt x engine cell
@@ -39,6 +48,14 @@ import {
   runsForPrompt,
   samplingMeta,
 } from '../../lib/citation-sampling.js';
+import {
+  applyResolvedUrls,
+  detectBrandCited,
+  detectCompetitorCitations,
+  redirectResolutionBanner,
+} from '../../lib/citation-detect.js';
+import { resolveGroundingRedirects, DEFAULT_CONCURRENCY } from '../../lib/citation-redirects.js';
+import { isGroundingRedirect } from '../../lib/pr-targets.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -66,13 +83,21 @@ const limit = numericArg('--limit', Infinity);
 const runs = Math.max(1, numericArg('--runs', 1));
 const coreSize = Math.max(0, numericArg('--core', 0));
 
+// Gemini cites through an opaque redirector, so without this pass
+// `detectBrandCited` CANNOT return true for that engine and its citation rate
+// reads 0 by construction — see lib/citation-detect.js for the measurement.
+// Resolution is HEAD-only and costs NO API money against a run that already
+// spends 575 paid LLM calls. Measured 2026-09-21 by replaying the real
+// 2026-09-20 cells: ~0.52s per resolved run-batch, so **≤ ~59s added to a full
+// run** for the ~1,066 redirects it produces (a conservative ceiling — the
+// sample batched a cell's whole UNION, ~31 URLs, where a live run resolves one
+// run's ~9). `--no-resolve` skips it and the run degrades to exactly its
+// pre-2026-09-21 behaviour, which the snapshot then SAYS.
+const RESOLVE = !args.includes('--no-resolve');
+
 // ── Detection helpers ────────────────────────────────────────────────────────
 
 const { brand, competitors, prompts: allPrompts } = promptsConfig;
-
-function detectBrandCited(citations) {
-  return citations.some(url => url.toLowerCase().includes(brand.domain));
-}
 
 function detectBrandMentioned(text) {
   if (!text) return false;
@@ -86,16 +111,6 @@ function detectCompetitorMentions(text) {
   const found = [];
   for (const comp of competitors) {
     if (comp.aliases.some(alias => lower.includes(alias.toLowerCase()))) {
-      found.push(comp.name);
-    }
-  }
-  return found;
-}
-
-function detectCompetitorCitations(citations) {
-  const found = [];
-  for (const comp of competitors) {
-    if (citations.some(url => url.toLowerCase().includes(comp.domain))) {
       found.push(comp.name);
     }
   }
@@ -126,6 +141,19 @@ async function main() {
   );
 
   const results = [];
+
+  // One cache for the whole process. It is deliberately NOT persisted to disk:
+  // measured over all 23 stored snapshots, every one of the 8,400 grounding
+  // tokens is DISTINCT — none recurs within a run or between runs — so a cache
+  // file would be ~1 MB of write-only data on a box that has already lost four
+  // days of cron to a full disk. The durable record is `citation_urls_resolved`
+  // on the snapshot itself, which is strictly better: tokens EXPIRE after about
+  // 30 days (measured — 2026-08-16 resolves 0/25, 2026-08-23 resolves 25/25),
+  // so storing the destination is the only thing that makes this history
+  // recoverable at all later.
+  const redirectCache = new Map();
+  let redirectsSeen = 0;
+  let redirectsResolved = 0;
 
   for (let i = 0; i < prompts.length; i++) {
     const prompt = prompts[i];
@@ -158,16 +186,41 @@ async function main() {
           try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
         });
 
+        // Resolve Gemini's redirector BEFORE asking who was cited. Without this
+        // `detectBrandCited` cannot return true for that engine at all, because
+        // the publisher never appears in the URL. Detection runs PER RUN rather
+        // than on the aggregate, so `cited_runs` stays exact — `citation_urls`
+        // on the aggregate is a UNION across runs and cannot answer "how many
+        // runs cited us".
+        let effectiveCitations = citations;
+        const redirects = RESOLVE ? citations.filter(isGroundingRedirect) : [];
+        if (redirects.length) {
+          const r = await resolveGroundingRedirects(redirects, {
+            cache: redirectCache,
+            concurrency: DEFAULT_CONCURRENCY,
+          });
+          redirectsSeen += redirects.length;
+          redirectsResolved += r.resolved.size;
+          effectiveCitations = applyResolvedUrls(citations, r.resolved);
+        } else if (!RESOLVE) {
+          redirectsSeen += citations.filter(isGroundingRedirect).length;
+        }
+
         sampled.push({
-          cited: citations.length > 0 ? detectBrandCited(citations) : null,
+          cited: citations.length > 0 ? detectBrandCited(effectiveCitations, brand) : null,
           mentioned: detectBrandMentioned(text),
           citations: citationDomains,
           // Full URLs preserved alongside the domains so downstream agents
           // (pr-target-finder) can fetch the actual article for its author byline
           // and pinpoint specific Reddit threads — not just the homepage.
+          // RAW and unchanged in shape: pr-target-finder resolves it itself.
           citation_urls: citations,
+          // ADDITIVE. Empty when nothing needed resolving, which is every
+          // engine but Gemini. Storing it is what makes a later recomputation
+          // possible after the tokens expire.
+          citation_urls_resolved: effectiveCitations === citations ? [] : effectiveCitations,
           competitor_mentions: detectCompetitorMentions(text),
-          competitor_citations: detectCompetitorCitations(citations),
+          competitor_citations: detectCompetitorCitations(effectiveCitations, competitors),
         });
       }
 
@@ -194,12 +247,29 @@ async function main() {
   const citationRate = summary.citation_rate;
   const mentionRate = summary.mention_rate;
 
+  // A resolution pass that quietly stopped resolving looks BYTE-IDENTICAL to
+  // one with nothing to resolve, so the snapshot states which it was. Absent on
+  // pre-2026-09-21 snapshots, and that absence means NO resolution — every
+  // Gemini citation rate in those files reads 0 by construction.
+  const redirectResolution = {
+    mode: RESOLVE ? 'on' : 'off',
+    redirects_seen: redirectsSeen,
+    redirects_resolved: redirectsResolved,
+    redirects_unresolved: Math.max(0, redirectsSeen - redirectsResolved),
+    note:
+      'Gemini cites through an opaque grounding redirector, so brand and competitor '
+      + 'citation detection is impossible for that engine without resolving it. '
+      + 'Absence of this block means the snapshot predates resolution.',
+  };
+  console.log(`[ai-citation-tracker] ${redirectResolutionBanner(redirectResolution)}`);
+
   const snapshot = {
     date: today,
     prompts_run: prompts.length,
     sources: sourceNames,
     // Absent on pre-2026-09 snapshots, and that absence means 1 run per cell.
     sampling,
+    redirect_resolution: redirectResolution,
     results,
     summary,
   };
@@ -238,7 +308,10 @@ async function main() {
 
   await notify({
     subject: `AI Citation Tracker — ${today}`,
-    body: `${summaryLine} ${samplingLine}`,
+    // The redirect banner travels into the 5 AM digest for the same reason the
+    // sample size does: a citation rate read without knowing whether the
+    // redirector was resolved is a number of unknown meaning.
+    body: `${summaryLine} ${samplingLine} ${redirectResolutionBanner(redirectResolution)}`,
     status: 'info',
     category: 'seo',
   });
@@ -250,6 +323,7 @@ async function main() {
 
 function generateReport(snapshot) {
   const { date, prompts_run, sources, results, summary, sampling } = snapshot;
+  const redirects = snapshot.redirect_resolution;
   const perCell = sampling?.runs_per_core_cell ?? 1;
   const lines = [];
 
@@ -260,7 +334,16 @@ function generateReport(snapshot) {
   lines.push(`**Sources:** ${sources.join(', ')}`);
   lines.push(`**Sampling:** ${perCell} run(s) per prompt×source cell`
     + (sampling?.tail_prompts ? `, core ${sampling.core_prompts} repeated / ${sampling.tail_prompts} at 1 run` : ''));
+  lines.push(`**Redirect resolution:** ${redirects
+    ? redirectResolutionBanner(redirects)
+    : 'not recorded — this snapshot predates resolution, so any Gemini citation rate here reads 0 by construction.'}`);
   lines.push('');
+  if (!redirects || redirects.mode !== 'on') {
+    lines.push('> **Gemini citation detection is OFF.** Every Gemini citation arrives as an opaque '
+      + '`vertexaisearch.cloud.google.com/grounding-api-redirect/<token>` URL, so the brand can never '
+      + 'match and `citation_rate.gemini` is 0 whatever the truth is. Do not read it as evidence.');
+    lines.push('');
+  }
   if (perCell === 1) {
     // Say it plainly rather than leaving a reader to infer precision from a
     // percentage. A single run is an anecdote — this is the caveat that was
