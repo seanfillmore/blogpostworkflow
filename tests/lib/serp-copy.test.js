@@ -87,3 +87,15 @@ test('meta-optimizer never writes an echoed description, and normalises dashes b
   assert.match(src, /if \(!echoed\) await upsertMetafield\('articles', article\.id, 'global', DESCRIPTION_TAG/);
   assert.match(src, /title: stripEmDashes\(parsed\.title, \{ kind: 'title' \}\)/);
 });
+
+describe('number grounding pairs the number with its noun', () => {
+  const body = '<h2>4 Easy Natural Moisturizer Recipes</h2><p>Recipe 7 is a joke. Use 5–6 drops. Done in five minutes.</p>';
+  test('supported: the body pairs the same number with the same noun', () => {
+    assert.deepEqual(unsupportedNumbers('4 Recipes', body), []);
+    assert.deepEqual(unsupportedNumbers('5-Min Recipe', body), [], '"five minutes" backs "5-Min"');
+  });
+  test('unsupported: the digit exists, but not attached to the claimed noun', () => {
+    assert.deepEqual(unsupportedNumbers('7 Clean Picks', body), [7], '"Recipe 7" does not back "7 Picks"');
+    assert.deepEqual(unsupportedNumbers('5 Recipes', body), [5], '"5–6 drops" does not back "5 Recipes"');
+  });
+});

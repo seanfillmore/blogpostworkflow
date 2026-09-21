@@ -206,6 +206,11 @@ No explanation, no markdown fences.`,
   };
 }
 
+/** A markdown table cell: a `|` in copy (e.g. "Updated April 2026 | …") would split the column. */
+function cell(text) {
+  return String(text ?? '').replace(/\|/g, '\\|');
+}
+
 // ── refresh stale years ───────────────────────────────────────────────────────
 
 /**
@@ -951,8 +956,8 @@ async function main() {
       lines.push('');
       lines.push('| | Before | After |');
       lines.push('|---|---|---|');
-      lines.push(`| **Title** | ${r.currentTitle} | ${r.proposedTitle} |`);
-      lines.push(`| **Meta** | ${r.currentMeta || '*(none)*'} | ${r.proposedMeta} |`);
+      lines.push(`| **Title** | ${cell(r.currentTitle)} | ${cell(r.proposedTitle)} |`);
+      lines.push(`| **Meta** | ${cell(r.currentMeta) || '*(none)*'} | ${cell(r.proposedMeta)} |`);
       lines.push('');
     }
 
