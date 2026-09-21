@@ -1157,26 +1157,48 @@ function rerunEditor(slug) {
 function renderActionRequired(d) {
   const flops = (d.postPerformance && d.postPerformance.action_required) || [];
   if (flops.length === 0) return '';
-  const rows = flops.map(f => {
-    const verdictClass = f.verdict === 'BLOCKED' ? 'verdict-blocked'
-                      : f.verdict === 'REFRESH' ? 'verdict-refresh'
-                      : 'verdict-demote';
-    return '<div class="action-row">' +
-      '<div class="action-head">' +
-        '<span class="verdict-pill ' + verdictClass + '">' + esc(f.verdict) + '</span>' +
-        '<span class="action-title">' + esc(f.title || f.slug) + '</span>' +
-        '<span class="action-age">' + f.milestone + 'd</span>' +
-      '</div>' +
-      '<div class="action-reason">' + esc(f.reason || '') + '</div>' +
-      '<div class="action-buttons">' +
-        (f.url ? '<a href="' + esc(f.url) + '" target="_blank" class="btn-secondary">Open post</a>' : '') +
-        '<button class="btn-primary" onclick="refreshSlug(' + "'" + esc(f.slug) + "'" + ')">Refresh this post</button>' +
-      '</div>' +
-    '</div>';
+  // One row per post, grouped by what happens NEXT (post-performance stamps
+  // `action` / `action_label` / `automated`). Only the groups no agent handles
+  // are shown as rows with a call to action; the automated ones are counted and
+  // listed collapsed, so the card stops asking a human to do work the fleet is
+  // already doing or deliberately refuses to do.
+  const order = ['demote', 'no-demand', 'auto-refresh', 'not-indexed', 'locked'];
+  const groups = {};
+  flops.forEach(function (f) {
+    const key = f.action || 'no-demand';
+    (groups[key] = groups[key] || []).push(f);
+  });
+  const manual = flops.filter(function (f) { return f.automated === false || f.automated == null; });
+  const auto = flops.length - manual.length;
+  const pill = function (f) {
+    const cls = f.verdict === 'REFRESH' ? 'verdict-refresh' : f.verdict === 'DEMOTE' ? 'verdict-demote' : 'verdict-blocked';
+    return '<span class="verdict-pill ' + cls + '">' + esc(f.verdict) + '</span>';
+  };
+  const sections = order.filter(function (k) { return groups[k]; }).map(function (k) {
+    const rows = groups[k];
+    const label = esc(rows[0].action_label || k) + ' (' + rows.length + ')';
+    if (rows[0].automated) {
+      const items = rows.map(function (f) {
+        return '<li>' + (f.url ? '<a href="' + esc(f.url) + '" target="_blank">' + esc(f.title || f.slug) + '</a>' : esc(f.title || f.slug)) +
+          ' <span class="action-age">' + f.milestone + 'd</span></li>';
+      }).join('');
+      return '<details class="action-group"><summary>&#10003; ' + label + '</summary><ul>' + items + '</ul></details>';
+    }
+    const cards = rows.map(function (f) {
+      return '<div class="action-row">' +
+        '<div class="action-head">' + pill(f) +
+          '<span class="action-title">' + esc(f.title || f.slug) + '</span>' +
+          '<span class="action-age">' + f.milestone + 'd</span>' +
+        '</div>' +
+        '<div class="action-reason">' + esc(f.reason || '') + '</div>' +
+        (f.url ? '<div class="action-buttons"><a href="' + esc(f.url) + '" target="_blank" class="btn-secondary">Open post</a></div>' : '') +
+      '</div>';
+    }).join('');
+    return '<details class="action-group"' + (k === order[0] ? ' open' : '') + '><summary>' + label + '</summary>' + cards + '</details>';
   }).join('');
-  return '<div class="card card-action"><div class="card-header accent-red">' +
-      '<h2>&#9888; Action Required &mdash; ' + flops.length + ' underperforming post' + (flops.length > 1 ? 's' : '') + '</h2>' +
-    '</div><div class="card-body">' + rows + '</div></div>';
+  return '<div class="card card-action"><div class="card-header ' + (manual.length ? 'accent-red' : 'accent-green') + '">' +
+      '<h2>Underperforming posts &mdash; ' + manual.length + ' need a decision &middot; ' + auto + ' handled automatically</h2>' +
+    '</div><div class="card-body">' + sections + '</div></div>';
 }
 
 function renderQuickWinCard(d) {

@@ -70,6 +70,8 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 // which only ever runs on a direct run. Same reasoning that makes
 // lib/queue-apply.js take its Shopify functions by injection.
 import { fetchLiveArticleIds, isArticleLive } from '../../lib/live-articles.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
+import { refreshableFlops, renderFlopSkipLines } from '../../lib/flop-candidates.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -171,8 +173,14 @@ function mergeMoves(moves) {
 function pickFlops(blocked, hold, held, ctx) {
   const pp = readJsonSafe(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   if (!pp) return [];
-  return heldAware((pp.action_required || [])
-    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug)), hold, held, { ...ctx, cap: MAX_FLOPS })
+  // Refreshable-and-unlocked BEFORE the cap — see lib/flop-candidates.js. The
+  // rows it withholds are reported, not dropped.
+  const { kept, skipped } = refreshableFlops(
+    (pp.action_required || []).filter(f => !blocked.has(f.slug)),
+    { mayRewriteBody },
+  );
+  if (Array.isArray(ctx?.flopSkips)) ctx.flopSkips.push(...skipped);
+  return heldAware(kept, hold, held, { ...ctx, cap: MAX_FLOPS })
     .slice(0, MAX_FLOPS)
     .map(f => ({
       slug: f.slug,
@@ -396,7 +404,8 @@ async function main() {
     console.log('  ⚠ Could not read live Shopify articles — NOT filtering dead ones this run.');
   }
 
-  const ctx = { ranking, moves, liveArticleIds, deadArticles };
+  const flopSkips = [];
+  const ctx = { ranking, moves, liveArticleIds, deadArticles, flopSkips };
 
   const blocked = activeSlugs();
   const flops = pickFlops(blocked, hold, held, ctx);
@@ -426,6 +435,9 @@ async function main() {
       ...deadArticles.map((d) => `  - ${d.slug} (article ${d.articleId})`)]
     : [];
   for (const line of deadLines) console.log(`    ${line}`);
+  const flopSkipLines = renderFlopSkipLines(flopSkips);
+  for (const line of flopSkipLines) console.log(`    ${line}`);
+  deadLines.push(...flopSkipLines);
   if (!liveArticleIds) {
     deadLines.push('⚠ Could not read live Shopify articles this run — dead-article filtering was OFF.');
   }

@@ -53,6 +53,7 @@ import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { refreshableFlops, renderFlopSkipLines } from '../../lib/flop-candidates.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
   decideRefreshFailure, buildRefreshWriteoff, mirrorFingerprint,
@@ -132,9 +133,10 @@ function gatherSlugs() {
 
   if (FLAG_PP) {
     const pp = loadJSON(join(ROOT, 'data', 'reports', 'post-performance', 'latest.json'), null);
-    for (const f of (pp?.action_required || [])) {
-      if (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') slugs.add(f.slug);
-    }
+    // Same filter performance-engine applies — see lib/flop-candidates.js.
+    const { kept, skipped } = refreshableFlops(pp?.action_required || [], { mayRewriteBody });
+    for (const f of kept) slugs.add(f.slug);
+    for (const line of renderFlopSkipLines(skipped)) console.log(`  ${line}`);
   }
 
   if (FLAG_QW) {
