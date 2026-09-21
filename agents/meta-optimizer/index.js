@@ -23,6 +23,7 @@
  *   node agents/meta-optimizer/index.js --min-impr 200 # higher impression threshold
  *   node agents/meta-optimizer/index.js --max-ctr 0.03 # stricter CTR threshold
  *   node agents/meta-optimizer/index.js --limit 20                # max pages to process
+ *   node agents/meta-optimizer/index.js --pages h1,h2 --apply     # only these article handles (all gates still apply)
  *   node agents/meta-optimizer/index.js --include-held            # also rewrite $0-cluster queries
  *                                                                 # (held by lib/cluster-hold.js; the
  *                                                                 #  hold is applied BEFORE --limit)
@@ -35,7 +36,9 @@ import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle, getMetafields, upsertMetafield } from '../../lib/shopify.js';
-import { renderedSerp, unsupportedNumbers, TITLE_TAG, DESCRIPTION_TAG } from '../../lib/serp-copy.js';
+import {
+  renderedSerp, unsupportedNumbers, TITLE_TAG, DESCRIPTION_TAG, stripEmDashes, isEchoedDescription, parsePagesArg,
+} from '../../lib/serp-copy.js';
 import { getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayTestMetadata } from '../../lib/post-lock.js';
 import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
@@ -104,6 +107,10 @@ const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const minImpressions = parseFloat(getArg('--min-impr') ?? '100');
 const maxCTR = parseFloat(getArg('--max-ctr') ?? '0.05');
 const limitArg = parseInt(getArg('--limit') ?? '25', 10);
+// --pages a,b: restrict the run to these article handles (every gate, the
+// holdout and the open-test guard still apply). For an operator who wants
+// named pages treated now rather than wherever the ranking happens to put them.
+const ONLY_PAGES = getArg('--pages') ? parsePagesArg(getArg('--pages')) : null;
 
 // ── article lookup ────────────────────────────────────────────────────────────
 
@@ -190,7 +197,13 @@ No explanation, no markdown fences.`,
 
   const raw = message.content[0].text.trim()
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  // Normalised before any gate sees it, so the gates judge what will be written.
+  return {
+    ...parsed,
+    title: stripEmDashes(parsed.title, { kind: 'title' }),
+    meta_description: stripEmDashes(parsed.meta_description, { kind: 'meta' }),
+  };
 }
 
 // ── refresh stale years ───────────────────────────────────────────────────────
@@ -523,7 +536,12 @@ async function main() {
     console.log('');
   }
 
-  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(waveOrdered, hold, {
+  const pageFiltered = ONLY_PAGES
+    ? waveOrdered.filter((c) => ONLY_PAGES.has(String(c.url || kwToPage.get(c.keyword) || '').split('/').pop()))
+    : waveOrdered;
+  if (ONLY_PAGES) console.log(`  --pages: ${pageFiltered.length} candidate(s) on ${ONLY_PAGES.size} named page(s)`);
+
+  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(pageFiltered, hold, {
     includeHeld: INCLUDE_HELD,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
     ranking,
@@ -798,9 +816,11 @@ async function main() {
           // The SERP fields, not article.title / summary_html — see
           // lib/serp-copy.js. The on-page H1 and excerpt are left alone.
           await upsertMetafield('articles', article.id, 'global', TITLE_TAG, proposed.title);
-          await upsertMetafield('articles', article.id, 'global', DESCRIPTION_TAG, proposed.meta_description);
+          const echoed = isEchoedDescription(proposed.meta_description, currentMeta);
+          if (!echoed) await upsertMetafield('articles', article.id, 'global', DESCRIPTION_TAG, proposed.meta_description);
           result.applied = true;
-          console.log(`    ✓ Updated in Shopify (title_tag + description_tag)`);
+          result.descriptionWritten = !echoed;
+          console.log(`    ✓ Updated in Shopify (title_tag${echoed ? '; description unchanged — proposal echoed the current one' : ' + description_tag'})`);
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
         }
