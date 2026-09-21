@@ -73,7 +73,7 @@ test('meta-optimizer applies the open-test filter after the wave ordering and be
   const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../../agents/meta-optimizer/index.js'), 'utf8');
   const iOpen = src.indexOf('excludeOpenTests(waveReady');
   const iWave = src.indexOf('prioritiseTreatment(notHeldOut');
-  const iCap = src.indexOf('holdMetaCandidates(waveOrdered');
+  const iCap = src.indexOf('holdMetaCandidates(pageFiltered');
   assert.ok(iWave > 0 && iOpen > iWave && iCap > iOpen);
   assert.match(src, /designatedMissingFromPool\(readWaveDesignated\(ROOT\)/);
 });
