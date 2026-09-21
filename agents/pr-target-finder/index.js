@@ -67,7 +67,7 @@ import {
   planAuthorChecks, articleDateSource, unreachableCurrencyReason, enrichmentCounts,
 } from '../../lib/pr-target-enrich.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
-import { loadContacts, contactsByDomain, normalizeDomain, PRESS_CONTACTS_PATH } from '../../lib/press-contacts.js';
+import { loadContacts, contactsByDomain, normalizeDomain, splitDomainHits, PRESS_CONTACTS_PATH } from '../../lib/press-contacts.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 
@@ -535,13 +535,19 @@ async function main() {
   const press = loadContacts(join(ROOT, PRESS_CONTACTS_PATH), { readFile: (p) => readFileSync(p, 'utf8') });
   const pitchedByDomain = press.available ? contactsByDomain(press.contacts) : new Map();
   for (const row of finalPitch) {
-    const hits = pitchedByDomain.get(normalizeDomain(row.domain)) || [];
-    row.already_contacted = hits.length ? hits : null;
+    const { pitched, onFile } = splitDomainHits(pitchedByDomain.get(normalizeDomain(row.domain)));
+    // Two different facts, kept apart: someone there was PITCHED, versus we only
+    // RESEARCHED someone there. Only the first means "already approached".
+    row.already_contacted = pitched.length ? pitched : null;
+    row.contacts_on_file = onFile.length ? onFile : null;
   }
   const alreadyContacted = finalPitch.filter((t) => t.already_contacted);
+  const onFileOnly = finalPitch.filter((t) => !t.already_contacted && t.contacts_on_file);
   console.log(press.available
     ? `  Contact book: ${alreadyContacted.length} target outlet(s) already pitched${
-      alreadyContacted.length ? ` — ${alreadyContacted.slice(0, 6).map((t) => t.domain).join(', ')}` : ''}`
+      alreadyContacted.length ? ` — ${alreadyContacted.slice(0, 6).map((t) => t.domain).join(', ')}` : ''}; ${
+      onFileOnly.length} more with a researched contact never pitched${
+      onFileOnly.length ? ` — ${onFileOnly.slice(0, 6).map((t) => t.domain).join(', ')}` : ''}`
     : `  Contact book NOT checked this run: ${press.reason}`);
 
   const counts = enrichmentCounts(finalPitch);
@@ -661,6 +667,7 @@ async function main() {
       // Contact-book coverage. `press_contacts_disarmed` is the fail-open record:
       // a run with no book must not read as "no target was ever pitched".
       already_contacted: press.available ? alreadyContacted.length : null,
+      contacts_on_file_not_pitched: press.available ? onFileOnly.length : null,
       press_contacts: press.available ? press.contacts.length : null,
       press_contacts_disarmed: press.available ? null : press.reason,
     },
@@ -691,7 +698,8 @@ async function main() {
       + `\nEverything flagged is demoted, never dropped.`
     : '';
   const pitched = press.available
-    ? `\n\nAlready pitched: ${alreadyContacted.length} target outlet(s) are in the contact book — flagged, not removed.`
+    ? `\n\nAlready pitched: ${alreadyContacted.length} target outlet(s) — flagged, not removed. ${onFileOnly.length} more have a researched contact nobody has pitched yet${
+      onFileOnly.length ? ` (${onFileOnly.slice(0, 5).map((t) => t.contacts_on_file.map((c) => c.name).join('/') + ' @ ' + t.domain).join('; ')})` : ''}.`
     : `\n\nContact book NOT checked: ${press.reason}. Targets you have already pitched are not flagged this run.`;
   await notify({
     // A demotion is the policy working, so this stays 'info' on the normal
@@ -721,7 +729,7 @@ function renderMarkdown(r) {
   if (s.press_contacts_disarmed) {
     lines.push(`> ✉ **Contact book NOT checked this run:** ${s.press_contacts_disarmed}. Outlets you have already pitched are not flagged below.`, '');
   } else if (s.already_contacted != null) {
-    lines.push(`_Contact book: **${s.already_contacted} target outlet(s) already pitched** (marked ✉ below; flagged, never removed) · ${s.press_contacts} contacts on record._`, '');
+    lines.push(`_Contact book: **${s.already_contacted} target outlet(s) already pitched** (marked ✉ below; flagged, never removed) · ${s.contacts_on_file_not_pitched ?? 0} with a researched contact nobody has pitched yet (marked 📇) · ${s.press_contacts} contacts on record._`, '');
   }
   if (s.authors_moved_outlet != null) {
     const why = Object.entries(s.author_currency_unknown_reasons || {})
@@ -739,6 +747,7 @@ function renderMarkdown(r) {
     const unreached = t.enriched && t.enrich_fetch && t.enrich_fetch !== 'ok' ? t.enrich_fetch : null;
     if (unreached) flags.push(`⚠ NOT CHECKED (${unreached})`);
     if (t.already_contacted) flags.push(`✉ ALREADY PITCHED (${t.already_contacted.map((c) => c.name).join(', ')})`);
+    if (t.contacts_on_file) flags.push(`📇 CONTACT ON FILE, NOT PITCHED (${t.contacts_on_file.map((c) => (c.status === 'active' ? c.name : `${c.name} — ${c.status}`)).join(', ')})`);
     lines.push(`### ${t.publication || t.domain}  ·  score ${t.score}${flags.length ? `  ·  ${flags.join('  ·  ')}` : ''}`);
     // "We fetched the page and it names nobody" and "the publisher would not
     // give us the page" are different instructions to a human. Before
