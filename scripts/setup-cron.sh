@@ -63,6 +63,13 @@ DAILY_POST_PERFORMANCE="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/post-per
 DAILY_PIPELINE_PRIORITIZER="0 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-prioritizer/index.js >> data/reports/scheduler/pipeline-prioritizer.log 2>&1"
 
 # Content pipeline (daily)
+#
+# NOTE — `agents/pr-target-finder` has NO cron line here and never has: it is
+# dispatched as step 8d INSIDE scheduler.js, which this entry runs. Its
+# `--enrich` budget (how many ranked PR targets get their byline and article
+# date fetched) is therefore changed in `scheduler.js` or in the agent's own
+# default, and reaches production on a `git pull`, NOT by re-running this
+# script. Do not add a second cron line for it — that would run it twice.
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
 DAILY_PIPELINE_SCHEDULER="0 16 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
 DAILY_CALENDAR_RUNNER="0 10 * * * cd \"$PROJECT_DIR\" && $NODE agents/calendar-runner/index.js --run --all >> data/logs/calendar-runner.log 2>&1"
