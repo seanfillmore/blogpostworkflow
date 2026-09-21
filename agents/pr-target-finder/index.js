@@ -106,10 +106,23 @@ const WEEKS = parseInt(argVal('--weeks', '4'), 10);
 //
 // That is FASTER IN BOTH DIRECTIONS than the serial pass at 150 was (140s
 // typical, 20 min worst), against this step's own 150-minute STEP_TIMEOUT_MS
-// and a slowest neighbour (ai-citation-tracker) at ~45 min. 400 covers 80% of
-// today's 502 rows; it stays a budget rather than "all of them" so that a
-// snapshot carrying ten times the citations cannot become an unbounded sweep.
-const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '400'), 10);
+// and a slowest neighbour (ai-citation-tracker) at ~45 min.
+//
+// 400 → 600 (2026-09-21, same day). At 400 the live run left **149 targets
+// never fetched at all** out of 549, so a fifth of the ranked list still had
+// no byline. MEASURED on production at 600, which enriched all 549:
+//
+//   article fetches  549 in 91.4s   (was 400 in 64.6s — close to linear)
+//   named bylines    120            (was 92 at 400, 36 at 150)
+//   left unfetched   0              (was 149)
+//
+// Worst case at 600: 600 x 8s / 6 ≈ 13.3 min plus the author pass, still ~10x
+// inside STEP_TIMEOUT_MS. It deliberately STAYS A BUDGET rather than "all of
+// them": 600 covers today's 549 with headroom, but a snapshot carrying ten
+// times the citations must not become an unbounded sweep. If the ranked list
+// ever outgrows 600, the run says so ("past the --enrich budget") rather than
+// silently truncating — raise it deliberately, with a new measurement.
+const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '600'), 10);
 
 // Pool width for the enrichment fetches, and how many of them may be in flight
 // against one registrable domain. Both are flags so an operator can turn the
