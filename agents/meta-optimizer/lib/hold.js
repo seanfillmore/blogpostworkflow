@@ -242,3 +242,81 @@ export function prioritiseTreatment(candidates, { root, pageForKeyword = () => n
 
   return { ordered, designated };
 }
+
+/**
+ * The pages the CTR wave designates for rewriting (`individual` then
+ * `treatment`, in the wave's own order), as `{ handle, url, arm }`. Empty when
+ * no wave is planned or it cannot be read — fails open like the rest of this
+ * file.
+ */
+export function readWaveDesignated(root) {
+  try {
+    const p = join(root ?? '.', 'data', 'reports', 'ctr-program', 'wave.json');
+    if (!existsSync(p)) return [];
+    const wave = JSON.parse(readFileSync(p, 'utf8'));
+    const out = []; const seen = new Set();
+    for (const arm of ['individual', 'treatment']) {
+      for (const pg of Array.isArray(wave?.[arm]) ? wave[arm] : []) {
+        const handle = handleOf(pg?.url);
+        if (!handle || seen.has(handle)) continue;
+        seen.add(handle);
+        out.push({ handle, url: pg.url, arm });
+      }
+    }
+    return out;
+  } catch { return []; }
+}
+
+function handleOf(u) {
+  return String(u || '').replace(/[?#].*$/, '').replace(/\/+$/, '').split('/').pop();
+}
+
+/**
+ * Designated pages the synthesiser in prioritiseTreatment CANNOT reach, because
+ * none of their queries is in the quick-win pool it draws on. That pool is the
+ * top 200 pages by score from GSC's first 5,000 query×page rows; a page outside
+ * it had no candidate AND no synthesised one, so it was never rewritten. On the
+ * 2026-08-31 wave that was `how-to-make-a-natural-moisturizer-at-home-easy-recipes-1`
+ * — 7,321 impressions at position 7.9 and 1 click, the site's worst CTR gap.
+ * The caller fetches each one's own top query and adds it to the pool.
+ * Pages with an open test are left out: they are not rewritten anyway.
+ */
+export function designatedMissingFromPool(designated, pool, { skipHandles = new Set() } = {}) {
+  const inPool = new Set((Array.isArray(pool) ? pool : []).map((r) => handleOf(r?.url)).filter(Boolean));
+  return (Array.isArray(designated) ? designated : [])
+    .filter((d) => d?.handle && !inPool.has(d.handle) && !skipHandles.has(d.handle));
+}
+
+/**
+ * Handles of pages with an OPEN A/B test. A test is open until meta-ab-checker
+ * stamps `status: 'concluded'` — `confounded` and `underpowered` deliberately
+ * stay open (see agents/meta-ab-checker).
+ */
+export function openTestHandles(tracker) {
+  const out = new Set();
+  for (const e of Array.isArray(tracker) ? tracker : []) {
+    if (e?.status === 'concluded') continue;
+    const h = handleOf(e?.pageUrl);
+    if (h) out.add(h);
+  }
+  return out;
+}
+
+/**
+ * NEVER REWRITE A PAGE WHOSE TEST IS STILL RUNNING. Nothing enforced this, and
+ * the tracker is keyed by KEYWORD, so a second rewrite of the same query
+ * REPLACES the running test's baseline with a post-rewrite one and the first
+ * variant is never evaluated. Measured 2026-09-21: the weekly run tried
+ * `best-soap-for-tattoos-…-2` again one week into its test and was stopped only
+ * by the distinctness gate, by luck. Applied BEFORE the cap, like every other
+ * filter here, so an open-test page never eats a slot.
+ */
+export function excludeOpenTests(candidates, { openHandles, pageForKeyword = () => null } = {}) {
+  const kept = []; const excluded = [];
+  for (const c of Array.isArray(candidates) ? candidates : []) {
+    const h = handleOf(c?.url || pageForKeyword(c?.keyword));
+    if (h && openHandles?.has(h)) excluded.push({ keyword: c?.keyword, handle: h });
+    else kept.push(c);
+  }
+  return { kept, excluded };
+}
