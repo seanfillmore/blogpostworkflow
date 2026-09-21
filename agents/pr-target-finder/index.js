@@ -39,6 +39,10 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { rankTargets } from '../../lib/pr-targets.js';
+import {
+  collectGroundingRedirects, resolveGroundingRedirects,
+  loadRedirectCache, saveRedirectCache, DEFAULT_CONCURRENCY,
+} from '../../lib/citation-redirects.js';
 import { extractByline, pageMentionsBrand, looksLikeStore } from '../../lib/html-byline.js';
 import { extractArticleDates, articleAgeDays, isStaleArticle, STALE_ARTICLE_DAYS } from '../../lib/article-freshness.js';
 import { fetchAllReviewStats } from '../../lib/judgeme.js';
@@ -78,6 +82,15 @@ const WEEKS = parseInt(argVal('--weeks', '4'), 10);
 // the fetches concurrent: past ~150 the serial worst case starts competing
 // with the step timeout rather than with the budget.
 const ENRICH = args.includes('--no-enrich') ? 0 : parseInt(argVal('--enrich', '150'), 10);
+
+// Gemini cites through an opaque redirector, so without this pass one of the
+// five engines contributes nothing at all and its 3,796 citations pile onto a
+// single junk domain. Resolution is HEAD-only, costs no API money, and is
+// concurrent — ~3,800 requests at concurrency 8 is a couple of minutes against
+// this step's 150-minute budget. `--no-resolve` skips it; the run then degrades
+// to exactly its pre-2026-09-20 behaviour. See lib/citation-redirects.js.
+const RESOLVE = !args.includes('--no-resolve');
+const REDIRECT_CACHE = join(OUT_DIR, 'redirect-cache.json');
 
 // One clock for the whole run, so every row's age is measured against the same
 // instant rather than drifting across a 150-page fetch loop.
@@ -263,7 +276,33 @@ async function main() {
   }
   console.log(`  Snapshots: ${snapshots.length} (last ${WEEKS} weeks)`);
 
-  const ranked = rankTargets(snapshots, { brand, competitors });
+  // Resolve Gemini's redirector BEFORE ranking — the domain is what the
+  // redirect hides, so this has to happen before anything is classified or
+  // scored. Failures are simply absent from the map and fall back to the
+  // redirector host, which classifySource excludes.
+  const redirects = RESOLVE ? collectGroundingRedirects(snapshots) : [];
+  let resolvedUrls = new Map();
+  let redirectStats = null;
+  if (redirects.length) {
+    const cache = loadRedirectCache(REDIRECT_CACHE);
+    console.log(`  Resolving ${redirects.length} Gemini grounding redirect(s) (${cache.size} cached)...`);
+    redirectStats = await resolveGroundingRedirects(redirects, {
+      concurrency: DEFAULT_CONCURRENCY,
+      onProgress: (done, total) => console.log(`    ...${done}/${total}`),
+    // The cache is passed in and mutated, so a partial run still persists what
+    // it managed to resolve.
+      cache,
+    });
+    resolvedUrls = redirectStats.resolved;
+    const kept = saveRedirectCache(REDIRECT_CACHE, cache, redirects);
+    console.log(`  Redirects: ${resolvedUrls.size} resolved to a publisher, ${redirectStats.failed} unresolved`
+      + `, ${redirectStats.fromCache} from cache${redirectStats.skipped ? `, ${redirectStats.skipped} over budget` : ''}`
+      + ` (cache now ${kept})`);
+  } else if (!RESOLVE) {
+    console.log('  Redirect resolution OFF (--no-resolve): Gemini citations will not name a publisher.');
+  }
+
+  const ranked = rankTargets(snapshots, { brand, competitors, resolvedUrls });
   const engage = ranked.engage;
   let excluded = ranked.excluded;
   // Relevance floor: a real PR target shows up across MULTIPLE engines or
@@ -325,6 +364,16 @@ async function main() {
       freshness_checkable: checkable.length,
       freshness_unknown: unknownFreshness.length,
       stale_article_days: STALE_ARTICLE_DAYS,
+      // How many pitch rows carry a real article URL — the precondition for the
+      // freshness check above meaning anything. Reported so "0 stale" can never
+      // be read as "0 dead" when the real answer is "nothing was checkable".
+      with_article_url: finalPitch.filter((t) => t.top_url).length,
+      // A resolution pass that quietly stopped resolving looks identical to one
+      // with nothing to resolve, so say which it was.
+      redirects_seen: redirects.length,
+      redirects_resolved: resolvedUrls.size,
+      redirects_unresolved: redirectStats ? redirectStats.failed : null,
+      redirect_resolution: RESOLVE ? 'on' : 'off',
     },
     pitch_targets: finalPitch,
     community_targets: engage,
