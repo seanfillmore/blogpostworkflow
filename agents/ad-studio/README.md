@@ -87,6 +87,7 @@ quietly produce a different structure:
 | `--variations` fixed at 1 | Each format contributes exactly one plate. |
 | Meta only | Demand Gen has no flexible-ad equivalent. |
 | one `--objective` for the whole ad | Until 2026-08-25 the objective reached the ad-level writer and not the plate writer, so a mid-giveaway `--objective sale` run shipped ONE manifest whose primary texts sold a product and whose three plates asked for a giveaway entry. Both gates passed every word — an incoherent ad is not an unsourced one. |
+| 3 plates, visually distinct | Meta treats near-identical creatives as ONE delivery entity, so plates sharing a fingerprint share a learning pool and a fatigue curve however different their copy is — three plates funding a pool that learns about two. A plate's look comes from its format's fixed `plateBrief`, so this is checked before any render: two formats are a duplicate only when they share a SETTING and a GROUND and their compositions score at or above 0.80. `--flexible` refuses; an ordinary `--formats` run only reports, into stdout and `run.json`. See `plate-distinctness.js` for the measurement. |
 | 2 primary texts, 2 headlines, all distinct | Two *phrasings* of one angle give the shared pool nothing to learn — that is the whole reason for writing two. Case-insensitive duplicates are rejected. |
 | ≤40 char headlines, ≤125 char primary texts | Meta truncates rather than wrapping, and a truncated headline is a different headline. |
 
