@@ -59,7 +59,7 @@ describe('refreshableFlops', () => {
     ], { mayRewriteBody });
     const [line] = renderFlopSkipLines(skipped);
     assert.match(line, /1 locked winner \(cocoa-butter-lotion\)/);
-    assert.match(line, /1 BLOCKED\/NOT_INDEXED\/DEMOTE/);
+    assert.match(line, /1 BLOCKED\/NOT_INDEXED\/LOW_DEMAND\/DEMOTE/);
     assert.deepEqual(renderFlopSkipLines([]), []);
   });
 });
@@ -108,4 +108,9 @@ describe('consumers use the shared filter', () => {
       assert.doesNotMatch(src, /verdict === 'REFRESH' \|\| f\.verdict === 'BLOCKED'/);
     });
   }
+});
+
+test('LOW_DEMAND is a human decision, never refreshed', () => {
+  assert.equal(flopAction({ slug: 'a', verdict: 'LOW_DEMAND' }, { mayRewriteBody }), 'no-demand');
+  assert.equal(refreshableFlops([{ slug: 'a', verdict: 'LOW_DEMAND' }], { mayRewriteBody }).kept.length, 0);
 });

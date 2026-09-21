@@ -9,12 +9,12 @@
  * consumes.
  *
  * Verdicts:
- *   30d — indexed and getting any impressions/clicks? If all zero → BLOCKED
- *         (technical or intent mismatch worth investigating).
- *   60d — actual clicks vs. projected clicks (traffic_potential × 2 months).
- *         Under 25% of projection → REFRESH candidate.
- *   90d — final verdict. Under 50% of projection (traffic_potential × 3
- *         months) → DEMOTE candidate.
+ *   30d — any impressions/clicks at all? If all zero → BLOCKED (or NOT_INDEXED
+ *         when indexing-checker says the page is not indexed).
+ *   60d — clicks vs what the site's own blog pages earn from the same
+ *         impressions at the same rank (lib/peer-yield.js). Well below → REFRESH.
+ *   90d — same test, plus LOW_DEMAND when almost nobody searches for or reaches
+ *         the page (a merge-or-remove decision for a human).
  *
  * Outputs:
  *   data/reports/post-performance/<slug>-{30d,60d,90d}.md  — per-post review
@@ -39,18 +39,16 @@ import { listAllSlugs, getPostMeta, getMetaPath, writePostMeta, POSTS_DIR, ROOT 
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { flopAction, countByAction, FLOP_ACTIONS } from '../../lib/flop-candidates.js';
+import { judgeYield, peerCtrByBand } from '../../lib/peer-yield.js';
+import { CANONICAL_ORIGIN } from '../../lib/gsc-page-url.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'post-performance');
 
 const MILESTONES = [30, 60, 90];
 const FORCE = process.argv.includes('--force');
 
-// Thresholds (fractions of projected traffic)
-const REFRESH_THRESHOLD_60D = 0.25;
-const DEMOTE_THRESHOLD_90D = 0.5;
 
 function ageInDays(iso) {
   if (!iso) return null;
@@ -92,7 +90,7 @@ export function supersedeStaleReviews(reviews, clockStart) {
   for (const [key, review] of Object.entries(reviews || {})) {
     const at = review?.reviewed_at ? new Date(review.reviewed_at).getTime() : NaN;
     if (review && review.gsc_basis !== GSC_BASIS) {
-      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: 'gsc-measurement-fix' });
+      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: 'basis-change' });
     } else if (!Number.isNaN(start) && !Number.isNaN(at) && at < start) {
       superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: clockStart });
     } else {
@@ -119,24 +117,21 @@ export function currentFlop(reviews, milestones = MILESTONES) {
 const HISTORY_CAP = 12;
 
 /**
- * The GSC measurement basis a review was scored on. Every review written before
- * 2026-09-21 queried `meta.shopify_url`, which is on the myshopify host for all
- * 183 posts, and an exact page filter on that host matches nothing — so every
- * one of those reviews was scored on 0 clicks / 0 impressions (see
- * lib/gsc-page-url.js). A review without this stamp is superseded exactly as a
- * pre-refresh one is, and the milestone is re-measured on the real URL.
+ * The basis a review was scored on. A review stamped with any other basis is
+ * superseded exactly as a pre-refresh one is, and the milestone re-measured.
+ *
+ *   (none)                     → queried `meta.shopify_url`, the myshopify host
+ *                                 for all 183 posts; an exact GSC page filter on
+ *                                 it matches nothing, so every review read 0/0
+ *                                 (lib/gsc-page-url.js).
+ *   canonical-host-2026-09-21  → real clicks, but judged against the brief's
+ *                                 traffic_potential (up to 144,000 clicks), a
+ *                                 target no page could meet.
+ *   peer-yield-2026-09-21      → judged against what the site's own pages earn
+ *                                 from the same demand at the same rank
+ *                                 (lib/peer-yield.js).
  */
-export const GSC_BASIS = 'canonical-host-2026-09-21';
-
-function loadBriefTrafficPotential(slug) {
-  const path = join(BRIEFS_DIR, `${slug}.json`);
-  if (!existsSync(path)) return null;
-  try {
-    const brief = JSON.parse(readFileSync(path, 'utf8'));
-    const tp = brief.traffic_potential;
-    return typeof tp === 'number' ? tp : null;
-  } catch { return null; }
-}
+export const GSC_BASIS = 'peer-yield-2026-09-21';
 
 function listPublishedPosts() {
   const posts = [];
@@ -217,83 +212,41 @@ function loadExternalContext() {
   return ctx;
 }
 
-const KNOWN_CLUSTERS_PP = ['deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'coconut oil', 'shampoo', 'conditioner', 'sunscreen', 'body wash', 'face cream', 'moisturizer', 'serum'];
-function clusterForPost(slug, keyword) {
-  const text = ((keyword || '') + ' ' + (slug || '')).toLowerCase();
-  for (const c of KNOWN_CLUSTERS_PP) {
-    if (text.includes(c)) return c;
-  }
-  return null;
-}
-
-function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, keyword, externalCtx }) {
+/**
+ * 30d: zero impressions → BLOCKED (or NOT_INDEXED when indexing-checker says so).
+ * 60d/90d: judged against the site's own peers on the page's own demand
+ * (lib/peer-yield.js) — REFRESH when it earns well below them; at 90d also
+ * LOW_DEMAND when almost nobody searches for or reaches it.
+ */
+export function evaluateMilestone({ milestone, age, metrics, slug, externalCtx, bandCtr }) {
   if (age < milestone) return null;
 
   const impressions = metrics?.impressions ?? 0;
   const clicks = metrics?.clicks ?? 0;
-
-  // Monthly traffic_potential -> per-milestone projection
-  const months = milestone / 30;
-  const projection = typeof trafficPotential === 'number'
-    ? Math.round(trafficPotential * months)
-    : null;
-
   let verdict = 'ON_TRACK';
   let reason = '';
+  let projection = null;
 
   if (milestone === 30) {
     if (impressions === 0 && clicks === 0) {
-      // Check whether the indexing-checker has already determined this is an
-      // indexing problem. If so, emit a more specific NOT_INDEXED verdict
-      // instead of the generic BLOCKED — different root cause, different fix.
-      // See docs/signal-manifest.md (indexing-checker → post-performance loop).
-      if (externalCtx && externalCtx.indexingStateBySlug && externalCtx.indexingStateBySlug[slug]) {
-        const idxState = externalCtx.indexingStateBySlug[slug];
-        if (idxState !== 'indexed') {
-          verdict = 'NOT_INDEXED';
-          reason = `Zero impressions and zero clicks after 30 days because the page is not indexed (state: ${idxState}). The indexing-checker flagged this; refreshing content will not help — fix indexing first.`;
-        } else {
-          verdict = 'BLOCKED';
-          reason = 'Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.';
-        }
+      // A NOT_INDEXED verdict is a different root cause with a different fix, so
+      // it is split out when indexing-checker has already said so.
+      const idxState = externalCtx?.indexingStateBySlug?.[slug];
+      if (idxState && idxState !== 'indexed') {
+        verdict = 'NOT_INDEXED';
+        reason = `Zero impressions and zero clicks after 30 days because the page is not indexed (state: ${idxState}). Refreshing content will not help — fix indexing first.`;
       } else {
         verdict = 'BLOCKED';
-        reason = 'Zero impressions and zero clicks after 30 days — likely not indexed, or targeting a query the page does not match. Investigate GSC coverage and intent.';
+        reason = 'Zero impressions and zero clicks after 30 days — nobody is searching for what this page targets, or it is not indexed.';
       }
     } else {
-      reason = `Indexed. ${impressions} impressions, ${clicks} clicks over first 30 days.`;
+      reason = `Indexed. ${impressions} impressions, ${clicks} clicks over the last 30 days.`;
     }
-  } else if (milestone === 60) {
-    if (projection != null && clicks < projection * REFRESH_THRESHOLD_60D) {
-      verdict = 'REFRESH';
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Under ${Math.round(REFRESH_THRESHOLD_60D * 100)}% threshold — refresh candidate.`;
-    } else if (projection == null) {
-      reason = `No traffic_potential in brief — cannot score. ${clicks} clicks, ${impressions} impressions over 60 days.`;
-    } else {
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). On track.`;
-    }
-  } else if (milestone === 90) {
-    if (projection != null && clicks < projection * DEMOTE_THRESHOLD_90D) {
-      verdict = 'DEMOTE';
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Under ${Math.round(DEMOTE_THRESHOLD_90D * 100)}% threshold — consider merging, refreshing, or removing.`;
-      // Context-aware softening: if a competitor just published in this cluster,
-      // an underperformance is probably external pressure, not content rot.
-      // Downgrade DEMOTE → REFRESH so the response is a rewrite, not a removal.
-      const cluster = externalCtx ? clusterForPost(slug, keyword) : null;
-      const competitorHits = cluster ? (externalCtx.competitorBoosts[cluster] || 0) : 0;
-      const clusterWeight = cluster ? (externalCtx.clusterWeights[cluster] || 0) : 0;
-      if (competitorHits > 0) {
-        verdict = 'REFRESH';
-        reason += ` [softened to REFRESH: ${competitorHits} new competitor post${competitorHits > 1 ? 's' : ''} in the "${cluster}" cluster — external ranking pressure suggests rewrite, not removal.]`;
-      } else if (clusterWeight >= 2) {
-        verdict = 'REFRESH';
-        reason += ` [softened to REFRESH: "${cluster}" is a page-1 cluster (weight +${clusterWeight}) — worth reinforcing, not removing.]`;
-      }
-    } else if (projection == null) {
-      reason = `No traffic_potential in brief — cannot score. ${clicks} clicks, ${impressions} impressions over 90 days.`;
-    } else {
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Final verdict: on track.`;
-    }
+  } else {
+    const judged = judgeYield(metrics, bandCtr, { days: milestone, judgeLowDemand: milestone === 90 });
+    projection = judged.expected != null ? Math.round(judged.expected * 10) / 10 : null;
+    reason = judged.why;
+    if (judged.verdict === 'REFRESH' || judged.verdict === 'LOW_DEMAND') verdict = judged.verdict;
   }
 
   return {
@@ -309,6 +262,24 @@ function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, ke
     reason,
     gsc_basis: GSC_BASIS,
   };
+}
+
+/**
+ * The site's blog CTR per position band over the trailing window, from GSC's
+ * own page rows. Only the canonical www host — the host every per-page lookup
+ * now queries (lib/gsc-page-url.js) — so page and peers share one basis; GSC
+ * also returns tiny apex-domain duplicates that would otherwise be mixed in.
+ */
+async function loadPeerBandCtr(days) {
+  try {
+    const gsc = await import('../../lib/gsc.js');
+    const rows = (await gsc.getTopPages(5000, days))
+      .filter((r) => r.page.startsWith(`${CANONICAL_ORIGIN}/blogs/news/`));
+    return { bandCtr: peerCtrByBand(rows), pages: rows.length };
+  } catch (err) {
+    console.warn(`  [warn] peer CTR unavailable for ${days}d: ${err.message}`);
+    return null;
+  }
 }
 
 function writePerPostReview({ slug, title, url, review }) {
@@ -331,7 +302,7 @@ function writePerPostReview({ slug, title, url, review }) {
     `- Clicks: ${review.clicks}`,
     `- CTR: ${(review.ctr * 100).toFixed(2)}%`,
     `- Avg position: ${review.position != null ? review.position.toFixed(1) : 'n/a'}`,
-    review.projection != null ? `- Projected clicks (traffic_potential × ${review.milestone / 30}mo): ${review.projection}` : '',
+    review.projection != null ? `- Expected clicks (site peers, same demand and rank): ${review.projection}` : '',
     '',
   ].filter(Boolean);
   writeFileSync(path, lines.join('\n'));
@@ -349,7 +320,7 @@ function writeDailyRollup({ dateStr, reviews }) {
   }
   lines.push(`${reviews.length} review${reviews.length > 1 ? 's' : ''} generated today.`);
   lines.push('');
-  lines.push('| Slug | Milestone | Verdict | Clicks | Impressions | Projection |');
+  lines.push('| Slug | Milestone | Verdict | Clicks | Impressions | Expected |');
   lines.push('|------|-----------|---------|--------|-------------|------------|');
   for (const r of reviews) {
     lines.push(`| \`${r.slug}\` | ${r.review.milestone}d | ${r.review.verdict} | ${r.review.clicks} | ${r.review.impressions} | ${r.review.projection ?? '—'} |`);
@@ -386,6 +357,17 @@ async function main() {
   if (externalCtx.rankDrops.size) ctxNotes.push(`${externalCtx.rankDrops.size} recent rank drops`);
   if (ctxNotes.length) console.log(`  External context loaded: ${ctxNotes.join(', ')}`);
 
+  // Peer CTR per band for each judged window, fetched once. A window whose peer
+  // data cannot be read is skipped this run rather than judged on nothing.
+  const peerByDays = {};
+  for (const days of MILESTONES.filter((m) => m > 30)) {
+    const peer = await loadPeerBandCtr(days);
+    if (peer) {
+      peerByDays[days] = peer.bandCtr;
+      console.log(`  Peer CTR (${days}d, ${peer.pages} blog pages): ${Object.entries(peer.bandCtr).map(([b, c]) => `${b} ${(c * 100).toFixed(2)}%`).join(' · ')}`);
+    }
+  }
+
   const todayReviews = []; // reviews produced this run
   const allFlops = [];      // any outstanding flops across all posts
 
@@ -397,7 +379,7 @@ async function main() {
     if (superseded.length) {
       history = [...(meta.performance_review_history || []), ...superseded].slice(-HISTORY_CAP);
       supersededCount += superseded.length;
-      console.log(`  [reset] ${meta.slug}: ${superseded.length} earlier verdict(s) superseded (${[...new Set(superseded.map((r) => (r.superseded_by === 'gsc-measurement-fix' ? 'measured on the wrong URL' : 'body refreshed')))].join(', ')}).`);
+      console.log(`  [reset] ${meta.slug}: ${superseded.length} earlier verdict(s) superseded (${[...new Set(superseded.map((r) => (r.superseded_by === 'basis-change' ? 'scored on an older basis' : 'body refreshed')))].join(', ')}).`);
     }
 
     const age = ageInDays(clockStart);
@@ -406,7 +388,6 @@ async function main() {
       continue;
     }
 
-    const trafficPotential = loadBriefTrafficPotential(meta.slug);
     let metricsByDays = {};
     let updated = Boolean(history);
 
@@ -421,12 +402,13 @@ async function main() {
       }
       const metrics = metricsByDays[milestone];
       if (!metrics) continue; // GSC unavailable — skip this run
+      if (milestone > 30 && !peerByDays[milestone]) continue; // no peers — judge next run
 
       const review = evaluateMilestone({
-        milestone, age, metrics, trafficPotential,
+        milestone, age, metrics,
         slug: meta.slug,
-        keyword: meta.target_keyword,
         externalCtx,
+        bandCtr: peerByDays[milestone],
       });
       if (!review) continue;
 
@@ -491,7 +473,7 @@ async function main() {
     action_required: allFlops,
   }, null, 2));
 
-  if (supersededCount) console.log(`\n  ${supersededCount} verdict(s) superseded by a body refresh.`);
+  if (supersededCount) console.log(`\n  ${supersededCount} verdict(s) superseded (older basis or body refresh).`);
   console.log(`\n  ${todayReviews.length} new review${todayReviews.length === 1 ? '' : 's'} this run, ${allFlops.length} outstanding flop${allFlops.length === 1 ? '' : 's'}.`);
 
   if (todayReviews.length > 0) {
