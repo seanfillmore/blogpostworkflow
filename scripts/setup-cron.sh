@@ -172,6 +172,14 @@ DAILY_THEME_CLAIMS_GATE="45 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-
 # `ps`.
 DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-scheduler-heartbeat.mjs >> data/reports/scheduler/scheduler-heartbeat.log 2>&1"
 
+# Trybe creator review (daily). Screens each PENDING creator submission's
+# transcript through the commercial claim gate and sends a revision request
+# quoting any health claim; never approves or rejects. Also reports creator
+# sales and commission. 12:55 UTC: the free minute after the 12:50 heartbeat
+# (checked against the LIVE crontab 2026-09-22), 5 minutes before the 13:00
+# daily-summary so the row lands in the SAME morning's digest. A handful of GETs.
+DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -554,6 +562,8 @@ $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
+# ── Creator program (daily, before the digest) ──
+$DAILY_TRYBE_REVIEW
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -612,6 +622,7 @@ echo "  11:30 UTC — indexing-fixer"
 echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
+echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
