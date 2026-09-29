@@ -158,13 +158,16 @@ async function main() {
     });
   log(`negative keywords: ${negativeKeywords.length}`);
 
-  let portfolios = [];
-  try {
-    portfolios = (await request(client, 'GET', '/v2/portfolios')) ?? [];
-    log(`portfolios: ${portfolios.length}`);
-  } catch (e) {
-    log(`portfolios: unavailable (${e.message.slice(0, 80)})`);
-  }
+  // NOT /v2/portfolios — that 404s "Method Not Found" on this account and an earlier
+  // version of this script reported it as "no portfolios exist". There are 18, organised
+  // one per parent product. A wrong endpoint and an empty account look identical from the
+  // outside, so a 404 here is never evidence of absence.
+  const portfolios = await listAll(client, '/portfolios/list', 'portfolios', {},
+    'application/vnd.spPortfolio.v3+json').catch((e) => {
+      log(`portfolios: unavailable (${e.message.slice(0, 80)})`);
+      return [];
+    });
+  log(`portfolios: ${portfolios.length}`);
 
   console.log('\nReports…');
   const base = { adProduct: 'SPONSORED_PRODUCTS', timeUnit: 'SUMMARY', format: 'GZIP_JSON' };
