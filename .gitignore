@@ -369,3 +369,5 @@ data/reports/authored-titles/
 # backed up offsite by scripts/backup-snapshots-offsite.sh (set `press`).
 # Pinned by tests/repo/press-contacts-private.test.js.
 data/press/
+data/reports/amazon-ads-audit/
+docs/*.pdf

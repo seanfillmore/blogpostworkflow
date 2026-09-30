@@ -1,0 +1,204 @@
+#!/usr/bin/env node
+/**
+ * Analyse the audit pull. READ ONLY — reads the JSON written by amazon-ads-audit.mjs
+ * and touches neither the ad account nor any live surface.
+ *
+ *   node scripts/amazon-ads-analyze.mjs [--in data/reports/amazon-ads-audit/latest.json]
+ *
+ * Every finding is reported PER BRAND. RSC and Culina share one seller account with very
+ * different economics, so a blended ACoS is the easiest wrong number to quote from here.
+ */
+
+import { readFileSync } from 'node:fs';
+import { isDirectRun } from '../lib/is-direct-run.js';
+import { classifyBrand } from './amazon-ads-audit.mjs';
+
+const money = (n) => `$${(n ?? 0).toFixed(2)}`;
+const pct = (n) => `${((n ?? 0) * 100).toFixed(1)}%`;
+
+/** Sum performance rows, which arrive one per 31-day window and must be recombined. */
+export function sumRows(rows, keyFn) {
+  const out = new Map();
+  for (const r of rows) {
+    const k = keyFn(r);
+    const cur = out.get(k) ?? {
+      key: k, name: r.campaignName ?? r.searchTerm ?? r.keyword ?? '',
+      impressions: 0, clicks: 0, cost: 0, orders: 0, sales: 0,
+    };
+    cur.impressions += r.impressions ?? 0;
+    cur.clicks += r.clicks ?? 0;
+    cur.cost += r.cost ?? 0;
+    cur.orders += r.purchases30d ?? 0;
+    cur.sales += r.sales30d ?? 0;
+    out.set(k, cur);
+  }
+  return [...out.values()];
+}
+
+export const acos = (r) => (r.sales > 0 ? r.cost / r.sales : null);
+export const roas = (r) => (r.cost > 0 ? r.sales / r.cost : null);
+const fmtAcos = (r) => (acos(r) === null ? (r.cost > 0 ? '∞ (no sales)' : '—') : pct(acos(r)));
+
+function totals(rows) {
+  return rows.reduce((a, r) => ({
+    impressions: a.impressions + r.impressions, clicks: a.clicks + r.clicks,
+    cost: a.cost + r.cost, orders: a.orders + r.orders, sales: a.sales + r.sales,
+  }), { impressions: 0, clicks: 0, cost: 0, orders: 0, sales: 0 });
+}
+
+function line(label, t) {
+  const cvr = t.clicks > 0 ? t.orders / t.clicks : 0;
+  console.log(
+    `  ${label.padEnd(22)} spend ${money(t.cost).padStart(10)}   sales ${money(t.sales).padStart(10)}` +
+    `   ACoS ${fmtAcos(t).padStart(12)}   orders ${String(t.orders).padStart(5)}` +
+    `   clicks ${String(t.clicks).padStart(6)}   CVR ${pct(cvr).padStart(6)}`
+  );
+}
+
+function main() {
+  const argv = process.argv.slice(2);
+  const inPath = argv.includes('--in')
+    ? argv[argv.indexOf('--in') + 1]
+    : 'data/reports/amazon-ads-audit/latest.json';
+  const d = JSON.parse(readFileSync(inPath, 'utf8'));
+
+  console.log(`\n${'='.repeat(100)}`);
+  console.log(`AMAZON ADS AUDIT — ${d.profile.name} (${d.profile.country})`);
+  console.log(`Window ${d.window.startDate} → ${d.window.endDate} (${d.window.days}d)` +
+    `   ·   search terms from ${d.window.searchTermStartDate}   ·   READ ONLY`);
+  console.log('='.repeat(100));
+
+  // ---- Campaign performance, by brand -------------------------------------------------
+  const camps = sumRows(d.campaignPerf, (r) => r.campaignId);
+  const stateById = new Map(d.campaigns.map((c) => [String(c.campaignId), c.state]));
+  const budgetById = new Map(d.campaigns.map((c) => [String(c.campaignId), c.budget?.budget ?? 0]));
+  for (const c of camps) {
+    c.brand = classifyBrand(c.name);
+    c.state = stateById.get(String(c.key)) ?? 'UNKNOWN';
+    c.budget = budgetById.get(String(c.key)) ?? 0;
+  }
+
+  console.log('\n── SPEND BY BRAND ' + '─'.repeat(82));
+  const rsc = camps.filter((c) => c.brand === 'RSC');
+  const cul = camps.filter((c) => c.brand === 'Culina');
+  const unk = camps.filter((c) => c.brand === 'UNKNOWN');
+  line('RSC', totals(rsc));
+  line('Culina', totals(cul));
+  line('UNKNOWN / both', totals(unk));
+  line('ACCOUNT TOTAL', totals(camps));
+  const tAll = totals(camps);
+  const tR = totals(rsc);
+  const tU = totals(unk);
+  console.log(`\n  RSC share of spend: ${pct(tR.cost / tAll.cost)}   ·   RSC share of ad sales: ${pct(tR.sales / tAll.sales)}`);
+  if (tU.cost > 0) {
+    console.log(`  ⚠ ${money(tU.cost)} (${pct(tU.cost / tAll.cost)}) sits in account-wide campaigns spanning BOTH brands` +
+      ` — it cannot be attributed to either, so treat the RSC share as a floor, not a point estimate.`);
+    console.log('    Unattributable campaigns:');
+    for (const c of unk.filter((c) => c.cost > 0).sort((a, b) => b.cost - a.cost).slice(0, 10)) {
+      console.log(`      ${money(c.cost).padStart(9)}  ${c.name.slice(0, 70)}`);
+    }
+  }
+
+  // ---- Portfolio rollup ----------------------------------------------------------------
+  // Portfolios are organised one per parent product here, which makes them the readable
+  // unit for "is this product's ad economics working" — a flat campaign list forces you to
+  // reassemble that mapping by eye before you can judge anything.
+  if (d.portfolios?.length) {
+    const pName = new Map(d.portfolios.map((p) => [String(p.portfolioId), p.name]));
+    const pById = new Map(d.campaigns.map((c) => [String(c.campaignId), String(c.portfolioId ?? '')]));
+    const rolled = sumRows(
+      d.campaignPerf.map((r) => ({ ...r, _p: pName.get(pById.get(String(r.campaignId))) ?? '(no portfolio)' })),
+      (r) => r._p
+    );
+    console.log('\n── BY PORTFOLIO (one per parent product) ' + '─'.repeat(59));
+    for (const p of rolled.sort((a, b) => b.cost - a.cost)) {
+      if (p.cost === 0 && p.sales === 0) continue;
+      line(p.key.slice(0, 22), p);
+    }
+  }
+
+  // ---- Campaigns that spent with zero sales -------------------------------------------
+  console.log('\n── SPEND WITH ZERO ATTRIBUTED SALES ' + '─'.repeat(64));
+  const zero = camps.filter((c) => c.cost > 0 && c.sales === 0).sort((a, b) => b.cost - a.cost);
+  const zeroT = totals(zero);
+  console.log(`  ${zero.length} campaigns burned ${money(zeroT.cost)} on ${zeroT.clicks} clicks with NO attributed sales`);
+  console.log(`  = ${pct(zeroT.cost / tAll.cost)} of all spend\n`);
+  for (const c of zero.slice(0, 20)) {
+    console.log(`   ${money(c.cost).padStart(9)}  ${String(c.clicks).padStart(5)} clk  ${c.state.padEnd(8)} ${c.brand.padEnd(7)} ${c.name.slice(0, 62)}`);
+  }
+
+  // ---- Worst ACoS among campaigns that DO sell ----------------------------------------
+  console.log('\n── WORST ACoS (campaigns with sales, spend ≥ $25) ' + '─'.repeat(50));
+  const bad = camps.filter((c) => c.sales > 0 && c.cost >= 25).sort((a, b) => acos(b) - acos(a));
+  for (const c of bad.slice(0, 15)) {
+    console.log(`   ACoS ${fmtAcos(c).padStart(8)}  spend ${money(c.cost).padStart(9)}  sales ${money(c.sales).padStart(9)}  ${String(c.orders).padStart(3)} ord  ${c.brand.padEnd(7)} ${c.name.slice(0, 52)}`);
+  }
+
+  // ---- Budget-capped winners ----------------------------------------------------------
+  console.log('\n── BUDGET-CAPPED WINNERS (ACoS < 25%, spending near cap) ' + '─'.repeat(43));
+  const winners = camps
+    .filter((c) => c.sales > 0 && acos(c) < 0.25 && c.state === 'ENABLED' && c.budget > 0)
+    .map((c) => ({ ...c, dailySpend: c.cost / d.window.days, util: c.cost / d.window.days / c.budget }))
+    .sort((a, b) => b.util - a.util);
+  if (!winners.length) console.log('  none');
+  for (const c of winners.slice(0, 15)) {
+    console.log(`   ACoS ${fmtAcos(c).padStart(7)}  ROAS ${(roas(c) ?? 0).toFixed(1).padStart(5)}x  budget $${String(c.budget).padStart(4)}/d  used ${pct(c.util).padStart(6)}  ${c.brand.padEnd(7)} ${c.name.slice(0, 48)}`);
+  }
+
+  // ---- Structure: ad groups per campaign ----------------------------------------------
+  console.log('\n── STRUCTURE ' + '─'.repeat(87));
+  const agByCampaign = new Map();
+  for (const ag of d.adGroups) {
+    const k = String(ag.campaignId);
+    agByCampaign.set(k, (agByCampaign.get(k) ?? 0) + 1);
+  }
+  const enabledIds = d.campaigns.filter((c) => c.state === 'ENABLED').map((c) => String(c.campaignId));
+  const multi = enabledIds.filter((id) => (agByCampaign.get(id) ?? 0) > 1);
+  console.log(`  ENABLED campaigns: ${enabledIds.length} of ${d.campaigns.length}`);
+  console.log(`  ENABLED campaigns with MORE THAN ONE ad group: ${multi.length}` +
+    (multi.length ? '  ← budget splits unpredictably; Amazon has no ad-group budget control' : '  ✓'));
+  const dailyBudget = d.campaigns.filter((c) => c.state === 'ENABLED')
+    .reduce((s, c) => s + (c.budget?.budget ?? 0), 0);
+  const actualDaily = tAll.cost / d.window.days;
+  console.log(`  ENABLED daily budget: ${money(dailyBudget)}/day   ·   actual spend: ${money(actualDaily)}/day` +
+    `   ·   utilisation ${pct(actualDaily / dailyBudget)}`);
+  console.log(`  Negative keywords in account: ${d.negativeKeywords.length}`);
+
+  // ---- Search terms: zero-order waste --------------------------------------------------
+  if (d.searchTerms.length) {
+    console.log('\n── SEARCH TERM WASTE (≥5 clicks, zero orders) ' + '─'.repeat(54));
+    const st = sumRows(d.searchTerms, (r) => `${r.campaignId} ${r.searchTerm}`);
+    for (const s of st) {
+      const src = d.searchTerms.find((r) => `${r.campaignId} ${r.searchTerm}` === s.key);
+      s.term = src?.searchTerm; s.campaign = src?.campaignName; s.brand = classifyBrand(src?.campaignName);
+    }
+    const waste = st.filter((s) => s.clicks >= 5 && s.orders === 0).sort((a, b) => b.cost - a.cost);
+    const wasteT = totals(waste);
+    console.log(`  ${waste.length} terms · ${money(wasteT.cost)} spent · ${wasteT.clicks} clicks · ZERO orders`);
+    console.log(`  = ${pct(wasteT.cost / tAll.cost)} of all spend — negatable today\n`);
+    for (const s of waste.slice(0, 25)) {
+      console.log(`   ${money(s.cost).padStart(8)}  ${String(s.clicks).padStart(4)} clk  ${s.brand.padEnd(7)} "${(s.term ?? '').slice(0, 42).padEnd(42)}"  ← ${(s.campaign ?? '').slice(0, 34)}`);
+    }
+
+    console.log('\n── SEARCH TERM WASTE (converting but unprofitable: ≥1 order, ACoS > 60%) ' + '─'.repeat(27));
+    const unprof = st.filter((s) => s.orders >= 1 && s.sales > 0 && acos(s) > 0.6)
+      .sort((a, b) => b.cost - a.cost);
+    console.log(`  ${unprof.length} terms · ${money(totals(unprof).cost)} spent · ${money(totals(unprof).sales)} sales\n`);
+    for (const s of unprof.slice(0, 15)) {
+      console.log(`   ACoS ${fmtAcos(s).padStart(8)}  ${money(s.cost).padStart(8)}  ${String(s.orders).padStart(2)} ord  ${s.brand.padEnd(7)} "${(s.term ?? '').slice(0, 40)}"`);
+    }
+  }
+
+  // ---- Placement -----------------------------------------------------------------------
+  if (d.placementPerf.length) {
+    console.log('\n── PLACEMENT ' + '─'.repeat(87));
+    const pl = sumRows(d.placementPerf, (r) => r.placementClassification ?? 'unknown');
+    for (const p of pl.sort((a, b) => b.cost - a.cost)) line(p.key, p);
+  }
+
+  console.log('\n' + '='.repeat(100));
+  console.log('READ ONLY — no ad-account writes were made. Any change list needs approval before execution.');
+  console.log('='.repeat(100) + '\n');
+}
+
+if (isDirectRun(import.meta.url)) main();
