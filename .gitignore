@@ -370,3 +370,4 @@ data/reports/authored-titles/
 # Pinned by tests/repo/press-contacts-private.test.js.
 data/press/
 data/reports/amazon-ads-audit/
+docs/*.pdf
