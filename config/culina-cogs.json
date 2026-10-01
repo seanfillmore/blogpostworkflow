@@ -1,18 +1,109 @@
 {
   "_note": "Operator-supplied cost of goods per Culina ASIN, keyed on ASIN. Sean provided these on 2026-09-03; they lived only in a session scratchpad until 2026-09-05, which is why they are committed here. COGS is the number that decides whether an ACoS is profitable, and it exists nowhere else in this repo.",
   "_scope": "CULINA ONLY. Culina is out of scope for this codebase's Shopify/content/SEO pipelines (see CLAUDE.md); the one standing exception is the Amazon PPC audit, because an outside agency is paid >$1K/mo to manage that account. Nothing in the content fleet reads this file.",
-  "_basis": "Landed unit cost as supplied by the operator. `price` is the list price at the time of supply and is context only — the P&L uses real per-unit revenue from SP-API finance line items, never this figure.",
+  "_basis": "Landed unit cost as supplied by the operator. `price` is the list price at the time of supply and is context only \u2014 the P&L uses real per-unit revenue from SP-API finance line items, never this figure.",
   "_supplied_at": "2026-09-03",
   "_source": "operator sheet",
   "cogs": {
-    "B08BTQK5Z9": { "cogs": 7.30, "price": 24.99, "name": "Supreme Care Set (scrub+soap+oil)" },
-    "B08BTVXLXN": { "cogs": 2.63, "price": 14.99, "name": "Cleaning & Restoring Scrub" },
-    "B071SGF6GT": { "cogs": 1.73, "price": 9.99, "name": "Cleaning Soap 8oz" },
-    "B077LYR5SF": { "cogs": 4.50, "price": 17.99, "name": "Cleaning Kit (cleanser+conditioner)" },
-    "B0771WC1Q1": { "cogs": 1.99, "price": 9.99, "name": "Conditioner Oil 8oz" },
-    "B08KHGYYKQ": { "cogs": 10.12, "price": 49.99, "name": "Soap+stick+oil+scrubber+brush" },
-    "B08K892JQG": { "cogs": 9.35, "price": 29.99, "name": "Seasoning Stick+soap+oil+scrub" },
-    "B0984W3SG3": { "cogs": 10.62, "price": 54.99, "name": "Soap+stick+oil+scrubber+brush+scrapers" },
-    "B08CQMQQ1K": { "cogs": 2.21, "price": 9.99, "name": "Seasoning Stick" }
-  }
+    "B08BTQK5Z9": {
+      "cogs": 7.3,
+      "price": 24.99,
+      "name": "Supreme Care Set",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap",
+        "salt scrub"
+      ],
+      "component_count": 3
+    },
+    "B08BTVXLXN": {
+      "cogs": 2.63,
+      "price": 14.99,
+      "name": "Cleaning & Restoring Scrub",
+      "contents": [
+        "salt scrub"
+      ],
+      "component_count": 1
+    },
+    "B071SGF6GT": {
+      "cogs": 1.73,
+      "price": 9.99,
+      "name": "Cleaning Soap 8oz",
+      "contents": [
+        "cleaning soap"
+      ],
+      "component_count": 1
+    },
+    "B077LYR5SF": {
+      "cogs": 4.5,
+      "price": 17.99,
+      "name": "Cleaning Kit",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap"
+      ],
+      "component_count": 2
+    },
+    "B0771WC1Q1": {
+      "cogs": 1.99,
+      "price": 9.99,
+      "name": "Conditioner Oil 8oz",
+      "contents": [
+        "conditioning oil"
+      ],
+      "component_count": 1
+    },
+    "B08KHGYYKQ": {
+      "cogs": 10.12,
+      "price": 49.99,
+      "name": "6-piece set",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap",
+        "salt scrub",
+        "brush",
+        "conditioning stick",
+        "chain mail scrubber"
+      ],
+      "component_count": 6
+    },
+    "B08K892JQG": {
+      "cogs": 9.35,
+      "price": 29.99,
+      "name": "4-piece set",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap",
+        "conditioning stick",
+        "salt scrub"
+      ],
+      "component_count": 4
+    },
+    "B0984W3SG3": {
+      "cogs": 10.62,
+      "price": 54.99,
+      "name": "8-piece set",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap",
+        "salt scrub",
+        "brush",
+        "conditioning stick",
+        "chain mail scrubber",
+        "plastic scrapers",
+        "silicone pan handle cover"
+      ],
+      "component_count": 8
+    },
+    "B08CQMQQ1K": {
+      "cogs": 2.21,
+      "price": 9.99,
+      "name": "Seasoning Stick",
+      "contents": [
+        "conditioning stick"
+      ],
+      "component_count": 1
+    }
+  },
+  "_contents_note": "Component lists supplied by the operator 2026-09-30 and cross-checked against live Amazon catalog titles via SP-API. They replace the abbreviated names this file shipped with, which understated several kits. NOTE B0984W3SG3: the operator's list omitted the conditioning stick, but the live Amazon title includes it ('Soap stick Conditioning Oil Stainless Scrubber Restoring Scrub brush handle and scrapers'); recorded WITH the stick pending operator confirmation. COGS values are unchanged and were supplied separately on 2026-09-03, so no contribution or break-even figure in any report moves as a result of this correction."
 }
