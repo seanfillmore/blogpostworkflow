@@ -50,18 +50,32 @@ Two observations about this table:
 
 Break-even ACoS is contribution margin expressed as a percentage of revenue. A product advertised above its break-even ACoS loses money on every advertised sale.
 
-| Product | Price | Break-even ACoS | Actual ACoS | Ad spend | Net |
-|---|--:|--:|--:|--:|--:|
-| Cleaning and Restoring Scrub | $14.99 | 33.9% | 69.6% | $2,288 | −$371 |
-| Cleaning Kit | $17.99 | 21.9% | 46.3% | $1,326 | −$606 |
-| Cleaning Soap 8oz | $9.99 | 26.8% | 56.2% | $852 | −$277 |
-| Conditioner Oil 8oz | $9.99 | 24.9% | 62.3% | $551 | −$313 |
-| Soap, stick, oil, brush | $49.99 | 27.5% | 37.7% | $1,465 | −$212 |
-| Seasoning stick set | $29.99 | 9.8% | 23.5% | $122 | −$22 |
-| Supreme Care Set | $24.99 | 23.5% | 32.3% | $2,134 | +$355 |
-| Soap, stick, oil, scrapers | $54.99 | 28.9% | **17.4%** | $133 | +$137 |
+| Product | Pieces | Price | Break-even ACoS | Actual ACoS | Ad spend | Net |
+|---|--:|--:|--:|--:|--:|--:|
+| Cleaning and Restoring Scrub | 1 | $14.99 | 33.9% | 69.6% | $2,288 | −$371 |
+| Cleaning Kit (oil, soap) | 2 | $17.99 | 21.9% | 46.3% | $1,326 | −$606 |
+| Cleaning Soap 8oz | 1 | $9.99 | 26.8% | 56.2% | $852 | −$277 |
+| Conditioner Oil 8oz | 1 | $9.99 | 24.9% | 62.3% | $551 | −$313 |
+| Six-piece set | 6 | $49.99 | 27.5% | 37.7% | $1,465 | −$212 |
+| Four-piece set | 4 | $29.99 | 9.8% | 23.5% | $122 | −$22 |
+| Supreme Care Set (oil, soap, scrub) | 3 | $24.99 | 23.5% | 32.3% | $2,134 | +$355 |
+| Eight-piece set | 8 | $54.99 | 28.9% | **17.4%** | $133 | +$137 |
 
 **Only the last product is advertised profitably, and it receives 1.5% of the budget.**
+
+### The bundle ladder does not price coherently
+
+Comparing each kit against the one below it, using supplier cost of goods:
+
+| Step up | What it adds | Added cost | Added price |
+|---|---|--:|--:|
+| 3-piece to 4-piece | conditioning stick | +$2.05 | +$5.00 |
+| 4-piece to 6-piece | brush, chain mail scrubber | **+$0.77** | **+$20.00** |
+| 6-piece to 8-piece | plastic scrapers, silicone handle cover | +$0.50 | +$5.00 |
+
+**A $20 price step is carried by 77 cents of goods.** This explains two figures that otherwise look unrelated. The four-piece set has the worst contribution margin in the catalogue, 9.8%, despite containing the conditioning stick, which is the most expensive component in the range: it is underpriced relative to its own contents. Meanwhile both kits priced above $49 sell fewer than 50 units per month, in a category whose kits transact at $25 to $35.
+
+The four-piece set at $29.99 sits inside that proven window and is the strongest candidate for a price increase. The two kits above it are priced above where this category buys.
 
 ### What the advertising itself earns
 
@@ -154,7 +168,7 @@ The nearest direct competitor sells an almost identical three-product architectu
 
 Because Amazon's fulfilment fee is fixed per unit, a price increase flows almost entirely into contribution. Moving to competitor parity is worth an estimated **$6,300 per month of additional contribution at unchanged unit volume**, which is more than the account's entire current net result.
 
-A second pricing observation: the category's kit prices top out around $35. Culina's $49.99 and $54.99 kits both sell fewer than 50 units per month, which is consistent with sitting above where this category's kits transact.
+A second pricing observation: the category's kit prices top out around $35. The six-piece and eight-piece sets, at $49.99 and $54.99, both sell fewer than 50 units per month, which is consistent with sitting above where this category's kits transact. See the bundle ladder in section 2: the step from the four-piece to the six-piece set adds $20 of price for 77 cents of goods, so the gap between them is a pricing decision rather than a cost difference.
 
 ---
 
