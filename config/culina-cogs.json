@@ -105,5 +105,5 @@
       "component_count": 1
     }
   },
-  "_contents_note": "Component lists supplied by the operator 2026-09-30 and cross-checked against live Amazon catalog titles via SP-API. They replace the abbreviated names this file shipped with, which understated several kits. NOTE B0984W3SG3: the operator's list omitted the conditioning stick, but the live Amazon title includes it ('Soap stick Conditioning Oil Stainless Scrubber Restoring Scrub brush handle and scrapers'); recorded WITH the stick pending operator confirmation. COGS values are unchanged and were supplied separately on 2026-09-03, so no contribution or break-even figure in any report moves as a result of this correction."
+  "_contents_note": "Component lists supplied by the operator 2026-09-30 and cross-checked against live Amazon catalog titles via SP-API. B0984W3SG3 INCLUDES the conditioning stick, confirmed by the operator 2026-09-30 (their first list omitted it; the live title and the carton both have it). COGS values are unchanged and were supplied separately on 2026-09-03, so no contribution or break-even figure in any report moves as a result of this correction."
 }

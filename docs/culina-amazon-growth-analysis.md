@@ -40,9 +40,9 @@ Gross revenue was $29,150 across 1,508 units, an average selling price of $19.33
 
 Two observations about this table:
 
-**The 9.0% spent on promotions is a decision, not a cost of doing business.** It is concentrated on the two highest-priced kits, where it runs 23% to 26% of principal, against 3% to 5% everywhere else. Those are the two products with the best underlying economics, and the coupons are removing most of that advantage.
+**The 9.0% spent on promotions is a decision, not a cost of doing business.** It is concentrated on the three multi-piece kits, where it runs 24% to 26% of the selling price, against 3% to 5% everywhere else. Those are the products with the best underlying economics, and the coupons are removing most of that advantage. Section 2 quantifies it per product.
 
-**FBA fulfilment is nearly flat in dollars regardless of price.** It costs $5.23 per unit on a $9.99 product and $26.33 on a $54.99 product. As a percentage that is 52% versus 48%. This is why low-priced items in this catalogue cannot carry an advertising budget: the fee does not shrink with the price.
+**FBA fulfilment does not scale with price, so it falls hardest on the cheapest products.** It costs $3.47 per unit on a $9.99 product and $7.57 on a $54.99 product: the price rises five and a half times while the fee roughly doubles. As a share of the selling price that is **35% against 14%**. This is the structural reason low-priced items in this catalogue struggle to carry an advertising budget, and it is why the single-item products show the worst gap between break-even and actual ACoS in section 2.
 
 ---
 
@@ -73,9 +73,30 @@ Comparing each kit against the one below it, using supplier cost of goods:
 | 4-piece to 6-piece | brush, chain mail scrubber | **+$0.77** | **+$20.00** |
 | 6-piece to 8-piece | plastic scrapers, silicone handle cover | +$0.50 | +$5.00 |
 
-**A $20 price step is carried by 77 cents of goods.** This explains two figures that otherwise look unrelated. The four-piece set has the worst contribution margin in the catalogue, 9.8%, despite containing the conditioning stick, which is the most expensive component in the range: it is underpriced relative to its own contents. Meanwhile both kits priced above $49 sell fewer than 50 units per month, in a category whose kits transact at $25 to $35.
+**A $20 price step is carried by 77 cents of goods.** The gap between those two kits is a pricing decision, not a cost difference.
 
-The four-piece set at $29.99 sits inside that proven window and is the strongest candidate for a price increase. The two kits above it are priced above where this category buys.
+### Coupons, not fees, are the largest controllable cost on the kits
+
+Separating Amazon's fulfilment fee from the referral commission and from promotional spend changes where the problem sits. Fulfilment runs $3.47 to $7.57 per unit across the whole range, which is unremarkable. Coupon spend does not:
+
+| Kit | List | Units / month | Coupon per unit | Contribution now | With coupon removed |
+|---|--:|--:|--:|--:|--:|
+| 3-piece | $24.99 | 453 | $1.25 | $6.26 (26%) | $7.93 (32%) |
+| 4-piece | $29.99 | 37 | $6.57 | **$1.71 (6%)** | $10.34 (34%) |
+| 6-piece | $49.99 | 97 | $12.83 | $13.06 (26%) | $25.89 (52%) |
+| 8-piece | $54.99 | 18 | $13.75 | $14.80 (27%) | $28.55 (52%) |
+
+**Removing the coupons on these four products is worth an estimated $2,570 per month of additional contribution at current unit volumes, with no change to any listed price.** That is roughly double the account's current monthly loss, and it costs nothing to do.
+
+It also explains the four-piece set's 6% margin, which is not a cost problem: that product carries a coupon worth 24% of its price.
+
+### Where the ladder actually fails
+
+Unit volumes do not support the idea that the higher-priced kits are priced out of the market. The six-piece set at $49.99 sells 97 units per month, more than twice the four-piece at $29.99. The ladder works at the top and fails in the middle:
+
+- **The four-piece set is the weak rung.** At $27.56 realised it sits about $3 above the three-piece set for one additional component, so there is little reason for a shopper to choose it. It should either be retired or moved to roughly $34 to become a genuine step.
+- **The eight-piece set is the other weak rung**, only $5 above the six-piece for two more components.
+- **The three-piece set is the volume anchor** at 453 units per month and the only consistently net-positive product. It is the last price to touch, not the first.
 
 ### What the advertising itself earns
 
@@ -104,7 +125,7 @@ The account's reported loss is $1,310 because organic sales generate contributio
 
 Against a blended 26.9% break-even, the cookware cluster costs about **$634 per month** in lost contribution. A reviewed negation list of 59 terms is ready. Four terms that carry cookware wording but convert at or below break-even were deliberately excluded, because negating profitable traffic to satisfy a tidy rule would cost money.
 
-**Promotions on the two premium kits.** Removing the 23% to 26% coupons lifts those two products from roughly 30% to roughly 55% contribution.
+**Coupons on the multi-piece kits: an estimated $2,570 per month.** Removing them lifts the six-piece and eight-piece sets from roughly 26% to 52% contribution, and the four-piece set from 6% to 34%, with no change to any listed price. This is the single largest controllable item in this report and the cheapest to act on.
 
 **Together these are worth an estimated $3,000 to $5,000 per month of contribution, on a business currently losing $1,310 per month.**
 
@@ -168,7 +189,7 @@ The nearest direct competitor sells an almost identical three-product architectu
 
 Because Amazon's fulfilment fee is fixed per unit, a price increase flows almost entirely into contribution. Moving to competitor parity is worth an estimated **$6,300 per month of additional contribution at unchanged unit volume**, which is more than the account's entire current net result.
 
-A second pricing observation: the category's kit prices top out around $35. The six-piece and eight-piece sets, at $49.99 and $54.99, both sell fewer than 50 units per month, which is consistent with sitting above where this category's kits transact. See the bundle ladder in section 2: the step from the four-piece to the six-piece set adds $20 of price for 77 cents of goods, so the gap between them is a pricing decision rather than a cost difference.
+A second pricing observation, and a caution about how it was first read. Published competitor volumes suggest the category's kits cluster at $25 to $35, which initially looked like evidence that the $49.99 and $54.99 sets were priced out of the market. First-party unit data contradicts that: the six-piece set at $49.99 sells 97 units per month, more than twice the four-piece at $29.99. **The constraint on those two products is coupon spend, not price.** This is a worked example of why the badge-derived category figures in section 5 should be treated as directional and checked against first-party data wherever first-party data exists.
 
 ---
 
