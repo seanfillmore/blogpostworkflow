@@ -374,3 +374,6 @@ docs/*.pdf
 
 # creator-outreach state: server-owned record of every email sent to a creator (backed up offsite)
 data/creator-outreach/
+
+# inbox-sorter state: which messages it filed, which senders Sean kept in the Inbox
+data/inbox-sorter/
