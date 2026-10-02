@@ -139,3 +139,28 @@ test('no thank-you for a video submitted more than 14 days ago', () => {
   const p = planScheduled(roster([order()], old), { creators: { 'lori@example.com': { sent: { welcome: 'x', nudge1: 'x' }, lastScheduledAt: iso(NOW - 3 * DAY) } } }, { now: NOW });
   assert.notEqual(p.sends[0]?.kind, 'thanks');
 });
+
+test('resend transport: From is Sean, threading headers carried, Sent copy appended with the same Message-ID', async () => {
+  const { sendMail } = await import('../../lib/hushmail.js');
+  let posted;
+  let appended;
+  const r = await sendMail({ user: 'sean@realskincare.com', pass: 'x' }, { to: 'c@x.com', subject: 'Re: hi', text: 'Hello', inReplyTo: '<a@x>' }, {
+    via: 'resend', resendKey: 'k',
+    fetchImpl: async (url, init) => { posted = JSON.parse(init.body); return new Response('{"id":"r1"}', { status: 200 }); },
+    appendSent: async (creds, raw) => { appended = raw.toString(); },
+  });
+  assert.equal(posted.from, 'Sean at Real Skin Care <sean@realskincare.com>');
+  assert.equal(posted.headers['In-Reply-To'], '<a@x>');
+  assert.equal(posted.headers['Message-ID'], r.messageId);
+  assert.match(r.messageId, /@realskincare\.com>$/);
+  assert.ok(appended.includes(`Message-ID: ${r.messageId}`));
+  assert.equal(r.sentCopy, 'saved to Sent');
+});
+
+test('resend transport: a failed Sent append is reported, not fatal', async () => {
+  const { sendMail } = await import('../../lib/hushmail.js');
+  const r = await sendMail({ user: 'sean@realskincare.com', pass: 'x' }, { to: 'c@x.com', subject: 's', text: 't' }, {
+    via: 'resend', resendKey: 'k', fetchImpl: async () => new Response('{"id":"r1"}'), appendSent: async () => { throw new Error('imap down'); },
+  });
+  assert.match(r.sentCopy, /NOT saved to Sent: imap down/);
+});

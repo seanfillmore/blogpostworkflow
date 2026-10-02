@@ -117,7 +117,7 @@ export async function runOutreach({
 } = {}) {
   const creds = hushmailCredentials(env);
   readInbox ||= (q) => fetchInboxFrom(creds, q);
-  send ||= (m) => sendMail(creds, m);
+  send ||= (m) => sendMail(creds, m, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
 
   const [orders, submissions] = await Promise.all([loadOrders(), loadSubmissions()]);
   const roster = buildRoster({ orders, submissions });
@@ -285,8 +285,8 @@ async function main() {
   const testTo = args[args.indexOf('--test-send') + 1];
   if (args.includes('--test-send')) {
     if (!creds) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD are not in .env');
-    const r = await sendMail(creds, { to: testTo, subject: 'Creator outreach test', text: `This is a test from the creator-outreach agent.\n\n${SIGNATURE}` });
-    console.log(`sent test to ${testTo}: ${r.messageId}`);
+    const r = await sendMail(creds, { to: testTo, subject: 'Creator outreach test', text: `This is a test from the creator-outreach agent.\n\n${SIGNATURE}` }, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
+    console.log(`sent test to ${testTo} via ${config.sendVia}: ${r.messageId}${r.sentCopy ? ` (${r.sentCopy})` : ''}`);
     const inbox = await fetchInboxFrom(creds, { senders: [creds.user], since: new Date(Date.now() - 86_400_000) });
     console.log(`IMAP read OK (${inbox.length} message(s) from yourself in the last day)`);
     return;
