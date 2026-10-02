@@ -317,6 +317,9 @@ async function main() {
       throw new Error(`no state file at ${STATE_PATH}. Refusing to send: without it every creator would be re-sent every email. Restore it from backup, or run once with --init if this is genuinely the first run.`);
     }
     state = { createdAt: new Date().toISOString(), creators: {}, processed: [] };
+    // Written now, not on the first send: a run with nothing to send would
+    // otherwise leave no file, and the next cron run would refuse.
+    if (apply) writeState(state);
   }
 
   if (apply && !acquireLock()) { console.log('another run is in progress'); return; }
