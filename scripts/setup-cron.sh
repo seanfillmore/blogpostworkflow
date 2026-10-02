@@ -178,6 +178,11 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # sales and commission. 12:55 UTC: the free minute after the 12:50 heartbeat
 # (checked against the LIVE crontab 2026-09-22), 5 minutes before the 13:00
 # daily-summary so the row lands in the SAME morning's digest. A handful of GETs.
+# Creator outreach: emails Trybe creators from sean@realskincare.com (brief on ship,
+# nudges after delivery, thanks on approval) and answers their replies. Every
+# 30 minutes so a reply is answered quickly; scheduled mail only goes out
+# 16:00-24:00 UTC (see lib/creator-outreach.js). Off switch: config/creator-outreach.json.
+CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outreach/index.js --apply >> data/reports/scheduler/creator-outreach.log 2>&1"
 DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
 
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
@@ -564,6 +569,7 @@ $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
 # ── Creator program (daily, before the digest) ──
 $DAILY_TRYBE_REVIEW
+$CREATOR_OUTREACH
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -623,6 +629,7 @@ echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
+echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"

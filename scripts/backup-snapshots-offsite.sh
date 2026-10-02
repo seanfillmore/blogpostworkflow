@@ -60,6 +60,7 @@ readonly KEEP_REMOTE=12          # ~3 months of weekly archives, ~72 MB total
 readonly PREFIX="snapshots"
 readonly STATE_PREFIX="post-state"   # data/posts/*/state.json — tiny; same retention
 readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR contact book
+readonly OUTREACH_PREFIX="creator-outreach"  # data/creator-outreach/state.json
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -182,4 +183,17 @@ if [[ -f "$ROOT/$PRESS_BOOK" ]]; then
   push_archive "$PRESS_PREFIX" "$press_archive" 1
 else
   echo "[$PRESS_PREFIX] no $PRESS_BOOK — nothing to back up."
+fi
+
+# ── set 4: creator-outreach state ────────────────────────────────────────────
+# The only record of which creator was sent which email (agents/creator-outreach).
+# Losing it means the agent refuses to send until restored, so it is backed up
+# like the press book: one gitignored file, skipped with a notice when absent.
+OUTREACH_STATE="data/creator-outreach/state.json"
+if [[ -f "$ROOT/$OUTREACH_STATE" ]]; then
+  outreach_archive="$tmp/${OUTREACH_PREFIX}-${stamp}.tar.gz"
+  tar czf "$outreach_archive" -C "$ROOT" "$OUTREACH_STATE"
+  push_archive "$OUTREACH_PREFIX" "$outreach_archive" 1
+else
+  echo "[$OUTREACH_PREFIX] no $OUTREACH_STATE — nothing to back up."
 fi

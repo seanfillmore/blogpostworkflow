@@ -33,6 +33,7 @@ import { notify } from '../../lib/notify.js';
 import { listSubmissions, listCreators, listCreatorPerformance, requestRevision } from '../../lib/trybe.js';
 import { planReview, summarizePerformance, renderDigest } from '../../lib/trybe-review.js';
 import { planSamplePriming, renderPrimingLines } from '../../lib/trybe-samples.js';
+import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -108,40 +109,6 @@ export async function runReview({
   return { plan, revised, raced, failed, perf, priming, apply };
 }
 
-const SAMPLE_ORDERS_QUERY = `query($c: String, $q: String) {
-  orders(first: 100, after: $c, query: $q, sortKey: CREATED_AT) {
-    pageInfo { hasNextPage endCursor }
-    nodes {
-      name createdAt cancelledAt tags note
-      shippingAddress { name }
-      lineItems(first: 20) { nodes { title } }
-      fulfillments { status displayStatus deliveredAt estimatedDeliveryAt }
-    }
-  }
-}`;
-
-/** Days of sample orders to look back over. Long enough to outlast any nudge. */
-const SAMPLE_LOOKBACK_DAYS = 60;
-
-/**
- * Trybe sample orders from Shopify. lib/shopify.js throws at import without
- * OAuth credentials, so it is imported here and not at the top of the file.
- */
-export async function fetchSampleOrders({ now = Date.now() } = {}) {
-  const { shopifyGraphQL } = await import('../../lib/shopify.js');
-  const since = new Date(now - SAMPLE_LOOKBACK_DAYS * 86_400_000).toISOString().slice(0, 10);
-  const q = `tag:sample-request created_at:>=${since}`;
-  const out = [];
-  let c = null;
-  for (let page = 0; page < 20; page++) {
-    const res = await shopifyGraphQL(SAMPLE_ORDERS_QUERY, { c, q });
-    const conn = res.orders || res.data?.orders;
-    out.push(...conn.nodes);
-    if (!conn.pageInfo.hasNextPage) return out;
-    c = conn.pageInfo.endCursor;
-  }
-  return out;
-}
 
 async function main() {
   const args = process.argv.slice(2);
