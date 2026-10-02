@@ -32,7 +32,7 @@ test('importing the agent does not run it', () => {
 
 test('dry run decides but sends nothing', async () => {
   const f = fakeFetch(routes());
-  const run = await runReview({ apiKey: 'k', fetchImpl: f, log: () => {} });
+  const run = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], fetchImpl: f, log: () => {} });
   assert.equal(run.plan.revise.length, 1);
   assert.equal(run.plan.unchecked.length, 1);
   assert.ok(f.calls.every((c) => c.method === 'GET'), 'no write in a dry run');
@@ -42,7 +42,7 @@ test('dry run decides but sends nothing', async () => {
 
 test('--apply sends one revision request, only for the claim', async () => {
   const f = fakeFetch(routes({ 'POST /submissions/submission_1/request-revision': () => ({ json: { ...claim, status: 'revision_requested' } }) }));
-  const run = await runReview({ apiKey: 'k', apply: true, fetchImpl: f, log: () => {} });
+  const run = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], apply: true, fetchImpl: f, log: () => {} });
   const posts = f.calls.filter((c) => c.method === 'POST');
   assert.equal(posts.length, 1);
   assert.match(JSON.parse(posts[0].body).comment, /healed my eczema/);
@@ -50,13 +50,13 @@ test('--apply sends one revision request, only for the claim', async () => {
 });
 
 test('a submission reviewed mid-run is "raced", not failed; a 500 is failed', async () => {
-  const raced = await runReview({ apiKey: 'k', apply: true, log: () => {}, fetchImpl: fakeFetch(routes({
+  const raced = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], apply: true, log: () => {}, fetchImpl: fakeFetch(routes({
     'POST /submissions/submission_1/request-revision': () => ({ status: 400, json: { error: 'Submission is not pending' } }),
   })) });
   assert.equal(raced.raced.length, 1);
   assert.equal(raced.failed.length, 0);
 
-  const broken = await runReview({ apiKey: 'k', apply: true, log: () => {}, fetchImpl: fakeFetch(routes({
+  const broken = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], apply: true, log: () => {}, fetchImpl: fakeFetch(routes({
     'POST /submissions/submission_1/request-revision': () => ({ status: 500, json: { error: 'boom' } }),
   })) });
   assert.equal(broken.failed.length, 1);
@@ -64,7 +64,7 @@ test('a submission reviewed mid-run is "raced", not failed; a 500 is failed', as
 
 test('losing the performance read does not lose the review', async () => {
   const f = fakeFetch(routes({ 'GET /creator-performance': () => ({ status: 503, json: { error: 'down' } }) }));
-  const run = await runReview({ apiKey: 'k', fetchImpl: f, log: () => {} });
+  const run = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], fetchImpl: f, log: () => {} });
   assert.equal(run.perf, null);
   assert.equal(run.plan.revise.length, 1);
 });
@@ -89,4 +89,33 @@ test('the agent never approves or rejects (source scan)', () => {
     + readFileSync(new URL('../../lib/trybe.js', import.meta.url), 'utf8');
   assert.ok(!/\/approve['"`]/.test(src), 'no approve call');
   assert.ok(!/\/reject['"`]/.test(src), 'no reject call');
+});
+
+test('sample priming: joins Shopify sample orders to submissions and reports', async () => {
+  const order = {
+    name: '#1', createdAt: '2026-09-20T00:00:00Z', tags: ['sample-request', 'trybe'], note: 'Trybe sample request for Zena',
+    lineItems: { nodes: [{ title: 'Coconut Moisturizer | 4oz' }, { title: 'Foaming Soap' }] },
+    fulfillments: [{ status: 'SUCCESS', displayStatus: 'DELIVERED', deliveredAt: '2026-09-22T00:00:00Z' }],
+  };
+  const done = { ...claim, status: 'approved', products: [{ name: 'Coconut Moisturizer | 4oz' }] };
+  const f = fakeFetch(routes({
+    'GET /creators': () => ({ json: { data: [{ name: 'Zena' }, { name: 'Nobody' }], has_more: false } }),
+  }));
+  // The unfiltered /submissions read and the pending one share a route here.
+  const run = await runReview({
+    apiKey: 'k', apply: true, log: () => {}, now: Date.parse('2026-10-02T00:00:00Z'),
+    loadSampleOrders: async () => [order],
+    fetchImpl: async (url, init) => (new URL(url).searchParams.get('status') ? f(url, init)
+      : new URL(url).pathname.endsWith('/submissions') ? new Response(JSON.stringify({ data: [done], has_more: false }))
+        : f(url, init)),
+  });
+  assert.equal(run.priming.prime.length, 1);
+  assert.deepEqual(run.priming.prime[0].missing, ['Foaming Soap']);
+  assert.deepEqual(run.priming.noSample, ['Nobody']);
+});
+
+test('a failed sample read does not lose the review', async () => {
+  const run = await runReview({ apiKey: 'k', log: () => {}, fetchImpl: fakeFetch(routes()), loadSampleOrders: async () => { throw new Error('no shopify'); } });
+  assert.equal(run.priming, null);
+  assert.equal(run.plan.revise.length, 1);
 });
