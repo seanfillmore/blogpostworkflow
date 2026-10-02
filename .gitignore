@@ -377,3 +377,6 @@ data/creator-outreach/
 
 # inbox-sorter state: which messages it filed, which senders Sean kept in the Inbox
 data/inbox-sorter/
+
+# ad-test-monitor state: which stop-rule hits were already emailed
+data/ad-test-monitor/
