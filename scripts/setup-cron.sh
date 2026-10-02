@@ -187,6 +187,10 @@ CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outre
 # folders Sean already uses. Rules are learned from those folders; moves, never
 # deletes. 13:40 UTC = 6:40am PDT, before the working day.
 DAILY_INBOX_SORTER="40 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/inbox-sorter/index.js --apply >> data/reports/scheduler/inbox-sorter.log 2>&1"
+# Ad test monitor: checks each test in config/ad-tests.json against its stop
+# rules and reports in the digest; emails immediately the first time a rule is
+# hit. Reports only, never pauses. 12:10 UTC, ahead of the 13:00 digest.
+DAILY_AD_TEST_MONITOR="10 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/ad-test-monitor/index.js --notify >> data/reports/scheduler/ad-test-monitor.log 2>&1"
 DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
 
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
@@ -575,6 +579,7 @@ $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_TRYBE_REVIEW
 $CREATOR_OUTREACH
 $DAILY_INBOX_SORTER
+$DAILY_AD_TEST_MONITOR
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -634,6 +639,7 @@ echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
+echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
 echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
 echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"

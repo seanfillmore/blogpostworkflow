@@ -1,0 +1,23 @@
+{
+  "_note": "Paid ad tests watched by agents/ad-test-monitor. The agent only REPORTS; it never pauses anything. Purchases are judged on Shopify orders whose landing URL carries the test's tag (Meta's pixel has measured ~2x inflated on this store); Meta's own count is shown beside it.",
+  "tests": [
+    {
+      "name": "Trybe UGC October 2026",
+      "adAccount": "act_946015593265647",
+      "startDate": "2026-10-02",
+      "endDate": "2026-10-16",
+      "landingTag": "trybe=",
+      "campaigns": [
+        { "id": "120249610898540173", "label": "Cold (lotion)" },
+        { "id": "120249610898770173", "label": "Warm (cross-sell)" }
+      ],
+      "rules": {
+        "minImpressionsForCtr": 3000,
+        "minLinkCtr": 0.01,
+        "maxSpendWithoutPurchase": 150,
+        "maxCostPerPurchase": 60,
+        "costPerPurchaseAfter": 2
+      }
+    }
+  ]
+}
