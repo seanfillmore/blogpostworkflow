@@ -371,3 +371,6 @@ data/reports/authored-titles/
 data/press/
 data/reports/amazon-ads-audit/
 docs/*.pdf
+
+# creator-outreach state: server-owned record of every email sent to a creator (backed up offsite)
+data/creator-outreach/
