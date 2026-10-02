@@ -3,6 +3,11 @@
  * Trybe Review — screens creator submissions for health claims and reports the
  * creator program in the 5 AM digest.
  *
+ * It also tracks the free samples Trybe sends (Shopify orders tagged
+ * `sample-request`) and names creators whose sample was delivered days ago with
+ * no content yet, plus samples nobody has shipped. See lib/trybe-samples.js.
+ * Reporting only: Trybe's API cannot message a creator.
+ *
  * Every pending Trybe submission's transcript goes through the same COMMERCIAL
  * claim gate the fleet's product copy uses (lib/seo-copy-health-gate.js). A
  * transcript that makes a claim the creator brief forbids gets a revision
@@ -25,8 +30,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
-import { listSubmissions, listCreatorPerformance, requestRevision } from '../../lib/trybe.js';
+import { listSubmissions, listCreators, listCreatorPerformance, requestRevision } from '../../lib/trybe.js';
 import { planReview, summarizePerformance, renderDigest } from '../../lib/trybe-review.js';
+import { planSamplePriming, renderPrimingLines } from '../../lib/trybe-samples.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -54,6 +60,8 @@ export async function runReview({
   fetchImpl = fetch,
   send = requestRevision,
   log = console.log,
+  loadSampleOrders = fetchSampleOrders,
+  now = Date.now(),
 } = {}) {
   const pending = await listSubmissions({ status: 'pending', apiKey, fetchImpl });
   const plan = planReview(pending);
@@ -84,7 +92,55 @@ export async function runReview({
     log(`  creator performance unavailable: ${err.message}`);
   }
 
-  return { plan, revised, raced, failed, perf, apply };
+  // Sample priming is reporting only too, for the same reason.
+  let priming = null;
+  try {
+    const [orders, allSubmissions, creators] = await Promise.all([
+      loadSampleOrders(),
+      listSubmissions({ apiKey, fetchImpl }),
+      listCreators({ apiKey, fetchImpl }),
+    ]);
+    priming = planSamplePriming({ orders, submissions: allSubmissions, creators, now });
+  } catch (err) {
+    log(`  sample tracking unavailable: ${err.message}`);
+  }
+
+  return { plan, revised, raced, failed, perf, priming, apply };
+}
+
+const SAMPLE_ORDERS_QUERY = `query($c: String, $q: String) {
+  orders(first: 100, after: $c, query: $q, sortKey: CREATED_AT) {
+    pageInfo { hasNextPage endCursor }
+    nodes {
+      name createdAt cancelledAt tags note
+      shippingAddress { name }
+      lineItems(first: 20) { nodes { title } }
+      fulfillments { status displayStatus deliveredAt estimatedDeliveryAt }
+    }
+  }
+}`;
+
+/** Days of sample orders to look back over. Long enough to outlast any nudge. */
+const SAMPLE_LOOKBACK_DAYS = 60;
+
+/**
+ * Trybe sample orders from Shopify. lib/shopify.js throws at import without
+ * OAuth credentials, so it is imported here and not at the top of the file.
+ */
+export async function fetchSampleOrders({ now = Date.now() } = {}) {
+  const { shopifyGraphQL } = await import('../../lib/shopify.js');
+  const since = new Date(now - SAMPLE_LOOKBACK_DAYS * 86_400_000).toISOString().slice(0, 10);
+  const q = `tag:sample-request created_at:>=${since}`;
+  const out = [];
+  let c = null;
+  for (let page = 0; page < 20; page++) {
+    const res = await shopifyGraphQL(SAMPLE_ORDERS_QUERY, { c, q });
+    const conn = res.orders || res.data?.orders;
+    out.push(...conn.nodes);
+    if (!conn.pageInfo.hasNextPage) return out;
+    c = conn.pageInfo.endCursor;
+  }
+  return out;
 }
 
 async function main() {
@@ -98,11 +154,17 @@ async function main() {
 
   if (args.includes('--json')) {
     const slim = (rows) => rows.map((r) => ({ id: r.submission.id, creator: r.submission.creator?.name, action: r.action, reason: r.reason, blocking: r.blocking?.map((b) => b.match), comment: r.comment }));
-    console.log(JSON.stringify({ revise: slim(run.plan.revise), deferred: slim(run.plan.deferred), review: slim(run.plan.review), unchecked: slim(run.plan.unchecked), perf: run.perf }, null, 2));
+    console.log(JSON.stringify({ revise: slim(run.plan.revise), deferred: slim(run.plan.deferred), review: slim(run.plan.review), unchecked: slim(run.plan.unchecked), perf: run.perf, priming: run.priming }, null, 2));
     return;
   }
 
-  const { subject, body } = renderDigest(run);
+  const digest = renderDigest(run);
+  const body = [digest.body, ...renderPrimingLines(run.priming)].join('\n');
+  const nudge = run.priming?.prime.length || 0;
+  const unshipped = run.priming?.unshipped.length || 0;
+  const subject = digest.subject
+    + (nudge ? ` · ${nudge} creator(s) to nudge` : '')
+    + (unshipped ? ` · ${unshipped} sample(s) unshipped` : '');
   console.log(`\n${subject}\n\n${body}`);
   // A claim found, or a failed revision request, is the agent doing its job:
   // 'info', never 'error' (see CLAUDE.md on digest severity). Only a crash in
