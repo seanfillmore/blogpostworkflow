@@ -16,6 +16,7 @@ import { USD_PER_RENDER } from '../../lib/ad-studio-cost.js';
 import { renderFlexibleManifest } from '../ad-studio/flexible.js';
 import { ratioSlug } from '../ad-studio/packaging.js';
 import { createRenderBudget, sniffImageMediaType } from '../ad-studio/index.js';
+import { selectVolumeStrings } from '../ad-studio/verify.js';
 import { buildConceptPrompt, parseConceptsResponse, preGate, buildJudgePrompt, parseJudgeResponse, pickConcepts, nextReplacement } from './concepts.js';
 import { buildShotSpecPrompt, parseShotSpec, buildTakePrompt, runConceptTakes } from './shots.js';
 import { writeOverlayCopy, writeFlexibleCopy } from './copy.js';
@@ -59,6 +60,19 @@ export async function runConcepts({ args, deps }) {
   mkdirSync(runDir, { recursive: true });
   const ev = await deps.loadEvidence({ product: args.product, variant: args.variant });
   const { product, sourceIndex } = ev;
+
+  // THROW before any paid call. Fidelity is a hard gate and the reference photographs are what
+  // a take is checked against; with none, hasReference is false and the check switches itself
+  // off while the run still bills for renders. Same reasoning as agents/ad-studio/index.js.
+  if (!ev.photoPaths || ev.photoPaths.length === 0) {
+    const dir = ev.photoDir || `data/product-images/<imageDir>/${args.variant || ''}`;
+    throw new Error(
+      `ad-concepts: no reference photos under ${dir}. A take rendered without them cannot be checked ` +
+      `for product fidelity, so this run would bill for unverifiable renders.\n` +
+      `  In a worktree this usually means data/product-images/ was never linked (it is gitignored); ` +
+      `scripts/new-worktree.sh links it.`
+    );
+  }
 
   // 1. Concepts: generate (one retry on malformed JSON), pre-gate, judge, pick.
   const conceptPrompt = buildConceptPrompt({ ...ev, requested: args.concepts, count: 18, sourceIds: Object.keys(sourceIndex) });
@@ -111,7 +125,7 @@ export async function runConcepts({ args, deps }) {
           format: { key: c.id, plateSetting: 'scene', pairsImagesWithLabels: false },
           physicalDescription: product.physicalDescription, unitCount: product.unitCount, variant: product.variant,
           expectedLabelInk: product.labelInk, expectedBadge: product.badgeStrings,
-          volumeStrings: product.labelStrings, allowedSceneText: c.sceneText === 'illegible-print' ? 'illegible-print' : null,
+          volumeStrings: selectVolumeStrings(product.labelStrings), allowedSceneText: c.sceneText === 'illegible-print' ? 'illegible-print' : null,
         });
         return { mediaType, proof };
       },
@@ -125,6 +139,10 @@ export async function runConcepts({ args, deps }) {
       proofs[`meta-plate-take${t.n}-${rSlug}.jpg`] = { ...t.proof, needsHumanReview: t.needsHumanReview };
     }
     let best = null;
+    if (!takes.passed.length) {
+      const why = [...new Set(takes.takes.flatMap(t => t.proof.reasons || []))].slice(0, 3).join('; ');
+      verdicts[c.id] = `no take passed verification${takes.budgetStopped ? ' (budget ran out)' : ''}${why ? `: ${why}` : ''}`;
+    }
     if (takes.passed.length) {
       let copy;
       try {
@@ -155,6 +173,7 @@ export async function runConcepts({ args, deps }) {
     writeJson(join(dir, 'proof.json'), proofs);
     if (best) finals.push(best);
     else {
+      if (takes.passed.length && !verdicts[c.id]) verdicts[c.id] = 'typeset/critique failed on both treatments';
       const rep = nextReplacement(runnersUp.filter(r => !queue.includes(r) && !finals.some(f => f.concept === r)), used);
       if (rep) { used.add(rep.family); queue.push(rep); runnersUp.splice(runnersUp.indexOf(rep), 1); }
     }
@@ -162,6 +181,7 @@ export async function runConcepts({ args, deps }) {
   for (const c of queue) skipped.push(c.id);
   writeConcepts();
 
+  let manifestReason = `fewer than 2 concepts finished (${finals.length})`;
   if (finals.length >= 2) {
     const flex = await writeFlexibleCopy({ anthropic: deps.anthropic, model: deps.models.copy, product, concepts: finals.map(f => f.concept), sourceIndex, pdpBody: ev.pdpBody, persona: ev.persona, reviews: ev.reviews });
     if (flex.ok) {
@@ -173,6 +193,9 @@ export async function runConcepts({ args, deps }) {
       manifest = { ...json, short: finals.length < SLOTS, needsHumanReview: finals.filter(f => f.take.needsHumanReview.length).map(f => f.concept.id) };
       writeJson(join(runDir, 'flexible-ad.json'), manifest);
       writeFileSync(join(runDir, 'flexible-ad.md'), md);
+      manifestReason = null;
+    } else {
+      manifestReason = `flexible copy rejected: ${flex.reasons.join('; ')}`;
     }
   }
   return finish({ dry: false });
@@ -190,6 +213,7 @@ export async function runConcepts({ args, deps }) {
       cost: { renders, perRenderUsd: USD_PER_RENDER, estimatedUsd: Number((renders * USD_PER_RENDER).toFixed(2)) },
       budget: { maxRenders: args.maxRenders, stopped: dry ? false : budgetStopped, skipped: dry ? [] : skipped, skippedCount: dry ? 0 : skipped.length },
       manifest: manifest ? 'flexible-ad.json' : null,
+      manifestReason: dry ? 'dry run' : manifestReason,
       needsHumanReview,
     };
     writeJson(join(runDir, 'run.json'), report);
@@ -198,7 +222,7 @@ export async function runConcepts({ args, deps }) {
     const subject = dry
       ? `Ad Concepts dry run, ${product.title}: ${picked.length} concepts picked`
       : `Ad Concepts, ${product.title}: ${n} image${n === 1 ? '' : 's'}${manifest?.short ? ' (SHORT)' : ''}${needsHumanReview.length ? ' · NEEDS HUMAN REVIEW' : ''}`;
-    await deps.notify({ subject, body: `Run ${runId}\n${manifest ? 'flexible-ad.md is ready.' : 'No flexible ad: fewer than 2 concepts finished.'}`, status: 'info', category: 'ads' });
+    await deps.notify({ subject, body: `Run ${runId}\n${manifest ? 'flexible-ad.md is ready.' : `No flexible ad: ${dry ? 'dry run' : manifestReason}.`}`, status: 'info', category: 'ads' });
     return report;
   }
 }
@@ -246,7 +270,7 @@ async function main() {
         return {
           product, catalogEntry, brandKit, pdpBody, persona, reviews,
           sourceIndex: buildSourceIndex({ pdpBody, brandKit, catalogEntry, reviews }),
-          photoPaths, competitorNames: loadJson('config/competitors.json').map(c => c.name),
+          photoPaths, photoDir, competitorNames: loadJson('config/competitors.json').map(c => c.name),
           tactics: renderContextMirror(scanSkillInventory(join(ROOT, '.claude', 'skills'))).trim(),
         };
       },

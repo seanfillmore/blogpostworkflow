@@ -11,7 +11,8 @@ const JPEG = Buffer.from([0xff, 0xd8, 0xff, 9]);
 const concept = (id, family, extra = {}) => ({ id, title: id, picture: `${id} picture`, anchor: 'a', twist: 't', family, productRole: 'r', sceneText: 'none', people: 'none', typeBand: 'top', awareness: 'problem', headlineIdea: 'One fat.', claims: [], ...extra });
 const reply = (o) => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: typeof o === 'string' ? o : JSON.stringify(o) }] });
 
-function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlayGarbageOnce = false } = {}) {
+function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlayGarbageOnce = false, critiqueFailures = 0, flexGarbage = false } = {}) {
+  let critFails = critiqueFailures;
   let garbage = overlayGarbageOnce;
   const out = mkdtempSync(join(tmpdir(), 'adc-'));
   const concepts = [concept('a', 'scale-gag'), concept('b', 'genre-parody', peopleOn === 'b' ? { people: 'face' } : {}), concept('c', 'product-art'), concept('d', 'identity-comedy')].slice(0, maxConcepts);
@@ -24,6 +25,7 @@ function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlay
     if (text.includes('Write the SCENE description')) return reply('A bold kitchen scene.');
     if (text.includes('overlay type')) { if (garbage) { garbage = false; return reply('this is not json'); } }
     if (text.includes('overlay type')) return reply({ headline: 'One fat. Real soap.', sub: '', claims: [{ text: 'one fat', sourceId: 'pdp' }] });
+    if (text.includes('AD-LEVEL copy') && flexGarbage) return reply('nope');
     if (text.includes('AD-LEVEL copy')) return reply({ primaryTexts: ['One fat. Organic virgin coconut oil, turned into soap. That is the list.', 'Swap a long ingredient list for one fat. Coconut oil soap, small batches.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [{ text: 'one fat', sourceId: 'pdp' }] });
     throw new Error(`unexpected prompt: ${text.slice(0, 80)}`);
   } } };
@@ -36,12 +38,12 @@ function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlay
       loadEvidence: async () => ({
         product: { handle: 'coconut-soap', title: 'Moisturizing Coconut Soap', unitCount: 1, labelStrings: ['real SKIN CARE'], badgeStrings: [], physicalDescription: 'bar', variant: 'nourishing-tea-tree', labelInk: null },
         catalogEntry: {}, brandKit: {}, pdpBody: 'One fat: organic virgin coconut oil.', persona: null, reviews: [],
-        sourceIndex: { pdp: 'One fat: organic virgin coconut oil.' }, photoPaths: [], competitorNames: [], tactics: '',
+        sourceIndex: { pdp: 'One fat: organic virgin coconut oil.' }, photoPaths: ['ref1.jpg'], photoDir: '/refs/coconut-soap', competitorNames: [], tactics: '',
       }),
       render: async () => JPEG,
       verifyImage: async () => ({ ok: verifyOk(), reasons: verifyOk() ? [] : ['bad'] }),
       typeset: async ({ buffer }) => ({ buffer, mediaType: 'image/jpeg', colour: '#000000', treatment: 'band', overflow: false, headlinePx: 80 }),
-      critique: async () => ({ ok: true, score: 4, reasons: [] }),
+      critique: async () => (critFails-- > 0 ? { ok: false, score: 1, reasons: ['bad type'] } : { ok: true, score: 4, reasons: [] }),
       notify: async (n) => { queue.push(n); },
       archive: () => null,
       notifications: queue,
@@ -95,6 +97,56 @@ test('a malformed copy reply rejects that concept and it is replaced; the run do
   const { out, deps: d } = deps({ overlayGarbageOnce: true });
   const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
   assert.ok(report.rejectedConcepts.some(r => /copy rejected/.test(r.error)));
+  const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
+  assert.equal(manifest.plates.length, 3);
+});
+
+test('zero reference photos: rejects before any model or render call, naming the directory', async () => {
+  const { deps: d } = deps();
+  const base = d.loadEvidence;
+  d.loadEvidence = async (a) => ({ ...(await base(a)), photoPaths: [] });
+  let calls = 0; d.render = async () => { calls++; return JPEG; };
+  const create = d.anthropic.messages.create; d.anthropic.messages.create = async (r) => { calls++; return create(r); };
+  await assert.rejects(runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d }), /no reference photos under \/refs\/coconut-soap/);
+  assert.equal(calls, 0);
+});
+
+test('fewer than 2 finals: manifestReason says so, notify body uses it', async () => {
+  const { out, deps: d } = deps({ verifyOk: () => false });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap', '--max-renders', '4']), deps: d });
+  assert.match(report.manifestReason, /fewer than 2 concepts finished \(0\)/);
+  assert.match(d.notifications[0].body, /fewer than 2 concepts finished/);
+  assert.ok(report.rejectedConcepts.some(r => /no take passed verification/.test(r.error)));
+  assert.equal(JSON.parse(readFileSync(join(out, report.runId, 'run.json'), 'utf8')).manifestReason, report.manifestReason);
+});
+
+test('flexible copy rejected: manifestReason names it, not "fewer than 2"', async () => {
+  const { out, deps: d } = deps({ flexGarbage: true });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  assert.match(report.manifestReason, /^flexible copy rejected: /);
+  assert.doesNotMatch(d.notifications[0].body, /fewer than 2/);
+  assert.equal(existsSync(join(out, report.runId, 'flexible-ad.json')), false);
+});
+
+test('a written manifest has manifestReason null', async () => {
+  const { deps: d } = deps();
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  assert.equal(report.manifestReason, null);
+});
+
+test('two finals: manifest is written with short: true', async () => {
+  const { out, deps: d } = deps({ maxConcepts: 2 });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
+  assert.equal(manifest.plates.length, 2);
+  assert.equal(manifest.short, true);
+  assert.match(d.notifications[0].subject, /SHORT/);
+});
+
+test('critique failing on both treatments: concept is recorded and replaced', async () => {
+  const { out, deps: d } = deps({ critiqueFailures: 6 });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  assert.ok(report.rejectedConcepts.some(r => /typeset\/critique failed on both treatments/.test(r.error)));
   const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
   assert.equal(manifest.plates.length, 3);
 });
