@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { runOutreach, renderSummary } from '../../agents/creator-outreach/index.js';
+import { runOutreach, renderSummary, escalationEmail } from '../../agents/creator-outreach/index.js';
 import { DEFAULT_CONFIG } from '../../lib/creator-outreach.js';
 
 const NOW = Date.parse('2026-10-02T18:00:00Z');
@@ -12,7 +12,7 @@ const order = {
 };
 const inbound = (text, id = '<m1@x>') => ({ messageId: id, from: 'lori@example.com', subject: 'Re: samples', date: '2026-10-02T17:00:00Z', text, references: [] });
 
-function harness({ inbox = [], draft, state = {} } = {}) {
+function harness({ inbox = [], draft, state = {}, sentFolder = [] } = {}) {
   const sent = [];
   const escalations = [];
   const saves = [];
@@ -21,6 +21,7 @@ function harness({ inbox = [], draft, state = {} } = {}) {
     saveState: (s) => saves.push(JSON.parse(JSON.stringify(s))),
     loadOrders: async () => [order], loadSubmissions: async () => [],
     readInbox: async () => inbox,
+    readSent: async () => sentFolder,
     send: async (m) => { sent.push(m); return { messageId: `<out${sent.length}@x>` }; },
     draft: draft || (async () => ({ action: 'reply', reply: 'It shipped with USPS and was delivered on the 26th.\nSean', reason: '' })),
     escalate: async (c, msg, row) => { escalations.push(row); },
@@ -54,7 +55,7 @@ test('a question gets a threaded reply, is processed once, and the reply suppres
   assert.equal(again.sent.length, 0, 'same Message-ID is never answered twice');
 });
 
-test('money questions never reach the model: holding reply + escalation, reminders paused', async () => {
+test('money questions never reach the model: escalated to Sean, NOTHING sent to the creator, reminders paused', async () => {
   let asked = false;
   const state = {};
   const h = harness({ inbox: [inbound('What do you pay per video?')], state, draft: async () => { asked = true; } });
@@ -62,8 +63,9 @@ test('money questions never reach the model: holding reply + escalation, reminde
   assert.equal(asked, false);
   assert.equal(r.escalations.length, 1);
   assert.equal(h.escalations.length, 1);
-  assert.match(h.sent[0].text, /within one business day/);
+  assert.equal(h.sent.length, 0, 'no holding reply, no welcome: Sean writes the answer');
   assert.equal(state.creators['lori@example.com'].escalatedOpen, true);
+  assert.equal(state.creators['lori@example.com'].escalatedAt, '2026-10-02T17:00:00Z');
 });
 
 test('a model draft that promises product is refused and escalated, never sent', async () => {
@@ -71,7 +73,7 @@ test('a model draft that promises product is refused and escalated, never sent',
   const r = await runOutreach(h.opts);
   assert.equal(r.replies.length, 0);
   assert.equal(r.escalations[0].suggestion, 'Sure, I will send you another bottle!');
-  assert.doesNotMatch(h.sent[0].text, /another bottle/);
+  assert.equal(h.sent.length, 0);
 });
 
 test('opt-out is honoured and acknowledged once', async () => {
@@ -143,4 +145,70 @@ test('a reply quotes the creator\'s whole message, and a later nudge quotes the 
   assert.match(nudge.references, /^<delivered-welcome@ses> <m1@x> <out1@x>$/);
   assert.match(nudge.text, /Sean at Real Skin Care <sean@realskincare\.com> wrote:\n> It shipped with USPS/);
   assert.match(nudge.text, /\n>> Where is my package\?\n[\s\S]*\n>>> Hi Lori,$/, 'the whole exchange, three levels deep');
+});
+
+// Sean, 2026-10-03: a flagged email "should have come straight to my email and
+// let me craft the response". These pin the whole handoff.
+test('a reported reaction goes to Sean only: the creator receives nothing', async () => {
+  const state = {};
+  const h = harness({ inbox: [inbound('I got a rash on my arm after using it')], state });
+  const r = await runOutreach(h.opts);
+  assert.equal(h.sent.length, 0);
+  assert.equal(h.escalations.length, 1);
+  assert.deepEqual(r.escalations[0].reasons, ['a skin reaction or health concern']);
+});
+
+test('while a creator waits on Sean, every new message goes to Sean and the model is never asked', async () => {
+  let asked = false;
+  const state = { creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-02T16:00:00Z' } } };
+  const h = harness({ inbox: [inbound('Also, it arrived today, thanks!')], state, draft: async () => { asked = true; } });
+  const r = await runOutreach(h.opts);
+  assert.equal(asked, false);
+  assert.equal(h.sent.length, 0);
+  assert.equal(r.escalations[0].reasons[0], 'a new message while this creator is waiting on you');
+  assert.equal(state.creators['lori@example.com'].escalatedAt, '2026-10-02T17:00:00Z', 'the clock moves to her newest message');
+});
+
+test('Sean replying from Hushmail clears the flag; an older Sent message does not', async () => {
+  const flagged = () => ({ creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-03T14:34:31Z' } } });
+  const before = flagged();
+  const stale = harness({ state: before, sentFolder: [{ to: ['lori@example.com'], date: '2026-10-03T14:00:00Z', messageId: '<old@hush>' }] });
+  await runOutreach({ ...stale.opts, now: Date.parse('2026-10-03T18:00:00Z') });
+  assert.equal(before.creators['lori@example.com'].escalatedOpen, true, 'sent before her message: not an answer to it');
+
+  const after = flagged();
+  const h = harness({ state: after, sentFolder: [{ to: ['lori@example.com'], date: '2026-10-03T16:25:32Z', messageId: '<sean@hush>' }] });
+  const r = await runOutreach({ ...h.opts, now: Date.parse('2026-10-03T18:00:00Z') });
+  const rec = after.creators['lori@example.com'];
+  assert.equal(rec.escalatedOpen, false);
+  assert.equal(rec.escalationResolvedAt, '2026-10-03T16:25:32Z');
+  assert.deepEqual(rec.seanMessageIds, ['<sean@hush>']);
+  assert.equal(r.resolved.length, 1);
+  assert.match(renderSummary(r, { apply: true }).body, /Sean replied, so the agent picked these creators back up/);
+});
+
+test('a creator answering SEAN\'s own email goes back to Sean, not the model', async () => {
+  let asked = false;
+  const state = { creators: { 'lori@example.com': { seanMessageIds: ['<sean@hush>'] } } };
+  const msg = { ...inbound('Oh that is great to know, thanks!'), inReplyTo: '<sean@hush>', references: ['<sean@hush>'] };
+  const h = harness({ inbox: [msg], state, draft: async () => { asked = true; } });
+  const r = await runOutreach(h.opts);
+  assert.equal(asked, false);
+  assert.equal(h.sent.length, 0);
+  assert.equal(r.escalations[0].reasons[0], 'a reply to your own email');
+});
+
+test('a heart on Sean\'s email is still just a heart', async () => {
+  const state = { creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-01T00:00:00Z' } } };
+  const h = harness({ inbox: [{ ...inbound('x reacted via Gmail'), emojiReaction: true }], state });
+  const r = await runOutreach(h.opts);
+  assert.equal(r.escalations.length, 0);
+  assert.equal(h.escalations.length, 0);
+});
+
+test('the escalation email says nothing was sent and carries the full message', () => {
+  const e = escalationEmail({ name: 'Lori Y', email: 'l@x' }, { subject: 'Re: s', text: 'rash', fullText: 'rash\n\nOn Fri, Sean wrote:\n> hi' }, { reasons: ['a skin reaction or health concern'] });
+  assert.match(e.body, /Nothing was sent to them/);
+  assert.match(e.body, /> hi/);
+  assert.doesNotMatch(e.body, /holding reply|--resolve/);
 });

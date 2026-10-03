@@ -33,9 +33,9 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listSubmissions } from '../../lib/trybe.js';
 import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
-import { hushmailCredentials, sendMail, fetchInboxFrom, isTransientNetworkError } from '../../lib/hushmail.js';
+import { hushmailCredentials, sendMail, fetchInboxFrom, fetchSentTo, isTransientNetworkError } from '../../lib/hushmail.js';
 import {
-  DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems, holdingReply,
+  DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems,
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
   withQuotedThread, senderLabel,
 } from '../../lib/creator-outreach.js';
@@ -113,6 +113,7 @@ export async function runOutreach({
   loadOrders = () => fetchSampleOrders({ now }),
   loadSubmissions = () => listSubmissions({ apiKey: env.TRYBE_API_KEY }),
   readInbox,
+  readSent,
   send,
   draft = (c, msg) => draftWithModel(c, msg, env),
   escalate = async () => {},
@@ -121,6 +122,7 @@ export async function runOutreach({
   const creds = hushmailCredentials(env);
   const us = `Sean at Real Skin Care <${creds?.user || 'sean@realskincare.com'}>`;
   readInbox ||= (q) => fetchInboxFrom(creds, q);
+  readSent ||= (q) => fetchSentTo(creds, q);
   send ||= (m) => sendMail(creds, m, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
 
   const [orders, submissions] = await Promise.all([loadOrders(), loadSubmissions()]);
@@ -128,7 +130,33 @@ export async function runOutreach({
   const byEmail = new Map(roster.map((c) => [c.email, c]));
   state.processed ||= [];
   const done = new Set(state.processed);
-  const result = { replies: [], escalations: [], optOuts: [], ignored: [], scheduled: [], failed: [], plan: null };
+  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], plan: null };
+
+  // ── 0. Has Sean answered anyone himself? ──
+  // His own mail in the Sent folder (anything without the agent's header) to a
+  // creator clears a flag raised before it, and is remembered so a creator's
+  // answer to HIS message comes back to him rather than to the model.
+  const sentBySean = await readSent({ recipients: [...byEmail.keys()], since: new Date(now - INBOX_LOOKBACK_DAYS * 86_400_000) });
+  for (const m of sentBySean) {
+    for (const email of m.to) {
+      if (!byEmail.has(email)) continue;
+      const rec = touch(state, email);
+      if (m.messageId && !(rec.seanMessageIds || []).includes(m.messageId)) {
+        rec.seanMessageIds = [...(rec.seanMessageIds || []), m.messageId].slice(-MAX_THREAD_REFS);
+        rec.threadRefs = [...(rec.threadRefs || []), m.messageId].slice(-MAX_THREAD_REFS);
+      }
+      const since = rec.escalatedAt || rec.lastInboundAt;
+      if (rec.escalatedOpen && since && m.date > since) {
+        rec.escalatedOpen = false;
+        rec.escalationResolvedAt = m.date;
+        // The quoted thread we hold predates his reply; quoting it in a later
+        // nudge would show a conversation with his answer missing.
+        delete rec.thread;
+        result.resolved.push({ email, name: byEmail.get(email).name, at: m.date });
+      }
+    }
+  }
+  if (apply && result.resolved.length) saveState(state);
 
   // ── 1. Replies first: a creator waiting on an answer outranks a reminder. ──
   const inbox = await readInbox({ senders: [...byEmail.keys()], since: new Date(now - INBOX_LOOKBACK_DAYS * 86_400_000) });
@@ -146,8 +174,15 @@ export async function runOutreach({
     let outgoing = null;
     let escalated = null;
     let row = { email: c.email, name: c.name, subject: msg.subject, said: msg.text.slice(0, 400) };
+    const toSean = (msg.inReplyTo && (rec.seanMessageIds || []).includes(msg.inReplyTo))
+      || (msg.references || []).some((id) => (rec.seanMessageIds || []).includes(id));
+    // A real message (not a reaction or an autoresponder) from a creator whose
+    // conversation is with Sean goes to Sean, whatever it says.
+    const withSean = verdict.action !== 'ignore' && (rec.escalatedOpen || toSean);
 
-    if (verdict.action === 'ignore') {
+    if (withSean) {
+      escalated = { ...row, reasons: [rec.escalatedOpen ? 'a new message while this creator is waiting on you' : 'a reply to your own email', ...(verdict.reasons || [])], suggestion: null };
+    } else if (verdict.action === 'ignore') {
       result.ignored.push({ ...row, reason: verdict.reason });
     } else if (verdict.action === 'opt-out') {
       rec.optedOut = true;
@@ -169,14 +204,19 @@ export async function runOutreach({
         }
       }
       if (!outgoing) {
-        rec.escalatedOpen = true;
-        outgoing = holdingReply(c, reasons);
+        // Flagged: nothing goes to the creator. Sean writes the answer.
         escalated = { ...row, reasons, suggestion };
-        result.escalations.push(escalated);
       } else {
         result.replies.push({ ...row, reply: outgoing });
       }
     }
+
+    if (escalated) {
+      rec.escalatedOpen = true;
+      rec.escalatedAt = msg.date;
+      result.escalations.push(escalated);
+    }
+    if (verdict.action !== 'ignore') rec.thread = { date: msg.date, from: senderLabel(msg.fromName || c.name, c.email), text: msg.fullText || msg.text };
 
     if (outgoing && rec.repliesToday >= config.maxRepliesPerCreatorPerDay) {
       // A loop with an autoresponder is the realistic way this goes wrong.
@@ -261,8 +301,12 @@ export function renderSummary(r, { apply }) {
     for (const x of r.replies) lines.push(`  - ${who(x)} asked: "${x.said.slice(0, 160)}"\n    we said: "${x.reply.replace(/\n+/g, ' ').slice(0, 300)}"`);
   }
   if (r.escalations.length) {
-    lines.push('Escalated to Sean (creator got a holding reply):');
+    lines.push('Sent to Sean to answer (nothing was sent to the creator):');
     for (const x of r.escalations) lines.push(`  - ${who(x)}: ${x.reasons.join('; ')}`);
+  }
+  if (r.resolved?.length) {
+    lines.push('Sean replied, so the agent picked these creators back up:');
+    for (const x of r.resolved) lines.push(`  - ${who(x)}`);
   }
   if (r.optOuts.length) lines.push(`Opted out: ${r.optOuts.map(who).join(', ')}`);
   if (r.failed.length) {
@@ -273,16 +317,16 @@ export function renderSummary(r, { apply }) {
   return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') || 'Nothing to do.' };
 }
 
-function escalationEmail(c, msg, row) {
+export function escalationEmail(c, msg, row) {
   return {
     subject: `Creator needs you: ${c.name} (${row.reasons.join('; ')})`,
     body: [
-      `${c.name} <${c.email}> wrote:`, `Subject: ${msg.subject}`, '', msg.text, '',
+      `${c.name} <${c.email}> wrote:`, `Subject: ${msg.subject}`, '', msg.fullText || msg.text, '',
       `Why it came to you: ${row.reasons.join('; ')}`,
-      'They already got a holding reply saying you will answer within one business day.',
-      ...(row.suggestion ? ['', 'The model\'s draft (NOT sent):', row.suggestion] : []),
-      '', 'Reply to them from Hushmail. Scheduled reminders to this creator are paused until you clear it:',
-      `node agents/creator-outreach/index.js --resolve ${c.email}`,
+      'Nothing was sent to them. The agent will not reply to or remind this creator until you do.',
+      ...(row.suggestion ? ['', 'The model\'s draft (NOT sent, for reference only):', row.suggestion] : []),
+      '', 'Reply to them from Hushmail. Your reply is detected automatically (within 30 minutes) and the agent picks them back up.',
+      'If they answer YOUR email, that answer comes to you too, not to the agent.',
     ].join('\n'),
   };
 }
