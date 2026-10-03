@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { buildTabChatSystemPrompt } from '../lib/tab-chat-prompt.js';
 import { readJsonBody } from '../lib/responses.js';
 import { LLM_MODELS } from '../../../config/llm-models.js';
+import { transcriptPrompt } from '../lib/chat-transcript.js';
 
 export default [
   {
@@ -40,11 +41,12 @@ export default [
       try {
         response = await ctx.anthropic.messages.create({
           model: LLM_MODELS.standard,
-          // Multi-turn history goes over the direct API, where always-on thinking
-          // counts against max_tokens; 4096 leaves room for it and the answer.
           max_tokens: 4096,
           system: systemPrompt,
-          messages: cappedMessages,
+          // ONE user turn, so the call runs on the Claude subscription. A real
+          // multi-turn array takes the per-token API, whose key is invalid. See
+          // lib/chat-transcript.js.
+          messages: [{ role: 'user', content: transcriptPrompt(cappedMessages) }],
         });
       } catch (err) {
         res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
