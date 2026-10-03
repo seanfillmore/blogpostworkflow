@@ -24,6 +24,11 @@ function compFor(plateName) {
   return plateName.replace('-plate-', '-comp-');
 }
 
+/** A concepts run's typeset final; preferred over a comp because its copy is set in code, not by an image model. */
+function finalFor(plateName) {
+  return plateName.replace('-plate-', '-final-');
+}
+
 function readJsonOr(path, fallback) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return fallback; }
 }
@@ -155,7 +160,10 @@ export function summariseChecks(proofEntry) {
  * comp is the layout reference the operator rebuilds from — judging plates alone judges
  * the wrong artifact (Sean, 2026-08-16). `compTrusted: false` is not decoration: the comp
  * is a second generative pass and it drifts the product, so a verified 236ml plate has
- * produced a 230ml comp. The screen has to say which one is the base.
+ * produced a 230ml comp. The screen has to say which one is the base. The one exception is
+ * an ad-concepts run: its `-final-` image is the verified plate with type set over it in code
+ * (no second generative pass), so when a final exists it is shown as the comp with
+ * `compTrusted: true`.
  *
  * @param {string} rootDir
  * @param {string} runId
@@ -193,8 +201,8 @@ export function readRun(rootDir, runId) {
             ratio: (plateName.match(/-(\d+x\d+|1_91x1)\./) || [])[1] || '',
             platform: plateName.split('-')[0],
             plate: plateName,
-            comp: files.includes(comp) ? comp : null,
-            compTrusted: false,
+            comp: files.includes(finalFor(plateName)) ? finalFor(plateName) : (files.includes(comp) ? comp : null),
+            compTrusted: files.includes(finalFor(plateName)),
             attempts: entry?.attempts ?? null,
             outcome: classifyOutcome(entry),
             checks: summariseChecks(entry),

@@ -190,6 +190,7 @@ export const FIDELITY_ATTRIBUTES = [
 export function buildVerifyPrompt({
   expected, format, mode = 'finished', volumeStrings = [],
   physicalDescription = '', referenceCount = 0, unitCount = 1,
+  allowedSceneText = null,
 }) {
   const list = (expected || []).map(s => `  - "${s}"`).join('\n');
   const wantsPairings = format.pairsImagesWithLabels && mode === 'finished';
@@ -258,6 +259,10 @@ ${physicalDescription ? `
    SAME BOTTLE. Ask yourself: would this difference still exist if both were lit
    identically? If the answer is no, it is MATCH.` : '';
 
+  const sceneTextNote = (isPlate && allowedSceneText === 'illegible-print')
+    ? `\n     - printed lines, hairlines or texture on paper or packaging in the scene that carry NO readable letters or digits (declared illegible print). Report it only if you can read actual characters in it.`
+    : '';
+
   const defectsSection = isPlate
     ? `${nDefects}. STRAY TEXT — every headline bar, list row, caption slot and panel in this layout is
    SUPPOSED to be empty. An empty bar, a blank line, a row of icons with nothing written
@@ -281,7 +286,7 @@ ${physicalDescription ? `
      - text printed on the PRODUCT'S OWN LABEL — the brand mark, the arc-set badge
        micro-copy, the variant name, the volume. The label belongs on the product and is
        supposed to be there; section 2 already covers the one falsifiable part of it.
-     - an empty zone, a blank bar, a blank line, or a bare icon with no text beside it.
+     - an empty zone, a blank bar, a blank line, or a bare icon with no text beside it.${sceneTextNote}
    Return [] if there is no text anywhere outside the product's own label.`
     : `${nDefects}. DEFECTS — list every piece of the AD'S OWN TYPESET COPY that is not fully legible
    and correct, in "defects". Report a defect when such text is:
@@ -1193,6 +1198,26 @@ function isAbsenceReport(text) {
   return ABSENCE_WORD_RE.test(t);
 }
 
+// Declared scene text (agents/ad-concepts). A concept can declare that its scene carries
+// printed texture on purpose (an endless receipt rendered as hairlines). The model sometimes
+// reports that texture as a "defect" by DESCRIBING it rather than quoting characters; those
+// descriptions are not text and are dropped. Anything quoting real characters still fails.
+// Off unless a caller passes the declaration, so every Ad Studio path is unchanged.
+export const ALLOWED_SCENE_TEXT = Object.freeze(['illegible-print']);
+const ILLEGIBLE_PRINT_RE = /\b(illegible|unreadable|indistinct|blurr?(ed|y)|hairlines?|printed lines|lines of print|faint (print|lines))\b/i;
+
+// A description that ALSO quotes characters (a quote mark, a digit, an ALL-CAPS token) is
+// reporting readable text and must still fail, so those disqualify the drop.
+const QUOTE_RE = /["\u201c\u201d]/;
+const SINGLE_QUOTED_RUN_RE = /(^|\s)['\u2018][^'\u2019]+['\u2019](\s|$)/;
+export function isIllegiblePrintReport(text) {
+  const t = String(text || '');
+  if (!ILLEGIBLE_PRINT_RE.test(t)) return false;
+  if (QUOTE_RE.test(t) || SINGLE_QUOTED_RUN_RE.test(t)) return false;
+  if (/\d/.test(t) || /\b[A-Z]{2,}\b/.test(t)) return false;
+  return true;
+}
+
 /**
  * Any reported defect fails the render. A human would reject an ad whose product sits
  * on top of its own closing line — the live manifesto frame did exactly that and the
@@ -1209,10 +1234,11 @@ function isAbsenceReport(text) {
  * 'finished', the strict side, so a caller that forgets to thread it keeps the full
  * obscured/cut-off/garbled gate.
  */
-export function normalizeDefects(defects, mode = 'finished') {
+export function normalizeDefects(defects, mode = 'finished', { allowedSceneText = null } = {}) {
   return (defects || [])
     .filter(d => d && typeof d.text === 'string' && d.text.trim())
     .filter(d => mode !== 'plate' || !isAbsenceReport(d.text))
+    .filter(d => !(mode === 'plate' && allowedSceneText === 'illegible-print' && isIllegiblePrintReport(d.text)))
     .map(d => ({
       text: d.text.trim(),
       issue: DEFECT_ISSUES.has(String(d.issue || '').toLowerCase()) ? String(d.issue).toLowerCase() : 'unspecified',
@@ -1246,6 +1272,7 @@ export function verdictFor({
   // The badge printed on THIS variant. Lets the scent gate tell a render that faithfully
   // reproduces the real bottle from one that invented a scent — see scentVerdict.
   expectedBadge = [],
+  allowedSceneText = null,
 }) {
   const reasons = [];
 
@@ -1315,7 +1342,7 @@ export function verdictFor({
 
   // 4. Text defects (R3), mode-aware (R3a): on a finished frame, copy that is obscured,
   //    cut off or garbled; on a plate, copy that exists at all outside the product label.
-  const reportedDefects = normalizeDefects(defects, mode);
+  const reportedDefects = normalizeDefects(defects, mode, { allowedSceneText });
   if (reportedDefects.length) {
     reasons.push(mode === 'plate'
       ? `${reportedDefects.length} text defect(s) — a plate must carry no text except the product's own label`
