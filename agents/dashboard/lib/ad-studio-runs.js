@@ -160,7 +160,10 @@ export function summariseChecks(proofEntry) {
  * comp is the layout reference the operator rebuilds from — judging plates alone judges
  * the wrong artifact (Sean, 2026-08-16). `compTrusted: false` is not decoration: the comp
  * is a second generative pass and it drifts the product, so a verified 236ml plate has
- * produced a 230ml comp. The screen has to say which one is the base.
+ * produced a 230ml comp. The screen has to say which one is the base. The one exception is
+ * an ad-concepts run: its `-final-` image is the verified plate with type set over it in code
+ * (no second generative pass), so when a final exists it is shown as the comp with
+ * `compTrusted: true`.
  *
  * @param {string} rootDir
  * @param {string} runId
