@@ -251,15 +251,81 @@ export async function renderVariationWithBackoff(gemini, args, { tries = 3, dela
   throw lastErr;
 }
 
-export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null, expectedLabelInk = null, expectedBadge = [] }) {
-  // R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
-  // can compare the product it got against the product it asked for. Capped below what
-  // the renderer gets: two angles are enough to judge silhouette, cap and label order,
-  // and every extra photograph is input tokens on a call made once per attempt.
-  const referencePhotos = (photoPaths || []).slice(0, VERIFY_REFERENCE_MAX).map(p => {
+/**
+ * R4. The reference photographs go to the VERIFIER as well as the renderer, so the gate
+ * can compare the product it got against the product it asked for. Capped below what
+ * the renderer gets: two angles are enough to judge silhouette, cap and label order,
+ * and every extra photograph is input tokens on a call made once per attempt.
+ */
+export function loadReferencePhotos(photoPaths) {
+  return (photoPaths || []).slice(0, VERIFY_REFERENCE_MAX).map(p => {
     const buf = readFileSync(p);
     return { mediaType: sniffImageMediaType(buf), data: buf.toString('base64') };
   });
+}
+
+/**
+ * The verify gate on ONE image buffer. Extracted from renderWithRetry so agents/ad-concepts
+ * gates its takes with the identical call; renderWithRetry now delegates here.
+ */
+export async function verifyImage({
+  anthropic, buffer, mediaType, referencePhotos = [], expected = [], format, mode = 'plate',
+  volumeStrings = [], physicalDescription = '', unitCount = 1, variant = null,
+  expectedLabelInk = null, expectedBadge = [], allowedSceneText = null,
+}) {
+  const msg = await anthropic.messages.create({
+    model: CREATIVE_MODELS.adStudio.verify,
+    // A per-string check carries the expected string AND the rendered text back, so
+    // the response scales with the copy volume — 2000 truncated the JSON on a
+    // six-zone format — and the truncation surfaced as an unparseable response.
+    // R4 added a per-attribute fidelity block, five entries each carrying a prose
+    // detail, on top of a per-string check that already scales with the copy volume.
+    // 5000 truncated the JSON on the 1x1 frame of a six-zone format — the same failure
+    // 2000 produced before it, surfacing as an unparseable response rather than as
+    // "the output was cut off". Raised, and the cut is now reported as itself below.
+    max_tokens: 8000,
+    messages: [{
+      role: 'user',
+      content: [
+        // Reference photographs FIRST, each labelled, then the render. buildVerifyPrompt
+        // states this order too — a verifier that read the label off a reference photo
+        // would report a flawless render of a product the ad never contained.
+        ...referencePhotos.flatMap((ref, i) => [
+          { type: 'text', text: `REFERENCE PHOTOGRAPH ${i + 1} of the real product:` },
+          { type: 'image', source: { type: 'base64', media_type: ref.mediaType, data: ref.data } },
+        ]),
+        ...(referencePhotos.length ? [{ type: 'text', text: 'THE RENDER UNDER TEST:' }] : []),
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') } },
+        { type: 'text', text: buildVerifyPrompt({
+          expected, format, mode, volumeStrings,
+          physicalDescription, referenceCount: referencePhotos.length, unitCount, allowedSceneText,
+        }) },
+      ],
+    }],
+  });
+
+  // A truncated response is not a malformed one, and saying so is the difference
+  // between a one-line max_tokens bump and an afternoon debugging the parser. Same
+  // reasoning as the blog-post-writer's stop_reason check in CLAUDE.md.
+  if (msg.stop_reason === 'max_tokens') {
+    throw new Error(
+      `ad-studio: the verify response was cut off at the ${msg.usage?.output_tokens ?? '?'}-token ` +
+      `limit, so this render could not be scored. Raise max_tokens in renderWithRetry / verifyImage.`
+    );
+  }
+
+  const { checks, productVolume, labelScent, labelInk, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
+  const proof = verdictFor({
+    expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
+    fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
+    labelScent, variant, labelInk, expectedLabelInk, expectedBadge, allowedSceneText,
+  });
+  proof.transcript = transcript;
+  return proof;
+}
+
+export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, ratio, expected, format, zones = {}, deliveryRatio = '', mode = 'finished', volumeStrings = [], physicalDescription = '', unitCount = 1, maxAttempts = 3, budget = null, variant = null, expectedLabelInk = null, expectedBadge = [] }) {
+  const referencePhotos = loadReferencePhotos(photoPaths);
   let attempts = 0;
   let lastProof = { ok: false, reasons: ['no attempt made'], missing: [], mismatchedPairs: [] };
   let lastBuffer = null;
@@ -282,54 +348,10 @@ export async function renderWithRetry({ gemini, anthropic, prompt, photoPaths, r
     // Sniff on every attempt — nothing guarantees Gemini returns the same format twice.
     lastMediaType = sniffImageMediaType(lastBuffer);
 
-    const msg = await anthropic.messages.create({
-      model: CREATIVE_MODELS.adStudio.verify,
-      // A per-string check carries the expected string AND the rendered text back, so
-      // the response scales with the copy volume — 2000 truncated the JSON on a
-      // six-zone format and the truncation surfaced as an unparseable response.
-      // R4 added a per-attribute fidelity block, five entries each carrying a prose
-      // detail, on top of a per-string check that already scales with the copy volume.
-      // 5000 truncated the JSON on the 1x1 frame of a six-zone format — the same failure
-      // 2000 produced before it, surfacing as an unparseable response rather than as
-      // "the output was cut off". Raised, and the cut is now reported as itself below.
-      max_tokens: 8000,
-      messages: [{
-        role: 'user',
-        content: [
-          // Reference photographs FIRST, each labelled, then the render. buildVerifyPrompt
-          // states this order too — a verifier that read the label off a reference photo
-          // would report a flawless render of a product the ad never contained.
-          ...referencePhotos.flatMap((ref, i) => [
-            { type: 'text', text: `REFERENCE PHOTOGRAPH ${i + 1} of the real product:` },
-            { type: 'image', source: { type: 'base64', media_type: ref.mediaType, data: ref.data } },
-          ]),
-          ...(referencePhotos.length ? [{ type: 'text', text: 'THE RENDER UNDER TEST:' }] : []),
-          { type: 'image', source: { type: 'base64', media_type: lastMediaType, data: lastBuffer.toString('base64') } },
-          { type: 'text', text: buildVerifyPrompt({
-            expected, format, mode, volumeStrings,
-            physicalDescription, referenceCount: referencePhotos.length, unitCount,
-          }) },
-        ],
-      }],
+    lastProof = await verifyImage({
+      anthropic, buffer: lastBuffer, mediaType: lastMediaType, referencePhotos, expected, format, mode,
+      volumeStrings, physicalDescription, unitCount, variant, expectedLabelInk, expectedBadge,
     });
-
-    // A truncated response is not a malformed one, and saying so is the difference
-    // between a one-line max_tokens bump and an afternoon debugging the parser. Same
-    // reasoning as the blog-post-writer's stop_reason check in CLAUDE.md.
-    if (msg.stop_reason === 'max_tokens') {
-      throw new Error(
-        `ad-studio: the verify response was cut off at the ${msg.usage?.output_tokens ?? '?'}-token ` +
-        `limit, so this render could not be scored. Raise max_tokens in renderWithRetry.`
-      );
-    }
-
-    const { checks, productVolume, labelScent, labelInk, defects, transcript, pairings, fidelity, sceneInventory } = parseVerifyResponse(textOf(msg));
-    lastProof = verdictFor({
-      expected, checks, productVolume, defects, transcript, pairings, format, mode, volumeStrings,
-      fidelity, hasReference: referencePhotos.length > 0, sceneInventory, unitCount,
-      labelScent, variant, labelInk, expectedLabelInk, expectedBadge,
-    });
-    lastProof.transcript = transcript;
 
     // Stage 5b — the layout critique, and ONLY on a frame that already passed verify.
     // Art-directing a frame that is about to be rejected for a corrupted headline buys
@@ -1370,7 +1392,7 @@ function stripHtml(html) {
 }
 
 /** The live storefront's public product JSON — no Admin API token required. */
-async function fetchPdpBody(siteUrl, handle) {
+export async function fetchPdpBody(siteUrl, handle) {
   const url = `${siteUrl}/products/${handle}.json`;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`ad-studio: failed to fetch PDP body for "${handle}" (${url}): ${res.status}`);
