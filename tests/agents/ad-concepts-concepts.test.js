@@ -175,7 +175,11 @@ test('CONCEPT_TACTIC_SKILLS all exist under .claude/skills', () => {
 });
 
 test('buildConceptTactics on the real repo mirror stays within budget', () => {
-  const out = buildConceptTactics(renderContextMirror(scanSkillInventory('.claude/skills')));
-  assert.ok(out.length <= 40000 + 200, String(out.length));
+  const mirror = renderContextMirror(scanSkillInventory('.claude/skills'));
+  const out = buildConceptTactics(mirror);
+  assert.ok(out.length <= 60000 + 200, String(out.length));
   assert.ok(out.includes('Do not propose'));
+  // A skill the mirror omits (every tactic stage-parked) is correctly absent; every one it emits must survive the cap.
+  for (const sk of CONCEPT_TACTIC_SKILLS) if (mirror.includes(`\n## ${sk}\n`)) assert.ok(out.includes(`## ${sk}`), `missing ${sk}`);
+  assert.ok(!out.includes('tactic menu truncated'));
 });

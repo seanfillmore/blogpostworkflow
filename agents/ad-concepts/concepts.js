@@ -29,7 +29,7 @@ export const CONCEPT_TACTIC_SKILLS = Object.freeze([
  * Do-not-propose section, each listed skill's `##` line, and only the `###` tactic heading lines.
  * Over maxChars: whole skill blocks are dropped from the end; Do-not-propose is never cut.
  */
-export function buildConceptTactics(mirrorText, { skills = CONCEPT_TACTIC_SKILLS, maxChars = 40000 } = {}) {
+export function buildConceptTactics(mirrorText, { skills = CONCEPT_TACTIC_SKILLS, maxChars = 60000 } = {}) {
   const lines = String(mirrorText || '').split('\n');
   const sections = [];
   let cur = null;
