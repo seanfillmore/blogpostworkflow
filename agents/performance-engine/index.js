@@ -72,6 +72,7 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 import { fetchLiveArticleIds, isArticleLive } from '../../lib/live-articles.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { refreshableFlops, renderFlopSkipLines } from '../../lib/flop-candidates.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -332,7 +333,7 @@ function runRefresh(slug, feedback = null) {
 async function generateSummary({ slug, trigger, signal, originalHtml, refreshedHtml }) {
   const prompt = buildSummaryPrompt({ slug, trigger, signal, originalHtml, refreshedHtml });
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

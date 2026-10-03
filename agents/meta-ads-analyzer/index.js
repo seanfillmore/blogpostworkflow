@@ -13,6 +13,7 @@
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -167,7 +168,7 @@ async function main() {
         id: a.id, body: a.ad_creative_body, title: a.ad_creative_link_title, description: a.ad_creative_link_description,
       })));
       const response = await client.messages.create({
-        model: 'claude-opus-4-6', max_tokens: 1024,
+        model: LLM_MODELS.flagship, max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       });
       const result = parsePass1Response(response.content[0].text);
@@ -211,7 +212,7 @@ async function main() {
         publisherPlatforms: ad.publisher_platforms,
       });
       const response = await client.messages.create({
-        model: 'claude-opus-4-6', max_tokens: 1024,
+        model: LLM_MODELS.flagship, max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       });
       const analysis = parsePass2Response(response.content[0].text);

@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 import { notify } from '../../lib/notify.js';
 import { compactJson, headArray, fitSections } from '../../lib/prompt-budget.js';
 import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -181,7 +182,7 @@ CATEGORY/HANDLE tag rules:
 
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content: userMessage }],

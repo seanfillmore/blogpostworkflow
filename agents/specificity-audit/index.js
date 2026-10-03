@@ -20,6 +20,7 @@ import { resolveExternalId, fetchProductReviews } from '../../lib/judgeme.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -106,7 +107,7 @@ Rewrite the description with these rules:
 Output ONLY the rewritten HTML body. No explanation, no code fence, no preamble.`;
 
   const res = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }],
   });

@@ -48,6 +48,7 @@ import { partitionInternalLinkIssues, indexLinkResults } from '../../lib/interna
 import { productKeyFromLinks, resolveProductKey, soapFormatIsExplicit } from '../../lib/product-format.js';
 import { variantIngredients } from '../../lib/product-variant.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -277,7 +278,7 @@ async function verifySource(link, pageText) {
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: LLM_MODELS.standard,
       max_tokens: 256,
       messages: [{
         role: 'user',
@@ -649,7 +650,7 @@ NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to abo
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: LLM_MODELS.standard,
       max_tokens: 1800,
       // No cache_control. This carried `{ type: 'ephemeral' }` for a long time and
       // it never once cached: the minimum cacheable prefix on Haiku 4.5 is 4,096

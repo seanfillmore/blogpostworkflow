@@ -22,6 +22,7 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { getContentPath, getMetaPath, getEditorReportPath, loadUnpublishedPostIndex, ROOT, requirePostMeta } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -213,7 +214,7 @@ Respond with ONLY the replacement URL (starting with https://) or the word REMOV
     let candidate = '';
     await withRetry(async () => {
       const msg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 200,
         messages: [{ role: 'user', content: prompt }],
       });

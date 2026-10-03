@@ -28,6 +28,7 @@ import {
 import { parseEditorBlockers, contentBlockers, formatBlockersForPrompt } from '../../lib/editor-remediation.js';
 import { reviseWithLinkGuard } from '../../lib/content-revision.js';
 import { notify } from '../../lib/notify.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -123,7 +124,7 @@ ${original}`;
     now: { year: nowDate.getFullYear(), month: nowDate.getMonth() + 1 },
     callModel: async (p) => {
       const res = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 16000,
         messages: [{ role: 'user', content: p }],
       });

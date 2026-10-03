@@ -5,26 +5,27 @@
 // Image model IDs: gemini-3-pro-image and gemini-3.1-flash-image went GA.
 // Verified against the models endpoint 2026-08-14. Do not reintroduce the
 // `-preview` suffixes — they are the older, separately-billed endpoints.
+import { LLM_MODELS } from './llm-models.js';
 export const CREATIVE_MODELS = {
-  adCopy: 'claude-opus-4-8',
-  styleBrief: 'claude-haiku-4-5',
-  templateVision: 'claude-haiku-4-5',
-  styleVision: 'claude-haiku-4-5',
-  sessionName: 'claude-haiku-4-5',
+  adCopy: LLM_MODELS.flagship,
+  styleBrief: LLM_MODELS.fast,
+  templateVision: LLM_MODELS.fast,
+  styleVision: LLM_MODELS.fast,
+  sessionName: LLM_MODELS.fast,
   imageGen: 'gemini-3-pro-image',
 
   // agents/ad-studio. Pro @2K is the only image model that renders label text
   // legibly; Flash renders it blank or blurred.
   adStudio: {
-    angle: 'claude-opus-4-8',
-    copy: 'claude-opus-4-8',
+    angle: LLM_MODELS.flagship,
+    copy: LLM_MODELS.flagship,
     // Sonnet, NOT Haiku. Haiku passed a live ad whose headline read "DOES MORE WORK
     // TTHAN THE FORMLA" and whose bottle said "4 FL oz / 118ml" on an 8 fl. oz.
     // product — it auto-corrected both on the way out. This is one vision call
     // guarding a ~$0.13 render that nobody else reads before it goes live; the read
     // has to be worth more than the render. Do not drop it back to Haiku to save
     // pennies on the cheapest call in the pipeline.
-    verify: 'claude-sonnet-5',
+    verify: LLM_MODELS.standard,
     imageGen: 'gemini-3-pro-image',
   },
 };

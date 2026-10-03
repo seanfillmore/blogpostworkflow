@@ -65,6 +65,7 @@ import {
   SEO_COPY_COMPLIANCE_RULE, renderGateSkipLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -159,7 +160,7 @@ async function rewriteMeta(currentTitle, currentMeta, keyword, position, impress
   const groundingBlock = groundingLines.length ? `\n${groundingLines.join('\n')}\n` : '';
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 512,
     messages: [{
       role: 'user',

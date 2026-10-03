@@ -25,6 +25,7 @@ import { getPostMeta, getMetaPath, getContentPath, ROOT } from '../../lib/posts.
 // see lib/faq-blocks.js for why that mattered.
 import { extractFaqBlocks } from '../../lib/faq-blocks.js';
 import { updateArticle } from '../../lib/shopify.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
@@ -85,7 +86,7 @@ ORIGINAL ANSWER:
 ${a}`;
 
   const res = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 800,
     messages: [{ role: 'user', content: prompt }],
   });

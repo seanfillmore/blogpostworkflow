@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from 
 import { join } from 'node:path';
 import { buildTabChatSystemPrompt } from '../lib/tab-chat-prompt.js';
 import { readJsonBody } from '../lib/responses.js';
+import { LLM_MODELS } from '../../../config/llm-models.js';
 
 export default [
   {
@@ -38,8 +39,10 @@ export default [
       let response;
       try {
         response = await ctx.anthropic.messages.create({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1024,
+          model: LLM_MODELS.standard,
+          // Multi-turn history goes over the direct API, where always-on thinking
+          // counts against max_tokens; 4096 leaves room for it and the answer.
+          max_tokens: 4096,
           system: systemPrompt,
           messages: cappedMessages,
         });

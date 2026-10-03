@@ -51,6 +51,7 @@ import {
 } from '../../lib/shopify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -261,7 +262,7 @@ async function getCollectionIndex() {
 async function generateMetaDescription(title, url, existingMeta = '') {
   const context = existingMeta ? `Current (problematic) meta: "${existingMeta}"` : 'No current meta description.';
   const msg = await claude.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 200,
     messages: [{
       role: 'user',
@@ -285,7 +286,7 @@ Rules:
 
 async function generateSeoTitle(currentTitle, url) {
   const msg = await claude.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 100,
     messages: [{
       role: 'user',
@@ -307,7 +308,7 @@ Rules:
 
 async function generateAltText(imageUrl, pageTitle, pageUrl) {
   const msg = await claude.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 100,
     messages: [{
       role: 'user',
@@ -1986,7 +1987,7 @@ async function fixAiContent({ dryRun = false } = {}) {
     console.log(`  ${path} — rewriting ${contentOnly.length} chars of content...`);
 
     const msg = await claude.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: LLM_MODELS.standard,
       max_tokens: 4000,
       messages: [{
         role: 'user',
