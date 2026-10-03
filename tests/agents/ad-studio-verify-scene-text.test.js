@@ -9,6 +9,7 @@ test('off by default: prompt and defects are unchanged', () => {
   assert.equal(buildVerifyPrompt(base), buildVerifyPrompt({ ...base, allowedSceneText: null }));
   const d = [{ text: 'illegible printed lines', issue: 'stray-text' }];
   assert.deepEqual(normalizeDefects(d, 'plate'), normalizeDefects(d, 'plate', { allowedSceneText: null }));
+  assert.doesNotMatch(buildVerifyPrompt(base), /declared illegible print/);
   assert.equal(normalizeDefects(d, 'plate').length, 1, 'without the declaration, any reported text still fails');
 });
 
@@ -33,4 +34,27 @@ test('verdictFor threads the option to the defect check', () => {
   };
   assert.equal(verdictFor(args).ok, false);
   assert.equal(verdictFor({ ...args, allowedSceneText: 'illegible-print' }).ok, true);
+});
+
+test('a descriptor word beside readable text is still a defect', () => {
+  const opt = { allowedSceneText: 'illegible-print' };
+  for (const text of [
+    'blurry "WEAK SOAP" lettering on the receipt',
+    '"WEAK SOAP" printed lines',
+    'readable text "12.50", not illegible',
+    'WEAK SOAP printed lines',
+  ]) {
+    assert.equal(normalizeDefects([{ text, issue: 'stray-text' }], 'plate', opt).length, 1, text);
+  }
+  for (const text of ['illegible printed lines on the receipt paper', 'faint hairlines', 'blurred lines of print']) {
+    assert.equal(normalizeDefects([{ text, issue: 'stray-text' }], 'plate', opt).length, 0, text);
+  }
+});
+
+test('verdictFor still fails a real-character defect with the declaration on', () => {
+  const args = {
+    expected: [], checks: [], format, mode: 'plate', sceneInventory: [{ object: 'soap bar', kind: 'product-unit' }],
+    defects: [{ text: 'blurry "WEAK SOAP"', issue: 'stray-text' }], allowedSceneText: 'illegible-print',
+  };
+  assert.equal(verdictFor(args).ok, false);
 });

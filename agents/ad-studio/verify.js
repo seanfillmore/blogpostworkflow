@@ -1206,8 +1206,16 @@ function isAbsenceReport(text) {
 export const ALLOWED_SCENE_TEXT = Object.freeze(['illegible-print']);
 const ILLEGIBLE_PRINT_RE = /\b(illegible|unreadable|indistinct|blurr?(ed|y)|hairlines?|printed lines|lines of print|faint (print|lines))\b/i;
 
+// A description that ALSO quotes characters (a quote mark, a digit, an ALL-CAPS token) is
+// reporting readable text and must still fail, so those disqualify the drop.
+const QUOTE_RE = /["\u201c\u201d]/;
+const SINGLE_QUOTED_RUN_RE = /(^|\s)['\u2018][^'\u2019]+['\u2019](\s|$)/;
 export function isIllegiblePrintReport(text) {
-  return ILLEGIBLE_PRINT_RE.test(String(text || ''));
+  const t = String(text || '');
+  if (!ILLEGIBLE_PRINT_RE.test(t)) return false;
+  if (QUOTE_RE.test(t) || SINGLE_QUOTED_RUN_RE.test(t)) return false;
+  if (/\d/.test(t) || /\b[A-Z]{2,}\b/.test(t)) return false;
+  return true;
 }
 
 /**
