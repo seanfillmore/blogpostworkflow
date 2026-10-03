@@ -188,3 +188,35 @@ test('only an explicit factual:false is persuasion: factual null / missing-with-
   }
   assert.equal(gateCopy({ primaryText1: 'x' }, [{ zone: 'primaryText1', text: 'Still dry?', factual: false }], { sourceIndex }).ok, true);
 });
+
+// ── acceptance fix: variant conflicts (live run 2) ───────────────────────────
+const SIBS = ['calming-lavender', 'refreshing-lemongrass', 'pure-unscented'];
+
+test('gateCopy flags a sibling scent and "Nothing added." in any zone for a scented variant', () => {
+  const r = gateCopy({ headline: 'Nothing added.', sub: 'Soap with lavender oil' }, [], { sourceIndex, variant: 'nourishing-tea-tree', siblingVariants: SIBS });
+  assert.equal(r.ok, false);
+  const s = r.reasons.join(' | ');
+  assert.match(s, /"lavender"/);
+  assert.match(s, /nothing added/i);
+  assert.equal(gateCopy({ headline: 'Nothing added.', sub: '' }, [], { sourceIndex }).ok, true, 'no variant: no-op');
+});
+
+test('overlay and flexible prompts carry the Ad Studio variant block', async () => {
+  const { buildVariantBlock } = await import('../../agents/ad-studio/copy.js');
+  const p = buildOverlayCopyPrompt({ concept, product: { ...product, variant: 'nourishing-tea-tree' }, pdpBody: '', sourceIds: ['pdp'] });
+  assert.ok(p.includes(buildVariantBlock('nourishing-tea-tree')));
+  const good = { primaryTexts: ['One fat. Organic virgin coconut oil, turned into soap. That is the whole ingredient story.', 'Swap the ingredient list for one fat. Coconut oil soap, made in small batches.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [] };
+  const anthropic = scripted(reply(good));
+  await writeFlexibleCopy({ anthropic, model: 'm', product: { ...product, variant: 'nourishing-tea-tree' }, concepts: [concept, concept], sourceIndex, pdpBody: '' });
+  assert.ok(anthropic.calls[0].messages[0].content.includes(buildVariantBlock('nourishing-tea-tree')));
+});
+
+test('writeOverlayCopy regenerates once when the overlay names a sibling scent', async () => {
+  const anthropic = scripted(
+    reply({ headline: 'Tasting notes: lavender.', sub: '', claims: [] }),
+    reply({ headline: 'Tasting notes: tea tree.', sub: '', claims: [] }),
+  );
+  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex, variant: 'nourishing-tea-tree', siblingVariants: SIBS });
+  assert.equal(r.ok, true);
+  assert.match(anthropic.calls[1].messages[0].content, /variant conflict: names "lavender"/);
+});

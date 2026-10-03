@@ -5,6 +5,7 @@
 import { findHealthClaims } from '../ad-studio/health-claims.js';
 import { assertClaimsSourced, normalizeForMatch, sourceText } from '../ad-studio/claims.js';
 import { findProductCategoryMisnomers } from '../../lib/product-category-terms.js';
+import { buildVariantBlock } from '../ad-studio/copy.js';
 
 export const FAMILIES = Object.freeze(['scale-gag', 'genre-parody', 'native-screenshot', 'product-art', 'identity-comedy']);
 export const SCENE_TEXT = Object.freeze(['none', 'illegible-print']);
@@ -134,7 +135,7 @@ export function buildConceptPrompt({ product, catalogEntry, pdpBody, brandKit, p
   const reviewText = (r) => (typeof r === 'string' ? r : (r?.body || r?.text || ''));
   const reviewLines = (reviews || []).slice(0, 8).map(r => `  - "${String(reviewText(r)).slice(0, 240)}"`).join('\n');
   return `You are the creative director for Real Skin Care, generating ad CONCEPTS for one Meta flexible ad.
-Product: ${product.title} (${product.handle}).
+Product: ${product.title} (${product.handle}).${buildVariantBlock(product.variant)}
 
 THE JOB. A concept is an IDEA for a single static image that stops a thumb mid-scroll. Generate ${count} concepts that differ in kind, not just wording. Each one needs a recognisable ANCHOR (something the viewer already knows) and a TWIST (the unexpected thing it turns out to be about). It must read in about one second, with one primary subject and room for at most four words of overlay type. Stock photography is a failed concept.
 
@@ -198,7 +199,35 @@ export function checkClaimsSourced(claims, sourceIndex) {
   return { ok: true, reasons: [] };
 }
 
-export function preGate(concept, { sourceIndex, competitorNames = [] }) {
+/**
+ * Deterministic variant gate. The PDP and catalog describe the whole product LINE, so the claim
+ * gate passes "Tasting notes: lavender." on a tea tree bar (live run 2, 2026-10-03). A sibling's
+ * scent term is its variant key minus its first word ("calming-lavender" -> "lavender",
+ * "pure-unscented" -> "unscented"); a term that also appears in our own scent term is never
+ * flagged. A scented variant may not say "nothing added". No variant: a no-op.
+ */
+const UNSCENTED_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
+const scentTerm = (key) => String(key || '').split('-').slice(1).join(' ').trim().toLowerCase();
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function variantConflicts(text, { variant = null, siblingVariants = [] } = {}) {
+  if (!variant) return [];
+  const t = String(text || '');
+  const own = scentTerm(variant);
+  const out = [];
+  const seen = new Set();
+  for (const sib of siblingVariants || []) {
+    const term = scentTerm(sib);
+    if (!term || seen.has(term) || (own && own.includes(term))) continue;
+    seen.add(term);
+    if (new RegExp(`\\b${escRe(term).replace(/ /g, '\\s+')}\\b`, 'i').test(t)) out.push(`variant conflict: names "${term}" (a different variant)`);
+  }
+  if (!UNSCENTED_RE.test(variant) && /\bnothing added\b/i.test(t)) {
+    out.push(`variant conflict: says "nothing added" on a scented variant (${variant})`);
+  }
+  return out;
+}
+
+export function preGate(concept, { sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
   const reasons = [];
   const text = [concept.title, concept.picture, concept.anchor, concept.twist, concept.productRole, concept.headlineIdea, ...concept.claims.map(c => c.text)].join(' ');
   const health = findHealthClaims(text);
@@ -209,6 +238,7 @@ export function preGate(concept, { sourceIndex, competitorNames = [] }) {
   if (named.length) reasons.push(`names a competitor: ${named.join(', ')}`);
   if (BEFORE_AFTER_RE.test(text)) reasons.push('before/after imagery of skin or body');
   if (/\u2014/.test(text)) reasons.push('em dash');
+  reasons.push(...variantConflicts(text, { variant, siblingVariants }));
   const claimCheck = checkClaimsSourced(concept.claims, sourceIndex);
   if (!claimCheck.ok) reasons.push(...claimCheck.reasons);
   return { ok: reasons.length === 0, reasons };

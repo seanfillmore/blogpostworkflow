@@ -183,3 +183,43 @@ test('buildConceptTactics on the real repo mirror stays within budget', () => {
   for (const sk of CONCEPT_TACTIC_SKILLS) if (mirror.includes(`\n## ${sk}\n`)) assert.ok(out.includes(`## ${sk}`), `missing ${sk}`);
   assert.ok(!out.includes('tactic menu truncated'));
 });
+
+// ── acceptance fix: variant conflicts (live run 2) ───────────────────────────
+import { variantConflicts } from '../../agents/ad-concepts/concepts.js';
+
+const SIBS = ['calming-lavender', 'refreshing-lemongrass', 'pure-unscented'];
+
+test('variantConflicts: a sibling scent fails, our own scent passes', () => {
+  const r = variantConflicts('Tasting notes: lavender.', { variant: 'nourishing-tea-tree', siblingVariants: SIBS });
+  assert.equal(r.length, 1);
+  assert.match(r[0], /variant conflict: names "lavender" \(a different variant\)/);
+  assert.deepEqual(variantConflicts('Tasting notes: tea tree.', { variant: 'nourishing-tea-tree', siblingVariants: SIBS }), []);
+  assert.match(variantConflicts('A bright LEMONGRASS morning', { variant: 'nourishing-tea-tree', siblingVariants: SIBS }).join(' '), /"lemongrass"/);
+  assert.match(variantConflicts('Totally unscented.', { variant: 'nourishing-tea-tree', siblingVariants: SIBS }).join(' '), /"unscented"/);
+  assert.deepEqual(variantConflicts('lavenders', { variant: 'nourishing-tea-tree', siblingVariants: SIBS }), [], 'word boundary');
+});
+
+test('variantConflicts: "Nothing added." fails for a scented variant, passes for an unscented one', () => {
+  assert.equal(variantConflicts('Nothing added.', { variant: 'nourishing-tea-tree', siblingVariants: SIBS }).length, 1);
+  assert.deepEqual(variantConflicts('Nothing added.', { variant: 'pure-unscented', siblingVariants: ['calming-lavender', 'refreshing-lemongrass', 'nourishing-tea-tree'] }), []);
+});
+
+test('variantConflicts: a sibling term inside our own scent term is never flagged', () => {
+  assert.deepEqual(variantConflicts('Pure lavender calm', { variant: 'deep-lavender', siblingVariants: ['calming-lavender'] }), []);
+});
+
+test('variantConflicts: no variant, no conflicts', () => {
+  assert.deepEqual(variantConflicts('Tasting notes: lavender. Nothing added.', { variant: null, siblingVariants: SIBS }), []);
+  assert.deepEqual(variantConflicts('Tasting notes: lavender.', { variant: 'nourishing-tea-tree' }), []);
+});
+
+test('preGate applies the variant gate to concept fields and claims', () => {
+  const base = { title: 'The Sommelier', picture: 'a wine glass of lather', anchor: 'wine tasting', twist: 'soap', productRole: 'hero', headlineIdea: 'Tasting notes.', claims: [] };
+  const opts = { sourceIndex: { pdp: 'lavender oil' }, competitorNames: [], variant: 'nourishing-tea-tree', siblingVariants: SIBS };
+  assert.equal(preGate(base, opts).ok, true);
+  const bad = preGate({ ...base, headlineIdea: 'Tasting notes: lavender.' }, opts);
+  assert.equal(bad.ok, false);
+  assert.match(bad.reasons.join(' '), /variant conflict: names "lavender"/);
+  const badClaim = preGate({ ...base, claims: [{ text: 'lavender oil', sourceId: 'pdp' }] }, opts);
+  assert.match(badClaim.reasons.join(' '), /variant conflict/);
+});

@@ -15,7 +15,8 @@ import { assertClaimsSourced, normalizeForMatch, sourceText } from '../ad-studio
 import { findProductCategoryMisnomers } from '../../lib/product-category-terms.js';
 import { buildFlexibleCopyPrompt, parseFlexibleCopyResponse, flexibleZones } from '../ad-studio/flexible.js';
 import { sellingVocabulary, findGoldenThread, splitPrimaryText, goldenThreadRetryNote, MIN_SELLING_VOCABULARY } from '../ad-studio/golden-thread.js';
-import { checkClaimsSourced, namedCompetitors } from './concepts.js';
+import { checkClaimsSourced, namedCompetitors, variantConflicts } from './concepts.js';
+import { buildVariantBlock } from '../ad-studio/copy.js';
 
 export const HEADLINE_MAX_WORDS = 6;
 export const SUB_MAX_WORDS = 12;
@@ -38,7 +39,7 @@ async function call(anthropic, model, content, maxTokens = 1500) {
 }
 
 export function buildOverlayCopyPrompt({ concept, product, pdpBody, sourceIds, retryNote = null }) {
-  return `Write the overlay type for one static ad image for ${product.title}.
+  return `Write the overlay type for one static ad image for ${product.title}.${buildVariantBlock(product.variant)}
 The image: ${concept.picture}
 Anchor: ${concept.anchor || ''}. Twist: ${concept.twist}. Draft idea: "${concept.headlineIdea}".
 
@@ -63,7 +64,7 @@ export function parseOverlayCopy(text) {
   };
 }
 
-export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) {
+export function gateCopy(fields, claims, { sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
   const reasons = [];
   const entries = Object.entries(fields).filter(([, v]) => String(v || '').trim());
   for (const [k, v] of entries) if (/—/.test(v)) reasons.push(`em dash in ${k}`);
@@ -73,6 +74,8 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) 
     const named = namedCompetitors(v, competitorNames);
     if (named.length) reasons.push(`names a competitor: ${named.join(', ')} in ${k}. Jab at the category, never a named brand`);
   }
+  // The PDP describes the whole line, so the claim gate cannot catch a sibling's scent.
+  for (const [k, v] of entries) for (const r of variantConflicts(v, { variant, siblingVariants })) reasons.push(`${r} in ${k}`);
   try { assertNoHealthClaims(Object.fromEntries(entries)); } catch (e) { reasons.push(`health claim: ${String(e.message).split('\n').slice(1).map(l => l.trim()).filter(Boolean).join('; ') || firstLine(e)}`); }
   for (const [k, v] of entries) {
     if (findProductCategoryMisnomers(v).length) reasons.push(`product category in ${k}: our product is a deodorant or soap, never an antiperspirant`);
@@ -109,13 +112,13 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) 
   return { ok: reasons.length === 0, reasons };
 }
 
-export async function writeOverlayCopy({ anthropic, model, concept, product, pdpBody, sourceIndex, competitorNames = [] }) {
+export async function writeOverlayCopy({ anthropic, model, concept, product, pdpBody, sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
   let retryNote = null;
   let lastReasons = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const prompt = buildOverlayCopyPrompt({ concept, product, pdpBody, sourceIds: Object.keys(sourceIndex), retryNote });
     const copy = parseOverlayCopy(await call(anthropic, model, prompt));
-    const gate = gateCopy({ headline: copy.headline, sub: copy.sub }, copy.claims, { sourceIndex, competitorNames });
+    const gate = gateCopy({ headline: copy.headline, sub: copy.sub }, copy.claims, { sourceIndex, competitorNames, variant, siblingVariants });
     if (gate.ok && copy.headline) return { ok: true, copy };
     lastReasons = copy.headline ? gate.reasons : ['empty headline', ...gate.reasons];
     retryNote = lastReasons.join('\n');
@@ -137,7 +140,7 @@ export const FLEXIBLE_OVERLAY_NOTE = `IMPORTANT, OVERRIDING THE LINE ABOVE ABOUT
  */
 export const FLEXIBLE_CLAIMS_RULE = `CLAIMS RULE: questions, hooks and persuasion lines are "factual": false and need no sourceId or evidence. Only a statement of fact about the product (what it contains, how it is made, what it costs) is "factual": true, and every factual:true claim MUST carry a sourceId and an "evidence" string that is an exact, verbatim quote copied from that source.`;
 
-export async function writeFlexibleCopy({ anthropic, model, product, concepts, sourceIndex, pdpBody, persona = null, reviews = [], competitorNames = [] }) {
+export async function writeFlexibleCopy({ anthropic, model, product, concepts, sourceIndex, pdpBody, persona = null, reviews = [], competitorNames = [], variant = null, siblingVariants = [] }) {
   const pseudo = concepts.map(c => ({
     format: {
       key: c.id,
@@ -147,7 +150,7 @@ export async function writeFlexibleCopy({ anthropic, model, product, concepts, s
   }));
   // A missing priceLabel used to reach the prompt as the literal word "undefined".
   const priced = { ...product, priceLabel: product.priceLabel || 'price on the product page' };
-  const base = `${buildFlexibleCopyPrompt({ product: priced, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews })}\n\n${FLEXIBLE_OVERLAY_NOTE}\n\n${FLEXIBLE_CLAIMS_RULE}`;
+  const base = `${buildFlexibleCopyPrompt({ product: priced, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews })}\n\n${FLEXIBLE_OVERLAY_NOTE}\n\n${FLEXIBLE_CLAIMS_RULE}${buildVariantBlock(product.variant)}`;
 
   // Golden thread on the PRIMARY TEXTS, advisory, exactly as Ad Studio's writeFlexibleManifest:
   // it SHARES the one regeneration (never a third call), the second attempt ships whatever it
@@ -168,7 +171,7 @@ export async function writeFlexibleCopy({ anthropic, model, product, concepts, s
       if (/cut off/.test(e.message)) throw e;
       lastReasons = [firstLine(e)]; note = lastReasons[0]; continue;
     }
-    const gate = gateCopy(flexibleZones(parsed), parsed.claims, { sourceIndex, competitorNames });
+    const gate = gateCopy(flexibleZones(parsed), parsed.claims, { sourceIndex, competitorNames, variant, siblingVariants });
     const threads = findThreads(parsed.primaryTexts);
     if (gate.ok && (threads.length === 0 || attempt === 1)) {
       return {

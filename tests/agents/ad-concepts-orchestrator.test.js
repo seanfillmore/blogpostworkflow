@@ -343,3 +343,45 @@ test('a truncated flexible reply still escapes the wrapper (hard signal, not a m
   d.writeFlexibleCopy = async () => { throw new Error('ad-concepts: the copy response was cut off at the token limit.'); };
   await assert.rejects(runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d }), /cut off/);
 });
+
+// ── acceptance fix: variant conflicts (live run 2) ───────────────────────────
+test('an overlay naming a sibling scent is regenerated once; concept and overlay prompts carry the variant block', async () => {
+  const { buildVariantBlock } = await import('../../agents/ad-studio/copy.js');
+  const { out, deps: d } = deps();
+  const base = d.loadEvidence;
+  d.loadEvidence = async (a) => ({ ...(await base(a)), siblingVariants: ['calming-lavender', 'refreshing-lemongrass', 'pure-unscented'] });
+  let lavenderOnce = true;
+  const create = d.anthropic.messages.create;
+  d.anthropic.messages.create = async (req) => {
+    const t = req.messages[0].content;
+    if (typeof t === 'string' && t.includes('Write the overlay type') && lavenderOnce) { lavenderOnce = false; d.prompts.push(t); return reply({ headline: 'Tasting notes: lavender.', sub: '', claims: [] }); }
+    return create(req);
+  };
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap', '--variant', 'nourishing-tea-tree']), deps: d });
+  const overlayPrompts = d.prompts.filter(p => p.includes('Write the overlay type'));
+  assert.match(overlayPrompts[1], /variant conflict: names "lavender" \(a different variant\)/);
+  assert.ok(overlayPrompts[0].includes(buildVariantBlock('nourishing-tea-tree')));
+  assert.ok(d.prompts.find(p => p.includes('generating ad CONCEPTS')).includes(buildVariantBlock('nourishing-tea-tree')));
+  assert.equal(report.results.length, 3);
+  assert.ok(!report.rejectedConcepts.some(r => /copy rejected/.test(r.error)));
+  assert.ok(existsSync(join(out, report.runId, 'flexible-ad.json')));
+});
+
+test('preGate in the orchestrator drops a concept naming a sibling scent', async () => {
+  const { deps: d } = deps({ conceptExtra: { a: { headlineIdea: 'Tasting notes: lavender.' } } });
+  const base = d.loadEvidence;
+  d.loadEvidence = async (a) => ({ ...(await base(a)), siblingVariants: ['calming-lavender'] });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap', '--variant', 'nourishing-tea-tree', '--dry-run']), deps: d });
+  assert.ok(report.rejectedConcepts.some(r => r.conceptSlug === 'a' && /variant conflict/.test(r.error)));
+});
+
+import { listSiblingVariants } from '../../agents/ad-concepts/index.js';
+import { mkdirSync, writeFileSync } from 'node:fs';
+test('listSiblingVariants: directories only, minus the current variant and unwrapped', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adc-img-'));
+  for (const v of ['calming-lavender', 'nourishing-tea-tree', 'pure-unscented', 'refreshing-lemongrass', 'unwrapped']) mkdirSync(join(dir, v));
+  writeFileSync(join(dir, '2.jpg'), 'x');
+  assert.deepEqual(listSiblingVariants(dir, 'nourishing-tea-tree'), ['calming-lavender', 'pure-unscented', 'refreshing-lemongrass']);
+  assert.deepEqual(listSiblingVariants(dir, null), []);
+  assert.deepEqual(listSiblingVariants(join(dir, 'missing'), 'x'), []);
+});

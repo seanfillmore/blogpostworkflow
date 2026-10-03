@@ -6,7 +6,7 @@
 //
 //   node agents/ad-concepts/index.js --product <handle> [--variant <name>]
 //     [--concept "<idea>"]... [--ratio 4:5|1:1] [--max-renders 30] [--dry-run]
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -59,6 +59,19 @@ const firstLine = (e) => String(e?.message || e).split('\n')[0];
 /** Stated wherever needsHumanReview appears: the flag exists BECAUSE nothing checks this. */
 export const NEEDS_HUMAN_REVIEW_NOTE =
   'verify.js checks nothing about anatomy. These images show a person (hands or a face), so a human must look at every hand and face before the ad ships.';
+
+/**
+ * The product's OTHER variants, for the deterministic variant gate: the directory names under
+ * data/product-images/<imageDir>/, minus the current variant, the non-variant 'unwrapped' dir
+ * and any plain file. No variant (or no directory) means no siblings, and the gate is a no-op.
+ */
+export function listSiblingVariants(imageRoot, variant) {
+  if (!variant) return [];
+  let entries;
+  try { entries = readdirSync(imageRoot, { withFileTypes: true }); } catch { return []; }
+  return entries.filter(e => e.isDirectory() && e.name !== variant && e.name !== 'unwrapped' && !e.name.startsWith('.'))
+    .map(e => e.name).sort();
+}
 
 /** The product block the whole run reads. priceLabel and url ride along for the flexible copy and manifest. */
 export function buildEvidenceProduct({ args, manifestEntry, catalogEntry, studio }) {
@@ -220,7 +233,7 @@ export async function runConcepts({ args, deps }) {
       }
       let copy;
       try {
-        copy = await writeOverlayCopy({ anthropic: deps.anthropic, model: deps.models.copy, concept: c, product, pdpBody: ev.pdpBody, sourceIndex, competitorNames: ev.competitorNames || [] });
+        copy = await writeOverlayCopy({ anthropic: deps.anthropic, model: deps.models.copy, concept: c, product, pdpBody: ev.pdpBody, sourceIndex, competitorNames: ev.competitorNames || [], variant: product.variant || null, siblingVariants: ev.siblingVariants || [] });
       } catch (e) {
         if (/cut off/.test(e.message)) throw e;
         copy = { ok: false, reasons: [firstLine(e)] };
@@ -288,7 +301,7 @@ export async function runConcepts({ args, deps }) {
       if (got < args.concepts.length) requestedMissing = args.concepts.length - got;
     }
     for (const c of generated) {
-      const g = preGate(c, { sourceIndex, competitorNames: ev.competitorNames });
+      const g = preGate(c, { sourceIndex, competitorNames: ev.competitorNames, variant: product.variant || null, siblingVariants: ev.siblingVariants || [] });
       if (g.ok) survivors.push(c); else verdicts[c.id] = `gated: ${g.reasons.join('; ')}`;
     }
     const judged = survivors.length ? parseJudgeResponse(await ask(deps.anthropic, deps.models.judge, buildJudgePrompt(survivors), 4000), survivors.length) : [];
@@ -328,6 +341,7 @@ export async function runConcepts({ args, deps }) {
           anthropic: deps.anthropic, model: deps.models.copy, product,
           concepts: finals.map(f => ({ ...f.concept, overlayHeadline: f.headline, overlaySub: f.sub })),
           sourceIndex, pdpBody: ev.pdpBody, persona: ev.persona, reviews: ev.reviews, competitorNames: ev.competitorNames || [],
+          variant: product.variant || null, siblingVariants: ev.siblingVariants || [],
         });
       } catch (e) {
         if (/cut off/.test(e?.message || '')) throw e;
@@ -446,7 +460,7 @@ async function main() {
         const product = buildEvidenceProduct({ args, manifestEntry, catalogEntry, studio });
         return {
           product, catalogEntry, brandKit, pdpBody, persona, reviews, sourceIndex,
-          photoPaths, photoDir, competitorNames: loadJson('config/competitors.json').map(c => c.name),
+          photoPaths, photoDir, siblingVariants: listSiblingVariants(join(ROOT, 'data', 'product-images', manifestEntry.imageDir), args.variant), competitorNames: loadJson('config/competitors.json').map(c => c.name),
           tactics: buildConceptTactics(renderContextMirror(scanSkillInventory(join(ROOT, '.claude', 'skills')))),
         };
       },
