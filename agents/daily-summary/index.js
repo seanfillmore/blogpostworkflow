@@ -977,7 +977,13 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // Decisions awaiting you — posts blocked from publish. A hard-blocked post
   // genuinely needs a person and nothing else reports it; the optimization
   // queue used to share this slot and no longer does.
-  const decisionsBody = `${decisionSection}${blockedSection}`;
+  // A flop a human must decide (merge or remove a no-demand page) is a
+  // decision too, and the subject line already counts it ("1 flop to decide").
+  // The section was built but dropped from the layout in the revenue-first
+  // strip-down, so the subject promised a row the body never showed. Only
+  // rendered when something needs a person; the automated count alone stays off.
+  const flopNeedsDecision = flops.some((f) => f.automated !== true);
+  const decisionsBody = `${decisionSection}${flopNeedsDecision ? flopSection : ''}${blockedSection}`;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;

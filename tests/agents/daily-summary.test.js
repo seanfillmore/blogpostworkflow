@@ -591,3 +591,19 @@ test('an empty indexing escalation set is silent', () => {
   const html = digestFor(withIndexingDecisions([]));
   assert.ok(!/Needs your decision/i.test(html), 'no empty section');
 });
+
+test('a flop the subject counts as "to decide" is rendered in the body (2026-10-02 regression)', () => {
+  const pp = { reviews_today: 0, action_required: [
+    { slug: 'olive-oil-soap', title: 'Olive Oil Soap', milestone: 90, verdict: 'LOW_DEMAND', reason: '87 impressions', action: 'no-demand', action_label: 'Almost no searches or visits: merge or remove', automated: false },
+    { slug: 'locked-winner', title: 'Locked Winner', milestone: 90, verdict: 'REFRESH', action: 'locked', action_label: 'Locked winner', automated: true },
+  ] };
+  const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
+  assert.match(html, /Olive Oil Soap/);
+  assert.match(html, /1 need a decision, 1 handled automatically/);
+});
+
+test('flops that are all automated stay out of the body', () => {
+  const pp = { action_required: [{ slug: 'w', title: 'Locked Winner Only', milestone: 90, verdict: 'REFRESH', action: 'locked', automated: true }] };
+  const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
+  assert.doesNotMatch(html, /Locked Winner Only/);
+});
