@@ -33,7 +33,7 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listSubmissions } from '../../lib/trybe.js';
 import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
-import { hushmailCredentials, sendMail, fetchInboxFrom } from '../../lib/hushmail.js';
+import { hushmailCredentials, sendMail, fetchInboxFrom, isTransientNetworkError } from '../../lib/hushmail.js';
 import {
   DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems, holdingReply,
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
@@ -338,9 +338,37 @@ async function main() {
   }
 }
 
+// A connection that still drops after connectImap's retries is reported only
+// once it has failed this many CONSECUTIVE runs (cron is every 30 minutes, so
+// 4 = two hours down). A single blip recovers on the next run by itself and is
+// not a broken agent; a real outage still reaches the digest's Failures block.
+export const TRANSIENT_ESCALATE_AFTER = 4;
+const TRANSIENT_PATH = join(dirname(STATE_PATH), '.transient-failures.json');
+
+/** Pure: given the previous streak and this run's outcome, what to record and whether to report. */
+export function transientStreak(prev, { failed, now = new Date().toISOString() }) {
+  if (!failed) return { next: null, report: false };
+  const count = (prev?.count || 0) + 1;
+  return { next: { count, since: prev?.since || now, last: now }, report: count >= TRANSIENT_ESCALATE_AFTER };
+}
+
+function readStreak() { try { return JSON.parse(readFileSync(TRANSIENT_PATH, 'utf8')); } catch { return null; } }
+function writeStreak(v) {
+  try { if (v) writeFileSync(TRANSIENT_PATH, JSON.stringify(v)); else if (existsSync(TRANSIENT_PATH)) unlinkSync(TRANSIENT_PATH); } catch { /* best effort */ }
+}
+
 if (isDirectRun(import.meta.url)) {
-  main().catch(async (err) => {
+  main().then(() => writeStreak(null)).catch(async (err) => {
     console.error(err);
+    if (isTransientNetworkError(err)) {
+      const { next, report } = transientStreak(readStreak(), { failed: true });
+      writeStreak(next);
+      if (!report) {
+        console.error(`transient connection failure ${next.count}/${TRANSIENT_ESCALATE_AFTER}; the next run retries, not reported`);
+        process.exit(0);
+      }
+      err = new Error(`IMAP connection has failed ${next.count} consecutive runs since ${next.since}: ${err.message}`);
+    }
     try {
       await notify({ subject: 'Creator outreach failed', body: String(err?.stack || err), status: 'error', category: 'creators' });
     } catch { /* the console already has it */ }
