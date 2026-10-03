@@ -206,3 +206,18 @@ test('no agent, lib or script imports the SDK around lib/anthropic.js', () => {
   assert.deepEqual(offenders.filter((f) => f !== 'lib/anthropic.js'), [],
     'a direct SDK import bills the per-token API key and bypasses the subscription transport');
 });
+
+test('a model that cannot disable thinking gets headroom on top of the answer budget (§1b)', async () => {
+  const { THINKING_HEADROOM, thinksRegardless } = await import('../../lib/claude-subscription.js');
+  for (const m of ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1']) {
+    assert.ok(thinksRegardless(m), m);
+    const req = buildCliRequest({ model: m, max_tokens: 512, messages: [{ role: 'user', content: 'x' }] });
+    assert.equal(req.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS, String(512 + THINKING_HEADROOM), `${m}: a 512-token JSON call must not be stitched or emptied`);
+  }
+  const big = buildCliRequest({ model: 'claude-opus-5-5', max_tokens: 120000, messages: [{ role: 'user', content: 'x' }] });
+  assert.equal(big.env.CLAUDE_CODE_MAX_OUTPUT_TOKENS, '128000', 'never above the model ceiling');
+  for (const m of ['claude-haiku-4-5', 'claude-sonnet-4-6', 'claude-opus-4-6']) {
+    assert.equal(thinksRegardless(m), false, m);
+    assert.equal(buildCliRequest({ model: m, max_tokens: 512, messages: [{ role: 'user', content: 'x' }] }).env.CLAUDE_CODE_MAX_OUTPUT_TOKENS, '512', `${m} keeps its exact cap`);
+  }
+});

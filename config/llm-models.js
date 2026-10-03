@@ -24,11 +24,12 @@
 // opus-4-6 / 4-7 / 4-8 / opus-5 -> claude-opus-5-5; sonnet-4-6 / sonnet-5 ->
 // claude-sonnet-5-5. Haiku 4.5 is still the current Haiku. Nine calls that were
 // on Haiku while writing live copy or guarding it moved to `standard` (see the PR).
-// Measured through the real transport on the production box before switching:
-// the 5.5 models answered 30-40% faster than the 4.6 ones, and their always-on
-// thinking does NOT count against the visible-output cap there (a 300-token call
-// returned 538 output tokens with stop_reason end_turn), so tight max_tokens
-// budgets did not start truncating.
+// Measured through the real transport on the production box: the 5.5 models
+// answered 30-40% faster than the 4.6 ones. Their thinking CANNOT be turned off
+// and DOES count against the output cap; a first reading ("538 tokens on a
+// 300-token cap, end_turn") was the CLI silently continuing and stitching the
+// reply, which corrupted every short JSON answer in the first live smoke test.
+// lib/claude-subscription.js now adds THINKING_HEADROOM for these models (§1b).
 //
 // ── Before changing a value ───────────────────────────────────────────────────
 // The server's Claude Code CLI never self-updates (DISABLE_AUTOUPDATER=1) and
