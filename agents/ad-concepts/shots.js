@@ -54,7 +54,9 @@ export function buildTakePrompt({ sceneSpec, concept, product, brandKit }) {
   ].filter(Boolean).join('\n\n');
 }
 
-export async function runConceptTakes({ concept, prompt, render, verify, budget, takes = 3, retryTakes = 2 }) {
+// onTake runs as soon as a take is verified, so a throw on a LATER take (or later in the
+// concept) cannot lose a render that was already paid for and checked.
+export async function runConceptTakes({ concept, prompt, render, verify, budget, takes = 3, retryTakes = 2, onTake = null }) {
   const all = [];
   let budgetStopped = false;
   const review = concept.people !== 'none' ? ['anatomy'] : [];
@@ -64,7 +66,9 @@ export async function runConceptTakes({ concept, prompt, render, verify, budget,
       if (!budget.take()) { budgetStopped = true; return; }
       const buffer = await render(p);
       const { mediaType, proof } = await verify(buffer);
-      all.push({ n: all.length + 1, buffer, mediaType, proof, needsHumanReview: review });
+      const take = { n: all.length + 1, buffer, mediaType, proof, needsHumanReview: review };
+      all.push(take);
+      if (onTake) await onTake(take);
     }
   };
 

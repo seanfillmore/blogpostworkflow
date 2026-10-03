@@ -56,3 +56,13 @@ test('budget exhaustion stops takes and says so', async () => {
   assert.equal(r.takes.length, 2);
   assert.equal(r.budgetStopped, true);
 });
+
+test('onTake fires per verified take, before a later render can throw', async () => {
+  const seen = [];
+  let n = 0;
+  await assert.rejects(runConceptTakes({
+    concept, prompt: 'P', render: async () => { if (++n === 3) throw new Error('boom'); return JPEG; },
+    verify: mkVerify([true, true, true]), budget: createRenderBudget(30), onTake: (t) => seen.push(t.n),
+  }), /boom/);
+  assert.deepEqual(seen, [1, 2]);
+});
