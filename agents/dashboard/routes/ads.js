@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { readJsonBody } from '../lib/responses.js';
 import { LLM_MODELS } from '../../../config/llm-models.js';
+import { transcriptPrompt, actionInstructions, parseAction } from '../lib/chat-transcript.js';
 
 export default [
   {
@@ -91,25 +92,17 @@ export default [
         const now = () => new Date().toISOString();
         suggestion.chat.push({ role: 'user', content: message, ts: now() });
 
-        // Reconstruct Anthropic SDK message array from chat history
-        const messages = [];
+        // Rebuild the conversation as transcript entries. A stored tool_call +
+        // tool_result pair becomes one bracketed "action" note, so the model
+        // still sees what it already did.
+        const history = [];
         for (let i = 0; i < suggestion.chat.length; i++) {
           const entry = suggestion.chat[i];
-          if (entry.role === 'user') {
-            messages.push({ role: 'user', content: entry.content });
-          } else if (entry.role === 'assistant') {
-            const content = [{ type: 'text', text: entry.content }];
-            // Merge adjacent tool_call into this assistant message
-            if (i + 1 < suggestion.chat.length && suggestion.chat[i + 1].role === 'tool_call') {
-              const tc = suggestion.chat[i + 1];
-              content.push({ type: 'tool_use', id: tc.tool_use_id, name: tc.tool, input: tc.input });
-              i++; // skip the tool_call entry
-            }
-            messages.push({ role: 'assistant', content });
-          } else if (entry.role === 'tool_result') {
-            messages.push({ role: 'user', content: [{ type: 'tool_result', tool_use_id: entry.tool_use_id, content: entry.content }] });
+          if (entry.role === 'user' || entry.role === 'assistant') history.push({ role: entry.role, content: entry.content });
+          else if (entry.role === 'tool_call') {
+            const result = suggestion.chat[i + 1]?.role === 'tool_result' ? suggestion.chat[++i].content : '';
+            history.push({ role: 'action', content: `${entry.tool}${result ? ` (${result})` : ''}` });
           }
-          // tool_call entries are consumed above alongside their assistant message
         }
 
         // Build system prompt
@@ -146,7 +139,7 @@ export default [
           `- For update_suggestion, only provide fields valid for this suggestion type (${suggestion.type}).`,
         ].filter(Boolean).join('\n');
 
-        // Tool definitions
+        // Fields update_suggestion may change, per suggestion type
         const ALLOWED_UPDATE_FIELDS = {
           bid_adjust:    ['proposedCpcMicros'],
           keyword_add:   ['keyword', 'matchType'],
@@ -155,44 +148,19 @@ export default [
           keyword_pause: [],
         };
 
-        const tools = [
-          {
-            name: 'approve_suggestion',
-            description: 'Approve the suggestion as-is, setting its status to approved.',
-            input_schema: { type: 'object', properties: {}, required: [] },
-          },
-          {
-            name: 'reject_suggestion',
-            description: 'Reject the suggestion, setting its status to rejected.',
-            input_schema: { type: 'object', properties: {}, required: [] },
-          },
-          {
-            name: 'update_suggestion',
-            description: 'Modify specific fields of the proposed change and approve the suggestion. Only provide fields valid for this suggestion type.',
-            input_schema: {
-              type: 'object',
-              properties: {
-                proposedCpcMicros: { type: 'integer', description: 'New max CPC in micros (bid_adjust only)' },
-                keyword:           { type: 'string',  description: 'Keyword text (keyword_add / negative_add only)' },
-                matchType:         { type: 'string',  enum: ['EXACT', 'PHRASE', 'BROAD'], description: 'Match type (keyword_add / negative_add only)' },
-                suggestedCopy:     { type: 'string',  description: 'Replacement copy text (copy_rewrite only)' },
-              },
-              required: [],
-            },
-          },
-        ];
+        const allowedFields = ALLOWED_UPDATE_FIELDS[suggestion.type] || [];
 
-        // First Claude call (non-streaming) to detect tool use
-        let firstResponse;
+        // One call on the Claude subscription. The three actions
+        // (approve_suggestion, reject_suggestion, update_suggestion) used to be API
+        // tools; they are now a tagged JSON line that parseAction validates, because
+        // tool use cannot run on the subscription and the API key is invalid.
+        let response;
         try {
-          firstResponse = await ctx.anthropic.messages.create({
+          response = await ctx.anthropic.messages.create({
             model: LLM_MODELS.standard,
-            // Tool use goes over the direct API, where the 5.x models' always-on
-            // thinking counts against max_tokens; 4096 leaves room for both.
             max_tokens: 4096,
-            system: systemPrompt,
-            messages,
-            tools,
+            system: `${systemPrompt}\n\n${actionInstructions(suggestion.type, allowedFields)}`,
+            messages: [{ role: 'user', content: transcriptPrompt(history) }],
           });
         } catch (err) {
           res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
@@ -202,77 +170,42 @@ export default [
           return;
         }
 
-        // Extract text and tool use from first response
-        const textBlock   = firstResponse.content.find(b => b.type === 'text');
-        const toolBlock   = firstResponse.content.find(b => b.type === 'tool_use');
-        let finalText     = textBlock?.text || '';
+        const replyText = response.content.find(b => b.type === 'text')?.text || '';
+        const { text: spoken, action, rejected } = parseAction(replyText, allowedFields);
+        let finalText = spoken;
         let toolCallEntry = null;
         let toolResultEntry = null;
 
-        if (toolBlock) {
-          // Validate and execute tool
-          const allowedFields = ALLOWED_UPDATE_FIELDS[suggestion.type] || [];
+        if (action) {
           let toolSummary = '';
-
-          if (toolBlock.name === 'approve_suggestion') {
+          if (action.tool === 'approve_suggestion') {
             suggestion.status = 'approved';
             toolSummary = 'status: approved';
-          } else if (toolBlock.name === 'reject_suggestion') {
+          } else if (action.tool === 'reject_suggestion') {
             suggestion.status = 'rejected';
             toolSummary = 'status: rejected';
-          } else if (toolBlock.name === 'update_suggestion') {
-            const input = toolBlock.input || {};
+          } else if (action.tool === 'update_suggestion') {
             const changes = [];
             for (const field of allowedFields) {
-              if (input[field] !== undefined) {
+              if (action.input[field] !== undefined) {
                 const oldVal = suggestion.proposedChange[field];
-                suggestion.proposedChange[field] = input[field];
-                changes.push(`${field}: ${oldVal} → ${input[field]}`);
+                suggestion.proposedChange[field] = action.input[field];
+                changes.push(`${field}: ${oldVal} → ${action.input[field]}`);
               }
             }
             suggestion.status = 'approved';
             toolSummary = [...changes, 'status: approved'].join(' · ');
           }
-
-          toolCallEntry   = { role: 'tool_call',   tool: toolBlock.name, tool_use_id: toolBlock.id, input: toolBlock.input, ts: now() };
-          toolResultEntry = { role: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary, ts: now() };
-
-          // Second Claude call (streaming) to get narration after tool execution
-          const messagesWithTool = [
-            ...messages,
-            { role: 'assistant', content: firstResponse.content },
-            { role: 'user',      content: [{ type: 'tool_result', tool_use_id: toolBlock.id, content: toolSummary }] },
-          ];
-
-          res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-
-          try {
-            const stream = ctx.anthropic.messages.stream({
-              model: LLM_MODELS.standard,
-              max_tokens: 4096,
-              system: systemPrompt,
-              messages: messagesWithTool,
-              tools,
-            });
-            finalText = '';
-            for await (const event of stream) {
-              if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
-                const chunk = event.delta.text;
-                finalText += chunk;
-                res.write(`data: ${chunk.replace(/\n/g, '\\n')}\n\n`);
-              }
-            }
-          } catch (err) {
-            res.write(`data: Error: ${err.message.replace(/\n/g, '\\n')}\n\n`);
-            res.write('data: [DONE]\n\n');
-            res.end();
-            return;
-          }
-        } else {
-          // No tool use — write first response text as a single SSE chunk
-          res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
-          if (finalText) res.write(`data: ${finalText.replace(/\n/g, '\\n')}\n\n`);
+          const actionId = `act_${Date.now()}`;
+          toolCallEntry   = { role: 'tool_call',   tool: action.tool, tool_use_id: actionId, input: action.input, ts: now() };
+          toolResultEntry = { role: 'tool_result', tool_use_id: actionId, content: toolSummary, ts: now() };
+        } else if (rejected) {
+          console.error(`[ads-chat] action not applied: ${rejected}`);
+          finalText = `${finalText}\n\n(No change was made to the suggestion: ${rejected}. Please say what you want done and I'll try again.)`.trim();
         }
+
+        res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', 'Connection': 'keep-alive' });
+        if (finalText) res.write(`data: ${finalText.replace(/\n/g, '\\n')}\n\n`);
 
         // Persist to chat history and write file
         if (finalText) suggestion.chat.push({ role: 'assistant', content: finalText, ts: now() });
