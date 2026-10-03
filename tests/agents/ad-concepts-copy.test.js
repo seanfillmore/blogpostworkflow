@@ -141,3 +141,30 @@ test('golden thread fixed on the retry: nothing recorded', async () => {
   assert.equal(r.ok, true);
   assert.deepEqual(r.goldenThread, []);
 });
+
+// ── acceptance fix 2: rhetorical questions are not factual claims ────────────
+
+test('writeFlexibleCopy: a question marked factual with no sourceId is rejected, the retry restates the rule, factual:false passes', async () => {
+  const texts = ['Tried every lotion and still dry? Swap the soap first. One fat: organic virgin coconut oil.', 'Still dry? Swap the soap first. Coconut oil soap, one fat, small batches.'];
+  const base = { primaryTexts: texts, headlines: ['One fat. Real soap.', 'Coconut oil soap'] };
+  const anthropic = scripted(
+    reply({ ...base, claims: [{ zone: 'primaryText1', text: 'Tried every lotion and still dry?', factual: true }] }),
+    reply({ ...base, claims: [{ zone: 'primaryText1', text: 'Tried every lotion and still dry?', factual: false }, { zone: 'primaryText1', text: 'One fat', factual: true, sourceId: 'pdp', evidence: 'One fat: organic virgin coconut oil' }] }),
+  );
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept, concept], sourceIndex, pdpBody: '' });
+  assert.equal(r.ok, true, JSON.stringify(r.reasons));
+  const first = anthropic.calls[0].messages[0].content;
+  const second = anthropic.calls[1].messages[0].content;
+  assert.match(first, /questions, hooks and persuasion lines are "factual": false/i);
+  assert.match(second, /factual claim with no sourceId/);
+  assert.match(second.split('YOUR PREVIOUS ATTEMPT WAS REJECTED')[1], /questions, hooks and persuasion lines are "factual": false/i);
+});
+
+test('writeFlexibleCopy does not weaken the gate: a factual:true claim with no evidence still fails twice', async () => {
+  const base = { primaryTexts: ['One fat. Organic virgin coconut oil, turned into soap.', 'Swap the list for one fat. Coconut oil soap.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'] };
+  const bad = { ...base, claims: [{ zone: 'primaryText1', text: 'Dermatologist approved', factual: true, sourceId: 'pdp' }] };
+  const anthropic = scripted(reply(bad), reply(bad));
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept, concept], sourceIndex, pdpBody: '' });
+  assert.equal(r.ok, false);
+  assert.match(r.reasons.join(' '), /no evidence quote|unsourced/);
+});

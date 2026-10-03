@@ -81,8 +81,15 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) 
   if ('sub' in fields && words(fields.sub) > SUB_MAX_WORDS) reasons.push(`sub has ${words(fields.sub)} words (max ${SUB_MAX_WORDS})`);
 
   const list = claims || [];
-  const adStudioShaped = list.filter(c => c && c.evidence !== undefined);
-  const quoteShaped = list.filter(c => c && c.evidence === undefined);
+  // Ad Studio shaped = it carries Ad Studio's own fields. Keying on `evidence` alone sent a
+  // persuasion line ({ zone, text, factual: false }, no evidence: it needs none) down the
+  // overlay path, which treats every claim as factual, so the live run on 2026-10-03 had a
+  // rhetorical question rejected as "factual claim with no sourceId" twice. Overlay claims
+  // never carry these fields (parseOverlayCopy keeps only text + sourceId). A factual:true
+  // claim still needs sourceId AND a verbatim evidence quote: assertClaimsSourced is unchanged.
+  const isAdStudioShaped = (c) => c.evidence !== undefined || 'factual' in c || 'zone' in c;
+  const adStudioShaped = list.filter(c => c && isAdStudioShaped(c));
+  const quoteShaped = list.filter(c => c && !isAdStudioShaped(c));
   if (quoteShaped.length) {
     const r = checkClaimsSourced(quoteShaped, sourceIndex);
     if (!r.ok) reasons.push(...r.reasons);
@@ -117,6 +124,13 @@ export async function writeOverlayCopy({ anthropic, model, concept, product, pdp
  */
 export const FLEXIBLE_OVERLAY_NOTE = `IMPORTANT, OVERRIDING THE LINE ABOVE ABOUT THE IMAGES: these images DO carry overlay text. Each one shows the on-image headline quoted next to it in the list of images. The primary texts and headlines you write run around those images, so do not repeat an on-image headline verbatim and never contradict one.`;
 
+/**
+ * Appended to the flexible prompt and restated in any retry that hit an unsourced claim. The
+ * model marked rhetorical questions ("Tried every lotion and still dry?") factual:true with no
+ * sourceId on the first live run; the gate was right to reject that, the prompt never said so.
+ */
+export const FLEXIBLE_CLAIMS_RULE = `CLAIMS RULE: questions, hooks and persuasion lines are "factual": false and need no sourceId or evidence. Only a statement of fact about the product (what it contains, how it is made, what it costs) is "factual": true, and every factual:true claim MUST carry a sourceId and an "evidence" string that is an exact, verbatim quote copied from that source.`;
+
 export async function writeFlexibleCopy({ anthropic, model, product, concepts, sourceIndex, pdpBody, persona = null, reviews = [], competitorNames = [] }) {
   const pseudo = concepts.map(c => ({
     format: {
@@ -127,7 +141,7 @@ export async function writeFlexibleCopy({ anthropic, model, product, concepts, s
   }));
   // A missing priceLabel used to reach the prompt as the literal word "undefined".
   const priced = { ...product, priceLabel: product.priceLabel || 'price on the product page' };
-  const base = `${buildFlexibleCopyPrompt({ product: priced, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews })}\n\n${FLEXIBLE_OVERLAY_NOTE}`;
+  const base = `${buildFlexibleCopyPrompt({ product: priced, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews })}\n\n${FLEXIBLE_OVERLAY_NOTE}\n\n${FLEXIBLE_CLAIMS_RULE}`;
 
   // Golden thread on the PRIMARY TEXTS, advisory, exactly as Ad Studio's writeFlexibleManifest:
   // it SHARES the one regeneration (never a third call), the second attempt ships whatever it
@@ -158,6 +172,7 @@ export async function writeFlexibleCopy({ anthropic, model, product, concepts, s
     }
     lastReasons = gate.reasons;
     const parts = [...gate.reasons];
+    if (gate.reasons.some(r => /unsourced claim|no sourceId|no evidence quote|evidence not found/.test(r))) parts.push(FLEXIBLE_CLAIMS_RULE);
     if (threads.length) parts.push(`${goldenThreadRetryNote(threads[0].r)}\nThe offending primary text was: "${threads[0].t}"`);
     note = parts.join('\n');
   }
