@@ -317,3 +317,9 @@ test('occlusion fails on band, passes on caption: the caption final is chosen an
   assert.equal(p1.critique.ok, true);
   assert.deepEqual(p1.attempts.map(a => [a.treatment, a.occlusion?.ok]), [['band', false], ['caption', true]]);
 });
+
+test('buildEvidenceProduct carries labelInk from the manifest entry (the take prompt states it)', () => {
+  const studio = { buildLabelStrings: () => ['real SKIN CARE'], resolveBadgeStrings: () => [] };
+  const p = buildEvidenceProduct({ args: { product: 'coconut-soap', variant: null }, manifestEntry: { unitCount: 1, labelInk: 'black' }, catalogEntry: { title: 'Soap' }, studio });
+  assert.equal(p.labelInk, 'black');
+});

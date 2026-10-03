@@ -51,6 +51,10 @@ export function buildTakePrompt({ sceneSpec, concept, product, brandKit }) {
     unitBlock(product.unitCount),
     palette ? `Brand palette, for any colour accents: ${palette}.` : '',
     buildProductFidelityBlock(product, { allowPeople: concept.people !== 'none' }),
+    // Code-owned, beside the product block. On the first live run two concepts failed
+    // verification because the render printed the label type green (the tea tree illustration
+    // is green; the real type is black), and nothing in the prompt said otherwise.
+    product.labelInk ? `All printed type on our product's label is ${product.labelInk} ink; only the botanical illustration is in colour.` : '',
   ].filter(Boolean).join('\n\n');
 }
 

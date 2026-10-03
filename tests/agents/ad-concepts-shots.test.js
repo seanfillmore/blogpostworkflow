@@ -66,3 +66,10 @@ test('onTake fires per verified take, before a later render can throw', async ()
   }), /boom/);
   assert.deepEqual(seen, [1, 2]);
 });
+
+test('take prompt states the label ink when the product has one, and says nothing when it does not', () => {
+  const p = buildTakePrompt({ sceneSpec: 'A kitchen.', concept, product: { ...product, labelInk: 'black' }, brandKit: {} });
+  assert.match(p, /All printed type on our product's label is black ink; only the botanical illustration is in colour\./);
+  const none = buildTakePrompt({ sceneSpec: 'A kitchen.', concept, product, brandKit: {} });
+  assert.doesNotMatch(none, /printed type on our product's label is/);
+});
