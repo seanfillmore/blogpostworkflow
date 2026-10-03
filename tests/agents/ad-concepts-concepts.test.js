@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import {
   normalizeConcept, parseConceptsResponse, preGate, parseJudgeResponse, pickConcepts, nextReplacement,
-  buildConceptPrompt, FAMILIES,
+  buildConceptPrompt, FAMILIES, checkClaimsSourced,
 } from '../../agents/ad-concepts/concepts.js';
 
 const raw = (o = {}) => ({
@@ -82,4 +82,36 @@ test('the concept prompt carries the rules and the operator ideas', () => {
     assert.match(p, re);
   }
   for (const f of FAMILIES) assert.match(p, new RegExp(f));
+});
+
+test('prompt demands verbatim claim quotes', () => {
+  const p = buildConceptPrompt({ product: { title: 'T', handle: 't' }, catalogEntry: {}, pdpBody: '', brandKit: {}, persona: null, reviews: [], tactics: '', requested: [], count: 3, sourceIds: ['pdp'] });
+  assert.match(p, /EXACT contiguous quote/);
+});
+
+test('claim text is screened for health claims', () => {
+  const idx = { ...sourceIndex, reviews: 'I tried prescription strength lotions and nothing worked.' };
+  const r = preGate(normalizeConcept(raw({ claims: [{ text: 'tried prescription strength lotions', sourceId: 'reviews' }] }), 0), { ...ctx, sourceIndex: idx });
+  assert.equal(r.ok, false);
+  assert.match(r.reasons.join(' '), /health/);
+});
+
+test('competitor match is case-sensitive and spares our own family wording', () => {
+  assert.equal(preGate(normalizeConcept(raw({ picture: 'a native-feed screenshot of a soap' }), 0), ctx).ok, true);
+  assert.equal(preGate(normalizeConcept(raw({ picture: 'a native look, shot on a phone' }), 0), ctx).ok, true);
+  assert.equal(preGate(normalizeConcept(raw({ picture: 'A Native deodorant stick in an evidence bag' }), 0), ctx).ok, false);
+});
+
+test('overflow requested concepts head the runners-up', () => {
+  const mk = (id, requested) => ({ ...normalizeConcept(raw({ id, family: id }), 0), total: 1, requested });
+  const { picked, runnersUp } = pickConcepts([mk('r1', true), mk('r2', true), mk('x', false)], { slots: 1 });
+  assert.deepEqual(picked.map(c => c.id), ['r1']);
+  assert.equal(runnersUp[0].id, 'r2');
+});
+
+test('checkClaimsSourced is directly usable', () => {
+  assert.deepEqual(checkClaimsSourced([{ text: 'one fat', sourceId: 'pdp' }], sourceIndex), { ok: true, reasons: [] });
+  const bad = checkClaimsSourced([{ text: 'made on the moon', sourceId: 'pdp' }], sourceIndex);
+  assert.equal(bad.ok, false);
+  assert.match(bad.reasons[0], /unsourced claim/);
 });

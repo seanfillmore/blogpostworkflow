@@ -3,7 +3,7 @@
 // Stage 1 of the concept-first pipeline (spec: docs/superpowers/specs/2026-10-03-ad-concepts-design.md).
 // Pure: prompt builders, parsers, the free pre-gate, and the auto-pick. No I/O, no model calls.
 import { findHealthClaims } from '../ad-studio/health-claims.js';
-import { assertClaimsSourced, normalizeForMatch } from '../ad-studio/claims.js';
+import { assertClaimsSourced, normalizeForMatch, sourceText } from '../ad-studio/claims.js';
 import { findProductCategoryMisnomers } from '../../lib/product-category-terms.js';
 
 export const FAMILIES = Object.freeze(['scale-gag', 'genre-parody', 'native-screenshot', 'product-art', 'identity-comedy']);
@@ -99,14 +99,14 @@ RULES. A concept that breaks one is discarded before anyone sees it:
   - Jabs at a generic CATEGORY are fine ("your soap's ingredient list"). Never a named competitor, its brand, colours or packaging.
   - Real Skin Care sells a DEODORANT, never an antiperspirant. Never describe our product with the word.
   - No before/after imagery of skin, a body, a face, an underarm or teeth, and no claim to treat, heal or cure anything. This is a cosmetic.
-  - Every fact a concept leans on goes in "claims" with a sourceId from: ${sourceIds.join(', ')}. Invent nothing.
+  - Every fact a concept leans on goes in "claims": "text" must be an EXACT contiguous quote copied from the source named by "sourceId" (letter for letter, no paraphrase), and sourceId is one of: ${sourceIds.join(', ')}. Invent nothing.
   - No em dash anywhere in any field.
   - Text in the scene is either none, or "illegible-print" (texture that reads as print from a distance with no readable characters). Overlay type is set later, in code, in the typeBand you name.
 
 EVIDENCE
 PDP:
 ${String(pdpBody || '').slice(0, 4000)}
-Catalog: ${JSON.stringify(catalogEntry || {}).slice(0, 1500)}
+Catalog: ${sourceText(catalogEntry || {}).slice(0, 1500)}
 Brand: ${JSON.stringify({ voice: brandKit?.voice, palette: brandKit?.palette_hexes }).slice(0, 800)}
 Persona: ${persona ? JSON.stringify(persona).slice(0, 2000) : 'none'}
 Customer words:
@@ -119,25 +119,41 @@ Return ONLY this JSON:
 {"concepts":[{"id":"kebab-slug","title":"","picture":"one sentence describing the image","anchor":"","twist":"","family":"","productRole":"","sceneText":"none|illegible-print","people":"none|hands|face","typeBand":"top|bottom","awareness":"unaware|problem|solution|product|most-aware","headlineIdea":"","claims":[{"text":"","sourceId":""}],"requested":false}]}`;
 }
 
+const NATIVE_NOT_A_BRAND = '(?![-\\u2010-\\u2015]|\\s+(?:feed|ads?|format|look|screenshot|post)\\b)';
+
+// Competitor names are proper nouns: case-SENSITIVE on word boundaries. "Native" is also an
+// ordinary word and one of our own family names ("native-screenshot"), so it is not counted
+// when a hyphen or a format word follows it.
+function mentionsCompetitor(text, name) {
+  if (!name) return false;
+  const esc = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const tail = name === 'Native' ? NATIVE_NOT_A_BRAND : '';
+  return new RegExp(`(?<![\\w])${esc}(?![\\w])${tail}`).test(text);
+}
+
+/** Claim text is its own evidence quote; the index is normalized to match. */
+export function checkClaimsSourced(claims, sourceIndex) {
+  const index = Object.fromEntries(Object.entries(sourceIndex || {}).map(([k, v]) => [k, normalizeForMatch(sourceText(v))]));
+  const gateClaims = (claims || []).map(c => ({ zone: 'concept', text: c.text, factual: true, sourceId: c.sourceId, evidence: c.text }));
+  try { assertClaimsSourced(gateClaims, index); } catch (e) {
+    return { ok: false, reasons: [`unsourced claim: ${String(e.message).split('\n').slice(1).join(' ').trim()}`] };
+  }
+  return { ok: true, reasons: [] };
+}
+
 export function preGate(concept, { sourceIndex, competitorNames = [] }) {
   const reasons = [];
-  const text = [concept.title, concept.picture, concept.anchor, concept.twist, concept.productRole, concept.headlineIdea].join(' ');
+  const text = [concept.title, concept.picture, concept.anchor, concept.twist, concept.productRole, concept.headlineIdea, ...concept.claims.map(c => c.text)].join(' ');
   const health = findHealthClaims(text);
   if (health.length) reasons.push(`health claim: ${health.map(h => `"${h.match}" (${h.category})`).join(', ')}`);
   const misnomer = findProductCategoryMisnomers(text);
   if (misnomer.length) reasons.push(`product category: ${misnomer.map(m => m.match).join(', ')}`);
-  const lower = text.toLowerCase();
-  const named = competitorNames.filter(n => n && new RegExp(`\\b${n.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`).test(lower));
+  const named = competitorNames.filter(n => mentionsCompetitor(text, n));
   if (named.length) reasons.push(`names a competitor: ${named.join(', ')}`);
   if (BEFORE_AFTER_RE.test(text)) reasons.push('before/after imagery of skin or body');
-  if (/—/.test(text)) reasons.push('em dash');
-  if (concept.claims.length) {
-    // assertClaimsSourced wants factual claims carrying an evidence quote, against a
-    // normalized haystack. A concept claim's text IS the quoted span, so it is its own evidence.
-    const index = Object.fromEntries(Object.entries(sourceIndex || {}).map(([k, v]) => [k, normalizeForMatch(typeof v === 'string' ? v : JSON.stringify(v))]));
-    const gateClaims = concept.claims.map(c => ({ zone: 'concept', text: c.text, factual: true, sourceId: c.sourceId, evidence: c.text }));
-    try { assertClaimsSourced(gateClaims, index); } catch (e) { reasons.push(`unsourced claim: ${String(e.message).split('\n').slice(1).join(' ').trim()}`); }
-  }
+  if (/\u2014/.test(text)) reasons.push('em dash');
+  const claimCheck = checkClaimsSourced(concept.claims, sourceIndex);
+  if (!claimCheck.ok) reasons.push(...claimCheck.reasons);
   return { ok: reasons.length === 0, reasons };
 }
 
@@ -173,13 +189,14 @@ export function parseJudgeResponse(text, n) {
 export function pickConcepts(scored, { slots = 3 } = {}) {
   const picked = [];
   const used = new Set();
+  const overflow = [];
   for (const c of scored.filter(c => c.requested)) {
-    if (picked.length >= slots) break;
+    if (picked.length >= slots) { overflow.push(c); continue; }
     picked.push(c);
     used.add(c.family);
   }
   const rest = scored.filter(c => !c.requested).sort((a, b) => (b.total ?? 0) - (a.total ?? 0));
-  const runnersUp = [];
+  const runnersUp = [...overflow];
   for (const c of rest) {
     if (picked.length < slots && !used.has(c.family)) { picked.push(c); used.add(c.family); }
     else runnersUp.push(c);
