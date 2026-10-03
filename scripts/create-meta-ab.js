@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '../lib/anthropic.js';
 import { getMetaPath, requirePostMeta } from '../lib/posts.js';
 import { upsertMetafield } from '../lib/shopify.js';
+import { LLM_MODELS } from '../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -121,7 +122,7 @@ Requirements:
 Reply with ONLY the title tag text, no quotes, no explanation.`;
 
   const msg = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 100,
     messages: [{ role: 'user', content: prompt }],
   });

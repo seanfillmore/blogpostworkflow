@@ -21,6 +21,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '../../lib/anthropic.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -149,7 +150,7 @@ Rewrite the ad copy to comply with Google Ads policies while preserving the orig
 }`;
 
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 1024,
     messages: [{ role: 'user', content: prompt }],
   });

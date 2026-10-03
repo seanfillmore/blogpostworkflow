@@ -53,13 +53,14 @@ import {
   renderPersonasMarkdown,
   renderVoiceOfCustomerMarkdown,
 } from '../../lib/voice-of-customer.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const REPORT_DIR = join('data', 'reports', 'voice-of-customer');
 const CONTEXT_DIR = join('data', 'context');
 
-const MODEL = 'claude-opus-5';
+const MODEL = LLM_MODELS.flagship;
 
 /**
  * Where the objections actually live — our own reviews are 4.68 stars.

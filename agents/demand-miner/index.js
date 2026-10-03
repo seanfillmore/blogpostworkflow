@@ -53,6 +53,7 @@ import {
   renderDemandQuestionsMarkdown,
   filterLeaksToSkinClusterDetailed,
 } from '../../lib/demand-questions.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -72,7 +73,7 @@ const REPORT_DIR = join('data', 'reports', 'demand-miner');
 // each question's own `seed_origin` rather than let them assume every cluster listed
 // here applies to every question.
 const CLUSTERS = SKIN_LEAK_CLUSTERS;
-const MODEL = 'claude-haiku-4-5-20251001';
+const MODEL = LLM_MODELS.fast;
 
 // ── .env loader (same pattern as the other agents) ───────────────────────────
 

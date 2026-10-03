@@ -98,7 +98,7 @@ assert.ok(
 
 // ── The verify model is Sonnet, not Haiku ───────────────────────────────────────
 // Haiku auto-corrected "TTHAN"/"FORMLA" into clean text and passed the ad on attempt 1.
-assert.equal(CREATIVE_MODELS.adStudio.verify, 'claude-sonnet-5');
+assert.equal(CREATIVE_MODELS.adStudio.verify, 'claude-sonnet-5-5');
 
 // ── parseVerifyResponse ─────────────────────────────────────────────────────────
 // Handles fenced JSON; defaults the optional fields; REQUIRES checks.

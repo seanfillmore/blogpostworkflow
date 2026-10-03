@@ -37,6 +37,7 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
 import { injectLink } from '../../lib/internal-link-inject.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 // Suggestion-call parse failures for this run. Collected rather than thrown: the
 // agent loops over many articles and one bad response must not abandon the batch,
@@ -166,7 +167,7 @@ async function findLinkOpportunities(article, targetUrl, targetKeyword, targetTi
   const typeLabel = type === 'collection' ? 'product collection page' : 'product page';
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 1024,
     messages: [{
       role: 'user',

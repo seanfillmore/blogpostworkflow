@@ -35,6 +35,7 @@ import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getReferringDomains } from '../../lib/dataforseo.js';
 import { classifySource } from '../../lib/pr-targets.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -161,7 +162,7 @@ For each category, list the top domains that fit it, and give ONE specific outre
 Format as Markdown. Be specific and direct — skip generic advice.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   });

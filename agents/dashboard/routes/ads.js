@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { readJsonBody } from '../lib/responses.js';
+import { LLM_MODELS } from '../../../config/llm-models.js';
 
 export default [
   {
@@ -185,8 +186,10 @@ export default [
         let firstResponse;
         try {
           firstResponse = await ctx.anthropic.messages.create({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 1024,
+            model: LLM_MODELS.standard,
+            // Tool use goes over the direct API, where the 5.x models' always-on
+            // thinking counts against max_tokens; 4096 leaves room for both.
+            max_tokens: 4096,
             system: systemPrompt,
             messages,
             tools,
@@ -245,8 +248,8 @@ export default [
 
           try {
             const stream = ctx.anthropic.messages.stream({
-              model: 'claude-sonnet-4-6',
-              max_tokens: 512,
+              model: LLM_MODELS.standard,
+              max_tokens: 4096,
               system: systemPrompt,
               messages: messagesWithTool,
               tools,

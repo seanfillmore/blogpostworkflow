@@ -186,7 +186,7 @@ the failure the structure exists to avoid.
    | `fact-hook` | one arresting figure dominating the upper half, caption beneath, product small in the lower right like a footnote | `productProminent: false` — the number is the hero and the label is deliberately unreadable, so the verify gate must not demand it back. `headline` carries the **figure itself**. The brief requires the figure be quoted from a named source, never invented, and repeats `problem-aware`'s ban on depicting a skin condition. Studio, not scene: a giant numeral needs a flat field, and a counter would put texture exactly where the largest type lands. |
    | `spec-panel` | restrained headline, a vertical list of plain factual rows down one half, product hero opposite with its label legible | `productProminent: true` — a transparency pitch whose own label cannot be read defeats itself. `zoneCapacity: { specRows: 5 }`. Every row must be a plain verifiable fact, never a benefit promise or a claim of effect; the most-aware reader has already decided and wants facts to act on. |
 
-2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
+2. **Copy** (`copy.js`, model: `LLM_MODELS.flagship`, `claude-opus-5-5`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
 3. **Health-claim gate** (`health-claims.js`, `assertNoHealthClaims`) — runs on every zone
@@ -228,7 +228,7 @@ the failure the structure exists to avoid.
    of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
    1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
    is how a wrong assumption ships without anyone deciding it.
-6. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
+6. **Verify** (`verify.js`, model: `LLM_MODELS.standard`, `claude-sonnet-5-5`) — five checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
      exact character sequence appear, yes or no, and what does that region actually
@@ -374,7 +374,7 @@ the failure the structure exists to avoid.
    into clean text and passed a corrupted ad. This is one vision call guarding a ~$0.13
    render that nobody else reads before it goes live; do not drop it back to save
    pennies on the cheapest call in the pipeline.
-6. **Layout critique** (`critique.js`, model: `claude-sonnet-5`) — a **second, separate**
+6. **Layout critique** (`critique.js`, model: `LLM_MODELS.standard`, `claude-sonnet-5-5`) — a **second, separate**
    vision call, run only on a frame that already passed stage 5, and only on **finished
    frames** (a plate carries no typeset copy, so neither check has an answerable question
    and the call is skipped rather than paid for). Split in two on purpose:

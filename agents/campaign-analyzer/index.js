@@ -37,6 +37,7 @@ import {
   measureCvr, renderMeasuredCvrSection, breakEvenCpcAtMeasured, CvrMeasurementError, PAGE_TYPE_LABELS, pct,
 } from './lib/measured-cvr.js';
 import { buildPromptContext } from './lib/context.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 export const ROOT = join(__dirname, '..', '..');
@@ -50,8 +51,8 @@ export const ROOT = join(__dirname, '..', '..');
  * responseText(): the first content block can be a thinking block, and the old
  * `content[0].text` read would have returned '' and thrown a JSON parse error.
  */
-export const ANALYZER_MODEL = 'claude-opus-5';
-export const REVIEW_MODEL = 'claude-sonnet-5';
+export const ANALYZER_MODEL = LLM_MODELS.flagship;
+export const REVIEW_MODEL = LLM_MODELS.standard;
 
 /** Output budget. Thinking counts against it, so 8192 is no longer enough headroom. */
 const ANALYZER_MAX_TOKENS = 16000;

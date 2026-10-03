@@ -34,6 +34,7 @@
 import { readFileSync, readdirSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { LLM_MODELS } from '../config/llm-models.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 try {
@@ -140,7 +141,7 @@ async function draftAnswers(handle, product, questions, pdp) {
   const maxTokens = Math.min(16000, 600 + questions.length * 200);
   const generate = async (constraint) => {
     const msg = await client.messages.create({
-      model: 'claude-sonnet-5',
+      model: LLM_MODELS.standard,
       max_tokens: maxTokens,
       messages: [{
         role: 'user',

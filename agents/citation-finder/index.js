@@ -28,6 +28,7 @@ import { searchWeb } from '../../lib/tavily.js';
 import { assertHtmlComplete, externalLinksAdded } from '../../lib/html-output-guards.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const countLinks = (html) => (html.match(/<a\s/gi) || []).length;
 const stripFences = (t) => t.replace(/^```(?:html)?\s*/i, '').replace(/```\s*$/i, '').trim();
@@ -50,7 +51,7 @@ const arg = (n) => { const i = process.argv.indexOf(n); return i !== -1 ? proces
 async function sourceSupportsClaim(anthropic, claim, cand) {
   try {
     const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: LLM_MODELS.standard,
       max_tokens: 200,
       messages: [{
         role: 'user',
@@ -96,7 +97,7 @@ ORIGINAL POST HTML:
 ${html}`;
 
   const res = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   });

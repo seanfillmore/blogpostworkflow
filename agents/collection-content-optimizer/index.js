@@ -57,6 +57,7 @@ import {
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -257,7 +258,7 @@ async function generateCollectionContent(collection, topQueries, gscData, relate
     : `No GSC data yet for this page.`;
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{
       role: 'user',

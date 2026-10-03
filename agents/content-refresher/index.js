@@ -41,6 +41,7 @@ import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -205,7 +206,7 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
   } catch { /* ignore */ }
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{
       role: 'user',
@@ -307,7 +308,7 @@ async function summarizeChanges(originalHtml, refreshedHtml, keyword) {
   const refreshedText = refreshedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -523,7 +524,7 @@ async function main() {
         process.stdout.write(`    Intro failed answer-first (${afCheck.reasons.join('; ')}) — repairing... `);
         try {
           const repairMsg = await client.messages.create({
-            model: 'claude-sonnet-4-6',
+            model: LLM_MODELS.standard,
             max_tokens: 300,
             messages: [{
               role: 'user',

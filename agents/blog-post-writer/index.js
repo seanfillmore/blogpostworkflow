@@ -28,6 +28,7 @@ import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs,
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 /**
  * Wall-clock ceiling for the one streaming call in this agent. Measured 2026-08-23: a full
@@ -613,7 +614,7 @@ async function writePost(briefPath) {
     const dl = streamDeadline(BLOG_STREAM_DEADLINE_MS, 'blog-post-writer');
     try {
       const stream = client.messages.stream({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 8000,
         system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
         messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
@@ -693,7 +694,7 @@ async function writePost(briefPath) {
     try {
       const badIntro = extractFirstBodyParagraph(html);
       const repairMsg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 300,
         messages: [{
           role: 'user',

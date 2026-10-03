@@ -42,6 +42,7 @@ import {
   buildDuplicateIndex, committedTopics, decideProposal, duplicateDecisions, lookupDuplicate,
   renderWithheldLines, withheldDigest, evidenceLine, isFlagged as isDuplicateFlagged,
 } from '../../lib/duplicate-flag.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 // Re-export so existing importers of these from content-strategist keep working.
 export { isInProductScope, PRODUCT_SCOPE_TERMS };
 
@@ -881,7 +882,7 @@ The content-researcher agent is called with: node agents/content-researcher/inde
 Be specific with dates. Use realistic weekly batches of 2–3 posts.`;
 
   const calendarResponse = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{ role: 'user', content: calendarPrompt }],
   });
@@ -907,7 +908,7 @@ CONTENT CALENDAR:
 ${calendarMd}`;
 
   const extractResponse = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 2048,
     messages: [{ role: 'user', content: extractPrompt }],
   });

@@ -39,13 +39,14 @@ import {
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
   withQuotedThread, senderLabel,
 } from '../../lib/creator-outreach.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const STATE_PATH = join(ROOT, 'data', 'creator-outreach', 'state.json');
 const CONFIG_PATH = join(ROOT, 'config', 'creator-outreach.json');
 const LOCK_PATH = join(ROOT, 'data', 'creator-outreach', '.lock');
 const INBOX_LOOKBACK_DAYS = 14;
-const REPLY_MODEL = 'claude-sonnet-5-5';
+const REPLY_MODEL = LLM_MODELS.standard;
 /** Message-IDs kept for a References header; Gmail threads on any one of them. */
 const MAX_THREAD_REFS = 20;
 

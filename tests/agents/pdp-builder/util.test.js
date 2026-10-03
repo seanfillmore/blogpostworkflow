@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CLAUDE_MODEL, gitSha, parseClaudeJson, MAX_PARSE_RETRIES } from '../../../agents/pdp-builder/lib/util.js';
 
-test('CLAUDE_MODEL: pinned to claude-opus-4-7', () => {
-  assert.equal(CLAUDE_MODEL, 'claude-opus-4-7');
+test('CLAUDE_MODEL: the flagship tier', () => {
+  assert.equal(CLAUDE_MODEL, 'claude-opus-5-5');
 });
 
 test('gitSha: returns a non-empty string', () => {

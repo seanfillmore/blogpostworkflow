@@ -18,7 +18,7 @@ assert.ok(CREATIVE_MODELS.adStudio.copy.includes('opus'), 'copy must stay on the
 // bottle said "4 FL oz / 118ml" on an 8 fl. oz. product, auto-correcting both on the way
 // out. It is one vision call guarding a ~$0.13 render that nothing else reads before it
 // goes live. Pinned to the exact ID so a downgrade has to be a deliberate edit here.
-assert.equal(CREATIVE_MODELS.adStudio.verify, 'claude-sonnet-5', 'verify must not go back to Haiku');
+assert.equal(CREATIVE_MODELS.adStudio.verify, 'claude-sonnet-5-5', 'verify must not go back to Haiku');
 assert.ok(CREATIVE_MODELS.adStudio.angle.includes('opus'), 'angle selection stays on the flagship');
 
 // No preview IDs anywhere in the model config or the dashboard picker.

@@ -42,6 +42,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'seo-reporter');
 
 import { listAllSlugs, getEditorReportPath } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
@@ -261,7 +262,7 @@ Be specific. Use the real numbers from the data. If data is unavailable, say so 
 Keep the tone direct and analytical — this is an internal performance document.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{ role: 'user', content: promptMsg }],
   });

@@ -81,6 +81,7 @@ import {
   loadClusterHold, holdDecision, renderHoldLines, dedupeHeld, holdBanner,
   renderDisagreementLines, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
@@ -258,7 +259,7 @@ Return ONLY a JSON array, no other text:
 ]`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8000,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -338,7 +339,7 @@ Rules:
 - Output ONLY the merged HTML body content, nothing else`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     // The winner's own body is the floor here — a merge is the winner plus
     // selected loser sections, so the ceiling must clear the input, not sit at a
     // fixed guess. The old flat 8000 was below the MEDIAN article's own token
