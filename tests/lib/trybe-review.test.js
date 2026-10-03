@@ -108,12 +108,14 @@ test('summarizePerformance totals the roster and lists only active creators', ()
   assert.deepEqual(perf.window, { start: '2026-08-23', end: '2026-09-21' });
 });
 
-test('renderDigest separates unchecked from reviewable and says when it is a dry run', () => {
+test('renderDigest presents every waiting submission and says when it is a dry run', () => {
   const plan = planReview([said('this cured my eczema', { id: 'a', trybe_id: 'aaa' }), sub({ id: 'b', trybe_id: 'bbb' }), said('so soft', { id: 'c', trybe_id: 'ccc' })]);
   const dry = renderDigest({ plan, perf: summarizePerformance([]), apply: false });
   assert.match(dry.body, /DRY RUN/);
-  assert.match(dry.body, /Not checked, review by eye/);
-  assert.match(dry.body, /Ready for your review/);
+  assert.match(dry.body, /Awaiting your response \(2\)/);
+  assert.match(dry.body, /bbb[\s\S]*Spoken words: not checked/);
+  assert.match(dry.body, /ccc[\s\S]*Spoken words: no claim found/);
+  assert.match(dry.body, /Visual: not reviewed this run/);
   assert.match(dry.subject, /2 awaiting review · 1 claim revision/);
 
   const failed = [{ ...plan.revise[0], error: 'HTTP 500' }];
@@ -121,4 +123,28 @@ test('renderDigest separates unchecked from reviewable and says when it is a dry
   assert.ok(!/DRY RUN/.test(live.body));
   assert.match(live.subject, /1 FAILED/);
   assert.match(live.body, /could not be read/);
+});
+
+test('renderDigest shows each visual verdict, its issues, the note and a preview', () => {
+  const still = sub({ id: 's', trybe_id: 'still1', media_type: 'image', thumbnail_url: 'https://cdn.example/t.jpg', created_at: '2026-10-03T00:00:00Z' });
+  const vid = said('so soft', { id: 'v', trybe_id: 'vid1', created_at: '2026-10-01T00:00:00Z' });
+  const failedOne = sub({ id: 'f', trybe_id: 'fail1', media_type: 'image', created_at: '2026-10-02T00:00:00Z' });
+  const later = sub({ id: 'l', trybe_id: 'later1', media_type: 'image', created_at: '2026-10-04T00:00:00Z' });
+  const plan = planReview([still, vid, failedOne, later]);
+  const byId = Object.fromEntries([...plan.review, ...plan.unchecked].map((r) => [r.submission.id, r]));
+  byId.s.visual = { verdict: { verdict: 'needs_changes', summary: 'Ingredient card is wrong.', issues: [{ type: 'ingredients', detail: 'lists essential oils instead of emulsifying wax' }], overlay_text: ['Only 6 Ingredients.'], creator_note: 'Please fix the card.', references: 2, frame: 'image' } };
+  byId.v.visual = { verdict: { verdict: 'looks_ready', summary: 'Matches the bottle.', issues: [], overlay_text: [], creator_note: '', references: 0, frame: 'thumbnail' } };
+  byId.f.visual = { error: 'image HTTP 403' };
+  const d = renderDigest({ plan, perf: null, apply: true, visualEnabled: true, visualOverCap: [byId.l] });
+  assert.match(d.body, /still1[\s\S]*NEEDS CHANGES\. Ingredient card is wrong\./);
+  assert.match(d.body, /· ingredients: lists essential oils/);
+  assert.match(d.body, /Suggested note: "Please fix the card\."/);
+  assert.match(d.body, /Image text: "Only 6 Ingredients\."/);
+  assert.match(d.body, /Preview: https:\/\/cdn\.example\/t\.jpg/);
+  assert.match(d.body, /vid1[\s\S]*Visual \(thumbnail frame only\): LOOKS READY/);
+  assert.match(d.body, /no product photo could be matched/);
+  assert.match(d.body, /fail1[\s\S]*review FAILED \(image HTTP 403\)/);
+  assert.match(d.body, /later1[\s\S]*over this run's review cap/);
+  assert.ok(d.body.indexOf('vid1') < d.body.indexOf('fail1') && d.body.indexOf('fail1') < d.body.indexOf('still1'), 'oldest first');
+  assert.match(d.subject, /4 awaiting review \(1 look ready, 1 need changes\)/);
 });
