@@ -18,7 +18,7 @@ node agents/ad-concepts/index.js --product <handle> [--variant <name>] \
 ```
 evidence -> generate concepts -> pre-gate -> judge -> pick 3 (distinct families)
   -> per concept: shot spec -> 3 takes (+2 retry) -> verifyImage gate
-       -> overlay copy (gated) -> typeset in code -> critique
+       -> overlay copy (gated) -> typeset in code -> critique -> occlusion check
        -> on failure, next runner-up from an unused family
   -> flexible copy (2 primary texts, 2 headlines, gated) -> flexible-ad.json / .md
 ```
@@ -36,6 +36,14 @@ evidence -> generate concepts -> pre-gate -> judge -> pick 3 (distinct families)
 A take is written to disk the moment it is verified. A throw inside one concept (a render error, a cut-off model reply, typesetting) records `failed: <message>` for that concept and replaces it; the run carries on. Anything that escapes still writes `run.json` with `error` and archives the run before rethrowing. The run is archived to the main checkout on success, on a thrown error and on SIGINT/SIGTERM.
 
 Copy gates: no em dash, no health claim, deodorant never antiperspirant, no named competitor (`config/competitors.json`), every fact sourced verbatim. Reviews carrying health-claim language are withheld up front (`selectQuotableReviews`). Flexible primary texts get Ad Studio's advisory golden-thread check (recorded as `goldenThread` in `flexible-ad.json`).
+
+## Occlusion check
+
+`critiqueArtifact` judges the TYPE, never what the type sits on. The first live run (2026-10-03) passed, at score 4, a caption final whose sand strip covered the top of the soap bar and clipped its logo. So every final whose type passed critique (and did not overflow) gets one more vision call, `occlusion.js`'s `checkOcclusion` (`CREATIVE_MODELS.adStudio.verify`): is any part of our product, described by `physicalDescription`, covered by the overlay type or caption strip, or cut off by the frame edge?
+
+- The `band` treatment is tried first; an occluded band final is retried as `caption`. A take still occluded (or whose type fails critique or overflows) yields no usable final, exactly like a critique failure. A concept with no usable final is replaced; when occlusion was the reason, the verdict says `overlay occludes our product on both treatments: <detail>`.
+- It fails CLOSED: a reply that is not JSON with three real booleans is a failure. A cut-off reply throws, and that concept is recorded as `failed`.
+- `proof.json` carries, per plate, `critique`, `occlusion`, `treatment` (of the final on disk) and `attempts[]` (every treatment tried, with its critique and occlusion verdict).
 
 The dashboard's Ad Studio screen lists these runs.
 

@@ -12,7 +12,7 @@ const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10, 0x4a, 0x46, 0x49, 0x4
 const concept = (id, family, extra = {}) => ({ id, title: id, picture: `${id} picture`, anchor: 'a', twist: 't', family, productRole: 'r', sceneText: 'none', people: 'none', typeBand: 'top', awareness: 'problem', headlineIdea: 'One fat.', claims: [], ...extra });
 const reply = (o) => ({ stop_reason: 'end_turn', content: [{ type: 'text', text: typeof o === 'string' ? o : JSON.stringify(o) }] });
 
-function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlayGarbageOnce = false, critiqueFailures = 0, flexGarbage = false, conceptExtra = {}, productExtra = {}, flexCutOff = false } = {}) {
+function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlayGarbageOnce = false, critiqueFailures = 0, flexGarbage = false, conceptExtra = {}, productExtra = {}, flexCutOff = false, occlusion = null } = {}) {
   let critFails = critiqueFailures;
   let garbage = overlayGarbageOnce;
   const out = mkdtempSync(join(tmpdir(), 'adc-'));
@@ -50,6 +50,7 @@ function deps({ verifyOk = () => true, maxConcepts = 4, peopleOn = null, overlay
       verifyImage: async () => ({ ok: verifyOk(), reasons: verifyOk() ? [] : ['bad'] }),
       typeset: async ({ buffer }) => ({ buffer, mediaType: 'image/jpeg', colour: '#000000', treatment: 'band', overflow: false, headlinePx: 80 }),
       critique: async () => (critFails-- > 0 ? { ok: false, score: 1, reasons: ['bad type'] } : { ok: true, score: 4, reasons: [] }),
+      occlusion: occlusion || (async () => ({ ok: true, detail: '' })),
       notify: async (n) => { queue.push(n); },
       archive: (a) => { archived.push(a); },
       notifications: queue, prompts, archived,
@@ -279,4 +280,40 @@ test('quotableEvidence withholds health-claim reviews from the prompts AND the c
   const r = quotableEvidence({ pdpBody: 'One fat.', brandKit: null, catalogEntry: null, reviews: ['Lathers beautifully.', 'It cured my eczema.'] });
   assert.deepEqual(r.reviews, ['Lathers beautifully.']);
   assert.doesNotMatch(r.sourceIndex.reviews, /eczema/);
+});
+
+// ── acceptance fix 2: occlusion check on the final ───────────────────────────
+
+test('occlusion fails on both treatments: the concept gets no final and is replaced', async () => {
+  const seen = [];
+  // Only concept a is occluded, on BOTH treatments; every other concept passes.
+  const { out, deps: d } = deps({ occlusion: async (o) => { seen.push(o); return o.conceptId === 'a' ? { ok: false, detail: 'the caption strip covers the top of the bar' } : { ok: true, detail: '' }; } });
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  const rej = report.rejectedConcepts.find(r => r.conceptSlug === 'a');
+  assert.ok(rej, JSON.stringify(report.rejectedConcepts));
+  assert.match(rej.error, /occlu|covers/i);
+  assert.ok(!report.results.some(r => r.conceptSlug === 'a'));
+  const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
+  assert.equal(manifest.plates.length, 3);
+  assert.ok(!manifest.plates.some(p => p.format === 'a'));
+  const proof = JSON.parse(readFileSync(join(out, report.runId, 'a', 'v1', 'proof.json'), 'utf8'));
+  assert.equal(proof['meta-plate-take1-4x5.jpg'].occlusion.ok, false);
+  assert.match(proof['meta-plate-take1-4x5.jpg'].occlusion.detail, /caption strip/);
+  assert.ok(seen.some(o => o.productDescription === 'bar' && o.band === 'top'), 'productDescription and band reach the check');
+});
+
+test('occlusion fails on band, passes on caption: the caption final is chosen and recorded', async () => {
+  const typesets = [];
+  const { out, deps: d } = deps({ occlusion: async (o) => (o.treatment === 'band' ? { ok: false, detail: 'headline over the lid' } : { ok: true, detail: '' }) });
+  const base = d.typeset;
+  d.typeset = async (o) => { typesets.push(o.treatment); return { ...(await base(o)), treatment: o.treatment }; };
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  assert.equal(report.results.length, 3);
+  assert.ok(typesets.includes('caption'));
+  const proof = JSON.parse(readFileSync(join(out, report.runId, 'a', 'v1', 'proof.json'), 'utf8'));
+  const p1 = proof['meta-plate-take1-4x5.jpg'];
+  assert.equal(p1.treatment, 'caption');
+  assert.equal(p1.occlusion.ok, true);
+  assert.equal(p1.critique.ok, true);
+  assert.deepEqual(p1.attempts.map(a => [a.treatment, a.occlusion?.ok]), [['band', false], ['caption', true]]);
 });

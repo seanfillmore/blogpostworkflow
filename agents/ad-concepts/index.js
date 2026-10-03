@@ -228,24 +228,44 @@ export async function runConcepts({ args, deps }) {
       if (!copy.ok) { verdicts[c.id] = `copy rejected: ${copy.reasons.join('; ')}`; return null; }
       writeJson(join(runDir, c.id, 'copy.json'), { zones: { headline: copy.copy.headline, sub: copy.copy.sub }, claims: copy.copy.claims });
       let best = null;
+      const occludedDetails = [];
+      let otherFailure = false;
+      // One treatment: typeset, critique the type, then (only if the type passed) ask whether
+      // the type covers our product. The critique judges the TYPE and never what it sits on:
+      // live run 2026-10-03 passed a caption strip clipping the soap's logo at score 4.
+      const attempt = async (t, treatment) => {
+        const set = await deps.typeset({ buffer: t.buffer, headline: copy.copy.headline, sub: copy.copy.sub, band: c.typeBand, treatment });
+        const crit = await deps.critique({ buffer: set.buffer, mediaType: set.mediaType, zones: { headline: copy.copy.headline, sub: copy.copy.sub } });
+        const occ = crit.ok && !set.overflow
+          ? await deps.occlusion({ buffer: set.buffer, mediaType: set.mediaType, productDescription: product.physicalDescription, band: c.typeBand, treatment, conceptId: c.id })
+          : null;
+        return { set, crit, occ, treatment, ok: crit.ok && !set.overflow && !!occ?.ok };
+      };
       for (const t of takes.passed) {
         const plate = `meta-plate-take${t.n}-${rSlug}.jpg`;
-        let set = await deps.typeset({ buffer: t.buffer, headline: copy.copy.headline, sub: copy.copy.sub, band: c.typeBand, treatment: 'band' });
-        let crit = await deps.critique({ buffer: set.buffer, mediaType: set.mediaType, zones: { headline: copy.copy.headline, sub: copy.copy.sub } });
-        if (!crit.ok || set.overflow) {
-          set = await deps.typeset({ buffer: t.buffer, headline: copy.copy.headline, sub: copy.copy.sub, band: c.typeBand, treatment: 'caption' });
-          crit = await deps.critique({ buffer: set.buffer, mediaType: set.mediaType, zones: { headline: copy.copy.headline, sub: copy.copy.sub } });
-        }
+        const tries = [await attempt(t, 'band')];
+        if (!tries[0].ok) tries.push(await attempt(t, 'caption'));
+        const last = tries[tries.length - 1];
         const name = `meta-final-take${t.n}-${rSlug}.jpg`;
-        writeFileSync(join(dir, name), set.buffer);
-        proofs[plate].critique = crit;
+        writeFileSync(join(dir, name), last.set.buffer);
+        proofs[plate].critique = last.crit;
+        proofs[plate].occlusion = last.occ ?? { ok: false, detail: 'not checked: the type failed critique or overflowed' };
+        proofs[plate].treatment = last.treatment;
+        proofs[plate].attempts = tries.map(a => ({ treatment: a.treatment, overflow: !!a.set.overflow, critique: a.crit, occlusion: a.occ }));
         proofs[plate].final = name;
         writeProofs();
-        if (crit.ok && !set.overflow && (!best || (crit.score ?? 0) > (best.score ?? 0))) {
-          best = { take: t, file: join(c.id, 'v1', name), score: crit.score, concept: c, headline: copy.copy.headline, sub: copy.copy.sub };
-        }
+        if (last.ok) {
+          if (!best || (last.crit.score ?? 0) > (best.score ?? 0)) {
+            best = { take: t, file: join(c.id, 'v1', name), score: last.crit.score, concept: c, headline: copy.copy.headline, sub: copy.copy.sub };
+          }
+        } else if (last.occ && !last.occ.ok) occludedDetails.push(last.occ.detail);
+        else otherFailure = true;
       }
-      if (!best) verdicts[c.id] = 'typeset/critique failed on both treatments';
+      if (!best) {
+        verdicts[c.id] = occludedDetails.length && !otherFailure
+          ? `overlay occludes our product on both treatments: ${[...new Set(occludedDetails)].slice(0, 2).join('; ')}`
+          : 'typeset/critique failed on both treatments';
+      }
       return best;
     } finally {
       writeProofs();
@@ -365,6 +385,7 @@ async function main() {
   const { overlayPersonas } = await import('../../lib/operator-angles.js');
   const { scanSkillInventory, renderContextMirror } = await import('../../lib/marketing-learner.js');
   const { typesetTake } = await import('./typeset.js');
+  const { checkOcclusion } = await import('./occlusion.js');
   const { CREATIVE_MODELS } = await import('../../config/creative-models.js');
   const env = Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
     .filter(l => /^[A-Z_]+=/.test(l)).map(l => { const i = l.indexOf('='); return [l.slice(0, i), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }));
@@ -423,6 +444,7 @@ async function main() {
       verifyImage: (o) => studio.verifyImage({ anthropic, ...o }),
       typeset: typesetTake,
       critique: ({ buffer, mediaType, zones }) => studio.critiqueArtifact({ anthropic, buffer, mediaType, format: { key: 'concept' }, zones, mode: 'finished', ratio: args.ratio }),
+      occlusion: ({ buffer, mediaType, productDescription, band }) => checkOcclusion({ anthropic, model: CREATIVE_MODELS.adStudio.verify, buffer, mediaType, productDescription, band }),
       notify: realNotify,
       archive: () => flushArchive(),
     },
