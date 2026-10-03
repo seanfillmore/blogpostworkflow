@@ -24,6 +24,11 @@ function compFor(plateName) {
   return plateName.replace('-plate-', '-comp-');
 }
 
+/** A concepts run's typeset final; preferred over a comp because its copy is set in code, not by an image model. */
+function finalFor(plateName) {
+  return plateName.replace('-plate-', '-final-');
+}
+
 function readJsonOr(path, fallback) {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return fallback; }
 }
@@ -193,8 +198,8 @@ export function readRun(rootDir, runId) {
             ratio: (plateName.match(/-(\d+x\d+|1_91x1)\./) || [])[1] || '',
             platform: plateName.split('-')[0],
             plate: plateName,
-            comp: files.includes(comp) ? comp : null,
-            compTrusted: false,
+            comp: files.includes(finalFor(plateName)) ? finalFor(plateName) : (files.includes(comp) ? comp : null),
+            compTrusted: files.includes(finalFor(plateName)),
             attempts: entry?.attempts ?? null,
             outcome: classifyOutcome(entry),
             checks: summariseChecks(entry),
