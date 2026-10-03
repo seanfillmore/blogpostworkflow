@@ -1,6 +1,6 @@
 ---
 name: marketing-organic-content-program
-description: Running an organic content program as one person: what to post, how it is structured, cadence and batching, give:ask ratio, lead-magnet opt-ins as the standing CTA and measurement unit, audience-breadth rings and topic-bucket mix, batch audits, niche selection and how content supports paid and retention.
+description: Running an organic content program as one person: what to post, how it is structured, cadence and batching, give:ask ratio, lead-magnet opt-ins as the standing CTA and measurement unit, audience-breadth rings and topic-bucket mix, format narrowing including a faceless narrated production line, batch audits, niche selection and how content supports paid and retention.
 ---
 
 # Organic Content Program
@@ -11,7 +11,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Author's own numbers — 200,000 audience added in twelve months at one post per platform per day, then 1.2M added in the next six months after a friend audited his cadence and he 10x'd output.
 
-**Fit here (5/10):** Durable principle rather than platform mechanics. Organic posting is one of the two cheapest channels for a solo operator and costs no ad budget. But the prime directive is revenue, retention is the binding constraint, and 'three posts a day on every platform' is not a real ask for one person also running fulfilment, Amazon and a $30/day Meta test. Adopt scaled down: fix a current baseline cadence, step it up deliberately on the one platform where the buyer actually is, and treat follower growth as a leading indicator only. Volume is bounded by what one person can sustain, which is why format choice is rationed rather than open-ended — see the format-narrowing claim below.
+**Fit here (5/10):** Durable principle rather than platform mechanics. Organic posting is one of the two cheapest channels for a solo operator and costs no ad budget. But the prime directive is revenue, retention is the binding constraint, and 'three posts a day on every platform' is not a real ask for one person also running fulfilment, Amazon and a $30/day Meta test. Adopt scaled down: fix a current baseline cadence, step it up deliberately on the one platform where the buyer actually is, and treat follower growth as a leading indicator only. Volume is bounded by what one person can sustain, which is why format choice is rationed rather than open-ended — see the format-narrowing claim below, and the faceless production line that relieves the on-camera bottleneck specifically.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -21,7 +21,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Anecdotes only — Kylie Jenner, Huda Kattan, Conor McGregor's Proper 12, Dwayne Johnson's Teremana — survivorship examples with pre-existing fame.
 
-**Fit here (5/10):** Durable positioning principle and honestly runnable by a solo operator (founder-led posts need no crew). But the evidence is four already-famous people, which is not representative of a solo skincare operator. Worth adopting as a positioning choice — a maker-founder face gives natural-deodorant copy the provenance and identity material the awareness skill already asks for — not as a growth mechanism.
+**Fit here (5/10):** Durable positioning principle and honestly runnable by a solo operator (founder-led posts need no crew). But the evidence is four already-famous people, which is not representative of a solo skincare operator. Worth adopting as a positioning choice — a maker-founder face gives natural-deodorant copy the provenance and identity material the awareness skill already asks for — not as a growth mechanism. Note the tension with the faceless production line below: the founder face stays the primary persona, and faceless is the second line that runs alongside it, not the one that replaces it.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -41,7 +41,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Assertion plus worked examples for each bucket, including a far-past lesson story and a manufactured 'I lived on $100 for a month' experience.
 
-**Fit here (6/10):** Durable principle. A solo skincare formulator has exactly this asset — why she formulated an aluminium-free deodorant, what went wrong in the first batches, what customers write in. Gives a standing topic queue with no budget or team. Distinct from the existing persona-consistency claim, which governs voice, not where topics come from. Note these are *sources* of raw material; how far out to aim the finished piece is a separate decision, governed by the audience-rings claim below.
+**Fit here (6/10):** Durable principle. A solo skincare formulator has exactly this asset — why she formulated an aluminium-free deodorant, what went wrong in the first batches, what customers write in. Gives a standing topic queue with no budget or team. Distinct from the existing persona-consistency claim, which governs voice, not where topics come from. Note these are *sources* of raw material; how far out to aim the finished piece is a separate decision, governed by the audience-rings claim below, and narrated/faceless pieces get a further screen (does it tell a story or answer a question) recorded with the faceless format claim.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
 
@@ -202,9 +202,29 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Assertion from experience — 'most people will get comfortable with one or two that they like making over and over'.
 
-**Fit here (6/10):** Directly protects a solo operator's output rate, which is the real constraint on organic video here. Runnable today, no gate. Scores mid rather than high because it is a production-discipline rule rather than a mechanism that moves revenue on its own, and it partially overlaps the output-volume and cadence claims above — read it as the constraint that makes those sustainable: a format the founder dreads filming will quietly cap cadence long before the calendar does.
+**Fit here (6/10):** Directly protects a solo operator's output rate, which is the real constraint on organic video here. Runnable today, no gate. Scores mid rather than high because it is a production-discipline rule rather than a mechanism that moves revenue on its own, and it partially overlaps the output-volume and cadence claims above — read it as the constraint that makes those sustainable: a format the founder dreads filming will quietly cap cadence long before the calendar does. The faceless narrated format below is one candidate for that two-or-three slate, and specifically the candidate that removes the dread.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+## Run a faceless format — your own voice or an AI voice over generated/stock visuals carrying the story, with nobody on camera — as a second production line that does not require you to be the on-camera personality.
+
+**Why it works:** Removing the on-camera requirement removes the slowest, most reluctance-prone step in a solo content program, so output volume is limited only by scripting and editing rather than by whether the founder feels presentable that day. Viewers reward the value delivered, not the presence of a face.
+
+**Evidence offered:** Creator points to multiple established faceless YouTube channels (Wendover Productions named) and produces a working Pompeii example; argues value to the viewer is what matters regardless of AI involvement.
+
+**Fit here (6/10):** Organic short-form is a live surface run solo and the whole program is built on raw output volume, so a narrated faceless line — ingredient education, why aluminium-free, transition-period explainers, routine walkthroughs — adds a second production line that does not require the founder on camera for every post. It also pairs with the batch mix: faceless pieces are a natural fit for the broader ring-3/ring-4 reach slot, where a talking head adds little. Not higher because the founder-on-camera persona is itself an asset in this category, so this is additive rather than a replacement, and it still obeys the ring ban and the give:ask ratio like any other post.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
+
+## Pick a faceless/narrated topic by whether it tells an interesting story or answers an interesting question — and prefer topics that do both at once.
+
+**Why it works:** A question gives the viewer a reason to click and a loop to close; the story gives them a reason to stay through the middle. A topic with only one of the two either fails to earn the click or fails to hold — which maps exactly onto the hook/retain halves of the three-part content unit above.
+
+**Evidence offered:** Creator names Wendover Productions as the model ('Why Trains Suck in America' both answers a question and tells the story of American development) and applies the same test to his own Pompeii topic choice.
+
+**Fit here (6/10):** A usable screen laid on top of the five topic buckets, for the narrated format specifically — 'why does natural deodorant stop working after a few weeks' answers a question and can carry the story of the switch and the reformulation behind it. Runnable today by one person with no budget. Capped at 6 because it is a topic-selection heuristic rather than a revenue lever, and because it screens topics after the ring decision has already bounded which audience the piece is aimed at.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
 
 ## Maintain a master list of your best-performing content ('greatest hits'), each labeled with the problem it solves and the benefit it provides, so it can be sent to a prospect before or after a conversation to resolve a specific concern.
 
@@ -252,7 +272,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Screen-share of the creator's own audit showing 'personal brand growth' rising and 'storytelling' dropping against his prior belief; the tool projects a rebalanced mix 'after two to three batches'. Assertion that this is what he runs on his own channels. The source runs batches of seven videos.
 
-**Fit here (7/10):** Runnable today in scaled-down form: native Instagram/TikTok insights on the last 7–15 posts, each tagged by topic bucket (deodorant switching, oral care, lip balm), hook type and format in a spreadsheet — no paid dashboard, and views arrive at far higher volume than ~54 orders/month. On a small account two videos per bucket is a noisy sample, so the read is directional and should require several batches with a consistent direction before dropping a bucket. Complements the fixed-cadence/monthly-measurement claim above and the performance-pattern-analysis work elsewhere, which measure audience size or top-vs-bottom decile contrast rather than reallocating topic buckets at low volume. Where a post carried a giveaway link, prefer opt-ins over views as the bucket's score.
+**Fit here (7/10):** Runnable today in scaled-down form: native Instagram/TikTok insights on the last 7–15 posts, each tagged by topic bucket (deodorant switching, oral care, lip balm), hook type and format — including whether it was founder-on-camera or faceless narrated — in a spreadsheet. No paid dashboard, and views arrive at far higher volume than ~54 orders/month. On a small account two videos per bucket is a noisy sample, so the read is directional and should require several batches with a consistent direction before dropping a bucket. Complements the fixed-cadence/monthly-measurement claim above and the performance-pattern-analysis work elsewhere, which measure audience size or top-vs-bottom decile contrast rather than reallocating topic buckets at low volume. Where a post carried a giveaway link, prefer opt-ins over views as the bucket's score.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
 
