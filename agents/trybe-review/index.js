@@ -8,6 +8,12 @@
  * no content yet, plus samples nobody has shipped. See lib/trybe-samples.js.
  * Reporting only: Trybe's API cannot message a creator.
  *
+ * Every submission still waiting on a human also gets a VISUAL review: the
+ * image (or a video's thumbnail frame) is compared by a vision model against
+ * the live PDP's photographs and ingredient text, and the digest presents every
+ * one with a verdict, its issues and a ready-to-paste note. That review is
+ * presentation only; see lib/trybe-visual-review.js.
+ *
  * Every pending Trybe submission's transcript goes through the same COMMERCIAL
  * claim gate the fleet's product copy uses (lib/seo-copy-health-gate.js). A
  * transcript that makes a claim the creator brief forbids gets a revision
@@ -34,6 +40,9 @@ import { listSubmissions, listCreators, listCreatorPerformance, requestRevision 
 import { planReview, summarizePerformance, renderDigest } from '../../lib/trybe-review.js';
 import { planSamplePriming, renderPrimingLines } from '../../lib/trybe-samples.js';
 import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
+import { createVisualReviewer } from '../../lib/trybe-visual-fetch.js';
+import { MAX_VISUAL_REVIEWS_PER_RUN } from '../../lib/trybe-visual-review.js';
+import Anthropic from '../../lib/anthropic.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -62,10 +71,30 @@ export async function runReview({
   send = requestRevision,
   log = console.log,
   loadSampleOrders = fetchSampleOrders,
+  reviewVisual = null,
+  maxVisual = MAX_VISUAL_REVIEWS_PER_RUN,
   now = Date.now(),
 } = {}) {
   const pending = await listSubmissions({ status: 'pending', apiKey, fetchImpl });
   const plan = planReview(pending);
+
+  // Visual review of everything still waiting on a human, oldest first, before
+  // any write. Claim revisions are excluded: those leave the queue this run.
+  // A failure is recorded on the row and presented, never fatal to the run.
+  const visualOverCap = [];
+  if (reviewVisual) {
+    const waiting = [...plan.review, ...plan.unchecked]
+      .sort((a, b) => String(a.submission.created_at).localeCompare(String(b.submission.created_at)));
+    for (const [i, row] of waiting.entries()) {
+      if (i >= maxVisual) { visualOverCap.push(row); continue; }
+      try {
+        row.visual = await reviewVisual(row.submission);
+      } catch (err) {
+        row.visual = { error: err.message };
+      }
+      log(`  visual: ${row.submission.trybe_id || row.submission.id} → ${row.visual.verdict?.verdict || `error: ${row.visual.error}`}`);
+    }
+  }
 
   const revised = [];
   const raced = [];
@@ -106,7 +135,7 @@ export async function runReview({
     log(`  sample tracking unavailable: ${err.message}`);
   }
 
-  return { plan, revised, raced, failed, perf, priming, apply };
+  return { plan, revised, raced, failed, perf, priming, apply, visualEnabled: Boolean(reviewVisual), visualOverCap };
 }
 
 
@@ -117,10 +146,18 @@ async function main() {
   const apiKey = env.TRYBE_API_KEY || process.env.TRYBE_API_KEY;
 
   console.log(`Trybe review${apply ? '' : ' (dry run)'}`);
-  const run = await runReview({ apiKey, apply });
+  const reviewVisual = createVisualReviewer({
+    client: new Anthropic({ apiKey: env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY }),
+    cacheDir: join(ROOT, 'data', 'reports', 'trybe-review', 'visual'),
+    // Imported lazily: lib/shopify.js throws at import time without OAuth
+    // credentials, and that must not stop the transcript review.
+    loadProducts: async () => (await import('../../lib/shopify.js')).getProducts(),
+    log: console.log,
+  });
+  const run = await runReview({ apiKey, apply, reviewVisual });
 
   if (args.includes('--json')) {
-    const slim = (rows) => rows.map((r) => ({ id: r.submission.id, creator: r.submission.creator?.name, action: r.action, reason: r.reason, blocking: r.blocking?.map((b) => b.match), comment: r.comment }));
+    const slim = (rows) => rows.map((r) => ({ id: r.submission.id, creator: r.submission.creator?.name, action: r.action, reason: r.reason, blocking: r.blocking?.map((b) => b.match), comment: r.comment, visual: r.visual }));
     console.log(JSON.stringify({ revise: slim(run.plan.revise), deferred: slim(run.plan.deferred), review: slim(run.plan.review), unchecked: slim(run.plan.unchecked), perf: run.perf, priming: run.priming }, null, 2));
     return;
   }

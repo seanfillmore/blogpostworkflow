@@ -380,3 +380,6 @@ data/inbox-sorter/
 
 # ad-test-monitor state: which stop-rule hits were already emailed
 data/ad-test-monitor/
+
+# Trybe visual-review verdict cache: regenerable, server-written (agents/trybe-review)
+data/reports/trybe-review/

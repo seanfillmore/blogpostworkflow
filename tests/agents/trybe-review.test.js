@@ -119,3 +119,25 @@ test('a failed sample read does not lose the review', async () => {
   assert.equal(run.priming, null);
   assert.equal(run.plan.revise.length, 1);
 });
+
+test('visual review runs on waiting submissions only, oldest first, capped, and a throw is contained', async () => {
+  const still = (id, at) => ({ ...silent, id, trybe_id: id, media_type: 'image', created_at: at });
+  const subs = [claim, still('s3', '2026-09-24T00:00:00Z'), still('s1', '2026-09-22T00:00:01Z'), still('s2', '2026-09-23T00:00:00Z')];
+  const f = fakeFetch(routes({ 'GET /submissions': () => ({ json: { data: subs, has_more: false } }) }));
+  const seen = [];
+  const run = await runReview({
+    apiKey: 'k', loadSampleOrders: async () => [], fetchImpl: f, log: () => {}, maxVisual: 2,
+    reviewVisual: async (s) => { seen.push(s.id); if (s.id === 's2') throw new Error('boom'); return { verdict: { verdict: 'looks_ready', issues: [] } }; },
+  });
+  assert.deepEqual(seen, ['s1', 's2'], 'the claim revision is not visually reviewed; oldest first; capped at 2');
+  assert.equal(run.visualEnabled, true);
+  assert.deepEqual(run.visualOverCap.map((r) => r.submission.id), ['s3']);
+  const s2 = run.plan.unchecked.find((r) => r.submission.id === 's2');
+  assert.equal(s2.visual.error, 'boom');
+});
+
+test('without a reviewer the run is unchanged and says visuals were not reviewed', async () => {
+  const run = await runReview({ apiKey: 'k', loadSampleOrders: async () => [], fetchImpl: fakeFetch(routes()), log: () => {} });
+  assert.equal(run.visualEnabled, false);
+  assert.ok(run.plan.unchecked.every((r) => !r.visual));
+});
