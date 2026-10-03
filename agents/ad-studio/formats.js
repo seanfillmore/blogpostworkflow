@@ -779,9 +779,11 @@ export const FORMATS = [
   // THE VILLAIN IS UNBRANDED AND UNLABELLED ON THE PLATE. Plates carry no text (stray text
   // is a hard fail, and you cannot remove pixels), so the stand-in renders with a blank
   // label and the operator sets "WEAK" on it in Photoshop, exactly like every other piece
-  // of type. It is also a different SHAPE and COLOUR from our product (a twist-up oval
-  // stick in flat grey against our white roll-on bottle) so the fidelity gate cannot read
-  // it as a second unit of ours. It may stand for a CATEGORY, never a named competitor.
+  // of type. It is also a different SHAPE and COLOUR from our product (flat grey; a stick
+  // against our roll-on, a body-wash bottle against our wrapped bar, a pump against our
+  // lotion) so the fidelity gate cannot read it as a second unit of ours. The brief names
+  // the shape per CATEGORY rather than per product so the table stays data. It may stand
+  // for a CATEGORY, never a named competitor.
   //
   // A FACE, BY OPERATOR DECISION (2026-10-03). The comedy is the man's expression, so the
   // "no face" line the in-use formats hold is overridden here, by name, as they did for
@@ -814,11 +816,14 @@ export const FORMATS = [
       'A bright, crisp, slightly exaggerated direct-response commercial photograph in an ordinary, moderately nice',
       'suburban kitchen in daylight, with clean contrast and a shallow depth of field.',
       'An ordinary adult man in his late thirties, casually dressed, stands in the middle ground holding up a',
-      'generic twist-up solid stick at arm\'s length toward the camera with an exaggerated look of mild',
-      'disappointment. The stick is oval, flat matte grey, plain and cheap-looking, with a completely blank',
-      'label and no printing, logo or colour of any kind, so it is clearly a different object from the product.',
-      'His hands are relaxed and natural, one holding the stick, the other at his side.',
-      'The product stands upright on the counter in the lower right foreground, sharp and well lit, occupying',
+      'generic, mass-market stand-in for the same everyday product category at arm\'s length toward the camera,',
+      'with an exaggerated look of mild disappointment. Choose the stand-in by category and make it a different',
+      'shape from the product: for a deodorant, a twist-up oval solid stick; for a soap, a plastic body-wash',
+      'bottle; for a lotion, a plain plastic pump bottle. It is flat matte grey, plain and cheap-looking, with a',
+      'completely blank label and no printing, logo or colour of any kind, so it is clearly a different object',
+      'from the product.',
+      'His hands are relaxed and natural, one holding the stand-in, the other at his side.',
+      'The product rests naturally on the counter in the lower right foreground, sharp and well lit, occupying',
       'about a quarter of the frame height.',
       'The upper third of the frame is quiet, evenly lit wall with nothing on it, so type can be set over it later.',
       'Ordinary healthy skin only, no other people, no other products, and no text anywhere in the picture.',
