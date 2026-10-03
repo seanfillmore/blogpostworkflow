@@ -10,7 +10,7 @@ const scripted = (...replies) => { const calls = []; return { calls, messages: {
 
 test('gateCopy rejects em dash, health claims, misnomers, overlong lines and unsourced claims', () => {
   assert.deepEqual(gateCopy({ headline: "Your soap's ingredient list.", sub: 'Ours: one fat.' }, [{ text: 'one fat', sourceId: 'pdp' }], { sourceIndex }), { ok: true, reasons: [] });
-  const bad = gateCopy({ headline: 'Our antiperspirant heals — seven words long here now', sub: '' }, [{ text: 'clinically proven', sourceId: 'pdp' }], { sourceIndex });
+  const bad = gateCopy({ headline: 'Our antiperspirant stick heals — seven words long here now', sub: '' }, [{ text: 'clinically proven', sourceId: 'pdp' }], { sourceIndex });
   assert.equal(bad.ok, false);
   const r = bad.reasons.join(' | ');
   for (const re of [/em dash/, /health/i, /antiperspirant|category/i, /headline has \d+ words/, /unsourced/i]) assert.match(r, re);
