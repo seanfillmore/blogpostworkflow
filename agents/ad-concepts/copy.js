@@ -87,16 +87,22 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) 
   // rhetorical question rejected as "factual claim with no sourceId" twice. Overlay claims
   // never carry these fields (parseOverlayCopy keeps only text + sourceId). A factual:true
   // claim still needs sourceId AND a verbatim evidence quote: assertClaimsSourced is unchanged.
-  const isAdStudioShaped = (c) => c.evidence !== undefined || 'factual' in c || 'zone' in c;
+  // Only an OBJECT can be Ad Studio shaped. parseFlexibleCopyResponse passes claims through
+  // unsanitised, so a bare string ("One fat") arrives here; it goes down the strict quote path
+  // as { text } (no sourceId, so it is rejected with a reason) and can never throw.
+  const isObj = (c) => typeof c === 'object' && c !== null;
+  const isAdStudioShaped = (c) => isObj(c) && (c.evidence !== undefined || 'factual' in c || 'zone' in c);
   const adStudioShaped = list.filter(c => c && isAdStudioShaped(c));
-  const quoteShaped = list.filter(c => c && !isAdStudioShaped(c));
+  const quoteShaped = list.filter(c => c && !isAdStudioShaped(c)).map(c => (isObj(c) ? c : { text: String(c) }));
   if (quoteShaped.length) {
     const r = checkClaimsSourced(quoteShaped, sourceIndex);
     if (!r.ok) reasons.push(...r.reasons);
   }
   if (adStudioShaped.length) {
     const index = Object.fromEntries(Object.entries(sourceIndex || {}).map(([k, v]) => [k, normalizeForMatch(sourceText(v))]));
-    try { assertClaimsSourced(adStudioShaped.map(c => ({ factual: true, ...c })), index); } catch (e) {
+    // Only an explicit factual:false is persuasion. null, 0, "" or a missing field stay factual
+    // and must be sourced: a label the model did not clearly set is not an exemption.
+    try { assertClaimsSourced(adStudioShaped.map(c => ({ ...c, factual: c.factual !== false })), index); } catch (e) {
       reasons.push(`unsourced claim: ${String(e.message).split('\n').slice(1).join(' ').trim()}`);
     }
   }

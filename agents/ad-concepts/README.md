@@ -35,7 +35,7 @@ evidence -> generate concepts -> pre-gate -> judge -> pick 3 (distinct families)
 
 A take is written to disk the moment it is verified. A throw inside one concept (a render error, a cut-off model reply, typesetting) records `failed: <message>` for that concept and replaces it; the run carries on. Anything that escapes still writes `run.json` with `error` and archives the run before rethrowing. The run is archived to the main checkout on success, on a thrown error and on SIGINT/SIGTERM.
 
-Copy gates: no em dash, no health claim, deodorant never antiperspirant, no named competitor (`config/competitors.json`), every fact sourced verbatim. Reviews carrying health-claim language are withheld up front (`selectQuotableReviews`). Flexible primary texts get Ad Studio's advisory golden-thread check (recorded as `goldenThread` in `flexible-ad.json`).
+Copy gates: no em dash, no health claim, deodorant never antiperspirant, no named competitor (`config/competitors.json`), every fact sourced verbatim. Reviews carrying health-claim language are withheld up front (`selectQuotableReviews`). The flexible-copy sourcing gate relies on the model's own factual/persuasion labels (only an explicit `"factual": false` is persuasion). Persuasion lines are still health-claim, misnomer, competitor and em-dash gated on the visible strings, but a fact the model mislabels as persuasion skips sourcing; the human check before upload covers that. A flexible-copy call that throws (other than a cut-off reply) leaves the finals on disk and sets `manifestReason: flexible copy failed: <message>`. Flexible primary texts get Ad Studio's advisory golden-thread check (recorded as `goldenThread` in `flexible-ad.json`).
 
 ## Occlusion check
 

@@ -320,12 +320,22 @@ export async function runConcepts({ args, deps }) {
 
     manifestReason = `fewer than 2 concepts finished (${finals.length})`;
     if (finals.length >= 2) {
-      const flex = await writeFlexibleCopy({
-        anthropic: deps.anthropic, model: deps.models.copy, product,
-        concepts: finals.map(f => ({ ...f.concept, overlayHeadline: f.headline, overlaySub: f.sub })),
-        sourceIndex, pdpBody: ev.pdpBody, persona: ev.persona, reviews: ev.reviews, competitorNames: ev.competitorNames || [],
-      });
-      if (flex.ok) {
+      // Every render is already paid for here. A truncation still escapes (that is a hard
+      // signal, same as everywhere else in the fleet); any other throw costs the manifest only.
+      let flex;
+      try {
+        flex = await (deps.writeFlexibleCopy || writeFlexibleCopy)({
+          anthropic: deps.anthropic, model: deps.models.copy, product,
+          concepts: finals.map(f => ({ ...f.concept, overlayHeadline: f.headline, overlaySub: f.sub })),
+          sourceIndex, pdpBody: ev.pdpBody, persona: ev.persona, reviews: ev.reviews, competitorNames: ev.competitorNames || [],
+        });
+      } catch (e) {
+        if (/cut off/.test(e?.message || '')) throw e;
+        flex = { ok: false, failed: firstLine(e) };
+      }
+      if (flex.failed) {
+        manifestReason = `flexible copy failed: ${flex.failed}`;
+      } else if (flex.ok) {
         const { json, md } = renderFlexibleManifest({
           runId, product, variant: args.variant, target: { platform: 'meta', ratio: args.ratio },
           plates: finals.map(f => ({ format: f.concept.id, file: f.file, verified: true })),

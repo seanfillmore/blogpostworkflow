@@ -168,3 +168,23 @@ test('writeFlexibleCopy does not weaken the gate: a factual:true claim with no e
   assert.equal(r.ok, false);
   assert.match(r.reasons.join(' '), /no evidence quote|unsourced/);
 });
+
+// ── acceptance fix 2, review round 1 ─────────────────────────────────────────
+
+test('gateCopy never throws on a bare-string claim: it goes down the strict path and is rejected', () => {
+  let r;
+  assert.doesNotThrow(() => { r = gateCopy({ headline: 'x' }, ['One fat', 42], { sourceIndex }); });
+  assert.equal(r.ok, false);
+  assert.match(r.reasons.join(' '), /unsourced/i);
+});
+
+test('only an explicit factual:false is persuasion: factual null / missing-with-zone stays factual and needs a source', () => {
+  for (const factual of [null, 0, '', undefined]) {
+    const claim = { zone: 'primaryText1', text: 'Dermatologist approved', factual };
+    if (factual === undefined) delete claim.factual;
+    const r = gateCopy({ primaryText1: 'x' }, [claim], { sourceIndex });
+    assert.equal(r.ok, false, `factual=${JSON.stringify(factual)} must be gated`);
+    assert.match(r.reasons.join(' '), /unsourced/i);
+  }
+  assert.equal(gateCopy({ primaryText1: 'x' }, [{ zone: 'primaryText1', text: 'Still dry?', factual: false }], { sourceIndex }).ok, true);
+});

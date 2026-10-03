@@ -323,3 +323,23 @@ test('buildEvidenceProduct carries labelInk from the manifest entry (the take pr
   const p = buildEvidenceProduct({ args: { product: 'coconut-soap', variant: null }, manifestEntry: { unitCount: 1, labelInk: 'black' }, catalogEntry: { title: 'Soap' }, studio });
   assert.equal(p.labelInk, 'black');
 });
+
+test('a non-truncation throw inside flexible copy becomes manifestReason, the run still finishes and archives', async () => {
+  const { out, deps: d } = deps();
+  // writeFlexibleCopy turns a failed model call into a rejection itself; this is anything that
+  // escapes it (the bare-string claim TypeError was the live example), injected directly.
+  d.writeFlexibleCopy = async () => { throw new TypeError("Cannot use 'in' operator to search for 'factual' in One fat"); };
+  const report = await runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d });
+  assert.match(report.manifestReason, /^flexible copy failed: Cannot use 'in' operator/);
+  assert.equal(existsSync(join(out, report.runId, 'flexible-ad.json')), false);
+  assert.equal(runJson(out, report).manifestReason, report.manifestReason);
+  assert.equal(runJson(out, report).error, undefined);
+  assert.equal(d.archived.length, 1);
+  assert.equal(report.results.length, 3);
+});
+
+test('a truncated flexible reply still escapes the wrapper (hard signal, not a manifestReason)', async () => {
+  const { deps: d } = deps();
+  d.writeFlexibleCopy = async () => { throw new Error('ad-concepts: the copy response was cut off at the token limit.'); };
+  await assert.rejects(runConcepts({ args: parseArgs(['--product', 'coconut-soap']), deps: d }), /cut off/);
+});
