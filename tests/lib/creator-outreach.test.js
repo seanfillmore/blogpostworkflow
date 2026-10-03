@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {
   buildRoster, planScheduled, renderTemplate, classifyInbound, replyProblems, parseDraft,
   firstName, shortProduct, inSendWindow, holdingReply, replySubject, DEFAULT_CONFIG,
+  withQuotedThread, MAX_QUOTED_CHARS,
 } from '../../lib/creator-outreach.js';
-import { stripQuoted } from '../../lib/hushmail.js';
+import { stripQuoted, isEmojiReaction } from '../../lib/hushmail.js';
 
 const DAY = 86_400_000;
 const NOW = Date.parse('2026-10-02T18:00:00Z'); // inside the send window
@@ -163,4 +164,54 @@ test('resend transport: a failed Sent append is reported, not fatal', async () =
     via: 'resend', resendKey: 'k', fetchImpl: async () => new Response('{"id":"r1"}'), appendSent: async () => { throw new Error('imap down'); },
   });
   assert.match(r.sentCopy, /NOT saved to Sent: imap down/);
+});
+
+// The 2026-10-03 incident, from the real messages: a heart emoji was escalated
+// as a skin reaction and the creator was told to stop using a product she had
+// not received yet.
+test('a Gmail emoji reaction is ignored, never escalated as a skin reaction', () => {
+  const body = '\u{1F496}\n\nSierra Swinney reacted via Gmail\n<https://www.google.com/gmail/about/>';
+  assert.equal(isEmojiReaction({ text: body, attachments: [] }), true);
+  assert.equal(isEmojiReaction({ text: 'x', attachments: [{ contentType: 'text/vnd.google.email-reaction+json' }] }), true);
+  assert.equal(isEmojiReaction({ text: 'Thanks, it arrived!', attachments: [] }), false);
+  assert.deepEqual(classifyInbound({ subject: 'Re: samples', text: body, emojiReaction: true }), { action: 'ignore', reason: 'emoji reaction' });
+});
+
+test('the health pattern needs a symptom or condition, not a stray word', () => {
+  const m = (text) => classifyInbound({ text, subject: 'Re: samples' }).action;
+  for (const ok of [
+    'Sierra Swinney reacted via Gmail',
+    'I will film it this weekend, I am still learning',
+    'My daughter will be in the video, she is ill-tempered in the mornings lol',
+    'I will burn through this bottle fast!',
+    'Excited to start posting it',
+  ]) assert.equal(m(ok), 'draft', ok);
+  for (const bad of [
+    'I got a rash after using it',
+    'I had a reaction on my arms',
+    'my skin reacted badly to it',
+    'It is burning a little',
+    'I am prone to eczema flareups',
+    'my hands are itchy and swollen',
+    'is it safe while pregnant?',
+  ]) assert.equal(m(bad), 'escalate', bad);
+});
+
+test('Gmail wraps a long attribution over two lines and it still counts as the quote', () => {
+  const real = 'That is so helpful. Thanks.\n\nOn Fri, Oct 2, 2026 at 10:30 PM Sean at Real Skin Care <\nsean@realskincare.com> wrote:\n\n> Hi Sierra,';
+  assert.equal(stripQuoted(real), 'That is so helpful. Thanks.');
+  const twoLine = 'Talk soon!\n\nOn Fri, Oct 2, 2026 at 9:30 AM Sean at Real Skin Care <sean@realskincare.com>\nwrote:\n\n> Hi';
+  assert.equal(stripQuoted(twoLine), 'Talk soon!');
+  assert.equal(stripQuoted('On Monday I will film it.\nThanks!'), 'On Monday I will film it.\nThanks!');
+});
+
+test('every reply quotes the conversation under it, nesting earlier quotes', () => {
+  const prior = { date: '2026-10-03T14:34:31Z', from: 'Sierra Swinney <s@example.com>', text: 'Sounds good!\n\nOn Fri, Sean wrote:\n> Hi Sierra,' };
+  const out = withQuotedThread('Hi Sierra,\n\nSean', prior);
+  assert.match(out, /^Hi Sierra,\n\nSean\n\nOn Sat, 03 Oct 2026 14:34:31 UTC, Sierra Swinney <s@example\.com> wrote:\n> Sounds good!/);
+  assert.match(out, /\n>> Hi Sierra,$/, 'an already-quoted line gains one more level');
+  assert.equal(withQuotedThread('Hi', null), 'Hi');
+  assert.equal(withQuotedThread('Hi', { date: 'x', from: 'y', text: '   ' }), 'Hi');
+  const long = withQuotedThread('Hi', { date: '2026-10-03T00:00:00Z', from: 'y', text: 'a'.repeat(MAX_QUOTED_CHARS + 500) });
+  assert.match(long, /\[earlier messages trimmed\]$/);
 });
