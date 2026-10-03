@@ -769,6 +769,61 @@ export const FORMATS = [
       'Nothing else appears in the picture.',
     ].join(' '),
   },
+  // ── Added 2026-10-03: the GENERIC VILLAIN, from Anthony Gallo's AI Creator Course ────
+  //
+  // The course's "Weak Soap" ad: a classic direct-response, Old Spice-style frame where a
+  // man holds up a deliberately bland, unbranded stand-in for the product class the buyer
+  // already owns, and the real product sits crisp beside it. Adopted as the "visual
+  // villain" tactic in marketing-ai-product-imagery (PR #974).
+  //
+  // THE VILLAIN IS UNBRANDED AND UNLABELLED ON THE PLATE. Plates carry no text (stray text
+  // is a hard fail, and you cannot remove pixels), so the stand-in renders with a blank
+  // label and the operator sets "WEAK" on it in Photoshop, exactly like every other piece
+  // of type. It is also a different SHAPE and COLOUR from our product (a twist-up oval
+  // stick in flat grey against our white roll-on bottle) so the fidelity gate cannot read
+  // it as a second unit of ours. It may stand for a CATEGORY, never a named competitor.
+  //
+  // A FACE, BY OPERATOR DECISION (2026-10-03). The comedy is the man's expression, so the
+  // "no face" line the in-use formats hold is overridden here, by name, as they did for
+  // hands. The same caveat applies with more force: verify.js checks nothing about human
+  // anatomy, so a wrong hand or an uncanny face passes every gate. Review the people in
+  // every accepted plate by eye before it ships. The face must resemble no identifiable
+  // real person (see the casting guardrail in marketing-ai-video-ad-production).
+  {
+    key: 'generic-villain',
+    name: 'Generic villain (direct-response comedy)',
+    awareness: 'solution',
+    pairsImagesWithLabels: false,
+    // Our product sits in the foreground at moderate scale beside a person; it is
+    // recognisable but the gate must not demand its small print back.
+    productProminent: false,
+    zones: ['headline', 'villainLabel', 'subhead', 'bottomBar'],
+    layoutBrief: [
+      'A bright, bold, slightly exaggerated classic direct-response commercial frame with a comedic, confident tone.',
+      'A short punchy headline sits in the upper third over quiet background, with a supporting line beneath it.',
+      'In the middle ground a man holds up a deliberately bland, unbranded generic stand-in for the product class',
+      'at arm\'s length with a look of mock disappointment; one or two plain words are set on its blank label.',
+      'In the foreground the product stands crisp and well lit as the obvious upgrade.',
+      'A single restrained line of caps runs across the bottom.',
+      'The stand-in represents a generic category only: never a real competitor\'s brand, name, colours or',
+      'packaging. No before/after, no depiction of skin or a skin condition, and the product is never called',
+      'an antiperspirant.',
+    ].join(' '),
+    plateSetting: 'scene',
+    plateBrief: [
+      'A bright, crisp, slightly exaggerated direct-response commercial photograph in an ordinary, moderately nice',
+      'suburban kitchen in daylight, with clean contrast and a shallow depth of field.',
+      'An ordinary adult man in his late thirties, casually dressed, stands in the middle ground holding up a',
+      'generic twist-up solid stick at arm\'s length toward the camera with an exaggerated look of mild',
+      'disappointment. The stick is oval, flat matte grey, plain and cheap-looking, with a completely blank',
+      'label and no printing, logo or colour of any kind, so it is clearly a different object from the product.',
+      'His hands are relaxed and natural, one holding the stick, the other at his side.',
+      'The product stands upright on the counter in the lower right foreground, sharp and well lit, occupying',
+      'about a quarter of the frame height.',
+      'The upper third of the frame is quiet, evenly lit wall with nothing on it, so type can be set over it later.',
+      'Ordinary healthy skin only, no other people, no other products, and no text anywhere in the picture.',
+    ].join(' '),
+  },
 ];
 
 // A format with no plateBrief must not silently fall back to layoutBrief — that fallback

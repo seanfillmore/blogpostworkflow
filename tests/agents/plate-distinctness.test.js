@@ -120,7 +120,7 @@ test('exactly one duplicate pair exists across every renderable surface', () => 
     const n = (f.plateVariants || []).length || 1;
     for (let v = 1; v <= n; v++) all.push(plateFingerprint(f, v));
   }
-  assert.equal(all.length, 18, 'renderable surfaces');
+  assert.equal(all.length, 19, 'renderable surfaces');
 
   let comparable = 0, duplicates = 0;
   for (let i = 0; i < all.length; i++) {
@@ -131,7 +131,7 @@ test('exactly one duplicate pair exists across every renderable surface', () => 
       if (r.tier === 'duplicate') duplicates++;
     }
   }
-  assert.equal(comparable, 44, 'same setting AND same ground — the judged population');
+  assert.equal(comparable, 48, 'same setting AND same ground — the judged population');
   assert.equal(duplicates, 1, 'the measured catalogue holds exactly one duplicate pair');
 });
 
