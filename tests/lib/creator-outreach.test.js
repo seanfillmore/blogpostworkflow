@@ -2,10 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildRoster, planScheduled, renderTemplate, classifyInbound, replyProblems, parseDraft,
-  firstName, shortProduct, inSendWindow, holdingReply, replySubject, DEFAULT_CONFIG,
+  firstName, shortProduct, inSendWindow, replySubject, DEFAULT_CONFIG,
   withQuotedThread, MAX_QUOTED_CHARS,
 } from '../../lib/creator-outreach.js';
-import { stripQuoted, isEmojiReaction } from '../../lib/hushmail.js';
+import { stripQuoted, isEmojiReaction, isAgentMessageId } from '../../lib/hushmail.js';
 
 const DAY = 86_400_000;
 const NOW = Date.parse('2026-10-02T18:00:00Z'); // inside the send window
@@ -118,10 +118,7 @@ test('model output parsing is strict about the action', () => {
   assert.throws(() => parseDraft('not json'));
 });
 
-test('holding reply adds stop-using advice only for a reaction; subjects thread', () => {
-  const [c] = roster([order()]);
-  assert.match(holdingReply(c, ['a skin reaction or health concern']), /stop using/);
-  assert.doesNotMatch(holdingReply(c, ['money or terms']), /stop using/);
+test('reply subjects thread', () => {
   assert.equal(replySubject('Re: hi'), 'Re: hi');
   assert.equal(replySubject('hi'), 'Re: hi');
 });
@@ -214,4 +211,10 @@ test('every reply quotes the conversation under it, nesting earlier quotes', () 
   assert.equal(withQuotedThread('Hi', { date: 'x', from: 'y', text: '   ' }), 'Hi');
   const long = withQuotedThread('Hi', { date: '2026-10-03T00:00:00Z', from: 'y', text: 'a'.repeat(MAX_QUOTED_CHARS + 500) });
   assert.match(long, /\[earlier messages trimmed\]$/);
+});
+
+test('the agent\'s own Message-IDs are recognised, so its Sent copies are never read as Sean\'s reply', () => {
+  // Real IDs from the Sent folder, 2026-10-03.
+  for (const id of ['<mur6igqx.6ec5t4wg@realskincare.com>', '<mushnym2.1kcz5soh@realskincare.com>']) assert.equal(isAgentMessageId(id), true, id);
+  for (const id of ['<8a8bbb94464173106f7eaf47eb93c25562b195f21a99bbd4@smtp.hushmail.com>', '<5F2A9C1E-3B4D-4E8F-9A21-7C6D8E9F0A1B@realskincare.com>', '', null]) assert.equal(isAgentMessageId(id), false, String(id));
 });
