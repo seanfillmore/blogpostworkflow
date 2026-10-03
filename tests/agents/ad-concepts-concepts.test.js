@@ -134,3 +134,48 @@ test('mentionsCompetitor is exported and case-sensitive', async () => {
   assert.equal(mentionsCompetitor('Better than Weleda', 'Weleda'), true);
   assert.equal(mentionsCompetitor('a native-screenshot', 'Native'), false);
 });
+
+// ---- buildConceptTactics ----
+import { buildConceptTactics, CONCEPT_TACTIC_SKILLS } from '../../agents/ad-concepts/concepts.js';
+import { readdirSync } from 'node:fs';
+import { scanSkillInventory, renderContextMirror } from '../../lib/marketing-learner.js';
+
+const MIRROR = [
+  '# Marketing Tactics', '', '_Generated._', '',
+  '## Do not propose', '', 'These failed.', '', '- Dead tactic A', '- Dead tactic B', '',
+  '## marketing-paid-creative-testing', '', '_desc one_', '',
+  '### Tactic One', '', 'BODY-ONE long text.', '', '### Tactic Two', '', 'BODY-TWO text.', '',
+  '## marketing-unrelated-skill', '', '_desc two_', '', '### Unrelated Tactic', '', 'BODY-UNRELATED', '',
+  '## marketing-product-image-stack', '', '_desc three_', '', '### Stack Tactic', '', 'BODY-STACK', '',
+].join('\n');
+
+test('buildConceptTactics keeps Do-not-propose verbatim, tactic headings only, listed skills only', () => {
+  const out = buildConceptTactics(MIRROR);
+  assert.ok(out.includes('## Do not propose\n\nThese failed.\n\n- Dead tactic A\n- Dead tactic B'));
+  assert.ok(out.includes('## marketing-paid-creative-testing'));
+  assert.ok(out.includes('### Tactic One') && out.includes('### Tactic Two') && out.includes('### Stack Tactic'));
+  assert.ok(!/BODY-/.test(out), 'bodies dropped');
+  assert.ok(!out.includes('marketing-unrelated-skill') && !out.includes('Unrelated Tactic'));
+});
+
+test('buildConceptTactics maxChars drops whole skill blocks from the end, keeps Do-not-propose', () => {
+  const small = buildConceptTactics(MIRROR, { maxChars: 150 });
+  assert.ok(small.includes('- Dead tactic B'));
+  assert.ok(!small.includes('marketing-product-image-stack'));
+  assert.match(small, /\(tactic menu truncated at 150 characters\)$/m);
+  for (const line of small.split('\n')) assert.ok(!line.startsWith('###') || /^### (Tactic|Stack)/.test(line));
+  const tiny = buildConceptTactics(MIRROR, { maxChars: 1 });
+  assert.ok(tiny.includes('## Do not propose') && tiny.includes('- Dead tactic A'));
+  assert.ok(!tiny.includes('marketing-paid-creative-testing'));
+});
+
+test('CONCEPT_TACTIC_SKILLS all exist under .claude/skills', () => {
+  const dirs = readdirSync('.claude/skills');
+  for (const s of CONCEPT_TACTIC_SKILLS) assert.ok(dirs.includes(s), s);
+});
+
+test('buildConceptTactics on the real repo mirror stays within budget', () => {
+  const out = buildConceptTactics(renderContextMirror(scanSkillInventory('.claude/skills')));
+  assert.ok(out.length <= 40000 + 200, String(out.length));
+  assert.ok(out.includes('Do not propose'));
+});

@@ -19,7 +19,7 @@ import { createRenderBudget, sniffImageMediaType } from '../ad-studio/index.js';
 import { selectVolumeStrings } from '../ad-studio/verify.js';
 import { selectQuotableReviews } from '../ad-studio/health-claims.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
-import { buildConceptPrompt, parseConceptsResponse, preGate, buildJudgePrompt, parseJudgeResponse, pickConcepts, nextReplacement } from './concepts.js';
+import { buildConceptPrompt, buildConceptTactics, parseConceptsResponse, preGate, buildJudgePrompt, parseJudgeResponse, pickConcepts, nextReplacement } from './concepts.js';
 import { buildShotSpecPrompt, parseShotSpec, buildTakePrompt, runConceptTakes } from './shots.js';
 import { writeOverlayCopy, writeFlexibleCopy } from './copy.js';
 
@@ -416,7 +416,7 @@ async function main() {
         return {
           product, catalogEntry, brandKit, pdpBody, persona, reviews, sourceIndex,
           photoPaths, photoDir, competitorNames: loadJson('config/competitors.json').map(c => c.name),
-          tactics: renderContextMirror(scanSkillInventory(join(ROOT, '.claude', 'skills'))).trim(),
+          tactics: buildConceptTactics(renderContextMirror(scanSkillInventory(join(ROOT, '.claude', 'skills')))),
         };
       },
       render: (prompt, { ratio, budget }) => studio.renderVariationWithBackoff(gemini, { prompt, photoPaths, ratio }, { budget }),

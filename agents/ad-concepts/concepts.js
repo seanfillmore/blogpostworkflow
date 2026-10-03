@@ -15,6 +15,55 @@ export const JUDGE_CRITERIA = Object.freeze(['thumbStop', 'oneSecondRead', 'prod
 
 const BEFORE_AFTER_RE = /\bbefore[\s-]*(?:and|&|\/|-)?[\s-]*after\b|\b(?:skin|face|body|underarms?|armpits?|teeth)\b[^.]{0,40}\b(?:improv\w*|clear(?:s|ed|er)?|transform\w*|heal\w*|whiter|smoother)\b/i;
 
+export const CONCEPT_TACTIC_SKILLS = Object.freeze([
+  'marketing-paid-creative-testing', 'marketing-product-image-stack', 'marketing-ai-product-imagery',
+  'marketing-copy-hook-construction', 'marketing-copy-hooks-and-formats', 'marketing-copy-hook-generation',
+  'marketing-conversion-copy-angles', 'marketing-competitor-messaging-teardown',
+  'marketing-awareness-level-messaging', 'marketing-ai-video-ad-production', 'marketing-copy-credibility-and-proof',
+]);
+
+/**
+ * A compact tactic MENU from renderContextMirror's output (so its stage gating still applies).
+ * Mirror shape: `## Do not propose` section, then per skill `## <name>`, an italic description
+ * line, and tactic headings demoted to `###` (floor 3) with bodies beneath. Keeps the whole
+ * Do-not-propose section, each listed skill's `##` line, and only the `###` tactic heading lines.
+ * Over maxChars: whole skill blocks are dropped from the end; Do-not-propose is never cut.
+ */
+export function buildConceptTactics(mirrorText, { skills = CONCEPT_TACTIC_SKILLS, maxChars = 40000 } = {}) {
+  const lines = String(mirrorText || '').split('\n');
+  const sections = [];
+  let cur = null;
+  let fence = false;
+  for (const line of lines) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    const m = !fence && line.match(/^## (.+?)\s*$/);
+    if (m) { cur = { name: m[1], lines: [line] }; sections.push(cur); continue; }
+    if (cur) cur.lines.push(line);
+  }
+  const dnp = sections.find(x => x.name === 'Do not propose');
+  const head = dnp ? dnp.lines.join('\n').replace(/\s+$/, '') : '';
+  const blocks = [];
+  for (const sec of sections) {
+    if (!skills.includes(sec.name)) continue;
+    const kept = [sec.lines[0]];
+    let inFence = false;
+    for (const line of sec.lines.slice(1)) {
+      if (/^\s*(```|~~~)/.test(line)) inFence = !inFence;
+      if (!inFence && /^### /.test(line) && !/^### Falsified\s*$/.test(line)) kept.push(line);
+    }
+    blocks.push(kept.join('\n'));
+  }
+  let out = head;
+  let truncated = false;
+  for (const b of blocks) {
+    const next = out ? `${out}\n\n${b}` : b;
+    if (next.length > maxChars) { truncated = true; break; }
+    out = next;
+  }
+  if (truncated) out += `\n\n(tactic menu truncated at ${maxChars} characters)`;
+  return out;
+}
+
 const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 48);
 const str = (v) => (typeof v === 'string' ? v.trim() : '');
 
