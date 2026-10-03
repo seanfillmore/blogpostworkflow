@@ -1,6 +1,6 @@
 ---
 name: marketing-organic-content-program
-description: Running an organic content program as one person: what to post, how it is structured, cadence and batching, give:ask ratio, lead-magnet opt-ins as the standing CTA and measurement unit, audience-breadth rings and topic-bucket mix, batch audits, niche selection and how content supports paid and retention.
+description: Running an organic content program as one person: what to post, how it is structured, cadence and batching, give:ask ratio, lead-magnet opt-ins as the standing CTA and measurement unit, audience-breadth rings and topic-bucket mix, title-first idea screening, evergreen search-demand topics, format narrowing including a faceless narrated production line and unscripted real-process capture, batch audits, niche selection and how content supports paid and retention.
 ---
 
 # Organic Content Program
@@ -11,7 +11,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Author's own numbers — 200,000 audience added in twelve months at one post per platform per day, then 1.2M added in the next six months after a friend audited his cadence and he 10x'd output.
 
-**Fit here (5/10):** Durable principle rather than platform mechanics. Organic posting is one of the two cheapest channels for a solo operator and costs no ad budget. But the prime directive is revenue, retention is the binding constraint, and 'three posts a day on every platform' is not a real ask for one person also running fulfilment, Amazon and a $30/day Meta test. Adopt scaled down: fix a current baseline cadence, step it up deliberately on the one platform where the buyer actually is, and treat follower growth as a leading indicator only. Volume is bounded by what one person can sustain, which is why format choice is rationed rather than open-ended — see the format-narrowing claim below.
+**Fit here (5/10):** Durable principle rather than platform mechanics. Organic posting is one of the two cheapest channels for a solo operator and costs no ad budget. But the prime directive is revenue, retention is the binding constraint, and 'three posts a day on every platform' is not a real ask for one person also running fulfilment, Amazon and a $30/day Meta test. Adopt scaled down: fix a current baseline cadence, step it up deliberately on the one platform where the buyer actually is, and treat follower growth as a leading indicator only. Volume is bounded by what one person can sustain, which is why format choice is rationed rather than open-ended — see the format-narrowing claim below, and the faceless production line that relieves the on-camera bottleneck specifically.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -21,7 +21,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Anecdotes only — Kylie Jenner, Huda Kattan, Conor McGregor's Proper 12, Dwayne Johnson's Teremana — survivorship examples with pre-existing fame.
 
-**Fit here (5/10):** Durable positioning principle and honestly runnable by a solo operator (founder-led posts need no crew). But the evidence is four already-famous people, which is not representative of a solo skincare operator. Worth adopting as a positioning choice — a maker-founder face gives natural-deodorant copy the provenance and identity material the awareness skill already asks for — not as a growth mechanism.
+**Fit here (5/10):** Durable positioning principle and honestly runnable by a solo operator (founder-led posts need no crew). But the evidence is four already-famous people, which is not representative of a solo skincare operator. Worth adopting as a positioning choice — a maker-founder face gives natural-deodorant copy the provenance and identity material the awareness skill already asks for — not as a growth mechanism. Note the tension with the faceless production line below: the founder face stays the primary persona, and faceless is the second line that runs alongside it, not the one that replaces it.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 4 of 16))*
 
@@ -41,7 +41,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Assertion plus worked examples for each bucket, including a far-past lesson story and a manufactured 'I lived on $100 for a month' experience.
 
-**Fit here (6/10):** Durable principle. A solo skincare formulator has exactly this asset — why she formulated an aluminium-free deodorant, what went wrong in the first batches, what customers write in. Gives a standing topic queue with no budget or team. Distinct from the existing persona-consistency claim, which governs voice, not where topics come from. Note these are *sources* of raw material; how far out to aim the finished piece is a separate decision, governed by the audience-rings claim below.
+**Fit here (6/10):** Durable principle. A solo skincare formulator has exactly this asset — why she formulated an aluminium-free deodorant, what went wrong in the first batches, what customers write in. Gives a standing topic queue with no budget or team. Distinct from the existing persona-consistency claim, which governs voice, not where topics come from. Note these are *sources* of raw material; how far out to aim the finished piece is a separate decision, governed by the audience-rings claim below. Everything that comes out of these buckets then passes two cheap screens before it reaches a script — standing search demand and whether a title exists for it, both recorded below — and narrated/faceless pieces get a further screen (does it tell a story or answer a question) recorded with the faceless format claim.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
 
@@ -65,15 +65,35 @@ description: Running an organic content program as one person: what to post, how
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
 
-## Make content about what is trending right now and attach your own experience or expertise to it.
+## Make content about what is trending right now and attach your own experience or expertise to it — but treat trending as the smaller, secondary share of the queue, behind evergreen search-demand topics.
 
-**Why it works:** Attention is already pooled around trending topics, so commentary on them borrows distribution you would otherwise have to build, exposing you to a broader audience than your niche alone.
+**Why it works:** Attention is already pooled around trending topics, so commentary on them borrows distribution you would otherwise have to build, exposing you to a broader audience than your niche alone. The cost is that the borrowed attention decays with the trend, which is why it ranks below topics with standing demand.
 
 **Evidence offered:** Assertion only.
 
-**Fit here (5/10):** Durable principle and free to run solo. Honest translation exists — trending natural-deodorant, aluminium, fluoride or ingredient-safety discourse is constant in this category and the founder has genuine expertise to attach. Scored mid because trend-chasing pulls in the broadest, least-qualified audience, and the prime directive is revenue with retention as the binding constraint. Bound trend posts to the working rings below: a trend that only connects at the outermost 'all beauty' ring is not worth making, however big the wave.
+**Fit here (5/10):** Durable principle and free to run solo. Honest translation exists — trending natural-deodorant, aluminium, fluoride or ingredient-safety discourse is constant in this category and the founder has genuine expertise to attach. Scored mid because trend-chasing pulls in the broadest, least-qualified audience, and the prime directive is revenue with retention as the binding constraint. Bound trend posts to the working rings below: a trend that only connects at the outermost 'all beauty' ring is not worth making, however big the wave. And when the queue is full, the evergreen claim immediately below wins the slot.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 5 of 16))*
+
+## Prefer evergreen, high-search-demand topics you already know the buyer wants over cutting-edge trending ones — and treat a proven evergreen topic as something you remake repeatedly rather than retire after one post.
+
+**Why it works:** A topic with standing search demand keeps earning views long after publication, so the same piece can be remade and re-earn its audience, whereas a trending topic pays once and decays. For an account with no reach of its own, search-driven discovery is the only distribution that does not depend on an audience you do not yet have.
+
+**Evidence offered:** Assertion grounded in the creator's own channel — 'a beginner's guide to buying a camera, that's a video we can make 100 times and we know it'll pretty much always do well'; he explicitly passes on the trending VR topics in favour of it.
+
+**Fit here (7/10):** Organic short-form here is run by one person with a small audience, so topics that are *found* rather than pushed are the ones that compound — 'why natural deodorant stops working', 'the switching period', 'is aluminium-free actually better', 'how to get through the detox' are standing searches in this category and can be remade indefinitely with a new hook, a new format or a new customer story. This is the selection criterion the five topic buckets lack: buckets tell you where to look, this tells you which candidate to pick. It also gives the repeat-the-message claim below a concrete form — repetition is not just restating the offer, it is remaking the proven topic. Runnable today at zero cost.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 3 of 4)*
+
+## Generate and judge ideas title-first — ask for each idea as a curiosity-driven title on top with a one-line description beneath, and kill any idea that has no compelling title.
+
+**Why it works:** If no compelling title exists for an idea, the piece will not get watched however good the content is — so the title *is* the viability test, and putting it above the concept makes that test the first thing you read. It lets you reject topics in seconds, at idea stage, before any scripting or filming time is sunk into them.
+
+**Evidence offered:** Demonstrated live — the creator asks for '10 video ideas each with their own unique, engaging and curiosity driven title', explicitly approves the ordering ('I like how it's going to give us the title first'), then accepts and rejects specific ideas purely on their titles.
+
+**Fit here (6/10):** Cheap screen that slots directly into batch planning for a solo operator: when generating the next batch of deodorant/soap/toothpaste ideas, demand title-first output and cut anything whose title is flat before it ever reaches a script. Distinct from hook-writing guidance elsewhere — that improves a hook for a piece already committed to; this gates whether the *topic* earns a piece at all. The same ordering works for email campaign planning, where the subject line is the equivalent viability test. Capped at 6 because it is a planning discipline rather than a revenue mechanism, and it sits after the ring decision and the evergreen screen, not instead of them.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 2 of 4)*
 
 ## Manufacture an experience on purpose — pick a topic people find interesting, go do it, then document it — rather than only reporting experiences you already had.
 
@@ -162,7 +182,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Author posts about his book daily and surveyed his audience: one in five who saw the post did not know he had a book.
 
-**Fit here (7/10):** Durable principle with a direct operational consequence for a solo operator running a sub-1,000 list and a small following: the giveaway, the deodorant hero SKU and the guarantee should be restated repeatedly across sends and posts rather than announced once. Costs nothing. Distinct from the existing 'carry one dominant idea through the piece' claim, which governs a single asset.
+**Fit here (7/10):** Durable principle with a direct operational consequence for a solo operator running a sub-1,000 list and a small following: the giveaway, the deodorant hero SKU and the guarantee should be restated repeatedly across sends and posts rather than announced once. Costs nothing. Distinct from the existing 'carry one dominant idea through the piece' claim, which governs a single asset. The evergreen-topic claim above extends this from messages to whole pieces: a proven search-demand topic gets remade, not retired.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 6 of 16))*
 
@@ -202,9 +222,39 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Assertion from experience — 'most people will get comfortable with one or two that they like making over and over'.
 
-**Fit here (6/10):** Directly protects a solo operator's output rate, which is the real constraint on organic video here. Runnable today, no gate. Scores mid rather than high because it is a production-discipline rule rather than a mechanism that moves revenue on its own, and it partially overlaps the output-volume and cadence claims above — read it as the constraint that makes those sustainable: a format the founder dreads filming will quietly cap cadence long before the calendar does.
+**Fit here (6/10):** Directly protects a solo operator's output rate, which is the real constraint on organic video here. Runnable today, no gate. Scores mid rather than high because it is a production-discipline rule rather than a mechanism that moves revenue on its own, and it partially overlaps the output-volume and cadence claims above — read it as the constraint that makes those sustainable: a format the founder dreads filming will quietly cap cadence long before the calendar does. The faceless narrated format and the unscripted real-process format below are two candidates for that two-or-three slate, and specifically the candidates that remove the dread.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+## Run a faceless format — your own voice or an AI voice over generated/stock visuals carrying the story, with nobody on camera — as a second production line that does not require you to be the on-camera personality.
+
+**Why it works:** Removing the on-camera requirement removes the slowest, most reluctance-prone step in a solo content program, so output volume is limited only by scripting and editing rather than by whether the founder feels presentable that day. Viewers reward the value delivered, not the presence of a face.
+
+**Evidence offered:** Creator points to multiple established faceless YouTube channels (Wendover Productions named) and produces a working Pompeii example; argues value to the viewer is what matters regardless of AI involvement.
+
+**Fit here (6/10):** Organic short-form is a live surface run solo and the whole program is built on raw output volume, so a narrated faceless line — ingredient education, why aluminium-free, transition-period explainers, routine walkthroughs — adds a second production line that does not require the founder on camera for every post. It also pairs with the batch mix: faceless pieces are a natural fit for the broader ring-3/ring-4 reach slot, where a talking head adds little. Not higher because the founder-on-camera persona is itself an asset in this category, so this is additive rather than a replacement, and it still obeys the ring ban and the give:ask ratio like any other post.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
+
+## Pick a faceless/narrated topic by whether it tells an interesting story or answers an interesting question — and prefer topics that do both at once.
+
+**Why it works:** A question gives the viewer a reason to click and a loop to close; the story gives them a reason to stay through the middle. A topic with only one of the two either fails to earn the click or fails to hold — which maps exactly onto the hook/retain halves of the three-part content unit above.
+
+**Evidence offered:** Creator names Wendover Productions as the model ('Why Trains Suck in America' both answers a question and tells the story of American development) and applies the same test to his own Pompeii topic choice.
+
+**Fit here (6/10):** A usable screen laid on top of the five topic buckets, for the narrated format specifically — 'why does natural deodorant stop working after a few weeks' answers a question and can carry the story of the switch and the reformulation behind it. Runnable today by one person with no budget. Capped at 6 because it is a topic-selection heuristic rather than a revenue lever, and because it screens topics after the ring decision has already bounded which audience the piece is aimed at.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
+
+## For process and workflow content specifically, drop the word-for-word script and record yourself doing the real thing start to finish — every step and every decision — rather than presenting a tidied-up overview.
+
+**Why it works:** A scripted overview compresses out the decisions and the small course-corrections, which are exactly the part the viewer cannot get anywhere else and the part that earns trust. Recording the real run leaves them in, so nothing the viewer needs is missed out on; the roughness is the credential.
+
+**Evidence offered:** Assertion plus the video itself as the demonstration — the creator states he normally scripts word for word and is deliberately not doing so for this process piece.
+
+**Fit here (5/10):** A deliberate exception to the default that every video gets scripted word for word, and worth recording as such so the default is not applied blindly. The real-process version is filmable today on a phone with no extra cost: making or filling a batch, the actual morning routine with the deodorant and toothpaste, the unedited first week of switching. Unscripted process footage is also the 'show your work' material that provenance and proof claims elsewhere ask for. Modest score because it is a narrow format exception rather than a broad lever — and it is one more candidate for the two-or-three format slate above, not a licence to stop scripting everything else.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 2 of 4)*
 
 ## Maintain a master list of your best-performing content ('greatest hits'), each labeled with the problem it solves and the benefit it provides, so it can be sent to a prospect before or after a conversation to resolve a specific concern.
 
@@ -252,7 +302,7 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Screen-share of the creator's own audit showing 'personal brand growth' rising and 'storytelling' dropping against his prior belief; the tool projects a rebalanced mix 'after two to three batches'. Assertion that this is what he runs on his own channels. The source runs batches of seven videos.
 
-**Fit here (7/10):** Runnable today in scaled-down form: native Instagram/TikTok insights on the last 7–15 posts, each tagged by topic bucket (deodorant switching, oral care, lip balm), hook type and format in a spreadsheet — no paid dashboard, and views arrive at far higher volume than ~54 orders/month. On a small account two videos per bucket is a noisy sample, so the read is directional and should require several batches with a consistent direction before dropping a bucket. Complements the fixed-cadence/monthly-measurement claim above and the performance-pattern-analysis work elsewhere, which measure audience size or top-vs-bottom decile contrast rather than reallocating topic buckets at low volume. Where a post carried a giveaway link, prefer opt-ins over views as the bucket's score.
+**Fit here (7/10):** Runnable today in scaled-down form: native Instagram/TikTok insights on the last 7–15 posts, each tagged by topic bucket (deodorant switching, oral care, lip balm), hook type and format — including whether it was founder-on-camera, faceless narrated or unscripted real-process — in a spreadsheet. No paid dashboard, and views arrive at far higher volume than ~54 orders/month. On a small account two videos per bucket is a noisy sample, so the read is directional and should require several batches with a consistent direction before dropping a bucket. Complements the fixed-cadence/monthly-measurement claim above and the performance-pattern-analysis work elsewhere, which measure audience size or top-vs-bottom decile contrast rather than reallocating topic buckets at low volume. Where a post carried a giveaway link, prefer opt-ins over views as the bucket's score. A topic that scores well here becomes an evergreen candidate to remake, not a one-off.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
 
@@ -262,6 +312,6 @@ description: Running an organic content program as one person: what to post, how
 
 **Evidence offered:** Live demonstration of pulling a report into Claude via MCP and asking it to bias the next seven videos; creator claims this flow drove 0→75k followers, 30k email subs and $100k+ attributable revenue on his own new channel in ~4 months.
 
-**Fit here (6/10):** The paid dashboard plus MCP connector is the scale-gated version, but there is an honest scale-down runnable today: export or hand-type the last 20–30 posts' views, saves and follows with their topic/hook/format tags into a CSV, paste it into a chat and ask the same forward question. That is a solo laptop task and it pairs directly with the batch audit above. Held at 6 because at this post volume the answers are directional and the headline revenue proof comes from a creator-economy channel, not an ecommerce catalog — so treat the prescription as a filming shortlist to sanity-check against the ring ban, not an instruction.
+**Fit here (6/10):** The paid dashboard plus MCP connector is the scale-gated version, but there is an honest scale-down runnable today: export or hand-type the last 20–30 posts' views, saves and follows with their topic/hook/format tags into a CSV, paste it into a chat and ask the same forward question. That is a solo laptop task and it pairs directly with the batch audit above, and with the title-first idea generation claim — ask for the next batch's ideas title-first, in the same conversation that holds the performance data. Held at 6 because at this post volume the answers are directional and the headline revenue proof comes from a creator-economy channel, not an ecommerce catalog — so treat the prescription as a filming shortlist to sanity-check against the ring ban, not an instruction.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*

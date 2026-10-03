@@ -1,6 +1,6 @@
 ---
 name: marketing-problem-solution-inventory
-description: Use before writing an offer, product page, FAQ, or email sequence, to generate the raw material rather than choose its structure — walking the buyer's actual before/during/after sequence to enumerate every problem they hit, listing why they would quit at each step, inverting each problem into the thing the page has to say, inventorying every performance the product delivers so the one matched to the strongest desire is what leads, inverting each performance back into the specific pain it removes, keeping spec detail only where it does one of its four jobs, and naming the structural drawback a SKU carries before writing a word.
+description: Use before writing an offer, product page, FAQ, or email sequence, to generate the raw material rather than choose its structure — walking the buyer's actual before/during/after sequence to enumerate every problem they hit, listing why they would quit at each step, inverting each problem into the thing the page has to say, inventorying every performance the product delivers so the one matched to the strongest desire is what leads, inverting each performance back into the specific pain it removes, keeping spec detail only where it does one of its four jobs, naming the structural drawback a SKU carries before writing a word, sourcing the objections from public complaints rather than imagination, and running the finished asset against an aggregated question list as a completeness gate before it ships.
 ---
 
 # Problem / Solution Inventory
@@ -88,3 +88,13 @@ The physical half of the product is not discarded — it is placed. See the four
 Two notes. **`agents/voice-of-customer` already mines Reddit and Judge.me monthly** and writes to `data/context/voice-of-customer.md` — read that file before doing any of this by hand, and use this section for what it does not cover: competitor reviews and ad comments. And the 'write a better spin on each complaint' half must be paired with the specificity rule in `marketing-copy-credibility-and-proof`, or it drifts into unsupportable body-care claims.
 
 *Source: Intelligems — "IntelliJAMS EP 066: Building an AI Brain for Your Ecommerce Growth Experiments" (CdkhplYma9w)*
+
+## Then run the finished asset against an aggregated question list as a checkbox pass — ask an LLM for the most commonly asked questions about the buying decision in the category, and treat any question the asset does not answer as a shopper left unsatisfied.
+
+**Why it works:** Satisfaction at the end of a page or an email is a function of unanswered questions, not of length. An aggregated question list is a completeness gate that sits *outside* your own assumptions, so the omission surfaces before publishing rather than arriving later as a support ticket or an abandoned cart.
+
+**Evidence offered:** Demonstration only — the question list is generated for 'buying a camera for YouTube' and described as a checklist. No data.
+
+**Fit here (6/10):** This is the cheap back-stop on the commitment rule above: that section says every enumerated obstacle must get an artifact, and this gives a free external check that the enumeration was complete. One person, a free chat window, today. Applies directly to the PDP's deciding content, the journey-staged FAQ and the Amazon A+ blocks — ask for the questions a first-time natural-deodorant buyer asks, then walk the live page line by line and mark which are answered. Not higher because the strongest version of the list still comes from the real sources named in the section above — own reviews, support messages, competitor one-stars, forum threads — and the model's aggregate is the supplement that catches what those missed, not the replacement. Run it last, after the inventories, and feed anything it surfaces back through the problem list rather than bolting an answer onto the end of the page; the information-fatigue rule still governs where the answer goes.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 4 of 4)*
