@@ -68,17 +68,18 @@ export async function typesetTake({ buffer, headline, sub = '', band = 'top', tr
   const puppeteer = require('puppeteer');
   const own = !browser;
   const b = browser || await puppeteer.launch({ args: ['--no-sandbox', '--font-render-hinting=none'] });
+  let page;
   try {
-    const page = await b.newPage();
+    page = await b.newPage();
     await page.setViewport({ width, height, deviceScaleFactor: 1 });
     await page.setContent(html, { waitUntil: 'load' });
     await page.evaluate(() => document.fonts.ready);
     // Fit again now that the brand faces have loaded: metrics measured on a fallback face are wrong.
     const fit = await page.evaluate(() => window.__runFit());
     const out = await page.screenshot({ type: 'jpeg', quality: 92, clip: { x: 0, y: 0, width, height } });
-    await page.close();
     return { buffer: Buffer.from(out), mediaType: 'image/jpeg', colour: treatment === 'caption' ? '#000000' : colour, treatment, overflow: !!fit?.overflow, headlinePx: fit?.px ?? 0 };
   } finally {
+    try { await page?.close(); } catch { /* page already gone */ }
     if (own) await b.close();
   }
 }

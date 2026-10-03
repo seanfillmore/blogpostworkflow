@@ -31,3 +31,16 @@ test('renders at the take size, PNG or JPEG in, and shrinks a long headline inst
     assert.equal(r.colour, '#000000');
   }
 });
+
+test('closes the page even when rendering throws, and leaves a caller-supplied browser open', async () => {
+  const calls = { pageClose: 0, browserClose: 0 };
+  const page = {
+    setViewport: async () => {}, setContent: async () => {}, evaluate: async () => ({ px: 10, overflow: false }),
+    screenshot: async () => { throw new Error('boom'); },
+    close: async () => { calls.pageClose++; },
+  };
+  const browser = { newPage: async () => page, close: async () => { calls.browserClose++; } };
+  await assert.rejects(typesetTake({ buffer: await solid({ r: 237, g: 229, b: 216 }), headline: 'x', browser }), /boom/);
+  assert.equal(calls.pageClose, 1);
+  assert.equal(calls.browserClose, 0);
+});
