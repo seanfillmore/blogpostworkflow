@@ -81,7 +81,9 @@ export function buildConceptPrompt({ product, catalogEntry, pdpBody, brandKit, p
   const requestedBlock = requested.length
     ? `\nOPERATOR IDEAS. Include each of these as its own concept, faithful to the idea, with "requested": true:\n${requested.map((r, i) => `  ${i + 1}. ${r}`).join('\n')}\n`
     : '';
-  const reviewLines = (reviews || []).slice(0, 8).map(r => `  - "${String(r.body || r.text || '').slice(0, 240)}"`).join('\n');
+  // fetchAdReviews returns string[]; an object shape is accepted too.
+  const reviewText = (r) => (typeof r === 'string' ? r : (r?.body || r?.text || ''));
+  const reviewLines = (reviews || []).slice(0, 8).map(r => `  - "${String(reviewText(r)).slice(0, 240)}"`).join('\n');
   return `You are the creative director for Real Skin Care, generating ad CONCEPTS for one Meta flexible ad.
 Product: ${product.title} (${product.handle}).
 
@@ -101,6 +103,7 @@ RULES. A concept that breaks one is discarded before anyone sees it:
   - No before/after imagery of skin, a body, a face, an underarm or teeth, and no claim to treat, heal or cure anything. This is a cosmetic.
   - Every fact a concept leans on goes in "claims": "text" must be an EXACT contiguous quote copied from the source named by "sourceId" (letter for letter, no paraphrase), and sourceId is one of: ${sourceIds.join(', ')}. Invent nothing.
   - No em dash anywhere in any field.
+  - A native-screenshot concept always takes sceneText "illegible-print": a screenshot's interface text can only be hairline texture, because any readable character in the render fails the text gate.
   - Text in the scene is either none, or "illegible-print" (texture that reads as print from a distance with no readable characters). Overlay type is set later, in code, in the typeBand you name.
 
 EVIDENCE
@@ -124,11 +127,16 @@ const NATIVE_NOT_A_BRAND = '(?![-\\u2010-\\u2015]|\\s+(?:feed|ads?|format|look|s
 // Competitor names are proper nouns: case-SENSITIVE on word boundaries. "Native" is also an
 // ordinary word and one of our own family names ("native-screenshot"), so it is not counted
 // when a hyphen or a format word follows it.
-function mentionsCompetitor(text, name) {
+export function mentionsCompetitor(text, name) {
   if (!name) return false;
   const esc = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const tail = name === 'Native' ? NATIVE_NOT_A_BRAND : '';
   return new RegExp(`(?<![\\w])${esc}(?![\\w])${tail}`).test(text);
+}
+
+/** Every competitor name the text mentions, by the same rule the pre-gate uses. */
+export function namedCompetitors(text, competitorNames = []) {
+  return (competitorNames || []).filter(n => mentionsCompetitor(String(text || ''), n));
 }
 
 /** Claim text is its own evidence quote; the index is normalized to match. */
@@ -148,7 +156,7 @@ export function preGate(concept, { sourceIndex, competitorNames = [] }) {
   if (health.length) reasons.push(`health claim: ${health.map(h => `"${h.match}" (${h.category})`).join(', ')}`);
   const misnomer = findProductCategoryMisnomers(text);
   if (misnomer.length) reasons.push(`product category: ${misnomer.map(m => m.match).join(', ')}`);
-  const named = competitorNames.filter(n => mentionsCompetitor(text, n));
+  const named = namedCompetitors(text, competitorNames);
   if (named.length) reasons.push(`names a competitor: ${named.join(', ')}`);
   if (BEFORE_AFTER_RE.test(text)) reasons.push('before/after imagery of skin or body');
   if (/\u2014/.test(text)) reasons.push('em dash');

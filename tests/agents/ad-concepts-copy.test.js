@@ -72,3 +72,72 @@ test('buildOverlayCopyPrompt states the word limit and the verbatim-quote rule',
   assert.match(p, /EXACT contiguous quote/);
   assert.match(p, /letter for letter/);
 });
+
+// ── final-review fixes ────────────────────────────────────────────────────────
+
+test('gateCopy rejects a named competitor (case-sensitive proper noun), not the ordinary word', () => {
+  const bad = gateCopy({ headline: 'Gentler than Piperwai.', sub: '' }, [], { sourceIndex, competitorNames: ['Piperwai', 'Native'] });
+  assert.equal(bad.ok, false);
+  assert.match(bad.reasons.join(' '), /names a competitor: Piperwai/);
+  const fine = gateCopy({ headline: 'A native-screenshot joke.', sub: '' }, [], { sourceIndex, competitorNames: ['Native'] });
+  assert.equal(fine.ok, true);
+});
+
+test('writeOverlayCopy regenerates once when the first attempt names a competitor', async () => {
+  const anthropic = scripted(
+    reply({ headline: 'Better than Native.', sub: '', claims: [] }),
+    reply({ headline: "Your soap's ingredient list.", sub: '', claims: [] }),
+  );
+  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex, competitorNames: ['Native'] });
+  assert.equal(r.ok, true);
+  assert.match(anthropic.calls[1].messages[0].content, /names a competitor: Native/);
+});
+
+test('writeFlexibleCopy rejects a competitor in a primary text and retries once', async () => {
+  const mk = (t) => ({ primaryTexts: [t, 'Swap the ingredient list for one fat. Coconut oil soap.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [] });
+  const anthropic = scripted(reply(mk('Weleda has a long list. Ours has one fat.')), reply(mk('Long lists are common. Ours has one fat.')));
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept], sourceIndex, pdpBody: '', competitorNames: ['Weleda'] });
+  assert.equal(r.ok, true);
+  assert.match(anthropic.calls[1].messages[0].content, /names a competitor: Weleda/);
+});
+
+test('writeFlexibleCopy prompt carries the price and each image\'s on-image headline, and says the images carry text', async () => {
+  const good = { primaryTexts: ['One fat. Organic virgin coconut oil, turned into soap.', 'Swap the ingredient list for one fat. Small batches.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [] };
+  const anthropic = scripted(reply(good));
+  const finals = [{ ...concept, overlayHeadline: "Your soap's ingredient list." }, { ...concept, id: 'two', title: 'Two', overlayHeadline: 'One fat.' }];
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product: { ...product, priceLabel: '$12' }, concepts: finals, sourceIndex, pdpBody: '' });
+  assert.equal(r.ok, true);
+  const sent = anthropic.calls[0].messages[0].content;
+  assert.match(sent, /\$12/);
+  assert.doesNotMatch(sent, /undefined/);
+  assert.match(sent, /on-image headline: "Your soap's ingredient list\."/);
+  assert.match(sent, /on-image headline: "One fat\."/);
+  assert.match(sent, /DO carry overlay text/);
+});
+
+const SELLING_PDP = 'Organic virgin coconut oil soap, cold pressed and unrefined, handmade in small batches in the USA. Gentle cleansing lather that rinses clean, leaves skin soft, never tight or dry. Fragrance free option, tea tree variant, nourishing moisturizing formula, biodegradable wrapper, plastic free packaging, long lasting bar, vegan cruelty free, family owned business, simple honest ingredients, sensitive skin friendly, everyday shower routine.';
+const threaded = (t) => ({ primaryTexts: [t, 'Organic coconut oil soap. Cold pressed, gentle lather, handmade in small batches.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [] });
+
+test('golden thread in a primary text: one shared regeneration naming it, then ships and records the finding', async () => {
+  const anthropic = scripted(
+    reply(threaded('Dinosaurs never bathed. Dinosaurs stomped volcanoes, dinosaurs roared at volcanoes.')),
+    reply(threaded('Dinosaurs never bathed. Dinosaurs roared, dinosaurs stomped volcanoes all day.')),
+  );
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept], sourceIndex, pdpBody: SELLING_PDP });
+  assert.equal(anthropic.calls.length, 2, 'the golden thread shares the single regeneration');
+  assert.match(anthropic.calls[1].messages[0].content, /GOLDEN THREAD/);
+  assert.equal(r.ok, true, 'advisory: the second attempt ships');
+  assert.equal(r.goldenThread.length, 1);
+  assert.equal(r.goldenThread[0].primaryText, 1);
+  assert.match(r.goldenThread[0].reason, /dinosaur/);
+});
+
+test('golden thread fixed on the retry: nothing recorded', async () => {
+  const anthropic = scripted(
+    reply(threaded('Dinosaurs never bathed. Dinosaurs stomped volcanoes, dinosaurs roared at volcanoes.')),
+    reply(threaded('Dinosaurs never bathed. Organic coconut oil soap, cold pressed, gentle lather.')),
+  );
+  const r = await writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept], sourceIndex, pdpBody: SELLING_PDP });
+  assert.equal(r.ok, true);
+  assert.deepEqual(r.goldenThread, []);
+});

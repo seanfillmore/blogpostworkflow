@@ -14,7 +14,8 @@ import { assertNoHealthClaims } from '../ad-studio/health-claims.js';
 import { assertClaimsSourced, normalizeForMatch, sourceText } from '../ad-studio/claims.js';
 import { findProductCategoryMisnomers } from '../../lib/product-category-terms.js';
 import { buildFlexibleCopyPrompt, parseFlexibleCopyResponse, flexibleZones } from '../ad-studio/flexible.js';
-import { checkClaimsSourced } from './concepts.js';
+import { sellingVocabulary, findGoldenThread, splitPrimaryText, goldenThreadRetryNote, MIN_SELLING_VOCABULARY } from '../ad-studio/golden-thread.js';
+import { checkClaimsSourced, namedCompetitors } from './concepts.js';
 
 export const HEADLINE_MAX_WORDS = 6;
 export const SUB_MAX_WORDS = 12;
@@ -62,10 +63,16 @@ export function parseOverlayCopy(text) {
   };
 }
 
-export function gateCopy(fields, claims, { sourceIndex }) {
+export function gateCopy(fields, claims, { sourceIndex, competitorNames = [] }) {
   const reasons = [];
   const entries = Object.entries(fields).filter(([, v]) => String(v || '').trim());
   for (const [k, v] of entries) if (/—/.test(v)) reasons.push(`em dash in ${k}`);
+  // Same matcher as the concept pre-gate (case-sensitive proper nouns), so a concept that
+  // passed cannot have a competitor written back into it by the copy call.
+  for (const [k, v] of entries) {
+    const named = namedCompetitors(v, competitorNames);
+    if (named.length) reasons.push(`names a competitor: ${named.join(', ')} in ${k}. Jab at the category, never a named brand`);
+  }
   try { assertNoHealthClaims(Object.fromEntries(entries)); } catch (e) { reasons.push(`health claim: ${String(e.message).split('\n').slice(1).map(l => l.trim()).filter(Boolean).join('; ') || firstLine(e)}`); }
   for (const [k, v] of entries) {
     if (findProductCategoryMisnomers(v).length) reasons.push(`product category in ${k}: our product is a deodorant or soap, never an antiperspirant`);
@@ -89,13 +96,13 @@ export function gateCopy(fields, claims, { sourceIndex }) {
   return { ok: reasons.length === 0, reasons };
 }
 
-export async function writeOverlayCopy({ anthropic, model, concept, product, pdpBody, sourceIndex }) {
+export async function writeOverlayCopy({ anthropic, model, concept, product, pdpBody, sourceIndex, competitorNames = [] }) {
   let retryNote = null;
   let lastReasons = [];
   for (let attempt = 0; attempt < 2; attempt++) {
     const prompt = buildOverlayCopyPrompt({ concept, product, pdpBody, sourceIds: Object.keys(sourceIndex), retryNote });
     const copy = parseOverlayCopy(await call(anthropic, model, prompt));
-    const gate = gateCopy({ headline: copy.headline, sub: copy.sub }, copy.claims, { sourceIndex });
+    const gate = gateCopy({ headline: copy.headline, sub: copy.sub }, copy.claims, { sourceIndex, competitorNames });
     if (gate.ok && copy.headline) return { ok: true, copy };
     lastReasons = copy.headline ? gate.reasons : ['empty headline', ...gate.reasons];
     retryNote = lastReasons.join('\n');
@@ -103,9 +110,34 @@ export async function writeOverlayCopy({ anthropic, model, concept, product, pdp
   return { ok: false, reasons: lastReasons };
 }
 
-export async function writeFlexibleCopy({ anthropic, model, product, concepts, sourceIndex, pdpBody, persona = null, reviews = [] }) {
-  const pseudo = concepts.map(c => ({ format: { key: c.id, name: c.title, awareness: c.awareness || 'solution' } }));
-  const base = buildFlexibleCopyPrompt({ product, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews });
+/**
+ * Ad Studio's flexible prompt says "the three images carry no text at all", which is true of
+ * a plate and false of our finals: each carries a typeset headline (and maybe a sub). So the
+ * pseudo-format name carries that headline, and this note overrides the stale sentence.
+ */
+export const FLEXIBLE_OVERLAY_NOTE = `IMPORTANT, OVERRIDING THE LINE ABOVE ABOUT THE IMAGES: these images DO carry overlay text. Each one shows the on-image headline quoted next to it in the list of images. The primary texts and headlines you write run around those images, so do not repeat an on-image headline verbatim and never contradict one.`;
+
+export async function writeFlexibleCopy({ anthropic, model, product, concepts, sourceIndex, pdpBody, persona = null, reviews = [], competitorNames = [] }) {
+  const pseudo = concepts.map(c => ({
+    format: {
+      key: c.id,
+      name: c.overlayHeadline ? `${c.title}, on-image headline: "${c.overlayHeadline}"${c.overlaySub ? ` with the line "${c.overlaySub}"` : ''}` : c.title,
+      awareness: c.awareness || 'solution',
+    },
+  }));
+  // A missing priceLabel used to reach the prompt as the literal word "undefined".
+  const priced = { ...product, priceLabel: product.priceLabel || 'price on the product page' };
+  const base = `${buildFlexibleCopyPrompt({ product: priced, concepts: pseudo, sourceIds: Object.keys(sourceIndex), persona, pdpBody, reviews })}\n\n${FLEXIBLE_OVERLAY_NOTE}`;
+
+  // Golden thread on the PRIMARY TEXTS, advisory, exactly as Ad Studio's writeFlexibleManifest:
+  // it SHARES the one regeneration (never a third call), the second attempt ships whatever it
+  // produced, and the finding is returned for flexible-ad.json. Disarmed below
+  // MIN_SELLING_VOCABULARY rather than condemning every text.
+  const selling = sellingVocabulary({ pdpBody, catalogEntry: null, persona });
+  const findThreads = (texts) => selling.size < MIN_SELLING_VOCABULARY ? [] : texts
+    .map((t, i) => ({ i, t, r: findGoldenThread({ ...splitPrimaryText(t), selling }) }))
+    .filter(x => x.r.goldenThread);
+
   let note = null;
   let lastReasons = [];
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -116,9 +148,18 @@ export async function writeFlexibleCopy({ anthropic, model, product, concepts, s
       if (/cut off/.test(e.message)) throw e;
       lastReasons = [firstLine(e)]; note = lastReasons[0]; continue;
     }
-    const gate = gateCopy(flexibleZones(parsed), parsed.claims, { sourceIndex });
-    if (gate.ok) return { ok: true, ...parsed };
-    lastReasons = gate.reasons; note = gate.reasons.join('\n');
+    const gate = gateCopy(flexibleZones(parsed), parsed.claims, { sourceIndex, competitorNames });
+    const threads = findThreads(parsed.primaryTexts);
+    if (gate.ok && (threads.length === 0 || attempt === 1)) {
+      return {
+        ok: true, ...parsed,
+        goldenThread: threads.map(x => ({ primaryText: x.i + 1, text: x.t, reason: x.r.reason, hookPremise: x.r.hookPremise, pivot: x.r.pivot, dominance: x.r.dominance })),
+      };
+    }
+    lastReasons = gate.reasons;
+    const parts = [...gate.reasons];
+    if (threads.length) parts.push(`${goldenThreadRetryNote(threads[0].r)}\nThe offending primary text was: "${threads[0].t}"`);
+    note = parts.join('\n');
   }
   return { ok: false, reasons: lastReasons };
 }

@@ -115,3 +115,22 @@ test('checkClaimsSourced is directly usable', () => {
   assert.equal(bad.ok, false);
   assert.match(bad.reasons[0], /unsourced claim/);
 });
+
+// ── final-review fixes ────────────────────────────────────────────────────────
+
+test('buildConceptPrompt quotes string reviews (fetchAdReviews returns string[])', () => {
+  const p = buildConceptPrompt({ product: { title: 'Soap', handle: 'coconut-soap' }, reviews: ['Lathers like a dream.', { body: 'Object body.' }] });
+  assert.match(p, /- "Lathers like a dream\."/);
+  assert.match(p, /- "Object body\."/);
+});
+
+test('buildConceptPrompt steers native-screenshot to illegible-print scene text', () => {
+  const p = buildConceptPrompt({ product: { title: 'Soap', handle: 'coconut-soap' } });
+  assert.match(p, /native-screenshot[^\n]*sceneText "illegible-print"/);
+});
+
+test('mentionsCompetitor is exported and case-sensitive', async () => {
+  const { mentionsCompetitor } = await import('../../agents/ad-concepts/concepts.js');
+  assert.equal(mentionsCompetitor('Better than Weleda', 'Weleda'), true);
+  assert.equal(mentionsCompetitor('a native-screenshot', 'Native'), false);
+});
