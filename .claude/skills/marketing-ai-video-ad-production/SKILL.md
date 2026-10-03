@@ -1,19 +1,61 @@
 ---
 name: marketing-ai-video-ad-production
-description: End-to-end production of scripted AI video ads: a reusable director skill that turns the script into a per-cut shot list used as the single source of truth for all generations, plus shot-length defaults, storyboard depth rules, coverage harvesting, spend tapering and credit-repair moves.
+description: End-to-end production of scripted AI video ads: a reusable director skill that turns the script into a persistent per-cut shot list used as the single source of truth for all generations, plus a global style prefix for cross-shot consistency, standalone non-referential prompt rules, behaviour-based acting direction, geo-spatial blocking, shot-length and storyboard-depth defaults, coverage harvesting, spend tapering and credit-repair moves.
 ---
 
 # Ai Video Ad Production
 
-## Install a reusable 'director' skill in the LLM and have it convert the full script into a per-cut shot list specifying camera angle, focal length, action, blocking and camera movement, then work from that shot list as the single source of truth for every generation.
+## Install a reusable 'director' skill in the LLM and have it convert the full script into a per-cut shot list specifying camera angle, focal length, action, blocking and camera movement — then keep that shot list as a persistent file with a completion checkbox per scene, and work from the file as the single source of truth for every generation.
 
-**Why it works:** The shot list is the brain of the video: it moves you out of asset creation and into the director's seat, so each generation prompt is derived from one coherent plan rather than invented ad hoc. Because the instructions live in a reusable skill, the same directing standard is applied to every project without re-briefing.
+**Why it works:** The shot list is the brain of the video: it moves you out of asset creation and into the director's seat, so each generation prompt is derived from one coherent plan rather than invented ad hoc. Because the instructions live in a reusable skill, the same directing standard is applied to every project without re-briefing. A multi-shot piece is generated over many sessions, so progress has to live outside the chat: make the shot list a file artifact with a done/not-done state per scene that survives reloads, and when you want a change, have the model rewrite that same file with the edits applied and the scene numbering preserved rather than describing the change in conversation. Re-rendering the one file on every revision stops the shot list and the actual generations from drifting apart, and stable numbering means tracked progress is not lost when the file is rewritten.
 
-**Evidence offered:** Walkthrough of installing and invoking the custom Director skill, showing the shot list it produced with camera angle, actions and movement per cut; downloadable skill offered.
+**Evidence offered:** Walkthrough of installing and invoking the custom Director skill, showing the shot list it produced with camera angle, actions and movement per cut; downloadable skill offered. The persistence requirement is assertion only — specified as a hard requirement of the skill, with the localStorage keying scheme given.
 
-**Fit here (7/10):** A solo operator who is also his own director benefits most from an externalised directing standard, and the shot list is what makes a multi-cut ad tractable for one person. Runnable today — an LLM skill, a script and a video model, no second person and no spend floor.
+**Fit here (7/10):** A solo operator who is also his own director benefits most from an externalised directing standard, and the shot list is what makes a multi-cut ad tractable for one person. Runnable today — an LLM skill, a script and a video model, no second person and no spend floor. The file-artifact-with-checkboxes half scores lower on its own (5/10): he is the only person tracking which of a dozen shots are done across sessions, but a six-shot ad is small enough that a plain doc mostly suffices.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 2 of 6)*
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
+
+## Write a single global 'Style Prefix' block — photorealism level, lighting doctrine, colour ratio, lens and shutter, skin detail, acting register, physics, continuity, frame rate, audio rules — and prepend it verbatim to every single shot prompt in the project, then reinforce it per shot with the specific lighting geometry of that frame.
+
+**Why it works:** A video model has no project-level memory, so the only way a sequence of separately generated clips shares one look is if the same look instruction is physically present in each prompt. Keeping it as one locked block means every prompt is copy-paste-ready standalone with no reassembly. The per-shot reinforcement — where the window is, what the haze is doing, which colour dominates — tells the model where to actually place the rim light rather than leaving it to chance.
+
+**Evidence offered:** Assertion only — presented as the skill's law, with a full default prefix supplied.
+
+**Fit here (7/10):** He produces his own short-form video and AI-assisted ads solo, and the rest of this skill already covers writing scene prompts from a fixed template; this adds the missing cross-shot consistency mechanism, which is exactly the failure mode when a 30-second deodorant ad is assembled from six separately generated clips. Current-era platform mechanics, so no age discount.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
+
+## Never write referential language in any field of a generation prompt — 'same as last shot', 'still at the train station', 'as established earlier', 'continues from the previous prompt' — and instead restate the location, setting, time of day and every character's physical state in full, explicit language in every prompt, even when it repeats the previous prompt word for word.
+
+**Why it works:** Each generation is rendered in complete isolation with no memory of the script or of other prompts, so a phrase that only makes sense to someone who read a different prompt cannot be resolved and will be rendered wrong or silently ignored. The test is simple: if a phrase depends on another prompt for its meaning, it is broken. Repetition across 1a / 1b / 1c is mandatory, not wasteful.
+
+**Evidence offered:** Assertion only, but with an explicit forbidden-phrase list, a stated test, and two worked examples.
+
+**Fit here (8/10):** This is the single most common reason a multi-clip AI ad falls apart mid-sequence, and he assembles ads from multiple generations himself today. It generalises beyond video to any isolated-generation prompt, including the image frames used for listing and ad statics. Runnable at $30/day with no extra tooling.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
+
+## Write acting direction as observable physical behaviour rather than emotion labels — not 'she looks sad' but 'her eyes drop to the table, jaw tightens, she swallows once before answering' — express carried-over emotion as how it looks right now, and default to restraint.
+
+**Why it works:** A model can render a described physical action but has to guess at an emotion label, so naming the behaviour is the only way to control the performance. Not 'he's angry' but 'knuckles whiten on the glass, breath shortens, eyes never leave hers'. Expressing emotional state as present-tense visible fact — 'her hands haven't stopped shaking' — also keeps the prompt standalone instead of referring back to an earlier beat. Restraint reads as real: a whispered line outperforms a screamed one in most cases, and big emotion belongs only where the moment has earned it.
+
+**Evidence offered:** Assertion with six before/after rewrite pairs.
+
+**Fit here (8/10):** Directly usable twice over: in his AI video prompts and in directing his own on-camera delivery, where 'look relieved' is unfilmable and 'exhale, shoulders drop, half-smile' is. Durable craft principle, so age is irrelevant, and it needs nothing but a prompt field.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
+
+## Block every shot geo-spatially: state where each subject and prop sits relative to the location and to each other in literal terms, rather than 'they sit and talk'.
+
+**Why it works:** Explicit spatial relations — 'she sits across from him at the diner booth, knees touching under the table', 'the space between them is roughly twelve feet', 'he stops in the doorway six feet behind her' — are what let the model render a coherent, consistent space. Without them it reinvents the geometry of the room on every generation and the cuts stop matching.
+
+**Evidence offered:** Assertion plus the worked example, which states distances and positions in every Scene block.
+
+**Fit here (7/10):** Applies the moment he generates more than one shot of the same scene — e.g. a bathroom-counter sequence where the deodorant stick has to stay in the same place across cuts. Runnable today, costs nothing but prompt words.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
 
 ## Give every asset a simple descriptive filename in one Assets folder, register each one with the LLM as an @-name plus a one-line description, and have the shot list call assets by that @-name so each reference maps one-to-one onto the video tool's media picker.
 
@@ -47,7 +89,7 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 ## When a generated shot is wrong, go back to the director document and issue one named change scoped to that scene ('in scene one, do not punch into a 50mm, keep the whole action in one continuous 35mm shot') rather than hand-rewriting the generation prompt.
 
-**Why it works:** Editing upstream regenerates only the affected prompt while leaving every other scene in the shot list untouched, so the plan stays internally consistent and you never lose the rest of the work; hand-editing the prompt desynchronises the shot list from what you actually generated.
+**Why it works:** Editing upstream regenerates only the affected prompt while leaving every other scene in the shot list untouched, so the plan stays internally consistent and you never lose the rest of the work; hand-editing the prompt desynchronises the shot list from what you actually generated. Issue the change against the shot-list file and have the model re-render the whole file with the edit applied and the numbering preserved, as in the file discipline above.
 
 **Evidence offered:** Four worked corrections — removing a punch-in, switching to a car-mounted frontal shot, forcing one continuous shot, converting a cut to POV — each followed by a visibly better generation.
 
@@ -55,15 +97,27 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 2 of 6)*
 
-## Treat the video model's 5–10 second generation limit as a non-issue: plan the piece as a sequence of short shots and default to 5-second clips, because the average shot length in real film and TV is 2.5–4 seconds.
+## Treat the video model's 5–10 second generation limit as a non-issue: plan the piece as a sequence of short shots and default to 5-second clips — then write enough cuts and acting beats into each prompt to fill that fixed clip length, because an under-written prompt ends in dead air.
 
-**Why it works:** Length in finished video comes from shot count, not clip length, so building to real editorial shot rhythm both fits the tool's limit and spends the fewest credits per finished minute — a 5-second generation costs roughly half a 10-second one. The limit only feels like a constraint if you were planning long unbroken takes that would look slack on a timeline anyway.
+**Why it works:** Length in finished video comes from shot count, not clip length, so building to real editorial shot rhythm both fits the tool's limit and spends the fewest credits per finished minute — a 5-second generation costs roughly half a 10-second one. The limit only feels like a constraint if you were planning long unbroken takes that would look slack on a timeline anyway. The other half of the equation is filling the window you bought: the generator produces a clip of fixed duration regardless of how much you described, so design the beats to occupy the whole thing — either one long held shot that carries the moment or a rapid multi-cut sequence, whichever the action calls for. A 12-second moment still gets a full-length prompt, filled out with the breath, the look and the held silence after the line.
 
-**Evidence offered:** Cites a film scholar's analysis of 15,000 movies finding average shot length of 2.5–4 seconds; walks a mountain-climbing sequence to show no shot approaches 10 seconds.
+**Evidence offered:** Cites a film scholar's analysis of 15,000 movies finding average shot length of 2.5–4 seconds; walks a mountain-climbing sequence to show no shot approaches 10 seconds. The fill-the-window rule is assertion only, with a worked example showing one 15-second prompt built from three cuts.
 
-**Fit here (7/10):** Directly governs how the operator storyboards and budgets any AI-assisted video — 5-second generations at half the credit cost of 10-second ones, planned as a shot sequence, is the difference between affording a batch of social videos and affording one. Durable editorial principle with a concrete default setting. Compatible with the multi-cut batching rule below: a single 30-second request carrying six cuts is still a sequence of ~5-second shots, just bought in one transaction.
+**Fit here (7/10):** Directly governs how the operator storyboards and budgets any AI-assisted video — 5-second generations at half the credit cost of 10-second ones, planned as a shot sequence, is the difference between affording a batch of social videos and affording one. The chunking rule says how to divide; the fill rule says how to occupy each chunk, which is where the usable-footage ratio actually comes from. Compatible with the multi-cut batching rule below: a single 30-second request carrying six cuts is still a sequence of ~5-second shots, just bought in one transaction.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 3 of 9)*
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
+
+## Allocate shots by dramatic weight rather than by script length: give a heavy line its own prompt, give a reveal a single sustained close-up and refuse to undercut it with extra cuts, split a confession so it has air, compress an action sequence into short cuts.
+
+**Why it works:** Runtime is the only currency you have for emphasis, so spending it in proportion to the words rather than in proportion to the drama flattens the moment the piece exists to deliver. Don't pack the script efficiently — pack it dramatically.
+
+**Evidence offered:** Assertion only.
+
+**Fit here (6/10):** Translates honestly to his 30-second ads: the mechanism claim or the result reveal gets its own held shot while the setup compresses, rather than every line getting equal screen time. Durable craft principle, so age is irrelevant.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
 
 ## Ask the video model for several cuts inside one long generation rather than generating each shot separately — and write that prompt as explicitly timestamped scenes matched to the voiceover script, splitting long narration into chunks sized to the model's maximum clip length.
 
@@ -165,6 +219,8 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 **Fit here (5/10):** A cheap, real prompting shortcut for the recurring-character likeness RSC's image stack already calls for, and runnable today. Scored mid because it needs a guardrail the source does not give: the output must be a blend that resembles nobody identifiable, since a recognisable celebrity likeness in a paid ad is a legal exposure, not a creative choice.
 
+**Guardrail (added at ingestion review):** Use the names only as private prompt shorthand. The rendered face must resemble no identifiable real person; check each final frame and regenerate any that reads as one of the named people. A recognisable celebrity likeness in a paid ad implies endorsement and creates right-of-publicity exposure. Never put a real person's name in ad copy, a filename that ships, or a caption.
+
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
 
 ## Storyboard in a plain Google Doc — paste the script, drop each generated frame directly under the line of script it illustrates, keep only the images you will actually use in the doc, then export everything at once with File > Download > Web Page to get an organised folder of high-resolution frames.
@@ -184,6 +240,8 @@ description: End-to-end production of scripted AI video ads: a reusable director
 **Evidence offered:** Demonstrated: the 'manly dad' image prompted into a 'youthful, clean-shaven' version, then transformed back in a later scene.
 
 **Fit here (7/10):** RSC's product image stack already requires transformation frames and a routine-contrast substitute where an honest before/after does not exist — this is the generation method that makes the two states read as one person. Directly usable for deodorant and body-care contrast frames on social video and PDP galleries.
+
+**Guardrail (added at ingestion review):** Use this for identity or comedy beats only (the character before he "switched", a younger self). Never use a generated before/after to show a product RESULT on skin, odor, teeth or body. An AI-made before/after of a result is a fabricated demonstration, deceptive under FTC rules in the same way as a fake testimonial, and for a cosmetic it also implies a treatment effect. Where an honest before/after does not exist, use the routine-contrast substitute in `marketing-product-image-stack`.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
 

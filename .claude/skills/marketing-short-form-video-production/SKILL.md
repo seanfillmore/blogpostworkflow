@@ -1,6 +1,6 @@
 ---
 name: marketing-short-form-video-production
-description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting and teleprompter delivery, staging and framing on the shoot, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, generated cover images, and re-cutting an existing footage library into new ads.
+description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, staging and framing on the shoot, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, cover-image composition and generation, and re-cutting an existing footage library into new ads.
 ---
 
 # Short Form Video Production
@@ -14,6 +14,16 @@ description: Shooting and editing your own short-form video by modelling a prove
 **Fit here (7/10):** Organic short-form is filmed by the operator himself, and the cheapest quality lever on a one-person shoot is simply not improvising: scripting plus teleprompter removes the wandering takes that kill retention. The 'action script even with no dialogue' rule covers the product-demo and b-roll pieces. Zero cost, zero volume requirement, aimed squarely at the surface published to weekly.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 2 of 9)*
+
+## Read the finished script out loud, ideally several times, before hitting record — and rewrite any sentence you trip over so it is easier to say.
+
+**Why it works:** A line that is hard to speak is what makes teleprompter delivery sound read rather than spoken; rewriting to the mouth removes the stumble at source, and the read-through builds enough muscle memory that you anticipate the next line instead of reacting to it, which is what reads as natural on camera.
+
+**Evidence offered:** Assertion, offered as the creator's own named 'cheat code' for why his teleprompter delivery sounds unscripted.
+
+**Fit here (8/10):** The operator scripts, films and delivers his own short-form video, so this is the exact craft problem he hits on every piece — and a cadence that reveals the speaker is reading is the single most disqualifying flaw in talking-head video. It is the missing pass between writing the word-for-word script above and rolling the camera. Zero cost, no second person, no volume needed.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 3 of 4)*
 
 ## Produce only the hook — the first ~60 seconds — as the first deliverable of a new narrated video or format, judge it, and only then repeat the identical process for the rest of the piece.
 
@@ -117,15 +127,17 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
 
-## Generate the cover frame by uploading an ordinary photo of yourself plus a photo of the product and prompting a 16:9 close-up with a named facial expression, instead of staging a lit photoshoot for it.
+## Build the cover frame by uploading an ordinary photo of yourself plus a photo of the product and prompting a 16:9 close-up with a named facial expression — and compose it as the product held up close and sharp in the foreground with your slightly-blurred reacting face behind it, plus an arrow and a two-word text callout pointing at the product.
 
-**Why it works:** A cover is just a composite of a person and an object with a directed expression, and an image model can build that from two existing photos — turning a half-day of lighting, wardrobe and Photoshop into minutes. The second-order gain is bigger than the time saved: at minutes per attempt you can generate several candidate covers and pick, instead of being stuck with the one frame you managed to shoot.
+**Why it works:** A cover is just a composite of a person and an object with a directed expression, and an image model can build that from two existing photos — turning a half-day of lighting, wardrobe and Photoshop into minutes. The second-order gain is bigger than the time saved: at minutes per attempt you can generate several candidate covers and pick, instead of being stuck with the one frame you managed to shoot. The composition is what makes the frame work at thumbnail size — the product has to be the largest legible object, the human face supplies the emotional read in half a second, and the arrow forces the eye onto the product while the two-word text states the question the viewer already has ('Worth it?'), so one frame delivers subject, emotion and an open loop.
 
-**Evidence offered:** Creator's own before/after — the original camera-review thumbnail took 'almost half a day'; the team now uses the model for 'almost all' their thumbnails with 'amazing' results.
+**Evidence offered:** Creator's own before/after — the original camera-review thumbnail took 'almost half a day'; the team now uses the model for 'almost all' their thumbnails with 'amazing' results. On the composition, assertion plus his judgement of the generated output ('that's honestly a really good YouTube thumbnail').
 
-**Fit here (7/10):** Organic short-form is filmed, edited and published by one person, and the cover frame is the single element deciding whether the post gets opened on a grid or in a feed. Replacing a staged shoot with a two-photo composite is exactly the production cost one person cannot otherwise absorb, and generating multiple candidates is near-free on pay-per-generation access. Off YouTube, the same frame is the Reels/TikTok cover and the grid tile.
+**Fit here (7/10):** Organic short-form is filmed, edited and published by one person, and the cover frame is the single element deciding whether the post gets opened on a grid or in a feed. Replacing a staged shoot with a two-photo composite is exactly the production cost one person cannot otherwise absorb, and generating multiple candidates is near-free on pay-per-generation access. The compositional spec supplies the part he would otherwise have to invent each time. Off YouTube, the same frame is the Reels/TikTok cover and the grid tile, and the same product-forward-plus-callout layout carries over to benefit-callout statics for deodorant or lotion.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 2 of 9)*
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 2 of 4)*
 
 ## When a published video underperforms, generate a new cover image and swap it onto the live video rather than writing the video off.
 

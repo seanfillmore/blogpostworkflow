@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-broll-generation
-description: Use when a talking-head short-form video or ad has no visual support behind it and you want to rebuild it with AI-generated B-roll — covers marking the script's visual beats (literal and figurative), building structured character/location/prop reference specs, anchoring characters to real photos, writing scene prompts from a fixed template, generating a frame per beat with matched close-up coverage, animating frames in a video model with one named camera move, chaining end frames to start frames, first-frame/last-frame transformation shots (including using a real product photo as the terminal frame), routing refused or fading shots to a second model, running the cheap model by default, and holding character and product consistency (and image quality) across a sequence.
+description: Use when a talking-head short-form video or ad has no visual support behind it and you want to rebuild it with AI-generated B-roll — covers marking the script's visual beats (literal and figurative), using a script critique pass to name the shots a verbal explanation cannot carry, building structured character/location/prop reference specs, anchoring characters to real photos, inventorying your references before prompting so the reference image (not a text description) is the sole source of truth for appearance, writing scene prompts from a fixed template, generating a frame per beat with matched close-up coverage, animating frames in a video model with one named camera move, chaining end frames to start frames, first-frame/last-frame transformation shots (including using a real product photo as the terminal frame), routing refused or fading shots to a second model, running the cheap model by default, and holding character and product consistency (and image quality) across a sequence.
 ---
 
 # Ai Broll Generation
@@ -33,6 +33,8 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Fit here (8/10):** The product-image-stack skill already prescribes an enduring non-founder likeness across frames and this skill already warns faces drift across threads, but neither holds the production artifact that makes it happen. A written spec is the cheap, solo-runnable mechanism for both, and it extends to voice and delivery. This is the artifact the drift-prevention and face-repair rules below both depend on.
 
+**One division of labour to hold:** the spec is what *builds* the character and what carries voice, delivery and personality into every prompt forever. Once that character has a locked reference image, the appearance fields have done their job and stop travelling into scene prompts — the image becomes the sole source of truth for how the subject looks (see the reference-inventory rule below). Keep pasting voice, personality and framing; drop the appearance paragraph.
+
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 1 of 6)*
 
 ## Build the character you animate by uploading a real photo of yourself (or the real subject) into an image model and generating new images from it, rather than describing an appearance in words — then animate those images and lay your voice over them, so you can appear in shots you could never film.
@@ -41,7 +43,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Assertion plus forward-reference to a dedicated course section ('imagine trying to create a video of yourself… with Nano Banana Pro I can upload a real photo of myself'); the core mechanism is shown working on a fictional character in the same lesson.
 
-**Fit here (7/10):** The brand is founder-fronted and he is already the on-camera face, so the reference photos exist. Anchoring generated scenes to his own photographed likeness keeps a recurring character consistent across a batch of social videos and ads and lets one person produce demonstration scenes and scenarios he has no set, time or crew for. Guardrail: a trust-dependent skincare brand carries real downside risk in obviously synthetic founder footage, so this is a production option rather than a default — prefer the real-footage-plus-gap-list split above, and reserve the synthetic founder for shots that cannot be filmed at all. Still pair the photo reference with the written character spec; the photo carries appearance, the spec carries voice and delivery.
+**Fit here (7/10):** The brand is founder-fronted and he is already the on-camera face, so the reference photos exist. Anchoring generated scenes to his own photographed likeness keeps a recurring character consistent across a batch of social videos and ads and lets one person produce demonstration scenes and scenarios he has no set, time or crew for. Guardrail: a trust-dependent skincare brand carries real downside risk in obviously synthetic founder footage, so this is a production option rather than a default — prefer the real-footage-plus-gap-list split above, and reserve the synthetic founder for shots that cannot be filmed at all. Still pair the photo reference with the written character spec; the photo carries appearance, the spec carries voice and delivery — and once the photo is in the prompt, do not also describe the face in text.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 2 of 9)*
 
@@ -101,7 +103,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Reported as a method one editor adopted from a colleague and now uses exclusively; named as what 2.5's reference preservation improves most.
 
-**Fit here (7/10):** Lets a solo operator produce people-in-scene creative without hiring a model or appearing himself in every frame, using photos he can shoot on his own phone — and it pairs with the existing rule about keeping an enduring non-founder likeness consistent across frames. Durable technique; runnable today with no second person involved. This is the opposite end of the same dial as anchoring to your own photo above: same mechanism, one keeps the identity and one discards it.
+**Fit here (7/10):** Lets a solo operator produce people-in-scene creative without hiring a model or appearing himself in every frame, using photos he can shoot on his own phone — and it pairs with the existing rule about keeping an enduring non-founder likeness consistent across frames. Durable technique; runnable today with no second person involved. This is the opposite end of the same dial as anchoring to your own photo above: same mechanism, one keeps the identity and one discards it. Note the one case where you *do* write appearance text against a reference image — here the photo is deliberately being used for light and framing only, so say so explicitly rather than letting the model assume the face is to be preserved.
 
 *Source: Lorenzo Pravata (@lorenzo_pravata) — "How to exploit GPT-2.5 Images for more winning ads" (social post)*
 
@@ -115,15 +117,35 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 *Source: Lorenzo Pravata (@lorenzo_pravata) — "How to exploit GPT-2.5 Images for more winning ads" (social post)*
 
+## Run the script through a critique pass that is asked for visual notes as well as wording — have the model flag where a verbal explanation alone will not land for a beginner and name the shot that should cover it ('show a side-by-side example here') — and carry those named shots onto the same shot list as the marked beats.
+
+**Why it works:** A script review surfaces comprehension gaps, and some of those gaps cannot be fixed with better wording — they need a demonstration. Making the model name the shot converts a script note into a production note before you film, rather than discovering the gap in the edit when the only fix left is a voiceover patch. This is a second entry point into the same shot-listing step as beat-marking above: beats cover the whole script, comprehension failures cover the specific moments where words are not enough.
+
+**Evidence offered:** Demonstration only — he notes the model told him a beginner would not visually understand a point and suggested a side-by-side in the edit.
+
+**Fit here (6/10):** Durable principle, no platform dependency. He films, cuts and posts RSC's own short-form himself, so a shot note is directly executable — and natural deodorant and oral care are full of claims that only land as demonstration (application, texture, lather, how little you need). Scored at six because it refines an already-adopted step rather than opening a new one.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: content ideas, scripting and thumbnail lessons" (transcript, part 4 of 4)*
+
 ## In longer talking-head content, take the figurative line in your own script and generate the literal image of it as a cutaway — 'launching the business felt like getting to the top of the mountain' becomes an AI shot of you celebrating on Everest — so the viewer is not watching you at a desk for the whole runtime.
 
 **Why it works:** A metaphor the speaker says aloud is already the viewer's mental picture; showing it breaks visual monotony at exactly the moment attention would otherwise drift, and because the cutaway illustrates what was just said it costs no comprehension. Retention rises without changing the script.
 
 **Evidence offered:** Worked example from the creator's own planned entrepreneurship video; assertion only on the retention effect.
 
-**Fit here (7/10):** He films himself talking to camera about aluminium-free deodorant, ingredients and why he formulated the line. Beat-marking above covers the literal visual beats; this adds the higher-leverage move of rendering the metaphor — 'it felt like my armpits were in a plastic bag', 'like scrubbing with gravel' — as the cutaway. Mark these on the same pass as the literal beats: one person, one phone, one image model.
+**Fit here (7/10):** He films himself talking to camera about aluminium-free deodorant, ingredients and why he formulated the line. Beat-marking above covers the literal visual beats and the critique pass catches the comprehension gaps; this adds the higher-leverage move of rendering the metaphor — 'it felt like my armpits were in a plastic bag', 'like scrubbing with gravel' — as the cutaway. Mark these on the same pass as the literal beats: one person, one phone, one image model.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 4 of 9)*
+
+## Before writing any prompt, inventory what you actually have — which characters, locations and props have uploaded reference images, and what the script literally states — and treat that inventory as a hard boundary: a subject with a reference image is referred to by handle alone with no appearance description, a subject without one gets only the details the script states outright, and anything missing stays missing rather than being invented for vividness.
+
+**Why it works:** A text appearance description written alongside a reference image can contradict the image, and the model then has to reconcile two sources of truth — so the image must be the only one. Invented detail added to make a prompt read better is detail that was never checked against reality, which is how a render ends up depicting a product or a face that does not exist. A sparse accurate prompt is correct; a vivid invented one is wrong. Doing the inventory first also makes the gap visible *before* you spend the generation: if the script does not say what the room looks like and you have no location sheet, that is a reference you need to build, not a sentence you should improvise.
+
+**Evidence offered:** Two contrasting worked examples — Case A with reference images, Case B without — showing precisely which details are absent from the second.
+
+**Fit here (7/10):** He grounds generations in real photos of the actual product and of himself, so the rule that the reference image wins and no text description competes with it directly protects against renders that misrepresent a real pack or a real face — the exact defect the hallucination-audit step in the product-imagery skill catches after the fact, prevented here before the generation is spent. It is also the governing constraint on how much detail belongs in the scene-prompt template's subject and prop fields below: the template tells you which fields to fill, this tells you what you are allowed to put in them.
+
+*Source: PromptEdit (shared in ContentCreator.com AI Creator Course) — "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)" (prompt document)*
 
 ## Write every scene prompt from a fixed template in a fixed order — generation intent plus reference style, camera framing and composition, main subject and prop detail, lighting and tone, background action or secondary subjects, overall mood and emotional direction — because a vague scene prompt ('a man holding soap standing in front of another man who looks like he is about to fall') regenerates a radically different scene every run and makes incremental adjustment impossible.
 
@@ -131,7 +153,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Side-by-side of the vague prompt versus the templated prompt, described as 'an absolute massive difference'; the template is supplied as a reusable fill-in block with a Loom walkthrough and is visible in the structure of every worked prompt in the lesson.
 
-**Fit here (7/10):** Extends the SCENE / SUBJECT / EMOTIONAL READ format already recorded for B-roll frames with the fields that matter once a frame has to become a moving clip — camera framing, lighting, background action — and supplies the prompt-assembly order the imagery skill lacks. Two caveats to record: this is more structure than the 'write short plain-language prompts' claim advises, so it belongs on deliberate scene frames, not a straightforward white-background hero render; and it is written for single-frame generation — when you supply both a first and a last frame, use the deliberately broad one-line prompt described further down instead.
+**Fit here (7/10):** Extends the SCENE / SUBJECT / EMOTIONAL READ format already recorded for B-roll frames with the fields that matter once a frame has to become a moving clip — camera framing, lighting, background action — and supplies the prompt-assembly order the imagery skill lacks. Three caveats to record: this is more structure than the 'write short plain-language prompts' claim advises, so it belongs on deliberate scene frames, not a straightforward white-background hero render; the subject and prop fields are bounded by the reference inventory above — where a reference image exists, that field is a handle, not a description; and it is written for single-frame generation — when you supply both a first and a last frame, use the deliberately broad one-line prompt described further down instead.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
 
@@ -141,7 +163,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Presented as the creator's own worksheet of required versus bonus prompt elements, with on-screen examples for each field; no comparative tests.
 
-**Fit here (6/10):** The fixed scene-prompt template above does not name the look-defining fields — visual style, light colour, time of day, atmospherics and palette — and those are how a batch of product frames stays consistent across a campaign instead of drifting. Add them to the template block whenever you are generating without a locked reference sheet in the prompt. Runnable today at pay-per-generation cost.
+**Fit here (6/10):** The fixed scene-prompt template above does not name the look-defining fields — visual style, light colour, time of day, atmospherics and palette — and those are how a batch of product frames stays consistent across a campaign instead of drifting. Add them to the template block whenever you are generating without a locked reference sheet in the prompt. Runnable today at pay-per-generation cost. One limit: this licenses you to specify the *look* in the absence of a reference, not to invent the *subject* — a character or product with no reference image still gets only what the script literally states, per the inventory rule above. Style and light are your choices to make; a real pack's cap colour is not.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 4 of 9)*
 
@@ -157,7 +179,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 ## When the new camera angle would reveal something the source frame never showed — a face turned away, a hidden side of the product — upload a second reference image of that element and name it in the prompt as the reference for how it should look.
 
-**Why it works:** The model cannot invent a consistent face or label it has never seen, so the reverse-angle shot drifts into a different character. Supplying the unseen element as its own reference ('use the face from image 2 as a reference for how the man's face should look') gives it the missing information while the angle instruction keeps the set intact.
+**Why it works:** The model cannot invent a consistent face or label it has never seen, so the reverse-angle shot drifts into a different character. Supplying the unseen element as its own reference ('use the face from image 2 as a reference for how the man's face should look') gives it the missing information while the angle instruction keeps the set intact. This is the inventory rule applied mid-sequence: the missing detail is answered with a reference, never with a description.
 
 **Evidence offered:** Demonstrated output: an over-the-shoulder reverse angle where the previously unseen character's face matches the uploaded reference.
 
@@ -243,11 +265,13 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Fit here (8/10):** The highest-value shot type for RSC's catalogue: aluminium antiperspirant morphing into the natural deodorant, an old cracked bar into the body bar, a drugstore tube into the toothpaste. It is a visual way to encode the us-vs-them and before/after claims the product-image and creative-testing skills already want, and it is runnable by one person with an image reference and a video model. Distinct from frame-chaining above, which is about continuity between consecutive clips rather than specifying both endpoints of one transformation.
 
+**Guardrail (added at ingestion review):** Morph PRODUCTS and objects, never a person's skin, underarm, teeth or body into an improved state. That would be a fabricated result shot (see the guardrail on deriving a 'before' character in `marketing-ai-video-ad-production`). The competitor end of a morph stays an unbranded generic stand-in, and an antiperspirant stick may appear only as the category we are contrasting against, never as a description of our deodorant.
+
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 4 of 6)*
 
 ## When you supply both a first and a last frame, write a deliberately broad one-line prompt rather than a detailed one, because the two images have already written the story.
 
-**Why it works:** The keyframes constrain the beginning and end states, so there are only a limited number of things that can physically happen in between. Over-specifying adds instructions the model has to reconcile against two fixed images and increases the chance it fights the frames.
+**Why it works:** The keyframes constrain the beginning and end states, so there are only a limited number of things that can physically happen in between. Over-specifying adds instructions the model has to reconcile against two fixed images and increases the chance it fights the frames. It is the same principle as the reference-inventory rule, at clip level: whatever an image already establishes should not be re-stated in text.
 
 **Evidence offered:** Demonstrated: 'A majestic horse walks into frame and starts grazing on the grass' produced a clean first-try result, and a three-shot camera sequence succeeded first try on similarly short action prompts.
 
@@ -305,23 +329,13 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
 
-## Route a shot to whichever model's content policy permits it — one model refuses any subject who appears under 18, another is more permissive.
-
-**Why it works:** Generation refusals are policy differences, not quality differences, so the shot is not impossible — it just has to be produced somewhere else.
-
-**Evidence offered:** Demonstration — Veo 3.1 returned an error on the boy sniffing the soap, Kling 2.6 generated it.
-
-**Fit here (5/10):** Honest translation exists — a family bathroom scene, a kid using the soap or toothpaste, is a plausible RSC angle, and the operator can run both tools today. Scored mid on merit: it unblocks a narrow subset of shots rather than improving the ads generally. Platform-mechanics class, so the particular policy named here should be re-checked rather than trusted after ~18 months.
-
-*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 4 of 6)*
-
 ## Expect faces to drift across a batch — one thread holds a character well, thirty threads will not — so carry the same reference image and the same written character spec into every thread rather than relying on the model's memory.
 
 **Why it works:** Character consistency is a property of a single conversation's context, not of the model; re-anchoring each new thread to the same uploaded reference — and re-pasting the structured character spec that produced it — is what reproduces the face.
 
 **Evidence offered:** Stated explicitly as a known limitation of the current model.
 
-**Fit here (7/10):** A named failure mode with a named fix, which is what keeps a one-person creative batch from shipping three ads whose 'same' customer is visibly three different people. Fast-decaying platform-mechanics class, but consistent with how these models behave generally. Prevention is this rule; the repair when drift has already happened is the face-replacement edit below.
+**Fit here (7/10):** A named failure mode with a named fix, which is what keeps a one-person creative batch from shipping three ads whose 'same' customer is visibly three different people. Fast-decaying platform-mechanics class, but consistent with how these models behave generally. Prevention is this rule; the repair when drift has already happened is the face-replacement edit below. Note the division the inventory rule sets: it is the *image* you re-upload to carry appearance, and the spec's voice, personality and framing fields that ride along in text — not a re-written description of the face.
 
 *Source: Lorenzo Pravata (@lorenzo_pravata) — "How to exploit GPT-2.5 Images for more winning ads" (social post)*
 
@@ -334,3 +348,18 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 **Fit here (7/10):** Drift prevention is already recorded above (carry the reference into every thread, and supply a second reference image for any element a new angle reveals); this is the surgical repair — one operator, one prompt, no reshoot — and it also lets the founder persona the copy skills hold constant be placed into generated frames. Two constraints on the adopted version: never swap in a real person's face without consent and never present the result as a verified customer; and because this is an edit pass, restore the original high-quality face before the frame goes to a video model.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
+
+## Falsified
+
+Tried here and did not work. Do not reintroduce these.
+
+### Route a shot to whichever model's content policy permits it — one model refuses any subject who appears under 18, another is more permissive.
+**Falsified 2026-10-03:** Rejected at ingestion review, not tested: it is a method for routing around a model's minor-safety policy to generate synthetic minors in ad footage. RSC does not generate AI children in ads; a family/kids angle uses real, consented customer footage or none.
+
+**Why it works:** Generation refusals are policy differences, not quality differences, so the shot is not impossible — it just has to be produced somewhere else.
+
+**Evidence offered:** Demonstration — Veo 3.1 returned an error on the boy sniffing the soap, Kling 2.6 generated it.
+
+**Fit here (5/10):** Honest translation exists — a family bathroom scene, a kid using the soap or toothpaste, is a plausible RSC angle, and the operator can run both tools today. Scored mid on merit: it unblocks a narrow subset of shots rather than improving the ads generally. Platform-mechanics class, so the particular policy named here should be re-checked rather than trusted after ~18 months.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 4 of 6)*

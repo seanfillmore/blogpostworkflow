@@ -1,0 +1,221 @@
+{
+  "sourceId": "promptedit-shotlist-director-claude-skill-for-seedance-2-0-shotlists",
+  "creator": "PromptEdit (shared in ContentCreator.com AI Creator Course)",
+  "title": "PromptEdit Shotlist Director (Claude skill for Seedance 2.0 shotlists)",
+  "summary": "This is not a talking-head video but the full source of a packaged Claude skill that turns a script into a director's shotlist of AI-video generation prompts for Seedance 2.0. Its substance is a set of hard rules for writing shot prompts for a video model that has no memory between generations: a single global 'Style Prefix' block prepended verbatim to every prompt, an absolute ban on referential language ('same as before', 'still at the train station') because each prompt is the model's entire universe, a ground-truth rule that forbids inventing any appearance or location detail not supplied by the script or a reference image (and forbids describing a character at all when a reference image exists — @handle only), per-prompt sizing to the model's fixed clip length so no clip ends in dead air, dramatic rather than efficient allocation of shots, geo-spatial blocking, lens/height/movement camera language, and acting direction written as observable physical behaviour instead of emotion labels. It also specifies the deliverable as a self-contained HTML shotlist with per-scene checkboxes persisted in localStorage that the model rewrites on every revision rather than answering in chat.",
+  "recencySignals": "Seedance 2.0 as the target video model; Claude skill format with YAML name/description frontmatter and /mnt/user-data/outputs; localStorage HTML artifact; published 2026. Current-era platform mechanics.",
+  "tactics": [
+    {
+      "claim": "Write a single global 'Style Prefix' block — photorealism level, lighting doctrine, colour ratio, lens and shutter, skin detail, acting register, physics, continuity, frame rate, audio rules — and prepend it verbatim to every single shot prompt in the project, then reinforce it per shot with the specific lighting geometry of that frame (where the window is, what the haze is doing, which colour dominates).",
+      "mechanism": "A video model has no project-level memory, so the only way a sequence of separately generated clips shares one look is if the same look instruction is physically present in each prompt. Keeping it as one locked block means every prompt is copy-paste-ready standalone with no reassembly, and the per-shot lighting specifics tell the model where to actually place the rim light rather than leaving it to chance.",
+      "evidence": "Assertion only — presented as the skill's law, with a full default prefix supplied.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "He produces his own short-form video and AI-assisted ads solo, and the existing skills already cover writing scene prompts from a fixed template; this adds the missing cross-shot consistency mechanism, which is exactly the failure mode when a 30-second deodorant ad is assembled from six separately generated clips. Current-era platform mechanics (2026), so no age discount.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when turning a script into AI-generated video shots for an ad or organic short — covers building the per-cut shot list, writing each generation prompt so it stands alone, locking a reusable global style block for cross-shot consistency, camera and acting direction, and sizing each prompt to the model's clip length."
+      }
+    },
+    {
+      "claim": "Never write referential language in any field of a generation prompt — 'same as last shot', 'still at the train station', 'as established earlier', 'continues from the previous prompt' — and instead restate the location, setting, time of day and every character's physical state in full, explicit language in every prompt, even when it repeats the previous prompt word for word.",
+      "mechanism": "Each generation is rendered in complete isolation with no memory of the script or of other prompts, so a phrase that only makes sense to someone who read a different prompt cannot be resolved and will be rendered wrong or ignored. The test is: if a phrase depends on another prompt for meaning, it is broken. Repetition across 1a/1b/1c is mandatory, not wasteful.",
+      "evidence": "Assertion only, but with an explicit forbidden-phrase list, a stated test, and two worked examples.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "This is the single most common reason a multi-clip AI ad falls apart mid-sequence, and he assembles ads from multiple generations himself today. It generalises beyond video to any isolated-generation prompt, including the image frames used for listing and ad statics. Runnable at $30/day with no extra tooling.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when turning a script into AI-generated video shots for an ad or organic short — covers building the per-cut shot list, writing each generation prompt so it stands alone with no reference to other shots, locking a global style block, camera and acting direction, and sizing each prompt to the model's clip length."
+      }
+    },
+    {
+      "claim": "Before writing any prompt, inventory exactly what you have — which characters and locations have uploaded reference images, and what the script explicitly states — and treat that inventory as a hard boundary: a character with a reference image is referred to by @handle only with no appearance description at all, a character without one gets only the details the script literally states, and any missing detail stays missing rather than being filled in for vividness.",
+      "mechanism": "A text appearance description written alongside a reference image can contradict the image, so the image must be the sole source of truth for how a subject looks. Inventing detail to make a prompt read better produces a render that does not match the real subject or product. A sparse accurate prompt is correct; a vivid invented one is wrong.",
+      "evidence": "Two contrasting worked examples (Case A with reference images, Case B without) showing precisely which details are absent from the second.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "He grounds generations in real photos of the actual product and of himself, so the rule that the reference image wins and no text description competes with it directly protects against renders that misrepresent a real pack or a real face — the exact defect the existing hallucination-audit claim catches after the fact, prevented here before the generation is spent.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-broll-generation",
+        "action": "edit",
+        "description": "Use when a video or static needs AI-generated shots built around a real product or a real person — covers building character, location and prop reference specs, when to call a reference by handle instead of describing it, and refusing to invent appearance or set detail the references and script never supplied."
+      }
+    },
+    {
+      "claim": "Write acting direction as observable physical behaviour rather than emotion labels — not 'she looks sad' but 'her eyes drop to the table, jaw tightens, she swallows once before answering'; not 'he's angry' but 'knuckles whiten on the glass, breath shortens, eyes never leave hers' — express carried-over emotion as how it looks right now ('her hands haven't stopped shaking'), and default to restraint, because a whispered line outperforms a screamed one in most cases.",
+      "mechanism": "A model can render a described physical action but has to guess at an emotion label, so naming the behaviour is the only way to control the performance. Expressing emotional state as present-tense visible fact also keeps the prompt standalone. Restraint reads as real; big emotion only when the moment earns it.",
+      "evidence": "Assertion with six before/after rewrite pairs.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "Directly usable twice over: in his AI video prompts and in directing his own on-camera delivery, where 'look relieved' is unfilmable and 'exhale, shoulders drop, half-smile' is. Durable craft principle, so age is irrelevant, and it needs nothing but a prompt field.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when writing the shot-by-shot direction for a video ad or short — covers specifying performance as observable physical behaviour rather than emotion labels, camera language, blocking, and how much of each clip's runtime to fill."
+      }
+    },
+    {
+      "claim": "Block every shot geo-spatially: state where each subject and prop sits relative to the location and to each other in literal terms — 'she sits across from him at the diner booth, knees touching under the table', 'the space between them is roughly twelve feet', 'he stops in the doorway six feet behind her' — rather than 'they sit and talk'.",
+      "mechanism": "Explicit spatial relations are what let the model render a coherent, consistent space; without them it reinvents the geometry of the room on every generation and the cuts stop matching.",
+      "evidence": "Assertion plus the worked example, which states distances and positions in every Scene block.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Applies the moment he generates more than one shot of the same scene — e.g. a bathroom-counter sequence where the deodorant stick has to stay in the same place across cuts. Runnable today, costs nothing but prompt words.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when writing the shot-by-shot direction for a video ad or short — covers geo-spatial blocking so the model renders a consistent space across cuts, acting direction as physical behaviour, camera language, and prompt length."
+      }
+    },
+    {
+      "claim": "Size every prompt to the model's fixed clip length and write enough cuts and acting beats to fill it, because the model renders a fixed-length clip and an under-written prompt ends in dead air; a 12-second moment still gets a full-length prompt filled with the breath, the look and the held silence after the line.",
+      "mechanism": "The generator produces a clip of fixed duration regardless of how much you described, so the only way to avoid wasted seconds at the tail is to design the beats to occupy the whole window — either one long held shot that carries the moment or a rapid multi-cut sequence, whichever the action calls for.",
+      "evidence": "Assertion only, with a worked example showing one 15-second prompt built from three cuts.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "A real refinement on the existing 'plan the piece as short shots sized to the model's maximum clip length' claim — that one says how to chunk, this one says how to fill the chunk, which is where the usable-footage ratio actually comes from. Runnable solo today.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when writing the shot-by-shot direction for a video ad or short — covers sizing each generation prompt to the model's fixed clip length so no clip ends in dead air, splitting longer beats across lettered sub-prompts, blocking, camera and acting direction."
+      }
+    },
+    {
+      "claim": "Allocate shots by dramatic weight rather than by script length — give a heavy line its own prompt, give a reveal a single sustained close-up and refuse to undercut it with extra cuts, split a confession so it has air, compress an action sequence into short cuts; 'don't pack the script efficiently, pack it dramatically'.",
+      "mechanism": "Runtime is the only currency you have for emphasis, so spending it in proportion to the words rather than in proportion to the drama flattens the moment the piece exists to deliver.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Translates honestly to his 30-second ads: the mechanism claim or the result reveal gets its own held shot while the setup compresses, rather than every line getting equal screen time. Durable craft principle, so age is irrelevant.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when planning how many shots each beat of a video ad or short gets — covers allocating runtime by dramatic weight rather than script length, holding a reveal on one sustained shot, and sizing prompts to the model's clip length."
+      }
+    },
+    {
+      "claim": "Make the shot list a persistent file artifact with a completion checkbox per scene whose state survives reloads, and when you want a change, have the model rewrite that same file with the edits applied and the numbering preserved rather than describing the change in chat.",
+      "mechanism": "A multi-shot piece is generated over many sessions, so progress has to live outside the chat; keeping one file as the single source of truth and re-rendering it on every revision stops the shot list and the actual generations from drifting apart, and stable numbering means tracked progress is not lost when the file is rewritten.",
+      "evidence": "Assertion only — specified as a hard requirement of the skill, with the localStorage keying scheme given.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "A genuine solo-operator mechanism: he is the only person tracking which of a dozen shots are done, across sessions. The existing claim covers storyboarding in a Google Doc; this adds the done/not-done state and the rewrite-the-file-on-revision discipline. Modest score because a six-shot ad is small enough that a doc mostly suffices.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-video-ad-production",
+        "action": "edit",
+        "description": "Use when producing a multi-shot AI video over several sessions and needing to track which shots are done — covers keeping the shot list as one persistent file with per-scene completion state and having the model rewrite that file on every revision instead of answering in chat."
+      }
+    },
+    {
+      "claim": "When writing a reusable LLM prompt or skill, include a worked example of good output and pair it with a deliberately contrasting negative case, calling out explicitly what is absent from the second version and why.",
+      "mechanism": "A rule stated abstractly gets routed around; showing the same scene rendered twice — once with reference images and once without — and then naming the specific details that do not appear in the second ('no mascara, no navy coat, no stubble, no hair colour') makes the boundary unambiguous in a way the rule alone does not.",
+      "evidence": "Demonstrated rather than argued — the skill carries Case A and Case B plus an explicit 'notice what's missing' paragraph.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "He maintains persisted prompts and long-running threads for recurring marketing jobs today, and the existing prompt-craft skill covers voice training and format instructions but not showing the model a negative example. Cheap, immediate, and it is the fix for the model inventing product detail he has to catch in QA.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-prompt-craft",
+        "action": "edit",
+        "description": "Use when building a reusable prompt, project instruction or custom skill for a recurring marketing job — covers persisting the business brief and voice, specifying output format, and pairing a worked example of good output with a contrasting negative case so the model cannot route around the rule."
+      }
+    },
+    {
+      "claim": "Write a reusable skill's description as the literal phrases you would actually type when you want it — 'make a shotlist', 'break this script into prompts', 'generate prompts for [tool]' — plus the artifact types that should trigger it, so it loads at the right moment instead of having to be invoked by name.",
+      "mechanism": "The assistant chooses which stored instruction set to apply by matching your request against its description, so enumerating the real trigger phrasings and the input types (script, scene breakdown, treatment, existing shotlist to revise) is what makes the saved work actually fire.",
+      "evidence": "Assertion, embodied in the skill's own frontmatter.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "He is the only operator and will accumulate saved prompts for ad copy, hooks, shot lists and listing graphics; a saved instruction that never triggers is wasted work. Runnable today. Current-era mechanics, so no age discount, but it is operational plumbing rather than a revenue lever, hence the modest score.",
+        "stage_note": null
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-ai-prompt-craft",
+        "action": "edit",
+        "description": "Use when building or saving a reusable prompt, project instruction or custom skill for a recurring marketing job — covers persisting the business brief and voice, specifying output format, and writing the skill's description as the literal phrases and input types that should make it fire."
+      }
+    },
+    {
+      "claim": "Install a reusable 'director' skill in the LLM that converts a full script into a numbered per-shot list specifying camera, blocking, action and movement, and work from that list as the single source of truth for every generation.",
+      "mechanism": "A per-cut shot list fixes all the creative decisions in one place so individual generations are executions rather than fresh guesses.",
+      "evidence": "The entire transcript is an instance of such a skill.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Duplicate of an existing recorded claim.",
+        "stage_note": null
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Restates marketing-ai-video-ad-production's existing claim: \"Install a reusable 'director' skill in the LLM and have it convert the full script into a per-cut shot list specifying camera angle, focal length, action, blocking and camera movement, then work from that shot list as the single source of truth for every generation.\" This transcript is a concrete implementation of that claim, not a new tactic.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Be specific about the camera in every shot — lens, height, movement — and motivate every move, e.g. 'low-angle 35mm dolly-in on Anna, slow push from waist to chest as she realizes' or 'static 50mm two-shot, eye-level, locked off'.",
+      "mechanism": "The camera is a character and needs a stated reason to be where it is; an unspecified camera gets invented by the model.",
+      "evidence": "Assertion with three example camera lines.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "Duplicate of existing recorded claims.",
+        "stage_note": null
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Restates marketing-ai-broll-generation's claims \"Write an explicit camera instruction into every shot prompt — locked off on a tripod, slow zoom in, camera tracking backwards as the subject walks forward — rather than describing only the action\" and \"Restrict every AI video generation to the small menu of basic camera movements... one simple move per shot.\" The addition of a focal-length number is wording, not a new mechanism.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Always write the generation prompts in English even when you brief the model in another language, because the video model expects English.",
+      "mechanism": "The generator's training and parsing favour English, so a non-English prompt degrades the render.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 0,
+        "reasoning": "No translation to this business at any size.",
+        "stage_note": null
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "A solo English-speaking operator selling to an English-speaking market writes English prompts by default; there is no decision here to make and no honest translation to an ecommerce catalogue at any size.",
+      "targetSkill": null
+    }
+  ]
+}
