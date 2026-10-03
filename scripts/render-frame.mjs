@@ -38,16 +38,16 @@
  * scripts/upload-product-images.mjs, which enforces alt text.
  */
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import sharp from 'sharp';
 import puppeteer from 'puppeteer';
 import { getAccessToken } from '../lib/shopify.js';
 import { API_VERSION } from '../lib/shopify-api-version.js';
+import { fontFaceCss } from '../lib/brand-fonts.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const FONT_DIR = join(ROOT, 'data', 'brand', 'fonts');
 const site = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 
 const env = Object.fromEntries(
@@ -64,22 +64,6 @@ if (!framePath) { console.error('usage: render-frame.mjs <frame.mjs> [--out DIR]
 const frame = (await import(pathToFileURL(resolve(framePath)).href)).default;
 for (const k of ['product', 'name', 'html', 'alt', 'verify']) {
   if (!frame[k]) throw new Error(`${basename(framePath)}: frame module must export "${k}"`);
-}
-
-/** Brand faces, inlined so the render never depends on a network font or a locally installed one. */
-function fontFaceCss() {
-  const faces = {
-    'cabin-400.woff2': ['Cabin', 400], 'cabin-700.woff2': ['Cabin', 700],
-    'outfit-300.woff2': ['Outfit', 300], 'outfit-400.woff2': ['Outfit', 400], 'outfit-600.woff2': ['Outfit', 600],
-  };
-  const present = readdirSync(FONT_DIR).filter((f) => f.endsWith('.woff2'));
-  const missing = Object.keys(faces).filter((f) => !present.includes(f));
-  if (missing.length) throw new Error(`missing brand fonts in data/brand/fonts: ${missing.join(', ')}`);
-  return Object.entries(faces).map(([file, [family, weight]]) => {
-    const b64 = readFileSync(join(FONT_DIR, file)).toString('base64');
-    return `@font-face{font-family:'${family}';font-weight:${weight};font-style:normal;font-display:block;`
-      + `src:url(data:font/woff2;base64,${b64}) format('woff2');}`;
-  }).join('\n');
 }
 
 const gql = async (query, variables) => {
