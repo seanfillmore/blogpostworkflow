@@ -37,6 +37,7 @@ import { hushmailCredentials, sendMail, fetchInboxFrom, isTransientNetworkError 
 import {
   DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems, holdingReply,
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
+  withQuotedThread, senderLabel,
 } from '../../lib/creator-outreach.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -45,6 +46,8 @@ const CONFIG_PATH = join(ROOT, 'config', 'creator-outreach.json');
 const LOCK_PATH = join(ROOT, 'data', 'creator-outreach', '.lock');
 const INBOX_LOOKBACK_DAYS = 14;
 const REPLY_MODEL = 'claude-sonnet-5-5';
+/** Message-IDs kept for a References header; Gmail threads on any one of them. */
+const MAX_THREAD_REFS = 20;
 
 function loadEnv(root = ROOT) {
   try {
@@ -116,6 +119,7 @@ export async function runOutreach({
   log = console.log,
 } = {}) {
   const creds = hushmailCredentials(env);
+  const us = `Sean at Real Skin Care <${creds?.user || 'sean@realskincare.com'}>`;
   readInbox ||= (q) => fetchInboxFrom(creds, q);
   send ||= (m) => sendMail(creds, m, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
 
@@ -179,14 +183,24 @@ export async function runOutreach({
       result.ignored.push({ ...row, reason: `reply cap (${config.maxRepliesPerCreatorPerDay}/day) reached` });
       outgoing = null;
     }
+    if (outgoing) {
+      // Every reply carries the conversation under it, so the creator's copy
+      // and the Sent copy in Hushmail both read as one complete thread.
+      outgoing = withQuotedThread(outgoing, { date: msg.date, from: senderLabel(msg.fromName || c.name, c.email), text: msg.fullText || msg.text });
+    }
     if (outgoing && apply) {
       try {
+        const refs = [...(msg.references || []), msg.messageId].slice(-MAX_THREAD_REFS);
         const sent = await send({
           to: c.email, subject: replySubject(msg.subject), text: outgoing,
-          inReplyTo: msg.messageId, references: [...(msg.references || []), msg.messageId].join(' '),
+          inReplyTo: msg.messageId, references: refs.join(' '),
         });
         rec.repliesToday += 1;
         rec.threadMessageId = sent.messageId;
+        // The creator's own headers name IDs that exist in their mailbox. Ours
+        // may not (the relay rewrites Message-ID), so later nudges thread on these.
+        rec.threadRefs = [...refs, sent.messageId].slice(-MAX_THREAD_REFS);
+        rec.thread = { date: new Date(now).toISOString(), from: us, text: outgoing };
       } catch (err) {
         result.failed.push({ ...row, error: err.message });
         continue; // leave unprocessed so the next run retries it
@@ -209,11 +223,17 @@ export async function runOutreach({
     const st = creatorState(state, s.email);
     try {
       const threaded = s.kind.startsWith('nudge') || s.kind === 'final';
+      const refs = rec.threadRefs?.length ? rec.threadRefs : st.threadMessageId ? [st.threadMessageId] : [];
+      const text = threaded ? withQuotedThread(s.text, rec.thread) : s.text;
       const sent = await send({
-        to: s.email, subject: s.subject, text: s.text,
-        ...(threaded && st.threadMessageId ? { inReplyTo: st.threadMessageId, references: st.threadMessageId } : {}),
+        to: s.email, subject: s.subject, text,
+        ...(threaded && refs.length ? { inReplyTo: refs[refs.length - 1], references: refs.join(' ') } : {}),
       });
       const at = new Date(now).toISOString();
+      if (threaded || s.kind === 'welcome') {
+        rec.thread = { date: at, from: us, text };
+        if (threaded && refs.length) rec.threadRefs = [...refs, sent.messageId].slice(-MAX_THREAD_REFS);
+      }
       rec.sent = { ...(rec.sent || {}), [s.kind]: s.kind === 'thanks' ? (rec.sent?.thanks || 0) + 1 : at };
       if (s.kind === 'thanks') rec.thanked = [...(rec.thanked || []), ...s.extra.submissionIds];
       rec.lastScheduledAt = at;

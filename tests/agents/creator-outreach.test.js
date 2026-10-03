@@ -112,3 +112,35 @@ test('a missing state file refuses --apply without --init (source scan)', () => 
   const src = readFileSync(new URL('../../agents/creator-outreach/index.js', import.meta.url), 'utf8');
   assert.match(src, /if \(apply && !args\.includes\('--init'\)\)/);
 });
+
+test('a reply quotes the creator\'s whole message, and a later nudge quotes the reply and threads on IDs she received', async () => {
+  const state = {};
+  const msg = {
+    ...inbound('Where is my package?'),
+    references: ['<delivered-welcome@ses>'], fromName: 'Lori Yockim',
+    fullText: 'Where is my package?\n\nOn Fri, Sean wrote:\n> Hi Lori,',
+  };
+  const h = harness({ inbox: [msg], state });
+  await runOutreach(h.opts);
+  const reply = h.sent[0];
+  assert.match(reply.text, /delivered on the 26th\.\nSean\n\nOn .*2026.*, Lori Yockim <lori@example\.com> wrote:\n> Where is my package\?/);
+  assert.match(reply.text, /\n>> Hi Lori,$/);
+  assert.equal(reply.references, '<delivered-welcome@ses> <m1@x>');
+  const rec = state.creators['lori@example.com'];
+  assert.deepEqual(rec.threadRefs, ['<delivered-welcome@ses>', '<m1@x>', '<out1@x>']);
+  assert.equal(rec.thread.text, reply.text);
+
+  // Eight days later the first nudge is due: it quotes the whole exchange and
+  // replies to the creator's own message, an ID that exists in her mailbox.
+  rec.sent = { welcome: '2026-09-22T17:00:00Z' };
+  rec.lastScheduledAt = '2026-09-22T17:00:00Z';
+  const later = harness({ inbox: [], state });
+  later.opts.now = Date.parse('2026-10-12T18:00:00Z');
+  await runOutreach(later.opts);
+  const nudge = later.sent.find((m) => m.inReplyTo);
+  assert.ok(nudge, 'a nudge went out');
+  assert.equal(nudge.inReplyTo, '<out1@x>');
+  assert.match(nudge.references, /^<delivered-welcome@ses> <m1@x> <out1@x>$/);
+  assert.match(nudge.text, /Sean at Real Skin Care <sean@realskincare\.com> wrote:\n> It shipped with USPS/);
+  assert.match(nudge.text, /\n>> Where is my package\?\n[\s\S]*\n>>> Hi Lori,$/, 'the whole exchange, three levels deep');
+});
