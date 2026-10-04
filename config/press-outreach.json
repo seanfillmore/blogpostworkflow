@@ -1,0 +1,4 @@
+{
+  "_note": "agents/press-outreach. enabled:false stops every email. Defaults live in lib/press-outreach.js DEFAULT_CONFIG; any key here overrides it.",
+  "enabled": true
+}
