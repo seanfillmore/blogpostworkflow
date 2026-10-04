@@ -75,7 +75,8 @@ import {
 } from '../../lib/shopify.js';
 
 import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta, listAllSlugs, getPostMeta } from '../../lib/posts.js';
-import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { mayEditLivePost, recordMaterialEdit, readEditFacts, decideEdit } from '../../lib/post-edit-gate.js';
+import { decideWinnerAction } from './winner-policy.js';
 import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
 import { winnerPostSlug } from './post-dir.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
@@ -427,6 +428,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   if (banner) console.log(banner);
   const heldRecords = [];
   const editGateHeld = [];
+  const winnerFactsThisRun = new Map();
 
   // MERGE CAP — how many times may ONE page be rewritten in a single run?
   //
@@ -492,16 +494,30 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
         continue;
       }
 
-      // EDIT GATE — a CONSOLIDATE rewrites the WINNER's body, so it is a
-      // `rewrite` of the winner (lib/post-edit-gate.js): refused on a locked
-      // winner, a frozen page, or one still inside the 28-day window of its
-      // last material change. Asked BEFORE consolidateContent so a held merge
-      // spends nothing. A held merge creates no loser redirect either: the
-      // loser's unique content would be lost into a winner that never received
-      // it. Detection is re-derived from live GSC every run, so the pair simply
-      // re-proposes once the gate opens. A REDIRECT-only loser does not touch
-      // the winner's body and is not gated.
-      if (loser.action === 'CONSOLIDATE' && loserArticle) {
+      // WINNER POLICY (winner-policy.js, operator decision 2026-10-03): a
+      // frozen winner, or one inside the 28-day window of its last material
+      // change, holds the whole pair, redirect included; a locked winner is
+      // never merged into, its loser is redirected instead. Asked BEFORE
+      // consolidateContent so a held or downgraded merge spends nothing.
+      // Facts are read ONCE per winner per run, before any of this run's
+      // redirects stamp its clock: several losers folded into one winner in one
+      // run are ONE change to measure, not a queue of one loser per 28 days.
+      if (!winnerFactsThisRun.has(winnerHandle)) winnerFactsThisRun.set(winnerHandle, readEditFacts(winnerHandle));
+      const winnerCall = decideWinnerAction(loser.action, winnerFactsThisRun.get(winnerHandle), decideEdit);
+      if (winnerCall.action === 'HOLD') {
+        console.log(`\n    ⏸ Edit gate held "${loserHandle}" → "${winnerHandle}": ${winnerCall.reason}`);
+        editGateHeld.push({ target: winnerHandle, kind: loser.action === 'CONSOLIDATE' ? 'rewrite' : 'redirect', reason: winnerCall.reason, until: winnerCall.until });
+        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'skipped_edit_gate', reason: winnerCall.reason });
+        continue;
+      }
+      const action = winnerCall.action;
+      if (action !== loser.action) {
+        console.log(`\n    ↪ "${loserHandle}" → "${winnerHandle}": ${winnerCall.reason}`);
+        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'downgraded_to_redirect', reason: winnerCall.reason });
+      }
+
+      // Backstop: the gate itself must agree before any merge rewrites the winner.
+      if (action === 'CONSOLIDATE' && loserArticle) {
         const gate = mayEditLivePost(winnerHandle, 'rewrite');
         if (!gate.allowed) {
           console.log(`\n    ⏸ Edit gate held merge "${loserHandle}" → "${winnerHandle}": ${gate.reason}`);
@@ -512,7 +528,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
       }
 
       // CONSOLIDATE: merge content, run editor review, save to Shopify as draft
-      if (loser.action === 'CONSOLIDATE' && loserArticle) {
+      if (action === 'CONSOLIDATE' && loserArticle) {
         // Key the local post by the directory that already holds this article,
         // never by the handle alone — see post-dir.js for the shadow-dir bug.
         const winnerSlug = postSlugFor(winnerHandle);
@@ -618,14 +634,17 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
       const { createRedirect: allowRedirect, reason: redirectDecisionReason } =
         decideHeldMergeRedirect({ consolidateHeld, loserClicks });
 
-      if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && allowRedirect) {
+      if ((action === 'REDIRECT' || action === 'CONSOLIDATE') && allowRedirect) {
         if (existingPaths.has(loserPath)) {
-          results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_exists' });
+          results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_exists' });
         } else {
           try {
             await createRedirect(loserPath, winnerPath);
             existingPaths.add(loserPath);
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', reason: redirectDecisionReason });
+            results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_created', reason: redirectDecisionReason });
+            // A loser's 301 changes what the winner's URL represents, so it
+            // starts the winner's measurement window like any material edit.
+            recordMaterialEdit(winnerHandle, 'rewrite', `cannibalization-resolver (${action === 'CONSOLIDATE' ? 'merge + ' : ''}loser ${slugFromPath(loserPath)} redirected in)`);
 
             // A Shopify redirect only fires when the path does not already
             // resolve. Leaving the loser PUBLISHED left every 301 this agent
@@ -636,28 +655,28 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
             if (disposition.unpublish) {
               const loserArticle = articleIndex.get(slugFromPath(loserPath));
               if (!loserArticle) {
-                results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'unpublish_skipped_no_article' });
+                results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'unpublish_skipped_no_article' });
               } else {
                 try {
                   // edit-gate kind: repair — unpublishing the LOSER so its 301 can
                   // fire; no body, title or meta is changed.
                   await updateArticle(loserArticle.blogId, loserArticle.articleId, { published: false });
                   console.log(`    Unpublished loser "${slugFromPath(loserPath)}" — the redirect can now fire.`);
-                  results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'loser_unpublished', reason: disposition.reason });
+                  results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'loser_unpublished', reason: disposition.reason });
                 } catch (e) {
                   // The redirect exists and is inert. Say so loudly rather than
                   // letting the run read as a completed consolidation.
                   console.error(`    ⚠ Redirect created but loser "${slugFromPath(loserPath)}" is STILL LIVE (${e.message}) — the 301 will not fire until it is unpublished.`);
-                  results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'unpublish_error', error: e.message });
+                  results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'unpublish_error', error: e.message });
                 }
               }
             }
           } catch (e) {
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_error', error: e.message });
+            results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_error', error: e.message });
           }
         }
-      } else if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && consolidateHeld) {
-        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_skipped_held', reason: redirectDecisionReason });
+      } else if ((action === 'REDIRECT' || action === 'CONSOLIDATE') && consolidateHeld) {
+        results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_skipped_held', reason: redirectDecisionReason });
       }
     }
   }
@@ -750,6 +769,8 @@ function buildReport(groups, decisions, results) {
         draft_needs_review: '📝',
         draft_saved: '📝',
         redirect_exists: '⏭️',
+        downgraded_to_redirect: '↪️',
+        skipped_edit_gate: '⏸️',
         skipped_not_blog: '⏭️',
         winner_not_found: '⚠️',
         error: '❌',
@@ -1124,7 +1145,9 @@ async function main() {
       // CONSOLIDATE pushes 'draft_needs_review'; 'draft_saved' is the legacy name.
       const drafts = results.filter((r) => r.status === 'draft_needs_review' || r.status === 'draft_saved').length;
       const held = results.filter((r) => r.status === 'draft_needs_review').length;
-      console.log(`\n  Done: ${published} merged+published, ${drafts} held for review (live winners untouched), ${redirectsCreated} redirects created`);
+      const downgraded = results.filter((r) => r.status === 'downgraded_to_redirect').length;
+      const gateHeld = results.filter((r) => r.status === 'skipped_edit_gate').length;
+      console.log(`\n  Done: ${published} merged+published, ${drafts} held for review (live winners untouched), ${redirectsCreated} redirects created, ${downgraded} merge(s) into locked winners redirected instead, ${gateHeld} pair(s) held by the edit gate`);
       if (held) console.log(`  ${held} merge(s) held — review data/posts/<winner>/content.html, then publish.`);
     }
   }
