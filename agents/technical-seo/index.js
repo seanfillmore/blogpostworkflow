@@ -33,6 +33,7 @@ import Anthropic from '../../lib/anthropic.js';
 import { shortenToRenderedLimit, renderTitle, LENGTH_LIMITS } from '../../lib/seo-copy-length.js';
 import * as cheerio from 'cheerio';
 import { notify } from '../../lib/notify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
 import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, statSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
@@ -1229,6 +1230,7 @@ async function fixBrokenLinks({ dryRun = false } = {}) {
     const bodyChanged = newBody !== body;
     if (!dryRun && bodyChanged) {
       try {
+        // edit-gate kind: repair — a broken link fixed in place; always allowed.
         if (type === 'article') await updateArticle(blogId, resourceId, { body_html: newBody });
         else if (type === 'page') await updatePage(resourceId, { body_html: newBody });
         else if (type === 'product') await updateProduct(resourceId, { body_html: newBody });
@@ -1380,6 +1382,7 @@ async function checkLinkDecay({ dryRun = false } = {}) {
     console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path} — ${articleChanges} link(s) actioned`);
     if (!dryRun) {
       try {
+        // edit-gate kind: repair — decayed links actioned; always allowed.
         await updateArticle(entry.blogId, entry.articleId, { body_html: newBody });
         articlesChanged++;
       } catch (e) { console.log(`    Error: ${e.message}`); }
@@ -1538,6 +1541,7 @@ async function fixRedirectLinks({ dryRun = false } = {}) {
 
     if (!dryRun) {
       if (type === 'article') {
+        // edit-gate kind: repair — a redirected link repointed; always allowed.
         await updateArticle(blogId, resourceId, { body_html: newBody });
       } else if (type === 'page') {
         await updatePage(resourceId, { body_html: newBody });
@@ -1609,6 +1613,13 @@ async function fixMeta({ dryRun = false } = {}) {
     const pageTitle = row.title?.split('\n')[0] || path;
     const existingMeta = row.meta_description || '';
 
+    // Live-article edit gate BEFORE the paid generation: a new description on a
+    // blog article is a `serp` edit (lib/post-edit-gate.js).
+    if (type === 'article') {
+      const editGate = mayEditLivePost(row.url, 'serp');
+      if (!editGate.allowed) { console.log(`  [HELD] ${path} — edit gate: ${editGate.reason}`); continue; }
+    }
+
     process.stdout.write(`  ${path} [${row.issue}] → generating meta... `);
     const newMeta = await generateMetaDescription(pageTitle, row.url, existingMeta);
     console.log(`(${newMeta.length} chars)`);
@@ -1619,6 +1630,7 @@ async function fixMeta({ dryRun = false } = {}) {
           const entry = articleIndex[path];
           if (!entry) { console.log(`    [SKIP] Article not found`); continue; }
           await updateArticle(entry.blogId, entry.articleId, { summary_html: `<p>${newMeta}</p>` });
+          recordMaterialEdit(row.url, 'serp', 'technical-seo fix-meta');
           fixed++;
         } else if (type === 'page') {
           const entry = pageIdx[path];
@@ -1738,6 +1750,7 @@ async function fixAltText({ dryRun = false } = {}) {
 
     if (!dryRun) {
       try {
+        // edit-gate kind: repair — alt attributes added to existing images.
         await updateArticle(entry.blogId, entry.articleId, { body_html: newBody });
         fixed++;
       } catch (e) {
@@ -2086,6 +2099,12 @@ async function fixTitles({ dryRun = false } = {}) {
     // top, making the page worse than the defect being fixed.
     const newTitle = shortenToRenderedLimit(currentTitle);
     if (!newTitle || newTitle === currentTitle) continue;
+    // Live-article edit gate: a new SERP title on a blog article is a `serp`
+    // edit (lib/post-edit-gate.js).
+    if (type === 'article') {
+      const editGate = mayEditLivePost(url, 'serp');
+      if (!editGate.allowed) { console.log(`  [HELD] ${path} — edit gate: ${editGate.reason}`); continue; }
+    }
 
     console.log(`  ${dryRun ? '[DRY RUN] ' : ''}${path}: "${currentTitle.slice(0, 50)}..." → "${newTitle}" (renders ${[...renderTitle(newTitle)].length})`);
 
@@ -2095,6 +2114,7 @@ async function fixTitles({ dryRun = false } = {}) {
           const entry = articleIndex[path];
           if (entry) {
             await upsertMetafield('articles', entry.articleId, 'global', 'title_tag', newTitle);
+            recordMaterialEdit(url, 'serp', 'technical-seo fix-titles');
             fixed++;
           }
         } else if (type === 'page') {
@@ -2227,6 +2247,7 @@ async function fixDuplicateTags({ dryRun = false } = {}) {
 
     if (!dryRun) {
       try {
+        // edit-gate kind: repair — duplicate tags stripped, prose untouched.
         await updateArticle(entry.blogId, entry.articleId, { body_html: body });
         fixed++;
       } catch (e) {

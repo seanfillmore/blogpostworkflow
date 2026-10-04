@@ -25,6 +25,7 @@ import { getPostMeta, getMetaPath, getContentPath, ROOT } from '../../lib/posts.
 // see lib/faq-blocks.js for why that mattered.
 import { extractFaqBlocks } from '../../lib/faq-blocks.js';
 import { updateArticle } from '../../lib/shopify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -197,7 +198,17 @@ async function main() {
   console.log(`  Backup: ${basename(backup)}`);
 
   if (push && meta.shopify_blog_id && meta.shopify_article_id) {
+    // Live-article edit gate: an LLM rewrite of FAQ prose is a `rewrite`
+    // (lib/post-edit-gate.js). The local file keeps the fix; only the live
+    // push waits for the gate.
+    const gateTarget = meta.shopify_handle || slug;
+    const editGate = mayEditLivePost(gateTarget, 'rewrite');
+    if (!editGate.allowed) {
+      console.log(`  ⏸ Edit gate held the live push for ${gateTarget}: ${editGate.reason}`);
+      return;
+    }
     await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: updated });
+    recordMaterialEdit(gateTarget, 'rewrite', 'faq-rewriter');
     console.log(`  ✓ Pushed body_html to Shopify (article_id: ${meta.shopify_article_id})`);
   }
 }

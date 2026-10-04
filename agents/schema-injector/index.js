@@ -44,6 +44,8 @@ import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { getContentPath, getMetaPath, POSTS_DIR, requirePostMeta } from '../../lib/posts.js';
 import { buildPostSchemas } from '../../lib/schema-builders.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -148,9 +150,21 @@ async function pushToShopify(results) {
     }
   }
 
+  const editGateHeld = [];
   for (const r of results) {
     let blogId = r.shopifyBlogId;
     let articleId = r.shopifyArticleId;
+
+    // Live-article edit gate: splicing a schema block into a live body is an
+    // `enhance` edit (lib/post-edit-gate.js), refused only on a frozen page.
+    // The local HTML keeps the schema; only the live push waits.
+    const gateTarget = r.shopifyHandle || r.slug;
+    const editGate = mayEditLivePost(gateTarget, 'enhance');
+    if (!editGate.allowed) {
+      console.log(`    ⏸ ${r.slug} — edit gate: ${editGate.reason}`);
+      editGateHeld.push({ target: gateTarget, kind: 'enhance', reason: editGate.reason, until: editGate.until });
+      continue;
+    }
 
     if (!blogId || !articleId) {
       // Fallback: look up by handle (shopify handle or local slug)
@@ -194,6 +208,8 @@ async function pushToShopify(results) {
       console.error(`    ✗ ${r.slug} — Shopify error: ${e.message}`);
     }
   }
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
+  return editGateHeld;
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -219,9 +235,10 @@ async function main() {
     results.push(result);
   }
 
+  let editGateHeld = [];
   if (apply && results.length > 0) {
     console.log('\n  Pushing to Shopify...');
-    await pushToShopify(results);
+    editGateHeld = await pushToShopify(results);
   }
 
   // Save report
@@ -241,6 +258,8 @@ async function main() {
   if (!apply && results.length > 0) {
     lines.push('Run with `--apply` to push schema updates to Shopify.');
   }
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) lines.push('', '## Edit gate — live push held (local HTML updated)', '', ...editGateLines.map((l) => `- ${l.trim()}`));
 
   const reportPath = join(REPORTS_DIR, 'schema-injection-report.md');
   writeFileSync(reportPath, lines.join('\n'));

@@ -52,6 +52,7 @@ import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
 import { EXIT_MIRROR_DIVERGED } from '../../lib/refresh-writeoff.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -135,8 +136,16 @@ async function publishApprovedQueueItems() {
       if (!postMeta.shopify_article_id) { console.warn(`    [skip] ${item.slug}: no shopify_article_id`); continue; }
       if (!existsSync(item.refreshed_html_path)) { console.warn(`    [skip] ${item.slug}: no refreshed HTML`); continue; }
 
+      // Live-article edit gate: an approved refresh replaces a live body, a
+      // `rewrite` (lib/post-edit-gate.js). Held items stay `approved` and are
+      // asked again on the next publisher run; never dismissed.
+      const gateTarget = postMeta.shopify_handle || item.slug;
+      const editGate = mayEditLivePost(gateTarget, 'rewrite');
+      if (!editGate.allowed) { console.warn(`    [held] ${item.slug}: edit gate — ${editGate.reason}`); continue; }
+
       const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
       await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
+      recordMaterialEdit(gateTarget, 'rewrite', 'publisher (approved queue item)');
 
       // Copy refreshed HTML over canonical
       writeFileSync(getContentPath(item.slug), refreshedHtml);
@@ -352,6 +361,11 @@ async function main() {
       console.warn(`\n  ⚠ Mirror gate (${verdict.severity}): ${verdict.reason}`);
     }
 
+    // edit-gate: not asked here. This update branch is TRANSPORT — the caller
+    // decided what kind of edit it is and asked lib/post-edit-gate.js itself
+    // (refresh-runner: rewrite; scheduler.js link repair: repair; pipeline.js
+    // and calendar-runner publish their own new post). See
+    // tests/agents/edit-gate-wired.test.js.
     process.stdout.write(`  Updating existing article ${meta.shopify_article_id}... `);
     article = await updateArticle(blogId, meta.shopify_article_id, articleFields);
     console.log('done');
