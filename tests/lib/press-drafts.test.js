@@ -113,3 +113,39 @@ test('M4: a corrupt draft file is skipped and named, not thrown', () => {
   assert.equal(errors[0].name, 'bad.json');
   assert.doesNotThrow(() => loadDrafts('/d', fsImpl), 'no callback: still does not throw');
 });
+
+const memFs = () => {
+  const files = new Map();
+  return {
+    files,
+    mkdirSync() {}, readdirSync: () => [...files.keys()].map((k) => k.split('/').pop()),
+    readFileSync: (p) => files.get(p), writeFileSync: (p, s) => files.set(p, s),
+    renameSync: (a, b) => { files.set(b, files.get(a)); files.delete(a); },
+  };
+};
+
+test('I2: saveDraft refuses to overwrite an APPROVED draft with a different, newer draft', () => {
+  const fsImpl = memFs();
+  const approved = approveDraft(mk(), { now: T0 + 1000 });
+  saveDraft('/d', approved, fsImpl);
+  // A second run the same day builds a fresh pending draft with the same id.
+  const fresh = mk({ now: T0 + 3600_000, subject: 'Second run' });
+  assert.equal(fresh.id, approved.id);
+  assert.throws(() => saveDraft('/d', fresh, fsImpl), /cannot overwrite approved draft/);
+  assert.equal(loadDrafts('/d', fsImpl)[0].status, 'approved');
+  assert.equal(loadDrafts('/d', fsImpl)[0].subject, 'Hi');
+});
+
+test('I2: the same approved draft may still be edited back to pending, rejected or sent', () => {
+  for (const next of [
+    (a) => { const n = { ...a, status: 'pending', edited: true }; delete n.approved_at; return n; },
+    (a) => rejectDraft(a, { now: T0 + D, reason: 'changed mind' }),
+    (a) => approveDraft(a, { now: T0 + D, edits: { subject: 'Edited' } }),
+    (a) => markSent(a, { now: T0 + D, messageId: '<m>' }),
+  ]) {
+    const fsImpl = memFs();
+    const approved = approveDraft(mk(), { now: T0 });
+    saveDraft('/d', approved, fsImpl);
+    assert.doesNotThrow(() => saveDraft('/d', next(approved), fsImpl));
+  }
+});

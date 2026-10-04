@@ -148,3 +148,19 @@ test('reject on an approved draft works', async () => {
   assert.equal(res.status, 200);
   assert.equal(read(r, A).status, 'rejected');
 });
+
+test('M1: GET passes address_source through, and the Outreach card shows it escaped (or "address source unknown")', async () => {
+  const r = root();
+  put(r, A, { address_source: 'published:https://example.com/about' });
+  const res = await call('GET', '/api/press/drafts', undefined, { ROOT: r });
+  assert.equal(res.body.drafts[0].address_source, 'published:https://example.com/about');
+
+  const src = readFileSync(new URL('../../agents/dashboard/public/js/dashboard.js', import.meta.url), 'utf8');
+  const start = src.indexOf('async function renderOutreachTab(');
+  assert.ok(start > 0);
+  const fn = src.slice(start, src.indexOf('\nasync function ', start + 10) > 0 ? src.indexOf('\nasync function ', start + 10) : start + 6000);
+  assert.match(fn, /esc\(x\.address_source\)/, 'address_source is rendered through esc()');
+  assert.match(fn, /address source unknown/);
+  // Never rendered raw.
+  assert.doesNotMatch(fn, /\+ x\.address_source \+/);
+});

@@ -189,6 +189,12 @@ CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outre
 # and avoids the hourly job at :05 on this memory-tight box.
 PRESS_OUTREACH="17,47 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --apply >> data/reports/scheduler/press-outreach.log 2>&1"
 
+# Press outreach drafting: turns prospects (pr-target-finder's pitch_targets and
+# the backlink gap) into pitch drafts that wait in the dashboard (#outreach) for
+# Sean's approval; it never sends. 14:20 UTC: after the :17 run has released the
+# shared lock, before the 16:00 send window, and clear of the 12:20-12:50 detectors.
+PRESS_OUTREACH_DRAFT="20 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --draft --apply >> data/reports/scheduler/press-outreach-draft.log 2>&1"
+
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
 # folders Sean already uses. Rules are learned from those folders; moves, never
 # deletes. 13:40 UTC = 6:40am PDT, before the working day.
@@ -585,6 +591,7 @@ $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_TRYBE_REVIEW
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
+$PRESS_OUTREACH_DRAFT
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
 # ── Daily digest ──

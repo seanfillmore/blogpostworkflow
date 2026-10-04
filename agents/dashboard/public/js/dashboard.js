@@ -4987,6 +4987,7 @@ async function renderOutreachTab() {
       '<div class="outreach-meta"><span class="outreach-badge">' + esc(x.kind) + '</span>' +
         (x.status === 'approved' ? '<span class="outreach-badge" style="background:var(--green,#16a34a);color:#fff">approved</span>' : '') +
         '<span>To: ' + esc(x.to) + '</span>' +
+        '<span title="Where this address came from">' + (x.address_source ? 'Address: ' + esc(x.address_source) : 'address source unknown') + '</span>' +
         (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' : '') +
       '</div>' +
       (x.opener_quote ? '<blockquote class="outreach-quote">' + esc(x.opener_quote) + '</blockquote>' : '') +

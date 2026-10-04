@@ -27,8 +27,11 @@
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
  *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
  *                                                          # one-off: thread ids, existing replies, bump drafts
+ *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
+ *                                                          # daily: turn prospects into pitch drafts for approval
+ *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
  *
- * Cron: every 30 minutes (scripts/setup-cron.sh). Sends happen only Mon-Fri
+ * Cron: every 30 minutes, plus `--draft --apply` daily at 14:20 UTC (scripts/setup-cron.sh). Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
  * after two clean weeks. Any spam complaint or a >3% bounce rate pauses
  * everything until --resume.
@@ -55,8 +58,12 @@ import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, isTran
 import {
   loadContacts, validateContacts, recordPitch, updatePitch, autoFollowUpsDue, openPitchByAddress,
   emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
-  OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS,
+  OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS, normalizeDomain,
 } from '../../lib/press-contacts.js';
+import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
+import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
+import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
+import { fetchWithOutcome } from '../../lib/fetch-pool.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -784,6 +791,486 @@ export function parseSet(arg) {
   return { id: m[1], outcome: m[2], sampleOrder: m[3] || null };
 }
 
+// ── Drafting (--draft) ──────────────────────────────────────────────────────
+
+const MAX_DRAFT_ATTEMPTS = 2;
+
+// A drafting run stops STARTING prospects at 15:30 UTC (the 16:00 UTC send
+// window needs the lock, and the 15:00 UTC scheduler and Monday LLM jobs share
+// a 961 MB box) and never runs longer than this.
+const DRAFT_RUN_MAX_MS = 60 * 60_000;
+const DRAFT_CUTOFF_UTC = '15:30';
+
+/**
+ * The finder runDrafting calls, as wired in production. `opts.hunter === false`
+ * runs the FREE pass only: the prospect already cost a Hunter credit on an
+ * earlier run (spec §2: no credit is spent on it twice).
+ */
+export function makeFindAddress({ fetchPage, tavilySearch, hunter, budget = {}, today }) {
+  return (p, opts = {}) => findAddressLib(p, { fetchPage, tavilySearch, hunter: opts.hunter === false ? null : hunter, budget, today });
+}
+
+/** Pure: the default deadline for a run starting at `startMs`. */
+export function defaultDraftDeadline(startMs) {
+  const cutoff = Date.parse(`${isoOf(startMs).slice(0, 10)}T${DRAFT_CUTOFF_UTC}:00Z`);
+  const cap = startMs + DRAFT_RUN_MAX_MS;
+  // A run started after the cutoff (by hand) is bounded by the 60-minute cap alone.
+  return startMs < cutoff ? Math.min(cap, cutoff) : cap;
+}
+const NO_ADDRESS_NOTE = 'no published or verified address';
+
+/** Article HTML to plain text: script/style removed first, then tags, then the common entities. */
+export function htmlToText(html) {
+  return String(html || '')
+    .replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (m, d) => { try { return String.fromCodePoint(Number(d)); } catch { return m; } })
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const kebab = (s) => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const domainStem = (d) => kebab(String(d || '').replace(/^www\./, '').split('.')[0]) || 'site';
+
+const foldName = (s) => String(s || '').trim().toLowerCase();
+const prospectName = (p) => (p.source === 'link-gap' ? (p.publication || p.domain) : p.person.name);
+const onDomainOf = (c, domain) => (c.domains || []).some((d) => normalizeDomain(d) === domain);
+
+/** Pure: the existing contact a prospect IS (same name on the same domain), or null. */
+export function resolveExistingContact(book, prospect) {
+  const domain = normalizeDomain(prospect.domain) || prospect.domain;
+  const name = foldName(prospectName(prospect));
+  return (book.contacts || []).find((c) => foldName(c.name) === name && onDomainOf(c, domain)) || null;
+}
+
+/** Pure: the contact whose email channels hold `address`, or null. */
+export function contactOwning(book, address) {
+  const a = foldName(address);
+  return (book.contacts || []).find((c) => (c.channels || []).some((ch) => ch.type === 'email' && foldName(ch.address) === a)) || null;
+}
+
+/**
+ * The sender's first-pitch test, applied before any spend: a contact we are
+ * talking to, or pitched inside the cooldown, or that is not pitchable, gets no
+ * new draft. Returns { reason, permanent } or null. Only a non-pitchable status
+ * is PERMANENT; escalated, open conversation and cooldown end on their own, so
+ * they must never count toward the attempts that retire a prospect.
+ */
+export function contactBlocker(contact, state, nowMs) {
+  if (!PITCHABLE_STATUSES.includes(contact.status)) return { reason: `contact ${contact.id} has status ${contact.status}`, permanent: true };
+  if (state?.escalated?.[contact.id]) return { reason: `contact ${contact.id} is escalated to Sean`, permanent: false };
+  const lp = lastPitch(contact);
+  if (lp && OPEN_OUTCOMES.includes(lp.outcome)) return { reason: `contact ${contact.id} has an open conversation (${lp.outcome})`, permanent: false };
+  if (lp && nowMs - Date.parse(`${lp.date}T00:00:00Z`) < DEFAULT_COOLDOWN_DAYS * DAY) return { reason: `contact ${contact.id} pitched within ${DEFAULT_COOLDOWN_DAYS} days (last ${lp.date})`, permanent: false };
+  return null;
+}
+
+/**
+ * Pure: find or add the contact a prospect drafts to. `existing` (a resolved
+ * contact) wins; otherwise the contact is matched by name on the domain.
+ * `address` null means the finder found nothing: a NEW editorial contact is
+ * `unverified`, with no email channel and a note naming the page to try by
+ * hand. An existing contact keeps its status, and NEVER gains a second email
+ * channel: emailOf (the first one) is what follow-ups and reply matching use,
+ * so the draft must go there too. With an address, the prospect's domain is
+ * added to an existing contact's domains. Returns { book, contactId, created, contact }.
+ */
+export function upsertProspectContact(book, prospect, { address = null, source = null, reason = null, today, existing = null }) {
+  const outlet = prospect.source === 'link-gap';
+  const name = prospectName(prospect);
+  const domain = normalizeDomain(prospect.domain) || prospect.domain;
+  const contacts = book.contacts || [];
+  const match = (existing && contacts.find((c) => c.id === existing.id)) || resolveExistingContact(book, prospect);
+  const manualUrl = (outlet ? null : prospect.person?.authorUrl) || prospect.targetUrl || `https://${domain}/`;
+  const note = `${today}: ${NO_ADDRESS_NOTE}${reason ? ` (${reason})` : ''}; try by hand: ${manualUrl}`;
+  const channel = address ? { type: 'email', address: address.toLowerCase(), verified: true, source } : null;
+
+  if (match) {
+    let next = match;
+    if (channel) {
+      if (!emailOf(match)) {
+        next = { ...next, channels: [...(match.channels || []), channel] };
+        // A verified email is what `unverified` was waiting for.
+        if (next.status === 'unverified') next = { ...next, status: 'active' };
+      }
+      if (!onDomainOf(next, domain)) next = { ...next, domains: [...(next.domains || []), domain] };
+    } else if (!(match.notes || []).some((n) => String(n).includes(NO_ADDRESS_NOTE))) {
+      next = { ...next, notes: [...(match.notes || []), note] };
+    }
+    return { book: { ...book, contacts: contacts.map((c) => (c === match ? next : c)) }, contactId: match.id, created: false, contact: next };
+  }
+
+  const ids = new Set(contacts.map((c) => c.id));
+  const base = kebab(name) || domainStem(domain);
+  let id = base;
+  if (ids.has(id)) id = `${base}-${domainStem(domain)}`;
+  for (let n = 2; ids.has(id); n += 1) id = `${base}-${domainStem(domain)}-${n}`;
+  const contact = {
+    id, name, kind: outlet ? 'outlet' : 'journalist', status: channel ? 'active' : 'unverified',
+    outlets: [prospect.publication || domain], domains: [domain],
+    channels: channel ? [channel] : [], pitches: [],
+    ...(channel ? {} : { notes: [note] }),
+    added_by: 'press-outreach', added_at: today,
+  };
+  return { book: { ...book, contacts: [...contacts, contact] }, contactId: id, created: true, contact };
+}
+
+/**
+ * One drafting run: turn prospects into pending pitch drafts until the approval
+ * queue holds config.queueTarget (or `limit` drafts, which overrides it). All
+ * I/O is injected. Nothing here sends mail; a draft waits for Sean's approval.
+ *
+ * Per prospect: fetch the article first (a failed fetch spends no Hunter
+ * credit); resolve the contact already on file and apply the sender's
+ * first-pitch test BEFORE any spend; reuse the address on file, or else run the
+ * finder; then draft. Every failure or contact skip is counted in
+ * state.draft_attempts[key]; at MAX_DRAFT_ATTEMPTS the key is excluded from the
+ * pool before it is truncated, so dead rows never crowd out live ones.
+ */
+export async function runDrafting({
+  apply = false,
+  now = Date.now(),
+  config = DEFAULT_CONFIG,
+  book,
+  state,
+  drafts = [],
+  prTargets = null,
+  linkGap = null,
+  factSheet,
+  postalAddress,
+  findAddress,
+  fetchArticle,
+  draftPitch,
+  generate,
+  saveDraft = (d) => saveDraftFile(join(ROOT, DRAFTS_DIR), d),
+  saveBook = writeBook,
+  saveState = writeState,
+  onProgress = () => {},
+  limit = null,
+  log = console.log,
+  clock = null,
+  deadline = null,
+} = {}) {
+  if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
+  state.draft_attempts ||= {};
+  state.found_addresses ||= {};
+  state.hunter_tried ||= {};
+  const today = isoOf(now).slice(0, 10);
+  const concept = `pitch-${today.slice(0, 7)}`;
+  const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null };
+  // Elapsed real time on top of `now`, so an injected `now` still moves.
+  if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
+  const stopAt = deadline ?? defaultDraftDeadline(now);
+  result.deadline = isoOf(stopAt);
+
+  const pending = drafts.filter((d) => ['pending', 'approved'].includes(d.status)).length;
+  result.pending = pending;
+  // The queue fills over a few days: one run drafts at most draftRunMax. An
+  // explicit --limit is a human's choice and is bounded by the deadline only.
+  const runMax = config.draftRunMax ?? DEFAULT_CONFIG.draftRunMax ?? 10;
+  const want = limit != null ? limit : Math.min(runMax, (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending);
+  result.want = Math.max(0, want);
+  if (want <= 0) { log(`  queue holds ${pending} drafts (target ${config.queueTarget}); nothing to draft`); return { ...result, book, state }; }
+
+  // Dead keys are excluded BEFORE truncation; they are counted, never reported
+  // as skips, so a run that only met dead keys does not notify.
+  const deadKeys = new Set(Object.entries(state.draft_attempts).filter(([, n]) => n >= MAX_DRAFT_ATTEMPTS).map(([k]) => k));
+  // A deeper pool than `want`, so a failed prospect is replaced by the next one.
+  const pool = buildProspects({
+    prTargets, linkGap, contacts: book.contacts, existingDrafts: drafts, today, excludeKeys: deadKeys,
+    want: Math.max(want * 3, want + 5), editorialShare: config.editorialShare ?? DEFAULT_CONFIG.editorialShare,
+  });
+  result.dead = pool.skipped.filter((s) => s.reason === 'excluded: repeated failed attempts').length;
+  result.queueSkipped = pool.skipped.length - result.dead;
+
+  // Honour editorialShare among the drafts actually made: a source past its share
+  // waits, and is only used if the other source runs out.
+  const share = config.editorialShare ?? DEFAULT_CONFIG.editorialShare;
+  const caps = { editorial: Math.ceil(want * share) };
+  caps.gap = want - caps.editorial;
+  const made = { editorial: 0, gap: 0 };
+  const sideOf = (p) => (p.source === 'link-gap' ? 'gap' : 'editorial');
+  const deferred = [];
+  const draftedContacts = new Set();
+  // Drafts already on disk block their contact the same way they block their
+  // domain in buildProspects: pending and approved while open, rejected for the
+  // cooldown. Without this, a writer reached through a second domain gets a
+  // duplicate pitch, and a second run the same day overwrites an approved one.
+  const contactDraftBlock = new Map();
+  for (const d of drafts) {
+    const reason = draftBlockReason(d, today);
+    if (reason && d.contact_id && !contactDraftBlock.has(d.contact_id)) contactDraftBlock.set(d.contact_id, reason);
+  }
+  const blockerOf = (contact) => {
+    const r = contactDraftBlock.get(contact.id);
+    if (r) return { reason: `contact ${contact.id}: ${r}`, permanent: false };
+    return contactBlocker(contact, state, now);
+  };
+
+  const persistState = () => { try { saveState(state); } catch (err) { log(`  could not save state: ${err.message}`); } };
+  const countAttempt = (p) => {
+    state.draft_attempts[p.key] = (state.draft_attempts[p.key] || 0) + 1;
+    persistState();
+  };
+  const fail = (p, reason) => { countAttempt(p); return reason; };
+
+  async function attempt(p) {
+    const row = { key: p.key, domain: p.domain, name: p.person?.name || p.domain };
+    const skip = (reason) => { countAttempt(p); result.skipped.push({ ...row, reason }); return false; };
+    // A temporary block (escalated, open conversation, cooldown) is skipped with
+    // its reason and NO attempt, so the prospect is drafted once it clears.
+    const blocked = (b) => (b.permanent ? skip(b.reason) : (result.skipped.push({ ...row, reason: `${b.reason}; retried later` }), false));
+
+    // The contact already on file, checked before ANY spend (fetch included).
+    let existing = resolveExistingContact(book, p);
+    if (existing) {
+      if (draftedContacts.has(existing.id)) { result.skipped.push({ ...row, reason: `already drafted to ${existing.id} this run` }); return false; }
+      const b = blockerOf(existing);
+      if (b) return blocked(b);
+    }
+
+    let page;
+    try { page = await fetchArticle(p.targetUrl); } catch (err) { page = { outcome: 'network-error', error: err.message }; }
+    const articleText = page?.outcome === 'ok' ? htmlToText(page.html) : '';
+    if (!articleText) {
+      result.failed.push({ ...row, reason: fail(p, `article fetch: ${page?.outcome === 'ok' ? 'empty page' : page?.outcome || 'failed'}`) });
+      return false;
+    }
+
+    let found;
+    if (existing && emailOf(existing)) {
+      // Follow-ups and reply matching use the first email on file, so the
+      // pitch goes there too, and no credit is spent looking for another.
+      const ch = existing.channels.find((c) => c.type === 'email' && c.address);
+      found = { address: emailOf(existing), source: ch.source || 'contact book', spentHunter: 0 };
+    } else {
+      const cached = state.found_addresses[p.key];
+      if (cached?.address) {
+        // Found on an earlier run that a temporary block stopped: no second spend.
+        found = { address: cached.address, source: cached.source, spentHunter: 0 };
+      } else {
+        // A prospect that already cost a Hunter credit (recorded in state, or
+        // the contact carries the no-address note) gets the free pass only.
+        const hunterDone = Boolean(state.hunter_tried[p.key])
+          || Boolean(existing && (existing.notes || []).some((n) => String(n).includes(NO_ADDRESS_NOTE)));
+        try {
+          found = hunterDone ? await findAddress(p, { hunter: false }) : await findAddress(p);
+        } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
+        const spent = found?.spentHunter || 0;
+        result.hunterSpent += spent;
+        if (spent > 0) {
+          state.hunter_tried[p.key] = today;
+          // A paid address is kept, so no later outcome spends for it again.
+          if (found?.address) state.found_addresses[p.key] = { address: found.address, source: found.source, at: isoOf(now) };
+          persistState();
+        }
+      }
+      if (found?.address) {
+        const owner = contactOwning(book, found.address);
+        if (owner && !(existing && owner.id === existing.id)) {
+          // The address is someone already on file. The same name means the same
+          // person writing elsewhere; anyone else is a different person.
+          if (existing || foldName(owner.name) !== foldName(prospectName(p))) return skip(`found address belongs to ${owner.id}, a different contact`);
+          if (draftedContacts.has(owner.id)) { result.skipped.push({ ...row, reason: `already drafted to ${owner.id} this run` }); return false; }
+          const b = blockerOf(owner);
+          if (b) {
+            if (!b.permanent) {
+              state.found_addresses[p.key] = { address: found.address, source: found.source, at: isoOf(now) };
+              persistState();
+            }
+            return blocked(b);
+          }
+          existing = owner;
+        }
+      }
+    }
+
+    if (!found?.address) {
+      const reason = found?.reason || 'no address found';
+      if (p.source === 'link-gap') return skip(`no address: ${reason}`);
+      countAttempt(p);
+      const up = upsertProspectContact(book, p, { address: null, reason, today, existing });
+      const v = validateContacts(up.book);
+      if (!v.ok) { result.failed.push({ ...row, reason: `contact book invalid: ${v.errors[0]}` }); return false; }
+      try { saveBook(up.book); } catch (err) { result.failed.push({ ...row, reason: `contact book write failed: ${err.message}` }); return false; }
+      book = up.book;
+      result.noAddress.push({ ...row, contactId: up.contactId, reason });
+      return false;
+    }
+
+    const up = upsertProspectContact(book, p, { address: found.address, source: found.source, today, existing });
+    if (draftedContacts.has(up.contactId)) { result.skipped.push({ ...row, reason: `already drafted to ${up.contactId} this run` }); return false; }
+    const to = emailOf(up.contact) || found.address;
+    let out;
+    try {
+      out = await draftPitch({ prospect: p, articleText, factSheet, generate, postalAddress, contact: up.contact });
+    } catch (err) {
+      out = { ok: false, reason: `draft error: ${err.message}` };
+    }
+    if (!out?.ok) { result.failed.push({ ...row, reason: fail(p, out?.reason || 'draft rejected') }); return false; }
+
+    const v = validateContacts(up.book);
+    if (!v.ok) { result.failed.push({ ...row, reason: fail(p, `contact book invalid: ${v.errors[0]}`) }); return false; }
+    try { saveBook(up.book); } catch (err) { result.failed.push({ ...row, reason: fail(p, `contact book write failed: ${err.message}`) }); return false; }
+    book = up.book;
+    let draft;
+    try {
+      draft = {
+        ...newDraft({
+          kind: 'pitch', contactId: up.contactId, to, subject: out.draft.subject, text: out.draft.text,
+          source: p.source, targetUrl: p.targetUrl, openerQuote: out.draft.openerQuote, products: out.draft.products || [], concept, now,
+        }),
+        address_source: found.source,
+      };
+      saveDraft(draft);
+    } catch (err) {
+      result.failed.push({ ...row, reason: fail(p, `draft save failed: ${err.message}`) });
+      return false;
+    }
+    draftedContacts.add(up.contactId);
+    delete state.draft_attempts[p.key];
+    delete state.found_addresses[p.key];
+    delete state.hunter_tried[p.key];
+    persistState();
+    result.drafted.push({ ...row, contactId: up.contactId, draftId: draft.id, to, addressSource: found.source, subject: draft.subject });
+    log(`  drafted ${draft.id} to ${up.contactId} (${found.source})`);
+    return true;
+  }
+
+  const attempted = new Set();
+  const pastDeadline = () => {
+    if (clock() < stopAt) return false;
+    result.stoppedAtDeadline = true;
+    result.leftAtDeadline = pool.prospects.filter((x) => !attempted.has(x.key)).length;
+    log(`  stopped at the deadline (${isoOf(stopAt).slice(11, 16)} UTC), ${result.leftAtDeadline} prospects left`);
+    return true;
+  };
+  let stopped = false;
+  for (const p of pool.prospects) {
+    if (result.drafted.length >= want) break;
+    const side = sideOf(p);
+    if (made[side] >= caps[side]) { deferred.push(p); continue; }
+    if (pastDeadline()) { stopped = true; break; }
+    attempted.add(p.key);
+    if (await attempt(p)) made[side] += 1;
+    onProgress();
+  }
+  for (const p of stopped ? [] : deferred) {
+    if (result.drafted.length >= want) break;
+    if (pastDeadline()) break;
+    attempted.add(p.key);
+    if (await attempt(p)) made[sideOf(p)] += 1;
+    onProgress();
+  }
+  return { ...result, book, state };
+}
+
+export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
+  const waiting = r.pending + (apply ? r.drafted.length : 0);
+  const where = dashboardUrl ? `${dashboardUrl.replace(/\/$/, '')}/#outreach` : 'the dashboard, #outreach';
+  const lines = [apply ? '' : 'DRY RUN: nothing was saved.'];
+  if (r.drafted.length) { lines.push(`${apply ? 'Drafted' : 'Would draft'}:`); for (const d of r.drafted) lines.push(`  - ${d.contactId} <${d.to}> (address: ${d.addressSource}): ${d.subject}`); }
+  if (r.noAddress.length) { lines.push('No address found (contact saved as unverified, try by hand):'); for (const x of r.noAddress) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.failed.length) { lines.push('Failed (retried next run, at most twice):'); for (const x of r.failed) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  if (r.stoppedAtDeadline) lines.push(`Stopped at the deadline (${String(r.deadline || '').slice(11, 16)} UTC), ${r.leftAtDeadline} ${r.leftAtDeadline === 1 ? 'prospect' : 'prospects'} left for the next run.`);
+  lines.push(`Hunter credits used: ${r.hunterSpent}. Prospects filtered out of the queue: ${r.queueSkipped}. Given up after repeated failures: ${r.dead}.`);
+  lines.push(`${waiting} ${waiting === 1 ? 'pitch' : 'pitches'} waiting for approval: ${where}`);
+  const subject = `Press drafting: ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter${r.stoppedAtDeadline ? ' · stopped at deadline' : ''}`;
+  return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') };
+}
+
+/** Default model call for draftPitch: the prompt goes UNCHANGED as the one user message. */
+async function generateWithModel(prompt, env) {
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const res = await client.messages.create({
+    model: CONFIRM_MODEL,
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  if (res.stop_reason === 'max_tokens') throw new Error('pitch draft truncated at max_tokens');
+  return (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+}
+
+function readJson(rel) {
+  try { return JSON.parse(readFileSync(join(ROOT, rel), 'utf8')); } catch { return null; }
+}
+
+async function waitForLock(maxMs = 5 * 60_000, stepMs = 30_000) {
+  const until = Date.now() + maxMs;
+  for (;;) {
+    if (acquireLock()) return true;
+    if (Date.now() >= until) return false;
+    await new Promise((r) => setTimeout(r, stepMs));
+  }
+}
+
+async function runDraftMode(args, apply, env, config) {
+  const li = args.indexOf('--limit');
+  let limit = null;
+  if (li !== -1) {
+    limit = Number(args[li + 1]);
+    if (!Number.isInteger(limit) || limit < 1) throw new Error(`--limit wants a positive integer, got "${args[li + 1]}"`);
+  }
+  console.log(`Press outreach drafting${apply ? '' : ' (dry run)'}${limit ? ` (limit ${limit})` : ''}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  // The same lock as the 30-minute run: the book, the drafts and the state are
+  // read only once nothing else can be writing them. A run already holding it
+  // (it is short outside the send window) gets a few minutes to finish.
+  if (apply && !(await waitForLock())) {
+    console.log('another press-outreach run holds the lock (data/press/.lock); drafting skipped today');
+    await notify({ subject: 'Press drafting skipped: lock held', body: 'Another press-outreach run held data/press/.lock for over 5 minutes, so no drafts were made today.', status: 'info', category: 'press' });
+    return;
+  }
+  try {
+    const loaded = readBook();
+    if (!loaded.available) throw new Error(`Refusing to draft: ${loaded.reason}`);
+    let state = readState();
+    if (!state) {
+      // Creating the state file here would disarm the 30-minute run's
+      // "no state, refuse" guard, so drafting never creates it.
+      if (apply) throw new Error(`Refusing to draft: no state file at ${STATE_PATH}. Run the 30-minute agent once with --init first.`);
+      state = emptyState();
+    }
+    const postalAddress = readPostalAddress();
+    if (!postalAddress) throw new Error('Refusing to draft: no postal_address in data/brand/brand-kit.json');
+    const factSheet = buildFactSheet(readJson('config/ingredients.json'), readJson('data/brand/product-catalog.json'), readJson('data/brand/brand-kit.json'));
+    const prTargets = readJson('data/reports/pr-targets/latest.json');
+    const linkGap = readJson('data/backlinks/opportunities.json');
+    if (!prTargets) console.log('  no data/reports/pr-targets/latest.json; editorial prospects unavailable');
+    if (!linkGap) console.log('  no data/backlinks/opportunities.json; link-gap prospects unavailable');
+
+    // Hunter costs real credits, so a dry run uses the free pass only.
+    const hunter = apply && env.HUNTER_API_KEY ? hunterClient(env.HUNTER_API_KEY) : null;
+    if (!hunter) console.log(`  Hunter ${apply ? 'unavailable (no HUNTER_API_KEY)' : 'not used in a dry run'}; published addresses only`);
+    const tavilySearch = env.TAVILY_API_KEY ? tavilyClient(env.TAVILY_API_KEY) : null;
+    const fetchPage = (url) => fetchWithOutcome(url);
+    const today = new Date().toISOString().slice(0, 10);
+
+    const draftsDir = join(ROOT, DRAFTS_DIR);
+    const drafts = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
+    const run = await runDrafting({
+      apply, config, book: loaded.doc, state, drafts, prTargets, linkGap, factSheet, postalAddress, limit,
+      fetchArticle: fetchPage,
+      findAddress: makeFindAddress({ fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
+      draftPitch: draftPitchLib,
+      generate: (prompt) => generateWithModel(prompt, env),
+      onProgress: touchLock,
+    });
+    const { subject, body } = renderDraftSummary(run, { apply, dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
+    console.log(`\n${subject}\n\n${body}`);
+    const acted = run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline;
+    if (apply && acted) await notify({ subject, body, status: 'info', category: 'press' });
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
+  }
+}
+
 export function escalationEmail(contact, msg, reason) {
   const p = lastPitch(contact);
   return {
@@ -885,7 +1372,9 @@ async function runBackfill(args, apply, creds) {
     for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
     console.log(`${plan.processed.length} replies marked as already handled`);
     if (apply) {
-      const applied = applyBackfill({ book, plan, state: readState(), now });
+      const priorState = readState();
+      if (!priorState) console.log(`WARNING: no state file existed, so a FRESH one was created at ${STATE_PATH}. Its sends and escalations history is empty; if a state file should exist, restore it from backup.`);
+      const applied = applyBackfill({ book, plan, state: priorState, now });
       book = applied.book;
       writeBook(book);
       writeState(applied.state);
@@ -923,6 +1412,10 @@ async function main() {
   }
   if (args.includes('--backfill')) {
     await runBackfill(args, apply, creds);
+    return { imapDown: false };
+  }
+  if (args.includes('--draft')) {
+    await runDraftMode(args, apply, env, config);
     return { imapDown: false };
   }
 
