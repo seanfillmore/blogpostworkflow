@@ -202,3 +202,8 @@ test('tracking_sent_at and checkin_sent_at must be ISO datetimes when present', 
   assert.ok(bad.errors.some((e) => /tracking_sent_at must be an ISO datetime/.test(e)));
   assert.ok(bad.errors.some((e) => /checkin_sent_at must be an ISO datetime/.test(e)));
 });
+
+test('checkin_skipped_at must be an ISO datetime when present', () => {
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: '2026-10-19T18:00:00Z' })).ok, true);
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: 'never' })).ok, false);
+});

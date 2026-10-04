@@ -139,3 +139,22 @@ test('config maps every catalogue product to a variant', async () => {
   const { PRODUCTS } = await import('../../lib/press-contacts.js');
   for (const p of PRODUCTS) assert.match(variantGid(cfg, p) || '', /^gid:\/\/shopify\/ProductVariant\/\d+$/, p);
 });
+
+test('R2: the orders query is newest first, 100 at a time', async () => {
+  let seen;
+  await fetchPrPackageOrders({ now: NOW, graphql: async (q) => { seen = q; return { orders: { nodes: [] } }; } });
+  assert.match(seen, /orders\(first: 100, query: \$q, sortKey: CREATED_AT, reverse: true\)/);
+});
+
+test('R3: an error after draftOrderCreate carries the draft identity', async () => {
+  const graphql = async (q) => { if (/Create/.test(q)) return { draftOrderCreate: { draftOrder: { id: 'gid://shopify/DraftOrder/8', name: '#D8', totalPriceSet: { shopMoney: { amount: '0.0' } } }, userErrors: [] } }; throw new Error('HTTP 502'); };
+  await assert.rejects(createSampleOrder({}, { graphql }), (err) => err.draft?.name === '#D8' && err.draft?.id === 'gid://shopify/DraftOrder/8' && /HTTP 502/.test(err.message));
+  const g2 = async (q) => (/Create/.test(q) ? { draftOrderCreate: { draftOrder: { id: 'gid://shopify/DraftOrder/8', name: '#D8', totalPriceSet: { shopMoney: { amount: '0.0' } } }, userErrors: [] } } : { draftOrderComplete: { draftOrder: null, userErrors: [{ field: null, message: 'nope' }] } });
+  await assert.rejects(createSampleOrder({}, { graphql: g2 }), (err) => err.draft?.name === '#D8');
+});
+
+test('R5: planSample refuses an address missing city, state or ZIP', () => {
+  const r = planSample({ pitch, address: { lines: ['12 Example Road', 'Springfield IL'], zip: null }, config: CONFIG, monthKits: 0 });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /incomplete address/);
+});

@@ -221,3 +221,50 @@ test('if telling Sean fails, the reply stays unprocessed and the contact is not 
   assert.ok(!opts.state.processed.includes('<r-jane>'));
   assert.ok(r.failed.some((f) => f.kind === 'address-given'));
 });
+
+// ── fix round 1 ──
+
+test('R1: a hand-made order placed before the address arrived is adopted, never duplicated', async () => {
+  const shop = shopify({ orders: [prOrder({ name: '#2373', createdAt: '2026-10-15T10:00:00Z' })] });
+  const { opts } = world({ contacts: [contact('jane')], replies: [reply('jane', ADDRESS_REPLY)], shop });
+  await runPressOutreach(opts);
+  assert.equal(shop.kinds().filter((k) => k === 'create').length, 0);
+  assert.equal(pitchOf(opts, 'jane').sample_order, '#2373');
+  assert.equal(pitchOf(opts, 'jane').outcome, 'samples-sent');
+});
+
+test('R3: a failure after draftOrderCreate names the draft and says to check Shopify first', async () => {
+  const shop = shopify();
+  const inner = shop.graphql;
+  shop.graphql = async (q, v) => { if (/draftOrderComplete/.test(q)) throw new Error('socket hang up'); return inner(q, v); };
+  const { opts, calls } = world({ contacts: [contact('jane')], replies: [reply('jane', ADDRESS_REPLY)], shop });
+  await runPressOutreach(opts);
+  assert.match(calls.tell[0].body, /#D5/);
+  assert.match(calls.tell[0].body, /gid:\/\/shopify\/DraftOrder\/5/);
+  assert.match(calls.tell[0].body, /check Shopify for this draft\/order before creating one/);
+});
+
+test('R4: orders created earlier in this run count toward the cap', async () => {
+  const orders = Array.from({ length: 9 }, (_, i) => prOrder({ name: `#${3000 + i}`, shippingAddress: { name: `Other ${i}` }, createdAt: '2026-10-02T00:00:00Z' }));
+  const shop = shopify({ orders });
+  const { opts, calls } = world({
+    contacts: [contact('jane'), contact('sam')],
+    replies: [reply('jane', ADDRESS_REPLY), reply('sam', ADDRESS_REPLY, { date: '2026-10-19T11:00:00Z' })],
+    shop,
+  });
+  await runPressOutreach(opts);
+  assert.equal(shop.kinds().filter((k) => k === 'create').length, 1, 'only the tenth kit is created');
+  assert.ok(calls.tell.some((m) => /Sam Example/.test(m.subject) && /over monthly cap/.test(m.body)));
+});
+
+test('R6: a check-in with no delivery 90 days after tracking stops being chased', async () => {
+  const shop = shopify({ orders: [prOrder({ fulfillments: [{ deliveredAt: null, trackingInfo: [{ url: 'https://example.com/t' }] }] })] });
+  const base = { outcome: 'samples-sent', sample_order: '#2373', tracking_sent_at: '2026-07-15T17:00:00Z', last_sent_at: '2026-07-15T17:00:00Z', date: '2026-07-10' };
+  const a = world({ contacts: [contact('jane', base)], shop });
+  await runPressOutreach(a.opts);
+  assert.equal(a.calls.send.length, 0);
+  assert.equal(pitchOf(a.opts, 'jane').checkin_skipped_at, new Date(NOW).toISOString());
+  const b = world({ contacts: [contact('jane', { ...base, checkin_skipped_at: '2026-10-18T00:00:00Z' })], shop: shopify() });
+  await runPressOutreach(b.opts);
+  assert.equal(b.shop.calls.length, 0, 'never queried again');
+});

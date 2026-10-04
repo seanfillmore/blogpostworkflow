@@ -97,6 +97,7 @@ const MAX_PROCESSED = 2000;
 const MAX_REFS = 20;
 const CONFIRM_MODEL = LLM_MODELS.standard;
 const SEND_FAILURES_REPORT_AT = 3;
+const CHECKIN_GIVE_UP_DAYS = 90;
 const AUTO_KINDS = new Set(['sample-yes', 'address-given', 'opt-out', 'decline']);
 
 function loadEnv(root = ROOT) {
@@ -369,8 +370,13 @@ export async function runPressOutreach({
     }
     return scopeAnswer;
   };
-  // The date a sample order for this pitch may carry at the earliest.
-  const sampleSince = (p) => String(p.sample_address?.received_at || p.date || '').slice(0, 10) || p.date;
+  // The date a sample order for this pitch may carry at the earliest: the PITCH
+  // date, never the address date. Sean may place the order by hand before the
+  // address reaches the agent, and that order must be adopted, not duplicated.
+  const sampleSince = (p) => p.date;
+  // Orders this run created: Shopify's order search lags, so they are counted
+  // here as well or two addresses in one run could overrun the monthly cap.
+  let ordersCreatedThisRun = 0;
   /** Hand the order to Sean: the contact is escalated, so their next message reaches him. */
   const askSeanForOrder = async (c, p, address, msg, reason = null) => {
     // Escalated only once Sean has the email: if it fails this throws, the reply
@@ -398,13 +404,15 @@ export async function runPressOutreach({
     let name = matchOrder(orders, { contact: c, email: emailOf(c), sinceDate: since })?.name || null;
     let action = `adopted existing order ${name}`;
     if (!name) {
-      const plan = planSample({ pitch: p, address, config, monthKits: countMonthKits(orders, now) });
+      const plan = planSample({ pitch: p, address, config, monthKits: countMonthKits(orders, now) + ordersCreatedThisRun });
       if (!plan.ok) return askSeanForOrder(c, p, address, msg, plan.reason);
       try {
         ({ name } = await createSampleOrder(buildDraftOrderInput({ contact: c, pitch: p, address, lines: plan.lines }), { graphql }));
       } catch (err) {
-        return askSeanForOrder(c, p, address, msg, `order creation failed: ${err.message}`);
+        const draft = err.draft ? ` after draft ${err.draft.name} (${err.draft.id}) was created; check Shopify for this draft/order before creating one` : '';
+        return askSeanForOrder(c, p, address, msg, `order creation failed${draft}: ${err.message}`);
       }
+      ordersCreatedThisRun += 1;
       action = `$0 PR Package order ${name} created`;
     }
     commit(updatePitch(book, c.id, { outcome: 'samples-sent', sample_order: name }), { id: c.id, name: c.name, kind: 'sample-order' });
@@ -438,7 +446,7 @@ export async function runPressOutreach({
     const pending = book.contacts.filter((c) => {
       if (!PITCHABLE_STATUSES.includes(c.status) || !emailOf(c)) return false;
       const p = lastPitch(c);
-      return p && ['sample-accepted', 'samples-sent'].includes(p.outcome) && (!p.tracking_sent_at || !p.checkin_sent_at);
+      return p && ['sample-accepted', 'samples-sent'].includes(p.outcome) && (!p.tracking_sent_at || (!p.checkin_sent_at && !p.checkin_skipped_at));
     });
     if (!pending.length) return;
     const earliest = pending.map((c) => sampleSince(lastPitch(c))).sort()[0];
@@ -499,7 +507,13 @@ export async function runPressOutreach({
         if (t) await sendOne('sample-tracking', trackingText({ firstName: firstName(c), url: t.url }), 'tracking_sent_at');
         continue;
       }
-      if (p.checkin_sent_at || !checkinDue({ deliveredAt: deliveredAtOf(order), nowMs: now })) continue;
+      const deliveredAt = deliveredAtOf(order);
+      // Never delivered (or never scanned) 90 days on: stop asking Shopify about it.
+      if (!deliveredAt && now - Date.parse(p.tracking_sent_at) >= CHECKIN_GIVE_UP_DAYS * DAY) {
+        if (commit(updatePitch(book, c.id, { checkin_skipped_at: isoOf(now) }), { ...row, kind: 'sample-checkin' })) result.samples.push({ ...row, action: `check-in skipped: no delivery recorded ${CHECKIN_GIVE_UP_DAYS} days after tracking` });
+        continue;
+      }
+      if (p.checkin_sent_at || !checkinDue({ deliveredAt, nowMs: now })) continue;
       // Only a quiet thread gets the check-in, which needs the mail read this run.
       if (result.imapDown || state.escalated[c.id]) continue;
       const after = Date.parse(p.tracking_sent_at);
