@@ -131,3 +131,43 @@ test('hunterClient builds URLs and never throws on errors body', async () => {
   assert.ok(out.errors);
   assert.match(seen[0], /email-verifier\?email=a%40example\.com&api_key=KEY/);
 });
+
+test('pickPersonalEmail rejects the wrong person and keeps the right one', () => {
+  const d = ['example.com'];
+  const jane = { name: 'Jane Doe', domains: d };
+  for (const bad of ['janet.smith@example.com', 'john.doe@example.com', 'adoe@example.com', 'jane.smith@gmail.com']) {
+    assert.equal(pickPersonalEmail([bad], jane), null, bad);
+  }
+  assert.equal(pickPersonalEmail(['samantha.k@example.com'], { name: 'Sam Lee', domains: d }), null);
+  assert.equal(pickPersonalEmail(['jlimited@example.com'], { name: 'Jane Li', domains: d }), null);
+  for (const good of ['jane.doe@example.com', 'jdoe@example.com', 'jane@example.com', 'janedoe@gmail.com', 'doe.jane@example.com']) {
+    assert.equal(pickPersonalEmail([good], jane), good, good);
+  }
+  assert.equal(pickPersonalEmail(['jane@gmail.com'], jane), null);
+  assert.equal(pickPersonalEmail(['rivers@example.com'], { name: 'Jane Rivers', domains: d }), 'rivers@example.com');
+});
+
+test('extractEmails decodes escapes and skips script text', () => {
+  assert.deepEqual(extractEmails(String.raw`\u003cjane@example.com`), ['jane@example.com']);
+  assert.deepEqual(extractEmails('<a href="mailto:%20jane@example.com">x</a>'), ['jane@example.com']);
+  assert.deepEqual(extractEmails('jane&#64;example.com and sam&#x40;example.com and lee&commat;example.com').sort(),
+    ['jane@example.com', 'lee@example.com', 'sam@example.com']);
+  assert.deepEqual(extractEmails('<script>var a="hidden@example.com"</script><p>x</p><style>.a{}</style>'), []);
+  assert.deepEqual(extractEmails('<script>1</script><a href="mailto:Keep@example.com">k</a>'), ['keep@example.com']);
+});
+
+test('tavily host match uses labels, not substrings', async () => {
+  const p = { ...prospect, domain: 'outlet.example.net', person: { name: 'Jane Doe', authorUrl: null } };
+  const r = await findAddress(p, {
+    fetchPage: async () => blocked,
+    tavilySearch: async () => [{ url: 'https://doevents.com/x', content: 'jane.doe@doevents.com' }],
+  });
+  assert.equal(r.address, null);
+  const p2 = { ...p, person: { name: 'Jane Rivers', authorUrl: null } };
+  const r2 = await findAddress(p2, {
+    fetchPage: async () => blocked,
+    tavilySearch: async () => [{ url: 'https://janerivers.com/about', content: 'jane@janerivers.com' }, { url: 'https://rivers.blog/about', content: 'jane.rivers@rivers.blog' }],
+  });
+  assert.equal(r2.address, 'jane.rivers@rivers.blog');
+  assert.match(r2.source, /rivers\.blog/);
+});
