@@ -194,3 +194,16 @@ test('openPitchByAddress keys on the lowercased email of contacts whose latest p
   assert.equal(emailOf(book().contacts[0]), 'jane@example.com');
   assert.equal(openPitchByAddress(book({ outcome: 'declined' }).contacts).size, 0);
 });
+
+test('tracking_sent_at and checkin_sent_at must be ISO datetimes when present', () => {
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', tracking_sent_at: '2026-10-19T18:00:00.000Z', checkin_sent_at: '2026-11-10T18:00:00Z' })).ok, true);
+  const bad = validateContacts(book({ outcome: 'samples-sent', tracking_sent_at: '2026-10-19', checkin_sent_at: 'soon' }));
+  assert.equal(bad.ok, false);
+  assert.ok(bad.errors.some((e) => /tracking_sent_at must be an ISO datetime/.test(e)));
+  assert.ok(bad.errors.some((e) => /checkin_sent_at must be an ISO datetime/.test(e)));
+});
+
+test('checkin_skipped_at must be an ISO datetime when present', () => {
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: '2026-10-19T18:00:00Z' })).ok, true);
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: 'never' })).ok, false);
+});

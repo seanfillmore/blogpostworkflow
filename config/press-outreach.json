@@ -1,4 +1,14 @@
 {
   "_note": "agents/press-outreach. enabled:false stops every email. Defaults live in lib/press-outreach.js DEFAULT_CONFIG; any key here overrides it.",
-  "enabled": true
+  "enabled": true,
+  "_sampleVariantsNote": "One Shopify variant id per lib/press-contacts.js PRODUCTS key: the Pure Unscented (or base) variant shipped in a $0 PR Package sample order. Looked up 2026-10-04.",
+  "sampleVariants": {
+    "lotion": 45828179165354,
+    "body-cream": 45828182114474,
+    "soap": 45828179951786,
+    "hand-soap": 45828180770986,
+    "lip-balm": 45828179656874,
+    "deodorant": 45828181721258,
+    "toothpaste": 44179458162858
+  }
 }

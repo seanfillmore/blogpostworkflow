@@ -107,6 +107,7 @@ test('C1: a backfilled pitch gets no automatic follow-ups; only the approved bum
     send: async (m) => { sends.push(m); return { messageId: `<s${sends.length}@realskincare.com>`, resendId: 'r' }; },
     saveBook: () => {}, saveState: () => {}, saveDraft: (d) => disk.set(d.id, d), readDraft: (id) => disk.get(id),
     escalate: async () => {}, confirmReply: async () => true, sleep: async () => {}, reportError: async () => {}, log: () => {},
+    graphql: async () => { throw new Error('unexpected Shopify call'); },
   });
   assert.deepEqual(sends.map((m) => m.to), ['jane@example.com'], 'one message total: the approved bump');
   assert.match(sends[0].text, /Bumping/);
