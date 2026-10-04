@@ -1,0 +1,74 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { buildProspects } from '../../lib/press-prospects.js';
+
+const row = (domain, over = {}) => ({
+  domain, pitch_url: `https://${domain}/a`, top_url: `https://${domain}/top`,
+  author: 'Jane Example', author_url: `https://${domain}/author/jane`, publication: `${domain} Pub`,
+  author_rejected: null, stale_article: false, likely_store: false, enrich_fetch: 'ok',
+  angle: 'angle', competitors: ['Brand A'], prompts: ['best lotion'], score: 10, ...over,
+});
+const prTargets = { pitch_targets: [
+  row('noauthor.example', { author: null }),
+  row('stale.example', { stale_article: true }),
+  row('pitched.example'),
+  row('good.example'),
+] };
+const linkGap = { opportunities: [
+  { domain: 'nofollow.example', rank: 80, dofollow: false, competitors: ['X'], score: 5 },
+  { domain: 'good.example', rank: 70, dofollow: true, competitors: ['X'], score: 5 },
+  { domain: 'gap.example', rank: 60, dofollow: true, competitors: ['Y'], score: 4 },
+] };
+const contacts = [{
+  id: 'p', name: 'Pat Pitched', status: 'active', domains: ['pitched.example'], channels: [],
+  pitches: [{ date: '2026-09-24', outcome: 'sent' }],
+}];
+const base = { prTargets, linkGap, contacts, existingDrafts: [], today: '2026-10-04' };
+
+test('good editorial first, then good link-gap', () => {
+  const { prospects } = buildProspects({ ...base, want: 2 });
+  assert.deepEqual(prospects.map((p) => p.key), ['pr-target:good.example', 'link-gap:gap.example']);
+  assert.equal(prospects[0].person.name, 'Jane Example');
+  assert.equal(prospects[1].person, null);
+});
+
+test('every drop has a reason', () => {
+  const { skipped } = buildProspects({ ...base, want: 2 });
+  const why = (d) => skipped.find((s) => s.domain === d)?.reason || '';
+  assert.match(why('noauthor.example'), /no author/);
+  assert.match(why('stale.example'), /stale/);
+  assert.match(why('pitched.example'), /pitched/);
+  assert.match(why('nofollow.example'), /nofollow/);
+  assert.match(why('good.example') , /./);
+  assert.ok(skipped.some((s) => s.domain === 'good.example' && /editorial/.test(s.reason)));
+});
+
+test('no padding when short', () => {
+  assert.equal(buildProspects({ ...base, want: 5 }).prospects.length, 2);
+});
+
+test('pitch older than cooldown does not block', () => {
+  const c = [{ ...contacts[0], pitches: [{ date: '2026-07-01', outcome: 'sent' }] }];
+  const { prospects } = buildProspects({ ...base, contacts: c, want: 5 });
+  assert.ok(prospects.some((p) => p.domain === 'pitched.example'));
+});
+
+test('existing pending/approved draft blocks; sent/rejected does not', () => {
+  const d = (status, extra) => ({ id: 'd', status, target_url: 'https://www.good.example/x', ...extra });
+  let r = buildProspects({ ...base, existingDrafts: [d('pending')], want: 5 });
+  assert.ok(!r.prospects.some((p) => p.key === 'pr-target:good.example'));
+  assert.ok(r.skipped.some((s) => s.domain === 'good.example' && /draft/.test(s.reason)));
+  r = buildProspects({ ...base, existingDrafts: [{ status: 'approved', to: 'a@good.example' }], want: 5 });
+  assert.ok(!r.prospects.some((p) => p.key === 'pr-target:good.example'));
+  r = buildProspects({ ...base, existingDrafts: [d('rejected')], want: 5 });
+  assert.ok(r.prospects.some((p) => p.key === 'pr-target:good.example'));
+});
+
+test('shortfall on one side is filled from the other; link-gap in book dropped', () => {
+  const many = { opportunities: ['a', 'b', 'c', 'd'].map((x) => ({ domain: `${x}.example`, rank: 1, dofollow: true, competitors: [], score: 1 })) };
+  const book = [{ id: 'q', name: 'Q', status: 'inactive', domains: ['a.example'], channels: [], pitches: [] }];
+  const { prospects, skipped } = buildProspects({ ...base, linkGap: many, contacts: [...contacts, ...book], want: 4 });
+  assert.equal(prospects.length, 4);
+  assert.deepEqual(prospects.map((p) => p.source), ['pr-target', 'link-gap', 'link-gap', 'link-gap']);
+  assert.ok(skipped.some((s) => s.domain === 'a.example' && /book/.test(s.reason)));
+});
