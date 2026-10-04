@@ -50,3 +50,54 @@ test('store round-trips through an injected fs, atomically', () => {
   assert.equal(loadDrafts('/d', fsImpl)[0].contact_id, 'jane-doe');
   assert.ok(![...files.keys()].some((k) => k.includes('.tmp')));
 });
+
+test('saveDraft refuses to overwrite a sent draft with a non-sent draft', () => {
+  const files = new Map();
+  const fsImpl = {
+    mkdirSync() {}, readdirSync: () => [...files.keys()].map((k) => k.split('/').pop()),
+    readFileSync: (p) => files.get(p), writeFileSync: (p, s) => files.set(p, s),
+    renameSync: (a, b) => { files.set(b, files.get(a)); files.delete(a); },
+  };
+  // Save a sent draft first
+  const sent = markSent(approveDraft(mk(), { now: T0 }), { now: T0, messageId: '<m>' });
+  saveDraft('/d', sent, fsImpl);
+
+  // Try to overwrite it with an approved draft (non-sent) — should throw
+  const approved = approveDraft(mk(), { now: T0 + D });
+  assert.throws(
+    () => saveDraft('/d', approved, fsImpl),
+    /cannot overwrite sent draft|already sent/i
+  );
+
+  // The sent draft should still be in storage
+  assert.equal(loadDrafts('/d', fsImpl)[0].status, 'sent');
+});
+
+test('saveDraft allows a sent draft to overwrite its approved version (normal markSent flow)', () => {
+  const files = new Map();
+  const fsImpl = {
+    mkdirSync() {}, readdirSync: () => [...files.keys()].map((k) => k.split('/').pop()),
+    readFileSync: (p) => files.get(p), writeFileSync: (p, s) => files.set(p, s),
+    renameSync: (a, b) => { files.set(b, files.get(a)); files.delete(a); },
+  };
+  // Save an approved draft
+  const approved = approveDraft(mk(), { now: T0 });
+  saveDraft('/d', approved, fsImpl);
+
+  // Now overwrite with a sent version of the same draft — should succeed
+  const sent = markSent(approved, { now: T0 + D, messageId: '<m>' });
+  saveDraft('/d', sent, fsImpl);
+
+  assert.equal(loadDrafts('/d', fsImpl)[0].status, 'sent');
+});
+
+test('approveDraft on a rejected draft changes mind, dropping rejected metadata', () => {
+  const d = rejectDraft(mk(), { now: T0, reason: 'wrong beat' });
+  assert.equal(d.status, 'rejected');
+  assert.equal(d.rejected_reason, 'wrong beat');
+
+  const reconsidered = approveDraft(d, { now: T0 + D });
+  assert.equal(reconsidered.status, 'approved');
+  assert.equal(reconsidered.rejected_reason, undefined);
+  assert.equal(reconsidered.rejected_at, undefined);
+});
