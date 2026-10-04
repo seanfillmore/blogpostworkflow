@@ -121,8 +121,9 @@ test('a failed article fetch drafts nothing and counts an attempt; two attempts 
   });
   const r2 = await runDrafting(second.args);
   assert.equal(looked, 0);
-  assert.equal(r2.skipped.length, 1);
-  assert.match(r2.skipped[0].reason, /2 failed attempts/);
+  // Excluded from the pool, counted as dead, never reported as a skip (no daily notify).
+  assert.equal(r2.skipped.length, 0);
+  assert.equal(r2.dead, 1);
 });
 
 test('a draft failure is recorded with its reason and clears nothing', async () => {
@@ -178,4 +179,167 @@ test('upsert: a link-gap outlet becomes kind outlet named by publication or doma
   assert.equal(c.name, 'gap.example.com');
   assert.equal(c.id, 'gap-example-com');
   assert.equal(c.status, 'active');
+});
+
+// ── fix round 1 ──
+const existingWithEmail = (over = {}) => ({
+  id: 'writer1-person', name: 'Writer1 Person', kind: 'journalist', status: 'active',
+  domains: ['oldmag.example.com'], outlets: ['Old Mag'],
+  channels: [{ type: 'email', address: 'writer1@oldmag.example.com', verified: true, source: 'published:https://oldmag.example.com' }],
+  pitches: [], ...over,
+});
+// name+domain match needs the domain; same person found on outlet1 via the book:
+const sameDomain = (over = {}) => existingWithEmail({ domains: ['oldmag.example.com', 'outlet1.example.com'], ...over });
+
+test('an existing contact with an email on file is drafted to THAT address, finder never called', async () => {
+  let looked = 0;
+  const { args, saved } = harness({
+    prTargets: prTargets(1),
+    book: { version: 1, contacts: [sameDomain()] },
+    findAddress: async () => { looked += 1; return { address: 'other@outlet1.example.com', source: 'hunter:verified:x', spentHunter: 2 }; },
+  });
+  const r = await runDrafting(args);
+  assert.equal(looked, 0);
+  assert.equal(r.hunterSpent, 0);
+  assert.equal(r.drafted.length, 1);
+  assert.equal(saved.drafts[0].to, 'writer1@oldmag.example.com');
+  const c = saved.books.at(-1).contacts[0];
+  assert.equal(c.channels.length, 1);
+});
+
+test('a found address that belongs to a DIFFERENT existing contact is skipped with an attempt', async () => {
+  const other = { id: 'someone-else', name: 'Someone Else', status: 'active', domains: ['x.example.com'], channels: [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }], pitches: [] };
+  const { args, saved } = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [other] } });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 0);
+  assert.equal(saved.drafts.length, 0);
+  assert.match(r.skipped[0].reason, /belongs to someone-else/);
+  assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
+});
+
+test('upsert never appends a second email channel; it extends domains when drafting', () => {
+  const book = { contacts: [sameDomain()] };
+  const prospect = { source: 'pr-target', domain: 'outlet1.example.com', person: { name: 'Writer1 Person' }, publication: 'Outlet 1' };
+  const r = upsertProspectContact(book, prospect, { address: 'new@outlet1.example.com', source: 'x', today: '2026-10-05' });
+  assert.equal(r.book.contacts[0].channels.length, 1);
+  const third = upsertProspectContact({ contacts: [existingWithEmail({ domains: ['outlet1.example.com'] })] }, { ...prospect, domain: 'outlet1.example.com' }, { address: 'writer1@oldmag.example.com', source: 'x', today: '2026-10-05' });
+  assert.equal(third.book.contacts[0].channels.length, 1);
+});
+
+test('drafting for an existing contact matched by name on a known domain extends its domains', async () => {
+  const c0 = existingWithEmail({ channels: [], domains: ['outlet1.example.com'] });
+  const { args, saved } = harness({
+    prTargets: prTargets(1),
+    book: { version: 1, contacts: [c0] },
+  });
+  await runDrafting(args);
+  const c = saved.books.at(-1).contacts[0];
+  assert.equal(c.channels.length, 1);
+  assert.deepEqual(c.domains, ['outlet1.example.com']);
+});
+
+test('existing contact found by EMAIL on a new domain gets the domain added', async () => {
+  const c0 = existingWithEmail({ channels: [], domains: ['oldmag.example.com'] });
+  c0.channels = [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }];
+  // same name, same address, other outlet -> the same person (owner by email)
+  const { args, saved } = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] } });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 1);
+  assert.deepEqual(saved.books.at(-1).contacts[0].domains, ['oldmag.example.com', 'outlet1.example.com']);
+});
+
+for (const [label, over, st] of [
+  ['escalated', {}, { escalated: { 'writer1-person': { at: '2026-10-01' } } }],
+  ['open conversation', { pitches: [{ date: '2026-06-01', concept: 'c', outcome: 'replied' }] }, {}],
+]) {
+  test(`existing contact with ${label} is skipped before the finder, attempt recorded`, async () => {
+    let looked = 0;
+    const { args, saved } = harness({
+      prTargets: prTargets(1),
+      book: { version: 1, contacts: [sameDomain(over)] },
+      state: { sends: [], processed: [], escalated: {}, ...st },
+      findAddress: async () => { looked += 1; return { address: null }; },
+    });
+    const r = await runDrafting(args);
+    assert.equal(looked, 0);
+    assert.equal(r.drafted.length, 0);
+    assert.equal(r.skipped.length, 1);
+    assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
+  });
+}
+
+test('existing contact with a non-pitchable status is skipped before the finder, attempt recorded', async () => {
+  let looked = 0;
+  const contact = sameDomain({ status: 'left_outlet', name: 'Someone Gone' });
+  contact.domains = ['outlet1.example.com'];
+  const { args, saved } = harness({
+    prTargets: { pitch_targets: [{ ...row(1), author: 'Writer1 Person' }] },
+    book: { version: 1, contacts: [{ ...contact, name: 'Writer1 Person', status: 'inactive' }] },
+    findAddress: async () => { looked += 1; return { address: null }; },
+  });
+  const r = await runDrafting(args);
+  // buildProspects itself drops a non-pitchable same-name contact; either way nothing is spent.
+  assert.equal(looked, 0);
+  assert.equal(r.drafted.length, 0);
+  // a found-by-email contact with bad status: finder ran, but the skip records an attempt
+  let found = 0;
+  const owner = { id: 'dnc', name: 'Other Name', status: 'do_not_contact', domains: ['z.example.com'], channels: [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }], pitches: [] };
+  const h2 = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [owner] }, findAddress: async (p) => { found += 1; return { address: 'writer1@outlet1.example.com', source: 'published:x', spentHunter: 0 }; } });
+  const r2 = await runDrafting(h2.args);
+  assert.equal(found, 1);
+  assert.equal(r2.drafted.length, 0);
+  assert.equal(h2.saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
+  void saved;
+});
+
+test('dead keys do not clog the pool: live prospects behind them still draft, dead ones are not reported', async () => {
+  const dead = Object.fromEntries([1, 2, 3, 4, 5, 6].map((n) => [`pr-target:outlet${n}.example.com`, 2]));
+  const { args } = harness({
+    limit: 1, prTargets: prTargets(8),
+    state: { sends: [], processed: [], escalated: {}, draft_attempts: dead },
+  });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 1);
+  assert.equal(r.drafted[0].domain, 'outlet7.example.com');
+  assert.equal(r.skipped.length, 0);
+  assert.equal(r.dead, 6);
+});
+
+test('two prospects resolving to the same contact make only one draft this run', async () => {
+  const { args, saved } = harness({
+    prTargets: { pitch_targets: [{ ...row(1), author: 'Same Person' }, { ...row(2), author: 'Same Person' }] },
+    findAddress: async () => ({ address: 'same@shared.example.com', source: 'published:x', spentHunter: 0 }),
+  });
+  const r = await runDrafting(args);
+  assert.equal(saved.drafts.length, 1);
+  assert.equal(r.drafted.length, 1);
+});
+
+test('a no-address saveBook failure still counts the attempt', async () => {
+  const { args, saved } = harness({
+    prTargets: prTargets(1),
+    findAddress: async () => ({ address: null, reason: 'none' }),
+    saveBook: () => { throw new Error('disk full'); },
+  });
+  const r = await runDrafting(args);
+  assert.equal(r.failed.length, 1);
+  assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
+});
+
+test('hunterSpent survives a finder that throws with partial spend', async () => {
+  const { args } = harness({
+    prTargets: prTargets(1),
+    findAddress: async () => { const e = new Error('boom'); e.spentHunter = 1; throw e; },
+  });
+  const r = await runDrafting(args);
+  assert.equal(r.hunterSpent, 1);
+});
+
+test('an email-matched contact pitched inside the cooldown (on another outlet) is skipped, attempt recorded', async () => {
+  const c0 = existingWithEmail({ channels: [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }], pitches: [{ date: '2026-09-20', concept: 'c', outcome: 'declined' }] });
+  const { args, saved } = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] } });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 0);
+  assert.match(r.skipped[0].reason, /pitched within 60 days/);
+  assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
 });

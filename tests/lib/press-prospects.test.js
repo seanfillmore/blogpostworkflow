@@ -98,3 +98,20 @@ test('duplicate domains collapse to the first row', () => {
   assert.deepEqual(r.prospects.map((p) => p.key), ['pr-target:dup.example', 'link-gap:g.example']);
   assert.equal(r.skipped.filter((s) => s.reason === 'duplicate domain').length, 2);
 });
+
+test('excludeKeys drops dead prospects BEFORE truncation, so live ones still fill want', () => {
+  const many = { pitch_targets: [row('dead1.example'), row('dead2.example'), row('live.example')] };
+  const { prospects, skipped } = buildProspects({
+    ...base, prTargets: many, linkGap: { opportunities: [] }, want: 1,
+    excludeKeys: new Set(['pr-target:dead1.example', 'pr-target:dead2.example']),
+  });
+  assert.deepEqual(prospects.map((p) => p.key), ['pr-target:live.example']);
+  assert.ok(skipped.some((s) => s.domain === 'dead1.example' && /failed attempts/.test(s.reason)));
+});
+
+test('excludeKeys applies to link-gap keys too', () => {
+  const { prospects } = buildProspects({
+    ...base, prTargets: { pitch_targets: [] }, want: 5, excludeKeys: new Set(['link-gap:gap.example']),
+  });
+  assert.deepEqual(prospects.map((p) => p.key), ['link-gap:good.example']);
+});
