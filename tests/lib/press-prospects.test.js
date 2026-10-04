@@ -72,3 +72,29 @@ test('shortfall on one side is filled from the other; link-gap in book dropped',
   assert.deepEqual(prospects.map((p) => p.source), ['pr-target', 'link-gap', 'link-gap', 'link-gap']);
   assert.ok(skipped.some((s) => s.domain === 'a.example' && /book/.test(s.reason)));
 });
+
+const left = (name, status, extra = {}) => ({ id: 'x', name, status, domains: ['good.example'], channels: [], pitches: [], ...extra });
+
+test('matching-author contact who left blocks, naming contact and status', () => {
+  const r = buildProspects({ ...base, contacts: [left('jane example', 'left_outlet')], want: 5 });
+  assert.ok(!r.prospects.some((p) => p.domain === 'good.example'));
+  assert.ok(r.skipped.some((s) => s.domain === 'good.example' && /jane example/.test(s.reason) && /left_outlet/.test(s.reason)));
+});
+
+test('do_not_contact outlet blocks any author on the domain', () => {
+  const r = buildProspects({ ...base, contacts: [left('Desk', 'do_not_contact', { kind: 'outlet' })], want: 5 });
+  assert.ok(!r.prospects.some((p) => p.domain === 'good.example'));
+});
+
+test('a different writer who left does not block', () => {
+  const r = buildProspects({ ...base, contacts: [left('Someone Else', 'left_outlet'), left('Desk2', 'inactive', { kind: 'outlet' })], want: 5 });
+  assert.ok(r.prospects.some((p) => p.key === 'pr-target:good.example'));
+});
+
+test('duplicate domains collapse to the first row', () => {
+  const pt = { pitch_targets: [row('www.dup.example'), row('dup.example', { author: 'Other' })] };
+  const lg = { opportunities: ['www.g.example', 'g.example'].map((d) => ({ domain: d, rank: 1, dofollow: true, competitors: [], score: 1 })) };
+  const r = buildProspects({ ...base, prTargets: pt, linkGap: lg, want: 10 });
+  assert.deepEqual(r.prospects.map((p) => p.key), ['pr-target:dup.example', 'link-gap:g.example']);
+  assert.equal(r.skipped.filter((s) => s.reason === 'duplicate domain').length, 2);
+});
