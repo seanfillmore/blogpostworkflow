@@ -111,3 +111,38 @@ test('C1: a backfilled pitch gets no automatic follow-ups; only the approved bum
   assert.deepEqual(sends.map((m) => m.to), ['jane@example.com'], 'one message total: the approved bump');
   assert.match(sends[0].text, /Bumping/);
 });
+
+test('C2a: the backfill marks every reply it read from a book contact as processed', async () => {
+  const { applyBackfill } = await import('../../agents/press-outreach/index.js');
+  const saleam = { ...contact('saleam', { outcome: 'samples-sent' }) };
+  const book = { contacts: [contact('jane'), saleam] };
+  const replies = [reply('jane', 'Thanks, but not interested.'), { ...reply('saleam', 'Got them, thank you!'), messageId: '<r-saleam>' }, { ...reply('stranger', 'hi'), messageId: '<r-stranger>' }];
+  const plan = planBackfill({ book, sentCopies: [copy('jane')], replies, now: NOW });
+  assert.deepEqual(plan.processed.sort(), ['<r-jane>', '<r-saleam>']);
+  const out = applyBackfill({ book, plan, state: { sends: [], processed: ['<old>'], escalated: {} } });
+  assert.deepEqual(out.state.processed.sort(), ['<old>', '<r-jane>', '<r-saleam>']);
+  const again = applyBackfill({ book, plan, state: out.state });
+  assert.equal(again.state.processed.length, 3, 'idempotent');
+  assert.equal(out.book.contacts.find((c) => c.id === 'jane').pitches[0].outcome, 'declined');
+});
+
+test('C2a: no state file yet: the backfill creates one holding the processed replies', async () => {
+  const { applyBackfill } = await import('../../agents/press-outreach/index.js');
+  const book = { contacts: [contact('jane')] };
+  const plan = planBackfill({ book, sentCopies: [copy('jane')], replies: [reply('jane', 'Yes please, send me the samples!')], now: NOW });
+  const out = applyBackfill({ book, plan, state: null, now: NOW });
+  assert.deepEqual(out.state.processed, ['<r-jane>']);
+  assert.deepEqual(out.state.sends, []);
+});
+
+test('C2a: --init reads replies like a run and marks them all processed, classifying nothing', async () => {
+  const { initState } = await import('../../agents/press-outreach/index.js');
+  const book = { contacts: [contact('jane'), contact('saleam', { outcome: 'samples-sent' }), contact('gone', { outcome: 'declined' })] };
+  let q;
+  const state = await initState({ book, now: NOW, readReplies: async (query) => { q = query; return [reply('jane', 'Yes please!'), reply('saleam', 'Here is my address'), { ...reply('x', 'hi'), messageId: null }]; } });
+  assert.deepEqual(q.senders.sort(), ['jane@example.com', 'saleam@example.com']);
+  assert.equal(q.since.toISOString(), new Date(NOW - 45 * 86_400_000).toISOString());
+  assert.deepEqual(state.processed.sort(), ['<r-jane>', '<r-saleam>']);
+  assert.deepEqual(state.sends, []);
+  assert.deepEqual(state.escalated, {});
+});

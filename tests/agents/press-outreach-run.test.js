@@ -320,3 +320,25 @@ test('source: first pitches send only when approved, never via the Gmail connect
   assert.match(src, /agent: 'press-outreach'/);
   assert.doesNotMatch(src, /@anthropic-ai\/sdk/);
 });
+
+test('C2b: a reply Sean already answered by hand is marked processed and not acted on', async () => {
+  const { opts, calls } = world({
+    replies: [reply('jane', "I'd love to try them!")],
+    sent: [{ to: ['jane@example.com'], date: '2026-10-05T12:00:00Z', messageId: '<hand>', subject: 'Re: Coconut cream' }],
+  });
+  const r = await runPressOutreach(opts);
+  assert.ok(opts.state.processed.includes('<r-jane>'));
+  assert.ok(!calls.send.some((m) => m.to === 'jane@example.com'));
+  assert.equal(calls.escalate.length, 0);
+  assert.deepEqual(calls.confirms, []);
+  assert.equal(r.replies.length, 0);
+});
+
+test('C2b: a reply that came AFTER Sean\'s own message is still handled', async () => {
+  const { opts, calls } = world({
+    replies: [reply('jane', "I'd love to try them!")],
+    sent: [{ to: ['jane@example.com'], date: '2026-10-04T12:00:00Z', messageId: '<hand>', subject: 'Re: Coconut cream' }],
+  });
+  await runPressOutreach(opts);
+  assert.deepEqual(calls.confirms, ['sample-yes']);
+});

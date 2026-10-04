@@ -162,6 +162,38 @@ const isoOf = (ms) => new Date(ms).toISOString();
 const reSubject = (s) => (/^re:/i.test(String(s || '').trim()) ? String(s).trim() : `Re: ${String(s || '').trim()}`);
 const refsOf = (list, id) => [...new Set([...(list || []), id].filter(Boolean))].slice(-MAX_REFS);
 
+/** A fresh state object, the shape every run expects. */
+export function emptyState(nowMs = Date.now()) {
+  return { created_at: isoOf(nowMs), sends: [], processed: [], escalated: {} };
+}
+
+/** Add reply Message-IDs to state.processed: unique, newest kept, capped. Mutates and returns state. */
+export function markProcessed(state, ids) {
+  const seen = new Set(state.processed ||= []);
+  for (const id of ids || []) {
+    if (!id || seen.has(id)) continue;
+    state.processed.push(id);
+    seen.add(id);
+  }
+  if (state.processed.length > MAX_PROCESSED) state.processed = state.processed.slice(-MAX_PROCESSED);
+  return state;
+}
+
+/**
+ * First-run state (`--init`). Reads replies exactly as a run would (every open
+ * pitch, LOOKBACK_DAYS) and marks them ALL processed without classifying any:
+ * a reply that arrived before the agent existed was Sean's to answer, and the
+ * first live run must not answer it a second time.
+ */
+export async function initState({ book, readReplies, now = Date.now() }) {
+  const senders = [...openPitchByAddress(book.contacts).keys()];
+  const state = emptyState(now);
+  if (!senders.length) return state;
+  const want = new Set(senders);
+  const replies = await readReplies({ senders, since: new Date(now - LOOKBACK_DAYS * DAY) });
+  return markProcessed(state, replies.filter((m) => m.messageId && want.has(String(m.from || '').toLowerCase())).map((m) => m.messageId));
+}
+
 /**
  * One run. All I/O is injected so the orchestration is testable without a
  * mailbox, a model, or the real contact book.
@@ -244,6 +276,13 @@ export async function runPressOutreach({
     }
     commit(next, { ...row, kind: row.kind });
   };
+  /** Persist state; a failed write is reported in the run result, never thrown. */
+  const persistState = (row = {}) => {
+    try { saveState(state); return true; } catch (err) {
+      result.failed.push({ ...row, kind: row.kind || 'state', error: `bookkeeping: state write failed: ${err.message}` });
+      return false;
+    }
+  };
   // Contacts with a reply this run that was not fully handled: no automatic
   // follow-up may land on top of a conversation still waiting for an answer.
   const held = new Set();
@@ -323,6 +362,17 @@ export async function runPressOutreach({
     }
 
     // ── 4. replies, oldest first ──
+    // The latest message Sean sent each address by hand. A reply older than it
+    // is one he has already answered himself, so nothing may answer it again.
+    const seanLatest = new Map();
+    for (const m of sentBySean) {
+      const t = Date.parse(m.date);
+      if (!Number.isFinite(t)) continue;
+      for (const addr of m.to || []) {
+        const a = String(addr).toLowerCase();
+        if (!(seanLatest.get(a) >= t)) seanLatest.set(a, t);
+      }
+    }
     const done = new Set(state.processed);
     const markDone = (id) => {
       state.processed.push(id);
@@ -338,6 +388,12 @@ export async function runPressOutreach({
       // A message from before this pitch belongs to an older conversation.
       if (Date.parse(msg.date) < Date.parse(`${p.date}T00:00:00Z`)) continue;
       const row = { id: c.id, name: c.name, said: String(msg.text || '').slice(0, 300) };
+      if (seanLatest.get(String(msg.from || '').toLowerCase()) > Date.parse(msg.date)) {
+        log(`  ${c.name}: Sean already answered this reply himself; leaving it`);
+        markDone(msg.messageId);
+        persistState();
+        continue;
+      }
 
       const toSean = async (reason) => {
         try {
@@ -528,12 +584,16 @@ const fold = (s) => String(s || '').trim().toLowerCase();
  *   2. replies since the pitch: reported with their classification; only
  *      decline and opt-out are patched, everything else is left for Sean
  *   3. bump drafts: one per pitch still `sent`, threaded, older than 12 days
- * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], drafts: object[], notes: string[]}}
+ *   4. processed: the Message-ID of every reply read from a book contact, so the
+ *      first live run never answers a reply Sean already handled by hand
+ * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], drafts: object[], notes: string[], processed: string[]}}
  */
 export function planBackfill({ book, sentCopies = [], replies = [], now = Date.now(), drafts = [] } = {}) {
   const patches = [];
   const out = [];
   const notes = [];
+  const bookEmails = new Set(book.contacts.map(emailOf).filter(Boolean));
+  const processed = [...new Set(replies.filter((m) => m.messageId && bookEmails.has(String(m.from || '').toLowerCase())).map((m) => m.messageId))];
   for (const c of book.contacts) {
     const p = lastPitch(c);
     if (!p || p.outcome !== 'sent') continue;
@@ -606,7 +666,24 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
       inReplyTo: messageId, references: [messageId], concept: p.concept || 'intro', products: p.products || [], now,
     }));
   }
-  return { patches, drafts: out, notes };
+  return { patches, drafts: out, notes, processed };
+}
+
+/**
+ * Pure: the book and state a backfill plan leaves behind. `state` may be null
+ * (no state file yet), in which case a fresh one is created; either way every
+ * reply the backfill read is marked processed.
+ */
+export function applyBackfill({ book, plan, state, now = Date.now() }) {
+  let next = book;
+  for (const { id, patch, contactStatus } of plan.patches) {
+    if (Object.keys(patch).length) next = updatePitch(next, id, patch);
+    if (contactStatus) next = { ...next, contacts: next.contacts.map((x) => (x.id === id ? { ...x, status: contactStatus } : x)) };
+  }
+  const st = state ? { ...state, processed: [...(state.processed || [])] } : emptyState(now);
+  st.sends ||= [];
+  st.escalated ||= {};
+  return { book: next, state: markProcessed(st, plan.processed || []) };
 }
 
 /** `id=outcome[:order]` -> { id, outcome, sampleOrder } or throws. */
@@ -716,12 +793,12 @@ async function runBackfill(args, apply, creds) {
     for (const n of plan.notes) console.log(`  ${n}`);
     console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
     for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
+    console.log(`${plan.processed.length} replies marked as already handled`);
     if (apply) {
-      for (const { id, patch, contactStatus } of plan.patches) {
-        if (Object.keys(patch).length) book = updatePitch(book, id, patch);
-        if (contactStatus) book = { ...book, contacts: book.contacts.map((x) => (x.id === id ? { ...x, status: contactStatus } : x)) };
-      }
+      const applied = applyBackfill({ book, plan, state: readState(), now });
+      book = applied.book;
       writeBook(book);
+      writeState(applied.state);
       for (const d of plan.drafts) {
         try { saveDraftFile(draftsDir, d); } catch (err) { console.log(`  could not save ${d.id}: ${err.message}`); }
       }
@@ -781,8 +858,14 @@ async function main() {
         if (refusedToday('state')) { console.log('no state file; refusal already reported today'); return { imapDown: false }; }
         throw new Error(`no state file at ${STATE_PATH}. Refusing to send: without it every reply would be handled again. Restore it from backup, or run once with --init if this is genuinely the first run.`);
       }
-      state = { created_at: new Date().toISOString(), sends: [], processed: [], escalated: {} };
-      if (apply) writeState(state);
+      if (apply) {
+        // --init: every reply already in the mailbox was Sean's to answer.
+        state = await initState({ book: loaded.doc, readReplies: (q) => fetchFromAllFolders(creds, q) });
+        writeState(state);
+        console.log(`state created; ${state.processed.length} existing replies marked as already handled`);
+      } else {
+        state = emptyState();
+      }
     }
     const postalAddress = readPostalAddress();
     const drafts = loadDrafts(join(ROOT, DRAFTS_DIR));
