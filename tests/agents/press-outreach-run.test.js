@@ -33,6 +33,13 @@ function world({ replies = [], sent = [], drafts = [], state = {}, imapError = n
     readDraft: (id) => disk.get(id) || null,
     escalate: async (c, msg, reason) => { calls.escalate.push({ id: c.id, reason }); },
     onAddress: async (c, p, a) => { calls.addresses.push({ id: c.id, zip: a.zip }); },
+    tellSean: async (m) => { calls.escalate.push({ tell: m.subject }); },
+    // Never the real Shopify: a test that reaches it fails loudly.
+    graphql: async (q) => {
+      if (/accessScopes/.test(q)) return { currentAppInstallation: { accessScopes: [{ handle: 'read_orders' }] } };
+      if (/^query\(\$q/.test(q)) return { orders: { nodes: [] } };
+      throw new Error(`unexpected Shopify call: ${q.slice(0, 60)}`);
+    },
     confirmReply: async (msg, kind) => { calls.confirms.push(kind); return true; },
     sleep: async (ms) => { calls.sleeps.push(ms); },
     reportError: async (subject, body) => { calls.errors.push({ subject, body }); },
@@ -294,12 +301,13 @@ test('fix 5: a book write failing after a send keeps the send recorded and the r
   assert.ok(r.failed.some((f) => /bookkeeping/.test(f.error)));
 });
 
-test('fix 6: the default onAddress escalates and marks the contact escalated', async () => {
+test('fix 6: without write_draft_orders the default onAddress asks Sean for the order and marks the contact escalated', async () => {
   const { opts, calls } = world({ replies: [reply('jane', "I'd love to try them! Ship to:\n12 Example Road\nSpringfield, IL 62704")] });
   delete opts.onAddress;
-  await runPressOutreach(opts);
-  assert.deepEqual(calls.escalate, [{ id: 'jane', reason: 'address received, create the PR Package order' }]);
-  assert.ok(opts.state.escalated.jane);
+  const r = await runPressOutreach(opts);
+  assert.deepEqual(calls.escalate, [{ tell: 'Press outreach: create a PR Package order for Jane Example' }]);
+  assert.equal(opts.state.escalated.jane.kind, 'order-request');
+  assert.equal(r.failed.length, 0);
 });
 
 test('fix 7: three consecutive send failures report one error; a success resets the counter', async () => {

@@ -16,6 +16,11 @@
  *      model call first; anything unconfirmed or unclear is ESCALATED to Sean and
  *      nothing goes back to the writer
  *   5. sends threaded follow-ups (at most 2 per pitch, days 5 and 12)
+ *   5b. samples (lib/press-samples.js): an address becomes a $0 "PR Package"
+ *      order when the app holds write_draft_orders (else Sean is asked to place
+ *      it); any PR Package order for an accepted sample, hand-made ones too, is
+ *      found by shipping name or email, its tracking emailed once it ships, and
+ *      one check-in sent 21 days after delivery if the thread stayed quiet
  *   6. sends first pitches and bumps ONLY from drafts Sean approved (sendOrder)
  *
  * Usage:
@@ -70,6 +75,11 @@ import {
   DEFAULT_CONFIG, inSendWindow, dailyCap, stripDashes, followUpText, askAddressText,
   checkOutgoingCopy, shouldPause, firstName, bumpText,
 } from '../../lib/press-outreach.js';
+import {
+  hasDraftOrderScope, fetchPrPackageOrders, fetchOrderByName, countMonthKits, planSample, buildDraftOrderInput,
+  createSampleOrder, matchOrder, trackingOf, deliveredAtOf, checkinDue, thanksText, trackingText, checkinText,
+  orderRequestEmail, defaultGraphql,
+} from '../../lib/press-samples.js';
 import { transientStreak, TRANSIENT_ESCALATE_AFTER } from '../creator-outreach/index.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
 
@@ -224,6 +234,8 @@ export async function runPressOutreach({
   readDraft = (id) => JSON.parse(readFileSync(join(ROOT, DRAFTS_DIR, `${id}.json`), 'utf8')),
   escalate = async () => {},
   onAddress,
+  tellSean = async () => {},
+  graphql = defaultGraphql,
   confirmReply,
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   postalAddress = null,
@@ -249,23 +261,15 @@ export async function runPressOutreach({
     saveState = () => {};
     saveDraft = () => {};
     escalate = async (c, _msg, reason) => { log(`  [dry run] would escalate ${c.name} to Sean: ${reason}`); };
-    onAddress = async (c) => { log(`  [dry run] would record ${c.name}'s address and tell Sean`); };
+    onAddress = async (c) => { log(`  [dry run] would record ${c.name}'s address and create a PR Package order (or ask Sean to)`); };
+    tellSean = async (m) => { log(`  [dry run] would tell Sean: ${m.subject}`); };
     sleep = async () => {};
     reportError = async (subject) => { log(`  [dry run] would report: ${subject}`); };
   }
-  // PR 1: an address is recorded by the run; this tells Sean to place the order.
-  // The contact is escalated too, so their next message reaches Sean rather than
-  // going back through automatic classification while an order is pending.
-  onAddress ||= async (c, _pitch, _address, msg) => {
-    const reason = 'address received, create the PR Package order';
-    state.escalated[c.id] = { at: isoOf(now), reason, message_id: msg?.messageId || null };
-    await escalate(c, msg, reason);
-  };
-
   state.sends ||= [];
   state.processed ||= [];
   state.escalated ||= {};
-  const result = { replies: [], escalations: [], followUps: [], sent: [], skipped: [], expired: [], failed: [], paused: Boolean(state.paused), imapDown: false };
+  const result = { replies: [], escalations: [], followUps: [], sent: [], skipped: [], expired: [], failed: [], samples: [], paused: Boolean(state.paused), imapDown: false };
   const at = isoOf(now);
   const today = at.slice(0, 10);
 
@@ -350,6 +354,159 @@ export async function runPressOutreach({
     // Persisted at once, so cap accounting survives a crash before any bookkeeping.
     try { saveState(state); } catch (err) { log(`  could not save state after a send: ${err.message}`); }
     return { ...r, at: sentAt };
+  }
+
+  // ── samples ──
+  // Whether the app may create draft orders, asked once per run. A failed read
+  // counts as "no": the fallback (Sean places the order) is always safe.
+  let scopeAnswer = null;
+  const mayCreateOrders = async () => {
+    if (scopeAnswer === null) {
+      try { scopeAnswer = await hasDraftOrderScope({ graphql }); } catch (err) {
+        log(`  could not read the app's access scopes (${err.message}); Sean places sample orders this run`);
+        scopeAnswer = false;
+      }
+    }
+    return scopeAnswer;
+  };
+  // The date a sample order for this pitch may carry at the earliest.
+  const sampleSince = (p) => String(p.sample_address?.received_at || p.date || '').slice(0, 10) || p.date;
+  /** Hand the order to Sean: the contact is escalated, so their next message reaches him. */
+  const askSeanForOrder = async (c, p, address, msg, reason = null) => {
+    // Escalated only once Sean has the email: if it fails this throws, the reply
+    // stays unprocessed, and the next run asks him again rather than routing the
+    // address to the generic "waiting on you" escalation.
+    await tellSean(orderRequestEmail({ contact: c, pitch: p, address, config, reason }));
+    state.escalated[c.id] = { at: isoOf(now), reason: reason ? `create the PR Package order (${reason})` : 'address received, create the PR Package order', kind: 'order-request', message_id: msg?.messageId || null };
+    result.escalations.push({ id: c.id, name: c.name, reason: `PR Package order needed${reason ? `: ${reason}` : ''}` });
+  };
+  // An address arrived. With write_draft_orders the agent ships a $0 PR Package
+  // order itself (under the monthly cap) and thanks the writer; without it, or
+  // when anything about the order is off, Sean gets the address and places it.
+  // Never throws for an order problem: a retry could create a second order.
+  onAddress ||= async (c, p, address, msg) => {
+    if (!(await mayCreateOrders())) return askSeanForOrder(c, p, address, msg);
+    const since = sampleSince(p);
+    const monthStart = `${new Date(now).toISOString().slice(0, 7)}-01`;
+    const earliest = since < monthStart ? since : monthStart;
+    const sinceDays = Math.ceil((now - Date.parse(`${earliest}T00:00:00Z`)) / DAY) + 1;
+    let orders;
+    try { orders = await fetchPrPackageOrders({ sinceDays, now, graphql }); } catch (err) {
+      return askSeanForOrder(c, p, address, msg, `could not read existing PR Package orders: ${err.message}`);
+    }
+    // An order for them may already exist (Sean made one, or an earlier run did): adopt it.
+    let name = matchOrder(orders, { contact: c, email: emailOf(c), sinceDate: since })?.name || null;
+    let action = `adopted existing order ${name}`;
+    if (!name) {
+      const plan = planSample({ pitch: p, address, config, monthKits: countMonthKits(orders, now) });
+      if (!plan.ok) return askSeanForOrder(c, p, address, msg, plan.reason);
+      try {
+        ({ name } = await createSampleOrder(buildDraftOrderInput({ contact: c, pitch: p, address, lines: plan.lines }), { graphql }));
+      } catch (err) {
+        return askSeanForOrder(c, p, address, msg, `order creation failed: ${err.message}`);
+      }
+      action = `$0 PR Package order ${name} created`;
+    }
+    commit(updatePitch(book, c.id, { outcome: 'samples-sent', sample_order: name }), { id: c.id, name: c.name, kind: 'sample-order' });
+    result.samples.push({ id: c.id, name: c.name, action });
+    if (state.sends.some((s) => s.contact_id === c.id && s.kind === 'sample-thanks' && s.pitch_date === p.date)) return;
+    if (!canSend()) { result.skipped.push({ id: c.id, name: c.name, reason: 'sample thanks skipped: send cap reached (tracking still follows)' }); return; }
+    const text = stripDashes(thanksText({ firstName: firstName(c) }));
+    const subject = stripDashes(reSubject(msg?.subject || p.subject));
+    const gate = checkOutgoingCopy({ subject, text, kind: 'followup' });
+    if (!gate.ok) { result.skipped.push({ id: c.id, name: c.name, reason: `sample thanks failed the copy gate: ${gate.problems.join('; ')}` }); return; }
+    const refs = refsOf(msg?.references, msg?.messageId);
+    let r;
+    try {
+      // A reply in an open conversation, like the address request: not held to the window.
+      r = await doSend({ to: emailOf(c), subject, text, inReplyTo: msg?.messageId, references: refs.join(' ') }, { contactId: c.id, kind: 'sample-thanks', pitchDate: p.date, windowed: false });
+    } catch (err) {
+      result.failed.push({ id: c.id, name: c.name, kind: 'sample-thanks', error: err.message });
+      return;
+    }
+    if (r.skipped) return;
+    commitAfterSend(c.id, { last_sent_at: r.at, references: refsOf(refs, r.messageId) }, { id: c.id, name: c.name, kind: 'sample-thanks' });
+  };
+
+  /**
+   * Tracking and the day-21 check-in, for agent-made and hand-made orders alike.
+   * Finds each accepted sample's PR Package order, records it, emails tracking
+   * once a fulfillment has a URL, and checks in 21 days after delivery unless the
+   * writer (or Sean) has said anything since the tracking email.
+   */
+  async function sampleFollowThrough() {
+    const pending = book.contacts.filter((c) => {
+      if (!PITCHABLE_STATUSES.includes(c.status) || !emailOf(c)) return false;
+      const p = lastPitch(c);
+      return p && ['sample-accepted', 'samples-sent'].includes(p.outcome) && (!p.tracking_sent_at || !p.checkin_sent_at);
+    });
+    if (!pending.length) return;
+    const earliest = pending.map((c) => sampleSince(lastPitch(c))).sort()[0];
+    const sinceDays = Math.min(180, Math.ceil((now - Date.parse(`${earliest}T00:00:00Z`)) / DAY) + 1);
+    let orders;
+    try { orders = await fetchPrPackageOrders({ sinceDays, now, graphql }); } catch (err) {
+      result.failed.push({ id: 'samples', kind: 'sample-orders', error: `could not read PR Package orders: ${err.message}` });
+      return;
+    }
+    for (const c0 of pending) {
+      let c = find(c0.id);
+      let p = lastPitch(c);
+      const row = { id: c.id, name: c.name };
+      if (held.has(c.id)) { result.skipped.push({ ...row, reason: 'sample follow-through held: a reply from them is still being handled' }); continue; }
+      let order = p.sample_order ? orders.find((o) => o.name === p.sample_order) : matchOrder(orders, { contact: c, email: emailOf(c), sinceDate: sampleSince(p) });
+      if (!order && p.sample_order) {
+        try { order = await fetchOrderByName(p.sample_order, { graphql }); } catch (err) {
+          result.failed.push({ ...row, kind: 'sample-orders', error: `could not read order ${p.sample_order}: ${err.message}` });
+          continue;
+        }
+      }
+      if (!order) continue;
+      if (p.outcome !== 'samples-sent' || p.sample_order !== order.name) {
+        if (!commit(updatePitch(book, c.id, { outcome: 'samples-sent', sample_order: order.name }), { ...row, kind: 'sample-order' })) continue;
+        result.samples.push({ ...row, action: `found PR Package order ${order.name}` });
+      }
+      // Sean asked to place the order has placed it: the request is done.
+      if (state.escalated[c.id]?.kind === 'order-request') { delete state.escalated[c.id]; persistState(row); }
+      c = find(c.id);
+      p = lastPitch(c);
+      if (!p.subject && !p.message_id) { result.skipped.push({ ...row, reason: 'sample email skipped: the pitch has no subject or thread to reply under' }); continue; }
+      const subject = stripDashes(p.subject ? reSubject(p.subject) : 'Your Real Skin Care samples');
+      const thread = p.message_id ? refsOf(p.references, p.message_id) : [];
+      const sendOne = async (kind, text, field) => {
+        const prior = state.sends.find((s) => s.contact_id === c.id && s.kind === kind && s.pitch_date === p.date);
+        if (prior) {
+          commitAfterSend(c.id, { [field]: prior.at }, { ...row, kind });
+          result.skipped.push({ ...row, reason: `${kind} was already sent by an earlier run; book repaired` });
+          return;
+        }
+        if (!canSend()) { result.skipped.push({ ...row, reason: `${kind} deferred: send cap reached` }); return; }
+        const body = stripDashes(text);
+        const gate = checkOutgoingCopy({ subject, text: body, kind: 'followup' });
+        if (!gate.ok) { result.skipped.push({ ...row, reason: `${kind} failed the copy gate: ${gate.problems.join('; ')}` }); return; }
+        let r;
+        try {
+          r = await doSend({ to: emailOf(c), subject, text: body, ...(p.message_id ? { inReplyTo: p.message_id, references: thread.join(' ') } : {}) }, { contactId: c.id, kind, pitchDate: p.date });
+        } catch (err) {
+          result.failed.push({ ...row, kind, error: err.message });
+          return;
+        }
+        if (r.skipped) { result.skipped.push({ ...row, reason: `${kind}: ${r.skipped}` }); return; }
+        commitAfterSend(c.id, { [field]: r.at, last_sent_at: r.at, ...(p.message_id ? { references: refsOf(thread, r.messageId) } : {}) }, { ...row, kind });
+        result.samples.push({ ...row, action: kind === 'sample-tracking' ? 'tracking sent' : 'day-21 check-in sent' });
+      };
+      if (!p.tracking_sent_at) {
+        const t = trackingOf(order);
+        if (t) await sendOne('sample-tracking', trackingText({ firstName: firstName(c), url: t.url }), 'tracking_sent_at');
+        continue;
+      }
+      if (p.checkin_sent_at || !checkinDue({ deliveredAt: deliveredAtOf(order), nowMs: now })) continue;
+      // Only a quiet thread gets the check-in, which needs the mail read this run.
+      if (result.imapDown || state.escalated[c.id]) continue;
+      const after = Date.parse(p.tracking_sent_at);
+      if (Date.parse(p.last_sent_at || 0) > after) continue; // Sean wrote since
+      if (replies.some((m) => String(m.from || '').toLowerCase() === emailOf(c) && Date.parse(m.date) > after)) continue;
+      await sendOne('sample-checkin', checkinText({ firstName: firstName(c) }), 'checkin_sent_at');
+    }
   }
 
   // ── 1. expire drafts ──
@@ -563,6 +720,9 @@ export async function runPressOutreach({
       }
     }
   }
+
+  // ── 5b. samples: find orders, send tracking, check in ──
+  if (inSendWindow(now)) await sampleFollowThrough();
 
   // ── 6. approved drafts (first pitches do not depend on reading mail) ──
   // Drafts were read at run start; the dashboard can reject, edit or demote one
@@ -1294,6 +1454,7 @@ export function renderSummary(r, { apply, drafts = [], dashboardUrl = null } = {
   if (r.sent.length) { lines.push(`${apply ? 'Sent' : 'Would send'} from approved drafts:`); for (const s of r.sent) lines.push(`  - ${s.kind} to ${s.id}`); }
   if (r.followUps.length) { lines.push('Follow-ups:'); for (const f of r.followUps) lines.push(`  - ${f.name}: follow-up ${f.n}`); }
   if (r.replies.length) { lines.push('Replies handled:'); for (const x of r.replies) lines.push(`  - ${x.name}: ${x.kind}`); }
+  if (r.samples?.length) { lines.push('Samples:'); for (const x of r.samples) lines.push(`  - ${x.name}: ${x.action}`); }
   if (r.escalations.length) { lines.push('Sent to Sean (nothing went to the writer):'); for (const x of r.escalations) lines.push(`  - ${x.name}: ${x.reason}`); }
   if (r.expired.length) lines.push(`Expired drafts: ${r.expired.map((e) => e.id).join(', ')}`);
   if (r.skipped.length) { lines.push('Held:'); for (const s of r.skipped) lines.push(`  - ${s.name || s.id}: ${s.reason}`); }
@@ -1458,6 +1619,7 @@ async function main() {
       env, apply, config, book: loaded.doc, state, drafts, postalAddress,
       sleep: async (ms) => { await new Promise((r) => setTimeout(r, ms)); touchLock(); },
       escalate: async (c, msg, reason) => { await notify({ ...escalationEmail(c, msg, reason), status: 'info', category: 'press', immediate: true }); },
+      tellSean: async ({ subject, body }) => { await notify({ subject, body, status: 'info', category: 'press', immediate: true }); },
     });
 
     for (const e of draftErrors) run.failed.push({ id: e.name, kind: 'draft', error: `unreadable draft file data/press/drafts/${e.name} skipped: ${e.err.message}` });
@@ -1477,7 +1639,7 @@ async function main() {
     const { subject, body } = renderSummary(run, { apply, drafts: loadDrafts(join(ROOT, DRAFTS_DIR), undefined, { onError: onDraftError }), dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
     const noAddress = postalAddress ? '' : '\nNo postal_address in data/brand/brand-kit.json: first pitches are refused until it is set.';
     console.log(`\n${subject}\n\n${body}${noAddress}`);
-    const acted = run.sent.length || run.followUps.length || run.replies.length || run.escalations.length || run.expired.length || run.failed.length;
+    const acted = run.sent.length || run.followUps.length || run.replies.length || run.samples.length || run.escalations.length || run.expired.length || run.failed.length;
     if (apply && acted) await notify({ subject, body: body + noAddress, status: 'info', category: 'press' });
     return run;
   } finally {
