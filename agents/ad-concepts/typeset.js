@@ -93,7 +93,10 @@ window.__fitAll = () => {
   let overflow = false;
   document.querySelectorAll('[data-fit]').forEach((el) => {
     const min = Number(el.dataset.min) || 12;
-    let px = parseFloat(getComputedStyle(el).fontSize);
+    // Restart from the declared size every pass: shrink-only would lock in a fallback-font result.
+    if (!el.dataset.fitStart) el.dataset.fitStart = String(parseFloat(getComputedStyle(el).fontSize));
+    let px = Number(el.dataset.fitStart);
+    el.style.fontSize = px + 'px';
     const over = () => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
     while (px > min && over()) { px -= 1; el.style.fontSize = px + 'px'; }
     if (over()) overflow = true;
