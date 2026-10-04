@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   parseLibraryResponse, daysRunning, isBodyCareAd, rankCandidates, parseTagResponse,
-  libraryUrl, collect, approveCandidate, WallError,
+  libraryUrl, collect, approveCandidate, WallError, scrollUntilStable,
 } from '../../agents/ad-concepts/research.js';
 import { loadLibrary } from '../../agents/ad-concepts/structures.js';
 
@@ -151,4 +151,52 @@ test('approve is idempotent on id and rejects unknown ids', async () => {
   const again = await approveCandidate('brand-1', { dir });
   assert.equal(again.written, false);
   await assert.rejects(approveCandidate('nope', { dir }), /unknown candidate/);
+});
+
+test('approve write is atomic: a failing rename leaves the original library intact', async () => {
+  const dir = dataDir([approvedCC]); withCandidates(dir, [cand()]);
+  const before = readFileSync(join(dir, 'library.json'), 'utf8');
+  await assert.rejects(approveCandidate('brand-1', { dir, rename: () => { throw new Error('disk full'); } }), /disk full/);
+  assert.equal(readFileSync(join(dir, 'library.json'), 'utf8'), before);
+  assert.equal(existsSync(join(dir, 'library.json.tmp')), false);
+});
+
+test('rankCandidates drops ads with no usable start date', () => {
+  const now = Date.UTC(2026, 9, 3);
+  const r = rankCandidates([{ id: 'n', body: 'body lotion', title: '', images: ['u'], videos: 0 }, { id: 'o', start: now / 1000 - 200 * 86400, body: 'body lotion', title: '', images: ['u'], videos: 0 }], { now });
+  assert.deepEqual(r.map(x => x.id), ['o']);
+});
+
+test('scrolling re-checks for a wall after each scroll and stops with WallError', async () => {
+  let scrolls = 0;
+  await assert.rejects(scrollUntilStable({
+    scrolls: 8, scroll: async () => { scrolls++; }, sleep: async () => {}, count: () => scrolls,
+    bodyText: async () => (scrolls >= 2 ? 'Log in to continue' : 'ads'),
+  }), WallError);
+  assert.equal(scrolls, 2);
+});
+
+test('scrolling ends when the count is stable', async () => {
+  let scrolls = 0;
+  await scrollUntilStable({ scrolls: 8, scroll: async () => { scrolls++; }, sleep: async () => {}, count: () => 5, bodyText: async () => 'ads' });
+  assert.equal(scrolls, 4);
+});
+
+test('approve with a missing candidate image writes a note instead of crashing', async () => {
+  const dir = dataDir([approvedCC]); withCandidates(dir, [cand({ image: 'gone.jpg' })]);
+  const before = readFileSync(join(dir, 'library.json'), 'utf8');
+  const r = await approveCandidate('brand-1', { dir });
+  assert.equal(r.written, false);
+  assert.match(r.reason, /missing/);
+  assert.ok(existsSync(join(dir, 'candidates', 'brand-1.needs-human.md')));
+  assert.equal(readFileSync(join(dir, 'library.json'), 'utf8'), before);
+});
+
+test('approve borrows only from an approved, plate-free, same-layout entry', async () => {
+  const bad = { ...approvedCC, id: 'plated', plates: [{ ratio: '1:1', scene: { primary: 'x' } }] };
+  const cand2 = { ...approvedCC, id: 'cand-only', status: 'candidate' };
+  const dir = dataDir([bad, cand2]); withCandidates(dir, [cand()]);
+  const r = await approveCandidate('brand-1', { dir });
+  assert.equal(r.written, false);
+  assert.match(r.reason, /approved, plate-free/);
 });

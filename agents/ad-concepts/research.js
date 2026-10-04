@@ -15,7 +15,7 @@
  * it by hand) only when the entry can be made complete and valid automatically.
  * Otherwise it writes candidates/<id>.needs-human.md and leaves library.json alone.
  */
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, copyFileSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync, copyFileSync, unlinkSync, renameSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -84,7 +84,7 @@ export function rankCandidates(ads, { minDays = 90, now = Date.now() } = {}) {
     if (/\{\{product/.test([a.body, a.title, a.linkDescription, a.linkUrl].join(' '))) continue;
     if (!isBodyCareAd(a)) continue;
     const days = daysRunning(a.start, now);
-    if (days < minDays) continue;
+    if (!Number.isFinite(days) || days < minDays) continue;
     out.push({ ...a, days });
   }
   return out.sort((x, y) => y.days - x.days);
@@ -165,6 +165,23 @@ export async function collect({ brands = [], keywords = [], browserFactory, slee
   return { ads, stopped };
 }
 
+const WALL_RE = /log in to continue|log into facebook|captcha|security check/i;
+export function assertNoWall(bodyText) {
+  if (WALL_RE.test(bodyText || '')) throw new WallError('login wall or captcha');
+}
+
+/** Scroll until the ad count is stable; re-checks for a wall after every scroll and throws WallError. */
+export async function scrollUntilStable({ scrolls, scroll, count, bodyText, sleep }) {
+  let stable = 0, last = -1;
+  for (let i = 0; i < scrolls && stable < 3; i++) {
+    await scroll();
+    await sleep();
+    assertNoWall(await bodyText());
+    const n = count();
+    stable = n === last ? stable + 1 : 0; last = n;
+  }
+}
+
 /** Real headful Chrome session. Not used by tests. */
 export async function launchBrowser({ scrolls = 8 } = {}) {
   const { default: puppeteer } = await import('puppeteer');
@@ -183,14 +200,14 @@ export async function launchBrowser({ scrolls = 8 } = {}) {
         const scripts = await page.evaluate(() => [...document.querySelectorAll('script')].map(s => s.textContent).filter(t => t.includes('ad_archive_id')));
         text.push(...scripts);
         const body = await page.evaluate(() => document.body.innerText.slice(0, 600));
-        if (/log in to continue|log into facebook|captcha|security check/i.test(body)) throw new WallError('login wall or captcha');
-        let stable = 0, last = -1;
-        for (let i = 0; i < scrolls && stable < 3; i++) {
-          await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-          await defaultSleep(MIN_PACE_MS + Math.random() * 1500);
-          const n = new Set(text.join('\n').match(/"ad_archive_id":"\d+"/g) || []).size;
-          stable = n === last ? stable + 1 : 0; last = n;
-        }
+        assertNoWall(body);
+        await scrollUntilStable({
+          scrolls,
+          scroll: () => page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)),
+          count: () => new Set(text.join('\n').match(/"ad_archive_id":"\d+"/g) || []).size,
+          bodyText: () => page.evaluate(() => document.body.innerText.slice(0, 600)),
+          sleep: () => defaultSleep(MIN_PACE_MS + Math.random() * 1500),
+        });
         return parseLibraryResponse(text.join('\n'));
       } finally { await page.close(); }
     },
@@ -269,7 +286,7 @@ function needsHuman(dir, c, why) {
   return { written: false, reason: why, note: p };
 }
 
-export async function approveCandidate(id, { dir = DATA_DIR } = {}) {
+export async function approveCandidate(id, { dir = DATA_DIR, rename = renameSync } = {}) {
   const c = findCandidate(dir, id);
   if (!c) throw new Error(`unknown candidate "${id}"`);
   const libPath = join(dir, 'library.json');
@@ -277,10 +294,11 @@ export async function approveCandidate(id, { dir = DATA_DIR } = {}) {
   if ((raw.structures || []).some(s => s.id === id)) return { written: false, reason: 'already in library' };
   if (c.nonTransferable?.length) return { written: false, reason: `non-transferable: ${c.nonTransferable.join('; ')}` };
   if (!AUTO_LAYOUTS.includes(c.format)) return needsHuman(dir, c, `No automatic layout mapping for format "${c.format}" (auto-approvable: ${AUTO_LAYOUTS.join(', ')}). Build the entry by hand.`);
-  const tpl = (raw.structures || []).find(s => s.layout === c.format);
-  if (!tpl) return needsHuman(dir, c, `No existing "${c.format}" structure to borrow scene and slots from.`);
+  const tpl = (raw.structures || []).find(s => s.status === 'approved' && s.layout === c.format && !s.plates?.length && !s.labelPositions?.length);
+  if (!tpl) return needsHuman(dir, c, `No approved, plate-free "${c.format}" structure to borrow scene and slots from.`);
   const layoutRatios = LAYOUT_REGISTRY[c.format].ratios.filter(r => RUN_RATIOS.includes(r));
   const imageRel = `sources/${c.image}`;
+  if (!existsSync(join(dir, 'candidates', c.image))) return needsHuman(dir, c, `Candidate image candidates/${c.image} is missing.`);
   const entry = {
     id: c.id, name: `${c.brand}: ${c.summary}`.slice(0, 120), status: 'candidate',
     sources: [{ brand: c.brand, days: c.days, adLibraryUrl: c.adLibraryUrl, image: imageRel }],
@@ -300,7 +318,14 @@ export async function approveCandidate(id, { dir = DATA_DIR } = {}) {
   try { loadLibrary(scratch); }
   catch (e) { if (!existed) unlinkSync(dest); return needsHuman(dir, c, `Automatic entry failed library validation: ${e.message}`); }
   finally { unlinkSync(scratch); }
-  writeFileSync(libPath, JSON.stringify(next, null, 2) + '\n');
+  const tmp = `${libPath}.tmp`;
+  try {
+    writeFileSync(tmp, JSON.stringify(next, null, 2) + '\n');
+    rename(tmp, libPath);
+  } catch (e) {
+    try { unlinkSync(tmp); } catch { /* no temp left */ }
+    throw e;
+  }
   return { written: true, entry };
 }
 
