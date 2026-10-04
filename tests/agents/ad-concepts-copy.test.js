@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { parseOverlayCopy, gateCopy, writeOverlayCopy, writeFlexibleCopy, buildOverlayCopyPrompt } from '../../agents/ad-concepts/copy.js';
+import { gateCopy, writeFlexibleCopy } from '../../agents/ad-concepts/copy.js';
 
 const sourceIndex = { pdp: 'One fat: organic virgin coconut oil, cold-pressed and unrefined, turned into soap.' };
 const concept = { id: 'the-receipt', title: 'The Receipt', picture: 'An endless receipt.', twist: 'ingredient list', headlineIdea: "Your soap's ingredient list.", awareness: 'problem' };
@@ -24,30 +24,9 @@ test('gateCopy gates Ad Studio shaped claims (with evidence) through assertClaim
   assert.match(bad.reasons.join(' '), /unsourced/i);
 });
 
-test('parseOverlayCopy reads the JSON', () => {
-  assert.deepEqual(parseOverlayCopy('x {"headline":"A","sub":"B","claims":[]} y'), { headline: 'A', sub: 'B', claims: [] });
-});
-
-test('writeOverlayCopy regenerates once naming the failure, then succeeds', async () => {
-  const anthropic = scripted(
-    reply({ headline: 'Clean — finally', sub: '', claims: [] }),
-    reply({ headline: "Your soap's ingredient list.", sub: 'Ours: one fat.', claims: [{ text: 'one fat', sourceId: 'pdp' }] }),
-  );
-  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex });
-  assert.equal(r.ok, true);
-  assert.equal(r.copy.headline, "Your soap's ingredient list.");
-  assert.match(anthropic.calls[1].messages[0].content, /em dash/);
-});
-
-test('writeOverlayCopy gives up after the second failure', async () => {
-  const anthropic = scripted(reply({ headline: 'a — b', sub: '', claims: [] }), reply({ headline: 'c — d', sub: '', claims: [] }));
-  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex });
-  assert.equal(r.ok, false);
-});
-
-test('a truncated copy response throws', async () => {
-  const anthropic = scripted({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{"headline":"' }] });
-  await assert.rejects(() => writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex }), /cut off/);
+test('a truncated flexible copy response throws', async () => {
+  const anthropic = scripted({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{"primaryTexts":["' }] });
+  await assert.rejects(() => writeFlexibleCopy({ anthropic, model: 'm', product, concepts: [concept, concept], sourceIndex, pdpBody: '' }), /cut off/);
 });
 
 test('writeFlexibleCopy gates primary texts and headlines the same way', async () => {
@@ -66,13 +45,6 @@ test('writeFlexibleCopy rejects an em dash and retries once', async () => {
   assert.match(anthropic.calls[1].messages[0].content, /em dash/);
 });
 
-test('buildOverlayCopyPrompt states the word limit and the verbatim-quote rule', () => {
-  const p = buildOverlayCopyPrompt({ concept, product, pdpBody: '', sourceIds: ['pdp'] });
-  assert.match(p, /6 words or fewer/);
-  assert.match(p, /EXACT contiguous quote/);
-  assert.match(p, /letter for letter/);
-});
-
 // ── final-review fixes ────────────────────────────────────────────────────────
 
 test('gateCopy rejects a named competitor (case-sensitive proper noun), not the ordinary word', () => {
@@ -81,16 +53,6 @@ test('gateCopy rejects a named competitor (case-sensitive proper noun), not the 
   assert.match(bad.reasons.join(' '), /names a competitor: Piperwai/);
   const fine = gateCopy({ headline: 'A native-screenshot joke.', sub: '' }, [], { sourceIndex, competitorNames: ['Native'] });
   assert.equal(fine.ok, true);
-});
-
-test('writeOverlayCopy regenerates once when the first attempt names a competitor', async () => {
-  const anthropic = scripted(
-    reply({ headline: 'Better than Native.', sub: '', claims: [] }),
-    reply({ headline: "Your soap's ingredient list.", sub: '', claims: [] }),
-  );
-  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex, competitorNames: ['Native'] });
-  assert.equal(r.ok, true);
-  assert.match(anthropic.calls[1].messages[0].content, /names a competitor: Native/);
 });
 
 test('writeFlexibleCopy rejects a competitor in a primary text and retries once', async () => {
@@ -201,22 +163,11 @@ test('gateCopy flags a sibling scent and "Nothing added." in any zone for a scen
   assert.equal(gateCopy({ headline: 'Nothing added.', sub: '' }, [], { sourceIndex }).ok, true, 'no variant: no-op');
 });
 
-test('overlay and flexible prompts carry the Ad Studio variant block', async () => {
+test('the flexible prompt carries the Ad Studio variant block', async () => {
   const { buildVariantBlock } = await import('../../agents/ad-studio/copy.js');
-  const p = buildOverlayCopyPrompt({ concept, product: { ...product, variant: 'nourishing-tea-tree' }, pdpBody: '', sourceIds: ['pdp'] });
-  assert.ok(p.includes(buildVariantBlock('nourishing-tea-tree')));
   const good = { primaryTexts: ['One fat. Organic virgin coconut oil, turned into soap. That is the whole ingredient story.', 'Swap the ingredient list for one fat. Coconut oil soap, made in small batches.'], headlines: ['One fat. Real soap.', 'Coconut oil soap'], claims: [] };
   const anthropic = scripted(reply(good));
   await writeFlexibleCopy({ anthropic, model: 'm', product: { ...product, variant: 'nourishing-tea-tree' }, concepts: [concept, concept], sourceIndex, pdpBody: '' });
   assert.ok(anthropic.calls[0].messages[0].content.includes(buildVariantBlock('nourishing-tea-tree')));
 });
 
-test('writeOverlayCopy regenerates once when the overlay names a sibling scent', async () => {
-  const anthropic = scripted(
-    reply({ headline: 'Tasting notes: lavender.', sub: '', claims: [] }),
-    reply({ headline: 'Tasting notes: tea tree.', sub: '', claims: [] }),
-  );
-  const r = await writeOverlayCopy({ anthropic, model: 'm', concept, product, pdpBody: '', sourceIndex, variant: 'nourishing-tea-tree', siblingVariants: SIBS });
-  assert.equal(r.ok, true);
-  assert.match(anthropic.calls[1].messages[0].content, /variant conflict: names "lavender"/);
-});
