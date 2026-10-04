@@ -75,6 +75,7 @@ const DAY = 86_400_000;
 const MAX_PROCESSED = 2000;
 const MAX_REFS = 20;
 const CONFIRM_MODEL = LLM_MODELS.standard;
+const SEND_FAILURES_REPORT_AT = 3;
 const AUTO_KINDS = new Set(['sample-yes', 'address-given', 'opt-out', 'decline']);
 
 function loadEnv(root = ROOT) {
@@ -182,6 +183,7 @@ export async function runPressOutreach({
   confirmReply,
   sleep = (ms) => new Promise((r) => setTimeout(r, ms)),
   postalAddress = null,
+  reportError = async (subject, body) => notify({ subject, body, status: 'error', category: 'press' }),
   log = console.log,
 } = {}) {
   const creds = hushmailCredentials(env);
@@ -200,9 +202,16 @@ export async function runPressOutreach({
     escalate = async (c, _msg, reason) => { log(`  [dry run] would escalate ${c.name} to Sean: ${reason}`); };
     onAddress = async (c) => { log(`  [dry run] would record ${c.name}'s address and tell Sean`); };
     sleep = async () => {};
+    reportError = async (subject) => { log(`  [dry run] would report: ${subject}`); };
   }
   // PR 1: an address is recorded by the run; this tells Sean to place the order.
-  onAddress ||= async (c, _pitch, _address, msg) => escalate(c, msg, 'address received, create the PR Package order');
+  // The contact is escalated too, so their next message reaches Sean rather than
+  // going back through automatic classification while an order is pending.
+  onAddress ||= async (c, _pitch, _address, msg) => {
+    const reason = 'address received, create the PR Package order';
+    state.escalated[c.id] = { at: isoOf(now), reason, message_id: msg?.messageId || null };
+    await escalate(c, msg, reason);
+  };
 
   state.sends ||= [];
   state.processed ||= [];
@@ -211,8 +220,31 @@ export async function runPressOutreach({
   const at = isoOf(now);
   const today = at.slice(0, 10);
 
-  const commit = (next) => { book = next; saveBook(book); };
   const find = (id) => book.contacts.find((c) => c.id === id);
+  /** Adopt `next` in memory, then persist. A failed write is reported, never thrown: returns false. */
+  const commit = (next, row = {}) => {
+    book = next;
+    try { saveBook(book); return true; } catch (err) {
+      result.failed.push({ ...row, kind: row.kind || 'book', error: `bookkeeping: contact book write failed: ${err.message}` });
+      return false;
+    }
+  };
+  /** After a SEND: the change must hold in memory even if validation or the write fails. */
+  const commitAfterSend = (id, patch, row) => {
+    let next;
+    try { next = updatePitch(book, id, patch); } catch (err) {
+      result.failed.push({ ...row, error: `bookkeeping: sent, but the pitch update was invalid: ${err.message}` });
+      next = { ...book, contacts: book.contacts.map((x) => {
+        if (x.id !== id) return x;
+        const lp = lastPitch(x);
+        return { ...x, pitches: (x.pitches || []).map((q) => (q === lp ? { ...q, ...patch } : q)) };
+      }) };
+    }
+    commit(next, { ...row, kind: row.kind });
+  };
+  // Contacts with a reply this run that was not fully handled: no automatic
+  // follow-up may land on top of a conversation still waiting for an answer.
+  const held = new Set();
 
   // ── spacing and cap ──
   const gapMs = (config.minGapMinutes || DEFAULT_CONFIG.minGapMinutes) * 60_000;
@@ -223,8 +255,21 @@ export async function runPressOutreach({
   async function doSend(message, { contactId, kind }) {
     if (runSends > 0) await sleep(gapMs);
     runSends += 1;
-    const r = await send(message);
+    let r;
+    try {
+      r = await send(message);
+    } catch (err) {
+      state.send_failures = (state.send_failures || 0) + 1;
+      if (state.send_failures === SEND_FAILURES_REPORT_AT) {
+        try { await reportError('Press outreach: sends are failing', `${SEND_FAILURES_REPORT_AT} consecutive sends failed. Latest: ${err.message}`); } catch { /* the console has it */ }
+      }
+      try { saveState(state); } catch { /* best effort */ }
+      throw err;
+    }
+    state.send_failures = 0;
     state.sends.push({ at: isoOf(now), contact_id: contactId, kind, message_id: r.messageId, resend_id: r.resendId || null, last_event: 'sent' });
+    // Persisted at once, so cap accounting survives a crash before any bookkeeping.
+    try { saveState(state); } catch (err) { log(`  could not save state after a send: ${err.message}`); }
     return r;
   }
 
@@ -269,7 +314,7 @@ export async function runPressOutreach({
           delete state.escalated[c.id];
           patch.outcome = 'replied';
         }
-        commit(updatePitch(book, c.id, patch));
+        commit(updatePitch(book, c.id, patch), { id: c.id, name: c.name });
         saveState(state);
         log(`  Sean wrote to ${c.name} himself; no automatic follow-up`);
       }
@@ -306,6 +351,7 @@ export async function runPressOutreach({
       if (state.escalated[c.id]) {
         // While escalated, every message goes to Sean.
         if (await toSean('a new message while this contact is waiting on you')) markDone(msg.messageId);
+        else held.add(c.id);
         saveState(state);
         continue;
       }
@@ -313,6 +359,7 @@ export async function runPressOutreach({
       let verdict = classifyReply(msg, { awaitingAddress: p.outcome === 'sample-accepted' });
       if (verdict.kind === 'sample-yes' && !canSend()) {
         result.skipped.push({ ...row, reason: 'sample-yes waiting: send cap reached, retrying next run' });
+        held.add(c.id);
         continue; // left unprocessed on purpose
       }
       if (AUTO_KINDS.has(verdict.kind)) {
@@ -326,10 +373,10 @@ export async function runPressOutreach({
         log(`  ignored ${c.name}: ${verdict.reason}`);
       } else if (verdict.kind === 'opt-out') {
         const next = updatePitch(book, c.id, { outcome: 'declined' });
-        commit({ ...next, contacts: next.contacts.map((x) => (x.id === c.id ? { ...x, status: 'do_not_contact' } : x)) });
+        handled = commit({ ...next, contacts: next.contacts.map((x) => (x.id === c.id ? { ...x, status: 'do_not_contact' } : x)) }, row);
         result.replies.push({ ...row, kind: 'opt-out' });
       } else if (verdict.kind === 'decline') {
-        commit(updatePitch(book, c.id, { outcome: 'declined' }));
+        handled = commit(updatePitch(book, c.id, { outcome: 'declined' }), row);
         result.replies.push({ ...row, kind: 'decline' });
       } else if (verdict.kind === 'sample-yes') {
         const text = stripDashes(askAddressText({ firstName: firstName(c) }));
@@ -337,23 +384,28 @@ export async function runPressOutreach({
         const gate = checkOutgoingCopy({ subject, text, kind: 'reply' });
         if (!gate.ok) {
           const reason = `could not send the address request: ${gate.problems.join('; ')}`;
-          commit(updatePitch(book, c.id, { outcome: 'escalated' }));
+          commit(updatePitch(book, c.id, { outcome: 'escalated' }), row);
           state.escalated[c.id] = { at: isoOf(now), reason, message_id: msg.messageId };
           handled = await toSean(reason);
         } else {
+          let sent = false;
           try {
             const refs = refsOf(msg.references, msg.messageId);
             await doSend({ to: emailOf(c), subject, text, inReplyTo: msg.messageId, references: refs.join(' ') }, { contactId: c.id, kind: 'ask-address' });
-            commit(updatePitch(book, c.id, { outcome: 'sample-accepted', last_sent_at: isoOf(now) }));
-            result.replies.push({ ...row, kind: 'sample-yes' });
+            sent = true;
           } catch (err) {
             result.failed.push({ ...row, kind: 'ask-address', error: err.message });
             handled = false;
           }
+          if (sent) {
+            // Sent: the reply is handled whatever happens to the bookkeeping below.
+            commitAfterSend(c.id, { outcome: 'sample-accepted', last_sent_at: isoOf(now) }, { ...row, kind: 'ask-address' });
+            result.replies.push({ ...row, kind: 'sample-yes' });
+          }
         }
       } else if (verdict.kind === 'address-given') {
-        commit(updatePitch(book, c.id, { outcome: 'sample-accepted', sample_address: { lines: verdict.address.lines, zip: verdict.address.zip, received_at: isoOf(Date.parse(msg.date)) } }));
-        try {
+        handled = commit(updatePitch(book, c.id, { outcome: 'sample-accepted', sample_address: { lines: verdict.address.lines, zip: verdict.address.zip, received_at: isoOf(Date.parse(msg.date)) } }), row);
+        if (handled) try {
           await onAddress(find(c.id), lastPitch(find(c.id)), verdict.address, msg);
           result.replies.push({ ...row, kind: 'address-given' });
         } catch (err) {
@@ -361,13 +413,13 @@ export async function runPressOutreach({
           handled = false;
         }
       } else {
-        commit(updatePitch(book, c.id, { outcome: 'escalated' }));
+        commit(updatePitch(book, c.id, { outcome: 'escalated' }), row);
         state.escalated[c.id] = { at: isoOf(now), reason: verdict.reason, message_id: msg.messageId };
         handled = await toSean(verdict.reason);
       }
 
       if (handled) markDone(msg.messageId);
-      saveBook(book);
+      else held.add(c.id);
       saveState(state);
     }
 
@@ -376,21 +428,23 @@ export async function runPressOutreach({
       const due = autoFollowUpsDue(book.contacts, now)
         .sort((a, b) => String(a.pitch.last_sent_at || a.pitch.date).localeCompare(String(b.pitch.last_sent_at || b.pitch.date)));
       for (const { contact, pitch, n } of due) {
+        if (held.has(contact.id)) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} held: a reply from them is still being handled` }); continue; }
         if (!canSend()) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} deferred: send cap reached` }); continue; }
         if (!pitch.subject) { result.skipped.push({ id: contact.id, name: contact.name, reason: 'pitch has no subject to reply under' }); continue; }
         const text = stripDashes(followUpText({ firstName: firstName(contact), n }));
         const subject = stripDashes(reSubject(pitch.subject));
         const gate = checkOutgoingCopy({ subject, text, kind: 'follow-up' });
         if (!gate.ok) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up failed the copy gate: ${gate.problems.join('; ')}` }); continue; }
+        const refs = refsOf(pitch.references, pitch.message_id);
+        let r;
         try {
-          const refs = refsOf(pitch.references, pitch.message_id);
-          const r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}` });
-          commit(updatePitch(book, contact.id, { follow_ups_sent: n, last_sent_at: isoOf(now), references: refsOf(refs, r.messageId) }));
-          saveState(state);
-          result.followUps.push({ id: contact.id, name: contact.name, n });
+          r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}` });
         } catch (err) {
           result.failed.push({ id: contact.id, name: contact.name, kind: `follow-up-${n}`, error: err.message });
+          continue;
         }
+        commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: isoOf(now), references: refsOf(refs, r.messageId) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
+        result.followUps.push({ id: contact.id, name: contact.name, n });
       }
     }
   }
@@ -404,6 +458,17 @@ export async function runPressOutreach({
       const c = find(d.contact_id);
       if (!c) { result.skipped.push({ ...row, reason: 'contact not in the book' }); continue; }
       if (!PITCHABLE_STATUSES.includes(c.status)) { result.skipped.push({ ...row, reason: `contact status is ${c.status}` }); continue; }
+      if (d.kind === 'bump') {
+        // A bump re-opens a quiet thread. It is only right while the thread is
+        // still quiet, which we can only know when the mail was read this run.
+        if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: 'bump held: replies could not be read this run' }); continue; }
+        if (lastPitch(c)?.outcome !== 'sent') {
+          const gone = { ...d, status: 'expired', expired_at: isoOf(now), expired_reason: 'thread moved on' };
+          try { saveDraft(gone); } catch (err) { log(`  could not save draft ${d.id}: ${err.message}`); }
+          result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
+          continue;
+        }
+      }
       const subject = stripDashes(d.subject);
       const text = stripDashes(d.text);
       const gate = checkOutgoingCopy({ subject, text, kind: d.kind, ...(d.kind === 'pitch' ? { postalAddress } : {}) });
@@ -432,9 +497,9 @@ export async function runPressOutreach({
             date: today, concept: d.concept, products: d.products || [], channel: 'email', subject,
             outcome: 'sent', message_id: r.messageId, references: [], last_sent_at: isoOf(now), follow_ups_sent: 0,
             source: d.source || 'manual', target_url: d.target_url || null, draft_id: d.id,
-          }));
+          }), row);
         } else {
-          commit(updatePitch(book, c.id, { follow_ups_sent: 1, last_sent_at: isoOf(now) }));
+          commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lastPitch(c)?.follow_ups_sent || 0, 1), last_sent_at: isoOf(now) }), row);
         }
       } catch (err) {
         result.failed.push({ ...row, error: `sent, but the book was not updated: ${err.message}` });
@@ -554,26 +619,27 @@ async function main() {
   if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return { imapDown: false }; }
   if (!creds) { console.log('HUSHMAIL_USER / HUSHMAIL_PASSWORD not in .env; nothing to do'); return { imapDown: false }; }
 
-  const loaded = readBook();
-  if (!loaded.available) {
-    if (!apply) { console.log(`contact book unavailable: ${loaded.reason}`); return { imapDown: false }; }
-    // Cron runs every 30 minutes: report the refusal once a day, not 48 times.
-    if (refusedToday('book')) { console.log('contact book unavailable; refusal already reported today'); return { imapDown: false }; }
-    throw new Error(`Refusing to send: ${loaded.reason}. Without the contact book the agent cannot know who it already pitched.`);
-  }
-
-  let state = readState();
-  if (!state) {
-    if (apply && !args.includes('--init')) {
-      if (refusedToday('state')) { console.log('no state file; refusal already reported today'); return { imapDown: false }; }
-      throw new Error(`no state file at ${STATE_PATH}. Refusing to send: without it every reply would be handled again. Restore it from backup, or run once with --init if this is genuinely the first run.`);
-    }
-    state = { created_at: new Date().toISOString(), sends: [], processed: [], escalated: {} };
-    if (apply) writeState(state);
-  }
-
+  // The lock comes BEFORE the book and state are read: a run that read them
+  // while another run was still writing would act on a stale copy.
   if (apply && !acquireLock()) { console.log('another run is in progress'); return { imapDown: false }; }
   try {
+    const loaded = readBook();
+    if (!loaded.available) {
+      if (!apply) { console.log(`contact book unavailable: ${loaded.reason}`); return { imapDown: false }; }
+      // Cron runs every 30 minutes: report the refusal once a day, not 48 times.
+      if (refusedToday('book')) { console.log('contact book unavailable; refusal already reported today'); return { imapDown: false }; }
+      throw new Error(`Refusing to send: ${loaded.reason}. Without the contact book the agent cannot know who it already pitched.`);
+    }
+
+    let state = readState();
+    if (!state) {
+      if (apply && !args.includes('--init')) {
+        if (refusedToday('state')) { console.log('no state file; refusal already reported today'); return { imapDown: false }; }
+        throw new Error(`no state file at ${STATE_PATH}. Refusing to send: without it every reply would be handled again. Restore it from backup, or run once with --init if this is genuinely the first run.`);
+      }
+      state = { created_at: new Date().toISOString(), sends: [], processed: [], escalated: {} };
+      if (apply) writeState(state);
+    }
     const postalAddress = readPostalAddress();
     const drafts = loadDrafts(join(ROOT, DRAFTS_DIR));
     const run = await runPressOutreach({

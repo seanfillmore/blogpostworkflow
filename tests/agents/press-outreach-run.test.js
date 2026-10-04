@@ -17,7 +17,7 @@ const contact = (id, pitchOver = {}, over = {}) => ({
 const fresh = (id) => ({ id, name: `${id[0].toUpperCase()}${id.slice(1)} Example`, status: 'active', domains: ['example.com'], channels: [{ type: 'email', address: `${id}@example.com`, verified: true, source: 'https://example.com' }], pitches: [] });
 
 function world({ replies = [], sent = [], drafts = [], state = {}, imapError = null } = {}) {
-  const calls = { send: [], escalate: [], addresses: [], sleeps: [], savedDrafts: [], confirms: [] };
+  const calls = { send: [], escalate: [], addresses: [], sleeps: [], savedDrafts: [], confirms: [], errors: [], order: [] };
   const book = { contacts: [contact('jane'), contact('sam'), contact('lee', { outcome: 'escalated' })] };
   const st = { sends: [], processed: [], escalated: { lee: { at: '2026-10-02T00:00:00Z' } }, ...state };
   const opts = {
@@ -31,6 +31,7 @@ function world({ replies = [], sent = [], drafts = [], state = {}, imapError = n
     onAddress: async (c, p, a) => { calls.addresses.push({ id: c.id, zip: a.zip }); },
     confirmReply: async (msg, kind) => { calls.confirms.push(kind); return true; },
     sleep: async (ms) => { calls.sleeps.push(ms); },
+    reportError: async (subject, body) => { calls.errors.push({ subject, body }); },
     log: () => {},
   };
   return { opts, calls };
@@ -215,7 +216,7 @@ test('a bump threads under its in_reply_to and records the follow-up', async () 
   await runPressOutreach(opts);
   const m = calls.send.find((x) => x.to === 'jane@example.com');
   assert.equal(m.inReplyTo, '<jane@realskincare.com>');
-  assert.equal(opts.book.contacts[0].pitches[0].follow_ups_sent, 1);
+  assert.equal(opts.book.contacts[0].pitches[0].follow_ups_sent, 2, 'a bump never lowers the follow-up count');
 });
 
 test('an expired draft that collides with a sent copy does not crash the run', async () => {
@@ -238,6 +239,78 @@ test('renderSummary lists pending drafts with the dashboard link', () => {
   const r = { replies: [], escalations: [], followUps: [], sent: [], skipped: [], expired: [], failed: [], paused: false, imapDown: false };
   const s = renderSummary(r, { apply: true, drafts: pending, dashboardUrl: 'https://dash.example.com' });
   assert.match(s.body, /1 pitch(es)? waiting for approval: https:\/\/dash\.example\.com\/#outreach/);
+});
+
+const bumpFor = (id) => approveDraft(newDraft({ kind: 'bump', contactId: id, to: `${id}@example.com`, subject: 'Re: Coconut cream', text: `Hi,\n\nBumping this.\n\nSean`, inReplyTo: `<${id}@realskincare.com>`, concept: 'intro', now: NOW - 3600e3 }), { now: NOW - 1800e3 });
+
+test('fix 1: a bump is not sent once the writer replied this run; the draft expires', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', "I'm going to pass at this time.")], drafts: [bumpFor('jane')] });
+  await runPressOutreach(opts);
+  assert.ok(!calls.send.some((m) => m.to === 'jane@example.com'));
+  const saved = calls.savedDrafts.find((d) => d.kind === 'bump');
+  assert.equal(saved.status, 'expired');
+  assert.equal(saved.expired_reason, 'thread moved on');
+});
+
+test('fix 1: a bump is held, still approved, while IMAP is down', async () => {
+  const err = Object.assign(new Error('socket hang up'), { code: 'ECONNRESET' });
+  const { opts, calls } = world({ imapError: err, drafts: [bumpFor('jane')] });
+  await runPressOutreach(opts);
+  assert.ok(!calls.send.some((m) => m.to === 'jane@example.com'));
+  assert.ok(!calls.savedDrafts.some((d) => d.kind === 'bump'), 'left approved for the next run');
+});
+
+test('fix 2: a failed address request is not followed by the automatic follow-up', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', "I'd love to try them!")] });
+  const inner = opts.send;
+  opts.send = async (m) => { if (/mailing address/.test(m.text)) throw new Error('resend 500'); return inner(m); };
+  await runPressOutreach(opts);
+  assert.ok(!calls.send.some((m) => m.to === 'jane@example.com'), 'no follow-up lands on a writer awaiting an answer');
+  assert.ok(!opts.state.processed.includes('<r-jane>'));
+});
+
+test('fix 4: the lock is taken before the book and state are read', () => {
+  const src = readFileSync(new URL('../../agents/press-outreach/index.js', import.meta.url), 'utf8');
+  const main = src.slice(src.indexOf('async function main()'));
+  const lock = main.indexOf('acquireLock()');
+  assert.ok(lock > -1 && lock < main.indexOf('readBook()') && lock < main.indexOf('let state = readState()'));
+});
+
+test('fix 5: a book write failing after a send keeps the send recorded and the reply processed', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', "I'd love to try them!")] });
+  opts.saveState = (s) => { calls.order.push(`state:${s.sends.length}`); };
+  opts.saveBook = () => { calls.order.push('book'); throw new Error('disk full'); };
+  const r = await runPressOutreach(opts);
+  assert.ok(opts.state.processed.includes('<r-jane>'));
+  assert.equal(opts.state.sends.filter((s) => s.contact_id === 'jane').length, 1);
+  assert.equal(calls.order[0], 'state:1', 'state persisted right after the send, before any book write');
+  assert.equal(r.book.contacts.find((c) => c.id === 'jane').pitches[0].outcome, 'sample-accepted');
+  assert.equal(r.book.contacts.find((c) => c.id === 'sam').pitches[0].follow_ups_sent, 1, 'follow-up count updated in memory');
+  assert.equal(calls.send.filter((m) => m.to === 'sam@example.com').length, 1);
+  assert.ok(r.failed.some((f) => /bookkeeping/.test(f.error)));
+});
+
+test('fix 6: the default onAddress escalates and marks the contact escalated', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', "I'd love to try them! Ship to:\n12 Example Road\nSpringfield, IL 62704")] });
+  delete opts.onAddress;
+  await runPressOutreach(opts);
+  assert.deepEqual(calls.escalate, [{ id: 'jane', reason: 'address received, create the PR Package order' }]);
+  assert.ok(opts.state.escalated.jane);
+});
+
+test('fix 7: three consecutive send failures report one error; a success resets the counter', async () => {
+  const drafts = ['a', 'b', 'c'].map((id) => approved(id));
+  const { opts, calls } = world({ drafts, state: { send_failures: 0 } });
+  for (const id of ['a', 'b', 'c']) opts.book.contacts.push(fresh(id));
+  opts.send = async () => { throw new Error('resend 500'); };
+  await runPressOutreach(opts);
+  assert.equal(calls.errors.length, 1);
+  assert.equal(opts.state.send_failures, 3);
+
+  const ok = world({ state: { send_failures: 2 } });
+  await runPressOutreach(ok.opts);
+  assert.equal(ok.opts.state.send_failures, 0);
+  assert.equal(ok.calls.errors.length, 0);
 });
 
 test('source: first pitches send only when approved, never via the Gmail connector', () => {
