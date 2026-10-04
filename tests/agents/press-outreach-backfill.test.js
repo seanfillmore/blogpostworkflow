@@ -85,3 +85,29 @@ test('an opt-out reply is patched even when no Sent copy was found', () => {
   assert.ok(r.patches.some((p) => p.id === 'lee' && p.patch.outcome === 'declined'));
   assert.equal(r.drafts.length, 0);
 });
+
+test('C1: a backfilled pitch gets no automatic follow-ups; only the approved bump sends', async () => {
+  const { runPressOutreach } = await import('../../agents/press-outreach/index.js');
+  const { updatePitch, MAX_FOLLOW_UPS } = await import('../../lib/press-contacts.js');
+  const { approveDraft } = await import('../../lib/press-drafts.js');
+  let book = { contacts: [contact('jane'), contact('sam')] };
+  const plan = planBackfill({ book, sentCopies: [copy('jane'), copy('sam')], replies: [], now: NOW });
+  for (const { id, patch } of plan.patches) {
+    assert.equal(patch.follow_ups_sent, MAX_FOLLOW_UPS, 'a patched thread id comes with follow-ups maxed');
+    book = updatePitch(book, id, patch);
+  }
+  const bump = approveDraft(plan.drafts.find((d) => d.contact_id === 'jane'), { now: NOW });
+  const RUN = Date.parse('2026-10-06T18:00:00Z');
+  const sends = [];
+  const disk = new Map([[bump.id, bump]]);
+  await runPressOutreach({
+    apply: true, now: RUN, config: { enabled: true, sendVia: 'resend', dailySendCap: 10, dailySendCapRamped: 25, rampAfterDays: 14, draftExpiryDays: 14, minGapMinutes: 10 },
+    book, state: { sends: [], processed: [], escalated: {} }, drafts: [bump], postalAddress: '1 Example Way, Testville, WY 00000',
+    readReplies: async () => [], readSent: async () => [],
+    send: async (m) => { sends.push(m); return { messageId: `<s${sends.length}@realskincare.com>`, resendId: 'r' }; },
+    saveBook: () => {}, saveState: () => {}, saveDraft: (d) => disk.set(d.id, d), readDraft: (id) => disk.get(id),
+    escalate: async () => {}, confirmReply: async () => true, sleep: async () => {}, reportError: async () => {}, log: () => {},
+  });
+  assert.deepEqual(sends.map((m) => m.to), ['jane@example.com'], 'one message total: the approved bump');
+  assert.match(sends[0].text, /Bumping/);
+});

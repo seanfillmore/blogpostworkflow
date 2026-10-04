@@ -565,6 +565,9 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
           patch.message_id = messageId;
           patch.subject = copy.subject;
           patch.last_sent_at = lastSent;
+          // A hand-sent September pitch never gets AUTOMATIC follow-ups: its one
+          // follow-up is the bump draft below, which only sends once Sean approves it.
+          patch.follow_ups_sent = MAX_FOLLOW_UPS;
           notes.push(`${c.name} (${c.id}): thread id found (${messageId})`);
         }
       }
