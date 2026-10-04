@@ -171,3 +171,17 @@ test('tavily host match uses labels, not substrings', async () => {
   assert.equal(r2.address, 'jane.rivers@rivers.blog');
   assert.match(r2.source, /rivers\.blog/);
 });
+
+test('tavily results cannot smuggle in a different person', async () => {
+  const p = { ...prospect, domain: 'outlet.example.net', person: { name: 'Jane Smith', authorUrl: null } };
+  const run = async (url, content) => (await findAddress(p, {
+    fetchPage: async () => blocked, tavilySearch: async () => [{ url, content }],
+  })).address;
+  assert.equal(await run('https://smithandco.com/a', 'jane@smithandco.com'), null);
+  assert.equal(await run('https://smithlaw.com/a', 'jane@smithlaw.com'), null);
+  assert.equal(await run('https://smithandco.com/a', 'smith@smithandco.com'), null);
+  assert.equal(await run('https://smithandco.com/a', 'jane.smith@smithandco.com'), null);
+  assert.equal(await run('https://janesmith.com/about', 'jane.smith@janesmith.com'), 'jane.smith@janesmith.com');
+  assert.equal(await run('https://janesmith.com/about', 'jane@janesmith.com'), null);
+  assert.equal(await run('https://outlet.example.net/staff', 'jane@outlet.example.net'), 'jane@outlet.example.net');
+});
