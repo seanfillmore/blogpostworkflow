@@ -48,6 +48,7 @@ import {
   listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
 } from '../../lib/posts.js';
 import { classifyBlockedReport } from '../../lib/blocked-posts.js';
+import { freezeFollowupsDue } from '../../lib/post-edit-gate.js';
 
 // Collector/snapshot agents — suppress their success entries from the digest
 const SILENT_ON_SUCCESS = new Set([
@@ -1091,6 +1092,19 @@ function checkSystemHealth() {
         + (note ? ` ${note}` : ''),
     });
   }
+
+  // Edit freezes that have ended and carry a deferred follow-up
+  // (scripts/post-edit-freeze.mjs --followup). The freeze held the page still
+  // so a change could be measured; the follow-up is the work that waited on it.
+  try {
+    const metas = listAllSlugs().map((s) => [s, getPostMeta(s)]);
+    for (const f of freezeFollowupsDue(metas)) {
+      issues.push({
+        title: `Edit freeze ended on "${f.slug}" (${f.until.slice(0, 10)}): follow-up due`,
+        detail: `${f.followup} Then lift it: \`node scripts/post-edit-freeze.mjs --handle ${f.slug} --clear --apply\`.`,
+      });
+    }
+  } catch { /* posts unreadable — the post-meta gate reports that separately */ }
 
   // Leftover git stashes — per the deploy hygiene rule the list should be empty
   // outside an active deploy. A non-empty list means a past `git stash pop` was
