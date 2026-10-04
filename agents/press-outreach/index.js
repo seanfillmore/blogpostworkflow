@@ -60,7 +60,7 @@ import {
   emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
   OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS, normalizeDomain,
 } from '../../lib/press-contacts.js';
-import { buildProspects } from '../../lib/press-prospects.js';
+import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
 import { fetchWithOutcome } from '../../lib/fetch-pool.js';
@@ -794,6 +794,29 @@ export function parseSet(arg) {
 // ── Drafting (--draft) ──────────────────────────────────────────────────────
 
 const MAX_DRAFT_ATTEMPTS = 2;
+
+// A drafting run stops STARTING prospects at 15:30 UTC (the 16:00 UTC send
+// window needs the lock, and the 15:00 UTC scheduler and Monday LLM jobs share
+// a 961 MB box) and never runs longer than this.
+const DRAFT_RUN_MAX_MS = 60 * 60_000;
+const DRAFT_CUTOFF_UTC = '15:30';
+
+/**
+ * The finder runDrafting calls, as wired in production. `opts.hunter === false`
+ * runs the FREE pass only: the prospect already cost a Hunter credit on an
+ * earlier run (spec §2: no credit is spent on it twice).
+ */
+export function makeFindAddress({ fetchPage, tavilySearch, hunter, budget = {}, today }) {
+  return (p, opts = {}) => findAddressLib(p, { fetchPage, tavilySearch, hunter: opts.hunter === false ? null : hunter, budget, today });
+}
+
+/** Pure: the default deadline for a run starting at `startMs`. */
+export function defaultDraftDeadline(startMs) {
+  const cutoff = Date.parse(`${isoOf(startMs).slice(0, 10)}T${DRAFT_CUTOFF_UTC}:00Z`);
+  const cap = startMs + DRAFT_RUN_MAX_MS;
+  // A run started after the cutoff (by hand) is bounded by the 60-minute cap alone.
+  return startMs < cutoff ? Math.min(cap, cutoff) : cap;
+}
 const NO_ADDRESS_NOTE = 'no published or verified address';
 
 /** Article HTML to plain text: script/style removed first, then tags, then the common entities. */
@@ -869,7 +892,11 @@ export function upsertProspectContact(book, prospect, { address = null, source =
   if (match) {
     let next = match;
     if (channel) {
-      if (!emailOf(match)) next = { ...next, channels: [...(match.channels || []), channel] };
+      if (!emailOf(match)) {
+        next = { ...next, channels: [...(match.channels || []), channel] };
+        // A verified email is what `unverified` was waiting for.
+        if (next.status === 'unverified') next = { ...next, status: 'active' };
+      }
       if (!onDomainOf(next, domain)) next = { ...next, domains: [...(next.domains || []), domain] };
     } else if (!(match.notes || []).some((n) => String(n).includes(NO_ADDRESS_NOTE))) {
       next = { ...next, notes: [...(match.notes || []), note] };
@@ -925,17 +952,27 @@ export async function runDrafting({
   onProgress = () => {},
   limit = null,
   log = console.log,
+  clock = null,
+  deadline = null,
 } = {}) {
   if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
   state.draft_attempts ||= {};
   state.found_addresses ||= {};
+  state.hunter_tried ||= {};
   const today = isoOf(now).slice(0, 10);
   const concept = `pitch-${today.slice(0, 7)}`;
-  const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0 };
+  const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null };
+  // Elapsed real time on top of `now`, so an injected `now` still moves.
+  if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
+  const stopAt = deadline ?? defaultDraftDeadline(now);
+  result.deadline = isoOf(stopAt);
 
   const pending = drafts.filter((d) => ['pending', 'approved'].includes(d.status)).length;
   result.pending = pending;
-  const want = limit != null ? limit : (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending;
+  // The queue fills over a few days: one run drafts at most draftRunMax. An
+  // explicit --limit is a human's choice and is bounded by the deadline only.
+  const runMax = config.draftRunMax ?? DEFAULT_CONFIG.draftRunMax ?? 10;
+  const want = limit != null ? limit : Math.min(runMax, (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending);
   result.want = Math.max(0, want);
   if (want <= 0) { log(`  queue holds ${pending} drafts (target ${config.queueTarget}); nothing to draft`); return { ...result, book, state }; }
 
@@ -959,6 +996,20 @@ export async function runDrafting({
   const sideOf = (p) => (p.source === 'link-gap' ? 'gap' : 'editorial');
   const deferred = [];
   const draftedContacts = new Set();
+  // Drafts already on disk block their contact the same way they block their
+  // domain in buildProspects: pending and approved while open, rejected for the
+  // cooldown. Without this, a writer reached through a second domain gets a
+  // duplicate pitch, and a second run the same day overwrites an approved one.
+  const contactDraftBlock = new Map();
+  for (const d of drafts) {
+    const reason = draftBlockReason(d, today);
+    if (reason && d.contact_id && !contactDraftBlock.has(d.contact_id)) contactDraftBlock.set(d.contact_id, reason);
+  }
+  const blockerOf = (contact) => {
+    const r = contactDraftBlock.get(contact.id);
+    if (r) return { reason: `contact ${contact.id}: ${r}`, permanent: false };
+    return contactBlocker(contact, state, now);
+  };
 
   const persistState = () => { try { saveState(state); } catch (err) { log(`  could not save state: ${err.message}`); } };
   const countAttempt = (p) => {
@@ -974,20 +1025,20 @@ export async function runDrafting({
     // its reason and NO attempt, so the prospect is drafted once it clears.
     const blocked = (b) => (b.permanent ? skip(b.reason) : (result.skipped.push({ ...row, reason: `${b.reason}; retried later` }), false));
 
+    // The contact already on file, checked before ANY spend (fetch included).
+    let existing = resolveExistingContact(book, p);
+    if (existing) {
+      if (draftedContacts.has(existing.id)) { result.skipped.push({ ...row, reason: `already drafted to ${existing.id} this run` }); return false; }
+      const b = blockerOf(existing);
+      if (b) return blocked(b);
+    }
+
     let page;
     try { page = await fetchArticle(p.targetUrl); } catch (err) { page = { outcome: 'network-error', error: err.message }; }
     const articleText = page?.outcome === 'ok' ? htmlToText(page.html) : '';
     if (!articleText) {
       result.failed.push({ ...row, reason: fail(p, `article fetch: ${page?.outcome === 'ok' ? 'empty page' : page?.outcome || 'failed'}`) });
       return false;
-    }
-
-    // The contact already on file, checked before any address spend.
-    let existing = resolveExistingContact(book, p);
-    if (existing) {
-      if (draftedContacts.has(existing.id)) { result.skipped.push({ ...row, reason: `already drafted to ${existing.id} this run` }); return false; }
-      const b = contactBlocker(existing, state, now);
-      if (b) return blocked(b);
     }
 
     let found;
@@ -1002,8 +1053,21 @@ export async function runDrafting({
         // Found on an earlier run that a temporary block stopped: no second spend.
         found = { address: cached.address, source: cached.source, spentHunter: 0 };
       } else {
-        try { found = await findAddress(p); } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
-        result.hunterSpent += found?.spentHunter || 0;
+        // A prospect that already cost a Hunter credit (recorded in state, or
+        // the contact carries the no-address note) gets the free pass only.
+        const hunterDone = Boolean(state.hunter_tried[p.key])
+          || Boolean(existing && (existing.notes || []).some((n) => String(n).includes(NO_ADDRESS_NOTE)));
+        try {
+          found = hunterDone ? await findAddress(p, { hunter: false }) : await findAddress(p);
+        } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
+        const spent = found?.spentHunter || 0;
+        result.hunterSpent += spent;
+        if (spent > 0) {
+          state.hunter_tried[p.key] = today;
+          // A paid address is kept, so no later outcome spends for it again.
+          if (found?.address) state.found_addresses[p.key] = { address: found.address, source: found.source, at: isoOf(now) };
+          persistState();
+        }
       }
       if (found?.address) {
         const owner = contactOwning(book, found.address);
@@ -1012,7 +1076,7 @@ export async function runDrafting({
           // person writing elsewhere; anyone else is a different person.
           if (existing || foldName(owner.name) !== foldName(prospectName(p))) return skip(`found address belongs to ${owner.id}, a different contact`);
           if (draftedContacts.has(owner.id)) { result.skipped.push({ ...row, reason: `already drafted to ${owner.id} this run` }); return false; }
-          const b = contactBlocker(owner, state, now);
+          const b = blockerOf(owner);
           if (b) {
             if (!b.permanent) {
               state.found_addresses[p.key] = { address: found.address, source: found.source, at: isoOf(now) };
@@ -1070,21 +1134,35 @@ export async function runDrafting({
     draftedContacts.add(up.contactId);
     delete state.draft_attempts[p.key];
     delete state.found_addresses[p.key];
+    delete state.hunter_tried[p.key];
     persistState();
     result.drafted.push({ ...row, contactId: up.contactId, draftId: draft.id, to, addressSource: found.source, subject: draft.subject });
     log(`  drafted ${draft.id} to ${up.contactId} (${found.source})`);
     return true;
   }
 
+  const attempted = new Set();
+  const pastDeadline = () => {
+    if (clock() < stopAt) return false;
+    result.stoppedAtDeadline = true;
+    result.leftAtDeadline = pool.prospects.filter((x) => !attempted.has(x.key)).length;
+    log(`  stopped at the deadline (${isoOf(stopAt).slice(11, 16)} UTC), ${result.leftAtDeadline} prospects left`);
+    return true;
+  };
+  let stopped = false;
   for (const p of pool.prospects) {
     if (result.drafted.length >= want) break;
     const side = sideOf(p);
     if (made[side] >= caps[side]) { deferred.push(p); continue; }
+    if (pastDeadline()) { stopped = true; break; }
+    attempted.add(p.key);
     if (await attempt(p)) made[side] += 1;
     onProgress();
   }
-  for (const p of deferred) {
+  for (const p of stopped ? [] : deferred) {
     if (result.drafted.length >= want) break;
+    if (pastDeadline()) break;
+    attempted.add(p.key);
     if (await attempt(p)) made[sideOf(p)] += 1;
     onProgress();
   }
@@ -1099,9 +1177,10 @@ export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
   if (r.noAddress.length) { lines.push('No address found (contact saved as unverified, try by hand):'); for (const x of r.noAddress) lines.push(`  - ${x.contactId}: ${x.reason}`); }
   if (r.failed.length) { lines.push('Failed (retried next run, at most twice):'); for (const x of r.failed) lines.push(`  - ${x.domain}: ${x.reason}`); }
   if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  if (r.stoppedAtDeadline) lines.push(`Stopped at the deadline (${String(r.deadline || '').slice(11, 16)} UTC), ${r.leftAtDeadline} ${r.leftAtDeadline === 1 ? 'prospect' : 'prospects'} left for the next run.`);
   lines.push(`Hunter credits used: ${r.hunterSpent}. Prospects filtered out of the queue: ${r.queueSkipped}. Given up after repeated failures: ${r.dead}.`);
   lines.push(`${waiting} ${waiting === 1 ? 'pitch' : 'pitches'} waiting for approval: ${where}`);
-  const subject = `Press drafting: ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter`;
+  const subject = `Press drafting: ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter${r.stoppedAtDeadline ? ' · stopped at deadline' : ''}`;
   return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') };
 }
 
@@ -1178,14 +1257,14 @@ async function runDraftMode(args, apply, env, config) {
     const run = await runDrafting({
       apply, config, book: loaded.doc, state, drafts, prTargets, linkGap, factSheet, postalAddress, limit,
       fetchArticle: fetchPage,
-      findAddress: (p) => findAddressLib(p, { fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
+      findAddress: makeFindAddress({ fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
       draftPitch: draftPitchLib,
       generate: (prompt) => generateWithModel(prompt, env),
       onProgress: touchLock,
     });
     const { subject, body } = renderDraftSummary(run, { apply, dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length;
+    const acted = run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'press' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
