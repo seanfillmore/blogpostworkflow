@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import Anthropic from '../lib/anthropic.js';
 import { getMetaPath, requirePostMeta } from '../lib/posts.js';
 import { upsertMetafield } from '../lib/shopify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../lib/post-edit-gate.js';
 import { LLM_MODELS } from '../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -149,6 +150,15 @@ async function main() {
   const baselineCTR = getBaselineCTR();
   console.log(`Baseline CTR: ${baselineCTR != null ? (baselineCTR * 100).toFixed(2) + '%' : 'insufficient data'}`);
 
+  // Live-article edit gate (lib/post-edit-gate.js): a new title_tag is a
+  // `serp` edit. Asked before the model call and before the test file exists.
+  const gateTarget = meta.shopify_handle || slug;
+  const editGate = mayEditLivePost(gateTarget, 'serp');
+  if (!editGate.allowed) {
+    console.log(`Edit gate held ${gateTarget}: ${editGate.reason}. No test created.`);
+    return;
+  }
+
   console.log('Generating Variant B title...');
   const variantB = await generateVariantB();
   console.log(`Variant A: ${meta.title}`);
@@ -187,6 +197,7 @@ async function main() {
   // so a missing-credential case now fails visibly instead of skipping in a warning.
   console.log('Applying Variant B to Shopify (global.title_tag)...');
   await applyMetafield(meta.shopify_article_id, meta.shopify_blog_id, variantB);
+  recordMaterialEdit(gateTarget, 'serp', 'create-meta-ab');
   console.log('Done. Variant B is now live.');
 }
 

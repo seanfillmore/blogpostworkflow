@@ -17,6 +17,10 @@ import { join } from 'node:path';
 import { getArticle, updateArticle } from '../lib/shopify.js';
 import { getContentPath, getEditorReportPath, getBackupsDir, getPostMeta, ensurePostDir, resolvePostSlug, ROOT } from '../lib/posts.js';
 import { isPassing, parseEditorBlockers, contentBlockers, firstBlockerReason } from '../lib/editor-remediation.js';
+import { mayEditLivePost, recordMaterialEdit } from '../lib/post-edit-gate.js';
+
+/** Exit code for "the live-article edit gate held this page" — not a failure. */
+const EDIT_GATE_HELD_EXIT = 3; // agents/blocked-post-resolver reads this code as a hold
 
 // RESOLVE THE ARGUMENT — never trust it as a local slug, because line 51 does
 // `ensurePostDir(slug)` and therefore MANUFACTURES whatever directory it is
@@ -65,6 +69,19 @@ const { shopify_blog_id: blogId, shopify_article_id: articleId } = meta || {};
 if (!blogId || !articleId) { console.error(`  ${slug}: no Shopify article IDs — skipping.`); process.exit(1); }
 
 console.log(`\n=== ${slug} ===`);
+
+// EDIT GATE — pushing a remediated body is a `rewrite` of a live article
+// (lib/post-edit-gate.js). Asked BEFORE the repair loop spends a single model
+// call. Only on --push: a local-only remediation edits nothing live.
+const gateTarget = meta.shopify_handle || slug;
+if (doPush) {
+  const editGate = mayEditLivePost(gateTarget, 'rewrite');
+  if (!editGate.allowed) {
+    console.log(`  ⏸ Edit gate held ${gateTarget}: ${editGate.reason} — live page left unchanged.`);
+    process.exit(EDIT_GATE_HELD_EXIT);
+  }
+}
+
 const live = await getArticle(blogId, articleId);
 const liveBody = live.body_html || '';
 const contentPath = getContentPath(slug);
@@ -110,6 +127,7 @@ console.log(`  After ${attempts} attempt(s): ${g.pass ? 'PASS' : 'STILL FAILING'
 
 if (g.pass && changed && doPush) {
   await updateArticle(blogId, articleId, { body_html: remediated });
+  recordMaterialEdit(gateTarget, 'rewrite', 'remediate-live-post');
   console.log(`  ✓ PUSHED remediated content to Shopify (live).`);
 } else if (g.pass && changed) {
   console.log(`  (dry) would push — re-run with --push to publish.`);

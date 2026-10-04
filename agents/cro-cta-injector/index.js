@@ -21,6 +21,8 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -163,6 +165,7 @@ async function main() {
 
   let applied = 0;
   let skipped = 0;
+  const editGateHeld = [];
 
   const targets = fromGa4 ? loadGa4Targets() : TARGETS;
   if (targets.length === 0) {
@@ -196,6 +199,15 @@ async function main() {
     console.log('      CTA: "' + target.headline + '" → /collections/' + target.collection);
 
     if (apply) {
+      // Inserting a CTA block is an `enhance` edit (lib/post-edit-gate.js),
+      // refused only on a frozen page.
+      const editGate = mayEditLivePost(article.handle, 'enhance');
+      if (!editGate.allowed) {
+        console.log('      ⏸ Edit gate: ' + editGate.reason);
+        editGateHeld.push({ target: article.handle, kind: 'enhance', reason: editGate.reason, until: editGate.until });
+        skipped++;
+        continue;
+      }
       await updateArticle(blog.id, article.id, { body_html: newHtml });
       console.log('      Updated.');
     }
@@ -208,7 +220,7 @@ async function main() {
   if (apply) {
     await notify({
       subject: 'CRO CTA Injector completed',
-      body: applied + ' posts updated with product CTA blocks.',
+      body: [applied + ' posts updated with product CTA blocks.', ...renderEditGateLines(editGateHeld)].join('\n'),
       status: 'success',
     }).catch(() => {});
   }

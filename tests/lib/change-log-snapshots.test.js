@@ -63,3 +63,24 @@ test('aggregateGA4ForUrl returns zeroes for missing page', () => {
   assert.equal(result.conversions, 0);
   assert.equal(result.page_revenue, 0);
 });
+
+test('aggregateGSCForUrl reads query rows from queriesByPage, the field real snapshots carry', async () => {
+  const { mkdtempSync, writeFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'gsc-'));
+  const page = 'https://www.realskincare.com/blogs/news/toothpaste-without-sls-what-to-know-best-options';
+  writeFileSync(join(dir, '2026-09-01.json'), JSON.stringify({
+    date: '2026-09-01',
+    topPages: [{ page, clicks: 30, impressions: 3698, position: 5.2 }],
+    queriesByPage: [{ query: 'sls free toothpaste', page, clicks: 9, impressions: 538, position: 4.2 }],
+  }));
+  const r = aggregateGSCForUrl({
+    snapshotsDir: dir,
+    url: '/blogs/news/toothpaste-without-sls-what-to-know-best-options',
+    queries: ['sls free toothpaste'],
+    fromDate: '2026-09-01',
+    toDate: '2026-09-01',
+  });
+  assert.equal(r.page.impressions, 3698, 'a blog path must match its GSC row');
+  assert.equal(r.byQuery['sls free toothpaste'].impressions, 538);
+});

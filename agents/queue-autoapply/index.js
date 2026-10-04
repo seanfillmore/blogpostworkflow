@@ -54,12 +54,13 @@ import { execFileSync } from 'node:child_process';
 import { listQueueItems, writeItem } from '../performance-engine/lib/queue.js';
 import { getContentPath, ROOT as POSTS_ROOT } from '../../lib/posts.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../../lib/cluster-hold.js';
-import { planRun, cooldownTargets, targetSlugFor, MAX_APPLIES_PER_RUN, DECISION_LABELS } from '../../lib/queue-autoapply.js';
-import { applyItem, findPostMeta, matchProductsForGap } from '../../lib/queue-apply.js';
+import { planRun, cooldownTargets, targetSlugFor, editKindForItem, MAX_APPLIES_PER_RUN, DECISION_LABELS } from '../../lib/queue-autoapply.js';
+import { applyItem, findPostMeta, matchProductsForGap, editGateTargetFor, PostEditGateError } from '../../lib/queue-apply.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
 import { revertPlanFor } from '../../lib/queue-revert.js';
 import { checkEditGate, runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import { renderGateRefusalLines } from '../../lib/seo-copy-health-gate.js';
-import { buildTriggerCommand } from '../dashboard/lib/opportunity-trigger.js';
+import { buildTriggerCommand, agentForOpportunityItem } from '../dashboard/lib/opportunity-trigger.js';
 import { notify } from '../../lib/notify.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -210,6 +211,29 @@ async function capturePreviousMeta(item, deps) {
   }
 }
 
+/**
+ * Live-article edit-gate verdicts for every pending item that would edit a live
+ * blog article (lib/post-edit-gate.js). Computed here — I/O — and handed to the
+ * pure planner as data, so it can skip a held page BEFORE the per-run cap.
+ * @returns {Map<string, object>} item.slug → verdict (+ kind, target)
+ */
+function buildEditGate(items) {
+  const out = new Map();
+  for (const item of items) {
+    if (item?.status !== 'pending' || typeof item.slug !== 'string') continue;
+    let opportunityAgent = null;
+    if (item.trigger === 'seo-opportunity') {
+      try { opportunityAgent = agentForOpportunityItem(item); } catch { /* unknown: not gated here */ }
+    }
+    const kind = editKindForItem(item, { opportunityAgent });
+    if (!kind) continue;
+    const slug = targetSlugFor(item);
+    const target = editGateTargetFor(findPostMeta(slug)?.meta, slug);
+    out.set(item.slug, { ...mayEditLivePost(target, kind), target });
+  }
+  return out;
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = console.log } = {}) {
@@ -237,13 +261,15 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
   });
   const productCounts = deps ? await buildProductCounts(items, deps) : new Map();
 
-  const plan = planRun(items, { clusters, cooldown, productCounts }, { cap });
+  const editGate = buildEditGate(items);
+  const plan = planRun(items, { clusters, cooldown, productCounts, editGate }, { cap });
   log(`  ${items.length} item(s) in the queue → ${plan.apply.length} to apply, ${plan.dismiss.length} to dismiss, ${plan.skip.length} left alone (cap ${cap}/run).\n`);
 
   const applied = [];
   const dismissed = [];
   const gated = [];
   const failed = [];
+  const editHeld = [];
 
   // ── dismissals first: cheap, local-only, and they shrink the queue a human
   //    would otherwise scroll past.
@@ -340,6 +366,15 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
       log(`      ✓ applied${revertPlan ? '' : ' (NOT automatically revertible — recorded)'}`);
       applied.push({ slug: item.slug, trigger: item.trigger, revertible: !!revertPlan });
     } catch (err) {
+      if (err instanceof PostEditGateError) {
+        // The write-site gate refused (the planner's verdict went stale inside
+        // this run, e.g. another writer just stamped the page). Not a failure:
+        // left PENDING, unstaged, asked again next run.
+        log(`      ⏸ ${err.message}`);
+        unstageRefresh(item, log);
+        editHeld.push({ slug: item.slug, trigger: item.trigger, target: err.target, kind: err.kind, reason: err.reason, until: err.until });
+        continue;
+      }
       log(`      ✗ apply failed: ${err.message}`);
       // The gate STAGED the refreshed body into content.html. If the Shopify
       // write then failed, local and live disagree in the worst direction:
@@ -369,8 +404,15 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     log(`  ⊘ health-claim  ${g.slug} [${g.trigger}] — ${words} (refused, left pending, nothing written)`);
   }
 
+  // Edit-gate holds: skipped before the cap by the planner, or refused at the
+  // write site. Named in the console AND the digest body; never an error.
+  for (const s of plan.skip.filter((x) => x.gate === 'edit-gate')) {
+    editHeld.push({ slug: s.item.slug, trigger: s.item.trigger, target: s.editGate?.target || targetSlugFor(s.item), kind: s.editGate?.kind || null, reason: s.editGate?.reason || s.reason, until: s.editGate?.until || null });
+  }
+  for (const h of editHeld) log(`  ⏸ edit gate  ${h.slug} [${h.trigger}] — ${h.reason} (left pending)`);
+
   for (const { item, reason, gate } of plan.skip) {
-    if (gate === 'health-claim') continue; // already reported above, more loudly
+    if (gate === 'health-claim' || gate === 'edit-gate') continue; // already reported above
     log(`  ·  skip     ${item?.slug || '(malformed item)'} — ${reason}`);
   }
 
@@ -384,6 +426,7 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     dismissed,
     gated,
     health_gated: healthGated,
+    edit_gate_held: editHeld,
     failed,
     skipped: plan.skip.map(({ item, reason }) => ({ slug: item?.slug || null, trigger: item?.trigger || item?.type || null, reason })),
     // The skips no automated run will ever clear — see DECISION_LABELS in
@@ -419,11 +462,13 @@ export async function run({ dryRun = true, cap = MAX_APPLIES_PER_RUN, log = cons
     ...dismissed.map((d) => `DISMISSED ${d.slug} [${d.trigger}] — ${d.reason}`),
     ...gated.map((g) => `GATED     ${g.slug} [${g.trigger}] — ${g.reason} (${g.repair_attempts} repair attempts; stays pending for the repair loop)`),
     ...(healthGated.length ? ['', ...renderGateRefusalLines(healthGated.map((g) => ({ label: g.slug, resource: g.trigger, violations: g.violations })))] : []),
+    ...(editHeld.length ? ['', `Edit gate held ${editHeld.length} page(s) (left pending, asked again next run):`] : []),
+    ...editHeld.map((h) => `HELD      ${h.target || h.slug} [${h.trigger}] — ${h.reason}`),
     ...(failed.length ? [''] : []),
     ...failed.map((f) => `FAILED    ${f.slug} [${f.trigger}] — ${f.error}`),
   ];
   await notify({
-    subject: `Queue auto-apply: ${applied.length} applied, ${dismissed.length} dismissed${healthGated.length ? `, ${healthGated.length} health-claim refused` : ''}${dryRun ? ' (dry run)' : ''}`,
+    subject: `Queue auto-apply: ${applied.length} applied, ${dismissed.length} dismissed${healthGated.length ? `, ${healthGated.length} health-claim refused` : ''}${editHeld.length ? `, ${editHeld.length} edit-gate held` : ''}${dryRun ? ' (dry run)' : ''}`,
     body: lines.join('\n'),
     // ALWAYS 'success'. One item failing to apply is a FINDING (named in the body
     // above), not the agent breaking — "1 applied, 1 failed" is a working run.

@@ -253,6 +253,7 @@ async function main() {
               // The rewrite wrote the title_tag / description_tag metafields
               // (lib/serp-copy.js), so the revert restores THOSE: prior value,
               // or delete where no tag existed before.
+              // edit-gate kind: repair — auto-reverting a losing title/meta variant.
               for (const op of serpRevertOps(entry, await getMetafields('articles', art.id))) {
                 if (op.op === 'set') await upsertMetafield('articles', art.id, 'global', op.key, op.value);
                 else await deleteMetafield(op.id);

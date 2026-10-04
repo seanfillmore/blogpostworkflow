@@ -100,6 +100,7 @@ async function revertMetafield(test) {
   // created a second metafield rather than updating the existing one.
   const resource = metafieldResource(resourceType) ?? (blogId ? 'articles' : null);
   if (!resource) { console.warn(`  Unknown resourceType: ${resourceType}`); return; }
+  // edit-gate kind: repair — reverting a losing variant to the original (A).
   await upsertMetafield(resource, resourceId, 'global', 'title_tag', variantA);
 }
 

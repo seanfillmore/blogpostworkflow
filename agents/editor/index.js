@@ -1168,6 +1168,7 @@ async function runEditor(htmlPath) {
         if (titleChanged) update.title = newTitle;
         if (metaChanged) update.summary_html = `<p>${newMetaDesc}</p>`;
         try {
+          // edit-gate kind: repair — a deterministic stale-year bump.
           await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, update);
           console.log(`  Pushed corrected title/meta to Shopify`);
         } catch (e) {
@@ -1407,6 +1408,7 @@ async function runEditor(htmlPath) {
     const currentHtml = readFileSync(htmlPath, 'utf8');
     if (currentHtml !== html) {
       try {
+        // edit-gate kind: repair — syncing pre-review auto-fixes (years, dead-link removal).
         await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: currentHtml });
         console.log(`\n  ✓ Pushed body_html to Shopify (article_id: ${meta.shopify_article_id})`);
       } catch (e) {

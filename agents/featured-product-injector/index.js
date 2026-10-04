@@ -22,6 +22,8 @@ import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js
 // chemicals" is this brand's central content position and appears verbatim in
 // real customer reviews — CLAUDE.md names reusing it here as the over-correction.
 import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
 
 export { ROOT };
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -764,10 +766,18 @@ async function main() {
   const gscFiles = readdirSync(gscDir).filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
   if (gscFiles.length === 0) throw new Error('No GSC snapshots found in data/snapshots/gsc/');
   const gscSnap = JSON.parse(readFileSync(join(gscDir, gscFiles.at(-1)), 'utf8'));
-  const blogPages = (gscSnap.topPages || gscSnap.pages || [])
+  const rankedPages = (gscSnap.topPages || gscSnap.pages || [])
     .filter(p => (p.page || p.url || '').includes('/blogs/news/'))
-    .sort((a, b) => (b.clicks || 0) - (a.clicks || 0))
-    .slice(0, topN);
+    .sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+  // Live-article edit gate BEFORE the top-N cap: injecting a buy box into a live
+  // article is an `enhance` edit (lib/post-edit-gate.js), refused only on a
+  // frozen page. A frozen page must not take one of the N slots.
+  const { kept: gatePages, held: editGateHeld } = partitionByEditGate(rankedPages, {
+    kind: 'enhance', mayEdit: mayEditLivePost, targetOf: (p) => gateTargetHandle(p.page || p.url),
+  });
+  const editGateLines = renderEditGateLines(editGateHeld);
+  for (const line of editGateLines) console.log(`  ${line}`);
+  const blogPages = gatePages.slice(0, topN);
 
   if (blogPages.length === 0) throw new Error('No blog pages found in GSC snapshot');
   console.log(`  Top ${blogPages.length} pages: ${blogPages.map(p => (p.page || p.url).split('/').at(-1)).join(', ')}`);
@@ -824,6 +834,7 @@ async function main() {
     '',
     '## Results',
     ...results.map(r => `- **${r.handle}**: ${r.status}${r.product ? ` — "${r.product}"` : ''}${r.reason ? ` — ${r.reason}` : ''}`),
+    ...(editGateLines.length ? ['', ...editGateLines] : []),
   ];
   writeFileSync(join(reportsDir, `${today}.md`), reportLines.join('\n'));
   console.log(`\n  Report saved to data/reports/featured-product/${today}.md`);

@@ -116,6 +116,7 @@ async function applyRevert(window, events, articleIndex) {
       continue;
     }
     try {
+      // edit-gate kind: repair — restoring the BEFORE value of a change that lost its verdict.
       if (ev.change_type === 'title') {
         await updateArticle(article.blogId, article.articleId, { title: ev.before });
       } else if (ev.change_type === 'meta_description') {

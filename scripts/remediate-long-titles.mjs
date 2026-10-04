@@ -79,6 +79,8 @@ import {
 } from '../lib/seo-copy-length.js';
 import { checkSeoCopy } from '../lib/seo-copy-health-gate.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { mayEditLivePost, recordMaterialEdit } from '../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines } from '../lib/edit-gate-filter.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPORT_DIR = join(ROOT, 'data', 'reports', 'long-title-remediation');
@@ -283,6 +285,19 @@ async function main() {
     });
   }
 
+  // Live-article edit gate, BEFORE --limit: a new SERP title on a blog ARTICLE
+  // is a `serp` edit (lib/post-edit-gate.js) — refused on a frozen page or one
+  // inside the 28-day window of its last title/meta or body change. Products,
+  // collections and pages are not articles and are not asked.
+  const { kept: gatedPlan, held: editGateHeld } = partitionByEditGate(plan, {
+    kind: 'serp', mayEdit: mayEditLivePost, targetOf: (c) => (c.kind === 'article' ? c.handle : null),
+  });
+  plan.length = 0;
+  plan.push(...gatedPlan);
+  const editGateLines = renderEditGateLines(editGateHeld);
+  for (const l of editGateLines) console.log(`  ${l}`);
+  if (editGateLines.length) console.log('');
+
   const trims = plan.filter((p) => p.action === 'trim');
   const mints = plan.filter((p) => p.action === 'mint');
   console.log(`  TRIM  (shorten an existing title_tag) : ${trims.length}`);
@@ -333,6 +348,7 @@ async function main() {
     mint_enabled: MINT,
     refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
     refused_health: healthBlocked,
+    edit_gate_held: editGateHeld.map((h) => ({ handle: h.target, kind: h.kind, reason: h.reason, until: h.until || null })),
     // Excluded before measurement — see the UNREADABLE note above. Recorded so
     // a run that quietly saw less of the site than it thought is legible later.
     excluded_unreadable: unreadable.map((c) => ({ kind: c.kind, handle: c.handle })),
@@ -358,6 +374,7 @@ async function main() {
   for (const c of plan.slice(0, LIMIT)) {
     try {
       await upsertMetafield(c.resource, c.id, 'global', 'title_tag', c.proposed);
+      if (c.kind === 'article') recordMaterialEdit(c.handle, 'serp', 'remediate-long-titles');
       written++;
       console.log(`  ✓ ${c.action === 'mint' ? 'minted ' : 'trimmed'} ${c.handle}`);
     } catch (e) {

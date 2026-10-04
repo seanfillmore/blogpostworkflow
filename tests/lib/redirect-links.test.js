@@ -215,3 +215,24 @@ test('single-quoted and unquoted hrefs are left alone rather than mangled', () =
   const src = "<a href='/collections/natural-bar-soap'>x</a>";
   assert.equal(rewriteRedirectLinks(src, MAP).html, src);
 });
+
+import { buildLivePathSet as _bl, isLivePath as _il, buildRedirectMap as _bm, rewriteRedirectLinks as _rw } from '../../lib/redirect-links.js';
+
+test('a redirect on a LIVE product path is dormant and never rewrites a link (2026-09-20)', () => {
+  const live = _bl({ products: [{ handle: 'coconut-oil-toothpaste', status: 'active', published_at: '2026-01-01' }] });
+  const map = _bm([
+    { path: '/products/coconut-oil-toothpaste', target: '/blogs/news/can-you-use-coconut-oil-as-toothpaste' },
+    { path: '/collections/best-sellers/products/coconut-oil-toothpaste', target: '/blogs/news/can-you-use-coconut-oil-as-toothpaste' },
+    { path: '/collections/toothpaste', target: '/products/coconut-oil-toothpaste' },
+  ], { livePaths: live });
+  assert.equal(map.size, 1);
+  assert.deepEqual(map.dormant.length, 2);
+  const { html } = _rw('<a href="/products/coconut-oil-toothpaste">Add to Cart</a><a href="/collections/toothpaste">x</a>', map);
+  assert.match(html, /href="\/products\/coconut-oil-toothpaste">Add to Cart/);
+  assert.match(html, /href="\/products\/coconut-oil-toothpaste">x/);
+});
+
+test('isLivePath ignores drafts', () => {
+  const live = _bl({ products: [{ handle: 'draft', status: 'draft', published_at: null }] });
+  assert.equal(_il('/products/draft', live), false);
+});

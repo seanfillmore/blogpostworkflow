@@ -46,8 +46,8 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { getBlogs, getArticles, updateArticle, getAllRedirects } from '../lib/shopify.js';
-import { rewriteRedirectLinks, buildRedirectMap } from '../lib/redirect-links.js';
+import { getBlogs, getArticles, updateArticle, getAllRedirects, getProducts, getCustomCollections, getSmartCollections, getPages } from '../lib/shopify.js';
+import { rewriteRedirectLinks, buildRedirectMap, buildLivePathSet } from '../lib/redirect-links.js';
 import { compareBodies } from '../lib/content-mirror.js';
 import { getContentPath, listAllSlugs, getPostMeta } from '../lib/posts.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
@@ -113,15 +113,27 @@ function buildMirrorIndex() {
 async function main() {
   console.log(`\nRedirect-link fixer — ${APPLY ? 'APPLY' : 'DRY RUN'}\n`);
 
-  const redirectRows = await getAllRedirects();
-  const map = buildRedirectMap(redirectRows);
-  console.log(`  Redirect table: ${map.size} source paths`);
-
   const blogs = await getBlogs();
   let articles = [];
   for (const b of blogs) {
-    articles = articles.concat((await getArticles(b.id)).map((a) => ({ ...a, blogId: b.id })));
+    articles = articles.concat((await getArticles(b.id)).map((a) => ({ ...a, blogId: b.id, blogHandle: b.handle })));
   }
+
+  // A redirect whose source a LIVE resource occupies never fires, so it must
+  // never be used to rewrite a link (see buildRedirectMap). If the resource
+  // lists cannot be read, refuse rather than guess: rewriting with an unchecked
+  // table is the 2026-09-20 failure.
+  const livePaths = buildLivePathSet({
+    products: await getProducts(),
+    collections: [...await getCustomCollections(), ...await getSmartCollections()],
+    pages: await getPages(),
+    articles,
+  });
+  if (!livePaths.size) throw new Error('could not build the live-path set; refusing to rewrite links');
+  const redirectRows = await getAllRedirects();
+  const map = buildRedirectMap(redirectRows, { livePaths });
+  console.log(`  Redirect table: ${map.size} source paths (${map.dormant.length} dormant on live resources, ignored)`);
+  for (const d of map.dormant) console.log(`    dormant: ${d}`);
   const live = articles.filter((a) => a.published_at && new Date(a.published_at) <= new Date());
   const scope = slugArg ? live.filter((a) => a.handle === slugArg) : live;
   console.log(`  Live articles: ${live.length}${slugArg ? ` (scoped to ${slugArg})` : ''}\n`);
@@ -179,6 +191,7 @@ async function main() {
 
     mkdirSync(backupDir, { recursive: true });
     writeFileSync(join(backupDir, `${art.handle}.live.html`), before);
+    // edit-gate kind: repair — repointing links off redirected URLs; always allowed.
     await updateArticle(art.blogId, art.id, { body_html: after });
 
     if (mirror && mirrorAfter !== mirrorHtml) {

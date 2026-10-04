@@ -74,7 +74,10 @@ import {
   getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
-import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta, listAllSlugs, getPostMeta } from '../../lib/posts.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
+import { winnerPostSlug } from './post-dir.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
@@ -387,6 +390,11 @@ async function loadLiveCollections() {
   }
 }
 
+/** The local post dir holding this article; the handle only when none does. See post-dir.js. */
+function postSlugFor(handle) {
+  return winnerPostSlug(handle, listAllSlugs().map((s) => [s, getPostMeta(s)]).filter(([, m]) => m));
+}
+
 async function applyResolutions(decisions, articleIndex, existingRedirects, groups) {
   const existingPaths = new Set(existingRedirects.map((r) => r.path));
   const results = [];
@@ -418,6 +426,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   const banner = holdBanner(hold);
   if (banner) console.log(banner);
   const heldRecords = [];
+  const editGateHeld = [];
 
   // MERGE CAP — how many times may ONE page be rewritten in a single run?
   //
@@ -483,8 +492,35 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
         continue;
       }
 
+      // EDIT GATE — a CONSOLIDATE rewrites the WINNER's body, so it is a
+      // `rewrite` of the winner (lib/post-edit-gate.js): refused on a locked
+      // winner, a frozen page, or one still inside the 28-day window of its
+      // last material change. Asked BEFORE consolidateContent so a held merge
+      // spends nothing. A held merge creates no loser redirect either: the
+      // loser's unique content would be lost into a winner that never received
+      // it. Detection is re-derived from live GSC every run, so the pair simply
+      // re-proposes once the gate opens. A REDIRECT-only loser does not touch
+      // the winner's body and is not gated.
+      if (loser.action === 'CONSOLIDATE' && loserArticle) {
+        const gate = mayEditLivePost(winnerHandle, 'rewrite');
+        if (!gate.allowed) {
+          console.log(`\n    ⏸ Edit gate held merge "${loserHandle}" → "${winnerHandle}": ${gate.reason}`);
+          editGateHeld.push({ target: winnerHandle, kind: 'rewrite', reason: gate.reason, until: gate.until });
+          results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'skipped_edit_gate', reason: gate.reason });
+          continue;
+        }
+      }
+
       // CONSOLIDATE: merge content, run editor review, save to Shopify as draft
       if (loser.action === 'CONSOLIDATE' && loserArticle) {
+        // Key the local post by the directory that already holds this article,
+        // never by the handle alone — see post-dir.js for the shadow-dir bug.
+        const winnerSlug = postSlugFor(winnerHandle);
+        if (!winnerSlug) {
+          console.log(`\n    ⚠ data/posts/${winnerHandle}/ holds a different article — merge skipped rather than written into it.`);
+          results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'skipped_dir_collision' });
+          continue;
+        }
         try {
           process.stdout.write(`\n    Merging "${loserHandle}" → "${winnerHandle}"... `);
           const mergedHtml = await consolidateContent(winnerArticle, loserArticle, decision.query, articleIndex, liveCollections);
@@ -495,12 +531,12 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           // shopify_publish_at, legacy_*) — overwriting wholesale strips the
           // legacy/Shopify state and the dashboard then reads the post as
           // "Written" or "Draft" instead of "Published".
-          ensurePostDir(winnerHandle);
-          writeFileSync(getContentPath(winnerHandle), mergedHtml);
+          ensurePostDir(winnerSlug);
+          writeFileSync(getContentPath(winnerSlug), mergedHtml);
           let existingWinnerMeta = {};
-          try { existingWinnerMeta = requirePostMeta(winnerHandle); } catch { /* ok */ }
+          try { existingWinnerMeta = requirePostMeta(winnerSlug); } catch { /* ok */ }
           const { needs_rebuild: _dropWinner, ...winnerMetaRest } = existingWinnerMeta;
-          replacePostMeta(winnerHandle, {
+          replacePostMeta(winnerSlug, {
             ...winnerMetaRest,
             title: winnerArticle.title,
             target_keyword: decision.query,
@@ -512,9 +548,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let editorRan = false;
           let editorError = null;
           try {
-            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerHandle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
+            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerSlug}/content.html`, { cwd: ROOT, stdio: 'pipe' });
             editorRan = true;
-            console.log(`done → data/reports/editor/${winnerHandle}-editor-report.md`);
+            console.log(`done → data/reports/editor/${winnerSlug}-editor-report.md`);
           } catch (editorErr) {
             editorError = editorErr.stderr?.toString().trim().slice(0, 120) ?? editorErr.message;
             console.log(`editor warning (non-fatal): ${editorError}`);
@@ -526,7 +562,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let needsRebuild = null;
           if (editorRan) {
             try {
-              const meta = requirePostMeta(winnerHandle);
+              const meta = requirePostMeta(winnerSlug);
               needsRebuild = meta.needs_rebuild ?? null;
             } catch { /* missing/unreadable meta — treat as ambiguous, fall back to draft */ }
           }
@@ -543,6 +579,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
               body_html: mergedHtml,
               published: true,
             });
+            recordMaterialEdit(winnerHandle, 'rewrite', 'cannibalization-resolver');
             console.log('published');
           } else {
             consolidateHeld = true;
@@ -602,6 +639,8 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
                 results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'unpublish_skipped_no_article' });
               } else {
                 try {
+                  // edit-gate kind: repair — unpublishing the LOSER so its 301 can
+                  // fire; no body, title or meta is changed.
                   await updateArticle(loserArticle.blogId, loserArticle.articleId, { published: false });
                   console.log(`    Unpublished loser "${slugFromPath(loserPath)}" — the redirect can now fire.`);
                   results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'loser_unpublished', reason: disposition.reason });
@@ -629,6 +668,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
     for (const line of renderHoldLines(dedupeHeld(heldRecords))) console.log(`  ${line}`);
   }
   results.clusterHeld = heldRecords;
+
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
+  results.editGateHeld = editGateHeld;
 
   return results;
 }
@@ -681,6 +723,17 @@ function buildReport(groups, decisions, results) {
   }
 
   lines.push('');
+
+  // The digest body IS this report (notifyLatestReport), so a held merge has to
+  // be named here or it reaches nobody. A hold is the policy working: deferred,
+  // never status 'error'. Vanishes on a clean run.
+  const editGateLines = renderEditGateLines(results.editGateHeld || []);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — merges held (winner untouched, no redirect, re-proposes next run)');
+    lines.push('');
+    for (const l of editGateLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
 
   if (apply && results.length > 0) {
     lines.push('## Actions Taken');
@@ -846,18 +899,26 @@ async function publishPendingDrafts() {
     // Refresh local files from current Shopify draft so the editor evaluates the
     // actual content the user would see (the local data/posts/<slug>.html may be
     // stale from an earlier server run).
+    // Same shadow-dir rule as applyResolutions: the post dir that already holds
+    // this article, never a new one named for the handle.
+    const slug = postSlugFor(handle);
+    if (!slug) {
+      console.log(`    ⚠ data/posts/${handle}/ holds a different article — skipped rather than written into it.`);
+      summary.push({ winnerPath, status: 'dir_collision' });
+      continue;
+    }
     try {
-      ensurePostDir(handle);
-      writeFileSync(getContentPath(handle), article.body_html || '');
+      ensurePostDir(slug);
+      writeFileSync(getContentPath(slug), article.body_html || '');
 
       // Preserve any existing meta.json fields (e.g. shopify_article_id) and
       // ensure target_keyword + title are present so the editor can run.
       let existingMeta = {};
-      try { existingMeta = requirePostMeta(handle); } catch { /* ok */ }
+      try { existingMeta = requirePostMeta(slug); } catch { /* ok */ }
       // Drop any stale needs_rebuild flag from a previous run so the editor's
       // current verdict is the source of truth.
       const { needs_rebuild: _drop, ...metaRest } = existingMeta;
-      replacePostMeta(handle, {
+      replacePostMeta(slug, {
         ...metaRest,
         title: article.title,
         target_keyword: targetQueryByWinner.get(winnerPath) || metaRest.target_keyword || article.title,
@@ -873,7 +934,7 @@ async function publishPendingDrafts() {
     let editorRan = false;
     let editorError = null;
     try {
-      execSync(`"${process.execPath}" agents/editor/index.js data/posts/${handle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
+      execSync(`"${process.execPath}" agents/editor/index.js data/posts/${slug}/content.html`, { cwd: ROOT, stdio: 'pipe' });
       editorRan = true;
       console.log('done');
     } catch (editorErr) {
@@ -884,7 +945,7 @@ async function publishPendingDrafts() {
     let needsRebuild = null;
     if (editorRan) {
       try {
-        const meta = requirePostMeta(handle);
+        const meta = requirePostMeta(slug);
         needsRebuild = meta.needs_rebuild ?? null;
       } catch { /* ignore */ }
     }
@@ -899,6 +960,9 @@ async function publishPendingDrafts() {
 
     process.stdout.write('    Publishing... ');
     try {
+      // edit-gate: not gated — this publishes a DRAFT (published_at is null,
+      // checked above), so there is no live ranked page to protect, and its
+      // body is the one already on Shopify.
       await updateArticle(article.blogId, article.articleId, { published: true });
       console.log('published ✅');
       summary.push({ winnerPath, status: 'published' });

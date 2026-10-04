@@ -142,6 +142,8 @@ if (!dryFlag) {
         // Re-run editor to refresh the verdict (clears the blocker on the dashboard/digest).
         execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname, timeout: STEP_TIMEOUT_MS });
         if (onShopify) {
+          // edit-gate kind: repair — a broken link fixed in a live body; always
+          // allowed by lib/post-edit-gate.js, so the gate is not asked here.
           // Already live on Shopify — push the repaired body back up.
           // --force skips the editor gate since the post is already published.
           // Preserve a future shopify_publish_at so scheduled posts don't flip

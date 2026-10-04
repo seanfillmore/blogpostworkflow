@@ -37,6 +37,8 @@ import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
@@ -383,6 +385,7 @@ async function main() {
 
   // Select targets
   let targets = [];
+  const editGateHeld = [];
 
   // Separate normal keywords from long-form queries (likely AI-generated or
   // conversational searches). Long queries contain real user concerns that
@@ -444,6 +447,17 @@ async function main() {
     }
     console.log(`  ${candidates.length} candidates`);
 
+    // Live-article edit gate, BEFORE the --count cap: with --apply a refresh
+    // replaces a live body (`rewrite`, lib/post-edit-gate.js), so a frozen page
+    // or one inside its 28-day measurement window must not take a slot.
+    if (apply) {
+      const { kept, held } = partitionByEditGate(candidates, {
+        kind: 'rewrite', mayEdit: mayEditLivePost, targetOf: (c) => gateTargetHandle(c.url),
+      });
+      candidates = kept;
+      editGateHeld.push(...held);
+    }
+
     for (const candidate of candidates.slice(0, count)) {
       const handle = candidate.url.split('/').filter(Boolean).pop();
       const article = byHandle.get(handle);
@@ -499,6 +513,18 @@ async function main() {
     if (!bodyLock.allowed) {
       console.log(`    [skip] ${slug}: ${bodyLock.reason}`);
       continue;
+    }
+
+    // Edit gate, alongside the lock (not instead of it). Only when this run
+    // will write a LIVE article: refresh-runner calls without --apply, having
+    // asked the gate itself. Asked before the paid generation.
+    if (apply && article.published_at) {
+      const editGate = mayEditLivePost(article.handle, 'rewrite');
+      if (!editGate.allowed) {
+        console.log(`    [held] ${slug}: edit gate — ${editGate.reason}`);
+        editGateHeld.push({ target: article.handle, kind: 'rewrite', reason: editGate.reason, until: editGate.until });
+        continue;
+      }
     }
 
     console.log(`\n  [${i + 1}/${targets.length}] Refreshing "${article.title}"...`);
@@ -604,6 +630,7 @@ ${afCheck.intro?.html || ''}`,
             published: wasPublished,
           });
           applied = true;
+          if (wasPublished) recordMaterialEdit(article.handle, 'rewrite', 'content-refresher');
           console.log('done');
         } catch (e) {
           console.error(`failed: ${e.message}`);
@@ -659,6 +686,16 @@ ${afCheck.intro?.html || ''}`,
     }
     lines.push('');
     lines.push('---');
+    lines.push('');
+  }
+
+  // The digest body IS this report (notifyLatestReport). A hold is the policy
+  // working: named here, never status 'error'.
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — held (page unchanged, asked again next run)');
+    lines.push('');
+    for (const l of editGateLines) { lines.push(`- ${l.trim()}`); console.log(`  ${l}`); }
     lines.push('');
   }
 

@@ -61,6 +61,8 @@ import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-post
 import { RETIRED_STATUSES } from '../../lib/post-publish-state.js';
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
@@ -101,7 +103,7 @@ const DEFAULT_LIMIT = 5;
  */
 export function selectBlockedPostsWithHold(entries, {
   now = Date.now(), limit = null, slug = null, hold = null, includeHeld = false,
-  ranking = null,
+  ranking = null, mayEdit = null,
 } = {}) {
   const classified = (entries || [])
     .map((e) => {
@@ -129,8 +131,19 @@ export function selectBlockedPostsWithHold(entries, {
     out = efficiency.items;
   }
   if (slug) out = out.filter((e) => e.slug === slug);
+  // Live-article edit gate (lib/post-edit-gate.js), BEFORE the limit: pushing a
+  // remediated body onto a LIVE page is a `rewrite`, so a frozen page, a locked
+  // winner or one inside its 28-day measurement window is withheld here rather
+  // than eating a slot. Pre-publish posts are not live and are never asked.
+  // Injected so this stays pure; the flag is left set, asked again next run.
+  const { kept: gateKept, held: editGated } = partitionByEditGate(out, {
+    kind: 'rewrite',
+    mayEdit,
+    targetOf: (e) => (e.live ? (e.meta?.shopify_handle || e.slug) : null),
+  });
+  out = gateKept;
   if (limit) out = out.slice(0, limit);
-  return { kept: out, held, overridden, efficiency };
+  return { kept: out, held, overridden, efficiency, editGated };
 }
 
 /** The selection alone. Kept as the call shape everything already uses. */
@@ -302,6 +315,8 @@ function collectEntries() {
 }
 
 const NODE = process.execPath;
+/** scripts/remediate-live-post.js exits with this when the edit gate held the page. */
+const EDIT_GATE_HELD_EXIT = 3;
 /** Run a child step. Returns the exit code (0 = ok); never throws. */
 function runStep(cmd) {
   try { execSync(cmd, { cwd: ROOT, stdio: 'inherit' }); return 0; }
@@ -333,7 +348,14 @@ async function softenAndSettle(slug, meta) {
     const live = await getArticle(meta.shopify_blog_id, meta.shopify_article_id);
     const body = readFileSync(getContentPath(slug), 'utf8');
     if (body && body !== (live.body_html || '')) {
+      const gateTarget = meta.shopify_handle || slug;
+      const editGate = mayEditLivePost(gateTarget, 'rewrite');
+      if (!editGate.allowed) {
+        console.log(`  ${slug}: ⏸ edit gate held the push — ${editGate.reason}. Page left LIVE and unchanged; flag kept.`);
+        return { outcome: 'edit-gate', target: gateTarget, reason: editGate.reason, until: editGate.until };
+      }
       await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: body });
+      recordMaterialEdit(gateTarget, 'rewrite', 'blocked-post-resolver');
       console.log(`  ${slug}: ✓ softening cleared the gate — pushed to Shopify.`);
     }
     replacePostMeta(slug, metaAfterSuccess(getPostMeta(slug) || meta, { at }));
@@ -366,9 +388,11 @@ async function main() {
   const rankBanner = efficiencyBanner(ranking);
   if (rankBanner) console.log(`${rankBanner}\n`);
 
-  const { kept: candidates, held, efficiency } = selectBlockedPostsWithHold(
-    collectEntries(), { limit, slug, hold, includeHeld, ranking },
+  const { kept: candidates, held, efficiency, editGated } = selectBlockedPostsWithHold(
+    collectEntries(), { limit, slug, hold, includeHeld, ranking, mayEdit: mayEditLivePost },
   );
+  const editGateHeld = [...editGated];
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
   console.log(`  ${candidates.length} blocked post(s)${apply ? '' : ' (DRY RUN)'}`);
   if (held.length) for (const line of renderHoldLines(held)) console.log(`  ${line}`);
   const rankLines = renderEfficiencyLines(ranking, efficiency);
@@ -376,9 +400,9 @@ async function main() {
 
   if (!apply) {
     for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
-    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
+    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: [...rankLines, ...renderEditGateLines(editGateHeld), ...renderDisagreementLines(hold)] });
     console.log(`\n${body}`);
-    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
+    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)}${editGateSummaryFragment(editGateHeld)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
     return;
   }
 
@@ -392,6 +416,13 @@ async function main() {
       // The canonical repair loop. --push because the scheduled path applies
       // (Autonomy Principle); it still pushes ONLY a revision that PASSES.
       const code = runStep(`"${NODE}" scripts/remediate-live-post.js ${entry.slug} --push`);
+      if (code === EDIT_GATE_HELD_EXIT) {
+        // The edit gate refused at the write site (the verdict changed since
+        // selection). Not a failure, not a write-off: flag kept, asked again.
+        editGateHeld.push({ target: entry.meta?.shopify_handle || entry.slug, kind: 'rewrite', reason: 'held at the write site by the edit gate (see console)' });
+        console.log(`  [held] ${entry.slug}: edit gate — left live, flag kept.`);
+        continue;
+      }
       if (code === 0) {
         const at = new Date().toISOString();
         replacePostMeta(entry.slug, metaAfterSuccess(getPostMeta(entry.slug) || entry.meta, { at }));
@@ -400,6 +431,7 @@ async function main() {
         continue;
       }
       const settled = await softenAndSettle(entry.slug, entry.meta);
+      if (settled.outcome === 'edit-gate') { editGateHeld.push({ target: settled.target, kind: 'rewrite', reason: settled.reason, until: settled.until }); continue; }
       if (settled.outcome === 'resolved') resolved.push({ slug: entry.slug, softened: true });
       else exhausted.push({ slug: entry.slug, reasons: settled.reasons });
     } catch (err) {
@@ -419,11 +451,11 @@ async function main() {
     }
   }
 
-  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: [...rankLines, ...renderEditGateLines(editGateHeld), ...renderDisagreementLines(hold)] });
   console.log(`\n${body}`);
 
   await notify({
-    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed${holdSummaryFragment(held)}`,
+    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed${holdSummaryFragment(held)}${editGateSummaryFragment(editGateHeld)}`,
     body,
     // Deferred, per the digest convention in CLAUDE.md — never immediate. An
     // exhausted post is a note, not an outage: the page is still live.
