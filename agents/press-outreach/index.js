@@ -35,6 +35,9 @@
  *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
  *                                                          # daily: turn prospects into pitch drafts for approval
  *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
+ *   node agents/press-outreach/index.js --check-links [--apply]
+ *                                                          # weekly (Mon 14:25 UTC): find earned links and mentions
+ *                                                          # among engaged pitches, then send the funnel digest
  *
  * Cron: every 30 minutes, plus `--draft --apply` daily at 14:20 UTC (scripts/setup-cron.sh). Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
@@ -54,7 +57,7 @@
  * addresses and messages and must never be committed; fixtures use example.com.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, unlinkSync, statSync, copyFileSync, utimesSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync, renameSync, unlinkSync, statSync, copyFileSync, utimesSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -68,7 +71,8 @@ import {
 import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
-import { fetchWithOutcome } from '../../lib/fetch-pool.js';
+import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
+import { checkLinks, funnel, renderFunnel, referringDomainsChange } from '../../lib/press-links.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -1563,6 +1567,68 @@ async function runBackfill(args, apply, creds) {
   }
 }
 
+/**
+ * The authors' pages the pr-targets report knows, keyed by outlet domain, so a
+ * pitch to that outlet can also be checked on the author's archive.
+ */
+export function authorUrlsFromTargets(prTargets) {
+  const map = new Map();
+  for (const r of (prTargets && prTargets.pitch_targets) || []) {
+    const d = normalizeDomain(r.domain || '');
+    if (d && r.author_url && !map.has(d)) map.set(d, r.author_url);
+  }
+  return map;
+}
+
+export function renderLinkDigest({ found, candidates, tally, f, change, apply }) {
+  const lines = [apply ? '' : 'DRY RUN: nothing was written.'];
+  lines.push(renderFunnel(f));
+  if (found.length) {
+    lines.push('New earned coverage:');
+    for (const x of found) lines.push(`  - ${x.name}: ${x.kind === 'link' ? `LINK (${x.dofollow ? 'dofollow' : 'nofollow'})` : 'mention, no link'} ${x.url}`);
+  } else lines.push('No new links or mentions found.');
+  lines.push(`Pitches checked: ${candidates.length}. Fetch outcomes: ${renderOutcomeTally(tally)}. Unreachable pages were not judged either way.`);
+  if (change) lines.push(`Context, not attributed to outreach: site-wide referring domains ${change.from} to ${change.to} (${change.delta >= 0 ? '+' : ''}${change.delta}) between ${change.prevDate} and ${change.date}.`);
+  const links = found.filter((x) => x.kind === 'link').length;
+  return { subject: `Press links: ${links} new ${links === 1 ? 'link' : 'links'} · ${found.length - links} mentions · ${f.last28.sent} sent in 28d`, body: lines.filter((l, i) => i > 0 || l).join('\n') };
+}
+
+function readBacklinkSnapshots() {
+  const dir = join(ROOT, 'data', 'backlinks', 'snapshots');
+  try {
+    return readdirSync(dir).filter((n) => n.endsWith('.json')).sort().slice(-2).map((n) => JSON.parse(readFileSync(join(dir, n), 'utf8')));
+  } catch { return []; }
+}
+
+/** Weekly: look for our links and mentions on engaged pitches. Fails open. */
+async function runLinkCheck(apply, env, config) {
+  console.log(`Press link check${apply ? '' : ' (dry run)'}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  if (apply && !acquireLock()) {
+    console.log('another press-outreach run holds the lock (data/press/.lock); link check skipped this week');
+    return;
+  }
+  try {
+    const loaded = readBook();
+    if (!loaded.available) { console.log(`contact book unavailable: ${loaded.reason}`); return; }
+    const authors = authorUrlsFromTargets(readJson('data/reports/pr-targets/latest.json'));
+    const authorUrlOf = (c, p) => {
+      let host = null;
+      try { host = normalizeDomain(new URL(p.target_url).hostname); } catch { /* no target url */ }
+      return (host && authors.get(host)) || null;
+    };
+    const nowMs = Date.now();
+    const res = await checkLinks({ book: loaded.doc, nowMs, fetchPage: (u) => fetchWithOutcome(u), authorUrlOf });
+    if (apply && res.found.length) writeBook(res.book);
+    const drafts = loadDrafts(join(ROOT, DRAFTS_DIR), undefined, { onError: () => {} });
+    const { subject, body } = renderLinkDigest({ ...res, f: funnel(res.book.contacts, drafts, nowMs), change: referringDomainsChange(readBacklinkSnapshots()), apply });
+    console.log(`\n${subject}\n\n${body}`);
+    if (apply) await notify({ subject, body, status: 'info', category: 'press' });
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
@@ -1587,6 +1653,10 @@ async function main() {
   }
   if (args.includes('--backfill')) {
     await runBackfill(args, apply, creds);
+    return { imapDown: false };
+  }
+  if (args.includes('--check-links')) {
+    await runLinkCheck(apply, env, config);
     return { imapDown: false };
   }
   if (args.includes('--draft')) {

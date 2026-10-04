@@ -195,6 +195,11 @@ PRESS_OUTREACH="17,47 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach
 # shared lock, before the 16:00 send window, and clear of the 12:20-12:50 detectors.
 PRESS_OUTREACH_DRAFT="20 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --draft --apply >> data/reports/scheduler/press-outreach-draft.log 2>&1"
 
+# Press outreach earned-link check: weekly, looks for our links and mentions on
+# pages of engaged pitches and sends the funnel digest. Monday 14:25 UTC, after
+# the 14:20 drafting run has released the shared lock.
+PRESS_OUTREACH_LINKS="25 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --check-links --apply >> data/reports/scheduler/press-outreach-links.log 2>&1"
+
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
 # folders Sean already uses. Rules are learned from those folders; moves, never
 # deletes. 13:40 UTC = 6:40am PDT, before the working day.
@@ -592,6 +597,7 @@ $DAILY_TRYBE_REVIEW
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
+$PRESS_OUTREACH_LINKS
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
 # ── Daily digest ──
