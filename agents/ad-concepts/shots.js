@@ -60,7 +60,7 @@ export function buildTakePrompt({ sceneSpec, concept, product, brandKit }) {
 
 // onTake runs as soon as a take is verified, so a throw on a LATER take (or later in the
 // concept) cannot lose a render that was already paid for and checked.
-export async function runConceptTakes({ concept, prompt, render, verify, budget, takes = 3, retryTakes = 2, onTake = null }) {
+export async function runConceptTakes({ concept, prompt, render, verify, budget, takes = 3, retryTakes = 2, onTake = null, fallbackPrompt = null, primaryTakes = 2, fallbackTakes = 2 }) {
   const all = [];
   let budgetStopped = false;
   const review = concept.people !== 'none' ? ['anatomy'] : [];
@@ -75,6 +75,13 @@ export async function runConceptTakes({ concept, prompt, render, verify, budget,
       if (onTake) await onTake(take);
     }
   };
+
+  if (fallbackPrompt) {
+    // Structure pipeline: primary scene, then the fallback scene; no repair round.
+    await shoot(primaryTakes, prompt);
+    if (!budgetStopped && !all.some(t => t.proof.ok)) await shoot(fallbackTakes, fallbackPrompt);
+    return { takes: all, passed: all.filter(t => t.proof.ok), budgetStopped, repaired: false, usedFallback: all.length > primaryTakes };
+  }
 
   await shoot(takes, prompt);
   let repaired = false;
