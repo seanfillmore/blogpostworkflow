@@ -165,3 +165,41 @@ test('a tag mismatch alone does not downgrade looks_ready; a real issue still do
 test('the cache key carries the review revision, so a rules change re-reviews', () => {
   assert.equal(cacheKey({ id: 'abc', version: 2 }), `abc-v2-r${REVIEW_REVISION}`);
 });
+
+const cream = { handle: 'coconut-moisturizer', title: 'Coconut Moisturizer | 4oz', body_html: '<p>Thicker than the lotion, a cream in a jar.</p>', images: [{ src: 'https://cdn.shopify.com/jar1.jpg' }, { src: 'https://cdn.shopify.com/jar2.jpg' }] };
+
+test('a mis-tagged image is reviewed a second time against the SHOWN product\'s photos', async () => {
+  const reqs = [];
+  const calls = [];
+  const first = { ...good, product_shown: 'Coconut Breeze body cream', product_shown_handle: 'coconut-moisturizer', issues: [{ type: 'tag', detail: 'tagged as lotion, shows the cream' }] };
+  const client = { messages: { create: async (req) => { reqs.push(req); return { content: [{ type: 'text', text: reply(reqs.length === 1 ? first : { ...good, product_shown: 'cream' }) }] }; } } };
+  const review = createVisualReviewer({ client, fetchImpl: imgFetch(calls), shopifyProducts: [lotion, cream] });
+  const { verdict } = await review(still);
+  assert.equal(reqs.length, 2, 'exactly one extra review');
+  assert.ok(calls.some((u) => u.includes('jar1.jpg')), 'the cream\'s photos were fetched');
+  const secondText = reqs[1].messages[0].content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+  assert.match(secondText, /TAGGED this as Non-Toxic Body Lotion/);
+  assert.match(secondText, /PRODUCT: Coconut Moisturizer \| 4oz/);
+  assert.deepEqual(verdict.compared_against, ['coconut-moisturizer']);
+  assert.equal(verdict.verdict, 'looks_ready', 'the carried-over tag note alone does not downgrade');
+  assert.equal(verdict.issues[0].type, 'tag');
+});
+
+test('no second review when the shown product IS the tag, is unknown, or is not on the store', async () => {
+  for (const handle of ['coconut-lotion', '', 'made-up-product']) {
+    let n = 0;
+    const client = { messages: { create: async () => { n++; return { content: [{ type: 'text', text: reply({ ...good, product_shown_handle: handle }) }] }; } } };
+    await createVisualReviewer({ client, fetchImpl: imgFetch([]), shopifyProducts: [lotion, cream] })(still);
+    assert.equal(n, 1, handle || '(empty)');
+  }
+});
+
+test('a failed second review keeps the first verdict and says packaging was not compared', async () => {
+  let n = 0;
+  const client = { messages: { create: async () => (++n === 1
+    ? { content: [{ type: 'text', text: reply({ ...good, product_shown_handle: 'coconut-moisturizer' }) }] }
+    : { content: [{ type: 'text', text: 'sorry' }] }) } };
+  const { verdict } = await createVisualReviewer({ client, fetchImpl: imgFetch([]), shopifyProducts: [lotion, cream] })(still);
+  assert.match(verdict.issues.at(-1).detail, /packaging was not compared with Coconut Moisturizer/);
+  assert.equal(verdict.verdict, 'unsure');
+});
