@@ -142,7 +142,20 @@ export const FIDELITY_ATTRIBUTES = [
   {
     key: 'labelLayout',
     label: 'the order and placement of the elements on the label',
-    ask: 'Do the brand mark, product name, variant name, badge and volume sit in the same positions, top to bottom, as in the photographs?',
+    // WIDENED 2026-10-04. Top-to-bottom order alone passed a jar whose label had the right
+    // order but a different ARRANGEMENT: the reference sets the illustration at the left with
+    // a left-aligned text column beside it, the render centred every line with a small leaf
+    // tucked next to the name. Sean: "The label is completely different and not usable."
+    ask: 'Do the brand mark, product name, variant name, badge and volume sit in the same positions as in the photographs, both top to bottom AND left to right? Check the arrangement as well as the order: whether the text block is left-aligned beside an illustration or centred across the label, which side the illustration sits on, and roughly how much of the label width it takes. Same order but a different arrangement is a mismatch.',
+  },
+  {
+    // ADDED 2026-10-04 with the widening above: the same rejected jar printed the brand as a
+    // plain upright serif where the real wordmark is a distinctive italic/script lowercase.
+    // The wordmark is the largest brand element on the label, so it survives a medium-sized
+    // render; on a small one CANNOT_TELL keeps this from costing retries.
+    key: 'wordmark',
+    label: 'the lettering style of the brand wordmark',
+    ask: 'Compare only the STYLE of the brand mark\'s letters, not their spelling: italic or upright, script or plain, serif or sans, heavy or light. A plain upright typeface where the photographs show a distinctive italic or script mark is a mismatch.',
   },
   {
     key: 'labelGraphics',
