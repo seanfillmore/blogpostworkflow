@@ -20,3 +20,18 @@ test('a concepts run shows the typeset final as a trusted comp', () => {
   assert.equal(t.compTrusted, true);
   assert.equal(t.ratio, '4x5');
 });
+
+test('a structures run whose final has a different ratio from its plate (split panel) still shows it, via proof.final', () => {
+  const root = mkdtempSync(join(tmpdir(), 'runs-'));
+  const run = join(root, 'structures-x'); const v = join(run, 'they-think-we-sell', 'v1');
+  mkdirSync(v, { recursive: true });
+  writeFileSync(join(run, 'run.json'), JSON.stringify({ kind: 'ad-structures', generatedAt: '2026-10-03', product: { handle: 'x', title: 'X' }, totals: {}, results: [] }));
+  writeFileSync(join(v, 'meta-plate-take1-9x16.jpg'), 'x');
+  writeFileSync(join(v, 'meta-generic-take1-9x16.jpg'), 'x');
+  writeFileSync(join(v, 'meta-final-take1-4x5.jpg'), 'x');
+  writeFileSync(join(v, 'proof.json'), JSON.stringify({ 'meta-plate-take1-9x16.jpg': { ok: true, reasons: [], final: 'meta-final-take1-4x5.jpg' } }));
+  const t = readRun(root, 'structures-x').concepts[0].variations[0].targets;
+  assert.equal(t.length, 1, 'the generic product-free plate is not a target');
+  assert.equal(t[0].comp, 'meta-final-take1-4x5.jpg');
+  assert.equal(t[0].compTrusted, true);
+});

@@ -1,0 +1,313 @@
+{
+  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (the structure's default run ratio, 1:1|4:5) and optional ratios[] (every run ratio it supports, each one its layout renders; a run uses ONE output ratio, default 4:5, and only selects structures supporting it), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, ratio (the plate's own render ratio: 1:1|4:5|3:4|9:16), scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here. A model slot may carry sourceWords: \"reviews\" (every content word must appear in the review evidence). bandPreference[] names value-line ids (free-shipping, made-in-usa, ingredients, ingredients-origin) tried first for an offerOrValue band; a verified --offer still wins unless bandPreferenceOverOffer is true. A checklist oursRows slot names minRows/maxRows: the model picks that many rows by index from the gated candidates.",
+  "version": 1,
+  "structures": [
+    {
+      "id": "comment-card-offer",
+      "name": "Customer comment card + offer band",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Ancestral Cosmetics",
+          "days": 304,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=839428982013888",
+          "image": "sources/ancestral-cosmetics-2025-12-02-1.jpg"
+        }
+      ],
+      "layout": "comment-card",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
+      "fits": [
+        "cream",
+        "lotion"
+      ],
+      "requires": [
+        "review"
+      ],
+      "people": "none",
+      "scene": {
+        "primary": "Our {productNoun} ({productDescriptionShort}) stands upright with its lid on, on a light wood bathroom counter, centred and large in the lower half of the frame: it fills about 45% of the frame height, label facing straight at the camera, sharp and evenly lit. The upper half of the frame is a plain, softly out-of-focus pale wall with nothing on it.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and large on a plain light surface, centred in the lower half of the frame and filling about 50% of the frame height, label facing straight at the camera, sharp and evenly lit. The upper half is a plain, softly out-of-focus pale wall."
+      },
+      "slots": {
+        "headline": {
+          "source": "model",
+          "maxWords": 5,
+          "style": "a 2-4 word category title in the reviewer's own framing"
+        },
+        "quote": {
+          "source": "review",
+          "maxChars": 220
+        },
+        "band": {
+          "source": "offerOrValue"
+        }
+      },
+      "notes": "A real review as a social-comment card over the product, with a plain band. Do not invent names, avatars as people, or likes counts; attribute \"Customer review\"."
+    },
+    {
+      "id": "texture-scoop",
+      "name": "Finger-scoop texture close-up",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Beauty From Bees",
+          "days": 256,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=1442034064205051",
+          "image": "sources/beauty-from-bees-2026-01-19-1.jpg"
+        }
+      ],
+      "layout": "headline-over-photo",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
+      "fits": [
+        "cream"
+      ],
+      "requires": [
+        "review"
+      ],
+      "people": "hands",
+      "scene": {
+        "primary": "Extreme close-up: one hand holds our open {productNoun} ({productDescriptionShort}) from below while the index finger of the other hand lifts a generous, glossy swirl of thick whipped white cream out of it. The label is visible below the rim. Very shallow depth of field, soft warm window light, a blurred neutral background with clean empty space in the upper-left third of the frame. Natural relaxed hands with five fingers each, short unpainted nails.",
+        "fallback": "Close-up of our {productNoun} ({productDescriptionShort}) standing large in the lower half of the frame, label facing the camera, with one finger resting beside a small dab of the product on the surface. Soft warm window light, blurred neutral background, clean empty space in the upper-left third."
+      },
+      "slots": {
+        "headline": {
+          "source": "model",
+          "maxWords": 4,
+          "style": "a short texture benefit built only from words in a chosen review (soft, not greasy), no claim beyond it",
+          "sourceWords": "reviews"
+        }
+      },
+      "notes": "Texture is the hook; the headline is sourced from review wording. Hands trigger human review. Do not copy the competitor body-part imagery."
+    },
+    {
+      "id": "they-think-we-sell",
+      "name": "What they think we sell / what we actually sell",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Ancestral Cosmetics",
+          "days": 207,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=955591563601456",
+          "image": "sources/ancestral-cosmetics-2026-03-09-1.jpg"
+        }
+      ],
+      "layout": "split-two-panel",
+      "ratio": "4:5",
+      "fits": [
+        "lotion",
+        "cream"
+      ],
+      "requires": [
+        "catalogFact"
+      ],
+      "people": "none",
+      "scene": {
+        "primary": "Our {productNoun} ({productDescriptionShort}) stands upright on a white marble bathroom counter, centred and large: it fills about 65% of the frame height, label facing straight at the camera, sharp and evenly lit. Behind it, softly out of focus, a bright airy bathroom with a green plant.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and very large on a plain light surface, filling about 75% of the frame height, label facing the camera, evenly lit, plain softly blurred background."
+      },
+      "plates": [
+        {
+          "kind": "generic",
+          "productFree": true,
+          "ratio": "9:16",
+          "scene": {
+            "primary": "A plain, unbranded clear plastic tub of solid white cooking coconut oil, lid off, a metal spoon stuck in it, on a plain, tidy kitchen counter beside an empty frying pan. Nothing else is in the frame: no jars, bottles, boxes, appliances or packaging anywhere, and a plain tiled or painted wall behind. Unlabelled: no logo, no printing, no text on the tub.",
+            "fallback": "A plain, unbranded jar of solid white cooking fat, lid off, alone on a bare kitchen counter against a plain wall. Nothing else is in the frame: no other jars, bottles, boxes or packaging. Unlabelled: no logo, no printing, no text anywhere."
+          }
+        },
+        {
+          "kind": "product",
+          "productFree": false,
+          "ratio": "3:4"
+        }
+      ],
+      "slots": {
+        "left": {
+          "source": "template",
+          "template": "{category} they think we sell"
+        },
+        "right": {
+          "source": "template",
+          "template": "{category} we actually sell"
+        },
+        "band": {
+          "source": "offerOrValue"
+        }
+      },
+      "notes": "The left plate is a generic product-free kitchen-staple stand-in (never a competitor brand); the right is our verified product. Do not copy the competitor humour or any claim about their product.",
+      "bandPreference": [
+        "ingredients-origin"
+      ]
+    },
+    {
+      "id": "ours-vs-theirs-checklist",
+      "name": "Ours vs theirs checklist",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Ancestral Cosmetics",
+          "days": 207,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=1303931671557681",
+          "image": "sources/ancestral-cosmetics-2026-03-09-5.jpg"
+        },
+        {
+          "brand": "Wild Gold Tallow",
+          "days": 204,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=1175091274546616",
+          "image": "sources/wild-gold-tallow-2026-03-12-2.jpg"
+        }
+      ],
+      "layout": "checklist-split",
+      "ratio": "4:5",
+      "fits": [
+        "lotion",
+        "cream"
+      ],
+      "requires": [
+        "catalogFact"
+      ],
+      "people": "none",
+      "scene": {
+        "primary": "Our {productNoun} ({productDescriptionShort}) stands upright on a plain light surface in the right half of the frame, large, label facing the camera, evenly lit; the left half is plain, softly blurred and empty.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and very large, centred on a plain light surface, label facing the camera, evenly lit, plain softly blurred background."
+      },
+      "rows": {
+        "theirsLabel": "Typical drugstore lotion",
+        "theirs": [
+          "Long ingredient list",
+          "Synthetic fragrance",
+          "Hard-to-pronounce additives"
+        ],
+        "oursSource": "catalogFact"
+      },
+      "slots": {
+        "title": {
+          "source": "template",
+          "template": "Ours vs {theirsLabel}"
+        },
+        "oursRows": {
+          "source": "catalogFact",
+          "maxRows": 4,
+          "verbatim": true,
+          "minRows": 3
+        },
+        "band": {
+          "source": "offerOrValue"
+        }
+      },
+      "notes": "Our facts only, each stated verbatim in the catalog or PDP; theirs is a generic category, never a brand. The fixed theirs rows are category negatives and must still clear the claim gates."
+    },
+    {
+      "id": "product-group-plain",
+      "name": "Plain product group shot",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Carolina Tallow",
+          "days": 386,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=1611709743547178",
+          "image": "sources/carolina-tallow-2025-09-11-1.jpg"
+        }
+      ],
+      "layout": "photo-only",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
+      "fits": [
+        "cream",
+        "lotion"
+      ],
+      "requires": [],
+      "people": "none",
+      "scene": {
+        "primary": "Our {productNoun} ({productDescriptionShort}) stands on a plain light wooden surface, large and centred, label facing the camera, soft daylight, a plain softly blurred neutral background.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and very large on a plain light surface, filling most of the frame height, label facing the camera, evenly lit, plain background."
+      },
+      "slots": {
+        "band": {
+          "source": "offerOrValue",
+          "optional": true
+        }
+      },
+      "notes": "No overlay text except an optional band. The longest-running survivor is the plainest."
+    },
+    {
+      "id": "labelled-bundle-offer",
+      "name": "Labelled bundle with offer",
+      "status": "approved",
+      "sources": [
+        {
+          "brand": "Ancestral Cosmetics",
+          "days": 304,
+          "adLibraryUrl": "https://www.facebook.com/ads/library/?id=845560184737753",
+          "image": "sources/ancestral-cosmetics-2025-12-02-2.jpg"
+        }
+      ],
+      "layout": "labelled-bundle",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
+      "fits": [
+        "cream",
+        "lotion"
+      ],
+      "requires": [
+        "offer",
+        "bundleLanding"
+      ],
+      "people": "none",
+      "scene": {
+        "primary": "Our bundle products ({productDescriptionShort}) are arranged together on a plain light surface, standing upright and large with labels facing the camera, evenly lit, plain softly blurred background, clear empty space along the bottom.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and large, centred on a plain light surface, label facing the camera, evenly lit, clear empty space along the bottom."
+      },
+      "slots": {
+        "labels": {
+          "source": "template",
+          "template": "product names from the bundle"
+        },
+        "band": {
+          "source": "offer"
+        }
+      },
+      "labelPositions": [
+        {
+          "x": 0.25,
+          "y": 0.12,
+          "tx": 0.32,
+          "ty": 0.42
+        },
+        {
+          "x": 0.75,
+          "y": 0.12,
+          "tx": 0.68,
+          "ty": 0.42
+        },
+        {
+          "x": 0.25,
+          "y": 0.8,
+          "tx": 0.32,
+          "ty": 0.62
+        },
+        {
+          "x": 0.75,
+          "y": 0.8,
+          "tx": 0.68,
+          "ty": 0.62
+        }
+      ],
+      "notes": "Only runs when --offer is verified and the landing product is a bundle. Offer text is the verified price pair only."
+    }
+  ]
+}

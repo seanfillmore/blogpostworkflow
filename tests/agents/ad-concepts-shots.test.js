@@ -1,28 +1,13 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { sceneTextBlock, typeBandBlock, buildTakePrompt, parseShotSpec, runConceptTakes } from '../../agents/ad-concepts/shots.js';
+import { unitBlock, runConceptTakes } from '../../agents/ad-concepts/shots.js';
 import { createRenderBudget } from '../../agents/ad-studio/index.js';
 
-const product = { handle: 'coconut-soap', unitCount: 1, labelStrings: ['real SKIN CARE', '3.4 oz • 84g'], badgeStrings: [], physicalDescription: 'A round wrapped bar.' };
-const concept = { id: 'c', people: 'none', sceneText: 'illegible-print', typeBand: 'top' };
+const concept = { id: 'c', people: 'none' };
 
-test('scene-text and type-band blocks are exact', () => {
-  assert.match(sceneTextBlock('illegible-print'), /fine grey hairlines only/);
-  assert.match(sceneTextBlock('illegible-print'), /no letters, numbers or symbols/);
-  assert.match(sceneTextBlock('none'), /no text anywhere except our product's own label/i);
-  assert.match(typeBandBlock('top'), /top quarter/);
-  assert.match(typeBandBlock('bottom'), /bottom quarter/);
-});
-
-test('take prompt = scene + type band + scene text + product fidelity; people flag reaches fidelity', () => {
-  const p = buildTakePrompt({ sceneSpec: 'A kitchen.', concept, product, brandKit: {} });
-  assert.ok(p.startsWith('A kitchen.'));
-  assert.match(p, /PRODUCT FIDELITY IS THE HIGHEST PRIORITY/);
-  assert.match(p, /No human hands or faces\./);
-  assert.match(p, /EXACTLY 1 UNIT OF OUR PRODUCT/);
-  const withPeople = buildTakePrompt({ sceneSpec: 'A man.', concept: { ...concept, people: 'face' }, product, brandKit: {} });
-  assert.doesNotMatch(withPeople, /No human hands or faces/);
-  assert.throws(() => parseShotSpec('   '), /empty/);
+test('unitBlock states the exact unit count', () => {
+  assert.match(unitBlock(1), /EXACTLY 1 UNIT OF OUR PRODUCT\./);
+  assert.match(unitBlock(3), /EXACTLY 3 UNITS OF OUR PRODUCT\./);
 });
 
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 1]);
@@ -67,9 +52,3 @@ test('onTake fires per verified take, before a later render can throw', async ()
   assert.deepEqual(seen, [1, 2]);
 });
 
-test('take prompt states the label ink when the product has one, and says nothing when it does not', () => {
-  const p = buildTakePrompt({ sceneSpec: 'A kitchen.', concept, product: { ...product, labelInk: 'black' }, brandKit: {} });
-  assert.match(p, /All printed type on our product's label is black ink; only the botanical illustration is in colour\./);
-  const none = buildTakePrompt({ sceneSpec: 'A kitchen.', concept, product, brandKit: {} });
-  assert.doesNotMatch(none, /printed type on our product's label is/);
-});

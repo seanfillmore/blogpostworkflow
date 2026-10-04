@@ -196,13 +196,17 @@ export function readRun(rootDir, runId) {
           const comp = compFor(plateName);
           const entry = proof[plateName] || proof[basename(plateName, '.jpg') + '.png'] || null;
           const key = `${conceptSlug}/${vName}/${plateName}`;
+          // A structures run names its final in proof.json: a split's product plate renders at 3:4
+          // (its product-free generic plate at 9:16) while the final is at the run ratio, so the
+          // name-swap below cannot find it.
+          const final = [entry?.final, finalFor(plateName)].find(f => f && files.includes(f)) || null;
           return {
             key,
             ratio: (plateName.match(/-(\d+x\d+|1_91x1)\./) || [])[1] || '',
             platform: plateName.split('-')[0],
             plate: plateName,
-            comp: files.includes(finalFor(plateName)) ? finalFor(plateName) : (files.includes(comp) ? comp : null),
-            compTrusted: files.includes(finalFor(plateName)),
+            comp: final || (files.includes(comp) ? comp : null),
+            compTrusted: !!final,
             attempts: entry?.attempts ?? null,
             outcome: classifyOutcome(entry),
             checks: summariseChecks(entry),

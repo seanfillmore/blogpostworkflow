@@ -48,3 +48,20 @@ test('checkOcclusion throws on a cut-off reply', async () => {
   const anthropic = { messages: { create: async () => reply('{"productVis', 'max_tokens') } };
   await assert.rejects(checkOcclusion({ anthropic, model: 'v', buffer: JPEG, mediaType: 'image/jpeg', productDescription: 'a bar', band: 'top' }), /cut off/);
 });
+
+test('with layout regions, the prompt names where the type sits instead of a quarter band', () => {
+  const p = buildOcclusionPrompt({
+    productDescription: 'A white squeeze bottle.',
+    regions: [{ name: 'headline', x: 40, y: 56, w: 1000, h: 118 }, { name: 'band', x: 0, y: 976, w: 1080, h: 104 }],
+    size: { width: 1080, height: 1080 },
+  });
+  assert.match(p, /headline: left 4%, top 5%, 93% wide, 11% tall/);
+  assert.match(p, /band: left 0%, top 90%, 100% wide, 10% tall/);
+  assert.doesNotMatch(p, /quarter/);
+  assert.match(p, /covered/i);
+});
+
+test('with no regions at all (a photo with nothing set on it) the prompt says so', () => {
+  const p = buildOcclusionPrompt({ productDescription: 'x', regions: [], size: { width: 1080, height: 1080 } });
+  assert.match(p, /No overlay type/);
+});

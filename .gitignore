@@ -383,3 +383,4 @@ data/ad-test-monitor/
 
 # Trybe visual-review verdict cache: regenerable, server-written (agents/trybe-review)
 data/reports/trybe-review/
+data/ad-structures/.chrome-profile/

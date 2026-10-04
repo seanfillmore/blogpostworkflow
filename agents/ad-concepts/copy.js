@@ -1,11 +1,11 @@
 // agents/ad-concepts/copy.js
 //
-// Overlay copy per concept and the ad-level flexible copy. Every string passes the same
-// gates as Ad Studio's copy, plus the no-em-dash rule. Policy: one regeneration that
-// names the failure, then give up (the caller replaces the concept).
+// The copy gate every visible string passes (slot text, bands, checklist rows) and the
+// ad-level flexible copy. Every string passes the same gates as Ad Studio's copy, plus the
+// no-em-dash rule. Policy: one regeneration that names the failure, then give up.
 //
 // Claim gating has two shapes, because two callers write claims two ways:
-//   - overlay claims are { text, sourceId }; the text is its own verbatim evidence quote,
+//   - slot claims are { text, sourceId }; the text is its own verbatim evidence quote,
 //     checked by concepts.js's checkClaimsSourced (raw sourceIndex, normalized there).
 //   - flexible claims arrive in Ad Studio's { zone, text, factual, sourceId, evidence }
 //     shape (parseFlexibleCopyResponse passes them through untouched), so those go through
@@ -25,51 +25,18 @@ const textOf = (msg) => (msg?.content || []).filter(b => b.type === 'text').map(
 const words = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
 const firstLine = (e) => String(e?.message || e).split('\n')[0];
 
-function extractJson(text) {
-  const s = String(text || '');
-  const a = s.indexOf('{'); const b = s.lastIndexOf('}');
-  if (a === -1 || b <= a) throw new Error('ad-concepts: no JSON object in the copy response');
-  return JSON.parse(s.slice(a, b + 1));
-}
-
 async function call(anthropic, model, content, maxTokens = 1500) {
   const msg = await anthropic.messages.create({ model, max_tokens: maxTokens, messages: [{ role: 'user', content }] });
   if (msg.stop_reason === 'max_tokens') throw new Error('ad-concepts: the copy response was cut off at the token limit.');
   return textOf(msg);
 }
 
-export function buildOverlayCopyPrompt({ concept, product, pdpBody, sourceIds, retryNote = null }) {
-  return `Write the overlay type for one static ad image for ${product.title}.${buildVariantBlock(product.variant)}
-The image: ${concept.picture}
-Anchor: ${concept.anchor || ''}. Twist: ${concept.twist}. Draft idea: "${concept.headlineIdea}".
-
-Rules:
-  - headline: ${HEADLINE_MAX_WORDS} words or fewer. It completes the joke the picture sets up.
-  - sub: optional, ${SUB_MAX_WORDS} words or fewer, plain and factual.
-  - Every fact goes in "claims" with a sourceId from: ${sourceIds.join(', ')}. Invent nothing.
-  - Each claim "text" is an EXACT contiguous quote copied from the source named by sourceId, letter for letter, no paraphrase.
-  - No em dash. No health claim. Our product is a deodorant or soap, never an antiperspirant.
-PDP:
-${String(pdpBody || '').slice(0, 3000)}
-${retryNote ? `\nYOUR PREVIOUS ATTEMPT WAS REJECTED:\n${retryNote}\nFix exactly that.\n` : ''}
-Return ONLY: {"headline":"","sub":"","claims":[{"text":"","sourceId":""}]}`;
-}
-
-export function parseOverlayCopy(text) {
-  const o = extractJson(text);
-  return {
-    headline: String(o.headline || '').trim(),
-    sub: String(o.sub || '').trim(),
-    claims: Array.isArray(o.claims) ? o.claims.filter(c => c && c.text).map(c => ({ text: String(c.text), sourceId: String(c.sourceId || '') })) : [],
-  };
-}
-
 export function gateCopy(fields, claims, { sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
   const reasons = [];
   const entries = Object.entries(fields).filter(([, v]) => String(v || '').trim());
   for (const [k, v] of entries) if (/—/.test(v)) reasons.push(`em dash in ${k}`);
-  // Same matcher as the concept pre-gate (case-sensitive proper nouns), so a concept that
-  // passed cannot have a competitor written back into it by the copy call.
+  // Same matcher as evidence screening (case-sensitive proper nouns), so a review that
+  // passed screening cannot have a competitor written back into it by a copy call.
   for (const [k, v] of entries) {
     const named = namedCompetitors(v, competitorNames);
     if (named.length) reasons.push(`names a competitor: ${named.join(', ')} in ${k}. Jab at the category, never a named brand`);
@@ -86,9 +53,9 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [], va
   const list = claims || [];
   // Ad Studio shaped = it carries Ad Studio's own fields. Keying on `evidence` alone sent a
   // persuasion line ({ zone, text, factual: false }, no evidence: it needs none) down the
-  // overlay path, which treats every claim as factual, so the live run on 2026-10-03 had a
-  // rhetorical question rejected as "factual claim with no sourceId" twice. Overlay claims
-  // never carry these fields (parseOverlayCopy keeps only text + sourceId). A factual:true
+  // quote path, which treats every claim as factual, so the live run on 2026-10-03 had a
+  // rhetorical question rejected as "factual claim with no sourceId" twice. Slot claims
+  // never carry these fields (fillModelSlot keeps only text + sourceId). A factual:true
   // claim still needs sourceId AND a verbatim evidence quote: assertClaimsSourced is unchanged.
   // Only an OBJECT can be Ad Studio shaped. parseFlexibleCopyResponse passes claims through
   // unsanitised, so a bare string ("One fat") arrives here; it goes down the strict quote path
@@ -110,20 +77,6 @@ export function gateCopy(fields, claims, { sourceIndex, competitorNames = [], va
     }
   }
   return { ok: reasons.length === 0, reasons };
-}
-
-export async function writeOverlayCopy({ anthropic, model, concept, product, pdpBody, sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
-  let retryNote = null;
-  let lastReasons = [];
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const prompt = buildOverlayCopyPrompt({ concept, product, pdpBody, sourceIds: Object.keys(sourceIndex), retryNote });
-    const copy = parseOverlayCopy(await call(anthropic, model, prompt));
-    const gate = gateCopy({ headline: copy.headline, sub: copy.sub }, copy.claims, { sourceIndex, competitorNames, variant, siblingVariants });
-    if (gate.ok && copy.headline) return { ok: true, copy };
-    lastReasons = copy.headline ? gate.reasons : ['empty headline', ...gate.reasons];
-    retryNote = lastReasons.join('\n');
-  }
-  return { ok: false, reasons: lastReasons };
 }
 
 /**

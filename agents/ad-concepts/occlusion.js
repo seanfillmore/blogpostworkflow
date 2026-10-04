@@ -13,14 +13,31 @@
 
 const textOf = (msg) => (msg?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 
-export function buildOcclusionPrompt({ productDescription, band }) {
-  const where = band === 'bottom' ? 'bottom' : 'top';
+const pct = (v, of) => `${Math.round((v / of) * 100)}%`;
+
+/**
+ * Where the type sits. A structure layout passes its own regions (pixel boxes on a frame of
+ * `size`), described as fractions so the check looks where the type actually is; without
+ * regions the legacy quarter-band wording is kept.
+ */
+function typeAreaLine({ band, regions, size }) {
+  if (!Array.isArray(regions)) {
+    const where = band === 'bottom' ? 'bottom' : 'top';
+    return `Overlay type has been set across the ${where} quarter of the frame, sometimes on a solid sand-coloured caption strip.`;
+  }
+  if (!regions.length) return 'No overlay type has been set on this image; check only the frame edges.';
+  const { width, height } = size;
+  const lines = regions.map(r => `  - ${r.name}: left ${pct(r.x, width)}, top ${pct(r.y, height)}, ${pct(r.w, width)} wide, ${pct(r.h, height)} tall`);
+  return `Overlay type, cards and bands have been set in these areas of the frame:\n${lines.join('\n')}`;
+}
+
+export function buildOcclusionPrompt({ productDescription, band, regions, size }) {
   return `This is a finished static ad image. Our product appears in it: ${String(productDescription || 'our product').trim()}
-Overlay type has been set across the ${where} quarter of the frame, sometimes on a solid sand-coloured caption strip.
+${typeAreaLine({ band, regions, size })}
 
 Check ONLY our product, nothing else in the scene:
   - productVisible: is our product in the frame at all?
-  - productCovered: is ANY part of our product (its body, lid, cap, wrapper, label or logo) covered or overlapped by the overlay type or the caption strip? Even a small overlap counts.
+  - productCovered: is ANY part of our product (its body, lid, cap, wrapper, label or logo) covered or overlapped by the overlay type, a card, a band or a caption strip? Even a small overlap counts.
   - productCutOffByFrame: is any part of our product cut off by the edge of the frame?
 Look closely at where the overlay meets the product. Do not assume it is fine.
 
@@ -43,7 +60,7 @@ export function parseOcclusionResponse(text) {
   return { ok: true, detail };
 }
 
-export async function checkOcclusion({ anthropic, model, buffer, mediaType, productDescription, band }) {
+export async function checkOcclusion({ anthropic, model, buffer, mediaType, productDescription, band, regions, size }) {
   const msg = await anthropic.messages.create({
     model,
     max_tokens: 400,
@@ -51,7 +68,7 @@ export async function checkOcclusion({ anthropic, model, buffer, mediaType, prod
       role: 'user',
       content: [
         { type: 'image', source: { type: 'base64', media_type: mediaType, data: buffer.toString('base64') } },
-        { type: 'text', text: buildOcclusionPrompt({ productDescription, band }) },
+        { type: 'text', text: buildOcclusionPrompt({ productDescription, band, regions, size }) },
       ],
     }],
   });
