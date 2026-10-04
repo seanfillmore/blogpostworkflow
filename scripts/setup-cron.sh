@@ -185,8 +185,9 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outreach/index.js --apply >> data/reports/scheduler/creator-outreach.log 2>&1"
 
 # Press outreach: replies, follow-ups and Sean-approved pitches (agents/press-outreach).
-# Offset to :05/:35 so it never shares an IMAP login minute with creator-outreach.
-PRESS_OUTREACH="5,35 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --apply >> data/reports/scheduler/press-outreach.log 2>&1"
+# Offset to :17/:47: never shares an IMAP login minute with creator-outreach (:00/:30)
+# and avoids the hourly job at :05 on this memory-tight box.
+PRESS_OUTREACH="17,47 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --apply >> data/reports/scheduler/press-outreach.log 2>&1"
 
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
 # folders Sean already uses. Rules are learned from those folders; moves, never
