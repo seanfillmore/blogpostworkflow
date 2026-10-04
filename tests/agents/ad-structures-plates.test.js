@@ -28,7 +28,7 @@ test('label ink defaults to black; no short description leaves no empty parens o
   const p = buildScenePrompt({ structure: split, which: 'primary', product: { ...product, labelInk: null, productDescriptionShort: undefined }, brandKit: {} });
   assert.match(p, /label is black ink\./);
   assert.doesNotMatch(p, /\(\s*\)/);
-  assert.doesNotMatch(p, /long physical description/);
+  assert.doesNotMatch(p.split('\n\n')[1], /physical description/);
   assert.match(p, /Our bar soap stands upright/);
 });
 
