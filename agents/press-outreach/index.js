@@ -202,7 +202,7 @@ export async function initState({ book, readReplies, now = Date.now() }) {
 export async function runPressOutreach({
   env = {},
   apply = false,
-  now = Date.now(),
+  now: nowArg = Date.now(),
   config = DEFAULT_CONFIG,
   book,
   state,
@@ -222,6 +222,11 @@ export async function runPressOutreach({
   reportError = async (subject, body) => notify({ subject, body, status: 'error', category: 'press' }),
   log = console.log,
 } = {}) {
+  // `now` may be a number (the run's time) or a clock function. The run's
+  // decisions use its start time; every SEND re-reads the clock, so a run that
+  // started inside the window cannot send after it closes (M1).
+  const clock = typeof nowArg === 'function' ? nowArg : () => nowArg;
+  const now = clock();
   const creds = hushmailCredentials(env);
   readReplies ||= (q) => fetchFromAllFolders(creds, q);
   readSent ||= (q) => fetchSentTo(creds, { recipients: q.senders, since: q.since });
@@ -305,8 +310,9 @@ export async function runPressOutreach({
    * the gap sleep and right before the send: a non-empty string it returns is
    * why the message must not go, and doSend returns { skipped: reason }.
    */
-  async function doSend(message, { contactId, kind, draftId = null, pitchDate = null, precheck = null }) {
+  async function doSend(message, { contactId, kind, draftId = null, pitchDate = null, precheck = null, windowed = true }) {
     if (needGap) { await sleep(gapMs); needGap = false; }
+    if (windowed && !inSendWindow(clock())) return { skipped: 'outside the send window now; waits for the next window' };
     if (precheck) {
       const why = precheck();
       if (why) return { skipped: why };
@@ -325,16 +331,17 @@ export async function runPressOutreach({
       throw err;
     }
     state.send_failures = 0;
+    const sentAt = isoOf(clock());
     // draft_id / pitch_date make a send recognisable on the next run even if every
     // bookkeeping write after it failed, so it is never sent a second time.
     state.sends.push({
-      at: isoOf(now), contact_id: contactId, kind,
+      at: sentAt, contact_id: contactId, kind,
       ...(draftId ? { draft_id: draftId } : {}), ...(pitchDate ? { pitch_date: pitchDate } : {}),
       message_id: r.messageId, resend_id: r.resendId || null, last_event: 'sent',
     });
     // Persisted at once, so cap accounting survives a crash before any bookkeeping.
     try { saveState(state); } catch (err) { log(`  could not save state after a send: ${err.message}`); }
-    return r;
+    return { ...r, at: sentAt };
   }
 
   // ── 1. expire drafts ──
@@ -376,10 +383,12 @@ export async function runPressOutreach({
         const patch = { last_sent_at: when, follow_ups_sent: MAX_FOLLOW_UPS };
         if (state.escalated[c.id]) {
           delete state.escalated[c.id];
-          patch.outcome = 'replied';
+          // Only a pitch still at `sent`/`escalated` becomes `replied`; a sample
+          // already accepted or shipped keeps that stage.
+          if (['escalated', 'sent'].includes(p.outcome)) patch.outcome = 'replied';
         }
         commit(updatePitch(book, c.id, patch), { id: c.id, name: c.name });
-        saveState(state);
+        persistState({ id: c.id, name: c.name });
         log(`  Sean wrote to ${c.name} himself; no automatic follow-up`);
       }
     }
@@ -433,7 +442,7 @@ export async function runPressOutreach({
         // While escalated, every message goes to Sean.
         if (await toSean('a new message while this contact is waiting on you')) markDone(msg.messageId);
         else held.add(c.id);
-        saveState(state);
+        persistState(row);
         continue;
       }
 
@@ -477,9 +486,11 @@ export async function runPressOutreach({
           handled = await toSean(reason);
         } else {
           let sent = false;
+          let sentAt = null;
           try {
             const refs = refsOf(msg.references, msg.messageId);
-            await doSend({ to: emailOf(c), subject, text, inReplyTo: msg.messageId, references: refs.join(' ') }, { contactId: c.id, kind: 'ask-address' });
+            const r = await doSend({ to: emailOf(c), subject, text, inReplyTo: msg.messageId, references: refs.join(' ') }, { contactId: c.id, kind: 'ask-address', windowed: false });
+            sentAt = r.at;
             sent = true;
           } catch (err) {
             result.failed.push({ ...row, kind: 'ask-address', error: err.message });
@@ -487,7 +498,7 @@ export async function runPressOutreach({
           }
           if (sent) {
             // Sent: the reply is handled whatever happens to the bookkeeping below.
-            commitAfterSend(c.id, { outcome: 'sample-accepted', last_sent_at: isoOf(now) }, { ...row, kind: 'ask-address' });
+            commitAfterSend(c.id, { outcome: 'sample-accepted', last_sent_at: sentAt }, { ...row, kind: 'ask-address' });
             result.replies.push({ ...row, kind: 'sample-yes' });
           }
         }
@@ -508,7 +519,7 @@ export async function runPressOutreach({
 
       if (handled) markDone(msg.messageId);
       else held.add(c.id);
-      saveState(state);
+      persistState(row);
     }
 
     // ── 5. follow-ups ──
@@ -538,7 +549,8 @@ export async function runPressOutreach({
           result.failed.push({ id: contact.id, name: contact.name, kind: `follow-up-${n}`, error: err.message });
           continue;
         }
-        commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: isoOf(now), references: refsOf(refs, r.messageId) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
+        if (r.skipped) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n}: ${r.skipped}` }); continue; }
+        commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: r.at, references: refsOf(refs, r.messageId) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
         result.followUps.push({ id: contact.id, name: contact.name, n });
       }
     }
@@ -635,12 +647,12 @@ export async function runPressOutreach({
         continue;
       }
       if (r.skipped) { result.skipped.push({ ...row, reason: r.skipped }); continue; }
-      const sentAt = isoOf(now);
+      const sentAt = r.at;
       // Sent: from here on nothing may make it look unsent.
       try { saveDraft(markSent(d, { now: Date.parse(sentAt), messageId: r.messageId, resendId: r.resendId || null })); } catch (err) { log(`  could not save sent draft ${d.id}: ${err.message}`); }
       recordDraftSent(d, c, { messageId: r.messageId, sentAt, subject, row });
       state.first_sent_at ||= sentAt;
-      saveState(state);
+      persistState(row);
       result.sent.push({ ...row, to: d.to });
     }
   }
@@ -865,7 +877,7 @@ async function runBackfill(args, apply, creds) {
     const replies = senders.length ? await fetchFromAllFolders(creds, { senders, since }) : [];
     const sentCopies = senders.length ? await fetchSentTo(creds, { recipients: senders, since }) : [];
     const draftsDir = join(ROOT, DRAFTS_DIR);
-    const existing = loadDrafts(draftsDir);
+    const existing = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
     const plan = planBackfill({ book, sentCopies, replies, now, drafts: existing });
     for (const n of plan.notes) console.log(`  ${n}`);
     console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
@@ -945,25 +957,30 @@ async function main() {
       }
     }
     const postalAddress = readPostalAddress();
-    const drafts = loadDrafts(join(ROOT, DRAFTS_DIR));
+    const draftErrors = [];
+    const onDraftError = (name, err) => { console.log(`  skipped unreadable draft ${name}: ${err.message}`); if (!draftErrors.some((e) => e.name === name)) draftErrors.push({ name, err }); };
+    const drafts = loadDrafts(join(ROOT, DRAFTS_DIR), undefined, { onError: onDraftError });
     const run = await runPressOutreach({
       env, apply, config, book: loaded.doc, state, drafts, postalAddress,
       sleep: async (ms) => { await new Promise((r) => setTimeout(r, ms)); touchLock(); },
       escalate: async (c, msg, reason) => { await notify({ ...escalationEmail(c, msg, reason), status: 'info', category: 'press', immediate: true }); },
     });
 
+    for (const e of draftErrors) run.failed.push({ id: e.name, kind: 'draft', error: `unreadable draft file data/press/drafts/${e.name} skipped: ${e.err.message}` });
     if (apply) {
       await refreshEvents(state, env, Date.now());
       const verdict = shouldPause(state.sends);
       if (verdict.pause && !state.paused) {
         state.paused = { at: new Date().toISOString(), reason: verdict.reason };
+        // Kept after --resume: the cap does not ramp within rampAfterDays of any pause.
+        state.pause_history = [...(state.pause_history || []), state.paused.at].slice(-50);
         run.paused = true;
         await notify({ immediate: true, status: 'info', category: 'press', subject: 'Press outreach PAUSED', body: `${verdict.reason}. Run node agents/press-outreach/index.js --resume after checking Resend.` });
       }
       writeState(state);
     }
 
-    const { subject, body } = renderSummary(run, { apply, drafts: loadDrafts(join(ROOT, DRAFTS_DIR)), dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
+    const { subject, body } = renderSummary(run, { apply, drafts: loadDrafts(join(ROOT, DRAFTS_DIR), undefined, { onError: onDraftError }), dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
     const noAddress = postalAddress ? '' : '\nNo postal_address in data/brand/brand-kit.json: first pitches are refused until it is set.';
     console.log(`\n${subject}\n\n${body}${noAddress}`);
     const acted = run.sent.length || run.followUps.length || run.replies.length || run.escalations.length || run.expired.length || run.failed.length;

@@ -84,3 +84,11 @@ test('checkOutgoingCopy accepts postalAddress parameter for pitch-specific valid
   assert.equal(checkOutgoingCopy({ subject: 'Test', text: withDefault, kind: 'pitch' }).ok, true);
   assert.match(checkOutgoingCopy({ subject: 'Test', text: baseText + 'No address here', kind: 'pitch' }).problems.join(), /missing the postal address/);
 });
+
+test('M3: no ramp while any pause happened inside the last rampAfterDays', () => {
+  const t = Date.parse('2026-10-20T18:00:00Z');
+  const ramped = { first_sent_at: '2026-10-01T17:00:00Z' };
+  assert.equal(dailyCap(DEFAULT_CONFIG, ramped, t), 25);
+  assert.equal(dailyCap(DEFAULT_CONFIG, { ...ramped, pause_history: ['2026-10-15T10:00:00Z'] }, t), 10, 'resumed 5 days ago: base cap');
+  assert.equal(dailyCap(DEFAULT_CONFIG, { ...ramped, pause_history: ['2026-10-01T10:00:00Z'] }, t), 25, 'last pause 19 days ago: ramped');
+});

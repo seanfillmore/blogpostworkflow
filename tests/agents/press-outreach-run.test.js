@@ -451,3 +451,39 @@ test('I6: a first pitch to a contact with an open conversation, an escalation or
   assert.equal(back('cool').status, 'pending');
   assert.match(back('cool').gate_problems[0], /pitched within 60 days/);
 });
+
+test('M1: the send window is re-checked before each send against a moving clock; real send times are recorded', async () => {
+  const drafts = ['a', 'b', 'c'].map((id) => approved(id, { now: Date.parse('2026-10-09T22:00:00Z') }));
+  for (const d of drafts) d.approved_at = '2026-10-09T22:30:00.000Z';
+  const { opts, calls } = world({ drafts });
+  opts.book.contacts = ['a', 'b', 'c'].map(fresh);
+  let t = Date.parse('2026-10-09T23:40:00Z'); // Friday
+  opts.now = () => t;
+  opts.sleep = async (ms) => { calls.sleeps.push(ms); t += ms; };
+  const r = await runPressOutreach(opts);
+  assert.deepEqual(calls.send.map((m) => m.to), ['a@example.com', 'b@example.com'], 'c would go out on Saturday 00:00');
+  assert.deepEqual(opts.state.sends.map((s) => s.at), ['2026-10-09T23:40:00.000Z', '2026-10-09T23:50:00.000Z']);
+  assert.equal(opts.book.contacts.find((c) => c.id === 'b').pitches[0].last_sent_at, '2026-10-09T23:50:00.000Z');
+  assert.ok(r.skipped.some((s) => s.draft_id === drafts[2].id && /send window/.test(s.reason)));
+});
+
+test('M2: a failed state write in step 3 is reported, not thrown', async () => {
+  const { opts } = world({ sent: [{ to: ['sam@example.com'], date: '2026-10-05T12:00:00Z', messageId: '<hand>', subject: 'Re: Coconut cream' }] });
+  opts.saveState = () => { throw new Error('disk full'); };
+  const r = await runPressOutreach(opts);
+  assert.ok(r.failed.some((f) => /state write failed: disk full/.test(f.error)));
+});
+
+test('M6: Sean answering an escalated contact keeps a sample stage', async () => {
+  const { opts } = world({ sent: [{ to: ['lee@example.com'], date: '2026-10-05T12:00:00Z', messageId: '<hand>', subject: 'Re: Coconut cream' }] });
+  opts.book.contacts.find((c) => c.id === 'lee').pitches[0].outcome = 'samples-sent';
+  await runPressOutreach(opts);
+  assert.equal(opts.state.escalated.lee, undefined);
+  assert.equal(opts.book.contacts.find((c) => c.id === 'lee').pitches[0].outcome, 'samples-sent');
+});
+
+test('M3: an auto-pause is recorded in pause_history', () => {
+  const src = readFileSync(new URL('../../agents/press-outreach/index.js', import.meta.url), 'utf8');
+  const main = src.slice(src.indexOf('async function main()'));
+  assert.match(main, /pause_history/);
+});

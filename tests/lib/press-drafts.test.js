@@ -101,3 +101,15 @@ test('approveDraft on a rejected draft changes mind, dropping rejected metadata'
   assert.equal(reconsidered.rejected_reason, undefined);
   assert.equal(reconsidered.rejected_at, undefined);
 });
+
+test('M4: a corrupt draft file is skipped and named, not thrown', () => {
+  const files = new Map([['/d/good.json', JSON.stringify(mk())], ['/d/bad.json', '{"id": "half-writ']]);
+  const fsImpl = { readdirSync: () => ['good.json', 'bad.json'], readFileSync: (p) => files.get(p) };
+  const errors = [];
+  const out = loadDrafts('/d', fsImpl, { onError: (name, err) => errors.push({ name, err }) });
+  assert.equal(out.length, 1);
+  assert.equal(out[0].contact_id, 'jane-doe');
+  assert.equal(errors.length, 1);
+  assert.equal(errors[0].name, 'bad.json');
+  assert.doesNotThrow(() => loadDrafts('/d', fsImpl), 'no callback: still does not throw');
+});

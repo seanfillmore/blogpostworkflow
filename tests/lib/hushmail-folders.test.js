@@ -83,3 +83,12 @@ test('name fallback and \\Noselect skip folders without specialUse', async () =>
   assert.deepEqual(client.rec.opened.sort(), ['Cold Pitches', 'Junk']);
   assert.deepEqual(rows.map((r) => r.folder).sort(), ['Cold Pitches', 'Junk']);
 });
+
+test('M5: sendMail via Resend posts X-RSC-Agent: press-outreach', async () => {
+  const { sendMail } = await import('../../lib/hushmail.js');
+  let posted;
+  const fetchImpl = async (url, init) => { posted = JSON.parse(init.body); return { ok: true, status: 200, text: async () => '{"id":"re_1"}' }; };
+  await sendMail({ user: 'sean@realskincare.com', pass: 'x' }, { to: 'a@example.com', subject: 's', text: 't', agent: 'press-outreach' },
+    { via: 'resend', resendKey: 'k', fetchImpl, appendSent: async () => {} });
+  assert.equal(posted.headers[AGENT_HEADER], 'press-outreach');
+});
