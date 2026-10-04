@@ -495,3 +495,12 @@ test('M3: an auto-pause is recorded in pause_history', () => {
   const main = src.slice(src.indexOf('async function main()'));
   assert.match(main, /pause_history/);
 });
+
+test('a reply from a placed contact is escalated and nothing is sent to the writer', async () => {
+  const w = world({ replies: [reply('pat', 'Yes please send samples!')] });
+  w.opts.book = { contacts: [contact('pat', { outcome: 'placed', link_earned: { url: 'https://example.com/a', found_at: '2026-10-04T00:00:00Z' } })] };
+  const r = await runPressOutreach(w.opts);
+  assert.equal(w.calls.send.length, 0);
+  assert.equal(w.calls.escalate.length, 1);
+  assert.equal(r.escalations.length, 1);
+});

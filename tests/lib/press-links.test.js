@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { openPitchByAddress } from '../../lib/press-contacts.js';
 import { findOurPresence, linkCandidates, funnel, checkLinks, articleLinks, referringDomainsChange } from '../../lib/press-links.js';
 import { authorUrlsFromTargets, renderLinkDigest } from '../../agents/press-outreach/index.js';
 
@@ -14,7 +15,7 @@ test('findOurPresence: dofollow, nofollow sponsored, mention, lookalike domain',
   assert.deepEqual(findOurPresence('<a href="https://www.realskincare.com/products/x">x</a>'), { linked: true, dofollow: true, href: 'https://www.realskincare.com/products/x', mentioned: false });
   const nf = findOurPresence('<a href="https://realskincare.com/" rel="nofollow sponsored">Real Skin Care</a>');
   assert.equal(nf.linked, true); assert.equal(nf.dofollow, false); assert.equal(nf.mentioned, false);
-  const m = findOurPresence('<p>We tried real skin care deodorant.</p>');
+  const m = findOurPresence("<p>We tried Real Skin Care's coconut lotion.</p>");
   assert.deepEqual([m.linked, m.dofollow, m.mentioned], [false, null, true]);
   const fake = findOurPresence('<a href="https://notrealskincare.com/">go</a>');
   assert.equal(fake.linked, false);
@@ -84,4 +85,27 @@ test('referring domain change, author map and digest render', () => {
   const f = funnel([], [], NOW);
   const d = renderLinkDigest({ found: [], candidates: [], tally: {}, f, change: { from: 40, to: 43, delta: 3, prevDate: 'a', date: 'b' }, apply: true });
   assert.match(d.body, /not attributed to outreach/);
+});
+
+test('brand mention ignores generic phrases and lookalike words', () => {
+  for (const t of ['a real skin care routine', 'Real Skin Care routine tips', 'unreal skin care', 'surreal skin care', 'real skin care deodorant']) {
+    assert.equal(findOurPresence(`<p>${t}</p>`).mentioned, false, t);
+  }
+});
+
+test('a link on a samples-sent pitch keeps the outcome, and still counts as a link', async () => {
+  const book = { contacts: [contact('s', { outcome: 'samples-sent', sample_order: '#1001' })] };
+  const r = await checkLinks({ book, nowMs: NOW, fetchPage: async () => ({ outcome: 'ok', html: '<a href="https://realskincare.com/">r</a>' }) });
+  const p = r.book.contacts[0].pitches[0];
+  assert.equal(p.outcome, 'samples-sent'); assert.ok(p.link_earned); assert.equal(p.sample_order, '#1001');
+  assert.equal(openPitchByAddress(r.book.contacts).size, 1);
+  assert.equal(funnel(r.book.contacts, [], NOW).allTime.links, 1);
+});
+
+test('author pages on a foreign host are not fetched', () => {
+  const c = contact('f', {}, { author_url: 'https://evil.net/a' });
+  assert.equal(linkCandidates([c], NOW)[0].urls.length, 1);
+  const sub = contact('g', {}, { author_url: 'https://writers.example.com/a' });
+  assert.equal(linkCandidates([sub], NOW)[0].urls.length, 2);
+  assert.equal(linkCandidates([contact('h', {})], NOW, { authorUrlOf: () => 'https://evil.net/x' })[0].urls.length, 1);
 });
