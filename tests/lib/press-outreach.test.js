@@ -39,6 +39,14 @@ test('first pitch must carry the opt-out line and the address, and pass the clai
   assert.match(checkOutgoingCopy({ subject: 'Heals eczema', text: good, kind: 'pitch' }).problems.join(), /eczema|heal/i);
   assert.match(checkOutgoingCopy({ subject: 'a — b', text: good, kind: 'pitch' }).problems.join(), /dash/);
   assert.equal(checkOutgoingCopy({ subject: 'x'.repeat(71), text: good, kind: 'pitch' }).ok, false);
+
+  // Body-level product-category violation
+  const bodyWithClaim = `Hi Jane,\n\nOur antiperspirant formula keeps you fresh all day.\n\n${OPT_OUT_LINE}\n\n${signature(ADDR)}`;
+  assert.match(checkOutgoingCopy({ subject: 'Coconut cream', text: bodyWithClaim, kind: 'pitch' }).problems.join(), /product-category/);
+
+  // Category-reference sentence must pass
+  const categoryRef = `Hi Jane,\n\nAntiperspirants are regulated as over-the-counter drugs; ours is a deodorant.\n\n${OPT_OUT_LINE}\n\n${signature(ADDR)}`;
+  assert.equal(checkOutgoingCopy({ subject: 'Coconut deodorant', text: categoryRef, kind: 'pitch' }).ok, true);
 });
 
 test('auto-pause on >3% bounces over the last 50, or any complaint', () => {
@@ -53,4 +61,26 @@ test('auto-pause on >3% bounces over the last 50, or any complaint', () => {
 test('firstName falls back to "there" for an outlet record', () => {
   assert.equal(firstName({ name: 'Jane Doe', kind: 'journalist' }), 'Jane');
   assert.equal(firstName({ name: 'Example Magazine', kind: 'outlet' }), 'there');
+});
+
+test('fixed follow-up templates pass copy checks', () => {
+  for (const [n, text] of [[1, followUpText({ firstName: 'Jane', n: 1 })], [2, followUpText({ firstName: 'Jane', n: 2 })], [null, bumpText({ firstName: 'Jane' })], [null, askAddressText({ firstName: 'Jane' })]]) {
+    const result = checkOutgoingCopy({ subject: 'Re: Coconut cream', text, kind: 'followup' });
+    assert.equal(result.ok, true, `template should pass (n=${n}): ${result.problems.join('; ')}`);
+  }
+});
+
+test('checkOutgoingCopy accepts postalAddress parameter for pitch-specific validation', () => {
+  const baseText = `Hi Jane,\n\nShort pitch.\n\n${OPT_OUT_LINE}\n\n`;
+  const customAddr = '456 Main St, Anytown, CO 80000, United States';
+
+  // With postalAddress: exact string required after opt-out line
+  const withCustom = `${baseText}${customAddr}`;
+  assert.equal(checkOutgoingCopy({ subject: 'Test', text: withCustom, kind: 'pitch', postalAddress: customAddr }).ok, true);
+  assert.match(checkOutgoingCopy({ subject: 'Test', text: baseText + ADDR, kind: 'pitch', postalAddress: customAddr }).problems.join(), /missing the postal address/);
+
+  // Without postalAddress: fallback to 5-digit check
+  const withDefault = `${baseText}${signature(ADDR)}`;
+  assert.equal(checkOutgoingCopy({ subject: 'Test', text: withDefault, kind: 'pitch' }).ok, true);
+  assert.match(checkOutgoingCopy({ subject: 'Test', text: baseText + 'No address here', kind: 'pitch' }).problems.join(), /missing the postal address/);
 });
