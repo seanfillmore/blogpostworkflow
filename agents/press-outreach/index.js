@@ -27,8 +27,11 @@
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
  *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
  *                                                          # one-off: thread ids, existing replies, bump drafts
+ *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
+ *                                                          # daily: turn prospects into pitch drafts for approval
+ *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
  *
- * Cron: every 30 minutes (scripts/setup-cron.sh). Sends happen only Mon-Fri
+ * Cron: every 30 minutes, plus `--draft --apply` daily at 14:20 UTC (scripts/setup-cron.sh). Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
  * after two clean weeks. Any spam complaint or a >3% bounce rate pauses
  * everything until --resume.
@@ -55,8 +58,12 @@ import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, isTran
 import {
   loadContacts, validateContacts, recordPitch, updatePitch, autoFollowUpsDue, openPitchByAddress,
   emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
-  OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS,
+  OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS, normalizeDomain,
 } from '../../lib/press-contacts.js';
+import { buildProspects } from '../../lib/press-prospects.js';
+import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
+import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
+import { fetchWithOutcome } from '../../lib/fetch-pool.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -784,6 +791,329 @@ export function parseSet(arg) {
   return { id: m[1], outcome: m[2], sampleOrder: m[3] || null };
 }
 
+// ── Drafting (--draft) ──────────────────────────────────────────────────────
+
+const MAX_DRAFT_ATTEMPTS = 2;
+const NO_ADDRESS_NOTE = 'no published or verified address';
+
+/** Article HTML to plain text: script/style removed first, then tags, then the common entities. */
+export function htmlToText(html) {
+  return String(html || '')
+    .replace(/<(script|style|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, ' ')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&quot;/gi, '"').replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<').replace(/&gt;/gi, '>')
+    .replace(/&#(\d+);/g, (m, d) => { try { return String.fromCodePoint(Number(d)); } catch { return m; } })
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const kebab = (s) => String(s || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const domainStem = (d) => kebab(String(d || '').replace(/^www\./, '').split('.')[0]) || 'site';
+
+/**
+ * Pure: find or add the contact a prospect drafts to. `address` null means the
+ * finder found nothing: a NEW editorial contact is `unverified`, with no email
+ * channel and a note naming the page to try by hand. An existing contact keeps
+ * its status and channels; it only gains the email channel if it lacks that
+ * address. Returns { book, contactId, created, contact }.
+ */
+export function upsertProspectContact(book, prospect, { address = null, source = null, reason = null, today }) {
+  const outlet = prospect.source === 'link-gap';
+  const name = outlet ? (prospect.publication || prospect.domain) : prospect.person.name;
+  const domain = normalizeDomain(prospect.domain) || prospect.domain;
+  const fold = (s) => String(s || '').trim().toLowerCase();
+  const onDomain = (c) => (c.domains || []).some((d) => normalizeDomain(d) === domain);
+  const contacts = book.contacts || [];
+  const existing = (address && contacts.find((c) => (c.channels || []).some((ch) => ch.type === 'email' && fold(ch.address) === fold(address))))
+    || contacts.find((c) => fold(c.name) === fold(name) && onDomain(c));
+  const manualUrl = (outlet ? null : prospect.person?.authorUrl) || prospect.targetUrl || `https://${domain}/`;
+  const note = `${today}: ${NO_ADDRESS_NOTE}${reason ? ` (${reason})` : ''}; try by hand: ${manualUrl}`;
+  const channel = address ? { type: 'email', address: address.toLowerCase(), verified: true, source } : null;
+
+  if (existing) {
+    let next = existing;
+    if (channel && !(existing.channels || []).some((ch) => ch.type === 'email' && fold(ch.address) === channel.address)) {
+      next = { ...existing, channels: [...(existing.channels || []), channel] };
+    } else if (!channel && !(existing.notes || []).some((n) => String(n).includes(NO_ADDRESS_NOTE))) {
+      next = { ...existing, notes: [...(existing.notes || []), note] };
+    }
+    return { book: { ...book, contacts: contacts.map((c) => (c === existing ? next : c)) }, contactId: existing.id, created: false, contact: next };
+  }
+
+  const ids = new Set(contacts.map((c) => c.id));
+  const base = kebab(name) || domainStem(domain);
+  let id = base;
+  if (ids.has(id)) id = `${base}-${domainStem(domain)}`;
+  for (let n = 2; ids.has(id); n += 1) id = `${base}-${domainStem(domain)}-${n}`;
+  const contact = {
+    id, name, kind: outlet ? 'outlet' : 'journalist', status: channel ? 'active' : 'unverified',
+    outlets: [prospect.publication || domain], domains: [domain],
+    channels: channel ? [channel] : [], pitches: [],
+    ...(channel ? {} : { notes: [note] }),
+    added_by: 'press-outreach', added_at: today,
+  };
+  return { book: { ...book, contacts: [...contacts, contact] }, contactId: id, created: true, contact };
+}
+
+/**
+ * One drafting run: turn prospects into pending pitch drafts until the approval
+ * queue holds config.queueTarget (or `limit` drafts, which overrides it). All
+ * I/O is injected. Nothing here sends mail; a draft waits for Sean's approval.
+ *
+ * Per prospect: fetch the article first (a failed fetch spends no Hunter
+ * credit), then find an address, then draft. A failure of any of the three is
+ * counted in state.draft_attempts[key]; after MAX_DRAFT_ATTEMPTS the prospect
+ * is skipped, so one dead page cannot spend credits or model calls every day.
+ */
+export async function runDrafting({
+  apply = false,
+  now = Date.now(),
+  config = DEFAULT_CONFIG,
+  book,
+  state,
+  drafts = [],
+  prTargets = null,
+  linkGap = null,
+  factSheet,
+  postalAddress,
+  findAddress,
+  fetchArticle,
+  draftPitch,
+  generate,
+  saveDraft = (d) => saveDraftFile(join(ROOT, DRAFTS_DIR), d),
+  saveBook = writeBook,
+  saveState = writeState,
+  onProgress = () => {},
+  limit = null,
+  log = console.log,
+} = {}) {
+  if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
+  state.draft_attempts ||= {};
+  const today = isoOf(now).slice(0, 10);
+  const concept = `pitch-${today.slice(0, 7)}`;
+  const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, pending: 0, want: 0 };
+
+  const pending = drafts.filter((d) => ['pending', 'approved'].includes(d.status)).length;
+  result.pending = pending;
+  const want = limit != null ? limit : (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending;
+  result.want = Math.max(0, want);
+  if (want <= 0) { log(`  queue holds ${pending} drafts (target ${config.queueTarget}); nothing to draft`); return { ...result, book, state }; }
+
+  // A deeper pool than `want`, so a failed prospect is replaced by the next one.
+  const pool = buildProspects({
+    prTargets, linkGap, contacts: book.contacts, existingDrafts: drafts, today,
+    want: Math.max(want * 3, want + 5), editorialShare: config.editorialShare ?? DEFAULT_CONFIG.editorialShare,
+  });
+  result.queueSkipped = pool.skipped.length;
+
+  // Honour editorialShare among the drafts actually made: a source past its share
+  // waits, and is only used if the other source runs out.
+  const share = config.editorialShare ?? DEFAULT_CONFIG.editorialShare;
+  const caps = { editorial: Math.ceil(want * share) };
+  caps.gap = want - caps.editorial;
+  const made = { editorial: 0, gap: 0 };
+  const sideOf = (p) => (p.source === 'link-gap' ? 'gap' : 'editorial');
+  const deferred = [];
+
+  const persistState = () => { try { saveState(state); } catch (err) { log(`  could not save state: ${err.message}`); } };
+  const fail = (p, reason) => {
+    state.draft_attempts[p.key] = (state.draft_attempts[p.key] || 0) + 1;
+    persistState();
+    return reason;
+  };
+
+  async function attempt(p) {
+    const row = { key: p.key, domain: p.domain, name: p.person?.name || p.domain };
+    if ((state.draft_attempts[p.key] || 0) >= MAX_DRAFT_ATTEMPTS) {
+      result.skipped.push({ ...row, reason: `${MAX_DRAFT_ATTEMPTS} failed attempts already; not retried` });
+      return false;
+    }
+
+    let page;
+    try { page = await fetchArticle(p.targetUrl); } catch (err) { page = { outcome: 'network-error', error: err.message }; }
+    const articleText = page?.outcome === 'ok' ? htmlToText(page.html) : '';
+    if (!articleText) {
+      result.failed.push({ ...row, reason: fail(p, `article fetch: ${page?.outcome === 'ok' ? 'empty page' : page?.outcome || 'failed'}`) });
+      return false;
+    }
+
+    let found;
+    try { found = await findAddress(p); } catch (err) { found = { address: null, reason: `finder error: ${err.message}` }; }
+    result.hunterSpent += found?.spentHunter || 0;
+    if (!found?.address) {
+      const reason = found?.reason || 'no address found';
+      if (p.source === 'link-gap') {
+        result.skipped.push({ ...row, reason: `no address: ${reason}` });
+        fail(p, reason);
+        return false;
+      }
+      const up = upsertProspectContact(book, p, { address: null, reason, today });
+      const v = validateContacts(up.book);
+      if (!v.ok) { result.failed.push({ ...row, reason: fail(p, `contact book invalid: ${v.errors[0]}`) }); return false; }
+      book = up.book;
+      try { saveBook(book); } catch (err) { result.failed.push({ ...row, reason: `contact book write failed: ${err.message}` }); return false; }
+      fail(p, reason);
+      result.noAddress.push({ ...row, contactId: up.contactId, reason });
+      return false;
+    }
+
+    const up = upsertProspectContact(book, p, { address: found.address, source: found.source, today });
+    if (!PITCHABLE_STATUSES.includes(up.contact.status)) {
+      result.skipped.push({ ...row, reason: `contact ${up.contactId} has status ${up.contact.status}` });
+      return false;
+    }
+    let out;
+    try {
+      out = await draftPitch({ prospect: p, articleText, factSheet, generate, postalAddress, contact: up.contact });
+    } catch (err) {
+      out = { ok: false, reason: `draft error: ${err.message}` };
+    }
+    if (!out?.ok) { result.failed.push({ ...row, reason: fail(p, out?.reason || 'draft rejected') }); return false; }
+
+    const v = validateContacts(up.book);
+    if (!v.ok) { result.failed.push({ ...row, reason: fail(p, `contact book invalid: ${v.errors[0]}`) }); return false; }
+    try { saveBook(up.book); } catch (err) { result.failed.push({ ...row, reason: `contact book write failed: ${err.message}` }); return false; }
+    book = up.book;
+    let draft;
+    try {
+      draft = {
+        ...newDraft({
+          kind: 'pitch', contactId: up.contactId, to: found.address, subject: out.draft.subject, text: out.draft.text,
+          source: p.source, targetUrl: p.targetUrl, openerQuote: out.draft.openerQuote, products: out.draft.products || [], concept, now,
+        }),
+        address_source: found.source,
+      };
+      saveDraft(draft);
+    } catch (err) {
+      result.failed.push({ ...row, reason: fail(p, `draft save failed: ${err.message}`) });
+      return false;
+    }
+    delete state.draft_attempts[p.key];
+    persistState();
+    result.drafted.push({ ...row, contactId: up.contactId, draftId: draft.id, to: found.address, addressSource: found.source, subject: draft.subject });
+    log(`  drafted ${draft.id} to ${up.contactId} (${found.source})`);
+    return true;
+  }
+
+  for (const p of pool.prospects) {
+    if (result.drafted.length >= want) break;
+    const side = sideOf(p);
+    if (made[side] >= caps[side]) { deferred.push(p); continue; }
+    if (await attempt(p)) made[side] += 1;
+    onProgress();
+  }
+  for (const p of deferred) {
+    if (result.drafted.length >= want) break;
+    if (await attempt(p)) made[sideOf(p)] += 1;
+    onProgress();
+  }
+  return { ...result, book, state };
+}
+
+export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
+  const waiting = r.pending + (apply ? r.drafted.length : 0);
+  const where = dashboardUrl ? `${dashboardUrl.replace(/\/$/, '')}/#outreach` : 'the dashboard, #outreach';
+  const lines = [apply ? '' : 'DRY RUN: nothing was saved.'];
+  if (r.drafted.length) { lines.push(`${apply ? 'Drafted' : 'Would draft'}:`); for (const d of r.drafted) lines.push(`  - ${d.contactId} <${d.to}> (address: ${d.addressSource}): ${d.subject}`); }
+  if (r.noAddress.length) { lines.push('No address found (contact saved as unverified, try by hand):'); for (const x of r.noAddress) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.failed.length) { lines.push('Failed (retried next run, at most twice):'); for (const x of r.failed) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  lines.push(`Hunter credits used: ${r.hunterSpent}. Prospects filtered out of the queue: ${r.queueSkipped}.`);
+  lines.push(`${waiting} ${waiting === 1 ? 'pitch' : 'pitches'} waiting for approval: ${where}`);
+  const subject = `Press drafting: ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter`;
+  return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') };
+}
+
+/** Default model call for draftPitch: the prompt goes UNCHANGED as the one user message. */
+async function generateWithModel(prompt, env) {
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const res = await client.messages.create({
+    model: CONFIRM_MODEL,
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  if (res.stop_reason === 'max_tokens') throw new Error('pitch draft truncated at max_tokens');
+  return (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+}
+
+function readJson(rel) {
+  try { return JSON.parse(readFileSync(join(ROOT, rel), 'utf8')); } catch { return null; }
+}
+
+async function waitForLock(maxMs = 5 * 60_000, stepMs = 30_000) {
+  const until = Date.now() + maxMs;
+  for (;;) {
+    if (acquireLock()) return true;
+    if (Date.now() >= until) return false;
+    await new Promise((r) => setTimeout(r, stepMs));
+  }
+}
+
+async function runDraftMode(args, apply, env, config) {
+  const li = args.indexOf('--limit');
+  let limit = null;
+  if (li !== -1) {
+    limit = Number(args[li + 1]);
+    if (!Number.isInteger(limit) || limit < 1) throw new Error(`--limit wants a positive integer, got "${args[li + 1]}"`);
+  }
+  console.log(`Press outreach drafting${apply ? '' : ' (dry run)'}${limit ? ` (limit ${limit})` : ''}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  // The same lock as the 30-minute run: the book, the drafts and the state are
+  // read only once nothing else can be writing them. A run already holding it
+  // (it is short outside the send window) gets a few minutes to finish.
+  if (apply && !(await waitForLock())) {
+    console.log('another press-outreach run holds the lock (data/press/.lock); drafting skipped today');
+    await notify({ subject: 'Press drafting skipped: lock held', body: 'Another press-outreach run held data/press/.lock for over 5 minutes, so no drafts were made today.', status: 'info', category: 'press' });
+    return;
+  }
+  try {
+    const loaded = readBook();
+    if (!loaded.available) throw new Error(`Refusing to draft: ${loaded.reason}`);
+    let state = readState();
+    if (!state) {
+      // Creating the state file here would disarm the 30-minute run's
+      // "no state, refuse" guard, so drafting never creates it.
+      if (apply) throw new Error(`Refusing to draft: no state file at ${STATE_PATH}. Run the 30-minute agent once with --init first.`);
+      state = emptyState();
+    }
+    const postalAddress = readPostalAddress();
+    if (!postalAddress) throw new Error('Refusing to draft: no postal_address in data/brand/brand-kit.json');
+    const factSheet = buildFactSheet(readJson('config/ingredients.json'), readJson('data/brand/product-catalog.json'), readJson('data/brand/brand-kit.json'));
+    const prTargets = readJson('data/reports/pr-targets/latest.json');
+    const linkGap = readJson('data/backlinks/opportunities.json');
+    if (!prTargets) console.log('  no data/reports/pr-targets/latest.json; editorial prospects unavailable');
+    if (!linkGap) console.log('  no data/backlinks/opportunities.json; link-gap prospects unavailable');
+
+    // Hunter costs real credits, so a dry run uses the free pass only.
+    const hunter = apply && env.HUNTER_API_KEY ? hunterClient(env.HUNTER_API_KEY) : null;
+    if (!hunter) console.log(`  Hunter ${apply ? 'unavailable (no HUNTER_API_KEY)' : 'not used in a dry run'}; published addresses only`);
+    const tavilySearch = env.TAVILY_API_KEY ? tavilyClient(env.TAVILY_API_KEY) : null;
+    const fetchPage = (url) => fetchWithOutcome(url);
+    const today = new Date().toISOString().slice(0, 10);
+
+    const draftsDir = join(ROOT, DRAFTS_DIR);
+    const drafts = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
+    const run = await runDrafting({
+      apply, config, book: loaded.doc, state, drafts, prTargets, linkGap, factSheet, postalAddress, limit,
+      fetchArticle: fetchPage,
+      findAddress: (p) => findAddressLib(p, { fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
+      draftPitch: draftPitchLib,
+      generate: (prompt) => generateWithModel(prompt, env),
+      onProgress: touchLock,
+    });
+    const { subject, body } = renderDraftSummary(run, { apply, dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
+    console.log(`\n${subject}\n\n${body}`);
+    const acted = run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length;
+    if (apply && acted) await notify({ subject, body, status: 'info', category: 'press' });
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
+  }
+}
+
 export function escalationEmail(contact, msg, reason) {
   const p = lastPitch(contact);
   return {
@@ -885,7 +1215,9 @@ async function runBackfill(args, apply, creds) {
     for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
     console.log(`${plan.processed.length} replies marked as already handled`);
     if (apply) {
-      const applied = applyBackfill({ book, plan, state: readState(), now });
+      const priorState = readState();
+      if (!priorState) console.log(`WARNING: no state file existed, so a FRESH one was created at ${STATE_PATH}. Its sends and escalations history is empty; if a state file should exist, restore it from backup.`);
+      const applied = applyBackfill({ book, plan, state: priorState, now });
       book = applied.book;
       writeBook(book);
       writeState(applied.state);
@@ -923,6 +1255,10 @@ async function main() {
   }
   if (args.includes('--backfill')) {
     await runBackfill(args, apply, creds);
+    return { imapDown: false };
+  }
+  if (args.includes('--draft')) {
+    await runDraftMode(args, apply, env, config);
     return { imapDown: false };
   }
 
