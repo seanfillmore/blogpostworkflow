@@ -212,3 +212,12 @@ test('the escalation email says nothing was sent and carries the full message', 
   assert.match(e.body, /> hi/);
   assert.doesNotMatch(e.body, /holding reply|--resolve/);
 });
+
+test('the summary names emails held by a gate instead of saying "Nothing to do"', () => {
+  const r = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [],
+    plan: { sends: [], deferredByWindow: [], outsideWindow: false,
+      suppressed: [{ email: 'lori@example.com', name: 'Lori Yockim', kind: 'nudge1', reason: 'emailed recently (48h gap)', until: '2026-10-04T16:00:02.680Z' }] } };
+  const { body } = renderSummary(r, { apply: true });
+  assert.doesNotMatch(body, /Nothing to do/);
+  assert.match(body, /Due but held:\n  - nudge1: Lori Yockim <lori@example.com> \(emailed recently \(48h gap\), eligible 2026-10-04 16:00 UTC\)/);
+});

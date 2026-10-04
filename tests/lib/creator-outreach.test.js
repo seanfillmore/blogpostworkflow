@@ -218,3 +218,30 @@ test('the agent\'s own Message-IDs are recognised, so its Sent copies are never 
   for (const id of ['<mur6igqx.6ec5t4wg@realskincare.com>', '<mushnym2.1kcz5soh@realskincare.com>']) assert.equal(isAgentMessageId(id), true, id);
   for (const id of ['<8a8bbb94464173106f7eaf47eb93c25562b195f21a99bbd4@smtp.hushmail.com>', '<5F2A9C1E-3B4D-4E8F-9A21-7C6D8E9F0A1B@realskincare.com>', '', null]) assert.equal(isAgentMessageId(id), false, String(id));
 });
+
+test('a due email held by a gate is reported with its kind, reason and when it lifts', () => {
+  // 2026-10-04: welcome sent 46h earlier, nudge1 due (delivered 6 days ago). The
+  // run said "Nothing to do" while it was holding the nudge.
+  const welcomeAt = iso(NOW - 46 * 3_600_000);
+  const st = { creators: { 'lori@example.com': { sent: { welcome: welcomeAt }, lastScheduledAt: welcomeAt } } };
+  const p = planScheduled(roster([order()]), st, { now: NOW });
+  assert.equal(p.sends.length, 0);
+  assert.equal(p.suppressed.length, 1);
+  const [h] = p.suppressed;
+  assert.equal(h.kind, 'nudge1');
+  assert.match(h.reason, /emailed recently/);
+  assert.equal(h.until, iso(Date.parse(welcomeAt) + 48 * 3_600_000));
+});
+
+test('a recently-emailed creator with nothing due is NOT listed as held', () => {
+  const at = iso(NOW - 3_600_000);
+  const st = { creators: { 'lori@example.com': { sent: { welcome: at, nudge1: at }, lastScheduledAt: at } } };
+  const p = planScheduled(roster([order()]), st, { now: NOW });
+  assert.equal(p.sends.length, 0);
+  assert.deepEqual(p.suppressed, []);
+});
+
+test('opted-out creators are never listed as held', () => {
+  const st = { creators: { 'lori@example.com': { optedOut: true } } };
+  assert.deepEqual(planScheduled(roster([order()]), st, { now: NOW }).suppressed, []);
+});

@@ -296,7 +296,19 @@ export function renderSummary(r, { apply }) {
     lines.push(`Scheduled emails ${apply ? 'sent' : 'due'}:`);
     for (const s of r.scheduled) lines.push(`  - ${s.kind}: ${who(s)}`);
   }
-  if (r.plan?.deferredByWindow?.length) lines.push(`${r.plan.deferredByWindow.length} scheduled email(s) waiting for the send window.`);
+  if (r.plan?.deferredByWindow?.length) {
+    lines.push(`${r.plan.deferredByWindow.length} scheduled email(s) waiting for the send window:`);
+    for (const s of r.plan.deferredByWindow) lines.push(`  - ${s.kind}: ${who(s)}`);
+  }
+  // Due but held by a gate. Without this a run holding five nudges read
+  // "Nothing to do", indistinguishable from an idle one.
+  if (r.plan?.suppressed?.length) {
+    lines.push('Due but held:');
+    for (const h of r.plan.suppressed) {
+      const until = h.until ? `, eligible ${h.until.slice(0, 16).replace('T', ' ')} UTC` : '';
+      lines.push(`  - ${h.kind}: ${who(h)} (${h.reason}${until})`);
+    }
+  }
   if (r.replies.length) {
     lines.push('Replied automatically:');
     for (const x of r.replies) lines.push(`  - ${who(x)} asked: "${x.said.slice(0, 160)}"\n    we said: "${x.reply.replace(/\n+/g, ' ').slice(0, 300)}"`);
