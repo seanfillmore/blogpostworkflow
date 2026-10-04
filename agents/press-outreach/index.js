@@ -54,6 +54,7 @@ import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, isTran
 import {
   loadContacts, validateContacts, recordPitch, updatePitch, autoFollowUpsDue, openPitchByAddress,
   emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
+  OPEN_OUTCOMES, DEFAULT_COOLDOWN_DAYS,
 } from '../../lib/press-contacts.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
@@ -212,6 +213,7 @@ export async function runPressOutreach({
   saveBook = writeBook,
   saveState = writeState,
   saveDraft = (d) => saveDraftFile(join(ROOT, DRAFTS_DIR), d),
+  readDraft = (id) => JSON.parse(readFileSync(join(ROOT, DRAFTS_DIR, `${id}.json`), 'utf8')),
   escalate = async () => {},
   onAddress,
   confirmReply,
@@ -286,6 +288,10 @@ export async function runPressOutreach({
   // Contacts with a reply this run that was not fully handled: no automatic
   // follow-up may land on top of a conversation still waiting for an answer.
   const held = new Set();
+  // Escalating marks the pitch `escalated` only where that cannot erase a later
+  // stage: a sample already accepted or shipped stays recorded as such (no
+  // automatic follow-up fires for those outcomes, and state.escalated holds the rest).
+  const escalatedOutcome = (pitch) => (['sent', 'replied'].includes(pitch.outcome) ? { outcome: 'escalated' } : {});
 
   // ── spacing and cap ──
   const gapMs = (config.minGapMinutes || DEFAULT_CONFIG.minGapMinutes) * 60_000;
@@ -293,9 +299,20 @@ export async function runPressOutreach({
   let runSends = 0;
   const sentToday = () => state.sends.filter((s) => String(s.at).slice(0, 10) === today).length;
   const canSend = () => runSends < maxPerRun && sentToday() < dailyCap(config, state, now);
-  async function doSend(message, { contactId, kind }) {
-    if (runSends > 0) await sleep(gapMs);
+  let needGap = false;
+  /**
+   * Send one message, minGapMinutes after the previous one. `precheck` runs AFTER
+   * the gap sleep and right before the send: a non-empty string it returns is
+   * why the message must not go, and doSend returns { skipped: reason }.
+   */
+  async function doSend(message, { contactId, kind, draftId = null, pitchDate = null, precheck = null }) {
+    if (needGap) { await sleep(gapMs); needGap = false; }
+    if (precheck) {
+      const why = precheck();
+      if (why) return { skipped: why };
+    }
     runSends += 1;
+    needGap = true;
     let r;
     try {
       r = await send(message);
@@ -308,7 +325,13 @@ export async function runPressOutreach({
       throw err;
     }
     state.send_failures = 0;
-    state.sends.push({ at: isoOf(now), contact_id: contactId, kind, message_id: r.messageId, resend_id: r.resendId || null, last_event: 'sent' });
+    // draft_id / pitch_date make a send recognisable on the next run even if every
+    // bookkeeping write after it failed, so it is never sent a second time.
+    state.sends.push({
+      at: isoOf(now), contact_id: contactId, kind,
+      ...(draftId ? { draft_id: draftId } : {}), ...(pitchDate ? { pitch_date: pitchDate } : {}),
+      message_id: r.messageId, resend_id: r.resendId || null, last_event: 'sent',
+    });
     // Persisted at once, so cap accounting survives a crash before any bookkeeping.
     try { saveState(state); } catch (err) { log(`  could not save state after a send: ${err.message}`); }
     return r;
@@ -415,6 +438,13 @@ export async function runPressOutreach({
       }
 
       let verdict = classifyReply(msg, { awaitingAddress: p.outcome === 'sample-accepted' });
+      // An automatic answer is only right at the stage it was written for: a
+      // "yes" from someone whose samples already shipped is not a sample request.
+      const stageOk = verdict.kind === 'sample-yes' ? p.outcome === 'sent'
+        : verdict.kind === 'address-given' ? (p.outcome === 'sample-accepted' || (p.outcome === 'sent' && verdict.reason === 'accepted with address'))
+          : verdict.kind === 'decline' ? p.outcome === 'sent'
+            : true;
+      if (!stageOk) verdict = { kind: 'escalate', reason: 'reply does not fit the conversation stage' };
       if (verdict.kind === 'sample-yes' && !canSend()) {
         result.skipped.push({ ...row, reason: 'sample-yes waiting: send cap reached, retrying next run' });
         held.add(c.id);
@@ -442,7 +472,7 @@ export async function runPressOutreach({
         const gate = checkOutgoingCopy({ subject, text, kind: 'reply' });
         if (!gate.ok) {
           const reason = `could not send the address request: ${gate.problems.join('; ')}`;
-          commit(updatePitch(book, c.id, { outcome: 'escalated' }), row);
+          commit(updatePitch(book, c.id, escalatedOutcome(p)), row);
           state.escalated[c.id] = { at: isoOf(now), reason, message_id: msg.messageId };
           handled = await toSean(reason);
         } else {
@@ -471,7 +501,7 @@ export async function runPressOutreach({
           handled = false;
         }
       } else {
-        commit(updatePitch(book, c.id, { outcome: 'escalated' }), row);
+        if (Object.keys(escalatedOutcome(p)).length) commit(updatePitch(book, c.id, escalatedOutcome(p)), row);
         state.escalated[c.id] = { at: isoOf(now), reason: verdict.reason, message_id: msg.messageId };
         handled = await toSean(verdict.reason);
       }
@@ -487,6 +517,13 @@ export async function runPressOutreach({
         .sort((a, b) => String(a.pitch.last_sent_at || a.pitch.date).localeCompare(String(b.pitch.last_sent_at || b.pitch.date)));
       for (const { contact, pitch, n } of due) {
         if (held.has(contact.id)) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} held: a reply from them is still being handled` }); continue; }
+        const prior = state.sends.find((s) => s.contact_id === contact.id && s.kind === `follow-up-${n}` && s.pitch_date === pitch.date);
+        if (prior) {
+          // Sent by an earlier run whose book write failed: repair, never resend.
+          commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: prior.at, references: refsOf(refsOf(pitch.references, pitch.message_id), prior.message_id) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
+          result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} was already sent by an earlier run; book repaired` });
+          continue;
+        }
         if (!canSend()) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} deferred: send cap reached` }); continue; }
         if (!pitch.subject) { result.skipped.push({ id: contact.id, name: contact.name, reason: 'pitch has no subject to reply under' }); continue; }
         const text = stripDashes(followUpText({ firstName: firstName(contact), n }));
@@ -496,7 +533,7 @@ export async function runPressOutreach({
         const refs = refsOf(pitch.references, pitch.message_id);
         let r;
         try {
-          r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}` });
+          r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}`, pitchDate: pitch.date });
         } catch (err) {
           result.failed.push({ id: contact.id, name: contact.name, kind: `follow-up-${n}`, error: err.message });
           continue;
@@ -508,22 +545,74 @@ export async function runPressOutreach({
   }
 
   // ── 6. approved drafts (first pitches do not depend on reading mail) ──
+  // Drafts were read at run start; the dashboard can reject, edit or demote one
+  // while this run sleeps. Every write and every send re-reads the file first.
+  const CHANGED = 'changed in dashboard since the run started; left as it is';
+  const draftUnchanged = (d) => {
+    let cur = null;
+    try { cur = readDraft(d.id); } catch { cur = null; }
+    return Boolean(cur) && cur.status === 'approved' && cur.approved_at === d.approved_at && cur.subject === d.subject && cur.text === d.text;
+  };
+  /** Write `next` over draft `d` only if nobody changed the file since the run read it. */
+  const saveIfUnchanged = (d, next, row) => {
+    if (!draftUnchanged(d)) { result.skipped.push({ ...row, reason: CHANGED }); return false; }
+    try { saveDraft(next); } catch (err) { log(`  could not save draft ${d.id}: ${err.message}`); }
+    return true;
+  };
+  /** The book's record of a sent draft. Idempotent: a pitch already recorded for this draft is not added twice. */
+  const recordDraftSent = (d, c, { messageId, sentAt, subject, row }) => {
+    try {
+      if (d.kind === 'pitch') {
+        if ((c.pitches || []).some((p) => p.draft_id === d.id)) return;
+        commit(recordPitch(book, c.id, {
+          date: sentAt.slice(0, 10), concept: d.concept, products: d.products || [], channel: 'email', subject,
+          outcome: 'sent', message_id: messageId, references: [], last_sent_at: sentAt, follow_ups_sent: 0,
+          source: d.source || 'manual', target_url: d.target_url || null, draft_id: d.id,
+        }), row);
+      } else {
+        const lp = lastPitch(c);
+        const later = !lp?.last_sent_at || Date.parse(sentAt) > Date.parse(lp.last_sent_at);
+        commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lp?.follow_ups_sent || 0, 1), ...(later ? { last_sent_at: sentAt } : {}) }), row);
+      }
+    } catch (err) {
+      result.failed.push({ ...row, error: `sent, but the book was not updated: ${err.message}` });
+    }
+  };
+
   if (inSendWindow(now) && !state.paused) {
     for (const d of sendOrder(drafts)) {
       const row = { id: d.contact_id, draft_id: d.id, kind: d.kind };
+      const c = find(d.contact_id);
+      const prior = state.sends.find((s) => s.draft_id === d.id);
+      if (prior) {
+        // Sent by an earlier run whose bookkeeping failed: repair the file and the book, never resend.
+        try { saveDraft(markSent(d, { now: Date.parse(prior.at), messageId: prior.message_id, resendId: prior.resend_id || null })); } catch (err) { log(`  could not repair sent draft ${d.id}: ${err.message}`); }
+        if (c) recordDraftSent(d, c, { messageId: prior.message_id, sentAt: prior.at, subject: stripDashes(d.subject), row });
+        result.skipped.push({ ...row, reason: 'already sent by an earlier run; draft and book repaired' });
+        continue;
+      }
       if (!canSend()) { result.skipped.push({ ...row, reason: 'approved, waiting: send cap reached' }); continue; }
       if (d.kind === 'pitch' && !postalAddress) { result.skipped.push({ ...row, reason: 'no postal address in data/brand/brand-kit.json; first pitches refused' }); continue; }
-      const c = find(d.contact_id);
       if (!c) { result.skipped.push({ ...row, reason: 'contact not in the book' }); continue; }
       if (!PITCHABLE_STATUSES.includes(c.status)) { result.skipped.push({ ...row, reason: `contact status is ${c.status}` }); continue; }
+      if (d.kind === 'pitch') {
+        // A first pitch is only a first pitch to someone we are not already talking to.
+        const lp = lastPitch(c);
+        let problem = null;
+        if (state.escalated[c.id] || (lp && OPEN_OUTCOMES.includes(lp.outcome))) problem = 'contact has an open conversation';
+        else if (lp && now - Date.parse(`${lp.date}T00:00:00Z`) < DEFAULT_COOLDOWN_DAYS * DAY) problem = `contact pitched within ${DEFAULT_COOLDOWN_DAYS} days (last ${lp.date})`;
+        if (problem) {
+          if (saveIfUnchanged(d, { ...d, status: 'pending', gate_problems: [problem] }, row)) result.skipped.push({ ...row, reason: `back to pending: ${problem}` });
+          continue;
+        }
+      }
       if (d.kind === 'bump') {
         // A bump re-opens a quiet thread. It is only right while the thread is
         // still quiet, which we can only know when the mail was read this run.
         if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: 'bump held: replies could not be read this run' }); continue; }
         if (lastPitch(c)?.outcome !== 'sent') {
           const gone = { ...d, status: 'expired', expired_at: isoOf(now), expired_reason: 'thread moved on' };
-          try { saveDraft(gone); } catch (err) { log(`  could not save draft ${d.id}: ${err.message}`); }
-          result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
+          if (saveIfUnchanged(d, gone, row)) result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
           continue;
         }
       }
@@ -531,9 +620,7 @@ export async function runPressOutreach({
       const text = stripDashes(d.text);
       const gate = checkOutgoingCopy({ subject, text, kind: d.kind, ...(d.kind === 'pitch' ? { postalAddress } : {}) });
       if (!gate.ok) {
-        const back = { ...d, status: 'pending', gate_problems: gate.problems };
-        try { saveDraft(back); } catch (err) { log(`  could not save draft ${d.id}: ${err.message}`); }
-        result.skipped.push({ ...row, reason: `back to pending: ${gate.problems.join('; ')}` });
+        if (saveIfUnchanged(d, { ...d, status: 'pending', gate_problems: gate.problems }, row)) result.skipped.push({ ...row, reason: `back to pending: ${gate.problems.join('; ')}` });
         continue;
       }
       let r;
@@ -542,27 +629,17 @@ export async function runPressOutreach({
         r = await doSend({
           to: d.to, subject, text,
           ...(threaded ? { inReplyTo: d.in_reply_to, references: refsOf(d.references, d.in_reply_to).join(' ') } : {}),
-        }, { contactId: c.id, kind: d.kind });
+        }, { contactId: c.id, kind: d.kind, draftId: d.id, precheck: () => (draftUnchanged(d) ? null : CHANGED) });
       } catch (err) {
         result.failed.push({ ...row, error: err.message });
         continue;
       }
+      if (r.skipped) { result.skipped.push({ ...row, reason: r.skipped }); continue; }
+      const sentAt = isoOf(now);
       // Sent: from here on nothing may make it look unsent.
-      try { saveDraft(markSent(d, { now, messageId: r.messageId, resendId: r.resendId || null })); } catch (err) { log(`  could not save sent draft ${d.id}: ${err.message}`); }
-      try {
-        if (d.kind === 'pitch') {
-          commit(recordPitch(book, c.id, {
-            date: today, concept: d.concept, products: d.products || [], channel: 'email', subject,
-            outcome: 'sent', message_id: r.messageId, references: [], last_sent_at: isoOf(now), follow_ups_sent: 0,
-            source: d.source || 'manual', target_url: d.target_url || null, draft_id: d.id,
-          }), row);
-        } else {
-          commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lastPitch(c)?.follow_ups_sent || 0, 1), last_sent_at: isoOf(now) }), row);
-        }
-      } catch (err) {
-        result.failed.push({ ...row, error: `sent, but the book was not updated: ${err.message}` });
-      }
-      state.first_sent_at ||= isoOf(now);
+      try { saveDraft(markSent(d, { now: Date.parse(sentAt), messageId: r.messageId, resendId: r.resendId || null })); } catch (err) { log(`  could not save sent draft ${d.id}: ${err.message}`); }
+      recordDraftSent(d, c, { messageId: r.messageId, sentAt, subject, row });
+      state.first_sent_at ||= sentAt;
       saveState(state);
       result.sent.push({ ...row, to: d.to });
     }

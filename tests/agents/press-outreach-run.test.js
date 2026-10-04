@@ -20,13 +20,17 @@ function world({ replies = [], sent = [], drafts = [], state = {}, imapError = n
   const calls = { send: [], escalate: [], addresses: [], sleeps: [], savedDrafts: [], confirms: [], errors: [], order: [] };
   const book = { contacts: [contact('jane'), contact('sam'), contact('lee', { outcome: 'escalated' })] };
   const st = { sends: [], processed: [], escalated: { lee: { at: '2026-10-02T00:00:00Z' } }, ...state };
+  // The drafts directory as the dashboard sees it: what the run saved, else what it loaded.
+  const disk = new Map(drafts.map((d) => [d.id, d]));
+  calls.disk = disk;
   const opts = {
     apply: true, now: NOW, config: { enabled: true, sendVia: 'resend', dailySendCap: 10, dailySendCapRamped: 25, rampAfterDays: 14, draftExpiryDays: 14, minGapMinutes: 10 },
     book, state: st, drafts, postalAddress: ADDR,
     readReplies: async () => { if (imapError) throw imapError; return replies; },
     readSent: async () => sent,
     send: async (m) => { calls.send.push(m); return { messageId: `<s${calls.send.length}@realskincare.com>`, resendId: 'r' }; },
-    saveBook: (b) => { opts.book = b; }, saveState: () => {}, saveDraft: (d) => { calls.savedDrafts.push(d); },
+    saveBook: (b) => { opts.book = b; }, saveState: () => {}, saveDraft: (d) => { calls.savedDrafts.push(d); disk.set(d.id, d); },
+    readDraft: (id) => disk.get(id) || null,
     escalate: async (c, msg, reason) => { calls.escalate.push({ id: c.id, reason }); },
     onAddress: async (c, p, a) => { calls.addresses.push({ id: c.id, zip: a.zip }); },
     confirmReply: async (msg, kind) => { calls.confirms.push(kind); return true; },
@@ -341,4 +345,109 @@ test('C2b: a reply that came AFTER Sean\'s own message is still handled', async 
   });
   await runPressOutreach(opts);
   assert.deepEqual(calls.confirms, ['sample-yes']);
+});
+
+import { rejectDraft } from '../../lib/press-drafts.js';
+
+test('I3: a draft rejected in the dashboard while the run sleeps is not sent and stays rejected', async () => {
+  const [a, b] = ['a', 'b'].map((id) => approved(id));
+  const { opts, calls } = world({ drafts: [a, b] });
+  for (const id of ['a', 'b']) opts.book.contacts.push(fresh(id));
+  opts.book.contacts = opts.book.contacts.filter((c) => ['a', 'b'].includes(c.id)); // no follow-ups in the way
+  opts.sleep = async (ms) => { calls.sleeps.push(ms); calls.disk.set(b.id, rejectDraft(b, { now: NOW, reason: 'not now' })); };
+  const r = await runPressOutreach(opts);
+  assert.deepEqual(calls.send.map((m) => m.to), ['a@example.com']);
+  assert.equal(calls.disk.get(b.id).status, 'rejected');
+  assert.ok(!calls.savedDrafts.some((d) => d.id === b.id), 'the rejected file is never overwritten');
+  assert.ok(r.skipped.some((s) => s.draft_id === b.id && /changed in dashboard/.test(s.reason)));
+});
+
+test('I3: an approved draft edited in the dashboard is not sent from the stale copy', async () => {
+  const a = approved('a');
+  const { opts, calls } = world({ drafts: [a] });
+  opts.book.contacts = [fresh('a')];
+  calls.disk.set(a.id, { ...a, status: 'pending', subject: 'Edited subject' });
+  await runPressOutreach(opts);
+  assert.equal(calls.send.length, 0);
+  assert.equal(calls.disk.get(a.id).subject, 'Edited subject');
+});
+
+test('I3: a gate failure never overwrites a concurrent dashboard edit', async () => {
+  const bad = approved('new', { text: 'Hi there. No opt-out line and no address.' });
+  const { opts, calls } = world({ drafts: [bad] });
+  opts.book.contacts = [fresh('new')];
+  calls.disk.set(bad.id, rejectDraft(bad, { now: NOW, reason: 'no' }));
+  await runPressOutreach(opts);
+  assert.ok(!calls.savedDrafts.some((d) => d.id === bad.id));
+  assert.equal(calls.disk.get(bad.id).status, 'rejected');
+});
+
+test('I4: every send records its draft id; a draft already in state.sends is repaired, never re-sent', async () => {
+  const a = approved('a');
+  const one = world({ drafts: [a] });
+  one.opts.book.contacts = [fresh('a')];
+  await runPressOutreach(one.opts);
+  assert.equal(one.opts.state.sends[0].draft_id, a.id);
+
+  const prev = { at: '2026-10-05T18:00:00.000Z', contact_id: 'a', kind: 'pitch', draft_id: a.id, message_id: '<prev@realskincare.com>', resend_id: 'r0', last_event: 'sent' };
+  const two = world({ drafts: [a], state: { sends: [prev] } });
+  two.opts.book.contacts = [fresh('a')];
+  await runPressOutreach(two.opts);
+  assert.equal(two.calls.send.length, 0, 'not sent twice');
+  const repaired = two.calls.disk.get(a.id);
+  assert.equal(repaired.status, 'sent');
+  assert.equal(repaired.message_id, '<prev@realskincare.com>');
+  const p = two.opts.book.contacts[0].pitches.find((x) => x.draft_id === a.id);
+  assert.ok(p, 'the missing pitch record is restored');
+  assert.equal(p.message_id, '<prev@realskincare.com>');
+});
+
+test('I4: a follow-up already in state.sends for this pitch is not sent again; the book is repaired', async () => {
+  const one = world();
+  await runPressOutreach(one.opts);
+  const fu = one.opts.state.sends.find((s) => s.contact_id === 'sam');
+  assert.equal(fu.kind, 'follow-up-1');
+  assert.equal(fu.pitch_date, '2026-10-01');
+
+  const prev = { at: '2026-10-06T17:00:00.000Z', contact_id: 'sam', kind: 'follow-up-1', pitch_date: '2026-10-01', message_id: '<prev-fu@realskincare.com>', resend_id: 'r0', last_event: 'sent' };
+  const two = world({ state: { sends: [prev] } });
+  await runPressOutreach(two.opts);
+  assert.ok(!two.calls.send.some((m) => m.to === 'sam@example.com'));
+  const p = two.opts.book.contacts.find((c) => c.id === 'sam').pitches[0];
+  assert.equal(p.follow_ups_sent, 1);
+  assert.equal(p.last_sent_at, '2026-10-06T17:00:00.000Z');
+});
+
+test('I5: a yes from a contact whose samples already went out escalates; nothing is sent', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', 'Absolutely, loved them!')] });
+  opts.book.contacts[0].pitches[0].outcome = 'samples-sent';
+  await runPressOutreach(opts);
+  assert.deepEqual(calls.escalate, [{ id: 'jane', reason: 'reply does not fit the conversation stage' }]);
+  assert.ok(!calls.send.some((m) => m.to === 'jane@example.com'));
+  assert.deepEqual(calls.addresses, []);
+});
+
+test('I5: an address from a contact who never accepted a sample escalates', async () => {
+  const { opts, calls } = world({ replies: [reply('jane', "I'd love to try them! Ship to:\n12 Example Road\nSpringfield, IL 62704")] });
+  opts.book.contacts[0].pitches[0].outcome = 'replied';
+  await runPressOutreach(opts);
+  assert.deepEqual(calls.addresses, []);
+  assert.deepEqual(calls.escalate, [{ id: 'jane', reason: 'reply does not fit the conversation stage' }]);
+});
+
+test('I6: a first pitch to a contact with an open conversation, an escalation or a recent pitch goes back to pending', async () => {
+  const drafts = ['jane', 'lee', 'cool'].map((id) => approved(id));
+  const { opts, calls } = world({ drafts });
+  opts.book.contacts.push(contact('cool', { date: '2026-09-20', outcome: 'declined' }));
+  opts.book.contacts.find((c) => c.id === 'lee').pitches[0].outcome = 'declined'; // only the escalation holds lee
+  opts.book.contacts = opts.book.contacts.filter((c) => c.id !== 'sam');
+  opts.book.contacts[0].pitches[0].follow_ups_sent = 2; // no follow-ups eat the per-run cap
+  await runPressOutreach(opts);
+  for (const id of ['jane', 'lee', 'cool']) assert.ok(!calls.send.some((m) => m.to === `${id}@example.com` && m.subject === 'Hi'), id);
+  const back = (id) => calls.disk.get(drafts.find((d) => d.contact_id === id).id);
+  assert.equal(back('jane').status, 'pending');
+  assert.deepEqual(back('jane').gate_problems, ['contact has an open conversation']);
+  assert.deepEqual(back('lee').gate_problems, ['contact has an open conversation']);
+  assert.equal(back('cool').status, 'pending');
+  assert.match(back('cool').gate_problems[0], /pitched within 60 days/);
 });
