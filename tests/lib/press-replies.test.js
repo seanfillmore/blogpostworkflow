@@ -53,3 +53,34 @@ test('a bare address only counts when we asked for one', () => {
 test('two addresses is ambiguous', () => {
   assert.equal(extractUsAddress('1 A St\nX, NY 10001\nor\n2 B St\nY, CA 90001'), null);
 });
+
+test('opt-out with negated send verbs', () => {
+  assert.equal(classifyReply(m('Please do not send me any more emails.')).kind, 'opt-out');
+  assert.equal(classifyReply(m("Please don't email me anymore.")).kind, 'opt-out');
+  assert.equal(classifyReply(m('Stop contacting me.')).kind, 'opt-out');
+  assert.equal(classifyReply(m('Never send us any more messages.')).kind, 'opt-out');
+});
+
+test('conditional or deferred yes escalates', () => {
+  assert.equal(classifyReply(m("I'd love to but I am slammed until January.")).kind, 'escalate');
+  assert.equal(classifyReply(m('I would love to try the lotion but I only cover makeup')).kind, 'escalate');
+  assert.equal(classifyReply(m('Sure. Send me your press kit first.')).kind, 'escalate');
+});
+
+test('word boundary fix: yes/sure with punctuation', () => {
+  assert.equal(classifyReply(m('Yes! Please send the lotion.')).kind, 'sample-yes');
+  assert.equal(classifyReply(m('Sure, I can try them.')).kind, 'sample-yes');
+  assert.equal(classifyReply(m('Absolutely, sounds great!')).kind, 'sample-yes');
+});
+
+test('address without cue is sample-yes, not address-given', () => {
+  const t = "I'd love to try them!\n\nJane Doe\n350 Fifth Ave\nNew York, NY 10118";
+  assert.equal(classifyReply(m(t)).kind, 'sample-yes');
+});
+
+test('address with cue is address-given', () => {
+  const t = "I'd love to try them! Here is my shipping address:\n350 Fifth Ave\nNew York, NY 10118";
+  const r = classifyReply(m(t));
+  assert.equal(r.kind, 'address-given');
+  assert.equal(r.address.zip, '10118');
+});
