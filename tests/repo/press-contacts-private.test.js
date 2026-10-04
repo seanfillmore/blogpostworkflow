@@ -32,3 +32,8 @@ test('nothing under data/press/ is tracked', () => {
   const tracked = git('ls-files', 'data/press').trim();
   assert.equal(tracked, '', `tracked files under data/press/: ${tracked}`);
 });
+
+test('the approval queue and send state are gitignored too', () => {
+  assert.match(git('check-ignore', '--no-index', 'data/press/drafts/x.json'), /drafts/);
+  assert.match(git('check-ignore', '--no-index', 'data/press/outreach-state.json'), /outreach-state/);
+});

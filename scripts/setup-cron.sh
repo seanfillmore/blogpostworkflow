@@ -183,6 +183,10 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # 30 minutes so a reply is answered quickly; scheduled mail only goes out
 # 16:00-24:00 UTC (see lib/creator-outreach.js). Off switch: config/creator-outreach.json.
 CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outreach/index.js --apply >> data/reports/scheduler/creator-outreach.log 2>&1"
+
+# Press outreach: replies, follow-ups and Sean-approved pitches (agents/press-outreach).
+# Offset to :05/:35 so it never shares an IMAP login minute with creator-outreach.
+PRESS_OUTREACH="5,35 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --apply >> data/reports/scheduler/press-outreach.log 2>&1"
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
 # folders Sean already uses. Rules are learned from those folders; moves, never
 # deletes. 13:40 UTC = 6:40am PDT, before the working day.
@@ -578,6 +582,7 @@ $DAILY_SCHEDULER_HEARTBEAT
 # ── Creator program (daily, before the digest) ──
 $DAILY_TRYBE_REVIEW
 $CREATOR_OUTREACH
+$PRESS_OUTREACH
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
 # ── Daily digest ──

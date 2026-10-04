@@ -24,6 +24,8 @@
  *   node agents/press-outreach/index.js --apply --init     # first run: create the state file
  *   node agents/press-outreach/index.js --test-send you@example.com
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
+ *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
+ *                                                          # one-off: thread ids, existing replies, bump drafts
  *
  * Cron: every 30 minutes (scripts/setup-cron.sh). Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
@@ -51,13 +53,13 @@ import { notify } from '../../lib/notify.js';
 import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, isTransientNetworkError } from '../../lib/hushmail.js';
 import {
   loadContacts, validateContacts, recordPitch, updatePitch, autoFollowUpsDue, openPitchByAddress,
-  emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES,
+  emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
 } from '../../lib/press-contacts.js';
-import { DRAFTS_DIR, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
+import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
   DEFAULT_CONFIG, inSendWindow, dailyCap, stripDashes, followUpText, askAddressText,
-  checkOutgoingCopy, shouldPause, firstName,
+  checkOutgoingCopy, shouldPause, firstName, bumpText,
 } from '../../lib/press-outreach.js';
 import { transientStreak, TRANSIENT_ESCALATE_AFTER } from '../creator-outreach/index.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
@@ -514,6 +516,96 @@ export async function runPressOutreach({
   return { ...result, book };
 }
 
+const BUMP_AFTER_DAYS = 12;
+const stripRe = (s) => String(s || '').trim().replace(/^(re:\s*)+/i, '').toLowerCase();
+
+/**
+ * One-off backfill for pitches Sean sent by hand before this agent existed.
+ * Pure: reads the book plus the Sent copies and replies, and returns what to
+ * change. It acts on nothing and calls no model.
+ *   1. thread ids: finds the Sent copy of each sent pitch and patches in its
+ *      message_id, subject and last_sent_at (no Sent copy: noted, never followed up)
+ *   2. replies since the pitch: reported with their classification; only
+ *      decline and opt-out are patched, everything else is left for Sean
+ *   3. bump drafts: one per pitch still `sent`, threaded, older than 12 days
+ * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], drafts: object[], notes: string[]}}
+ */
+export function planBackfill({ book, sentCopies = [], replies = [], now = Date.now(), postalAddress = null, drafts = [] } = {}) { // eslint-disable-line no-unused-vars
+  const patches = [];
+  const out = [];
+  const notes = [];
+  for (const c of book.contacts) {
+    const p = lastPitch(c);
+    if (!p || p.outcome !== 'sent') continue;
+    const email = emailOf(c);
+    if (!email) continue;
+    const pitchStart = Date.parse(`${p.date}T00:00:00Z`);
+    const patch = {};
+    let messageId = p.message_id || null;
+    let lastSent = p.last_sent_at || null;
+
+    // 1. thread ids
+    if (!messageId) {
+      const want = stripRe(p.subject);
+      const copy = sentCopies
+        .filter((m) => (m.to || []).some((a) => String(a).toLowerCase() === email) && m.messageId && (want ? stripRe(m.subject) === want : Date.parse(m.date) >= pitchStart))
+        .sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
+      if (!copy) {
+        notes.push(`${c.name} (${c.id}): no Sent copy of "${p.subject || '(no subject)'}" found, so no thread id and no follow-up`);
+        continue;
+      }
+      messageId = copy.messageId;
+      lastSent = new Date(Date.parse(copy.date)).toISOString();
+      patch.message_id = messageId;
+      patch.subject = copy.subject;
+      patch.last_sent_at = lastSent;
+      notes.push(`${c.name} (${c.id}): thread id found (${messageId})`);
+    }
+
+    // 2. replies since the pitch
+    let conversation = false;
+    let declined = false;
+    for (const m of replies.filter((r) => String(r.from || '').toLowerCase() === email && Date.parse(r.date) >= pitchStart)) {
+      const v = classifyReply(m);
+      if (v.kind === 'ignore') { notes.push(`${c.name} (${c.id}): ignored a message (${v.reason})`); continue; }
+      conversation = true;
+      const said = String(m.text || '').replace(/\s+/g, ' ').slice(0, 120);
+      if (v.kind === 'decline' || v.kind === 'opt-out') {
+        declined = true;
+        patch.outcome = 'declined';
+        notes.push(`${c.name} (${c.id}): ${v.kind} reply, marked declined${v.kind === 'opt-out' ? ' and do_not_contact' : ''}: "${said}"`);
+        if (v.kind === 'opt-out') patches.push({ id: c.id, patch: {}, contactStatus: 'do_not_contact' });
+      } else {
+        notes.push(`${c.name} (${c.id}): ${v.kind} reply NOT acted on, for Sean${v.reason ? ` (${v.reason})` : ''}: "${said}"`);
+      }
+    }
+    if (Object.keys(patch).length) patches.push({ id: c.id, patch });
+    if (declined || conversation) continue;
+
+    // 3. bump draft
+    const age = (now - Date.parse(lastSent || `${p.date}T00:00:00Z`)) / DAY;
+    if (age <= BUMP_AFTER_DAYS) continue;
+    if (drafts.some((d) => d.contact_id === c.id && ['pending', 'approved'].includes(d.status))) {
+      notes.push(`${c.name} (${c.id}): a draft is already waiting, no bump created`);
+      continue;
+    }
+    const subject = reSubject(patch.subject || p.subject);
+    out.push(newDraft({
+      kind: 'bump', contactId: c.id, to: email, subject, text: bumpText({ firstName: firstName(c) }),
+      inReplyTo: messageId, references: [messageId], concept: p.concept || 'intro', products: p.products || [], now,
+    }));
+  }
+  return { patches, drafts: out, notes };
+}
+
+/** `id=outcome[:order]` -> { id, outcome, sampleOrder } or throws. */
+export function parseSet(arg) {
+  const m = /^([^=]+)=([^:]+)(?::(.+))?$/.exec(String(arg || ''));
+  if (!m) throw new Error(`--set wants <id>=<outcome>[:<order>], got "${arg}"`);
+  if (!PITCH_OUTCOMES.includes(m[2])) throw new Error(`--set outcome "${m[2]}" must be one of ${PITCH_OUTCOMES.join(', ')}`);
+  return { id: m[1], outcome: m[2], sampleOrder: m[3] || null };
+}
+
 export function escalationEmail(contact, msg, reason) {
   const p = lastPitch(contact);
   return {
@@ -588,6 +680,42 @@ function writeStreak(v) {
   try { if (v) writeFileSync(TRANSIENT_PATH, JSON.stringify(v)); else if (existsSync(TRANSIENT_PATH)) unlinkSync(TRANSIENT_PATH); } catch { /* best effort */ }
 }
 
+async function runBackfill(args, apply, creds) {
+  const sets = [];
+  args.forEach((a, i) => { if (a === '--set') sets.push(parseSet(args[i + 1])); });
+  const loaded = readBook();
+  if (!loaded.available) throw new Error(`contact book unavailable: ${loaded.reason}`);
+  if (!creds) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD are not in .env');
+  let book = loaded.doc;
+  const now = Date.now();
+  for (const s of sets) {
+    const patch = { outcome: s.outcome, ...(s.sampleOrder ? { sample_order: s.sampleOrder } : {}) };
+    console.log(`${apply ? '' : '[dry run] would '}set ${s.id}: ${JSON.stringify(patch)}`);
+    book = updatePitch(book, s.id, patch);
+  }
+  const senders = [...openPitchByAddress(book.contacts).keys()];
+  const since = new Date(now - 90 * DAY);
+  const replies = senders.length ? await fetchFromAllFolders(creds, { senders, since }) : [];
+  const sentCopies = senders.length ? await fetchSentTo(creds, { recipients: senders, since }) : [];
+  const draftsDir = join(ROOT, DRAFTS_DIR);
+  const existing = loadDrafts(draftsDir);
+  const plan = planBackfill({ book, sentCopies, replies, now, postalAddress: readPostalAddress(), drafts: existing });
+  for (const n of plan.notes) console.log(`  ${n}`);
+  console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
+  for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
+  if (apply) {
+    for (const { id, patch, contactStatus } of plan.patches) {
+      if (Object.keys(patch).length) book = updatePitch(book, id, patch);
+      if (contactStatus) book = { ...book, contacts: book.contacts.map((x) => (x.id === id ? { ...x, status: contactStatus } : x)) };
+    }
+    writeBook(book);
+    for (const d of plan.drafts) {
+      try { saveDraftFile(draftsDir, d); } catch (err) { console.log(`  could not save ${d.id}: ${err.message}`); }
+    }
+    console.log('backfill applied');
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
@@ -611,7 +739,7 @@ async function main() {
     return { imapDown: false };
   }
   if (args.includes('--backfill')) {
-    console.log('--backfill is not implemented yet (Task 8)');
+    await runBackfill(args, apply, creds);
     return { imapDown: false };
   }
 

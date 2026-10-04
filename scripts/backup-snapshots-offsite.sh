@@ -33,8 +33,10 @@
 #                  the book holds named people's addresses, so — exactly like
 #                  state.json — this job is its only copy. It records who was
 #                  pitched, when, and what they said; losing it means re-doing
-#                  hours of verified contact research. Only the book itself is
-#                  archived, never data/press/backups/, which is local undo.
+#                  hours of verified contact research. Also archived when
+#                  present: data/press/drafts/ (the approval queue) and
+#                  data/press/outreach-state.json (press-outreach's send ledger).
+#                  Never data/press/backups/, which is local undo.
 #
 #   The sets are archived and pruned independently but share one upload,
 #   verify and prune path — a second copy of that logic is a second copy that
@@ -173,14 +175,18 @@ else
 fi
 
 # ── set 3: the PR contact book ───────────────────────────────────────────────
-# One file, gitignored because the repository is public. Skipped with a notice
+# The book, plus data/press/drafts/ (the approval queue) and
+# data/press/outreach-state.json (press-outreach's send ledger) when present. One file, gitignored because the repository is public. Skipped with a notice
 # when absent — every box except the server legitimately has none, and failing
 # here would take the other two backups down with it.
 PRESS_BOOK="data/press/contacts.json"
 if [[ -f "$ROOT/$PRESS_BOOK" ]]; then
   press_archive="$tmp/${PRESS_PREFIX}-${stamp}.tar.gz"
-  tar czf "$press_archive" -C "$ROOT" "$PRESS_BOOK"
-  push_archive "$PRESS_PREFIX" "$press_archive" 1
+  PRESS_PATHS=("$PRESS_BOOK")
+  [[ -d "$ROOT/data/press/drafts" ]] && PRESS_PATHS+=("data/press/drafts")
+  [[ -f "$ROOT/data/press/outreach-state.json" ]] && PRESS_PATHS+=("data/press/outreach-state.json")
+  tar czf "$press_archive" -C "$ROOT" "${PRESS_PATHS[@]}"
+  push_archive "$PRESS_PREFIX" "$press_archive" "${#PRESS_PATHS[@]}"
 else
   echo "[$PRESS_PREFIX] no $PRESS_BOOK — nothing to back up."
 fi
