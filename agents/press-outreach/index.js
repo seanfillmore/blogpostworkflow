@@ -21,7 +21,8 @@
  * Usage:
  *   node agents/press-outreach/index.js                    # dry run: plan, send nothing
  *   node agents/press-outreach/index.js --apply            # send (cron does this)
- *   node agents/press-outreach/index.js --apply --init     # first run: create the state file
+ *   node agents/press-outreach/index.js --apply --init     # first run: create the state file, marking
+ *                                                          # every reply already in the mailbox handled
  *   node agents/press-outreach/index.js --test-send you@example.com
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
  *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
