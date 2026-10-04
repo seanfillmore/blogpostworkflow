@@ -97,3 +97,20 @@ test('real library loads with the six seeded structures', () => {
   for (const s of l.structures) assert.ok(!JSON.stringify(s).includes('—'), s.id);
   assert.ok(!/antiperspirant|mineral oil|petrolatum/i.test(JSON.stringify(l)));
 });
+
+test('labelPositions, when present, must be 0-1 fractions', () => {
+  const ok = { labelPositions: [{ x: 0.2, y: 0.1, tx: 0.3, ty: 0.4 }, { x: 0.8, y: 0.1, tx: 0.7, ty: 0.4 }] };
+  assert.equal(loadLibrary(lib([base(ok)])).structures.length, 1);
+  assert.throws(() => loadLibrary(lib([base({ id: 'lp', labelPositions: [{ x: 2, y: 0.1, tx: 0.3, ty: 0.4 }] })])), /lp.*labelPositions/);
+});
+
+test('the seeded labelled-bundle structure carries label positions', () => {
+  const s = loadLibrary().structures.find(x => x.id === 'labelled-bundle-offer');
+  assert.ok(s.labelPositions.length >= 2 && s.labelPositions.length <= 4);
+});
+
+test('whyIneligible names the reason', async () => {
+  const { whyIneligible } = await import('../../agents/ad-concepts/structures.js');
+  assert.match(whyIneligible(base({ requires: ['offer'] }), { productKinds: ['cream'], evidence: new Set() }), /missing evidence: offer/);
+  assert.equal(whyIneligible(base(), { productKinds: ['cream'], evidence: new Set() }), null);
+});

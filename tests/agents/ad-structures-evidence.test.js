@@ -137,3 +137,14 @@ test('fillModelSlot throws after two failures, on max_tokens, and on too many wo
   await assert.rejects(() => fillModelSlot({ anthropic: stub({ stop_reason: 'max_tokens', content: [] }), ...base }), /cut off/);
   await assert.rejects(() => fillModelSlot({ anthropic: stub('{"text":"one two three four five six"}', '{"text":"one two three four five six"}'), ...base }), /words/);
 });
+
+test('templateSlot reports the rows it drops through ctx.onDropped', () => {
+  const s = S('ours-vs-theirs-checklist');
+  const seen = [];
+  const sourceIndex = { catalog: 'Only 6 clean ingredients. Cures eczema fast.' };
+  const kept = templateSlot(s, 'oursRows', { facts: ['Only 6 clean ingredients', 'Cures eczema fast', 'Made on the moon'], sourceIndex, competitorNames: CN, onDropped: (slot, d) => seen.push([slot, d]) });
+  assert.deepEqual(kept, ['Only 6 clean ingredients']);
+  assert.equal(seen[0][0], 'oursRows');
+  assert.deepEqual(seen[0][1].map(d => d.text), ['Cures eczema fast', 'Made on the moon']);
+  assert.ok(seen[0][1].every(d => d.reason));
+});

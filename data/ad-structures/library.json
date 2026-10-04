@@ -1,5 +1,5 @@
 {
-  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (1:1|4:5), fits[] product kinds, requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. Phone-shot look and the no-text and label-ink blocks are added by code, not written here.",
+  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (1:1|4:5), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here.",
   "version": 1,
   "structures": [
     {
@@ -94,8 +94,8 @@
       "layout": "split-two-panel",
       "ratio": "4:5",
       "fits": [
-        "cream",
-        "lotion"
+        "lotion",
+        "cream"
       ],
       "requires": [
         "catalogFact"
@@ -155,8 +155,8 @@
       "layout": "checklist-split",
       "ratio": "4:5",
       "fits": [
-        "cream",
-        "lotion"
+        "lotion",
+        "cream"
       ],
       "requires": [
         "catalogFact"
@@ -259,6 +259,32 @@
           "source": "offer"
         }
       },
+      "labelPositions": [
+        {
+          "x": 0.25,
+          "y": 0.12,
+          "tx": 0.32,
+          "ty": 0.42
+        },
+        {
+          "x": 0.75,
+          "y": 0.12,
+          "tx": 0.68,
+          "ty": 0.42
+        },
+        {
+          "x": 0.25,
+          "y": 0.8,
+          "tx": 0.32,
+          "ty": 0.62
+        },
+        {
+          "x": 0.75,
+          "y": 0.8,
+          "tx": 0.68,
+          "ty": 0.62
+        }
+      ],
       "notes": "Only runs when --offer is verified and the landing product is a bundle. Offer text is the verified price pair only."
     }
   ]

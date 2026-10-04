@@ -110,7 +110,7 @@ export function screenRows(rows, { sourceIndex = null, competitorNames, variant 
 
 /**
  * Deterministic template slots. Strings only; nothing here is model-written.
- * ctx: { product | productNoun, facts?, sourceIndex?, competitorNames, labels? }
+ * ctx: { product | productNoun, facts?, sourceIndex?, competitorNames, labels?, onDropped?(slotName, dropped[]) }
  */
 export function templateSlot(structure, slotName, ctx = {}) {
   const slot = structure?.slots?.[slotName];
@@ -122,14 +122,11 @@ export function templateSlot(structure, slotName, ctx = {}) {
     return `${needNoun()} ${slotName === 'left' ? 'they think we sell' : 'we actually sell'}`;
   }
   if (slotName === 'title') return `Ours vs ${structure.rows?.theirsLabel || 'typical'}`;
-  if (slotName === 'theirsRows') {
-    const r = screenRows(structure.rows?.theirs || [], { ...gateCtx, requireSourced: false });
-    return r.kept;
-  }
-  if (slotName === 'oursRows') {
-    return screenRows(ctx.facts || [], { ...gateCtx, sourceIndex: ctx.sourceIndex }).kept.slice(0, slot.maxRows || 3);
-  }
-  if (slotName === 'labels') return screenRows(ctx.labels || [], { ...gateCtx, requireSourced: false }).kept;
+  // Rejected rows are reported, never silently dropped: the caller records them.
+  const screened = (r) => { if (r.dropped.length) ctx.onDropped?.(slotName, r.dropped); return r.kept; };
+  if (slotName === 'theirsRows') return screened(screenRows(structure.rows?.theirs || [], { ...gateCtx, requireSourced: false }));
+  if (slotName === 'oursRows') return screened(screenRows(ctx.facts || [], { ...gateCtx, sourceIndex: ctx.sourceIndex })).slice(0, slot.maxRows || 3);
+  if (slotName === 'labels') return screened(screenRows(ctx.labels || [], { ...gateCtx, requireSourced: false }));
   if (slot.template) return slot.template.replaceAll('{category}', needNoun());
   throw new Error(`slot "${slotName}" of "${structure.id}" is not a template slot`);
 }

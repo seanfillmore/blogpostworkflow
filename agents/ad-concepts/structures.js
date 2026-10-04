@@ -29,6 +29,10 @@ function validate(s, dir) {
   }
   for (const r of s.requires || []) if (!EVIDENCE.includes(r)) fail(`unknown requires "${r}"`);
   if (!s.scene?.primary) fail('missing scene.primary');
+  const frac = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
+  for (const p of s.labelPositions || []) {
+    if (!['x', 'y', 'tx', 'ty'].every(k => frac(p?.[k]))) fail(`labelPositions entries need x, y, tx, ty as 0-1 fractions, got ${JSON.stringify(p)}`);
+  }
 }
 
 export function loadLibrary(path = DEFAULT_LIBRARY_PATH) {
@@ -38,7 +42,8 @@ export function loadLibrary(path = DEFAULT_LIBRARY_PATH) {
   return { version: lib.version, structures: lib.structures || [] };
 }
 
-function whyIneligible(s, { productKinds, evidence }) {
+/** Why a structure cannot run this time, or null when it can. */
+export function whyIneligible(s, { productKinds, evidence }) {
   if (s.status !== 'approved') return `status is ${s.status}`;
   const missing = (s.requires || []).filter(r => !evidence.has(r));
   if (missing.length) return `missing evidence: ${missing.join(', ')}`;
