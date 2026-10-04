@@ -50,6 +50,7 @@ import rejectedImagesRoutes from './routes/rejected-images.js';
 import postsKillRoutes from './routes/posts-kill.js';
 import cannibalizationRoutes from './routes/cannibalization.js';
 import ideasRoutes from './routes/ideas.js';
+import pressOutreachRoutes from './routes/press-outreach.js';
 import rumRoutes from './routes/rum.js';
 import giveawayRoutes from './routes/giveaway.js';
 
@@ -118,6 +119,7 @@ const ROUTES = [
   ...postsKillRoutes,
   ...cannibalizationRoutes,
   ...ideasRoutes,
+  ...pressOutreachRoutes,
   ...rumRoutes,
   ...giveawayRoutes,
 ];
