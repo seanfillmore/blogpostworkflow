@@ -29,8 +29,8 @@
       ],
       "people": "none",
       "scene": {
-        "primary": "Our {productNoun} ({productDescriptionShort}) sits on a light wood bathroom counter, lid off and leaning against it where it has one, the product visible; it is in the lower third of the frame, label facing the camera. The upper half of the frame is a plain, softly out-of-focus pale wall.",
-        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and large on a plain light surface, centred in the lower two thirds of the frame, label facing straight at the camera, sharp and evenly lit. The upper third is a plain, softly out-of-focus pale wall."
+        "primary": "Our {productNoun} ({productDescriptionShort}) stands upright with its lid on, on a light wood bathroom counter, centred and large in the lower half of the frame: it fills about 45% of the frame height, label facing straight at the camera, sharp and evenly lit. The upper half of the frame is a plain, softly out-of-focus pale wall with nothing on it.",
+        "fallback": "Our {productNoun} ({productDescriptionShort}) stands upright and large on a plain light surface, centred in the lower half of the frame and filling about 50% of the frame height, label facing straight at the camera, sharp and evenly lit. The upper half is a plain, softly out-of-focus pale wall."
       },
       "slots": {
         "headline": {
@@ -119,8 +119,8 @@
           "productFree": true,
           "ratio": "9:16",
           "scene": {
-            "primary": "A plain, unbranded clear plastic tub of solid white cooking coconut oil, lid off, a metal spoon stuck in it, sitting on a cluttered kitchen counter next to a frying pan. Unlabelled: no logo, no printing, no text on the tub.",
-            "fallback": "A plain, unbranded jar of solid white cooking fat, lid off, on a kitchen counter. Unlabelled: no logo, no printing, no text anywhere."
+            "primary": "A plain, unbranded clear plastic tub of solid white cooking coconut oil, lid off, a metal spoon stuck in it, on a plain, tidy kitchen counter beside an empty frying pan. Nothing else is in the frame: no jars, bottles, boxes, appliances or packaging anywhere, and a plain tiled or painted wall behind. Unlabelled: no logo, no printing, no text on the tub.",
+            "fallback": "A plain, unbranded jar of solid white cooking fat, lid off, alone on a bare kitchen counter against a plain wall. Nothing else is in the frame: no other jars, bottles, boxes or packaging. Unlabelled: no logo, no printing, no text anywhere."
           }
         },
         {
