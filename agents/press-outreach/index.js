@@ -833,14 +833,16 @@ export function contactOwning(book, address) {
 /**
  * The sender's first-pitch test, applied before any spend: a contact we are
  * talking to, or pitched inside the cooldown, or that is not pitchable, gets no
- * new draft. Returns the reason, or null.
+ * new draft. Returns { reason, permanent } or null. Only a non-pitchable status
+ * is PERMANENT; escalated, open conversation and cooldown end on their own, so
+ * they must never count toward the attempts that retire a prospect.
  */
 export function contactBlocker(contact, state, nowMs) {
-  if (!PITCHABLE_STATUSES.includes(contact.status)) return `contact ${contact.id} has status ${contact.status}`;
-  if (state?.escalated?.[contact.id]) return `contact ${contact.id} is escalated to Sean`;
+  if (!PITCHABLE_STATUSES.includes(contact.status)) return { reason: `contact ${contact.id} has status ${contact.status}`, permanent: true };
+  if (state?.escalated?.[contact.id]) return { reason: `contact ${contact.id} is escalated to Sean`, permanent: false };
   const lp = lastPitch(contact);
-  if (lp && OPEN_OUTCOMES.includes(lp.outcome)) return `contact ${contact.id} has an open conversation (${lp.outcome})`;
-  if (lp && nowMs - Date.parse(`${lp.date}T00:00:00Z`) < DEFAULT_COOLDOWN_DAYS * DAY) return `contact ${contact.id} pitched within ${DEFAULT_COOLDOWN_DAYS} days (last ${lp.date})`;
+  if (lp && OPEN_OUTCOMES.includes(lp.outcome)) return { reason: `contact ${contact.id} has an open conversation (${lp.outcome})`, permanent: false };
+  if (lp && nowMs - Date.parse(`${lp.date}T00:00:00Z`) < DEFAULT_COOLDOWN_DAYS * DAY) return { reason: `contact ${contact.id} pitched within ${DEFAULT_COOLDOWN_DAYS} days (last ${lp.date})`, permanent: false };
   return null;
 }
 
@@ -926,6 +928,7 @@ export async function runDrafting({
 } = {}) {
   if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
   state.draft_attempts ||= {};
+  state.found_addresses ||= {};
   const today = isoOf(now).slice(0, 10);
   const concept = `pitch-${today.slice(0, 7)}`;
   const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0 };
@@ -967,6 +970,9 @@ export async function runDrafting({
   async function attempt(p) {
     const row = { key: p.key, domain: p.domain, name: p.person?.name || p.domain };
     const skip = (reason) => { countAttempt(p); result.skipped.push({ ...row, reason }); return false; };
+    // A temporary block (escalated, open conversation, cooldown) is skipped with
+    // its reason and NO attempt, so the prospect is drafted once it clears.
+    const blocked = (b) => (b.permanent ? skip(b.reason) : (result.skipped.push({ ...row, reason: `${b.reason}; retried later` }), false));
 
     let page;
     try { page = await fetchArticle(p.targetUrl); } catch (err) { page = { outcome: 'network-error', error: err.message }; }
@@ -980,8 +986,8 @@ export async function runDrafting({
     let existing = resolveExistingContact(book, p);
     if (existing) {
       if (draftedContacts.has(existing.id)) { result.skipped.push({ ...row, reason: `already drafted to ${existing.id} this run` }); return false; }
-      const why = contactBlocker(existing, state, now);
-      if (why) return skip(why);
+      const b = contactBlocker(existing, state, now);
+      if (b) return blocked(b);
     }
 
     let found;
@@ -991,8 +997,14 @@ export async function runDrafting({
       const ch = existing.channels.find((c) => c.type === 'email' && c.address);
       found = { address: emailOf(existing), source: ch.source || 'contact book', spentHunter: 0 };
     } else {
-      try { found = await findAddress(p); } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
-      result.hunterSpent += found?.spentHunter || 0;
+      const cached = state.found_addresses[p.key];
+      if (cached?.address) {
+        // Found on an earlier run that a temporary block stopped: no second spend.
+        found = { address: cached.address, source: cached.source, spentHunter: 0 };
+      } else {
+        try { found = await findAddress(p); } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
+        result.hunterSpent += found?.spentHunter || 0;
+      }
       if (found?.address) {
         const owner = contactOwning(book, found.address);
         if (owner && !(existing && owner.id === existing.id)) {
@@ -1000,8 +1012,14 @@ export async function runDrafting({
           // person writing elsewhere; anyone else is a different person.
           if (existing || foldName(owner.name) !== foldName(prospectName(p))) return skip(`found address belongs to ${owner.id}, a different contact`);
           if (draftedContacts.has(owner.id)) { result.skipped.push({ ...row, reason: `already drafted to ${owner.id} this run` }); return false; }
-          const why = contactBlocker(owner, state, now);
-          if (why) return skip(why);
+          const b = contactBlocker(owner, state, now);
+          if (b) {
+            if (!b.permanent) {
+              state.found_addresses[p.key] = { address: found.address, source: found.source, at: isoOf(now) };
+              persistState();
+            }
+            return blocked(b);
+          }
           existing = owner;
         }
       }
@@ -1051,6 +1069,7 @@ export async function runDrafting({
     }
     draftedContacts.add(up.contactId);
     delete state.draft_attempts[p.key];
+    delete state.found_addresses[p.key];
     persistState();
     result.drafted.push({ ...row, contactId: up.contactId, draftId: draft.id, to, addressSource: found.source, subject: draft.subject });
     log(`  drafted ${draft.id} to ${up.contactId} (${found.source})`);

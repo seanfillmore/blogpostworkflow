@@ -252,7 +252,7 @@ for (const [label, over, st] of [
   ['escalated', {}, { escalated: { 'writer1-person': { at: '2026-10-01' } } }],
   ['open conversation', { pitches: [{ date: '2026-06-01', concept: 'c', outcome: 'replied' }] }, {}],
 ]) {
-  test(`existing contact with ${label} is skipped before the finder, attempt recorded`, async () => {
+  test(`existing contact with ${label} is skipped before the finder, NO attempt (temporary)`, async () => {
     let looked = 0;
     const { args, saved } = harness({
       prTargets: prTargets(1),
@@ -264,7 +264,7 @@ for (const [label, over, st] of [
     assert.equal(looked, 0);
     assert.equal(r.drafted.length, 0);
     assert.equal(r.skipped.length, 1);
-    assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
+    assert.equal(saved.states.at(-1)?.draft_attempts?.['pr-target:outlet1.example.com'], undefined);
   });
 }
 
@@ -335,11 +335,63 @@ test('hunterSpent survives a finder that throws with partial spend', async () =>
   assert.equal(r.hunterSpent, 1);
 });
 
-test('an email-matched contact pitched inside the cooldown (on another outlet) is skipped, attempt recorded', async () => {
+test('an after-finder temporary block caches the found address, no attempt; the next run reuses it with zero finder calls', async () => {
   const c0 = existingWithEmail({ channels: [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }], pitches: [{ date: '2026-09-20', concept: 'c', outcome: 'declined' }] });
-  const { args, saved } = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] } });
-  const r = await runDrafting(args);
+  let calls = 0;
+  const finder = async () => { calls += 1; return { address: 'writer1@outlet1.example.com', source: 'hunter:verified:2026-10-05', spentHunter: 2 }; };
+  const first = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] }, findAddress: finder });
+  const r = await runDrafting(first.args);
+  assert.equal(calls, 1);
   assert.equal(r.drafted.length, 0);
   assert.match(r.skipped[0].reason, /pitched within 60 days/);
+  const st = first.saved.states.at(-1);
+  assert.equal(st.draft_attempts['pr-target:outlet1.example.com'], undefined);
+  assert.deepEqual(st.found_addresses['pr-target:outlet1.example.com'], { address: 'writer1@outlet1.example.com', source: 'hunter:verified:2026-10-05', at: '2026-10-05T14:20:00.000Z' });
+
+  // Next run, still in cooldown: no finder call, still no attempt.
+  const second = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] }, findAddress: finder, state: st });
+  const r2 = await runDrafting(second.args);
+  assert.equal(calls, 1);
+  assert.equal(r2.hunterSpent, 0);
+  assert.equal(r2.drafted.length, 0);
+
+  // After the cooldown: drafted from the cached address, still no finder call, cache cleared.
+  const later = Date.parse('2026-11-25T14:20:00Z');
+  const third = harness({ now: later, prTargets: prTargets(1), book: { version: 1, contacts: [c0] }, findAddress: finder, state: JSON.parse(JSON.stringify(st)) });
+  const r3 = await runDrafting(third.args);
+  assert.equal(calls, 1);
+  assert.equal(r3.drafted.length, 1);
+  assert.equal(third.saved.drafts[0].to, 'writer1@outlet1.example.com');
+  assert.equal(third.saved.drafts[0].address_source, 'hunter:verified:2026-10-05');
+  assert.equal(third.saved.states.at(-1).found_addresses['pr-target:outlet1.example.com'], undefined);
+});
+
+test('a contact pitched 50 days ago is skipped without an attempt and drafted once the cooldown passes', async () => {
+  // Matched by name, on another outlet's domain list plus this one; the last pitch is on a different
+  // domain, so buildProspects' own domain cooldown does not see it.
+  const c0 = existingWithEmail({ domains: ['oldmag.example.com', 'outlet1.example.com'], pitches: [{ date: '2026-08-16', concept: 'c', outcome: 'declined' }] });
+  let looked = 0;
+  const finder = async () => { looked += 1; return { address: null }; };
+  const first = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [c0] }, findAddress: finder });
+  const r = await runDrafting(first.args);
+  assert.equal(r.drafted.length, 0);
+  assert.equal(r.skipped.length + r.queueSkipped >= 1, true);
+  assert.equal(first.saved.states.at(-1)?.draft_attempts?.['pr-target:outlet1.example.com'], undefined);
+
+  const later = Date.parse('2026-10-20T14:20:00Z');
+  const second = harness({ now: later, prTargets: prTargets(1), book: { version: 1, contacts: [c0] }, findAddress: finder, state: { sends: [], processed: [], escalated: {}, draft_attempts: {} } });
+  const r2 = await runDrafting(second.args);
+  assert.equal(r2.drafted.length, 1);
+  assert.equal(second.saved.drafts[0].to, 'writer1@oldmag.example.com');
+  assert.equal(looked, 0);
+});
+
+test('a same-name owner found by email with status do_not_contact is skipped, attempt recorded, no draft', async () => {
+  const owner = existingWithEmail({ status: 'do_not_contact', domains: ['oldmag.example.com'], channels: [{ type: 'email', address: 'writer1@outlet1.example.com', verified: true, source: 's' }] });
+  const { args, saved } = harness({ prTargets: prTargets(1), book: { version: 1, contacts: [owner] } });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 0);
+  assert.equal(saved.drafts.length, 0);
+  assert.match(r.skipped[0].reason, /status do_not_contact/);
   assert.equal(saved.states.at(-1).draft_attempts['pr-target:outlet1.example.com'], 1);
 });
