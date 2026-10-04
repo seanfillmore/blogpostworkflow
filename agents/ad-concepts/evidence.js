@@ -195,32 +195,38 @@ export function templateSlot(structure, slotName, ctx = {}) {
 
 const textOf = (msg) => (msg?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
 
-function buildSlotPrompt({ structure, slotName, slot, evidence, retryNote }) {
-  const ev = Array.isArray(evidence) ? evidence.map(e => `- ${e}`).join('\n') : String(evidence || '');
+// The model must cite a source by the index's own key. Live dry run 2026-10-03: with unlabelled
+// evidence it invented "review-1", which the gate rejected twice as an unknown source.
+function buildSlotPrompt({ structure, slotName, slot, evidence, retryNote, sourceIds = [], evidenceSourceId = 'reviews' }) {
+  const ev = Array.isArray(evidence) ? evidence.map(e => `- [${evidenceSourceId}] ${e}`).join('\n') : String(evidence || '');
+  const ids = sourceIds.length ? `\nEach claim's sourceId MUST be exactly one of: ${sourceIds.map(k => `"${k}"`).join(', ')}. Evidence lines are labelled with their sourceId in brackets.` : '';
   return `Write the "${slotName}" text for a static ad built on the structure "${structure.name || structure.id}".
 Style: ${slot.style || 'short, plain, concrete'}. At most ${slot.maxWords} words. No em dash. No health claim. Never name a competitor brand. Our product is never an antiperspirant.
-Any statement of fact must be listed in "claims" as an exact verbatim quote from a source, with its sourceId.${slot.sourceWords === 'reviews' ? '\nUse ONLY words that appear in the evidence below (the customers\' own wording); small grammar words and "never"/"not" are fine.' : ''}
+Any statement of fact must be listed in "claims" as an exact verbatim quote from a source, with its sourceId.${ids}${slot.sourceWords === 'reviews' ? '\nUse ONLY words that appear in the evidence below (the customers\' own wording); small grammar words and "never"/"not" are fine.' : ''}
 Evidence:
 ${ev}
 ${retryNote ? `\nYOUR PREVIOUS ATTEMPT WAS REJECTED:\n${retryNote}\nFix exactly that.\n` : ''}
 Return ONLY: {"text":"","claims":[{"text":"","sourceId":""}]}`;
 }
 
-export async function fillModelSlot({ anthropic, model, structure, slotName, evidence, sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
+/** A cited "review-1", "Review_2", "review" means the reviews source; anything else is left for the gate to judge. */
+export const normaliseSourceId = (id) => (/^reviews?[-_ ]?\d*$/i.test(String(id || '').trim()) ? 'reviews' : String(id || ''));
+
+export async function fillModelSlot({ anthropic, model, structure, slotName, evidence, sourceIndex, competitorNames = [], variant = null, siblingVariants = [], evidenceSourceId = 'reviews' }) {
   const slot = structure?.slots?.[slotName];
   if (!slot || slot.source !== 'model') throw new Error(`slot "${slotName}" of "${structure?.id}" is not a model slot`);
   if (!Number.isFinite(slot.maxWords)) throw new Error(`slot "${slotName}" of "${structure.id}" declares no maxWords`);
   let retryNote = null;
   let reasons = [];
   for (let attempt = 0; attempt < 2; attempt++) {
-    const msg = await anthropic.messages.create({ model, max_tokens: 400, messages: [{ role: 'user', content: buildSlotPrompt({ structure, slotName, slot, evidence, retryNote }) }] });
+    const msg = await anthropic.messages.create({ model, max_tokens: 400, messages: [{ role: 'user', content: buildSlotPrompt({ structure, slotName, slot, evidence, retryNote, sourceIds: Object.keys(sourceIndex || {}), evidenceSourceId }) }] });
     if (msg.stop_reason === 'max_tokens') throw new Error('ad-concepts: the slot response was cut off at the token limit.');
     const s = textOf(msg);
     let o;
     try { o = JSON.parse(s.slice(s.indexOf('{'), s.lastIndexOf('}') + 1)); } catch { o = null; }
     if (!o) { reasons = ['response was not parseable JSON']; retryNote = reasons.join('\n'); continue; }
     const text = String(o.text || '').trim();
-    const claims = Array.isArray(o.claims) ? o.claims.filter(c => c && c.text).map(c => ({ text: String(c.text), sourceId: String(c.sourceId || '') })) : [];
+    const claims = Array.isArray(o.claims) ? o.claims.filter(c => c && c.text).map(c => ({ text: String(c.text), sourceId: normaliseSourceId(c.sourceId) })) : [];
     reasons = [];
     if (!text) reasons.push('empty text');
     if (wordCount(text) > slot.maxWords) reasons.push(`${slotName} has ${wordCount(text)} words (max ${slot.maxWords})`);

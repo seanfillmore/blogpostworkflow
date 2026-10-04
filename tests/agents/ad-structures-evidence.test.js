@@ -148,3 +148,21 @@ test('templateSlot reports the rows it drops through ctx.onDropped', () => {
   assert.deepEqual(seen[0][1].map(d => d.text), ['Cures eczema fast', 'Made on the moon']);
   assert.ok(seen[0][1].every(d => d.reason));
 });
+
+// ---- acceptance dry run: the model cited "review-1" while the index key is "reviews" ----
+test('fillModelSlot prompt lists the exact allowed sourceIds and labels evidence with them, never review-N', async () => {
+  const a = stub('{"text":"Soft, not greasy","claims":[]}');
+  await fillModelSlot({ anthropic: a, ...base, sourceIndex: { reviews: K1, catalog: 'x', pdp: 'Soft.', brandKit: 'y' } });
+  const p = a.calls[0].messages[0].content;
+  assert.match(p, /sourceId MUST be exactly one of: "reviews", "catalog", "pdp", "brandKit"/);
+  assert.ok(p.includes(`[reviews] ${K1}`));
+  assert.doesNotMatch(p, /review-\d/);
+});
+
+test('fillModelSlot normalises a cited "review-1" to "reviews" before gating', async () => {
+  const a = stub(JSON.stringify({ text: 'Soft, not greasy', claims: [{ text: 'Incredibly soft.', sourceId: 'review-1' }, { text: 'Doesn’t make you feel greasy or sticky after use.', sourceId: 'Review_2' }] }));
+  assert.equal(await fillModelSlot({ anthropic: a, ...base, sourceIndex: { reviews: K1 } }), 'Soft, not greasy');
+  assert.equal(a.calls.length, 1);
+  const bad = stub(JSON.stringify({ text: 'Soft', claims: [{ text: 'Incredibly soft.', sourceId: 'reviewer-1' }] }), JSON.stringify({ text: 'Soft', claims: [{ text: 'Incredibly soft.', sourceId: 'reviewer-1' }] }));
+  await assert.rejects(fillModelSlot({ anthropic: bad, ...base, sourceIndex: { reviews: K1 } }), /unknown source/);
+});
