@@ -4,7 +4,7 @@
  * DRY BY DEFAULT.
  *
  *   node scripts/post-edit-freeze.mjs --list
- *   node scripts/post-edit-freeze.mjs --handle <h> --until 2026-11-14 --reason "..." [--apply]
+ *   node scripts/post-edit-freeze.mjs --handle <h> --until 2026-11-14 --reason "..." [--followup "..."] [--apply]
  *   node scripts/post-edit-freeze.mjs --handle <h> --clear [--apply]
  *
  * A freeze is `edit_freeze: { until, reason, set_at }` in the post's state.json,
@@ -12,6 +12,9 @@
  * edits may touch the page: no title tests, rewrites, merges, refreshes, or
  * added links. It is written to EVERY local dir that could be the article, so a
  * shadow directory cannot carry an unfrozen copy.
+ *
+ * `--followup` names work deferred until the freeze ends; the 5 AM digest raises
+ * it as a health row from the day the freeze expires until the freeze is cleared.
  *
  * `--until` is required and capped at 120 days: a hold with no expiry is how a
  * pinned list and a held merge became outages nobody was looking for.
@@ -68,8 +71,9 @@ function main() {
   const reason = arg('--reason');
   if (!reason) throw new Error('--reason is required');
   const until = validateUntil(arg('--until'));
-  const freeze = { until, reason, set_at: new Date().toISOString() };
-  console.log(`Freeze ${slugs.join(', ')} until ${until.slice(0, 10)}: ${reason}`);
+  const followup = arg('--followup');
+  const freeze = { until, reason, set_at: new Date().toISOString(), ...(followup ? { followup } : {}) };
+  console.log(`Freeze ${slugs.join(', ')} until ${until.slice(0, 10)}: ${reason}${followup ? `\n  follow-up: ${followup}` : ''}`);
   if (!apply) return console.log('Dry run. Pass --apply to write.');
   for (const s of slugs) writePostMeta(s, { edit_freeze: freeze });
   const facts = readEditFacts(handle);

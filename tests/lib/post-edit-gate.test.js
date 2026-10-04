@@ -97,3 +97,15 @@ test('recordMaterialEdit stamps state.json (never the tracked meta.json) and sta
   assert.equal(gate.mayEditLivePost('fresh-post', 'serp', { now: NOW, eventsDir: events }).allowed, false);
   assert.deepEqual(gate.recordMaterialEdit('fresh-post', 'repair', 'test'), [], 'repairs do not start a cooldown');
 });
+
+test('a freeze follow-up is due only once the freeze has ended', () => {
+  const metas = [
+    ['a', { edit_freeze: { until: '2026-11-14T00:00:00.000Z', followup: 'consolidate explainers' } }],
+    ['b', { edit_freeze: { until: '2026-09-01T00:00:00.000Z' } }],
+    ['c', {}],
+  ];
+  assert.deepEqual(gate.freezeFollowupsDue(metas, '2026-11-13T00:00:00.000Z'), []);
+  const due = gate.freezeFollowupsDue(metas, '2026-11-15T00:00:00.000Z');
+  assert.equal(due.length, 1);
+  assert.equal(due[0].slug, 'a');
+});
