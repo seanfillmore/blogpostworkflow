@@ -84,3 +84,17 @@ test('address with cue is address-given', () => {
   assert.equal(r.kind, 'address-given');
   assert.equal(r.address.zip, '10118');
 });
+
+test('deferred yes with let me / check with / think about escalates', () => {
+  assert.equal(classifyReply(m('Sure! Let me check with my editor')).kind, 'escalate');
+  assert.equal(classifyReply(m('Sure, I will think about it')).kind, 'escalate');
+});
+
+test('mixed yes and do-not-send escalates instead of opt-out', () => {
+  assert.equal(classifyReply(m("Yes, I'd love to. Don't send before March")).kind, 'escalate');
+  assert.equal(classifyReply(m('Yes, happy to try them. Please do not send anything til I confirm')).kind, 'escalate');
+});
+
+test('do-not-send without yes stays opt-out', () => {
+  assert.equal(classifyReply(m('Please do not send me any more emails.')).kind, 'opt-out');
+});
