@@ -54,7 +54,7 @@ backlink-opp ─────┘        (queue)        (address)        (draft+ga
   - any person or outlet that `eligibleFor` rejects (the 60-day re-pitch cooldown, non-pitchable statuses)
   - any domain the book already has an open pitch with
   - targets pr-target-finder marked as demoted
-- **Weekly slot budget** (`config/press-outreach.json` `weeklyNewPitches`, default **15**): about 70% editorial, 30% link-gap. Leftover slots from either list go to the other, so a thin week on one side does not idle the budget.
+- **No weekly pitch cap** (Sean, 2026-10-04: "I will take as many as you can write"). Throughput is bounded only by prospects with a verified address, Hunter's monthly allowance, and the daily send cap in §5. Drafting runs daily and tops the approval queue up to `queueTarget` (default **25** pending drafts), filled about 70% editorial and 30% link-gap. Leftover share from either list goes to the other.
 - **Order:** within each list, the source agent's own rank.
 - **Output:** a list of prospects with the evidence each one was picked on (target URL, the competitor it cites, rank).
 
@@ -101,7 +101,7 @@ Each draft is plain text, **at most 150 words**, with a subject line of at most 
 
 ### 5. Sender — `agents/press-outreach` (cron every 30 minutes)
 
-- **First pitches:** only `approved` drafts. At most **10 per day** and **15 per week**, sent **16:00–24:00 UTC, weekdays only**, spaced at least 10 minutes apart.
+- **First pitches:** only `approved` drafts, sent **16:00–24:00 UTC, weekdays only**, spaced at least 10 minutes apart. **Daily cap ramps:** **10/day** to start, then **25/day** once 14 days have passed since the first send with no auto-pause trigger (§5 kill switches). This is a domain-reputation limit, not a volume target. Cold mail shares a sender reputation with Klaviyo and order email. Approved drafts over the cap wait for the next day, oldest first, and still expire under the §4 rule.
 - **Follow-ups:** at most **2 per pitch**, on **day 5 and day 12**, threaded with `In-Reply-To` and `References`, under 60 words, no new claims.
   - Templates are fixed and gated once at build time; no model call is needed.
   - A follow-up sends only if no reply exists in **any** folder (§6).
@@ -132,11 +132,11 @@ The default for an unsure classification is **escalate**, never reply. A wrong a
 ### 7. Samples — `lib/press-samples.js`
 
 - **Order:** a $0 Shopify order for the products named in the pitch, created via a draft order completed at $0.
-  - Tags: `press-sample` and `press-outreach`.
+  - Tags: `PR Package` (the existing convention: Saleam Singleton's #2373 was hand-made with it on 2026-09-29) and `press-outreach`.
   - Note: the contact id and the pitch concept.
   - Shipping: the address from the reply.
-- **Revenue exclusion is already true:** every $0 order in the snapshots carries `countsAsRevenue: false`, measured across the 30 days to 2026-10-04 (25 of 25 $0 orders). A test pins that a `press-sample` order is classified the same way, so it can never inflate order counts, CVR, or the cluster gate's `MIN_WINDOW_ORDERS`.
-- **Cap:** `monthlySampleKits` (default **10**), counted from orders tagged `press-sample` this calendar month. Over the cap, or a product we did not pitch, escalates to Sean.
+- **Revenue exclusion is already true:** every $0 order in the snapshots carries `countsAsRevenue: false`, measured across the 30 days to 2026-10-04 (25 of 25 $0 orders). A test pins that a `PR Package` order is classified the same way, so it can never inflate order counts, CVR, or the cluster gate's `MIN_WINDOW_ORDERS`.
+- **Cap:** `monthlySampleKits` (default **10**), counted from orders tagged `PR Package` this calendar month, hand-made ones included. Over the cap, or a product we did not pitch, escalates to Sean.
 - **Tracking:** when a fulfillment has tracking, one email goes out with the tracking link (fixed template).
 - **Follow-up:** 21 days after delivery, one note asking whether they had a chance to try it and offering anything they need for the piece. Then the conversation is left alone.
 
@@ -174,8 +174,10 @@ Existing fields are unchanged; old records without the new keys read as defaults
 ```json
 {
   "enabled": true,
-  "weeklyNewPitches": 15,
+  "queueTarget": 25,
   "dailySendCap": 10,
+  "dailySendCapRamped": 25,
+  "rampAfterDays": 14,
   "editorialShare": 0.7,
   "monthlySampleKits": 10,
   "followUpDays": [5, 12],
@@ -201,7 +203,7 @@ Existing fields are unchanged; old records without the new keys read as defaults
 
 1. **Sender, follow-ups, replies, approval queue** on the existing 38 contacts.
    - **First batch:** one follow-up to each of the ~16 unanswered September email pitches, through Sean's approval. They are 13+ days late, so they get a "bumping this in case it got buried" wording rather than the day-5 template.
-   - The two existing replies are backfilled into the book: Nourish Move Love `declined`, Saleam Singleton `sample_accepted`.
+   - The two existing replies are backfilled into the book: Nourish Move Love `declined`, Saleam Singleton `sample_shipped` (#2373, `PR Package`, USPS, 2026-09-29).
 2. **Prospect queue, address finder, drafting.** New pitches start flowing into the approval queue.
 3. **Samples.**
 4. **Link measurement and the weekly funnel line.**
@@ -217,4 +219,4 @@ Each PR is tested locally, with a `--dry-run` default on the CLI and `--test-sen
   - every draft path runs `checkSeoCopyFields`
   - no first pitch can send without `status: approved`
 - **Privacy:** `data/press/drafts/` is ignored and untracked.
-- **Order counts:** a `press-sample` $0 order has `countsAsRevenue: false`.
+- **Order counts:** a `PR Package` $0 order has `countsAsRevenue: false`.
