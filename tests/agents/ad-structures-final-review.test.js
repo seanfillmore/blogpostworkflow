@@ -121,3 +121,31 @@ test('texture-scoop scene restores "thick whipped white cream"', () => {
   const p = buildScenePrompt({ structure: S('texture-scoop'), product: { productNoun: 'body cream', productDescriptionShort: '4 fl oz white jar', unitCount: 1, labelStrings: ['real SKIN CARE'], physicalDescription: 'A jar.' } });
   assert.match(p, /thick whipped white cream/);
 });
+
+test('library validation: sourceWords and bandPreference values', async () => {
+  const { mkdtempSync, writeFileSync, mkdirSync, copyFileSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const { tmpdir } = await import('node:os');
+  const dir = mkdtempSync(join(tmpdir(), 'lib-'));
+  mkdirSync(join(dir, 'sources'));
+  const base = S('texture-scoop');
+  copyFileSync(new URL(`../../data/ad-structures/${base.sources[0].image}`, import.meta.url), join(dir, base.sources[0].image));
+  const write = (o) => { const p = join(dir, 'library.json'); writeFileSync(p, JSON.stringify({ version: 1, structures: [{ ...base, ...o }] })); return p; };
+  assert.throws(() => loadLibrary(write({ slots: { headline: { source: 'model', maxWords: 4, sourceWords: 'pdp' } } })), /sourceWords/);
+  assert.throws(() => loadLibrary(write({ bandPreference: ['made-on-the-moon'] })), /bandPreference/);
+  assert.throws(() => loadLibrary(write({ bandPreferenceOverOffer: 'yes' })), /bandPreferenceOverOffer/);
+  assert.equal(loadLibrary(write({ bandPreference: ['ingredients-origin'], bandPreferenceOverOffer: false })).structures.length, 1);
+});
+
+test('real manifest: the starter set names its three components; the jar reads 4 fl oz from its label', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { productDescriptionShort } = await import('../../agents/ad-concepts/index.js');
+  const { buildLabelStrings } = await import('../../agents/ad-studio/index.js');
+  const { selectVolumeStrings } = await import('../../agents/ad-studio/verify.js');
+  const m = JSON.parse(readFileSync(new URL('../../data/product-images/manifest.json', import.meta.url), 'utf8'));
+  const set = m.find(e => e.handle === 'sensitive-skin-starter-set');
+  assert.deepEqual(bundleComponents(set.productDescription), ['Body Lotion', 'Body Cream', 'Hand & Body Soap']);
+  const jar = m.find(e => e.handle === 'coconut-moisturizer');
+  const labels = buildLabelStrings({ manifestEntry: jar, variant: 'pure-unscented' });
+  assert.equal(productDescriptionShort(jar.productDescription, 'cream', selectVolumeStrings(labels)), '4 fl oz white jar');
+});

@@ -126,6 +126,20 @@ export function unsourcedWords(text, evidenceText) {
   return out;
 }
 
+/**
+ * The comment card's underlined word: the headline's longest content word that is NOT the
+ * product's own name or noun ("The winter moisturizer." on Coconut Moisturizer -> "winter", as
+ * approved A underlined it). Falls back to the longest content word. Deterministic.
+ */
+export function emphasisWord(headline, avoid = []) {
+  const tokens = String(headline || '').match(/[A-Za-z][A-Za-z'\u2019-]*/g) || [];
+  const content = tokens.filter(t => !SOURCE_STOPWORDS.has(t.toLowerCase()));
+  const avoidSet = new Set(avoid.flatMap(a => wordsOf(a)).flatMap(w => [...stems(w)]));
+  const fresh = content.filter(t => ![...stems(t.toLowerCase())].some(x => avoidSet.has(x)));
+  const pool = fresh.length ? fresh : content;
+  return pool.reduce((best, t) => (t.length > best.length ? t : best), '') || null;
+}
+
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const nounOf = (ctx) => String(ctx.productNoun || ctx.product?.productNoun || ctx.product?.noun || (typeof ctx.product === 'string' ? ctx.product : '') || '').trim();
 

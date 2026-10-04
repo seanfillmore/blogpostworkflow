@@ -22,8 +22,8 @@ import { selectVolumeStrings } from '../ad-studio/verify.js';
 import { selectQuotableReviews } from '../ad-studio/health-claims.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
 import { loadLibrary, eligible, selectStructures, whyIneligible, RUN_RATIOS } from './structures.js';
-import { parseOffer, verifyOffer, valueLines } from './landing.js';
-import { screenReviews, screenRows, buildQuotePickPrompt, parseQuotePick, quoteFromPick, quotableReviews, templateSlot, fillModelSlot } from './evidence.js';
+import { parseOffer, verifyOffer, valueLineOptions, bundleComponents } from './landing.js';
+import { screenReviews, screenRows, buildQuotePickPrompt, parseQuotePick, quoteFromPick, quotableReviews, templateSlot, fillModelSlot, buildRowPickPrompt, parseRowPick, emphasisWord } from './evidence.js';
 import { getLayout } from './layouts/index.js';
 import { LABEL_MAX_CHARS } from './layouts/labelled-bundle.js';
 import { buildScenePrompt } from './plates.js';
@@ -32,10 +32,13 @@ import { gateCopy, writeFlexibleCopy } from './copy.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const DEFAULT_MAX_RENDERS = 30;
+/** 128 + signal number, the shell convention: SIGINT (2) -> 130, SIGTERM (15) -> 143. */
+export const SIGNAL_EXIT_CODES = Object.freeze({ SIGINT: 130, SIGTERM: 143 });
 const SLOTS = 3;
 const MIN_ELIGIBLE = 2;
-const MIN_CHECKLIST_ROWS = 2;
-const BUNDLE_LANDING_RE = /\b(?:set|bundle|kit)s?\b/i;
+// A checklist needs this many "ours" rows unless the slot names its own minRows/maxRows.
+const MIN_CHECKLIST_ROWS = 3;
+const MAX_CHECKLIST_ROWS = 4;
 // A product-free plate is cheap to judge (is there text?), so it stops on its first pass:
 // one primary take, then one fallback take only if that failed.
 const PRODUCT_FREE_TAKES = Object.freeze({ primaryTakes: 1, fallbackTakes: 1 });
@@ -76,7 +79,6 @@ async function ask(anthropic, model, content, maxTokens) {
 }
 const writeJson = (p, o) => { mkdirSync(dirname(p), { recursive: true }); writeFileSync(p, JSON.stringify(o, null, 2)); };
 const firstLine = (e) => String(e?.message || e).split('\n')[0];
-const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
 const money = (n) => (Number.isInteger(n) ? String(n) : Number(n).toFixed(2));
 const maxDays = (s) => Math.max(...s.sources.map(x => x.days || 0));
 
@@ -113,10 +115,15 @@ export function productNoun(handle, kind) {
 }
 
 /** A short physical phrase for a scene sentence ("8 fl oz white squeeze bottle"); the full description is too long. */
-export function productDescriptionShort(description, kind) {
+export function productDescriptionShort(description, kind, labelStrings = []) {
   const d = String(description || '');
-  const m = /(\d+(?:\.\d+)?)\s*(fl\.?\s*)?oz\b/i.exec(d);
-  const volume = m ? `${m[1]} ${m[2] ? 'fl oz' : 'oz'}` : '';
+  // The LABEL's volume wins: the jar's prose says "approximately 4 oz" while its label reads
+  // "4 fl. oz", and a scene sentence must never contradict the label. Then any fl oz in the
+  // prose, then a bare oz.
+  const ANY = /(\d+(?:\.\d+)?)\s*(?:fl\.?\s*)?oz\b/i;
+  const m = (labelStrings || []).map(s => ANY.exec(String(s))).find(Boolean)
+    || /(\d+(?:\.\d+)?)\s*fl\.?\s*oz\b/i.exec(d) || ANY.exec(d);
+  const volume = m ? `${m[1]} ${/fl/i.test(m[0]) ? 'fl oz' : 'oz'}` : '';
   const colour = /\bwhite\b/i.test(d) ? 'white' : '';
   const container = kind === 'lotion' ? 'squeeze bottle' : kind === 'cream' ? 'jar' : 'container';
   return [volume, colour, container].filter(Boolean).join(' ');
@@ -126,13 +133,14 @@ export function productDescriptionShort(description, kind) {
 export function buildEvidenceProduct({ handle, variant, manifestEntry, catalogEntry, studio }) {
   const physicalDescription = manifestEntry.productDescription || '';
   const kind = productKind(physicalDescription);
+  const labelStrings = studio.buildLabelStrings({ manifestEntry, variant });
   return {
     handle, title: catalogEntry.title, variant, unitCount: manifestEntry.unitCount,
     priceLabel: catalogEntry.priceLabel || null, url: catalogEntry.url || null,
-    labelStrings: studio.buildLabelStrings({ manifestEntry, variant }),
+    labelStrings,
     badgeStrings: studio.resolveBadgeStrings({ manifestEntry, variant }),
     labelInk: manifestEntry.labelInk || null, physicalDescription,
-    kind, productNoun: productNoun(handle, kind), productDescriptionShort: productDescriptionShort(physicalDescription, kind),
+    kind, productNoun: productNoun(handle, kind), productDescriptionShort: productDescriptionShort(physicalDescription, kind, selectVolumeStrings(labelStrings)),
   };
 }
 
@@ -147,20 +155,37 @@ export function quotableEvidence({ pdpBody, brandKit, catalogEntry, reviews }) {
 }
 
 /**
- * Candidate "ours" checklist rows: short phrases lifted from the catalog titles and the PDP.
- * Candidates only. Every one still has to pass screenRows (copy gate + verbatim in the catalog
- * or PDP) before it can appear on an ad.
+ * Candidate "ours" checklist rows: whole short sentences from the PDP, plus facts a fixed
+ * pattern extracts from the catalog title ("Only 6 Clean Ingredients"). Candidates only: every
+ * one still passes screenRows (copy gate + verbatim in the catalog or PDP), and then the model
+ * picks 3-4 BY INDEX. What never becomes a candidate (the live 2026-10-03 rows that shipped as
+ * fragments): anything inside quote marks on the PDP (a quoted review is not our fact), any
+ * segment carrying a quote character, anything under 3 words ("It absorbs"), and anything
+ * equal to or contained in the product's title or name ("Coconut Moisturizer"). A title is a
+ * name, so its segments are never candidates; only the fact patterns read it.
  */
-export function factCandidates({ catalogEntries = [], pdpBodies = [] } = {}) {
+const QUOTE_SPAN_RE = /"[^"]*"|\u201c[^\u201d]*\u201d/g;
+const QUOTE_CHAR_RE = /["\u201c\u201d]/;
+const TITLE_FACT_PATTERNS = [/only\s+\d+\s+clean\s+ingredients/gi];
+const MIN_ROW_WORDS = 3;
+const MAX_ROW_WORDS = 8;
+export function factCandidates({ catalogEntries = [], pdpBodies = [], names = [] } = {}) {
   const out = new Set();
+  const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const titles = catalogEntries.map(e => String(e?.title || '')).filter(Boolean);
+  const nameList = [...titles, ...titles.flatMap(t => t.split(/\s*\|\s*/)), ...names].map(norm).filter(Boolean);
+  const isName = (t) => { const n = norm(t); return nameList.some(x => x === n || x.includes(n)); };
   const words = (s) => s.split(/\s+/).filter(Boolean).length;
-  const add = (s) => { const t = String(s || '').trim().replace(/[.!?,:;]+$/, '').trim(); if (words(t) >= 2 && words(t) <= 8) out.add(t); };
-  for (const e of catalogEntries) {
-    const title = String(e?.title || '');
-    for (const seg of title.split(/\s*\|\s*/)) add(seg);
-    for (const m of title.matchAll(/only\s+\d+\s+clean\s+ingredients/gi)) add(m[0]);
+  const clean = (s) => String(s || '').trim().replace(/[.!?,:;]+$/, '').trim();
+  for (const t of titles) for (const re of TITLE_FACT_PATTERNS) for (const m of t.matchAll(re)) out.add(clean(m[0]));
+  for (const body of pdpBodies) {
+    const unquoted = String(body || '').replace(QUOTE_SPAN_RE, '. ');
+    for (const seg of unquoted.split(/(?<=[.!?])\s+|\n|\u2022|;/)) {
+      const t = clean(seg);
+      if (!t || QUOTE_CHAR_RE.test(t) || words(t) < MIN_ROW_WORDS || words(t) > MAX_ROW_WORDS || isName(t)) continue;
+      out.add(t);
+    }
   }
-  for (const body of pdpBodies) for (const seg of String(body || '').split(/(?<=[.!?])\s+|\n|•|;/)) add(seg);
   return [...out];
 }
 
@@ -168,6 +193,7 @@ export function factCandidates({ catalogEntries = [], pdpBodies = [] } = {}) {
 function critiqueZones(slots) {
   const zones = {};
   for (const [k, v] of Object.entries(slots || {})) {
+    if (k === 'emphasis') continue; // a word of the headline, not a separate piece of copy
     if (typeof v === 'string' && v) zones[k] = v;
     else if (Array.isArray(v) && v.length) zones[k] = v.map(x => (typeof x === 'string' ? x : x?.text)).filter(Boolean).join(' / ');
   }
@@ -193,26 +219,6 @@ function finishFlexibleMd(md, { n, target, landing, reviewFiles }) {
     out += `\n## Needs a human look before it ships\n\n${NEEDS_HUMAN_REVIEW_NOTE}\n\n${reviewFiles.map(f => `- \`${f}\``).join('\n')}\n`;
   }
   return out;
-}
-
-/** One product standing in for several (a labelled bundle shows every --products entry at once). */
-function combineProducts(ps) {
-  const uniq = (xs) => [...new Set(xs.filter(Boolean))];
-  const first = ps[0];
-  const interleave = (lists, max) => { const o = []; for (let i = 0; o.length < max && lists.some(l => i < l.length); i++) for (const l of lists) if (i < l.length && o.length < max) o.push(l[i]); return o; };
-  return {
-    handle: ps.map(p => p.handle).join('+'),
-    product: {
-      handle: ps.map(p => p.handle).join('+'), title: ps.map(p => p.product.title).join(' + '), variant: first.product.variant,
-      unitCount: ps.reduce((n, p) => n + (Number(p.product.unitCount) || 1), 0),
-      labelStrings: uniq(ps.flatMap(p => p.product.labelStrings || [])), badgeStrings: uniq(ps.flatMap(p => p.product.badgeStrings || [])),
-      labelInk: first.product.labelInk, physicalDescription: ps.map(p => p.product.physicalDescription).join(' '),
-      productNoun: ps.map(p => p.product.productNoun).join(' and '), productDescriptionShort: ps.map(p => p.product.productDescriptionShort).join(' and '),
-    },
-    catalogEntry: first.catalogEntry, pdpBody: ps.map(p => p.pdpBody).join('\n'),
-    photoPaths: interleave(ps.map(p => p.photoPaths || []), 4),
-    referencePhotos: interleave(ps.map(p => p.referencePhotos || []), 4),
-  };
 }
 
 export async function runAds({ args, deps }) {
@@ -242,8 +248,11 @@ export async function runAds({ args, deps }) {
   let manifest = null;
   let manifestReason = null;
   let dry = false;
+  // The landing SET when it can be shown (labelled-bundle-offer); else why not.
+  let bundle = null;
+  let bundleWhy = null;
 
-  const serialPlan = (e) => ({ id: e.id, name: e.name, layout: e.layout, ratio: e.ratio, people: e.people, sourceDays: e.sourceDays, sources: e.sources, product: e.product, slots: e.slots });
+  const serialPlan = (e) => ({ id: e.id, name: e.name, layout: e.layout, ratio: e.ratio, people: e.people, sourceDays: e.sourceDays, sources: e.sources, product: e.product, slots: e.slots, offered: e.offered });
   const writePlan = () => writeJson(join(runDir, 'plan.json'), {
     runId, ratio: args.ratio, landing: landingRec, offer: offerRec, target,
     structures: plan.map(serialPlan), skipped, ineligible, droppedReviews, droppedRows,
@@ -273,26 +282,47 @@ export async function runAds({ args, deps }) {
   // Shared evidence, set in body() before anything that is paid for.
   let shared = null;
 
-  /** The --products entry a structure is shot on: the kind it lists first, then the least used. */
+  /** The --products entry a structure is shot on: the kind it lists first, then the least used. A labelled bundle shows the landing SET itself. */
   function productFor(s) {
-    if (s.layout === 'labelled-bundle') return combineProducts(products);
+    if (s.layout === 'labelled-bundle') return bundle;
     const used = (h) => plan.filter(e => e.product === h).length;
     const fit = products.filter(p => s.fits.includes(p.product.kind));
     return [...fit].sort((a, b) => (s.fits.indexOf(a.product.kind) - s.fits.indexOf(b.product.kind)) || (used(a.handle) - used(b.handle)))[0];
   }
 
+  /**
+   * One model pick BY INDEX (a review, or checklist rows), with one retry that names the problem.
+   * A truncated reply escapes; a second unusable reply throws `<what> failed twice`.
+   */
+  async function pickByIndex(prompt, parse, what, hint) {
+    try { return parse(await ask(deps.anthropic, models.copy, prompt, 200)); }
+    catch (e) {
+      if (/cut off/.test(e.message)) throw e;
+      try { return parse(await ask(deps.anthropic, models.copy, `${prompt}\n\nYour previous reply could not be used (${e.message}). ${hint}`, 200)); }
+      catch (e2) { if (/cut off/.test(e2.message)) throw e2; throw new Error(`${what} failed twice: ${e2.message}`); }
+    }
+  }
+
+  /** Reviews of the product(s) a structure pictures: a lotion review is never quoted over a cream. */
+  const reviewsFor = (prod) => shared.reviews.filter(r => (prod.handles || [prod.handle]).some(h => shared.reviewHandles.get(r)?.has(h)));
+
   /** Fill every slot of one structure. Throws (with a reason) when a slot cannot be filled. */
   async function fillSlots(s) {
     const prod = productFor(s);
-    if (!prod) throw new Error(`no --products entry fits ${s.fits.join('/')}`);
-    const { sourceIndex, competitorNames, variant, siblingVariants, reviews, brandKit } = shared;
+    if (!prod) throw new Error(s.layout === 'labelled-bundle' ? (bundleWhy || 'no landing bundle') : `no --products entry fits ${s.fits.join('/')}`);
+    const { sourceIndex, competitorNames, variant, siblingVariants, brandKit } = shared;
+    const reviews = reviewsFor(prod);
+    // Model slots cite reviews of THIS product only.
+    const prodIndex = { ...sourceIndex };
+    if (reviews.length) prodIndex.reviews = reviews.join(' '); else delete prodIndex.reviews;
     const gateCtx = { competitorNames, variant, siblingVariants };
     const slots = {};
+    const offered = {};
     const defs = Object.entries(s.slots || {});
     const onDropped = (slot, dropped) => { for (const d of dropped) droppedRows.push({ structure: s.id, slot, text: d.text, reason: d.reason }); };
     const ctx = {
       productNoun: prod.product.productNoun, sourceIndex, ...gateCtx, onDropped,
-      facts: factCandidates({ catalogEntries: [prod.catalogEntry], pdpBodies: [prod.pdpBody] }),
+      facts: factCandidates({ catalogEntries: [prod.catalogEntry], pdpBodies: [prod.pdpBody], names: [prod.product.productNoun, prod.product.title] }),
     };
 
     // 1. Quotes: the model picks a review BY INDEX, code inserts it verbatim. NoQuoteError propagates.
@@ -300,33 +330,36 @@ export async function runAds({ args, deps }) {
       const maxChars = slot.maxChars || 220;
       const prompt = buildQuotePickPrompt({ structure: s, reviews, maxChars });
       const n = quotableReviews(reviews, maxChars).length;
-      let idx;
-      // One retry on an unparseable or out-of-range pick, naming the problem; then the
-      // structure is skipped (and replaced) with the reason.
-      try { idx = parseQuotePick(await ask(deps.anthropic, models.copy, prompt, 200), n); }
-      catch (e) {
-        if (/cut off/.test(e.message)) throw e;
-        try { idx = parseQuotePick(await ask(deps.anthropic, models.copy, `${prompt}\n\nYour previous reply could not be used (${e.message}). Return ONLY {"index": <number>} with a number from 0 to ${n - 1}.`, 200), n); }
-        catch (e2) { if (/cut off/.test(e2.message)) throw e2; throw new Error(`quote pick failed twice: ${e2.message}`); }
-      }
+      // One retry on an unparseable or out-of-range pick; then the structure is skipped (and replaced).
+      const idx = await pickByIndex(prompt, (t) => parseQuotePick(t, n), 'quote pick', `Return ONLY {"index": <number>} with a number from 0 to ${n - 1}.`);
       slots[name] = quoteFromPick(reviews, idx, maxChars);
     }
     // 2. Template slots: deterministic strings, every rejected row recorded.
     for (const [name, slot] of defs.filter(([, d]) => d.source === 'template' || d.source === 'catalogFact')) {
       if (name === 'labels') {
-        const nouns = (s.layout === 'labelled-bundle' ? products : [prod]).map(p => cap(p.product.productNoun)).filter(Boolean);
-        for (const n of nouns.filter(n => n.length > LABEL_MAX_CHARS)) droppedRows.push({ structure: s.id, slot: name, text: n, reason: `longer than ${LABEL_MAX_CHARS} chars` });
-        const texts = templateSlot(s, 'labels', { ...ctx, labels: nouns.filter(n => n.length <= LABEL_MAX_CHARS) });
+        // The SET's own components, from its manifest description, gated and length-capped.
+        const comps = prod.components || [];
+        for (const n of comps.filter(n => n.length > LABEL_MAX_CHARS)) droppedRows.push({ structure: s.id, slot: name, text: n, reason: `longer than ${LABEL_MAX_CHARS} chars` });
+        const texts = templateSlot(s, 'labels', { ...ctx, labels: comps.filter(n => n.length <= LABEL_MAX_CHARS) });
         const pos = s.labelPositions || [];
         if (texts.length < 2) throw new Error(`labelled bundle needs at least 2 labels, has ${texts.length}`);
         if (pos.length < 2) throw new Error('labelled bundle has no labelPositions in the library');
         slots.labels = texts.slice(0, Math.min(4, pos.length)).map((text, i) => ({ text, x: pos[i].x, y: pos[i].y, tx: pos[i].tx, ty: pos[i].ty }));
         continue;
       }
-      slots[name] = templateSlot(s, name, ctx);
-      if (name === 'oursRows' && slots[name].length < MIN_CHECKLIST_ROWS) {
-        throw new Error(`only ${slots[name].length} sourced "ours" row(s); a checklist needs ${MIN_CHECKLIST_ROWS}`);
+      if (name === 'oursRows') {
+        // The model picks 3-4 rows BY INDEX from the offered (filtered, gated) list; code inserts them verbatim.
+        const list = templateSlot(s, name, ctx);
+        offered.oursRows = list;
+        const min = slot.minRows || MIN_CHECKLIST_ROWS;
+        const max = Math.min(slot.maxRows || MAX_CHECKLIST_ROWS, list.length);
+        if (list.length < min) throw new Error(`only ${list.length} sourced "ours" row(s) offered; a checklist needs ${min}`);
+        const idx = await pickByIndex(buildRowPickPrompt({ structure: s, rows: list, min, max }), (t) => parseRowPick(t, { n: list.length, min, max }),
+          'row pick', `Return ONLY {"indices": [...]} with ${min === max ? min : `${min} to ${max}`} distinct numbers from 0 to ${list.length - 1}.`);
+        slots.oursRows = idx.map(i => list[i]);
+        continue;
       }
+      slots[name] = templateSlot(s, name, ctx);
     }
     if (s.rows?.theirs) {
       slots.theirs = templateSlot(s, 'theirsRows', ctx);
@@ -336,14 +369,28 @@ export async function runAds({ args, deps }) {
     for (const [name] of defs.filter(([, d]) => d.source === 'model')) {
       slots[name] = await fillModelSlot({
         anthropic: deps.anthropic, model: models.copy, structure: s, slotName: name,
-        evidence: slots.quote ? [slots.quote] : reviews.slice(0, 12), sourceIndex, ...gateCtx,
+        evidence: slots.quote ? [slots.quote] : reviews.slice(0, 12), sourceIndex: prodIndex, ...gateCtx,
       });
     }
+    // The comment card underlines one word of its headline, as approved A did.
+    if (s.layout === 'comment-card' && slots.headline && !slots.emphasis) {
+      const word = emphasisWord(slots.headline, [prod.product.title, prod.product.productNoun]);
+      if (word) slots.emphasis = word;
+    }
     // 4. Band: the verified offer, or an always-true value line. Either way it passes the gate.
+    // A structure's bandPreference names the value lines it tries first (approved C:
+    // "Only 6 clean ingredients. Made in the USA."); the offer still wins unless it says otherwise.
     for (const [name, slot] of defs.filter(([, d]) => d.source === 'offerOrValue' || d.source === 'offer')) {
+      const opts = valueLineOptions({ brandKit, catalogEntry: prod.catalogEntry });
+      const preferred = (s.bandPreference || []).map(id => opts.find(o => o.id === id)).filter(Boolean);
+      const passes = (o) => gateCopy({ band: o.text }, [], { sourceIndex, ...gateCtx }).ok;
+      if (s.bandPreferenceOverOffer && slot.source === 'offerOrValue') {
+        const pick = preferred.find(passes);
+        if (pick) { slots[name] = pick.text; continue; }
+      }
       if (offerRec) { slots[name] = offerRec.band; continue; }
       if (slot.source === 'offer') throw new Error(`slot "${name}" needs a verified --offer`);
-      const line = valueLines({ brandKit, catalogEntry: prod.catalogEntry }).find(l => gateCopy({ band: l }, [], { sourceIndex, ...gateCtx }).ok);
+      const line = [...preferred, ...opts.filter(o => o.id !== 'ingredients-origin')].find(passes)?.text;
       if (line) slots[name] = line;
       else if (!slot.optional) throw new Error(`slot "${name}": no value line passes the copy gate`);
     }
@@ -356,6 +403,7 @@ export async function runAds({ args, deps }) {
       id: s.id, name: s.name, layout: s.layout, ratio: args.ratio, people: s.people || 'none',
       sourceDays: maxDays(s), sources: s.sources.map(x => ({ brand: x.brand, days: x.days, adLibraryUrl: x.adLibraryUrl })),
       product: prod.handle, slots, structure: s, prod,
+      ...(Object.keys(offered).length ? { offered } : {}),
     };
   }
 
@@ -535,29 +583,69 @@ export async function runAds({ args, deps }) {
     }
     landingRec = { handle: landing.handle, title: landing.title, url: landing.url, price: landingVariant?.price ?? null, compareAt: landingVariant?.compareAt ?? null };
 
+    // 2b. The landing SET, when it has its own manifest entry, photos and label strings: the
+    // labelled bundle shows it (never the --products standing in for it).
+    const b = deps.loadLandingBundle ? await deps.loadLandingBundle({ handle: args.landing, variant: args.variant }) : null;
+    const components = bundleComponents(b?.description);
+    if (!b) bundleWhy = 'landing bundle has no photos (no manifest entry for it)';
+    else if (!b.photoPaths?.length) bundleWhy = 'landing bundle has no photos under its manifest image dir';
+    else if (!b.labelStrings?.length) bundleWhy = 'landing bundle has no label strings in its manifest description';
+    else if (components.length < 2) bundleWhy = `landing bundle names ${components.length} component(s) in its manifest description, needs 2`;
+    else {
+      const kind = productKind(b.description);
+      const short = components.map(c => c.toLowerCase());
+      bundle = {
+        handle: b.handle || args.landing, handles: [b.handle || args.landing], components,
+        product: {
+          handle: b.handle || args.landing, title: b.title || landing.title, variant: b.variant ?? args.variant, unitCount: b.unitCount || components.length,
+          labelStrings: b.labelStrings, badgeStrings: b.badgeStrings || [], labelInk: b.labelInk || null,
+          physicalDescription: b.description, kind, productNoun: String(b.title || landing.title || 'set').toLowerCase(),
+          productDescriptionShort: short.length > 1 ? `${short.slice(0, -1).join(', ')} and ${short[short.length - 1]}` : short[0],
+        },
+        catalogEntry: b.catalogEntry || products[0].catalogEntry, pdpBody: '',
+        photoPaths: b.photoPaths, referencePhotos: b.referencePhotos || [],
+      };
+    }
+
     // 3. Reviews: Ad Studio's health screen, then ad-concepts' own. Every drop is recorded.
-    const raw = [...new Set(products.flatMap(p => (p.reviews || []).map(r => String(r ?? '').trim())).filter(Boolean))];
+    // Each review is tagged with the product(s) it was fetched for, so a structure only ever
+    // quotes reviews of the product it pictures.
+    const reviewHandles = new Map();
+    for (const p of products) {
+      for (const r of p.reviews || []) {
+        const t = String(r ?? '').trim();
+        if (!t) continue;
+        if (!reviewHandles.has(t)) reviewHandles.set(t, new Set());
+        reviewHandles.get(t).add(p.handle);
+      }
+    }
+    const raw = [...reviewHandles.keys()];
     const pdpAll = products.map(p => p.pdpBody || '').join('\n');
     const catalogAll = Object.fromEntries(products.map(p => [p.handle, p.catalogEntry]));
     const healthy = quotableEvidence({ pdpBody: pdpAll, brandKit, catalogEntry: catalogAll, reviews: raw }).reviews;
-    for (const r of raw.filter(r => !healthy.includes(r))) droppedReviews.push({ text: r, reason: 'health claim (selectQuotableReviews)' });
+    const tagOf = (t) => [...(reviewHandles.get(String(t).trim()) || [])];
+    for (const r of raw.filter(r => !healthy.includes(r))) droppedReviews.push({ text: r, reason: 'health claim (selectQuotableReviews)', products: tagOf(r) });
     const screened = screenReviews(healthy, { variant, siblingVariants, competitorNames });
-    droppedReviews.push(...screened.dropped);
+    droppedReviews.push(...screened.dropped.map(d => ({ ...d, products: tagOf(d.text) })));
     const reviews = screened.kept;
     const sourceIndex = buildSourceIndex({ pdpBody: pdpAll, brandKit, catalogEntry: catalogAll, reviews });
-    shared = { sourceIndex, competitorNames, variant, siblingVariants, reviews, brandKit, persona: first.persona || null, pdpAll };
+    shared = { sourceIndex, competitorNames, variant, siblingVariants, reviews, reviewHandles, brandKit, persona: first.persona || null, pdpAll };
 
     // 4. Evidence present this run, then eligibility and selection (free, no model call yet).
-    const facts = screenRows(factCandidates({ catalogEntries: products.map(p => p.catalogEntry), pdpBodies: products.map(p => p.pdpBody) }), { sourceIndex, competitorNames, variant, siblingVariants });
+    const facts = screenRows(factCandidates({ catalogEntries: products.map(p => p.catalogEntry), pdpBodies: products.map(p => p.pdpBody), names: products.flatMap(p => [p.product.productNoun, p.product.title]) }), { sourceIndex, competitorNames, variant, siblingVariants });
     const evidence = new Set();
     if (reviews.length) evidence.add('review');
     if (offerRec) evidence.add('offer');
     if (facts.kept.length) evidence.add('catalogFact');
-    if (BUNDLE_LANDING_RE.test(landing.title || '')) evidence.add('bundleLanding');
+    if (bundle) evidence.add('bundleLanding');
     const ctx = { productKinds: [...new Set(products.map(p => p.product.kind).filter(Boolean))], evidence, ratio: args.ratio };
     const library = deps.library || loadLibrary();
     const ok = eligible(library, ctx);
-    ineligible = library.structures.filter(s => !ok.includes(s)).map(s => ({ id: s.id, reason: whyIneligible(s, ctx) }));
+    const why = (s) => {
+      const r = whyIneligible(s, ctx);
+      return r && bundleWhy && /missing evidence/.test(r) && (s.requires || []).includes('bundleLanding') ? `${r} (${bundleWhy})` : r;
+    };
+    ineligible = library.structures.filter(s => !ok.includes(s)).map(s => ({ id: s.id, reason: why(s) }));
     if (ok.length < MIN_ELIGIBLE) {
       throw new Error(`ad-concepts: fewer than 2 eligible structures (${ok.length}); ${ineligible.map(x => `${x.id}: ${x.reason}`).join('; ')}`);
     }
@@ -712,7 +800,7 @@ async function main() {
     process.once(sig, () => {
       console.warn(`\nad-concepts: ${sig}, archiving run output before exit.`);
       try { flushArchive(); } catch (e) { console.warn(`archive failed: ${e.message}`); }
-      process.exit(130);
+      process.exit(SIGNAL_EXIT_CODES[sig]);
     });
   }
 
@@ -741,6 +829,25 @@ async function main() {
         };
       },
       fetchLanding: (handle) => fetchLanding(handle, { siteUrl }),
+      // The landing SET's own manifest entry and photos, or null. The variant directory is used
+      // when it exists; a set photographed once (no variant dirs) falls back to its image root,
+      // and its label strings then carry no variant name it may not print.
+      loadLandingBundle: async ({ handle, variant }) => {
+        const e = manifestAll.find(x => x.handle === handle);
+        if (!e) return null;
+        const root = join(ROOT, 'data', 'product-images', e.imageDir);
+        let photoPaths = variant ? selectReferencePhotos(join(root, variant), 4) : [];
+        const fromVariant = photoPaths.length > 0;
+        if (!fromVariant) photoPaths = selectReferencePhotos(root, 4);
+        const v = fromVariant ? variant : null;
+        return {
+          handle, title: e.title, description: e.productDescription || '', unitCount: e.unitCount, variant: v,
+          labelStrings: studio.buildLabelStrings({ manifestEntry: e, variant: v }),
+          badgeStrings: studio.resolveBadgeStrings({ manifestEntry: e, variant: v }),
+          labelInk: e.labelInk || null, catalogEntry: catalog[handle] || null,
+          photoPaths, referencePhotos: photoPaths.length ? studio.loadReferencePhotos(photoPaths) : [],
+        };
+      },
       render: (prompt, { ratio, budget, photoPaths }) => studio.renderVariationWithBackoff(gemini, { prompt, photoPaths, ratio }, { budget }),
       verifyImage: (o) => studio.verifyImage({ anthropic, ...o }),
       strayText: ({ buffer, mediaType }) => checkStrayText({ anthropic, model: verifyModel, buffer, mediaType }),

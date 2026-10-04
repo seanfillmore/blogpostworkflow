@@ -52,6 +52,7 @@ function validate(s, dir) {
   if (s.bandPreference !== undefined) {
     if (!Array.isArray(s.bandPreference) || !s.bandPreference.every(x => VALUE_LINE_IDS.includes(x))) fail(`bandPreference must list value-line ids (${VALUE_LINE_IDS.join(', ')})`);
   }
+  if (s.bandPreferenceOverOffer !== undefined && typeof s.bandPreferenceOverOffer !== 'boolean') fail('bandPreferenceOverOffer must be true or false');
   const frac = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
   for (const p of s.labelPositions || []) {
     if (!['x', 'y', 'tx', 'ty'].every(k => frac(p?.[k]))) fail(`labelPositions entries need x, y, tx, ty as 0-1 fractions, got ${JSON.stringify(p)}`);

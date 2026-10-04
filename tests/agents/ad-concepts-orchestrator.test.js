@@ -24,6 +24,7 @@ const REVIEWS = [
   'Soft, not greasy, and it soaks right in. I use it every single morning.',
   'It helps my diabetic skin so much.',
 ];
+const PDP_FIXTURE = 'Made with organic coconut oil. Absorbs quickly. Heals cracked skin. Small batches, made by hand. A little goes a long way.';
 const LOTION_DESC = 'An 8 fl. oz. (236ml) white plastic cylindrical squeeze bottle with a black flip-top cap and a white label reading "real SKIN CARE".';
 const CREAM_DESC = 'A short, wide-mouth plastic jar approximately 4 oz in size with a flat, ribbed black screw-on cap. The jar body is white.';
 
@@ -37,7 +38,7 @@ function product(handle, desc) {
   };
 }
 
-function deps({ verify = () => true, reviews = REVIEWS, landing = null, productExtra = {}, photos = ['ref.jpg'] } = {}) {
+function deps({ verify = () => true, reviews = REVIEWS, landing = null, productExtra = {}, photos = ['ref.jpg'], pdp = PDP_FIXTURE, headline = 'Soft, not greasy', bundle = undefined } = {}) {
   const out = mkdtempSync(join(tmpdir(), 'ads-'));
   const prompts = [];
   const renders = [];
@@ -49,7 +50,8 @@ function deps({ verify = () => true, reviews = REVIEWS, landing = null, productE
     const text = typeof t === 'string' ? t : '';
     prompts.push(text);
     if (text.includes('Pick the ONE customer review')) return reply({ index: 0 });
-    if (text.includes('"headline" text')) return reply({ text: 'Soft, not greasy', claims: [] });
+    if (text.includes('"headline" text')) return reply({ text: headline, claims: [] });
+    if (text.includes('Pick the checklist rows')) return reply({ indices: [2, 0, 1] });
     if (text.includes('AD-LEVEL copy')) {
       return reply({
         primaryTexts: ['Soft, not greasy. Coconut lotion that soaks right in.', 'One lotion for the whole family, every morning.'],
@@ -71,11 +73,12 @@ function deps({ verify = () => true, reviews = REVIEWS, landing = null, productE
       loadEvidence: async ({ handle }) => ({
         product: { ...product(handle, handle === 'coconut-lotion' ? LOTION_DESC : CREAM_DESC), ...productExtra },
         catalogEntry: { title: handle === 'coconut-lotion' ? 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' : 'Coconut Moisturizer | 4oz' },
-        pdpBody: 'Made with organic coconut oil. Absorbs quickly. Heals cracked skin.', reviews, photoPaths: photos, photoDir: `/refs/${handle}`,
+        pdpBody: typeof pdp === 'function' ? pdp(handle) : pdp, reviews: typeof reviews === 'function' ? reviews(handle) : reviews, photoPaths: photos, photoDir: `/refs/${handle}`,
         referencePhotos: [], siblingVariants: ['coconut-breeze'], brandKit: { free_shipping_threshold: 45, manufacturing: 'Made in the USA' },
         competitorNames: ['Acme'], persona: null,
       }),
       fetchLanding: async () => landingObj,
+      ...(bundle === undefined ? {} : { loadLandingBundle: async () => bundle }),
       render: async (prompt) => { lastRender = prompt; renders.push(prompt); return JPEG; },
       verifyImage: async () => { const ok = verify(lastRender); return { ok, reasons: ok ? [] : ['label wrong'] }; },
       strayText: async () => ({ ok: true, detail: '' }),
@@ -123,7 +126,7 @@ test('factCandidates pulls short phrases from catalog titles and the PDP', () =>
   const f = factCandidates({ catalogEntries: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }, { title: 'Coconut Moisturizer | 4oz' }], pdpBodies: ['Made with organic coconut oil. Absorbs quickly. ' + 'word '.repeat(20)] });
   assert.ok(f.includes('Only 6 Clean Ingredients'));
   assert.ok(f.includes('Made with organic coconut oil'));
-  assert.ok(f.includes('Coconut Moisturizer'));
+  assert.ok(!f.includes('Coconut Moisturizer'), 'a product name is not a fact');
   assert.ok(!f.some(x => x.split(' ').length > 8));
 });
 
@@ -238,20 +241,6 @@ test('checklist rows the gates reject are recorded with their reasons', async ()
   assert.ok(cl.slots.oursRows.includes('Only 6 Clean Ingredients'));
   assert.ok(plan.droppedRows.length > 0);
   assert.ok(plan.droppedRows.every(r => r.reason && r.structure));
-});
-
-test('labelled bundle: labels are product nouns <= 28 chars at the library positions, offer band', async () => {
-  const { out, deps: d } = deps();
-  const report = await runAds({ args: parseArgs([...ARGS, '--offer', 'Set $46.80 (was $58)', '--structures', 'labelled-bundle-offer,comment-card-offer', '--dry-run']), deps: d });
-  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
-  const lb = plan.structures.find(s => s.id === 'labelled-bundle-offer');
-  const entry = LIBRARY.structures.find(s => s.id === 'labelled-bundle-offer');
-  assert.deepEqual(lb.slots.labels.map(l => l.text), ['Body cream', 'Coconut lotion']);
-  lb.slots.labels.forEach((l, i) => {
-    assert.ok(l.text.length <= LABEL_MAX_CHARS);
-    for (const k of ['x', 'y', 'tx', 'ty']) { assert.equal(l[k], entry.labelPositions[i][k]); assert.ok(l[k] >= 0 && l[k] <= 1); }
-  });
-  assert.match(lb.slots.band, /\$46\.80 \(WAS \$58\)/);
 });
 
 test('overrides beyond 3 structures are honoured', async () => {
@@ -465,4 +454,138 @@ test('quote pick unparseable twice: the structure is skipped with the reason', a
   const report = await runAds({ args: parseArgs([...ARGS, '--dry-run']), deps: d });
   const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
   assert.match(plan.skipped.find(s => s.id === 'comment-card-offer').reason, /quote pick/);
+});
+
+// ---- final whole-branch review fixes ----
+import { SIGNAL_EXIT_CODES } from '../../agents/ad-concepts/index.js';
+import { getLayout } from '../../agents/ad-concepts/layouts/index.js';
+
+// The REAL live PDP bodies (stripped, 2026-10-03) whose fragments shipped as checklist rows.
+const PDP_CREAM = 'Thicker than the lotion — a cream for the places that need more. Reviewers reach for it on hands, knees, legs and feet, and a little goes further than you expect. "Incredibly soft. Doesn\'t make you feel greasy or sticky after use. It makes you feel incredibly moisturized." — verified review Thick, but it does not sit on you. It goes on like butter and works in — heavy enough for rough spots, without the slick film. A little goes a long way. A tiny bit covers more than the same amount of lotion does. The scent is light. It comes from the oils, not added fragrance. Five to choose from above — and Pure Unscented is the same cream with none at all. Beeswax is what makes it a cream. No synthetic fragrance, no parabens. Two things worth knowing: warm a small amount between your fingers first — beeswax firms in cold weather. And because it is real coconut oil, it can separate a little in the jar.';
+const PDP_LOTION = 'Six ingredients, and here is every one: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract and organic red palm oil. No synthetic fragrance, no parabens. It absorbs. It is built on coconut oil and jojoba, which is close to the oil your skin makes, so it works in within a few minutes instead of sitting on top. The scent comes from the oils themselves — light, natural, fades after a few minutes.';
+const realPdp = (h) => (h === 'coconut-lotion' ? PDP_LOTION : PDP_CREAM);
+
+test('factCandidates on the real PDPs: no fragment, no quote, no product name', () => {
+  const f = factCandidates({ catalogEntries: [{ title: 'Coconut Moisturizer | 4oz' }], pdpBodies: [PDP_CREAM], names: ['body cream'] });
+  for (const bad of ['"Incredibly soft', 'Incredibly soft', 'Coconut Moisturizer', "Doesn't make you feel greasy or sticky after use", 'It makes you feel incredibly moisturized']) assert.ok(!f.includes(bad), bad);
+  assert.ok(f.includes('A little goes a long way'));
+  assert.ok(f.every(x => x.split(/\s+/).length >= 3 && !/^["“”]|["“”]$/.test(x)));
+  const l = factCandidates({ catalogEntries: [{ title: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' }], pdpBodies: [PDP_LOTION] });
+  assert.ok(!l.includes('It absorbs'));
+  assert.ok(l.includes('Only 6 Clean Ingredients'), 'the ingredient-count fact is extracted from the title');
+  assert.ok(!l.includes('Non-Toxic Body Lotion Made With Only 6 Clean Ingredients'));
+});
+
+test('checklist: the model picks rows BY INDEX from the offered list; plan.json records the offered list; no scent row on unscented', async () => {
+  const { out, deps: d, prompts } = deps({ pdp: realPdp });
+  const report = await runAds({ args: parseArgs(['--products', 'coconut-moisturizer', '--variant', 'pure-unscented', '--structures', 'ours-vs-theirs-checklist,comment-card-offer', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  const cl = plan.structures.find(s => s.id === 'ours-vs-theirs-checklist');
+  const offered = cl.offered.oursRows;
+  assert.ok(offered.length >= 3);
+  assert.deepEqual(cl.slots.oursRows, [offered[2], offered[0], offered[1]]);
+  for (const bad of ['The scent is light', 'It absorbs', 'Coconut Moisturizer', '"Incredibly soft']) assert.ok(!offered.includes(bad), bad);
+  assert.ok(plan.droppedRows.some(r => r.text === 'The scent is light' && /scent/.test(r.reason)));
+  const pick = prompts.find(p => p.includes('Pick the checklist rows'));
+  offered.forEach((r, i) => assert.ok(pick.includes(`[${i}] ${r}`)));
+});
+
+test('checklist with fewer than 3 offered rows is skipped with the reason', async () => {
+  const { out, deps: d } = deps({ pdp: 'It absorbs. Made with organic coconut oil.' });
+  const report = await runAds({ args: parseArgs(['--products', 'coconut-lotion', '--structures', 'ours-vs-theirs-checklist,comment-card-offer', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.match(plan.skipped.find(s => s.id === 'ours-vs-theirs-checklist').reason, /needs 3/);
+});
+
+test('reviews are tagged with their product: a lotion review is never offered for a cream plate', async () => {
+  const LOTION_R = 'This lotion pumps out smooth and my whole family uses it after every shower.';
+  const CREAM_R = 'This cream is thick and rich and a small dab covers both of my hands all day.';
+  const { out, deps: d, prompts } = deps({ reviews: (h) => (h === 'coconut-lotion' ? [LOTION_R] : [CREAM_R]) });
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'comment-card-offer,texture-scoop', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  const card = plan.structures.find(s => s.id === 'comment-card-offer');
+  assert.equal(card.product, 'coconut-moisturizer');
+  assert.equal(card.slots.quote, CREAM_R);
+  const picks = prompts.filter(p => p.includes('Pick the ONE customer review'));
+  assert.ok(picks.length && picks.every(p => p.includes(CREAM_R) && !p.includes(LOTION_R)));
+  const headlinePrompts = prompts.filter(p => p.includes('"headline" text'));
+  assert.ok(headlinePrompts.every(p => !p.includes(LOTION_R)));
+});
+
+const SET_DESC = 'The set consists of three items: a tall, slim cylindrical squeeze bottle (8 fl oz) of moisturizing body lotion with a black flip-top cap; a short, wide cylindrical jar (4 fl oz) of moisturizing body cream with a black screw-on lid; and a round, flat disc-shaped hand & body soap bar wrapped in white packaging. All containers are white with a label featuring the "real SKIN CARE" brand name and a banner reading "pure unscented" in white text.';
+const BUNDLE = {
+  handle: 'sensitive-skin-starter-set', title: 'Sensitive Skin Starter Set', description: SET_DESC,
+  unitCount: 3, labelStrings: ['real SKIN CARE', 'pure unscented', '8 fl oz', '4 fl oz'], badgeStrings: [], labelInk: 'black',
+  photoPaths: ['/refs/set/1.webp'], referencePhotos: [],
+};
+
+test('labelled bundle renders the landing SET with its own photos and its components as labels', async () => {
+  const { out, deps: d, renders } = deps({ bundle: BUNDLE });
+  const seenPhotos = [];
+  const base = d.render;
+  d.render = async (p, o) => { seenPhotos.push(o.photoPaths); return base(p, o); };
+  const report = await runAds({ args: parseArgs([...ARGS, '--offer', 'Set $46.80 (was $58)', '--structures', 'labelled-bundle-offer,comment-card-offer']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  const lb = plan.structures.find(s => s.id === 'labelled-bundle-offer');
+  assert.deepEqual(lb.slots.labels.map(l => l.text), ['Body Lotion', 'Body Cream', 'Hand & Body Soap']);
+  assert.ok(lb.slots.labels.every(l => l.text.length <= LABEL_MAX_CHARS));
+  assert.equal(lb.product, 'sensitive-skin-starter-set');
+  const setRender = renders.findIndex(p => p.includes('hand & body soap bar'));
+  assert.ok(setRender >= 0, 'the set\'s own description reaches the scene prompt');
+  assert.deepEqual(seenPhotos[setRender], ['/refs/set/1.webp']);
+  assert.match(renders[setRender], /EXACTLY 3 UNITS/);
+  assert.ok(report.results.some(r => r.conceptSlug === 'labelled-bundle-offer'));
+});
+
+test('labelled bundle is ineligible when the landing bundle has no photos', async () => {
+  for (const bundle of [null, { ...BUNDLE, photoPaths: [] }]) {
+    const { out, deps: d } = deps({ bundle });
+    const report = await runAds({ args: parseArgs([...ARGS, '--offer', 'Set $46.80 (was $58)', '--dry-run']), deps: d });
+    const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+    assert.match(plan.ineligible.find(s => s.id === 'labelled-bundle-offer').reason, /landing bundle has no photos/);
+  }
+  const { out, deps: d } = deps();
+  const report = await runAds({ args: parseArgs([...ARGS, '--offer', 'Set $46.80 (was $58)', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.match(plan.ineligible.find(s => s.id === 'labelled-bundle-offer').reason, /landing bundle has no photos/);
+});
+
+test('comment card: emphasis is the headline\'s distinctive word, so the approved red underline renders', async () => {
+  const { out, deps: d } = deps({ headline: 'The winter moisturizer.' });
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'comment-card-offer,product-group-plain', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  const card = plan.structures.find(s => s.id === 'comment-card-offer');
+  assert.equal(card.slots.emphasis, 'winter');
+  const html = getLayout('comment-card').render({ plates: ['x.jpg'], slots: card.slots, ratio: '4:5' });
+  assert.match(html, /border-bottom:7px solid #c0392b">winter</);
+});
+
+test('they-think-we-sell band reproduces approved C without an offer; a verified offer still wins', async () => {
+  const { out, deps: d } = deps();
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'they-think-we-sell,comment-card-offer', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  const c = plan.structures.find(s => s.id === 'they-think-we-sell');
+  assert.equal(c.slots.band, 'Only 6 clean ingredients. Made in the USA.');
+  assert.equal(c.slots.left, 'Coconut lotion they think we sell');
+  assert.equal(plan.structures.find(s => s.id === 'comment-card-offer').slots.band, 'FREE SHIPPING ON ORDERS OVER $45');
+  const o = deps();
+  const r2 = await runAds({ args: parseArgs([...ARGS, '--offer', 'Set $46.80 (was $58)', '--structures', 'they-think-we-sell,comment-card-offer', '--dry-run']), deps: o.deps });
+  const p2 = JSON.parse(readFileSync(join(o.out, r2.runId, 'plan.json'), 'utf8'));
+  assert.equal(p2.structures.find(s => s.id === 'they-think-we-sell').slots.band, 'SENSITIVE SKIN MOISTURIZING SET $46.80 (WAS $58)');
+});
+
+test('the jar\'s short description uses the LABEL volume (4 fl oz), never "4 oz"', () => {
+  const real = 'A short, wide-mouth plastic jar approximately 4 oz in size with a flat, ribbed black screw-on cap. The jar body is white with a matte finish and features a white label ... and "4 fl. oz • 118ml" at the bottom.';
+  assert.equal(productDescriptionShort(real, 'cream'), '4 fl oz white jar');
+  assert.equal(productDescriptionShort(CREAM_DESC, 'cream', ['real SKIN CARE', '4 fl. oz • 118ml']), '4 fl oz white jar');
+  const studio = { buildLabelStrings: () => ['real SKIN CARE', '4 fl. oz • 118ml'], resolveBadgeStrings: () => [] };
+  const p = buildEvidenceProduct({ handle: 'coconut-moisturizer', variant: 'pure-unscented', manifestEntry: { unitCount: 1, productDescription: CREAM_DESC }, catalogEntry: { title: 'Coconut Moisturizer | 4oz' }, studio });
+  assert.equal(p.productDescriptionShort, '4 fl oz white jar');
+});
+
+test('signal exit codes: SIGINT 130, SIGTERM 143, and main uses them', () => {
+  assert.deepEqual(SIGNAL_EXIT_CODES, { SIGINT: 130, SIGTERM: 143 });
+  const src = readFileSync(new URL('../../agents/ad-concepts/index.js', import.meta.url), 'utf8');
+  assert.match(src, /process\.exit\(SIGNAL_EXIT_CODES\[sig\]\)/);
+  assert.doesNotMatch(src, /process\.exit\(130\)/);
 });
