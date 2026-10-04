@@ -53,8 +53,10 @@ backlink-opp ─────┘        (queue)        (address)        (draft+ga
 - **Excludes:**
   - any person or outlet that `eligibleFor` rejects (the 60-day re-pitch cooldown, non-pitchable statuses)
   - any domain the book already has an open pitch with
+  - any domain or contact with a `pending` or `approved` draft, or a draft **rejected within the last 60 days** (§4)
   - targets pr-target-finder marked as demoted
-- **No weekly pitch cap** (Sean, 2026-10-04: "I will take as many as you can write"). Throughput is bounded only by prospects with a verified address, Hunter's monthly allowance, and the daily send cap in §5. Drafting runs daily and tops the approval queue up to `queueTarget` (default **25** pending drafts), filled about 70% editorial and 30% link-gap. Leftover share from either list goes to the other.
+- **No weekly pitch cap** (Sean, 2026-10-04: "I will take as many as you can write"). Throughput is bounded only by prospects with a verified address, Hunter's monthly allowance, and the daily send cap in §5. Drafting runs daily at **14:20 UTC** (`--draft --apply`) and tops the approval queue up to `queueTarget` (default **25** pending drafts), filled about 70% editorial and 30% link-gap. Leftover share from either list goes to the other.
+- **Per-run bounds:** one run drafts at most `draftRunMax` (default **10**), so the queue fills over a few days rather than in one long run. A run stops **starting** new prospects at **15:30 UTC** (the 16:00 UTC send window needs the shared lock, and the 15:00 UTC scheduler and Monday LLM jobs share the box), and never runs longer than **60 minutes**; a run started by hand after 15:30 is bounded by the 60 minutes alone. A run that stops early says so in its digest row with the number of prospects left.
 - **Order:** within each list, the source agent's own rank.
 - **Output:** a list of prospects with the evidence each one was picked on (target URL, the competitor it cites, rank).
 
@@ -70,7 +72,8 @@ Free pass first, in order. All fetches go through `lib/fetch-pool.js`, so failur
 
 - Every address is stored with its source: `channels[].source` is either `published:<url>` or `hunter:verified:<date>`.
 - An unverified address is never written as sendable.
-- A prospect with no usable address becomes a contact with status `unverified` and no email channel. It is listed in the digest as manual (DM or contact form), and no Hunter credit is spent on it twice.
+- A prospect with no usable address becomes a contact with status `unverified` and no email channel. It is listed in the digest as manual (DM or contact form), and no Hunter credit is spent on it twice: a prospect that cost a credit is recorded in the agent state (`hunter_tried`), and a contact carrying the no-address note counts too; on later runs it gets the free pass only. An address Hunter did return is cached so no later outcome pays for it again.
+- A contact whose status is `unverified` becomes `active` when drafting adds a verified email channel.
 - **Budget guard:** before spending a credit, it reads Hunter's `/account` usage. It stops at 80% of either monthly allowance and reports that in the digest.
 
 ### 3. Drafting — `lib/press-pitch.js` (pure prompt + checks) and a `standard`-tier model call
@@ -78,7 +81,7 @@ Free pass first, in order. All fetches go through `lib/fetch-pool.js`, so failur
 Each draft is plain text, **at most 150 words**, with a subject line of at most 70 characters:
 
 - **Opener:** one specific thing from the writer's own target article, fetched fresh. **Deterministic anti-fabrication check:** the draft must carry a short quote or concrete detail from that article, and the check confirms that string actually appears in the fetched text (normalized whitespace and case). A miss gets one regeneration naming the problem. A second miss drops the draft and records the prospect as `draft_failed`. The model's word that it read the page is not a check (same lesson as `lib/html-output-guards.js`).
-- **Body:** one product angle chosen for that page, with every fact traced to the PDP or catalog through `agents/ad-studio/claims.js`'s source gate.
+- **Body:** one product angle chosen for that page. **Facts come only from a closed fact sheet** built from `config/ingredients.json`, the catalog's price and URL, and the brand kit's manufacturing line; the model is told to use no other fact about the brand or products. `agents/ad-studio/claims.js`'s source tracing is **not** used (ruling, 2026-10-04). The safeguards are, together: the closed fact sheet, `checkOutgoingCopy`'s gate, the verified opener quote, and Sean approving every first pitch before it can send.
 - **Gates**, each a hard fail with one retry:
   - `checkSeoCopyFields` on the default **commercial** surface: health claims, product-category accuracy (never "antiperspirant"; deodorant is odor-only), oral-care claims
   - no em dashes (stripped deterministically, then re-checked)
@@ -87,7 +90,7 @@ Each draft is plain text, **at most 150 words**, with a subject line of at most 
   - the sample offer
   - `If this isn't a fit, just reply "no thanks" and I won't follow up.`
   - a signature with the canonical postal address read from `brand-kit.json`, the same source `lib/email-rebuild-checks.js` uses. CAN-SPAM requires it for commercial email.
-- **Link-gap prospects** get the same structure, but the ask names the specific page that links to a competitor and what we would add to it.
+- **Link-gap prospects** get the same structure, but the ask says the site links to those competitors and what we would add. `data/backlinks/opportunities.json` names the linking domain only, never the page, so the pitch **never names or describes a specific page** as the one that links to them.
 
 ### 4. Approval queue
 
@@ -97,7 +100,9 @@ Each draft is plain text, **at most 150 words**, with a subject line of at most 
   - The route reads its body through `readJsonBody`, per the dashboard route contract.
 - **Digest:** the 5 AM digest shows `N pitches waiting for approval` with a dashboard link, plus the weekly funnel line from §8.
 - **Expiry:** a draft unapproved for **14 days** expires and frees its slot. A stale opener ("loved your piece last month") must never send late.
-- **Rejection:** a rejected draft records the reason. The prospect gets a 60-day cooldown and is not re-drafted.
+- **Rejection:** a rejected draft records the reason. The prospect gets a 60-day cooldown and is not re-drafted: a draft rejected within 60 days blocks both its domain (in the prospect queue) and its contact (in the drafting run).
+- **Overwrite guard:** a draft file is never replaced by a *different* draft that shares its id once it is approved (a second run the same day for the same contact); only that draft's own edit, rejection, expiry or send may rewrite it.
+- **Dashboard card** shows where each address came from (`published:<url>` or `hunter:verified:<date>`), or "address source unknown".
 
 ### 5. Sender — `agents/press-outreach` (cron every 30 minutes)
 
