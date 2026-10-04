@@ -61,19 +61,20 @@ export function buildScenePrompt({ structure, which = 'primary', product, brandK
   if (!tpl) throw new Error(`ad-concepts: structure "${structure?.id}" has no ${which} scene`);
   const scene = fill(tpl, {
     productNoun: product?.productNoun || String(product?.title || 'product').toLowerCase(),
-    productDescriptionShort: product?.productDescriptionShort || product?.physicalDescription || '',
-  }).trim();
+    // The orchestrator must supply productNoun and productDescriptionShort; the full
+    // physical description is deliberately NOT a fallback (too long for a scene sentence).
+    productDescriptionShort: product?.productDescriptionShort || '',
+  }).replace(/\s*\(\s*\)/g, '').trim();
   if (plate?.productFree) {
     return [PHONE_LOOK, scene, 'No logo, no printing, no text anywhere in the image.'].join('\n\n');
   }
-  const palette = (brandKit?.palette_hexes || []).join(', ');
+  // Reproduces the approved reference recipe exactly: no palette line.
   return [
     PHONE_LOOK,
     scene,
-    `TEXT: there is no text anywhere in the image except our product's own printed label.`,
+    `There is no text anywhere in the image except our product's own printed label.`,
     unitBlock(product.unitCount),
-    product.labelInk ? `All printed type on our product's label is ${product.labelInk} ink; only the botanical illustration is in colour.` : '',
-    palette ? `Brand palette, for any colour accents: ${palette}.` : '',
+    `All printed type on our product's label is ${product.labelInk || 'black'} ink.`,
     buildProductFidelityBlock(product, { allowPeople: structure.people !== 'none' }),
   ].filter(Boolean).join('\n\n');
 }
