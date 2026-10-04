@@ -196,8 +196,11 @@ PRESS_OUTREACH="17,47 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach
 PRESS_OUTREACH_DRAFT="20 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --draft --apply >> data/reports/scheduler/press-outreach-draft.log 2>&1"
 
 # Press outreach earned-link check: weekly, looks for our links and mentions on
-# pages of engaged pitches and sends the funnel digest. Monday 14:25 UTC, after
-# the 14:20 drafting run has released the shared lock.
+# pages of engaged pitches and sends the funnel digest. Monday 14:25 UTC. The
+# 14:20 drafting run usually still HOLDS the shared lock (it may run to its
+# 15:30 cutoff), so the check fetches without the lock and then waits up to
+# 80 minutes for it to write the contact book. If it never gets the lock the
+# digest still goes out, marked "not written to the contact book this week".
 PRESS_OUTREACH_LINKS="25 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --check-links --apply >> data/reports/scheduler/press-outreach-links.log 2>&1"
 
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the

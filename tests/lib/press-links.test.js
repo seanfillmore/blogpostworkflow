@@ -109,3 +109,10 @@ test('author pages on a foreign host are not fetched', () => {
   assert.equal(linkCandidates([sub], NOW)[0].urls.length, 2);
   assert.equal(linkCandidates([contact('h', {})], NOW, { authorUrlOf: () => 'https://evil.net/x' })[0].urls.length, 1);
 });
+
+test('M4: a title-case routine/regimen/tips phrase is not a brand mention', () => {
+  for (const t of ['The Real Skin Care Routine You Need', 'My Real Skin Care Regimen', 'Real Skin Care Tips For Winter']) {
+    assert.equal(findOurPresence(`<h1>${t}</h1>`).mentioned, false, t);
+  }
+  assert.equal(findOurPresence('<p>Real Skin Care makes a lotion.</p>').mentioned, true);
+});
