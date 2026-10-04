@@ -1,0 +1,52 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { newDraft, approveDraft, rejectDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft } from '../../lib/press-drafts.js';
+
+const T0 = Date.parse('2026-10-05T12:00:00Z'), D = 86_400_000;
+const mk = (over = {}) => newDraft({ kind: 'pitch', contactId: 'jane-doe', to: 'jane@example.com', subject: 'Hi', text: 'Body', concept: 'intro', now: T0, ...over });
+
+test('new draft is pending with a stable id', () => {
+  const d = mk();
+  assert.equal(d.status, 'pending');
+  assert.match(d.id, /^\d{8}-jane-doe-pitch$/);
+});
+
+test('approve applies edits and keeps created_at (expiry is from creation)', () => {
+  const d = approveDraft(mk(), { now: T0 + D, edits: { subject: 'Edited' } });
+  assert.equal(d.status, 'approved');
+  assert.equal(d.subject, 'Edited');
+  assert.equal(d.created_at, new Date(T0).toISOString());
+  assert.throws(() => approveDraft(markSent(approveDraft(mk(), { now: T0 }), { now: T0, messageId: '<m>' }), { now: T0 }), /sent/);
+});
+
+test('reject needs a reason', () => {
+  assert.throws(() => rejectDraft(mk(), { now: T0 }));
+  assert.equal(rejectDraft(mk(), { now: T0, reason: 'wrong beat' }).status, 'rejected');
+});
+
+test('pending AND approved drafts expire 14 days after creation; sent ones never', () => {
+  const pending = mk();
+  const approved = approveDraft(mk({ contactId: 'b' }), { now: T0 + 13 * D });
+  const sent = markSent(approveDraft(mk({ contactId: 'c' }), { now: T0 }), { now: T0, messageId: '<m>' });
+  const { drafts, expired } = expireDrafts([pending, approved, sent], T0 + 14 * D + 1);
+  assert.deepEqual(expired.map((d) => d.contact_id).sort(), ['b', 'jane-doe']);
+  assert.equal(drafts.find((d) => d.contact_id === 'c').status, 'sent');
+});
+
+test('send order: approved only, oldest approval first', () => {
+  const a = approveDraft(mk({ contactId: 'a' }), { now: T0 + 2 * D });
+  const b = approveDraft(mk({ contactId: 'b' }), { now: T0 + D });
+  assert.deepEqual(sendOrder([mk({ contactId: 'p' }), a, b]).map((d) => d.contact_id), ['b', 'a']);
+});
+
+test('store round-trips through an injected fs, atomically', () => {
+  const files = new Map();
+  const fsImpl = {
+    mkdirSync() {}, readdirSync: () => [...files.keys()].map((k) => k.split('/').pop()),
+    readFileSync: (p) => files.get(p), writeFileSync: (p, s) => files.set(p, s),
+    renameSync: (a, b) => { files.set(b, files.get(a)); files.delete(a); },
+  };
+  saveDraft('/d', mk(), fsImpl);
+  assert.equal(loadDrafts('/d', fsImpl)[0].contact_id, 'jane-doe');
+  assert.ok(![...files.keys()].some((k) => k.includes('.tmp')));
+});
