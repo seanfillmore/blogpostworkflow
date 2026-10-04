@@ -7,7 +7,7 @@
 // docs/superpowers/specs/2026-10-03-ad-structures-design.md
 //
 //   node agents/ad-concepts/index.js --products a,b [--variant <name>] [--landing <handle>]
-//     [--offer "<text naming price and was-price>"] [--structures id,id] [--max-renders 30] [--dry-run]
+//     [--offer "<text naming price and was-price>"] [--structures id,id] [--ratio 4:5|1:1] [--max-renders 30] [--dry-run]
 import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,7 @@ import { createRenderBudget, sniffImageMediaType } from '../ad-studio/index.js';
 import { selectVolumeStrings } from '../ad-studio/verify.js';
 import { selectQuotableReviews } from '../ad-studio/health-claims.js';
 import { buildSourceIndex } from '../ad-studio/claims.js';
-import { loadLibrary, eligible, selectStructures, whyIneligible } from './structures.js';
+import { loadLibrary, eligible, selectStructures, whyIneligible, RUN_RATIOS } from './structures.js';
 import { parseOffer, verifyOffer, valueLines } from './landing.js';
 import { screenReviews, screenRows, buildQuotePickPrompt, parseQuotePick, quoteFromPick, quotableReviews, templateSlot, fillModelSlot } from './evidence.js';
 import { getLayout } from './layouts/index.js';
@@ -36,14 +36,15 @@ const SLOTS = 3;
 const MIN_ELIGIBLE = 2;
 const MIN_CHECKLIST_ROWS = 2;
 const BUNDLE_LANDING_RE = /\b(?:set|bundle|kit)s?\b/i;
-// A split panel is tall and narrow (538 x 1246): render each panel's plate at 9:16, as the
-// approved reference did, so the cover crop loses as little of the scene as possible.
-const PLATE_RATIO = Object.freeze({ 'split-two-panel': '9:16' });
+// A product-free plate is cheap to judge (is there text?), so it stops on its first pass:
+// one primary take, then one fallback take only if that failed.
+const PRODUCT_FREE_TAKES = Object.freeze({ primaryTakes: 1, fallbackTakes: 1 });
+const PRODUCT_TAKES = Object.freeze({ primaryTakes: 2, fallbackTakes: 2 });
 
 const list = (s) => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
 
 export function parseArgs(argv) {
-  const a = { products: [], variant: null, landing: null, offer: null, structures: [], maxRenders: DEFAULT_MAX_RENDERS, dryRun: false };
+  const a = { products: [], variant: null, landing: null, offer: null, structures: [], ratio: RUN_RATIOS[0], maxRenders: DEFAULT_MAX_RENDERS, dryRun: false };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
     const v = () => { const x = argv[++i]; if (x === undefined) throw new Error(`${k} needs a value`); return x; };
@@ -52,6 +53,7 @@ export function parseArgs(argv) {
     else if (k === '--landing') a.landing = v();
     else if (k === '--offer') a.offer = v();
     else if (k === '--structures') a.structures = list(v());
+    else if (k === '--ratio') a.ratio = v();
     else if (k === '--max-renders') a.maxRenders = Number(v());
     else if (k === '--dry-run') a.dryRun = true;
     else throw new Error(`unknown argument ${k}`);
@@ -61,6 +63,7 @@ export function parseArgs(argv) {
     if (a.products.length !== 1) throw new Error('--landing is required when --products names more than one product');
     a.landing = a.products[0];
   }
+  if (!RUN_RATIOS.includes(a.ratio)) throw new Error(`--ratio must be one of ${RUN_RATIOS.join(', ')} (one output ratio per run)`);
   if (!Number.isInteger(a.maxRenders) || a.maxRenders < 1) throw new Error('--max-renders must be a positive integer');
   return a;
 }
@@ -171,12 +174,11 @@ function critiqueZones(slots) {
   return zones;
 }
 
-/** renderFlexibleManifest's markdown assumes three images at one ratio; make it say what this run is. */
-function finishFlexibleMd(md, { n, target, ratios, landing, reviewFiles }) {
+/** renderFlexibleManifest's markdown assumes three images; make it say what this run is. */
+function finishFlexibleMd(md, { n, target, landing, reviewFiles }) {
   let out = md;
   const word = n === 2 ? 'both' : n === 3 ? 'all three' : `all ${n}`;
-  const shared = new Set(ratios).size === 1;
-  out = out.replace('all three plates share this ratio', shared ? `${word} images share this ratio` : `the images differ in ratio (${ratios.join(', ')}); add each at its own ratio`);
+  out = out.replace('all three plates share this ratio', `${word} images share this ratio`);
   if (n !== 3) out = out.replace('add all three images', `add ${word} images`);
   const extra = [];
   if (landing?.url) {
@@ -243,7 +245,7 @@ export async function runAds({ args, deps }) {
 
   const serialPlan = (e) => ({ id: e.id, name: e.name, layout: e.layout, ratio: e.ratio, people: e.people, sourceDays: e.sourceDays, sources: e.sources, product: e.product, slots: e.slots });
   const writePlan = () => writeJson(join(runDir, 'plan.json'), {
-    runId, landing: landingRec, offer: offerRec, target,
+    runId, ratio: args.ratio, landing: landingRec, offer: offerRec, target,
     structures: plan.map(serialPlan), skipped, ineligible, droppedReviews, droppedRows,
   });
 
@@ -253,7 +255,7 @@ export async function runAds({ args, deps }) {
     return {
       kind: 'ad-structures', runId, generatedAt: deps.now().toISOString(),
       product: { handle: landing?.handle || args.landing, title: landing?.title || null }, variant: args.variant,
-      products: args.products, landing: landingRec, offer: offerRec,
+      ratio: args.ratio, products: args.products, landing: landingRec, offer: offerRec,
       structures: plan.map(e => ({ id: e.id, layout: e.layout, sourceDays: e.sourceDays, sources: e.sources, product: e.product })),
       totals: { artifacts: dry ? 0 : finals.length },
       results: dry ? [] : finals.map(f => ({ conceptSlug: f.entry.id, file: f.file, score: f.score })),
@@ -297,7 +299,16 @@ export async function runAds({ args, deps }) {
     for (const [name, slot] of defs.filter(([, d]) => d.source === 'review')) {
       const maxChars = slot.maxChars || 220;
       const prompt = buildQuotePickPrompt({ structure: s, reviews, maxChars });
-      const idx = parseQuotePick(await ask(deps.anthropic, models.copy, prompt, 200), quotableReviews(reviews, maxChars).length);
+      const n = quotableReviews(reviews, maxChars).length;
+      let idx;
+      // One retry on an unparseable or out-of-range pick, naming the problem; then the
+      // structure is skipped (and replaced) with the reason.
+      try { idx = parseQuotePick(await ask(deps.anthropic, models.copy, prompt, 200), n); }
+      catch (e) {
+        if (/cut off/.test(e.message)) throw e;
+        try { idx = parseQuotePick(await ask(deps.anthropic, models.copy, `${prompt}\n\nYour previous reply could not be used (${e.message}). Return ONLY {"index": <number>} with a number from 0 to ${n - 1}.`, 200), n); }
+        catch (e2) { if (/cut off/.test(e2.message)) throw e2; throw new Error(`quote pick failed twice: ${e2.message}`); }
+      }
       slots[name] = quoteFromPick(reviews, idx, maxChars);
     }
     // 2. Template slots: deterministic strings, every rejected row recorded.
@@ -342,7 +353,7 @@ export async function runAds({ args, deps }) {
     if (!g.ok) throw new Error(`copy gate: ${g.reasons.join('; ')}`);
 
     return {
-      id: s.id, name: s.name, layout: s.layout, ratio: s.ratio, people: s.people || 'none',
+      id: s.id, name: s.name, layout: s.layout, ratio: args.ratio, people: s.people || 'none',
       sourceDays: maxDays(s), sources: s.sources.map(x => ({ brand: x.brand, days: x.days, adLibraryUrl: x.adLibraryUrl })),
       product: prod.handle, slots, structure: s, prod,
     };
@@ -378,9 +389,10 @@ export async function runAds({ args, deps }) {
     const s = entry.structure;
     const prod = entry.prod;
     const layout = getLayout(s.layout);
-    const plateRatio = PLATE_RATIO[s.layout] || s.ratio;
-    const pSlug = ratioSlug(plateRatio);
-    const fSlug = ratioSlug(s.ratio);
+    // ONE output ratio per run; each plate renders at its own library ratio (a split panel is
+    // tall and narrow), and a single-plate structure's plate at the run ratio.
+    const ratio = args.ratio;
+    const fSlug = ratioSlug(ratio);
     const dir = join(runDir, s.id, 'v1');
     mkdirSync(dir, { recursive: true });
     // The dashboard's judging screen reads the zones from here.
@@ -388,18 +400,21 @@ export async function runAds({ args, deps }) {
     const proofs = {};
     const writeProofs = () => writeJson(join(dir, 'proof.json'), proofs);
     try {
-      const specs = s.plates?.length ? s.plates : [{ kind: 'product', productFree: false }];
+      const specs = s.plates?.length ? s.plates : [{ kind: 'product', productFree: false, ratio }];
       const productIdx = specs.findIndex(p => !p.productFree);
       const passedByPlate = [];
       for (let i = 0; i < specs.length; i++) {
         const spec = specs[i];
         const productFree = !!spec.productFree;
         const prefix = productFree ? 'meta-generic' : 'meta-plate';
+        const plateRatio = spec.ratio || ratio;
+        const pSlug = ratioSlug(plateRatio);
+        const takeCounts = productFree ? PRODUCT_FREE_TAKES : PRODUCT_TAKES;
         const plateArg = s.plates?.length ? spec : null;
         const promptFor = (which) => buildScenePrompt({ structure: s, which, product: prod.product, brandKit: shared.brandKit, plate: plateArg });
         const takes = await runConceptTakes({
           concept: { people: productFree ? 'none' : (s.people || 'none') },
-          prompt: promptFor('primary'), fallbackPrompt: promptFor('fallback'), budget,
+          prompt: promptFor('primary'), fallbackPrompt: promptFor('fallback'), budget, ...takeCounts,
           render: (p) => deps.render(p, { ratio: plateRatio, budget, photoPaths: productFree ? [] : prod.photoPaths }),
           verify: async (buffer) => {
             const mediaType = sniffImageMediaType(buffer);
@@ -416,8 +431,9 @@ export async function runAds({ args, deps }) {
           },
           onTake: (t) => {
             const name = `${prefix}-take${t.n}-${pSlug}.jpg`;
+            t.file = name;
             writeFileSync(join(dir, name), t.buffer);
-            proofs[name] = { ...t.proof, needsHumanReview: t.needsHumanReview, usedFallback: t.n > 2 };
+            proofs[name] = { ...t.proof, needsHumanReview: t.needsHumanReview, usedFallback: t.n > takeCounts.primaryTakes, ratio: plateRatio };
             writeProofs();
           },
         });
@@ -430,8 +446,8 @@ export async function runAds({ args, deps }) {
         passedByPlate[i] = takes.passed;
       }
 
-      const size = layout.size(s.ratio);
-      const regions = layout.regions(s.ratio, entry.slots);
+      const size = layout.size(ratio);
+      const regions = layout.regions(ratio, entry.slots);
       const zones = critiqueZones(entry.slots);
       const dataUrl = (t) => `data:${t.mediaType};base64,${t.buffer.toString('base64')}`;
       let best = null;
@@ -439,16 +455,17 @@ export async function runAds({ args, deps }) {
       let otherFailure = false;
       for (const t of passedByPlate[productIdx]) {
         const plates = specs.map((_, i) => dataUrl(i === productIdx ? t : passedByPlate[i][0]));
-        const html = layout.render({ plates, slots: entry.slots, ratio: s.ratio });
+        const html = layout.render({ plates, slots: entry.slots, ratio });
         const set = await deps.renderLayout({ html, width: size.width, height: size.height });
         const name = `meta-final-take${t.n}-${fSlug}.jpg`;
         writeFileSync(join(dir, name), set.buffer);
         const mediaType = sniffImageMediaType(set.buffer);
-        const crit = await deps.critique({ buffer: set.buffer, mediaType, zones, ratio: s.ratio, structureId: s.id });
+        const crit = await deps.critique({ buffer: set.buffer, mediaType, zones, ratio, structureId: s.id });
         const occ = crit.ok && !set.overflow
           ? await deps.occlusion({ buffer: set.buffer, mediaType, productDescription: prod.product.physicalDescription, regions, size, structureId: s.id })
           : null;
-        const plateName = `meta-plate-take${t.n}-${pSlug}.jpg`;
+        // Keyed on the product plate's REAL file name so the dashboard's proof.final lookup finds it.
+        const plateName = t.file;
         proofs[plateName] = {
           ...proofs[plateName], final: name, overflow: !!set.overflow, critique: crit,
           occlusion: occ ?? { ok: false, detail: set.overflow ? 'not checked: the type overflowed its box' : 'not checked: the type failed critique' },
@@ -537,7 +554,7 @@ export async function runAds({ args, deps }) {
     if (offerRec) evidence.add('offer');
     if (facts.kept.length) evidence.add('catalogFact');
     if (BUNDLE_LANDING_RE.test(landing.title || '')) evidence.add('bundleLanding');
-    const ctx = { productKinds: [...new Set(products.map(p => p.product.kind).filter(Boolean))], evidence };
+    const ctx = { productKinds: [...new Set(products.map(p => p.product.kind).filter(Boolean))], evidence, ratio: args.ratio };
     const library = deps.library || loadLibrary();
     const ok = eligible(library, ctx);
     ineligible = library.structures.filter(s => !ok.includes(s)).map(s => ({ id: s.id, reason: whyIneligible(s, ctx) }));
@@ -601,10 +618,8 @@ export async function runAds({ args, deps }) {
     }
     if (flex.failed) { manifestReason = `flexible copy failed: ${flex.failed}`; return; }
     if (!flex.ok) { manifestReason = `flexible copy rejected: ${flex.reasons.join('; ')}`; return; }
-    const ratios = finals.map(f => f.entry.ratio);
-    const sharedRatio = new Set(ratios).size === 1 ? ratios[0] : 'mixed';
     const { json, md } = renderFlexibleManifest({
-      runId, product: landingProduct, variant: args.variant, target: { platform: 'meta', ratio: sharedRatio },
+      runId, product: landingProduct, variant: args.variant, target: { platform: 'meta', ratio: args.ratio },
       plates: finals.map(f => ({ format: f.entry.id, file: f.file, verified: true })),
       primaryTexts: flex.primaryTexts, headlines: flex.headlines, claims: flex.claims,
     });
@@ -618,7 +633,7 @@ export async function runAds({ args, deps }) {
       goldenThread: flex.goldenThread || [],
     };
     writeJson(join(runDir, 'flexible-ad.json'), manifest);
-    writeFileSync(join(runDir, 'flexible-ad.md'), finishFlexibleMd(md, { n: finals.length, target, ratios, landing: landingRec, reviewFiles: review.map(f => f.file) }));
+    writeFileSync(join(runDir, 'flexible-ad.md'), finishFlexibleMd(md, { n: finals.length, target, landing: landingRec, reviewFiles: review.map(f => f.file) }));
     manifestReason = null;
   }
 

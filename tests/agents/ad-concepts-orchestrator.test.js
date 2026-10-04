@@ -101,6 +101,9 @@ test('parseArgs: products list, landing default, offer, structures, renders, dry
   assert.equal(a.dryRun, true);
   assert.equal(parseArgs(['--products', 'coconut-lotion']).landing, 'coconut-lotion');
   assert.equal(parseArgs(['--products', 'coconut-lotion']).maxRenders, 30);
+  assert.equal(parseArgs(['--products', 'coconut-lotion']).ratio, '4:5');
+  assert.equal(parseArgs(['--products', 'coconut-lotion', '--ratio', '1:1']).ratio, '1:1');
+  assert.throws(() => parseArgs(['--products', 'a', '--ratio', '9:16']), /--ratio/);
   assert.throws(() => parseArgs([]), /--products/);
   assert.throws(() => parseArgs(['--products', 'a,b']), /--landing/);
   assert.throws(() => parseArgs(['--products', 'a', '--max-renders', '0']), /max-renders/);
@@ -150,8 +153,8 @@ test('full run: 3 finals, manifest with the landing URL and price, run.json with
   assert.equal(card.product, 'coconut-moisturizer');
   // The diabetic review was screened out and recorded with its reason.
   assert.ok(run.droppedReviews.some(r => /diabetic/.test(r.text) && /condition word/.test(r.reason)));
-  assert.ok(existsSync(join(runDir, 'comment-card-offer', 'v1', 'meta-plate-take1-1x1.jpg')));
-  assert.ok(existsSync(join(runDir, 'comment-card-offer', 'v1', 'meta-final-take1-1x1.jpg')));
+  assert.ok(existsSync(join(runDir, 'comment-card-offer', 'v1', 'meta-plate-take1-4x5.jpg')));
+  assert.ok(existsSync(join(runDir, 'comment-card-offer', 'v1', 'meta-final-take1-4x5.jpg')));
   assert.equal(JSON.parse(readFileSync(join(runDir, 'comment-card-offer', 'copy.json'), 'utf8')).zones.quote, REVIEWS[0]);
   assert.equal(archived.length, 1);
   assert.notEqual(notes[0].immediate, true);
@@ -167,7 +170,7 @@ test('texture-scoop (hands) is flagged needsHumanReview everywhere', async () =>
   assert.match(notes[0].subject, /NEEDS HUMAN REVIEW/);
   const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
   assert.deepEqual(manifest.needsHumanReview, ['texture-scoop']);
-  assert.match(readFileSync(join(out, report.runId, 'flexible-ad.md'), 'utf8'), /texture-scoop\/v1\/meta-final-take\d-1x1\.jpg/);
+  assert.match(readFileSync(join(out, report.runId, 'flexible-ad.md'), 'utf8'), /texture-scoop\/v1\/meta-final-take\d-4x5\.jpg/);
 });
 
 test('offer mismatch aborts before any render or model call', async () => {
@@ -361,4 +364,105 @@ test('listSiblingVariants: directories only, minus the current variant and unwra
   assert.deepEqual(listSiblingVariants(dir, 'nourishing-tea-tree'), ['calming-lavender', 'pure-unscented']);
   assert.deepEqual(listSiblingVariants(dir, null), []);
   assert.deepEqual(listSiblingVariants(join(dir, 'missing'), 'x'), []);
+});
+
+// ---- task 6 fix round 1 ----
+import { readRun } from '../../agents/dashboard/lib/ad-studio-runs.js';
+
+test('a lotion-only run never selects texture-scoop (cream only)', async () => {
+  const { out, deps: d } = deps();
+  const report = await runAds({ args: parseArgs(['--products', 'coconut-lotion', '--variant', 'pure-unscented', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.ok(!plan.structures.some(s => s.id === 'texture-scoop'));
+  assert.match(plan.ineligible.find(s => s.id === 'texture-scoop').reason, /fits cream/);
+  await assert.rejects(runAds({ args: parseArgs(['--products', 'coconut-lotion', '--structures', 'texture-scoop', '--dry-run']), deps: deps().deps }), /texture-scoop.*not eligible/);
+});
+
+test('split run: each plate rendered at its own library ratio, named from it, and the dashboard finds the final', async () => {
+  const { out, deps: d } = deps();
+  const ratios = [];
+  const base = d.render;
+  d.render = async (p, o) => { ratios.push([/cooking coconut oil/.test(p) ? 'generic' : 'product', o.ratio]); return base(p, o); };
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'they-think-we-sell,comment-card-offer']), deps: d });
+  const v = join(out, report.runId, 'they-think-we-sell', 'v1');
+  assert.ok(existsSync(join(v, 'meta-generic-take1-9x16.jpg')));
+  assert.ok(existsSync(join(v, 'meta-plate-take1-3x4.jpg')));
+  assert.ok(existsSync(join(v, 'meta-final-take1-4x5.jpg')));
+  const proof = JSON.parse(readFileSync(join(v, 'proof.json'), 'utf8'));
+  assert.equal(proof['meta-plate-take1-3x4.jpg'].final, 'meta-final-take1-4x5.jpg');
+  assert.ok(ratios.some(([k, r]) => k === 'generic' && r === '9:16'));
+  assert.ok(ratios.filter(([k]) => k === 'product').every(([, r]) => r === '3:4' || r === '4:5'));
+  const run = readRun(out, report.runId);
+  const target = run.concepts.find(c => c.conceptSlug === 'they-think-we-sell').variations[0].targets.find(t => t.key.endsWith('meta-plate-take1-3x4.jpg'));
+  assert.equal(target.comp, 'meta-final-take1-4x5.jpg');
+  assert.equal(target.compTrusted, true);
+});
+
+test('one output ratio per run: every final the same pixel size, manifest placement is that ratio', async () => {
+  for (const [ratio, size] of [['4:5', [1080, 1350]], ['1:1', [1080, 1080]]]) {
+    const { out, deps: d } = deps();
+    const sizes = [];
+    d.renderLayout = async ({ width, height }) => { sizes.push([width, height]); return { buffer: JPEG, overflow: false }; };
+    const report = await runAds({ args: parseArgs([...ARGS, '--ratio', ratio]), deps: d });
+    assert.equal(report.results.length, 3, ratio);
+    assert.ok(sizes.length >= 3 && sizes.every(s => s[0] === size[0] && s[1] === size[1]), `${ratio}: ${JSON.stringify(sizes)}`);
+    const manifest = JSON.parse(readFileSync(join(out, report.runId, 'flexible-ad.json'), 'utf8'));
+    assert.equal(manifest.placement.ratio, ratio);
+    assert.ok(manifest.plates.every(p => p.ratio === ratio));
+    assert.equal(runJson(out, report).ratio, ratio);
+  }
+});
+
+test('--ratio 1:1 never selects a 4:5-only structure', async () => {
+  const { out, deps: d } = deps();
+  const report = await runAds({ args: parseArgs([...ARGS, '--ratio', '1:1', '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.ok(!plan.structures.some(s => ['they-think-we-sell', 'ours-vs-theirs-checklist'].includes(s.id)));
+  assert.match(plan.ineligible.find(s => s.id === 'they-think-we-sell').reason, /does not support 1:1/);
+});
+
+test('a product-free plate takes one render when it passes; run.json cost counts fallback and product-free renders', async () => {
+  // The split's product plate fails both primary takes, so its fallback renders too.
+  const { out, deps: d, renders } = deps({ verify: (p) => !/bright airy bathroom/.test(p) });
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'they-think-we-sell,comment-card-offer,product-group-plain']), deps: d });
+  assert.equal(renders.filter(p => /cooking coconut oil/.test(p)).length, 1, 'generic plate: one render, it passed');
+  assert.equal(renders.filter(p => /very large on a plain light surface, filling about 75%/.test(p)).length, 2, 'two fallback renders');
+  assert.equal(renders.length, 1 + 4 + 2 + 2);
+  assert.equal(runJson(out, report).cost.renders, renders.length);
+});
+
+test('a product-free plate that fails gets exactly one fallback render', async () => {
+  const { deps: d, renders } = deps();
+  d.strayText = async () => ({ ok: false, detail: 'a logo on the tub' });
+  const report = await runAds({ args: parseArgs([...ARGS, '--structures', 'they-think-we-sell,comment-card-offer']), deps: d });
+  assert.equal(renders.filter(p => /cooking (coconut oil|fat)/.test(p)).length, 2);
+  assert.match(report.rejectedStructures.find(r => r.id === 'they-think-we-sell').reason, /stray-text.*a logo on the tub/);
+});
+
+test('quote pick: one retry on an unparseable reply, then the structure is planned', async () => {
+  const { out, deps: d, prompts } = deps();
+  let bad = true;
+  const create = d.anthropic.messages.create;
+  d.anthropic.messages.create = async (req) => {
+    const t = req.messages[0].content;
+    if (typeof t === 'string' && t.includes('Pick the ONE customer review') && bad) { bad = false; prompts.push(t); return reply('I pick the first one'); }
+    return create(req);
+  };
+  const report = await runAds({ args: parseArgs([...ARGS, '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.equal(plan.structures.find(s => s.id === 'comment-card-offer').slots.quote, REVIEWS[0]);
+  assert.equal(prompts.filter(p => p.includes('Pick the ONE customer review')).length, 2);
+});
+
+test('quote pick unparseable twice: the structure is skipped with the reason', async () => {
+  const { out, deps: d } = deps();
+  const create = d.anthropic.messages.create;
+  d.anthropic.messages.create = async (req) => {
+    const t = req.messages[0].content;
+    if (typeof t === 'string' && t.includes('Pick the ONE customer review')) return reply('no idea');
+    return create(req);
+  };
+  const report = await runAds({ args: parseArgs([...ARGS, '--dry-run']), deps: d });
+  const plan = JSON.parse(readFileSync(join(out, report.runId, 'plan.json'), 'utf8'));
+  assert.match(plan.skipped.find(s => s.id === 'comment-card-offer').reason, /quote pick/);
 });
