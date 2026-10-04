@@ -4826,11 +4826,7 @@ function ideaSourceLabel(source) {
   return labels[source] || source;
 }
 
-async function renderIdeasTab() {
-  var panel = document.getElementById('ideas-panel');
-  panel.innerHTML = '<div class="empty-state">Loading ideas...</div>';
-
-  // Inject styles once
+function ensureIdeasStyles() {
   if (!document.getElementById('ideas-styles')) {
     var style = document.createElement('style');
     style.id = 'ideas-styles';
@@ -4849,6 +4845,13 @@ async function renderIdeasTab() {
     ].join('');
     document.head.appendChild(style);
   }
+}
+
+async function renderIdeasTab() {
+  var panel = document.getElementById('ideas-panel');
+  panel.innerHTML = '<div class="empty-state">Loading ideas...</div>';
+
+  ensureIdeasStyles();
 
   var res = await fetch('/api/ideas');
   var d = await res.json();
@@ -6715,6 +6718,7 @@ function outreachSafeUrl(u) {
 async function renderOutreachTab() {
   var panel = document.getElementById('outreach-panel');
   panel.innerHTML = '<div class="empty-state">Loading drafts...</div>';
+  ensureIdeasStyles();
   if (!document.getElementById('outreach-styles')) {
     var style = document.createElement('style');
     style.id = 'outreach-styles';
@@ -6766,7 +6770,8 @@ async function renderOutreachTab() {
       '<textarea class="idea-input outreach-text" id="outreach-text-' + id + '">' + esc(x.text) + '</textarea>' +
       (problems.length ? '<ul class="outreach-problems" id="outreach-problems-' + id + '">' + problems.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<ul class="outreach-problems" id="outreach-problems-' + id + '" style="display:none"></ul>') +
       '<div class="idea-row-actions">' +
-        '<button class="btn-approve" onclick="approveOutreach(this)" data-id="' + id + '"' + (x.status === 'approved' ? ' disabled' : '') + '>Approve</button>' +
+        (x.status === 'approved' ? '' : '<button class="btn-approve" onclick="approveOutreach(this)" data-id="' + id + '">Approve</button>') +
+        '<button class="btn-idea-reject" style="color:var(--text)" onclick="saveOutreach(this)" data-id="' + id + '">Save edit</button>' +
         '<button class="btn-idea-reject" onclick="rejectOutreach(this)" data-id="' + id + '">Reject</button>' +
       '</div></div>';
   });
@@ -6781,43 +6786,77 @@ function outreachShowProblems(id, problems) {
   ul.style.display = (problems && problems.length) ? '' : 'none';
 }
 
-async function approveOutreach(btn) {
-  var id = btn.getAttribute('data-id');
+// PATCH the card's edits. Returns { ok, problems }. A 422 still saved the edit, and the
+// server demotes an approved draft that no longer passes back to pending.
+async function outreachPatch(id) {
   var subj = document.getElementById('outreach-subject-' + id);
   var text = document.getElementById('outreach-text-' + id);
-  var patch = await fetch('/api/press/drafts/' + encodeURIComponent(id), {
+  var res = await fetch('/api/press/drafts/' + encodeURIComponent(id), {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ subject: subj.value, text: text.value }),
   });
-  var pd = await patch.json();
-  if (!pd.ok) { outreachShowProblems(id, pd.problems || [pd.error || 'could not save']); return; }
-  var res = await fetch('/api/press/drafts/' + encodeURIComponent(id) + '/approve', { method: 'POST' });
-  var d = await res.json();
-  if (!d.ok) { outreachShowProblems(id, d.problems || [d.error || 'could not approve']); return; }
-  renderOutreachTab();
+  return res.json();
+}
+
+async function saveOutreach(btn) {
+  var id = btn.getAttribute('data-id');
+  try {
+    var wasApproved = (outreachDrafts.find(function(x) { return x.id === id; }) || {}).status === 'approved';
+    var pd = await outreachPatch(id);
+    if (!pd.ok) {
+      await renderOutreachTab();
+      outreachShowProblems(id, (pd.problems || [pd.error || 'could not save']).concat(wasApproved && pd.problems ? ['Edit saved, but this draft no longer passes and is back to PENDING. Fix it and approve again.'] : []));
+      return;
+    }
+    renderOutreachTab();
+  } catch (e) { alert('Could not save the edit: ' + e.message); }
+}
+
+async function approveOutreach(btn) {
+  var id = btn.getAttribute('data-id');
+  try {
+    var pd = await outreachPatch(id);
+    if (!pd.ok) { outreachShowProblems(id, pd.problems || [pd.error || 'could not save']); return; }
+    var res = await fetch('/api/press/drafts/' + encodeURIComponent(id) + '/approve', { method: 'POST' });
+    var d = await res.json();
+    if (!d.ok) { outreachShowProblems(id, d.problems || [d.error || 'could not approve']); return; }
+    renderOutreachTab();
+  } catch (e) { alert('Could not approve: ' + e.message); }
 }
 
 async function rejectOutreach(btn) {
   var id = btn.getAttribute('data-id');
   var reason = prompt('Why reject this draft?');
   if (!reason || !reason.trim()) return;
-  var res = await fetch('/api/press/drafts/' + encodeURIComponent(id) + '/reject', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ reason: reason }),
-  });
-  var d = await res.json();
-  if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
-  renderOutreachTab();
+  try {
+    var res = await fetch('/api/press/drafts/' + encodeURIComponent(id) + '/reject', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: reason }),
+    });
+    var d = await res.json();
+    if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
+    renderOutreachTab();
+  } catch (e) { alert('Could not reject: ' + e.message); }
 }
 
 async function approveAllCleanOutreach() {
   var ids = outreachDrafts.filter(function(x) { return x.status === 'pending' && x.gate && x.gate.ok; }).map(function(x) { return x.id; });
   if (!ids.length) return;
-  var res = await fetch('/api/press/drafts/approve', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: ids }),
-  });
-  var d = await res.json();
-  if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
-  renderOutreachTab();
+  try {
+    var res = await fetch('/api/press/drafts/approve', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids: ids }),
+    });
+    var d = await res.json();
+    if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
+    var results = d.results || {};
+    var failed = Object.keys(results).filter(function(k) { return !results[k].ok; });
+    if (failed.length) {
+      alert('Approved ' + (ids.length - failed.length) + ', ' + failed.length + ' failed:\n' + failed.map(function(k) {
+        var r = results[k];
+        return k + ': ' + ((r.problems && r.problems.join('; ')) || r.error || 'unknown');
+      }).join('\n'));
+    }
+    renderOutreachTab();
+  } catch (e) { alert('Could not approve: ' + e.message); }
 }

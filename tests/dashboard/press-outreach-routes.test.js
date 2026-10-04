@@ -123,3 +123,28 @@ test('unknown valid id is 404', async () => {
   const r = root();
   assert.equal((await call('POST', `/api/press/drafts/${A}/approve`, {}, { ROOT: r })).status, 404);
 });
+
+test('PATCH on an approved draft that stays clean stays approved', async () => {
+  const r = root();
+  put(r, A, { status: 'approved', approved_at: '2026-10-01T11:00:00.000Z' });
+  const res = await call('PATCH', `/api/press/drafts/${A}`, { subject: 'New subject' }, { ROOT: r });
+  assert.equal(res.status, 200);
+  assert.equal(read(r, A).status, 'approved');
+  assert.equal(read(r, A).subject, 'New subject');
+});
+
+test('PATCH on an approved draft that fails the gate is demoted to pending', async () => {
+  const r = root();
+  put(r, A, { status: 'approved', approved_at: '2026-10-01T11:00:00.000Z' });
+  const res = await call('PATCH', `/api/press/drafts/${A}`, { text: NO_OPT }, { ROOT: r });
+  assert.equal(res.status, 422);
+  assert.equal(read(r, A).status, 'pending');
+});
+
+test('reject on an approved draft works', async () => {
+  const r = root();
+  put(r, A, { status: 'approved', approved_at: '2026-10-01T11:00:00.000Z' });
+  const res = await call('POST', `/api/press/drafts/${A}/reject`, { reason: 'changed mind' }, { ROOT: r });
+  assert.equal(res.status, 200);
+  assert.equal(read(r, A).status, 'rejected');
+});
