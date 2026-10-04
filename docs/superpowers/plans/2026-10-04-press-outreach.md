@@ -1664,6 +1664,7 @@ git commit -m "feat(press-outreach): daily drafting from both target lists"
 2. On the author page, also follow the 10 most recent article links on the outlet's own domain and check those.
 3. Record `link_earned: { url, found_at, dofollow }` or `mention_earned`, and set the outcome to `placed` on a link.
 4. Join backlink-monitor's newest snapshot in `data/backlinks/snapshots/`: any referring domain new since the previous snapshot that matches a contacted domain is listed in the digest as a possible earned link to confirm by hand.
+   - **As built (ruling, 2026-10-04): dropped.** `data/backlinks/snapshots/` holds only COUNTS (`referringDomains`), never the domain list, so there is nothing to join. Replaced by an unattributed delta: the digest prints the site-wide referring-domain change between the two newest snapshots as context, explicitly "not attributed to outreach" (`referringDomainsChange` in `lib/press-links.js`).
 5. Send one deferred notify with the funnel line, every new link (immediately worth celebrating, but deferred is fine), and the fetch outcome tally (`renderOutcomeTally`).
 
 **Cron:** check `crontab -l` for a free slot first. Proposed:
