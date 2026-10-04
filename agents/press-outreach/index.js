@@ -39,10 +39,15 @@
  *                                                          # weekly (Mon 14:25 UTC): find earned links and mentions
  *                                                          # among engaged pitches, then send the funnel digest
  *
- * Cron: every 30 minutes, plus `--draft --apply` daily at 14:20 UTC (scripts/setup-cron.sh). Sends happen only Mon-Fri
- * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
- * after two clean weeks. Any spam complaint or a >3% bounce rate pauses
- * everything until --resume.
+ * Cron (UTC, scripts/setup-cron.sh):
+ *   17,47 * * * *   --apply              replies, escalations, follow-ups, samples, Sean-approved sends
+ *   20 14 * * *     --draft --apply       prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
+ *                                         at most 10 drafts a run, no new prospect after 15:30 UTC
+ *   25 14 * * 1     --check-links --apply earned-link check and funnel digest
+ *   (--backfill was a one-time run, done 2026-10-04; --resume, --init and --test-send are by hand.)
+ * Every first pitch and bump waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
+ * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap of 10 that ramps to 25 after 14 days with no
+ * auto-pause. A spam complaint or a >3% hard-bounce rate over the last 50 sends pauses everything until --resume.
  *
  * Off switch: config/press-outreach.json "enabled": false.
  * Requires HUSHMAIL_USER, HUSHMAIL_PASSWORD and RESEND_API_KEY in .env.
