@@ -1,7 +1,7 @@
-import { esc, bandHtml, bandRegions, plateBg, SIZES, BAND_HEIGHT } from './band.js';
+import { esc, bandHtml, bandRegions, plateBg, sizeFor, BAND_HEIGHT } from './band.js';
 
 export const LABEL_MAX_CHARS = 28;
-const W = 1080, H = 1080, LW = 340, LH = 64;
+const W = 1080, LW = 340, LH = 64;
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const num = (v, d, what) => {
   if (v === undefined || v === null) return d;
@@ -12,10 +12,12 @@ const num = (v, d, what) => {
 export default {
   key: 'labelled-bundle',
   plates: 1,
-  size: () => SIZES['1:1'],
-  regions: (ratio, slots) => [{ name: 'label-zone', x: 0, y: 0, w: W, h: H - BAND_HEIGHT }, ...bandRegions(W, H, slots)],
+  ratios: ['4:5', '1:1'],
+  size: (ratio) => sizeFor(ratio),
+  regions: (ratio, slots) => { const H = sizeFor(ratio).height; return [{ name: 'label-zone', x: 0, y: 0, w: W, h: H - BAND_HEIGHT }, ...bandRegions(W, H, slots)]; },
   // slots.labels: 2-4 of { text, x, y, tx, ty } in 0-1 frame fractions: label centre (x,y), product point (tx,ty).
-  render({ plates, slots }) {
+  render({ plates, slots, ratio }) {
+    const H = sizeFor(ratio).height;
     const labels = slots.labels || [];
     if (labels.length < 2 || labels.length > 4) throw new Error(`labelled-bundle needs 2-4 labels, got ${labels.length}`);
     for (const l of labels) if (String(l.text ?? "").length > LABEL_MAX_CHARS) throw new Error(`labelled-bundle: label "${l.text}" is ${String(l.text).length} chars, max ${LABEL_MAX_CHARS}`);

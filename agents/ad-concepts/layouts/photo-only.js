@@ -1,12 +1,13 @@
-import { bandHtml, bandRegions, plateBg, SIZES } from './band.js';
+import { bandHtml, bandRegions, plateBg, sizeFor } from './band.js';
 
 export default {
   key: 'photo-only',
   plates: 1,
-  size: (ratio) => SIZES[ratio] || SIZES['1:1'],
-  regions(ratio, slots) { const s = SIZES[ratio] || SIZES['1:1']; return bandRegions(s.width, s.height, slots); },
+  ratios: ['4:5', '1:1'],
+  size: (ratio) => sizeFor(ratio),
+  regions(ratio, slots) { const s = sizeFor(ratio); return bandRegions(s.width, s.height, slots); },
   render({ plates, slots, ratio }) {
-    const { width, height } = SIZES[ratio] || SIZES['1:1'];
+    const { width, height } = sizeFor(ratio);
     return `<div style="position:relative;width:${width}px;height:${height}px;${plateBg(plates[0])};overflow:hidden">${bandHtml({ text: slots.band, width, height })}</div>`;
   },
 };

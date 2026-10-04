@@ -176,3 +176,65 @@ test('labelled-bundle: a label over LABEL_MAX_CHARS throws, naming it', async ()
   assert.equal(text.length, 47);
   assert.throws(() => getLayout('labelled-bundle').render({ plates: ['x'], slots: { labels: [{ text }, { text: 'ok' }] }, ratio: '1:1' }), new RegExp(text));
 });
+
+// ---- task 6 fix round 1: one output ratio per run, 4:5 everywhere ----
+test('every layout renders 4:5 at 1080x1350; single-plate layouts keep 1:1', () => {
+  for (const [k, l] of Object.entries(LAYOUT_REGISTRY)) {
+    assert.ok(l.ratios.includes('4:5'), k);
+    assert.deepEqual(l.size('4:5'), { width: 1080, height: 1350 }, k);
+    if (l.ratios.includes('1:1')) assert.deepEqual(l.size('1:1'), { width: 1080, height: 1080 }, k);
+  }
+  for (const k of ['comment-card', 'headline-over-photo', 'photo-only', 'labelled-bundle']) assert.deepEqual(getLayout(k).ratios, ['4:5', '1:1'], k);
+  for (const k of ['split-two-panel', 'checklist-split']) assert.deepEqual(getLayout(k).ratios, ['4:5'], k);
+});
+
+test('regions stay accurate at every supported ratio', { timeout: 180000 }, async () => {
+  const b = await puppeteer.launch({ args: ['--no-sandbox'] });
+  try {
+    for (const [k, slots] of Object.entries(FULL)) {
+      const l = getLayout(k);
+      for (const ratio of l.ratios) {
+        const { width, height } = l.size(ratio);
+        const p = await plate(width, height);
+        const html = l.render({ plates: l.plates === 2 ? [p, p] : [p], slots, ratio });
+        const regions = l.regions(ratio, slots);
+        for (const r of regions) assert.ok(r.x >= 0 && r.y >= 0 && r.x + r.w <= width && r.y + r.h <= height, `${k} ${ratio} ${r.name} in frame`);
+        const page = await b.newPage();
+        await page.setViewport({ width, height });
+        await page.setContent(wrapLayoutHtml({ html, width, height }));
+        await page.evaluate(() => document.fonts.ready);
+        const rects = await page.evaluate(() => [...document.querySelectorAll('[data-region]')].map(e => { const r = e.getBoundingClientRect(); return { name: e.dataset.region, x: r.x, y: r.y, w: r.width, h: r.height }; }));
+        await page.close();
+        for (const r of rects) {
+          const reg = regions.find(x => x.name === r.name);
+          assert.ok(reg, `${k} ${ratio}: drawn ${r.name} has a region`);
+          assert.ok(r.x >= reg.x - 1 && r.y >= reg.y - 1 && r.x + r.w <= reg.x + reg.w + 1 && r.y + r.h <= reg.y + reg.h + 1, `${k} ${ratio} ${r.name} inside region`);
+        }
+        const band = rects.find(r => r.name === 'band');
+        if (band) assert.equal(band.y + band.h, height, `${k} ${ratio} band sits at the bottom`);
+      }
+    }
+  } finally { await b.close(); }
+});
+
+test('comment-card at 4:5: approved typography and positions, exact strings, no overflow', { timeout: 60000 }, async () => {
+  const l = getLayout('comment-card');
+  const slots = { headline: 'The winter moisturizer.', emphasis: 'winter', quote: 'Soft and never greasy, we use it all over.', band: 'FREE SHIPPING ON ORDERS OVER $45' };
+  const html = l.render({ plates: [await plate(1080, 1350)], slots, ratio: '4:5' });
+  assert.match(html, /top:56px;left:40px;width:1000px;height:118px[^"]*font-size:76px/);
+  assert.match(html, /position:absolute;top:190px;left:80px/);
+  const b = await puppeteer.launch({ args: ['--no-sandbox'] });
+  try {
+    const page = await b.newPage();
+    await page.setViewport({ width: 1080, height: 1350 });
+    await page.setContent(wrapLayoutHtml({ html, width: 1080, height: 1350 }));
+    await page.evaluate(() => document.fonts.ready);
+    const got = await page.evaluate(() => ({ fit: window.__fitAll(), headline: document.querySelector('[data-region=headline]').textContent, bubble: document.querySelector('[data-region=bubble]').textContent, band: document.querySelector('[data-region=band]').textContent }));
+    assert.equal(got.fit.overflow, false);
+    assert.equal(got.headline, slots.headline);
+    assert.ok(got.bubble.includes(slots.quote));
+    assert.equal(got.band.trim(), slots.band);
+  } finally { await b.close(); }
+  const r = await renderLayoutHtml({ html, width: 1080, height: 1350 });
+  assert.equal(r.overflow, false);
+});

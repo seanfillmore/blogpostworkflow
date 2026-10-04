@@ -3,6 +3,8 @@ export const BAND_HEIGHT = 104;
 export const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 export const cssUrl = (u) => String(u || '').replace(/['"\\()\s]/g, (c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'));
 export const SIZES = { '1:1': { width: 1080, height: 1080 }, '4:5': { width: 1080, height: 1350 } };
+// A layout that renders at both run ratios: unknown or missing ratio throws rather than guessing.
+export const sizeFor = (ratio) => { const s = SIZES[ratio]; if (!s) throw new Error(`no layout size for ratio "${ratio}"`); return s; };
 
 export function bandHtml({ text, width = 1080, height, bg = '#000', color = '#fff', size = 40, spacing = 2 }) {
   if (!text) return '';

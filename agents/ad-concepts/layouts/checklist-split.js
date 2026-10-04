@@ -7,6 +7,7 @@ const X1 = X0 + COL_W + GAP;
 export default {
   key: 'checklist-split',
   plates: 1,
+  ratios: ['4:5'],
   size: () => SIZES['4:5'],
   regions: (ratio, slots) => [
     { name: 'title', x: 40, y: 56, w: 1000, h: 120 },

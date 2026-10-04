@@ -1,5 +1,5 @@
 {
-  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (1:1|4:5), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here.",
+  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (the structure's default run ratio, 1:1|4:5) and optional ratios[] (every run ratio it supports, each one its layout renders; a run uses ONE output ratio, default 4:5, and only selects structures supporting it), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, ratio (the plate's own render ratio: 1:1|4:5|3:4|9:16), scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here.",
   "version": 1,
   "structures": [
     {
@@ -15,7 +15,11 @@
         }
       ],
       "layout": "comment-card",
-      "ratio": "1:1",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
       "fits": [
         "cream",
         "lotion"
@@ -57,10 +61,13 @@
         }
       ],
       "layout": "headline-over-photo",
-      "ratio": "1:1",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
       "fits": [
-        "cream",
-        "lotion"
+        "cream"
       ],
       "requires": [
         "review"
@@ -109,6 +116,7 @@
         {
           "kind": "generic",
           "productFree": true,
+          "ratio": "9:16",
           "scene": {
             "primary": "A plain, unbranded clear plastic tub of solid white cooking coconut oil, lid off, a metal spoon stuck in it, sitting on a cluttered kitchen counter next to a frying pan. Unlabelled: no logo, no printing, no text on the tub.",
             "fallback": "A plain, unbranded jar of solid white cooking fat, lid off, on a kitchen counter. Unlabelled: no logo, no printing, no text anywhere."
@@ -116,7 +124,8 @@
         },
         {
           "kind": "product",
-          "productFree": false
+          "productFree": false,
+          "ratio": "3:4"
         }
       ],
       "slots": {
@@ -204,7 +213,11 @@
         }
       ],
       "layout": "photo-only",
-      "ratio": "1:1",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
       "fits": [
         "cream",
         "lotion"
@@ -236,7 +249,11 @@
         }
       ],
       "layout": "labelled-bundle",
-      "ratio": "1:1",
+      "ratio": "4:5",
+      "ratios": [
+        "4:5",
+        "1:1"
+      ],
       "fits": [
         "cream",
         "lotion"

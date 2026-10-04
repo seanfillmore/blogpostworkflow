@@ -114,3 +114,41 @@ test('whyIneligible names the reason', async () => {
   assert.match(whyIneligible(base({ requires: ['offer'] }), { productKinds: ['cream'], evidence: new Set() }), /missing evidence: offer/);
   assert.equal(whyIneligible(base(), { productKinds: ['cream'], evidence: new Set() }), null);
 });
+
+// ---- task 6 fix round 1 ----
+import { supportedRatios, RUN_RATIOS, PLATE_RATIOS } from '../../agents/ad-concepts/structures.js';
+
+test('run and plate ratio vocabularies', () => {
+  assert.deepEqual(RUN_RATIOS, ['4:5', '1:1']);
+  assert.deepEqual(PLATE_RATIOS, ['1:1', '4:5', '3:4', '9:16']);
+});
+
+test('plates[].ratio must be a plate ratio', () => {
+  const plates = (r) => [{ kind: 'generic', productFree: true, ratio: r, scene: { primary: 'p' } }, { kind: 'product', productFree: false, ratio: '3:4' }];
+  assert.equal(loadLibrary(lib([base({ plates: plates('9:16') })])).structures.length, 1);
+  assert.throws(() => loadLibrary(lib([base({ id: 'pr', plates: plates('16:9') })])), /pr.*plate ratio/);
+  assert.throws(() => loadLibrary(lib([base({ id: 'pr2', plates: [{ kind: 'product' }] })])), /pr2.*plate ratio/);
+});
+
+test('ratios[] lists the run ratios a structure supports; each must be one its layout can render', () => {
+  assert.deepEqual(supportedRatios(base({ ratio: '4:5' })), ['4:5']);
+  assert.deepEqual(supportedRatios(base({ ratio: '4:5', ratios: ['4:5', '1:1'] })), ['4:5', '1:1']);
+  assert.throws(() => loadLibrary(lib([base({ id: 'rr', layout: 'split-two-panel', ratio: '4:5', ratios: ['4:5', '1:1'] })])), /rr.*1:1/);
+});
+
+test('eligible filters by the run ratio when ctx.ratio is given', () => {
+  const l = { structures: [S('a', 'comment-card', 1, { ratio: '4:5', ratios: ['4:5', '1:1'] }), S('b', 'split-two-panel', 1, { ratio: '4:5' })] };
+  assert.deepEqual(eligible(l, { ...ctx(['cream'], []), ratio: '1:1' }).map(s => s.id), ['a']);
+  assert.deepEqual(eligible(l, { ...ctx(['cream'], []), ratio: '4:5' }).map(s => s.id), ['a', 'b']);
+  assert.match(whyIneligibleOf(l.structures[1], '1:1'), /does not support 1:1/);
+});
+async function whyIneligibleOfImpl() { return (await import('../../agents/ad-concepts/structures.js')).whyIneligible; }
+const whyIneligibleFn = await whyIneligibleOfImpl();
+function whyIneligibleOf(s, ratio) { return whyIneligibleFn(s, { ...ctx(['cream'], []), ratio }); }
+
+test('seeded library: every structure runs at 4:5; texture-scoop is cream only; split plates carry their ratios', () => {
+  const by = Object.fromEntries(loadLibrary().structures.map(s => [s.id, s]));
+  for (const s of Object.values(by)) assert.ok(supportedRatios(s).includes('4:5'), s.id);
+  assert.deepEqual(by['texture-scoop'].fits, ['cream']);
+  assert.deepEqual(by['they-think-we-sell'].plates.map(p => p.ratio), ['9:16', '3:4']);
+});

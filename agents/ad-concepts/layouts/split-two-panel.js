@@ -5,6 +5,7 @@ const W = 1080, H = 1350, PANEL_W = 538, PANEL_H = 1246;
 export default {
   key: 'split-two-panel',
   plates: 2,
+  ratios: ['4:5'],
   size: () => SIZES['4:5'],
   regions: (ratio, slots) => [
     { name: 'left-label', x: 28, y: 44, w: PANEL_W - 56, h: 160 },
