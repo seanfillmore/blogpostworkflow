@@ -8,9 +8,10 @@ import { findProductCategoryMisnomers } from '../../lib/product-category-terms.j
 import { variantConflicts, namedCompetitors, checkClaimsSourced } from './concepts.js';
 import { gateCopy } from './copy.js';
 
-/** Condition words a cosmetic review must not carry into an ad (beyond the shared gate). */
-export const DISEASE_EXTRA = Object.freeze(['diabetic', 'diabetes', 'cuts', 'wound', 'wounds', 'burn', 'burns', 'rash', 'psoriasis', 'eczema', 'dermatitis']);
+/** Condition words a cosmetic review must not carry into an ad (beyond the shared gate). Regex source strings, plural-tolerant. */
+export const DISEASE_EXTRA = Object.freeze(['diabetic', 'diabetes', 'cuts?', 'wounds?', 'burns?', 'sunburns?', 'rash(?:es)?', 'psoriasis', 'eczema', 'dermatitis', 'scars?', 'blisters?', 'scrapes?', 'stinging', 'clear(?:s|ed)?\\s+up']);
 const DISEASE_EXTRA_RE = new RegExp(`\\b(?:${DISEASE_EXTRA.join('|')})\\b`, 'i');
+const SUBJECT_RE = /\bantiperspirants?\b|\bover[- ]the[- ]counter\b|\bOTC\b/i;
 const MIN_REVIEW_CHARS = 25;
 
 const wordCount = (s) => String(s || '').trim().split(/\s+/).filter(Boolean).length;
@@ -30,31 +31,30 @@ export function screenReviews(reviews, { variant = null, siblingVariants = [], c
     if (t.length < MIN_REVIEW_CHARS) reason = `too short (${t.length} chars)`;
     else if (isTitleOnly(t)) reason = 'product title, not a review';
     else if (/—/.test(t)) reason = 'em dash';
+    else if (SUBJECT_RE.test(t)) reason = 'about antiperspirant or OTC (our product is a deodorant)';
     else if (health.length) reason = `health claim: ${health.map(h => h.match).join(', ')}`;
     else if (cond) reason = `condition word: ${cond[0]}`;
     else if (findProductCategoryMisnomers(t).length) reason = 'product category misnomer';
     else if (conflicts.length) reason = conflicts[0];
     else if (named.length) reason = `names a competitor: ${named.join(', ')}`;
-    if (reason) dropped.push({ text, reason }); else kept.push(text);
+    if (reason) dropped.push({ text, reason }); else kept.push(t);
   }
   return { kept, dropped };
 }
 
-/** Longest prefix of whole sentences within maxChars; null when even the first is too long. */
-export function truncateAtSentence(text, maxChars) {
-  const s = String(text ?? '');
-  const ends = [];
-  const re = /[.!?]+(?=\s|$)/g;
-  let m;
-  while ((m = re.exec(s))) ends.push(m.index + m[0].length);
-  if (!ends.length || ends[ends.length - 1] < s.trimEnd().length) ends.push(s.trimEnd().length); // trailing unpunctuated tail counts as a sentence
-  let best = null;
-  for (const e of ends) { if (e <= maxChars && e > 0) best = e; else break; }
-  return best === null ? null : s.slice(0, best);
+export class NoQuoteError extends Error {
+  constructor(msg) { super(msg); this.name = 'NoQuoteError'; }
 }
 
-export function buildQuotePickPrompt({ structure, reviews }) {
-  const list = (reviews || []).map((r, i) => `[${i}] ${r}`).join('\n');
+/** Quotes are WHOLE reviews only: the ones whose full trimmed text fits. */
+export function quotableReviews(reviews, maxChars) {
+  return (reviews || []).map(r => String(r ?? '').trim()).filter(r => r && r.length <= maxChars);
+}
+
+export function buildQuotePickPrompt({ structure, reviews, maxChars }) {
+  const offered = quotableReviews(reviews, maxChars);
+  if (!offered.length) throw new NoQuoteError(`no review fits ${maxChars} chars whole; the quote slot cannot be filled`);
+  const list = offered.map((r, i) => `[${i}] ${r}`).join('\n');
   return `Pick the ONE customer review below that best fits this ad structure: "${structure?.name || structure?.id || ''}". Prefer a specific, concrete, warm review about feel or everyday use. You only choose; you never edit or rewrite a review.
 
 ${list}
@@ -71,53 +71,67 @@ export function parseQuotePick(text, n) {
   return idx;
 }
 
+/** index is into the OFFERED list (quotableReviews). Returns the whole trimmed review, verbatim. */
 export function quoteFromPick(reviews, index, maxChars) {
-  const r = (reviews || [])[index];
-  if (r === undefined) throw new Error(`ad-concepts: no review at index ${index}`);
-  const q = truncateAtSentence(r, maxChars);
-  if (!q) throw new Error(`ad-concepts: review ${index} has no whole sentence within ${maxChars} chars`);
-  return q;
+  const offered = quotableReviews(reviews, maxChars);
+  if (!offered.length) throw new NoQuoteError(`no review fits ${maxChars} chars whole; the quote slot cannot be filled`);
+  if (!(index in offered)) throw new Error(`ad-concepts: no offered review at index ${index}`);
+  return offered[index];
 }
 
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const nounOf = (ctx) => String(ctx.productNoun || ctx.product?.productNoun || ctx.product?.noun || (typeof ctx.product === 'string' ? ctx.product : '') || '').trim();
 
+const ROW_SOURCES = ['catalog', 'pdp'];
+
+/** Every checklist row/label passes the copy gate; ours rows must also be sourced in catalog/pdp only. */
+export function screenRows(rows, { sourceIndex = null, competitorNames, variant = null, siblingVariants = [], requireSourced = true } = {}) {
+  if (!Array.isArray(competitorNames)) throw new Error('screenRows needs competitorNames (an array) so a brand can never be a row');
+  let index = null;
+  if (requireSourced) {
+    if (!sourceIndex || typeof sourceIndex !== 'object') throw new Error('screenRows needs a sourceIndex to verify rows verbatim');
+    index = Object.fromEntries(ROW_SOURCES.filter(k => k in sourceIndex).map(k => [k, sourceIndex[k]]));
+  }
+  const kept = []; const dropped = [];
+  for (const row of rows || []) {
+    const text = String(row ?? '').trim();
+    const reasons = [];
+    const gate = gateCopy({ row: text }, [], { sourceIndex: index || {}, competitorNames, variant, siblingVariants });
+    reasons.push(...gate.reasons);
+    if (!text) reasons.push('empty row');
+    if (requireSourced && text) {
+      const found = Object.keys(index).some(id => checkClaimsSourced([{ text, sourceId: id }], index).ok);
+      if (!found) reasons.push('not found verbatim in the catalog or PDP');
+    }
+    if (reasons.length) dropped.push({ text, reason: reasons.join('; ') }); else kept.push(text);
+  }
+  return { kept, dropped };
+}
+
 /**
  * Deterministic template slots. Strings only; nothing here is model-written.
- * ctx: { product | productNoun, facts?: string[], sourceIndex?, competitorNames?, labels?: string[] }
+ * ctx: { product | productNoun, facts?, sourceIndex?, competitorNames, labels? }
  */
 export function templateSlot(structure, slotName, ctx = {}) {
   const slot = structure?.slots?.[slotName];
   if (!slot && slotName !== 'theirsRows') throw new Error(`structure "${structure?.id}" has no slot "${slotName}"`);
   const noun = nounOf(ctx);
   const needNoun = () => { if (!noun) throw new Error('templateSlot needs a productNoun'); return cap(noun); };
+  const gateCtx = { competitorNames: ctx.competitorNames, variant: ctx.variant, siblingVariants: ctx.siblingVariants };
   if (structure.id === 'they-think-we-sell' && (slotName === 'left' || slotName === 'right')) {
     return `${needNoun()} ${slotName === 'left' ? 'they think we sell' : 'we actually sell'}`;
   }
   if (slotName === 'title') return `Ours vs ${structure.rows?.theirsLabel || 'typical'}`;
-  if (slotName === 'theirsRows') return theirsRows(structure, ctx);
+  if (slotName === 'theirsRows') {
+    const r = screenRows(structure.rows?.theirs || [], { ...gateCtx, requireSourced: false });
+    return r.kept;
+  }
   if (slotName === 'oursRows') {
-    const max = slot.maxRows || 3;
-    const ok = (ctx.facts || []).filter(f => !/—/.test(f) && (!ctx.sourceIndex || checkClaimsSourced([{ text: f, sourceId: pickSource(f, ctx.sourceIndex) }], ctx.sourceIndex).ok));
-    return ok.slice(0, max);
+    return screenRows(ctx.facts || [], { ...gateCtx, sourceIndex: ctx.sourceIndex }).kept.slice(0, slot.maxRows || 3);
   }
-  if (slotName === 'labels') return ctx.labels || [];
-  if (slot.template) return slot.template.replace('{category}', needNoun());
+  if (slotName === 'labels') return screenRows(ctx.labels || [], { ...gateCtx, requireSourced: false }).kept;
+  if (slot.template) return slot.template.replaceAll('{category}', needNoun());
   throw new Error(`slot "${slotName}" of "${structure.id}" is not a template slot`);
-}
-
-function pickSource(text, sourceIndex) {
-  for (const id of Object.keys(sourceIndex || {})) {
-    if (checkClaimsSourced([{ text, sourceId: id }], sourceIndex).ok) return id;
-  }
-  return Object.keys(sourceIndex || {})[0];
-}
-
-function theirsRows(structure, ctx) {
-  const rows = structure.rows?.theirs || [];
-  const bad = rows.filter(r => namedCompetitors(r, ctx.competitorNames || []).length);
-  if (bad.length) throw new Error(`theirs rows name a brand: ${bad.join(', ')}`);
-  return rows;
 }
 
 const textOf = (msg) => (msg?.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
@@ -136,6 +150,7 @@ Return ONLY: {"text":"","claims":[{"text":"","sourceId":""}]}`;
 export async function fillModelSlot({ anthropic, model, structure, slotName, evidence, sourceIndex, competitorNames = [], variant = null, siblingVariants = [] }) {
   const slot = structure?.slots?.[slotName];
   if (!slot || slot.source !== 'model') throw new Error(`slot "${slotName}" of "${structure?.id}" is not a model slot`);
+  if (!Number.isFinite(slot.maxWords)) throw new Error(`slot "${slotName}" of "${structure.id}" declares no maxWords`);
   let retryNote = null;
   let reasons = [];
   for (let attempt = 0; attempt < 2; attempt++) {

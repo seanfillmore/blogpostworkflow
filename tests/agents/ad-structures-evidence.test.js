@@ -1,7 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { loadLibrary } from '../../agents/ad-concepts/structures.js';
-import { DISEASE_EXTRA, screenReviews, truncateAtSentence, buildQuotePickPrompt, parseQuotePick, quoteFromPick, templateSlot, fillModelSlot } from '../../agents/ad-concepts/evidence.js';
+import * as ev from '../../agents/ad-concepts/evidence.js';
+import { DISEASE_EXTRA, screenReviews, buildQuotePickPrompt, parseQuotePick, quoteFromPick, templateSlot, fillModelSlot, NoQuoteError } from '../../agents/ad-concepts/evidence.js';
 
 const lib = loadLibrary();
 const S = (id) => lib.structures.find(s => s.id === id);
@@ -18,33 +19,65 @@ test('screenReviews drops the two real bad reviews and keeps the two good ones',
   assert.ok(Object.isFrozen(DISEASE_EXTRA));
 });
 
-test('screenReviews drops em dash, short, title-only, competitor, variant conflict', () => {
+test('screenReviews drops em dash, short, title-only, competitor, variant conflict, each with its reason', () => {
   const long = 'Really lovely lotion that I use every day';
-  const r = screenReviews([`${long} — great`, 'Too short', 'Coconut Moisturizer | 4oz', `${long} better than Acme`, `${long}, love the lavender scent`, long], { competitorNames: ['Acme'], variant: 'calming-tea-tree', siblingVariants: ['calming-lavender'] });
+  const inputs = [`${long} \u2014 great`, 'Too short', 'Coconut Moisturizer | 4oz', `${long} better than Acme`, `${long}, love the lavender scent`, long];
+  const r = screenReviews(inputs, { competitorNames: ['Acme'], variant: 'calming-tea-tree', siblingVariants: ['calming-lavender'] });
   assert.deepEqual(r.kept, [long]);
-  assert.equal(r.dropped.length, 5);
+  assert.deepEqual(r.dropped.map(d => d.text), inputs.slice(0, 5));
+  assert.match(r.dropped[0].reason, /em dash/);
+  assert.match(r.dropped[1].reason, /too short/);
+  assert.match(r.dropped[2].reason, /title/);
+  assert.match(r.dropped[3].reason, /competitor/);
+  assert.match(r.dropped[4].reason, /variant conflict/);
 });
 
-test('truncateAtSentence: whole sentences only, verbatim, null when first too long', () => {
-  assert.equal(truncateAtSentence('One. Two! Three?', 11), 'One. Two!');
-  assert.equal(truncateAtSentence('One. Two! Three?', 100), 'One. Two! Three?');
-  assert.equal(truncateAtSentence('A very long first sentence here. B.', 10), null);
-  assert.equal(truncateAtSentence('No punctuation at all', 50), 'No punctuation at all');
-  assert.equal(truncateAtSentence('Hi. Loves 3.5 stars ok.', 8), 'Hi.');
-  const q = truncateAtSentence(K1, 60);
-  assert.ok(K1.includes(q) && K1.startsWith(q));
+test('screenReviews trims kept reviews', () => {
+  assert.deepEqual(screenReviews(['  Really lovely lotion that I use every day \n'], {}).kept, ['Really lovely lotion that I use every day']);
 });
 
-test('quote pick prompt/parse/verbatim', () => {
-  const p = buildQuotePickPrompt({ structure: S('comment-card-offer'), reviews: [K1, K2] });
+test('screenReviews: plural-tolerant condition words and treatment phrasing', () => {
+  const pad = ' and I really like it a lot';
+  for (const t of ['It cleared up my diaper rashes' + pad, 'On a small cut it stopped stinging' + pad, 'Great on my sunburn' + pad, 'I saw scars fading fast' + pad, 'Helps my blisters' + pad, 'Soothes scrapes' + pad, 'It clears up my skin' + pad]) {
+    const r = screenReviews([t], {});
+    assert.equal(r.kept.length, 0, t);
+  }
+  // documented behaviour: "haircuts" is kept; "I wound up buying" is over-dropped (acceptable)
+  assert.equal(screenReviews(['Great after my haircuts, so soft and light' + pad], {}).kept.length, 1);
+  assert.equal(screenReviews(['I wound up buying three of these' + pad], {}).kept.length, 0);
+});
+
+test('screenReviews drops reviews about antiperspirant or OTC', () => {
+  for (const t of ['Best natural antiperspirant I have ever used, love it so much!', 'Better than any over-the-counter stuff I tried before', 'Works like an OTC product, honestly lovely stuff']) {
+    assert.equal(screenReviews([t], {}).kept.length, 0, t);
+  }
+});
+
+test('truncateAtSentence is gone from the quote path', () => {
+  assert.equal(ev.truncateAtSentence, undefined);
+});
+
+test('quote pick offers only whole reviews that fit, numbered in the offered list', () => {
+  const long = 'x'.repeat(30) + '. ' + 'y'.repeat(300) + '.';
+  const p = buildQuotePickPrompt({ structure: S('comment-card-offer'), reviews: [long, K1, K2], maxChars: 220 });
+  assert.ok(!p.includes('xxxx'));
   assert.match(p, /\[0\] Incredibly/); assert.match(p, /\[1\] I'm obsessed/);
   assert.equal(parseQuotePick('{"index": 1}', 2), 1);
   assert.throws(() => parseQuotePick('{"index": 2}', 2), /out of range/);
   assert.throws(() => parseQuotePick('nope', 2), /parseable/);
   assert.throws(() => parseQuotePick('{"index": -1}', 2));
-  const q = quoteFromPick([K1, K2], 1, 220);
-  assert.ok(K2.includes(q)); assert.equal(q, K2);
-  assert.throws(() => quoteFromPick([K2], 0, 5), /whole sentence/);
+});
+
+test('quoteFromPick returns the whole trimmed review verbatim, indexed in the offered list', () => {
+  const long = 'z'.repeat(300) + '.';
+  assert.equal(quoteFromPick([long, `  ${K2} `], 0, 220), K2);
+  assert.equal(quoteFromPick([K1, K2], 1, 220), K2);
+});
+
+test('no review fits: typed NoQuoteError', () => {
+  const long = 'z'.repeat(300) + '.';
+  assert.throws(() => quoteFromPick([long], 0, 220), (e) => e instanceof NoQuoteError && e.name === 'NoQuoteError');
+  assert.throws(() => buildQuotePickPrompt({ structure: S('comment-card-offer'), reviews: [long], maxChars: 220 }), NoQuoteError);
 });
 
 test('templateSlot: they-think-we-sell labels', () => {
@@ -53,13 +86,34 @@ test('templateSlot: they-think-we-sell labels', () => {
   assert.equal(templateSlot(s, 'right', { productNoun: 'Body cream' }), 'Body cream we actually sell');
 });
 
-test('templateSlot: checklist rows', () => {
+const CN = ['Acme'];
+test('templateSlot: checklist rows are gated and sourced', () => {
   const s = S('ours-vs-theirs-checklist');
-  const sourceIndex = { catalog: 'Only 6 clean ingredients. Made in the USA.' };
-  assert.deepEqual(templateSlot(s, 'oursRows', { facts: ['Only 6 clean ingredients', 'Made on the moon', 'Made in the USA'], sourceIndex }), ['Only 6 clean ingredients', 'Made in the USA']);
-  assert.deepEqual(templateSlot(s, 'theirsRows', {}), ['Long ingredient list', 'Synthetic fragrance', 'Hard-to-pronounce additives']);
-  assert.throws(() => templateSlot(s, 'theirsRows', { competitorNames: ['Synthetic'] }), /brand/);
+  const sourceIndex = { catalog: 'Only 6 clean ingredients. Made in the USA.', reviews: 'Smells like a spa day' };
+  const ctx = { facts: ['Only 6 clean ingredients', 'Made on the moon', 'Made in the USA'], sourceIndex, competitorNames: CN };
+  assert.deepEqual(templateSlot(s, 'oursRows', ctx), ['Only 6 clean ingredients', 'Made in the USA']);
+  assert.deepEqual(templateSlot(s, 'theirsRows', { competitorNames: CN }), ['Long ingredient list', 'Synthetic fragrance', 'Hard-to-pronounce additives']);
   assert.equal(templateSlot(s, 'title', {}), 'Ours vs Typical drugstore lotion');
+});
+
+test('checklist: health claim, reviews-only phrase, and brand rows rejected; missing inputs throw', () => {
+  const s = S('ours-vs-theirs-checklist');
+  const sourceIndex = { catalog: 'Cures eczema in 3 days. Only 6 clean ingredients.', reviews: 'Smells like a spa day', giveaway: 'Win a year of soap' };
+  const r = ev.screenRows(['Cures eczema in 3 days', 'Smells like a spa day', 'Win a year of soap', 'Only 6 clean ingredients'], { sourceIndex, competitorNames: CN });
+  assert.deepEqual(r.kept, ['Only 6 clean ingredients']);
+  assert.equal(r.dropped.length, 3);
+  assert.match(r.dropped[0].reason, /health/);
+  assert.throws(() => templateSlot(s, 'oursRows', { facts: ['Made in the USA'], competitorNames: CN }), /sourceIndex/);
+  assert.throws(() => templateSlot(s, 'oursRows', { facts: ['x'], sourceIndex }), /competitorNames/);
+  assert.throws(() => templateSlot(s, 'theirsRows', {}), /competitorNames/);
+  assert.deepEqual(templateSlot(s, 'theirsRows', { competitorNames: ['Synthetic'] }), ['Long ingredient list', 'Hard-to-pronounce additives']);
+  const bad = { ...s, rows: { ...s.rows, theirs: ['Cures eczema', 'Long list'] } };
+  assert.deepEqual(templateSlot(bad, 'theirsRows', { competitorNames: CN }), ['Long list']);
+});
+
+test('fillModelSlot throws when the slot has no maxWords', async () => {
+  const st = { id: 'x', slots: { headline: { source: 'model' } } };
+  await assert.rejects(() => fillModelSlot({ anthropic: stub('{"text":"a"}'), model: 'm', structure: st, slotName: 'headline', evidence: [], sourceIndex: {} }), /maxWords/);
 });
 
 const stub = (...texts) => { const calls = []; return { calls, messages: { create: async (a) => { calls.push(a); const t = texts.shift(); return typeof t === 'object' ? t : { stop_reason: 'end_turn', content: [{ type: 'text', text: t }] }; } } }; };
