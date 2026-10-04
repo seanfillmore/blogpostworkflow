@@ -29,6 +29,7 @@ import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
 import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
 import { rowsInWindow, daysBetween } from '../../lib/digest-window.js';
+import { renderCreatorReviewSection, awaitingSubmissions } from '../../lib/digest-creator-review.js';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // The A/B dead-band and its classifier come from the module that OWNS the
@@ -986,7 +987,8 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // strip-down, so the subject promised a row the body never showed. Only
   // rendered when something needs a person; the automated count alone stays off.
   const flopNeedsDecision = flops.some((f) => f.automated !== true);
-  const decisionsBody = `${decisionSection}${flopNeedsDecision ? flopSection : ''}${blockedSection}`;
+  const creatorReviewSection = renderCreatorReviewSection(visible, esc);
+  const decisionsBody = `${creatorReviewSection}${decisionSection}${flopNeedsDecision ? flopSection : ''}${blockedSection}`;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;
@@ -1242,6 +1244,8 @@ async function main() {
   // are the fleet working, not news.
   const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
   if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
+  const toReview = awaitingSubmissions(entries).items.length;
+  if (toReview > 0) parts.push(`${toReview} creator submission${toReview > 1 ? 's' : ''} to review`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
