@@ -53,14 +53,30 @@ test('pitch older than cooldown does not block', () => {
   assert.ok(prospects.some((p) => p.domain === 'pitched.example'));
 });
 
-test('existing pending/approved draft blocks; sent/rejected does not', () => {
+test('existing pending/approved draft blocks; sent does not', () => {
   const d = (status, extra) => ({ id: 'd', status, target_url: 'https://www.good.example/x', ...extra });
   let r = buildProspects({ ...base, existingDrafts: [d('pending')], want: 5 });
   assert.ok(!r.prospects.some((p) => p.key === 'pr-target:good.example'));
   assert.ok(r.skipped.some((s) => s.domain === 'good.example' && /draft/.test(s.reason)));
   r = buildProspects({ ...base, existingDrafts: [{ status: 'approved', to: 'a@good.example' }], want: 5 });
   assert.ok(!r.prospects.some((p) => p.key === 'pr-target:good.example'));
-  r = buildProspects({ ...base, existingDrafts: [d('rejected')], want: 5 });
+  r = buildProspects({ ...base, existingDrafts: [d('sent')], want: 5 });
+  assert.ok(r.prospects.some((p) => p.key === 'pr-target:good.example'));
+});
+
+test('a draft rejected inside the 60-day cooldown blocks its domain (spec §4)', () => {
+  const rej = { id: 'd', status: 'rejected', target_url: 'https://www.good.example/x', created_at: '2026-09-01T14:20:00Z', rejected_at: '2026-09-02T10:00:00Z' };
+  const r = buildProspects({ ...base, existingDrafts: [rej], want: 5 });
+  assert.ok(!r.prospects.some((p) => p.key === 'pr-target:good.example'));
+  assert.ok(r.skipped.some((s) => s.domain === 'good.example' && /rejected/.test(s.reason)));
+  const gapRej = { ...rej, target_url: 'https://gap.example/' };
+  const g = buildProspects({ ...base, existingDrafts: [gapRej], want: 5 });
+  assert.ok(!g.prospects.some((p) => p.key === 'link-gap:gap.example'));
+});
+
+test('a draft rejected 61 days ago does not block', () => {
+  const rej = { id: 'd', status: 'rejected', target_url: 'https://www.good.example/x', created_at: '2026-08-03T14:20:00Z', rejected_at: '2026-08-04T10:00:00Z' };
+  const r = buildProspects({ ...base, existingDrafts: [rej], want: 5 });
   assert.ok(r.prospects.some((p) => p.key === 'pr-target:good.example'));
 });
 
