@@ -11,6 +11,8 @@ import { LAYOUT_REGISTRY } from './layouts/index.js';
 
 export const LAYOUTS = ['comment-card', 'headline-over-photo', 'split-two-panel', 'checklist-split', 'photo-only', 'labelled-bundle'];
 export const EVIDENCE = ['review', 'offer', 'catalogFact', 'bundleLanding'];
+/** Value-line ids a structure's bandPreference may name (agents/ad-concepts/landing.js valueLineOptions). */
+export const VALUE_LINE_IDS = ['free-shipping', 'made-in-usa', 'ingredients', 'ingredients-origin'];
 const STATUSES = ['approved', 'candidate', 'retired'];
 const RATIOS = ['1:1', '4:5'];
 /** One output ratio per run (Meta steers feed to 4:5; a flexible ad shares one ratio). Default first. */
@@ -44,6 +46,12 @@ function validate(s, dir) {
   }
   for (const r of s.requires || []) if (!EVIDENCE.includes(r)) fail(`unknown requires "${r}"`);
   if (!s.scene?.primary) fail('missing scene.primary');
+  for (const [name, slot] of Object.entries(s.slots || {})) {
+    if (slot?.sourceWords !== undefined && slot.sourceWords !== 'reviews') fail(`slot "${name}" sourceWords must be "reviews", got "${slot.sourceWords}"`);
+  }
+  if (s.bandPreference !== undefined) {
+    if (!Array.isArray(s.bandPreference) || !s.bandPreference.every(x => VALUE_LINE_IDS.includes(x))) fail(`bandPreference must list value-line ids (${VALUE_LINE_IDS.join(', ')})`);
+  }
   const frac = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
   for (const p of s.labelPositions || []) {
     if (!['x', 'y', 'tx', 'ty'].every(k => frac(p?.[k]))) fail(`labelPositions entries need x, y, tx, ty as 0-1 fractions, got ${JSON.stringify(p)}`);

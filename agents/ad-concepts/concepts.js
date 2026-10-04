@@ -41,6 +41,15 @@ export function checkClaimsSourced(claims, sourceIndex) {
  * flagged. A scented variant may not say "nothing added". No variant: a no-op.
  */
 const UNSCENTED_RE = /unscented|fragrance[\s-]?free|no[\s-]?scent/i;
+const SCENT_WORD = '(?:smell|scent|fragran|aroma|perfume)\\w*';
+// Negations name the ABSENCE of a scent, which is true of an unscented variant: "no scent",
+// "no added fragrance", "no synthetic fragrance", "without any scent", "fragrance-free".
+const SCENT_NEGATED_RE = new RegExp(`\\b(?:no|not|zero|without|never|free\\s+(?:of|from))\\s+(?:(?:any|added|synthetic|artificial|a|the)\\s+){0,2}${SCENT_WORD}|\\b${SCENT_WORD}[\\s-]+free\\b`, 'gi');
+const SCENT_RE = new RegExp(`\\b${SCENT_WORD}`, 'i');
+/** True when the text describes or praises a scent (not merely names its absence). */
+export function describesScent(text) {
+  return SCENT_RE.test(String(text || '').replace(SCENT_NEGATED_RE, ' '));
+}
 const scentTerm = (key) => String(key || '').split('-').slice(1).join(' ').trim().toLowerCase();
 const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 export function variantConflicts(text, { variant = null, siblingVariants = [] } = {}) {
@@ -54,6 +63,10 @@ export function variantConflicts(text, { variant = null, siblingVariants = [] } 
     if (!term || seen.has(term) || (own && own.includes(term))) continue;
     seen.add(term);
     if (new RegExp(`\\b${escRe(term).replace(/ /g, '\\s+')}\\b`, 'i').test(t)) out.push(`variant conflict: names "${term}" (a different variant)`);
+  }
+  // An unscented variant has no scent to describe: a row, review or line praising one is wrong.
+  if (UNSCENTED_RE.test(variant) && describesScent(t)) {
+    out.push(`variant conflict: describes a scent on an unscented variant (${variant})`);
   }
   if (!UNSCENTED_RE.test(variant) && /\bnothing added\b/i.test(t)) {
     out.push(`variant conflict: says "nothing added" on a scented variant (${variant})`);

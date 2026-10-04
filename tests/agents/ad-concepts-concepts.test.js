@@ -10,7 +10,7 @@ import { checkClaimsSourced, mentionsCompetitor, namedCompetitors, variantConfli
 const sourceIndex = { pdp: 'One fat: organic virgin coconut oil, cold-pressed and unrefined, turned into soap.' };
 
 test('only the shared gates remain exported', () => {
-  assert.deepEqual(Object.keys(concepts).sort(), ['checkClaimsSourced', 'mentionsCompetitor', 'namedCompetitors', 'variantConflicts']);
+  assert.deepEqual(Object.keys(concepts).sort(), ['checkClaimsSourced', 'describesScent', 'mentionsCompetitor', 'namedCompetitors', 'variantConflicts']);
 });
 
 test('checkClaimsSourced is directly usable', () => {

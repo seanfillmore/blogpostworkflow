@@ -1,5 +1,5 @@
 {
-  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (the structure's default run ratio, 1:1|4:5) and optional ratios[] (every run ratio it supports, each one its layout renders; a run uses ONE output ratio, default 4:5, and only selects structures supporting it), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, ratio (the plate's own render ratio: 1:1|4:5|3:4|9:16), scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here.",
+  "schema": "version 1. structures[]: id, name, status (approved|candidate|retired), sources[] {brand, days, adLibraryUrl, image relative to this dir}, layout (agents/ad-concepts/structures.js LAYOUTS), ratio (the structure's default run ratio, 1:1|4:5) and optional ratios[] (every run ratio it supports, each one its layout renders; a run uses ONE output ratio, default 4:5, and only selects structures supporting it), fits[] product kinds (ordered: the run puts a structure on the --products entry whose kind comes first here), requires[] evidence (review|offer|catalogFact|bundleLanding), people (none|hands|face), scene {primary, fallback} for the product plate with placeholders {productNoun} and {productDescriptionShort}, optional plates[] ordered {kind: product|generic, productFree: bool, ratio (the plate's own render ratio: 1:1|4:5|3:4|9:16), scene {primary, fallback}} for multi-plate layouts (a generic plate is unbranded and product-free), slots, optional rows (fixed generic rows), notes. labelled-bundle structures carry labelPositions[]: 2-4 of {x, y, tx, ty}, 0-1 frame fractions (label centre, product point), applied to the labels in order. Phone-shot look and the no-text and label-ink blocks are added by code, not written here. A model slot may carry sourceWords: \"reviews\" (every content word must appear in the review evidence). bandPreference[] names value-line ids (free-shipping, made-in-usa, ingredients, ingredients-origin) tried first for an offerOrValue band; a verified --offer still wins unless bandPreferenceOverOffer is true. A checklist oursRows slot names minRows/maxRows: the model picks that many rows by index from the gated candidates.",
   "version": 1,
   "structures": [
     {
@@ -74,14 +74,15 @@
       ],
       "people": "hands",
       "scene": {
-        "primary": "Extreme close-up: one hand holds our open {productNoun} ({productDescriptionShort}) from below while the index finger of the other hand lifts a generous, glossy swirl of thick white product out of it. The label is visible below the rim. Very shallow depth of field, soft warm window light, a blurred neutral background with clean empty space in the upper-left third of the frame. Natural relaxed hands with five fingers each, short unpainted nails.",
+        "primary": "Extreme close-up: one hand holds our open {productNoun} ({productDescriptionShort}) from below while the index finger of the other hand lifts a generous, glossy swirl of thick whipped white cream out of it. The label is visible below the rim. Very shallow depth of field, soft warm window light, a blurred neutral background with clean empty space in the upper-left third of the frame. Natural relaxed hands with five fingers each, short unpainted nails.",
         "fallback": "Close-up of our {productNoun} ({productDescriptionShort}) standing large in the lower half of the frame, label facing the camera, with one finger resting beside a small dab of the product on the surface. Soft warm window light, blurred neutral background, clean empty space in the upper-left third."
       },
       "slots": {
         "headline": {
           "source": "model",
           "maxWords": 4,
-          "style": "a short texture benefit built only from words in a chosen review (soft, not greasy), no claim beyond it"
+          "style": "a short texture benefit built only from words in a chosen review (soft, not greasy), no claim beyond it",
+          "sourceWords": "reviews"
         }
       },
       "notes": "Texture is the hook; the headline is sourced from review wording. Hands trigger human review. Do not copy the competitor body-part imagery."
@@ -141,7 +142,10 @@
           "source": "offerOrValue"
         }
       },
-      "notes": "The left plate is a generic product-free kitchen-staple stand-in (never a competitor brand); the right is our verified product. Do not copy the competitor humour or any claim about their product."
+      "notes": "The left plate is a generic product-free kitchen-staple stand-in (never a competitor brand); the right is our verified product. Do not copy the competitor humour or any claim about their product.",
+      "bandPreference": [
+        "ingredients-origin"
+      ]
     },
     {
       "id": "ours-vs-theirs-checklist",
@@ -191,8 +195,9 @@
         },
         "oursRows": {
           "source": "catalogFact",
-          "maxRows": 3,
-          "verbatim": true
+          "maxRows": 4,
+          "verbatim": true,
+          "minRows": 3
         },
         "band": {
           "source": "offerOrValue"

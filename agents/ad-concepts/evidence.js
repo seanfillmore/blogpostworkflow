@@ -9,7 +9,9 @@ import { variantConflicts, namedCompetitors, checkClaimsSourced } from './concep
 import { gateCopy } from './copy.js';
 
 /** Condition words a cosmetic review must not carry into an ad (beyond the shared gate). Regex source strings, plural-tolerant. */
-export const DISEASE_EXTRA = Object.freeze(['diabetic', 'diabetes', 'cuts?', 'wounds?', 'burns?', 'sunburns?', 'rash(?:es)?', 'psoriasis', 'eczema', 'dermatitis', 'scars?', 'blisters?', 'scrapes?', 'stinging', 'clear(?:s|ed)?\\s+up']);
+// Inflected (burning, sunburned, rashy, bleeding, scarring, blistered). "cuts?" stays a whole
+// word so "haircuts" is kept.
+export const DISEASE_EXTRA = Object.freeze(['diabetic', 'diabetes', 'cuts?', 'wounds?', 'burn\\w*', 'sunburn\\w*', 'rash\\w*', 'bleed\\w*', 'psoriasis', 'eczema', 'dermatitis', 'scar\\w*', 'blister\\w*', 'scrapes?', 'stinging', 'clear(?:s|ed)?\\s+up']);
 const DISEASE_EXTRA_RE = new RegExp(`\\b(?:${DISEASE_EXTRA.join('|')})\\b`, 'i');
 const SUBJECT_RE = /\bantiperspirants?\b|\bover[- ]the[- ]counter\b|\bOTC\b/i;
 const MIN_REVIEW_CHARS = 25;
@@ -79,6 +81,51 @@ export function quoteFromPick(reviews, index, maxChars) {
   return offered[index];
 }
 
+/** The model picks checklist rows BY INDEX from the offered (filtered, gated) list; code inserts them verbatim. */
+export function buildRowPickPrompt({ structure, rows, min, max }) {
+  const list = (rows || []).map((r, i) => `[${i}] ${r}`).join('\n');
+  return `Pick the checklist rows for the "Ours" column of this ad structure: "${structure?.name || structure?.id || ''}". Choose ${min === max ? min : `${min} to ${max}`} rows from the list below: the clearest, most concrete product facts a shopper would care about, no two saying the same thing. You only choose; you never edit or rewrite a row.
+
+${list}
+
+Return ONLY: {"indices": [<number>, ...]}`;
+}
+
+export function parseRowPick(text, { n, min, max }) {
+  const s = String(text || '');
+  let idx;
+  try { idx = JSON.parse(s.slice(s.indexOf('{'), s.lastIndexOf('}') + 1)).indices; } catch { throw new Error('ad-concepts: row pick was not parseable JSON'); }
+  if (!Array.isArray(idx) || idx.length < min || idx.length > max) throw new Error(`ad-concepts: row pick must name ${min}-${max} rows, got ${Array.isArray(idx) ? idx.length : 'none'}`);
+  if (!idx.every(i => Number.isInteger(i) && i >= 0 && i < n)) throw new Error(`ad-concepts: row pick index out of range (0..${n - 1}): ${JSON.stringify(idx)}`);
+  if (new Set(idx).size !== idx.length) throw new Error(`ad-concepts: row pick indices must be distinct: ${JSON.stringify(idx)}`);
+  return idx;
+}
+
+// Words a "from the reviews" slot may add without the reviews saying them: grammar, and the
+// negators that turn a review's "doesn't feel greasy" into "never greasy".
+const SOURCE_STOPWORDS = new Set(['a', 'an', 'the', 'and', 'or', 'but', 'of', 'to', 'in', 'on', 'at', 'for', 'with', 'by', 'from', 'as', 'is', 'are', 'was', 'be', 'it', 'its', 'this', 'that', 'so', 'just', 'all', 'not', 'no', 'never', 'nothing', 'zero', 'you', 'your', 'we', 'our', 'i', 'my', 'me']);
+const stems = (w) => {
+  const out = new Set([w]);
+  if (w.endsWith('ly') && w.length > 4) out.add(w.slice(0, -2));
+  if (w.endsWith('bly') && w.length > 4) out.add(`${w.slice(0, -1)}e`);
+  if (w.endsWith('ily') && w.length > 4) out.add(`${w.slice(0, -3)}y`);
+  if (w.endsWith('es') && w.length > 4) out.add(w.slice(0, -2));
+  if (w.endsWith('s') && w.length > 3) out.add(w.slice(0, -1));
+  return out;
+};
+const wordsOf = (s) => String(s || '').toLowerCase().replace(/[\u2018\u2019]/g, "'").match(/[a-z0-9']+/g) || [];
+
+/** Content words of `text` that the evidence never uses (case-insensitive, stopwords ignored, plural and -ly tolerated). */
+export function unsourcedWords(text, evidenceText) {
+  const have = new Set(wordsOf(evidenceText).flatMap(w => [...stems(w)]));
+  const out = [];
+  for (const w of wordsOf(text)) {
+    if (SOURCE_STOPWORDS.has(w) || out.includes(w)) continue;
+    if (![...stems(w)].some(x => have.has(x))) out.push(w);
+  }
+  return out;
+}
+
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const nounOf = (ctx) => String(ctx.productNoun || ctx.product?.productNoun || ctx.product?.noun || (typeof ctx.product === 'string' ? ctx.product : '') || '').trim();
 
@@ -125,7 +172,8 @@ export function templateSlot(structure, slotName, ctx = {}) {
   // Rejected rows are reported, never silently dropped: the caller records them.
   const screened = (r) => { if (r.dropped.length) ctx.onDropped?.(slotName, r.dropped); return r.kept; };
   if (slotName === 'theirsRows') return screened(screenRows(structure.rows?.theirs || [], { ...gateCtx, requireSourced: false }));
-  if (slotName === 'oursRows') return screened(screenRows(ctx.facts || [], { ...gateCtx, sourceIndex: ctx.sourceIndex })).slice(0, slot.maxRows || 3);
+  // The OFFERED list: every candidate that survived the gates. The model picks 3-4 by index.
+  if (slotName === 'oursRows') return screened(screenRows(ctx.facts || [], { ...gateCtx, sourceIndex: ctx.sourceIndex }));
   if (slotName === 'labels') return screened(screenRows(ctx.labels || [], { ...gateCtx, requireSourced: false }));
   if (slot.template) return slot.template.replaceAll('{category}', needNoun());
   throw new Error(`slot "${slotName}" of "${structure.id}" is not a template slot`);
@@ -137,7 +185,7 @@ function buildSlotPrompt({ structure, slotName, slot, evidence, retryNote }) {
   const ev = Array.isArray(evidence) ? evidence.map(e => `- ${e}`).join('\n') : String(evidence || '');
   return `Write the "${slotName}" text for a static ad built on the structure "${structure.name || structure.id}".
 Style: ${slot.style || 'short, plain, concrete'}. At most ${slot.maxWords} words. No em dash. No health claim. Never name a competitor brand. Our product is never an antiperspirant.
-Any statement of fact must be listed in "claims" as an exact verbatim quote from a source, with its sourceId.
+Any statement of fact must be listed in "claims" as an exact verbatim quote from a source, with its sourceId.${slot.sourceWords === 'reviews' ? '\nUse ONLY words that appear in the evidence below (the customers\' own wording); small grammar words and "never"/"not" are fine.' : ''}
 Evidence:
 ${ev}
 ${retryNote ? `\nYOUR PREVIOUS ATTEMPT WAS REJECTED:\n${retryNote}\nFix exactly that.\n` : ''}
@@ -164,6 +212,10 @@ export async function fillModelSlot({ anthropic, model, structure, slotName, evi
     if (wordCount(text) > slot.maxWords) reasons.push(`${slotName} has ${wordCount(text)} words (max ${slot.maxWords})`);
     const gate = gateCopy({ [slotName]: text }, claims, { sourceIndex, competitorNames, variant, siblingVariants });
     reasons.push(...gate.reasons);
+    if (slot.sourceWords === 'reviews' && text) {
+      const missing = unsourcedWords(text, Array.isArray(evidence) ? evidence.join(' ') : String(evidence || ''));
+      if (missing.length) reasons.push(`words not in the review evidence: ${missing.join(', ')}. Use only the reviewers' own words`);
+    }
     if (!reasons.length) return text;
     retryNote = reasons.join('\n');
   }
