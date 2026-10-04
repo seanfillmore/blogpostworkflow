@@ -159,7 +159,7 @@ test('long text shrinks to fit on the other layouts too', { timeout: 120000 }, a
     'headline-over-photo': { headline: LONGWORDS + ' ' + LONGWORDS, band: LONGWORDS },
     'split-two-panel': { left: LONGWORDS, right: LONGWORDS, band: LONGWORDS },
     'checklist-split': { title: LONGWORDS, oursRows: Array(3).fill(LONGWORDS), theirsLabel: LONGWORDS, theirs: Array(3).fill(LONGWORDS), band: LONGWORDS },
-    'labelled-bundle': { labels: [{ text: 'Organic coconut moisturizing body cream jar' }, { text: 'Organic coconut moisturizing body lotion bottle', x: .75, y: .3 }], band: LONGWORDS },
+    'labelled-bundle': { labels: [{ text: 'Organic Coconut Body Lotion!' }, { text: 'MOISTURIZING COCONUT LOTION!', x: .75, y: .3 }], band: LONGWORDS },
   };
   for (const [k, slots] of Object.entries(long)) {
     const l = getLayout(k); const ratio = CASES[k].ratio; const { width, height } = l.size(ratio);
@@ -167,4 +167,12 @@ test('long text shrinks to fit on the other layouts too', { timeout: 120000 }, a
     const r = await renderLayoutHtml({ html: l.render({ plates: l.plates === 2 ? [p, p] : [p], slots, ratio }), width, height });
     assert.equal(r.overflow, false, k);
   }
+});
+
+test('labelled-bundle: a label over LABEL_MAX_CHARS throws, naming it', async () => {
+  const { LABEL_MAX_CHARS } = await import('../../agents/ad-concepts/layouts/labelled-bundle.js');
+  assert.equal(LABEL_MAX_CHARS, 28);
+  const text = 'Organic coconut moisturizing body lotion bottle';
+  assert.equal(text.length, 47);
+  assert.throws(() => getLayout('labelled-bundle').render({ plates: ['x'], slots: { labels: [{ text }, { text: 'ok' }] }, ratio: '1:1' }), new RegExp(text));
 });
