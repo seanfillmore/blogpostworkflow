@@ -41,7 +41,7 @@ import { planReview, summarizePerformance, renderDigest } from '../../lib/trybe-
 import { planSamplePriming, renderPrimingLines } from '../../lib/trybe-samples.js';
 import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
 import { createVisualReviewer } from '../../lib/trybe-visual-fetch.js';
-import { MAX_VISUAL_REVIEWS_PER_RUN } from '../../lib/trybe-visual-review.js';
+import { MAX_VISUAL_REVIEWS_PER_RUN, catalogueFacts } from '../../lib/trybe-visual-review.js';
 import Anthropic from '../../lib/anthropic.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -152,6 +152,11 @@ async function main() {
     // Imported lazily: lib/shopify.js throws at import time without OAuth
     // credentials, and that must not stop the transcript review.
     loadProducts: async () => (await import('../../lib/shopify.js')).getProducts(),
+    // Per-scent formulas and each product's container; the PDP carries neither.
+    catalogue: (() => {
+      try { return catalogueFacts(JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'))); }
+      catch (err) { console.log(`  catalogue unavailable (${err.message}); ingredient counts judged from the PDP only`); return ''; }
+    })(),
     log: console.log,
   });
   const run = await runReview({ apiKey, apply, reviewVisual });

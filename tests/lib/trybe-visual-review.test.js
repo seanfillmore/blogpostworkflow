@@ -135,3 +135,33 @@ test('the creator note never carries an em or en dash', () => {
   const v = parseVisualVerdict(reply({ ...good, verdict: 'needs_changes', creator_note: 'Love this one — two fixes – then done.' }));
   assert.equal(v.creator_note, 'Love this one, two fixes, then done.');
 });
+
+import { catalogueFacts, REVIEW_REVISION } from '../../lib/trybe-visual-review.js';
+import { readFileSync as _rf } from 'node:fs';
+
+test('catalogue states the base count AND each scent total, from the real config', () => {
+  const cat = catalogueFacts(JSON.parse(_rf(new URL('../../config/ingredients.json', import.meta.url), 'utf8')));
+  // Sean, 2026-10-04: Coconut Breeze cream is 8, and "7" (the base) is honest too.
+  assert.match(cat, /Body Cream \[coconut-moisturizer\], container: jar\. Base formula, 7 ingredients/);
+  assert.match(cat, /Coconut Breeze \(\+ organic coconut oil extract = 8\)/);
+  assert.match(cat, /A stated count of 7 is correct for every scent/);
+  assert.match(cat, /Body Lotion \[coconut-lotion\].*Base formula, 6 ingredients/);
+});
+
+test('the request carries the catalogue and the owner-accepted copy rules', () => {
+  const req = buildVisualRequest({ submission: { products: [{ name: 'Lotion' }] }, image: { media_type: 'image/jpeg', data: 'x' }, catalogue: '- Body Cream [coconut-moisturizer], container: jar.' });
+  const text = req.messages[0].content.filter((b) => b.type === 'text').map((b) => b.text).join('\n');
+  assert.match(text, /FULL REAL SKIN CARE CATALOGUE/);
+  assert.match(text, /vs 20\+ in most lotions/);
+  assert.match(text, /type "tag"/);
+});
+
+test('a tag mismatch alone does not downgrade looks_ready; a real issue still does', () => {
+  const base = { overlay_text: [], product_shown: 'Coconut Breeze body cream', summary: '', creator_note: '' };
+  assert.equal(finalizeVerdict({ ...base, verdict: 'looks_ready', issues: [{ type: 'tag', detail: 'tagged as lotion, shows the cream' }] }).verdict, 'looks_ready');
+  assert.equal(finalizeVerdict({ ...base, verdict: 'looks_ready', issues: [{ type: 'label', detail: 'wrong size' }] }).verdict, 'unsure');
+});
+
+test('the cache key carries the review revision, so a rules change re-reviews', () => {
+  assert.equal(cacheKey({ id: 'abc', version: 2 }), `abc-v2-r${REVIEW_REVISION}`);
+});
