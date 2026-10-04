@@ -176,8 +176,9 @@ fi
 
 # ── set 3: the PR contact book ───────────────────────────────────────────────
 # The book, plus data/press/drafts/ (the approval queue) and
-# data/press/outreach-state.json (press-outreach's send ledger) when present. One file, gitignored because the repository is public. Skipped with a notice
-# when absent — every box except the server legitimately has none, and failing
+# data/press/outreach-state.json (press-outreach's send ledger) when present.
+# Gitignored because the repository is public. Skipped with a notice when the
+# book is absent — every box except the server legitimately has none, and failing
 # here would take the other two backups down with it.
 PRESS_BOOK="data/press/contacts.json"
 if [[ -f "$ROOT/$PRESS_BOOK" ]]; then

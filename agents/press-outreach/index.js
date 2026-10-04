@@ -517,7 +517,7 @@ export async function runPressOutreach({
 }
 
 const BUMP_AFTER_DAYS = 12;
-const stripRe = (s) => String(s || '').trim().replace(/^(re:\s*)+/i, '').toLowerCase();
+const fold = (s) => String(s || '').trim().toLowerCase();
 
 /**
  * One-off backfill for pitches Sean sent by hand before this agent existed.
@@ -530,7 +530,7 @@ const stripRe = (s) => String(s || '').trim().replace(/^(re:\s*)+/i, '').toLower
  *   3. bump drafts: one per pitch still `sent`, threaded, older than 12 days
  * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], drafts: object[], notes: string[]}}
  */
-export function planBackfill({ book, sentCopies = [], replies = [], now = Date.now(), postalAddress = null, drafts = [] } = {}) { // eslint-disable-line no-unused-vars
+export function planBackfill({ book, sentCopies = [], replies = [], now = Date.now(), drafts = [] } = {}) {
   const patches = [];
   const out = [];
   const notes = [];
@@ -544,25 +544,33 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
     let messageId = p.message_id || null;
     let lastSent = p.last_sent_at || null;
 
-    // 1. thread ids
+    // 1. thread ids. Exact subject (case-folded, "Re:" NOT stripped, so Sean's later
+    // reply never matches), on or after the pitch date, earliest wins.
+    let threadOk = true;
     if (!messageId) {
-      const want = stripRe(p.subject);
-      const copy = sentCopies
-        .filter((m) => (m.to || []).some((a) => String(a).toLowerCase() === email) && m.messageId && (want ? stripRe(m.subject) === want : Date.parse(m.date) >= pitchStart))
-        .sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
-      if (!copy) {
-        notes.push(`${c.name} (${c.id}): no Sent copy of "${p.subject || '(no subject)'}" found, so no thread id and no follow-up`);
-        continue;
+      const want = fold(p.subject);
+      if (!want) {
+        notes.push(`${c.name} (${c.id}): no subject recorded; cannot match the Sent copy safely`);
+        threadOk = false;
+      } else {
+        const copy = sentCopies
+          .filter((m) => (m.to || []).some((a) => String(a).toLowerCase() === email) && m.messageId && fold(m.subject) === want && Date.parse(m.date) >= pitchStart)
+          .sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
+        if (!copy) {
+          notes.push(`${c.name} (${c.id}): no Sent copy of "${p.subject}" found, so no thread id and no follow-up`);
+          threadOk = false;
+        } else {
+          messageId = copy.messageId;
+          lastSent = new Date(Date.parse(copy.date)).toISOString();
+          patch.message_id = messageId;
+          patch.subject = copy.subject;
+          patch.last_sent_at = lastSent;
+          notes.push(`${c.name} (${c.id}): thread id found (${messageId})`);
+        }
       }
-      messageId = copy.messageId;
-      lastSent = new Date(Date.parse(copy.date)).toISOString();
-      patch.message_id = messageId;
-      patch.subject = copy.subject;
-      patch.last_sent_at = lastSent;
-      notes.push(`${c.name} (${c.id}): thread id found (${messageId})`);
     }
 
-    // 2. replies since the pitch
+    // 2. replies since the pitch (scanned whether or not a Sent copy was found)
     let conversation = false;
     let declined = false;
     for (const m of replies.filter((r) => String(r.from || '').toLowerCase() === email && Date.parse(r.date) >= pitchStart)) {
@@ -580,7 +588,7 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
       }
     }
     if (Object.keys(patch).length) patches.push({ id: c.id, patch });
-    if (declined || conversation) continue;
+    if (!threadOk || declined || conversation) continue;
 
     // 3. bump draft
     const age = (now - Date.parse(lastSent || `${p.date}T00:00:00Z`)) / DAY;
@@ -681,38 +689,43 @@ function writeStreak(v) {
 }
 
 async function runBackfill(args, apply, creds) {
-  const sets = [];
-  args.forEach((a, i) => { if (a === '--set') sets.push(parseSet(args[i + 1])); });
-  const loaded = readBook();
-  if (!loaded.available) throw new Error(`contact book unavailable: ${loaded.reason}`);
-  if (!creds) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD are not in .env');
-  let book = loaded.doc;
-  const now = Date.now();
-  for (const s of sets) {
-    const patch = { outcome: s.outcome, ...(s.sampleOrder ? { sample_order: s.sampleOrder } : {}) };
-    console.log(`${apply ? '' : '[dry run] would '}set ${s.id}: ${JSON.stringify(patch)}`);
-    book = updatePitch(book, s.id, patch);
-  }
-  const senders = [...openPitchByAddress(book.contacts).keys()];
-  const since = new Date(now - 90 * DAY);
-  const replies = senders.length ? await fetchFromAllFolders(creds, { senders, since }) : [];
-  const sentCopies = senders.length ? await fetchSentTo(creds, { recipients: senders, since }) : [];
-  const draftsDir = join(ROOT, DRAFTS_DIR);
-  const existing = loadDrafts(draftsDir);
-  const plan = planBackfill({ book, sentCopies, replies, now, postalAddress: readPostalAddress(), drafts: existing });
-  for (const n of plan.notes) console.log(`  ${n}`);
-  console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
-  for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
-  if (apply) {
-    for (const { id, patch, contactStatus } of plan.patches) {
-      if (Object.keys(patch).length) book = updatePitch(book, id, patch);
-      if (contactStatus) book = { ...book, contacts: book.contacts.map((x) => (x.id === id ? { ...x, status: contactStatus } : x)) };
+  if (apply && !acquireLock()) throw new Error('another press-outreach run holds the lock (data/press/.lock); try again in a few minutes');
+  try {
+    const sets = [];
+    args.forEach((a, i) => { if (a === '--set') sets.push(parseSet(args[i + 1])); });
+    const loaded = readBook();
+    if (!loaded.available) throw new Error(`contact book unavailable: ${loaded.reason}`);
+    if (!creds) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD are not in .env');
+    let book = loaded.doc;
+    const now = Date.now();
+    for (const s of sets) {
+      const patch = { outcome: s.outcome, ...(s.sampleOrder ? { sample_order: s.sampleOrder } : {}) };
+      console.log(`${apply ? '' : '[dry run] would '}set ${s.id}: ${JSON.stringify(patch)}`);
+      book = updatePitch(book, s.id, patch);
     }
-    writeBook(book);
-    for (const d of plan.drafts) {
-      try { saveDraftFile(draftsDir, d); } catch (err) { console.log(`  could not save ${d.id}: ${err.message}`); }
+    const senders = [...openPitchByAddress(book.contacts).keys()];
+    const since = new Date(now - 90 * DAY);
+    const replies = senders.length ? await fetchFromAllFolders(creds, { senders, since }) : [];
+    const sentCopies = senders.length ? await fetchSentTo(creds, { recipients: senders, since }) : [];
+    const draftsDir = join(ROOT, DRAFTS_DIR);
+    const existing = loadDrafts(draftsDir);
+    const plan = planBackfill({ book, sentCopies, replies, now, drafts: existing });
+    for (const n of plan.notes) console.log(`  ${n}`);
+    console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
+    for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
+    if (apply) {
+      for (const { id, patch, contactStatus } of plan.patches) {
+        if (Object.keys(patch).length) book = updatePitch(book, id, patch);
+        if (contactStatus) book = { ...book, contacts: book.contacts.map((x) => (x.id === id ? { ...x, status: contactStatus } : x)) };
+      }
+      writeBook(book);
+      for (const d of plan.drafts) {
+        try { saveDraftFile(draftsDir, d); } catch (err) { console.log(`  could not save ${d.id}: ${err.message}`); }
+      }
+      console.log('backfill applied');
     }
-    console.log('backfill applied');
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
   }
 }
 
