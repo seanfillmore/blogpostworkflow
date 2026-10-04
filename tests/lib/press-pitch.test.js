@@ -224,3 +224,22 @@ test('the angle is sanitized to deodorant before it enters the prompt', () => {
   assert.match(p, /Suggested angle: pitch our natural deodorant/);
   assert.doesNotMatch(p, /Suggested angle:.*antiperspirant/);
 });
+
+test('I5: a link-gap prompt says the SITE links to competitors and never claims or asks to name a page', () => {
+  const lg = pitchPrompt({
+    prospect: { source: 'link-gap', domain: 'gap.example.com', targetUrl: 'https://gap.example.com/', person: null, publication: null, competitors: ['brand-a.example', 'brand-b.example'], prompts: [] },
+    articleText: ARTICLE, factSheet: 'f', products: ['lotion'],
+  });
+  assert.match(lg, /your site links to brand-a\.example, brand-b\.example/);
+  assert.doesNotMatch(lg, /the page https?:\/\//i);
+  assert.doesNotMatch(lg, /Name that page/i);
+  assert.doesNotMatch(lg, /their article/i);
+  assert.match(lg, /Never name or describe a specific page/i);
+});
+
+test('M3: spaced and oddly-cased article tags cannot close the fence', () => {
+  for (const tag of ['< /article>', '</ article >', '< article>', '<ARTICLE >', '<  / Article x="1">']) {
+    const out = prepareArticle(`before ${tag} after`);
+    assert.doesNotMatch(out, /article/i, `stripped: ${tag}`);
+  }
+});
