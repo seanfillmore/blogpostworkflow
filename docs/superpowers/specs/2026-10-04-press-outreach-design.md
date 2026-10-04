@@ -149,7 +149,7 @@ The default for an unsure classification is **escalate**, never reply. A wrong a
 
 - **Who is checked:** every contact with a pitch whose outcome is `replied`, `sample_accepted`, `sample_shipped` or `feature_confirmed`, for 120 days after the last touch.
 - **How:** fetch the outlet's target page and the writer's recent articles (via `fetch-pool`), and look for a link to `realskincare.com` or a brand mention.
-- **Cross-check:** `agents/backlink-monitor`'s new referring domains are joined to the domains we contacted.
+- **Cross-check:** ~~`agents/backlink-monitor`'s new referring domains are joined to the domains we contacted.~~ **Dropped by ruling (2026-10-04):** the backlink snapshots hold only referring-domain COUNTS, not the domains, so no join is possible. The digest shows the site-wide referring-domain delta between the two newest snapshots instead, labelled "not attributed to outreach".
 - **Record:** `link_earned: { url, found_at, dofollow }` or `mention_earned`.
 - **Digest:** a weekly funnel line, `drafted · approved · sent · replied · samples · links · mentions`, for the trailing 28 days and all time.
 - **Context:** AI-citation movement is read separately against the 2026-09-20 baseline. Per the citation-tracker notes, nothing is readable before 8–12 weeks.

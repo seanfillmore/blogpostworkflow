@@ -554,3 +554,20 @@ test('I4: one run drafts at most draftRunMax (default 10), however short the que
   const small = harness({ prTargets: prTargets(15), config: { queueTarget: 25, editorialShare: 1, draftRunMax: 4 } });
   assert.equal((await runDrafting(small.args)).drafted.length, 4);
 });
+
+test('M9: the lock is refreshed inside a prospect, not only between prospects', async () => {
+  const events = [];
+  const { args } = harness({
+    limit: 1,
+    onProgress: () => events.push('touch'),
+    fetchArticle: async () => { events.push('fetch'); return { outcome: 'ok', html: '<p>A long article about lotion.</p>' }; },
+    findAddress: async (p) => { events.push('find'); return { address: `w@${p.domain}`, source: 'published:x', verified: true, spentHunter: 0 }; },
+    draftPitch: async ({ contact }) => { events.push('draft'); return { ok: true, draft: { subject: `Note for ${contact.name}`, text: 'Hi', openerQuote: 'a long article about lotion', products: [] } }; },
+  });
+  const r = await runDrafting(args);
+  assert.equal(r.drafted.length, 1);
+  const between = (a, b) => events.slice(events.indexOf(a) + 1, events.indexOf(b)).includes('touch');
+  assert.ok(between('fetch', 'find'), events.join(' > '));
+  assert.ok(between('find', 'draft'), events.join(' > '));
+  assert.equal(events.at(-1), 'touch');
+});

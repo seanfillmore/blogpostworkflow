@@ -35,11 +35,19 @@
  *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
  *                                                          # daily: turn prospects into pitch drafts for approval
  *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
+ *   node agents/press-outreach/index.js --check-links [--apply]
+ *                                                          # weekly (Mon 14:25 UTC): find earned links and mentions
+ *                                                          # among engaged pitches, then send the funnel digest
  *
- * Cron: every 30 minutes, plus `--draft --apply` daily at 14:20 UTC (scripts/setup-cron.sh). Sends happen only Mon-Fri
- * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap that ramps
- * after two clean weeks. Any spam complaint or a >3% bounce rate pauses
- * everything until --resume.
+ * Cron (UTC, scripts/setup-cron.sh):
+ *   17,47 * * * *   --apply              replies, escalations, follow-ups, samples, Sean-approved sends
+ *   20 14 * * *     --draft --apply       prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
+ *                                         at most 10 drafts a run, no new prospect after 15:30 UTC
+ *   25 14 * * 1     --check-links --apply earned-link check and funnel digest
+ *   (--backfill was a one-time run, done 2026-10-04; --resume, --init and --test-send are by hand.)
+ * Every first pitch and bump waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
+ * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap of 10 that ramps to 25 after 14 days with no
+ * auto-pause. A spam complaint or a >3% hard-bounce rate over the last 50 sends pauses everything until --resume.
  *
  * Off switch: config/press-outreach.json "enabled": false.
  * Requires HUSHMAIL_USER, HUSHMAIL_PASSWORD and RESEND_API_KEY in .env.
@@ -54,7 +62,7 @@
  * addresses and messages and must never be committed; fixtures use example.com.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, unlinkSync, statSync, copyFileSync, utimesSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, existsSync, mkdirSync, renameSync, unlinkSync, statSync, copyFileSync, utimesSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -68,7 +76,8 @@ import {
 import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
-import { fetchWithOutcome } from '../../lib/fetch-pool.js';
+import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
+import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange } from '../../lib/press-links.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -206,7 +215,7 @@ export function markProcessed(state, ids) {
  * first live run must not answer it a second time.
  */
 export async function initState({ book, readReplies, now = Date.now() }) {
-  const senders = [...openPitchByAddress(book.contacts).keys()];
+  const senders = [...openPitchByAddress(book.contacts, now).keys()];
   const state = emptyState(now);
   if (!senders.length) return state;
   const want = new Set(senders);
@@ -532,7 +541,7 @@ export async function runPressOutreach({
   }
 
   // ── 2. read mail ──
-  const open = openPitchByAddress(book.contacts);
+  const open = openPitchByAddress(book.contacts, now);
   const senders = [...open.keys()];
   const since = new Date(now - LOOKBACK_DAYS * DAY);
   let replies = [];
@@ -1209,6 +1218,9 @@ export async function runDrafting({
 
     let page;
     try { page = await fetchArticle(p.targetUrl); } catch (err) { page = { outcome: 'network-error', error: err.message }; }
+    // One prospect can take minutes (fetch, finder, model): keep the lock fresh
+    // inside it too, or a long attempt lets the next run read the lock as stale.
+    onProgress();
     const articleText = page?.outcome === 'ok' ? htmlToText(page.html) : '';
     if (!articleText) {
       result.failed.push({ ...row, reason: fail(p, `article fetch: ${page?.outcome === 'ok' ? 'empty page' : page?.outcome || 'failed'}`) });
@@ -1234,6 +1246,7 @@ export async function runDrafting({
         try {
           found = hunterDone ? await findAddress(p, { hunter: false }) : await findAddress(p);
         } catch (err) { found = { address: null, reason: `finder error: ${err.message}`, spentHunter: err?.spentHunter || 0 }; }
+        onProgress();
         const spent = found?.spentHunter || 0;
         result.hunterSpent += spent;
         if (spent > 0) {
@@ -1285,6 +1298,7 @@ export async function runDrafting({
     } catch (err) {
       out = { ok: false, reason: `draft error: ${err.message}` };
     }
+    onProgress();
     if (!out?.ok) { result.failed.push({ ...row, reason: fail(p, out?.reason || 'draft rejected') }); return false; }
 
     const v = validateContacts(up.book);
@@ -1535,7 +1549,7 @@ async function runBackfill(args, apply, creds) {
       console.log(`${apply ? '' : '[dry run] would '}set ${s.id}: ${JSON.stringify(patch)}`);
       book = updatePitch(book, s.id, patch);
     }
-    const senders = [...openPitchByAddress(book.contacts).keys()];
+    const senders = [...openPitchByAddress(book.contacts, now).keys()];
     const since = new Date(now - 90 * DAY);
     const replies = senders.length ? await fetchFromAllFolders(creds, { senders, since }) : [];
     const sentCopies = senders.length ? await fetchSentTo(creds, { recipients: senders, since }) : [];
@@ -1563,6 +1577,123 @@ async function runBackfill(args, apply, creds) {
   }
 }
 
+/**
+ * The authors' pages the pr-targets report knows, keyed by outlet domain, so a
+ * pitch to that outlet can also be checked on the author's archive.
+ */
+export function authorUrlsFromTargets(prTargets) {
+  const map = new Map();
+  for (const r of (prTargets && prTargets.pitch_targets) || []) {
+    const d = normalizeDomain(r.domain || '');
+    if (d && r.author_url && !map.has(d)) map.set(d, r.author_url);
+  }
+  return map;
+}
+
+export function renderLinkDigest({ found, candidates, tally, f, change, apply }) {
+  const lines = [apply ? '' : 'DRY RUN: nothing was written.'];
+  lines.push(renderFunnel(f));
+  if (found.length) {
+    lines.push('New earned coverage:');
+    for (const x of found) lines.push(`  - ${x.name}: ${x.kind === 'link' ? `LINK (${x.dofollow ? 'dofollow' : 'nofollow'})` : 'mention, no link'} ${x.url}`);
+  } else lines.push('No new links or mentions found.');
+  lines.push(`Pitches checked: ${candidates.length}. Fetch outcomes: ${renderOutcomeTally(tally)}. Unreachable pages were not judged either way.`);
+  if (change) lines.push(`Context, not attributed to outreach: site-wide referring domains ${change.from} to ${change.to} (${change.delta >= 0 ? '+' : ''}${change.delta}) between ${change.prevDate} and ${change.date}.`);
+  const links = found.filter((x) => x.kind === 'link').length;
+  return { subject: `Press links: ${links} new ${links === 1 ? 'link' : 'links'} · ${found.length - links} mentions · ${f.last28.sent} sent in 28d`, body: lines.filter((l, i) => i > 0 || l).join('\n') };
+}
+
+function readBacklinkSnapshots() {
+  const dir = join(ROOT, 'data', 'backlinks', 'snapshots');
+  try {
+    return readdirSync(dir).filter((n) => n.endsWith('.json')).sort().slice(-2).map((n) => JSON.parse(readFileSync(join(dir, n), 'utf8')));
+  } catch { return []; }
+}
+
+// --draft (14:20 UTC) may hold the lock until its 15:30 cutoff; the Monday
+// 14:25 link check waits that out rather than skipping the week.
+export const LINK_CHECK_LOCK_WAIT_MS = 80 * 60_000;
+
+/**
+ * The weekly link check with every side effect injected. The network work runs
+ * WITHOUT the lock against a snapshot of the book; only the write takes it.
+ * Under the lock the book is re-read and the findings are applied to the FRESH
+ * copy by contact id (applyLinkFindings re-checks each pitch), so a draft or
+ * send run that wrote the book meanwhile loses nothing. If the lock never comes
+ * free, the digest still goes out and says the findings were not written.
+ */
+export async function runLinkCheckFlow({
+  apply = false,
+  nowMs = Date.now(),
+  readBook: read,
+  writeBook: write,
+  fetchPage,
+  authorUrlOf = null,
+  waitForLock: wait = async () => true,
+  releaseLock = () => {},
+  drafts = [],
+  snapshots = [],
+  notify: tell = async () => {},
+  log = console.log,
+} = {}) {
+  const loaded = read();
+  if (!loaded.available) { log(`contact book unavailable: ${loaded.reason}`); return { written: false, reason: loaded.reason }; }
+  const res = await checkLinks({ book: loaded.doc, nowMs, fetchPage, authorUrlOf });
+  let book = res.book;
+  let found = res.found;
+  let notWritten = null;
+  if (apply && res.found.length) {
+    if (await wait()) {
+      try {
+        const fresh = read();
+        if (!fresh.available) notWritten = `the contact book could not be re-read (${fresh.reason})`;
+        else {
+          const ap = applyLinkFindings(fresh.doc, res.found);
+          for (const d of ap.dropped) log(`  not applied for ${d.finding.id}: ${d.reason}`);
+          if (ap.applied.length) write(ap.book);
+          book = ap.book;
+          found = ap.applied;
+        }
+      } catch (err) {
+        notWritten = `the contact book write failed (${err.message})`;
+      } finally {
+        releaseLock();
+      }
+    } else {
+      notWritten = 'another press-outreach run held data/press/.lock the whole time';
+    }
+  }
+  const { subject, body } = renderLinkDigest({ ...res, found: notWritten ? res.found : found, f: funnel(book.contacts, drafts, nowMs), change: referringDomainsChange(snapshots), apply });
+  const note = notWritten ? `\nNOT WRITTEN to the contact book this week: ${notWritten}. The findings above will be found again next week.` : '';
+  log(`\n${subject}\n\n${body}${note}`);
+  if (apply) await tell({ subject: notWritten ? `${subject} · not written` : subject, body: body + note, status: 'info', category: 'press' });
+  return { written: apply && !notWritten && found.length > 0, notWritten, found, book };
+}
+
+/** Weekly: look for our links and mentions on engaged pitches. Fails open. */
+async function runLinkCheck(apply, config) {
+  console.log(`Press link check${apply ? '' : ' (dry run)'}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  const authors = authorUrlsFromTargets(readJson('data/reports/pr-targets/latest.json'));
+  const authorUrlOf = (c, p) => {
+    let host = null;
+    try { host = normalizeDomain(new URL(p.target_url).hostname); } catch { /* no target url */ }
+    return (host && authors.get(host)) || null;
+  };
+  await runLinkCheckFlow({
+    apply,
+    readBook,
+    writeBook,
+    fetchPage: (u) => fetchWithOutcome(u),
+    authorUrlOf,
+    waitForLock: () => waitForLock(LINK_CHECK_LOCK_WAIT_MS),
+    releaseLock: () => { try { unlinkSync(LOCK_PATH); } catch { /* already gone */ } },
+    drafts: loadDrafts(join(ROOT, DRAFTS_DIR), undefined, { onError: () => {} }),
+    snapshots: readBacklinkSnapshots(),
+    notify,
+  });
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
@@ -1587,6 +1718,10 @@ async function main() {
   }
   if (args.includes('--backfill')) {
     await runBackfill(args, apply, creds);
+    return { imapDown: false };
+  }
+  if (args.includes('--check-links')) {
+    await runLinkCheck(apply, config);
     return { imapDown: false };
   }
   if (args.includes('--draft')) {

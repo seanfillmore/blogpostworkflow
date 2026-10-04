@@ -207,3 +207,20 @@ test('checkin_skipped_at must be an ISO datetime when present', () => {
   assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: '2026-10-19T18:00:00Z' })).ok, true);
   assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: 'never' })).ok, false);
 });
+
+test('I3: a placed pitch is reply-matched only within 120 days of the link (else the last touch)', async () => {
+  const { PLACED_REPLY_WINDOW_DAYS, REPLY_MATCH_OUTCOMES, OPEN_OUTCOMES } = await import('../../lib/press-contacts.js');
+  const now = Date.parse('2026-10-12T12:00:00Z'); const D = 86_400_000;
+  const iso = (ms) => new Date(ms).toISOString();
+  const c = (id, p) => ({ id, name: id, status: 'active', domains: ['example.com'], channels: [{ type: 'email', address: `${id}@example.com` }], pitches: [{ date: '2026-01-01', concept: 'c', outcome: 'placed', ...p }] });
+  const m = openPitchByAddress([
+    c('recent', { link_earned: { url: 'https://example.com/a', found_at: iso(now - 119 * D) } }),
+    c('stale', { link_earned: { url: 'https://example.com/a', found_at: iso(now - 121 * D) } }),
+    c('touch', { last_sent_at: iso(now - 30 * D) }),
+    c('old', { last_sent_at: iso(now - 130 * D) }),
+  ], now);
+  assert.deepEqual([...m.keys()].sort(), ['recent@example.com', 'touch@example.com']);
+  assert.equal(PLACED_REPLY_WINDOW_DAYS, 120);
+  assert.ok(!OPEN_OUTCOMES.includes('placed'), 'placed is not an open conversation');
+  assert.ok(REPLY_MATCH_OUTCOMES.includes('placed'));
+});

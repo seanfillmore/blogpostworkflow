@@ -495,3 +495,26 @@ test('M3: an auto-pause is recorded in pause_history', () => {
   const main = src.slice(src.indexOf('async function main()'));
   assert.match(main, /pause_history/);
 });
+
+test('a reply from a placed contact is escalated and nothing is sent to the writer', async () => {
+  const w = world({ replies: [reply('pat', 'Yes please send samples!')] });
+  w.opts.book = { contacts: [contact('pat', { outcome: 'placed', link_earned: { url: 'https://example.com/a', found_at: '2026-10-04T00:00:00Z' } })] };
+  const r = await runPressOutreach(w.opts);
+  assert.equal(w.calls.send.length, 0);
+  assert.equal(w.calls.escalate.length, 1);
+  assert.equal(r.escalations.length, 1);
+});
+
+test('I2: a first pitch to a placed writer sends after the 60-day cooldown and waits inside it', async () => {
+  const daysAgo = (n) => new Date(NOW - n * 86_400_000).toISOString().slice(0, 10);
+  const placed = (id, n) => contact(id, { outcome: 'placed', date: daysAgo(n), last_sent_at: `${daysAgo(n)}T17:00:00Z`, follow_ups_sent: 2, link_earned: { url: 'https://example.com/a', found_at: new Date(NOW - 5 * 86_400_000).toISOString(), dofollow: true } });
+  const drafts = ['ripe', 'young'].map((id) => approved(id));
+  const { opts, calls } = world({ drafts, state: { escalated: {} } });
+  opts.book = { contacts: [placed('ripe', 61), placed('young', 59)] };
+  await runPressOutreach(opts);
+  assert.ok(calls.send.some((m) => m.to === 'ripe@example.com' && m.subject === 'Hi'), 'placed 61 days ago is pitchable');
+  assert.ok(!calls.send.some((m) => m.to === 'young@example.com'));
+  const back = calls.disk.get(drafts.find((d) => d.contact_id === 'young').id);
+  assert.equal(back.status, 'pending');
+  assert.match(back.gate_problems[0], /pitched within 60 days/);
+});
