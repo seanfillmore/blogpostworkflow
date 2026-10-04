@@ -219,10 +219,38 @@ test('a quote only past the article cap is treated as fabricated', async () => {
   assert.match(r.reason, /fabricated-opener/);
 });
 
-test('the angle is sanitized to deodorant before it enters the prompt', () => {
-  const p = pitchPrompt({ prospect: { ...PROSPECT, angle: 'pitch our natural antiperspirant' }, articleText: ARTICLE, factSheet: 'f', products: ['deodorant'] });
-  assert.match(p, /Suggested angle: pitch our natural deodorant/);
-  assert.doesNotMatch(p, /Suggested angle:.*antiperspirant/);
+const BUTTER_ARTICLE = 'We Are in the Midst of a Body-Butter Bonanza. We tested the best body butters for dry winter skin. ' +
+  'Thick body butter and rich cream textures dominate this list of moisturizers.';
+const DEO_PROSPECT = {
+  ...PROSPECT, targetUrl: 'https://example.com/best-body-butters', angle: 'Suggested angle: aluminum-free deodorant for men alongside Boka',
+  prompts: ['best natural deodorant', 'aluminum free deodorant for men', 'best deodorant'], competitors: ['Boka'],
+};
+
+test('pickProducts scores the ARTICLE first: a body-butter piece pitches body-cream despite deodorant prompts', () => {
+  assert.equal(pickProducts(DEO_PROSPECT, BUTTER_ARTICLE)[0], 'body-cream');
+  assert.ok(!pickProducts(DEO_PROSPECT, BUTTER_ARTICLE).includes('deodorant'));
+});
+
+test('pickProducts falls back to prompts when the article names no product', () => {
+  assert.deepEqual(pickProducts({ prompts: ['best natural deodorant'], targetUrl: 'https://example.com/a' }, 'A piece about gardening and weather.'), ['deodorant']);
+});
+
+test('pickProducts: "ice cream" does not select body-cream', () => {
+  assert.ok(!pickProducts({ prompts: [] }, 'We ate ice cream all summer and ranked every ice cream shop in town.').includes('body-cream'));
+});
+
+test('editorial prompt has no Suggested angle and names only competitors the article mentions', () => {
+  const noMention = pitchPrompt({ prospect: DEO_PROSPECT, articleText: BUTTER_ARTICLE, factSheet: 'f', products: ['body-cream'] });
+  assert.doesNotMatch(noMention, /Suggested angle/);
+  assert.doesNotMatch(noMention, /Boka/);
+  assert.match(noMention, /Describe only what this article actually covers/);
+  const mention = pitchPrompt({ prospect: DEO_PROSPECT, articleText: `${BUTTER_ARTICLE} Boka also makes a toothpaste.`, factSheet: 'f', products: ['body-cream'] });
+  assert.match(mention, /Boka/);
+});
+
+test('link-gap prompt still lists its competitors', () => {
+  const lg = pitchPrompt({ prospect: { ...PROSPECT, source: 'link-gap', competitors: ['Boka', 'Hume'] }, articleText: 'site text', factSheet: 'f', products: ['lotion'] });
+  assert.match(lg, /links to Boka, Hume/);
 });
 
 test('I5: a link-gap prompt says the SITE links to competitors and never claims or asks to name a page', () => {
