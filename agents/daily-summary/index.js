@@ -27,6 +27,8 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
+import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
+import { rowsInWindow, daysBetween } from '../../lib/digest-window.js';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // The A/B dead-band and its classifier come from the module that OWNS the
@@ -1123,6 +1125,15 @@ function checkSystemHealth() {
   return issues;
 }
 
+const LAST_SENT_PATH = () => join(DAILY_SUMMARY_DIR, 'last-sent.json');
+function readLastSent() {
+  try { return JSON.parse(readFileSync(LAST_SENT_PATH(), 'utf8')).until || null; } catch { return null; }
+}
+function writeLastSent(until) {
+  try { writeFileSync(LAST_SENT_PATH(), JSON.stringify({ until }, null, 2) + '\n'); }
+  catch (err) { log(`could not record the digest window end: ${err.message}`); }
+}
+
 async function main() {
   // Default to yesterday's date (runs at 5 AM, reporting on previous day)
   const dateArg = process.argv.indexOf('--date');
@@ -1137,11 +1148,45 @@ async function main() {
 
   const digestFile = join(DAILY_SUMMARY_DIR, `${targetDate}.jsonl`);
 
-  let entries = [];
-  if (existsSync(digestFile)) {
-    const lines = readFileSync(digestFile, 'utf8').trim().split('\n').filter(Boolean);
-    entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const readRows = (file) => (existsSync(file)
+    ? readFileSync(file, 'utf8').trim().split('\n').filter(Boolean)
+      .map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)
+    : []);
+  // WHICH ROWS: everything written since the last digest was sent, up to now.
+  // Reading only the calendar day before meant anything written between midnight
+  // and the 13:00 UTC send (the 12:20-12:50 gates, trybe-review at 12:55) reached
+  // Sean a DAY late: on 2026-10-04 he got the previous morning's Trybe review,
+  // without the verdicts, while that morning's sat in a file nobody read yet.
+  // `--date` keeps the old whole-calendar-day view for inspecting a past day.
+  const nowIso = new Date().toISOString();
+  let entries;
+  let laterRows = [];
+  let windowUntil = null;
+  if (dateArg !== -1) {
+    entries = readRows(digestFile);
+    for (let d = new Date(`${targetDate}T00:00:00Z`); ;) {
+      d = new Date(d.getTime() + 86_400_000);
+      const day = d.toISOString().slice(0, 10);
+      if (day > nowIso.slice(0, 10)) break;
+      laterRows.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+  } else {
+    const since = readLastSent() || `${targetDate}T00:00:00.000Z`;
+    windowUntil = nowIso;
+    entries = [];
+    for (const day of daysBetween(since.slice(0, 10), nowIso.slice(0, 10))) {
+      entries.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+    entries = rowsInWindow(entries, { since, until: windowUntil });
+    log(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
   }
+
+  // A failure that a later run of the same agent has already recovered from is
+  // not news (Sean, 2026-10-04): drop it before anything counts or renders it.
+  // See lib/digest-recovery.js.
+  const { kept, recovered } = dropRecoveredFailures(entries, laterRows);
+  if (recovered.length) log(`Dropped ${recovered.length} failure(s) that later recovered: ${[...new Set(recovered.map(e => e.subject))].join('; ')}`);
+  entries = kept;
 
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
@@ -1215,6 +1260,8 @@ async function main() {
     html,
   );
 
+  // Only a real send advances the window; a preview or a --date run never does.
+  if (windowUntil) writeLastSent(windowUntil);
   log('Daily summary sent.');
 }
 
