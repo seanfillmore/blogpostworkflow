@@ -63,3 +63,61 @@ test('the monitor never writes to Meta (source scan)', () => {
   const src = readFileSync(new URL('../../agents/ad-test-monitor/index.js', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /method:\s*['"]POST|status=PAUSED|'PAUSED'/);
 });
+
+// ── Creative graduation readout (2026-10-04) ────────────────────────────────────
+import { evaluateGraduation, readoutDue, adOrderTag, metaAddToCartCount, renderCreativeLines, shortCreativeName } from '../../lib/ad-test-rules.js';
+
+const grad = { minSpend: 150, minLinkCtr: 0.015, maxCostPerLinkClick: 1.5, minAddToCarts: 5, minPurchases: 1 };
+const c = (o) => ({ spend: 0, impressions: 0, linkClicks: 0, addToCarts: 0, purchases: 0, ...o });
+
+test('graduation: collecting until the spend floor, whatever the ratios', () => {
+  assert.equal(evaluateGraduation(c({ spend: 149.99, impressions: 1000, linkClicks: 100, addToCarts: 9 }), grad).status, 'collecting');
+});
+
+test('graduation: ready needs CTR, cost per click and add-to-carts together', () => {
+  const ok = c({ spend: 150, impressions: 10000, linkClicks: 150, addToCarts: 5 }); // 1.5% CTR, $1.00/click
+  assert.equal(evaluateGraduation(ok, grad).status, 'ready');
+  assert.equal(evaluateGraduation({ ...ok, linkClicks: 149 }, grad).status, 'below');          // CTR 1.49%
+  assert.equal(evaluateGraduation({ ...ok, impressions: 5000, linkClicks: 99 }, grad).status, 'below'); // $1.52/click
+  assert.equal(evaluateGraduation({ ...ok, addToCarts: 4 }, grad).status, 'below');
+  assert.equal(evaluateGraduation({ ...ok, addToCarts: 0, purchases: 1 }, grad).status, 'ready'); // a purchase stands in for carts
+});
+
+test('graduation: no clicks at all reads as below, not as an error', () => {
+  const e = evaluateGraduation(c({ spend: 200, impressions: 5000 }), grad);
+  assert.equal(e.status, 'below');
+  assert.equal(e.cpc, null);
+});
+
+test('readout cadence counts calendar days in UTC', () => {
+  const d = (s) => Date.parse(s);
+  assert.equal(readoutDue(null, d('2026-10-05T12:10Z'), 3), true);
+  assert.equal(readoutDue('2026-10-05T12:10:00Z', d('2026-10-07T12:10Z'), 3), false);
+  assert.equal(readoutDue('2026-10-05T12:10:00Z', d('2026-10-08T12:09Z'), 3), true); // a minute earlier is still day 3
+});
+
+test('order tags: Trybe id from the ad name, utm_content from url_tags, else null', () => {
+  assert.equal(adOrderTag({ name: 'X_20261003_trybe=cce706a9' }), 'trybe=cce706a9');
+  assert.equal(adOrderTag({ name: 'RSC | split', urlTags: 'utm_source=facebook&utm_content=sensitive-skin-split' }), 'utm_content=sensitive-skin-split');
+  assert.equal(adOrderTag({ name: 'RSC | DPA' }), null);
+});
+
+test('tagged orders accept several tags', () => {
+  const o = taggedOrders([{ landing_site: '/?trybe=a' }, { landing_site: '/?utm_campaign=creative-test-2026-10' }, { landing_site: '/' }], ['trybe=', 'utm_campaign=creative-test-2026-10']);
+  assert.equal(o.length, 2);
+});
+
+test('add to carts read the pixel action', () => {
+  assert.equal(metaAddToCartCount([{ action_type: 'offsite_conversion.fb_pixel_add_to_cart', value: '3' }]), 3);
+});
+
+test('readout lists ready creatives first and names them briefly', () => {
+  const rows = [
+    { name: 'Trybe | TaylorCopp_Non-ToxicBodyLotionMadeWithOnly6CleanIngredients_20261002_trybe=9638b656', ...c({ spend: 10 }), eval: { status: 'collecting', ctr: null, cpc: null, misses: [] } },
+    { name: 'EverittModer_MoisturizingCoconutSoap|3.4oz_20261004_trybe=75427b73', ...c({ spend: 160, impressions: 9000, linkClicks: 150, addToCarts: 6 }), eval: { status: 'ready', ctr: 0.0167, cpc: 1.07, misses: [] } },
+  ];
+  const lines = renderCreativeLines(rows, grad);
+  assert.match(lines[0], /1 ready, 0 below the bar, 1 still collecting/);
+  assert.match(lines[1], /READY TO GRADUATE: Everitt Moder · Bar Soap · 75427b73/);
+  assert.equal(shortCreativeName('RSC | Sensitive Skin Set | split'), 'RSC | Sensitive Skin Set | split');
+});
