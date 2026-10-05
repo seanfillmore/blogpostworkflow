@@ -43,6 +43,13 @@ test('the banned list holds every phrase from the brief', () => {
   }
 });
 
+test('a follow-up may not claim the first email was wrong', () => {
+  const body = 'Here is the real one: 26 reviews averaging 4.7 stars, which corrects the figure in my pitch.';
+  const hits = findBannedPhrases(body);
+  assert.ok(hits.includes('corrects the figure'));
+  assert.ok(hits.includes('in my pitch'));
+});
+
 test('findBannedPhrases is case-insensitive and word-bounded', () => {
   assert.deepEqual(findBannedPhrases('Just Checking In on this'), ['just checking in', 'checking in']);
   assert.deepEqual(findBannedPhrases('Following up on my note'), ['following up']);
