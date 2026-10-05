@@ -1,0 +1,154 @@
+{
+  "_note": "Facts the press-outreach pitch writer may use, and nothing else. Add product facts under products.<key>.facts and brand facts under brand.facts. Every fact is checked by the health/product-category gate; a fact that fails is skipped and reported, never sent.",
+  "brand": {
+    "website": "https://www.realskincare.com",
+    "facts": [
+      "Handmade in small batches, made in the USA"
+    ]
+  },
+  "products": {
+    "lotion": {
+      "name": "Body Lotion",
+      "format": "squeeze bottle",
+      "price": "$30",
+      "url": "https://www.realskincare.com/products/coconut-lotion",
+      "amazon_url": "https://www.amazon.com/dp/B08GMCDMQ7",
+      "base_ingredients": [
+        "purified spring water",
+        "organic virgin coconut oil",
+        "organic jojoba",
+        "organic plant-based emulsifying wax",
+        "organic grapefruit seed extract",
+        "organic red palm oil"
+      ],
+      "scents": [
+        "Pure Unscented",
+        "Coconut Breeze",
+        "Rose Petal",
+        "Lavender & Rose",
+        "Calming Lavender"
+      ],
+      "facts": []
+    },
+    "body-cream": {
+      "name": "Body Cream",
+      "format": "jar",
+      "price": "$28",
+      "url": "https://www.realskincare.com/products/coconut-moisturizer",
+      "amazon_url": "https://www.amazon.com/dp/B0D2FWPRF7",
+      "base_ingredients": [
+        "purified spring water",
+        "organic virgin coconut oil",
+        "organic plant-based emulsifying wax",
+        "organic palm stearic",
+        "organic grapefruit seed extract",
+        "organic beeswax",
+        "organic red palm oil"
+      ],
+      "scents": [
+        "Coconut Breeze",
+        "Lavender & Rose",
+        "Calming Lavender",
+        "Rose Petal",
+        "Pure Unscented"
+      ],
+      "facts": []
+    },
+    "soap": {
+      "name": "Bar Soap",
+      "format": "bar",
+      "price": "$11",
+      "url": "https://www.realskincare.com/products/coconut-soap",
+      "amazon_url": "https://www.amazon.com/dp/B0B683PG39",
+      "base_ingredients": [
+        "saponified organic virgin coconut oil"
+      ],
+      "scents": [
+        "Calming Lavender",
+        "Nourishing Tea Tree",
+        "Refreshing Lemongrass",
+        "Pure Unscented"
+      ],
+      "facts": []
+    },
+    "hand-soap": {
+      "name": "Foaming Liquid Soap",
+      "format": "foaming pump bottle",
+      "price": "$13",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "amazon_url": "https://www.amazon.com/dp/B08C6W3CYX",
+      "base_ingredients": [
+        "saponified organic virgin coconut oil"
+      ],
+      "scents": [
+        "Orange Zest",
+        "Coconut Breeze",
+        "Calming Lavender",
+        "Pure Unscented"
+      ],
+      "facts": []
+    },
+    "deodorant": {
+      "name": "Natural Deodorant",
+      "format": "roll-on",
+      "price": "$15",
+      "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+      "amazon_url": "https://www.amazon.com/dp/B0B687583D",
+      "base_ingredients": [
+        "purified spring water",
+        "organic virgin coconut oil",
+        "organic jojoba",
+        "organic plant-based emulsifying wax",
+        "organic grapefruit seed extract",
+        "sodium bicarbonate (baking soda)"
+      ],
+      "scents": [
+        "Geranium Flower",
+        "Calming Lavender",
+        "Mountain Cedarwood",
+        "Wildcrafted Frankincense"
+      ],
+      "facts": []
+    },
+    "toothpaste": {
+      "name": "Natural Toothpaste",
+      "format": "squeeze bottle",
+      "price": "$13",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "amazon_url": "https://www.amazon.com/dp/B0B6DYZF5H",
+      "base_ingredients": [
+        "purified spring water",
+        "organic virgin coconut oil",
+        "baking soda",
+        "xanthan gum",
+        "wildcrafted myrrh powder",
+        "stevia"
+      ],
+      "scents": [
+        "Fresh Mint",
+        "All Natural",
+        "Cinnamon Spice"
+      ],
+      "facts": []
+    },
+    "lip-balm": {
+      "name": "Lip Balm",
+      "format": "lip balm tube",
+      "price": "$15",
+      "url": "https://www.realskincare.com/products/coconut-oil-lip-balm",
+      "amazon_url": "https://www.amazon.com/dp/B0B6289MTY",
+      "base_ingredients": [
+        "organic virgin coconut oil",
+        "organic beeswax",
+        "organic red palm oil"
+      ],
+      "scents": [
+        "Vanilla Dream",
+        "Sweet Tangerine",
+        "Coconut Breeze",
+        "Pure Unscented"
+      ],
+      "facts": []
+    }
+  }
+}

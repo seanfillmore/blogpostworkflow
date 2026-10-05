@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   DEFAULT_CONFIG, inSendWindow, dailyCap, signature, stripDashes, followUpText, bumpText,
-  askAddressText, checkOutgoingCopy, shouldPause, OPT_OUT_LINE, firstName,
+  askAddressText, checkOutgoingCopy, shouldPause, OPT_OUT_LINE, firstName, postalLine,
 } from '../../lib/press-outreach.js';
 
 const ADDR = '1 Example Way, Testville, WY 00000, United States';
@@ -22,8 +22,10 @@ test('cap is 10 until 14 clean days after the first send, then 25; never ramps w
   assert.equal(dailyCap(DEFAULT_CONFIG, { first_sent_at: '2026-10-01T17:00:00Z', paused: { at: 'x' } }, t), 0);
 });
 
-test('signature carries the postal address; templates carry no dashes', () => {
-  assert.match(signature(ADDR), /1 Example Way/);
+test('signature is name, brand, site with no address; postalLine carries it; templates carry no dashes', () => {
+  assert.equal(signature(), 'Sean\nReal Skin Care\nrealskincare.com');
+  assert.equal(postalLine(ADDR), `Real Skin Care, ${ADDR}`);
+  assert.doesNotMatch(postalLine(ADDR), /\n/, 'one line');
   for (const s of [followUpText({ firstName: 'Jane', n: 1 }), followUpText({ firstName: 'Jane', n: 2 }), bumpText({ firstName: 'Jane', originalSubject: 'X' }), askAddressText({ firstName: 'Jane' })]) {
     assert.doesNotMatch(s, /[—–]/);
     assert.ok(s.split(/\s+/).length <= 70, 'follow-ups stay short');
@@ -32,7 +34,7 @@ test('signature carries the postal address; templates carry no dashes', () => {
 });
 
 test('first pitch must carry the opt-out line and the address, and pass the claim gate', () => {
-  const good = `Hi Jane,\n\nShort pitch.\n\n${OPT_OUT_LINE}\n\n${signature(ADDR)}`;
+  const good = `Hi Jane,\n\nShort pitch.\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDR)}`;
   assert.equal(checkOutgoingCopy({ subject: 'A coconut body cream', text: good, kind: 'pitch' }).ok, true);
   assert.match(checkOutgoingCopy({ subject: 's', text: 'no lines', kind: 'pitch' }).problems.join(), /opt-out/);
   assert.match(checkOutgoingCopy({ subject: 'Our natural antiperspirant', text: good, kind: 'pitch' }).problems.join(), /product-category|antiperspirant/);
@@ -41,12 +43,17 @@ test('first pitch must carry the opt-out line and the address, and pass the clai
   assert.equal(checkOutgoingCopy({ subject: 'x'.repeat(71), text: good, kind: 'pitch' }).ok, false);
 
   // Body-level product-category violation
-  const bodyWithClaim = `Hi Jane,\n\nOur antiperspirant formula keeps you fresh all day.\n\n${OPT_OUT_LINE}\n\n${signature(ADDR)}`;
+  const bodyWithClaim = `Hi Jane,\n\nOur antiperspirant formula keeps you fresh all day.\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDR)}`;
   assert.match(checkOutgoingCopy({ subject: 'Coconut cream', text: bodyWithClaim, kind: 'pitch' }).problems.join(), /product-category/);
 
   // Category-reference sentence must pass
-  const categoryRef = `Hi Jane,\n\nAntiperspirants are regulated as over-the-counter drugs; ours is a deodorant.\n\n${OPT_OUT_LINE}\n\n${signature(ADDR)}`;
+  const categoryRef = `Hi Jane,\n\nAntiperspirants are regulated as over-the-counter drugs; ours is a deodorant.\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDR)}`;
   assert.equal(checkOutgoingCopy({ subject: 'Coconut deodorant', text: categoryRef, kind: 'pitch' }).ok, true);
+});
+
+test('a pitch whose address sits ABOVE the opt-out line fails', () => {
+  const above = `Hi Jane,\n\nShort pitch.\n\n${signature()}\n${postalLine(ADDR)}\n\n${OPT_OUT_LINE}`;
+  assert.match(checkOutgoingCopy({ subject: 'Test', text: above, kind: 'pitch', postalAddress: ADDR }).problems.join(), /missing the postal address after the opt-out line/);
 });
 
 test('auto-pause on >3% bounces over the last 50, or any complaint', () => {
@@ -80,7 +87,7 @@ test('checkOutgoingCopy accepts postalAddress parameter for pitch-specific valid
   assert.match(checkOutgoingCopy({ subject: 'Test', text: baseText + ADDR, kind: 'pitch', postalAddress: customAddr }).problems.join(), /missing the postal address/);
 
   // Without postalAddress: fallback to 5-digit check
-  const withDefault = `${baseText}${signature(ADDR)}`;
+  const withDefault = `${baseText}${postalLine(ADDR)}`;
   assert.equal(checkOutgoingCopy({ subject: 'Test', text: withDefault, kind: 'pitch' }).ok, true);
   assert.match(checkOutgoingCopy({ subject: 'Test', text: baseText + 'No address here', kind: 'pitch' }).problems.join(), /missing the postal address/);
 });
