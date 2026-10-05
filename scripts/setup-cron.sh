@@ -384,8 +384,12 @@ WEEKLY_SEO_OPPORTUNITY="10 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-oppo
 # SEO impact / "what's working" — weekly Mon 14:30 UTC (after GA4/GSC/Shopify
 # collectors at 13:xx). Organic revenue by page/cluster; the feedback loop.
 WEEKLY_SEO_IMPACT="30 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-impact/index.js >> data/reports/scheduler/seo-impact.log 2>&1"
-WEEKLY_META_ADS_COLLECTOR="0 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
-WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
+# Meta Ad Library — Mon 03:00/03:10 UTC, an empty slot. Moved from 10:00/10:10 on
+# 2026-10-05: the collector had never worked (wrong token) so the analyzer never
+# ran; with data it makes up to MAX_PASS1_BRANDS LLM calls, and 10:10 overlapped
+# calendar-runner (10:00 daily). Two CLI processes at once is the OOM pattern.
+WEEKLY_META_ADS_COLLECTOR="0 3 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
+WEEKLY_META_ADS_ANALYZER="10 3 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
 # Competitor watcher (Monday 02:00 UTC — no TZ prefix on the live line, so this
 # is a fixed UTC time, not a fixed Pacific time. The agent's own header docstring
 # calls it "weekly Sun 7:00 PM PT", which is 02:00 UTC Monday only while PT is on
@@ -677,10 +681,10 @@ echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
 echo "  WEEKLY (Monday)"
 echo "  02:00 UTC Mon — competitor-watcher (UTC, like every job here; PT hour shifts with DST)"
+echo "  03:00 UTC — meta-ads-collector"
+echo "  03:10 UTC — meta-ads-analyzer"
 echo "  07:30 UTC — insight-aggregator"
 echo "  08:00 UTC — keyword-research (DataForSEO)"
-echo "  10:00 UTC — meta-ads-collector"
-echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  14:10 UTC — seo-opportunity-analyzer (rank winnable opportunities, stage bigger moves)"

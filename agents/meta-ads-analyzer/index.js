@@ -123,6 +123,24 @@ function deduplicateAds(snapshots) {
 
 // ── Main ───────────────────────────────────────────────────────────────────────
 
+export const MAX_PASS1_BRANDS = 25;
+export const MAX_PASS2_ADS = 40;
+export const MAX_PASS2_PER_BRAND = 3;
+
+/** Highest effectiveness first, at most MAX_PASS2_PER_BRAND per brand, MAX_PASS2_ADS total. */
+export function pickForAnalysis(scoredAds, { max = MAX_PASS2_ADS, perBrand = MAX_PASS2_PER_BRAND } = {}) {
+  const taken = new Map();
+  const out = [];
+  for (const ad of [...scoredAds].sort((x, y) => y.effectivenessScore - x.effectivenessScore)) {
+    const n = taken.get(ad.page_id) || 0;
+    if (n >= perBrand) continue;
+    taken.set(ad.page_id, n + 1);
+    out.push(ad);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 async function main() {
   const isDryRun = process.argv.includes('--dry-run');
   console.log('Meta Ads Analyzer' + (isDryRun ? ' (dry run)' : '') + '\n');
@@ -160,9 +178,21 @@ async function main() {
   //   - Brand with exactly 1 ad: skip Pass 1, variationCount = 1
   //   - Brand with 2+ ads, Claude succeeds: variationCount = max theme group size
   //   - Brand with 2+ ads, Claude fails: variationCount = total ad count for that brand (fallback)
+  //
+  // Bounded: at most MAX_PASS1_BRANDS calls per run, largest brands first. The
+  // first real snapshot (2026-10-05) held 195 brands, 105 with 2+ ads, and an
+  // unbounded pass made one serial flagship call each. Brands past the cap take
+  // the documented fallback (total ad count). A --dry-run makes no calls at all.
   const variationCountByPage = new Map();
+  const llmBrands = new Set(
+    [...byPage].filter(([, ads]) => ads.length >= 2)
+      .sort((x, y) => y[1].length - x[1].length)
+      .slice(0, isDryRun ? 0 : MAX_PASS1_BRANDS)
+      .map(([pageId]) => pageId));
+  console.log(`  Pass 1: ${llmBrands.size} brand(s) grouped by Claude, the rest use their ad count`);
   for (const [pageId, ads] of byPage) {
     if (ads.length < 2) { variationCountByPage.set(pageId, 1); continue; }
+    if (!llmBrands.has(pageId)) { variationCountByPage.set(pageId, ads.length); continue; }
     try {
       const prompt = buildPass1Prompt(pageId, ads[0].page_name, ads.map(a => ({
         id: a.id, body: a.ad_creative_body, title: a.ad_creative_link_title, description: a.ad_creative_link_description,
@@ -194,13 +224,18 @@ async function main() {
   console.log(`  Qualifying ads: ${scoredAds.length}`);
 
   if (isDryRun) {
-    scoredAds.slice(0, 5).forEach(a => console.log(`  [dry-run] ${a.page_name} score=${a.effectivenessScore}`));
+    console.log(`  [dry-run] Pass 2 would analyze ${pickForAnalysis(scoredAds).length} ads`);
+    pickForAnalysis(scoredAds).slice(0, 5).forEach(a => console.log(`  [dry-run] ${a.page_name} score=${a.effectivenessScore}`));
     return;
   }
 
-  // Pass 2 — Claude analysis per qualifying ad
+  // Pass 2 — Claude analysis of the TOP ads only. Unbounded, the first real
+  // snapshot qualified 1,301 ads (one serial flagship call each, half a day of
+  // CLI time on a box that runs one at a time), led by one brand with 313 ads.
+  const toAnalyze = pickForAnalysis(scoredAds);
+  console.log(`  Pass 2: analyzing ${toAnalyze.length} of ${scoredAds.length} qualifying ads`);
   const analyzedAds = [];
-  for (const ad of scoredAds) {
+  for (const ad of toAnalyze) {
     try {
       const prompt = buildPass2Prompt({
         pageName: ad.page_name,
