@@ -50,19 +50,14 @@ function world({ replies = [], sent = [], drafts = [], state = {}, imapError = n
 const reply = (from, text, id = `<r-${from}>`) => ({ from: `${from}@example.com`, messageId: id, text, fullText: text, subject: 'Re: Coconut cream', references: [`<${from}@realskincare.com>`], date: '2026-10-05T10:00:00Z', emojiReaction: false, autoSubmitted: false, folder: 'Cold Pitches' });
 const approved = (id, over = {}) => approveDraft(newDraft({ kind: 'pitch', contactId: id, to: `${id}@example.com`, subject: 'Hi', text: PITCH_TEXT, concept: 'intro', now: NOW - 3600e3, ...over }), { now: NOW - 1800e3 });
 
-test('a reply in a filed folder stops that contact\'s follow-up', async () => {
+test('a reply in a filed folder is read; nothing is followed up automatically any more', async () => {
   const { opts, calls } = world({ replies: [reply('jane', "I'm going to pass at this time.")] });
   await runPressOutreach(opts);
   assert.equal(opts.book.contacts.find((c) => c.id === 'jane').pitches[0].outcome, 'declined');
-  assert.deepEqual(calls.send.map((m) => m.to), ['sam@example.com'], 'only sam gets the day-5 follow-up');
-  assert.equal(calls.send[0].inReplyTo, '<sam@realskincare.com>');
-  assert.equal(calls.send[0].subject, 'Re: Coconut cream');
-  assert.ok(calls.send[0].references.includes('<sam@realskincare.com>'));
+  assert.deepEqual(calls.send, [], 'sam is due a day-5 follow-up, but only an approved followup draft may send it');
   const sam = opts.book.contacts.find((c) => c.id === 'sam').pitches[0];
-  assert.equal(sam.follow_ups_sent, 1);
-  assert.equal(sam.last_sent_at, new Date(NOW).toISOString());
-  assert.equal(opts.state.sends.length, 1);
-  assert.equal(opts.state.sends[0].last_event, 'sent');
+  assert.equal(sam.follow_ups_sent, 0);
+  assert.equal(opts.state.sends.length, 0);
 });
 
 test('yes plus address goes to onAddress, never asks for the address again', async () => {
@@ -189,7 +184,7 @@ test('spacing: sleeps minGapMinutes between sends, never before the first, and c
   const { opts, calls } = world({ drafts });
   for (const id of ['a', 'b', 'c']) opts.book.contacts.push(fresh(id));
   await runPressOutreach(opts);
-  // jane + sam follow-ups are due, plus 3 drafts; ceil(30/10) = 3 sends per run.
+  // 3 approved drafts; ceil(30/10) = 3 sends per run.
   assert.equal(calls.send.length, 3);
   assert.deepEqual(calls.sleeps, [600_000, 600_000]);
 });
@@ -296,8 +291,7 @@ test('fix 5: a book write failing after a send keeps the send recorded and the r
   assert.equal(opts.state.sends.filter((s) => s.contact_id === 'jane').length, 1);
   assert.equal(calls.order[0], 'state:1', 'state persisted right after the send, before any book write');
   assert.equal(r.book.contacts.find((c) => c.id === 'jane').pitches[0].outcome, 'sample-accepted');
-  assert.equal(r.book.contacts.find((c) => c.id === 'sam').pitches[0].follow_ups_sent, 1, 'follow-up count updated in memory');
-  assert.equal(calls.send.filter((m) => m.to === 'sam@example.com').length, 1);
+  assert.ok(!calls.send.some((m) => m.to === 'sam@example.com'), 'no automatic follow-up');
   assert.ok(r.failed.some((f) => /bookkeeping/.test(f.error)));
 });
 
@@ -319,8 +313,10 @@ test('fix 7: three consecutive send failures report one error; a success resets 
   assert.equal(calls.errors.length, 1);
   assert.equal(opts.state.send_failures, 3);
 
-  const ok = world({ state: { send_failures: 2 } });
+  const ok = world({ state: { send_failures: 2 }, drafts: [approved('a')] });
+  ok.opts.book.contacts.push(fresh('a'));
   await runPressOutreach(ok.opts);
+  assert.equal(ok.calls.send.length, 1);
   assert.equal(ok.opts.state.send_failures, 0);
   assert.equal(ok.calls.errors.length, 0);
 });
@@ -408,22 +404,6 @@ test('I4: every send records its draft id; a draft already in state.sends is rep
   const p = two.opts.book.contacts[0].pitches.find((x) => x.draft_id === a.id);
   assert.ok(p, 'the missing pitch record is restored');
   assert.equal(p.message_id, '<prev@realskincare.com>');
-});
-
-test('I4: a follow-up already in state.sends for this pitch is not sent again; the book is repaired', async () => {
-  const one = world();
-  await runPressOutreach(one.opts);
-  const fu = one.opts.state.sends.find((s) => s.contact_id === 'sam');
-  assert.equal(fu.kind, 'follow-up-1');
-  assert.equal(fu.pitch_date, '2026-10-01');
-
-  const prev = { at: '2026-10-06T17:00:00.000Z', contact_id: 'sam', kind: 'follow-up-1', pitch_date: '2026-10-01', message_id: '<prev-fu@realskincare.com>', resend_id: 'r0', last_event: 'sent' };
-  const two = world({ state: { sends: [prev] } });
-  await runPressOutreach(two.opts);
-  assert.ok(!two.calls.send.some((m) => m.to === 'sam@example.com'));
-  const p = two.opts.book.contacts.find((c) => c.id === 'sam').pitches[0];
-  assert.equal(p.follow_ups_sent, 1);
-  assert.equal(p.last_sent_at, '2026-10-06T17:00:00.000Z');
 });
 
 test('I5: a yes from a contact whose samples already went out escalates; nothing is sent', async () => {

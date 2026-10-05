@@ -109,6 +109,8 @@ const CONFIRM_MODEL = LLM_MODELS.standard;
 const SEND_FAILURES_REPORT_AT = 3;
 const CHECKIN_GIVE_UP_DAYS = 90;
 const AUTO_KINDS = new Set(['sample-yes', 'address-given', 'opt-out', 'decline']);
+// Drafts that reply under an existing pitch thread.
+const THREADED_KINDS = new Set(['followup', 'bump']);
 
 function loadEnv(root = ROOT) {
   try {
@@ -728,37 +730,9 @@ export async function runPressOutreach({
     }
 
     // ── 5. follow-ups ──
-    if (inSendWindow(now)) {
-      const due = autoFollowUpsDue(book.contacts, now)
-        .sort((a, b) => String(a.pitch.last_sent_at || a.pitch.date).localeCompare(String(b.pitch.last_sent_at || b.pitch.date)));
-      for (const { contact, pitch, n } of due) {
-        if (held.has(contact.id)) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} held: a reply from them is still being handled` }); continue; }
-        const prior = state.sends.find((s) => s.contact_id === contact.id && s.kind === `follow-up-${n}` && s.pitch_date === pitch.date);
-        if (prior) {
-          // Sent by an earlier run whose book write failed: repair, never resend.
-          commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: prior.at, references: refsOf(refsOf(pitch.references, pitch.message_id), prior.message_id) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
-          result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} was already sent by an earlier run; book repaired` });
-          continue;
-        }
-        if (!canSend()) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} deferred: send cap reached` }); continue; }
-        if (!pitch.subject) { result.skipped.push({ id: contact.id, name: contact.name, reason: 'pitch has no subject to reply under' }); continue; }
-        const text = stripDashes(followUpText({ firstName: firstName(contact), n }));
-        const subject = stripDashes(reSubject(pitch.subject));
-        const gate = checkOutgoingCopy({ subject, text, kind: 'follow-up' });
-        if (!gate.ok) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up failed the copy gate: ${gate.problems.join('; ')}` }); continue; }
-        const refs = refsOf(pitch.references, pitch.message_id);
-        let r;
-        try {
-          r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}`, pitchDate: pitch.date });
-        } catch (err) {
-          result.failed.push({ id: contact.id, name: contact.name, kind: `follow-up-${n}`, error: err.message });
-          continue;
-        }
-        if (r.skipped) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n}: ${r.skipped}` }); continue; }
-        commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: r.at, references: refsOf(refs, r.messageId) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
-        result.followUps.push({ id: contact.id, name: contact.name, n });
-      }
-    }
+    // Nothing is sent automatically any more: the daily --draft run writes a
+    // personalised follow-up for every due thread, and it sends in step 6 only
+    // once Sean has approved it.
   }
 
   // ── 5b. samples: find orders, send tracking, check in ──
@@ -790,9 +764,11 @@ export async function runPressOutreach({
           source: d.source || 'manual', target_url: d.target_url || null, draft_id: d.id,
         }), row);
       } else {
+        // A follow-up never lowers the count: follow_ups_sent = max(existing, n).
         const lp = lastPitch(c);
         const later = !lp?.last_sent_at || Date.parse(sentAt) > Date.parse(lp.last_sent_at);
-        commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lp?.follow_ups_sent || 0, 1), ...(later ? { last_sent_at: sentAt } : {}) }), row);
+        const n = d.kind === 'followup' ? (d.n === 2 ? 2 : 1) : 1;
+        commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lp?.follow_ups_sent || 0, n), ...(later ? { last_sent_at: sentAt } : {}) }), row);
       }
     } catch (err) {
       result.failed.push({ ...row, error: `sent, but the book was not updated: ${err.message}` });
@@ -826,10 +802,10 @@ export async function runPressOutreach({
           continue;
         }
       }
-      if (d.kind === 'bump') {
-        // A bump re-opens a quiet thread. It is only right while the thread is
+      if (THREADED_KINDS.has(d.kind)) {
+        // A follow-up (or an old bump) re-opens a quiet thread. It is only right while the thread is
         // still quiet, which we can only know when the mail was read this run.
-        if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: 'bump held: replies could not be read this run' }); continue; }
+        if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: `${d.kind} held: replies could not be read this run` }); continue; }
         if (lastPitch(c)?.outcome !== 'sent') {
           const gone = { ...d, status: 'expired', expired_at: isoOf(now), expired_reason: 'thread moved on' };
           if (saveIfUnchanged(d, gone, row)) result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
@@ -845,7 +821,7 @@ export async function runPressOutreach({
       }
       let r;
       try {
-        const threaded = d.kind === 'bump' && d.in_reply_to;
+        const threaded = THREADED_KINDS.has(d.kind) && d.in_reply_to;
         r = await doSend({
           to: d.to, subject, text,
           ...(threaded ? { inReplyTo: d.in_reply_to, references: refsOf(d.references, d.in_reply_to).join(' ') } : {}),
@@ -862,6 +838,7 @@ export async function runPressOutreach({
       state.first_sent_at ||= sentAt;
       persistState(row);
       result.sent.push({ ...row, to: d.to });
+      if (THREADED_KINDS.has(d.kind)) result.followUps.push({ id: c.id, name: c.name, n: d.kind === 'followup' ? d.n : 1, draft_id: d.id });
     }
   }
 
