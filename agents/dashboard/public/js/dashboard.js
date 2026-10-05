@@ -4941,6 +4941,12 @@ function outreachSafeUrl(u) {
   return /^https?:\/\//i.test(u || '') ? u : '';
 }
 
+// "Follow-up 1" / "Follow-up 2" for the model-written follow-ups; the kind itself otherwise.
+function outreachKindLabel(x) {
+  if (x.kind === 'followup') return 'Follow-up ' + (x.n === 2 ? 2 : 1);
+  return x.kind;
+}
+
 async function renderOutreachTab() {
   var panel = document.getElementById('outreach-panel');
   panel.innerHTML = '<div class="empty-state">Loading drafts...</div>';
@@ -4984,13 +4990,15 @@ async function renderOutreachTab() {
     var url = outreachSafeUrl(x.target_url);
     var problems = (x.gate && x.gate.problems) || [];
     html += '<div class="outreach-card" id="outreach-card-' + id + '">' +
-      '<div class="outreach-meta"><span class="outreach-badge">' + esc(x.kind) + '</span>' +
+      '<div class="outreach-meta"><span class="outreach-badge">' + esc(outreachKindLabel(x)) + '</span>' +
         (x.status === 'approved' ? '<span class="outreach-badge" style="background:var(--green,#16a34a);color:#fff">approved</span>' : '') +
         '<span>To: ' + esc(x.to) + '</span>' +
         '<span title="Where this address came from">' + (x.address_source ? 'Address: ' + esc(x.address_source) : 'address source unknown') + '</span>' +
         (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' : '') +
+        (outreachSafeUrl(x.article_url) ? '<a href="' + esc(x.article_url) + '" target="_blank" rel="noopener noreferrer">latest piece</a>' : '') +
       '</div>' +
       (x.opener_quote ? '<blockquote class="outreach-quote">' + esc(x.opener_quote) + '</blockquote>' : '') +
+      (x.article_quote ? '<blockquote class="outreach-quote">From their latest piece: ' + esc(x.article_quote) + '</blockquote>' : '') +
       '<label class="idea-label">Subject</label>' +
       '<input class="idea-input" id="outreach-subject-' + id + '" value="' + esc(x.subject) + '">' +
       '<label class="idea-label">Body</label>' +

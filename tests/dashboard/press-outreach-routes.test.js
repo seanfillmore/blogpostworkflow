@@ -164,3 +164,9 @@ test('M1: GET passes address_source through, and the Outreach card shows it esca
   // Never rendered raw.
   assert.doesNotMatch(fn, /\+ x\.address_source \+/);
 });
+
+test('ID_RE accepts followup1/followup2 drafts and still the old bump kind', async () => {
+  const { ID_RE } = await import('../../agents/dashboard/routes/press-outreach.js');
+  for (const ok of ['20261005-jane-doe-followup1', '20261005-jane-doe-followup2', '20261004-jane-bump', '20261004-jane-pitch']) assert.ok(ID_RE.test(ok), ok);
+  for (const bad of ['20261005-jane-followup3', '20261005-jane-followup', '../x-followup1']) assert.ok(!ID_RE.test(bad), bad);
+});

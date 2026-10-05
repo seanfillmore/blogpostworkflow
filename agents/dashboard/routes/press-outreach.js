@@ -14,7 +14,7 @@ import { readJsonBody, respondJson } from '../lib/responses.js';
 import { DRAFTS_DIR, loadDrafts, saveDraft, approveDraft, rejectDraft } from '../../../lib/press-drafts.js';
 import { checkOutgoingCopy, stripDashes } from '../../../lib/press-outreach.js';
 
-export const ID_RE = /^[0-9]{8}-[a-z0-9-]+-(pitch|bump)$/;
+export const ID_RE = /^[0-9]{8}-[a-z0-9-]+-(pitch|bump|followup[12])$/;
 const MAX_BODY = 64 * 1024;
 const MAX_IDS = 200;
 
