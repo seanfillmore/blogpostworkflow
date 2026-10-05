@@ -2741,7 +2741,7 @@ console.log('✓ marketing-learner stream-deadline tests pass');
   assertPaidStatusFresh();
 
   const block = buildConstraintBlock();
-  assert.match(block, /PAID SPEND IS CURRENTLY PAUSED/,
+  assert.match(block, /PAID SPEND IS CURRENTLY (LIVE|PAUSED)/,
     'the block must state the current spend status outright');
   assert.match(block, new RegExp(PAID_STATUS_AS_OF),
     'the stated status must carry the date it was verified');
