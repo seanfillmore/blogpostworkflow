@@ -113,8 +113,11 @@ const fetchArticle = async (url) => {
   if (/hand-creams/.test(url)) return { outcome: 'ok', html: ARTICLE_HTML };
   return { outcome: 'ok', html: '<p>A long article about lotion.</p>' };
 };
+// A follow-up may not repeat the writer's name after the greeting, so stub
+// openings vary on a per-writer token that is NOT their name.
+const alias = (name) => `Desk ${[...name.toLowerCase()].reverse().join('')}`;
 const goodGenerate = async (prompt) => {
-  const name = /writing a short personal note to (\w+)/.exec(prompt)[1];
+  const name = alias(/writing a short personal note to (\w+)/.exec(prompt)[1]);
   return JSON.stringify({
     body: `${name}'s readers came to mind: your line that "cracked knuckles are the first sign that winter has arrived" stuck with me. Our Body Lotion comes in Pure Unscented and Rose Petal. Would a bottle help your next cold weather list?`,
     article_quote: 'cracked knuckles are the first sign that winter has arrived',
@@ -180,7 +183,7 @@ test('--draft reads the Sent folder for a September pitch with no draft file; no
   let asked = null;
   const sentBodies = async (q) => { asked = q; return [{ to: ['ann@ann.example.com'], subject: 'Coconut lotion for your roundup', date: '2026-09-21T17:00:00.000Z', messageId: '<hand-ann@hushmail>', text: 'Hi Ann, our lotion pitch body by hand.' }]; };
   const { args, saved } = draftHarness({ book: { version: 1, contacts: [sept] }, drafts: [], readSentBodies: sentBodies, prTargets: { pitch_targets: [] } });
-  const goodNoArticle = async (prompt) => JSON.stringify({ body: 'Ann, our Body Lotion also comes in Rose Petal, which might suit a winter gift list. Would a bottle be useful?', article_quote: null });
+  const goodNoArticle = async (prompt) => JSON.stringify({ body: 'Our Body Lotion also comes in Rose Petal, which might suit a winter gift list. Would a bottle be useful?', article_quote: null });
   args.generate = goodNoArticle;
   const r = await runDrafting(args);
   assert.deepEqual(asked.recipients, ['ann@ann.example.com']);
@@ -378,7 +381,7 @@ test('findRecentArticle skips category, tag and landing pages and takes the firs
 const trio = () => ['sam', 'kim', 'lee'];
 const RICH = { ...FACTS, brand: { facts: ['Handmade in small batches, made in the USA', '30-day money-back guarantee'] }, products: { lotion: { ...FACTS.products.lotion, facts: ['26 customer reviews averaging 4.7 stars'] } } };
 const varied = (opening) => async (prompt) => {
-  const name = /writing a short personal note to (\w+)/.exec(prompt)[1];
+  const name = alias(/writing a short personal note to (\w+)/.exec(prompt)[1]);
   return JSON.stringify({ body: opening(name), article_quote: null });
 };
 
