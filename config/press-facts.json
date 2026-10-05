@@ -3,7 +3,11 @@
   "brand": {
     "website": "https://www.realskincare.com",
     "facts": [
-      "Handmade in small batches, made in the USA"
+      "Handmade in small batches, made in the USA",
+      "390 customer reviews on our site, averaging 4.7 stars",
+      "30-day money-back guarantee",
+      "Free US shipping on orders over $45",
+      "Subscribe and save 15%"
     ]
   },
   "products": {
@@ -28,7 +32,9 @@
         "Lavender & Rose",
         "Calming Lavender"
       ],
-      "facts": []
+      "facts": [
+        "26 customer reviews averaging 4.7 stars"
+      ]
     },
     "body-cream": {
       "name": "Body Cream",
@@ -52,7 +58,9 @@
         "Rose Petal",
         "Pure Unscented"
       ],
-      "facts": []
+      "facts": [
+        "12 customer reviews averaging 4.9 stars"
+      ]
     },
     "soap": {
       "name": "Bar Soap",
@@ -86,7 +94,9 @@
         "Calming Lavender",
         "Pure Unscented"
       ],
-      "facts": []
+      "facts": [
+        "12 customer reviews averaging 4.8 stars"
+      ]
     },
     "deodorant": {
       "name": "Natural Deodorant",
@@ -148,7 +158,9 @@
         "Coconut Breeze",
         "Pure Unscented"
       ],
-      "facts": []
+      "facts": [
+        "10 customer reviews averaging 4.6 stars"
+      ]
     }
   }
 }

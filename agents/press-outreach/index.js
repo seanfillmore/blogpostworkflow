@@ -36,6 +36,8 @@
  *                                                          # one-off: thread ids, existing replies, follow-up drafts
  *   node agents/press-outreach/index.js --redraft-bumps [--apply]
  *                                                          # replace old fixed-template bump drafts with written follow-ups
+ *   node agents/press-outreach/index.js --redraft-followups [--apply]
+ *                                                          # rewrite every pending follow-up draft as one batch (variety rules)
  *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
  *                                                          # daily: follow-up drafts for due threads, then pitch drafts, for approval
  *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
@@ -82,7 +84,7 @@ import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../..
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
 import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange, articleLinks } from '../../lib/press-links.js';
-import { draftFollowUp as draftFollowUpLib, pickNewFact } from '../../lib/press-followup.js';
+import { draftFollowUp as draftFollowUpLib, pickNewFact, isArticleUrl, offerGiftHook, createFollowUpRun, openingKey } from '../../lib/press-followup.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -983,12 +985,18 @@ export function parseSet(arg) {
 //
 // A follow-up is written per writer by lib/press-followup.js and queued as a
 // `followup` draft; it sends only once Sean approves it (step 6 of a run).
-// Three callers: the daily --draft run (threads due by the 5/7-day gaps),
-// --redraft-bumps (the old fixed-template bumps) and --backfill.
+// Four callers: the daily --draft run (threads due by the 5/7-day gaps),
+// --redraft-bumps (the old fixed-template bumps), --redraft-followups (every
+// pending follow-up, rewritten as one batch) and --backfill. Each batch shares
+// one createFollowUpRun() state, so no two notes in it open alike or carry the
+// same new fact, and only one in three gets the gift-guide hook.
 
 const FOLLOWUP_MAX_ATTEMPTS = 2;
 const findOriginalMissing = 'no copy of the original pitch (no sent draft file and no Sent folder copy)';
 const RECENT_ARTICLE_MIN_CHARS = 200;
+// Links considered on an author page: wider than the link checker's cap,
+// because category and landing links are skipped (isArticleUrl).
+const RECENT_ARTICLE_LINKS = 60;
 const urlKey = (u) => {
   try { const x = new URL(u); return `${x.hostname.toLowerCase().replace(/^www\./, '')}${x.pathname.replace(/\/$/, '')}`; } catch { return null; }
 };
@@ -1031,7 +1039,9 @@ export function findOriginalPitch({ contact, pitch, drafts = [], sentCopies = []
  * Best effort: the writer's most recent article other than the one we pitched.
  * The author page comes from the contact's own author_url, else the pr-targets
  * report by the contact's domain (or the pitched article's host); the first
- * same-host article link on it that is not the pitched article is fetched.
+ * same-host link on it that looks like an article (isArticleUrl: no category,
+ * tag, author or landing page, a slug of 3+ words) and is not the pitched
+ * article is fetched. No such link: no article.
  * Null on any failure: a follow-up then leans on the new fact instead.
  */
 export async function findRecentArticle({ contact, pitch, authorUrls = new Map(), fetchPage }) {
@@ -1044,7 +1054,7 @@ export async function findRecentArticle({ contact, pitch, authorUrls = new Map()
     const page = await fetchPage(authorUrl);
     if (page?.outcome !== 'ok') return null;
     const pitched = urlKey(pitch.target_url);
-    const next = articleLinks(page.html, authorUrl).find((u) => urlKey(u) !== pitched);
+    const next = articleLinks(page.html, authorUrl, RECENT_ARTICLE_LINKS).find((u) => isArticleUrl(u) && urlKey(u) !== pitched);
     if (!next) return null;
     const art = await fetchPage(next);
     if (art?.outcome !== 'ok') return null;
@@ -1055,24 +1065,29 @@ export async function findRecentArticle({ contact, pitch, authorUrls = new Map()
 
 /**
  * Write one follow-up draft for a contact. `thread` is { subject, inReplyTo,
- * references }: what the draft replies under. Returns { ok: true, draft } or
+ * references }: what the draft replies under. `run` is the batch's shared
+ * createFollowUpRun() state: the openings already taken, the facts already
+ * used and the gift-hook rotation. Returns { ok: true, draft } or
  * { ok: false, reason }. Saves nothing.
  */
 export async function draftFollowUpForContact({
   contact, pitch, n, thread, drafts = [], sentCopies = [], authorUrls = new Map(), fetchPage, pressFacts,
-  generate, usedOpeners = new Set(), now = Date.now(), writer = draftFollowUpLib,
+  generate, run = createFollowUpRun({ drafts }), now = Date.now(), writer = draftFollowUpLib,
 }) {
   const original = findOriginalPitch({ contact, pitch, drafts, sentCopies });
   if (!original) return { ok: false, reason: findOriginalMissing };
   const article = await findRecentArticle({ contact, pitch, authorUrls, fetchPage });
-  const fact = pickNewFact(pressFacts, pitch.products || [], original.body);
+  const fact = pickNewFact(pressFacts, pitch.products || [], original.body, run.facts);
+  const giftHook = offerGiftHook({ original, ordinal: run.ordinal, nowMs: now });
+  run.ordinal += 1;
   let out;
   try {
-    out = await writer({ contact, n, subject: thread.subject, original, article, fact, generate, usedOpeners, now });
+    out = await writer({ contact, n, subject: thread.subject, original, article, fact, generate, usedOpenings: run.openings, giftHook, now });
   } catch (err) {
     return { ok: false, reason: `writer error: ${err.message}` };
   }
   if (!out?.ok) return { ok: false, reason: out?.reason || 'follow-up rejected' };
+  if (fact) run.facts.add(fact);
   return {
     ok: true,
     draft: {
@@ -1084,6 +1099,7 @@ export async function draftFollowUpForContact({
       article_url: article?.url || null,
       article_quote: out.articleQuote || null,
       new_fact: fact,
+      gift_hook: giftHook,
       original_source: original.source,
       pitch_date: pitch.date,
     },
@@ -1144,7 +1160,7 @@ export async function runRedraftBumps({
     return result;
   }
   const sent = await loadSentCopies(readSentBodies, plan, now, log);
-  const usedOpeners = new Set();
+  const run = createFollowUpRun({ drafts });
   for (const { bump, contact, pitch } of plan) {
     const row = { draftId: bump.id, contactId: contact.id };
     const thread = {
@@ -1152,7 +1168,7 @@ export async function runRedraftBumps({
       inReplyTo: bump.in_reply_to || pitch.message_id,
       references: (bump.references || []).length ? bump.references : refsOf(pitch.references, pitch.message_id),
     };
-    const out = await draftFollowUpForContact({ contact, pitch, n: 1, thread, drafts, sentCopies: sent.rows, authorUrls, fetchPage, pressFacts, generate, usedOpeners, now, writer });
+    const out = await draftFollowUpForContact({ contact, pitch, n: 1, thread, drafts, sentCopies: sent.rows, authorUrls, fetchPage, pressFacts, generate, run, now, writer });
     if (!out.ok) { result.failed.push({ ...row, reason: out.reason }); continue; }
     let moved;
     try { moved = moveAside(bump); } catch (err) { result.failed.push({ ...row, reason: `could not move the bump aside: ${err.message}` }); continue; }
@@ -1179,6 +1195,84 @@ export function renderRedraftSummary(r, { apply } = {}) {
   return {
     subject: `Press follow-ups: ${apply ? r.redrafted.length : r.wouldRedraft.length} bumps ${apply ? 'redrafted' : 'to redraft'} · ${r.failed.length} failed · ${r.skipped.length} skipped`,
     body: lines.filter((l, i) => i > 0 || l).join('\n') || 'No bump drafts waiting.',
+  };
+}
+
+/**
+ * --redraft-followups: rewrite every PENDING follow-up draft (kind followup,
+ * never approved, never sent) as ONE batch, so the queue-wide variety rules
+ * (openings, new facts, the gift-hook rotation) apply across all of them. Same
+ * thread (subject, In-Reply-To, References) and same n. Same safety order as
+ * --redraft-bumps: the new draft is written (generated) first, then the old
+ * one is moved to data/press/backups/oldfollowup-<file>, then the new one is
+ * saved, and a failed save puts the old one back. A draft whose rewrite fails
+ * stays in the queue, reported. A dry run lists the plan and calls no model.
+ */
+export async function runRedraftFollowups({
+  apply = false, now = Date.now(), book, drafts = [], pressFacts, authorUrls = new Map(), fetchPage, readSentBodies,
+  generate, writer = draftFollowUpLib, moveAside, restore, saveDraft, log = console.log,
+} = {}) {
+  const result = { redrafted: [], wouldRedraft: [], failed: [], skipped: [] };
+  const olds = drafts.filter((d) => d.kind === 'followup' && d.status === 'pending' && !d.approved_at && !d.sent_at);
+  const plan = [];
+  for (const d of olds) {
+    const contact = book.contacts.find((c) => c.id === d.contact_id);
+    const pitch = contact && lastPitch(contact);
+    if (!contact || !emailOf(contact)) { result.skipped.push({ draftId: d.id, contactId: d.contact_id, reason: 'contact not in the book or has no email' }); continue; }
+    if (!pitch || !onPitch(d, pitch)) { result.skipped.push({ draftId: d.id, contactId: contact.id, reason: 'the draft is for an older pitch; it expires on its own' }); continue; }
+    if (pitch.outcome !== 'sent') { result.skipped.push({ draftId: d.id, contactId: contact.id, reason: `thread moved on (pitch is ${pitch.outcome}); the draft expires on its own` }); continue; }
+    plan.push({ old: d, contact, pitch });
+  }
+  if (!apply) {
+    for (const { old, contact } of plan) {
+      result.wouldRedraft.push({ draftId: old.id, contactId: contact.id });
+      log(`  [dry run] would redraft ${old.id} and move it to backups/oldfollowup-${old.id}.json`);
+    }
+    return result;
+  }
+  const sent = await loadSentCopies(readSentBodies, plan, now, log);
+  // The drafts being replaced do not hold their openings: they are going away.
+  const run = createFollowUpRun({ drafts, exclude: new Set(plan.map((x) => x.old.id)) });
+  for (const { old, contact, pitch } of plan) {
+    const row = { draftId: old.id, contactId: contact.id };
+    const n = old.n === 2 ? 2 : 1;
+    const thread = {
+      subject: old.subject || reSubject(pitch.subject),
+      inReplyTo: old.in_reply_to || pitch.message_id,
+      references: (old.references || []).length ? old.references : refsOf(pitch.references, pitch.message_id),
+    };
+    // A draft that stays in the queue keeps its opening taken for the rest of the batch.
+    const keepOld = () => { const k = openingKey(old.text); if (k) run.openings.add(k); };
+    const out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls, fetchPage, pressFacts, generate, run, now, writer });
+    if (!out.ok) { keepOld(); result.failed.push({ ...row, reason: out.reason }); continue; }
+    let moved;
+    try { moved = moveAside(old); } catch (err) { keepOld(); result.failed.push({ ...row, reason: `could not move the old draft aside: ${err.message}` }); continue; }
+    try {
+      saveDraft(out.draft);
+    } catch (err) {
+      try { restore(old, moved); } catch (e2) { log(`  could not restore ${old.id} from ${moved}: ${e2.message}`); }
+      keepOld();
+      result.failed.push({ ...row, reason: `could not save the new draft (old one put back): ${err.message}` });
+      continue;
+    }
+    result.redrafted.push({ ...row, newId: out.draft.id, backup: moved, fact: out.draft.new_fact, giftHook: out.draft.gift_hook, articleUrl: out.draft.article_url });
+    log(`  ${old.id} -> ${out.draft.id} (old draft kept at ${moved})`);
+  }
+  return result;
+}
+
+export function renderRedraftFollowupsSummary(r, { apply } = {}) {
+  const lines = [apply ? '' : 'DRY RUN: nothing was moved or drafted.'];
+  if (r.wouldRedraft.length) { lines.push('Would redraft:'); for (const x of r.wouldRedraft) lines.push(`  - ${x.contactId}: ${x.draftId}`); }
+  if (r.redrafted.length) {
+    lines.push('Redrafted (waiting for approval):');
+    for (const x of r.redrafted) lines.push(`  - ${x.contactId}: ${x.draftId} -> ${x.newId}${x.fact ? ` · new fact: ${x.fact}` : ''}${x.giftHook ? ' · gift hook' : ''}${x.articleUrl ? ` · latest piece ${x.articleUrl}` : ''}`);
+  }
+  if (r.failed.length) { lines.push('Not redrafted (the old draft stays in the queue):'); for (const x of r.failed) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  return {
+    subject: `Press follow-ups: ${apply ? r.redrafted.length : r.wouldRedraft.length} pending follow-ups ${apply ? 'redrafted' : 'to redraft'} · ${r.failed.length} failed · ${r.skipped.length} skipped`,
+    body: lines.filter((l, i) => i > 0 || l).join('\n') || 'No pending follow-up drafts.',
   };
 }
 
@@ -1423,14 +1517,14 @@ export async function runDrafting({
     const authors = authorUrls || authorUrlsFromTargets(prTargets);
     const needSent = todo.filter((x) => !findOriginalPitch({ contact: x.contact, pitch: x.pitch, drafts }));
     const sent = await loadSentCopies(readSentBodies, needSent, now, log);
-    const usedOpeners = new Set();
+    const run = createFollowUpRun({ drafts });
     for (const { contact, pitch, n, key } of todo) {
       if (result.followUps.length >= followBudget) break;
       if (clock() >= stopAt) { result.stoppedAtDeadline = true; log('  stopped at the deadline while drafting follow-ups'); break; }
       const thread = { subject: reSubject(pitch.subject), inReplyTo: pitch.message_id, references: refsOf(pitch.references, pitch.message_id) };
       let out;
       try {
-        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, usedOpeners, now, writer: writeFollowUp });
+        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, run, now, writer: writeFollowUp });
       } catch (err) { out = { ok: false, reason: `follow-up error: ${err.message}` }; }
       onProgress();
       if (out.ok) {
@@ -1878,12 +1972,12 @@ async function runBackfill(args, apply, creds, env) {
         const rows = plan.followUps.map((f) => ({ ...f, contact: book.contacts.find((c) => c.id === f.contactId) })).filter((f) => f.contact);
         const withPitch = rows.map((f) => ({ ...f, pitch: lastPitch(f.contact) }));
         const sent = await loadSentCopies((q) => fetchSentBodiesTo(creds, q), withPitch, now, console.log);
-        const usedOpeners = new Set();
+        const run = createFollowUpRun({ drafts: existing });
         for (const f of withPitch) {
           const out = await draftFollowUpForContact({
             contact: f.contact, pitch: f.pitch, n: 1, thread: { subject: f.subject, inReplyTo: f.inReplyTo, references: f.references },
             drafts: existing, sentCopies: sent.rows, authorUrls, fetchPage: (u) => fetchWithOutcome(u), pressFacts,
-            generate: (prompt) => generateWithModel(prompt, env), usedOpeners, now,
+            generate: (prompt) => generateWithModel(prompt, env), run, now,
           });
           if (!out.ok) { console.log(`  follow-up for ${f.contactId} not drafted: ${out.reason}`); continue; }
           try { saveDraftFile(draftsDir, out.draft); console.log(`  drafted ${out.draft.id}`); } catch (err) { console.log(`  could not save ${out.draft.id}: ${err.message}`); }
@@ -1896,12 +1990,12 @@ async function runBackfill(args, apply, creds, env) {
   }
 }
 
-/** Move a draft file to data/press/backups/oldbump-<file>; never overwrites an earlier backup. */
-function moveDraftAside(d) {
+/** Move a draft file to data/press/backups/<prefix>-<file>; never overwrites an earlier backup. */
+function moveDraftAside(d, prefix = 'oldbump') {
   mkdirSync(BACKUP_DIR, { recursive: true });
   const from = join(ROOT, DRAFTS_DIR, `${d.id}.json`);
-  let to = join(BACKUP_DIR, `oldbump-${d.id}.json`);
-  if (existsSync(to)) to = join(BACKUP_DIR, `oldbump-${d.id}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+  let to = join(BACKUP_DIR, `${prefix}-${d.id}.json`);
+  if (existsSync(to)) to = join(BACKUP_DIR, `${prefix}-${d.id}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
   renameSync(from, to);
   return to;
 }
@@ -1923,11 +2017,40 @@ async function runRedraftBumpsMode(apply, env, config) {
       fetchPage: (u) => { touchLock(); return fetchWithOutcome(u); },
       readSentBodies: creds ? (q) => fetchSentBodiesTo(creds, q) : null,
       generate: (prompt) => { touchLock(); return generateWithModel(prompt, env); },
-      moveAside: moveDraftAside,
+      moveAside: (d) => moveDraftAside(d, 'oldbump'),
       restore: (d, moved) => renameSync(moved, join(draftsDir, `${d.id}.json`)),
       saveDraft: (d) => saveDraftFile(draftsDir, d),
     });
     const { subject, body } = renderRedraftSummary(r, { apply });
+    console.log(`\n${subject}\n\n${body}`);
+    if (apply) await notify({ subject, body, status: 'info', category: 'press' });
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
+  }
+}
+
+async function runRedraftFollowupsMode(apply, env, config) {
+  console.log(`Press outreach: redraft pending follow-ups${apply ? '' : ' (dry run)'}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  if (apply && !(await waitForLock())) throw new Error('another press-outreach run holds the lock (data/press/.lock); try again in a few minutes');
+  try {
+    const loaded = readBook();
+    if (!loaded.available) throw new Error(`contact book unavailable: ${loaded.reason}`);
+    const creds = hushmailCredentials(env);
+    const draftsDir = join(ROOT, DRAFTS_DIR);
+    const drafts = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
+    const r = await runRedraftFollowups({
+      apply, book: loaded.doc, drafts,
+      pressFacts: apply ? loadPressFacts() : null,
+      authorUrls: authorUrlsFromTargets(readJson('data/reports/pr-targets/latest.json')),
+      fetchPage: (u) => { touchLock(); return fetchWithOutcome(u); },
+      readSentBodies: creds ? (q) => fetchSentBodiesTo(creds, q) : null,
+      generate: (prompt) => { touchLock(); return generateWithModel(prompt, env); },
+      moveAside: (d) => moveDraftAside(d, 'oldfollowup'),
+      restore: (d, moved) => renameSync(moved, join(draftsDir, `${d.id}.json`)),
+      saveDraft: (d) => saveDraftFile(draftsDir, d),
+    });
+    const { subject, body } = renderRedraftFollowupsSummary(r, { apply });
     console.log(`\n${subject}\n\n${body}`);
     if (apply) await notify({ subject, body, status: 'info', category: 'press' });
   } finally {
@@ -2072,6 +2195,10 @@ async function main() {
     delete state.paused;
     writeState(state);
     console.log('press outreach resumed');
+    return { imapDown: false };
+  }
+  if (args.includes('--redraft-followups')) {
+    await runRedraftFollowupsMode(apply, env, config);
     return { imapDown: false };
   }
   if (args.includes('--redraft-bumps')) {

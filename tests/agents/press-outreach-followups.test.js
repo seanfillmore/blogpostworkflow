@@ -90,7 +90,7 @@ test('an approved followup is held, still approved, while IMAP is down', async (
 });
 
 // ── drafting (--draft) and --redraft-bumps ──
-import { runDrafting, runRedraftBumps, findOriginalPitch } from '../../agents/press-outreach/index.js';
+import { runDrafting, runRedraftBumps, runRedraftFollowups, renderRedraftFollowupsSummary, findOriginalPitch, findRecentArticle } from '../../agents/press-outreach/index.js';
 import { markSent } from '../../lib/press-drafts.js';
 
 const DNOW = Date.parse('2026-10-07T14:20:00Z');
@@ -116,7 +116,7 @@ const fetchArticle = async (url) => {
 const goodGenerate = async (prompt) => {
   const name = /writing a short personal note to (\w+)/.exec(prompt)[1];
   return JSON.stringify({
-    body: `${name}, your line that "cracked knuckles are the first sign that winter has arrived" stuck with me. Our Body Lotion comes in Pure Unscented and Rose Petal. Would a bottle help your next cold weather list?`,
+    body: `${name}'s readers came to mind: your line that "cracked knuckles are the first sign that winter has arrived" stuck with me. Our Body Lotion comes in Pure Unscented and Rose Petal. Would a bottle help your next cold weather list?`,
     article_quote: 'cracked knuckles are the first sign that winter has arrived',
   });
 };
@@ -235,7 +235,7 @@ function redraftWorld(over = {}) {
     drafts: [oldBump('jane'), oldBump('lee', 'approved')],
     pressFacts: FACTS, authorUrls: new Map(), fetchPage: fetchArticle,
     readSentBodies: async () => [septSent('jane'), septSent('lee')],
-    generate: async (p) => { calls.generated += 1; return goodGenerate(p).then((j) => JSON.stringify({ ...JSON.parse(j), body: JSON.parse(j).body.replace(/, your line that "[^"]+" stuck with me/, ', a winter list idea'), article_quote: null })); },
+    generate: async (p) => { calls.generated += 1; return goodGenerate(p).then((j) => JSON.stringify({ ...JSON.parse(j), body: JSON.parse(j).body.replace(/: your line that "[^"]+" stuck with me/, ', a winter list idea'), article_quote: null })); },
     moveAside: (d) => { calls.order.push(`move:${d.id}`); calls.moved.push(d.id); return `/backups/oldbump-${d.id}.json`; },
     restore: (d) => calls.restored.push(d.id),
     saveDraft: (d) => { calls.order.push(`save:${d.id}`); calls.saved.push(d); },
@@ -358,4 +358,146 @@ test('minor: --redraft-bumps skips a contact that already has a followup1 for th
   assert.deepEqual(calls.moved, ['20261004-lee-bump']);
   const { renderRedraftSummary } = await import('../../agents/press-outreach/index.js');
   assert.match(renderRedraftSummary(r, { apply: true }).body, /approved bumps become PENDING follow-ups/i);
+});
+
+// ── queue-wide variety (2026-10-05 production: 9 of 11 opened "One detail I left out") ──
+
+test('findRecentArticle skips category, tag and landing pages and takes the first real article; none survives -> null', async () => {
+  const contact = { id: 'kim', domains: ['kim.example.com'], author_url: 'https://kim.example.com/author/kim' };
+  const pitch = { target_url: 'https://kim.example.com/2026/best-winter-lotions-tested' };
+  const links = (hrefs) => async (url) => {
+    if (/\/author\//.test(url)) return { outcome: 'ok', html: hrefs.map((h) => `<a href="${h}">x</a>`).join('') };
+    return { outcome: 'ok', html: ARTICLE_HTML };
+  };
+  const junk = ['https://kim.example.com/beauty/skincare/', 'https://kim.example.com/category/gray-hair/', 'https://kim.example.com/prevention-premium/a43519830/what-is-prevention-premium/', 'https://kim.example.com/2026/best-winter-lotions-tested'];
+  const got = await findRecentArticle({ contact, pitch, fetchPage: links([...junk, 'https://kim.example.com/beauty/best-natural-deodorants-that-work/']) });
+  assert.equal(got.url, 'https://kim.example.com/beauty/best-natural-deodorants-that-work/');
+  assert.equal(await findRecentArticle({ contact, pitch, fetchPage: links(junk) }), null, 'only junk links: no article');
+});
+
+const trio = () => ['sam', 'kim', 'lee'];
+const RICH = { ...FACTS, brand: { facts: ['Handmade in small batches, made in the USA', '30-day money-back guarantee'] }, products: { lotion: { ...FACTS.products.lotion, facts: ['26 customer reviews averaging 4.7 stars'] } } };
+const varied = (opening) => async (prompt) => {
+  const name = /writing a short personal note to (\w+)/.exec(prompt)[1];
+  return JSON.stringify({ body: opening(name), article_quote: null });
+};
+
+test('--draft: 3 follow-ups for the same product get 3 different new facts, and only the 1st gets the gift hook', async () => {
+  const prompts = [];
+  const gen = async (p) => { prompts.push(p); return varied((n) => `${n}'s winter readers might like our Body Lotion. Would a bottle help?`)(p); };
+  const { args, saved } = draftHarness({ book: { version: 1, contacts: trio().map((x) => writer(x)) }, drafts: trio().map(sentPitch), pressFacts: RICH, generate: gen, prTargets: { pitch_targets: [] } });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 3, JSON.stringify(r.followUpFailed));
+  const fus = saved.drafts.filter((d) => d.kind === 'followup');
+  assert.equal(new Set(fus.map((d) => d.new_fact)).size, 3, fus.map((d) => d.new_fact).join(' | '));
+  assert.equal(fus[0].new_fact, 'Body Lotion: 26 customer reviews averaging 4.7 stars');
+  assert.deepEqual(fus.map((d) => d.gift_hook), [true, false, false]);
+  assert.match(prompts[0], /you may mention gift guides/i);
+  assert.match(prompts[1], /do not mention gift guides/i);
+  for (const d of fus) assert.ok(prompts.some((p) => p.includes(d.new_fact)), `the fact reached the model: ${d.new_fact}`);
+});
+
+test('--draft: a batch whose bodies all start "One detail I left out" is rejected, each after one retry', async () => {
+  const gen = varied((n) => `One detail I left out for ${n}: our Body Lotion has 26 reviews. Would a bottle help?`);
+  const { args, saved } = draftHarness({ book: { version: 1, contacts: trio().map((x) => writer(x)) }, drafts: trio().map(sentPitch), pressFacts: RICH, generate: gen, prTargets: { pitch_targets: [] } });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 0);
+  assert.equal(r.followUpFailed.length, 3);
+  for (const f of r.followUpFailed) assert.match(f.reason, /formulaic-opener/);
+  assert.ok(!saved.drafts.some((d) => d.kind === 'followup'));
+});
+
+test('--draft: an opening already used by ANOTHER contact\'s open draft (an earlier day) costs the retry', async () => {
+  const kimOpen = { ...newDraft({ kind: 'followup', n: 1, contactId: 'kim', to: 'kim@kim.example.com', subject: 'Re: x', text: 'Hi Kim,\n\nYour winter readers might like our Body Lotion. Would a bottle help?\n\nSean', inReplyTo: '<k>', concept: 'x', now: Date.parse('2026-10-05T10:00:00Z') }), pitch_date: '2026-10-01' };
+  const gen = async () => JSON.stringify({ body: 'Your winter readers might like Rose Petal. Would a bottle help?', article_quote: null });
+  const { args } = draftHarness({ drafts: [sentPitch('sam'), kimOpen], generate: gen, prTargets: { pitch_targets: [] } });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 0);
+  assert.match(r.followUpFailed[0].reason, /opener-collision/);
+});
+
+// --redraft-followups
+const pendingFu = (id, over = {}) => ({
+  ...newDraft({ kind: 'followup', n: 1, contactId: id, to: `${id}@${id}.example.com`, subject: 'Re: Coconut lotion for your roundup', text: `Hi ${id},\n\nOne detail I left out: the lotion comes in a squeeze bottle. Would a bottle help?\n\nSean`, inReplyTo: `<${id}-p@realskincare.com>`, references: [`<${id}-p@realskincare.com>`], concept: 'pitch-2026-10', products: ['lotion'], now: Date.parse('2026-10-05T14:20:00Z') }),
+  pitch_date: '2026-10-01', new_fact: 'Body Lotion comes in a squeeze bottle', ...over,
+});
+
+function redraftFuWorld(over = {}) {
+  const calls = { moved: [], saved: [], restored: [], order: [], generated: 0 };
+  const ids = ['sam', 'kim', 'lee'];
+  const args = {
+    apply: true, now: DNOW, book: { contacts: ids.map((x) => writer(x)) },
+    drafts: [...ids.map(sentPitch), ...ids.map((x) => pendingFu(x))],
+    pressFacts: RICH, authorUrls: new Map(), fetchPage: fetchArticle, readSentBodies: async () => [],
+    generate: async (p) => { calls.generated += 1; return varied((n) => `${n}'s winter readers might like our Body Lotion. Would a bottle help?`)(p); },
+    moveAside: (d) => { calls.order.push(`move:${d.id}`); calls.moved.push(d.id); return `/backups/oldfollowup-${d.id}.json`; },
+    restore: (d) => calls.restored.push(d.id),
+    saveDraft: (d) => { calls.order.push(`save:${d.id}`); calls.saved.push(d); },
+    log: () => {},
+    ...over,
+  };
+  return { args, calls };
+}
+
+test('--redraft-followups rewrites every pending follow-up as one batch: same thread and n, distinct facts, old moved to oldfollowup', async () => {
+  const { args, calls } = redraftFuWorld();
+  args.drafts.push(pendingFu('lee', { n: 2, id: '20261005-lee-followup2' }));
+  args.drafts = args.drafts.filter((d) => d.id !== '20261005-lee-followup1');
+  const r = await runRedraftFollowups(args);
+  assert.equal(r.redrafted.length, 3, JSON.stringify(r.failed));
+  assert.deepEqual(calls.moved.sort(), ['20261005-kim-followup1', '20261005-lee-followup2', '20261005-sam-followup1']);
+  for (const d of calls.saved) {
+    assert.equal(d.kind, 'followup');
+    assert.equal(d.status, 'pending');
+    assert.equal(d.subject, 'Re: Coconut lotion for your roundup');
+    assert.equal(d.in_reply_to, `<${d.contact_id}-p@realskincare.com>`);
+    assert.deepEqual(d.references, [`<${d.contact_id}-p@realskincare.com>`]);
+  }
+  assert.equal(calls.saved.find((d) => d.contact_id === 'lee').n, 2, 'same n');
+  assert.equal(new Set(calls.saved.map((d) => d.new_fact)).size, 3);
+  assert.ok(calls.order.indexOf('move:20261005-sam-followup1') < calls.order.indexOf('save:20261007-sam-followup1'), 'written, then old moved, then saved');
+  assert.match(renderRedraftFollowupsSummary(r, { apply: true }).subject, /3 pending follow-ups redrafted/);
+});
+
+test('--redraft-followups leaves approved and sent follow-ups alone, and a dry run calls no model', async () => {
+  const { args, calls } = redraftFuWorld();
+  args.drafts = args.drafts.map((d) => (d.contact_id === 'kim' && d.kind === 'followup' ? approveDraft(d, { now: DNOW }) : d));
+  args.drafts.push({ ...pendingFu('lee'), id: '20261003-lee-followup1', status: 'pending', approved_at: '2026-10-04T00:00:00Z' });
+  const r = await runRedraftFollowups(args);
+  assert.deepEqual(r.redrafted.map((x) => x.contactId).sort(), ['lee', 'sam']);
+  assert.ok(!calls.moved.includes('20261003-lee-followup1'), 'once approved, never redrafted');
+  const dry = redraftFuWorld({ apply: false });
+  const r2 = await runRedraftFollowups(dry.args);
+  assert.equal(r2.wouldRedraft.length, 3);
+  assert.equal(dry.calls.generated, 0);
+  assert.deepEqual(dry.calls.moved, []);
+});
+
+test('--redraft-followups keeps an old draft whose rewrite fails, and puts it back if the save fails', async () => {
+  const bad = redraftFuWorld({ generate: async () => JSON.stringify({ body: 'One detail I left out: it is handmade. Would a bottle help?', article_quote: null }) });
+  const r = await runRedraftFollowups(bad.args);
+  assert.equal(r.redrafted.length, 0);
+  assert.equal(r.failed.length, 3);
+  assert.deepEqual(bad.calls.moved, []);
+  const boom = redraftFuWorld({ saveDraft: () => { throw new Error('disk full'); } });
+  const r2 = await runRedraftFollowups(boom.args);
+  assert.equal(r2.failed.length, 3);
+  assert.equal(boom.calls.restored.length, 3);
+});
+
+test('--redraft-followups: a failed redraft keeps its old draft, so its opening stays taken for the rest of the batch', async () => {
+  const prompts = [];
+  let i = 0;
+  // 1st (sam) fails twice; kim then tries sam's old opening, which must collide.
+  const gen = async (p) => {
+    prompts.push(p); i += 1;
+    if (i <= 2) return JSON.stringify({ body: 'Just circling back. Any thoughts?', article_quote: null });
+    return JSON.stringify({ body: 'Rose Petal season is here for winter readers. Would a bottle help?', article_quote: null });
+  };
+  const { args } = redraftFuWorld({ generate: gen });
+  args.drafts = args.drafts.filter((d) => d.id !== '20261005-lee-followup1');
+  args.drafts = args.drafts.map((d) => (d.id === '20261005-sam-followup1' ? { ...d, text: 'Hi sam,\n\nRose Petal season is here for your readers. Would a bottle help?\n\nSean' } : d));
+  const r = await runRedraftFollowups(args);
+  assert.deepEqual(r.failed.map((x) => x.contactId).sort(), ['kim', 'sam']);
+  assert.match(r.failed.find((x) => x.contactId === 'kim').reason, /opener-collision/);
 });
