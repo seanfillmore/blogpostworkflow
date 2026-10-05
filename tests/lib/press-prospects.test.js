@@ -14,10 +14,13 @@ const prTargets = { pitch_targets: [
   row('pitched.example'),
   row('good.example'),
 ] };
+// A link-gap row is pitchable only with the page that links to a competitor
+// (`linking_url`); the backlink feed itself names a domain only.
+const gapRow = (domain, over = {}) => ({ domain, linking_url: `https://${domain}/best-natural-lotions`, rank: 1, dofollow: true, competitors: [], score: 1, ...over });
 const linkGap = { opportunities: [
-  { domain: 'nofollow.example', rank: 80, dofollow: false, competitors: ['X'], score: 5 },
-  { domain: 'good.example', rank: 70, dofollow: true, competitors: ['X'], score: 5 },
-  { domain: 'gap.example', rank: 60, dofollow: true, competitors: ['Y'], score: 4 },
+  gapRow('nofollow.example', { rank: 80, dofollow: false, competitors: ['X'], score: 5 }),
+  gapRow('good.example', { rank: 70, competitors: ['X'], score: 5 }),
+  gapRow('gap.example', { rank: 60, competitors: ['Y'], score: 4 }),
 ] };
 const contacts = [{
   id: 'p', name: 'Pat Pitched', status: 'active', domains: ['pitched.example'], channels: [],
@@ -81,7 +84,7 @@ test('a draft rejected 61 days ago does not block', () => {
 });
 
 test('shortfall on one side is filled from the other; link-gap in book dropped', () => {
-  const many = { opportunities: ['a', 'b', 'c', 'd'].map((x) => ({ domain: `${x}.example`, rank: 1, dofollow: true, competitors: [], score: 1 })) };
+  const many = { opportunities: ['a', 'b', 'c', 'd'].map((x) => gapRow(`${x}.example`)) };
   const book = [{ id: 'q', name: 'Q', status: 'inactive', domains: ['a.example'], channels: [], pitches: [] }];
   const { prospects, skipped } = buildProspects({ ...base, linkGap: many, contacts: [...contacts, ...book], want: 4 });
   assert.equal(prospects.length, 4);
@@ -109,7 +112,7 @@ test('a different writer who left does not block', () => {
 
 test('duplicate domains collapse to the first row', () => {
   const pt = { pitch_targets: [row('www.dup.example'), row('dup.example', { author: 'Other' })] };
-  const lg = { opportunities: ['www.g.example', 'g.example'].map((d) => ({ domain: d, rank: 1, dofollow: true, competitors: [], score: 1 })) };
+  const lg = { opportunities: ['www.g.example', 'g.example'].map((d) => gapRow(d)) };
   const r = buildProspects({ ...base, prTargets: pt, linkGap: lg, want: 10 });
   assert.deepEqual(r.prospects.map((p) => p.key), ['pr-target:dup.example', 'link-gap:g.example']);
   assert.equal(r.skipped.filter((s) => s.reason === 'duplicate domain').length, 2);
@@ -140,4 +143,30 @@ test('a rejected follow-up is not a verdict on the domain: only a rejected pitch
   assert.match(draftBlockReason(rej('pitch'), '2026-10-06'), /cooldown/);
   assert.match(draftBlockReason({ ...rej('pitch'), kind: undefined }, '2026-10-06'), /cooldown/);
   assert.match(draftBlockReason({ id: 'f', kind: 'followup', status: 'pending' }, '2026-10-06'), /pending/, 'an open follow-up still blocks');
+});
+
+test('2026-10-05: a link-gap row with no linking page is dropped, never pitched from its homepage', () => {
+  const lg = { opportunities: [
+    { domain: 'adlibrary.com', rank: 116, dofollow: true, competitors: ["Schmidt's Naturals", 'Weleda'], score: 466 },
+    gapRow('promizi.com', { linking_url: 'https://promizi.com/' }),
+  ] };
+  const r = buildProspects({ ...base, prTargets: { pitch_targets: [] }, linkGap: lg, want: 5 });
+  assert.deepEqual(r.prospects, []);
+  const why = (d) => r.skipped.find((s) => s.domain === d)?.reason || '';
+  assert.match(why('adlibrary.com'), /no linking page known/);
+  assert.match(why('promizi.com'), /homepage/);
+});
+
+test('an editorial row whose page is a homepage, listing or product page is dropped', () => {
+  const pt = { pitch_targets: [
+    row('home.example', { pitch_url: 'https://home.example/', top_url: null }),
+    row('cat.example', { pitch_url: 'https://cat.example/categories/body-care' }),
+    row('prod.example', { pitch_url: 'https://prod.example/products/coconut-body-lotion' }),
+    row('ok.example', { pitch_url: 'https://www.today.com/shop/best-coconut-oil-for-skin-rcna183439' }),
+  ] };
+  const r = buildProspects({ ...base, prTargets: pt, linkGap: { opportunities: [] }, want: 10 });
+  assert.deepEqual(r.prospects.map((p) => p.key), ['pr-target:ok.example']);
+  for (const d of ['home.example', 'cat.example', 'prod.example']) {
+    assert.ok(r.skipped.some((s) => s.domain === d && /target page is/.test(s.reason)), d);
+  }
 });

@@ -394,3 +394,15 @@ test('name, format, scents and price are gated like facts', () => {
   assert.match(text, /scents: Pure Unscented(;|$)/m);
   assert.doesNotMatch(text, /eczema|cures|Healing|Antiperspirant|Bar Soap|saponified/i, 'a product whose name fails is left out entirely');
 });
+
+test('2026-10-05: draftPitch refuses a homepage target before calling the model', async () => {
+  let calls = 0;
+  const generate = async () => { calls += 1; return {}; };
+  const r = await draftPitch({
+    prospect: { ...PROSPECT, source: 'link-gap', targetUrl: 'https://adlibrary.com/' },
+    articleText: 'Save. Tag. Reuse. Build your swipe file.', pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT,
+  });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /homepage/);
+  assert.equal(calls, 0);
+});

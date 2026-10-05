@@ -100,12 +100,26 @@ test('a prospect with no address creates an unverified contact and no draft', as
 test('a link-gap prospect with no address is skipped, no contact', async () => {
   const { args, saved } = harness({
     prTargets: { pitch_targets: [] },
-    linkGap: { opportunities: [{ domain: 'gap.example.com', competitors: ['rival.example.com'] }] },
+    linkGap: { opportunities: [{ domain: 'gap.example.com', linking_url: 'https://gap.example.com/best-natural-lotions', competitors: ['rival.example.com'] }] },
     findAddress: async () => ({ address: null, reason: 'no published address; hunter unavailable' }),
   });
   const r = await runDrafting(args);
   assert.equal(r.skipped.length, 1);
   assert.equal(saved.books.length, 0);
+  assert.equal(saved.drafts.length, 0);
+});
+
+test('a homepage-only link-gap row spends nothing: no fetch, no address lookup, no draft', async () => {
+  let fetched = 0; let looked = 0;
+  const { args, saved } = harness({
+    prTargets: { pitch_targets: [] },
+    linkGap: { opportunities: [{ domain: 'adlibrary.com', competitors: ["Schmidt's Naturals"] }] },
+    fetchArticle: async () => { fetched += 1; return { outcome: 'ok', html: '<p>Save. Tag. Reuse. Build your swipe file.</p>' }; },
+    findAddress: async () => { looked += 1; return { address: 'marketing@adlibrary.com', source: 'hunter' }; },
+  });
+  await runDrafting(args);
+  assert.equal(fetched, 0);
+  assert.equal(looked, 0);
   assert.equal(saved.drafts.length, 0);
 });
 

@@ -48,6 +48,7 @@
  * Cron (UTC, scripts/setup-cron.sh):
  *   17,47 * * * *   --apply              replies, escalations, samples, Sean-approved sends
  *   20 14 * * *     --draft --apply       follow-up drafts for due threads first, then the prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
+ *                                         every prospect must point at an ARTICLE (lib/press-article-url.js); link-gap rows have no linking page, so yield none today,
  *                                         at most 10 drafts a run, no new prospect after 15:30 UTC
  *   25 14 * * 1     --check-links --apply earned-link check and funnel digest
  *   (--backfill was a one-time run, done 2026-10-04; --resume, --init and --test-send are by hand.)
