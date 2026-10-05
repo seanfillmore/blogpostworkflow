@@ -95,7 +95,7 @@ test('final text: greeting, body, availability line, signature, opt-out, postal 
   assert.equal(r.ok, true, r.reason);
   const { text, subject } = r.draft;
   assert.ok(text.startsWith('Hi Jane,\n\n'));
-  const avail = 'You can find it at realskincare.com, and on Amazon if that link works better for your affiliate setup: https://www.amazon.com/dp/B0TESTLOT1';
+  const avail = 'You can find it at realskincare.com and on Amazon: https://www.amazon.com/dp/B0TESTLOT1';
   assert.ok(text.endsWith(`\n\n${avail}\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDRESS)}`), text);
   assert.equal(postalLine(ADDRESS), `Real Skin Care, ${ADDRESS}`);
   assert.doesNotMatch(signature(), /Example St/);
