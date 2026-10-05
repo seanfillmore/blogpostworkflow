@@ -807,11 +807,17 @@ export async function runPressOutreach({
           continue;
         }
       }
+      if (THREADED_KINDS.has(d.kind) && !d.in_reply_to) {
+        const problem = 'no in_reply_to: cannot thread this under the pitch';
+        if (saveIfUnchanged(d, { ...d, status: 'pending', gate_problems: [problem] }, row)) result.skipped.push({ ...row, reason: `back to pending: ${problem}` });
+        continue;
+      }
       if (THREADED_KINDS.has(d.kind)) {
         // A follow-up (or an old bump) re-opens a quiet thread. It is only right while the thread is
         // still quiet, which we can only know when the mail was read this run.
         if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: `${d.kind} held: replies could not be read this run` }); continue; }
-        if (lastPitch(c)?.outcome !== 'sent') {
+        // Written for an older pitch than the latest one: that thread is over.
+        if (lastPitch(c)?.outcome !== 'sent' || (d.pitch_date && d.pitch_date !== lastPitch(c)?.date)) {
           const gone = { ...d, status: 'expired', expired_at: isoOf(now), expired_reason: 'thread moved on' };
           if (saveIfUnchanged(d, gone, row)) result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
           continue;
@@ -987,18 +993,27 @@ const urlKey = (u) => {
   try { const x = new URL(u); return `${x.hostname.toLowerCase().replace(/^www\./, '')}${x.pathname.replace(/\/$/, '')}`; } catch { return null; }
 };
 
+/** Pure: is draft `d` a follow-up on THIS pitch (its pitch_date, else its thread id, else drafted since the pitch)? */
+export function onPitch(d, pitch) {
+  if (d.pitch_date) return d.pitch_date === pitch.date;
+  if (d.in_reply_to && pitch.message_id) return d.in_reply_to === pitch.message_id;
+  return String(d.created_at || '').slice(0, 10) >= pitch.date;
+}
+
 /**
  * Pure: the original pitch we sent this contact, as { subject, body, source }.
- * The pitch's own sent draft file first (new-style pitches), else its copy in
+ * The pitch's own sent draft file first (matched by the pitch's draft_id or
+ * message_id, nothing looser), else its copy in
  * Hushmail's Sent folder (the September pitches Sean sent by hand): the same
  * Message-ID, else the same subject on or after the pitch date, earliest. Null
  * when neither exists; nothing is drafted against a pitch we cannot read.
  */
 export function findOriginalPitch({ contact, pitch, drafts = [], sentCopies = [] }) {
+  // Only THIS pitch's own draft: never "the newest sent draft for the contact",
+  // which for a December pitch could be October's email.
   const mine = drafts.filter((d) => d.kind === 'pitch' && d.status === 'sent' && d.contact_id === contact.id && d.text);
   const file = mine.find((d) => pitch.draft_id && d.id === pitch.draft_id)
-    || mine.find((d) => pitch.message_id && d.message_id === pitch.message_id)
-    || mine.sort((a, b) => String(b.sent_at || '').localeCompare(String(a.sent_at || '')))[0];
+    || mine.find((d) => pitch.message_id && d.message_id === pitch.message_id);
   if (file) {
     const body = String(file.text).split(OPT_OUT_LINE)[0].trim();
     if (body) return { subject: file.subject, body, source: 'draft' };
@@ -1114,6 +1129,11 @@ export async function runRedraftBumps({
       result.skipped.push({ draftId: b.id, contactId: contact.id, reason: 'a follow-up draft is already waiting' });
       continue;
     }
+    const prior = drafts.find((d) => d.kind === 'followup' && d.n === 1 && d.contact_id === contact.id && onPitch(d, pitch));
+    if (prior) {
+      result.skipped.push({ draftId: b.id, contactId: contact.id, reason: `a follow-up 1 for this pitch already exists (${prior.id}, ${prior.status})` });
+      continue;
+    }
     plan.push({ bump: b, contact, pitch });
   }
   if (!apply) {
@@ -1155,6 +1175,7 @@ export function renderRedraftSummary(r, { apply } = {}) {
   if (r.redrafted.length) { lines.push('Redrafted (waiting for approval):'); for (const x of r.redrafted) lines.push(`  - ${x.contactId}: ${x.draftId} -> ${x.followupId}${x.articleUrl ? ` (latest piece ${x.articleUrl})` : ''}`); }
   if (r.failed.length) { lines.push('Not redrafted (the bump stays in the queue):'); for (const x of r.failed) lines.push(`  - ${x.contactId}: ${x.reason}`); }
   if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.redrafted.length || r.wouldRedraft.length) lines.push('Note: approved bumps become PENDING follow-ups that need your re-approval in the Outreach tab.');
   return {
     subject: `Press follow-ups: ${apply ? r.redrafted.length : r.wouldRedraft.length} bumps ${apply ? 'redrafted' : 'to redraft'} · ${r.failed.length} failed · ${r.skipped.length} skipped`,
     body: lines.filter((l, i) => i > 0 || l).join('\n') || 'No bump drafts waiting.',
@@ -1351,11 +1372,33 @@ export async function runDrafting({
   // The queue fills over a few days: one run drafts at most draftRunMax. An
   // explicit --limit is a human's choice and is bounded by the deadline only.
   const runMax = config.draftRunMax ?? DEFAULT_CONFIG.draftRunMax ?? 10;
+  // Pitches fill the queue up to queueTarget. Follow-ups have their OWN budget,
+  // bounded by draftRunMax and not by queue room: a warm thread must not wait
+  // behind a queue full of cold pitches.
   let want = limit != null ? limit : Math.min(runMax, (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending);
+  const followBudget = limit != null ? limit : runMax;
   result.want = Math.max(0, want);
-  if (want <= 0) { log(`  queue holds ${pending} drafts (target ${config.queueTarget}); nothing to draft`); return { ...result, book, state }; }
 
   const persistFollowState = () => { try { saveState(state); } catch (err) { log(`  could not save state: ${err.message}`); } };
+
+  // A follow-up that SENT but whose book write failed leaves follow_ups_sent
+  // behind; repair it from the sent draft so that follow-up is never redrafted.
+  for (const c of book.contacts) {
+    const p = lastPitch(c);
+    if (!p) continue;
+    const sentFus = drafts.filter((d) => d.kind === 'followup' && d.status === 'sent' && d.contact_id === c.id && onPitch(d, p));
+    if (!sentFus.length) continue;
+    const n = Math.max(...sentFus.map((d) => (d.n === 2 ? 2 : 1)));
+    const at = sentFus.map((d) => d.sent_at).filter(Boolean).sort().at(-1);
+    if ((p.follow_ups_sent || 0) >= n) continue;
+    const later = at && (!p.last_sent_at || Date.parse(at) > Date.parse(p.last_sent_at));
+    try {
+      const next = updatePitch(book, c.id, { follow_ups_sent: n, ...(later ? { last_sent_at: at } : {}) });
+      saveBook(next);
+      book = next;
+      log(`  repaired ${c.id}: follow-up ${n} was sent (draft) but not recorded`);
+    } catch (err) { log(`  could not repair ${c.id}'s follow-up count: ${err.message}`); }
+  }
 
   // ── Follow-ups first: a warm thread beats a cold prospect. ──
   // Every thread due by the 5/7-day gaps (lib/press-contacts.js) gets one
@@ -1372,7 +1415,8 @@ export async function runDrafting({
       const skipF = (reason) => result.followUpSkipped.push({ contactId: contact.id, n, reason });
       if (openFor(contact.id)) { skipF('a follow-up draft is already waiting'); continue; }
       if (state.escalated?.[contact.id]) { skipF('escalated to Sean'); continue; }
-      if (drafts.some((d) => d.kind === 'followup' && d.contact_id === contact.id && d.n === n && d.status === 'rejected' && String(d.created_at).slice(0, 10) >= pitch.date)) { skipF(`follow-up ${n} was rejected`); continue; }
+      const done = drafts.find((d) => d.kind === 'followup' && d.contact_id === contact.id && d.n === n && ['sent', 'rejected', 'expired'].includes(d.status) && onPitch(d, pitch));
+      if (done) { skipF(`follow-up ${n} was already ${done.status} (${done.id})`); continue; }
       if ((state.followup_attempts[key] || 0) >= FOLLOWUP_MAX_ATTEMPTS) { skipF(`given up after ${FOLLOWUP_MAX_ATTEMPTS} failed runs`); continue; }
       todo.push({ ...row, key });
     }
@@ -1381,7 +1425,7 @@ export async function runDrafting({
     const sent = await loadSentCopies(readSentBodies, needSent, now, log);
     const usedOpeners = new Set();
     for (const { contact, pitch, n, key } of todo) {
-      if (result.followUps.length >= want) break;
+      if (result.followUps.length >= followBudget) break;
       if (clock() >= stopAt) { result.stoppedAtDeadline = true; log('  stopped at the deadline while drafting follow-ups'); break; }
       const thread = { subject: reSubject(pitch.subject), inReplyTo: pitch.message_id, references: refsOf(pitch.references, pitch.message_id) };
       let out;
@@ -1406,9 +1450,10 @@ export async function runDrafting({
     }
   }
   if (result.stoppedAtDeadline) return { ...result, book, state };
-  // The pitches get what the follow-ups left of this run's budget.
-  want -= result.followUps.length;
-  if (want <= 0) { log('  follow-ups used this run\'s whole drafting budget'); return { ...result, book, state }; }
+  // The pitches get what the follow-ups left of the queue room and the run budget.
+  want = Math.min(want, runMax) - result.followUps.length;
+  result.want = Math.max(0, want);
+  if (want <= 0) { log(`  queue holds ${pending + result.followUps.length} drafts (target ${config.queueTarget}); no new pitches`); return { ...result, book, state }; }
 
   // Dead keys are excluded BEFORE truncation; they are counted, never reported
   // as skips, so a run that only met dead keys does not notify.

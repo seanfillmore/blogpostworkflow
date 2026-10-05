@@ -282,3 +282,80 @@ test('--redraft-bumps keeps a bump whose follow-up fails, and puts it back if th
   assert.equal(r2.failed.length, 2);
   assert.deepEqual(boom.calls.restored.sort(), ['20261004-jane-bump', '20261004-lee-bump']);
 });
+
+// ── review fixes ──
+test('fix 1: findOriginalPitch never borrows another pitch\'s draft (October draft, December pitch)', () => {
+  const c = writer('sam', { date: '2026-12-01', draft_id: '20261201-sam-pitch', message_id: '<dec-p@realskincare.com>', subject: 'Gift guide soap' });
+  const october = sentPitch('sam'); // id 20261001-sam-pitch, message_id <sam-p@realskincare.com>
+  const decCopy = { to: ['sam@sam.example.com'], subject: 'Gift guide soap', date: '2026-12-01T17:00:00.000Z', messageId: '<dec-p@realskincare.com>', text: 'Hi Sam, the December soap pitch.' };
+  const found = findOriginalPitch({ contact: c, pitch: c.pitches[0], drafts: [october], sentCopies: [decCopy] });
+  assert.equal(found.source, 'sent-folder');
+  assert.match(found.body, /December soap pitch/);
+  assert.equal(findOriginalPitch({ contact: c, pitch: c.pitches[0], drafts: [october], sentCopies: [] }), null, 'no October body for a December pitch');
+  // Subject + recipient on or after the pitch date when the id does not match.
+  const bySubject = { ...decCopy, messageId: '<other>' };
+  assert.equal(findOriginalPitch({ contact: c, pitch: c.pitches[0], drafts: [october], sentCopies: [{ ...bySubject, date: '2026-11-20T00:00:00.000Z' }] }), null, 'before the pitch date never matches');
+  assert.equal(findOriginalPitch({ contact: c, pitch: c.pitches[0], drafts: [october], sentCopies: [bySubject] }).source, 'sent-folder');
+});
+
+test('fix 2: a full queue of pending pitches does not block a due follow-up', async () => {
+  const pendings = ['a', 'b', 'c'].map((x) => ({ id: `20261006-${x}-pitch`, kind: 'pitch', contact_id: x, status: 'pending', created_at: '2026-10-06T00:00:00Z', to: `${x}@other.example.com` }));
+  const { args, saved } = draftHarness({ drafts: [sentPitch('sam'), ...pendings] });
+  let pitched = 0;
+  args.draftPitch = async () => { pitched += 1; return { ok: false, reason: 'x' }; };
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 1, JSON.stringify(r.followUpFailed));
+  assert.ok(saved.drafts.some((d) => d.kind === 'followup'));
+  assert.equal(pitched, 0, 'no queue room left for pitches');
+});
+
+test('fix 4: a SENT followup n for this pitch is never redrafted, and the book count is repaired from it', async () => {
+  const sentFu = { ...followup('sam', 1), status: 'sent', sent_at: '2026-10-06T17:00:00.000Z', message_id: '<fu-sent>', pitch_date: '2026-10-01', to: 'sam@sam.example.com' };
+  const books = [];
+  const { args, saved } = draftHarness({ drafts: [sentPitch('sam'), sentFu], saveBook: (b) => books.push(b) });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 0);
+  assert.ok(!saved.drafts.some((d) => d.kind === 'followup'));
+  const p = (books.at(-1) || r.book).contacts.find((c) => c.id === 'sam').pitches[0];
+  assert.equal(p.follow_ups_sent, 1, 'repaired to max(existing, n)');
+  assert.equal(p.last_sent_at, '2026-10-06T17:00:00.000Z');
+});
+
+test('minor: an EXPIRED followup n for the same pitch is not redrafted (like a rejected one)', async () => {
+  const expired = { ...followup('sam', 1), status: 'expired', pitch_date: '2026-10-01', to: 'sam@sam.example.com' };
+  const { args, saved } = draftHarness({ drafts: [sentPitch('sam'), expired] });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 0);
+  assert.ok(!saved.drafts.some((d) => d.kind === 'followup'));
+  assert.ok(r.followUpSkipped.some((s) => /expired/.test(s.reason)));
+});
+
+test('minor: an approved followup for an OLDER pitch expires ("thread moved on") instead of sending', async () => {
+  const stale = { ...followup('jane', 1), pitch_date: '2026-09-01' };
+  const { opts, calls } = world({ drafts: [stale] });
+  const r = await runPressOutreach(opts);
+  assert.deepEqual(calls.send, []);
+  assert.equal(calls.savedDrafts.at(-1).status, 'expired');
+  assert.ok(r.expired.some((e) => e.reason === 'thread moved on'));
+});
+
+test('minor: a threaded draft with no in_reply_to is not sent; it goes back to pending with the problem', async () => {
+  const bare = { ...followup('jane', 1), in_reply_to: null, pitch_date: '2026-10-01' };
+  const { opts, calls } = world({ drafts: [bare] });
+  await runPressOutreach(opts);
+  assert.deepEqual(calls.send, []);
+  const saved = calls.savedDrafts.at(-1);
+  assert.equal(saved.status, 'pending');
+  assert.ok(saved.gate_problems.some((p) => /in_reply_to|thread/.test(p)));
+});
+
+test('minor: --redraft-bumps skips a contact that already has a followup1 for this pitch in ANY status, and says approved bumps need re-approval', async () => {
+  const rejectedFu = { id: '20261005-jane-followup1', kind: 'followup', n: 1, contact_id: 'jane', status: 'rejected', pitch_date: '2026-09-21', created_at: '2026-10-05T00:00:00Z' };
+  const { args, calls } = redraftWorld({ drafts: [oldBump('jane'), oldBump('lee', 'approved'), rejectedFu] });
+  const r = await runRedraftBumps(args);
+  assert.deepEqual(r.redrafted.map((x) => x.contactId), ['lee']);
+  assert.ok(r.skipped.some((s) => s.contactId === 'jane' && /follow-up 1/.test(s.reason)));
+  assert.deepEqual(calls.moved, ['20261004-lee-bump']);
+  const { renderRedraftSummary } = await import('../../agents/press-outreach/index.js');
+  assert.match(renderRedraftSummary(r, { apply: true }).body, /approved bumps become PENDING follow-ups/i);
+});
