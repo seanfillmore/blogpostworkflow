@@ -1,6 +1,6 @@
 ---
 name: marketing-short-form-video-production
-description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, staging and framing on the shoot, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, cover-image composition and generation, and re-cutting an existing footage library into new ads.
+description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, frame-by-frame shot breakdown of a reference mapped to script lines, staging and framing on the shoot, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, the sound-off and eyes-closed pre-publish test, cover-image composition and generation, and re-cutting an existing footage library into new ads.
 ---
 
 # Short Form Video Production
@@ -35,15 +35,19 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
 
-## Record by modelling a reference video that already crushed in the exact format you are making — copy the camera angles, distance from camera, lighting, who stands where, where the text hook sits relative to the speaker, and the cadence and rhythm of delivery.
+## Record by modelling a reference video that already crushed in the exact format you are making — first break it down frame by frame, then copy the camera angles, distance from camera, lighting, who stands where, where the text hook sits relative to the speaker, and the cadence and rhythm of delivery.
 
-**Why it works:** The physical staging of a proven video is part of why it retained viewers; replicating it removes the production variables from the experiment so the only new thing being tested is your message.
+**How to break the reference down:** Pull frames every 2–5 seconds and count how many distinct shots it uses for its runtime. Label each shot by type (wide, portrait/selfie, macro) and note its angle, aesthetic and action. Then map each visual back to the exact script line it carries. When you write your own script, plan a string of shots for every line at the writing stage. For example, 'I was walking down the street in New York when…' becomes wide, then selfie, then a jolt. That way the shot list exists before the shoot instead of being improvised in the edit.
 
-**Evidence offered:** Assertion, with the worked example of finding 'patient and doctor' format videos that performed and shooting to match.
+**Why it works:** The physical staging of a proven video is part of why it retained viewers; replicating it removes the production variables from the experiment so the only new thing being tested is your message. Visual pacing and shot selection carry retention as much as the words do. Counting shots per runtime and mapping them to lines exposes the cut density and shot grammar that keep the reference watchable, so you can match them deliberately rather than by feel.
 
-**Fit here (7/10):** A phone, a script and one person is today's production capability, and this tactic is exactly a solo operator's shortcut around not being a videographer — he picks a reference Reel and matches the frame. Applies first to RSC's own organic Reels/TikToks, then to the statics-and-video he cuts for the $30/day Meta campaign. No existing skill owns self-shot video staging: marketing-creator-content-sourcing covers briefing and rejecting other people's clips, not framing your own.
+**Evidence offered:** Assertion, with the worked example of finding 'patient and doctor' format videos that performed and shooting to match. The frame-breakdown and shot-per-line method is also assertion, illustrated with the New York street line mapped to a three-shot string.
+
+**Fit here (7/10):** A phone, a script and one person is today's production capability, and this tactic is exactly a solo operator's shortcut around not being a videographer — he picks a reference Reel and matches the frame. Applies first to RSC's own organic Reels/TikToks, then to the statics-and-video he cuts for the $30/day Meta campaign. No existing skill owns self-shot video staging: marketing-creator-content-sourcing covers briefing and rejecting other people's clips, not framing your own. The breakdown step is what turns 'copy the reference' into a concrete shot list. It also hands the edit sections below a target cut density.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
+
+*Source: Sweat Equity — "Watch Me Speedrun a Brand from 0 to 100k Followers (in 90 Days)" (w6qpJ0eTB68)*
 
 ## For a shot that has to read as real, film the real action plainly yourself and apply the AI effect to that footage — then layer the AI clip above the original in the editor and cut at the exact frame the action happens, masking or keyframing so your real face stays visible and the effect triggers on the beat.
 
@@ -61,7 +65,7 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 **Evidence offered:** Assertion from the creator's own practice; explicit dismissal of current auto-editing tools.
 
-**Fit here (6/10):** He is the editor, and CapCut on a phone is free — runnable today for RSC's own deodorant Reels. Platform-mechanics class in part (the claim that AI auto-edit tools are not good enough), so the tool judgement decays fast and should be re-checked; the durable half — copy the pacing of a proven reference cut — does not. Scored 6 because it is craft advice with no direct revenue mechanism attached. The reference tells you the target rhythm; the sections below are how you hit it clip by clip — assembly order, in and out points, and which word the cut lands on.
+**Fit here (6/10):** He is the editor, and CapCut on a phone is free — runnable today for RSC's own deodorant Reels. Platform-mechanics class in part (the claim that AI auto-edit tools are not good enough), so the tool judgement decays fast and should be re-checked; the durable half — copy the pacing of a proven reference cut — does not. Scored 6 because it is craft advice with no direct revenue mechanism attached. The reference tells you the target rhythm, and the shot-per-runtime count from the frame breakdown above gives you a number to check your cut against. The sections below are how you hit it clip by clip — assembly order, in and out points, and which word the cut lands on.
 
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
 
@@ -126,6 +130,16 @@ description: Shooting and editing your own short-form video by modelling a prove
 **Fit here (6/10):** Cheap, durable convention that costs one generation and one timeline move in the free editor he already uses, and it matters for a catalogue sold on both Shopify and Amazon where the viewer has to recognise the pack later. Governs one second of the asset, which is what holds it mid.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
+
+## Before publishing, run every cut through two tests: watch it with the sound off and check it is still captivating on visuals alone, then listen with your eyes closed and check the audio alone is still interesting, with no flat 'first we did this, then we did this' narration.
+
+**Why it works:** Viewers consume short-form in two partial modes: muted scrolling and audio-only half-attention. A video that leans on one channel to carry the other loses whichever group isn't getting that channel. Testing each channel alone exposes dead visuals and flat narration separately. Passing both means each layer independently gives a reason to keep watching.
+
+**Evidence offered:** Assertion only, stated twice and illustrated with a vlog narration example.
+
+**Fit here (7/10):** A free pre-publish check one person runs at the edit. On RSC's Reels and TikToks, watch the cut muted and confirm the product action reads on screen: the application, the texture, the sweat-test moment. Then listen with eyes closed and confirm the voiceover still tells the story. It carries straight over to Meta video ads, where muted autoplay is the default. Held back only by the absence of evidence beyond assertion.
+
+*Source: Sweat Equity — "Watch Me Speedrun a Brand from 0 to 100k Followers (in 90 Days)" (w6qpJ0eTB68)*
 
 ## Build the cover frame by uploading an ordinary photo of yourself plus a photo of the product and prompting a 16:9 close-up with a named facial expression — and compose it as the product held up close and sharp in the foreground with your slightly-blurred reacting face behind it, plus an arrow and a two-word text callout pointing at the product.
 
