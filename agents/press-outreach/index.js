@@ -1450,8 +1450,10 @@ export async function runDrafting({
     }
   }
   if (result.stoppedAtDeadline) return { ...result, book, state };
-  // The pitches get what the follow-ups left of the queue room and the run budget.
-  want = Math.min(want, runMax) - result.followUps.length;
+  // The pitches get what the follow-ups left. Without --limit `want` is already
+  // bounded by draftRunMax and the queue room; an explicit --limit is a human's
+  // choice and is not capped by draftRunMax.
+  want -= result.followUps.length;
   result.want = Math.max(0, want);
   if (want <= 0) { log(`  queue holds ${pending + result.followUps.length} drafts (target ${config.queueTarget}); no new pitches`); return { ...result, book, state }; }
 
