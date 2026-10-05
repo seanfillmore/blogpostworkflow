@@ -237,6 +237,26 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 
 *Source: Fedot (@FedotOff90) — "Native static ad formats that do not look like ads (X post)" (social post)*
 
+## Under Meta's Andromeda update the creative is the targeting — hold one angle fixed and cross it with several visibly different on-camera avatars (e.g. a 33-year-old high-performing woman and a 44-year-old suburban dad), so each avatar × angle pairing unlocks a different audience pocket.
+
+**Stage:** traffic — parked until the traffic phase opens.
+
+**Why it works:** Andromeda routes delivery from the content of the creative rather than from audience settings. The person on screen acts as a mirror the viewer recognises themselves in, and the system learns who stops; so the same angle carried by a different avatar is matched to a different audience rather than being clustered with the first ad as a near-duplicate.
+
+**Evidence offered:** Claims performance data from ~8,000 UGC ads shipped at Nibble; otherwise assertion.
+
+**Fit here (6/10):** A current (2026) platform mechanic, so age does not discount it, and it is the on-camera extension of the live visual-distinctness rule above — a different person on screen is one of the cleanest ways to make a genuinely new delivery entity. It sits in tension with the angle-not-audience refinement above and its aim at the shared centre of the market. The reconciliation: the avatar is a delivery-diversity lever on a single fixed angle, not a separate message written per demographic — the messaging brief, the pain angle and the copy stay identical, only the face carrying them changes, and every avatar is a version of the core buyer rather than a new market, which keeps it on the right side of the audience-expansion rule above. Honest scale-down when the gate opens: one angle × two or three avatars — the operator's own face, an existing Trybe creator, and an AI-built character from the ai-broll workflow — with each creative tagged by avatar and angle in its name so the delivery breakdowns can be read against the pairing. The avatars enter through a rebuild of the running flexible ad, never as ads launched alongside it (the doom-cycle rule above), and each still has to pass the no-brand-context and three-leg audits above. Parked because it depends on on-camera inventory and enough delivery volume for per-avatar breakdowns to separate, which the static-first rule above defers.
+
+*Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*
+
+**Refinement — multiply creative diversity with a fill-in worksheet tree: avatar → angle → 15-20 formats (statics, one-shots, narrative, guinea-pig, ungatekeeping UGC), producing 50-100 identity- and problem-specific ads per product.** Format is a third independent axis of diversity on top of avatar and angle; each combination is a distinct creative Andromeda can match to a different audience, and the worksheet turns 'creative diversity' from an intimidating goal into a process filled in row by row. The guinea-pig format (someone visibly testing the product on themselves) and the ungatekeeping format (someone letting the viewer in on a find) are on-camera UGC containers not covered by the native static list above.
+
+**Evidence offered:** Nibble agency experience (~8,000 UGC ads); assertion.
+
+**Fit here (5/10):** Current 2026 Meta mechanic, and the guinea-pig and ungatekeeping formats are genuinely new to this skill. The scale-down when the gate opens is one angle × two avatars × three or four self-filmed formats (one-shot, guinea-pig test, ungatekeeping, static), giving 6-8 ads; the full 50-100-ad tree comes later, once an angle clears the graduation bar and the scaling budget moves to $100/day. Each row of the tree still starts from the messaging brief above and must clear the visual-distinctness bar above — a tree filled with retyped plates is one ad, not fifty. Held at 5 because the source gives no mechanism for why breadth beats the live 'cover distinct creative jobs rather than creative volume' rule above, which remains the governing discipline until the tree's breadth is shown to pay.
+
+*Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*
+
 ## Take your best-performing organic short-form videos and run them as paid ads, because creative that worked with no spend usually works with spend.
 
 **Why it works:** Organic performance is a free pre-test of the hook and the message. A clip that held attention with zero distribution behind it has already cleared the hardest bar, so paid spend is buying reach for creative whose core question — does this stop and hold someone — is answered rather than gambled on.

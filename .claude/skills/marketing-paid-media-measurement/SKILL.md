@@ -25,7 +25,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 **Fit here (5/10):** A paid benchmarking subscription is explicitly a scale park. The mechanism is honest — a $22 CPM means nothing until you know whether skincare in your demo trades at $14 or $35, which tells you whether to fix creative or accept the auction. Two things hold it back today: it is a second paid subscription against a $900/mo budget, and at $30/day RSC's own CPM/CTR are too thin to benchmark meaningfully. It also only ever informs secondary storytelling metrics, never budget decisions, which caps its score. Trigger: several thousand dollars a month of Meta spend where a persistent category-level CPM gap is worth a subscription fee to diagnose. Sits naturally beside the standing decision to decline multi-touch attribution tools until real budget runs across several channels — same test, same restraint. The same subscription would also make the CAC-versus-category diagnostic recorded below sourceable rather than guessed.
 
-*Source: undefined — "undefined" (CCsty8R0UaA)*
+*Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
 ## Split every metric into primary metrics you are allowed to optimize budget on (spend, purchases, cost per purchase, ROAS — or leads and cost per lead) and secondary 'storytelling' metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain why something worked — and never treat click-through rate as a performance verdict.
 
@@ -78,6 +78,18 @@ description: Use when setting up paid-media reporting, or reading what a running
 **Fit here (7/10):** Fits the operating reality directly: the prime directive is revenue, retention is the binding constraint, and repeat customers already carry roughly 45–52% of revenue — so a Meta campaign that buys one-and-done customers cheaply is actively unhelpful even at a good ROAS. Distinct from the LTGP:CAC ratio below: that is a per-customer ceiling computed from averages, while this is a monthly trend line the solo operator can read straight off Shopify with no paid analytics tool. Concrete now — one number per month, recorded next to the $900/mo Meta spend, and the number that decides whether spend goes up next month. It also pairs with the CAC-versus-category diagnostic below: a rising front end with a flat returning-customer line is the monetization signal, not an ads signal.
 
 *Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
+
+## Judge a discovery or trial channel by the halo it produces on your other sales channels — especially Amazon — rather than by its own single-channel P&L.
+
+**Stage:** tracking — parked until the tracking phase opens.
+
+**Why it works:** Customers acquired on one channel are not loyal to it. They rebuy wherever it is most convenient — Amazon, retail — so a channel judged only on its own attributed revenue looks worse than it is: part of what it bought shows up as sales on a surface its pixel never sees. The creator expects roughly 30% Amazon lift from scaling a trial channel.
+
+**Evidence offered:** His own buying behaviour, and the retail lift his previous brand saw after activating TikTok Shop. No controlled measurement; the ~30% figure is an expectation, not a result.
+
+**Fit here (6/10):** Amazon is about two-thirds of RSC revenue (~$1,800 of ~$2,700/mo), so Meta spend aimed at Shopify very likely spills into Amazon branded search, and judging Meta on Shopify attribution alone understates it. Nothing else in this skill covers cross-surface spillover — the returning-customer revenue line and the LTGP:CAC ratio above are both read off a single surface. The runnable version is cheap and needs no attribution tool: log Meta spend dates against Amazon daily sales and branded-search sessions, using the 2026-08-27 → 2026-10-04 pause and relaunch as a natural before/after comparison (the pause window is the baseline; the relaunch began yesterday, so the comparison window is only now opening). Read it as directional — one pause, small volumes, and seasonality confounds it. The 'run the trial channel at a loss' half is not adopted, because the low-margin SKUs cannot carry it: any halo credit is added on top of the LTGP:CAC ceiling above, never used to excuse breaching it.
+
+*Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*
 
 ## Measure paid efficiency as lifetime gross profit to total customer acquisition cost (LTGP:CAC) — revenue minus cost to deliver, over the customer's whole life, against every cost of getting them — and hold CAC to at most one third of LTGP.
 
@@ -149,7 +161,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 **Evidence offered:** Attributed to Meta's own published explanation of the breakdown effect, plus her claim to have tested overriding it 'multiple times' with worse results. No figures from those tests.
 
-**Fit here (6/10):** Platform-mechanics class (algorithmic budget allocation behaviour) about 13 months old, so treat the named "breakdown effect" as a claim to re-check rather than gospel — but the instinct it guards against is live and expensive right now. On a small giveaway budget the temptation is acute: a handful of ads, one showing a flattering cost per entry on almost no delivery, and an operator checking daily with a slider in reach. That is precisely the ad whose efficiency will not survive more budget. Pairs directly with the doom-cycle rule below — both say the same thing, which is that the account needs to be left alone longer than feels comfortable. Held at 6 because it prevents a loss rather than producing a gain.
+**Fit here (6/10):** Platform-mechanics class (algorithmic budget allocation behaviour) about 13 months old, so treat the named "breakdown effect" as a claim to re-check rather than gospel — but the instinct it guards against is live and expensive right now. On a small giveaway budget the temptation is acute: a handful of ads, one showing a flattering cost per entry on almost no delivery, and an operator checking daily with a slider in reach. That is precisely the ad whose efficiency will not survive more budget. Pairs directly with the doom-cycle rule in marketing-paid-creative-testing — both say the same thing, which is that the account needs to be left alone longer than feels comfortable. Held at 6 because it prevents a loss rather than producing a gain.
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
