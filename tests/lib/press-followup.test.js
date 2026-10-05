@@ -70,6 +70,7 @@ test('pickNewFact prefers a gated fact whose words the original pitch did not us
   const f = pickNewFact(pressFacts, ['lotion'], original.body);
   assert.ok(f, 'a fact is picked');
   assert.ok(!/coconut oil/i.test(f), `the coconut oil fact was already in the pitch: ${f}`);
+  assert.match(f, /^Body Lotion/, 'the pitched product comes before brand facts');
   // No product: brand facts only.
   assert.equal(pickNewFact(pressFacts, [], ''), 'Handmade in small batches, made in the USA');
   // A fact the claim gate refuses is never picked.
