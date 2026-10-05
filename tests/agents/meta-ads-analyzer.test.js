@@ -108,3 +108,16 @@ assert.equal(meetsFilter(14, 3, 14, 3), true, 'exactly at both thresholds');
 }
 
 console.log('✓ meta-ads-analyzer unit tests pass');
+
+// pickForAnalysis — bounds the Claude pass and keeps one brand from filling it
+{
+  const { pickForAnalysis } = await import('../../agents/meta-ads-analyzer/index.js');
+  const ads = [];
+  for (let i = 0; i < 300; i++) ads.push({ id: `big${i}`, page_id: 'big', effectivenessScore: 600 });
+  for (let b = 0; b < 30; b++) ads.push({ id: `s${b}`, page_id: `p${b}`, effectivenessScore: 10 + b });
+  const picked = pickForAnalysis(ads);
+  assert.equal(picked.length, 33); // 3 from the big brand + 30 singles
+  assert.equal(picked.filter(a => a.page_id === 'big').length, 3);
+  assert.equal(picked[0].page_id, 'big');
+  assert.equal(pickForAnalysis(ads, { max: 5 }).length, 5);
+}

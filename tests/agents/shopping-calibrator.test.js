@@ -128,3 +128,27 @@ test('deadSpendQueries uses EXACT match so qualified variants survive', () => {
   assert.equal(negativeBlocks('coconut lotion', out[0].query, out[0].matchType), false);
   assert.equal(negativeBlocks('lotion', out[0].query, out[0].matchType), true);
 });
+
+import { trackingVerdict, calibratorStatus, TRACKING_JUDGE_MIN_CLICKS } from '../../agents/shopping-calibrator/index.js';
+
+test('trackingVerdict: 0 conversions on a trickle of clicks is not broken tracking', () => {
+  // The 2026-10-04 shape: 14 clicks, $4.69, 0 conversions.
+  assert.equal(trackingVerdict({ totalClicks: 14, totalConversions: 0 }), 'too-few-clicks');
+  assert.equal(trackingVerdict({ totalClicks: TRACKING_JUDGE_MIN_CLICKS, totalConversions: 0 }), 'looks-broken');
+  assert.equal(trackingVerdict({ totalClicks: 14, totalConversions: 1 }), 'alive');
+});
+
+test('calibratorStatus: a blocked-converting-query finding is info, not a failure', () => {
+  assert.equal(calibratorStatus({ verdict: 'too-few-clicks', conflicts: 5 }), 'info');
+  assert.equal(calibratorStatus({ verdict: 'alive', conflicts: 0 }), 'success');
+  assert.equal(calibratorStatus({ verdict: 'looks-broken', conflicts: 0 }), 'error');
+});
+
+test('buildMarkdown does not claim negatives were added when the safety rail skipped them', () => {
+  const md = buildMarkdown({
+    waste: [{ query: 'body lotion', volume: 1, marketPurchases: 1, marketPrice: 10, priceRatio: 0.34 }],
+    missing: [], conflicts: [], converting: [], weeks: 17, ourPrice: 30, applied: true, appliedCount: 0,
+  }, '2026-10-04');
+  assert.doesNotMatch(md, /Added as negatives/);
+  assert.match(md, /Added 0 as negatives; 1 skipped/);
+});
