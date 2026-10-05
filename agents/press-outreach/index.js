@@ -84,7 +84,7 @@ import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../..
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
 import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange, articleLinks } from '../../lib/press-links.js';
-import { draftFollowUp as draftFollowUpLib, pickNewFact, isArticleUrl, offerGiftHook, createFollowUpRun } from '../../lib/press-followup.js';
+import { draftFollowUp as draftFollowUpLib, pickNewFact, isArticleUrl, offerGiftHook, createFollowUpRun, openingKey } from '../../lib/press-followup.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
@@ -1241,14 +1241,17 @@ export async function runRedraftFollowups({
       inReplyTo: old.in_reply_to || pitch.message_id,
       references: (old.references || []).length ? old.references : refsOf(pitch.references, pitch.message_id),
     };
+    // A draft that stays in the queue keeps its opening taken for the rest of the batch.
+    const keepOld = () => { const k = openingKey(old.text); if (k) run.openings.add(k); };
     const out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls, fetchPage, pressFacts, generate, run, now, writer });
-    if (!out.ok) { result.failed.push({ ...row, reason: out.reason }); continue; }
+    if (!out.ok) { keepOld(); result.failed.push({ ...row, reason: out.reason }); continue; }
     let moved;
-    try { moved = moveAside(old); } catch (err) { result.failed.push({ ...row, reason: `could not move the old draft aside: ${err.message}` }); continue; }
+    try { moved = moveAside(old); } catch (err) { keepOld(); result.failed.push({ ...row, reason: `could not move the old draft aside: ${err.message}` }); continue; }
     try {
       saveDraft(out.draft);
     } catch (err) {
       try { restore(old, moved); } catch (e2) { log(`  could not restore ${old.id} from ${moved}: ${e2.message}`); }
+      keepOld();
       result.failed.push({ ...row, reason: `could not save the new draft (old one put back): ${err.message}` });
       continue;
     }

@@ -484,3 +484,20 @@ test('--redraft-followups keeps an old draft whose rewrite fails, and puts it ba
   assert.equal(r2.failed.length, 3);
   assert.equal(boom.calls.restored.length, 3);
 });
+
+test('--redraft-followups: a failed redraft keeps its old draft, so its opening stays taken for the rest of the batch', async () => {
+  const prompts = [];
+  let i = 0;
+  // 1st (sam) fails twice; kim then tries sam's old opening, which must collide.
+  const gen = async (p) => {
+    prompts.push(p); i += 1;
+    if (i <= 2) return JSON.stringify({ body: 'Just circling back. Any thoughts?', article_quote: null });
+    return JSON.stringify({ body: 'Rose Petal season is here for winter readers. Would a bottle help?', article_quote: null });
+  };
+  const { args } = redraftFuWorld({ generate: gen });
+  args.drafts = args.drafts.filter((d) => d.id !== '20261005-lee-followup1');
+  args.drafts = args.drafts.map((d) => (d.id === '20261005-sam-followup1' ? { ...d, text: 'Hi sam,\n\nRose Petal season is here for your readers. Would a bottle help?\n\nSean' } : d));
+  const r = await runRedraftFollowups(args);
+  assert.deepEqual(r.failed.map((x) => x.contactId).sort(), ['kim', 'sam']);
+  assert.match(r.failed.find((x) => x.contactId === 'kim').reason, /opener-collision/);
+});
