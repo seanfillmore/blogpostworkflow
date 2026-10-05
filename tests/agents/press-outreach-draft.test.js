@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runDrafting, htmlToText, upsertProspectContact, makeFindAddress, renderDraftSummary } from '../../agents/press-outreach/index.js';
+import { runDrafting, htmlToText, upsertProspectContact, makeFindAddress, renderDraftSummary, loadPressFacts } from '../../agents/press-outreach/index.js';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { validateContacts } from '../../lib/press-contacts.js';
 
 // FAKE DATA ONLY: invented people on example domains.
@@ -26,7 +29,7 @@ function harness(over = {}) {
     drafts: [],
     prTargets: prTargets(4),
     linkGap: { opportunities: [] },
-    factSheet: 'FACTS',
+    pressFacts: { brand: { facts: [] }, products: {} },
     postalAddress: '1 Example St',
     findAddress: async (p) => ({ address: `${p.person.name.split(' ')[0].toLowerCase()}@${p.domain}`, source: `published:${p.person.authorUrl}`, verified: true, spentHunter: 0 }),
     fetchArticle: async () => ({ outcome: 'ok', html: '<html><script>var x=1</script><p>A long article about lotion.</p></html>' }),
@@ -570,4 +573,34 @@ test('M9: the lock is refreshed inside a prospect, not only between prospects', 
   assert.ok(between('fetch', 'find'), events.join(' > '));
   assert.ok(between('find', 'draft'), events.join(' > '));
   assert.equal(events.at(-1), 'touch');
+});
+
+test('press facts: the drafting run reports every fact the gate skipped, and the draft call gets the document', async () => {
+  const pressFacts = { brand: { facts: ['Our antiperspirant formula is loved'] }, products: { lotion: { name: 'Body Lotion', facts: ['heals eczema overnight', 'unscented option'] } } };
+  const seen = [];
+  const { args } = harness({
+    pressFacts, config: { queueTarget: 1, editorialShare: 1 },
+    draftPitch: async (a) => { seen.push(a.pressFacts); return { ok: true, draft: { subject: 'Note', text: 'Hi', openerQuote: 'q', products: ['lotion'] } }; },
+  });
+  const r = await runDrafting(args);
+  assert.equal(r.skippedFacts.length, 2);
+  assert.equal(seen[0], pressFacts);
+  const { body } = renderDraftSummary(r, { apply: true });
+  assert.match(body, /Facts skipped by the claim gate \(never sent\):/);
+  assert.match(body, /brand\.facts: "Our antiperspirant formula is loved"/);
+  assert.match(body, /products\.lotion\.facts: "heals eczema overnight"/);
+  const clean = renderDraftSummary({ ...r, skippedFacts: [] }, { apply: true }).body;
+  assert.doesNotMatch(clean, /Facts skipped/);
+});
+
+test('press facts: a missing or unparseable file refuses with a clear message, never a fallback', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'press-facts-'));
+  const bad = join(dir, 'press-facts.json');
+  assert.throws(() => loadPressFacts(bad), /Refusing to draft: cannot read .*press-facts\.json/);
+  writeFileSync(bad, '{ not json');
+  assert.throws(() => loadPressFacts(bad), /Refusing to draft: .*not valid JSON/);
+  writeFileSync(bad, JSON.stringify({ brand: {} }));
+  assert.throws(() => loadPressFacts(bad), /Refusing to draft: .*no products/);
+  writeFileSync(bad, JSON.stringify({ brand: {}, products: { lotion: { name: 'L' } } }));
+  assert.equal(loadPressFacts(bad).products.lotion.name, 'L');
 });
