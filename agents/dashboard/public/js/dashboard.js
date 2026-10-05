@@ -4975,43 +4975,81 @@ async function renderOutreachTab() {
   }
   outreachDrafts = d.drafts || [];
   var pending = outreachDrafts.filter(function(x) { return x.status === 'pending'; });
-  var clean = pending.filter(function(x) { return x.gate && x.gate.ok; });
+  var approved = outreachDrafts.filter(function(x) { return x.status === 'approved'; });
 
+  // Pending drafts sit on top; approved ones fold into a collapsed section at the bottom
+  // (still editable or rejectable until they send). Approve and Reject remove the card in
+  // place, so the next draft moves up and the page never jumps back to the top.
   var html = '<div class="card"><div class="card-header accent-indigo">' +
     '<span class="card-title">Outreach</span>' +
-    '<span class="card-subtitle">' + pending.length + ' pending &middot; ' + (outreachDrafts.length - pending.length) + ' approved, waiting to send</span>' +
-    '<button class="btn-approve" style="margin-left:auto"' + (clean.length ? '' : ' disabled') + ' onclick="approveAllCleanOutreach()">Approve all clean (' + clean.length + ')</button>' +
-    '</div><div class="card-body">';
-  if (!outreachDrafts.length) {
-    html += '<div class="empty-state" style="padding:24px 0">No drafts waiting. The outreach agent drafts new pitches each day it runs.</div>';
-  }
-  outreachDrafts.forEach(function(x) {
-    var id = esc(x.id);
-    var url = outreachSafeUrl(x.target_url);
-    var problems = (x.gate && x.gate.problems) || [];
-    html += '<div class="outreach-card" id="outreach-card-' + id + '">' +
-      '<div class="outreach-meta"><span class="outreach-badge">' + esc(outreachKindLabel(x)) + '</span>' +
-        (x.status === 'approved' ? '<span class="outreach-badge" style="background:var(--green,#16a34a);color:#fff">approved</span>' : '') +
-        '<span>To: ' + esc(x.to) + '</span>' +
-        '<span title="Where this address came from">' + (x.address_source ? 'Address: ' + esc(x.address_source) : 'address source unknown') + '</span>' +
-        (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' : '') +
-        (outreachSafeUrl(x.article_url) ? '<a href="' + esc(x.article_url) + '" target="_blank" rel="noopener noreferrer">latest piece</a>' : '') +
-      '</div>' +
-      (x.opener_quote ? '<blockquote class="outreach-quote">' + esc(x.opener_quote) + '</blockquote>' : '') +
-      (x.article_quote ? '<blockquote class="outreach-quote">From their latest piece: ' + esc(x.article_quote) + '</blockquote>' : '') +
-      '<label class="idea-label">Subject</label>' +
-      '<input class="idea-input" id="outreach-subject-' + id + '" value="' + esc(x.subject) + '">' +
-      '<label class="idea-label">Body</label>' +
-      '<textarea class="idea-input outreach-text" id="outreach-text-' + id + '">' + esc(x.text) + '</textarea>' +
-      (problems.length ? '<ul class="outreach-problems" id="outreach-problems-' + id + '">' + problems.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<ul class="outreach-problems" id="outreach-problems-' + id + '" style="display:none"></ul>') +
-      '<div class="idea-row-actions">' +
-        (x.status === 'approved' ? '' : '<button class="btn-approve" onclick="approveOutreach(this)" data-id="' + id + '">Approve</button>') +
-        '<button class="btn-idea-reject" style="color:var(--text)" onclick="saveOutreach(this)" data-id="' + id + '">Save edit</button>' +
-        '<button class="btn-idea-reject" onclick="rejectOutreach(this)" data-id="' + id + '">Reject</button>' +
-      '</div></div>';
-  });
-  html += '</div></div>';
+    '<span class="card-subtitle"><span id="outreach-count-pending">' + pending.length + '</span> pending &middot; <span id="outreach-count-approved">' + approved.length + '</span> approved, waiting to send</span>' +
+    '<button class="btn-approve" id="outreach-approve-all" style="margin-left:auto" onclick="approveAllCleanOutreach()"></button>' +
+    '</div><div class="card-body">' +
+    '<div id="outreach-pending-list">' + pending.map(outreachCardHtml).join('') + '</div>' +
+    '<div class="empty-state" id="outreach-empty" style="padding:24px 0;display:none"></div>' +
+    '<details id="outreach-approved" style="margin-top:12px' + (approved.length ? '' : ';display:none') + '">' +
+      '<summary style="cursor:pointer;font-size:13px;color:var(--muted)">Approved, waiting to send (<span id="outreach-approved-count">' + approved.length + '</span>)</summary>' +
+      '<div id="outreach-approved-list">' + approved.map(outreachCardHtml).join('') + '</div>' +
+    '</details>' +
+    '</div></div>';
   panel.innerHTML = html;
+  outreachRefreshCounts();
+}
+
+function outreachCardHtml(x) {
+  var id = esc(x.id);
+  var url = outreachSafeUrl(x.target_url);
+  var problems = (x.gate && x.gate.problems) || [];
+  return '<div class="outreach-card" id="outreach-card-' + id + '">' +
+    '<div class="outreach-meta"><span class="outreach-badge">' + esc(outreachKindLabel(x)) + '</span>' +
+      (x.status === 'approved' ? '<span class="outreach-badge" style="background:var(--green,#16a34a);color:#fff">approved</span>' : '') +
+      '<span>To: ' + esc(x.to) + '</span>' +
+      '<span title="Where this address came from">' + (x.address_source ? 'Address: ' + esc(x.address_source) : 'address source unknown') + '</span>' +
+      (url ? '<a href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a>' : '') +
+      (outreachSafeUrl(x.article_url) ? '<a href="' + esc(x.article_url) + '" target="_blank" rel="noopener noreferrer">latest piece</a>' : '') +
+    '</div>' +
+    (x.opener_quote ? '<blockquote class="outreach-quote">' + esc(x.opener_quote) + '</blockquote>' : '') +
+    (x.article_quote ? '<blockquote class="outreach-quote">From their latest piece: ' + esc(x.article_quote) + '</blockquote>' : '') +
+    '<label class="idea-label">Subject</label>' +
+    '<input class="idea-input" id="outreach-subject-' + id + '" value="' + esc(x.subject) + '">' +
+    '<label class="idea-label">Body</label>' +
+    '<textarea class="idea-input outreach-text" id="outreach-text-' + id + '">' + esc(x.text) + '</textarea>' +
+    (problems.length ? '<ul class="outreach-problems" id="outreach-problems-' + id + '">' + problems.map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('') + '</ul>' : '<ul class="outreach-problems" id="outreach-problems-' + id + '" style="display:none"></ul>') +
+    '<div class="idea-row-actions">' +
+      (x.status === 'approved' ? '' : '<button class="btn-approve" onclick="approveOutreach(this)" data-id="' + id + '">Approve</button>') +
+      '<button class="btn-idea-reject" style="color:var(--text)" onclick="saveOutreach(this)" data-id="' + id + '">Save edit</button>' +
+      '<button class="btn-idea-reject" onclick="rejectOutreach(this)" data-id="' + id + '">Reject</button>' +
+    '</div></div>';
+}
+
+// Keep the header counts, the "Approve all clean" button and the empty/approved sections
+// in step with outreachDrafts after a card is removed in place.
+function outreachRefreshCounts() {
+  var pending = outreachDrafts.filter(function(x) { return x.status === 'pending'; });
+  var approved = outreachDrafts.filter(function(x) { return x.status === 'approved'; });
+  var clean = pending.filter(function(x) { return x.gate && x.gate.ok; });
+  var set = function(elId, v) { var el = document.getElementById(elId); if (el) el.textContent = v; };
+  set('outreach-count-pending', pending.length);
+  set('outreach-count-approved', approved.length);
+  set('outreach-approved-count', approved.length);
+  var btn = document.getElementById('outreach-approve-all');
+  if (btn) { btn.textContent = 'Approve all clean (' + clean.length + ')'; btn.disabled = !clean.length; }
+  var det = document.getElementById('outreach-approved');
+  if (det) det.style.display = approved.length ? '' : 'none';
+  var empty = document.getElementById('outreach-empty');
+  if (empty) {
+    empty.textContent = outreachDrafts.length
+      ? 'All caught up. Approved drafts send in the next sending window (weekdays, 16:00 to 24:00 UTC).'
+      : 'No drafts waiting. The outreach agent drafts new pitches each day it runs.';
+    empty.style.display = pending.length ? 'none' : '';
+  }
+}
+
+// Re-render without losing the reader's place (used after an edit is saved).
+async function outreachRerenderKeepScroll() {
+  var y = window.scrollY;
+  await renderOutreachTab();
+  window.scrollTo(0, y);
 }
 
 function outreachShowProblems(id, problems) {
@@ -5039,11 +5077,11 @@ async function saveOutreach(btn) {
     var wasApproved = (outreachDrafts.find(function(x) { return x.id === id; }) || {}).status === 'approved';
     var pd = await outreachPatch(id);
     if (!pd.ok) {
-      await renderOutreachTab();
+      await outreachRerenderKeepScroll();
       outreachShowProblems(id, (pd.problems || [pd.error || 'could not save']).concat(wasApproved && pd.problems ? ['Edit saved, but this draft no longer passes and is back to PENDING. Fix it and approve again.'] : []));
       return;
     }
-    renderOutreachTab();
+    outreachRerenderKeepScroll();
   } catch (e) { alert('Could not save the edit: ' + e.message); }
 }
 
@@ -5055,7 +5093,19 @@ async function approveOutreach(btn) {
     var res = await fetch('/api/press/drafts/' + encodeURIComponent(id) + '/approve', { method: 'POST' });
     var d = await res.json();
     if (!d.ok) { outreachShowProblems(id, d.problems || [d.error || 'could not approve']); return; }
-    renderOutreachTab();
+    var draft = outreachDrafts.find(function(x) { return x.id === id; });
+    if (draft) {
+      draft.status = 'approved';
+      var sj = document.getElementById('outreach-subject-' + id);
+      var tx = document.getElementById('outreach-text-' + id);
+      if (sj) draft.subject = sj.value;
+      if (tx) draft.text = tx.value;
+    }
+    var card = document.getElementById('outreach-card-' + id);
+    if (card) card.remove();
+    var list = document.getElementById('outreach-approved-list');
+    if (list && draft) list.insertAdjacentHTML('beforeend', outreachCardHtml(draft));
+    outreachRefreshCounts();
   } catch (e) { alert('Could not approve: ' + e.message); }
 }
 
@@ -5070,7 +5120,10 @@ async function rejectOutreach(btn) {
     });
     var d = await res.json();
     if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
-    renderOutreachTab();
+    outreachDrafts = outreachDrafts.filter(function(x) { return x.id !== id; });
+    var card = document.getElementById('outreach-card-' + id);
+    if (card) card.remove();
+    outreachRefreshCounts();
   } catch (e) { alert('Could not reject: ' + e.message); }
 }
 
