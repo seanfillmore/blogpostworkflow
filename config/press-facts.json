@@ -33,7 +33,7 @@
         "Calming Lavender"
       ],
       "facts": [
-        "26 customer reviews averaging 4.7 stars"
+        "94 customer reviews averaging 4.9 stars"
       ]
     },
     "body-cream": {
@@ -59,7 +59,7 @@
         "Pure Unscented"
       ],
       "facts": [
-        "12 customer reviews averaging 4.9 stars"
+        "27 customer reviews averaging 4.8 stars"
       ]
     },
     "soap": {
@@ -77,7 +77,9 @@
         "Refreshing Lemongrass",
         "Pure Unscented"
       ],
-      "facts": []
+      "facts": [
+        "32 customer reviews averaging 4.6 stars"
+      ]
     },
     "hand-soap": {
       "name": "Foaming Liquid Soap",
@@ -95,7 +97,7 @@
         "Pure Unscented"
       ],
       "facts": [
-        "12 customer reviews averaging 4.8 stars"
+        "27 customer reviews averaging 4.7 stars"
       ]
     },
     "deodorant": {
@@ -139,7 +141,9 @@
         "All Natural",
         "Cinnamon Spice"
       ],
-      "facts": []
+      "facts": [
+        "20 customer reviews averaging 4.4 stars"
+      ]
     },
     "lip-balm": {
       "name": "Lip Balm",
@@ -159,7 +163,7 @@
         "Pure Unscented"
       ],
       "facts": [
-        "10 customer reviews averaging 4.6 stars"
+        "11 customer reviews averaging 4.6 stars"
       ]
     }
   }
