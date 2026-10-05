@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DEFAULT_CONFIG, inSendWindow, dailyCap, signature, stripDashes, followUpText, bumpText,
+  DEFAULT_CONFIG, inSendWindow, dailyCap, signature, stripDashes,
   askAddressText, checkOutgoingCopy, shouldPause, OPT_OUT_LINE, firstName, postalLine,
 } from '../../lib/press-outreach.js';
 
@@ -26,9 +26,9 @@ test('signature is name, brand, site with no address; postalLine carries it; tem
   assert.equal(signature(), 'Sean\nReal Skin Care\nrealskincare.com');
   assert.equal(postalLine(ADDR), `Real Skin Care, ${ADDR}`);
   assert.doesNotMatch(postalLine(ADDR), /\n/, 'one line');
-  for (const s of [followUpText({ firstName: 'Jane', n: 1 }), followUpText({ firstName: 'Jane', n: 2 }), bumpText({ firstName: 'Jane', originalSubject: 'X' }), askAddressText({ firstName: 'Jane' })]) {
+  for (const s of [askAddressText({ firstName: 'Jane' })]) {
     assert.doesNotMatch(s, /[—–]/);
-    assert.ok(s.split(/\s+/).length <= 70, 'follow-ups stay short');
+    assert.ok(s.split(/\s+/).length <= 70, 'fixed replies stay short');
   }
   assert.equal(stripDashes('a — b – c'), 'a, b, c');
 });
@@ -70,8 +70,14 @@ test('firstName falls back to "there" for an outlet record', () => {
   assert.equal(firstName({ name: 'Example Magazine', kind: 'outlet' }), 'there');
 });
 
-test('fixed follow-up templates pass copy checks', () => {
-  for (const [n, text] of [[1, followUpText({ firstName: 'Jane', n: 1 })], [2, followUpText({ firstName: 'Jane', n: 2 })], [null, bumpText({ firstName: 'Jane' })], [null, askAddressText({ firstName: 'Jane' })]]) {
+test('the fixed follow-up templates are gone: follow-ups are model-written and approved', async () => {
+  const mod = await import('../../lib/press-outreach.js');
+  assert.equal(mod.followUpText, undefined);
+  assert.equal(mod.bumpText, undefined);
+});
+
+test('fixed reply templates pass copy checks', () => {
+  for (const [n, text] of [[null, askAddressText({ firstName: 'Jane' })]]) {
     const result = checkOutgoingCopy({ subject: 'Re: Coconut cream', text, kind: 'followup' });
     assert.equal(result.ok, true, `template should pass (n=${n}): ${result.problems.join('; ')}`);
   }
