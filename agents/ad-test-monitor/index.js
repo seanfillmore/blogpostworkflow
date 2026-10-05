@@ -18,6 +18,12 @@
  *   node agents/ad-test-monitor/index.js           # print the report
  *   node agents/ad-test-monitor/index.js --notify  # also send it (cron does this)
  *
+ * A test may carry `reportEveryDays` (the creative test uses 3, Sean's choice
+ * 2026-10-04): the check still runs daily so a stop rule is caught the morning
+ * it is hit, but the digest row appears only on that cadence. A campaign with
+ * `perCreative: true` and a test-level `graduation` block adds a per-ad readout
+ * against the graduation rule (lib/ad-test-rules.js evaluateGraduation).
+ *
  * Cron: DAILY_AD_TEST_MONITOR, 12:10 UTC (scripts/setup-cron.sh).
  * Requires META_USER_ACCESS_TOKEN (and TRYBE_API_KEY for Trybe tests) in .env.
  */
@@ -28,7 +34,7 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listCreatorPerformance } from '../../lib/trybe.js';
-import { evaluateRules, metaPurchaseCount, taggedOrders, renderTestLines } from '../../lib/ad-test-rules.js';
+import { evaluateRules, metaPurchaseCount, taggedOrders, renderTestLines, evaluateGraduation, metaAddToCartCount, adOrderTag, readoutDue, renderCreativeLines } from '../../lib/ad-test-rules.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CONFIG_PATH = join(ROOT, 'config', 'ad-tests.json');
@@ -83,21 +89,26 @@ export async function checkTest(test, {
 }) {
   const until = ymd(Math.min(now, Date.parse(test.endDate) + 86_400_000));
   const { orders = [] } = await loadOrders(`${test.startDate}T00:00:00Z`, new Date(now).toISOString());
-  const shopifyOrders = taggedOrders(orders, test.landingTag);
+  const landingTags = test.landingTags || [test.landingTag];
+  const shopifyOrders = taggedOrders(orders, landingTags);
+  const ordersFor = (tag) => shopifyOrders.filter((o) => String(o.landing_site || '').includes(tag));
 
   const rows = [];
   for (const c of test.campaigns) {
     const camp = await graph(c.id, token, { fields: 'effective_status' }, fetchImpl);
-    // Trybe names each ad "..._trybe=<video id>" and tags its link the same way,
-    // so an order's landing URL names the exact ad, and therefore the campaign.
-    const ads = await graph(`${c.id}/ads`, token, { fields: 'name', limit: '100' }, fetchImpl);
-    const ids = (ads.data || []).map((x) => (String(x.name).match(/trybe=([a-z0-9]+)/i) || [])[1]).filter(Boolean);
-    const mine = shopifyOrders.filter((o) => ids.some((id) => String(o.landing_site || '').includes(`${test.landingTag}${id}`)));
+    // Each ad's orders are found by the tag its link carries: Trybe names each ad
+    // "..._trybe=<video id>" and tags its link the same way; our own ads carry a
+    // utm_content in their url_tags. A campaign-level tag (c.landingTag) covers ads
+    // that carry neither, e.g. a catalog ad.
+    const ads = await graph(`${c.id}/ads`, token, { fields: 'name,creative{url_tags}', limit: '100' }, fetchImpl);
+    const adTags = new Map((ads.data || []).map((a) => [a.id, adOrderTag({ name: a.name, urlTags: a.creative?.url_tags })]));
+    const tags = [...new Set([...adTags.values()].filter(Boolean))];
+    const mine = shopifyOrders.filter((o) => [...tags, c.landingTag].filter(Boolean).some((t) => String(o.landing_site || '').includes(t)));
     const ins = await graph(`${c.id}/insights`, token, {
       time_range: { since: test.startDate, until }, fields: 'spend,impressions,inline_link_clicks,actions',
     }, fetchImpl);
     const r = ins.data?.[0] || {};
-    const shopifyPurchases = ids.length ? mine.length : (test.campaigns.length === 1 ? shopifyOrders.length : 0);
+    const shopifyPurchases = (tags.length || c.landingTag) ? mine.length : (test.campaigns.length === 1 ? shopifyOrders.length : 0);
     const m = {
       spend: Number(r.spend) || 0,
       impressions: Number(r.impressions) || 0,
@@ -105,7 +116,22 @@ export async function checkTest(test, {
       metaPurchases: metaPurchaseCount(r.actions),
       shopifyPurchases,
     };
-    rows.push({ ...m, id: c.id, label: c.label, status: camp.effective_status, eval: evaluateRules(m, test.rules) });
+    const row = { ...m, id: c.id, label: c.label, status: camp.effective_status, eval: evaluateRules(m, c.rules || test.rules) };
+    if (c.perCreative && test.graduation) {
+      const byAd = await graph(`${c.id}/insights`, token, {
+        level: 'ad', time_range: { since: test.startDate, until }, limit: '200',
+        fields: 'ad_id,ad_name,spend,impressions,inline_link_clicks,actions',
+      }, fetchImpl);
+      const seen = new Map((byAd.data || []).map((x) => [x.ad_id, x]));
+      row.creatives = (ads.data || []).map((a) => {
+        const x = seen.get(a.id) || {};
+        const tag = adTags.get(a.id);
+        const purchases = Math.max(tag ? ordersFor(tag).length : 0, metaPurchaseCount(x.actions));
+        const cm = { spend: Number(x.spend) || 0, impressions: Number(x.impressions) || 0, linkClicks: Number(x.inline_link_clicks) || 0, addToCarts: metaAddToCartCount(x.actions), purchases };
+        return { id: a.id, name: a.name, ...cm, eval: evaluateGraduation(cm, test.graduation) };
+      });
+    }
+    rows.push(row);
   }
 
   let trybe = null;
@@ -134,11 +160,22 @@ async function main() {
   const lines = [];
   const newStops = [];
   for (const test of tests) {
-    const loadTrybe = test.landingTag.startsWith('trybe') && env.TRYBE_API_KEY
+    const loadTrybe = (test.landingTags || [test.landingTag]).some((t) => String(t).startsWith('trybe')) && env.TRYBE_API_KEY
       ? (start, end) => listCreatorPerformance({ apiKey: env.TRYBE_API_KEY, startDate: start, endDate: end })
       : null;
     const r = await checkTest(test, { token, now, loadTrybe });
-    lines.push(...renderTestLines(test, r.rows, { ...r, tokenDaysLeft: daysLeft, now }), '');
+    // A test with reportEveryDays reports on that cadence only, except on a day a
+    // stop rule is hit (that is also emailed immediately below, once).
+    const due = !test.reportEveryDays || readoutDue(state.lastReadout?.[test.name], now, test.reportEveryDays);
+    const anyStop = r.rows.some((row) => row.eval.status === 'stop');
+    if (due || anyStop) {
+      lines.push(...renderTestLines(test, r.rows, { ...r, tokenDaysLeft: daysLeft, now }));
+      for (const row of r.rows) if (row.creatives) lines.push(`  ${row.label}:`, ...renderCreativeLines(row.creatives, test.graduation));
+      lines.push('');
+      if (due && test.reportEveryDays) (state.lastReadout ||= {})[test.name] = new Date(now).toISOString();
+    } else {
+      console.log(`${test.name}: next readout due ${test.reportEveryDays} day(s) after ${state.lastReadout[test.name].slice(0, 10)}; no stop rule hit today.`);
+    }
     for (const row of r.rows) {
       for (const reason of row.eval.reasons) {
         const key = `${row.id}:${reason.split(' ').slice(0, 3).join(' ')}`;
@@ -146,8 +183,14 @@ async function main() {
       }
     }
   }
+  if (!lines.length) {
+    console.log('No readout due today.');
+    if (send) { mkdirSync(dirname(STATE_PATH), { recursive: true }); writeFileSync(STATE_PATH, JSON.stringify(state, null, 2)); }
+    return;
+  }
   const stops = lines.filter((l) => l.includes('STOP RULE HIT')).length;
-  const subject = `Ad tests: ${stops ? `${stops} campaign(s) hit a stop rule` : 'all within rules'}`;
+  const ready = lines.filter((l) => l.includes('READY TO GRADUATE')).length;
+  const subject = `Ad tests: ${stops ? `${stops} campaign(s) hit a stop rule` : 'all within rules'}${ready ? ` · ${ready} creative(s) ready to graduate` : ''}`;
   const body = lines.join('\n').trim();
   console.log(`${subject}\n\n${body}`);
   if (!send) return;

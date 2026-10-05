@@ -5,11 +5,17 @@
       "name": "Trybe UGC October 2026",
       "adAccount": "act_946015593265647",
       "startDate": "2026-10-02",
-      "endDate": "2026-10-16",
+      "endDate": "2026-10-04",
       "landingTag": "trybe=",
       "campaigns": [
-        { "id": "120249610898540173", "label": "Cold (lotion)" },
-        { "id": "120249610898770173", "label": "Warm (cross-sell)" }
+        {
+          "id": "120249610898540173",
+          "label": "Cold (lotion)"
+        },
+        {
+          "id": "120249610898770173",
+          "label": "Warm (cross-sell)"
+        }
       ],
       "rules": {
         "minImpressionsForCtr": 3000,
@@ -17,6 +23,53 @@
         "maxSpendWithoutPurchase": 150,
         "maxCostPerPurchase": 60,
         "costPerPurchaseAfter": 2
+      },
+      "_ended": "Paused 2026-10-04: its six ads moved into the Creative test campaign."
+    },
+    {
+      "name": "Creative test October 2026",
+      "adAccount": "act_946015593265647",
+      "startDate": "2026-10-04",
+      "endDate": "2026-11-01",
+      "_note": "All approved creatives (Trybe UGC + our Sensitive Skin Set images) in one $50/day CBO campaign, plus DPA retargeting at $10/day. Readout every 3 days (Sean, 2026-10-04). Raise the test to $100/day only once a creative graduates; graduates move to a scaling campaign by post ID.",
+      "reportEveryDays": 3,
+      "landingTags": [
+        "trybe=",
+        "utm_campaign=creative-test-2026-10",
+        "utm_campaign=retargeting-dpa-2026-10"
+      ],
+      "campaigns": [
+        {
+          "id": "120249631730870173",
+          "label": "Creative test (cold, $50/day)",
+          "perCreative": true
+        },
+        {
+          "id": "120249631733200173",
+          "label": "Retargeting DPA ($10/day)",
+          "landingTag": "utm_campaign=retargeting-dpa-2026-10",
+          "rules": {
+            "minImpressionsForCtr": 3000,
+            "minLinkCtr": 0.01,
+            "maxSpendWithoutPurchase": 100,
+            "maxCostPerPurchase": 60,
+            "costPerPurchaseAfter": 2
+          }
+        }
+      ],
+      "rules": {
+        "minImpressionsForCtr": 5000,
+        "minLinkCtr": 0.008,
+        "maxSpendWithoutPurchase": 400,
+        "maxCostPerPurchase": 60,
+        "costPerPurchaseAfter": 2
+      },
+      "graduation": {
+        "minSpend": 150,
+        "minLinkCtr": 0.015,
+        "maxCostPerLinkClick": 1.5,
+        "minAddToCarts": 5,
+        "minPurchases": 1
       }
     }
   ]
