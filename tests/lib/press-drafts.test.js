@@ -149,3 +149,20 @@ test('I2: the same approved draft may still be edited back to pending, rejected 
     assert.doesNotThrow(() => saveDraft('/d', next(approved), fsImpl));
   }
 });
+
+test('a followup draft carries n and an id unique per contact, n and day', () => {
+  const f1 = mk({ kind: 'followup', n: 1, inReplyTo: '<p@realskincare.com>', references: ['<p@realskincare.com>'] });
+  const f2 = mk({ kind: 'followup', n: 2 });
+  assert.match(f1.id, /^\d{8}-jane-doe-followup1$/);
+  assert.match(f2.id, /^\d{8}-jane-doe-followup2$/);
+  assert.equal(f1.n, 1);
+  assert.equal(f1.kind, 'followup');
+  assert.equal(f1.status, 'pending');
+  assert.equal(f1.in_reply_to, '<p@realskincare.com>');
+  assert.throws(() => mk({ kind: 'followup' }), /n/);
+  assert.throws(() => mk({ kind: 'followup', n: 3 }), /n/);
+  // Same lifecycle as a pitch.
+  const sent = markSent(approveDraft(f1, { now: T0 }), { now: T0, messageId: '<m>' });
+  assert.equal(sent.status, 'sent');
+  assert.equal(expireDrafts([f2], T0 + 15 * D).expired.length, 1);
+});

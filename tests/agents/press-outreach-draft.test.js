@@ -604,3 +604,11 @@ test('press facts: a missing or unparseable file refuses with a clear message, n
   writeFileSync(bad, JSON.stringify({ brand: {}, products: { lotion: { name: 'L' } } }));
   assert.equal(loadPressFacts(bad).products.lotion.name, 'L');
 });
+
+test('an explicit --limit above draftRunMax is honoured for pitches (no follow-ups due)', async () => {
+  const { args, saved } = harness({ config: { ...CONFIG, draftRunMax: 2 }, limit: 5, prTargets: prTargets(5), deadline: NOW + 3600e3, clock: () => NOW });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 0);
+  assert.equal(r.drafted.length, 5);
+  assert.equal(saved.drafts.filter((d) => d.kind === 'pitch').length, 5);
+});

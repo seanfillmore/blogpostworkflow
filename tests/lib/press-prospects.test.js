@@ -131,3 +131,13 @@ test('excludeKeys applies to link-gap keys too', () => {
   });
   assert.deepEqual(prospects.map((p) => p.key), ['link-gap:good.example']);
 });
+
+test('a rejected follow-up is not a verdict on the domain: only a rejected pitch starts the cooldown', async () => {
+  const { draftBlockReason } = await import('../../lib/press-prospects.js');
+  const rej = (kind) => ({ id: `x-${kind}`, kind, status: 'rejected', rejected_at: '2026-10-05T00:00:00Z' });
+  assert.equal(draftBlockReason(rej('followup'), '2026-10-06'), null);
+  assert.equal(draftBlockReason(rej('bump'), '2026-10-06'), null);
+  assert.match(draftBlockReason(rej('pitch'), '2026-10-06'), /cooldown/);
+  assert.match(draftBlockReason({ ...rej('pitch'), kind: undefined }, '2026-10-06'), /cooldown/);
+  assert.match(draftBlockReason({ id: 'f', kind: 'followup', status: 'pending' }, '2026-10-06'), /pending/, 'an open follow-up still blocks');
+});

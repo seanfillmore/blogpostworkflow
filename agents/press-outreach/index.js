@@ -15,13 +15,15 @@
  *      action (sample-yes, address-given, opt-out, decline) is confirmed by one
  *      model call first; anything unconfirmed or unclear is ESCALATED to Sean and
  *      nothing goes back to the writer
- *   5. sends threaded follow-ups (at most 2 per pitch, days 5 and 12)
+ *   5. sends NO follow-up on its own: the daily --draft run writes one per due
+ *      thread (lib/press-followup.js, at most 2 per pitch, days 5 and 12) and
+ *      it sends in step 6 only once Sean approves it
  *   5b. samples (lib/press-samples.js): an address becomes a $0 "PR Package"
  *      order when the app holds write_draft_orders (else Sean is asked to place
  *      it); any PR Package order for an accepted sample, hand-made ones too, is
  *      found by shipping name or email, its tracking emailed once it ships, and
  *      one check-in sent 21 days after delivery if the thread stayed quiet
- *   6. sends first pitches and bumps ONLY from drafts Sean approved (sendOrder)
+ *   6. sends first pitches and follow-ups ONLY from drafts Sean approved (sendOrder)
  *
  * Usage:
  *   node agents/press-outreach/index.js                    # dry run: plan, send nothing
@@ -31,21 +33,23 @@
  *   node agents/press-outreach/index.js --test-send you@example.com
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
  *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
- *                                                          # one-off: thread ids, existing replies, bump drafts
+ *                                                          # one-off: thread ids, existing replies, follow-up drafts
+ *   node agents/press-outreach/index.js --redraft-bumps [--apply]
+ *                                                          # replace old fixed-template bump drafts with written follow-ups
  *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
- *                                                          # daily: turn prospects into pitch drafts for approval
+ *                                                          # daily: follow-up drafts for due threads, then pitch drafts, for approval
  *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
  *   node agents/press-outreach/index.js --check-links [--apply]
  *                                                          # weekly (Mon 14:25 UTC): find earned links and mentions
  *                                                          # among engaged pitches, then send the funnel digest
  *
  * Cron (UTC, scripts/setup-cron.sh):
- *   17,47 * * * *   --apply              replies, escalations, follow-ups, samples, Sean-approved sends
- *   20 14 * * *     --draft --apply       prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
+ *   17,47 * * * *   --apply              replies, escalations, samples, Sean-approved sends
+ *   20 14 * * *     --draft --apply       follow-up drafts for due threads first, then the prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
  *                                         at most 10 drafts a run, no new prospect after 15:30 UTC
  *   25 14 * * 1     --check-links --apply earned-link check and funnel digest
  *   (--backfill was a one-time run, done 2026-10-04; --resume, --init and --test-send are by hand.)
- * Every first pitch and bump waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
+ * Every first pitch and follow-up waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap of 10 that ramps to 25 after 14 days with no
  * auto-pause. A spam complaint or a >3% hard-bounce rate over the last 50 sends pauses everything until --resume.
  *
@@ -67,7 +71,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
-import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, isTransientNetworkError } from '../../lib/hushmail.js';
+import { hushmailCredentials, sendMail, fetchFromAllFolders, fetchSentTo, fetchSentBodiesTo, isTransientNetworkError } from '../../lib/hushmail.js';
 import {
   loadContacts, validateContacts, recordPitch, updatePitch, autoFollowUpsDue, openPitchByAddress,
   emailOf, lastPitch, MAX_FOLLOW_UPS, PRESS_CONTACTS_PATH, PITCHABLE_STATUSES, PITCH_OUTCOMES,
@@ -77,12 +81,13 @@ import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
-import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange } from '../../lib/press-links.js';
+import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange, articleLinks } from '../../lib/press-links.js';
+import { draftFollowUp as draftFollowUpLib, pickNewFact } from '../../lib/press-followup.js';
 import { DRAFTS_DIR, newDraft, markSent, expireDrafts, sendOrder, loadDrafts, saveDraft as saveDraftFile } from '../../lib/press-drafts.js';
 import { classifyReply } from '../../lib/press-replies.js';
 import {
-  DEFAULT_CONFIG, inSendWindow, dailyCap, stripDashes, followUpText, askAddressText,
-  checkOutgoingCopy, shouldPause, firstName, bumpText,
+  DEFAULT_CONFIG, inSendWindow, dailyCap, stripDashes, askAddressText,
+  checkOutgoingCopy, shouldPause, firstName, OPT_OUT_LINE,
 } from '../../lib/press-outreach.js';
 import {
   hasDraftOrderScope, fetchPrPackageOrders, fetchOrderByName, countMonthKits, planSample, buildDraftOrderInput,
@@ -109,6 +114,8 @@ const CONFIRM_MODEL = LLM_MODELS.standard;
 const SEND_FAILURES_REPORT_AT = 3;
 const CHECKIN_GIVE_UP_DAYS = 90;
 const AUTO_KINDS = new Set(['sample-yes', 'address-given', 'opt-out', 'decline']);
+// Drafts that reply under an existing pitch thread.
+const THREADED_KINDS = new Set(['followup', 'bump']);
 
 function loadEnv(root = ROOT) {
   try {
@@ -728,37 +735,9 @@ export async function runPressOutreach({
     }
 
     // ── 5. follow-ups ──
-    if (inSendWindow(now)) {
-      const due = autoFollowUpsDue(book.contacts, now)
-        .sort((a, b) => String(a.pitch.last_sent_at || a.pitch.date).localeCompare(String(b.pitch.last_sent_at || b.pitch.date)));
-      for (const { contact, pitch, n } of due) {
-        if (held.has(contact.id)) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} held: a reply from them is still being handled` }); continue; }
-        const prior = state.sends.find((s) => s.contact_id === contact.id && s.kind === `follow-up-${n}` && s.pitch_date === pitch.date);
-        if (prior) {
-          // Sent by an earlier run whose book write failed: repair, never resend.
-          commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: prior.at, references: refsOf(refsOf(pitch.references, pitch.message_id), prior.message_id) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
-          result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} was already sent by an earlier run; book repaired` });
-          continue;
-        }
-        if (!canSend()) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n} deferred: send cap reached` }); continue; }
-        if (!pitch.subject) { result.skipped.push({ id: contact.id, name: contact.name, reason: 'pitch has no subject to reply under' }); continue; }
-        const text = stripDashes(followUpText({ firstName: firstName(contact), n }));
-        const subject = stripDashes(reSubject(pitch.subject));
-        const gate = checkOutgoingCopy({ subject, text, kind: 'follow-up' });
-        if (!gate.ok) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up failed the copy gate: ${gate.problems.join('; ')}` }); continue; }
-        const refs = refsOf(pitch.references, pitch.message_id);
-        let r;
-        try {
-          r = await doSend({ to: emailOf(contact), subject, text, inReplyTo: pitch.message_id, references: refs.join(' ') }, { contactId: contact.id, kind: `follow-up-${n}`, pitchDate: pitch.date });
-        } catch (err) {
-          result.failed.push({ id: contact.id, name: contact.name, kind: `follow-up-${n}`, error: err.message });
-          continue;
-        }
-        if (r.skipped) { result.skipped.push({ id: contact.id, name: contact.name, reason: `follow-up ${n}: ${r.skipped}` }); continue; }
-        commitAfterSend(contact.id, { follow_ups_sent: n, last_sent_at: r.at, references: refsOf(refs, r.messageId) }, { id: contact.id, name: contact.name, kind: `follow-up-${n}` });
-        result.followUps.push({ id: contact.id, name: contact.name, n });
-      }
-    }
+    // Nothing is sent automatically any more: the daily --draft run writes a
+    // personalised follow-up for every due thread, and it sends in step 6 only
+    // once Sean has approved it.
   }
 
   // ── 5b. samples: find orders, send tracking, check in ──
@@ -790,9 +769,11 @@ export async function runPressOutreach({
           source: d.source || 'manual', target_url: d.target_url || null, draft_id: d.id,
         }), row);
       } else {
+        // A follow-up never lowers the count: follow_ups_sent = max(existing, n).
         const lp = lastPitch(c);
         const later = !lp?.last_sent_at || Date.parse(sentAt) > Date.parse(lp.last_sent_at);
-        commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lp?.follow_ups_sent || 0, 1), ...(later ? { last_sent_at: sentAt } : {}) }), row);
+        const n = d.kind === 'followup' ? (d.n === 2 ? 2 : 1) : 1;
+        commit(updatePitch(book, c.id, { follow_ups_sent: Math.max(lp?.follow_ups_sent || 0, n), ...(later ? { last_sent_at: sentAt } : {}) }), row);
       }
     } catch (err) {
       result.failed.push({ ...row, error: `sent, but the book was not updated: ${err.message}` });
@@ -826,11 +807,17 @@ export async function runPressOutreach({
           continue;
         }
       }
-      if (d.kind === 'bump') {
-        // A bump re-opens a quiet thread. It is only right while the thread is
+      if (THREADED_KINDS.has(d.kind) && !d.in_reply_to) {
+        const problem = 'no in_reply_to: cannot thread this under the pitch';
+        if (saveIfUnchanged(d, { ...d, status: 'pending', gate_problems: [problem] }, row)) result.skipped.push({ ...row, reason: `back to pending: ${problem}` });
+        continue;
+      }
+      if (THREADED_KINDS.has(d.kind)) {
+        // A follow-up (or an old bump) re-opens a quiet thread. It is only right while the thread is
         // still quiet, which we can only know when the mail was read this run.
-        if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: 'bump held: replies could not be read this run' }); continue; }
-        if (lastPitch(c)?.outcome !== 'sent') {
+        if (result.imapDown || held.has(c.id)) { result.skipped.push({ ...row, reason: `${d.kind} held: replies could not be read this run` }); continue; }
+        // Written for an older pitch than the latest one: that thread is over.
+        if (lastPitch(c)?.outcome !== 'sent' || (d.pitch_date && d.pitch_date !== lastPitch(c)?.date)) {
           const gone = { ...d, status: 'expired', expired_at: isoOf(now), expired_reason: 'thread moved on' };
           if (saveIfUnchanged(d, gone, row)) result.expired.push({ id: d.id, contact_id: d.contact_id, reason: 'thread moved on' });
           continue;
@@ -845,7 +832,7 @@ export async function runPressOutreach({
       }
       let r;
       try {
-        const threaded = d.kind === 'bump' && d.in_reply_to;
+        const threaded = THREADED_KINDS.has(d.kind) && d.in_reply_to;
         r = await doSend({
           to: d.to, subject, text,
           ...(threaded ? { inReplyTo: d.in_reply_to, references: refsOf(d.references, d.in_reply_to).join(' ') } : {}),
@@ -862,6 +849,7 @@ export async function runPressOutreach({
       state.first_sent_at ||= sentAt;
       persistState(row);
       result.sent.push({ ...row, to: d.to });
+      if (THREADED_KINDS.has(d.kind)) result.followUps.push({ id: c.id, name: c.name, n: d.kind === 'followup' ? d.n : 1, draft_id: d.id });
     }
   }
 
@@ -880,10 +868,11 @@ const fold = (s) => String(s || '').trim().toLowerCase();
  *      message_id, subject and last_sent_at (no Sent copy: noted, never followed up)
  *   2. replies since the pitch: reported with their classification; only
  *      decline and opt-out are patched, everything else is left for Sean
- *   3. bump drafts: one per pitch still `sent`, threaded, older than 12 days
+ *   3. follow-up candidates: one per pitch still `sent`, threaded, older than 12
+ *      days (runBackfill drafts each through lib/press-followup.js for approval)
  *   4. processed: the Message-ID of every reply read from a book contact, so the
  *      first live run never answers a reply Sean already handled by hand
- * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], drafts: object[], notes: string[], processed: string[]}}
+ * @returns {{patches: {id: string, patch: object, contactStatus?: string}[], followUps: {contactId: string, subject: string, inReplyTo: string, references: string[]}[], notes: string[], processed: string[]}}
  */
 export function planBackfill({ book, sentCopies = [], replies = [], now = Date.now(), drafts = [] } = {}) {
   const patches = [];
@@ -922,8 +911,9 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
           patch.message_id = messageId;
           patch.subject = copy.subject;
           patch.last_sent_at = lastSent;
-          // A hand-sent September pitch never gets AUTOMATIC follow-ups: its one
-          // follow-up is the bump draft below, which only sends once Sean approves it.
+          // A hand-sent September pitch is never picked up by the due-date
+          // follow-ups: its one follow-up is the candidate below, drafted for
+          // Sean's approval.
           patch.follow_ups_sent = MAX_FOLLOW_UPS;
           notes.push(`${c.name} (${c.id}): thread id found (${messageId})`);
         }
@@ -950,20 +940,18 @@ export function planBackfill({ book, sentCopies = [], replies = [], now = Date.n
     if (Object.keys(patch).length) patches.push({ id: c.id, patch });
     if (!threadOk || declined || conversation) continue;
 
-    // 3. bump draft
+    // 3. follow-up candidate
     const age = (now - Date.parse(lastSent || `${p.date}T00:00:00Z`)) / DAY;
     if (age <= BUMP_AFTER_DAYS) continue;
     if (drafts.some((d) => d.contact_id === c.id && ['pending', 'approved'].includes(d.status))) {
-      notes.push(`${c.name} (${c.id}): a draft is already waiting, no bump created`);
+      notes.push(`${c.name} (${c.id}): a draft is already waiting, no follow-up drafted`);
       continue;
     }
-    const subject = reSubject(patch.subject || p.subject);
-    out.push(newDraft({
-      kind: 'bump', contactId: c.id, to: email, subject, text: bumpText({ firstName: firstName(c) }),
-      inReplyTo: messageId, references: [messageId], concept: p.concept || 'intro', products: p.products || [], now,
-    }));
+    // No fixed-template bump any more: the thread becomes a follow-up CANDIDATE,
+    // written per writer by lib/press-followup.js and queued for Sean's approval.
+    out.push({ contactId: c.id, subject: reSubject(patch.subject || p.subject), inReplyTo: messageId, references: [messageId] });
   }
-  return { patches, drafts: out, notes, processed };
+  return { patches, followUps: out, notes, processed };
 }
 
 /**
@@ -989,6 +977,209 @@ export function parseSet(arg) {
   if (!m) throw new Error(`--set wants <id>=<outcome>[:<order>], got "${arg}"`);
   if (!PITCH_OUTCOMES.includes(m[2])) throw new Error(`--set outcome "${m[2]}" must be one of ${PITCH_OUTCOMES.join(', ')}`);
   return { id: m[1], outcome: m[2], sampleOrder: m[3] || null };
+}
+
+// ── Follow-ups (written for approval) ───────────────────────────────────────
+//
+// A follow-up is written per writer by lib/press-followup.js and queued as a
+// `followup` draft; it sends only once Sean approves it (step 6 of a run).
+// Three callers: the daily --draft run (threads due by the 5/7-day gaps),
+// --redraft-bumps (the old fixed-template bumps) and --backfill.
+
+const FOLLOWUP_MAX_ATTEMPTS = 2;
+const findOriginalMissing = 'no copy of the original pitch (no sent draft file and no Sent folder copy)';
+const RECENT_ARTICLE_MIN_CHARS = 200;
+const urlKey = (u) => {
+  try { const x = new URL(u); return `${x.hostname.toLowerCase().replace(/^www\./, '')}${x.pathname.replace(/\/$/, '')}`; } catch { return null; }
+};
+
+/** Pure: is draft `d` a follow-up on THIS pitch (its pitch_date, else its thread id, else drafted since the pitch)? */
+export function onPitch(d, pitch) {
+  if (d.pitch_date) return d.pitch_date === pitch.date;
+  if (d.in_reply_to && pitch.message_id) return d.in_reply_to === pitch.message_id;
+  return String(d.created_at || '').slice(0, 10) >= pitch.date;
+}
+
+/**
+ * Pure: the original pitch we sent this contact, as { subject, body, source }.
+ * The pitch's own sent draft file first (matched by the pitch's draft_id or
+ * message_id, nothing looser), else its copy in
+ * Hushmail's Sent folder (the September pitches Sean sent by hand): the same
+ * Message-ID, else the same subject on or after the pitch date, earliest. Null
+ * when neither exists; nothing is drafted against a pitch we cannot read.
+ */
+export function findOriginalPitch({ contact, pitch, drafts = [], sentCopies = [] }) {
+  // Only THIS pitch's own draft: never "the newest sent draft for the contact",
+  // which for a December pitch could be October's email.
+  const mine = drafts.filter((d) => d.kind === 'pitch' && d.status === 'sent' && d.contact_id === contact.id && d.text);
+  const file = mine.find((d) => pitch.draft_id && d.id === pitch.draft_id)
+    || mine.find((d) => pitch.message_id && d.message_id === pitch.message_id);
+  if (file) {
+    const body = String(file.text).split(OPT_OUT_LINE)[0].trim();
+    if (body) return { subject: file.subject, body, source: 'draft' };
+  }
+  const email = emailOf(contact);
+  const start = Date.parse(`${pitch.date}T00:00:00Z`);
+  const theirs = sentCopies.filter((m) => (m.to || []).includes(email) && String(m.text || '').trim());
+  const copy = theirs.find((m) => pitch.message_id && m.messageId === pitch.message_id)
+    || theirs.filter((m) => fold(m.subject) === fold(pitch.subject) && Date.parse(m.date) >= start)
+      .sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
+  return copy ? { subject: copy.subject || pitch.subject, body: String(copy.text).trim(), source: 'sent-folder' } : null;
+}
+
+/**
+ * Best effort: the writer's most recent article other than the one we pitched.
+ * The author page comes from the contact's own author_url, else the pr-targets
+ * report by the contact's domain (or the pitched article's host); the first
+ * same-host article link on it that is not the pitched article is fetched.
+ * Null on any failure: a follow-up then leans on the new fact instead.
+ */
+export async function findRecentArticle({ contact, pitch, authorUrls = new Map(), fetchPage }) {
+  if (typeof fetchPage !== 'function') return null;
+  const hosts = [...(contact.domains || [])];
+  try { hosts.push(new URL(pitch.target_url).hostname); } catch { /* no target url */ }
+  const authorUrl = contact.author_url || hosts.map((h) => authorUrls.get(normalizeDomain(h))).find(Boolean) || null;
+  if (!authorUrl) return null;
+  try {
+    const page = await fetchPage(authorUrl);
+    if (page?.outcome !== 'ok') return null;
+    const pitched = urlKey(pitch.target_url);
+    const next = articleLinks(page.html, authorUrl).find((u) => urlKey(u) !== pitched);
+    if (!next) return null;
+    const art = await fetchPage(next);
+    if (art?.outcome !== 'ok') return null;
+    const text = htmlToText(art.html);
+    return text.length >= RECENT_ARTICLE_MIN_CHARS ? { url: next, text } : null;
+  } catch { return null; }
+}
+
+/**
+ * Write one follow-up draft for a contact. `thread` is { subject, inReplyTo,
+ * references }: what the draft replies under. Returns { ok: true, draft } or
+ * { ok: false, reason }. Saves nothing.
+ */
+export async function draftFollowUpForContact({
+  contact, pitch, n, thread, drafts = [], sentCopies = [], authorUrls = new Map(), fetchPage, pressFacts,
+  generate, usedOpeners = new Set(), now = Date.now(), writer = draftFollowUpLib,
+}) {
+  const original = findOriginalPitch({ contact, pitch, drafts, sentCopies });
+  if (!original) return { ok: false, reason: findOriginalMissing };
+  const article = await findRecentArticle({ contact, pitch, authorUrls, fetchPage });
+  const fact = pickNewFact(pressFacts, pitch.products || [], original.body);
+  let out;
+  try {
+    out = await writer({ contact, n, subject: thread.subject, original, article, fact, generate, usedOpeners, now });
+  } catch (err) {
+    return { ok: false, reason: `writer error: ${err.message}` };
+  }
+  if (!out?.ok) return { ok: false, reason: out?.reason || 'follow-up rejected' };
+  return {
+    ok: true,
+    draft: {
+      ...newDraft({
+        kind: 'followup', n, contactId: contact.id, to: emailOf(contact), subject: stripDashes(thread.subject), text: out.text,
+        inReplyTo: thread.inReplyTo, references: thread.references || [], concept: pitch.concept || 'intro',
+        products: pitch.products || [], targetUrl: pitch.target_url || null, source: pitch.source || 'manual', now,
+      }),
+      article_url: article?.url || null,
+      article_quote: out.articleQuote || null,
+      new_fact: fact,
+      original_source: original.source,
+      pitch_date: pitch.date,
+    },
+  };
+}
+
+/** Sent-folder copies for `contacts`, read once; [] (and the reason) when the read fails. */
+async function loadSentCopies(readSentBodies, contacts, nowMs, log) {
+  if (typeof readSentBodies !== 'function' || !contacts.length) return { rows: [], error: readSentBodies ? null : 'no mailbox reader' };
+  const dates = contacts.map((x) => Date.parse(`${x.pitch.date}T00:00:00Z`)).filter(Number.isFinite);
+  const since = new Date(Math.min(...dates, nowMs) - DAY);
+  try {
+    return { rows: await readSentBodies({ recipients: [...new Set(contacts.map((x) => emailOf(x.contact)).filter(Boolean))], since }), error: null };
+  } catch (err) {
+    log(`  could not read the Sent folder (${err.message}); follow-ups without a sent draft file wait for the next run`);
+    return { rows: [], error: err.message };
+  }
+}
+
+/**
+ * --redraft-bumps: replace every PENDING or APPROVED `bump` draft (the old
+ * fixed-template re-opens) with a model-written `followup` n=1 for the same
+ * thread. The bump is moved to data/press/backups/oldbump-<file>, never
+ * deleted, and only once its follow-up is written: a bump whose follow-up
+ * fails stays in the queue, reported, so the thread is never left with no
+ * follow-up at all (these threads carry follow_ups_sent 2 from the backfill,
+ * so the due-date follow-ups never pick them up). A dry run lists the plan and
+ * calls no model.
+ */
+export async function runRedraftBumps({
+  apply = false, now = Date.now(), book, drafts = [], pressFacts, authorUrls = new Map(), fetchPage, readSentBodies,
+  generate, writer = draftFollowUpLib, moveAside, restore, saveDraft, log = console.log,
+} = {}) {
+  const result = { redrafted: [], wouldRedraft: [], failed: [], skipped: [] };
+  const bumps = drafts.filter((d) => d.kind === 'bump' && ['pending', 'approved'].includes(d.status));
+  const plan = [];
+  for (const b of bumps) {
+    const contact = book.contacts.find((c) => c.id === b.contact_id);
+    const pitch = contact && lastPitch(contact);
+    if (!contact || !emailOf(contact)) { result.skipped.push({ draftId: b.id, contactId: b.contact_id, reason: 'contact not in the book or has no email' }); continue; }
+    if (!pitch || pitch.outcome !== 'sent') { result.skipped.push({ draftId: b.id, contactId: contact.id, reason: `thread moved on (pitch is ${pitch?.outcome || 'missing'}); the bump expires on its own` }); continue; }
+    if (drafts.some((d) => d.kind === 'followup' && d.contact_id === contact.id && ['pending', 'approved'].includes(d.status))) {
+      result.skipped.push({ draftId: b.id, contactId: contact.id, reason: 'a follow-up draft is already waiting' });
+      continue;
+    }
+    const prior = drafts.find((d) => d.kind === 'followup' && d.n === 1 && d.contact_id === contact.id && onPitch(d, pitch));
+    if (prior) {
+      result.skipped.push({ draftId: b.id, contactId: contact.id, reason: `a follow-up 1 for this pitch already exists (${prior.id}, ${prior.status})` });
+      continue;
+    }
+    plan.push({ bump: b, contact, pitch });
+  }
+  if (!apply) {
+    for (const { bump, contact } of plan) {
+      result.wouldRedraft.push({ draftId: bump.id, contactId: contact.id });
+      log(`  [dry run] would move ${bump.id} to backups/oldbump-${bump.id}.json and draft a follow-up for ${contact.id}`);
+    }
+    return result;
+  }
+  const sent = await loadSentCopies(readSentBodies, plan, now, log);
+  const usedOpeners = new Set();
+  for (const { bump, contact, pitch } of plan) {
+    const row = { draftId: bump.id, contactId: contact.id };
+    const thread = {
+      subject: bump.subject || reSubject(pitch.subject),
+      inReplyTo: bump.in_reply_to || pitch.message_id,
+      references: (bump.references || []).length ? bump.references : refsOf(pitch.references, pitch.message_id),
+    };
+    const out = await draftFollowUpForContact({ contact, pitch, n: 1, thread, drafts, sentCopies: sent.rows, authorUrls, fetchPage, pressFacts, generate, usedOpeners, now, writer });
+    if (!out.ok) { result.failed.push({ ...row, reason: out.reason }); continue; }
+    let moved;
+    try { moved = moveAside(bump); } catch (err) { result.failed.push({ ...row, reason: `could not move the bump aside: ${err.message}` }); continue; }
+    try {
+      saveDraft(out.draft);
+    } catch (err) {
+      try { restore(bump, moved); } catch (e2) { log(`  could not restore ${bump.id} from ${moved}: ${e2.message}`); }
+      result.failed.push({ ...row, reason: `could not save the follow-up (bump put back): ${err.message}` });
+      continue;
+    }
+    result.redrafted.push({ ...row, followupId: out.draft.id, backup: moved, articleUrl: out.draft.article_url });
+    log(`  ${bump.id} -> ${out.draft.id} (bump kept at ${moved})`);
+  }
+  return result;
+}
+
+export function renderRedraftSummary(r, { apply } = {}) {
+  const lines = [apply ? '' : 'DRY RUN: nothing was moved or drafted.'];
+  if (r.wouldRedraft.length) { lines.push('Would redraft:'); for (const x of r.wouldRedraft) lines.push(`  - ${x.contactId}: ${x.draftId}`); }
+  if (r.redrafted.length) { lines.push('Redrafted (waiting for approval):'); for (const x of r.redrafted) lines.push(`  - ${x.contactId}: ${x.draftId} -> ${x.followupId}${x.articleUrl ? ` (latest piece ${x.articleUrl})` : ''}`); }
+  if (r.failed.length) { lines.push('Not redrafted (the bump stays in the queue):'); for (const x of r.failed) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.contactId}: ${x.reason}`); }
+  if (r.redrafted.length || r.wouldRedraft.length) lines.push('Note: approved bumps become PENDING follow-ups that need your re-approval in the Outreach tab.');
+  return {
+    subject: `Press follow-ups: ${apply ? r.redrafted.length : r.wouldRedraft.length} bumps ${apply ? 'redrafted' : 'to redraft'} · ${r.failed.length} failed · ${r.skipped.length} skipped`,
+    body: lines.filter((l, i) => i > 0 || l).join('\n') || 'No bump drafts waiting.',
+  };
 }
 
 // ── Drafting (--draft) ──────────────────────────────────────────────────────
@@ -1154,9 +1345,15 @@ export async function runDrafting({
   log = console.log,
   clock = null,
   deadline = null,
+  // Follow-ups: the Sent-folder reader for original pitches with no draft file,
+  // the follow-up writer, and the author pages by outlet domain.
+  readSentBodies = null,
+  writeFollowUp = draftFollowUpLib,
+  authorUrls = null,
 } = {}) {
   if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
   state.draft_attempts ||= {};
+  state.followup_attempts ||= {};
   state.found_addresses ||= {};
   state.hunter_tried ||= {};
   const today = isoOf(now).slice(0, 10);
@@ -1164,7 +1361,7 @@ export async function runDrafting({
   // Facts the claim gate refused are reported on every run, so a bad fact
   // Sean added is visible the next morning rather than silently ignored.
   const { skippedFacts } = buildFactSheet(pressFacts);
-  const result = { skippedFacts, drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null };
+  const result = { skippedFacts, drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null, followUps: [], followUpFailed: [], followUpSkipped: [] };
   // Elapsed real time on top of `now`, so an injected `now` still moves.
   if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
   const stopAt = deadline ?? defaultDraftDeadline(now);
@@ -1175,9 +1372,90 @@ export async function runDrafting({
   // The queue fills over a few days: one run drafts at most draftRunMax. An
   // explicit --limit is a human's choice and is bounded by the deadline only.
   const runMax = config.draftRunMax ?? DEFAULT_CONFIG.draftRunMax ?? 10;
-  const want = limit != null ? limit : Math.min(runMax, (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending);
+  // Pitches fill the queue up to queueTarget. Follow-ups have their OWN budget,
+  // bounded by draftRunMax and not by queue room: a warm thread must not wait
+  // behind a queue full of cold pitches.
+  let want = limit != null ? limit : Math.min(runMax, (config.queueTarget ?? DEFAULT_CONFIG.queueTarget) - pending);
+  const followBudget = limit != null ? limit : runMax;
   result.want = Math.max(0, want);
-  if (want <= 0) { log(`  queue holds ${pending} drafts (target ${config.queueTarget}); nothing to draft`); return { ...result, book, state }; }
+
+  const persistFollowState = () => { try { saveState(state); } catch (err) { log(`  could not save state: ${err.message}`); } };
+
+  // A follow-up that SENT but whose book write failed leaves follow_ups_sent
+  // behind; repair it from the sent draft so that follow-up is never redrafted.
+  for (const c of book.contacts) {
+    const p = lastPitch(c);
+    if (!p) continue;
+    const sentFus = drafts.filter((d) => d.kind === 'followup' && d.status === 'sent' && d.contact_id === c.id && onPitch(d, p));
+    if (!sentFus.length) continue;
+    const n = Math.max(...sentFus.map((d) => (d.n === 2 ? 2 : 1)));
+    const at = sentFus.map((d) => d.sent_at).filter(Boolean).sort().at(-1);
+    if ((p.follow_ups_sent || 0) >= n) continue;
+    const later = at && (!p.last_sent_at || Date.parse(at) > Date.parse(p.last_sent_at));
+    try {
+      const next = updatePitch(book, c.id, { follow_ups_sent: n, ...(later ? { last_sent_at: at } : {}) });
+      saveBook(next);
+      book = next;
+      log(`  repaired ${c.id}: follow-up ${n} was sent (draft) but not recorded`);
+    } catch (err) { log(`  could not repair ${c.id}'s follow-up count: ${err.message}`); }
+  }
+
+  // ── Follow-ups first: a warm thread beats a cold prospect. ──
+  // Every thread due by the 5/7-day gaps (lib/press-contacts.js) gets one
+  // model-written follow-up queued for approval, unless the contact already
+  // has one waiting, Sean rejected this one, or it failed on two earlier runs.
+  {
+    const openFor = (id) => drafts.some((d) => d.contact_id === id && ['followup', 'bump'].includes(d.kind) && ['pending', 'approved'].includes(d.status));
+    const due = autoFollowUpsDue(book.contacts, now)
+      .sort((a, b) => String(a.pitch.last_sent_at || a.pitch.date).localeCompare(String(b.pitch.last_sent_at || b.pitch.date)));
+    const todo = [];
+    for (const row of due) {
+      const { contact, pitch, n } = row;
+      const key = `${contact.id}:${pitch.date}:${n}`;
+      const skipF = (reason) => result.followUpSkipped.push({ contactId: contact.id, n, reason });
+      if (openFor(contact.id)) { skipF('a follow-up draft is already waiting'); continue; }
+      if (state.escalated?.[contact.id]) { skipF('escalated to Sean'); continue; }
+      const done = drafts.find((d) => d.kind === 'followup' && d.contact_id === contact.id && d.n === n && ['sent', 'rejected', 'expired'].includes(d.status) && onPitch(d, pitch));
+      if (done) { skipF(`follow-up ${n} was already ${done.status} (${done.id})`); continue; }
+      if ((state.followup_attempts[key] || 0) >= FOLLOWUP_MAX_ATTEMPTS) { skipF(`given up after ${FOLLOWUP_MAX_ATTEMPTS} failed runs`); continue; }
+      todo.push({ ...row, key });
+    }
+    const authors = authorUrls || authorUrlsFromTargets(prTargets);
+    const needSent = todo.filter((x) => !findOriginalPitch({ contact: x.contact, pitch: x.pitch, drafts }));
+    const sent = await loadSentCopies(readSentBodies, needSent, now, log);
+    const usedOpeners = new Set();
+    for (const { contact, pitch, n, key } of todo) {
+      if (result.followUps.length >= followBudget) break;
+      if (clock() >= stopAt) { result.stoppedAtDeadline = true; log('  stopped at the deadline while drafting follow-ups'); break; }
+      const thread = { subject: reSubject(pitch.subject), inReplyTo: pitch.message_id, references: refsOf(pitch.references, pitch.message_id) };
+      let out;
+      try {
+        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, usedOpeners, now, writer: writeFollowUp });
+      } catch (err) { out = { ok: false, reason: `follow-up error: ${err.message}` }; }
+      onProgress();
+      if (out.ok) {
+        try { saveDraft(out.draft); } catch (err) { out = { ok: false, reason: `draft save failed: ${err.message}` }; }
+      }
+      if (!out.ok) {
+        const reason = out.reason === findOriginalMissing && sent.error ? `${out.reason}; the Sent folder could not be read (${sent.error})` : out.reason;
+        state.followup_attempts[key] = (state.followup_attempts[key] || 0) + 1;
+        persistFollowState();
+        result.followUpFailed.push({ contactId: contact.id, n, reason });
+        continue;
+      }
+      delete state.followup_attempts[key];
+      persistFollowState();
+      result.followUps.push({ contactId: contact.id, n, draftId: out.draft.id, to: out.draft.to, articleUrl: out.draft.article_url, subject: out.draft.subject });
+      log(`  drafted ${out.draft.id} (follow-up ${n}) for ${contact.id}`);
+    }
+  }
+  if (result.stoppedAtDeadline) return { ...result, book, state };
+  // The pitches get what the follow-ups left. Without --limit `want` is already
+  // bounded by draftRunMax and the queue room; an explicit --limit is a human's
+  // choice and is not capped by draftRunMax.
+  want -= result.followUps.length;
+  result.want = Math.max(0, want);
+  if (want <= 0) { log(`  queue holds ${pending + result.followUps.length} drafts (target ${config.queueTarget}); no new pitches`); return { ...result, book, state }; }
 
   // Dead keys are excluded BEFORE truncation; they are counted, never reported
   // as skips, so a run that only met dead keys does not notify.
@@ -1378,9 +1656,11 @@ export async function runDrafting({
 }
 
 export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
-  const waiting = r.pending + (apply ? r.drafted.length : 0);
+  const waiting = r.pending + (apply ? r.drafted.length + (r.followUps?.length || 0) : 0);
   const where = dashboardUrl ? `${dashboardUrl.replace(/\/$/, '')}/#outreach` : 'the dashboard, #outreach';
   const lines = [apply ? '' : 'DRY RUN: nothing was saved.'];
+  if (r.followUps?.length) { lines.push(`${apply ? 'Follow-ups drafted' : 'Would draft follow-ups'}:`); for (const f of r.followUps) lines.push(`  - ${f.contactId}: follow-up ${f.n}${f.articleUrl ? ` (cites ${f.articleUrl})` : ''}`); }
+  if (r.followUpFailed?.length) { lines.push('Follow-ups not drafted (retried next run, at most twice):'); for (const f of r.followUpFailed) lines.push(`  - ${f.contactId} (follow-up ${f.n}): ${f.reason}`); }
   if (r.drafted.length) { lines.push(`${apply ? 'Drafted' : 'Would draft'}:`); for (const d of r.drafted) lines.push(`  - ${d.contactId} <${d.to}> (address: ${d.addressSource}): ${d.subject}`); }
   if (r.noAddress.length) { lines.push('No address found (contact saved as unverified, try by hand):'); for (const x of r.noAddress) lines.push(`  - ${x.contactId}: ${x.reason}`); }
   if (r.failed.length) { lines.push('Failed (retried next run, at most twice):'); for (const x of r.failed) lines.push(`  - ${x.domain}: ${x.reason}`); }
@@ -1388,8 +1668,8 @@ export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
   if (r.skippedFacts?.length) { lines.push('Facts skipped by the claim gate (never sent):'); for (const f of r.skippedFacts) lines.push(`  - ${f.where}: "${f.fact}" (${f.reason})`); }
   if (r.stoppedAtDeadline) lines.push(`Stopped at the deadline (${String(r.deadline || '').slice(11, 16)} UTC), ${r.leftAtDeadline} ${r.leftAtDeadline === 1 ? 'prospect' : 'prospects'} left for the next run.`);
   lines.push(`Hunter credits used: ${r.hunterSpent}. Prospects filtered out of the queue: ${r.queueSkipped}. Given up after repeated failures: ${r.dead}.`);
-  lines.push(`${waiting} ${waiting === 1 ? 'pitch' : 'pitches'} waiting for approval: ${where}`);
-  const subject = `Press drafting: ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter${r.stoppedAtDeadline ? ' · stopped at deadline' : ''}`;
+  lines.push(`${waiting} ${waiting === 1 ? 'draft' : 'drafts'} waiting for approval: ${where}`);
+  const subject = `Press drafting: ${r.followUps?.length || 0} follow-ups · ${r.drafted.length} drafted · ${r.noAddress.length} no address · ${r.failed.length} failed · ${r.skipped.length} skipped · ${r.hunterSpent} Hunter${r.stoppedAtDeadline ? ' · stopped at deadline' : ''}`;
   return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') };
 }
 
@@ -1420,6 +1700,7 @@ async function waitForLock(maxMs = 5 * 60_000, stepMs = 30_000) {
 }
 
 async function runDraftMode(args, apply, env, config) {
+  const creds = hushmailCredentials(env);
   const li = args.indexOf('--limit');
   let limit = null;
   if (li !== -1) {
@@ -1470,10 +1751,12 @@ async function runDraftMode(args, apply, env, config) {
       draftPitch: draftPitchLib,
       generate: (prompt) => generateWithModel(prompt, env),
       onProgress: touchLock,
+      // Original pitches with no draft file (the September ones) are read from Sent.
+      readSentBodies: creds ? (q) => fetchSentBodiesTo(creds, q) : null,
     });
     const { subject, body } = renderDraftSummary(run, { apply, dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.skippedFacts?.length || run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline;
+    const acted = run.skippedFacts?.length || run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline || run.followUps.length || run.followUpFailed.length;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'press' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
@@ -1555,7 +1838,7 @@ function writeStreak(v) {
   try { if (v) writeFileSync(TRANSIENT_PATH, JSON.stringify(v)); else if (existsSync(TRANSIENT_PATH)) unlinkSync(TRANSIENT_PATH); } catch { /* best effort */ }
 }
 
-async function runBackfill(args, apply, creds) {
+async function runBackfill(args, apply, creds, env) {
   if (apply && !acquireLock()) throw new Error('another press-outreach run holds the lock (data/press/.lock); try again in a few minutes');
   try {
     const sets = [];
@@ -1578,8 +1861,8 @@ async function runBackfill(args, apply, creds) {
     const existing = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
     const plan = planBackfill({ book, sentCopies, replies, now, drafts: existing });
     for (const n of plan.notes) console.log(`  ${n}`);
-    console.log(`${plan.patches.length} patches, ${plan.drafts.length} bump drafts${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
-    for (const d of plan.drafts) console.log(`  bump ${d.id}: ${d.subject}`);
+    console.log(`${plan.patches.length} patches, ${plan.followUps.length} follow-ups to draft${apply ? '' : ' (dry run: nothing written; add --apply)'}`);
+    for (const f of plan.followUps) console.log(`  follow-up for ${f.contactId}: ${f.subject}`);
     console.log(`${plan.processed.length} replies marked as already handled`);
     if (apply) {
       const priorState = readState();
@@ -1588,11 +1871,65 @@ async function runBackfill(args, apply, creds) {
       book = applied.book;
       writeBook(book);
       writeState(applied.state);
-      for (const d of plan.drafts) {
-        try { saveDraftFile(draftsDir, d); } catch (err) { console.log(`  could not save ${d.id}: ${err.message}`); }
+      // Each candidate is written per writer and queued for approval, like any follow-up.
+      if (plan.followUps.length) {
+        const pressFacts = loadPressFacts();
+        const authorUrls = authorUrlsFromTargets(readJson('data/reports/pr-targets/latest.json'));
+        const rows = plan.followUps.map((f) => ({ ...f, contact: book.contacts.find((c) => c.id === f.contactId) })).filter((f) => f.contact);
+        const withPitch = rows.map((f) => ({ ...f, pitch: lastPitch(f.contact) }));
+        const sent = await loadSentCopies((q) => fetchSentBodiesTo(creds, q), withPitch, now, console.log);
+        const usedOpeners = new Set();
+        for (const f of withPitch) {
+          const out = await draftFollowUpForContact({
+            contact: f.contact, pitch: f.pitch, n: 1, thread: { subject: f.subject, inReplyTo: f.inReplyTo, references: f.references },
+            drafts: existing, sentCopies: sent.rows, authorUrls, fetchPage: (u) => fetchWithOutcome(u), pressFacts,
+            generate: (prompt) => generateWithModel(prompt, env), usedOpeners, now,
+          });
+          if (!out.ok) { console.log(`  follow-up for ${f.contactId} not drafted: ${out.reason}`); continue; }
+          try { saveDraftFile(draftsDir, out.draft); console.log(`  drafted ${out.draft.id}`); } catch (err) { console.log(`  could not save ${out.draft.id}: ${err.message}`); }
+        }
       }
       console.log('backfill applied');
     }
+  } finally {
+    if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
+  }
+}
+
+/** Move a draft file to data/press/backups/oldbump-<file>; never overwrites an earlier backup. */
+function moveDraftAside(d) {
+  mkdirSync(BACKUP_DIR, { recursive: true });
+  const from = join(ROOT, DRAFTS_DIR, `${d.id}.json`);
+  let to = join(BACKUP_DIR, `oldbump-${d.id}.json`);
+  if (existsSync(to)) to = join(BACKUP_DIR, `oldbump-${d.id}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+  renameSync(from, to);
+  return to;
+}
+
+async function runRedraftBumpsMode(apply, env, config) {
+  console.log(`Press outreach: redraft bumps${apply ? '' : ' (dry run)'}`);
+  if (!config.enabled) { console.log('disabled in config/press-outreach.json'); return; }
+  if (apply && !(await waitForLock())) throw new Error('another press-outreach run holds the lock (data/press/.lock); try again in a few minutes');
+  try {
+    const loaded = readBook();
+    if (!loaded.available) throw new Error(`contact book unavailable: ${loaded.reason}`);
+    const creds = hushmailCredentials(env);
+    const draftsDir = join(ROOT, DRAFTS_DIR);
+    const drafts = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
+    const r = await runRedraftBumps({
+      apply, book: loaded.doc, drafts,
+      pressFacts: apply ? loadPressFacts() : null,
+      authorUrls: authorUrlsFromTargets(readJson('data/reports/pr-targets/latest.json')),
+      fetchPage: (u) => { touchLock(); return fetchWithOutcome(u); },
+      readSentBodies: creds ? (q) => fetchSentBodiesTo(creds, q) : null,
+      generate: (prompt) => { touchLock(); return generateWithModel(prompt, env); },
+      moveAside: moveDraftAside,
+      restore: (d, moved) => renameSync(moved, join(draftsDir, `${d.id}.json`)),
+      saveDraft: (d) => saveDraftFile(draftsDir, d),
+    });
+    const { subject, body } = renderRedraftSummary(r, { apply });
+    console.log(`\n${subject}\n\n${body}`);
+    if (apply) await notify({ subject, body, status: 'info', category: 'press' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
   }
@@ -1737,8 +2074,12 @@ async function main() {
     console.log('press outreach resumed');
     return { imapDown: false };
   }
+  if (args.includes('--redraft-bumps')) {
+    await runRedraftBumpsMode(apply, env, config);
+    return { imapDown: false };
+  }
   if (args.includes('--backfill')) {
-    await runBackfill(args, apply, creds);
+    await runBackfill(args, apply, creds, env);
     return { imapDown: false };
   }
   if (args.includes('--check-links')) {
