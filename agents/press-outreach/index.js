@@ -15,13 +15,15 @@
  *      action (sample-yes, address-given, opt-out, decline) is confirmed by one
  *      model call first; anything unconfirmed or unclear is ESCALATED to Sean and
  *      nothing goes back to the writer
- *   5. sends threaded follow-ups (at most 2 per pitch, days 5 and 12)
+ *   5. sends NO follow-up on its own: the daily --draft run writes one per due
+ *      thread (lib/press-followup.js, at most 2 per pitch, days 5 and 12) and
+ *      it sends in step 6 only once Sean approves it
  *   5b. samples (lib/press-samples.js): an address becomes a $0 "PR Package"
  *      order when the app holds write_draft_orders (else Sean is asked to place
  *      it); any PR Package order for an accepted sample, hand-made ones too, is
  *      found by shipping name or email, its tracking emailed once it ships, and
  *      one check-in sent 21 days after delivery if the thread stayed quiet
- *   6. sends first pitches and bumps ONLY from drafts Sean approved (sendOrder)
+ *   6. sends first pitches and follow-ups ONLY from drafts Sean approved (sendOrder)
  *
  * Usage:
  *   node agents/press-outreach/index.js                    # dry run: plan, send nothing
@@ -31,21 +33,23 @@
  *   node agents/press-outreach/index.js --test-send you@example.com
  *   node agents/press-outreach/index.js --resume           # clear an auto-pause
  *   node agents/press-outreach/index.js --backfill [--apply] [--set <id>=<outcome>[:<order>]]...
- *                                                          # one-off: thread ids, existing replies, bump drafts
+ *                                                          # one-off: thread ids, existing replies, follow-up drafts
+ *   node agents/press-outreach/index.js --redraft-bumps [--apply]
+ *                                                          # replace old fixed-template bump drafts with written follow-ups
  *   node agents/press-outreach/index.js --draft [--apply] [--limit <n>]
- *                                                          # daily: turn prospects into pitch drafts for approval
+ *                                                          # daily: follow-up drafts for due threads, then pitch drafts, for approval
  *                                                          # (--limit overrides the queue target; a dry run skips Hunter)
  *   node agents/press-outreach/index.js --check-links [--apply]
  *                                                          # weekly (Mon 14:25 UTC): find earned links and mentions
  *                                                          # among engaged pitches, then send the funnel digest
  *
  * Cron (UTC, scripts/setup-cron.sh):
- *   17,47 * * * *   --apply              replies, escalations, follow-ups, samples, Sean-approved sends
- *   20 14 * * *     --draft --apply       prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
+ *   17,47 * * * *   --apply              replies, escalations, samples, Sean-approved sends
+ *   20 14 * * *     --draft --apply       follow-up drafts for due threads first, then the prospect queue (~70% pr-target-finder, ~30% backlink-opportunity),
  *                                         at most 10 drafts a run, no new prospect after 15:30 UTC
  *   25 14 * * 1     --check-links --apply earned-link check and funnel digest
  *   (--backfill was a one-time run, done 2026-10-04; --resume, --init and --test-send are by hand.)
- * Every first pitch and bump waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
+ * Every first pitch and follow-up waits for Sean's approval in the dashboard Outreach tab. Sends happen only Mon-Fri
  * 16:00-24:00 UTC, at least minGapMinutes apart, under a daily cap of 10 that ramps to 25 after 14 days with no
  * auto-pause. A spam complaint or a >3% hard-bounce rate over the last 50 sends pauses everything until --resume.
  *
