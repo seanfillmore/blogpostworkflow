@@ -190,3 +190,81 @@ test('a health claim fails through the commercial gate', async () => {
   const r = await draftFollowUp({ ...base(), generate, usedOpeners: new Set() });
   assert.equal(r.ok, false);
 });
+
+// ── review fixes ──
+test('fix 3: an invented reference to their work is rejected (reviewer probe, no article)', async () => {
+  const probe = { body: 'Your recent piece "ten best lotions for cracked winter hands this year" was great. Would samples help?', article_quote: null };
+  const { generate } = stub(probe, probe);
+  const r = await draftFollowUp({ ...base({ article: null }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /invented-reference|unverified-quote/);
+});
+
+test('fix 3a: a quoted 5+ word span in the body must be the verified article_quote', async () => {
+  const other = { body: `Loved "${GOOD.article_quote}" and also "a thicker cream helps more than people think" in your piece. Would a bottle help?`, article_quote: GOOD.article_quote };
+  const { generate } = stub(other, other);
+  const r = await draftFollowUp({ ...base(), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /unverified-quote/);
+});
+
+test('fix 3b: "your latest roundup" with no article_quote is rejected even when an article was fetched', async () => {
+  const vague = { body: 'Your latest roundup made me think of our Rose Petal lotion. Would a bottle help?', article_quote: null };
+  for (const article of [null, { url: 'https://outlet.example.com/x', text: ARTICLE }]) {
+    const { generate } = stub(vague, vague);
+    const r = await draftFollowUp({ ...base({ article }), generate, usedOpeners: new Set() });
+    assert.equal(r.ok, false);
+    assert.match(r.reason, /invented-reference/);
+  }
+});
+
+test('minor: dashes are normalised the same on both sides of the quote-in-body check', async () => {
+  const text = 'Cracked knuckles — the first sign that winter has arrived, and a thicker cream helps. We tested twelve tubes over three weeks in a drafty office for this list.';
+  const q = 'Cracked knuckles — the first sign that winter has arrived';
+  const reply = { body: `Your line "${q}" stuck with me. Would a bottle help your next list?`, article_quote: q };
+  const { generate } = stub(reply);
+  const r = await draftFollowUp({ ...base({ article: { url: 'https://outlet.example.com/x', text } }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, true, r.reason);
+});
+
+test('minor: firstSentenceKey does not split on abbreviations', () => {
+  assert.equal(firstSentenceKey('Dr. Smith liked it. Second one.'), 'dr smith liked it');
+  assert.equal(firstSentenceKey('See St. Louis, e.g. the river, i.e. water. Next.'), 'see st louis e g the river i e water');
+  assert.equal(firstSentenceKey('Mrs. Lee and Ms. Kay and Mr. Fox met. Then.'), 'mrs lee and ms kay and mr fox met');
+});
+
+test('minor: a "?" inside a quoted span does not count toward the one-question rule', async () => {
+  const text = 'Why does winter skin crack so badly every year? It comes down to humidity and hot showers, and a thicker cream helps more than you would think in the cold months.';
+  const q = 'Why does winter skin crack so badly every year?';
+  const reply = { body: `Your question "${q}" stuck with me. Would a bottle help your next list?`, article_quote: q };
+  const { generate } = stub(reply);
+  const r = await draftFollowUp({ ...base({ article: { url: 'https://outlet.example.com/x', text } }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, true, r.reason);
+});
+
+test('minor: coreBody strips a long greeting line and name/sign-off lines; no doubled greeting or sign-off', async () => {
+  assert.equal(coreBody('Hello there my very dear friend Jane Example of the Outlet Magazine team,\n\nOne line here?\n\n— Sean'), 'One line here?');
+  assert.equal(coreBody('Dear Jane,\nOne line here?\nThanks,\nSean'), 'One line here?');
+  assert.equal(coreBody('One line here?\n\nBest,'), 'One line here?');
+  const withBoth = { body: 'Hi Jane Example,\n\nOur Body Lotion comes in Rose Petal for your cold weather list. Would a bottle help?\n\nBest,\nSean', article_quote: null };
+  const { generate } = stub(withBoth);
+  const r = await draftFollowUp({ ...base(), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, true, r.reason);
+  assert.equal((r.text.match(/^Hi /gm) || []).length, 1);
+  assert.equal((r.text.match(/Sean/g) || []).length, 1);
+  assert.doesNotMatch(r.text, /Best,/);
+});
+
+test('minor: the banned list also catches follow-ups, followups, follow ups, touch-base, reminder(s)', () => {
+  for (const s of ['two follow-ups', 'no followups', 'my follow ups', 'a quick touch-base', 'a reminder', 'reminders']) {
+    assert.ok(findBannedPhrases(s).length > 0, s);
+  }
+});
+
+test('minor: the article URL sits inside the <article> fence', () => {
+  const p = followUpPrompt({ firstName: 'Jane', n: 1, original, article, fact: null, nowMs: NOW });
+  const open = p.indexOf('<article>\n');
+  const fence = p.slice(open, p.indexOf('</article>'));
+  assert.ok(fence.includes(article.url));
+  assert.ok(!p.slice(0, open).includes(article.url));
+});
