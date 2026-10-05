@@ -393,3 +393,35 @@ test('createFollowUpRun seeds the openings of every open follow-up draft (pendin
   assert.equal(run.facts.size, 0);
   assert.equal(run.ordinal, 0);
 });
+
+// 2026-10-05 production drafts: a discount offered unprompted, the writer's name
+// reused in the body, and a "new" fact the first email already carried.
+test('a follow-up may not offer or negotiate a discount, code or commission', async () => {
+  const bad = { body: 'Deals writers watch value closely. If a discount would make the lotion easier to feature, what number would work for you?', article_quote: null };
+  const { generate } = stub(bad, bad);
+  const r = await draftFollowUp({ ...base({ article: null }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /commercial-offer/);
+});
+
+test('"subscribe and save 15%" is a stated fact, not an offer', async () => {
+  const ok = { body: 'Readers who keep body lotion stocked can subscribe and save 15% on the Body Lotion, so it is easy to recommend. Would a bottle be useful to try?', article_quote: null };
+  const { generate } = stub(ok);
+  const r = await draftFollowUp({ ...base({ article: null }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, true, r.reason);
+});
+
+test("the writer's name appears only in the greeting", async () => {
+  const bad = { body: 'Shopping editors like Jane care whether a lotion is worth buying twice. Our Body Lotion comes in Pure Unscented and Rose Petal. Would a bottle help?', article_quote: null };
+  const { generate } = stub(bad, bad);
+  const r = await draftFollowUp({ ...base({ article: null }), generate, usedOpeners: new Set() });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /name-in-body/);
+});
+
+test('a fact whose numbers were all in the first email is not offered as new', () => {
+  const facts = { brand: { facts: ['Handmade in small batches, made in the USA'] }, products: { lotion: { ...pressFacts.products.lotion, facts: ['94 customer reviews averaging 4.9 stars'] } } };
+  const orig = 'Coconut Oil Lotion, 8oz, $30. Six ingredients. 94 reviews at 4.9.';
+  assert.notEqual(pickNewFact(facts, ['lotion'], orig), 'Body Lotion: 94 customer reviews averaging 4.9 stars');
+  assert.equal(pickNewFact(facts, ['lotion'], 'No numbers here.'), 'Body Lotion: 94 customer reviews averaging 4.9 stars');
+});
