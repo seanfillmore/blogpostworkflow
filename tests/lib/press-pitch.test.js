@@ -2,31 +2,25 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   buildFactSheet, pickProducts, pitchPrompt, quoteAppears, draftPitch, FACT_SHEET_LABEL_WORDS,
-  bodyUsesQuote, prepareArticle, ARTICLE_MAX_CHARS,
+  bodyUsesQuote, prepareArticle, ARTICLE_MAX_CHARS, availabilityLine, BODY_MAX_WORDS, checkFact,
 } from '../../lib/press-pitch.js';
-import { OPT_OUT_LINE, signature } from '../../lib/press-outreach.js';
+import { OPT_OUT_LINE, signature, postalLine, checkOutgoingCopy } from '../../lib/press-outreach.js';
 
-// Small invented fixtures; the tests never read the real config or catalogue.
-const INGREDIENTS = {
-  lotion: {
-    name: 'Body Lotion', format: 'squeeze bottle', shopify_handle: 'test-lotion',
-    base_ingredients: ['spring water', 'coconut oil', 'jojoba'],
-    variations: [{ name: 'Pure Unscented', essential_oils: [] }, { name: 'Rose Petal', essential_oils: ['rose oil'] }],
-  },
-  bar_soap: {
-    name: 'Bar Soap', format: 'bar', shopify_handle: 'test-soap',
-    base_ingredients: ['saponified coconut oil'],
-    variations: [{ name: 'Calming Lavender', essential_oils: ['lavender oil'] }],
-  },
-};
-const CATALOG = {
-  generated: '2026-01-01',
+// Small invented fixtures; most tests never read the real config.
+const FACTS = {
+  brand: { website: 'https://example.com', facts: ['handmade in small batches, made in the USA'] },
   products: {
-    'test-lotion': { title: 'Lotion Title', price: 20, priceLabel: '$20', url: 'https://example.com/products/test-lotion' },
-    'test-soap': { title: 'Soap Title', price: 8, priceLabel: '$8', url: 'https://example.com/products/test-soap' },
+    lotion: {
+      name: 'Body Lotion', format: 'squeeze bottle', price: '$20', url: 'https://example.com/products/test-lotion',
+      amazon_url: 'https://www.amazon.com/dp/B0TESTLOT1',
+      base_ingredients: ['spring water', 'coconut oil', 'jojoba'], scents: ['Pure Unscented', 'Rose Petal'], facts: [],
+    },
+    soap: {
+      name: 'Bar Soap', format: 'bar', price: '$8', url: 'https://example.com/products/test-soap',
+      base_ingredients: ['saponified coconut oil'], scents: ['Calming Lavender'], facts: ['aged for four weeks'],
+    },
   },
 };
-const BRAND_KIT = { manufacturing: 'handmade in small batches, made in the USA' };
 const ADDRESS = '100 Example St, Testville, ZZ 00000, United States';
 
 const ARTICLE = 'Our tester said the lotion "felt like nothing at all" after a week. ' +
@@ -61,9 +55,9 @@ test('a fabricated opener quote twice fails with fabricated-opener after two cal
   const generate = async (prompt) => {
     calls++;
     prompts.push(prompt);
-    return { subject: 'Samples for your lotion roundup', opener_quote: 'a phrase that is not in the article', body: CLEAN_BODY };
+    return { subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'a phrase that is not in the article', body: CLEAN_BODY };
   };
-  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'facts', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, false);
   assert.match(r.reason, /fabricated-opener/);
   assert.equal(calls, 2);
@@ -77,13 +71,13 @@ test('an antiperspirant claim on attempt 1 is regenerated and passes on attempt 
     if (calls === 1) {
       return JSON.stringify({
         subject: 'Samples for your roundup',
-        opener_quote: 'felt like nothing at all',
+        product: 'lotion', opener_quote: 'felt like nothing at all',
         body: 'Loved the "felt like nothing at all" line. Try our natural antiperspirant. Happy to send samples.',
       });
     }
-    return '```json\n' + JSON.stringify({ subject: 'Samples for your lotion roundup', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }) + '\n```';
+    return '```json\n' + JSON.stringify({ subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }) + '\n```';
   };
-  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'facts', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, true, r.reason);
   assert.equal(r.attempts, 2);
   assert.equal(calls, 2);
@@ -91,56 +85,93 @@ test('an antiperspirant claim on attempt 1 is regenerated and passes on attempt 
   assert.deepEqual(r.draft.products, ['lotion']);
 });
 
-test('final text greets, strips dashes, and ends with opt-out then signature', async () => {
+test('final text: greeting, body, availability line, signature, opt-out, postal line', async () => {
   const generate = async () => ({
     subject: 'Samples — lotion roundup',
-    opener_quote: 'felt like nothing at all',
+    product: 'lotion', opener_quote: 'felt like nothing at all',
     body: 'Your "felt like nothing at all" line stuck with me — our lotion is simple. Happy to send samples.',
   });
-  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'facts', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, true, r.reason);
   const { text, subject } = r.draft;
   assert.ok(text.startsWith('Hi Jane,\n\n'));
-  assert.ok(text.endsWith(OPT_OUT_LINE + '\n\n' + signature(ADDRESS)));
+  const avail = 'You can find it at realskincare.com, and on Amazon if that link works better for your affiliate setup: https://www.amazon.com/dp/B0TESTLOT1';
+  assert.ok(text.endsWith(`\n\n${avail}\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDRESS)}`), text);
+  assert.equal(postalLine(ADDRESS), `Real Skin Care, ${ADDRESS}`);
+  assert.doesNotMatch(signature(), /Example St/);
   assert.doesNotMatch(text, /[—–]/);
   assert.doesNotMatch(subject, /[—–]/);
 });
 
 test('a draft failing the outgoing-copy check is refused with a reason', async () => {
   const long = 'Your "felt like nothing at all" line. ' + Array.from({ length: 160 }, () => 'word').join(' ');
-  const generate = async () => ({ subject: 'Samples', opener_quote: 'felt like nothing at all', body: long });
-  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'facts', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const generate = async () => ({ subject: 'Samples', product: 'lotion', opener_quote: 'felt like nothing at all', body: long });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, false);
   assert.match(r.reason, /over 150 words/);
 });
 
 test('buildFactSheet uses no word absent from its inputs (beyond its fixed labels)', () => {
-  const sheet = buildFactSheet(INGREDIENTS, CATALOG, BRAND_KIT);
+  const { text: sheet, skippedFacts } = buildFactSheet(FACTS);
+  assert.deepEqual(skippedFacts, []);
   const allowed = new Set([
-    ...words(JSON.stringify(INGREDIENTS)),
-    ...words(JSON.stringify(CATALOG)),
-    ...words(JSON.stringify(BRAND_KIT)),
+    ...words(JSON.stringify(FACTS)),
     ...FACT_SHEET_LABEL_WORDS,
     // The ingredient count is derived from the input list, by design.
-    ...Object.values(INGREDIENTS).map((c) => String(c.base_ingredients.length)),
+    ...Object.values(FACTS.products).map((c) => String(c.base_ingredients.length)),
   ]);
   const stray = words(sheet).filter((w) => !allowed.has(w));
   assert.deepEqual(stray, []);
   assert.match(sheet, /Body Lotion/);
   assert.match(sheet, /3 base ingredients: spring water, coconut oil, jojoba/);
   assert.match(sheet, /1 base ingredient: saponified coconut oil/);
-  assert.match(sheet, /Pure Unscented, Rose Petal/);
+  assert.match(sheet, /scents: Pure Unscented, Rose Petal/);
   assert.match(sheet, /\$20/);
   assert.match(sheet, /https:\/\/example\.com\/products\/test-lotion/);
+  assert.match(sheet, /website: https:\/\/example\.com/);
+  assert.match(sheet, /aged for four weeks/);
   assert.match(sheet, /handmade in small batches, made in the USA/);
-  assert.doesNotMatch(sheet, /family/i);
+  assert.doesNotMatch(sheet, /amazon/i, 'the Amazon link is added in code, never shown to the model');
 });
 
-test('buildFactSheet skips a product missing from the config and tolerates a missing catalog entry', () => {
-  const sheet = buildFactSheet(INGREDIENTS, { products: {} }, {});
-  assert.match(sheet, /Bar Soap/);
-  assert.doesNotMatch(sheet, /undefined|null/);
-  assert.doesNotMatch(sheet, /Deodorant/);
+test('buildFactSheet renders only the picked products and tolerates missing ones', () => {
+  const { text } = buildFactSheet(FACTS, ['soap', 'deodorant']);
+  assert.match(text, /Bar Soap/);
+  assert.doesNotMatch(text, /Body Lotion/);
+  assert.doesNotMatch(text, /undefined|null/);
+  assert.doesNotMatch(buildFactSheet({}).text, /undefined|null/);
+});
+
+test('a fact failing the health / product-category gate is skipped and reported, and dashes are stripped', () => {
+  const doc = {
+    brand: { facts: ['Our antiperspirant formula is loved', 'Small batch \u2014 always'] },
+    products: { lotion: { ...FACTS.products.lotion, facts: ['heals eczema overnight', 'unscented option available'] } },
+  };
+  const { text, skippedFacts } = buildFactSheet(doc);
+  assert.deepEqual(skippedFacts.map((s) => s.where).sort(), ['brand.facts', 'products.lotion.facts']);
+  assert.ok(skippedFacts.every((s) => s.reason && s.fact));
+  assert.doesNotMatch(text, /antiperspirant|eczema/i);
+  assert.match(text, /unscented option available/);
+  assert.match(text, /Small batch, always/);
+  assert.doesNotMatch(text, /[\u2014\u2013]/);
+  assert.equal(checkFact('').ok, false);
+});
+
+test('availabilityLine: the product\'s Amazon link, else the website only', () => {
+  assert.match(availabilityLine(FACTS, 'lotion'), /: https:\/\/www\.amazon\.com\/dp\/B0TESTLOT1$/);
+  assert.equal(availabilityLine(FACTS, 'soap'), 'You can find it at realskincare.com.');
+  assert.equal(availabilityLine(null, 'lotion'), 'You can find it at realskincare.com.');
+});
+
+test('a max-length model body plus the availability line still passes the outgoing word limit', async () => {
+  const filler = Array.from({ length: BODY_MAX_WORDS - 10 }, () => 'word').join(' ');
+  const body = `Your "felt like nothing at all" line stuck with me. ${filler}`;
+  assert.equal(body.split(/\s+/).length, BODY_MAX_WORDS);
+  const generate = async () => ({ subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'felt like nothing at all', body });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: { name: 'Bartholomew' } });
+  assert.equal(r.ok, true, r.reason);
+  assert.match(r.draft.text, /amazon\.com\/dp\//);
+  assert.equal(checkOutgoingCopy({ subject: r.draft.subject, text: r.draft.text, kind: 'pitch', postalAddress: ADDRESS }).ok, true);
 });
 
 test('pickProducts matches prompts and angle, caps at 2, defaults to lotion and soap', () => {
@@ -157,7 +188,8 @@ test('pitchPrompt carries the rules, the article, and the link-gap ask', () => {
   assert.match(p, /opener_quote/);
   assert.match(p, /FACT SHEET HERE/);
   assert.match(p, /felt like nothing at all/);
-  assert.match(p, /120 words/);
+  assert.match(p, new RegExp(`${BODY_MAX_WORDS} words`));
+  assert.match(p, /Do not include any link/);
   assert.match(p, /antiperspirant/i);
   assert.match(p, /COSMETIC COMPLIANCE/);
   assert.match(p, /samples/i);
@@ -189,10 +221,10 @@ test('a real quote the body ignores costs the retry, then fails', async () => {
   const generate = async (prompt) => {
     calls++;
     prompts.push(prompt);
-    return { subject: 'Samples for your lotion roundup', opener_quote: 'felt like nothing at all',
+    return { subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'felt like nothing at all',
       body: 'Our Body Lotion has 3 base ingredients and comes unscented. Happy to send samples if useful.' };
   };
-  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'facts', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, false);
   assert.match(r.reason, /opener-not-used/);
   assert.equal(calls, 2);
@@ -212,9 +244,9 @@ test('the article is fenced as untrusted data, capped, and cannot close the fenc
 
 test('a quote only past the article cap is treated as fabricated', async () => {
   const long = 'z '.repeat(ARTICLE_MAX_CHARS) + 'this sentence sits beyond the cap for sure';
-  const generate = async () => ({ subject: 'Samples', opener_quote: 'this sentence sits beyond the cap for sure',
+  const generate = async () => ({ subject: 'Samples', product: 'lotion', opener_quote: 'this sentence sits beyond the cap for sure',
     body: 'Your line "this sentence sits beyond the cap" stuck with me. Happy to send samples.' });
-  const r = await draftPitch({ prospect: PROSPECT, articleText: long, factSheet: 'f', generate, postalAddress: ADDRESS, contact: CONTACT });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: long, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
   assert.equal(r.ok, false);
   assert.match(r.reason, /fabricated-opener/);
 });
@@ -270,4 +302,95 @@ test('M3: spaced and oddly-cased article tags cannot close the fence', () => {
     const out = prepareArticle(`before ${tag} after`);
     assert.doesNotMatch(out, /article/i, `stripped: ${tag}`);
   }
+});
+
+const TWO_ARTICLE = 'Our tester said the lotion "felt like nothing at all" after a week, and the bar soap rinsed clean. ' +
+  'We tried twelve lotions and a dozen soaps over a dry winter.';
+const TWO_FACTS = { ...FACTS, products: { ...FACTS.products, soap: { ...FACTS.products.soap, amazon_url: 'https://www.amazon.com/dp/B0TESTSOAP' } } };
+
+test('draftPitch offers exactly ONE product: only its facts, only its Amazon link', async () => {
+  const prompts = [];
+  // The article scores lotion first; a body about soap is not an option.
+  const generate = async (prompt) => { prompts.push(prompt); return { subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }; };
+  const r = await draftPitch({ prospect: PROSPECT, articleText: TWO_ARTICLE, pressFacts: TWO_FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
+  assert.equal(r.ok, true, r.reason);
+  assert.deepEqual(r.draft.products, ['lotion']);
+  assert.match(prompts[0], /Body Lotion/);
+  assert.doesNotMatch(prompts[0], /Bar Soap|saponified/, 'no other product in the fact sheet');
+  assert.match(prompts[0], /exactly one of: lotion\./);
+  assert.match(prompts[0], /Pitch this product: lotion\./);
+  assert.match(prompts[0], /handmade in small batches/, 'brand facts still present');
+  assert.match(r.draft.text, /B0TESTLOT1/);
+  assert.doesNotMatch(r.draft.text, /B0TESTSOAP/);
+  // Naming the other picked-by-score product is now an invalid product.
+  const soap = await draftPitch({ prospect: PROSPECT, articleText: TWO_ARTICLE, pressFacts: TWO_FACTS,
+    generate: async () => ({ subject: 'Samples', product: 'soap', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }), postalAddress: ADDRESS, contact: CONTACT });
+  assert.equal(soap.ok, false);
+  assert.match(soap.reason, /invalid-product/);
+});
+
+test('an invalid or missing product key costs the retry, then fails', async () => {
+  const prompts = [];
+  const generate = async (prompt) => { prompts.push(prompt); return { subject: 'Samples', product: 'shampoo', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }; };
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
+  assert.equal(r.ok, false);
+  assert.match(r.reason, /invalid-product/);
+  assert.equal(prompts.length, 2);
+  assert.match(prompts[1], /"product" must be exactly one of: lotion/);
+  const missing = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate: async () => ({ subject: 'S', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }), postalAddress: ADDRESS, contact: CONTACT });
+  assert.match(missing.reason, /invalid-product/);
+  assert.match(pitchPrompt({ prospect: PROSPECT, articleText: ARTICLE, factSheet: 'f', products: ['lotion', 'soap'] }), /"product"/);
+});
+
+test('a URL, www. or bare domain in the body OR the subject costs the retry, then fails', async () => {
+  const cases = [
+    ['body', 'https://example.com/x'], ['body', 'www.realskincare.com'], ['body', 'realskincare.com'], ['body', 'shop-now.co'],
+    ['subject', 'https://example.com/x'], ['subject', 'www.example.org'], ['subject', 'realskincare.com'],
+  ];
+  for (const [where, link] of cases) {
+    const prompts = [];
+    const generate = async (prompt) => {
+      prompts.push(prompt);
+      return { subject: where === 'subject' ? `Samples from ${link}` : 'Samples', product: 'lotion', opener_quote: 'felt like nothing at all',
+        body: where === 'body' ? `Your "felt like nothing at all" line stuck with me. See ${link} for more. Happy to send samples.` : CLEAN_BODY };
+    };
+    const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
+    assert.equal(r.ok, false, `${where}: ${link}`);
+    assert.match(r.reason, /link-in-copy/);
+    assert.equal(prompts.length, 2);
+    assert.match(prompts[1], /do not include links; the availability line is added for you/i);
+  }
+});
+
+test('a null amazon_url is reported as missing, not "null"', () => {
+  const doc = { products: { lotion: { ...FACTS.products.lotion, amazon_url: null } } };
+  const hit = buildFactSheet(doc).skippedFacts.find((f) => f.where === 'products.lotion.amazon_url');
+  assert.ok(hit);
+  assert.equal(hit.fact, 'missing');
+  assert.doesNotMatch(JSON.stringify(hit), /null/);
+  assert.equal(availabilityLine(doc, 'lotion'), 'You can find it at realskincare.com.');
+});
+
+test('an invalid amazon_url is treated as absent and reported', async () => {
+  const bad = { ...FACTS, products: { ...FACTS.products, lotion: { ...FACTS.products.lotion, amazon_url: 'https://amzn.to/xyz' } } };
+  assert.equal(availabilityLine(bad, 'lotion'), 'You can find it at realskincare.com.');
+  const { skippedFacts } = buildFactSheet(bad);
+  assert.ok(skippedFacts.some((f) => f.where === 'products.lotion.amazon_url' && /amzn\.to/.test(f.fact)));
+  const generate = async () => ({ subject: 'Samples', product: 'lotion', opener_quote: 'felt like nothing at all', body: CLEAN_BODY });
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: bad, generate, postalAddress: ADDRESS, contact: CONTACT });
+  assert.equal(r.ok, true, r.reason);
+  assert.doesNotMatch(r.draft.text, /amzn|amazon/i);
+});
+
+test('name, format, scents and price are gated like facts', () => {
+  const doc = { products: {
+    lotion: { ...FACTS.products.lotion, format: 'eczema treatment bottle', price: 'cures dryness $20', scents: ['Pure Unscented', 'Healing Rose'] },
+    soap: { ...FACTS.products.soap, name: 'Our Antiperspirant Bar' },
+  } };
+  const { text, skippedFacts } = buildFactSheet(doc);
+  const where = skippedFacts.map((s) => s.where).sort();
+  assert.deepEqual(where, ['products.lotion.format', 'products.lotion.price', 'products.lotion.scents', 'products.soap.name']);
+  assert.match(text, /Body Lotion/);
+  assert.match(text, /scents: Pure Unscented(;|$)/m);
+  assert.doesNotMatch(text, /eczema|cures|Healing|Antiperspirant|Bar Soap|saponified/i, 'a product whose name fails is left out entirely');
 });

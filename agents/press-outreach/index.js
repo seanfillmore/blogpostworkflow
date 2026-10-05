@@ -100,6 +100,7 @@ const LOCK_PATH = join(PRESS_DIR, '.lock');
 const TRANSIENT_PATH = join(PRESS_DIR, '.transient-failures.json');
 const BACKUP_DIR = join(PRESS_DIR, 'backups');
 const BRAND_KIT_PATH = join(ROOT, 'data', 'brand', 'brand-kit.json');
+const PRESS_FACTS_PATH = join(ROOT, 'config', 'press-facts.json');
 const LOOKBACK_DAYS = 45;
 const DAY = 86_400_000;
 const MAX_PROCESSED = 2000;
@@ -157,6 +158,22 @@ export function writeBook(doc) {
   const tmp = `${path}.tmp-${process.pid}`;
   writeFileSync(tmp, JSON.stringify(doc, null, 2));
   renameSync(tmp, path);
+}
+
+/**
+ * config/press-facts.json, the only source of facts a pitch may use. Missing,
+ * unparseable or product-less refuses the drafting run: there is no fallback
+ * to another file, because a silent fallback is how an unvetted fact ships.
+ */
+export function loadPressFacts(path = PRESS_FACTS_PATH) {
+  let raw;
+  try { raw = readFileSync(path, 'utf8'); } catch (err) { throw new Error(`Refusing to draft: cannot read ${path} (${err.code || err.message})`); }
+  let doc;
+  try { doc = JSON.parse(raw); } catch (err) { throw new Error(`Refusing to draft: ${path} is not valid JSON (${err.message})`); }
+  if (!doc || typeof doc !== 'object' || !doc.products || typeof doc.products !== 'object' || !Object.keys(doc.products).length) {
+    throw new Error(`Refusing to draft: ${path} has no products`);
+  }
+  return doc;
 }
 
 function readPostalAddress() {
@@ -1123,7 +1140,7 @@ export async function runDrafting({
   drafts = [],
   prTargets = null,
   linkGap = null,
-  factSheet,
+  pressFacts,
   postalAddress,
   findAddress,
   fetchArticle,
@@ -1144,7 +1161,10 @@ export async function runDrafting({
   state.hunter_tried ||= {};
   const today = isoOf(now).slice(0, 10);
   const concept = `pitch-${today.slice(0, 7)}`;
-  const result = { drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null };
+  // Facts the claim gate refused are reported on every run, so a bad fact
+  // Sean added is visible the next morning rather than silently ignored.
+  const { skippedFacts } = buildFactSheet(pressFacts);
+  const result = { skippedFacts, drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null };
   // Elapsed real time on top of `now`, so an injected `now` still moves.
   if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
   const stopAt = deadline ?? defaultDraftDeadline(now);
@@ -1294,7 +1314,7 @@ export async function runDrafting({
     const to = emailOf(up.contact) || found.address;
     let out;
     try {
-      out = await draftPitch({ prospect: p, articleText, factSheet, generate, postalAddress, contact: up.contact });
+      out = await draftPitch({ prospect: p, articleText, pressFacts, generate, postalAddress, contact: up.contact });
     } catch (err) {
       out = { ok: false, reason: `draft error: ${err.message}` };
     }
@@ -1365,6 +1385,7 @@ export function renderDraftSummary(r, { apply, dashboardUrl = null } = {}) {
   if (r.noAddress.length) { lines.push('No address found (contact saved as unverified, try by hand):'); for (const x of r.noAddress) lines.push(`  - ${x.contactId}: ${x.reason}`); }
   if (r.failed.length) { lines.push('Failed (retried next run, at most twice):'); for (const x of r.failed) lines.push(`  - ${x.domain}: ${x.reason}`); }
   if (r.skipped.length) { lines.push('Skipped:'); for (const x of r.skipped) lines.push(`  - ${x.domain}: ${x.reason}`); }
+  if (r.skippedFacts?.length) { lines.push('Facts skipped by the claim gate (never sent):'); for (const f of r.skippedFacts) lines.push(`  - ${f.where}: "${f.fact}" (${f.reason})`); }
   if (r.stoppedAtDeadline) lines.push(`Stopped at the deadline (${String(r.deadline || '').slice(11, 16)} UTC), ${r.leftAtDeadline} ${r.leftAtDeadline === 1 ? 'prospect' : 'prospects'} left for the next run.`);
   lines.push(`Hunter credits used: ${r.hunterSpent}. Prospects filtered out of the queue: ${r.queueSkipped}. Given up after repeated failures: ${r.dead}.`);
   lines.push(`${waiting} ${waiting === 1 ? 'pitch' : 'pitches'} waiting for approval: ${where}`);
@@ -1427,7 +1448,7 @@ async function runDraftMode(args, apply, env, config) {
     }
     const postalAddress = readPostalAddress();
     if (!postalAddress) throw new Error('Refusing to draft: no postal_address in data/brand/brand-kit.json');
-    const factSheet = buildFactSheet(readJson('config/ingredients.json'), readJson('data/brand/product-catalog.json'), readJson('data/brand/brand-kit.json'));
+    const pressFacts = loadPressFacts();
     const prTargets = readJson('data/reports/pr-targets/latest.json');
     const linkGap = readJson('data/backlinks/opportunities.json');
     if (!prTargets) console.log('  no data/reports/pr-targets/latest.json; editorial prospects unavailable');
@@ -1443,7 +1464,7 @@ async function runDraftMode(args, apply, env, config) {
     const draftsDir = join(ROOT, DRAFTS_DIR);
     const drafts = loadDrafts(draftsDir, undefined, { onError: (name, err) => console.log(`  skipped unreadable draft ${name}: ${err.message}`) });
     const run = await runDrafting({
-      apply, config, book: loaded.doc, state, drafts, prTargets, linkGap, factSheet, postalAddress, limit,
+      apply, config, book: loaded.doc, state, drafts, prTargets, linkGap, pressFacts, postalAddress, limit,
       fetchArticle: fetchPage,
       findAddress: makeFindAddress({ fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
       draftPitch: draftPitchLib,
@@ -1452,7 +1473,7 @@ async function runDraftMode(args, apply, env, config) {
     });
     const { subject, body } = renderDraftSummary(run, { apply, dashboardUrl: process.env.DASHBOARD_URL || env.DASHBOARD_URL || null });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline;
+    const acted = run.skippedFacts?.length || run.drafted.length || run.noAddress.length || run.failed.length || run.skipped.length || run.stoppedAtDeadline;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'press' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }

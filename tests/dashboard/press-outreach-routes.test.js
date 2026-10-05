@@ -5,10 +5,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import routes from '../../agents/dashboard/routes/press-outreach.js';
-import { OPT_OUT_LINE } from '../../lib/press-outreach.js';
+import { OPT_OUT_LINE, signature, postalLine } from '../../lib/press-outreach.js';
 
 const ADDR = '1623 Central Ave STE 201, Cheyenne, WY 82001, United States';
-const GOOD = `Hi Ada,\n\nLoved your piece on clean skincare. Could I send samples?\n\n${OPT_OUT_LINE}\n\nSean\n${ADDR}`;
+const GOOD = `Hi Ada,\n\nLoved your piece on clean skincare. Could I send samples?\n\nYou can find it at realskincare.com.\n\n${signature()}\n\n${OPT_OUT_LINE}\n${postalLine(ADDR)}`;
 const NO_OPT = 'Hi Ada,\n\nLoved your piece. Could I send samples?\n\nSean';
 
 function root() {
