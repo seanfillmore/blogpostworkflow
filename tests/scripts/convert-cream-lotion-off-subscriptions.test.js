@@ -13,9 +13,12 @@ test('neither page carries a Recurpay block any more', () => {
   }
 });
 
-test('the cream page sells through the ladder, the lotion page through its buy button', () => {
-  assert.ok(tpl('cream').sections.main.block_order.includes('quantity-ladder'));
-  assert.ok(tpl('lotion').sections.main.block_order.includes('buy_buttons'));
+test('cream and lotion both sell through the ladder (lotion since 2026-10-06)', () => {
+  for (const page of ['cream', 'lotion']) {
+    const order = tpl(page).sections.main.block_order;
+    assert.ok(order.includes('quantity-ladder'), `${page}: ladder`);
+    assert.ok(!order.includes('buy_buttons'), `${page}: old buy box gone`);
+  }
 });
 
 test('dropSubscriptionWidget removes only Recurpay blocks', () => {

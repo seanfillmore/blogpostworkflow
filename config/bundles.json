@@ -1585,7 +1585,7 @@
     {
       "handle": "coconut-lotion-5-pack",
       "title": "Coconut Body Lotion — 5-Pack",
-      "status": "draft",
+      "status": "live",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -1595,7 +1595,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flip to live and run convert-cream-to-ladder's lotion twin only after a restock.",
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flipped LIVE 2026-10-06 on Sean's go-ahead at that stock (2 + 1 packs available), and the lotion PDP converted to the 1/5 ladder by scripts/convert-pdp-to-ladder.mjs.",
       "options": [
         {
           "name": "Scent",
