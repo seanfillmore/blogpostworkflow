@@ -206,15 +206,15 @@ test('the badge sits inside the same element as the quantity label, not beside t
   // immediately preceding qty-ladder__price in source order -- i.e. the
   // badge is beside the quantity, and the price comes after the whole
   // wrapped group, not interleaved with it.
-  const wrapMatch = block.match(
-    /<span class="qty-ladder__qty-wrap">([\s\S]*?)<\/span>\s*<span class="qty-ladder__price">/
-  );
-  assert.ok(wrapMatch,
-    'expected a qty-ladder__qty-wrap span immediately followed by qty-ladder__price');
-  assert.match(wrapMatch[1], /qty-ladder__qty"/,
-    'the quantity label must be inside qty-ladder__qty-wrap');
-  assert.match(wrapMatch[1], /qty-ladder__badge/,
-    'the badge markup must be inside qty-ladder__qty-wrap, beside the quantity label, not beside the price');
+  // 2026-10-06 redesign: the badge lives in qty-ladder__head with the
+  // quantity label, inside qty-ladder__body, and the price column
+  // (qty-ladder__pricing) comes after the whole body group.
+  const head = block.slice(block.indexOf('<span class="qty-ladder__head">'), block.indexOf('<span class="qty-ladder__sub">'));
+  assert.ok(head.length > 0, 'expected qty-ladder__head before the sub line');
+  assert.match(head, /qty-ladder__qty"/, 'the quantity label must be in qty-ladder__head');
+  assert.match(head, /qty-ladder__badge/, 'the badge must sit beside the quantity label, not beside the price');
+  assert.ok(block.indexOf('qty-ladder__badge') < block.indexOf('class="qty-ladder__pricing"'),
+    'the badge must come before the price column');
 
   // The height-reservation hack must be gone: once the badge is inline with
   // the quantity label, every card is naturally two rows and nothing needs
@@ -260,7 +260,9 @@ test('the sticky bar posts the SELECTED tier, never a form of its own', () => {
 test('the sticky bar bakes no price: it reads the rendered tier card', () => {
   const out = renderBlock(TIERS, LADDER);
   assert.match(out, /\.qty-ladder__price/);
-  assert.match(out, /stickyPrice\.textContent = priceEl \? priceEl\.textContent\.trim\(\)/);
+  // The price is read once off the rendered card and shared by both buttons.
+  assert.match(out, /var price = priceEl \? priceEl\.textContent\.trim\(\) : '';/);
+  assert.match(out, /stickyPrice\.textContent = price;/);
   // Covered by the no-baked-price test above too, but state it at this seam:
   // a bar that formatted its own price could drift from the tier card.
   assert.doesNotMatch(out, /\$\d/);
@@ -337,4 +339,27 @@ test('a drawer add re-enables both buttons, since the page does not navigate', (
   // the network-failure one. Without the first, a shopper who adds via the
   // drawer is left with two dead buttons.
   assert.match(out, /drawer\.renderContents\(state\);[\s\S]{0,400}?syncCta\(\);/);
+});
+
+test('the preamble bakes one supply line per tier, from the base product rate', () => {
+  const out = renderLadderPreamble(TIERS, LADDER);
+  assert.match(out, /assign ladder_supply = "20-day supply\|2-month supply\|8-month supply" \| split: "\|"/);
+  const none = renderLadderPreamble([{ handle: 'x', units: 1, isBase: true }], { base: 'no-rate-product', default: 'x' });
+  assert.match(none, /assign ladder_supply = "" \| split/);
+});
+
+test('the redesigned card: Best value on the cheapest per unit, true strike-through, CTA names the pack', () => {
+  const out = renderBlock(TIERS, LADDER);
+  // "Best value" is decided by per-unit price, never by position.
+  assert.match(out, /per_unit <= best_per_unit/);
+  assert.match(out, /handle == best_handle and available_tiers > 1/);
+  // The struck figure is today's single price x units, not an invented "was".
+  assert.match(out, /assign singly = base_unit_price \| times: units/);
+  assert.match(out, /<s class="qty-ladder__compare">\{\{ compare \| money \}\}<\/s>/);
+  // CTA carries the pack and the live price read off the card.
+  assert.match(out, /data-qty-cta-label=/);
+  assert.match(out, /base \+ ' · ' \+ price/);
+  // The ship line is the measured one.
+  assert.match(out, /Ships in 1–2 business days/);
+  assert.doesNotMatch(out, /Most popular/i);
 });

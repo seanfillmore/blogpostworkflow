@@ -9,11 +9,34 @@
 {%- assign base_product = all_products[ladder_base] -%}
 {%- assign base_unit_price = base_product.price -%}
 
+{%- comment -%}
+  "Best value" goes on the tier with the LOWEST per-unit price, which is the
+  biggest pack on every configured ladder (and its default). That keeps the
+  nudge true by arithmetic. Ties go to the later, bigger tier. Only shown when
+  at least two tiers are available, since a lone card has nothing to beat.
+{%- endcomment -%}
+{%- assign best_handle = '' -%}
+{%- assign best_per_unit = 0 -%}
+{%- assign available_tiers = 0 -%}
+{%- for handle in ladder_handles -%}
+  {%- assign p = all_products[handle] -%}
+  {%- if p == blank or p.available == false -%}{%- continue -%}{%- endif -%}
+  {%- assign available_tiers = available_tiers | plus: 1 -%}
+  {%- assign units = ladder_units[forloop.index0] | plus: 0 -%}
+  {%- assign per_unit = p.price | divided_by: units -%}
+  {%- if best_handle == '' or per_unit <= best_per_unit -%}
+    {%- assign best_handle = handle -%}
+    {%- assign best_per_unit = per_unit -%}
+  {%- endif -%}
+{%- endfor -%}
+
 <div class="qty-ladder" data-qty-ladder>
+  <div class="qty-ladder__heading">Choose your pack</div>
   <div class="qty-ladder__tiers" role="radiogroup" aria-label="Choose your pack size">
     {%- for handle in ladder_handles -%}
       {%- assign p = all_products[handle] -%}
       {%- assign units = ladder_units[forloop.index0] | plus: 0 -%}
+      {%- assign supply = ladder_supply[forloop.index0] -%}
       {%- if p == blank or p.available == false -%}{%- continue -%}{%- endif -%}
 
       {%- assign per_unit = p.price | divided_by: units -%}
@@ -24,40 +47,85 @@
         "Liquid error: divided by 0" on a live PDP. paid_remainder defaults to
         a non-zero value so the free-unit branch below can never fire on a
         base_unit_price of 0/nil -- the same guard freeUnitFraming applies in
-        lib/quantity-ladder.js (`if (!baseUnitPrice || !units) return
-        {kind:'savings'}`).
+        lib/quantity-ladder.js.
       {%- endcomment -%}
       {%- assign paid_exact = 0 -%}
       {%- assign paid_remainder = 1 -%}
+      {%- assign singly = 0 -%}
       {%- if base_unit_price and base_unit_price > 0 -%}
         {%- assign paid_exact = p.price | divided_by: base_unit_price -%}
         {%- assign paid_remainder = p.price | modulo: base_unit_price -%}
+        {%- assign singly = base_unit_price | times: units -%}
       {%- endif -%}
 
-      <label class="qty-ladder__tier{% if handle == ladder_default %} is-selected{% endif %}">
+      {%- comment -%}
+        The struck-through figure is what the same units cost bought one at a
+        time TODAY (live single price x units), never an invented "was" price.
+        A compare_at_price set on the pack wins only when it is higher.
+      {%- endcomment -%}
+      {%- assign compare = singly -%}
+      {%- if p.compare_at_price > compare -%}{%- assign compare = p.compare_at_price -%}{%- endif -%}
+      {%- assign save_pct = 0 -%}
+      {%- if compare > p.price -%}
+        {%- assign save_pct = compare | minus: p.price | times: 100 | divided_by: compare -%}
+      {%- endif -%}
+
+      {%- if ladder_unit_noun == 'unit' -%}
+        {%- if units == 1 -%}{%- assign qty_label = 'Single' -%}{%- else -%}{%- assign qty_label = units | append: '-pack' -%}{%- endif -%}
+        {%- assign cta_label = 'Add to cart' -%}
+      {%- else -%}
+        {%- assign qty_label = units | append: ' ' | append: ladder_unit_noun -%}
+        {%- if units > 1 -%}{%- assign qty_label = qty_label | append: 's' -%}{%- endif -%}
+        {%- assign cta_label = 'Add ' | append: qty_label | append: ' to cart' -%}
+      {%- endif -%}
+
+      <label class="qty-ladder__tier{% if handle == ladder_default %} is-selected{% endif %}"
+             data-qty-label="{{ qty_label | escape }}" data-qty-cta-label="{{ cta_label | escape }}">
         <input type="radio" name="qty-tier" value="{{ handle }}"
                {% if handle == ladder_default %}checked{% endif %}>
-        <span class="qty-ladder__qty-wrap">
-          <span class="qty-ladder__qty">{% if units == 1 %}{{ units }} {{ ladder_unit_noun }}{% else %}{{ units }}-pack{% endif %}</span>
-
+        <span class="qty-ladder__radio" aria-hidden="true"></span>
+        {%- comment -%} A pack with no image of its own shows the single's photo. {%- endcomment -%}
+        {%- assign thumb = p.featured_image | default: base_product.featured_image -%}
+        {%- if thumb -%}
+          <img class="qty-ladder__thumb" src="{{ thumb | image_url: width: 160 }}"
+               alt="" width="56" height="56" loading="lazy">
+        {%- endif -%}
+        <span class="qty-ladder__body">
+          <span class="qty-ladder__head">
+            <span class="qty-ladder__qty">{{ qty_label }}</span>
+            {%- if handle == best_handle and available_tiers > 1 -%}
+              <span class="qty-ladder__badge">Best value</span>
+            {%- endif -%}
+          </span>
           {%- comment -%}
-            Free-unit framing only when the price divides into whole single units.
-            Across this catalogue exactly one tier qualifies; the rest show savings,
-            because "buy 3.5, get 0.5 free" is what the naive version prints.
-            The badge sits here, beside the quantity label, not beside the price --
-            see the CSS comment below for why that also removes the need for a
-            reserved row height.
+            Free-unit framing only when the price divides into whole single
+            units ("buy 3.5, get 0.5 free" is what the naive version prints);
+            otherwise the plain percentage saved.
           {%- endcomment -%}
+          {%- assign offer = '' -%}
           {%- if paid_remainder == 0 and paid_exact > 0 and paid_exact < units -%}
             {%- assign free_units = units | minus: paid_exact -%}
-            <span class="qty-ladder__badge">Buy {{ paid_exact }}, get {{ free_units }} free</span>
-          {%- elsif p.compare_at_price > p.price -%}
-            {%- assign saved = p.compare_at_price | minus: p.price -%}
-            <span class="qty-ladder__badge">Save {{ saved | money }}</span>
+            {%- assign offer = 'Buy ' | append: paid_exact | append: ', get ' | append: free_units | append: ' free' -%}
+          {%- elsif save_pct > 0 -%}
+            {%- assign offer = 'Save ' | append: save_pct | append: '%' -%}
+          {%- endif -%}
+          {%- if supply != blank or offer != '' -%}
+            <span class="qty-ladder__sub">
+              {%- if supply != blank -%}{{ supply }}{%- endif -%}
+              {%- if supply != blank and offer != '' %} · {% endif -%}
+              {%- if offer != '' -%}<strong>{{ offer }}</strong>{%- endif -%}
+            </span>
           {%- endif -%}
         </span>
-        <span class="qty-ladder__price">{{ p.price | money }}</span>
-        <span class="qty-ladder__unit">{{ per_unit | money }} each</span>
+        <span class="qty-ladder__pricing">
+          <span class="qty-ladder__price-line">
+            {%- if compare > p.price -%}<s class="qty-ladder__compare">{{ compare | money }}</s> {% endif -%}
+            <span class="qty-ladder__price">{{ p.price | money }}</span>
+          </span>
+          {%- if units > 1 -%}
+            <span class="qty-ladder__unit">{{ per_unit | money }}/{% if ladder_unit_noun == 'unit' %}each{% else %}{{ ladder_unit_noun }}{% endif %}</span>
+          {%- endif -%}
+        </span>
       </label>
     {%- endfor -%}
   </div>
@@ -72,10 +140,18 @@
     The IIFE's own renderOptions()/syncCta() correct this to the real state
     once it runs.
   {%- endcomment -%}
-  <button type="button" class="qty-ladder__cta button button--secondary button--full-width" data-qty-cta disabled>
+  <button type="button" class="qty-ladder__cta button button--full-width" data-qty-cta disabled>
     <span>Add to cart</span>
   </button>
   <p class="qty-ladder__error" data-qty-error hidden></p>
+  {%- comment -%}
+    Measured, not promised: 87% of the 134 orders fulfilled 2026-04-09 to
+    2026-10-06 left within 48 hours (median 17h, 98% within 72h).
+  {%- endcomment -%}
+  <p class="qty-ladder__ships">
+    <svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.6"/><circle cx="17" cy="17.5" r="1.6"/></svg>
+    Ships in 1–2 business days
+  </p>
 
   {%- comment -%}
     Sticky buy bar. The theme's own `sticky_cart` block CANNOT be used on a
@@ -104,7 +180,7 @@
           <span class="qty-ladder-sticky__price" data-qty-sticky-price></span>
         </span>
       </div>
-      <button type="button" class="qty-ladder-sticky__cta button button--secondary" data-qty-sticky-cta disabled>
+      <button type="button" class="qty-ladder-sticky__cta button" data-qty-sticky-cta disabled>
         <span>Add to cart</span>
       </button>
     </div>
@@ -145,28 +221,45 @@
 </div>
 
 <style>
-  .qty-ladder__tiers{display:grid;gap:8px;margin:12px 0}
+  .qty-ladder__heading{font-weight:700;margin:16px 0 8px}
+  .qty-ladder__tiers{display:grid;gap:10px;margin:0 0 12px}
   {%- comment -%}
-    3 columns: radio, qty (with its inline badge), price. The badge lives
-    inside qty-wrap, immediately right of the quantity label, so every card
-    is naturally two rows (label row, unit-price row) whether or not it
-    carries a badge -- no reserved row height is needed. An earlier version
-    of this block force-reserved row 1's height for a badge that wasn't
-    there on badge-less cards, which rendered as a visible empty green box.
+    Four columns: radio, thumbnail, body (quantity + badge over the supply /
+    offer line), pricing (struck "buy separately" figure + price over the
+    per-unit price). The native radio stays in the DOM for keyboard and
+    screen-reader use, visually replaced by .qty-ladder__radio.
   {%- endcomment -%}
-  .qty-ladder__tier{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;
-    border:1px solid #e0ded8;border-radius:8px;padding:12px 14px;cursor:pointer;background:#faf8f4}
-  .qty-ladder__tier.is-selected{border-color:#4a8b3c;box-shadow:0 0 0 1px #4a8b3c}
-  .qty-ladder__qty-wrap{display:flex;align-items:center;gap:8px;min-width:0}
-  .qty-ladder__qty{font-weight:700}
-  .qty-ladder__price{font-variant-numeric:tabular-nums;font-weight:700;text-align:right}
-  .qty-ladder__unit{grid-column:2;font-size:.85em;color:#6d7175}
-  .qty-ladder__badge{white-space:nowrap;background:#4a8b3c;color:#fff;border-radius:4px;
-    padding:3px 9px;font-size:.8em;font-weight:700}
+  .qty-ladder__tier{position:relative;display:grid;grid-template-columns:auto auto 1fr auto;gap:12px;align-items:center;
+    border:1px dashed #d4d2cc;border-radius:10px;padding:12px 14px;cursor:pointer;background:#fff}
+  .qty-ladder__tier.is-selected{border:2px solid #111;padding:11px 13px;background:#fafaf8}
+  .qty-ladder__tier:focus-within{outline:2px solid #111;outline-offset:2px}
+  .qty-ladder__tier input[type="radio"]{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+  .qty-ladder__radio{width:22px;height:22px;border-radius:50%;border:2px solid #b5b3ad;box-sizing:border-box;flex:0 0 auto}
+  .qty-ladder__tier.is-selected .qty-ladder__radio{border:7px solid #111}
+  .qty-ladder__thumb{width:56px;height:56px;object-fit:cover;border-radius:8px;background:#f4f4f2}
+  .qty-ladder__body{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .qty-ladder__head{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+  .qty-ladder__qty{font-weight:700;font-size:1.05em}
+  .qty-ladder__badge{white-space:nowrap;background:#111;color:#fff;border-radius:5px;
+    padding:3px 8px;font-size:.72em;font-weight:700;letter-spacing:.02em}
+  .qty-ladder__sub{font-size:.85em;color:#6d7175}
+  .qty-ladder__sub strong{color:#111;font-weight:700;white-space:nowrap}
+  .qty-ladder__pricing{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}
+  .qty-ladder__price-line{white-space:nowrap}
+  .qty-ladder__compare{color:#8a8d91;font-size:.85em;margin-right:4px}
+  .qty-ladder__price{font-variant-numeric:tabular-nums;font-weight:700;font-size:1.1em}
+  .qty-ladder__unit{font-size:.8em;color:#6d7175;white-space:nowrap}
+  .qty-ladder__ships{display:flex;align-items:center;justify-content:center;gap:8px;
+    font-size:.9em;color:#3d4043;margin:10px 0 0}
+  @media screen and (max-width:420px){
+    .qty-ladder__tier{gap:10px;padding:10px 12px}
+    .qty-ladder__tier.is-selected{padding:9px 11px}
+    .qty-ladder__thumb{width:44px;height:44px}
+  }
   {%- comment -%}
     .qty-ladder__cta deliberately carries NO sizing/color rules -- it is a
     hook for the JS selector and for the theme's own
-    `button button--secondary button--full-width` classes, which supply
+    `button button--full-width` classes (filled primary), which supply
     size, color, hover/focus and [disabled] styling. Spacing above the CTA
     is set on the injected <select> itself (see the IIFE below), not here.
   {%- endcomment -%}
@@ -289,22 +382,23 @@
   function syncCta() {
     var v = selectedVariant();
     var soldOut = !!v && !v.available;
-    var label = soldOut ? 'Sold out' : 'Add to cart';
+    // Tier name and price are read out of the rendered tier card, so neither
+    // button can show a price Liquid did not print (no baked prices here).
+    var checked = root.querySelector('input[name="qty-tier"]:checked');
+    var card = checked && checked.closest('.qty-ladder__tier');
+    var priceEl = card && card.querySelector('.qty-ladder__price');
+    var price = priceEl ? priceEl.textContent.trim() : '';
+    var base = (card && card.getAttribute('data-qty-cta-label')) || 'Add to cart';
+    var label = soldOut ? 'Sold out' : (price ? base + ' · ' + price : base);
     cta.disabled = !v || soldOut;
     ctaLabel.textContent = label;
 
     // The sticky bar mirrors the SAME selection rather than tracking its own.
     if (!sticky) return;
     stickyCta.disabled = cta.disabled;
-    stickyCtaLabel.textContent = label;
-    // Tier name and price are read out of the rendered tier card, so the bar
-    // can never show a price Liquid did not print (no baked prices here).
-    var checked = root.querySelector('input[name="qty-tier"]:checked');
-    var card = checked && checked.closest('.qty-ladder__tier');
-    var qtyEl = card && card.querySelector('.qty-ladder__qty');
-    var priceEl = card && card.querySelector('.qty-ladder__price');
-    stickyTier.textContent = qtyEl ? qtyEl.textContent.trim() : '';
-    stickyPrice.textContent = priceEl ? priceEl.textContent.trim() : '';
+    stickyCtaLabel.textContent = soldOut ? 'Sold out' : 'Add to cart';
+    stickyTier.textContent = (card && card.getAttribute('data-qty-label')) || '';
+    stickyPrice.textContent = price;
   }
 
   root.querySelectorAll('input[name="qty-tier"]').forEach(function (input) {
@@ -417,7 +511,7 @@
   {%- assign default_product = all_products[ladder_default] -%}
   {%- form 'product', default_product -%}
     <input type="hidden" name="id" value="{{ default_product.selected_or_first_available_variant.id }}">
-    <button type="submit" class="qty-ladder__cta button button--secondary button--full-width">
+    <button type="submit" class="qty-ladder__cta button button--full-width">
       <span>Add {{ default_product.title }} to cart</span>
     </button>
   {%- endform -%}
