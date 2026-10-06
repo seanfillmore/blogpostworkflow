@@ -99,15 +99,15 @@ export const MANIFEST = {
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-lotion.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping', 'no-subscription'],
-    drop: [],
-    // Recurpay widget removed 2026-10-05 (multi-unit over subscriptions): no new
-    // subscription can start here. Existing contracts keep renewing, which is
-    // why the plan stays attached and `no-subscription` suppresses the widget
-    // the Recurpay app EMBED still injects (subscribe pre-selected).
+    shared: ['ymal-recommendations', 'discount-callout', 'trust-line', 'tab-shipping', 'no-subscription'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-06. The single still
+    // carries a selling plan for existing subscribers, so `no-subscription`
+    // suppresses the widget the Recurpay app EMBED injects (subscribe
+    // pre-selected); retiredPlan stops the drift gate reading it as withheld.
     subscribable: false,
     retiredPlan: true,
-    insertAfter: { 'no-subscription': 'trust-line' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
   },
   'product.landing-page-cream.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],

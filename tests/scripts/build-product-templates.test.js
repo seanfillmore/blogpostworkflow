@@ -269,7 +269,7 @@ test('ladderTiers reads the baked handles, and is empty without a ladder', () =>
     ladderTiers(tpl('product.landing-page-toothpaste.json')),
     ['coconut-oil-toothpaste', 'coconut-toothpaste-3-pack'],
   );
-  assert.deepEqual(ladderTiers(tpl('product.landing-page-lotion.json')), []);
+  assert.deepEqual(ladderTiers(tpl('product.bundle-landing.json')), []);
 });
 
 // Per-PRODUCT subscribability. The liquid-soap template serves the foaming
