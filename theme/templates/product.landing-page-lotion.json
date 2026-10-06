@@ -172,6 +172,12 @@
           "settings": {
             "show_quantity_selector": false
           }
+        },
+        "no-subscription": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "{%- comment -%}\n  no-subscription: this page sells NO new subscriptions (multi-unit over\n  subscriptions, Sean 2026-10-05), but the product still carries a Recurpay\n  selling plan so the existing contracts keep renewing.\n\n  Removing the theme's Recurpay app block is not enough. Recurpay's app EMBED\n  (global, in settings_data) injects its own widget into the product form for\n  any product with a selling plan, with SUBSCRIBE PRE-SELECTED, which puts\n  `selling_plan` into the form a shopper submits. Measured live 2026-10-06 on\n  lotion and cream. On the ladder page it is also a dead control: the ladder\n  posts its own \/cart\/add.js call and never reads it.\n\n  So: hide the widget, switch it to one-time (Recurpay's own handler then\n  drops the plan), and strip any `selling_plan` field from every add-to-cart\n  form, again at submit time as the last word.\n{%- endcomment -%}\n<style>\n  .recurpay-pdp-widget, .recurpay__widget { display: none !important; }\n<\/style>\n<script>\n(function () {\n  function strip() {\n    document.querySelectorAll('.recurpay-pdp-widget input[type=\"radio\"][value=\"one-time\"]').forEach(function (r) {\n      if (!r.checked) r.click();\n    });\n    document.querySelectorAll('form[action*=\"\/cart\/add\"] [name=\"selling_plan\"]').forEach(function (i) {\n      i.parentNode && i.parentNode.removeChild(i);\n    });\n  }\n  var queued = false;\n  function schedule() {\n    if (queued) return;\n    queued = true;\n    requestAnimationFrame(function () { queued = false; strip(); });\n  }\n  strip();\n  document.addEventListener('DOMContentLoaded', strip);\n  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });\n  \/\/ Capture phase runs before the theme's product-form.js builds its FormData.\n  document.addEventListener('submit', function (e) {\n    var f = e.target;\n    if (f && f.querySelectorAll) {\n      f.querySelectorAll('[name=\"selling_plan\"]').forEach(function (i) { i.parentNode && i.parentNode.removeChild(i); });\n    }\n  }, true);\n})();\n<\/script>\n"
+          }
         }
       },
       "block_order": [
@@ -189,6 +195,7 @@
         "discount-callout",
         "buy_buttons",
         "trust-line",
+        "no-subscription",
         "tab-ingredients",
         "tab-details",
         "tab-howto",

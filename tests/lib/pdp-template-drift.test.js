@@ -56,10 +56,10 @@ test('a card already in dropSections is NOT reported again', () => {
 test('subscribable drift is reported in BOTH directions', () => {
   const templates = allTemplates();
   const plans = {};             // nothing carries a plan
-  const products = byFile({ 'landing-page-lotion': ['coconut-lotion'] });
+  const products = byFile({ 'landing-page-toothpaste': ['coconut-oil-toothpaste'] });
   const drift = subscribableDrift(products, plans, templates);
-  const lotion = drift.find((d) => d.template === 'lotion');
-  assert.equal(lotion.kind, 'false-claim', 'claims subscribable, nothing sells one');
+  const toothpaste = drift.find((d) => d.template === 'toothpaste');
+  assert.equal(toothpaste.kind, 'false-claim', 'claims subscribable, nothing sells one');
 
   // ...and the other way: the refill's shape.
   const products2 = byFile({ 'landing-page-lip-balm': ['coconut-oil-lip-balm'] });
@@ -121,4 +121,14 @@ test('the wrapper never writes and spawns only the DRY builder', () => {
   assert.equal((src.match(/execFileSync\(/g) ?? []).length, 1);
   assert.doesNotMatch(src, /BUILDER_ARGS = Object\.freeze\(\[[^\]]*apply/);
   assert.ok(existsSync(join(ROOT, 'scripts', 'build-product-templates.mjs')));
+});
+
+test('a retired plan kept for existing subscribers is not reported as withheld', () => {
+  // Lotion and cream stopped selling subscriptions 2026-10-05; their plans stay
+  // attached so the existing contracts renew.
+  const templates = allTemplates();
+  const products = byFile({ 'landing-page-lotion': ['coconut-lotion'], 'landing-page-cream': ['coconut-moisturizer'] });
+  const plans = { 'coconut-lotion': true, 'coconut-moisturizer': true };
+  const drift = subscribableDrift(products, plans, templates);
+  assert.deepEqual(drift.filter((d) => ['lotion', 'cream'].includes(d.template)), []);
 });
