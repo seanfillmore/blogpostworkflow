@@ -1,0 +1,18 @@
+{
+  "product": "coconut-lotion",
+  "productGid": "gid://shopify/Product/7691181686954",
+  "at": "2026-10-06T20:05:48.899Z",
+  "detached": [
+    {
+      "name": "clean-offer.jpg",
+      "id": "gid://shopify/MediaImage/37122446786730",
+      "alt": "Subscribe and save 15% on Real Skin Care coconut body lotion — $25.50 per 8 oz bottle, free shipping on every subscription order, pause, skip or cancel anytime"
+    },
+    {
+      "name": "coconut-lotion-ingredients-pdp.jpg",
+      "id": "gid://shopify/MediaImage/37163585831082",
+      "alt": "Pure Unscented body lotion bottle surrounded by its 6 ingredients: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil. Scented versions add 1–4 named essential oils, each one listed on the page. Subscribe and save 15%. Try it for 30 days with a full refund, no need to send it back."
+    }
+  ],
+  "restore": "fileUpdate(files:[{id, referencesToAdd:[productGid]}]) for each, then reorder"
+}
