@@ -16,10 +16,11 @@
  *
  * WHAT IT DELIBERATELY DOES NOT UNIFY, because it is not drift:
  *
- *   - The Recurpay widget. `recurpay-widget` (7 pages) and
- *     `recurpay-app-block-widget` (cream, lotion) are DIFFERENT app blocks
- *     from the same app, not one block under two ids. Collapsing them would
- *     change which subscription widget renders on lotion — 72% of revenue.
+ *   - The Recurpay widget. `recurpay-widget` and `recurpay-app-block-widget`
+ *     are DIFFERENT app blocks from the same app, not one block under two ids.
+ *     Lotion and cream carry neither since 2026-10-05, and their
+ *     `no-subscription` block suppresses the widget Recurpay's app EMBED still
+ *     injects for any product with a selling plan (subscribe pre-selected).
  *
  * `tab-shipping` IS unified, but by a FLAG rather than a majority vote. The
  * clause "and on every subscription order" is a CLAIM, and it is true on a
@@ -32,6 +33,11 @@
  * three LADDER pages because a multipack TIER carries the selling plan even
  * though the single unit does not, and false on lip-balm and liquid-soap,
  * where no tier has a plan at all.
+ *
+ * `retiredPlan: true` marks a page whose product still carries a selling plan
+ * ONLY so existing contracts keep renewing. It sells no new subscription
+ * (`no-subscription` suppresses the Recurpay embed widget), so the drift gate
+ * must not read the attached plan as a withheld claim.
  *
  * PER-TEMPLATE EXTRAS. A block may be core + page-specific additions, e.g.
  * lotion's `discount-callout` carries extra CSS for a testimonial section
@@ -93,20 +99,25 @@ export const MANIFEST = {
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-lotion.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping', 'no-subscription'],
     drop: [],
     // Recurpay widget removed 2026-10-05 (multi-unit over subscriptions): no new
-    // subscription can start here. Existing contracts keep renewing.
+    // subscription can start here. Existing contracts keep renewing, which is
+    // why the plan stays attached and `no-subscription` suppresses the widget
+    // the Recurpay app EMBED still injects (subscribe pre-selected).
     subscribable: false,
-    insertAfter: {},
+    retiredPlan: true,
+    insertAfter: { 'no-subscription': 'trust-line' },
   },
   'product.landing-page-cream.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-05; the 5-pack tier has
-    // no selling plan and the Recurpay widget is gone.
+    // no selling plan. The single unit still does (existing subscribers), so
+    // `no-subscription` suppresses the widget the Recurpay embed injects.
     subscribable: false,
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    retiredPlan: true,
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
   },
   'product.landing-page-lip-balm.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
@@ -259,6 +270,8 @@ export function applyManifest(parsed, file, read) {
 
   for (const name of spec.shared) {
     const blk = main.blocks[name];
+    // A shared block this run is about to insert is unified by the insert itself.
+    if (!blk && name in spec.insertAfter) continue;
     if (!blk) throw new Error(`${file}: shared block "${name}" is not in the template`);
     const next = blockSource(name, file, read);
     const key = settingsKey(blk, next);

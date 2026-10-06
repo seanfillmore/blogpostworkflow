@@ -319,3 +319,26 @@ test('expandSubscription: flat for a boolean, conditional for a list', () => {
   // A source with no token is untouched whatever the flag says.
   assert.equal(expandSubscription('<p>no token</p>', ['x']), '<p>no token</p>');
 });
+
+test('a page that sells no new subscription suppresses the Recurpay EMBED widget', () => {
+  // Removing the theme's Recurpay app block is not enough: the app EMBED
+  // injects its own widget, subscribe pre-selected, for any product that still
+  // carries a selling plan (lotion and cream do, for existing subscribers).
+  // Measured live 2026-10-06: the lotion buy form posted selling_plan.
+  for (const nick of ['lotion', 'cream']) {
+    const f = `product.landing-page-${nick}.json`;
+    const spec = MANIFEST[f];
+    assert.equal(spec.subscribable, false, `${f} is not subscribable`);
+    assert.ok(spec.shared.includes('no-subscription'), `${f} keeps no-subscription in sync`);
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const main = t.sections.main;
+    assert.ok(main.block_order.includes('no-subscription'), `${f}: block rendered`);
+    assert.match(main.blocks['no-subscription'].settings.custom_liquid, /\[name="selling_plan"\]/);
+  }
+  const src = blockSource('no-subscription', 'product.landing-page-lotion.json', read);
+  assert.match(src, /\.recurpay-pdp-widget[^{]*\{\s*display:\s*none !important/);
+  assert.match(src, /value="one-time"/);
+  // Stripped again in the CAPTURE phase, ahead of product-form.js's FormData.
+  assert.match(src, /addEventListener\('submit'[\s\S]*\}, true\)/);
+});
