@@ -1525,6 +1525,118 @@
           ]
         }
       ]
+    },
+    {
+      "handle": "coconut-moisturizer-5-pack",
+      "title": "Coconut Moisturizer — 5-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-cream",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05). $112 is exactly 4 x the $28 single, so the ladder renders the free-unit framing. Replaces the cream's subscription as its repeat-purchase offer: RSC moved off subscriptions to multi-unit purchases for AOV. Two scents only, per the two-scent rule. Stock supports it (Pure Unscented 200, Coconut Breeze 52 on 2026-10-05). No subscription tag: nothing on this page is subscribable any more. A bare ladder tier, like coconut-hand-soap-2-pack: no template, no collection, noindexed by ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Pure Unscented",
+            "5x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 112,
+          "compareAtPrice": 140,
+          "contents": "5 × Coconut Moisturizer, 4oz — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 112,
+          "compareAtPrice": 140,
+          "contents": "5 × Coconut Moisturizer, 4oz — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-lotion-5-pack",
+      "title": "Coconut Body Lotion — 5-Pack",
+      "status": "draft",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-lotion",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flip to live and run convert-cream-to-ladder's lotion twin only after a restock.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Pure Unscented",
+            "5x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 120,
+          "compareAtPrice": 150,
+          "contents": "5 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 120,
+          "compareAtPrice": 150,
+          "contents": "5 × Body Lotion — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        }
+      ]
     }
   ],
   "ladders": [
@@ -1566,9 +1678,9 @@
       "base": "coconut-lotion",
       "tiers": [
         "coconut-lotion",
-        "coconut-lotion-4-pack"
+        "coconut-lotion-5-pack"
       ],
-      "default": "coconut-lotion-4-pack",
+      "default": "coconut-lotion-5-pack",
       "template": "product.landing-page-lotion.json",
       "block_id": "quantity-ladder",
       "unit_noun": "bottle"
@@ -1584,6 +1696,17 @@
       "template": "product.landing-page-liquid-soap.json",
       "block_id": "quantity-ladder",
       "unit_noun": "pump"
+    },
+    {
+      "base": "coconut-moisturizer",
+      "tiers": [
+        "coconut-moisturizer",
+        "coconut-moisturizer-5-pack"
+      ],
+      "default": "coconut-moisturizer-5-pack",
+      "template": "product.landing-page-cream.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "jar"
     }
   ]
 }
