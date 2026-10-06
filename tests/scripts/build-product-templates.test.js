@@ -120,7 +120,7 @@ test('tab-shipping is one paragraph with ONE token, not two forked copies', () =
   const src = read('theme/blocks/tab-shipping.liquid');
   assert.equal((src.match(/%%SUBSCRIPTION%%/g) ?? []).length, 1);
   assert.doesNotMatch(src, /subscription order/);
-  const on = blockSource('tab-shipping', 'product.landing-page-lotion.json', read);
+  const on = blockSource('tab-shipping', 'product.landing-page-deodorant.json', read);
   const off = blockSource('tab-shipping', 'product.landing-page-lip-balm.json', read);
   assert.match(on, /\$45\+ and on every subscription order\./);
   assert.match(off, /\$45\+\. Standard/);
@@ -142,8 +142,10 @@ test('the subscription claim appears exactly where something IS subscribable', (
     toothpaste: true,          // coconut-toothpaste-3-pack
     deodorant: true,           // coconut-deodorant-4-pack
     'bar-soap': true,          // coconut-bar-soap-4-pack
-    lotion: true,
-    cream: true,
+    // Recurpay widget removed 2026-10-05 (multi-unit over subscriptions);
+    // existing contracts renew, but nothing new can be subscribed to here.
+    lotion: false,
+    cream: false,              // 1 / 5 ladder; the 5-pack has no plan
     'sensitive-skin-set-lander': true,
     'lip-balm': false,         // no tier has a plan
     // Per-PRODUCT: the pump and its 2-/4-pack tiers have no plan; the 32oz

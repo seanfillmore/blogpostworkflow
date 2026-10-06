@@ -95,14 +95,18 @@ export const MANIFEST = {
   'product.landing-page-lotion.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping'],
     drop: [],
-        subscribable: true,
+    // Recurpay widget removed 2026-10-05 (multi-unit over subscriptions): no new
+    // subscription can start here. Existing contracts keep renewing.
+    subscribable: false,
     insertAfter: {},
   },
   'product.landing-page-cream.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
-    drop: [],
-        subscribable: true,
-    insertAfter: { 'trust-line': 'buy_buttons' },
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-05; the 5-pack tier has
+    // no selling plan and the Recurpay widget is gone.
+    subscribable: false,
+    insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-lip-balm.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
