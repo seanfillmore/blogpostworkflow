@@ -18,12 +18,13 @@
  * distinction would be noise. Installing the generated block onto a template
  * is a separate step (update-theme-asset.mjs).
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadRoster } from '../lib/bundle-roster.js';
 import { resolveTiers, validateLadder, freeUnitFraming } from '../lib/quantity-ladder.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { supplyLabel } from '../lib/supply-duration.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -35,6 +36,10 @@ export function renderLadderPreamble(tiers, ladder) {
     `{%- assign ladder_unit_noun = "${ladder.unit_noun ?? 'unit'}" -%}`,
     `{%- assign ladder_handles = "${tiers.map((t) => t.handle).join(',')}" | split: "," -%}`,
     `{%- assign ladder_units = "${tiers.map((t) => t.units).join(',')}" | split: "," -%}`,
+    // One supply line per tier, '' where no measured rate backs one. Every
+    // tier of a ladder is the base product in a bigger box, so the rate is the
+    // base's. supplyLabel throws rather than print a claim the box can't meet.
+    `{%- assign ladder_supply = "${tiers.map((t) => supplyLabel(ladder.base, t.units) ?? '').join('|')}" | split: "|" -%}`,
   ].join('\n');
 }
 
@@ -150,5 +155,47 @@ if (isDirectRun(import.meta.url)) {
   const block = renderBlock(tiers, ladder);
   console.log(`${base}: ${tiers.length} tiers (${tiers.map((t) => t.units).join('/')} units), ${block.length} bytes`);
   writeFileSync(join(ROOT, 'data', `ladder-${base}.liquid`), block);
-  console.log(`wrote data/ladder-${base}.liquid — install with update-theme-asset.mjs`);
+  console.log(`wrote data/ladder-${base}.liquid`);
+
+  // --install writes the block into the ladder's live template; --preview
+  // writes a COPY of that template as product.ladder-preview.json, an
+  // alternate template no product is assigned to, viewable only with
+  // ?view=ladder-preview. Both are dry without --apply.
+  const INSTALL = process.argv.includes('--install');
+  const PREVIEW = process.argv.includes('--preview');
+  if (INSTALL || PREVIEW) {
+    const APPLY = process.argv.includes('--apply');
+    const { getAccessToken } = await import('../lib/shopify.js');
+    const { API_VERSION } = await import('../lib/shopify-api-version.js');
+    const { serialize } = await import('./build-product-templates.mjs');
+    const env = Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
+      .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
+      .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }));
+    const token = await getAccessToken();
+    const H = (path, init = {}) => fetch(`https://${env.SHOPIFY_STORE}/admin/api/${API_VERSION}/${path}`,
+      { ...init, headers: { 'X-Shopify-Access-Token': token, 'Content-Type': 'application/json' } });
+    const { themes } = await (await H('themes.json')).json();
+    const theme = themes.find((t) => t.role === 'main');
+    const srcKey = `templates/${ladder.template}`;
+    const live = (await (await H(`themes/${theme.id}/assets.json?asset[key]=${encodeURIComponent(srcKey)}`)).json()).asset.value;
+    if (serialize(JSON.parse(live)) !== live) { console.error(`${srcKey}: round-trip mismatch — refusing`); process.exit(1); }
+    const parsed = JSON.parse(live);
+    const blk = parsed.sections?.main?.blocks?.[ladder.block_id];
+    if (!blk) { console.error(`${srcKey}: no "${ladder.block_id}" block — refusing`); process.exit(1); }
+    blk.settings.custom_liquid = block;
+    const out = serialize(parsed);
+    const key = PREVIEW ? 'templates/product.ladder-preview.json' : srcKey;
+    if (!PREVIEW && out === live) { console.log(`${key}: already current`); process.exit(0); }
+    console.log(`${APPLY ? 'WRITE' : 'DRY  '} ${key} on ${theme.name} (${theme.id})`);
+    if (!APPLY) process.exit(0);
+    if (!PREVIEW) {
+      mkdirSync(join(ROOT, 'data', 'template-backup'), { recursive: true });
+      writeFileSync(join(ROOT, 'data', 'template-backup', ladder.template), live);
+    }
+    const put = await H(`themes/${theme.id}/assets.json`, { method: 'PUT', body: JSON.stringify({ asset: { key, value: out } }) });
+    if (!put.ok) { console.error(`PUT ${key} failed ${put.status}: ${(await put.text()).slice(0, 300)}`); process.exit(1); }
+    const back = (await (await H(`themes/${theme.id}/assets.json?asset[key]=${encodeURIComponent(key)}`)).json()).asset.value;
+    console.log(`  readback identical: ${back === out}`);
+    if (!PREVIEW) writeFileSync(join(ROOT, 'theme', key), out);
+  }
 }
