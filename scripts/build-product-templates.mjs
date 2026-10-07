@@ -155,10 +155,10 @@ export const MANIFEST = {
   'product.landing-page-sensitive-skin-set-lander.json': {
     shared: ['discount-callout', 'vqr-combo', 'tab-shipping', 'no-subscription'],
     drop: [],
-    // No new subscriptions since 2026-10-06; the set keeps its plan for
-    // existing contracts and `no-subscription` hides the embed widget.
+    // No subscription at all since 2026-10-07: Recurpay plan 11150632 deleted
+    // (it covered only this set and had no live contract). `no-subscription`
+    // stays as a guard in case a plan is ever re-attached.
     subscribable: false,
-    retiredPlan: true,
     insertAfter: { 'no-subscription': 'buy_buttons' },
   },
   'product.bundle-landing.json': {
