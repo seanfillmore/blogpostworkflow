@@ -53,36 +53,29 @@ test('a card already in dropSections is NOT reported again', () => {
   assert.deepEqual(staleRedundantCards(allTemplates()), []);
 });
 
-test('subscribable drift is reported in BOTH directions', () => {
+test('a plan on a page that sells no subscriptions is reported as WITHHELD', () => {
   const templates = allTemplates();
-  const plans = {};             // nothing carries a plan
-  const products = byFile({ 'landing-page-toothpaste': ['coconut-oil-toothpaste'] });
-  const drift = subscribableDrift(products, plans, templates);
-  const toothpaste = drift.find((d) => d.template === 'toothpaste');
-  assert.equal(toothpaste.kind, 'false-claim', 'claims subscribable, nothing sells one');
-
-  // ...and the other way: the refill's shape.
-  const products2 = byFile({ 'landing-page-lip-balm': ['coconut-oil-lip-balm'] });
-  const plans2 = { 'coconut-oil-lip-balm': true };
-  const drift2 = subscribableDrift(products2, plans2, templates);
-  assert.equal(drift2.find((d) => d.template === 'lip-balm').kind, 'withheld');
+  const products = byFile({ 'landing-page-lip-balm': ['coconut-oil-lip-balm'] });
+  const drift = subscribableDrift(products, { 'coconut-oil-lip-balm': true }, templates);
+  assert.equal(drift.find((d) => d.template === 'lip-balm').kind, 'withheld');
 });
 
-test('a per-product list must name exactly the handles that carry a plan', () => {
+test('a RETIRED plan (kept only for existing contracts) is never drift', () => {
+  // Since 2026-10-06 no page sells a new subscription; the pack tiers, the
+  // refill and the set keep their plans so existing contracts renew.
   const templates = allTemplates();
-  const f = 'product.landing-page-liquid-soap.json';
-  const handles = ['organic-foaming-hand-soap', 'foam-soap-refill-32oz'];
-  const products = byFile({ 'landing-page-liquid-soap': handles });
+  const products = byFile({
+    'landing-page-toothpaste': ['coconut-oil-toothpaste'],
+    'landing-page-liquid-soap': ['organic-foaming-hand-soap', 'foam-soap-refill-32oz'],
+  });
+  const plans = { 'coconut-toothpaste-3-pack': true, 'foam-soap-refill-32oz': true };
+  assert.deepEqual(subscribableDrift(products, plans, templates), []);
+});
 
-  // Correct today: only the refill has a plan, and the manifest lists only it.
-  const ok = subscribableDrift(products, { 'foam-soap-refill-32oz': true }, templates);
-  assert.equal(ok.find((d) => d.file === f), undefined);
-
-  // If the pump gains one, the conditional now gates the wrong set.
-  const bad = subscribableDrift(products, { 'foam-soap-refill-32oz': true, 'organic-foaming-hand-soap': true }, templates);
-  const hit = bad.find((d) => d.file === f);
-  assert.equal(hit.kind, 'per-product-mismatch');
-  assert.deepEqual(hit.real, [...handles].sort());
+test('no page claims to be subscribable, so a page with no plan is never a false claim', () => {
+  for (const [f, spec] of Object.entries(MANIFEST)) assert.equal(spec.subscribable, false, f);
+  const products = byFile({ 'landing-page-toothpaste': ['coconut-oil-toothpaste'] });
+  assert.deepEqual(subscribableDrift(products, {}, allTemplates()), []);
 });
 
 test('a template serving nothing is an ORPHAN, never "not subscribable"', () => {

@@ -75,26 +75,32 @@ export const serialize = (t) => `${JSON.stringify(t, null, 2).replace(/\//g, '\\
  */
 export const MANIFEST = {
   'product.landing-page-toothpaste.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 3-pack TIER; the single tube has no plan.
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-deodorant.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 4-pack TIER; the single bottle has no plan.
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-bar-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 4-pack TIER (the 12-pack has no plan).
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
@@ -128,7 +134,7 @@ export const MANIFEST = {
     insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-liquid-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // PER-PRODUCT, not per-page — the only template that needs it. It serves
     // the foaming pump and its ladder tiers (pump, 2-pack, 4-pack), none of
@@ -136,18 +142,24 @@ export const MANIFEST = {
     // plan 11152263 (1/2/3/4-month) on 2026-09-05. A page-level flag would
     // either advertise subscription shipping on three products that cannot be
     // subscribed to, or withhold it from the one that can.
-    subscribable: ['foam-soap-refill-32oz'],
+    // Since 2026-10-06 nothing here sells a new subscription; the refill keeps
+    // its plan for existing contracts and `no-subscription` hides the widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
   // they get no trust-line: a second copy under the button would be a
   // duplicate promise, not reinforcement.
   'product.landing-page-sensitive-skin-set-lander.json': {
-    shared: ['discount-callout', 'vqr-combo', 'tab-shipping'],
+    shared: ['discount-callout', 'vqr-combo', 'tab-shipping', 'no-subscription'],
     drop: [],
-        subscribable: true,
-    insertAfter: {},
+    // No new subscriptions since 2026-10-06; the set keeps its plan for
+    // existing contracts and `no-subscription` hides the embed widget.
+    subscribable: false,
+    retiredPlan: true,
+    insertAfter: { 'no-subscription': 'buy_buttons' },
   },
   'product.bundle-landing.json': {
     shared: ['discount-callout', 'vqr-combo'],
