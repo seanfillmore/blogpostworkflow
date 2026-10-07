@@ -142,17 +142,38 @@ export function renderReviews(cfg, roster) {
  * videos listed in config/homepage.json ugc.videos render, and the material-
  * connection disclosure is always shown (FTC: creators get product and commission).
  */
+/**
+ * Pure: a creator's social link for the UGC strip, or null when none is set.
+ * Hosts are a WHITELIST: a typo or a non-social URL refuses the build rather
+ * than sending shoppers somewhere unexpected. The link opens in a new tab
+ * (target=_blank, rel=noopener noreferrer) so the shopper never leaves the store.
+ */
+const SOCIAL_HOSTS = { 'instagram.com': 'Instagram', 'tiktok.com': 'TikTok', 'youtube.com': 'YouTube', 'facebook.com': 'Facebook' };
+export function socialLink(v) {
+  if (!v.social_url) return null;
+  let u;
+  try { u = new URL(v.social_url); } catch { throw new Error(`ugc: ${v.trybe_id} social_url is not a URL`); }
+  const host = u.hostname.replace(/^(www\.|m\.)/, '');
+  const platform = SOCIAL_HOSTS[host];
+  if (u.protocol !== 'https:' || !platform) throw new Error(`ugc: ${v.trybe_id} social_url must be https on ${Object.keys(SOCIAL_HOSTS).join(', ')}`);
+  const seg = u.pathname.split('/').filter(Boolean)[0] ?? '';
+  const handle = v.social_handle ?? (seg ? `@${seg.replace(/^@/, '')}` : v.creator);
+  return { url: u.href, platform, handle };
+}
+
 export function renderUgc(ugc) {
   if (!ugc.videos?.length) throw new Error('ugc: no videos configured');
   if (!ugc.disclosure) throw new Error('ugc: the creator disclosure line is required');
   const cards = ugc.videos.map((v) => {
     if (!/^https:\/\/cdn\.shopify\.com\//.test(v.src)) throw new Error(`ugc: ${v.trybe_id} src must be a Shopify CDN URL`);
+    const social = socialLink(v);
     return `
     <figure class="ugc__card">
       <div class="ugc__frame">
         <video class="ugc__video" src="${esc(v.src)}" poster="${esc(v.poster)}" muted loop playsinline preload="none" aria-label="${esc(v.creator)} on Real Skin Care ${esc(v.product)}"></video>
         <button type="button" class="ugc__sound" aria-label="Turn sound on">Tap for sound</button>
-      </div>
+      </div>${social ? `
+      <figcaption class="ugc__by"><a href="${esc(social.url)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(v.creator)} on ${social.platform} (opens in a new tab)">${esc(social.handle)}<span class="ugc__plat"> on ${social.platform}</span><svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a></figcaption>` : ''}
     </figure>`;
   }).join('');
   return `<div class="ugc"><div class="ugc__inner">
@@ -173,6 +194,10 @@ export function renderUgc(ugc) {
   .ugc__video{width:100%;height:100%;object-fit:cover;display:block}
   .ugc__sound{position:absolute;left:10px;bottom:10px;border:0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
   .ugc__sound[aria-pressed="true"]{background:rgba(0,0,0,.25)}
+  .ugc__by{margin:8px 2px 0;font-size:13px}
+  .ugc__by a{display:inline-flex;align-items:center;gap:4px;color:#151515;font-weight:600;text-decoration:none}
+  .ugc__by a:hover{text-decoration:underline}
+  .ugc__plat{font-weight:400;color:#6d7175}
   .ugc__disc{margin:14px 16px 0;font-size:12px;color:#6d7175}
   @media screen and (max-width:749px){.ugc__row{grid-auto-columns:62%}}
 </style>
