@@ -183,8 +183,13 @@
   "section_css": [
     {
       "section": "founder",
-      "css": ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:50%;margin:0 auto}",
-      "_why": "Sean, 2026-10-07: founder image reduced by 50%. Scales the image inside its column; the text column is unchanged."
+      "css": [
+        ".section{background:#efe6d8}",
+        ".image-with-text__grid{background:transparent}",
+        ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:75%;margin:0 auto}"
+      ],
+      "_why": "Sean, 2026-10-07: tan background on the founder section; image at 75% (50% was too small). Scales the image inside its column; the text column is unchanged.",
+      "_note": "One entry per rule: Shopify scopes each array element to the section by prefixing its id (attached directly, so .section matches the section element itself)."
     }
   ]
 }
