@@ -1254,7 +1254,7 @@
       "handle": "coconut-deodorant-4-pack",
       "title": "Coconut Deodorant — 4-Pack",
       "status": "live",
-      "templateSuffix": null,
+      "templateSuffix": "scoped-gallery",
       "packaging": 0,
       "tags": [
         "bundle",
@@ -1264,7 +1264,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription. Template is the DEFAULT product template (hide_variants: true) since 2026-10-07, when scripts/publish-ladder-galleries.mjs replaced its ten gang-scoped (#scent_) code composites with generated frames: one hero per variant, ATTACHED to that variant, plus shared unattached frames. It was on scoped-gallery until then because those #scent_ images only render where hide_variants is false; none remain, so the default template is now correct and scoped-gallery would show every variant's hero at once.",
+      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription. Template is scoped-gallery and must stay on a gang-scoping template: all 10 of its images carry #scent_ alt tokens, and that mechanism only runs where hide_variants is false. The roster recorded null (the default PDP, hide_variants: true), so build-bundle.mjs --all would have silently turned gang scoping off and unscoped every image. Verified 2026-08-25 by reading hide_variants off all three templates: product.json true, scoped-gallery false, bundle-landing false.",
       "options": [
         {
           "name": "Scent",

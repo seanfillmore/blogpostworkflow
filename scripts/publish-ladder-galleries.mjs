@@ -25,6 +25,10 @@
  *     deleting a Shopify product image destroys the CDN file (2026-08-12).
  *   - Alt text goes through the commercial-surface claim gate and the ruled-word
  *     list before anything is written.
+ *   - coconut-deodorant-4-pack is NOT yet published (2026-10-07): Gemini could not hold
+ *     its label design and OpenAI was out of credits, so its gallery is incomplete and
+ *     skipped. When it ships, set its `templateSuffix` to null in config/bundles.json IN
+ *     THE SAME CHANGE, or build-bundle.mjs --all will move it back to scoped-gallery.
  *   - coconut-deodorant-4-pack moves off `scoped-gallery` onto the default template
  *     in the same run that removes its gang-scoped (#scent_) media, never before:
  *     those images would render for no variant on a hide_variants: true template.

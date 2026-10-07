@@ -3,7 +3,8 @@
  * Render the generated gallery frames for every quantity-ladder tier.
  *
  *   node scripts/build-ladder-galleries.mjs [--only <handle>] [--frames hero,offer,scene]
- *        [--name hero-...,offer] [--max-renders N] [--concurrency N] [--dry-run]
+ *        [--name hero-...,offer] [--missing] [--engines openai|gemini]
+ *        [--max-renders N] [--concurrency N] [--dry-run]
  *
  * What gets rendered, and why, is in lib/ladder-gallery.js. This file is the I/O:
  * live price checks, references, rendering, vision reads, output.
@@ -17,9 +18,10 @@
  * contact sheet per product, archived to the main checkout so removing the worktree
  * cannot destroy a paid run.
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
 import { GoogleGenAI } from '@google/genai';
 import Anthropic from '../lib/anthropic.js';
@@ -42,6 +44,10 @@ const MAX_RENDERS = Number(arg('--max-renders', 240));
 const CONCURRENCY = Number(arg('--concurrency', 3));
 const DRY = argv.includes('--dry-run');
 const NAMES = arg('--name', null)?.split(',') ?? null;
+const MISSING = argv.includes('--missing');
+// --engines gemini: finish a run without OpenAI (2026-10-07 the account ran out of credits mid-run).
+const ENGINES = arg('--engines', null);
+const PLAN_ATTEMPTS = ENGINES === 'gemini' ? ['gemini', 'gemini', 'gemini'] : ENGINES === 'openai' ? ['openai', 'openai', 'openai'] : ATTEMPTS;
 const SIZE = '2048x2048';
 
 const env = Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
@@ -123,6 +129,18 @@ for (const [handle, tier] of Object.entries(TIERS)) {
 }
 
 if (NAMES) jobs.splice(0, jobs.length, ...jobs.filter((j) => NAMES.includes(j.name)));
+if (MISSING) {
+  // A frame already has a passing render in some earlier run: skip it. Only top-level
+  // files count — _rejected/ holds failures.
+  // Read the MAIN checkout's archive — the same place the publisher reads, and where
+  // a human moves a rejected frame. A worktree's own copy goes stale the moment that happens.
+  const common = execFileSync('git', ['rev-parse', '--path-format=absolute', '--git-common-dir'], { cwd: ROOT, encoding: 'utf8' }).trim();
+  const runsRoot = join(dirname(common), 'data', 'creatives', 'ladder-galleries');
+  const runs = existsSync(runsRoot) ? readdirSync(runsRoot).filter((d) => /^\d{4}-/.test(d)) : [];
+  const done = (j) => runs.some((r) => existsSync(join(runsRoot, r, j.handle, `${j.name}.png`)));
+  jobs.splice(0, jobs.length, ...jobs.filter((j) => !done(j)));
+}
+if (!jobs.length) { console.log('Nothing to render.'); process.exit(0); }
 console.log(`${jobs.length} frames planned across ${new Set(jobs.map((j) => j.handle)).size} products.`);
 if (DRY) {
   for (const j of jobs) console.log(`  ${j.handle.padEnd(28)} ${j.name.padEnd(30)} ${j.units.length} units${j.copy ? `  "${j.copy.headline}" ${j.copy.price} ${j.copy.sub}` : ''}`);
@@ -155,7 +173,7 @@ async function renderJob(job) {
   for (const s of [...new Set(job.units)]) refs.push(await refFor(job.unit, s));
   const attempts = [];
   let last = null;
-  for (const engine of ATTEMPTS) {
+  for (const engine of PLAN_ATTEMPTS) {
     if (budget.used >= MAX_RENDERS) { attempts.push({ engine, error: 'render budget exhausted' }); break; }
     if (engine === 'gemini' && !gemini) continue;
     budget.used++;
