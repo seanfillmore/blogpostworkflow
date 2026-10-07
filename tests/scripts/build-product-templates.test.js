@@ -87,7 +87,11 @@ test('the guarantee lands directly under the buy CTA on every page that gains it
     const t = tpl(f);
     applyManifest(t, f, read);
     const order = t.sections.main.block_order;
-    assert.equal(order[order.indexOf(anchor) + 1], 'trust-line', `${f}: not adjacent to ${anchor}`);
+    // Only the payment-icons row may sit between the CTA and the guarantee
+    // (Sean, 2026-10-07: card icons directly under the buy button).
+    const between = order.slice(order.indexOf(anchor) + 1, order.indexOf('trust-line'));
+    assert.ok(between.every((b) => b === 'payment-icons'), `${f}: not adjacent to ${anchor} (${between.join(',')})`);
+    assert.ok(order.indexOf('trust-line') > order.indexOf(anchor), `${f}: guarantee above ${anchor}`);
     // The anchor must be whatever carries the Add to cart on THAT page:
     // buy_buttons on variant-picker pages, the ladder where it owns the box.
     assert.ok(['buy_buttons', 'quantity-ladder'].includes(anchor), `${f}: odd anchor ${anchor}`);
@@ -336,4 +340,17 @@ test('a page that sells no new subscription suppresses the Recurpay EMBED widget
   assert.match(src, /value="one-time"/);
   // Stripped again in the CAPTURE phase, ahead of product-form.js's FormData.
   assert.match(src, /addEventListener\('submit'[\s\S]*\}, true\)/);
+});
+
+test('payment icons sit under the buy CTA, and the layout block comes after every tab', () => {
+  for (const f of Object.keys(MANIFEST)) {
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const m = t.sections.main;
+    const order = m.block_order;
+    const cta = order.includes('quantity-ladder') ? 'quantity-ladder' : 'buy_buttons';
+    assert.equal(order[order.indexOf(cta) + 1], 'payment-icons', `${f}: icons not under ${cta}`);
+    const lastTab = Math.max(...order.map((k, i) => (m.blocks[k].type === 'collapsible_tab' ? i : -1)));
+    assert.ok(order.indexOf('pdp-layout') > lastTab, `${f}: pdp-layout must follow the last tab (its script moves them)`);
+  }
 });

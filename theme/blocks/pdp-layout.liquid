@@ -1,0 +1,53 @@
+{%- comment -%}
+  Desktop PDP layout (Sean, 2026-10-07: shorter buy box, no gallery scroll bar).
+
+  1. The info tabs (collapsible_tab blocks) move out of the buy box to the LEFT
+     column, under the main image. Desktop only (>= 990px): on a phone the
+     columns stack and the tabs stay below the buy box, where they were. The
+     move is undone if the window narrows, so the page never ends up with the
+     tabs stranded in a column that is no longer beside anything.
+  2. The thumbnail column is no longer capped at the main image's height (it
+     scrolled: 7-10 thumbnails at 88px in a 536px box). It now runs its full
+     length beside the main image AND the tabs, so nothing scrolls and the
+     left column has no dead space.
+
+  The gallery's grid itself comes from the main section's custom_css (left
+  thumbnail column, PRs #1039/#1040), which is at Shopify's 500-character cap;
+  this block only overrides the two thumbnail properties it has to and adds a
+  second grid row. Must sit AFTER the last tab in block_order: the script runs
+  as the parser reaches it, so the tabs already exist and move before paint.
+{%- endcomment -%}
+<style>
+  @media screen and (min-width:990px){
+    .product__media-wrapper media-gallery{grid-template-rows:auto 1fr}
+    .product__media-wrapper media-gallery .thumbnail-slider{grid-row:1 / span 2 !important}
+    .product__media-wrapper media-gallery .thumbnail-list{max-height:none !important;overflow:visible !important}
+    .pdp-tabs-left{grid-column:2;grid-row:2;max-width:59.5vh;width:100%;margin-top:2.4rem;align-self:start}
+  }
+</style>
+<script>
+(function () {
+  var me = document.currentScript;
+  var info = me && me.closest('.product__info-container');
+  var gallery = document.querySelector('.product__media-wrapper media-gallery');
+  if (!info || !gallery || !window.matchMedia) return;
+  var tabs = [].slice.call(info.querySelectorAll('.product__accordion'));
+  if (!tabs.length) return;
+  var home = document.createComment('pdp-tabs');
+  tabs[0].parentNode.insertBefore(home, tabs[0]);
+  var box = document.createElement('div');
+  box.className = 'pdp-tabs-left';
+  var mq = window.matchMedia('(min-width: 990px)');
+  function place() {
+    if (mq.matches) {
+      tabs.forEach(function (t) { box.appendChild(t); });
+      if (!box.parentNode) gallery.appendChild(box);
+    } else {
+      tabs.forEach(function (t) { home.parentNode.insertBefore(t, home); });
+      if (box.parentNode) box.parentNode.removeChild(box);
+    }
+  }
+  place();
+  if (mq.addEventListener) mq.addEventListener('change', place); else if (mq.addListener) mq.addListener(place);
+})();
+</script>

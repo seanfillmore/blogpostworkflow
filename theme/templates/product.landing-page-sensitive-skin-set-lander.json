@@ -252,6 +252,18 @@
           "settings": {
             "custom_liquid": "{%- comment -%}\n  no-subscription: this page sells NO new subscriptions (multi-unit over\n  subscriptions, Sean 2026-10-05), but the product still carries a Recurpay\n  selling plan so the existing contracts keep renewing.\n\n  Removing the theme's Recurpay app block is not enough. Recurpay's app EMBED\n  (global, in settings_data) injects its own widget into the product form for\n  any product with a selling plan, with SUBSCRIBE PRE-SELECTED, which puts\n  `selling_plan` into the form a shopper submits. Measured live 2026-10-06 on\n  lotion and cream. On the ladder page it is also a dead control: the ladder\n  posts its own \/cart\/add.js call and never reads it.\n\n  So: hide the widget, switch it to one-time (Recurpay's own handler then\n  drops the plan), and strip any `selling_plan` field from every add-to-cart\n  form, again at submit time as the last word.\n{%- endcomment -%}\n<style>\n  .recurpay-pdp-widget, .recurpay__widget { display: none !important; }\n<\/style>\n<script>\n(function () {\n  function strip() {\n    document.querySelectorAll('.recurpay-pdp-widget input[type=\"radio\"][value=\"one-time\"]').forEach(function (r) {\n      if (!r.checked) r.click();\n    });\n    document.querySelectorAll('form[action*=\"\/cart\/add\"] [name=\"selling_plan\"]').forEach(function (i) {\n      i.parentNode && i.parentNode.removeChild(i);\n    });\n  }\n  var queued = false;\n  function schedule() {\n    if (queued) return;\n    queued = true;\n    requestAnimationFrame(function () { queued = false; strip(); });\n  }\n  strip();\n  document.addEventListener('DOMContentLoaded', strip);\n  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });\n  \/\/ Capture phase runs before the theme's product-form.js builds its FormData.\n  document.addEventListener('submit', function (e) {\n    var f = e.target;\n    if (f && f.querySelectorAll) {\n      f.querySelectorAll('[name=\"selling_plan\"]').forEach(function (i) { i.parentNode && i.parentNode.removeChild(i); });\n    }\n  }, true);\n})();\n<\/script>\n"
           }
+        },
+        "payment-icons": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "{%- comment -%}\n  Accepted payment methods, directly under the buy button (Sean, 2026-10-07).\n  Read from the store's ENABLED payment types, so the row always matches what\n  checkout actually offers; nothing here is hand-listed.\n{%- endcomment -%}\n{%- if shop.enabled_payment_types.size > 0 -%}\n<ul class=\"pdp-pay\" aria-label=\"Accepted payment methods\">\n  {%- for type in shop.enabled_payment_types -%}\n    <li>{{ type | payment_type_svg_tag: class: 'pdp-pay__icon' }}<\/li>\n  {%- endfor -%}\n<\/ul>\n<style>\n  .pdp-pay{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0 4px;padding:0}\n  .pdp-pay li{margin:0;padding:0}\n  .pdp-pay__icon{display:block;width:38px;height:24px}\n<\/style>\n{%- endif -%}\n"
+          }
+        },
+        "pdp-layout": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "{%- comment -%}\n  Desktop PDP layout (Sean, 2026-10-07: shorter buy box, no gallery scroll bar).\n\n  1. The info tabs (collapsible_tab blocks) move out of the buy box to the LEFT\n     column, under the main image. Desktop only (>= 990px): on a phone the\n     columns stack and the tabs stay below the buy box, where they were. The\n     move is undone if the window narrows, so the page never ends up with the\n     tabs stranded in a column that is no longer beside anything.\n  2. The thumbnail column is no longer capped at the main image's height (it\n     scrolled: 7-10 thumbnails at 88px in a 536px box). It now runs its full\n     length beside the main image AND the tabs, so nothing scrolls and the\n     left column has no dead space.\n\n  The gallery's grid itself comes from the main section's custom_css (left\n  thumbnail column, PRs #1039\/#1040), which is at Shopify's 500-character cap;\n  this block only overrides the two thumbnail properties it has to and adds a\n  second grid row. Must sit AFTER the last tab in block_order: the script runs\n  as the parser reaches it, so the tabs already exist and move before paint.\n{%- endcomment -%}\n<style>\n  @media screen and (min-width:990px){\n    .product__media-wrapper media-gallery{grid-template-rows:auto 1fr}\n    .product__media-wrapper media-gallery .thumbnail-slider{grid-row:1 \/ span 2 !important}\n    .product__media-wrapper media-gallery .thumbnail-list{max-height:none !important;overflow:visible !important}\n    .pdp-tabs-left{grid-column:2;grid-row:2;max-width:59.5vh;width:100%;margin-top:2.4rem;align-self:start}\n  }\n<\/style>\n<script>\n(function () {\n  var me = document.currentScript;\n  var info = me && me.closest('.product__info-container');\n  var gallery = document.querySelector('.product__media-wrapper media-gallery');\n  if (!info || !gallery || !window.matchMedia) return;\n  var tabs = [].slice.call(info.querySelectorAll('.product__accordion'));\n  if (!tabs.length) return;\n  var home = document.createComment('pdp-tabs');\n  tabs[0].parentNode.insertBefore(home, tabs[0]);\n  var box = document.createElement('div');\n  box.className = 'pdp-tabs-left';\n  var mq = window.matchMedia('(min-width: 990px)');\n  function place() {\n    if (mq.matches) {\n      tabs.forEach(function (t) { box.appendChild(t); });\n      if (!box.parentNode) gallery.appendChild(box);\n    } else {\n      tabs.forEach(function (t) { home.parentNode.insertBefore(t, home); });\n      if (box.parentNode) box.parentNode.removeChild(box);\n    }\n  }\n  place();\n  if (mq.addEventListener) mq.addEventListener('change', place); else if (mq.addListener) mq.addListener(place);\n})();\n<\/script>\n"
+          }
         }
       },
       "block_order": [
@@ -269,12 +281,14 @@
         "vqr-combo",
         "discount-callout",
         "buy_buttons",
+        "payment-icons",
         "no-subscription",
         "trust-row",
         "tab-ingredients",
         "tab-details",
         "tab-howto",
         "tab-shipping",
+        "pdp-layout",
         "ymal-recommendations",
         "sticky_cart"
       ],
