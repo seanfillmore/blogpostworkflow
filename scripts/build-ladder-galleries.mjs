@@ -78,6 +78,21 @@ async function refFor(unit, scent) {
   return out;
 }
 
+/** A label close-up cut from the same cutout, so it always matches the scent. */
+async function detailFor(unit, scent) {
+  const full = await refFor(unit, scent);
+  const out = full.replace(/\.png$/, '-label.png');
+  if (!existsSync(out)) {
+    const src = join(CUTOUTS, `component-${unit.refKey}-${slugify(scent)}.png`);
+    const m = await sharp(src).metadata();
+    const [a, b] = unit.detailCrop;
+    const buf = await sharp(src).flatten({ background: '#ffffff' })
+      .extract({ left: 0, top: Math.round(m.height * a), width: m.width, height: Math.round(m.height * (b - a)) }).png().toBuffer();
+    await sharp(buf).resize({ height: 1024 }).png().toFile(out);
+  }
+  return out;
+}
+
 // ── Live price check: a frame states a price, so the price must be the live one ──
 async function liveProduct(handle) {
   const r = await shopifyGraphQL(`query($h:String!){ productByIdentifier(identifier:{handle:$h}){
@@ -151,7 +166,8 @@ if (DRY) {
 }
 
 // ── Render ───────────────────────────────────────────────────────────────────
-const RUN = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+// pid suffix: two runs started in the same second once shared a directory and run.json.
+const RUN = `${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}-${process.pid}`;
 const OUT = join(ROOT, 'data', 'creatives', 'ladder-galleries', RUN);
 const anthropic = new Anthropic();
 const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
@@ -170,7 +186,10 @@ async function read(job, refs, buf) {
 
 async function renderJob(job) {
   const refs = [];
-  for (const s of [...new Set(job.units)]) refs.push(await refFor(job.unit, s));
+  for (const s of [...new Set(job.units)]) {
+    refs.push(await refFor(job.unit, s));
+    if (job.unit.detailCrop) refs.push(await detailFor(job.unit, s));
+  }
   const attempts = [];
   let last = null;
   for (const engine of PLAN_ATTEMPTS) {
