@@ -120,11 +120,12 @@ export const MANIFEST = {
     insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
   },
   'product.landing-page-lip-balm.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
-    drop: [],
-        // NO tier on this page carries a selling plan.
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 3 ladder ("buy 2, get 1 free", three four-packs) since 2026-10-06.
+    // No tier carries a selling plan.
     subscribable: false,
-    insertAfter: { 'trust-line': 'buy_buttons' },
+    insertAfter: { 'trust-line': 'quantity-ladder' },
   },
   'product.landing-page-liquid-soap.json': {
     shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
