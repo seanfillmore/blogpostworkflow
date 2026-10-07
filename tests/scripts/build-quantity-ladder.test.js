@@ -363,3 +363,29 @@ test('the redesigned card: Best value on the cheapest per unit, true strike-thro
   assert.match(out, /Ships in 1–2 business days/);
   assert.doesNotMatch(out, /Most popular/i);
 });
+
+test('every configured buy-box review is an exact, claim-clean excerpt', async () => {
+  const { assertReview } = await import('../../scripts/build-quantity-ladder.mjs');
+  const { loadRoster } = await import('../../lib/bundle-roster.js');
+  const ladders = loadRoster().ladders.filter((l) => l.review);
+  assert.ok(ladders.length >= 6, 'six ladders carry an approved review');
+  for (const l of ladders) assert.doesNotThrow(() => assertReview(l.review, l.base), l.base);
+});
+
+test('assertReview refuses an edited quote, a claim and an em dash', async () => {
+  const { assertReview } = await import('../../scripts/build-quantity-ladder.mjs');
+  const base = { judgeme_id: 1, name: 'A B.', source_body: 'It works great on dry skin. Love it.' };
+  assert.doesNotThrow(() => assertReview({ ...base, text: 'It works great on dry skin.' }));
+  assert.throws(() => assertReview({ ...base, text: 'It works great on all skin.' }), /exact excerpt/);
+  assert.throws(() => assertReview({ ...base, source_body: 'It cured my eczema.', text: 'It cured my eczema.' }), /gate/);
+  assert.throws(() => assertReview({ ...base, source_body: 'Great — love it', text: 'Great — love it' }), /em dash/);
+});
+
+test('the review is its own escaped block, never inside the ladder', async () => {
+  const { renderReviewBlock } = await import('../../scripts/build-quantity-ladder.mjs');
+  const html = renderReviewBlock({ base: 'x', review: { judgeme_id: 1, name: 'A <B>.', text: "It's \"great\".", source_body: "It's \"great\"." } });
+  assert.match(html, /“It's &quot;great&quot;\.”/);
+  assert.match(html, /A &lt;B&gt;\./);
+  assert.equal(renderReviewBlock({ base: 'x' }), '');
+  assert.doesNotMatch(renderBlock(TIERS, LADDER), /review/i);
+});

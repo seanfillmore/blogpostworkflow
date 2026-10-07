@@ -1650,7 +1650,14 @@
       "default": "coconut-bar-soap-12-pack",
       "template": "product.landing-page-bar-soap.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "bar"
+      "unit_noun": "bar",
+      "review": {
+        "judgeme_id": 534053314,
+        "name": "Stephen H.",
+        "text": "Bar soap lathers up very well. The unscented is an excellent choice for sensitive people. My #1 go to bar soap. Customer service is top notch.",
+        "source_body": "Bar soap lathers up very well. The unscented is an excellent choice for sensitive people. My #1 go to bar soap. Customer service is top notch.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-oil-deodorant",
@@ -1661,7 +1668,14 @@
       "default": "coconut-deodorant-4-pack",
       "template": "product.landing-page-deodorant.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "unit"
+      "unit_noun": "unit",
+      "review": {
+        "judgeme_id": 601017507,
+        "name": "Mike G.",
+        "text": "This is my second purchase of the deodorant. This time I got the frankincense. The scents are enjoyable and not over powering.",
+        "source_body": "This is my second purchase of the deodorant. This time I got the frankincense. The scents are enjoyable and not over powering. I use this in the evening after I shower from the gym when I don't need anti-perspirant. It works great.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-oil-toothpaste",
@@ -1672,7 +1686,14 @@
       "default": "coconut-toothpaste-3-pack",
       "template": "product.landing-page-toothpaste.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "unit"
+      "unit_noun": "unit",
+      "review": {
+        "judgeme_id": 597981700,
+        "name": "Mike G.",
+        "text": "This is my first time trying natural toothpaste and I am impressed. The cinnamon taste is just enough to make it pleasant and this leaves your teeth feeling clean and mouth feeling fresh.",
+        "source_body": "This is my first time trying natural toothpaste and I am impressed. The cinnamon taste is just enough to make it pleasant and this leaves your teeth feeling clean and mouth feeling fresh. As you can tell from my picture, I am a fan of all of their products.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-lotion",
@@ -1683,7 +1704,14 @@
       "default": "coconut-lotion-5-pack",
       "template": "product.landing-page-lotion.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "bottle"
+      "unit_noun": "bottle",
+      "review": {
+        "judgeme_id": 759720336,
+        "name": "Nicole H.",
+        "text": "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!",
+        "source_body": "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "organic-foaming-hand-soap",
@@ -1695,7 +1723,14 @@
       "default": "coconut-hand-soap-4-pack",
       "template": "product.landing-page-liquid-soap.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "pump"
+      "unit_noun": "pump",
+      "review": {
+        "judgeme_id": 514327211,
+        "name": "Laura S.",
+        "text": "The scent is great. Foams up nicely and doesn't leave hands dry at all!",
+        "source_body": "The scent is great. Foams up nicely and doesn't leave hands dry at all!",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-moisturizer",
@@ -1706,7 +1741,14 @@
       "default": "coconut-moisturizer-5-pack",
       "template": "product.landing-page-cream.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "jar"
+      "unit_noun": "jar",
+      "review": {
+        "judgeme_id": 514327202,
+        "name": "Ella M.",
+        "text": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+        "source_body": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+        "approved": "Sean, 2026-10-06"
+      }
     }
   ]
 }
