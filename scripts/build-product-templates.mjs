@@ -323,6 +323,16 @@ export function applyManifest(parsed, file, read) {
     notes.push(`dropped redundant section ${name}`);
   }
 
+  // Every info tab starts CLOSED (Sean, 2026-10-07: the ingredients tab was
+  // open by default, which made the column long before anyone asked).
+  for (const name of main.block_order) {
+    const blk = main.blocks[name];
+    if (blk?.type === 'collapsible_tab' && blk.settings?.keep_open) {
+      blk.settings.keep_open = false;
+      notes.push(`closed ${name}`);
+    }
+  }
+
   for (const [name, after] of Object.entries(spec.insertAfter)) {
     if (main.block_order.includes(name)) continue;
     const at = main.block_order.indexOf(after);

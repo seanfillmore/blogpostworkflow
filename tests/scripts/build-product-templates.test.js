@@ -354,3 +354,12 @@ test('payment icons sit under the buy CTA, and the layout block comes after ever
     assert.ok(order.indexOf('pdp-layout') > lastTab, `${f}: pdp-layout must follow the last tab (its script moves them)`);
   }
 });
+
+test('every info tab starts closed', () => {
+  for (const f of Object.keys(MANIFEST)) {
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const m = t.sections.main;
+    for (const k of m.block_order) if (m.blocks[k].type === 'collapsible_tab') assert.equal(m.blocks[k].settings.keep_open, false, `${f}: ${k} opens by default`);
+  }
+});

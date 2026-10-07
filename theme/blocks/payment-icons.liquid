@@ -2,6 +2,11 @@
   Accepted payment methods, directly under the buy button (Sean, 2026-10-07).
   Read from the store's ENABLED payment types, so the row always matches what
   checkout actually offers; nothing here is hand-listed.
+
+  On a quantity-ladder page the row moves ABOVE the ladder's "Ships in 1-2
+  business days" line (Sean: icons above the shipping line). That line lives
+  inside the ladder block, so the row is moved there as the parser reaches it,
+  before first paint. Without JS it simply stays below the ladder.
 {%- endcomment -%}
 {%- if shop.enabled_payment_types.size > 0 -%}
 <ul class="pdp-pay" aria-label="Accepted payment methods">
@@ -9,8 +14,16 @@
     <li>{{ type | payment_type_svg_tag: class: 'pdp-pay__icon' }}</li>
   {%- endfor -%}
 </ul>
+<script>
+(function () {
+  var row = document.currentScript && document.currentScript.previousElementSibling;
+  var box = row && row.closest('.product__info-container');
+  var ships = box && box.querySelector('.qty-ladder__ships');
+  if (row && ships) ships.parentNode.insertBefore(row, ships);
+})();
+</script>
 <style>
-  .pdp-pay{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0 4px;padding:0}
+  .pdp-pay{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0 6px;padding:0}
   .pdp-pay li{margin:0;padding:0}
   .pdp-pay__icon{display:block;width:38px;height:24px}
 </style>
