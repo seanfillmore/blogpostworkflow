@@ -33,9 +33,10 @@ test('the review strip only quotes approved, gated ladder reviews and links on-s
 
 test('transform swaps the three sections in place and drops the old hero CSS', () => {
   const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {} } };
+    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+  parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
-  assert.deepEqual(parsed.order, ['hero-split', 'product-intro', 'product-grid', 'thesis', 'review-strip', 'ugc-strip', 'founder-anchor', 'founder']);
+  assert.deepEqual(parsed.order, ['hero-split', 'product-intro', 'product-grid', 'thesis', 'review-strip', 'ugc-strip', 'founder-anchor', 'founder', 'set-offer']);
   assert.equal(parsed.sections['hero-split'].type, 'home-hero-split');
   assert.equal(parsed.sections['hero-split'].block_order.length, cfg.hero.bullets.length);
   // Idempotent: a second pass refreshes rather than throwing.
@@ -59,7 +60,8 @@ test('excluded Trybe videos stay out of the strip', () => {
 
 test('transform places the UGC strip before the founder anchor and bands both rich-text sections', () => {
   const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {} } };
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+  parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
   assert.equal(parsed.order[parsed.order.indexOf('founder-anchor') - 1], 'ugc-strip');
   for (const s of ['product-intro', 'thesis']) assert.ok(parsed.sections[s].block_order.includes('band-style'), s);
@@ -70,4 +72,13 @@ test('UGC cards carry no creator name or shop link (Sean, 2026-10-06)', async ()
   const out = renderUgc(cfg.ugc);
   assert.doesNotMatch(out, /ugc__cap|ugc__shop|Shop →/);
   for (const v of cfg.ugc.videos) assert.ok(!out.includes(`>${v.creator} ·`), v.creator);
+});
+
+test('the set offer bakes no price and adds the live variant', async () => {
+  const { renderSetOffer } = await import('../../scripts/build-homepage.mjs');
+  const out = renderSetOffer(cfg.set_offer);
+  assert.doesNotMatch(out, /\$\d/);
+  assert.match(out, /data-variant="\{\{ sv\.id \}\}"/);
+  assert.match(out, /sv\.compare_at_price \| minus: sv\.price \| money/);
+  assert.equal((out.match(/<li>/g) || []).length, cfg.set_offer.bullets.length);
 });
