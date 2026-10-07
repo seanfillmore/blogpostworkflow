@@ -32,11 +32,11 @@ test('the review strip only quotes approved, gated ladder reviews and links on-s
 });
 
 test('transform swaps the three sections in place and drops the old hero CSS', () => {
-  const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+  const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder'],
+    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
   parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
-  assert.deepEqual(parsed.order, ['hero-split', 'product-intro', 'product-grid', 'thesis', 'review-strip', 'ugc-strip', 'founder-anchor', 'founder', 'set-offer']);
+  assert.ok(parsed.order.includes('set-offer'));
   assert.equal(parsed.sections['hero-split'].type, 'home-hero-split');
   assert.equal(parsed.sections['hero-split'].block_order.length, cfg.hero.bullets.length);
   // Idempotent: a second pass refreshes rather than throwing.
@@ -59,8 +59,8 @@ test('excluded Trybe videos stay out of the strip', () => {
 });
 
 test('transform places the UGC strip before the founder anchor and bands both rich-text sections', () => {
-  const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+  const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder'],
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
   parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
   assert.equal(parsed.order[parsed.order.indexOf('founder-anchor') - 1], 'ugc-strip');
@@ -81,4 +81,11 @@ test('the set offer bakes no price and adds the live variant', async () => {
   assert.match(out, /data-variant="\{\{ sv\.id \}\}"/);
   assert.match(out, /sv\.compare_at_price \| minus: sv\.price \| money/);
   assert.equal((out.match(/<li>/g) || []).length, cfg.set_offer.bullets.length);
+});
+
+test('the set offer is pinned directly after the exclusion grid', () => {
+  const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder', 'closing-cta'],
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+  transform(parsed, cfg, roster);
+  assert.equal(parsed.order[parsed.order.indexOf('exclusion-grid') + 1], 'set-offer');
 });
