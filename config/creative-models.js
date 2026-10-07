@@ -28,4 +28,11 @@ export const CREATIVE_MODELS = {
     verify: LLM_MODELS.standard,
     imageGen: 'gemini-3-pro-image',
   },
+  // agents/ad-batch: the image model sets the HEADLINE too. 2026-10-06 spike:
+  // gpt-image-2 29/29 exact headline + label text; Gemini 3 Pro 3/5 labels, so it is
+  // the fallback, not the primary.
+  adBatch: {
+    imageGen: 'gpt-image-2',
+    fallbackImageGen: 'gemini-3-pro-image',
+  },
 };

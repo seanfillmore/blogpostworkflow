@@ -111,7 +111,8 @@
     "ctr-program": "node agents/ctr-program/index.js",
     "ctr-audit": "node agents/ctr-program/index.js --audit --no-write",
     "hero-product": "node scripts/hero-product-repurchase.mjs",
-    "claim-audit": "node scripts/claim-vocabulary-audit.mjs"
+    "claim-audit": "node scripts/claim-vocabulary-audit.mjs",
+    "ad-batch": "node agents/ad-batch/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
