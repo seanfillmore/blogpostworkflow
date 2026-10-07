@@ -1,0 +1,17 @@
+{%- comment -%}
+  Accepted payment methods, directly under the buy button (Sean, 2026-10-07).
+  Read from the store's ENABLED payment types, so the row always matches what
+  checkout actually offers; nothing here is hand-listed.
+{%- endcomment -%}
+{%- if shop.enabled_payment_types.size > 0 -%}
+<ul class="pdp-pay" aria-label="Accepted payment methods">
+  {%- for type in shop.enabled_payment_types -%}
+    <li>{{ type | payment_type_svg_tag: class: 'pdp-pay__icon' }}</li>
+  {%- endfor -%}
+</ul>
+<style>
+  .pdp-pay{list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:12px 0 4px;padding:0}
+  .pdp-pay li{margin:0;padding:0}
+  .pdp-pay__icon{display:block;width:38px;height:24px}
+</style>
+{%- endif -%}

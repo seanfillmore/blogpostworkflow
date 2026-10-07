@@ -75,37 +75,37 @@ export const serialize = (t) => `${JSON.stringify(t, null, 2).replace(/\//g, '\\
  */
 export const MANIFEST = {
   'product.landing-page-toothpaste.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
     // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
     subscribable: false,
     retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-deodorant.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
     // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
     subscribable: false,
     retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-bar-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
     // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
     subscribable: false,
     retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-lotion.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'trust-line', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'trust-line', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-06. The single still
     // carries a selling plan for existing subscribers, so `no-subscription`
@@ -113,28 +113,28 @@ export const MANIFEST = {
     // pre-selected); retiredPlan stops the drift gate reading it as withheld.
     subscribable: false,
     retiredPlan: true,
-    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-cream.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-05; the 5-pack tier has
     // no selling plan. The single unit still does (existing subscribers), so
     // `no-subscription` suppresses the widget the Recurpay embed injects.
     subscribable: false,
     retiredPlan: true,
-    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-lip-balm.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // 1 / 3 ladder ("buy 2, get 1 free", three four-packs) since 2026-10-06.
     // No tier carries a selling plan.
     subscribable: false,
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-liquid-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // PER-PRODUCT, not per-page — the only template that needs it. It serves
     // the foaming pump and its ladder tiers (pump, 2-pack, 4-pack), none of
@@ -147,26 +147,26 @@ export const MANIFEST = {
     subscribable: false,
     retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
   // they get no trust-line: a second copy under the button would be a
   // duplicate promise, not reinforcement.
   'product.landing-page-sensitive-skin-set-lander.json': {
-    shared: ['discount-callout', 'vqr-combo', 'tab-shipping', 'no-subscription'],
+    shared: ['discount-callout', 'vqr-combo', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: [],
     // No subscription at all since 2026-10-07: Recurpay plan 11150632 deleted
     // (it covered only this set and had no live contract). `no-subscription`
     // stays as a guard in case a plan is ever re-attached.
     subscribable: false,
-    insertAfter: { 'no-subscription': 'buy_buttons' },
+    insertAfter: { 'no-subscription': 'buy_buttons', 'payment-icons': 'buy_buttons', 'pdp-layout': 'tab-shipping' },
   },
   'product.bundle-landing.json': {
-    shared: ['discount-callout', 'vqr-combo'],
+    shared: ['discount-callout', 'vqr-combo', 'payment-icons', 'pdp-layout'],
     drop: [],
         // no tab-shipping block, and none of its six bundles is subscribable.
     subscribable: false,
-    insertAfter: {},
+    insertAfter: { 'payment-icons': 'buy_buttons', 'pdp-layout': 'tabs' },
   },
 };
 
