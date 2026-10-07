@@ -150,7 +150,8 @@
         "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/9dc3cef87c11465688593510cc5720fe.thumbnail.0000000000.jpg?v=1791350347",
         "shopify_file": "gid://shopify/Video/45977562316970"
       }
-    ]
+    ],
+    "_social_note": "Optional per video: social_url (https on instagram.com, tiktok.com, youtube.com or facebook.com) and social_handle (defaults to @<first path segment>). Renders a credit link under the video that opens in a new tab. The Trybe API does not expose creator socials, so these come from the Trybe dashboard or the creator."
   },
   "text_overrides": [
     {

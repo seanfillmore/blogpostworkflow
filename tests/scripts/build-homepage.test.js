@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadConfig, gateFailures, renderGrid, renderReviews, transform } from '../../scripts/build-homepage.mjs';
+import { loadConfig, gateFailures, renderGrid, renderReviews, renderUgc, socialLink, transform } from '../../scripts/build-homepage.mjs';
 import { loadRoster } from '../../lib/bundle-roster.js';
 
 const cfg = loadConfig();
@@ -97,4 +97,17 @@ test('founder: no em dashes in the live copy override, and its custom_css is one
   assert.ok(!o.value.includes('—'), 'no em dash');
   const sc = cfg.section_css.find((x) => x.section === 'founder');
   assert.ok(Array.isArray(sc.css) && sc.css.every((r) => (r.match(/\{/g) || []).length === 1), 'one rule per entry');
+});
+
+test('ugc: a creator social link opens in a new tab and only goes to a whitelisted social host', () => {
+  const base = { trybe_id: 't1', creator: 'Taylor', product: 'Body Lotion', src: 'https://cdn.shopify.com/v.mp4', poster: 'p.jpg' };
+  assert.equal(socialLink(base), null);
+  assert.deepEqual(socialLink({ ...base, social_url: 'https://www.instagram.com/taylor.c/' }),
+    { url: 'https://www.instagram.com/taylor.c/', platform: 'Instagram', handle: '@taylor.c' });
+  assert.equal(socialLink({ ...base, social_url: 'https://www.tiktok.com/@tay' }).handle, '@tay');
+  assert.throws(() => socialLink({ ...base, social_url: 'https://example.com/taylor' }), /must be https/);
+  assert.throws(() => socialLink({ ...base, social_url: 'http://instagram.com/x' }), /must be https/);
+  const html = renderUgc({ heading: 'h', subheading: 's', disclosure: 'd', videos: [{ ...base, social_url: 'https://instagram.com/taylor.c' }, { ...base, trybe_id: 't2' }] });
+  assert.match(html, /<a href="https:\/\/instagram\.com\/taylor\.c" target="_blank" rel="noopener noreferrer"/);
+  assert.equal((html.match(/ugc__by"/g) || []).length, 1, 'a video with no social_url gets no link');
 });
