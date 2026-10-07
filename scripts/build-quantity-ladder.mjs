@@ -25,6 +25,27 @@ import { loadRoster } from '../lib/bundle-roster.js';
 import { resolveTiers, validateLadder, freeUnitFraming } from '../lib/quantity-ladder.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
 import { supplyLabel } from '../lib/supply-duration.js';
+import { hasHealthClaim } from '../agents/ad-studio/health-claims.js';
+import { checkSeoCopyFields } from '../lib/seo-copy-health-gate.js';
+
+/**
+ * The buy-box review must be a real customer's words: an exact excerpt of the
+ * Judge.me review it cites (source_body, whitespace-normalised), passing both
+ * claim gates, with no em dash and a display name. Throws otherwise; a ladder
+ * with no review is fine and renders none.
+ */
+export function assertReview(review, label = 'ladder') {
+  if (!review) return null;
+  const { judgeme_id: id, name, text, source_body: source } = review;
+  if (!Number.isInteger(id)) throw new Error(`${label}: review has no judgeme_id`);
+  if (!name || !text || !source) throw new Error(`${label}: review needs name, text and source_body`);
+  if (!source.includes(text)) throw new Error(`${label}: review text is not an exact excerpt of Judge.me review ${id}`);
+  if (/—/.test(text)) throw new Error(`${label}: review text carries an em dash`);
+  if (hasHealthClaim(text)) throw new Error(`${label}: review text trips the ad health-claim gate`);
+  const gate = checkSeoCopyFields({ 'buy-box review': text });
+  if (!gate.ok) throw new Error(`${label}: review trips the commercial claim gate: ${gate.blocking.map((b) => b.match).join(', ')}`);
+  return review;
+}
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -41,6 +62,36 @@ export function renderLadderPreamble(tiers, ladder) {
     // base's. supplyLabel throws rather than print a claim the box can't meet.
     `{%- assign ladder_supply = "${tiers.map((t) => supplyLabel(ladder.base, t.units) ?? '').join('|')}" | split: "|" -%}`,
   ].join('\n');
+}
+
+const escapeHtml = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The approved review, as its OWN block placed after `trust-line`, so the
+ * guarantee stays directly under the CTA and the review sits below it (the
+ * reference buy box's order). Pure HTML: the customer's words are escaped
+ * here, so no Liquid string can be broken by an apostrophe. '' when the
+ * ladder has no review.
+ */
+export function renderReviewBlock(ladder) {
+  const r = assertReview(ladder.review, ladder.base);
+  if (!r) return '';
+  return `<figure class="ladder-review">
+  <div class="ladder-review__head">
+    <span class="ladder-review__stars" role="img" aria-label="5 out of 5 stars">★★★★★</span>
+    <span>Verified buyer</span>
+  </div>
+  <blockquote class="ladder-review__text">“${escapeHtml(r.text)}”</blockquote>
+  <figcaption class="ladder-review__name">${escapeHtml(r.name)}</figcaption>
+</figure>
+<style>
+  .ladder-review{margin:4px 0 16px;padding:16px 0 0;border-top:1px dashed #d4d2cc}
+  .ladder-review__head{display:flex;align-items:center;gap:10px;font-size:.85em;color:#6d7175}
+  .ladder-review__stars{color:#111;letter-spacing:2px;font-size:1.05em}
+  .ladder-review__text{margin:8px 0 6px;padding:0;border:0;font-size:1em;line-height:1.5;color:#111;font-style:normal}
+  .ladder-review__name{font-size:.85em;color:#6d7175}
+</style>
+`;
 }
 
 export function renderBlock(tiers, ladder) {
@@ -183,6 +234,17 @@ if (isDirectRun(import.meta.url)) {
     const blk = parsed.sections?.main?.blocks?.[ladder.block_id];
     if (!blk) { console.error(`${srcKey}: no "${ladder.block_id}" block — refusing`); process.exit(1); }
     blk.settings.custom_liquid = block;
+    const main = parsed.sections.main;
+    const review = renderReviewBlock(ladder);
+    if (review) {
+      if (!main.blocks['ladder-review']) {
+        const after = main.block_order.includes('trust-line') ? 'trust-line' : ladder.block_id;
+        main.blocks['ladder-review'] = { type: 'custom_liquid', settings: { custom_liquid: review } };
+        main.block_order.splice(main.block_order.indexOf(after) + 1, 0, 'ladder-review');
+      } else {
+        main.blocks['ladder-review'].settings.custom_liquid = review;
+      }
+    }
     const out = serialize(parsed);
     const key = PREVIEW ? 'templates/product.ladder-preview.json' : srcKey;
     if (!PREVIEW && out === live) { console.log(`${key}: already current`); process.exit(0); }
