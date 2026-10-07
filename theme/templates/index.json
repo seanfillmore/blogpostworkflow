@@ -22,11 +22,18 @@
             "enable_highlight": false,
             "highlight_style": "marker"
           }
+        },
+        "band-style": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>#shopify-section-{{ section.id }}{background:#EEF3E8;margin-top:16px}#shopify-section-{{ section.id }} .rich-text{background:transparent}<\/style>"
+          }
         }
       },
       "block_order": [
         "pl-heading",
-        "pl-sub"
+        "pl-sub",
+        "band-style"
       ],
       "settings": {
         "text_alignment": "center",
@@ -273,7 +280,7 @@
         "b4"
       ],
       "settings": {
-        "heading": "Skincare for skin that reacts to everything else.",
+        "heading": "Dry, tight skin to soft and comfortable in one application.",
         "kicker": "Our best seller",
         "product_heading": "Coconut Body Lotion",
         "subheading": "Six ingredients you can read. Made in small batches in the USA.",
