@@ -179,7 +179,11 @@ export function renderUgc(ugc) {
   return `<div class="ugc"><div class="ugc__inner">
   <h2 class="ugc__h">${esc(ugc.heading)}</h2>
   <p class="ugc__sub">${esc(ugc.subheading)}</p>
-  <div class="ugc__row">${cards}
+  <div class="ugc__scroller">
+    <button type="button" class="ugc__arrow ugc__arrow--prev" data-ugc-dir="-1" aria-label="Previous videos"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="ugc__row">${cards}
+    </div>
+    <button type="button" class="ugc__arrow ugc__arrow--next" data-ugc-dir="1" aria-label="More videos"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
   </div>
   <p class="ugc__disc">${esc(ugc.disclosure)}</p>
 </div></div>
@@ -188,7 +192,17 @@ export function renderUgc(ugc) {
   .ugc__inner{max-width:1240px;margin:0 auto;text-align:center}
   .ugc__h{margin:0 16px 6px}
   .ugc__sub{margin:0 16px 22px;color:#4a4d52}
-  .ugc__row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(170px,1fr);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
+  /* One scrolling row (Sean, 2026-10-07: "make the section scrolling"). Fixed
+     card width so the row scrolls rather than squeezing; no visible scroll
+     bar; arrows on desktop, swipe on touch. */
+  .ugc__scroller{position:relative}
+  .ugc__row{display:grid;grid-auto-flow:column;grid-auto-columns:210px;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 16px;scroll-behavior:smooth;padding:0 16px 8px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .ugc__row::-webkit-scrollbar{display:none}
+  .ugc__arrow{position:absolute;top:calc(50% - 30px);z-index:2;display:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:999px;border:1px solid #e2dfd8;background:#fff;color:#151515;box-shadow:0 2px 10px rgba(0,0,0,.12);cursor:pointer}
+  .ugc__arrow--prev{left:-6px}
+  .ugc__arrow--next{right:-6px}
+  .ugc__arrow[disabled]{opacity:0;pointer-events:none}
+  @media screen and (min-width:750px){.ugc__arrow{display:flex}}
   .ugc__card{margin:0;scroll-snap-align:start;text-align:left}
   .ugc__frame{position:relative;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#eee}
   .ugc__video{width:100%;height:100%;object-fit:cover;display:block}
@@ -219,6 +233,21 @@ export function renderUgc(ugc) {
     if (btn) btn.addEventListener('click', toggle);
     v.addEventListener('click', toggle);
   });
+  var row = (root || document).querySelector('.ugc__row');
+  var arrows = (root || document).querySelectorAll('.ugc__arrow');
+  function syncArrows() {
+    if (!row) return;
+    var max = row.scrollWidth - row.clientWidth - 2;
+    arrows.forEach(function (a) { a.disabled = a.getAttribute('data-ugc-dir') === '-1' ? row.scrollLeft <= 2 : row.scrollLeft >= max; });
+  }
+  arrows.forEach(function (a) {
+    a.addEventListener('click', function () {
+      var card = row.querySelector('.ugc__card');
+      var step = card ? (card.offsetWidth + 14) * Math.max(1, Math.floor(row.clientWidth / (card.offsetWidth + 14)) - 1) : row.clientWidth * 0.8;
+      row.scrollBy({ left: step * Number(a.getAttribute('data-ugc-dir')), behavior: 'smooth' });
+    });
+  });
+  if (row) { row.addEventListener('scroll', syncArrows, { passive: true }); window.addEventListener('resize', syncArrows); syncArrows(); }
   if (!('IntersectionObserver' in window)) return;
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (e) {
