@@ -31,7 +31,7 @@
       "adAccount": "act_946015593265647",
       "startDate": "2026-10-04",
       "endDate": "2026-11-01",
-      "_note": "All approved creatives (Trybe UGC + our Sensitive Skin Set images) in one $50/day CBO campaign, plus DPA retargeting at $10/day. Readout every 3 days (Sean, 2026-10-04). Raise the test to $100/day only once a creative graduates; graduates move to a scaling campaign by post ID.",
+      "_note": "All approved creatives (Trybe UGC + our Sensitive Skin Set images) in one CBO campaign, plus DPA retargeting at $10/day. Readout every 3 days (Sean, 2026-10-04). Budget raised 2026-10-07 by Sean to $100/day total ($90 test + $10 DPA) with 36 ads live, on the view that Meta picks the winners; graduates still move to a scaling campaign by post ID.",
       "reportEveryDays": 3,
       "landingTags": [
         "trybe=",
@@ -41,7 +41,7 @@
       "campaigns": [
         {
           "id": "120249631730870173",
-          "label": "Creative test (cold, $50/day)",
+          "label": "Creative test (cold, $90/day)",
           "perCreative": true
         },
         {
