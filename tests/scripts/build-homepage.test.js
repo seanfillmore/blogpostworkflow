@@ -32,12 +32,35 @@ test('the review strip only quotes approved, gated ladder reviews and links on-s
 });
 
 test('transform swaps the three sections in place and drops the old hero CSS', () => {
-  const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'featured-testimonial', 'founder'],
-    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, 'featured-testimonial': {}, founder: {} } };
+  const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
+    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {} } };
   transform(parsed, cfg, roster);
-  assert.deepEqual(parsed.order, ['hero-split', 'product-intro', 'product-grid', 'review-strip', 'founder']);
+  assert.deepEqual(parsed.order, ['hero-split', 'product-intro', 'product-grid', 'thesis', 'review-strip', 'ugc-strip', 'founder-anchor', 'founder']);
   assert.equal(parsed.sections['hero-split'].type, 'home-hero-split');
   assert.equal(parsed.sections['hero-split'].block_order.length, cfg.hero.bullets.length);
   // Idempotent: a second pass refreshes rather than throwing.
   assert.doesNotThrow(() => transform(parsed, cfg, roster));
+});
+
+test('the UGC strip always carries the disclosure and only Shopify-hosted videos', async () => {
+  const { renderUgc } = await import('../../scripts/build-homepage.mjs');
+  const out = renderUgc(cfg.ugc);
+  assert.match(out, /Creators received free product and may earn a commission\./);
+  assert.equal((out.match(/class="ugc__video"/g) || []).length, cfg.ugc.videos.length);
+  assert.match(out, /preload="none"/);
+  assert.throws(() => renderUgc({ ...cfg.ugc, disclosure: '' }), /disclosure/);
+  assert.throws(() => renderUgc({ ...cfg.ugc, videos: [{ ...cfg.ugc.videos[0], src: 'https://example.com/x.mp4' }] }), /Shopify CDN/);
+});
+
+test('excluded Trybe videos stay out of the strip', () => {
+  const ids = cfg.ugc.videos.map((v) => v.trybe_id);
+  for (const bad of ['099e1e5d', '89268673', '37fbdc30']) assert.ok(!ids.some((i) => i.includes(bad)), bad);
+});
+
+test('transform places the UGC strip before the founder anchor and bands both rich-text sections', () => {
+  const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'featured-testimonial', 'founder-anchor', 'founder'],
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {} } };
+  transform(parsed, cfg, roster);
+  assert.equal(parsed.order[parsed.order.indexOf('founder-anchor') - 1], 'ugc-strip');
+  for (const s of ['product-intro', 'thesis']) assert.ok(parsed.sections[s].block_order.includes('band-style'), s);
 });

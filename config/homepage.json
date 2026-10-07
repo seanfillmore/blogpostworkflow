@@ -86,9 +86,79 @@
     "link_label": "Read more reviews",
     "link_url": "/products/coconut-lotion#judgeme_product_reviews"
   },
-  "intro_band": {
-    "section": "product-intro",
-    "background": "#EEF3E8",
-    "margin_top_px": 16
-  }
+  "bands": [
+    {
+      "section": "product-intro",
+      "background": "#EEF3E8",
+      "margin_top_px": 16
+    },
+    {
+      "section": "thesis",
+      "background": "#faf7f0",
+      "margin_top_px": 0
+    }
+  ],
+  "ugc": {
+    "_note": "Approved Trybe videos (status approved, transcript passes the commercial claim gate, real people with the real product). Swap by editing this list; upload new videos to Shopify Files first. Excluded on review 2026-10-06: 099e1e5d (names petroleum, wrong ingredient count), 89268673 (unsupported 'cold-pressed'), 37fbdc30 (appears AI-generated, not a customer), Zjk videos (not about the product).",
+    "before_section": "founder-anchor",
+    "heading": "Real people. Real routines.",
+    "subheading": "Creators who use Real Skin Care, in their own words.",
+    "disclosure": "Creators received free product and may earn a commission.",
+    "videos": [
+      {
+        "trybe_id": "submission_90a80c8a-8fd6-469e-b84b-bf026334acd5",
+        "creator": "Taylor",
+        "product": "Body Lotion",
+        "url": "/products/coconut-lotion",
+        "src": "https://cdn.shopify.com/videos/c/vp/a9a54b4b3cde4eb5be88ed6ac9f62a38/a9a54b4b3cde4eb5be88ed6ac9f62a38.SD-480p-0.9Mbps-96650005.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/a9a54b4b3cde4eb5be88ed6ac9f62a38.thumbnail.0000000000.jpg?v=1791350290",
+        "shopify_file": "gid://shopify/Video/45977372393642"
+      },
+      {
+        "trybe_id": "submission_743bd45f-a830-463a-9849-1d9802a2a459",
+        "creator": "Marianne",
+        "product": "Body Cream",
+        "url": "/products/coconut-moisturizer",
+        "src": "https://cdn.shopify.com/videos/c/vp/4b9245d1b7ce4ce7b2c7dc93e8c958a5/4b9245d1b7ce4ce7b2c7dc93e8c958a5.SD-480p-0.9Mbps-96650022.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/4b9245d1b7ce4ce7b2c7dc93e8c958a5.thumbnail.0000000000.jpg?v=1791350320",
+        "shopify_file": "gid://shopify/Video/45977391890602"
+      },
+      {
+        "trybe_id": "submission_24e746f9-a18e-4a8e-8ee4-9f2cb4870cef",
+        "creator": "Sierra",
+        "product": "Body Lotion",
+        "url": "/products/coconut-lotion",
+        "src": "https://cdn.shopify.com/videos/c/vp/fa2d835f2d6a4e7ca66ad14562ee976d/fa2d835f2d6a4e7ca66ad14562ee976d.SD-480p-0.9Mbps-96649977.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/fa2d835f2d6a4e7ca66ad14562ee976d.thumbnail.0000000000.jpg?v=1791350264",
+        "shopify_file": "gid://shopify/Video/45977368756394"
+      },
+      {
+        "trybe_id": "submission_f5485281-bfb3-4906-9e20-49b357b5868d",
+        "creator": "Kaitlynn",
+        "product": "Toothpaste",
+        "url": "/products/coconut-oil-toothpaste",
+        "src": "https://cdn.shopify.com/videos/c/vp/9a86459943f54961a591c2a2b4a2b591/9a86459943f54961a591c2a2b4a2b591.SD-480p-0.9Mbps-96650072.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/9a86459943f54961a591c2a2b4a2b591.thumbnail.0000000000.jpg?v=1791350380",
+        "shopify_file": "gid://shopify/Video/45977701449898"
+      },
+      {
+        "trybe_id": "submission_e467ef33-e571-4eca-ad53-d7680956e9d8",
+        "creator": "Marianne",
+        "product": "Body Cream",
+        "url": "/products/coconut-moisturizer",
+        "src": "https://cdn.shopify.com/videos/c/vp/9dc3cef87c11465688593510cc5720fe/9dc3cef87c11465688593510cc5720fe.SD-480p-0.9Mbps-96650054.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/9dc3cef87c11465688593510cc5720fe.thumbnail.0000000000.jpg?v=1791350347",
+        "shopify_file": "gid://shopify/Video/45977562316970"
+      }
+    ]
+  },
+  "text_overrides": [
+    {
+      "section": "thesis",
+      "block": "thesis-body",
+      "setting": "text",
+      "value": "<p>We started Real Skin Care because the labels lied. \"Natural\" lotions still used petroleum jelly. \"Gentle\" creams still relied on silicones. \"Sensitive\" formulas still snuck in synthetic fragrance under names most buyers don't recognize.</p><p>We built every product in our line from the opposite direction. We asked what sensitive skin actually tolerates, then used the shortest ingredient list that does the job. Nothing else.</p>",
+      "_why": "Same copy without the two em dashes (house rule: no em dashes in published copy)."
+    }
+  ]
 }
