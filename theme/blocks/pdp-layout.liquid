@@ -18,6 +18,16 @@
   as the parser reaches it, so the tabs already exist and move before paint.
 {%- endcomment -%}
 <style>
+  /* Tabs as rounded, button-like cards (Sean, 2026-10-07, from a reference
+     buy box). All widths. */
+  .product__info-wrapper .product__accordion,.pdp-tabs-left .product__accordion{display:block;border:1px solid #e2dfd8 !important;border-radius:14px;background:#fff;margin:0 0 10px;overflow:hidden;box-shadow:none}
+  .product__accordion.accordion::before,.product__accordion.accordion::after{display:none !important}
+  .product__accordion summary{padding:16px 20px !important;border:0 !important}
+  .product__accordion summary:hover{background:#faf8f4}
+  .product__accordion .summary__title{gap:12px}
+  .product__accordion .accordion__title{text-transform:none !important;letter-spacing:0 !important;font-weight:600;font-size:1.6rem}
+  .product__accordion .accordion__content{padding:0 20px 18px !important;max-height:none !important;overflow:visible !important}
+  .product__accordion details[open] summary{padding-bottom:10px !important}
   @media screen and (min-width:990px){
     .product__media-wrapper media-gallery{grid-template-rows:auto 1fr}
     .product__media-wrapper media-gallery .thumbnail-slider{grid-row:1 / span 2 !important}

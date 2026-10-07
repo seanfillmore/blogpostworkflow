@@ -99,7 +99,7 @@
     }
   ],
   "ugc": {
-    "_note": "Approved Trybe videos (status approved, transcript passes the commercial claim gate, real people with the real product). Swap by editing this list; upload new videos to Shopify Files first. Excluded on review 2026-10-06: 099e1e5d (names petroleum, wrong ingredient count), 89268673 (unsupported 'cold-pressed'), 37fbdc30 (appears AI-generated, not a customer), Zjk videos (not about the product).",
+    "_note": "Approved Trybe videos (status approved, transcript passes the commercial claim gate, real people with the real product). Swap by editing this list; upload new videos to Shopify Files first. Excluded on review 2026-10-06: 099e1e5d (names petroleum, wrong ingredient count), 89268673 (flagged for 'cold-pressed', which Sean confirmed 2026-10-07 is TRUE, so not a reason to exclude), 37fbdc30 (appears AI-generated, not a customer), Zjk videos (not about the product).",
     "before_section": "founder-anchor",
     "heading": "Real people. Real routines.",
     "subheading": "Creators who use Real Skin Care, in their own words.",
