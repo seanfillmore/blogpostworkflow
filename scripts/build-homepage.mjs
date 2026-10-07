@@ -257,8 +257,8 @@ export function renderSetOffer(o) {
   .hso__price s{color:#a7a5a0;font-size:.8em;margin-right:6px}
   .hso__save{margin-left:8px;font-size:13px;font-weight:700;color:#aedeac}
   .hso__error{color:#ffb4ab;font-size:.9em;margin:8px 0 0}
-  .hso__link{display:inline-block;margin-top:14px;color:#fff;text-decoration:underline;font-size:14px}
-  .hso__guarantee{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;color:#d6d4cf}
+  .hso__link{display:block;width:fit-content;margin:14px auto 0;color:#fff;text-decoration:underline;font-size:14px}
+  .hso__guarantee{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px 0 0;font-size:13px;color:#d6d4cf}
   @media screen and (max-width:749px){
     .hso{padding:40px 16px}
     .hso__inner{grid-template-columns:1fr;gap:24px}
@@ -353,7 +353,17 @@ export function transform(parsed, cfg, roster) {
     }
   }
   swap('product-line', 'product-grid', { type: 'custom-liquid', settings: { custom_liquid: renderGrid(cfg.grid) } });
-  if (cfg.set_offer) swap(cfg.set_offer.replaces, 'set-offer', { type: 'custom-liquid', settings: { custom_liquid: renderSetOffer(cfg.set_offer) } });
+  if (cfg.set_offer) {
+    swap(cfg.set_offer.replaces, 'set-offer', { type: 'custom-liquid', settings: { custom_liquid: renderSetOffer(cfg.set_offer) } });
+    // Pinned position (Sean, 2026-10-06: directly after "What's not in any of our products").
+    const after = cfg.set_offer.after_section;
+    if (after) {
+      if (!parsed.order.includes(after)) throw new Error(`index.json has no "${after}" to place the set offer after`);
+      parsed.order = parsed.order.filter((k) => k !== 'set-offer');
+      parsed.order.splice(parsed.order.indexOf(after) + 1, 0, 'set-offer');
+      notes.push(`set-offer placed after ${after}`);
+    }
+  }
   swap('featured-testimonial', 'review-strip', { type: 'custom-liquid', settings: { custom_liquid: renderReviews(cfg, roster) } });
   return notes;
 }

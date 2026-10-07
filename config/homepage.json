@@ -177,6 +177,7 @@
     ],
     "cta_label": "Add the set to cart",
     "link_label": "See what's in the set",
-    "guarantee": "30-day money-back guarantee"
+    "guarantee": "30-day money-back guarantee",
+    "after_section": "exclusion-grid"
   }
 }
