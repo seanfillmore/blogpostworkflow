@@ -59,28 +59,37 @@ test('checkTest credits each Shopify order to the campaign whose ad it came thro
   assert.match(text, /token expires in 5 day/);
 });
 
-test('the monitor never writes to Meta (source scan)', () => {
+test('the monitor\'s only Meta write is pausing an ad, gated on kill.autoPause and the cron path (source scan)', () => {
   const src = readFileSync(new URL('../../agents/ad-test-monitor/index.js', import.meta.url), 'utf8');
-  assert.doesNotMatch(src, /method:\s*['"]POST|status=PAUSED|'PAUSED'/);
+  assert.equal((src.match(/method:\s*['"]POST/g) || []).length, 1, 'exactly one POST');
+  assert.match(src, /export async function pauseAd[\s\S]{0,400}status: 'PAUSED'/);
+  assert.doesNotMatch(src, /status: 'ACTIVE'|daily_budget|status=ACTIVE/, 'never activates or rebudgets');
+  assert.match(src, /if \(test\.kill\?\.autoPause\)/);
+  assert.match(src, /send \? await pauseAd/);
 });
 
 // ── Creative graduation readout (2026-10-04) ────────────────────────────────────
 import { evaluateGraduation, readoutDue, adOrderTag, metaAddToCartCount, renderCreativeLines, shortCreativeName } from '../../lib/ad-test-rules.js';
 
-const grad = { minSpend: 150, minLinkCtr: 0.015, maxCostPerLinkClick: 1.5, minAddToCarts: 5, minPurchases: 1 };
+const grad = { minSpend: 150, maxCostPerPurchase: 56, minAddToCarts: 5, minLinkCtr: 0.015 };
 const c = (o) => ({ spend: 0, impressions: 0, linkClicks: 0, addToCarts: 0, purchases: 0, ...o });
 
 test('graduation: collecting until the spend floor, whatever the ratios', () => {
   assert.equal(evaluateGraduation(c({ spend: 149.99, impressions: 1000, linkClicks: 100, addToCarts: 9 }), grad).status, 'collecting');
 });
 
-test('graduation: ready needs CTR, cost per click and add-to-carts together', () => {
-  const ok = c({ spend: 150, impressions: 10000, linkClicks: 150, addToCarts: 5 }); // 1.5% CTR, $1.00/click
+test('graduation: ready on cost per purchase at or under one average order', () => {
+  const base = c({ spend: 150, impressions: 5000, linkClicks: 40 }); // 0.8% CTR, $3.75/click: cost per click no longer matters
+  assert.equal(evaluateGraduation({ ...base, purchases: 3 }, grad).status, 'ready');   // $50
+  assert.equal(evaluateGraduation({ ...base, purchases: 2 }, grad).status, 'below');   // $75
+  assert.match(evaluateGraduation({ ...base, purchases: 3 }, grad).route, /per purchase/);
+});
+
+test('graduation: or on add to carts at a healthy CTR', () => {
+  const ok = c({ spend: 160, impressions: 10000, linkClicks: 150, addToCarts: 5 }); // 1.5% CTR
   assert.equal(evaluateGraduation(ok, grad).status, 'ready');
-  assert.equal(evaluateGraduation({ ...ok, linkClicks: 149 }, grad).status, 'below');          // CTR 1.49%
-  assert.equal(evaluateGraduation({ ...ok, impressions: 5000, linkClicks: 99 }, grad).status, 'below'); // $1.52/click
+  assert.equal(evaluateGraduation({ ...ok, linkClicks: 149 }, grad).status, 'below');
   assert.equal(evaluateGraduation({ ...ok, addToCarts: 4 }, grad).status, 'below');
-  assert.equal(evaluateGraduation({ ...ok, addToCarts: 0, purchases: 1 }, grad).status, 'ready'); // a purchase stands in for carts
 });
 
 test('graduation: no clicks at all reads as below, not as an error', () => {
@@ -120,4 +129,24 @@ test('readout lists ready creatives first and names them briefly', () => {
   assert.match(lines[0], /1 ready, 0 below the bar, 1 still collecting/);
   assert.match(lines[1], /READY TO GRADUATE: Everitt Moder · Bar Soap · 75427b73/);
   assert.equal(shortCreativeName('RSC | Sensitive Skin Set | split'), 'RSC | Sensitive Skin Set | split');
+});
+
+// ── Daily loser pause (2026-10-07) ──────────────────────────────────────────────
+import { evaluateKill, planPauses } from '../../lib/ad-test-rules.js';
+const kill = { autoPause: true, maxSpendWithoutAddToCart: 50, minActive: 3 };
+
+test('kill: a creative is a loser only after the spend line with no cart and no purchase', () => {
+  assert.equal(evaluateKill(c({ spend: 49.99 }), kill), null);
+  assert.match(evaluateKill(c({ spend: 50 }), kill), /no add to cart/);
+  assert.equal(evaluateKill(c({ spend: 80, addToCarts: 1 }), kill), null);
+  assert.equal(evaluateKill(c({ spend: 80, purchases: 1 }), kill), null);
+});
+
+test('planPauses: active losers only, biggest spender first, never below minActive', () => {
+  const ad = (id, spend, k, status = 'ACTIVE') => ({ id, name: id, spend, status, kill: k ? 'loser' : null });
+  const creatives = [ad('a', 60, true), ad('b', 90, true), ad('c', 70, true, 'PAUSED'), ad('d', 5, false), ad('e', 1, false), ad('f', 55, true)];
+  const { pause, held } = planPauses(creatives, kill);
+  assert.deepEqual(pause.map((x) => x.id), ['b', 'a']);
+  assert.deepEqual(held.map((x) => x.id), ['f']);
+  assert.equal(planPauses([ad('x', 99, true), ad('y', 1, false), ad('z', 1, false)], kill).pause.length, 0);
 });

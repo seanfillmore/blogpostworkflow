@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 /**
  * Ad Test Monitor — checks each paid ad test in config/ad-tests.json against its
- * stop rules once a day and reports in the 5 AM digest. It REPORTS ONLY: it
- * never pauses, edits or creates anything in Meta. Stopping a test is Sean's
- * call; this makes sure he hears about it the morning a rule is hit.
+ * stop rules once a day and reports in the 5 AM digest. Campaign-level stop rules
+ * are REPORT ONLY: stopping a whole test is Sean's call. The one write it makes:
+ * a test with a `kill` block and `autoPause: true` has its LOSING CREATIVES paused
+ * daily (Sean, 2026-10-07: "any identified losers are paused instead of waiting 7
+ * days ... stop the bleeding"). A loser is a creative that spent `kill.maxSpendWithoutAddToCart`
+ * with no add to cart or purchase; a campaign is never thinned below `kill.minActive`
+ * running ads. Pauses happen only on the cron path (--notify) and are always reported.
  *
  * Per campaign it reads Meta's lifetime spend, impressions, link clicks and
  * pixel purchases since the test started, counts Shopify orders whose landing
@@ -34,7 +38,7 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listCreatorPerformance } from '../../lib/trybe.js';
-import { evaluateRules, metaPurchaseCount, taggedOrders, renderTestLines, evaluateGraduation, metaAddToCartCount, adOrderTag, readoutDue, renderCreativeLines } from '../../lib/ad-test-rules.js';
+import { evaluateRules, metaPurchaseCount, taggedOrders, renderTestLines, evaluateGraduation, metaAddToCartCount, adOrderTag, readoutDue, renderCreativeLines, evaluateKill, planPauses, shortCreativeName } from '../../lib/ad-test-rules.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const CONFIG_PATH = join(ROOT, 'config', 'ad-tests.json');
@@ -69,6 +73,19 @@ async function graph(path, token, params = {}, fetchImpl = fetch) {
   return json;
 }
 
+/** Pause one ad. Returns null on success, else the error message. */
+export async function pauseAd(id, token, fetchImpl = fetch) {
+  try {
+    const res = await fetchImpl(`${GRAPH}/${id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ status: 'PAUSED', access_token: token }),
+    });
+    const json = JSON.parse(await res.text());
+    return json.success ? null : (json.error?.message || 'no success flag');
+  } catch (err) { return err.message; }
+}
+
 /** Days until the Meta token expires, or null when it cannot be read or never expires. */
 async function tokenDaysLeft(env, now, fetchImpl) {
   if (!env.FACEBOOK_APP_ID || !env.FACEBOOK_APP_SECRET) return null;
@@ -100,7 +117,7 @@ export async function checkTest(test, {
     // "..._trybe=<video id>" and tags its link the same way; our own ads carry a
     // utm_content in their url_tags. A campaign-level tag (c.landingTag) covers ads
     // that carry neither, e.g. a catalog ad.
-    const ads = await graph(`${c.id}/ads`, token, { fields: 'name,creative{url_tags}', limit: '100' }, fetchImpl);
+    const ads = await graph(`${c.id}/ads`, token, { fields: 'name,effective_status,creative{url_tags}', limit: '100' }, fetchImpl);
     const adTags = new Map((ads.data || []).map((a) => [a.id, adOrderTag({ name: a.name, urlTags: a.creative?.url_tags })]));
     const tags = [...new Set([...adTags.values()].filter(Boolean))];
     const mine = shopifyOrders.filter((o) => [...tags, c.landingTag].filter(Boolean).some((t) => String(o.landing_site || '').includes(t)));
@@ -128,7 +145,11 @@ export async function checkTest(test, {
         const tag = adTags.get(a.id);
         const purchases = Math.max(tag ? ordersFor(tag).length : 0, metaPurchaseCount(x.actions));
         const cm = { spend: Number(x.spend) || 0, impressions: Number(x.impressions) || 0, linkClicks: Number(x.inline_link_clicks) || 0, addToCarts: metaAddToCartCount(x.actions), purchases };
-        return { id: a.id, name: a.name, ...cm, eval: evaluateGraduation(cm, test.graduation) };
+        return {
+          id: a.id, name: a.name, status: a.effective_status, ...cm,
+          eval: evaluateGraduation(cm, test.graduation),
+          kill: test.kill ? evaluateKill(cm, test.kill) : null,
+        };
       });
     }
     rows.push(row);
@@ -159,11 +180,35 @@ async function main() {
   const daysLeft = await tokenDaysLeft(env, now);
   const lines = [];
   const newStops = [];
+  const paused = [];
+  const daily = [];
   for (const test of tests) {
     const loadTrybe = (test.landingTags || [test.landingTag]).some((t) => String(t).startsWith('trybe')) && env.TRYBE_API_KEY
       ? (start, end) => listCreatorPerformance({ apiKey: env.TRYBE_API_KEY, startDate: start, endDate: end })
       : null;
     const r = await checkTest(test, { token, now, loadTrybe });
+    // Daily loser pause: runs every day, independent of the readout cadence.
+    const pausedLines = [];
+    if (test.kill?.autoPause) {
+      for (const row of r.rows) {
+        if (!row.creatives) continue;
+        const { pause, held } = planPauses(row.creatives, test.kill);
+        for (const c of pause) {
+          const err = send ? await pauseAd(c.id, token) : 'dry run (no --notify), not paused';
+          if (!err) c.status = 'PAUSED';
+          pausedLines.push(`  ${err ? 'COULD NOT PAUSE' : 'PAUSED'}: ${shortCreativeName(c.name)} · ${c.kill}${err ? ` (${err})` : ''}`);
+        }
+        for (const c of held) pausedLines.push(`  KEPT RUNNING (would leave fewer than ${test.kill.minActive ?? 3} active): ${shortCreativeName(c.name)} · ${c.kill}`);
+      }
+    }
+    if (pausedLines.length) paused.push(`${test.name}:`, ...pausedLines, '');
+    // The daily spend check: one line per perCreative test, every day.
+    for (const row of r.rows) {
+      if (!row.creatives) continue;
+      const active = row.creatives.filter((c) => c.status === 'ACTIVE').length;
+      const ready = row.creatives.filter((c) => c.status === 'ACTIVE' && c.eval.status === 'ready').length;
+      daily.push(`${test.name} · ${row.label}: $${row.spend.toFixed(2)} spent to date · ${row.shopifyPurchases} Shopify / ${row.metaPurchases} Meta purchase(s) · ${active} creatives running${ready ? ` · ${ready} ready to graduate` : ''}`);
+    }
     // A test with reportEveryDays reports on that cadence only, except on a day a
     // stop rule is hit (that is also emailed immediately below, once).
     const due = !test.reportEveryDays || readoutDue(state.lastReadout?.[test.name], now, test.reportEveryDays);
@@ -182,6 +227,16 @@ async function main() {
         if (!state.alerted[key]) { state.alerted[key] = new Date(now).toISOString(); newStops.push(`${test.name} · ${row.label}: ${reason}`); }
       }
     }
+  }
+  if (daily.length || paused.length) {
+    const n = paused.filter((l) => l.includes('PAUSED:')).length;
+    const dbody = [...daily, '', ...(paused.length
+      ? [...paused, 'Rule: a creative that spends about one average order with no add to cart or purchase is paused the same morning. Re-enable in Ads Manager to overrule.']
+      : ['No losing creatives to pause today.'])].join('\n').trim();
+    const dsubject = `Ad tests daily check${n ? `: paused ${n} losing creative(s)` : ': nothing paused'}`;
+    console.log(`${dsubject}\n${dbody}\n`);
+    // A pause is the policy working, so 'info'; a failed pause is still only a row to read.
+    if (send) await notify({ subject: dsubject, body: dbody, status: 'info', category: 'paid-ads' });
   }
   if (!lines.length) {
     console.log('No readout due today.');
