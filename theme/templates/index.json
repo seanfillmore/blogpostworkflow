@@ -1,0 +1,318 @@
+{
+  "sections": {
+    "product-intro": {
+      "type": "rich-text",
+      "blocks": {
+        "pl-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Built for the bathroom shelf of someone who reacts.",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "pl-sub": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Seven products. One philosophy. Pick what your skin needs.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": true,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "pl-heading",
+        "pl-sub"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "content_max_width": 726,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#EEF3E8",
+        "colors_highlight": "#ffb503",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "reset-banner": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rbn{background:#f6f8f3;border-top:1px solid #e2ead9;border-bottom:1px solid #e2ead9;padding:26px 18px}.rbn__i{max-width:900px;margin:0 auto;display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}.rbn__t{margin:0;font-size:clamp(17px,2.2vw,21px);font-weight:700;color:#1a1b18;line-height:1.35}.rbn__s{margin:5px 0 0;font-size:14px;color:#4a4a4a}.rbn__c{background:#4a8b3c;color:#fff;text-decoration:none;font-weight:700;font-size:15px;padding:12px 22px;border-radius:8px;white-space:nowrap}<\/style><div class=\"rbn\"><div class=\"rbn__i\"><div><p class=\"rbn__t\">Tired of running out? Get ninety days of both formulas.<\/p><p class=\"rbn__s\">3 Body Lotions + 3 Body Creams — about $1.34 a day.<\/p><\/div><a class=\"rbn__c\" href=\"\/products\/99-coconut-reset-digital\">See the 90-Day Reset<\/a><\/div><\/div>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 20,
+        "padding_bottom": 20
+      }
+    },
+    "thesis": {
+      "type": "rich-text",
+      "blocks": {
+        "thesis-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Most \"natural\" skincare still isn't built for sensitive skin.",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "thesis-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>We started Real Skin Care because the labels lied. \"Natural\" lotions still used petroleum jelly. \"Gentle\" creams still relied on silicones. \"Sensitive\" formulas still snuck in synthetic fragrance under names most buyers don't recognize.<\/p><p>We built every product in our line from the opposite direction — what does sensitive skin actually tolerate? — and used the shortest ingredient list that does the job. Nothing else.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "thesis-link": {
+          "type": "text",
+          "settings": {
+            "text": "<p><a href=\"#founder\"><strong>Read our founder's story →<\/strong><\/a><\/p>",
+            "text_size": "small",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "thesis-heading",
+        "thesis-body",
+        "thesis-link"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": true,
+        "content_max_width": 726,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "colors_highlight": "#ffb503",
+        "gradient_background": "",
+        "padding_top": 48,
+        "padding_bottom": 40
+      }
+    },
+    "exclusion-grid": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.exclusion-band{background:#eef3e8;padding:88px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.exclusion-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.exclusion-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 12px 0;letter-spacing:-0.01em}.exclusion-band__sub{font-size:1.05rem;color:#4a4d52;margin:0 0 48px 0;font-weight:500}.exclusion-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 32px;list-style:none;padding:0;margin:0 auto 56px auto;text-align:left;max-width:1100px}.exclusion-band__list li{display:flex;align-items:center;gap:14px;font-size:1.1rem;line-height:1.3;font-weight:600;color:#1a1b18;text-align:left}.exclusion-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.6em;font-weight:800;line-height:1;flex-shrink:0}.exclusion-band__footer{font-size:clamp(2rem,3.6vw,2.7rem);font-weight:700;color:#1a1b18;max-width:920px;margin:0 auto;line-height:1.3;border-top:1px solid #c9d6c2;padding-top:48px;letter-spacing:-0.015em;font-style:italic}@media(max-width:900px){.exclusion-band__list{grid-template-columns:repeat(2,1fr);gap:14px 24px;max-width:560px}.exclusion-band__list li{font-size:1rem}}@media(max-width:480px){.exclusion-band{padding:56px 0}.exclusion-band__heading{font-size:1.625rem}.exclusion-band__list{gap:12px}.exclusion-band__list li{font-size:0.95rem}.exclusion-band__footer{font-size:1.5rem;padding-top:32px;letter-spacing:-0.01em}}<\/style><div class=\"exclusion-band\"><div class=\"exclusion-band__inner\"><h2 class=\"exclusion-band__heading\">What's not in any of our products.<\/h2><p class=\"exclusion-band__sub\">Across the entire line. Every product, every batch, every variant.<\/p><ul class=\"exclusion-band__list\"><li>Synthetic fragrance<\/li><li>Parabens<\/li><li>Phenoxyethanol<\/li><li>Petroleum jelly<\/li><li>Silicones<\/li><li>Lanolin<\/li><li>SLS<\/li><li>Phthalates<\/li><li>Titanium dioxide<\/li><li>Aluminum<\/li><li>Synthetic preservatives<\/li><\/ul><p class=\"exclusion-band__footer\">If you can't pronounce it and we can't justify it, it's not in the bottle.<\/p><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 24,
+        "padding_bottom": 24
+      }
+    },
+    "founder-anchor": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<span id=\"founder\" style=\"display:block;height:0;\"><\/span>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "founder": {
+      "type": "image-with-text",
+      "blocks": {
+        "founder-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Why we started Real Skin Care.",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "founder-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our family's healthy-ingredients journey kept hitting the same wall — body creams labeled \"natural\" that still relied on petroleum jelly, silicones, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.<\/p><p>So we built one. Then we built the rest of the bathroom shelf. Every ingredient earns its place. We won't cut corners on sourcing for margin — that line doesn't move.<\/p><p><strong>— Sean Fillmore, Founder<\/strong><\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "founder-heading",
+        "founder-body"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/founder-homepage.webp",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": true,
+        "full_width": true,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 64,
+        "padding_bottom": 64
+      }
+    },
+    "closing-cta": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rsc-final-cta{background:#1a1b18;padding:88px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw;color:#ffffff}.rsc-final-cta__inner{max-width:760px;margin:0 auto;padding:0 32px}.rsc-final-cta__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#ffffff;margin:0 0 24px 0;letter-spacing:-0.01em}.rsc-final-cta__sub{font-size:clamp(1.1rem,1.5vw,1.25rem);line-height:1.55;color:#d8d6d3;margin:0 0 40px 0;max-width:640px;margin-left:auto;margin-right:auto}.rsc-final-cta__btn{display:inline-block;background:#AEDEAC;color:#1a1b18;font-weight:700;padding:18px 36px;border-radius:6px;text-decoration:none;font-size:1.05rem;letter-spacing:0.5px;border:1px solid #444}.rsc-final-cta__secondary{display:block;margin-top:20px;color:#d8d6d3;text-decoration:underline;font-size:0.95rem}@media(max-width:600px){.rsc-final-cta{padding:60px 0}.rsc-final-cta__btn{display:block;padding:16px 28px}}<\/style><div class=\"rsc-final-cta\"><div class=\"rsc-final-cta__inner\"><h2 class=\"rsc-final-cta__heading\">Stop reacting to your skincare.<\/h2><p class=\"rsc-final-cta__sub\">If you've been slowly building a graveyard of \"natural\" products that still made your skin react, start with the Sensitive Skin Set. Two formulas, one routine, both Pure Unscented. 30-day money-back guarantee.<\/p>{%- assign bundle = all_products['sensitive-skin-starter-set'] -%}<a class=\"rsc-final-cta__btn\" href=\"\/products\/sensitive-skin-starter-set\">Shop the Sensitive Skin Set{% if bundle.price > 0 %} — {{ bundle.price | money }}{% endif %}<\/a><a class=\"rsc-final-cta__secondary\" href=\"\/collections\/all\">Browse all products →<\/a><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "email-intro": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.rsc-email-intro{text-align:center;padding:64px 24px 16px 24px;max-width:680px;margin:0 auto}.rsc-email-intro__heading{font-size:clamp(1.75rem,3.2vw,2.5rem);line-height:1.1;font-weight:700;color:#1a1b18;margin:0 0 14px 0;letter-spacing:-0.01em}.rsc-email-intro__sub{font-size:1.05rem;line-height:1.5;color:#4a4d52;margin:0;font-weight:500}.rsc-email-finepr{text-align:center;font-size:0.85rem;color:#6d7175;margin:14px auto 0 auto;max-width:520px}[class*=\"klaviyo-form\"] button,[class*=\"klaviyo-form\"] button[type=\"submit\"]{background-color:#AEDEAC !important;color:#1a1b18 !important;border-color:#AEDEAC !important;font-weight:700 !important;}[class*=\"klaviyo-form\"] button:hover{background-color:#9bcf99 !important}<\/style><div class=\"rsc-email-intro\"><h2 class=\"rsc-email-intro__heading\">Get 30% off your first order.<\/h2><p class=\"rsc-email-intro__sub\">Plus early access to new scents and restocks. No spam, no sponsored newsletters, no third-party data sharing.<\/p><\/div>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "email-capture": {
+      "type": "apps",
+      "blocks": {
+        "klaviyo-form": {
+          "type": "shopify:\/\/apps\/klaviyo-email-marketing-sms\/blocks\/form-embed-block\/2632fe16-c075-4321-a88b-50b567f42507",
+          "settings": {
+            "formId": "Xr4S7X"
+          }
+        }
+      },
+      "block_order": [
+        "klaviyo-form"
+      ],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 24
+      }
+    },
+    "email-fineprint": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<p style=\"text-align:center;font-size:0.85rem;color:#6d7175;margin:0 auto;max-width:520px;padding:0 24px;\">Unsubscribe anytime. We don't sell your email.<\/p>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 56
+      }
+    },
+    "hero-split": {
+      "type": "home-hero-split",
+      "blocks": {
+        "b1": {
+          "type": "bullet",
+          "settings": {
+            "text": "Soft, moisturized skin that lasts all day"
+          }
+        },
+        "b2": {
+          "type": "bullet",
+          "settings": {
+            "text": "Sinks in within minutes, without the greasy feel"
+          }
+        },
+        "b3": {
+          "type": "bullet",
+          "settings": {
+            "text": "Gentle enough for sensitive skin and kids"
+          }
+        },
+        "b4": {
+          "type": "bullet",
+          "settings": {
+            "text": "No fragrance, parabens or silicones"
+          }
+        }
+      },
+      "block_order": [
+        "b1",
+        "b2",
+        "b3",
+        "b4"
+      ],
+      "settings": {
+        "heading": "Skincare for skin that reacts to everything else.",
+        "kicker": "Our best seller",
+        "product_heading": "Coconut Body Lotion",
+        "subheading": "Six ingredients you can read. Made in small batches in the USA.",
+        "product_handle": "coconut-lotion",
+        "pack_handle": "coconut-lotion-5-pack",
+        "pack_units": 5,
+        "cta_label": "Shop Body Lotion",
+        "guarantee": "30-day money-back guarantee",
+        "image_desktop": "shopify:\/\/shop_images\/home-hero-lotion-desktop.webp",
+        "image_mobile": "shopify:\/\/shop_images\/home-hero-lotion-mobile.webp",
+        "image_alt": "Real Skin Care Pure Unscented body lotion on a bathroom vanity"
+      }
+    },
+    "product-grid": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<div class=\"hpg\"><div class=\"hpg__grid\">\n  {%- assign p = all_products['coconut-lotion'] -%}{%- assign pk = all_products['coconut-lotion-5-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 5 -%}\n      {%- assign free = 5 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 5 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 5-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/products\/coconut-lotion\">\n    {%- assign img = images['card-lotion.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Body Lotion\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Body Lotion<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">Soft, moisturized skin all day, without the greasy feel.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n  {%- assign p = all_products['coconut-moisturizer'] -%}{%- assign pk = all_products['coconut-moisturizer-5-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 5 -%}\n      {%- assign free = 5 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 5 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 5-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/products\/coconut-moisturizer\">\n    {%- assign img = images['card-cream.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Body Cream\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Body Cream<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">Rough hands, heels and elbows feel softer from the first use.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n  {%- assign p = all_products['coconut-soap'] -%}{%- assign pk = all_products['coconut-bar-soap-12-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 12 -%}\n      {%- assign free = 12 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 12 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 12-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/collections\/soap\">\n    {%- assign img = images['card-barsoap.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Soap\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Soap<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">Bar and foaming hand soap that leave skin clean and soft.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n  {%- assign p = all_products['coconut-oil-deodorant'] -%}{%- assign pk = all_products['coconut-deodorant-4-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 4 -%}\n      {%- assign free = 4 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 4 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 4-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/products\/coconut-oil-deodorant\">\n    {%- assign img = images['card-deodorant.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Deodorant\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Deodorant<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">Works like a regular deodorant, without the aluminum.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n  {%- assign p = all_products['coconut-oil-toothpaste'] -%}{%- assign pk = all_products['coconut-toothpaste-3-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 3 -%}\n      {%- assign free = 3 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 3 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 3-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/products\/coconut-oil-toothpaste\">\n    {%- assign img = images['card-toothpaste.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Toothpaste\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Toothpaste<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">A clean, fresh mouth. No SLS, no fluoride, no foam.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n  {%- assign p = all_products['coconut-oil-lip-balm'] -%}{%- assign pk = all_products['coconut-lip-balm-3-pack'] -%}\n  {%- assign r = p.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign rc = p.metafields.reviews.rating_count | default: 0 -%}\n  {%- assign offer = '' -%}\n  {%- if pk != blank and pk.available and p.price > 0 -%}\n    {%- assign paid = pk.price | divided_by: p.price -%}{%- assign rem = pk.price | modulo: p.price -%}\n    {%- if rem == 0 and paid > 0 and paid < 3 -%}\n      {%- assign free = 3 | minus: paid -%}\n      {%- assign offer = 'Buy ' | append: paid | append: ', get ' | append: free | append: ' free' -%}\n    {%- else -%}\n      {%- assign singly = p.price | times: 3 -%}\n      {%- if singly > pk.price -%}{%- assign pct = singly | minus: pk.price | times: 100 | divided_by: singly -%}{%- assign offer = 'Save ' | append: pct | append: '% on the 3-pack' -%}{%- endif -%}\n    {%- endif -%}\n  {%- endif -%}\n  <a class=\"hpg__card\" href=\"\/products\/coconut-oil-lip-balm\">\n    {%- assign img = images['card-lipbalm.webp'] -%}\n    {%- if img -%}<img class=\"hpg__img\" src=\"{{ img | image_url: width: 600 }}\" srcset=\"{{ img | image_url: width: 400 }} 400w, {{ img | image_url: width: 600 }} 600w\" sizes=\"(max-width: 749px) 50vw, 33vw\" alt=\"Lip Balm\" width=\"600\" height=\"600\" loading=\"lazy\">{%- endif -%}\n    <span class=\"hpg__body\">\n      <span class=\"hpg__title\">Lip Balm<\/span>\n      {%- if rc > 0 -%}<span class=\"hpg__rating\"><span class=\"hpg__stars\" role=\"img\" aria-label=\"{{ r | round: 1 }} out of 5 stars\">★★★★★<\/span> {{ r | round: 1 }} ({{ rc }})<\/span>{%- endif -%}\n      <span class=\"hpg__line\">Keeps lips soft and moisturized all day.<\/span>\n      <span class=\"hpg__price\">From {{ p.price | money_without_trailing_zeros }}<\/span>\n      {%- if offer != '' -%}<span class=\"hpg__offer\">{{ offer }}<\/span>{%- endif -%}\n      <span class=\"hpg__btn button\">Shop now<\/span>\n    <\/span>\n  <\/a>\n<\/div><\/div>\n<style>\n  .hpg{padding:8px 16px 48px}\n  .hpg__grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}\n  .hpg__card{display:flex;flex-direction:column;background:#fff;border:1px solid #e6e4df;border-radius:12px;overflow:hidden;text-decoration:none;color:#151515}\n  .hpg__img{display:block;width:100%;height:auto;aspect-ratio:1\/1;object-fit:cover;background:#f4f2ee}\n  .hpg__body{display:flex;flex-direction:column;gap:6px;padding:16px 16px 18px;flex:1}\n  .hpg__title{font-weight:700;font-size:1.1em}\n  .hpg__rating{font-size:13px;color:#4a4d52}\n  .hpg__stars{color:#151515;letter-spacing:1px}\n  .hpg__line{font-size:14px;line-height:1.45;color:#2f3133;flex:1}\n  .hpg__price{font-weight:700;margin-top:4px}\n  .hpg__offer{font-size:13px;font-weight:700;color:#3f7a33}\n  .hpg__btn{margin-top:10px;width:100%;max-width:100%;min-width:0;box-sizing:border-box;display:flex;justify-content:center;text-align:center}\n  @media screen and (max-width:749px){\n    .hpg__grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}\n    .hpg__body{padding:12px 12px 14px}\n    .hpg__line{font-size:13px}\n    .hpg__btn{font-size:12px;padding-left:6px;padding-right:6px;letter-spacing:.08em}\n    .hpg__offer{font-size:12px}\n  }\n<\/style>"
+      }
+    },
+    "review-strip": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<div class=\"hrs\"><div class=\"hrs__inner\">\n  <h2 class=\"hrs__h\">What customers say<\/h2>\n  <div class=\"hrs__grid\">\n    <figure class=\"hrs__card\">\n      <span class=\"hrs__stars\" role=\"img\" aria-label=\"5 out of 5 stars\">★★★★★<\/span>\n      <blockquote class=\"hrs__text\">“This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!”<\/blockquote>\n      <figcaption class=\"hrs__name\">Nicole H. · Verified buyer<\/figcaption>\n    <\/figure>\n    <figure class=\"hrs__card\">\n      <span class=\"hrs__stars\" role=\"img\" aria-label=\"5 out of 5 stars\">★★★★★<\/span>\n      <blockquote class=\"hrs__text\">“Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.”<\/blockquote>\n      <figcaption class=\"hrs__name\">Ella M. · Verified buyer<\/figcaption>\n    <\/figure>\n    <figure class=\"hrs__card\">\n      <span class=\"hrs__stars\" role=\"img\" aria-label=\"5 out of 5 stars\">★★★★★<\/span>\n      <blockquote class=\"hrs__text\">“Bar soap lathers up very well. The unscented is an excellent choice for sensitive people. My #1 go to bar soap. Customer service is top notch.”<\/blockquote>\n      <figcaption class=\"hrs__name\">Stephen H. · Verified buyer<\/figcaption>\n    <\/figure>\n  <\/div>\n  <a class=\"hrs__link\" href=\"\/products\/coconut-lotion#judgeme_product_reviews\">Read more reviews →<\/a>\n<\/div><\/div>\n<style>\n  .hrs{background:#eef3e8;padding:56px 16px}\n  .hrs__inner{max-width:1100px;margin:0 auto;text-align:center}\n  .hrs__h{margin:0 0 24px}\n  .hrs__grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;text-align:left}\n  .hrs__card{margin:0;background:#fff;border-radius:12px;padding:20px}\n  .hrs__stars{color:#151515;letter-spacing:2px}\n  .hrs__text{margin:10px 0;padding:0;border:0;font-style:normal;line-height:1.5;color:#151515}\n  .hrs__name{font-size:13px;color:#4a4d52}\n  .hrs__link{display:inline-block;margin-top:22px;font-weight:600;color:#151515;text-decoration:underline}\n  @media screen and (max-width:749px){.hrs__grid{grid-template-columns:1fr}}\n<\/style>"
+      }
+    }
+  },
+  "order": [
+    "hero-split",
+    "product-intro",
+    "product-grid",
+    "reset-banner",
+    "thesis",
+    "exclusion-grid",
+    "review-strip",
+    "founder-anchor",
+    "founder",
+    "closing-cta",
+    "email-intro",
+    "email-capture",
+    "email-fineprint"
+  ]
+}

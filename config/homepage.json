@@ -1,0 +1,43 @@
+{
+  "_what": "Homepage content built by scripts/build-homepage.mjs (Sean, 2026-10-06: split hero leading with lotion, result bullets, product grid with prices/stars/pack offers, on-site review strip). Every customer-facing line here is gated before it is written.",
+  "hero": {
+    "heading": "Skincare for skin that reacts to everything else.",
+    "kicker": "Our best seller",
+    "product_heading": "Coconut Body Lotion",
+    "subheading": "Six ingredients you can read. Made in small batches in the USA.",
+    "product_handle": "coconut-lotion",
+    "pack_handle": "coconut-lotion-5-pack",
+    "pack_units": 5,
+    "cta_label": "Shop Body Lotion",
+    "guarantee": "30-day money-back guarantee",
+    "image_desktop": "shopify://shop_images/home-hero-lotion-desktop.webp",
+    "image_mobile": "shopify://shop_images/home-hero-lotion-mobile.webp",
+    "image_alt": "Real Skin Care Pure Unscented body lotion on a bathroom vanity",
+    "bullets": [
+      "Soft, moisturized skin that lasts all day",
+      "Sinks in within minutes, without the greasy feel",
+      "Gentle enough for sensitive skin and kids",
+      "No fragrance, parabens or silicones"
+    ]
+  },
+  "grid": [
+    { "title": "Body Lotion", "base": "coconut-lotion", "pack": "coconut-lotion-5-pack", "units": 5, "url": "/products/coconut-lotion", "image": "shopify://shop_images/card-lotion.webp",
+      "line": "Soft, moisturized skin all day, without the greasy feel." },
+    { "title": "Body Cream", "base": "coconut-moisturizer", "pack": "coconut-moisturizer-5-pack", "units": 5, "url": "/products/coconut-moisturizer", "image": "shopify://shop_images/card-cream.webp",
+      "line": "Rough hands, heels and elbows feel softer from the first use." },
+    { "title": "Soap", "base": "coconut-soap", "pack": "coconut-bar-soap-12-pack", "units": 12, "url": "/collections/soap", "image": "shopify://shop_images/card-barsoap.webp",
+      "line": "Bar and foaming hand soap that leave skin clean and soft." },
+    { "title": "Deodorant", "base": "coconut-oil-deodorant", "pack": "coconut-deodorant-4-pack", "units": 4, "url": "/products/coconut-oil-deodorant", "image": "shopify://shop_images/card-deodorant.webp",
+      "line": "Works like a regular deodorant, without the aluminum." },
+    { "title": "Toothpaste", "base": "coconut-oil-toothpaste", "pack": "coconut-toothpaste-3-pack", "units": 3, "url": "/products/coconut-oil-toothpaste", "image": "shopify://shop_images/card-toothpaste.webp",
+      "line": "A clean, fresh mouth. No SLS, no fluoride, no foam." },
+    { "title": "Lip Balm", "base": "coconut-oil-lip-balm", "pack": "coconut-lip-balm-3-pack", "units": 3, "url": "/products/coconut-oil-lip-balm", "image": "shopify://shop_images/card-lipbalm.webp",
+      "line": "Keeps lips soft and moisturized all day." }
+  ],
+  "reviews": {
+    "heading": "What customers say",
+    "from_ladders": ["coconut-lotion", "coconut-moisturizer", "coconut-soap"],
+    "link_label": "Read more reviews",
+    "link_url": "/products/coconut-lotion#judgeme_product_reviews"
+  }
+}
