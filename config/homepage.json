@@ -160,5 +160,23 @@
       "value": "<p>We started Real Skin Care because the labels lied. \"Natural\" lotions still used petroleum jelly. \"Gentle\" creams still relied on silicones. \"Sensitive\" formulas still snuck in synthetic fragrance under names most buyers don't recognize.</p><p>We built every product in our line from the opposite direction. We asked what sensitive skin actually tolerates, then used the shortest ingredient list that does the job. Nothing else.</p>",
       "_why": "Same copy without the two em dashes (house rule: no em dashes in published copy)."
     }
-  ]
+  ],
+  "set_offer": {
+    "replaces": "closing-cta",
+    "handle": "sensitive-skin-starter-set",
+    "image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/lotion-beach-real_6cc8ec81-f25d-453e-883f-d75a5941236b.jpg",
+    "image_alt": "Real Skin Care Pure Unscented Body Lotion and Body Cream on the sand at the beach",
+    "kicker": "The Sensitive Skin Set",
+    "heading": "Soft, comfortable skin from morning to night.",
+    "subheading": "Lotion for the day, cream for the night. Both Pure Unscented.",
+    "bullets": [
+      "Skin that stays soft and moisturized all day",
+      "Rough hands, heels and elbows feel softer from the first use",
+      "No fragrance at all, for skin that reacts to scent",
+      "Gentle enough for the whole family, kids included"
+    ],
+    "cta_label": "Add the set to cart",
+    "link_label": "See what's in the set",
+    "guarantee": "30-day money-back guarantee"
+  }
 }

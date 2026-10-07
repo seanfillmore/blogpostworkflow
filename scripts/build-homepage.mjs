@@ -39,6 +39,7 @@ export function copyLines(cfg) {
   const h = cfg.hero;
   return [h.heading, h.kicker, h.product_heading, h.subheading, h.cta_label, h.guarantee, ...h.bullets,
     ...cfg.grid.flatMap((c) => [c.title, c.line]), cfg.reviews.heading, cfg.reviews.link_label,
+    ...(cfg.set_offer ? [cfg.set_offer.kicker, cfg.set_offer.heading, cfg.set_offer.subheading, ...cfg.set_offer.bullets, cfg.set_offer.cta_label, cfg.set_offer.link_label, cfg.set_offer.guarantee] : []),
     ...(cfg.text_overrides ?? []).map((o) => o.value.replace(/<[^>]+>/g, ' ')),
     ...(cfg.ugc ? [cfg.ugc.heading, cfg.ugc.subheading, cfg.ugc.disclosure, ...cfg.ugc.videos.flatMap((v) => [v.creator, v.product])] : [])];
 }
@@ -206,6 +207,93 @@ export function renderUgc(ugc) {
 </script>`;
 }
 
+/**
+ * Pure: the Sensitive Skin Set product section (replaces the old closing CTA).
+ * Results bullets, live rating, live price with the compare-at struck through
+ * and the saving computed in Liquid, and an Add to cart that uses the theme's
+ * own drawer handshake (<mini-cart>: getSectionsToRender/renderContents), with
+ * every post-add failure falling back to /cart so an add that succeeded is
+ * never reported as failed.
+ */
+export function renderSetOffer(o) {
+  const bullets = o.bullets.map((b) => `<li><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>${esc(b)}</span></li>`).join('');
+  return `{%- assign sp = all_products['${o.handle}'] -%}
+{%- if sp != blank and sp.available -%}
+{%- assign sv = sp.selected_or_first_available_variant -%}
+{%- assign sr = sp.metafields.reviews.rating.value.rating | default: 0 -%}{%- assign src = sp.metafields.reviews.rating_count | default: 0 -%}
+<div class="hso"><div class="hso__inner">
+  <div class="hso__media"><img src="${esc(o.image_url)}?width=900" srcset="${esc(o.image_url)}?width=600 600w, ${esc(o.image_url)}?width=900 900w, ${esc(o.image_url)}?width=1200 1200w" sizes="(max-width: 749px) 100vw, 50vw" alt="${esc(o.image_alt)}" width="900" height="900" loading="lazy"></div>
+  <div class="hso__body">
+    <p class="hso__kicker">${esc(o.kicker)}</p>
+    <h2 class="hso__h">${esc(o.heading)}</h2>
+    <p class="hso__sub">${esc(o.subheading)}</p>
+    {%- if src > 0 -%}<p class="hso__rating"><span class="hso__stars" role="img" aria-label="{{ sr | round: 1 }} out of 5 stars">★★★★★</span> {{ sr | round: 1 }} · {{ src }} reviews</p>{%- endif -%}
+    <ul class="hso__bullets">${bullets}</ul>
+    <p class="hso__price">
+      {%- if sv.compare_at_price > sv.price -%}<s>{{ sv.compare_at_price | money }}</s> {% endif -%}
+      <strong>{{ sv.price | money }}</strong>
+      {%- if sv.compare_at_price > sv.price -%} <span class="hso__save">Save {{ sv.compare_at_price | minus: sv.price | money }}</span>{%- endif -%}
+    </p>
+    <button type="button" class="hso__cta button button--full-width" data-hso-add data-variant="{{ sv.id }}">${esc(o.cta_label)} · {{ sv.price | money }}</button>
+    <p class="hso__error" data-hso-error hidden></p>
+    <a class="hso__link" href="{{ sp.url }}">${esc(o.link_label)} →</a>
+    <p class="hso__guarantee"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6z"/></svg> ${esc(o.guarantee)}</p>
+  </div>
+</div></div>
+<style>
+  #shopify-section-{{ section.id }}{background:#1a1b18}
+  .hso{background:#1a1b18;color:#f4f2ee;padding:64px 16px}
+  .hso__inner{max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+  .hso__media img{display:block;width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border-radius:16px}
+  .hso__kicker{margin:0 0 8px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:#aedeac}
+  .hso__h{margin:0 0 10px;color:#fff;font-size:clamp(28px,3vw,40px);line-height:1.12}
+  .hso__sub{margin:0 0 14px;color:#d6d4cf}
+  .hso__rating{margin:0 0 16px;font-size:14px;color:#d6d4cf}
+  .hso__stars{color:#fff;letter-spacing:2px}
+  .hso__bullets{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:10px}
+  .hso__bullets li{display:flex;gap:10px;align-items:flex-start;line-height:1.4}
+  .hso__bullets svg{flex:0 0 auto;margin-top:3px;color:#aedeac}
+  .hso__price{margin:0 0 14px;font-size:20px}
+  .hso__price s{color:#a7a5a0;font-size:.8em;margin-right:6px}
+  .hso__save{margin-left:8px;font-size:13px;font-weight:700;color:#aedeac}
+  .hso__error{color:#ffb4ab;font-size:.9em;margin:8px 0 0}
+  .hso__link{display:inline-block;margin-top:14px;color:#fff;text-decoration:underline;font-size:14px}
+  .hso__guarantee{display:flex;align-items:center;gap:6px;margin:10px 0 0;font-size:13px;color:#d6d4cf}
+  @media screen and (max-width:749px){
+    .hso{padding:40px 16px}
+    .hso__inner{grid-template-columns:1fr;gap:24px}
+  }
+</style>
+<script>
+(function () {
+  var btn = document.querySelector('[data-hso-add]');
+  if (!btn) return;
+  var err = document.querySelector('[data-hso-error]');
+  btn.addEventListener('click', function (evt) {
+    btn.disabled = true; err.hidden = true;
+    var el = document.querySelector('mini-cart');
+    var drawer = el && typeof el.getSectionsToRender === 'function' && typeof el.renderContents === 'function' ? el : null;
+    var payload = { items: [{ id: Number(btn.getAttribute('data-variant')), quantity: 1 }] };
+    if (drawer) {
+      payload.sections = drawer.getSectionsToRender().map(function (s) { return s.id; }).join(',');
+      payload.sections_url = window.location.pathname;
+      if (typeof drawer.setActiveElement === 'function') drawer.setActiveElement(evt.currentTarget);
+    }
+    fetch('/cart/add.js', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function (r) { if (!r.ok) throw new Error('Could not add to cart'); return r.json(); })
+      .then(function (state) {
+        // Past here the set IS in the cart: never surface an error, fall back to /cart.
+        if (!drawer || !state || !state.sections) { window.location.href = '/cart'; return; }
+        try { drawer.renderContents(state); } catch (e) { window.location.href = '/cart'; return; }
+        btn.disabled = false;
+      })
+      .catch(function (e) { err.textContent = e.message + '. Please try again.'; err.hidden = false; btn.disabled = false; });
+  });
+})();
+</script>
+{%- endif -%}`;
+}
+
 /** Pure: apply the three swaps to a parsed index.json. Returns notes; throws if an anchor is missing. */
 export function transform(parsed, cfg, roster) {
   const notes = [];
@@ -265,6 +353,7 @@ export function transform(parsed, cfg, roster) {
     }
   }
   swap('product-line', 'product-grid', { type: 'custom-liquid', settings: { custom_liquid: renderGrid(cfg.grid) } });
+  if (cfg.set_offer) swap(cfg.set_offer.replaces, 'set-offer', { type: 'custom-liquid', settings: { custom_liquid: renderSetOffer(cfg.set_offer) } });
   swap('featured-testimonial', 'review-strip', { type: 'custom-liquid', settings: { custom_liquid: renderReviews(cfg, roster) } });
   return notes;
 }
