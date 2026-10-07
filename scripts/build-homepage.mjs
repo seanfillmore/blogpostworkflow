@@ -160,6 +160,20 @@ export function transform(parsed, cfg, roster) {
     delete parsed.sections['hero-overrides'];
     notes.push('removed hero-overrides (CSS for the old hero)');
   }
+  // The rich-text intro paints its color on a box inside page-width, so it
+  // stops short of the edges. A style block scoped to this section's own id
+  // makes the band full width and separates it from the hero (Sean, 2026-10-06).
+  if (cfg.intro_band) {
+    const sec = parsed.sections[cfg.intro_band.section];
+    if (!sec) throw new Error(`index.json has no "${cfg.intro_band.section}" section`);
+    const css = `<style>#shopify-section-{{ section.id }}{background:${cfg.intro_band.background};margin-top:${cfg.intro_band.margin_top_px}px}`
+      + `#shopify-section-{{ section.id }} .rich-text{background:transparent}</style>`;
+    sec.blocks ??= {};
+    sec.block_order ??= [];
+    sec.blocks['band-style'] = { type: 'custom_liquid', settings: { custom_liquid: css } };
+    if (!sec.block_order.includes('band-style')) sec.block_order.push('band-style');
+    notes.push(`${cfg.intro_band.section}: full-width band, ${cfg.intro_band.margin_top_px}px top margin`);
+  }
   swap('product-line', 'product-grid', { type: 'custom-liquid', settings: { custom_liquid: renderGrid(cfg.grid) } });
   swap('featured-testimonial', 'review-strip', { type: 'custom-liquid', settings: { custom_liquid: renderReviews(cfg, roster) } });
   return notes;
