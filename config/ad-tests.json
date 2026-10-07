@@ -1,5 +1,5 @@
 {
-  "_note": "Paid ad tests watched by agents/ad-test-monitor. The agent only REPORTS; it never pauses anything. Purchases are judged on Shopify orders whose landing URL carries the test's tag (Meta's pixel has measured ~2x inflated on this store); Meta's own count is shown beside it.",
+  "_note": "Paid ad tests watched by agents/ad-test-monitor. Campaign stop rules only REPORT. The one write: a test with kill.autoPause pauses its losing creatives daily (Sean, 2026-10-07). Purchases are judged on Shopify orders whose landing URL carries the test's tag (Meta's pixel has measured ~2x inflated on this store); Meta's own count is shown beside it.",
   "tests": [
     {
       "name": "Trybe UGC October 2026",
@@ -65,12 +65,19 @@
         "costPerPurchaseAfter": 2
       },
       "graduation": {
+        "_note": "Sean 2026-10-07: graduate after minSpend on EITHER cost per purchase <= one average order, OR minAddToCarts at minLinkCtr. Replaced a $1.50 cost-per-click bar no ad could clear at a ~$75 CPM.",
         "minSpend": 150,
-        "minLinkCtr": 0.015,
-        "maxCostPerLinkClick": 1.5,
+        "maxCostPerPurchase": 56,
         "minAddToCarts": 5,
-        "minPurchases": 1
-      }
+        "minLinkCtr": 0.015
+      },
+      "kill": {
+        "_note": "Sean 2026-10-07: pause losers daily to stop the bleeding instead of waiting for the weekly drop. A loser spent about one average order with no add to cart or purchase. Never thins the campaign below minActive running ads.",
+        "autoPause": true,
+        "maxSpendWithoutAddToCart": 50,
+        "minActive": 3
+      },
+      "cadence": "New creatives go in once a week on MONDAY in one batch, never daily (every new ad pulls delivery while it learns). Graduates move to a scaling campaign by post ID."
     }
   ]
 }
