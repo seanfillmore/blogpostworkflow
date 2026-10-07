@@ -69,7 +69,7 @@ const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json')
 /** Newest passing render of one frame across every run directory. */
 function newestRender(handle, name) {
   if (!existsSync(RENDERS)) return null;
-  const runs = readdirSync(RENDERS).filter((d) => /^\d{4}-/.test(d)).sort().reverse();
+  const runs = readdirSync(RENDERS).filter((d) => /^\d{4}-/.test(d)).sort().reverse(); // ISO prefix sorts by time
   for (const run of runs) {
     const p = join(RENDERS, run, handle, `${name}.png`);
     if (existsSync(p) && statSync(p).isFile()) return p;
