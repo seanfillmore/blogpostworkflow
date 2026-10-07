@@ -33,7 +33,7 @@ test('the review strip only quotes approved, gated ladder reviews and links on-s
 
 test('transform swaps the three sections in place and drops the old hero CSS', () => {
   const parsed = { order: ['hero-overrides', 'hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+    sections: { 'hero-overrides': {}, hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: { blocks: { 'founder-body': { settings: {} } } }, 'closing-cta': {} } };
   parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
   assert.ok(parsed.order.includes('set-offer'));
@@ -60,7 +60,7 @@ test('excluded Trybe videos stay out of the strip', () => {
 
 test('transform places the UGC strip before the founder anchor and bands both rich-text sections', () => {
   const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder'],
-    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: { blocks: { 'founder-body': { settings: {} } } }, 'closing-cta': {} } };
   parsed.order.push('closing-cta');
   transform(parsed, cfg, roster);
   assert.equal(parsed.order[parsed.order.indexOf('founder-anchor') - 1], 'ugc-strip');
@@ -85,7 +85,16 @@ test('the set offer bakes no price and adds the live variant', async () => {
 
 test('the set offer is pinned directly after the exclusion grid', () => {
   const parsed = { order: ['hero', 'product-intro', 'product-line', 'thesis', 'exclusion-grid', 'featured-testimonial', 'founder-anchor', 'founder', 'closing-cta'],
-    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: {}, 'closing-cta': {} } };
+    sections: { hero: {}, 'product-intro': {}, 'product-line': {}, thesis: { blocks: { 'thesis-body': { settings: {} } } }, 'exclusion-grid': {}, 'featured-testimonial': {}, 'founder-anchor': {}, founder: { blocks: { 'founder-body': { settings: {} } } }, 'closing-cta': {} } };
   transform(parsed, cfg, roster);
   assert.equal(parsed.order[parsed.order.indexOf('exclusion-grid') + 1], 'set-offer');
+});
+
+test('founder: no em dashes in the live copy override, and its custom_css is one scoped rule per entry', () => {
+  const cfg = loadConfig();
+  const o = cfg.text_overrides.find((x) => x.section === 'founder' && x.block === 'founder-body');
+  assert.ok(o, 'founder-body override present');
+  assert.ok(!o.value.includes('—'), 'no em dash');
+  const sc = cfg.section_css.find((x) => x.section === 'founder');
+  assert.ok(Array.isArray(sc.css) && sc.css.every((r) => (r.match(/\{/g) || []).length === 1), 'one rule per entry');
 });
