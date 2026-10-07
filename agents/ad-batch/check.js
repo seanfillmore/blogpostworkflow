@@ -70,7 +70,7 @@ Answer about Image 2 ONLY, as JSON, transcribing letter by letter exactly as ren
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
 }
 
-Count only units of OUR product; ignore other generic bottles, jars or props. Lighting, gloss and angle differences are never a mismatch. Answer with the JSON only.`;
+Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size. Answer with the JSON only.`;
 }
 
 export function parseCheck(text) {
