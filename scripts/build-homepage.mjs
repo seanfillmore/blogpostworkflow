@@ -152,7 +152,6 @@ export function renderUgc(ugc) {
         <video class="ugc__video" src="${esc(v.src)}" poster="${esc(v.poster)}" muted loop playsinline preload="none" aria-label="${esc(v.creator)} on Real Skin Care ${esc(v.product)}"></video>
         <button type="button" class="ugc__sound" aria-label="Turn sound on">Tap for sound</button>
       </div>
-      <figcaption class="ugc__cap"><span class="ugc__who">${esc(v.creator)} · ${esc(v.product)}</span><a class="ugc__shop" href="${esc(v.url)}">Shop →</a></figcaption>
     </figure>`;
   }).join('');
   return `<div class="ugc"><div class="ugc__inner">
@@ -173,11 +172,8 @@ export function renderUgc(ugc) {
   .ugc__video{width:100%;height:100%;object-fit:cover;display:block}
   .ugc__sound{position:absolute;left:10px;bottom:10px;border:0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
   .ugc__sound[aria-pressed="true"]{background:rgba(0,0,0,.25)}
-  .ugc__cap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 8px;margin-top:8px;font-size:14px}
-  .ugc__who{font-weight:600}
-  .ugc__shop{color:#151515;font-weight:700;white-space:nowrap}
   .ugc__disc{margin:14px 16px 0;font-size:12px;color:#6d7175}
-  @media screen and (max-width:749px){.ugc__row{grid-auto-columns:62%}.ugc__cap{font-size:13px}}
+  @media screen and (max-width:749px){.ugc__row{grid-auto-columns:62%}}
 </style>
 <script>
 (function () {
