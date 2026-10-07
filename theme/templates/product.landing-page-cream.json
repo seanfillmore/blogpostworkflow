@@ -2,6 +2,9 @@
   "sections": {
     "main": {
       "type": "main-product",
+      "custom_css": [
+        "@media(min-width:990px){media-gallery{display:grid;grid-template-columns:7.2rem minmax(0,1fr);gap:1.6rem;align-items:start}media-gallery>use-animate{grid-area:1\/2;max-width:70vh}.thumbnail-slider{grid-area:1\/1;display:block;margin:0}.thumbnail-list{flex-direction:column;max-width:none!important;max-height:70vh;overflow:hidden auto;row-gap:.8rem;padding:.2rem;box-shadow:none}.thumbnail-list__item{width:100%!important;flex-shrink:0}.thumbnail-slider .slider-buttons{display:none}}"
+      ],
       "blocks": {
         "judgeme_preview_badge": {
           "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
