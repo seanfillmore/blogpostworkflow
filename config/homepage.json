@@ -179,5 +179,12 @@
     "link_label": "See what's in the set",
     "guarantee": "30-day money-back guarantee",
     "after_section": "exclusion-grid"
-  }
+  },
+  "section_css": [
+    {
+      "section": "founder",
+      "css": ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:50%;margin:0 auto}",
+      "_why": "Sean, 2026-10-07: founder image reduced by 50%. Scales the image inside its column; the text column is unchanged."
+    }
+  ]
 }

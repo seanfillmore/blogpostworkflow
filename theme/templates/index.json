@@ -268,7 +268,10 @@
         "colors_highlight": "#ffb503",
         "padding_top": 64,
         "padding_bottom": 64
-      }
+      },
+      "custom_css": [
+        ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:50%;margin:0 auto}"
+      ]
     },
     "email-intro": {
       "type": "custom-liquid",
