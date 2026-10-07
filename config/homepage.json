@@ -99,7 +99,7 @@
     }
   ],
   "ugc": {
-    "_note": "Approved Trybe videos (status approved, transcript passes the commercial claim gate, real people with the real product). Swap by editing this list; upload new videos to Shopify Files first. Excluded on review 2026-10-06: 099e1e5d (names petroleum, wrong ingredient count), 89268673 (flagged for 'cold-pressed', which Sean confirmed 2026-10-07 is TRUE, so not a reason to exclude), 37fbdc30 (appears AI-generated, not a customer), Zjk videos (not about the product).",
+    "_note": "Approved Trybe videos (status approved, transcript passes the commercial claim gate, real people with the real product). Swap by editing this list; upload new videos to Shopify Files first. Excluded on review 2026-10-06: 099e1e5d (names petroleum, wrong ingredient count), 37fbdc30 (appears AI-generated, not a customer), Zjk videos (not about the product). 89268673 was excluded for 'cold-pressed' and ADDED 2026-10-07 once Sean confirmed the claim is true.",
     "before_section": "founder-anchor",
     "heading": "Real people. Real routines.",
     "subheading": "Creators who use Real Skin Care, in their own words.",
@@ -149,6 +149,15 @@
         "src": "https://cdn.shopify.com/videos/c/vp/9dc3cef87c11465688593510cc5720fe/9dc3cef87c11465688593510cc5720fe.SD-480p-0.9Mbps-96650054.mp4",
         "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/9dc3cef87c11465688593510cc5720fe.thumbnail.0000000000.jpg?v=1791350347",
         "shopify_file": "gid://shopify/Video/45977562316970"
+      },
+      {
+        "trybe_id": "submission_89268673-589a-4bb4-8a7d-f0c49638b656",
+        "creator": "Taylor",
+        "product": "Body Lotion",
+        "url": "/products/coconut-lotion",
+        "src": "https://cdn.shopify.com/videos/c/vp/e869f58585ba4d5f8eeeb1137aea7916/e869f58585ba4d5f8eeeb1137aea7916.SD-480p-0.9Mbps-96743135.mp4",
+        "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/preview_images/e869f58585ba4d5f8eeeb1137aea7916.thumbnail.0000000000.jpg?v=1791411856",
+        "shopify_file": "gid://shopify/Video/45989461229738"
       }
     ],
     "_social_note": "Optional per video: social_url (https on instagram.com, tiktok.com, youtube.com or facebook.com) and social_handle (defaults to @<first path segment>). Renders a credit link under the video that opens in a new tab. The Trybe API does not expose creator socials, so these come from the Trybe dashboard or the creator."
