@@ -32,7 +32,7 @@
           "settings": {
             "icon_source": "preset",
             "icon_preset": "truck",
-            "text": "Free shipping on subscription"
+            "text": "Free shipping"
           }
         },
         "guarantee-2": {
@@ -171,7 +171,7 @@
           "settings": {
             "icon": "leaf",
             "heading": "Details",
-            "content": "<p><strong>Two formulas for a complete routine.<\/strong> Daily Pure Unscented Lotion for fast-absorbing moisture; Pure Unscented Cream for overnight occlusion and dry patches.<\/p><p><strong>Built around what sensitive skin recognizes.<\/strong> Cold-pressed virgin coconut oil, organic jojoba, organic beeswax — ingredients with a long track record of NOT triggering reactive skin.<\/p><p><strong>What we leave out.<\/strong> No silicones or lanolin. No parabens, phenoxyethanol, or synthetic fragrance. No essential oils added (Pure Unscented).<\/p><p><strong>First-subscription bonus.<\/strong> Subscribe and your first order ships with a free Pure Unscented Lip Balm and a free Unscented Bar Soap.<\/p>",
+            "content": "<p><strong>Two formulas for a complete routine.<\/strong> Daily Pure Unscented Lotion for fast-absorbing moisture; Pure Unscented Cream for overnight occlusion and dry patches.<\/p><p><strong>Built around what sensitive skin recognizes.<\/strong> Cold-pressed virgin coconut oil, organic jojoba, organic beeswax — ingredients with a long track record of NOT triggering reactive skin.<\/p><p><strong>What we leave out.<\/strong> No silicones or lanolin. No parabens, phenoxyethanol, or synthetic fragrance. No essential oils added (Pure Unscented).<\/p>",
             "page": "",
             "custom_liquid": "",
             "keep_open": false
@@ -232,12 +232,6 @@
             "custom_liquid": "<div style=\"margin:14px 0 4px 0;display:flex;gap:10px;align-items:baseline;\"><span style=\"font-size:11px;letter-spacing:1px;text-transform:uppercase;font-weight:500;color:#1a1b18;\">Scent<\/span><span style=\"font-size:14px;font-weight:600;color:#1a1b18;\">Pure Unscented<\/span><\/div>"
           }
         },
-        "bonus-banner": {
-          "type": "custom_liquid",
-          "settings": {
-            "custom_liquid": "<div style=\"background-color:#eef3e8;border-left:3px solid #4a8b3c;border-radius:6px;padding:14px 16px;margin:14px 0;line-height:1.5;\"><div style=\"font-weight:700;margin-bottom:6px;\">🎁 First subscription order includes:<\/div><ul style=\"margin:0 0 8px 0;padding-left:20px;\"><li>Free Pure Unscented Lip Balm <span style=\"color:#4a8b3c;font-weight:600;\">($15 value)<\/span><\/li><li>Free Unscented Bar Soap <span style=\"color:#4a8b3c;font-weight:600;\">($11 value)<\/span><\/li><\/ul><div style=\"font-weight:700;color:#4a8b3c;\">$26 in free product on your first delivery<\/div><\/div>"
-          }
-        },
         "trust-row": {
           "type": "custom_liquid",
           "settings": {
@@ -271,7 +265,6 @@
         "variant_picker",
         "vqr-combo",
         "discount-callout",
-        "bonus-banner",
         "buy_buttons",
         "no-subscription",
         "trust-row",
@@ -896,7 +889,7 @@
         "fc-text": {
           "type": "text",
           "settings": {
-            "text": "<p>Your first subscription order ships with a free Pure Unscented Lip Balm and a free Unscented Bar Soap.<\/p>",
+            "text": "<p>Lotion for the day, cream for the night. Both Pure Unscented, with a 30-day money-back guarantee.<\/p>",
             "text_size": "typeset",
             "secondary_color": false
           }
