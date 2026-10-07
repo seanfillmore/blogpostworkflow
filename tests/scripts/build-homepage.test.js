@@ -55,7 +55,9 @@ test('the UGC strip always carries the disclosure and only Shopify-hosted videos
 
 test('excluded Trybe videos stay out of the strip', () => {
   const ids = cfg.ugc.videos.map((v) => v.trybe_id);
-  for (const bad of ['099e1e5d', '89268673', '37fbdc30']) assert.ok(!ids.some((i) => i.includes(bad)), bad);
+  // 89268673 left this list 2026-10-07: it was excluded only for "cold-pressed",
+  // which Sean confirmed is true of our coconut oil.
+  for (const bad of ['099e1e5d', '37fbdc30']) assert.ok(!ids.some((i) => i.includes(bad)), bad);
 });
 
 test('transform places the UGC strip before the founder anchor and bands both rich-text sections', () => {

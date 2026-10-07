@@ -188,7 +188,7 @@ export function renderUgc(ugc) {
   .ugc__inner{max-width:1240px;margin:0 auto;text-align:center}
   .ugc__h{margin:0 16px 6px}
   .ugc__sub{margin:0 16px 22px;color:#4a4d52}
-  .ugc__row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
+  .ugc__row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(170px,1fr);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
   .ugc__card{margin:0;scroll-snap-align:start;text-align:left}
   .ugc__frame{position:relative;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#eee}
   .ugc__video{width:100%;height:100%;object-fit:cover;display:block}
