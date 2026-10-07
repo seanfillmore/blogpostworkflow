@@ -270,7 +270,9 @@
         "padding_bottom": 64
       },
       "custom_css": [
-        ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:50%;margin:0 auto}"
+        ".section{background:#efe6d8}",
+        ".image-with-text__grid{background:transparent}",
+        ".image-with-text__grid>.flex-grid__item:first-child .media-wrapper{display:block;width:75%;margin:0 auto}"
       ]
     },
     "email-intro": {

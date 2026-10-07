@@ -337,12 +337,15 @@ export function transform(parsed, cfg, roster) {
     notes.push(`${band.section}: full-width band`);
   }
   // Per-section CSS in the template's own custom_css (merchant-owned, so it
-  // survives the theme updater). Shopify caps each section at 500 characters.
+  // survives the theme updater). One array entry per rule: Shopify scopes each
+  // entry by prefixing the section id. It caps a section at 500 characters.
   for (const sc of cfg.section_css ?? []) {
     const sec = parsed.sections[sc.section];
     if (!sec) throw new Error(`index.json has no "${sc.section}" section`);
-    if (sc.css.length > 500) throw new Error(`${sc.section}: custom_css is ${sc.css.length} chars, Shopify allows 500`);
-    if (JSON.stringify(sec.custom_css) !== JSON.stringify([sc.css])) { sec.custom_css = [sc.css]; notes.push(`${sc.section}: custom_css`); }
+    const rules = [].concat(sc.css);
+    const len = rules.join('').length;
+    if (len > 500) throw new Error(`${sc.section}: custom_css is ${len} chars, Shopify allows 500`);
+    if (JSON.stringify(sec.custom_css) !== JSON.stringify(rules)) { sec.custom_css = rules; notes.push(`${sc.section}: custom_css`); }
   }
   for (const o of cfg.text_overrides ?? []) {
     const blk = parsed.sections[o.section]?.blocks?.[o.block];
