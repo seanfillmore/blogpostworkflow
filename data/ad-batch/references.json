@@ -1,0 +1,19 @@
+{
+  "_doc": "Hand-picked reference photos per product (and variant), relative to data/product-images/. Lists the ones known to produce accurate renders. A product or variant missing here falls back to the first images in data/product-images/<imageDir>/<variant>/. 'packaged' is the product as sold; 'unwrapped' is the bare product, used by in-use scenes (lather, shower). The bar soap's unwrapped photos are product-level: the bare puck looks the same for every scent.",
+  "coconut-moisturizer": {
+    "coconut-breeze": { "packaged": ["_clean-batch3/cream-coconut-breeze.png", "coconut-moisturizer/coconut-breeze/2.jpg"] },
+    "pure-unscented": { "packaged": ["_clean-batch3/cream-pure-unscented.png"] }
+  },
+  "coconut-soap": {
+    "*": { "unwrapped": ["coconut-soap/unwrapped/raw-2026-10-06-3.jpg", "coconut-soap/unwrapped/raw-2026-10-06-6.jpg", "coconut-soap/unwrapped/raw-2026-10-06-2.jpg"] },
+    "pure-unscented": { "packaged": ["_clean-batch2/bar-soap-ref.png", "coconut-soap/pure-unscented/1.jpg"] }
+  },
+  "organic-foaming-hand-soap": {
+    "coconut-breeze": { "packaged": ["_clean-batch2/foaming-ref.png", "organic-foaming-hand-soap/coconut-breeze/1.jpg", "organic-foaming-hand-soap/coconut-breeze/IMG_7087.jpg"] }
+  },
+  "coconut-oil-toothpaste": {
+    "fresh-mint": { "packaged": ["_clean-toothpaste/tp-fresh-mint.png"] },
+    "all-natural": { "packaged": ["_clean-toothpaste/tp-all-natural.png"] },
+    "cinnamon-spice": { "packaged": ["_clean-toothpaste/tp-cinnamon-spice.png"] }
+  }
+}
