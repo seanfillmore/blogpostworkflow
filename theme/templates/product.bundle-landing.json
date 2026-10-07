@@ -76,7 +76,7 @@
     "main": {
       "type": "main-product",
       "custom_css": [
-        "@media(min-width:990px){media-gallery{display:grid;grid-template-columns:7.2rem minmax(0,1fr);gap:1.6rem;align-items:start}media-gallery>use-animate{grid-area:1\/2;max-width:70vh}.thumbnail-slider{grid-area:1\/1;display:block;margin:0}.thumbnail-list{flex-direction:column;max-width:none!important;max-height:70vh;overflow:hidden auto;row-gap:.8rem;padding:.2rem;box-shadow:none}.thumbnail-list__item{width:100%!important;flex-shrink:0}.thumbnail-slider .slider-buttons{display:none}}"
+        "@media(min-width:990px){media-gallery{display:grid;grid-template-columns:8.3rem minmax(0,1fr);gap:1.6rem;align-items:start}media-gallery>use-animate{grid-area:1\/2;max-width:59.5vh}.thumbnail-slider{grid-area:1\/1;display:block;margin:0}.thumbnail-list{flex-direction:column;max-width:none!important;max-height:59.5vh;overflow:hidden auto;row-gap:.8rem;padding:.2rem;box-shadow:none}.thumbnail-list__item{width:100%!important;flex-shrink:0}.thumbnail-slider .slider-buttons{display:none}}"
       ],
       "blocks": {
         "buy-box-anchor": {
