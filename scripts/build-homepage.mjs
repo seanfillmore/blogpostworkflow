@@ -38,7 +38,9 @@ export function loadConfig() {
 export function copyLines(cfg) {
   const h = cfg.hero;
   return [h.heading, h.kicker, h.product_heading, h.subheading, h.cta_label, h.guarantee, ...h.bullets,
-    ...cfg.grid.flatMap((c) => [c.title, c.line]), cfg.reviews.heading, cfg.reviews.link_label];
+    ...cfg.grid.flatMap((c) => [c.title, c.line]), cfg.reviews.heading, cfg.reviews.link_label,
+    ...(cfg.text_overrides ?? []).map((o) => o.value.replace(/<[^>]+>/g, ' ')),
+    ...(cfg.ugc ? [cfg.ugc.heading, cfg.ugc.subheading, cfg.ugc.disclosure, ...cfg.ugc.videos.flatMap((v) => [v.creator, v.product])] : [])];
 }
 
 export function gateFailures(cfg) {
@@ -132,6 +134,82 @@ export function renderReviews(cfg, roster) {
 </style>`;
 }
 
+/**
+ * Pure: the UGC strip. Vertical creator videos in a swipeable row; each plays
+ * muted while on screen and pauses off screen (IntersectionObserver), tap for
+ * sound, preload="none" so nothing downloads until it scrolls into view. Only
+ * videos listed in config/homepage.json ugc.videos render, and the material-
+ * connection disclosure is always shown (FTC: creators get product and commission).
+ */
+export function renderUgc(ugc) {
+  if (!ugc.videos?.length) throw new Error('ugc: no videos configured');
+  if (!ugc.disclosure) throw new Error('ugc: the creator disclosure line is required');
+  const cards = ugc.videos.map((v) => {
+    if (!/^https:\/\/cdn\.shopify\.com\//.test(v.src)) throw new Error(`ugc: ${v.trybe_id} src must be a Shopify CDN URL`);
+    return `
+    <figure class="ugc__card">
+      <div class="ugc__frame">
+        <video class="ugc__video" src="${esc(v.src)}" poster="${esc(v.poster)}" muted loop playsinline preload="none" aria-label="${esc(v.creator)} on Real Skin Care ${esc(v.product)}"></video>
+        <button type="button" class="ugc__sound" aria-label="Turn sound on">Tap for sound</button>
+      </div>
+      <figcaption class="ugc__cap"><span class="ugc__who">${esc(v.creator)} · ${esc(v.product)}</span><a class="ugc__shop" href="${esc(v.url)}">Shop →</a></figcaption>
+    </figure>`;
+  }).join('');
+  return `<div class="ugc"><div class="ugc__inner">
+  <h2 class="ugc__h">${esc(ugc.heading)}</h2>
+  <p class="ugc__sub">${esc(ugc.subheading)}</p>
+  <div class="ugc__row">${cards}
+  </div>
+  <p class="ugc__disc">${esc(ugc.disclosure)}</p>
+</div></div>
+<style>
+  .ugc{padding:56px 0 40px;background:#fff}
+  .ugc__inner{max-width:1240px;margin:0 auto;text-align:center}
+  .ugc__h{margin:0 16px 6px}
+  .ugc__sub{margin:0 16px 22px;color:#4a4d52}
+  .ugc__row{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(200px,1fr);gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
+  .ugc__card{margin:0;scroll-snap-align:start;text-align:left}
+  .ugc__frame{position:relative;aspect-ratio:9/16;border-radius:14px;overflow:hidden;background:#eee}
+  .ugc__video{width:100%;height:100%;object-fit:cover;display:block}
+  .ugc__sound{position:absolute;left:10px;bottom:10px;border:0;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:600;background:rgba(0,0,0,.55);color:#fff;cursor:pointer}
+  .ugc__sound[aria-pressed="true"]{background:rgba(0,0,0,.25)}
+  .ugc__cap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 8px;margin-top:8px;font-size:14px}
+  .ugc__who{font-weight:600}
+  .ugc__shop{color:#151515;font-weight:700;white-space:nowrap}
+  .ugc__disc{margin:14px 16px 0;font-size:12px;color:#6d7175}
+  @media screen and (max-width:749px){.ugc__row{grid-auto-columns:62%}.ugc__cap{font-size:13px}}
+</style>
+<script>
+(function () {
+  var root = document.currentScript && document.currentScript.parentElement;
+  var vids = (root || document).querySelectorAll('.ugc__video');
+  if (!vids.length) return;
+  function setSound(v, on) {
+    vids.forEach(function (o) { if (o !== v) { o.muted = true; var b = o.parentElement.querySelector('.ugc__sound'); if (b) { b.textContent = 'Tap for sound'; b.setAttribute('aria-pressed', 'false'); } } });
+    v.muted = !on;
+    var btn = v.parentElement.querySelector('.ugc__sound');
+    if (btn) { btn.textContent = on ? 'Sound on' : 'Tap for sound'; btn.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+    if (on) v.play().catch(function () {});
+  }
+  vids.forEach(function (v) {
+    var btn = v.parentElement.querySelector('.ugc__sound');
+    var toggle = function () { setSound(v, v.muted); };
+    if (btn) btn.addEventListener('click', toggle);
+    v.addEventListener('click', toggle);
+  });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      var v = e.target;
+      if (e.isIntersecting && e.intersectionRatio > 0.6) { v.play().catch(function () {}); }
+      else { v.pause(); }
+    });
+  }, { threshold: [0, 0.6, 1] });
+  vids.forEach(function (v) { io.observe(v); });
+})();
+</script>`;
+}
+
 /** Pure: apply the three swaps to a parsed index.json. Returns notes; throws if an anchor is missing. */
 export function transform(parsed, cfg, roster) {
   const notes = [];
@@ -160,19 +238,35 @@ export function transform(parsed, cfg, roster) {
     delete parsed.sections['hero-overrides'];
     notes.push('removed hero-overrides (CSS for the old hero)');
   }
-  // The rich-text intro paints its color on a box inside page-width, so it
-  // stops short of the edges. A style block scoped to this section's own id
-  // makes the band full width and separates it from the hero (Sean, 2026-10-06).
-  if (cfg.intro_band) {
-    const sec = parsed.sections[cfg.intro_band.section];
-    if (!sec) throw new Error(`index.json has no "${cfg.intro_band.section}" section`);
-    const css = `<style>#shopify-section-{{ section.id }}{background:${cfg.intro_band.background};margin-top:${cfg.intro_band.margin_top_px}px}`
+  // A rich-text section paints its color on a box inside page-width, so it
+  // stops short of the edges. A style block scoped to the section's own id
+  // makes the band full width (Sean, 2026-10-06: intro + "natural" thesis).
+  for (const band of cfg.bands ?? []) {
+    const sec = parsed.sections[band.section];
+    if (!sec) throw new Error(`index.json has no "${band.section}" section`);
+    const css = `<style>#shopify-section-{{ section.id }}{background:${band.background};margin-top:${band.margin_top_px ?? 0}px}`
       + `#shopify-section-{{ section.id }} .rich-text{background:transparent}</style>`;
     sec.blocks ??= {};
     sec.block_order ??= [];
     sec.blocks['band-style'] = { type: 'custom_liquid', settings: { custom_liquid: css } };
     if (!sec.block_order.includes('band-style')) sec.block_order.push('band-style');
-    notes.push(`${cfg.intro_band.section}: full-width band, ${cfg.intro_band.margin_top_px}px top margin`);
+    notes.push(`${band.section}: full-width band`);
+  }
+  for (const o of cfg.text_overrides ?? []) {
+    const blk = parsed.sections[o.section]?.blocks?.[o.block];
+    if (!blk) throw new Error(`index.json has no block ${o.section}/${o.block}`);
+    if (blk.settings[o.setting] !== o.value) { blk.settings[o.setting] = o.value; notes.push(`updated ${o.section}/${o.block}`); }
+  }
+  if (cfg.ugc) {
+    const sec = { type: 'custom-liquid', settings: { custom_liquid: renderUgc(cfg.ugc) } };
+    if (parsed.order.includes('ugc-strip')) { parsed.sections['ugc-strip'] = sec; notes.push('refreshed ugc-strip'); }
+    else {
+      const at = parsed.order.indexOf(cfg.ugc.before_section);
+      if (at < 0) throw new Error(`index.json has no "${cfg.ugc.before_section}" to place the UGC strip before`);
+      parsed.order.splice(at, 0, 'ugc-strip');
+      parsed.sections['ugc-strip'] = sec;
+      notes.push(`inserted ugc-strip before ${cfg.ugc.before_section}`);
+    }
   }
   swap('product-line', 'product-grid', { type: 'custom-liquid', settings: { custom_liquid: renderGrid(cfg.grid) } });
   swap('featured-testimonial', 'review-strip', { type: 'custom-liquid', settings: { custom_liquid: renderReviews(cfg, roster) } });
