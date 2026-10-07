@@ -64,3 +64,10 @@ test('transform places the UGC strip before the founder anchor and bands both ri
   assert.equal(parsed.order[parsed.order.indexOf('founder-anchor') - 1], 'ugc-strip');
   for (const s of ['product-intro', 'thesis']) assert.ok(parsed.sections[s].block_order.includes('band-style'), s);
 });
+
+test('UGC cards carry no creator name or shop link (Sean, 2026-10-06)', async () => {
+  const { renderUgc } = await import('../../scripts/build-homepage.mjs');
+  const out = renderUgc(cfg.ugc);
+  assert.doesNotMatch(out, /ugc__cap|ugc__shop|Shop →/);
+  for (const v of cfg.ugc.videos) assert.ok(!out.includes(`>${v.creator} ·`), v.creator);
+});
