@@ -120,7 +120,9 @@ test('tab-shipping is one paragraph with ONE token, not two forked copies', () =
   const src = read('theme/blocks/tab-shipping.liquid');
   assert.equal((src.match(/%%SUBSCRIPTION%%/g) ?? []).length, 1);
   assert.doesNotMatch(src, /subscription order/);
-  const on = blockSource('tab-shipping', 'product.landing-page-deodorant.json', read);
+  // No live page carries the clause since 2026-10-06, so the ON variant is
+  // built from the source the same way a subscribable page would get it.
+  const on = expandSubscription(src, true);
   const off = blockSource('tab-shipping', 'product.landing-page-lip-balm.json', read);
   assert.match(on, /\$45\+ and on every subscription order\./);
   assert.match(off, /\$45\+\. Standard/);
@@ -138,20 +140,12 @@ test('the subscription claim appears exactly where something IS subscribable', (
   // Measured live 2026-09-05 per page, across EVERY tier the page sells --
   // the three ladder pages qualify only because a multipack TIER carries the
   // selling plan while the single unit does not.
+  // No template sells a NEW subscription since 2026-10-06 (Sean: "Remove all
+  // of the subscriptions for now"). Products that still carry a plan for
+  // existing contracts are marked retiredPlan instead.
   const SUBSCRIBABLE = {
-    toothpaste: true,          // coconut-toothpaste-3-pack
-    deodorant: true,           // coconut-deodorant-4-pack
-    'bar-soap': true,          // coconut-bar-soap-4-pack
-    // Recurpay widget removed 2026-10-05 (multi-unit over subscriptions);
-    // existing contracts renew, but nothing new can be subscribed to here.
-    lotion: false,
-    cream: false,              // 1 / 5 ladder; the 5-pack has no plan
-    'sensitive-skin-set-lander': true,
-    'lip-balm': false,         // no tier has a plan
-    // Per-PRODUCT: the pump and its 2-/4-pack tiers have no plan; the 32oz
-    // refill gained Recurpay plan 11152263 (1/2/3/4-month) on 2026-09-05.
-    'liquid-soap': ['foam-soap-refill-32oz'],
-    'bundle-landing': false,   // none of its six bundles
+    toothpaste: false, deodorant: false, 'bar-soap': false, lotion: false, cream: false,
+    'sensitive-skin-set-lander': false, 'lip-balm': false, 'liquid-soap': false, 'bundle-landing': false,
   };
   for (const [f, spec] of Object.entries(MANIFEST)) {
     assert.deepEqual(spec.subscribable, SUBSCRIBABLE[templateNick(f)], `${f} subscribable flag`);
@@ -278,7 +272,8 @@ test('ladderTiers reads the baked handles, and is empty without a ladder', () =>
 // right for both.
 
 test('a per-product template emits a handle conditional, not a flat claim', () => {
-  const out = blockSource('tab-shipping', 'product.landing-page-liquid-soap.json', read);
+  // Mechanism test: no template uses a per-product list since 2026-10-06.
+  const out = expandSubscription(read('theme/blocks/tab-shipping.liquid'), ['foam-soap-refill-32oz']);
   assert.match(out, /\{%- if product\.handle == 'foam-soap-refill-32oz' -%\}/);
   const refill = out.replace(/\{%- if [^%]*-%\}([\s\S]*?)\{%- else -%\}[\s\S]*?\{%- endif -%\}/, '$1');
   const pump = out.replace(/\{%- if [^%]*-%\}[\s\S]*?\{%- else -%\}([\s\S]*?)\{%- endif -%\}/, '$1');
