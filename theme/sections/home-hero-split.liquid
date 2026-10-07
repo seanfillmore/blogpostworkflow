@@ -34,11 +34,10 @@
 {%- endif -%}
 
 {%- comment -%}
-  Desktop: the hero sits inside the 1440px page width and takes the image's own
-  shape, so at 1440 the photo is shown whole (Sean, 2026-10-07: optimise for a
-  1440 monitor; traffic is mostly mobile; no blurred side bars). Wider screens
-  see the same 1440 hero centred. A fixed-height full-bleed box had cropped the
-  bottle cap at 1920px+.
+  Desktop: the hero fills the screen up to 1920px wide and takes the image's own
+  shape, so the photo is always shown whole (Sean, 2026-10-07: 1920 wide, fill
+  the screen; no blurred side bars). Wider screens see the 1920 hero centred.
+  A fixed-height full-bleed box had cropped the bottle cap at 1920px+.
 {%- endcomment -%}
 {%- assign hhs_ratio = section.settings.image_desktop.aspect_ratio | default: 2.357 -%}
 <section class="hhs" style="--hhs-ratio: {{ hhs_ratio }};" aria-label="{{ section.settings.heading | strip_html | escape }}">
@@ -110,7 +109,7 @@
   .hhs__guarantee{display:flex;align-items:center;gap:6px;margin:8px 0 0;font-size:13px;color:#2f3133}
 
   @media screen and (min-width:990px){
-    .hhs{max-width:1440px;margin:0 auto;height:clamp(460px,calc(min(100vw,1440px) / var(--hhs-ratio)),620px)}
+    .hhs{max-width:1920px;margin:0 auto;height:max(460px,calc(min(100vw,1920px) / var(--hhs-ratio)))}
     .hhs__media{position:absolute;inset:0}
     .hhs__media picture{position:relative;height:100%}
     .hhs__inner{position:relative;height:100%;max-width:1400px;margin:0 auto;padding:0 40px;
