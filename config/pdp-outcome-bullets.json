@@ -1,0 +1,46 @@
+{
+  "_what": "Outcome bullets above each ladder buy box (benefit-1..N text blocks). Approved by Sean 2026-10-06. Every line is gated by scripts/apply-pdp-outcome-bullets.mjs (ad health gate, commercial SEO-copy gate, product-category gate, no em dash) before it is written.",
+  "product.landing-page-lotion.json": [
+    "Skin that stays soft and moisturized all day, not just for an hour.",
+    "Sinks in within minutes, without the heavy, greasy feel of most natural oils.",
+    "Gentle enough for sensitive skin and the whole family, kids included.",
+    "Pure Unscented has no fragrance at all, for anyone who reacts to scent.",
+    "Six ingredients you can read in seconds, so you know what is on your skin."
+  ],
+  "product.landing-page-cream.json": [
+    "Rough hands, heels and elbows feel softer from the first use.",
+    "Rich enough for the driest winter skin, without feeling sticky or greasy.",
+    "Locks in moisture for hands that get washed all day.",
+    "A little goes a long way, so one small jar lasts."
+  ],
+  "product.landing-page-lip-balm.json": [
+    "Keeps lips soft and moisturized all day.",
+    "Goes on smooth, never waxy or sticky.",
+    "No menthol or camphor, the ingredients that can leave lips feeling drier.",
+    "A light, natural scent with no added flavor."
+  ],
+  "product.landing-page-bar-soap.json": [
+    "Skin feels clean and soft after your shower, not tight or dry.",
+    "A rich, creamy lather from pure organic coconut oil.",
+    "Gentle on sensitive skin, with an unscented bar for anyone who reacts to fragrance.",
+    "Real essential-oil scents, never synthetic perfume."
+  ],
+  "product.landing-page-deodorant.json": [
+    "Works like a regular deodorant, without the aluminum.",
+    "Keeps odor in check with baking soda and coconut oil.",
+    "A light, pleasant scent that never overpowers.",
+    "Absorbs without leaving a sticky film."
+  ],
+  "product.landing-page-toothpaste.json": [
+    "Leaves your teeth feeling clean and your breath fresh.",
+    "No foam to fight with, just a smooth gel that cleans.",
+    "Gentle baking soda clean that never feels gritty or harsh.",
+    "Safe for the whole family, kids included. No SLS, no fluoride."
+  ],
+  "product.landing-page-liquid-soap.json": [
+    "Thick, fluffy foam from a single pump.",
+    "Rinses clean, with no slippery film left on your hands.",
+    "Gentle enough for the whole family, kids included.",
+    "Each bottle goes further, because the foam uses less soap per wash."
+  ]
+}

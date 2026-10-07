@@ -28,7 +28,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "One ingredient in the base: organic coconut oil, turned into soap.",
+            "text": "Skin feels clean and soft after your shower, not tight or dry.",
             "text_style": "body"
           }
         },
@@ -36,7 +36,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "A rich lather without sulfates or foam boosters.",
+            "text": "A rich, creamy lather from pure organic coconut oil.",
             "text_style": "body"
           }
         },
@@ -44,7 +44,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Scented with named essential oils. No synthetic fragrance.",
+            "text": "Gentle on sensitive skin, with an unscented bar for anyone who reacts to fragrance.",
             "text_style": "body"
           }
         },
@@ -52,7 +52,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No animal fat. No sulfates. No parabens. No dyes.",
+            "text": "Real essential-oil scents, never synthetic perfume.",
             "text_style": "body"
           }
         },

@@ -28,7 +28,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "One ingredient in the base: organic coconut oil, turned into soap.",
+            "text": "Thick, fluffy foam from a single pump.",
             "text_style": "body"
           }
         },
@@ -36,7 +36,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Real soap, not a detergent.",
+            "text": "Rinses clean, with no slippery film left on your hands.",
             "text_style": "body"
           }
         },
@@ -44,7 +44,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "Designed for the foaming dispenser — less product per wash",
+            "text": "Gentle enough for the whole family, kids included.",
             "text_style": "body"
           }
         },
@@ -52,7 +52,7 @@
           "type": "text",
           "settings": {
             "icon": "check_mark",
-            "text": "No sulfates. No parabens. No harsh foaming agents.",
+            "text": "Each bottle goes further, because the foam uses less soap per wash.",
             "text_style": "body"
           }
         },
