@@ -28,12 +28,12 @@ export function openAiCostUsd(usage) {
   return (inTok * OPENAI_USD_PER_M.input + outTok * OPENAI_USD_PER_M.output) / 1e6;
 }
 
-export async function renderOpenAI({ apiKey, prompt, refs, fetchImpl = fetch }) {
+export async function renderOpenAI({ apiKey, prompt, refs, size = OPENAI_SIZE, fetchImpl = fetch }) {
   if (!apiKey) throw new Error('no OPENAI_API_KEY');
   const fd = new FormData();
   fd.append('model', OPENAI_IMAGE_MODEL);
   fd.append('prompt', prompt);
-  fd.append('size', OPENAI_SIZE);
+  fd.append('size', size);
   fd.append('quality', 'high');
   for (const p of refs) {
     fd.append('image[]', new Blob([readFileSync(p)], { type: MIME[extname(p).toLowerCase()] || 'image/jpeg' }), p.split('/').pop());
@@ -48,14 +48,14 @@ export async function renderOpenAI({ apiKey, prompt, refs, fetchImpl = fetch }) 
   return { buffer: Buffer.from(b64, 'base64'), model: OPENAI_IMAGE_MODEL, costUsd: openAiCostUsd(j.usage), usage: j.usage || null };
 }
 
-export async function renderGemini({ gemini, prompt, refs }) {
+export async function renderGemini({ gemini, prompt, refs, aspectRatio = '4:5' }) {
   if (!gemini) throw new Error('no GEMINI_API_KEY');
   const parts = refs.map(p => ({ inlineData: { data: readFileSync(p).toString('base64'), mimeType: MIME[extname(p).toLowerCase()] || 'image/jpeg' } }));
   parts.push({ text: prompt });
   const res = await gemini.models.generateContent({
     model: GEMINI_IMAGE_MODEL,
     contents: [{ role: 'user', parts }],
-    config: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: { imageSize: '2K', aspectRatio: '4:5' } },
+    config: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: { imageSize: '2K', aspectRatio } },
   });
   const img = res?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!img) throw new Error('Gemini returned no image');
