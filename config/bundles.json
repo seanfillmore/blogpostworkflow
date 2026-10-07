@@ -1637,6 +1637,110 @@
           ]
         }
       ]
+    },
+    {
+      "handle": "coconut-lip-balm-3-pack",
+      "title": "Coconut Oil Lip Balm — 3 Four-Packs",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "lip-balm",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 2, get 1 free (Sean, 2026-10-06): three of the $15 four-packs (12 tubes) for $30, so the ladder renders the free-unit framing. Chosen over a 5-pack ($60, 20 tubes) because 20 tubes is more lip balm than most buyers want at once. Gives the lip balm PDP the same ladder as every other PDP. Every base scent plus the Variety Pack (the two-scent rule covers lotion and cream only). Stock on 2026-10-06: 83 four-packs (Pure Unscented 27, Sweet Tangerine 24, Vanilla Dream 15, Variety 14, Coconut Breeze 3). A bare ladder tier: no template, no collection, noindexed by ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "3x Pure Unscented",
+            "3x Vanilla Dream",
+            "3x Sweet Tangerine",
+            "3x Coconut Breeze",
+            "3x Variety Pack"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "3x Pure Unscented"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Pure Unscented",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Pure Unscented",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Vanilla Dream"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Vanilla Dream",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Vanilla Dream",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Sweet Tangerine"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Sweet Tangerine",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Sweet Tangerine",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Coconut Breeze"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Coconut Breeze",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Variety Pack"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Variety Pack",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Variety Pack",
+              "qty": 3
+            }
+          ]
+        }
+      ]
     }
   ],
   "ladders": [
@@ -1747,6 +1851,24 @@
         "name": "Ella M.",
         "text": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
         "source_body": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+        "approved": "Sean, 2026-10-06"
+      }
+    },
+    {
+      "base": "coconut-oil-lip-balm",
+      "tiers": [
+        "coconut-oil-lip-balm",
+        "coconut-lip-balm-3-pack"
+      ],
+      "default": "coconut-lip-balm-3-pack",
+      "template": "product.landing-page-lip-balm.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "four-pack",
+      "review": {
+        "judgeme_id": 514327213,
+        "name": "Laurel E.",
+        "text": "I love the smell of this lip balm. It smells exactly the way you would want a coconut scent to smell. It’s warm and soft and definitely feels tropical. It goes on nicely on your lips and is very hydrating. Definitely worth picking up!",
+        "source_body": "I love the smell of this lip balm. It smells exactly the way you would want a coconut scent to smell. It’s warm and soft and definitely feels tropical. It goes on nicely on your lips and is very hydrating. Definitely worth picking up!",
         "approved": "Sean, 2026-10-06"
       }
     }
