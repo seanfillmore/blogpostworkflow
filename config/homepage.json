@@ -159,6 +159,13 @@
       "setting": "text",
       "value": "<p>We started Real Skin Care because the labels lied. \"Natural\" lotions still used petroleum jelly. \"Gentle\" creams still relied on silicones. \"Sensitive\" formulas still snuck in synthetic fragrance under names most buyers don't recognize.</p><p>We built every product in our line from the opposite direction. We asked what sensitive skin actually tolerates, then used the shortest ingredient list that does the job. Nothing else.</p>",
       "_why": "Same copy without the two em dashes (house rule: no em dashes in published copy)."
+    },
+    {
+      "section": "founder",
+      "block": "founder-body",
+      "setting": "text",
+      "value": "<p>Our family's healthy-ingredients journey kept hitting the same wall: body creams labeled \"natural\" that still relied on petroleum jelly, silicones, or undisclosed fragrance. We wanted a barrier cream we could use on our kids' driest patches without worrying about what we couldn't pronounce.</p><p>So we built one. Then we built the rest of the bathroom shelf. Every ingredient earns its place. We won't cut corners on sourcing for margin. That line doesn't move.</p><p><strong>Sean Fillmore, Founder</strong></p>",
+      "_why": "Same copy without the three em dashes (house rule; Sean approved 2026-10-07)."
     }
   ],
   "set_offer": {
