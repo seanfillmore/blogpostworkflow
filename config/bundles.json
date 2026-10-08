@@ -777,7 +777,7 @@
     {
       "handle": "coconut-hand-soap-4-pack",
       "title": "Coconut Hand Soap — 4-Pack",
-      "status": "live",
+      "status": "draft",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -787,7 +787,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "The top rung of the liquid-soap ladder, and the ladder STOPS HERE. Sean, 2026-09-05, asked why bar soap runs 1/4/12 while this runs 1/2/4: \"Bar soap makes sense with 12 packs, bars are easier to store. 12 liquid pump soaps does not make sense.\" The binding constraint is the BUYER'S SHELF, not the economics — a carton of twelve 8oz pump bottles is something nobody has anywhere to put, so the per-unit saving that carries the bar soap 12-pack cannot rescue it. Do not add a 12-pack here on the grounds that bar soap has one. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
+      "story": "The top rung of the liquid-soap ladder, and the ladder STOPS HERE. Sean, 2026-09-05, asked why bar soap runs 1/4/12 while this runs 1/2/4: \"Bar soap makes sense with 12 packs, bars are easier to store. 12 liquid pump soaps does not make sense.\" The binding constraint is the BUYER'S SHELF, not the economics — a carton of twelve 8oz pump bottles is something nobody has anywhere to put, so the per-unit saving that carries the bar soap 12-pack cannot rescue it. Do not add a 12-pack here on the grounds that bar soap has one. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05. RETIRED to draft 2026-10-08, replaced by coconut-hand-soap-5-pack (buy 4, get 1 free at $52; Sean: 'Pump soap change to buy 4 get 1 free').",
       "options": [
         {
           "name": "Scent",
@@ -857,6 +857,94 @@
               "product": "organic-foaming-hand-soap",
               "variant": "Pure Unscented",
               "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-hand-soap-5-pack",
+      "title": "Coconut Hand Soap — 5-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "hand-soap",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-08): five 8 oz pumps for $52, exactly 4 x the $13 single, so the ladder renders the free-unit framing like the lotion, cream and lip balm. Replaced the 4-pack, whose $44 was carried over from the retired Hand Soap Set and never re-priced: it framed as '4 bottles for $44', and at $44 sat $1 under the $45 free-shipping bar. $52 clears it. Contribution $20.66 an order against $17.15 for the 4-pack (scripts/bundle-economics.mjs, 2026-10-08). Five is still storable; twelve is not (Sean, 2026-09-05), so the ladder stops at five. Reached only from the pump PDP, noindexed via ladder-tier, never a destination.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Calming Lavender",
+            "5x Orange Zest",
+            "5x Coconut Breeze",
+            "5x Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Calming Lavender"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Calming Lavender",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Orange Zest"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Orange Zest",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Coconut Breeze",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Pure Unscented",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 5
             }
           ]
         }
@@ -1822,9 +1910,9 @@
       "tiers": [
         "organic-foaming-hand-soap",
         "coconut-hand-soap-2-pack",
-        "coconut-hand-soap-4-pack"
+        "coconut-hand-soap-5-pack"
       ],
-      "default": "coconut-hand-soap-4-pack",
+      "default": "coconut-hand-soap-5-pack",
       "template": "product.landing-page-liquid-soap.json",
       "block_id": "quantity-ladder",
       "unit_noun": "pump",
