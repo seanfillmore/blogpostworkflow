@@ -9,6 +9,10 @@ import { buildLabelStrings } from '../ad-studio/index.js';
 import { checkSeoCopyFields, COMMERCIAL_SURFACE } from '../../lib/seo-copy-health-gate.js';
 
 export const MIN_COUNT = 15;
+// A set ad shows 2-3 different products together. More than three and no single label
+// is large enough to read at feed size, which is the check every render has to pass.
+export const MIN_SET_PRODUCTS = 2;
+export const MAX_SET_PRODUCTS = 3;
 export const MAX_COUNT = 20;
 export const DEFAULT_COUNT = 16;
 
@@ -35,15 +39,42 @@ export function categoryFor(handle) {
 
 /**
  * Validate a parsed batch file. Throws with every problem named, not just the first.
- * @returns {{product:string, variant:string|null, count:number, form:string|null,
+ *
+ * One product: { product, variant }. A set: { products: [{ product, variant }, ...], title? },
+ * 2-3 entries, each rendered as one unit side by side in every image. `items` always holds
+ * the list (one entry for a single product); `product`/`variant` are kept for single runs.
+ *
+ * @returns {{product:string|null, variant:string|null, items:Array<{product:string, variant:string|null}>,
+ *            title:string|null, count:number, form:string|null,
  *            concepts:Array<{headline:string, subhead:string|null}>, scenes:string[]}}
  */
 export function parseBatch(raw) {
   const errors = [];
   if (!raw || typeof raw !== 'object') throw new Error('ad-batch: batch file must be a JSON object');
-  const product = typeof raw.product === 'string' ? raw.product.trim() : '';
-  if (!product) errors.push('"product" (a handle from data/product-images/manifest.json) is required');
-  const variant = typeof raw.variant === 'string' && raw.variant.trim() ? raw.variant.trim() : null;
+  const str = (v) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  let items = [];
+  if (raw.products != null) {
+    if (raw.product != null) errors.push('give either "product" or "products", not both');
+    if (!Array.isArray(raw.products) || raw.products.length < MIN_SET_PRODUCTS || raw.products.length > MAX_SET_PRODUCTS) {
+      errors.push(`"products" must list ${MIN_SET_PRODUCTS} to ${MAX_SET_PRODUCTS} { product, variant } entries`);
+    } else {
+      raw.products.forEach((p, i) => {
+        const h = str(p?.product);
+        if (!h) errors.push(`products[${i}] has no "product" handle`);
+        else items.push({ product: h, variant: str(p.variant) });
+      });
+      const seen = new Set(items.map(i => `${i.product}/${i.variant}`));
+      if (seen.size !== items.length) errors.push('"products" lists the same product twice');
+    }
+  } else {
+    const h = str(raw.product);
+    if (!h) errors.push('"product" (a handle from data/product-images/manifest.json) is required');
+    else items = [{ product: h, variant: str(raw.variant) }];
+  }
+  const isSet = raw.products != null;
+  const product = isSet ? null : (items[0]?.product || '');
+  const variant = isSet ? null : (items[0]?.variant || null);
+  const title = str(raw.title);
   const count = raw.count == null ? DEFAULT_COUNT : Number(raw.count);
   if (!Number.isInteger(count) || count < MIN_COUNT || count > MAX_COUNT) {
     errors.push(`"count" must be a whole number from ${MIN_COUNT} to ${MAX_COUNT} (got ${raw.count})`);
@@ -52,6 +83,7 @@ export function parseBatch(raw) {
   if (form && !['packaged', 'unwrapped', 'mixed'].includes(form)) {
     errors.push('"form" must be packaged, unwrapped or mixed');
   }
+  if (isSet && form && form !== 'packaged') errors.push('a set is always shown packaged; drop "form" or set it to packaged');
   const concepts = [];
   if (!Array.isArray(raw.concepts) || raw.concepts.length === 0) {
     errors.push('"concepts" must be a non-empty list of { headline, subhead? }');
@@ -67,7 +99,7 @@ export function parseBatch(raw) {
     ? raw.scenes.map(s => String(s || '').trim()).filter(Boolean)
     : [];
   if (errors.length) throw new Error('ad-batch: invalid batch file:\n  - ' + errors.join('\n  - '));
-  return { product, variant, count, form, concepts, scenes };
+  return { product, variant, items, title, count, form, concepts, scenes };
 }
 
 /**
@@ -125,5 +157,32 @@ export function resolveProduct({ handle, variant, manifest, references = {}, ima
     unwrappedDescription: entry.unwrapped?.productDescription || '',
     labelStrings: buildLabelStrings({ manifestEntry: entry, variant }),
     refs: { packaged, unwrapped },
+  };
+}
+
+/**
+ * The product (or set) a batch renders. One item resolves exactly as before. Two or
+ * three resolve to a SET: each item is resolved on its own, and the set carries the
+ * list in `items` so the prompt can describe each product and the check can verify
+ * each label and count separately. Only the first reference photo of each item is
+ * sent, in item order, so "reference photo N is product N" holds in both the render
+ * and the check. A set is never shown unwrapped.
+ */
+export function resolveLineup({ batch, manifest, references = {}, imageRoot, fs = {} }) {
+  const items = batch.items.map(i => resolveProduct({ handle: i.product, variant: i.variant, manifest, references, imageRoot, fs }));
+  if (items.length === 1) return items[0];
+  const variants = [...new Set(items.map(i => i.variant))];
+  const categories = [...new Set(items.map(i => i.category))];
+  return {
+    handle: items.map(i => i.handle).join('+'),
+    variant: variants.length === 1 ? variants[0] : null,
+    title: batch.title || items.map(i => i.title.split(/[|—–]/)[0].trim()).join(' + '),
+    category: categories.length === 1 ? categories[0] : 'all',
+    unitCount: items.length,
+    description: '',
+    unwrappedDescription: '',
+    labelStrings: [],
+    items,
+    refs: { packaged: items.map(i => i.refs.packaged[0]), unwrapped: [] },
   };
 }

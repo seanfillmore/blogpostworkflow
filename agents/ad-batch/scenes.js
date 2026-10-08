@@ -77,7 +77,7 @@ export function customScenes(lines) {
 export function freshScenePrompt({ product, concept, chosen, k, families }) {
   return `You are an art director planning scroll-stopping product ads for Meta.
 
-Product: ${product.title} (Real Skin Care). Category: ${product.category}.
+Product: ${product.title} (Real Skin Care). Category: ${product.category}.${product.items?.length > 1 ? `\nThis is a SET of ${product.items.length} products shown together in every ad (${product.items.map(i => `${i.title.split(/[|—–]/)[0].trim()}: ${String(i.description || '').split(/(?<=[a-z0-9)])\. /)[0].slice(0, 120)}`).join('; ')}), so every scene needs a surface or setting where they can stand side by side. Describe them by their real forms, never as "two bottles".` : ''}
 Headline that will be set on the ad: "${concept.headline}"${concept.subhead ? `\nSubhead: "${concept.subhead}"` : ''}
 
 These scenes are already in the batch, so yours must be clearly DIFFERENT settings from all of them:

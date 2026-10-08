@@ -5,10 +5,10 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import sharp from 'sharp';
 
-import { parseBatch, screenConcepts, resolveProduct, categoryFor, DEFAULT_COUNT } from '../../../agents/ad-batch/batch.js';
+import { parseBatch, screenConcepts, resolveProduct, resolveLineup, categoryFor, DEFAULT_COUNT } from '../../../agents/ad-batch/batch.js';
 import { selectLibraryScenes, parseFreshScenes, customScenes, suitsCategory, generateFreshScenes } from '../../../agents/ad-batch/scenes.js';
 import { buildPrompt, productForm } from '../../../agents/ad-batch/prompt.js';
-import { tokens, findRun, decide, requiredLabelStrings, inventedClaims, parseCheck } from '../../../agents/ad-batch/check.js';
+import { tokens, findRun, decide, requiredLabelStrings, inventedClaims, parseCheck, checkPrompt } from '../../../agents/ad-batch/check.js';
 import { openAiCostUsd, ATTEMPTS } from '../../../agents/ad-batch/render.js';
 import { slug, batchDirName, conceptDirName, imageName, scenesMarkdown } from '../../../agents/ad-batch/output.js';
 import { parseArgs, planScenes, renderScene } from '../../../agents/ad-batch/index.js';
@@ -282,4 +282,113 @@ test('renderScene stops at the render budget', async () => {
   const r = await renderScene({ job: { product: CREAM, concept, scene: { id: 's', scene: 'x', typeStyle: 't' } }, clients: { openaiKey: 'k', gemini: null, anthropic: null }, budget: { used: 5, max: 5, costUsd: 0 }, refCache: new Map(), log: () => {} });
   assert.equal(r.ok, false);
   assert.match(r.reasons.join(), /budget/);
+});
+
+// ── sets (2-3 products in one image) ─────────────────────────────────────────
+const LOTION = { ...CREAM, handle: 'coconut-lotion', variant: 'pure-unscented', title: 'Body Lotion',
+  description: 'A tall white squeeze bottle with a black disc cap.',
+  labelStrings: ['real SKIN CARE', 'moisturizing body lotion', '8 fl. oz. (236ml)', 'pure unscented'],
+  refs: { packaged: ['/x/lotion.jpg', '/x/lotion-2.jpg'], unwrapped: [] } };
+const CREAM_PU = { ...CREAM, variant: 'pure-unscented', labelStrings: ['real SKIN CARE', 'moisturizing body cream', '4 fl. oz • 118ml', 'pure unscented'] };
+const SET = { handle: 'coconut-lotion+coconut-moisturizer', variant: 'pure-unscented', title: 'Sensitive Skin Moisturizing Set',
+  category: 'skin', unitCount: 2, description: '', unwrappedDescription: '', labelStrings: [], items: [LOTION, CREAM_PU],
+  refs: { packaged: ['/x/lotion.jpg', '/x/cream.png'], unwrapped: [] } };
+
+test('parseBatch accepts a set of 2-3 products and refuses bad sets', () => {
+  const b = parseBatch({ products: [{ product: 'coconut-lotion', variant: 'pure-unscented' }, { product: 'coconut-moisturizer', variant: 'pure-unscented' }],
+    title: ' Sensitive Skin Moisturizing Set ', concepts: [{ headline: 'x' }] });
+  assert.equal(b.product, null);
+  assert.equal(b.title, 'Sensitive Skin Moisturizing Set');
+  assert.deepEqual(b.items.map(i => i.product), ['coconut-lotion', 'coconut-moisturizer']);
+  // single-product batches keep their old shape
+  assert.deepEqual(parseBatch({ product: 'coconut-soap', concepts: [{ headline: 'x' }] }).items, [{ product: 'coconut-soap', variant: null }]);
+  const bad = (raw) => assert.throws(() => parseBatch({ concepts: [{ headline: 'x' }], ...raw }));
+  bad({ products: [{ product: 'a' }] });
+  bad({ products: [{ product: 'a' }, { product: 'b' }, { product: 'c' }, { product: 'd' }] });
+  bad({ products: [{ product: 'a' }, { product: 'a' }] });
+  bad({ product: 'a', products: [{ product: 'a' }, { product: 'b' }] });
+  bad({ products: [{ product: 'a' }, { product: 'b' }], form: 'unwrapped' });
+});
+
+test('resolveLineup builds a set from two products, one reference each, in order', () => {
+  const fs = { exists: () => true, list: () => ['1.jpg', '2.jpg'] };
+  const references = { 'coconut-lotion': { 'pure-unscented': { packaged: ['l/a.jpg', 'l/b.jpg'] } }, 'coconut-moisturizer': { 'pure-unscented': { packaged: ['c/a.png'] } } };
+  const batch = parseBatch({ products: [{ product: 'coconut-lotion', variant: 'pure-unscented' }, { product: 'coconut-moisturizer', variant: 'pure-unscented' }],
+    concepts: [{ headline: 'x' }] });
+  const set = resolveLineup({ batch, manifest, references, imageRoot: '/r', fs });
+  assert.equal(set.items.length, 2);
+  assert.equal(set.unitCount, 2);
+  assert.equal(set.variant, 'pure-unscented');
+  assert.equal(set.category, 'skin');
+  assert.deepEqual(set.refs.packaged, ['/r/l/a.jpg', '/r/c/a.png']);
+  assert.equal(set.title, 'Body Lotion + Coconut Moisturizer');
+  // one item resolves exactly like resolveProduct
+  const single = resolveLineup({ batch: parseBatch({ product: 'coconut-moisturizer', variant: 'pure-unscented', concepts: [{ headline: 'x' }] }), manifest, references, imageRoot: '/r', fs });
+  assert.equal(single.items, undefined);
+  assert.equal(single.handle, 'coconut-moisturizer');
+});
+
+test('buildPrompt for a set describes every product, its label and one-of-each', () => {
+  const { prompt, refs, shown } = buildPrompt({ product: SET, concept: { headline: 'Skin that reacts to everything?', subhead: null }, scene: library.scenes[0], form: null });
+  assert.equal(shown, 'packaged');
+  assert.deepEqual(refs, ['/x/lotion.jpg', '/x/cream.png']);
+  assert.match(prompt, /PRODUCT 1 \(reference photo 1/);
+  assert.match(prompt, /PRODUCT 2 \(reference photo 2/);
+  assert.match(prompt, /"moisturizing body lotion"/);
+  assert.match(prompt, /"moisturizing body cream"/);
+  assert.match(prompt, /exactly ONE of each of the 2 products/);
+  assert.doesNotMatch(prompt, /Show exactly one of this product/);
+});
+
+const SET_READ = {
+  lettering: ['Skin that reacts', 'to everything?'],
+  products: [
+    { product: 1, count: 1, label_text: ['real', 'SKIN CARE', 'pure unscented', 'moisturizing body lotion', '8 fl oz 236ml'], matches_reference: 'MATCH' },
+    { product: 2, count: 1, label_text: ['real', 'SKIN CARE', 'pure unscented', 'moisturizing body cream', '4 fl oz 118ml'], matches_reference: 'MATCH' },
+  ],
+  hands_present: false, hand_defect: '',
+};
+const SET_CONCEPT = { headline: 'Skin that reacts to everything?', subhead: null };
+
+test('decide passes a good set read and checks each product on its own', () => {
+  assert.equal(decide({ read: SET_READ, concept: SET_CONCEPT, product: SET, shown: 'packaged' }).ok, true);
+  const wrongLabel = structuredClone(SET_READ); wrongLabel.products[1].label_text = ['real', 'SKIN CARE', 'pure unscented', 'moisturizing body lotion'];
+  const r1 = decide({ read: wrongLabel, concept: SET_CONCEPT, product: SET, shown: 'packaged' });
+  assert.equal(r1.ok, false);
+  assert.match(r1.reasons.join(), /Coconut Moisturizer: label missing or misspelled "moisturizing body cream"/);
+  const two = structuredClone(SET_READ); two.products[0].count = 2;
+  assert.match(decide({ read: two, concept: SET_CONCEPT, product: SET, shown: 'packaged' }).reasons.join(), /Body Lotion: 2 units, expected 1/);
+  const missing = structuredClone(SET_READ); missing.products = [missing.products[0]];
+  assert.match(decide({ read: missing, concept: SET_CONCEPT, product: SET, shown: 'packaged' }).reasons.join(), /no reading for product 2/);
+  const mismatch = structuredClone(SET_READ); mismatch.products[0].matches_reference = 'MISMATCH'; mismatch.products[0].mismatch_reason = 'pump top';
+  assert.match(decide({ read: mismatch, concept: SET_CONCEPT, product: SET, shown: 'packaged' }).reasons.join(), /Body Lotion does not match the photos: pump top/);
+});
+
+test('checkPrompt for a set names one reference per product and the ad as the last image', () => {
+  const p = checkPrompt({ product: SET, shown: 'packaged' });
+  assert.match(p, /Image 1 is a REFERENCE photo of product 1: Body Lotion/);
+  assert.match(p, /Image 2 is a REFERENCE photo of product 2: Coconut Moisturizer/);
+  assert.match(p, /Image 3 is an AD to check/);
+  assert.match(p, /exactly 2 entries in "products"/);
+});
+
+test('renderScene checks a set against one reference per product', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adb-set-'));
+  const png = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#fff' } }).png().toBuffer();
+  const a = join(dir, 'a.png'); const b = join(dir, 'b.png');
+  writeFileSync(a, png); writeFileSync(b, png);
+  const product = { ...SET, items: [{ ...LOTION, refs: { packaged: [a], unwrapped: [] } }, { ...CREAM_PU, refs: { packaged: [b], unwrapped: [] } }], refs: { packaged: [a, b], unwrapped: [] } };
+  let imagesSent = 0;
+  const anthropic = { messages: { create: async ({ messages }) => {
+    imagesSent = messages[0].content.filter(c => c.type === 'image').length;
+    return { content: [{ text: JSON.stringify(SET_READ) }] };
+  } } };
+  const fetchImpl = async () => ({ ok: true, json: async () => ({ data: [{ b64_json: png.toString('base64') }], usage: {} }) });
+  const realFetch = globalThis.fetch; globalThis.fetch = fetchImpl;
+  try {
+    const r = await renderScene({ job: { product, concept: SET_CONCEPT, scene: library.scenes[0], form: null },
+      clients: { openaiKey: 'k', gemini: null, anthropic }, budget: { used: 0, max: 5, costUsd: 0 }, refCache: new Map(), log: () => {} });
+    assert.equal(r.ok, true);
+    assert.equal(imagesSent, 3);
+  } finally { globalThis.fetch = realFetch; }
 });
