@@ -23,13 +23,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import sharp from 'sharp';
-import { GoogleGenAI } from '@google/genai';
-import Anthropic from '../lib/anthropic.js';
-import { LLM_MODELS } from '../config/llm-models.js';
 import { shopifyGraphQL } from '../lib/shopify.js';
 import { archiveRunOutput } from '../lib/archive-run-output.js';
-import { renderOpenAI, renderGemini, ATTEMPTS } from '../agents/ad-batch/render.js';
-import { parseCheck } from '../agents/ad-batch/check.js';
+import { loadEnv, createRenderer, runAll, cutoutRef, labelCrop } from '../lib/gallery-render.js';
 import {
   TIERS, UNIT, unitsFor, offerCopy, representativeVariant, sceneUnits, choiceLine,
   heroPrompt, offerPrompt, scenePrompt, checkPrompt, judge, slugify,
@@ -47,50 +43,20 @@ const NAMES = arg('--name', null)?.split(',') ?? null;
 const MISSING = argv.includes('--missing');
 // --engines gemini: finish a run without OpenAI (2026-10-07 the account ran out of credits mid-run).
 const ENGINES = arg('--engines', null);
-const PLAN_ATTEMPTS = ENGINES === 'gemini' ? ['gemini', 'gemini', 'gemini'] : ENGINES === 'openai' ? ['openai', 'openai', 'openai'] : ATTEMPTS;
-const SIZE = '2048x2048';
 
-const env = Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
-  .filter((l) => l.includes('=') && !l.trim().startsWith('#'))
-  .map((l) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }));
+const env = loadEnv();
 
 const { bundles } = JSON.parse(readFileSync(join(ROOT, 'config', 'bundles.json'), 'utf8'));
-const CUTOUTS = join(ROOT, 'data', 'brand', 'cutouts');
 
-// ── References: the prop-free cutouts, flattened onto white ─────────────────
+// ── References: the prop-free cutouts, flattened onto white (lib/gallery-render.js) ──
 const refDir = join(ROOT, 'data', 'creatives', 'ladder-galleries', '_refs');
-mkdirSync(refDir, { recursive: true });
-async function refFor(unit, scent) {
-  const name = `${unit.refKey}-${slugify(scent)}`;
-  let src = join(CUTOUTS, `component-${name}.png`);
-  // One artifact is pinned to a historical misspelling; see data/brand/frames/deodorant-4-pack.
-  if (!existsSync(src)) src = join(CUTOUTS, `component-${name.replace('frankincense', 'frankincence')}.png`);
-  if (!existsSync(src)) throw new Error(`no cutout for ${unit.refKey} / ${scent} (looked for component-${name}.png)`);
-  const out = join(refDir, `${name}.png`);
-  if (!existsSync(out)) {
-    const m = await sharp(src).metadata();
-    const side = Math.round(Math.max(m.width, m.height) * 1.15);
-    await sharp({ create: { width: side, height: side, channels: 3, background: '#ffffff' } })
-      .composite([{ input: await sharp(src).flatten({ background: '#ffffff' }).toBuffer(), gravity: 'center' }])
-      .png().toBuffer()
-      .then((b) => sharp(b).resize(1024, 1024).png().toFile(out));
+async function refsFor(job) {
+  const refs = [];
+  for (const s of [...new Set(job.units)]) {
+    refs.push(await cutoutRef(refDir, job.unit.refKey, s));
+    if (job.unit.detailCrop) refs.push(await labelCrop(refDir, job.unit.refKey, s, job.unit.detailCrop));
   }
-  return out;
-}
-
-/** A label close-up cut from the same cutout, so it always matches the scent. */
-async function detailFor(unit, scent) {
-  const full = await refFor(unit, scent);
-  const out = full.replace(/\.png$/, '-label.png');
-  if (!existsSync(out)) {
-    const src = join(CUTOUTS, `component-${unit.refKey}-${slugify(scent)}.png`);
-    const m = await sharp(src).metadata();
-    const [a, b] = unit.detailCrop;
-    const buf = await sharp(src).flatten({ background: '#ffffff' })
-      .extract({ left: 0, top: Math.round(m.height * a), width: m.width, height: Math.round(m.height * (b - a)) }).png().toBuffer();
-    await sharp(buf).resize({ height: 1024 }).png().toFile(out);
-  }
-  return out;
+  return refs;
 }
 
 // ── Live price check: a frame states a price, so the price must be the live one ──
@@ -169,61 +135,13 @@ if (DRY) {
 // pid suffix: two runs started in the same second once shared a directory and run.json.
 const RUN = `${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}-${process.pid}`;
 const OUT = join(ROOT, 'data', 'creatives', 'ladder-galleries', RUN);
-const anthropic = new Anthropic();
-const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
-const budget = { used: 0, costUsd: 0 };
-
-const jpegB64 = async (buf, px = 1024) => (await sharp(buf).resize(px, px, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
-
-async function read(job, refs, buf) {
-  const content = [];
-  for (const r of refs) content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: await jpegB64(readFileSync(r), 512) } });
-  content.push({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: await jpegB64(buf, 1400) } });
-  content.push({ type: 'text', text: checkPrompt({ unit: job.unit, units: job.units }) });
-  const res = await anthropic.messages.create({ model: LLM_MODELS.standard, max_tokens: 2000, messages: [{ role: 'user', content }] });
-  return parseCheck((res.content || []).map((c) => c.text || '').join(''));
-}
-
-async function renderJob(job) {
-  const refs = [];
-  for (const s of [...new Set(job.units)]) {
-    refs.push(await refFor(job.unit, s));
-    if (job.unit.detailCrop) refs.push(await detailFor(job.unit, s));
-  }
-  const attempts = [];
-  let last = null;
-  for (const engine of PLAN_ATTEMPTS) {
-    if (budget.used >= MAX_RENDERS) { attempts.push({ engine, error: 'render budget exhausted' }); break; }
-    if (engine === 'gemini' && !gemini) continue;
-    budget.used++;
-    let r;
-    try {
-      r = engine === 'openai'
-        ? await renderOpenAI({ apiKey: env.OPENAI_API_KEY, prompt: job.prompt, refs, size: SIZE })
-        : await renderGemini({ gemini, prompt: job.prompt, refs, aspectRatio: '1:1' });
-    } catch (e) { attempts.push({ engine, error: e.message }); continue; }
-    budget.costUsd += r.costUsd;
-    let verdict;
-    try { verdict = judge({ read: await read(job, refs, r.buffer), units: job.units, required: job.required }); }
-    catch (e) { verdict = { ok: false, reasons: [`vision read failed: ${e.message}`] }; }
-    attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });
-    last = { buf: r.buffer, verdict, model: r.model };
-    const dir = join(OUT, job.handle, verdict.ok ? '' : '_rejected');
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, `${job.name}${verdict.ok ? '' : `-a${attempts.length}`}.png`), r.buffer);
-    console.log(`  ${verdict.ok ? '✓' : '✗'} ${job.handle} ${job.name} [${r.model}] ${verdict.reasons.join(' | ')}`);
-    if (verdict.ok) break;
-  }
-  return { handle: job.handle, frame: job.frame, name: job.name, variantTitle: job.variantTitle || null,
-    units: job.units, copy: job.copy || null, checks: job.checks || null,
-    ok: !!last?.verdict.ok, model: last?.model || null, attempts, prompt: job.prompt };
-}
-
-const results = new Array(jobs.length);
-let next = 0;
-await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
-  while (next < jobs.length) { const i = next++; results[i] = await renderJob(jobs[i]); }
-}));
+const { renderJob, budget } = createRenderer({ env, outDir: OUT, maxRenders: MAX_RENDERS, engines: ENGINES });
+const results = await runAll(jobs, CONCURRENCY, async (job) => {
+  const r = await renderJob({ ...job, refs: await refsFor(job),
+    checkText: checkPrompt({ unit: job.unit, units: job.units }),
+    judge: (read) => judge({ read, units: job.units, required: job.required }) });
+  return { ...r, frame: job.frame, variantTitle: job.variantTitle || null, units: job.units, copy: job.copy || null, checks: job.checks || null };
+});
 
 // ── Contact sheets ───────────────────────────────────────────────────────────
 for (const handle of new Set(jobs.map((j) => j.handle))) {
