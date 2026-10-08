@@ -118,9 +118,11 @@ test('the hand soap ladder produces one row per rung, pump-only', () => {
   // whose four scents are all N-of-one-pump must produce exactly ONE row. Two
   // rows here means two rungs; three would mean a rung had grown a second
   // basket — which is how the Set started.
-  const rows = BUNDLES.filter(b => b.name.startsWith('Coconut Hand Soap'));
+  // 2026-10-08: the top rung became a 5-pack at $52 (buy 4, get 1 free); the
+  // $44 4-pack is retired to draft and stays in the roster, so LIVE rows only.
+  const rows = BUNDLES.filter(b => b.name.startsWith('Coconut Hand Soap') && b.status === 'live');
   assert.equal(rows.length, 2, 'one row per rung, not one per scent');
-  assert.deepEqual(rows.map(r => r.price), [24, 44], 'rows must read as a ladder');
+  assert.deepEqual(rows.map(r => r.price), [24, 52], 'rows must read as a ladder');
   assert.deepEqual(ev(rows[0]).items, { pump: 2 });
-  assert.deepEqual(ev(rows[1]).items, { pump: 4 });
+  assert.deepEqual(ev(rows[1]).items, { pump: 5 });
 });

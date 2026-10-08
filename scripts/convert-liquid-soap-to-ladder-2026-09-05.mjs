@@ -66,6 +66,17 @@ export function convert(parsed, ladderLiquid) {
     main.blocks[LADDER_ID] = { type: 'custom_liquid', settings: { custom_liquid: ladderLiquid } };
     main.block_order.splice(at + 1, 0, LADDER_ID);
     notes.push(`inserted ${LADDER_ID} after ${ANCHOR}`);
+  } else {
+    // A page ALREADY on a ladder: refresh the block's content from the roster and
+    // touch NOTHING else. 2026-10-08: the pump soap's top rung went 4-pack ->
+    // 5-pack, and re-running used to leave the stale block in place while
+    // reporting "already converted". The layout rules below are for a first
+    // conversion only — re-applying them would have moved the guarantee above the
+    // payment-icons row that was deliberately put directly under the buy box on
+    // 2026-10-07.
+    if (main.blocks[LADDER_ID]?.settings?.custom_liquid === ladderLiquid) return ['already converted'];
+    main.blocks[LADDER_ID].settings = { ...main.blocks[LADDER_ID].settings, custom_liquid: ladderLiquid };
+    return [`refreshed ${LADDER_ID} from the roster`];
   }
 
   for (const id of REPLACED) {
