@@ -1560,18 +1560,17 @@
     {
       "handle": "coconut-lotion-4-pack",
       "title": "Coconut Body Lotion — 4-Pack",
-      "status": "draft",
+      "status": "live",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
         "bundle",
-        "lotion",
+        "body-lotion",
         "ladder-tier",
-        "subscription",
         "value-set"
       ],
       "collections": [],
-      "story": "The depth play for the hero SKU. Lotion is 72% of revenue and has the largest repeat cohort (417 first-time buyers, 20.6% repurchase), yet it was the only repeat-purchase category with no quantity offer — soap, deodorant and toothpaste all had one. Priced as buy-3-get-1 ($90 against a $120 list) rather than '25% off': identical arithmetic, and the free-portion framing is the one the offer playbook prefers. One bottle is one month (config/consumption-rates.json, merchant-corrected 2026-08-30), so four bottles is a season — that is the quantity argument, and it is measured rather than invented. Built as the intended default tier for paid traffic: at ~$53 contribution it is the only lotion offer whose max CPC reaches the $0.59 actually being paid. TWO SCENTS ONLY, per the two-scent rule in lib/bundle-roster.js — Lavender & Rose has the deepest stock (28 units) and is deliberately ineligible; this bundle is the demand test that rule says it is waiting for. Ships as DRAFT: inventory supports only ~9 packs (Pure Unscented 20 + Coconut Breeze 18), about three weeks at $50/day, so stock has to be ordered before this backs a campaign. templateSuffix is null (default PDP, hide_variants: true) and must move to scoped-gallery if images carrying #scent_ alt tokens are ever added — see the deodorant 4-pack's story for what that mistake costs.",
+      "story": "Buy 3, get 1 free (Sean, 2026-10-08): four bottles for $90, exactly 3 x the $30 single, so the ladder renders the free-unit framing. Back as the lotion's top rung after two days of the $120 buy-4-get-1 5-pack; Sean: 'I think the lotion cost is too high with 4 get 1 free.' $120 is over twice the store's $56 average order; $90 is a smaller ask, and four is a quantity a real customer chose (4 lotions, 2026-09-14). Contribution $59.18 vs $83.39 for the 5-pack (scripts/bundle-economics.mjs), still above 2x the $25 CAC; the 4-pack needs ~1.4x the 5-pack's take rate to earn the same. Subscription tag removed: no product sells new subscriptions since 2026-10-06. Reached only from the lotion PDP and the homepage offer line, noindexed via ladder-tier.",
       "options": [
         {
           "name": "Scent",
@@ -1617,7 +1616,7 @@
     {
       "handle": "coconut-moisturizer-5-pack",
       "title": "Coconut Moisturizer — 5-Pack",
-      "status": "live",
+      "status": "draft",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -1627,7 +1626,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Buy 4, get 1 free (Sean, 2026-10-05). $112 is exactly 4 x the $28 single, so the ladder renders the free-unit framing. Replaces the cream's subscription as its repeat-purchase offer: RSC moved off subscriptions to multi-unit purchases for AOV. Two scents only, per the two-scent rule. Stock supports it (Pure Unscented 200, Coconut Breeze 52 on 2026-10-05). No subscription tag: nothing on this page is subscribable any more. A bare ladder tier, like coconut-hand-soap-2-pack: no template, no collection, noindexed by ladder-tier.",
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05). $112 is exactly 4 x the $28 single, so the ladder renders the free-unit framing. Replaces the cream's subscription as its repeat-purchase offer: RSC moved off subscriptions to multi-unit purchases for AOV. Two scents only, per the two-scent rule. Stock supports it (Pure Unscented 200, Coconut Breeze 52 on 2026-10-05). No subscription tag: nothing on this page is subscribable any more. A bare ladder tier, like coconut-hand-soap-2-pack: no template, no collection, noindexed by ladder-tier. RETIRED to draft 2026-10-08, replaced by the buy-3-get-1-free 4-pack at $84 to match the lotion.",
       "options": [
         {
           "name": "Scent",
@@ -1671,9 +1670,65 @@
       ]
     },
     {
+      "handle": "coconut-moisturizer-4-pack",
+      "title": "Coconut Moisturizer — 4-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-cream",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 3, get 1 free (Sean, 2026-10-08): four jars for $84, exactly 3 x the $28 single, matching the lotion's buy-3-get-1 4-pack. Replaced the $112 buy-4-get-1 5-pack after two days live. Contribution $52.31 vs $74.32 for the 5-pack (scripts/bundle-economics.mjs), above 2x the $25 CAC. Reached only from the cream PDP and the homepage card, noindexed via ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "4x Pure Unscented",
+            "4x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "4x Pure Unscented"
+          },
+          "price": 84,
+          "compareAtPrice": 112,
+          "contents": "4 × Coconut Moisturizer, 4oz — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Coconut Breeze"
+          },
+          "price": 84,
+          "compareAtPrice": 112,
+          "contents": "4 × Coconut Moisturizer, 4oz — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
       "handle": "coconut-lotion-5-pack",
       "title": "Coconut Body Lotion — 5-Pack",
-      "status": "live",
+      "status": "draft",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -1683,7 +1738,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flipped LIVE 2026-10-06 on Sean's go-ahead at that stock (2 + 1 packs available), and the lotion PDP converted to the 1/5 ladder by scripts/convert-pdp-to-ladder.mjs.",
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flipped LIVE 2026-10-06 on Sean's go-ahead at that stock (2 + 1 packs available), and the lotion PDP converted to the 1/5 ladder by scripts/convert-pdp-to-ladder.mjs. RETIRED to draft 2026-10-08, replaced by the buy-3-get-1-free 4-pack at $90 (Sean: lotion cost too high at $120).",
       "options": [
         {
           "name": "Scent",
@@ -1891,9 +1946,9 @@
       "base": "coconut-lotion",
       "tiers": [
         "coconut-lotion",
-        "coconut-lotion-5-pack"
+        "coconut-lotion-4-pack"
       ],
-      "default": "coconut-lotion-5-pack",
+      "default": "coconut-lotion-4-pack",
       "template": "product.landing-page-lotion.json",
       "block_id": "quantity-ladder",
       "unit_noun": "bottle",
@@ -1928,9 +1983,9 @@
       "base": "coconut-moisturizer",
       "tiers": [
         "coconut-moisturizer",
-        "coconut-moisturizer-5-pack"
+        "coconut-moisturizer-4-pack"
       ],
-      "default": "coconut-moisturizer-5-pack",
+      "default": "coconut-moisturizer-4-pack",
       "template": "product.landing-page-cream.json",
       "block_id": "quantity-ladder",
       "unit_noun": "jar",

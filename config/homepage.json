@@ -6,8 +6,8 @@
     "product_heading": "Coconut Body Lotion",
     "subheading": "Six ingredients you can read. Made in small batches in the USA.",
     "product_handle": "coconut-lotion",
-    "pack_handle": "coconut-lotion-5-pack",
-    "pack_units": 5,
+    "pack_handle": "coconut-lotion-4-pack",
+    "pack_units": 4,
     "cta_label": "Shop Body Lotion",
     "guarantee": "30-day money-back guarantee",
     "image_desktop": "shopify://shop_images/home-hero-lotion-desktop.webp",
@@ -24,8 +24,8 @@
     {
       "title": "Body Lotion",
       "base": "coconut-lotion",
-      "pack": "coconut-lotion-5-pack",
-      "units": 5,
+      "pack": "coconut-lotion-4-pack",
+      "units": 4,
       "url": "/products/coconut-lotion",
       "image": "shopify://shop_images/card-lotion.webp",
       "line": "Soft, moisturized skin all day, without the greasy feel."
@@ -33,8 +33,8 @@
     {
       "title": "Body Cream",
       "base": "coconut-moisturizer",
-      "pack": "coconut-moisturizer-5-pack",
-      "units": 5,
+      "pack": "coconut-moisturizer-4-pack",
+      "units": 4,
       "url": "/products/coconut-moisturizer",
       "image": "shopify://shop_images/card-cream.webp",
       "line": "Rough hands, heels and elbows feel softer from the first use."
