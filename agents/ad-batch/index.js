@@ -17,6 +17,11 @@
 //     "concepts": [ { "headline": "7 Simple Ingredients", "subhead": "vs 20+ in most lotions" } ],
 //     "scenes": [] }
 //
+// A set (2-3 products, one of each in every image):
+//   { "products": [ { "product": "coconut-lotion", "variant": "pure-unscented" },
+//                   { "product": "coconut-moisturizer", "variant": "pure-unscented" } ],
+//     "title": "Sensitive Skin Moisturizing Set", "concepts": [ ... ] }
+//
 // Output: ~/Desktop/Ad Batches/<date> <product>/<NN headline>/ — images, _rejected/,
 // _contact sheet.jpg, scenes.md — plus run.json for the batch. Nothing is published.
 // Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
@@ -29,7 +34,7 @@ import { GoogleGenAI } from '@google/genai';
 import Anthropic from '../../lib/anthropic.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
-import { parseBatch, screenConcepts, resolveProduct } from './batch.js';
+import { parseBatch, screenConcepts, resolveLineup } from './batch.js';
 import { selectLibraryScenes, customScenes, generateFreshScenes, LIBRARY_SHARE } from './scenes.js';
 import { buildPrompt } from './prompt.js';
 import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
@@ -89,13 +94,13 @@ async function refForCheck(path) {
   return (await sharp(path).rotate().resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64');
 }
 
-async function visionCheck({ anthropic, refB64, imageBuf, product, shown }) {
+async function visionCheck({ anthropic, refsB64, imageBuf, product, shown }) {
   const img = (await sharp(imageBuf).resize(1200, 1200, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
   const res = await anthropic.messages.create({
     model: LLM_MODELS.standard,
     max_tokens: 1500,
     messages: [{ role: 'user', content: [
-      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: refB64 } },
+      ...refsB64.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
       { type: 'text', text: checkPrompt({ product, shown }) },
     ] }],
@@ -132,9 +137,12 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
       continue;
     }
     budget.costUsd += r.costUsd;
-    if (!refCache.has(refs[0])) refCache.set(refs[0], await refForCheck(refs[0]));
+    // A set is checked against one reference per product, in product order; a single
+    // product against its first reference.
+    const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
+    for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
     let read = null;
-    try { read = await visionCheck({ anthropic: clients.anthropic, refB64: refCache.get(refs[0]), imageBuf: r.buffer, product, shown }); }
+    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown }); }
     catch (err) { log(`    check failed to run: ${err.message}`); }
     const verdict = decide({ read, concept, product, shown });
     attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });
@@ -155,7 +163,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   const manifest = JSON.parse(readFileSync(join(ROOT, 'data/product-images/manifest.json'), 'utf8'));
   const references = JSON.parse(readFileSync(join(ROOT, 'data/ad-batch/references.json'), 'utf8'));
   const library = JSON.parse(readFileSync(join(ROOT, 'data/ad-batch/scenes.json'), 'utf8'));
-  const product = resolveProduct({ handle: batch.product, variant: batch.variant, manifest, references, imageRoot: join(ROOT, 'data/product-images') });
+  const product = resolveLineup({ batch, manifest, references, imageRoot: join(ROOT, 'data/product-images') });
 
   const { ok: concepts, skipped } = screenConcepts(batch.concepts);
   for (const s of skipped) log(`⚠ skipped "${s.headline}": ${s.reasons.join('; ')}`);
@@ -192,7 +200,11 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   const budget = { used: 0, max: args.maxRenders, costUsd: 0 };
   const clients = { openaiKey: env.OPENAI_API_KEY, gemini, anthropic };
   const refCache = new Map();
-  const record = { generatedAt: new Date().toISOString(), product: { handle: product.handle, variant: product.variant, title: product.title }, skipped, concepts: [] };
+  const record = {
+    generatedAt: new Date().toISOString(),
+    product: { handle: product.handle, variant: product.variant, title: product.title, items: product.items?.map(i => ({ handle: i.handle, variant: i.variant })) },
+    skipped, concepts: [],
+  };
 
   for (const [ci, plan] of plans.entries()) {
     const dir = ensureDir(join(batchDir, conceptDirName(ci, plan.concept)));

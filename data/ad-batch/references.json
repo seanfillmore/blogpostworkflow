@@ -4,6 +4,9 @@
     "coconut-breeze": { "packaged": ["_clean-batch3/cream-coconut-breeze.png", "coconut-moisturizer/coconut-breeze/2.jpg"] },
     "pure-unscented": { "packaged": ["_clean-batch3/cream-pure-unscented.png"] }
   },
+  "coconut-lotion": {
+    "pure-unscented": { "packaged": ["coconut-lotion/pure-unscented/2.jpg"] }
+  },
   "coconut-soap": {
     "*": { "unwrapped": ["coconut-soap/unwrapped/raw-2026-10-06-3.jpg", "coconut-soap/unwrapped/raw-2026-10-06-6.jpg", "coconut-soap/unwrapped/raw-2026-10-06-2.jpg"] },
     "pure-unscented": { "packaged": ["_clean-batch2/bar-soap-ref.png", "coconut-soap/pure-unscented/1.jpg"] }

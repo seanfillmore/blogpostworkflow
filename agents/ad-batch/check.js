@@ -52,7 +52,31 @@ export function inventedClaims(extraText) {
   return hits;
 }
 
+const isSet = (product) => Array.isArray(product?.items) && product.items.length > 1;
+
+/** The check for a SET: one reference image per product, then the ad; each product read on its own. */
+function setCheckPrompt(product) {
+  const n = product.items.length;
+  const refs = product.items.map((p, i) => `Image ${i + 1} is a REFERENCE photo of product ${i + 1}: ${p.title}.`).join('\n');
+  return `${refs}
+Image ${n + 1} is an AD to check. It should show these ${n} products together, one of each.
+
+Answer about Image ${n + 1} ONLY, as JSON, transcribing letter by letter exactly as rendered. Do NOT correct spelling, do NOT fill in words you cannot see.
+
+{
+  "lettering": ["every line of text in the ad that is NOT printed on one of our products, in reading order"],
+  "products": [
+${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many units of the product in Image ${i + 1} appear>, "label_text": ["every line printed on that product's label, as rendered; [] if not visible"], "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL", "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>" }`).join(',\n')}
+  ],
+  "hands_present": true | false,
+  "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
+}
+
+Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size. Answer with the JSON only.`;
+}
+
 export function checkPrompt({ product, shown }) {
+  if (isSet(product)) return setCheckPrompt(product);
   const what = shown === 'unwrapped'
     ? 'a bare, unlabelled bar of soap like the one in the REFERENCE photo'
     : `the Real Skin Care product shown in the REFERENCE photo (${product.title})`;
@@ -112,7 +136,21 @@ export function decide({ read, concept, product, shown }) {
     else notes.push(`other text in scene: "${extra}"`);
   }
 
-  if (shown !== 'unwrapped') {
+  if (isSet(product)) {
+    const rows = Array.isArray(read.products) ? read.products : [];
+    product.items.forEach((item, i) => {
+      const name = item.title.split(/[|—–]/)[0].trim();
+      const row = rows.find(r => Number(r?.product) === i + 1) || rows[i];
+      if (!row) { reasons.push(`no reading for product ${i + 1} (${name})`); return; }
+      const label = tokens((row.label_text || []).join(' '));
+      for (const s of requiredLabelStrings(item.labelStrings)) {
+        if (findRun(label, tokens(s)) < 0) reasons.push(`${name}: label missing or misspelled "${s}" (read "${(row.label_text || []).join(' / ')}")`);
+      }
+      const c = Number(row.count);
+      if (Number.isFinite(c) && c !== 1) reasons.push(`${name}: ${c} units, expected 1`);
+      if (row.matches_reference === 'MISMATCH') reasons.push(`${name} does not match the photos: ${row.mismatch_reason || 'unspecified'}`);
+    });
+  } else if (shown !== 'unwrapped') {
     const label = tokens((read.label_text || []).join(' '));
     for (const s of requiredLabelStrings(product.labelStrings)) {
       if (findRun(label, tokens(s)) < 0) reasons.push(`label missing or misspelled "${s}" (read "${(read.label_text || []).join(' / ')}")`);
@@ -121,10 +159,12 @@ export function decide({ read, concept, product, shown }) {
     reasons.push(`bare bar shows text: "${read.label_text.join(' / ')}"`);
   }
 
-  const n = Number(read.our_product_count);
-  const want = product.unitCount || 1;
-  if (Number.isFinite(n) && n !== want) reasons.push(`${n} units of our product, expected ${want}`);
-  if (read.matches_reference === 'MISMATCH') reasons.push(`product does not match the photos: ${read.mismatch_reason || 'unspecified'}`);
+  if (!isSet(product)) {
+    const n = Number(read.our_product_count);
+    const want = product.unitCount || 1;
+    if (Number.isFinite(n) && n !== want) reasons.push(`${n} units of our product, expected ${want}`);
+    if (read.matches_reference === 'MISMATCH') reasons.push(`product does not match the photos: ${read.mismatch_reason || 'unspecified'}`);
+  }
   if (read.hand_defect && String(read.hand_defect).trim()) reasons.push(`malformed hand: ${read.hand_defect}`);
   if (read.hands_present) notes.push('hands in frame');
   return { ok: reasons.length === 0, reasons, notes };
