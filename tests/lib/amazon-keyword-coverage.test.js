@@ -59,7 +59,9 @@ test('exclusions: brands, the whitening ruling, absent ingredients, claims; ordi
   assert.equal(exclusionReason('lotion for eczema', EXCL).kind, 'never');
   assert.equal(exclusionReason('clinical strength deodorant for women', EXCL).kind, 'never');
   assert.equal(exclusionReason('bad breath treatment for adults', EXCL).kind, 'never');
-  for (const ok of ['mens deodorant', 'kids toothpaste', 'lotion for women', 'desodorante sin aluminio mujer', 'wildcrafted frankincense deodorant']) {
+  assert.equal(exclusionReason('natural tallow deodorant', EXCL).kind, 'never');
+  assert.equal(exclusionReason('pretty frank natural deodorant', EXCL).kind, 'brand');
+  for (const ok of ['kids fluoride free mint toothpaste', 'un flavored fluoride free toothpaste', 'mens deodorant', 'kids toothpaste', 'lotion for women', 'desodorante sin aluminio mujer', 'wildcrafted frankincense deodorant']) {
     assert.equal(exclusionReason(ok, EXCL), null, ok);
   }
 });
