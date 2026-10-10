@@ -388,3 +388,6 @@ data/ladder-convert/
 data/set-nosub/
 data/creatives/ladder-galleries/
 data/creatives/bundle-galleries/
+
+# Monthly Amazon keyword-coverage report — server-written, regenerated every run
+data/reports/amazon-keyword-coverage/

@@ -525,6 +525,14 @@ if (new Date().getDate() === 1) {
   // from last month's personas instead of the ones just written.
   runStep('demand-miner', `"${NODE}" agents/demand-miner/index.js`, { indent: '    ' });
 
+  // Step 14b: amazon-keyword-coverage — REPORT ONLY. Compares every RSC listing's live
+  // title, bullets and backend search terms against the searches Amazon's Search Query
+  // Performance says showed it (the weekly amazon-explore-sqp dumps), and lists the
+  // highest-volume searches containing a word the listing does not index. Never writes
+  // to Amazon. Added 2026-10-10 after the listing copy turned out never to have been
+  // checked against Amazon's own search data.
+  runStep('amazon-keyword-coverage', `"${NODE}" agents/amazon-keyword-coverage/index.js`, { indent: '    ' });
+
   // Step 15: marketing-learner --regate — park live tactics that need a gate.
   //
   // A backstop, not the primary mechanism: extraction now emits `stage` itself, so a
