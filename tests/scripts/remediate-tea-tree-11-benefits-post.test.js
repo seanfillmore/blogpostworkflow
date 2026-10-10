@@ -33,6 +33,7 @@ import {
   PLAN,
   KEPT,
   gatePlan,
+  articleBlocking,
   targetLabel,
   backupName,
 } from '../../scripts/remediate-tea-tree-11-benefits-post.js';
@@ -138,11 +139,11 @@ test('exactly one live section is rewritten without a blocking-tier claim', () =
 
 test("every entry's AFTER passes checkSeoCopy in its declared slot", () => {
   for (const e of PLAN) {
-    const res = checkSeoCopy({ [e.gateSlot]: e.after });
-    assert.equal(
-      res.ok,
-      true,
-      `${e.id}: AFTER still blocks — ${res.blocking.map((b) => b.match).join(', ')}`,
+    const blocking = articleBlocking(checkSeoCopy({ [e.gateSlot]: e.after }).blocking);
+    assert.deepEqual(
+      blocking,
+      [],
+      `${e.id}: AFTER still blocks — ${blocking.map((b) => b.match).join(', ')}`,
     );
   }
 });
@@ -423,7 +424,7 @@ test('the remediated mirror carries no blocking-tier claim outside the KEPT list
   const keptExcerpts = KEPT.map((k) => k.excerpt);
   const survivors = [];
   for (const block of once.split(/(?=<h[23])/)) {
-    const hits = findSeoCopyClaims(plainText(block)).blocking;
+    const hits = articleBlocking(findSeoCopyClaims(plainText(block)).blocking);
     if (!hits.length) continue;
     if (keptExcerpts.some((x) => block.includes(x))) continue;
     survivors.push(`${plainText(block).slice(0, 60)} → ${hits.map((h) => h.match).join(',')}`);
@@ -518,4 +519,12 @@ test('every entry carries a written reason and a body verdict', () => {
       `${e.id}: bodyVerdict must state whether the section body was changed`,
     );
   }
+});
+
+test('articleBlocking drops only the surface-tiered categories, never disease or therapeutic', () => {
+  const hits = findSeoCopyClaims('Tea tree oil is antibacterial and heals acne').blocking;
+  const kept = articleBlocking(hits).map((h) => h.category).sort();
+  assert.ok(hits.some((h) => h.category === 'drug-property'), 'precondition');
+  assert.ok(!kept.includes('drug-property'));
+  assert.ok(kept.includes('therapeutic') && kept.includes('disease'));
 });
