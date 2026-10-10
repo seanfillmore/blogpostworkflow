@@ -14,9 +14,9 @@ const INGREDIENTS = JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.js
 const strip = (s) => s.replace(/<br>/g, ' ');
 const allText = (e) => [e.after.item_name, ...e.after.bullet_point, strip(e.after.product_description)].join(' ');
 
-test('covers the eight in-stock RSC SKUs, main SKUs only, one per variant', () => {
-  assert.equal(PLAN.length, 8);
-  assert.equal(new Set(PLAN.map((e) => e.sku)).size, 8);
+test('covers the eight in-stock SKUs plus the three discoverable out-of-stock lotions, main SKUs only', () => {
+  assert.equal(PLAN.length, 11);
+  assert.equal(new Set(PLAN.map((e) => e.sku)).size, 11);
   for (const e of PLAN) assert.doesNotMatch(e.sku, /FBM/);
 });
 
@@ -48,6 +48,26 @@ test('no oil from another variant is named (Cinnamon Spice carries no mint, Lave
 test('ingredient counts are honest: Unscented lotion six, Coconut Breeze seven', () => {
   assert.match(PLAN.find((e) => e.variant === 'Pure Unscented').after.bullet_point[0], /^SIX INGREDIENTS/);
   assert.match(PLAN.find((e) => e.variant === 'Coconut Breeze').after.bullet_point[0], /^SEVEN INGREDIENTS/);
+  assert.match(PLAN.find((e) => e.product === 'lotion' && e.variant === 'Calming Lavender').after.bullet_point[0], /^SEVEN INGREDIENTS/);
+  assert.match(PLAN.find((e) => e.variant === 'Rose Petal').after.bullet_point[0], /^EIGHT INGREDIENTS/);
+  assert.match(PLAN.find((e) => e.variant === 'Lavender & Rose').after.bullet_point[0], /^TEN INGREDIENTS/);
+});
+
+test('every lotion count equals six base ingredients plus that scent\'s config entries', () => {
+  const words = ['six', 'seven', 'eight', 'nine', 'ten'];
+  for (const e of PLAN.filter((x) => x.product === 'lotion')) {
+    const n = INGREDIENTS.lotion.base_ingredients.length + INGREDIENTS.lotion.variations.find((v) => v.name === e.variant).essential_oils.length;
+    assert.ok(e.after.bullet_point[0].startsWith(`${words[n - 6].toUpperCase()} INGREDIENTS`), e.sku);
+  }
+});
+
+test('a floral lotion never borrows Coconut Breeze\'s scent line, and Rose Petal no longer describes Pure Unscented', () => {
+  for (const v of ['Rose Petal', 'Lavender & Rose', 'Calming Lavender']) {
+    const e = PLAN.find((x) => x.product === 'lotion' && x.variant === v);
+    assert.doesNotMatch(e.after.bullet_point[3], /coconut scent/i, v);
+    assert.doesNotMatch(allText(e), /Pure Unscented/, v);
+  }
+  assert.match(PLAN.find((x) => x.variant === 'Rose Petal').before.product_description, /Pure Unscented/, 'precondition: the defect is real');
 });
 
 test('every title names its variant', () => {
@@ -158,6 +178,6 @@ test('main: previews by default, skips an edited SKU, PATCHes nothing in that ca
   assert.equal(r.failed, 0);
   assert.equal(r.results.find((x) => x.sku === 'RSC-DE-CL-02').action, 'skip');
   const patches = calls.filter((c) => c.method === 'PATCH');
-  assert.equal(patches.length, 7);
+  assert.equal(patches.length, 10);
   for (const p of patches) assert.match(p.path, /mode=VALIDATION_PREVIEW/);
 });

@@ -117,13 +117,34 @@ function toothpaste(flavor, sku) {
 
 // ── Lotion ───────────────────────────────────────────────────────────────────
 const LOTION_BASE = 'purified spring water, organic virgin coconut oil, organic jojoba, organic plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil';
+// What each scent smells like. Coconut Breeze's wording is unchanged from the 2026-10-10
+// apply, so its already-live AFTER still matches byte for byte.
+const LOTION_NOTES = {
+  'Coconut Breeze': 'A light, natural coconut scent',
+  'Rose Petal': 'A soft floral scent',
+  'Lavender & Rose': 'A gentle floral blend',
+  'Calming Lavender': 'A calm, herbal scent',
+};
+const COUNT_WORDS = ['six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
+/** "organic coconut oil extract", or "organic essential oils of rose and ylang ylang". */
+export function lotionScentSource(scent) {
+  const raw = INGREDIENTS.lotion.variations.find((v) => v.name === scent).essential_oils;
+  const essential = raw.filter((o) => /^organic essential oils? of /.test(o))
+    .map((o) => o.replace(/^organic essential oils? of /, '').replace(/\.$/, '').replace(/^roman /, 'Roman '));
+  const other = raw.filter((o) => !/^organic essential oils? of /.test(o));
+  const parts = [...other];
+  if (essential.length) parts.push(`organic essential oil${essential.length > 1 ? 's' : ''} of ${listJoin(essential)}`);
+  return { phrase: listJoin(parts), count: raw.length };
+}
+
 function lotion(scent) {
-  const extraOils = oilsOf('lotion', scent);
-  const count = ['six', 'seven', 'eight'][extraOils.length] ?? String(6 + extraOils.length);
-  const extra = extraOils.length ? `, and ${listJoin(extraOils)} for scent` : '';
+  const src = lotionScentSource(scent);
+  const count = COUNT_WORDS[src.count];
+  const extra = src.count ? `, and ${src.phrase} for scent` : '';
   const scentLine = scent === 'Pure Unscented'
     ? 'NO ADDED FRAGRANCE: Pure Unscented has no essential oils and no fragrance of any kind, so there is nothing scented left on your skin.'
-    : `${scent.toUpperCase()} SCENT: A light, natural coconut scent from ${listJoin(extraOils)}. No synthetic fragrance.`;
+    : `${scent.toUpperCase()} SCENT: ${LOTION_NOTES[scent]} from ${src.phrase}. No synthetic fragrance.`;
   return {
     item_name: scent === 'Pure Unscented'
       ? 'Real Skin Care Unscented Body Lotion, Fragrance Free Organic Moisturizer with Coconut Oil and Jojoba for Dry and Sensitive Skin, Non-Greasy, Six Ingredients, Paraben Free, 8 oz, Made in USA'
@@ -153,6 +174,13 @@ export const PLAN = [
   { sku: 'RSC-TP-CI-08', product: 'toothpaste', variant: 'Cinnamon Spice', after: toothpaste('Cinnamon Spice', 'RSC-TP-CI-08') },
   { sku: 'RSC-LO-PU-08-stickerless', product: 'lotion', variant: 'Pure Unscented', after: lotion('Pure Unscented') },
   { sku: 'RSC-LO-CB-08-FBA-stickerless', product: 'lotion', variant: 'Coconut Breeze', after: lotion('Coconut Breeze') },
+  // Added 2026-10-10 (operator: "update them as well"). Out of stock and not buyable,
+  // but their detail pages are still DISCOVERABLE on Amazon and carried the same
+  // "Reduce Fine Lines and Wrinkles" / "Tighten" / "Chemical-Free" copy, and Rose
+  // Petal's description described Pure Unscented.
+  { sku: 'RSC-LO-RP-08-stickerless', product: 'lotion', variant: 'Rose Petal', after: lotion('Rose Petal') },
+  { sku: 'RSC-LO-LR-08-stickerless', product: 'lotion', variant: 'Lavender & Rose', after: lotion('Lavender & Rose') },
+  { sku: 'RSC-LO-CL-08-FBA-stickerless', product: 'lotion', variant: 'Calming Lavender', after: lotion('Calming Lavender') },
 ].map((e) => ({ ...e, asin: BEFORE[e.sku].asin, before: BEFORE[e.sku] }));
 
 const eq = (a, b) => JSON.stringify(a) === JSON.stringify(b);
