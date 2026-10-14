@@ -69,6 +69,7 @@ const ALLOWLIST = [
   { file: 'scripts/unpublish-hair-posts-2026-08-22.mjs', kind: 'repair', why: 'dated one-off: unpublish off-catalogue posts' },
   { file: 'scripts/remediate-antiperspirant-product-copy.js', kind: 'compliance', why: 'removes the antiperspirant product-category claim' },
   { file: 'scripts/remediate-ingredient-benefit-headings.js', kind: 'compliance', why: 'tones down health-claim headings' },
+  { file: 'scripts/remediate-editor-year-rewrites-2026-10-14.mjs', kind: 'repair', why: 'restores two historical dates the editor year-bump falsified' },
   { file: 'scripts/remediate-whitening-claims-2026-10-10.mjs', kind: 'compliance', why: 'removes whitening/stain claims about our toothpaste (operator ruling 2026-10-10)' },
   { file: 'scripts/remediate-live-health-claims.js', kind: 'compliance', why: 'removes blocking health claims' },
   { file: 'scripts/remediate-tea-tree-11-benefits-post.js', kind: 'compliance', why: 'removes health claims from one post' },
