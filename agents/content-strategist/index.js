@@ -29,6 +29,7 @@ import {
 } from '../../lib/calendar-coverage.js';
 import { isLiveOrScheduled } from '../../lib/post-publish-state.js';
 import { carryPaidItems } from '../../lib/calendar-carry.js';
+import { slotsFrom } from '../../lib/publish-schedule.js';
 import { appendRejection as appendRejectionEntry, isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 import { notify } from '../../lib/notify.js';
 import { splitInventory } from '../../lib/brief-triage.js';
@@ -534,27 +535,18 @@ export function briefQueueToCalendarItems(briefQueue, index, today = new Date(),
   const taken = new Set();
   for (const item of briefQueue) {
     const prev = existingBySlug.get(item.slug || slugify(item.keyword));
-    if (prev) taken.add(new Date(prev.publish_date).getTime());
+    if (prev) taken.add(new Date(prev.publish_date).toISOString().slice(0, 10));
   }
 
-  // Mon/Thu at 8 AM PT, walking forward from the first Monday after `today`.
-  let cursor = 0;
-  const nextFreeSlot = () => {
-    for (;;) {
-      const week = Math.floor(cursor / 2);
-      const publish = new Date(start);
-      publish.setUTCDate(start.getUTCDate() + week * 7 + (cursor % 2 === 0 ? 0 : 3));
-      cursor++;
-      if (!taken.has(publish.getTime())) return publish;
-    }
-  };
+  // lib/publish-schedule.js PUBLISH_DAYS, walking forward from the first Monday after `today`.
+  const nextFreeSlot = slotsFrom(start, taken);
 
   const nowIso = new Date().toISOString();
   return briefQueue.map((item) => {
     const slug = item.slug || slugify(item.keyword);
     const prev = existingBySlug.get(slug);
     const publish = prev ? new Date(prev.publish_date) : nextFreeSlot();
-    taken.add(publish.getTime());
+    taken.add(publish.toISOString().slice(0, 10));
 
     // Week is a display grouping derived from the date, not from queue position.
     // An overdue item lands in week 1 rather than a negative week.
@@ -833,7 +825,7 @@ STAY IN PRODUCT SCOPE. Real Skin Care only sells products in these categories: d
 You have been given a content gap analysis report. Your job is to produce a detailed, prioritized content calendar that:
 1. Targets the highest-impact gaps first (volume × low KD × category importance)
 2. Groups related content into topical clusters to build category authority
-3. Balances publishing cadence (realistic for a small team — roughly 2–3 posts/week)
+3. Balances publishing cadence: 4 posts/week (Mon, Tue, Thu, Fri), one per day
 4. Considers the buyer journey — ensure each category has TOF, MOF, and BOF coverage over time
 5. Specifies the exact keyword, suggested title, content type, and target publish week for each piece
 
@@ -880,7 +872,7 @@ A numbered list of keywords to brief next, in priority order. For each:
 Format the Brief Queue items so they can be fed directly into the content-researcher agent.
 The content-researcher agent is called with: node agents/content-researcher/index.js "<keyword>"
 
-Be specific with dates. Use realistic weekly batches of 2–3 posts.`;
+Be specific with dates. Plan weekly batches of 4 posts (Mon, Tue, Thu, Fri).`;
 
   const calendarResponse = await client.messages.create({
     model: LLM_MODELS.standard,

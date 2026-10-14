@@ -38,7 +38,7 @@ test('a filter verdict is honoured: covered, rejected, dud and completed stay cl
   }
 });
 
-test('an overdue or colliding item is re-slotted AFTER the plan, one per Mon/Thu, never two a day', () => {
+test('an overdue or colliding item is re-slotted AFTER the plan, on publish days, never two a day', () => {
   const out = carryPaidItems({
     newItems: [item('a', '2026-10-19T15:00:00.000Z'), item('b', '2026-10-22T15:00:00.000Z')],
     cleared: [cleared('old1'), cleared('old2'), cleared('clash')],
@@ -50,8 +50,8 @@ test('an overdue or colliding item is re-slotted AFTER the plan, one per Mon/Thu
     hasPaidWork: () => true, now: NOW,
   });
   const dates = out.map((o) => o.publish_date.slice(0, 10));
-  assert.deepEqual(dates, ['2026-10-26', '2026-10-29', '2026-11-02']);
-  for (const d of dates) assert.ok([1, 4].includes(new Date(d + 'T15:00:00Z').getUTCDay()));
+  assert.deepEqual(dates, ['2026-10-23', '2026-10-26', '2026-10-27']);
+  for (const d of dates) assert.ok([1, 2, 4, 5].includes(new Date(d + 'T15:00:00Z').getUTCDay()));
 });
 
 test('a hasPaidWork that throws fails closed for that item, not the run', () => {
