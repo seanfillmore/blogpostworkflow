@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  summarize, findings, needsDecisionRows, renderBody, ratingStatus, isOpen,
+  summarize, findings, needsDecisionRows, renderBody, ratingStatus, isOpen, urgentChanged,
 } from '../../lib/amazon-account-health.js';
 
 const range = { reportingDateFrom: '2026-04-15T00:00Z', reportingDateTo: '2026-10-12T23:59Z' };
@@ -98,4 +98,64 @@ test('the body names each marketplace and the open violation', () => {
   assert.match(body, /Amazon\.com: account NORMAL, rating GREAT/);
   assert.match(body, /NEW Restricted Products Policy violations: 1 \(open since 2026-10-13\)/);
   assert.match(body, /Amazon\.ca: account NORMAL, rating GREAT\n  no open policy violations/);
+});
+
+// Trimmed from the first live report (2026-10-14). It carries two fields the
+// published schema does not: customerProductReviewsPolicyViolations and
+// policyViolationWarnings.
+const LIVE_RANGE = { reportingDateFrom: '2026-04-18T00:00:00Z', reportingDateTo: '2026-10-14T23:59:59Z' };
+const live = (defectsCount, status) => ({ reportingDateRange: LIVE_RANGE, status, targetValue: 0, targetCondition: 'EQUALS', defectsCount });
+const LIVE = {
+  accountStatuses: [
+    { marketplaceId: 'A2EUQ1WTGCTBG2', status: 'DEACTIVATED' },
+    { marketplaceId: 'ATVPDKIKX0DER', status: 'NORMAL' },
+  ],
+  performanceMetrics: [
+    {
+      marketplaceId: 'ATVPDKIKX0DER',
+      accountHealthRating: { ahrStatus: 'GREAT', ahrScore: 372, reportingDateRange: LIVE_RANGE },
+      restrictedProductPolicyViolations: live(1, 'BAD'),
+      productSafetyCustomerComplaints: live(8, 'BAD'),
+      foodAndProductSafetyIssues: live(8, 'BAD'),
+      customerProductReviewsPolicyViolations: live(2, 'BAD'),
+      otherPolicyViolations: live(0, 'GOOD'),
+      policyViolationWarnings: { warningsCount: 3, reportingDateRange: LIVE_RANGE },
+    },
+    {
+      marketplaceId: 'A2EUQ1WTGCTBG2',
+      accountHealthRating: { ahrStatus: 'GREAT', ahrScore: 200, reportingDateRange: LIVE_RANGE },
+      otherPolicyViolations: live(1, 'BAD'),
+      policyViolationWarnings: { warningsCount: 0, reportingDateRange: LIVE_RANGE },
+    },
+  ],
+};
+
+test('live report: every BAD metric is open, including the unschema\'d reviews metric', () => {
+  const f = findings(summarize(LIVE));
+  assert.deepEqual(
+    f.open.map((o) => `${o.marketplaceId}:${o.key}:${o.defectsCount}`),
+    [
+      'ATVPDKIKX0DER:restrictedProductPolicyViolations:1',
+      'ATVPDKIKX0DER:productSafetyCustomerComplaints:8',
+      'ATVPDKIKX0DER:foodAndProductSafetyIssues:8',
+      'ATVPDKIKX0DER:customerProductReviewsPolicyViolations:2',
+      'A2EUQ1WTGCTBG2:otherPolicyViolations:1',
+    ],
+  );
+  assert.deepEqual(f.urgent, ['Amazon.ca account status is DEACTIVATED']);
+});
+
+test('live report: a non-zero policyViolationWarnings count is a warning, zero is not', () => {
+  const s = summarize(LIVE);
+  assert.deepEqual(s.markets[0].warnings, ['3 policy violation warnings']);
+  assert.deepEqual(s.markets[1].warnings, []);
+});
+
+test('urgentChanged: emails on a new at-risk state, not on the same one again', () => {
+  const urgent = ['Amazon.ca account status is DEACTIVATED'];
+  assert.equal(urgentChanged(urgent, null), true);
+  assert.equal(urgentChanged(urgent, { urgent }), false);
+  assert.equal(urgentChanged([...urgent, 'Amazon.com account status is AT_RISK'], { urgent }), true);
+  // Recovery is a change too; the agent only emails when the new set is non-empty.
+  assert.equal(urgentChanged([], { urgent }), true);
 });
