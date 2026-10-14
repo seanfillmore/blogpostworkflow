@@ -11,8 +11,10 @@
  * Amazon.com.br. See lib/amazon-account-health.js.
  *
  * Reports:
- *   - account status not NORMAL, or rating WARNED  -> `immediate: true` email.
- *     That is the state before deactivation and must not wait for 5 AM.
+ *   - account status not NORMAL, or rating WARNED  -> `immediate: true` email
+ *     when that set CHANGES from the previous run, else the daily digest only.
+ *     A new at-risk state must not wait for 5 AM; a known one (a reactivation
+ *     already pending) must not email every morning.
  *   - open policy violations -> `needs_decision[]` in latest.json, rendered in
  *     the digest's "Needs your decision" section, plus a deferred info row.
  *   - the app lacking the Selling Partner Insights role (HTTP 403) -> the check
@@ -33,7 +35,7 @@ import { getClient, request } from '../../lib/amazon/sp-api-client.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
-  MARKETPLACES, summarize, findings, needsDecisionRows, renderBody,
+  MARKETPLACES, summarize, findings, needsDecisionRows, renderBody, urgentChanged,
 } from '../../lib/amazon-account-health.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -109,14 +111,15 @@ export async function main({ doNotify = true } = {}) {
 
   const n = found.open.length;
   const fresh = found.open.filter((o) => o.isNew).length;
-  if (found.urgent.length) {
-    await notify({ subject: `Amazon account health AT RISK: ${found.urgent[0]}`, body, status: 'info', category: 'amazon', immediate: true });
-  } else {
-    const subject = n
+  // Email at once only when the at-risk set CHANGES; an unchanged at-risk state
+  // (e.g. a reactivation already pending) stays in the daily digest instead.
+  const emailNow = found.urgent.length > 0 && urgentChanged(found.urgent, previous);
+  const subject = found.urgent.length
+    ? `Amazon account health AT RISK: ${found.urgent.join('; ')}`
+    : n
       ? `Amazon account health: ${n} open policy violation${n > 1 ? 's' : ''}${fresh ? ` (${fresh} new)` : ''}`
       : 'Amazon account health: all clear';
-    await notify({ subject, body, status: n ? 'info' : 'success', category: 'amazon' });
-  }
+  await notify({ subject, body, status: found.urgent.length || n ? 'info' : 'success', category: 'amazon', immediate: emailNow });
   return result;
 }
 
