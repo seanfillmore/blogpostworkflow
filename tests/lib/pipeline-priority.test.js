@@ -361,3 +361,21 @@ test('buildContributionIndex still emits the weak-signal suggestions list', () =
     [{ type: 'unmapped', key: 'weak', strength: 600, cluster: null }], IDX_CFG);
   assert.ok(Array.isArray(suggestions));
 });
+
+import { partitionCalendar } from '../../lib/pipeline-priority.js';
+
+test('partitionCalendar: an undated BRIEFED item is backlog, not buffer', () => {
+  const ymd = (d) => new Date(d).toISOString().slice(0, 10);
+  const items = [
+    { slug: 'dated-briefed', keyword: 'a', publish_date: '2026-10-19T15:00:00.000Z' },
+    { slug: 'undated-briefed', keyword: 'b', publish_date: null },
+    { slug: 'undated-idea', keyword: 'c', publish_date: null },
+    { slug: 'undated-written', keyword: 'd', publish_date: null },
+  ];
+  const st = { 'dated-briefed': 'briefed', 'undated-briefed': 'briefed', 'undated-idea': 'pending', 'undated-written': 'written' };
+  const p = partitionCalendar(items, { statusOf: (i) => st[i.slug], today: '2026-10-14', ymd });
+  assert.deepEqual(p.backlog.map((b) => b.slug), ['undated-briefed', 'undated-idea']);
+  assert.equal(p.backlog[0].briefed, true);
+  assert.equal(p.bufferReady, 1);
+  assert.equal(p.upcomingScheduled, 1);
+});
