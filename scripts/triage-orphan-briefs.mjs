@@ -223,13 +223,20 @@ if (REQUEUE) {
   const onCalendar = new Set(items.map((i) => i.slug));
   const calendarKeywords = items.map((i) => i.keyword).filter(Boolean);
   const nowIso = new Date().toISOString();
+  // findCoverage's similarity does not stem (a known gap, kept on purpose so the
+  // CLEARING path is not made more aggressive), so "women's deodorants" read as
+  // new beside "women's deodorant". Here a plural twin is caught explicitly.
+  const singular = (k) => String(k).toLowerCase().replace(/[^a-z0-9 ]/g, '').split(/\s+/).map((w) => w.replace(/s$/, '')).join(' ');
+  const seenSingular = new Set(calendarKeywords.map(singular));
   const add = [];
   const held = [];
   for (const k of keep) {
     if (onCalendar.has(k.slug)) continue;
+    if (seenSingular.has(singular(k.keyword))) { held.push({ ...k, hit: { keyword: 'plural/singular twin', pool: 'calendar' } }); continue; }
     const hit = findCoverage(k.keyword, { publishedPosts: publishedPostsForCoverage, calendarKeywords });
     if (hit) { held.push({ ...k, hit }); continue; }
     calendarKeywords.push(k.keyword);
+    seenSingular.add(singular(k.keyword));
     add.push({
       slug: k.slug,
       keyword: k.keyword,
