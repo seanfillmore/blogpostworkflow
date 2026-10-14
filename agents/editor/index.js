@@ -910,7 +910,11 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
     for (const prefix of bodyYearPatterns) {
       const yearRegex = new RegExp(`\\b(${prefix} )${year}\\b`, 'gi');
       const before = fixed;
-      fixed = fixed.replace(yearRegex, (m, p) => `${p}${currentYear}`);
+      // The guard is consulted here too. Without it "In 2021, EFSA concluded" and
+      // "banned it in food in 2022" were rewritten to 2026 on 2026-10-12 and the
+      // draft was then blocked for the factual errors this pass had introduced.
+      fixed = fixed.replace(yearRegex, (m, p, offset, full) =>
+        (isHistoricalYearReference(full, offset + p.length) ? m : `${p}${currentYear}`));
       if (fixed !== before) {
         changes.push(`Corrected year: "${prefix} ${year}" → "${prefix} ${currentYear}"`);
       }
@@ -931,9 +935,11 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   // Stale years inside heading tags. Almost always "current year" markers
   // like "Best X 2025" — safe to bump.
   fixed = fixed.replace(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi, (match, level, attrs, inner) => {
-    const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr) => {
+    const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr, off, whole) => {
       const n = parseInt(yr, 10);
-      return n >= 2020 && n < currentYear ? String(currentYear) : yearMatch;
+      if (n < 2020 || n >= currentYear) return yearMatch;
+      // "The 2021 EFSA Ruling" is a dated fact, not an edition marker.
+      return isHistoricalYearReference(whole, off) ? yearMatch : String(currentYear);
     });
     if (updated !== inner) {
       changes.push(`Corrected year in <h${level}>: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);

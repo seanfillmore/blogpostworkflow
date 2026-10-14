@@ -185,3 +185,32 @@ test('a bare edition year with no month is still bumped', () => {
   assert.equal(r.text, 'Best Clean Body Lotion 2026');
   assert.equal(r.changed, true);
 });
+
+// 2026-10-12: the editor's pre-review auto-fix rewrote these real dates on the
+// non-toxic-toothpaste draft to 2026, then blocked the post for the errors it made.
+test('bumpStaleYears: a narrative past event ("In 2021, EFSA concluded") is preserved', () => {
+  const s = 'In 2021, EFSA concluded it could no longer be considered safe.';
+  assert.equal(bumpStaleYears(s, 2026).text, s);
+});
+
+test('bumpStaleYears: a past-tense event in the same sentence ("banned it in food in 2022") is preserved', () => {
+  const s = 'The EU banned it in food in 2022, and France had acted earlier.';
+  assert.equal(bumpStaleYears(s, 2026).text, s);
+});
+
+test('bumpStaleYears: a dated publication noun ("The 2024 NTP monograph") is preserved', () => {
+  const s = 'The 2024 NTP monograph on fluoride looked at drinking water.';
+  assert.equal(bumpStaleYears(s, 2026).text, s);
+});
+
+test('bumpStaleYears: an edition marker is still bumped ("Best Lotions in 2024", "updated for 2025")', () => {
+  assert.equal(bumpStaleYears('Best Natural Lotions in 2024', 2026).text, 'Best Natural Lotions in 2026');
+  assert.equal(bumpStaleYears('This guide was updated for 2025.', 2026).text, 'This guide was updated for 2026.');
+});
+
+test('isHistoricalYearReference: a closing tag after the year is not a URL', () => {
+  const h = '<h2>Best Alternatives to Body Lotion in 2025</h2>';
+  assert.equal(isHistoricalYearReference(h, h.indexOf('2025')), false);
+  const a = '<li><a href="/collections/x">Best Organic Skincare Products for 2024</a></li>';
+  assert.equal(isHistoricalYearReference(a, a.indexOf('2024')), false);
+});
