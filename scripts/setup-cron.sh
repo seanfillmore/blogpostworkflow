@@ -172,6 +172,14 @@ DAILY_THEME_CLAIMS_GATE="45 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-
 # `ps`.
 DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-scheduler-heartbeat.mjs >> data/reports/scheduler/scheduler-heartbeat.log 2>&1"
 
+# Amazon Account Health (daily, read-only). Reads the seller performance report
+# for every NA marketplace and puts open policy violations in the digest's
+# "Needs your decision" section; an at-risk account emails immediately. Needs
+# the SP-API "Selling Partner Insights" role; without it the digest row says the
+# check is OFF. 12:05 UTC: the report takes minutes to build and must land
+# before the 13:00 UTC daily-summary. No TZ= prefix: it schedules nothing here.
+DAILY_AMAZON_ACCOUNT_HEALTH="5 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-account-health/index.js >> data/reports/scheduler/amazon-account-health.log 2>&1"
+
 # Trybe creator review (daily). Screens each PENDING creator submission's
 # transcript through the commercial claim gate and sends a revision request
 # quoting any health claim; never approves or rejects. Also reports creator
@@ -599,6 +607,7 @@ $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
+$DAILY_AMAZON_ACCOUNT_HEALTH
 # ── Creator program (daily, before the digest) ──
 $DAILY_TRYBE_REVIEW
 $CREATOR_OUTREACH
