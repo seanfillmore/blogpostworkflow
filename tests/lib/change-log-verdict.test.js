@@ -83,3 +83,30 @@ test('THRESHOLDS exposed for tuning', () => {
   assert.ok(THRESHOLDS.revenue_positive);
   assert.ok(THRESHOLDS.revenue_negative);
 });
+
+import { computeDeltas as cd2, classifyOutcome as co2 } from '../../lib/change-log/verdict.js';
+
+const snap = (clicks, impressions, position) => ({
+  gsc: { page: { clicks, impressions, ctr: impressions ? clicks / impressions : 0, position }, byQuery: {} },
+  ga4: { sessions: 0, conversions: 0, page_revenue: 0 },
+});
+
+// 2026-10-13: /products/coconut-oil-lip-balm and /products/sensitive-skin-starter-set
+// were "regressed" on 1 click -> 0 while both moved UP ~3 positions.
+test('a 1 -> 0 click move is not evidence: click and CTR deltas are withheld below the floor', () => {
+  const d = cd2(snap(1, 747, 22.4), snap(0, 631, 19.0));
+  assert.equal(d.page.clicks, null);
+  assert.equal(d.page.ctr, null);
+  assert.notEqual(co2(d), 'regressed');
+});
+
+test('above the floor a real click decline still regresses', () => {
+  const d = cd2(snap(100, 5000, 8), snap(60, 5000, 8.5));
+  assert.equal(co2(d), 'regressed');
+});
+
+test('a rise from a thin baseline to a powered count still counts as improvement', () => {
+  const d = cd2(snap(4, 2000, 15), snap(80, 2100, 14));
+  assert.ok(d.page.clicks > 0);
+  assert.equal(co2(d), 'improved');
+});
