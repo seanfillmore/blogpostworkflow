@@ -690,12 +690,19 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // why nothing upstream ever drops on it. Same row shape again, so this stays
   // ONE renderer; a withheld topic that appeared nowhere would be the silent
   // drop this whole path exists to prevent.
+  //
+  // FOURTH PRODUCER, 2026-10-13: agents/amazon-account-health. An open Amazon
+  // policy violation is a decision only a human can take (fix and appeal, or
+  // delete the listing), and the SP-API cannot submit an appeal. The Geranium
+  // deodorant sat removed for ten weeks, unseen, blocking Remote Fulfillment
+  // for Amazon.ca. Same row shape.
   let decisionSection = '';
   try {
     const stuck = [
       join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
       join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
       join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'amazon-account-health', 'latest.json'),
     ].flatMap((p) => {
       if (!existsSync(p)) return [];
       try {
