@@ -29,6 +29,17 @@
  *   node scripts/triage-orphan-briefs.mjs --list-dropped        # what is archived
  *   node scripts/triage-orphan-briefs.mjs --restore <slug>...   # bring briefs back
  *   node scripts/triage-orphan-briefs.mjs --restore --all [--force]
+ *   node scripts/triage-orphan-briefs.mjs --requeue [--apply]  # put KEEP briefs back on the calendar
+ *
+ * --requeue exists because "KEEP goes back on the calendar" was a promise
+ * nothing kept: the planner was only SHOWN 12 prepaid briefs per re-plan and
+ * every re-plan replaced the calendar, so a kept brief could sit orphaned
+ * forever (59 kept, ~39 of them on no calendar, measured 2026-10-14). It adds
+ * each KEEP brief that is not already on the calendar as an UNDATED backlog
+ * item, so pipeline-prioritizer scores it and promotes it into a slot when the
+ * buffer drains. A brief whose keyword near-duplicates a calendar or published
+ * keyword (lib/calendar-coverage.js findCoverage, the same rule a proposal
+ * faces) is listed and left off.
  */
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
@@ -40,6 +51,9 @@ import { isInProductScope } from '../lib/product-scope.js';
 import { loadClusterHold, corroboratedClassification, holdBanner } from '../lib/cluster-hold.js';
 import { staleNote } from '../lib/seo-impact-freshness.js';
 import { notify } from '../lib/notify.js';
+import { loadCalendar, writeCalendar } from '../lib/calendar-store.js';
+import { findCoverage } from '../lib/calendar-coverage.js';
+import { clusterForText } from '../lib/cluster-revenue.js';
 import {
   DROPPED_DIRNAME, RESTORE_COMMAND, archiveBriefs, listDropped, restoreDropped,
   droppedSizeBytes, newRunId, renderDropDigest,
@@ -56,6 +70,7 @@ const RESTORE = ARGV.includes('--restore');
 const LIST_DROPPED = ARGV.includes('--list-dropped');
 const ALL = ARGV.includes('--all');
 const FORCE = ARGV.includes('--force');
+const REQUEUE = ARGV.includes('--requeue');
 const RUN_ID = newRunId();
 
 function readJson(p, fallback) {
@@ -107,6 +122,7 @@ if (RESTORE) {
 // ── context: what already exists, what we refuse to write ────────────────────
 
 const publishedKeywords = [];
+const publishedPostsForCoverage = [];
 const writtenSlugs = new Set();
 for (const slug of listAllSlugs()) {
   let meta = null;
@@ -114,6 +130,7 @@ for (const slug of listAllSlugs()) {
   if (!existsSync(getContentPath(slug)) && !meta?.shopify_article_id) continue;
   writtenSlugs.add(slug);
   if (meta?.target_keyword) publishedKeywords.push(meta.target_keyword);
+  if (meta?.target_keyword) publishedPostsForCoverage.push({ keyword: meta.target_keyword, slug });
 }
 
 // The ENTRIES, not their keywords. Flattening to strings discarded `matchType`,
@@ -184,7 +201,7 @@ for (const file of briefFiles) {
     publishedKeywords, rejectedKeywords, brandTerms, inScope: isInProductScope, clusterRevenue,
   });
   const row = {
-    slug, path, keyword, reason: verdict.reason,
+    slug, path, keyword, reason: verdict.reason, brief,
     cluster: verdict.cluster, clusterStats: verdict.clusterStats,
   };
   (verdict.keep ? keep : drop).push(row);
@@ -199,6 +216,56 @@ for (const d of drop) console.log(`  ${d.slug}\n      "${d.keyword}" — ${d.rea
 
 console.log(`\nKEEP — ${keep.length} (these go back on the calendar and get written):`);
 for (const k of keep) console.log(`  ${k.slug}  "${k.keyword}"`);
+
+if (REQUEUE) {
+  const calendar = loadCalendar();
+  const items = calendar.items || [];
+  const onCalendar = new Set(items.map((i) => i.slug));
+  const calendarKeywords = items.map((i) => i.keyword).filter(Boolean);
+  const nowIso = new Date().toISOString();
+  const add = [];
+  const held = [];
+  for (const k of keep) {
+    if (onCalendar.has(k.slug)) continue;
+    const hit = findCoverage(k.keyword, { publishedPosts: publishedPostsForCoverage, calendarKeywords });
+    if (hit) { held.push({ ...k, hit }); continue; }
+    calendarKeywords.push(k.keyword);
+    add.push({
+      slug: k.slug,
+      keyword: k.keyword,
+      title: k.brief?.recommended_title || '',
+      category: clusterForText(k.keyword) || '',
+      content_type: k.brief?.content_type || 'guide',
+      search_intent: k.brief?.search_intent || 'commercial',
+      priority: 'normal',
+      publish_date: null,
+      volume: Number.isFinite(k.brief?.search_volume) ? k.brief.search_volume : null,
+      kd: null,
+      source: 'orphan_brief_requeue',
+      status: null,
+      added_at: nowIso,
+    });
+  }
+  console.log(`\nREQUEUE — ${add.length} brief(s) go back on the calendar as undated backlog:`);
+  for (const a of add) console.log(`  + ${a.slug}  "${a.keyword}"`);
+  console.log(`\nLeft off — ${held.length} near-duplicate(s) of a calendar or published keyword:`);
+  for (const h of held) console.log(`  - ${h.slug}  "${h.keyword}" ~ "${h.hit.keyword}" (${h.hit.pool})`);
+  if (!APPLY) {
+    console.log('\nDry run. Re-run with --requeue --apply to write the calendar.');
+    process.exit(0);
+  }
+  if (add.length) {
+    writeCalendar({ items: [...items, ...add], preserve_metadata: true });
+    await notify({
+      subject: `Orphaned briefs requeued: ${add.length} back on the calendar`,
+      body: `Added as undated backlog (pipeline-prioritizer slots them):\n${add.map((a) => `- ${a.slug}`).join('\n')}`
+        + (held.length ? `\n\nLeft off as near-duplicates:\n${held.map((h) => `- ${h.slug} ~ "${h.hit.keyword}"`).join('\n')}` : ''),
+      status: 'info', category: 'pipeline',
+    });
+  }
+  console.log(`\nCalendar written: ${add.length} added.`);
+  process.exit(0);
+}
 
 if (!APPLY) {
   console.log(`\nDry run. Re-run with --apply to move the ${drop.length} drop(s) to data/briefs/${DROPPED_DIRNAME}/.`);

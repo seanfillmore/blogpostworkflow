@@ -212,6 +212,7 @@ async function main() {
   // partition: backlog ideas = pending items with no publish_date
   const backlog = [];
   let bufferReady = 0;
+  let upcomingScheduled = 0;
   const takenSlots = new Set();
   const statusBySlug = new Map(); // slug → derived status, reused by the attribution ledger
   for (const it of calendar.items) {
@@ -219,6 +220,7 @@ async function main() {
     statusBySlug.set(it.slug, st);
     if (['written', 'scheduled', 'draft', 'briefed'].includes(st)) bufferReady++;
     if (it.publish_date) takenSlots.add(ymd(it.publish_date));
+    if (it.publish_date && ymd(it.publish_date) >= today && st !== 'published') upcomingScheduled++;
     if (st === 'pending' && !it.publish_date) {
       backlog.push({
         slug: it.slug, keyword: it.keyword,
@@ -246,10 +248,10 @@ async function main() {
     console.log(`  ${flaggedSignals.length} signal(s) carry possible_duplicate — DEMOTED below every clean idea, never dropped:`);
     for (const s of flaggedSignals) console.log(`    "${s.key}" — ${evidenceLine(s.duplicateOf)}`);
   }
-  console.log(`  Backlog ideas: ${backlog.length} | buffer ready: ${bufferReady}/${cfg.buffer.target}`);
+  console.log(`  Backlog ideas: ${backlog.length} | scheduled ahead: ${upcomingScheduled} | buffer ready: ${bufferReady}/${cfg.buffer.target}`);
 
   const plan = computePlan({
-    backlog, signals: active, bufferReady, takenSlots, clusterRecent, refreshRecent,
+    backlog, signals: active, bufferReady, takenSlots, upcomingScheduled, clusterRecent, refreshRecent,
     coveredIndex: covered, rejections: rejections(), today, now, cfg,
   });
 
@@ -374,10 +376,11 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, `${today}.md`), buildReport(payload));
   console.log(`  Applied: ${plan.injections.length} injected, ${plan.promotions.length} promoted.`);
 
-  // 5) alerts bypass digest deferral (errors email immediately)
+  // 5) alerts go to the deferred digest as 'info': a thin pipeline is a FINDING
+  // for a human to act on, not this agent breaking (CLAUDE.md severity rule).
   if (plan.alerts.length) {
-    await notify({ subject: `⚠️ Pipeline prioritizer: ${plan.alerts.length} alert(s)`,
-      body: plan.alerts.join('\n'), status: 'error', category: 'content' }).catch(() => {});
+    await notify({ subject: `Pipeline prioritizer: ${plan.alerts.length} alert(s)`,
+      body: plan.alerts.join('\n'), status: 'info', category: 'content' }).catch(() => {});
   }
   console.log('\nPrioritizer complete.');
 }

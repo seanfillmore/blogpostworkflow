@@ -28,6 +28,7 @@ import {
   coveragePool, findCoverage, classifyClearedItems, renderClearedLines, clearedDigest,
 } from '../../lib/calendar-coverage.js';
 import { isLiveOrScheduled } from '../../lib/post-publish-state.js';
+import { carryPaidItems } from '../../lib/calendar-carry.js';
 import { appendRejection as appendRejectionEntry, isRejected as sharedIsRejected } from '../../lib/rejected-keywords.js';
 import { notify } from '../../lib/notify.js';
 import { splitInventory } from '../../lib/brief-triage.js';
@@ -1065,8 +1066,42 @@ ${calendarMd}`;
 
   // Carry across ideas awaiting human review — they are not in the brief queue,
   // so writing `extractedItems` alone would silently drop them from the inbox.
-  const calendarItems = mergeReviewItems(extractedItems, existingCalendarItems);
-  const carried = calendarItems.length - extractedItems.length;
+  const reviewMerged = mergeReviewItems(extractedItems, existingCalendarItems);
+  const carried = reviewMerged.length - extractedItems.length;
+
+  // Carry PAID work the planner did not re-propose (lib/calendar-carry.js).
+  // Each candidate first passes the same deterministic filters a proposal does;
+  // one that fails is recorded as a skip so its clearing carries a reason.
+  const postStateFor = (slug) => {
+    const meta = getPostMetaLib(slug);
+    return { exists: Boolean(meta), live: Boolean(meta) && isLiveOrScheduled(meta) };
+  };
+  const reviewKeywords = reviewMerged.map((i) => i.keyword).filter(Boolean);
+  const screenCarried = (item) => {
+    const kw = item.keyword || '';
+    if (isRejected(kw, rejections)) return { keyword: kw, reason: 'rejected' };
+    const brandHit = brandTerms.find((t) => kw.toLowerCase().includes(t));
+    if (brandHit) return { keyword: kw, reason: 'branded', detail: `contains "${brandHit}"` };
+    if (!isInProductScope(kw)) return { keyword: kw, reason: 'off_scope' };
+    const hit = findCoverage(kw, { publishedPosts, calendarKeywords: reviewKeywords });
+    if (hit) return { keyword: kw, reason: 'already_covered', matched: hit.keyword, matchedSlug: hit.slug, rule: hit.rule, pool: hit.pool };
+    const cl = clusterForText(kw) || clusterForText(item.category);
+    if (clusterRevenue[cl]?.status === 'proven_dud') return { keyword: kw, reason: 'cluster_dud', detail: `${cl} cluster does not earn` };
+    return null;
+  };
+  const carryCandidates = carryPaidItems({
+    newItems: reviewMerged,
+    cleared: classifyClearedItems({ previousItems: existingCalendarItems, newItems: reviewMerged, skips, postState: postStateFor }),
+    previous: existingCalendarItems,
+    hasPaidWork: (slug) => existsSync(join(BRIEFS_DIR, `${slug}.json`)) || existsSync(getContentPath(slug)),
+  });
+  const carriedPaid = [];
+  for (const item of carryCandidates) {
+    const skip = screenCarried(item);
+    if (skip) { skips.push(skip); continue; }
+    carriedPaid.push(item);
+  }
+  const calendarItems = [...reviewMerged, ...carriedPaid];
 
   // Write JSON as source of truth + regenerate markdown view automatically
   writeCalendar({
@@ -1077,6 +1112,10 @@ ${calendarMd}`;
   });
   console.log(`\n  Calendar saved: data/calendar/calendar.json (+ markdown view)`);
   if (carried > 0) console.log(`  Carried ${carried} item(s) awaiting review in the Ideas inbox`);
+  if (carriedPaid.length) {
+    console.log(`  Carried ${carriedPaid.length} paid-for item(s) the planner did not re-propose:`);
+    for (const i of carriedPaid) console.log(`    ${i.publish_date.slice(0, 10)}  ${i.slug}`);
+  }
 
   // ── The calendar is REPLACED, so say what that cost ──────────────────────────
   //
@@ -1089,10 +1128,7 @@ ${calendarMd}`;
     previousItems: existingCalendarItems,
     newItems: calendarItems,
     skips,
-    postState: (slug) => {
-      const meta = getPostMetaLib(slug);
-      return { exists: Boolean(meta), live: Boolean(meta) && isLiveOrScheduled(meta) };
-    },
+    postState: postStateFor,
   });
   if (cleared.length) {
     console.log(`\n  CLEARED — ${cleared.length} scheduled item(s) removed from the calendar by this re-plan:`);
