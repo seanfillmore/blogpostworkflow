@@ -40,10 +40,12 @@ import {
   withQuotedThread, senderLabel,
 } from '../../lib/creator-outreach.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
+import { extractInstagramHandle, mergeSocials, handleFor, recordHandle, recordDecline, DECLINE_TAG_PATTERN } from '../../lib/creator-socials.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const STATE_PATH = join(ROOT, 'data', 'creator-outreach', 'state.json');
 const CONFIG_PATH = join(ROOT, 'config', 'creator-outreach.json');
+const HOMEPAGE_PATH = join(ROOT, 'config', 'homepage.json');
 const LOCK_PATH = join(ROOT, 'data', 'creator-outreach', '.lock');
 const INBOX_LOOKBACK_DAYS = 14;
 const REPLY_MODEL = LLM_MODELS.standard;
@@ -118,6 +120,7 @@ export async function runOutreach({
   send,
   draft = (c, msg) => draftWithModel(c, msg, env),
   escalate = async () => {},
+  loadHomepage = () => JSON.parse(readFileSync(HOMEPAGE_PATH, 'utf8')),
   log = console.log,
 } = {}) {
   const creds = hushmailCredentials(env);
@@ -131,7 +134,15 @@ export async function runOutreach({
   const byEmail = new Map(roster.map((c) => [c.email, c]));
   state.processed ||= [];
   const done = new Set(state.processed);
-  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], plan: null };
+  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], handles: [], declinedTags: [], plan: null };
+
+  // Instagram handles we already hold (state.socials + the homepage list). A
+  // failure to build the list means nobody is asked this run; see planScheduled.
+  state.socials ||= { creators: {} };
+  let homepage = {};
+  try { homepage = loadHomepage(); } catch (err) { log(`  homepage handles unavailable: ${err.message}`); }
+  let socials = mergeSocials({ registry: state.socials, homepage, submissions });
+  for (const c of roster) c.instagram = handleFor(socials, c.name);
 
   // ── 0. Has Sean answered anyone himself? ──
   // His own mail in the Sent folder (anything without the agent's header) to a
@@ -172,6 +183,28 @@ export async function runOutreach({
     rec.repliesDay = today;
 
     const verdict = classifyInbound(msg);
+
+    // An Instagram handle (or a "please don't tag me") in a real reply is
+    // recorded whatever else happens to the message, including when it goes to
+    // Sean: the handle is a fact, not a decision.
+    c.instagramJustReceived = false;
+    if (verdict.action !== 'ignore') {
+      if (DECLINE_TAG_PATTERN.test(msg.text)) {
+        rec.declinedTag = true;
+        recordDecline(state.socials, { name: c.name, email: c.email, at: msg.date });
+        socials = mergeSocials({ registry: state.socials, homepage, submissions });
+        result.declinedTags.push({ email: c.email, name: c.name });
+      } else {
+        const handle = extractInstagramHandle(msg.text, { askedForInstagram: Boolean(rec.sent?.socials) });
+        if (handle && handle !== c.instagram) {
+          recordHandle(state.socials, { name: c.name, email: c.email, handle, at: msg.date });
+          socials = mergeSocials({ registry: state.socials, homepage, submissions });
+          c.instagram = handle;
+          c.instagramJustReceived = true;
+          result.handles.push({ email: c.email, name: c.name, handle });
+        }
+      }
+    }
     let outgoing = null;
     let escalated = null;
     let row = { email: c.email, name: c.name, subject: msg.subject, said: msg.text.slice(0, 400) };
@@ -256,7 +289,7 @@ export async function runOutreach({
   }
 
   // ── 2. Scheduled emails. ──
-  const plan = planScheduled(roster, state, { now, config });
+  const plan = planScheduled(roster, state, { now, config, socials });
   result.plan = plan;
   for (const s of plan.sends) {
     if (!apply) { result.scheduled.push(s); continue; }
@@ -276,6 +309,7 @@ export async function runOutreach({
         if (threaded && refs.length) rec.threadRefs = [...refs, sent.messageId].slice(-MAX_THREAD_REFS);
       }
       rec.sent = { ...(rec.sent || {}), [s.kind]: s.kind === 'thanks' ? (rec.sent?.thanks || 0) + 1 : at };
+      if (s.kind === 'thanks' && s.extra?.askSocials) rec.sent.socials = at;
       if (s.kind === 'thanks') rec.thanked = [...(rec.thanked || []), ...s.extra.submissionIds];
       rec.lastScheduledAt = at;
       if (s.kind === 'welcome' || !rec.threadMessageId) rec.threadMessageId = sent.messageId;
@@ -321,12 +355,17 @@ export function renderSummary(r, { apply }) {
     lines.push('Sean replied, so the agent picked these creators back up:');
     for (const x of r.resolved) lines.push(`  - ${who(x)}`);
   }
+  if (r.handles?.length) {
+    lines.push('Instagram handles received (Reels will tag them; add to the homepage credit too):');
+    for (const h of r.handles) lines.push(`  - ${who(h)}: @${h.handle} https://www.instagram.com/${h.handle}/`);
+  }
+  if (r.declinedTags?.length) lines.push(`Asked not to be tagged: ${r.declinedTags.map(who).join(', ')}`);
   if (r.optOuts.length) lines.push(`Opted out: ${r.optOuts.map(who).join(', ')}`);
   if (r.failed.length) {
     lines.push('Send FAILED (will retry next run):');
     for (const f of r.failed) lines.push(`  - ${who(f)}: ${f.error}`);
   }
-  const subject = `Creator outreach: ${r.scheduled.length} scheduled · ${r.replies.length} replied · ${r.escalations.length} escalated${r.failed.length ? ` · ${r.failed.length} FAILED` : ''}`;
+  const subject = `Creator outreach: ${r.scheduled.length} scheduled · ${r.replies.length} replied · ${r.escalations.length} escalated${r.handles?.length ? ` · ${r.handles.length} Instagram handle(s)` : ''}${r.failed.length ? ` · ${r.failed.length} FAILED` : ''}`;
   return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') || 'Nothing to do.' };
 }
 
@@ -408,7 +447,7 @@ async function main() {
     });
     const { subject, body } = renderSummary(run, { apply });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length;
+    const acted = run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'creators' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }

@@ -46,10 +46,19 @@ test('eligibleVideos: only approved videos, latest version only', () => {
   assert.deepEqual(eligible.map((s) => s.id), ['a2']);
 });
 
-test('eligibleVideos: a silent video is skipped as UNCHECKED, never treated as clean', () => {
-  const { eligible, skipped } = eligibleVideos([sub('s', { transcript: null })]);
-  assert.equal(eligible.length, 0);
-  assert.match(skipped[0].reason, /unchecked/);
+test('eligibleVideos: a silent video is eligible (Sean reviewed every video by eye, 2026-10-16)', () => {
+  const { eligible } = eligibleVideos([sub('s', { transcript: null })]);
+  assert.deepEqual(eligible.map((s) => s.id), ['s']);
+});
+
+test('chooseHookStyle: a silent video never gets the creator_quote style', () => {
+  for (let i = 0; i < 20; i++) assert.notEqual(chooseHookStyle({ posts: [] }, [], { now: NOW, rand: () => i / 20, exclude: ['creator_quote'] }).style, 'creator_quote');
+});
+
+test('composeCaption: tags the creator by @handle when we have it, first name when they declined', () => {
+  const socials = { 'kaci smith': { handle: 'kaci.makes' } };
+  assert.equal(composeCaption('Hi.', sub('a'), socials), 'Hi.\n\n🎥 @kaci.makes');
+  assert.equal(composeCaption('Hi.', sub('a'), { 'kaci smith': { handle: null, declined: true } }), 'Hi.\n\n🎥 Kaci');
 });
 
 test('eligibleVideos: a transcript with a health claim is skipped and names the words', () => {
