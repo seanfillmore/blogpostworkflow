@@ -221,6 +221,14 @@ DAILY_INBOX_SORTER="40 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/inbox-sorter
 DAILY_AD_TEST_MONITOR="10 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/ad-test-monitor/index.js --notify >> data/reports/scheduler/ad-test-monitor.log 2>&1"
 DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
 
+# Instagram Reels from approved Trybe creator videos (agents/ugc-reels). Three
+# posts a day: 16:20, 20:20 and 01:20 UTC (9:20 AM, 1:20 PM and 6:20 PM Pacific
+# during PDT; an hour earlier in PST). One Reel per run; each run also refreshes
+# insights for earlier posts. The Monday report puts the per-caption-style
+# results in the 13:00 UTC digest.
+DAILY_UGC_REELS="20 16,20,1 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --apply >> data/reports/scheduler/ugc-reels.log 2>&1"
+WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --report --notify >> data/reports/scheduler/ugc-reels.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -610,6 +618,8 @@ $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_AMAZON_ACCOUNT_HEALTH
 # ── Creator program (daily, before the digest) ──
 $DAILY_TRYBE_REVIEW
+$DAILY_UGC_REELS
+$WEEKLY_UGC_REELS_REPORT
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
@@ -675,6 +685,7 @@ echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
+echo "  16:20, 20:20, 01:20 UTC — ugc-reels (one Trybe creator video to Instagram per run; Mon 12:02 report)"
 echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
 echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
 echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
