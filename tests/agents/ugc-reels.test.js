@@ -64,6 +64,7 @@ test('runOnce: a caption that fails the gate twice skips to the next video', asy
   assert.equal(run.attempts.length, 1);
   assert.match(run.attempts[0].error, /gate twice/);
   assert.equal(run.posted.submission.id, 'b');
+  assert.equal(readLedger(ledgerPath).failures[0].kind, 'caption');
 });
 
 test('runOnce: an Instagram refusal is recorded as a failure, not a post', async () => {

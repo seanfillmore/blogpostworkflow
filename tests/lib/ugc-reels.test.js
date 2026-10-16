@@ -62,7 +62,7 @@ test('eligibleVideos: repeated Instagram refusals retire a video', () => {
   const failures = Array.from({ length: MAX_PUBLISH_FAILURES }, () => ({ submission_id: 'f', error: 'x' }));
   const { eligible, skipped } = eligibleVideos([sub('f')], { failures });
   assert.equal(eligible.length, 0);
-  assert.match(skipped[0].reason, /refused/);
+  assert.match(skipped[0].reason, /failed 2 times/);
 });
 
 // ── order ────────────────────────────────────────────────────────────────────
@@ -179,4 +179,17 @@ test('learningsForPrompt: says nothing until there are enough measured posts', (
   assert.equal(learningsForPrompt({ posts: [post('a', { insights: { views: 5 } })] }, NOW), '');
   const posts = Array.from({ length: 6 }, (_, i) => post(`p${i}`, { insights: { views: i * 10, total_interactions: i } }));
   assert.match(learningsForPrompt({ posts }, NOW), /Best:[\s\S]*Weakest:/);
+});
+
+test('misattributedCounts: an ingredient count pinned to the wrong product blocks (live case 2026-10-15)', async () => {
+  const { misattributedCounts } = await import('../../lib/ugc-reels.js');
+  const products = [
+    { name: 'Coconut Moisturizer | 4oz' },
+    { name: 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients' },
+    { name: 'Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free' },
+  ];
+  const bad = 'Our coconut moisturizer and body lotion are made with only 6 clean ingredients and coconut oil.';
+  assert.deepEqual(misattributedCounts(bad, products).map((h) => h.line), ['moisturizer']);
+  assert.deepEqual(misattributedCounts('Our body lotion has only 6 clean ingredients. The moisturizer is rich and thick.', products), []);
+  assert.deepEqual(misattributedCounts('A toothpaste with 5 ingredients.', products).map((h) => h.line), ['toothpaste']);
 });
