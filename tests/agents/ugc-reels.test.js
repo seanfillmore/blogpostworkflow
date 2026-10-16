@@ -120,3 +120,8 @@ test('waitForContainer: ERROR throws with Instagram\'s reason', async () => {
   const fetchImpl = async () => ({ ok: true, status: 200, json: async () => ({ status_code: 'ERROR', status: 'Error: unsupported video' }) });
   await assert.rejects(waitForContainer('c1', { token: 't', fetchImpl }), /ERROR: Error: unsupported video/);
 });
+
+test('the committed exclusion list parses and names the zeeey.xo video', async () => {
+  const { loadExcluded } = await import('../../agents/ugc-reels/index.js');
+  assert.ok(loadExcluded().some((e) => e.trybe_id === 'c2ba0f1d'));
+});

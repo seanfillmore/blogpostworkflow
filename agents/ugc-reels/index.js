@@ -50,6 +50,13 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
 const OUTREACH_STATE_PATH = join(ROOT, 'data', 'creator-outreach', 'state.json');
 const HOMEPAGE_PATH = join(ROOT, 'config', 'homepage.json');
+const CONFIG_PATH = join(ROOT, 'config', 'ugc-reels.json');
+
+/** Sean's exclusions. A config that exists but will not parse throws: posting an excluded video is worse than skipping a run. */
+export function loadExcluded(path = CONFIG_PATH) {
+  if (!existsSync(path)) return [];
+  return JSON.parse(readFileSync(path, 'utf8')).excluded || [];
+}
 
 /**
  * Creator handles from the outreach state + the homepage list. Unreadable =
@@ -172,6 +179,7 @@ export async function runOnce({
   fetchImpl = fetch,
   publish = publishReel,
   socials: socialsIn = null,
+  excluded = loadExcluded(),
   ledgerPath = LEDGER_PATH,
   now = Date.now(),
   log = console.log,
@@ -182,7 +190,7 @@ export async function runOnce({
   if (apply && insights.read) writeLedger(ledger, ledgerPath);
 
   const submissions = await listSubmissions({ status: 'approved', apiKey: trybeKey, fetchImpl });
-  const { eligible, skipped } = eligibleVideos(submissions, ledger);
+  const { eligible, skipped } = eligibleVideos(submissions, ledger, { excluded });
   const socials = socialsIn || loadSocials(submissions, { log });
   const attempts = [];
   let posted = null;

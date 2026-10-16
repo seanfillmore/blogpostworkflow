@@ -202,3 +202,9 @@ test('misattributedCounts: an ingredient count pinned to the wrong product block
   assert.deepEqual(misattributedCounts('Our body lotion has only 6 clean ingredients. The moisturizer is rich and thick.', products), []);
   assert.deepEqual(misattributedCounts('A toothpaste with 5 ingredients.', products).map((h) => h.line), ['toothpaste']);
 });
+
+test('eligibleVideos: a video excluded in config never posts, and the reason is shown', () => {
+  const { eligible, skipped } = eligibleVideos([sub('x'), sub('y')], {}, { excluded: [{ submission_id: 'x', reason: 'Sean: exclude' }] });
+  assert.deepEqual(eligible.map((s) => s.id), ['y']);
+  assert.match(skipped[0].reason, /excluded in config\/ugc-reels\.json: Sean: exclude/);
+});
