@@ -15,7 +15,8 @@
 #   are the only surviving record and cannot be re-fetched. Everything else is one
 #   25 GB droplet whose disk filled once and silently killed cron for four days.
 #
-# THREE SETS, ONE UPLOAD PATH
+# FIVE SETS, ONE UPLOAD PATH (the two newest, `creator-outreach` and
+# `ugc-reels`, are single gitignored state files documented at their blocks below)
 #   `snapshots`  — the tree above.
 #   `post-state` — data/posts/*/state.json, the server-owned half of the post
 #                  metadata split out of meta.json. It is GITIGNORED, so unlike
@@ -63,6 +64,7 @@ readonly PREFIX="snapshots"
 readonly STATE_PREFIX="post-state"   # data/posts/*/state.json — tiny; same retention
 readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR contact book
 readonly OUTREACH_PREFIX="creator-outreach"  # data/creator-outreach/state.json
+readonly REELS_PREFIX="ugc-reels"        # data/ugc-reels/ledger.json
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -203,4 +205,17 @@ if [[ -f "$ROOT/$OUTREACH_STATE" ]]; then
   push_archive "$OUTREACH_PREFIX" "$outreach_archive" 1
 else
   echo "[$OUTREACH_PREFIX] no $OUTREACH_STATE — nothing to back up."
+fi
+
+# ── set 5: Instagram Reels ledger ────────────────────────────────────────────
+# The only record of which creator video was posted when, with which caption
+# and caption style, and what it earned (agents/ugc-reels). Losing it means the
+# agent reposts every video as new and the style experiment starts from zero.
+REELS_LEDGER="data/ugc-reels/ledger.json"
+if [[ -f "$ROOT/$REELS_LEDGER" ]]; then
+  reels_archive="$tmp/${REELS_PREFIX}-${stamp}.tar.gz"
+  tar czf "$reels_archive" -C "$ROOT" "$REELS_LEDGER"
+  push_archive "$REELS_PREFIX" "$reels_archive" 1
+else
+  echo "[$REELS_PREFIX] no $REELS_LEDGER — nothing to back up."
 fi
