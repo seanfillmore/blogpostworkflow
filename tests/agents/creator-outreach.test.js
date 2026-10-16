@@ -221,3 +221,60 @@ test('the summary names emails held by a gate instead of saying "Nothing to do"'
   assert.doesNotMatch(body, /Nothing to do/);
   assert.match(body, /Due but held:\n  - nudge1: Lori Yockim <lori@example.com> \(emailed recently \(48h gap\), eligible 2026-10-04 16:00 UTC\)/);
 });
+
+// ── Instagram handles (2026-10-16) ───────────────────────────────────────────
+
+const approvedSub = { id: 'submission_a', status: 'approved', created_at: '2026-09-10T00:00:00Z', creator: { name: 'Lori Yockim' }, products: [{ name: 'Body Lotion' }] };
+
+test('a creator with an approved video and no handle is asked once for their Instagram', async () => {
+  const state = { creators: { 'lori@example.com': { sent: { welcome: '2026-09-22T00:00:00Z' }, thanked: ['submission_a'] } } };
+  const h = harness({ state });
+  h.opts.loadSubmissions = async () => [approvedSub];
+  h.opts.loadHomepage = () => ({});
+  const r = await runOutreach(h.opts);
+  assert.equal(r.scheduled[0].kind, 'socials');
+  assert.match(h.sent[0].text, /Instagram handle/);
+  assert.ok(state.creators['lori@example.com'].sent.socials);
+  const again = harness({ state });
+  again.opts.loadSubmissions = async () => [approvedSub];
+  again.opts.loadHomepage = () => ({});
+  again.opts.now = NOW + 5 * 86_400_000;
+  const r2 = await runOutreach(again.opts);
+  assert.equal(r2.scheduled.filter((s) => s.kind === 'socials').length, 0, 'asked once');
+});
+
+test('a thank-you for a new approval carries the Instagram ask instead of a second email', async () => {
+  const state = { creators: { 'lori@example.com': { sent: { welcome: '2026-09-22T00:00:00Z' } } } };
+  const h = harness({ state });
+  h.opts.loadSubmissions = async () => [{ ...approvedSub, created_at: '2026-10-01T00:00:00Z' }];
+  h.opts.loadHomepage = () => ({});
+  const r = await runOutreach(h.opts);
+  assert.equal(r.scheduled[0].kind, 'thanks');
+  assert.match(h.sent[0].text, /Instagram handle/);
+  assert.ok(state.creators['lori@example.com'].sent.socials);
+});
+
+test('a reply with a handle is recorded, reported, and stops the ask', async () => {
+  const state = { creators: { 'lori@example.com': { sent: { welcome: '2026-09-22T00:00:00Z', socials: '2026-10-01T00:00:00Z' }, thanked: ['submission_a'] } } };
+  const h = harness({ state, inbox: [inbound('Yes please! It\'s @lori.makes')] });
+  h.opts.loadSubmissions = async () => [approvedSub];
+  h.opts.loadHomepage = () => ({});
+  let facts = null;
+  h.opts.draft = async (c) => { facts = c; return { action: 'reply', reply: 'Thank you, we will tag you!\nSean', reason: '' }; };
+  const r = await runOutreach(h.opts);
+  assert.deepEqual(r.handles.map((x) => x.handle), ['lori.makes']);
+  assert.equal(state.socials.creators['lori yockim'].instagram, 'lori.makes');
+  assert.equal(facts.instagramJustReceived, true);
+  assert.match(renderSummary(r, { apply: true }).body, /@lori\.makes/);
+});
+
+test('"please don\'t tag me" is recorded and never asked again', async () => {
+  const state = { creators: { 'lori@example.com': { sent: { welcome: '2026-09-22T00:00:00Z', socials: '2026-10-01T00:00:00Z' }, thanked: ['submission_a'] } } };
+  const h = harness({ state, inbox: [inbound("Thanks! I'd rather not be tagged though.")] });
+  h.opts.loadSubmissions = async () => [approvedSub];
+  h.opts.loadHomepage = () => ({});
+  const r = await runOutreach(h.opts);
+  assert.equal(r.declinedTags.length, 1);
+  assert.equal(state.creators['lori@example.com'].declinedTag, true);
+  assert.equal(state.socials.creators['lori yockim'].declined, true);
+});

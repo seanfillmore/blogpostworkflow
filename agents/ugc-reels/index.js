@@ -39,6 +39,7 @@ import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
 import { SEO_COPY_COMPLIANCE_RULE } from '../../lib/seo-copy-health-gate.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
 import Anthropic from '../../lib/anthropic.js';
+import { mergeSocials, handleFor, declinedTag } from '../../lib/creator-socials.js';
 import {
   eligibleVideos, pickNext, chooseHookStyle, captionFormatCheck, composeCaption,
   learningsForPrompt, insightsDue, isFinalRead, renderStyleTable, transcriptText,
@@ -47,6 +48,18 @@ import {
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
+const OUTREACH_STATE_PATH = join(ROOT, 'data', 'creator-outreach', 'state.json');
+const HOMEPAGE_PATH = join(ROOT, 'config', 'homepage.json');
+
+/**
+ * Creator handles from the outreach state + the homepage list. Unreadable =
+ * an empty list (credit falls back to first names), said in the log; a Reel
+ * without a tag is still a Reel.
+ */
+export function loadSocials(submissions, { log = console.log, outreachPath = OUTREACH_STATE_PATH, homepagePath = HOMEPAGE_PATH } = {}) {
+  const read = (p) => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch (err) { if (existsSync(p)) log(`  ${p} unreadable: ${err.message}`); return {}; } };
+  return mergeSocials({ registry: read(outreachPath).socials || {}, homepage: read(homepagePath), submissions });
+}
 
 function loadEnv(root = ROOT) {
   try {
@@ -87,7 +100,7 @@ function parseCaptionJson(text) {
 
 export function buildPrompt({ submission, style, previous, learnings, constraint }) {
   const products = (submission.products || []).map((p) => `- ${p.name}`).join('\n');
-  const transcript = transcriptText(submission);
+  const transcript = transcriptText(submission) || '(no speech: this is a silent video, so do not quote or paraphrase anything as said by the creator)';
   return `You write Instagram Reel captions for Real Skin Care (@realskincare_com), a small US brand of coconut-oil body care and personal care products.
 
 This Reel is a short video made by a customer-creator named ${firstName(submission.creator?.name) || 'a creator'}. It shows these products (each line is one product; a fact in a product's name belongs to THAT product only):
@@ -158,6 +171,7 @@ export async function runOnce({
   client,
   fetchImpl = fetch,
   publish = publishReel,
+  socials: socialsIn = null,
   ledgerPath = LEDGER_PATH,
   now = Date.now(),
   log = console.log,
@@ -169,6 +183,7 @@ export async function runOnce({
 
   const submissions = await listSubmissions({ status: 'approved', apiKey: trybeKey, fetchImpl });
   const { eligible, skipped } = eligibleVideos(submissions, ledger);
+  const socials = socialsIn || loadSocials(submissions, { log });
   const attempts = [];
   let posted = null;
   const tried = new Set();
@@ -179,7 +194,7 @@ export async function runOnce({
     if (!next.submission) { attempts.push({ skipped: next.reason }); break; }
     const s = next.submission;
     tried.add(s.id);
-    const { style, why } = chooseHookStyle(ledger, next.previous, { now });
+    const { style, why } = chooseHookStyle(ledger, next.previous, { now, exclude: transcriptText(s) ? [] : ['creator_quote'] });
     log(`  candidate: ${s.trybe_id || s.id} · ${productKey(s)} · ${s.creator?.name} · cycle ${next.cycle} · style ${style} (${why})`);
 
     const gate = await writeCaption({ client, submission: s, style, previous: next.previous, ledger, now });
@@ -192,9 +207,10 @@ export async function runOnce({
       continue;
     }
     const body = gate.proposed.caption.trim();
-    const caption = composeCaption(body, s);
+    const caption = composeCaption(body, s, socials);
+    const tagged = declinedTag(socials, s.creator?.name) ? null : handleFor(socials, s.creator?.name);
     if (!apply) {
-      posted = { submission: s, cycle: next.cycle, style, why, body, caption, dryRun: true };
+      posted = { submission: s, cycle: next.cycle, style, why, body, caption, tagged, dryRun: true };
       break;
     }
     try {
@@ -203,6 +219,7 @@ export async function runOnce({
         submission_id: s.id,
         trybe_id: s.trybe_id || null,
         creator: firstName(s.creator?.name),
+        tagged,
         product_key: productKey(s),
         cycle: next.cycle,
         hook_style: style,
