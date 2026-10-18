@@ -13,6 +13,28 @@ description: Use when deciding whether and how to invest in being surfaced by AI
 
 **Fit here (9/10):** This is the single most clarifying idea in the source material for RSC, because it explains a result already sitting in the data. On-site GEO here is genuinely good — answer-first rewriting, `citation-finder`, a curated `/llms.txt` served through `templates/llms.txt.liquid`, breadcrumb schema — and the measured mention rate is still ~2% (4 of 180 prompt×engine cells), almost entirely from Google AI Overviews, with roughly 0% on standalone ChatGPT, Perplexity, Gemini and Claude. Under one number that reads as failure of the on-site work and invites more of it. Under the ladder it reads correctly: the citation rungs are being earned and the recommendation rung is not, because RSC has thin third-party corroboration in a category dominated by national incumbents. `agents/pr-target-finder` already exists and targets exactly that gap — the ladder is what makes it obvious that the PR agent, not another on-site pass, is the instrument. Costs nothing to adopt: it is a change to how `data/reports/ai-citations/` is read and reported. Held at 9 rather than 10 only because the framework's supporting studies are all B2B software.
 
+**THE CITED RUNG IS NOW MEASURED SEPARATELY, AND IT IS 83%, NOT 2% — the ladder predicted exactly this and the two numbers do not conflict (2026-09-07).** `npm run measure-ai-overview-citations` (`scripts/measure-ai-overview-citations.mjs`) ran the top **30 GSC questions × 3 runs = 90 live SERP pulls, $0.25**, and asked the one question `ai-citation-tracker` structurally cannot: *does Google's AI Overview cite `realskincare.com` for a question we already earn impressions for?*
+
+| | commercial (25 q) | withheld: diy / competitor-fact (5 q) |
+|---|--:|--:|
+| queries with an overview at all | 24 | 5 |
+| **cited, by query** | **83.3% (20/24)** | **0.0% (0/5)** |
+| **cited, by run** | **80.6% (54/67)** | **0.0% (0/15)** |
+
+**`realskincare.com` is the most-cited domain in the entire sample — 32 overviews, ahead of `reddit.com` at 26.**
+
+**Read the two numbers as two RUNGS, not as a contradiction, and do not quote either without saying which.** They differ on surface *and* on population, and the population difference is the larger one: the tracker runs 75 **branded and category shortlisting prompts** ("best natural deodorant") at n=1 against standalone LLM APIs — that is the **recommended** rung. This runs **informational questions this store already ranks for** against Google AI Overviews — the **cited** rung. A brand can be the single most-cited source on "can you use coconut oil as deodorant" and still appear on nobody's shortlist for "best natural deodorant", and that is precisely what the measurement says is happening.
+
+**What it changes, and what it does not.** It does NOT overturn the trust-rung diagnosis — it sharpens it, and narrows where the remaining work is. Google's own AI surfaces already retrieve and cite this site heavily; the deficit is standalone assistants and the shortlisting question. So a proposal to fix AI visibility with more on-site GEO now has a specific number to answer to on the Google surface, and `agents/pr-target-finder`'s off-site motion keeps the rest.
+
+**Three findings inside it worth keeping.**
+
+1. **Citation is NOT a function of organic rank.** Cited 3/3 on "is coconut oil a good moisturizer", "does coconut oil help with stretch marks", "is antibacterial soap good for body odor" and "is body wash antibacterial" — **while absent from the organic top 10 on every one of them**. And the inverse: "are there cinnamon toothpastes without artificial flavors?" ranks **2nd organically** and produced no readable overview in 3 runs. The two are recorded side by side and neither is derived from the other.
+2. **The Merchant-Center feed's withheld classes score 0/15, which independently validates `isUnsuitableQuestion`.** Competitor-fact overviews cite the competitor (`sensodyne.com` 6, `colgate.com` 3, `armandhammer.com` 3) and DIY overviews cite recipe blogs. The questions that feed refuses to answer are exactly the ones we are never cited on anyway — the filter is not costing visibility.
+3. **A rate needs its denominator or it is not a measurement.** The first run of this script reported **100% (32/32)** and was wrong-by-omission: 41 of 90 runs had come back with `asynchronous_ai_overview: true` and no content, and they were excluded — but they were **not random**, they were 14 queries failing on all three rounds, concentrated in toothpaste and long-tail phrasings. Passing `load_async_ai_overview: true` recovered them and the honest rate fell to 83%. See `lib/ai-overview-citations.js` for that trap and the two others the live API sets.
+
+*Measured by `scripts/measure-ai-overview-citations.mjs`; a single pull is a non-deterministic sample, so re-measure before quoting this months from now.*
+
 *Source: Corey Haines — "marketingskills / ai-seo" (github.com/coreyhaines31/marketingskills, references/citations-vs-recommendations.md)*
 
 ## Before commissioning any AI-visibility work, split the complaint into one of three causes — technical (we cannot be crawled or parsed), comprehension (we are read but described inaccurately or vaguely), or trust (we are understood and simply not selected) — because each has a different fix and only one of them is cheap.
