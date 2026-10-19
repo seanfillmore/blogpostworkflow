@@ -24,6 +24,8 @@ function harness({ inbox = [], draft, state = {}, sentFolder = [] } = {}) {
     readSent: async () => sentFolder,
     send: async (m) => { sent.push(m); return { messageId: `<out${sent.length}@x>` }; },
     draft: draft || (async () => ({ action: 'reply', reply: 'It shipped with USPS and was delivered on the 26th.\nSean', reason: '' })),
+    writeThanks: async () => { throw new Error('no model in tests'); },
+    loadReels: () => null,
     escalate: async (c, msg, row) => { escalations.push(row); },
     log: () => {},
   };
@@ -277,4 +279,54 @@ test('"please don\'t tag me" is recorded and never asked again', async () => {
   assert.equal(r.declinedTags.length, 1);
   assert.equal(state.creators['lori@example.com'].declinedTag, true);
   assert.equal(state.socials.creators['lori yockim'].declined, true);
+});
+
+test('a second approval gets a different note, threaded under the first thank-you', async () => {
+  const state = { creators: { 'lori@example.com': { sent: { welcome: '2026-09-22T00:00:00Z', socials: '2026-09-30T00:00:00Z' }, declinedTag: true } } };
+  const notes = [
+    { subject: 'Your body lotion video', body: 'Your body lotion video is approved and it came out really well. Thank you for making it, Lori.' },
+    { subject: 'Another one', body: 'And another! The soap video is approved too, and I love seeing these come in from you. Thanks again.' },
+  ];
+  const sub = (id, product, created) => ({ id, status: 'approved', created_at: created, creator: { name: 'Lori Yockim' }, products: [{ name: product }] });
+  const h = harness({ state });
+  h.opts.loadSubmissions = async () => [sub('a1', 'Body Lotion', '2026-10-01T00:00:00Z')];
+  h.opts.loadHomepage = () => ({});
+  h.opts.writeThanks = async () => JSON.stringify(notes[0]);
+  await runOutreach(h.opts);
+  assert.equal(h.sent[0].subject, 'Thank you for your video!');
+  assert.equal(h.sent[0].inReplyTo, undefined);
+
+  const prompts = [];
+  const h2 = harness({ state });
+  h2.opts.now = NOW + 3 * 86_400_000;
+  h2.opts.loadSubmissions = async () => [sub('a1', 'Body Lotion', '2026-10-01T00:00:00Z'), sub('a2', 'Moisturizing Coconut Soap | 3.4oz', '2026-10-04T00:00:00Z')];
+  h2.opts.loadHomepage = () => ({});
+  h2.opts.writeThanks = async (p) => { prompts.push(p); return JSON.stringify(notes[1]); };
+  await runOutreach(h2.opts);
+  assert.equal(h2.sent[0].subject, 'Re: Thank you for your video!');
+  assert.equal(h2.sent[0].inReplyTo, '<out1@x>');
+  assert.match(h2.sent[0].text, /And another!/);
+  assert.match(h2.sent[0].text, /> Your body lotion video is approved/, 'quotes the earlier thank-you');
+  assert.match(prompts[0], /Your body lotion video is approved/, 'the model sees what we said before');
+  assert.equal(state.creators['lori@example.com'].thanksHistory.length, 2);
+});
+
+test('a thank-you that cannot be written fresh is held and retried at most once a day', async () => {
+  const sub = { id: 'b9', status: 'approved', created_at: '2026-10-01T00:00:00Z', creator: { name: 'Lori Yockim' }, products: [{ name: 'Body Lotion' }] };
+  const used = Array.from({ length: 4 }, (_, v) => ({ source: `variant:${v}`, subject: `s${v}`, body: `note ${v}` }));
+  const state = { creators: { 'lori@example.com': { sent: { welcome: 'x', socials: 'x', thanks: 4 }, thanksHistory: used, declinedTag: true } } };
+  let calls = 0;
+  const h = harness({ state });
+  h.opts.loadSubmissions = async () => [sub];
+  h.opts.writeThanks = async () => { calls += 1; return 'garbage'; };
+  const r = await runOutreach(h.opts);
+  assert.equal(h.sent.length, 0);
+  assert.equal(r.heldThanks.length, 1);
+  assert.match(renderSummary(r, { apply: true }).body, /HELD/);
+  const again = harness({ state });
+  again.opts.loadSubmissions = async () => [sub];
+  again.opts.writeThanks = async () => { calls += 1; return 'garbage'; };
+  again.opts.now = NOW + 60 * 60_000;
+  await runOutreach(again.opts);
+  assert.equal(calls, 2, 'no model calls on the second run the same day');
 });
