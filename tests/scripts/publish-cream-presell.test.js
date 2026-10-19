@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { guardVerdict, FILES, PAGE } from '../../scripts/presell/publish-cream-presell.mjs';
+import { guardVerdict, FILES, PAGE, LIVE_BASE_REF } from '../../scripts/presell/publish-cream-presell.mjs';
 
 test('new file: absent → write, equal → already, anything else → refuse', () => {
   assert.equal(guardVerdict({ current: undefined, before: null, target: 'N' }), 'write');
@@ -15,12 +15,14 @@ test('existing file: only the known before (or the new content) may be overwritt
   assert.equal(guardVerdict({ current: undefined, before: 'B', target: 'N' }), 'refuse');
 });
 
-test('ships exactly the five files and the noindex page', () => {
+test('ships exactly the four pre-sell files over their origin/main versions, never the product template', () => {
   assert.deepEqual(FILES.map((f) => f.key).sort(), [
     'assets/presell-buy.js', 'assets/presell.css', 'sections/presell-listicle.liquid',
-    'templates/page.presell-cream.json', 'templates/product.landing-page-cream.json',
+    'templates/page.presell-cream.json',
   ]);
-  assert.equal(FILES.filter((f) => f.before).length, 1);
+  // Each file is live now, so its expected "before" is the version merged in PR #1087.
+  for (const f of FILES) assert.equal(f.before, LIVE_BASE_REF, f.key);
+  assert.ok(!FILES.some((f) => f.key.includes('product.landing-page-cream')));
   assert.equal(PAGE.template_suffix, 'presell-cream');
   assert.equal(PAGE.handle, 'coconut-body-cream');
 });

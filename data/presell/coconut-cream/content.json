@@ -4,7 +4,13 @@
     "handle": "coconut-moisturizer",
     "defaultVariantId": "44179428475050",
     "defaultScent": "Coconut Breeze",
-    "price": "$28"
+    "price": "$28",
+    "packHandle": "coconut-moisturizer-4-pack",
+    "packCount": 4,
+    "quantityToken": "2",
+    "totalToken": "$56",
+    "packPriceToken": "$84",
+    "packUnitToken": "$21"
   },
   "eyebrow": "Winter skin",
   "headline": "5 reasons people are switching to a body cream with a 7-ingredient base this winter",
@@ -48,7 +54,7 @@
       "body": "Coconut Breeze gets its light coconut scent from organic coconut oil extract. Lavender & Rose, Calming Lavender and Rose Petal use organic essential oils, and Pure Unscented has nothing added at all. No synthetic fragrance and no parabens.",
       "media": {
         "kind": "image",
-        "key": "jar-open"
+        "key": "breeze"
       }
     },
     {
@@ -149,11 +155,25 @@
   },
   "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back.",
   "buyBox": {
+    "image": {
+      "key": "jar-open"
+    },
     "title": "Coconut Breeze Moisturizing Body Cream, 4oz",
     "priceNote": "$28 for one jar",
+    "priceNoteMulti": "$56 for 2 jars",
     "shipping": "Ships in 1-2 business days.",
     "cta": "Get Coconut Breeze, $28",
-    "scentLabel": "Scent"
+    "ctaMulti": "Get 2 jars of Coconut Breeze, $56",
+    "scentLabel": "Scent",
+    "quantityLabel": "Quantity",
+    "quantityLess": "One fewer jar",
+    "quantityMore": "One more jar",
+    "maxQuantity": 3,
+    "pack": {
+      "headline": "Buy 3, get the 4th free",
+      "line": "4 jars for $84 ($21 a jar)",
+      "cta": "Get 4 jars for $84"
+    }
   },
   "videos": {
     "video-label": {
@@ -220,6 +240,17 @@
       "source": "shopify",
       "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg",
       "alt": "A customer smoothing body cream onto her arm"
+    },
+    "breeze": {
+      "source": "trybe",
+      "submissionId": "submission_f21e1811-6717-4957-8a95-217673f29fc3",
+      "creator": "Everitt Moder",
+      "note": "Approved Trybe static (Coconut Moisturizer), used whole; its own overlay text is listed in imageText and gated with the copy",
+      "imageText": [
+        "A breeze of coconut",
+        "Deep moisture. Zero junk."
+      ],
+      "alt": "Coconut Breeze body cream jar on a beach with palm trees and coconut pieces"
     }
   }
 }

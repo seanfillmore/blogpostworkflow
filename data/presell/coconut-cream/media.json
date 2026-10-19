@@ -31,18 +31,33 @@
     "kind": "image",
     "fileId": "gid://shopify/MediaImage/46120705196202",
     "bytes": 168685,
-    "signature": "{\"id\":\"submission_bf281134-b6ee-45be-bad1-78aad2a32715\",\"trim\":null,\"crop\":{\"y\":560,\"h\":1000}}"
+    "signature": "{\"id\":\"submission_bf281134-b6ee-45be-bad1-78aad2a32715\",\"trim\":null,\"crop\":{\"y\":560,\"h\":1000}}",
+    "width": 941,
+    "height": 1000
   },
   "jar-open": {
     "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-jar-open.jpg?v=1792447624",
     "kind": "image",
     "fileId": "gid://shopify/MediaImage/46120705261738",
     "bytes": 170229,
-    "signature": "{\"id\":\"submission_43cfc24d-734a-4358-9fac-6a107054c6d1\",\"trim\":null,\"crop\":{\"y\":430,\"h\":1500}}"
+    "signature": "{\"id\":\"submission_43cfc24d-734a-4358-9fac-6a107054c6d1\",\"trim\":null,\"crop\":{\"y\":430,\"h\":1500}}",
+    "width": 1080,
+    "height": 1446
   },
   "in-use": {
     "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg",
     "kind": "image",
+    "width": 1206,
+    "height": 1206,
     "signature": "{\"id\":\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg\",\"trim\":null,\"crop\":null}"
+  },
+  "breeze": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-breeze.jpg?v=1792452630",
+    "kind": "image",
+    "fileId": "gid://shopify/MediaImage/46121140551850",
+    "bytes": 184472,
+    "width": 1080,
+    "height": 1080,
+    "signature": "{\"id\":\"submission_f21e1811-6717-4957-8a95-217673f29fc3\",\"trim\":null,\"crop\":null}"
   }
 }

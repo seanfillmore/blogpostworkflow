@@ -84,6 +84,12 @@ function expectedSection() {
       default_variant_id: content.product.defaultVariantId,
       default_scent: content.product.defaultScent,
       price_token: content.product.price,
+      pack_handle: content.product.packHandle,
+      pack_count: content.product.packCount,
+      quantity_token: content.product.quantityToken,
+      total_token: content.product.totalToken,
+      pack_price_token: content.product.packPriceToken,
+      pack_unit_token: content.product.packUnitToken,
     },
     blocks: [
       { type: 'reason', settings: reasonSettings(r1) },
@@ -108,10 +114,23 @@ function expectedSection() {
       {
         type: 'buy-box',
         settings: {
+          image_url: media[content.buyBox.image.key].url,
+          image_alt: content.images[content.buyBox.image.key].alt,
+          image_width: media[content.buyBox.image.key].width,
+          image_height: media[content.buyBox.image.key].height,
           title: content.buyBox.title,
           price_note: content.buyBox.priceNote,
+          price_note_multi: content.buyBox.priceNoteMulti,
           scent_label: content.buyBox.scentLabel,
+          quantity_label: content.buyBox.quantityLabel,
+          quantity_less: content.buyBox.quantityLess,
+          quantity_more: content.buyBox.quantityMore,
+          quantity_max: content.buyBox.maxQuantity,
           cta: content.buyBox.cta,
+          cta_multi: content.buyBox.ctaMulti,
+          pack_headline: content.buyBox.pack.headline,
+          pack_line: content.buyBox.pack.line,
+          pack_cta: content.buyBox.pack.cta,
           shipping: content.buyBox.shipping,
           guarantee: content.guarantee,
         },
@@ -201,7 +220,8 @@ test('buy-box markup contract Task 3 binds to', () => {
   assert.match(l, /<a[^>]*data-presell-sticky[^>]*href="#presell-buy"/);
   assert.match(l, /<form[^>]*data-price-token="[^"]*"[^>]*data-scent-token="/);
   const labelled = l.match(/<[^>]*data-presell-label[^>]*>/g) || [];
-  assert.equal(labelled.length, 4);
+  // mid-page CTA, buy title, price line, buy button, sticky bar, pack line, pack button
+  assert.equal(labelled.length, 7);
   for (const tag of labelled) assert.match(tag, /data-presell-template="{{ s\.\w+ \| escape }}"/);
   assert.match(l, /<script src="{{ 'presell-buy\.js' \| asset_url }}" defer><\/script>/);
   assert.match(l, /money_without_trailing_zeros/, 'price is live from the product');
@@ -337,4 +357,73 @@ test('video posters are requested at width=640, not full size (they load before 
   const tags = markup().match(/<video\b[^>]*>/g) || [];
   for (const t of tags) assert.match(t, /poster="{{ s\.poster_url }}{{ poster_join }}width=640"/, t);
   assert.match(liquid(), /assign poster_join = '&'/);
+});
+
+// ── Buy box: open-jar image, quantity stepper, buy-3-get-1 banner (2026-10-19) ──
+
+const buyBoxMarkup = () => markup().match(/{%-?\s*when 'buy-box'\s*-?%}([\s\S]*?){%-?\s*endcase\s*-?%}/)[1];
+
+test('the buy-box image is the open jar; reason 4 is the breeze image', () => {
+  assert.equal(content.buyBox.image.key, 'jar-open');
+  const bb = blocks().find((b) => b.type === 'buy-box');
+  assert.match(bb.settings.image_url, /presell-cream-jar-open\.jpg/);
+  assert.ok(Number.isInteger(bb.settings.image_width) && Number.isInteger(bb.settings.image_height));
+  assert.equal(content.reasons[3].media.key, 'breeze');
+  assert.equal(content.reasons[3].media.kind, 'image');
+  const r4 = blocks().filter((b) => b.type === 'reason')[3];
+  assert.match(r4.settings.media_url, /presell-cream-breeze\.jpg/);
+  assert.match(content.images.breeze.submissionId, /^submission_f21e1811-/);
+});
+
+test('the buy-box image is rendered from settings with width/height, lazy, alt', () => {
+  const bb = buyBoxMarkup();
+  const img = bb.match(/<img\b[^>]*class="presell-buy-img"[^>]*>/);
+  assert.ok(img, 'buy image');
+  for (const a of ['s.image_url', 'width="{{ s.image_width }}"', 'height="{{ s.image_height }}"', 'loading="lazy"', 'alt="{{ s.image_alt | escape }}"']) {
+    assert.ok(img[0].includes(a), `${a} in ${img[0]}`);
+  }
+  assert.ok(!/featured_image/.test(bb), 'no longer the variant featured image');
+});
+
+test('the 4-pack banner sits at the TOP of the buy box and is honesty-gated', () => {
+  const bb = buyBoxMarkup();
+  const banner = bb.indexOf('data-presell-pack');
+  assert.ok(banner > 0, 'banner markup');
+  assert.ok(banner < bb.indexOf('presell-buy-img'), 'banner above the image');
+  assert.ok(banner < bb.indexOf('<form'), 'banner above the form');
+  assert.match(bb, /<button[^>]*type="button"[^>]*data-presell-pack-buy/);
+  assert.match(bb, /data-presell-pack-error[^>]*hidden/);
+  const l = liquid();
+  assert.match(l, /all_products\[section\.settings\.pack_handle\]/);
+  assert.match(l, /times: 3/, 'pack price compared with three singles');
+  for (const a of ['data-pack-id', 'data-pack-price', 'data-pack-unit', 'data-pack-cents', 'data-price-cents']) {
+    assert.ok(bb.includes(a), a);
+  }
+  // Pack prices are live: no literal dollar amount in the markup.
+  assert.ok(!/\$\d/.test(bb.replace(/{[{%][\s\S]*?[}%]}/g, '')), 'hardcoded price in the buy box');
+});
+
+test('the quantity stepper is accessible and bounded', () => {
+  const bb = buyBoxMarkup();
+  const dec = bb.match(/<button[^>]*data-presell-qty-dec[^>]*>/);
+  const inc = bb.match(/<button[^>]*data-presell-qty-inc[^>]*>/);
+  assert.ok(dec && inc);
+  for (const b of [dec[0], inc[0]]) {
+    assert.match(b, /type="button"/);
+    assert.match(b, /aria-label="{{ s\.quantity_(less|more) \| escape }}"/);
+  }
+  assert.match(dec[0], /disabled/, 'starts at the minimum');
+  assert.match(bb, /<output[^>]*data-presell-qty-value[^>]*aria-live="polite"/);
+  assert.match(bb, /data-presell-qty[^-][^>]*data-max="{{ s\.quantity_max }}"/);
+  assert.match(bb, /<input type="hidden" name="quantity" value="1"/);
+  assert.equal(content.buyBox.maxQuantity, 3);
+});
+
+test('media.json records dimensions for the buy-box and breeze images', () => {
+  for (const k of ['jar-open', 'breeze']) {
+    assert.ok(Number.isInteger(media[k].width) && Number.isInteger(media[k].height), k);
+    assert.match(media[k].url, /^https:\/\/cdn\.shopify\.com\//);
+  }
+  assert.ok(media.breeze.width <= 1200);
+  assert.match(media.breeze.signature, /submission_f21e1811-/);
 });

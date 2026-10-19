@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ship the Coconut Moisturizer pre-sell page: five theme files and one Shopify page.
+ * Ship the Coconut Moisturizer pre-sell page: four theme files and one Shopify page.
  *
  *   node scripts/presell/publish-cream-presell.mjs --theme <preview id> [--apply]
  *   node scripts/presell/publish-cream-presell.mjs --live [--apply]
@@ -12,8 +12,8 @@
  * THEME FILES are read from git HEAD (`git show HEAD:theme/<key>`), never from the
  * working tree, so what ships is exactly what was reviewed, `\/` escaping intact.
  * Each write is GUARDED: the target theme's current copy must be either
- *   - the expected "before" (absent for the four new files; the pre-change cream
- *     template at BASELINE_REF for product.landing-page-cream.json), or
+ *   - the expected "before": the version merged to main (LIVE_BASE_REF,
+ *     `git show origin/main:theme/<key>`), which is what PR #1087 put live, or
  *   - already the new content (a re-run is a no-op).
  *   - an earlier version of the file committed on this branch (a previous run of
  *     this script shipped it; a fix is being redeployed).
@@ -49,15 +49,18 @@ export const PAGE = {
   template_suffix: 'presell-cream',
 };
 
-/** The commit before Task 4 changed the cream product template. */
-export const BASELINE_REF = 'a1a6a181';
+/**
+ * The page is live (PR #1087), so each file's expected "before" is the version on
+ * main. The product template (product.landing-page-cream.json) shipped with that
+ * PR and is deliberately NOT in this list: this script never writes it again.
+ */
+export const LIVE_BASE_REF = 'origin/main';
 
 export const FILES = [
-  { key: 'sections/presell-listicle.liquid', before: null },
-  { key: 'assets/presell.css', before: null },
-  { key: 'assets/presell-buy.js', before: null },
-  { key: 'templates/page.presell-cream.json', before: null },
-  { key: 'templates/product.landing-page-cream.json', before: BASELINE_REF },
+  { key: 'sections/presell-listicle.liquid', before: LIVE_BASE_REF },
+  { key: 'assets/presell.css', before: LIVE_BASE_REF },
+  { key: 'assets/presell-buy.js', before: LIVE_BASE_REF },
+  { key: 'templates/page.presell-cream.json', before: LIVE_BASE_REF },
 ];
 
 function gitShow(ref, key) {
