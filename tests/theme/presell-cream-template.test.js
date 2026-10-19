@@ -324,3 +324,11 @@ test(`the video look-ahead margin is at most ${MAX_VIDEO_LOOKAHEAD_PX}px`, () =>
   assert.ok(margin.split(/\s+/).every((v) => /^-?\d+(\.\d+)?px$/.test(v)), `rootMargin in px: ${margin}`);
   assert.ok(Math.max(...px) <= MAX_VIDEO_LOOKAHEAD_PX, `rootMargin ${margin}`);
 });
+
+test('schema header settings fit Shopify\'s 50-character limit (the API rejects the asset otherwise)', () => {
+  const sch = schema();
+  const all = [...(sch.settings || []), ...(sch.blocks || []).flatMap((b) => b.settings || [])];
+  for (const s of all.filter((x) => x.type === 'header')) {
+    assert.ok(s.content.length <= 50, `header "${s.content}" is ${s.content.length} chars`);
+  }
+});
