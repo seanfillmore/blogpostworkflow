@@ -56,3 +56,7 @@ test('unknown, missing, or sold-out variant leaves the default', () => {
 test('template keeps \\/ escaping', () => {
   assert.ok(raw.includes('\\/'));
 });
+
+test('every / in the template is written \\/ (Shopify stores it that way; a bare / never reads back byte-equal)', () => {
+  assert.ok(!/(^|[^\\])\//.test(raw.replace(/\\\\/g, '')), 'unescaped / in product.landing-page-cream.json');
+});
