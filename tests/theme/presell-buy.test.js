@@ -99,3 +99,15 @@ test('pageshow persisted re-enables the button and hides the error', async () =>
   assert.equal(errorEl.hidden, true);
   await new Promise((r) => setTimeout(r, 5));
 });
+
+test('bind drops the form action so the cart-drawer app (OCU) does not hijack the add', () => {
+  const mk = () => ({ listeners: {}, addEventListener(n, f) { this.listeners[n] = f; } });
+  const form = mk(), select = mk(), win = mk();
+  select.options = [{ getAttribute: () => 'x', text: 'x' }]; select.selectedIndex = 0;
+  const attrs = { action: '/cart/add' };
+  form.getAttribute = (n) => attrs[n] ?? '';
+  form.removeAttribute = (n) => { delete attrs[n]; };
+  form.querySelector = (q) => (q.includes('select') ? select : q.includes('submit') ? { disabled: false } : { hidden: true });
+  bind({ querySelector: () => form, querySelectorAll: () => [] }, win);
+  assert.equal('action' in attrs, false);
+});

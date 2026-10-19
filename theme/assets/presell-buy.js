@@ -48,6 +48,12 @@
     win = win || window;
     var form = doc.querySelector('form[data-presell-buy]');
     if (!form) return;
+    // The cart-drawer app (Zipify OCU) captures clicks on any form whose action
+    // is /cart/add, adds the item itself and opens its drawer, so this handler
+    // never runs and the shopper never reaches checkout (seen on the preview
+    // theme 2026-10-19). The action is only the no-JS fallback; with JS bound it
+    // has done its job.
+    if (form.removeAttribute) form.removeAttribute('action');
     var select = form.querySelector('select[name=id]');
     var button = form.querySelector('[data-presell-submit]');
     var errorEl = form.querySelector('[data-presell-error]');
