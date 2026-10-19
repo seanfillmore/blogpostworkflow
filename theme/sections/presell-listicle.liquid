@@ -24,7 +24,9 @@
     available scent, the default variant selected), button[type=submit]
     [data-presell-submit], p[data-presell-error][hidden]; and the sticky phone
     bar a[data-presell-sticky][href="#presell-buy"]. Options carry data-scent and
-    data-price so the script can relabel the buttons on a scent change.
+    data-price so the script can relabel the buttons on a scent change. Each
+    data-presell-label element carries data-presell-template (the unreplaced
+    copy) and the form carries data-price-token / data-scent-token.
 
   No Recurpay widget: this is a page, not a product template, so the app embed's
   product-form injection has no product to attach to. presell.css hides its
@@ -162,7 +164,7 @@
 
       {%- when 'cta' -%}
         <p class="presell-cta-wrap" {{ block.shopify_attributes }}>
-          <a class="presell-button" href="#presell-buy" data-presell-label>{{ s.label | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
+          <a class="presell-button" href="#presell-buy" data-presell-label data-presell-template="{{ s.label | escape }}">{{ s.label | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
         </p>
 
       {%- when 'notes' -%}
@@ -182,9 +184,9 @@
               width="350" height="{{ 350 | divided_by: img.aspect_ratio | round }}"
               alt="{{ img.alt | default: s.title | escape }}" loading="lazy" decoding="async">
           {%- endif -%}
-          <h2 class="presell-buy-title" data-presell-label>{{ s.title | escape | replace: scent_token, live_scent }}</h2>
+          <h2 class="presell-buy-title" data-presell-label data-presell-template="{{ s.title | escape }}">{{ s.title | escape | replace: scent_token, live_scent }}</h2>
           <p class="presell-buy-price">{{ s.price_note | escape | replace: price_token, live_price }}</p>
-          <form data-presell-buy id="presell-buy" class="presell-form" action="{{ routes.cart_add_url }}" method="post">
+          <form data-presell-buy data-price-token="{{ price_token | escape }}" data-scent-token="{{ scent_token | escape }}" id="presell-buy" class="presell-form" action="{{ routes.cart_add_url }}" method="post">
             <label class="presell-select-label" for="presell-scent">{{ s.scent_label | escape }}</label>
             <select id="presell-scent" name="id" class="presell-select">
               {%- for v in p.variants -%}
@@ -194,13 +196,13 @@
               {%- endfor -%}
             </select>
             <input type="hidden" name="quantity" value="1">
-            <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label>{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
+            <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label data-presell-template="{{ s.cta | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
             <p class="presell-error" data-presell-error hidden role="alert"></p>
           </form>
           <p class="presell-buy-meta">{{ s.shipping | escape }}</p>
           <p class="presell-guarantee">{{ s.guarantee | escape }}</p>
         </section>
-        <a class="presell-sticky presell-button" data-presell-sticky href="#presell-buy" aria-hidden="true" tabindex="-1" data-presell-label>{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
+        <a class="presell-sticky presell-button" data-presell-sticky href="#presell-buy" aria-hidden="true" tabindex="-1" data-presell-label data-presell-template="{{ s.cta | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
 
     {%- endcase -%}
   {%- endfor -%}

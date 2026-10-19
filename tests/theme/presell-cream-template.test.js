@@ -199,6 +199,10 @@ test('buy-box markup contract Task 3 binds to', () => {
   assert.match(l, /<button[^>]*type="submit"[^>]*data-presell-submit/);
   assert.match(l, /<p[^>]*data-presell-error[^>]*hidden/);
   assert.match(l, /<a[^>]*data-presell-sticky[^>]*href="#presell-buy"/);
+  assert.match(l, /<form[^>]*data-price-token="[^"]*"[^>]*data-scent-token="/);
+  const labelled = l.match(/<[^>]*data-presell-label[^>]*>/g) || [];
+  assert.equal(labelled.length, 4);
+  for (const tag of labelled) assert.match(tag, /data-presell-template="{{ s\.\w+ \| escape }}"/);
   assert.match(l, /<script src="{{ 'presell-buy\.js' \| asset_url }}" defer><\/script>/);
   assert.match(l, /money_without_trailing_zeros/, 'price is live from the product');
   const code = l.replace(/{%-?\s*comment\s*-?%}[\s\S]*?{%-?\s*endcomment\s*-?%}/g, '');
