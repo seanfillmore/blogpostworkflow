@@ -1,0 +1,347 @@
+{%- comment -%}
+  Pre-sell listicle: the page Meta ad traffic for the Coconut Moisturizer lands
+  on (templates/page.presell-cream.json). Strangers on phones, one job: carry the
+  ad's promise (7-ingredient base vs a 34-ingredient drugstore label) through to
+  a single $28 jar.
+
+  COPY IS NOT AUTHORED HERE. Every string comes from section/block settings,
+  which scripts/presell/build-cream-template.mjs renders from
+  data/presell/coconut-cream/content.json, the file the copy gate
+  (tests/theme/presell-cream-copy.test.js) checks. Keep literal copy in this file
+  to the few words tests/theme/presell-cream-template.test.js also gates.
+
+  ABOVE THE FOLD IS ONE STILL. The hero image is the only media that loads on
+  arrival (fetchpriority high). Every <video> carries data-src, not src, and no
+  <source> child, so nothing is fetched until the IntersectionObserver at the
+  bottom swaps it in near the viewport. Posters are the first frame.
+
+  PRICE IS LIVE. Copy carries "$28" (settings.price_token); it is replaced with
+  the default variant's live price at render, so a price change cannot leave the
+  page quoting a stale number.
+
+  BUY BOX CONTRACT (assets/presell-buy.js binds to it, do not rename):
+    form[data-presell-buy]#presell-buy > select[name=id] (one option per
+    available scent, the default variant selected), button[type=submit]
+    [data-presell-submit], p[data-presell-error][hidden]; and the sticky phone
+    bar a[data-presell-sticky][href="#presell-buy"]. Options carry data-scent and
+    data-price so the script can relabel the buttons on a scent change.
+
+  No Recurpay widget: this is a page, not a product template, so the app embed's
+  product-form injection has no product to attach to. presell.css hides its
+  classes anyway as a belt-and-braces.
+{%- endcomment -%}
+
+{%- liquid
+  assign p = all_products[section.settings.product_handle]
+  assign price_token = section.settings.price_token | default: '@@no-price-token@@'
+  assign scent_token = section.settings.default_scent | default: '@@no-scent-token@@'
+
+  assign dv = false
+  for v in p.variants
+    assign vid = v.id | append: ''
+    if vid == section.settings.default_variant_id and v.available
+      assign dv = v
+    endif
+  endfor
+  unless dv
+    assign dv = p.selected_or_first_available_variant
+  endunless
+  assign live_price = dv.price | money_without_trailing_zeros
+  assign live_scent = dv.option1 | default: scent_token
+
+  assign rating = p.metafields.reviews.rating.value
+  assign rating_count = p.metafields.reviews.rating_count.value | plus: 0
+-%}
+
+{{ 'presell.css' | asset_url | stylesheet_tag }}
+
+<article class="presell" data-presell>
+
+  <header class="presell-hero" data-presell-hero>
+    <p class="presell-eyebrow">{{ section.settings.eyebrow | escape }}</p>
+    <h1 class="presell-headline">{{ section.settings.headline | escape }}</h1>
+    {%- if rating and rating_count > 0 -%}
+      {%- assign rating_value = rating.rating | round: 1 -%}
+      {%- assign rating_pct = rating.rating | times: 100.0 | divided_by: rating.scale_max -%}
+      <p class="presell-rating">
+        <span class="presell-stars" aria-hidden="true"><span style="width: {{ rating_pct }}%"></span></span>
+        <span>{{ rating_value }} out of 5 from {{ rating_count }} reviews</span>
+      </p>
+    {%- endif -%}
+    {%- assign hero_join = '?' -%}
+    {%- if section.settings.hero_image contains '?' -%}{%- assign hero_join = '&' -%}{%- endif -%}
+    <img
+      class="presell-hero-img"
+      src="{{ section.settings.hero_image }}{{ hero_join }}width=900"
+      srcset="{{ section.settings.hero_image }}{{ hero_join }}width=600 600w, {{ section.settings.hero_image }}{{ hero_join }}width=900 900w, {{ section.settings.hero_image }}{{ hero_join }}width=1200 1200w"
+      sizes="(min-width: 720px) 680px, 100vw"
+      width="941" height="1000"
+      alt="{{ section.settings.hero_alt | escape }}"
+      fetchpriority="high" loading="eager" decoding="async">
+    <p class="presell-intro">{{ section.settings.intro | escape | replace: price_token, live_price }}</p>
+  </header>
+
+  {%- for block in section.blocks -%}
+    {%- assign s = block.settings -%}
+    {%- case block.type -%}
+
+      {%- when 'reason' -%}
+        <section class="presell-reason" {{ block.shopify_attributes }}>
+          <h2 class="presell-reason-title">
+            <span class="presell-num" aria-hidden="true">{{ s.number }}</span>
+            <span>{{ s.title | escape }}</span>
+          </h2>
+          {%- if s.media_kind == 'video' -%}
+            <figure class="presell-media presell-media--video">
+              <video class="presell-video" muted loop playsinline autoplay preload="none" disablepictureinpicture
+                poster="{{ s.poster_url }}" data-src="{{ s.media_url }}"
+                width="720" height="1280" aria-label="{{ s.media_alt | escape }}"></video>
+              {%- unless s.captions_burned_in -%}
+                <figcaption class="presell-caption">{{ s.caption | escape }}</figcaption>
+              {%- else -%}
+                <figcaption class="presell-visually-hidden">{{ s.caption | escape }}</figcaption>
+              {%- endunless -%}
+            </figure>
+          {%- else -%}
+            {%- assign join = '?' -%}
+            {%- if s.media_url contains '?' -%}{%- assign join = '&' -%}{%- endif -%}
+            <figure class="presell-media presell-media--image">
+              <img
+                src="{{ s.media_url }}{{ join }}width=900"
+                srcset="{{ s.media_url }}{{ join }}width=600 600w, {{ s.media_url }}{{ join }}width=900 900w"
+                sizes="(min-width: 720px) 680px, 100vw"
+                width="900" height="1125"
+                alt="{{ s.media_alt | escape }}" loading="lazy" decoding="async">
+            </figure>
+          {%- endif -%}
+          <p class="presell-body">{{ s.body | escape | replace: price_token, live_price }}</p>
+        </section>
+
+      {%- when 'label-compare' -%}
+        {%- assign ours = s.ours_list | newline_to_br | split: '<br />' -%}
+        {%- assign theirs = s.theirs_list | newline_to_br | split: '<br />' -%}
+        <section class="presell-labels" {{ block.shopify_attributes }}>
+          <h2 class="presell-labels-heading">{{ s.heading | escape }}</h2>
+          <div class="presell-labels-grid">
+            <div class="presell-label presell-label--ours">
+              <h3>{{ s.ours_title | escape }}</h3>
+              <ol>
+                {%- for i in ours -%}{%- assign t = i | strip -%}{%- if t != blank -%}<li>{{ t | escape }}</li>{%- endif -%}{%- endfor -%}
+              </ol>
+              <p class="presell-label-note">{{ s.ours_note | escape }}</p>
+            </div>
+            <div class="presell-label presell-label--theirs">
+              <h3>{{ s.theirs_title | escape }}</h3>
+              <ol>
+                {%- for i in theirs -%}{%- assign t = i | strip -%}{%- if t != blank -%}<li>{{ t | escape }}</li>{%- endif -%}{%- endfor -%}
+              </ol>
+            </div>
+          </div>
+        </section>
+
+      {%- when 'reviews' -%}
+        {%- comment -%}
+          Five stars is a FACT about these three reviews, not decoration: each
+          was checked 5/5 on Judge.me (759721043, 514327202, 605921156) on
+          2026-10-19. Swap a review for one with fewer stars and this must change.
+        {%- endcomment -%}
+        <section class="presell-reviews" {{ block.shopify_attributes }}>
+          <h2>{{ s.heading | escape }}</h2>
+          {%- for n in (1..3) -%}
+            {%- assign qk = 'quote_' | append: n -%}
+            {%- assign nk = 'name_' | append: n -%}
+            {%- if s[qk] != blank -%}
+              <figure class="presell-review">
+                <p class="presell-review-stars" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                <blockquote><p>{{ s[qk] | escape }}</p></blockquote>
+                <figcaption>{{ s[nk] | escape }} <span>Verified buyer</span></figcaption>
+              </figure>
+            {%- endif -%}
+          {%- endfor -%}
+        </section>
+
+      {%- when 'cta' -%}
+        <p class="presell-cta-wrap" {{ block.shopify_attributes }}>
+          <a class="presell-button" href="#presell-buy" data-presell-label>{{ s.label | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
+        </p>
+
+      {%- when 'notes' -%}
+        <aside class="presell-notes" {{ block.shopify_attributes }}>
+          <h2>Good to know</h2>
+          <ul>
+            {%- if s.note_1 != blank -%}<li>{{ s.note_1 | escape }}</li>{%- endif -%}
+            {%- if s.note_2 != blank -%}<li>{{ s.note_2 | escape }}</li>{%- endif -%}
+          </ul>
+        </aside>
+
+      {%- when 'buy-box' -%}
+        {%- assign img = dv.featured_image | default: p.featured_image -%}
+        <section class="presell-buy" {{ block.shopify_attributes }}>
+          {%- if img -%}
+            <img class="presell-buy-img" src="{{ img | image_url: width: 700 }}"
+              width="350" height="{{ 350 | divided_by: img.aspect_ratio | round }}"
+              alt="{{ img.alt | default: s.title | escape }}" loading="lazy" decoding="async">
+          {%- endif -%}
+          <h2 class="presell-buy-title" data-presell-label>{{ s.title | escape | replace: scent_token, live_scent }}</h2>
+          <p class="presell-buy-price">{{ s.price_note | escape | replace: price_token, live_price }}</p>
+          <form data-presell-buy id="presell-buy" class="presell-form" action="{{ routes.cart_add_url }}" method="post">
+            <label class="presell-select-label" for="presell-scent">{{ s.scent_label | escape }}</label>
+            <select id="presell-scent" name="id" class="presell-select">
+              {%- for v in p.variants -%}
+                {%- if v.available -%}
+                  <option value="{{ v.id }}" data-scent="{{ v.option1 | escape }}" data-price="{{ v.price | money_without_trailing_zeros }}"{% if v.id == dv.id %} selected{% endif %}>{{ v.option1 | escape }}</option>
+                {%- endif -%}
+              {%- endfor -%}
+            </select>
+            <input type="hidden" name="quantity" value="1">
+            <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label>{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
+            <p class="presell-error" data-presell-error hidden role="alert"></p>
+          </form>
+          <p class="presell-buy-meta">{{ s.shipping | escape }}</p>
+          <p class="presell-guarantee">{{ s.guarantee | escape }}</p>
+        </section>
+        <a class="presell-sticky presell-button" data-presell-sticky href="#presell-buy" aria-hidden="true" tabindex="-1" data-presell-label>{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
+
+    {%- endcase -%}
+  {%- endfor -%}
+
+</article>
+
+<script>
+  (function () {
+    var root = document.querySelector('[data-presell]');
+    if (!root) return;
+
+    // Lazy video: swap data-src into src only near the viewport, play while
+    // visible, pause when scrolled away (saves a phone's battery and data).
+    var videos = root.querySelectorAll('video[data-src]');
+    function load(v) {
+      if (!v.getAttribute('src')) { v.src = v.getAttribute('data-src'); v.load(); }
+      var p = v.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+    if ('IntersectionObserver' in window) {
+      var vio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) load(e.target);
+          else if (e.target.getAttribute('src')) e.target.pause();
+        });
+      }, { rootMargin: '300px 0px' });
+      videos.forEach(function (v) { vio.observe(v); });
+    } else {
+      videos.forEach(load);
+    }
+
+    // Sticky phone CTA: shown once the hero has scrolled out, hidden again
+    // while the buy box itself is on screen.
+    var sticky = root.querySelector('[data-presell-sticky]');
+    var hero = root.querySelector('[data-presell-hero]');
+    var buy = document.getElementById('presell-buy');
+    if (!sticky || !hero || !('IntersectionObserver' in window)) return;
+    var heroGone = false, buyShown = false;
+    function sync() {
+      var on = heroGone && !buyShown;
+      sticky.classList.toggle('is-visible', on);
+      sticky.setAttribute('aria-hidden', on ? 'false' : 'true');
+      sticky.tabIndex = on ? 0 : -1;
+    }
+    new IntersectionObserver(function (e) { heroGone = !e[0].isIntersecting; sync(); }).observe(hero);
+    if (buy) new IntersectionObserver(function (e) { buyShown = e[0].isIntersecting; sync(); }).observe(buy);
+  })();
+</script>
+<script src="{{ 'presell-buy.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "Pre-sell listicle",
+  "tag": "div",
+  "class": "presell-section",
+  "settings": [
+    { "type": "header", "content": "Built from data/presell/coconut-cream/content.json. Edit there and rebuild." },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "textarea", "id": "headline", "label": "Headline" },
+    { "type": "textarea", "id": "intro", "label": "Intro" },
+    { "type": "text", "id": "hero_image", "label": "Hero image URL (a still, never a video)" },
+    { "type": "text", "id": "hero_alt", "label": "Hero image alt text" },
+    { "type": "text", "id": "product_handle", "label": "Product handle", "default": "coconut-moisturizer" },
+    { "type": "text", "id": "default_variant_id", "label": "Preselected variant id", "default": "44179428475050" },
+    { "type": "text", "id": "default_scent", "label": "Preselected scent name, as written in the copy", "default": "Coconut Breeze" },
+    { "type": "text", "id": "price_token", "label": "Price as written in the copy (replaced by the live price)", "default": "$28" }
+  ],
+  "blocks": [
+    {
+      "type": "reason",
+      "name": "Reason",
+      "settings": [
+        { "type": "number", "id": "number", "label": "Number" },
+        { "type": "text", "id": "title", "label": "Title" },
+        { "type": "textarea", "id": "body", "label": "Body" },
+        {
+          "type": "select", "id": "media_kind", "label": "Media kind", "default": "image",
+          "options": [ { "value": "image", "label": "Image" }, { "value": "video", "label": "Video" } ]
+        },
+        { "type": "text", "id": "media_url", "label": "Image or video URL" },
+        { "type": "text", "id": "media_alt", "label": "Alt text" },
+        { "type": "text", "id": "poster_url", "label": "Video poster URL" },
+        { "type": "text", "id": "caption", "label": "Video caption line" },
+        { "type": "checkbox", "id": "captions_burned_in", "label": "Captions are burned into the video", "default": false }
+      ]
+    },
+    {
+      "type": "label-compare",
+      "name": "Label comparison",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "text", "id": "ours_title", "label": "Our label title" },
+        { "type": "textarea", "id": "ours_list", "label": "Our ingredients, one per line" },
+        { "type": "text", "id": "ours_note", "label": "Note under our label" },
+        { "type": "text", "id": "theirs_title", "label": "Their label title (never the brand name)" },
+        { "type": "textarea", "id": "theirs_list", "label": "Their ingredients, one per line" }
+      ]
+    },
+    {
+      "type": "reviews",
+      "name": "Reviews",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "textarea", "id": "quote_1", "label": "Review 1 (word for word)" },
+        { "type": "text", "id": "name_1", "label": "Review 1 name" },
+        { "type": "textarea", "id": "quote_2", "label": "Review 2 (word for word)" },
+        { "type": "text", "id": "name_2", "label": "Review 2 name" },
+        { "type": "textarea", "id": "quote_3", "label": "Review 3 (word for word)" },
+        { "type": "text", "id": "name_3", "label": "Review 3 name" }
+      ]
+    },
+    {
+      "type": "cta",
+      "name": "Call to action",
+      "settings": [ { "type": "text", "id": "label", "label": "Button label" } ]
+    },
+    {
+      "type": "notes",
+      "name": "Good to know",
+      "limit": 1,
+      "settings": [
+        { "type": "textarea", "id": "note_1", "label": "Note 1" },
+        { "type": "textarea", "id": "note_2", "label": "Note 2" }
+      ]
+    },
+    {
+      "type": "buy-box",
+      "name": "Buy box",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "title", "label": "Product title" },
+        { "type": "text", "id": "price_note", "label": "Price line" },
+        { "type": "text", "id": "scent_label", "label": "Scent picker label" },
+        { "type": "text", "id": "cta", "label": "Button label" },
+        { "type": "text", "id": "shipping", "label": "Shipping line" },
+        { "type": "textarea", "id": "guarantee", "label": "Guarantee" }
+      ]
+    }
+  ],
+  "presets": [ { "name": "Pre-sell listicle" } ]
+}
+{% endschema %}
