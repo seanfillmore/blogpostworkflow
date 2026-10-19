@@ -94,9 +94,11 @@
             <span>{{ s.title | escape }}</span>
           </h2>
           {%- if s.media_kind == 'video' -%}
+            {%- assign poster_join = '?' -%}
+            {%- if s.poster_url contains '?' -%}{%- assign poster_join = '&' -%}{%- endif -%}
             <figure class="presell-media presell-media--video">
               <video class="presell-video" muted loop playsinline autoplay preload="none" disablepictureinpicture
-                poster="{{ s.poster_url }}" data-src="{{ s.media_url }}"
+                poster="{{ s.poster_url }}{{ poster_join }}width=640" data-src="{{ s.media_url }}"
                 width="720" height="1280" aria-label="{{ s.media_alt | escape }}"></video>
               {%- unless s.captions_burned_in -%}
                 <figcaption class="presell-caption">{{ s.caption | escape }}</figcaption>

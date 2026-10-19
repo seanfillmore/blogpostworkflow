@@ -332,3 +332,9 @@ test('schema header settings fit Shopify\'s 50-character limit (the API rejects 
     assert.ok(s.content.length <= 50, `header "${s.content}" is ${s.content.length} chars`);
   }
 });
+
+test('video posters are requested at width=640, not full size (they load before the scroll)', () => {
+  const tags = markup().match(/<video\b[^>]*>/g) || [];
+  for (const t of tags) assert.match(t, /poster="{{ s\.poster_url }}{{ poster_join }}width=640"/, t);
+  assert.match(liquid(), /assign poster_join = '&'/);
+});

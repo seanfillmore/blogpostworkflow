@@ -15,6 +15,8 @@
  *   - the expected "before" (absent for the four new files; the pre-change cream
  *     template at BASELINE_REF for product.landing-page-cream.json), or
  *   - already the new content (a re-run is a no-op).
+ *   - an earlier version of the file committed on this branch (a previous run of
+ *     this script shipped it; a fix is being redeployed).
  * Anything else means somebody changed the live file since this was built, and
  * the run refuses BEFORE writing anything. After each write the asset is read
  * back (polled, read-backs lag) and compared byte for byte; `theme push --only`
@@ -63,12 +65,27 @@ function gitShow(ref, key) {
 }
 
 /**
+ * Earlier versions of a file committed on THIS branch (origin/main..HEAD). A
+ * theme already carrying one of them was written by an earlier run of this
+ * script, so a fix can be redeployed over it.
+ */
+function branchVersions(key) {
+  const shas = execFileSync('git', ['log', '--format=%H', 'origin/main..HEAD', '--', `theme/${key}`], { cwd: ROOT, encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  const out = [];
+  for (const sha of shas) { try { out.push(gitShow(sha, key)); } catch { /* absent at that commit */ } }
+  return out;
+}
+
+/**
  * Pure guard. `current` is undefined when the asset is absent on the theme.
+ * `prior` lists earlier branch versions this script may have shipped.
  * @returns {'write'|'already'|'refuse'}
  */
-export function guardVerdict({ current, before, target }) {
+export function guardVerdict({ current, before, target, prior = [] }) {
   if (current === target) return 'already';
   if (before === null ? current === undefined : current === before) return 'write';
+  if (current !== undefined && prior.includes(current)) return 'write';
   return 'refuse';
 }
 
@@ -97,7 +114,7 @@ async function shipTheme(shopify, themeId, apply, record) {
     const target = gitShow('HEAD', f.key);
     const before = f.before === null ? null : gitShow(f.before, f.key);
     const current = await readAsset(shopify, themeId, f.key);
-    const verdict = guardVerdict({ current, before, target });
+    const verdict = guardVerdict({ current, before, target, prior: branchVersions(f.key) });
     plan.push({ ...f, target, verdict, currentBytes: current?.length ?? null });
     console.log(`  ${f.key}: ${verdict} (live ${current === undefined ? 'absent' : `${current.length} B`}, new ${target.length} B)`);
   }

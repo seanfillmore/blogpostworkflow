@@ -24,3 +24,8 @@ test('ships exactly the five files and the noindex page', () => {
   assert.equal(PAGE.template_suffix, 'presell-cream');
   assert.equal(PAGE.handle, 'coconut-body-cream');
 });
+
+test('an earlier branch version may be overwritten (redeploying a fix); an unknown one may not', () => {
+  assert.equal(guardVerdict({ current: 'V1', before: null, target: 'V2', prior: ['V1'] }), 'write');
+  assert.equal(guardVerdict({ current: 'X', before: 'B', target: 'V2', prior: ['V1'] }), 'refuse');
+});
