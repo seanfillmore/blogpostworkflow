@@ -1,0 +1,48 @@
+{
+  "video-label": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/9e37698a9cce4351ae69a053209734f5.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-video-label-poster.jpg?v=1792447564",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46120703492266",
+    "posterFileId": "gid://shopify/MediaImage/46120704016554",
+    "bytes": 1403046,
+    "signature": "{\"id\":\"submission_db18636e-97d2-40c8-8a41-c8f6b5aa8ae5\",\"trim\":{\"start\":23,\"end\":38},\"crop\":null}"
+  },
+  "video-butter": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/f2fbe7a79efe4a99af6e089164611ee0.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-video-butter-poster.jpg?v=1792447591",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46120704114858",
+    "posterFileId": "gid://shopify/MediaImage/46120704540842",
+    "bytes": 1255129,
+    "signature": "{\"id\":\"submission_2c126067-c15a-4f28-b98f-856b29560d0b\",\"trim\":{\"start\":0,\"end\":15},\"crop\":null}"
+  },
+  "video-scoop": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/fe1f148354ef4224ad07635278d2944f.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-video-scoop-poster.jpg?v=1792447617",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46120704573610",
+    "posterFileId": "gid://shopify/MediaImage/46120704934058",
+    "bytes": 1294750,
+    "signature": "{\"id\":\"submission_eb6eb0af-ac34-4070-8b2f-4a86c92c87d8\",\"trim\":{\"start\":37,\"end\":52},\"crop\":null}"
+  },
+  "hero": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-hero.jpg?v=1792447620",
+    "kind": "image",
+    "fileId": "gid://shopify/MediaImage/46120705196202",
+    "bytes": 168685,
+    "signature": "{\"id\":\"submission_bf281134-b6ee-45be-bad1-78aad2a32715\",\"trim\":null,\"crop\":{\"y\":560,\"h\":1000}}"
+  },
+  "jar-open": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-jar-open.jpg?v=1792447624",
+    "kind": "image",
+    "fileId": "gid://shopify/MediaImage/46120705261738",
+    "bytes": 170229,
+    "signature": "{\"id\":\"submission_43cfc24d-734a-4358-9fac-6a107054c6d1\",\"trim\":null,\"crop\":{\"y\":430,\"h\":1500}}"
+  },
+  "in-use": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg",
+    "kind": "image",
+    "signature": "{\"id\":\"https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg\",\"trim\":null,\"crop\":null}"
+  }
+}
