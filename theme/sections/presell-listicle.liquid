@@ -12,8 +12,8 @@
 
   ABOVE THE FOLD IS ONE STILL. The hero image is the only media that loads on
   arrival (fetchpriority high). Every <video> carries data-src, not src, and no
-  <source> child, so nothing is fetched until the IntersectionObserver at the
-  bottom swaps it in near the viewport. Posters are the first frame.
+  <source> child, so nothing is fetched until the visitor's first scroll starts
+  the IntersectionObserver at the bottom, which swaps it in near the viewport. Posters are the first frame.
 
   PRICE IS LIVE. Copy carries "$28" (settings.price_token); it is replaced with
   the default variant's live price at render, so a price change cannot leave the
@@ -212,25 +212,38 @@
     var root = document.querySelector('[data-presell]');
     if (!root) return;
 
-    // Lazy video: swap data-src into src only near the viewport, play while
-    // visible, pause when scrolled away (saves a phone's battery and data).
+    // Lazy video: nothing is observed until the visitor's FIRST SCROLL. Reason
+    // 1's video sits ~840-940px down a 390px phone, inside a 650-750px in-app
+    // viewport plus any look-ahead, so an observer created on parse fires for it
+    // at once and the MP4 downloads during the hero's LCP window. Not `load`
+    // either: a visitor who never scrolls never needs a video. After the first
+    // scroll: swap data-src into src within 150px of the viewport bottom, play
+    // while visible, pause when scrolled away. Pinned by
+    // tests/theme/presell-cream-template.test.js (no observer on parse;
+    // rootMargin at most 150px).
     var videos = root.querySelectorAll('video[data-src]');
     function load(v) {
       if (!v.getAttribute('src')) { v.src = v.getAttribute('data-src'); v.load(); }
       var p = v.play();
       if (p && p.catch) p.catch(function () {});
     }
-    if ('IntersectionObserver' in window) {
-      var vio = new IntersectionObserver(function (entries) {
-        entries.forEach(function (e) {
-          if (e.isIntersecting) load(e.target);
-          else if (e.target.getAttribute('src')) e.target.pause();
-        });
-      }, { rootMargin: '300px 0px' });
-      videos.forEach(function (v) { vio.observe(v); });
-    } else {
-      videos.forEach(load);
+    var started = false;
+    function startVideos() {
+      if (started) return;
+      started = true;
+      if ('IntersectionObserver' in window) {
+        var vio = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) load(e.target);
+            else if (e.target.getAttribute('src')) e.target.pause();
+          });
+        }, { rootMargin: '0px 0px 150px 0px' });
+        videos.forEach(function (v) { vio.observe(v); });
+      } else {
+        videos.forEach(load);
+      }
     }
+    if (videos.length) window.addEventListener('scroll', startVideos, { passive: true, once: true });
 
     // Sticky phone CTA: shown once the hero has scrolled out, hidden again
     // while the buy box itself is on screen.

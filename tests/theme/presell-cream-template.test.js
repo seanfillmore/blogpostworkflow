@@ -259,3 +259,64 @@ test('the build script reproduces the template byte for byte, with \\/ escaping'
   // Re-serialising what was written is a no-op.
   assert.equal(serialize(template()), raw());
 });
+
+// ── Videos wait for the visitor to scroll (fix round 1) ──────────────────────
+//
+// Reason 1's video sits ~840-940px down a 390px phone, inside a 650-750px
+// viewport plus any generous rootMargin, so an observer created on parse fires
+// for it at once and the MP4 downloads during the hero's LCP window. The inline
+// script is run here against a stub DOM to prove no video is observed (or
+// loaded) until the first scroll, and that the look-ahead margin stays small.
+const MAX_VIDEO_LOOKAHEAD_PX = 150;
+
+function runInlineScript() {
+  const src = markup().match(/<script>([\s\S]*?)<\/script>/)[1];
+  const listeners = {};
+  const observers = [];
+  const makeVideo = () => ({
+    attrs: { 'data-src': 'x.mp4' }, loaded: 0,
+    getAttribute(k) { return this.attrs[k] ?? null; },
+    set src(v) { this.attrs.src = v; }, load() { this.loaded++; },
+    play() { return Promise.resolve(); }, pause() {},
+  });
+  const videos = [makeVideo(), makeVideo()];
+  const el = () => ({ classList: { toggle() {} }, setAttribute() {} });
+  const root = {
+    querySelector: (s) => (s.includes('sticky') || s.includes('hero') ? el() : null),
+    querySelectorAll: (s) => (s.startsWith('video') ? videos : []),
+  };
+  class IO {
+    constructor(cb, opts = {}) { this.opts = opts; this.targets = []; observers.push(this); }
+    observe(t) { this.targets.push(t); }
+  }
+  const win = {
+    IntersectionObserver: IO,
+    addEventListener(type, fn) { (listeners[type] ||= []).push(fn); },
+  };
+  const doc = { querySelector: () => root, getElementById: () => el() };
+  new Function('window', 'document', 'IntersectionObserver', src)(win, doc, IO);
+  const videoObservers = () => observers.filter((o) => o.targets.some((t) => videos.includes(t)));
+  const fire = (type) => (listeners[type] || []).forEach((fn) => fn({}));
+  return { videos, listeners, videoObservers, fire };
+}
+
+test('no video is observed or loaded until the first scroll', () => {
+  const r = runInlineScript();
+  assert.equal(r.videoObservers().length, 0, 'video observer created on parse');
+  assert.ok(r.videos.every((v) => v.loaded === 0 && !v.attrs.src), 'a video loaded on parse');
+  assert.ok(!r.listeners.load, 'window load must not start videos');
+  r.fire('scroll');
+  assert.equal(r.videoObservers().length, 1, 'scroll starts exactly one video observer');
+  assert.equal(r.videoObservers()[0].targets.length, r.videos.length);
+  r.fire('scroll');
+  assert.equal(r.videoObservers().length, 1, 'a second scroll does not add observers');
+});
+
+test(`the video look-ahead margin is at most ${MAX_VIDEO_LOOKAHEAD_PX}px`, () => {
+  const r = runInlineScript();
+  r.fire('scroll');
+  const margin = r.videoObservers()[0].opts.rootMargin || '0px';
+  const px = margin.split(/\s+/).map((v) => parseFloat(v));
+  assert.ok(margin.split(/\s+/).every((v) => /^-?\d+(\.\d+)?px$/.test(v)), `rootMargin in px: ${margin}`);
+  assert.ok(Math.max(...px) <= MAX_VIDEO_LOOKAHEAD_PX, `rootMargin ${margin}`);
+});
