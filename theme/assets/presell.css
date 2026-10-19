@@ -318,6 +318,25 @@
   border-right: 1px solid var(--ps-line);
 }
 
+.presell-qty-hint {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin-top: -2px !important;
+}
+.presell-qty-hint-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ps-ink);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.presell-qty-hint-btn[disabled] { opacity: 0.6; cursor: wait; }
+
 /* 4-pack banner: top of the buy box, always offered (when it is a real deal). */
 .presell-pack {
   margin: 0 0 18px;

@@ -140,6 +140,8 @@
             "pack_headline": "Buy 3, get the 4th free",
             "pack_line": "4 jars for $84 ($21 a jar)",
             "pack_cta": "Get 4 jars for $84",
+            "pack_hint": "4 jars cost no more than 3.",
+            "pack_hint_cta": "Get 4 for $84",
             "shipping": "Ships in 1-2 business days.",
             "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back."
           }

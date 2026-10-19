@@ -5,6 +5,7 @@
 (function () {
   var FALLBACK = 'Sorry, that did not go through. Please try again.';
   var MAX_QTY = 10;
+  var DEFAULT_STEPPER_MAX = 3; // when data-max is missing or unreadable
 
   /** Integer 1..10; anything unreadable is 1. */
   function clampQuantity(q) {
@@ -112,6 +113,8 @@
     var inc = form.querySelector('[data-presell-qty-inc]');
     var qtyOut = form.querySelector('[data-presell-qty-value]');
     var qtyInput = form.querySelector('input[name=quantity]');
+    var hint = form.querySelector('[data-presell-qty-hint]');
+    var hintButton = form.querySelector('[data-presell-qty-hint-buy]');
     var banner = doc.querySelector('[data-presell-pack]');
     var packButton = doc.querySelector('[data-presell-pack-buy]');
     var packError = doc.querySelector('[data-presell-pack-error]');
@@ -122,7 +125,8 @@
       packPriceToken: attr('data-pack-price-token'), packUnitToken: attr('data-pack-unit-token')
     };
     var labels = doc.querySelectorAll('[data-presell-label][data-presell-template]');
-    var maxQty = clampQuantity(intAttr(stepper, 'data-max') || 1);
+    var rawMax = intAttr(stepper, 'data-max');
+    var maxQty = rawMax && rawMax > 0 ? clampQuantity(rawMax) : DEFAULT_STEPPER_MAX;
     var qty = 1;
     var buy = createBuy({
       fetch: function (u, o) { return win.fetch(u, o); },
@@ -176,6 +180,9 @@
       if (dec) dec.disabled = qty <= 1;
       if (inc) inc.disabled = qty >= maxQty;
       if (banner) banner.hidden = !pack;
+      // At 3 jars the single-jar total equals (or beats) the pack price, so
+      // point at the 4th jar. Same honesty guard as the banner.
+      if (hint) hint.hidden = !(pack && qty >= 3);
     }
 
     function step(delta) {
@@ -191,6 +198,7 @@
     function setBusy(busy) {
       if (button) button.disabled = busy;
       if (packButton) packButton.disabled = busy;
+      if (hintButton) hintButton.disabled = busy;
     }
     function hideErrors() {
       if (errorEl) errorEl.hidden = true;
@@ -224,17 +232,24 @@
       }
     });
 
-    on(packButton, 'click', function (e) {
-      if (e && e.preventDefault) e.preventDefault();
-      if (packButton.disabled || (button && button.disabled)) return;
-      var pack = packFor(current());
-      if (!pack) return;
-      run(pack.id, 1, packError);
-    });
+    function busy() {
+      return (button && button.disabled) || (packButton && packButton.disabled) || (hintButton && hintButton.disabled);
+    }
+    function buyPack(errTarget) {
+      return function (e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (busy()) return;
+        var pack = packFor(current());
+        if (!pack) return;
+        run(pack.id, 1, errTarget);
+      };
+    }
+    on(packButton, 'click', buyPack(packError));
+    on(hintButton, 'click', buyPack(errorEl));
 
     on(form, 'submit', function (e) {
       e.preventDefault();
-      if (button.disabled || (packButton && packButton.disabled)) return;
+      if (busy()) return;
       run(select.value, qty, errorEl);
     });
 

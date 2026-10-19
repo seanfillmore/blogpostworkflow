@@ -172,7 +172,9 @@
     "pack": {
       "headline": "Buy 3, get the 4th free",
       "line": "4 jars for $84 ($21 a jar)",
-      "cta": "Get 4 jars for $84"
+      "cta": "Get 4 jars for $84",
+      "hint": "4 jars cost no more than 3.",
+      "hintCta": "Get 4 for $84"
     }
   },
   "videos": {

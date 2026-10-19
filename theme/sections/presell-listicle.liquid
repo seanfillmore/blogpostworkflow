@@ -30,7 +30,10 @@
     input[name=quantity], button[type=submit][data-presell-submit],
     p[data-presell-error][hidden]; the 4-pack banner [data-presell-pack] with
     button[data-presell-pack-buy] and p[data-presell-pack-error][hidden]; and the
-    sticky phone bar a[data-presell-sticky][href="#presell-buy"]. Options carry
+    sticky phone bar a[data-presell-sticky][href="#presell-buy"]. Under the
+    stepper, p[data-presell-qty-hint][hidden] with button
+    [data-presell-qty-hint-buy] appears at 3 jars when the pack banner does
+    (3 singles cost as much as the pack) and buys the pack the same way. Options carry
     data-scent, data-price, data-price-cents and, when the scent has an
     available 4-pack, data-pack-id / data-pack-price / data-pack-unit /
     data-pack-cents, so the script can relabel the buttons and show or hide the
@@ -305,6 +308,10 @@
               <output class="presell-qty-value" data-presell-qty-value aria-live="polite">1</output>
               <button type="button" class="presell-qty-btn" data-presell-qty-inc aria-label="{{ s.quantity_more | escape }}">+</button>
             </div>
+            <p class="presell-qty-hint" data-presell-qty-hint hidden>
+              <span>{{ s.pack_hint | escape }}</span>
+              <button type="button" class="presell-qty-hint-btn" data-presell-qty-hint-buy data-presell-label data-presell-template="{{ s.pack_hint_cta | escape }}">{{ s.pack_hint_cta | escape | replace: pack_price_token, dv_pack_price | replace: pack_unit_token, dv_pack_unit }}</button>
+            </p>
             <input type="hidden" name="quantity" value="1">
             <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label data-presell-template="{{ s.cta | escape }}" data-presell-template-multi="{{ s.cta_multi | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
             <p class="presell-error" data-presell-error hidden role="alert"></p>
@@ -481,6 +488,8 @@
         { "type": "text", "id": "pack_headline", "label": "4-pack banner headline" },
         { "type": "text", "id": "pack_line", "label": "4-pack banner price line" },
         { "type": "text", "id": "pack_cta", "label": "4-pack banner button" },
+        { "type": "text", "id": "pack_hint", "label": "Hint at 3 jars" },
+        { "type": "text", "id": "pack_hint_cta", "label": "Hint button at 3 jars" },
         { "type": "text", "id": "shipping", "label": "Shipping line" },
         { "type": "textarea", "id": "guarantee", "label": "Guarantee" }
       ]

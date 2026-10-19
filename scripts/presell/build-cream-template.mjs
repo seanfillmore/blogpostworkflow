@@ -123,6 +123,8 @@ export function buildTemplate(content, media) {
         pack_headline: content.buyBox.pack.headline,
         pack_line: content.buyBox.pack.line,
         pack_cta: content.buyBox.pack.cta,
+        pack_hint: content.buyBox.pack.hint,
+        pack_hint_cta: content.buyBox.pack.hintCta,
         shipping: content.buyBox.shipping,
         guarantee: content.guarantee,
       },

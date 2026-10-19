@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { guardVerdict, FILES, PAGE, LIVE_BASE_REF } from '../../scripts/presell/publish-cream-presell.mjs';
+import { guardVerdict, FILES, PAGE, LIVE_BASE_REF, headContainsBase, assertHeadContainsBase } from '../../scripts/presell/publish-cream-presell.mjs';
 
 test('new file: absent → write, equal → already, anything else → refuse', () => {
   assert.equal(guardVerdict({ current: undefined, before: null, target: 'N' }), 'write');
@@ -30,4 +30,17 @@ test('ships exactly the four pre-sell files over their origin/main versions, nev
 test('an earlier branch version may be overwritten (redeploying a fix); an unknown one may not', () => {
   assert.equal(guardVerdict({ current: 'V1', before: null, target: 'V2', prior: ['V1'] }), 'write');
   assert.equal(guardVerdict({ current: 'X', before: 'B', target: 'V2', prior: ['V1'] }), 'refuse');
+});
+
+test('the guard refuses unless HEAD contains origin/main (a stale branch cannot overwrite newer live files)', () => {
+  const calls = [];
+  const ancestor = (args) => { calls.push(args); };
+  const notAncestor = () => { const e = new Error('exit 1'); e.status = 1; throw e; };
+  assert.equal(headContainsBase(ancestor), true);
+  assert.deepEqual(calls[0], ['merge-base', '--is-ancestor', LIVE_BASE_REF, 'HEAD']);
+  assert.equal(headContainsBase(notAncestor), false);
+  assert.throws(() => assertHeadContainsBase(notAncestor), /does not contain origin\/main/);
+  assert.doesNotThrow(() => assertHeadContainsBase(ancestor));
+  // This branch is built on main, so the real check passes here.
+  assert.equal(headContainsBase(), true);
 });

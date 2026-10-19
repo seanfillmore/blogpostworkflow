@@ -131,6 +131,8 @@ function expectedSection() {
           pack_headline: content.buyBox.pack.headline,
           pack_line: content.buyBox.pack.line,
           pack_cta: content.buyBox.pack.cta,
+          pack_hint: content.buyBox.pack.hint,
+          pack_hint_cta: content.buyBox.pack.hintCta,
           shipping: content.buyBox.shipping,
           guarantee: content.guarantee,
         },
@@ -220,8 +222,8 @@ test('buy-box markup contract Task 3 binds to', () => {
   assert.match(l, /<a[^>]*data-presell-sticky[^>]*href="#presell-buy"/);
   assert.match(l, /<form[^>]*data-price-token="[^"]*"[^>]*data-scent-token="/);
   const labelled = l.match(/<[^>]*data-presell-label[^>]*>/g) || [];
-  // mid-page CTA, buy title, price line, buy button, sticky bar, pack line, pack button
-  assert.equal(labelled.length, 7);
+  // mid-page CTA, buy title, price line, buy button, sticky bar, pack line, pack button, 3-jar hint button
+  assert.equal(labelled.length, 8);
   for (const tag of labelled) assert.match(tag, /data-presell-template="{{ s\.\w+ \| escape }}"/);
   assert.match(l, /<script src="{{ 'presell-buy\.js' \| asset_url }}" defer><\/script>/);
   assert.match(l, /money_without_trailing_zeros/, 'price is live from the product');
@@ -426,4 +428,15 @@ test('media.json records dimensions for the buy-box and breeze images', () => {
   }
   assert.ok(media.breeze.width <= 1200);
   assert.match(media.breeze.signature, /submission_f21e1811-/);
+});
+
+test('the 3-jar hint sits directly under the stepper, hidden, with a type=button pack button', () => {
+  const bb = buyBoxMarkup();
+  const stepperEnd = bb.indexOf('data-presell-qty-inc');
+  const hint = bb.indexOf('data-presell-qty-hint');
+  assert.ok(hint > stepperEnd, 'hint after the stepper');
+  assert.ok(hint < bb.indexOf('data-presell-submit'), 'hint before the buy button');
+  assert.match(bb, /<p[^>]*data-presell-qty-hint[^>]*hidden/);
+  assert.match(bb, /<button[^>]*type="button"[^>]*data-presell-qty-hint-buy[^>]*data-presell-template="{{ s\.pack_hint_cta \| escape }}"/);
+  assert.match(bb, /{{ s\.pack_hint \| escape }}/);
 });

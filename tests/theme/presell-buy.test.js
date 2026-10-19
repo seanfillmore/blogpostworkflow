@@ -169,6 +169,8 @@ function buyDom({ options, selected = 0, max = '3' }) {
   const sticky = el({ 'data-presell-label': '', 'data-presell-template': 'Get Coconut Breeze, $28' });
   const packLine = el({ 'data-presell-label': '', 'data-presell-template': '4 jars for $84 ($21 a jar)' });
   const packCta = el({ 'data-presell-label': '', 'data-presell-template': 'Get 4 jars for $84' });
+  const hint = el(); hint.hidden = true;
+  const hintCta = el({ 'data-presell-label': '', 'data-presell-template': 'Get 4 for $84' });
   const errorEl = el(); errorEl.hidden = true;
   const packError = el(); packError.hidden = true;
   const stepper = el({ 'data-max': max });
@@ -188,6 +190,7 @@ function buyDom({ options, selected = 0, max = '3' }) {
     'select[name=id]': select, '[data-presell-submit]': button, '[data-presell-error]': errorEl,
     '[data-presell-qty]': stepper, '[data-presell-qty-dec]': dec, '[data-presell-qty-inc]': inc,
     '[data-presell-qty-value]': out, 'input[name=quantity]': qtyInput,
+    '[data-presell-qty-hint]': hint, '[data-presell-qty-hint-buy]': hintCta,
   };
   form.querySelector = (q) => inForm[q] || null;
   const inDoc = {
@@ -196,7 +199,7 @@ function buyDom({ options, selected = 0, max = '3' }) {
   };
   const doc = {
     querySelector: (q) => inDoc[q] || null,
-    querySelectorAll: (q) => (q === '[data-presell-label][data-presell-template]' ? [button, priceLine, sticky, packLine, packCta] : []),
+    querySelectorAll: (q) => (q === '[data-presell-label][data-presell-template]' ? [button, priceLine, sticky, packLine, packCta, hintCta] : []),
   };
   const fetched = [];
   const win = el();
@@ -204,7 +207,7 @@ function buyDom({ options, selected = 0, max = '3' }) {
   win.addEventListener = (n, f) => { order.push(`win:${n}`); winAdd(n, f); };
   win.fetch = (u, o) => { fetched.push(JSON.parse(o.body)); return Promise.resolve(ok); };
   win.location = { href: '' };
-  return { doc, win, form, select, button, priceLine, sticky, packLine, packCta, errorEl, packError, dec, inc, out, qtyInput, banner, fetched, order };
+  return { doc, win, form, select, button, priceLine, sticky, packLine, packCta, hint, hintCta, stepper, errorEl, packError, dec, inc, out, qtyInput, banner, fetched, order };
 }
 const BREEZE = { value: '44179428475050', 'data-scent': 'Coconut Breeze', 'data-price': '$28', 'data-price-cents': '2800',
   'data-pack-id': '67602073387178', 'data-pack-price': '$84', 'data-pack-unit': '$21', 'data-pack-cents': '8400' };
@@ -292,3 +295,53 @@ test('the form action is removed LAST in bind, after every listener is attached'
   assert.ok(d.order.includes('listen:submit'));
   assert.ok(d.order.includes('win:pageshow'));
 });
+
+// ── Follow-ups (review 2026-10-19): the 3-jar hint and the data-max fallback ──
+const click = (b) => b.listeners.click({ preventDefault() {} });
+
+test('at 3 jars with an honest pack, a hint offers the 4-pack; hidden otherwise', () => {
+  const d = buyDom({ options: [BREEZE, UNSCENTED_NOPACK] });
+  bind(d.doc, d.win);
+  assert.equal(d.hint.hidden, true, 'qty 1');
+  click(d.inc);
+  assert.equal(d.hint.hidden, true, 'qty 2');
+  click(d.inc);
+  assert.equal(d.hint.hidden, false, 'qty 3 with a pack');
+  assert.equal(d.hintCta.textContent, 'Get 4 for $84');
+  d.select.selectedIndex = 1; d.select.listeners.change();
+  assert.equal(d.hint.hidden, true, 'qty 3, scent without a pack');
+  d.select.selectedIndex = 0; d.select.listeners.change();
+  assert.equal(d.hint.hidden, false);
+  click(d.dec);
+  assert.equal(d.hint.hidden, true, 'back to 2');
+});
+test('the hint stays hidden at 3 when the pack costs more than three singles', () => {
+  const d = buyDom({ options: [{ ...BREEZE, 'data-pack-cents': '8401', 'data-pack-price': '$84.01' }] });
+  bind(d.doc, d.win);
+  click(d.inc); click(d.inc);
+  assert.equal(d.out.textContent, '3');
+  assert.equal(d.hint.hidden, true);
+});
+test('the hint button adds the pack exactly like the banner button, guarded against double taps', async () => {
+  const d = buyDom({ options: [BREEZE] });
+  bind(d.doc, d.win);
+  click(d.inc); click(d.inc);
+  click(d.hintCta);
+  assert.equal(d.hintCta.disabled, true);
+  assert.equal(d.packCta.disabled, true);
+  assert.equal(d.button.disabled, true);
+  click(d.packCta);
+  d.form.listeners.submit({ preventDefault() {} });
+  await flush();
+  assert.deepEqual(d.fetched, [{ items: [{ id: 67602073387178, quantity: 1 }] }]);
+  assert.equal(d.win.location.href, '/checkout');
+});
+for (const bad of ['', 'abc', '0']) {
+  test(`stepper max falls back to 3 when data-max is ${JSON.stringify(bad)}`, () => {
+    const d = buyDom({ options: [BREEZE], max: bad });
+    bind(d.doc, d.win);
+    click(d.inc); click(d.inc); click(d.inc);
+    assert.equal(d.out.textContent, '3');
+    assert.equal(d.inc.disabled, true);
+  });
+}

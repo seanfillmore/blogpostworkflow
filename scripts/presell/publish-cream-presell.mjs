@@ -14,6 +14,8 @@
  * Each write is GUARDED: the target theme's current copy must be either
  *   - the expected "before": the version merged to main (LIVE_BASE_REF,
  *     `git show origin/main:theme/<key>`), which is what PR #1087 put live, or
+ *     (only accepted while HEAD contains origin/main; a branch main has moved
+ *     past is refused outright, so it cannot overwrite newer live files)
  *   - already the new content (a re-run is a no-op).
  *   - an earlier version of the file committed on this branch (a previous run of
  *     this script shipped it; a fix is being redeployed).
@@ -62,6 +64,24 @@ export const FILES = [
   { key: 'assets/presell-buy.js', before: LIVE_BASE_REF },
   { key: 'templates/page.presell-cream.json', before: LIVE_BASE_REF },
 ];
+
+const gitRun = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'ignore' });
+
+/**
+ * True when HEAD contains LIVE_BASE_REF. Accepting "live == origin/main" is only
+ * safe from a branch built on that main: once main moves on (another PR ships a
+ * newer version of these files), a stale branch would see live == main and
+ * overwrite the newer files with its older copy. `run` throws on a non-zero exit.
+ */
+export function headContainsBase(run = gitRun) {
+  try { run(['merge-base', '--is-ancestor', LIVE_BASE_REF, 'HEAD']); return true; } catch { return false; }
+}
+
+export function assertHeadContainsBase(run = gitRun) {
+  if (!headContainsBase(run)) {
+    throw new Error(`HEAD does not contain ${LIVE_BASE_REF}: rebase this branch on main (git fetch && git rebase origin/main) before shipping. Nothing written.`);
+  }
+}
 
 function gitShow(ref, key) {
   return execFileSync('git', ['show', `${ref}:theme/${key}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 << 20 });
@@ -112,6 +132,7 @@ async function readBack(shopify, themeId, key, target, { tries = 12, waitMs = 50
 }
 
 async function shipTheme(shopify, themeId, apply, record) {
+  assertHeadContainsBase();
   const plan = [];
   for (const f of FILES) {
     const target = gitShow('HEAD', f.key);

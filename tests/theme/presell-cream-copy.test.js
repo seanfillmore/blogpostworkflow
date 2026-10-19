@@ -130,6 +130,7 @@ test('buy-box quantity and pack copy clears the commercial gate as named fields,
   const b = load().buyBox;
   const fields = {
     'pack headline': b.pack.headline, 'pack line': b.pack.line, 'pack button': b.pack.cta,
+    'pack hint': b.pack.hint, 'pack hint button': b.pack.hintCta,
     'multi price line': b.priceNoteMulti, 'multi button': b.ctaMulti,
     'quantity label': b.quantityLabel, 'quantity less': b.quantityLess, 'quantity more': b.quantityMore,
   };
@@ -164,4 +165,10 @@ test('copy tokens are consistent with the prices they stand for', () => {
   }
   assert.ok(c.buyBox.pack.line.includes(p.packPriceToken) && c.buyBox.pack.line.includes(p.packUnitToken));
   assert.ok(c.buyBox.pack.cta.includes(p.packPriceToken));
+  // The 3-jar hint shows only while the pack costs no more than three singles,
+  // so it may claim exactly that and no more ("same price" would be false if
+  // the pack were ever cheaper).
+  assert.ok(c.buyBox.pack.hintCta.includes(p.packPriceToken), 'hint button carries the live pack price');
+  assert.ok(!/same price/i.test(c.buyBox.pack.hint), 'hint must not claim equal prices');
+  assert.ok(!c.buyBox.pack.hint.includes('$'), 'hint text carries no price of its own');
 });
