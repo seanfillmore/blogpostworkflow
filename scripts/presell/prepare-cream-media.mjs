@@ -8,7 +8,12 @@
 //           track, ~15s, target <=1.5 MB) + a poster jpg from the clip's start.
 //   images  Trybe submission -> optional crop (cuts off a baked-in ad headline)
 //           -> jpg <=1080px wide. A `source: 'shopify'` image is already in
-//           Shopify and is referenced by its URL, never re-uploaded.
+//           Shopify and is referenced by its URL, never re-uploaded. Every image
+//           entry records its pixel `width`/`height` (the buy box and the reason
+//           images render them as attributes); an entry written before that was
+//           recorded is backfilled by probing its CDN file, with no upload.
+//           The source is the approved Trybe submission named by
+//           content.images[key].submissionId, recorded in the entry's signature.
 //
 // Dry by default: downloads and processes into a work directory and reports
 // sizes, touching nothing in Shopify. --apply uploads each file to Shopify Files
@@ -33,6 +38,7 @@ const DIR = join(ROOT, 'data', 'presell', 'coconut-cream');
 const CONTENT = join(DIR, 'content.json');
 const MEDIA = join(DIR, 'media.json');
 const FFMPEG = process.env.FFMPEG || (existsSync('/usr/local/bin/ffmpeg') ? '/usr/local/bin/ffmpeg' : 'ffmpeg');
+const FFPROBE = process.env.FFPROBE || (existsSync('/usr/local/bin/ffprobe') ? '/usr/local/bin/ffprobe' : 'ffprobe');
 
 const MAX_VIDEO_BYTES = 1.5 * 1024 * 1024;
 const VIDEO_WIDTH = 720;
@@ -89,6 +95,15 @@ function posterFrom(src, out, start) {
   return statSync(out).size;
 }
 
+/** Pixel size of an image file. */
+function dimensions(file) {
+  const out = execFileSync(FFPROBE, ['-v', 'error', '-select_streams', 'v:0',
+    '-show_entries', 'stream=width,height', '-of', 'csv=p=0', file], { encoding: 'utf8' }).trim();
+  const [width, height] = out.split(',').map(Number);
+  if (!Number.isInteger(width) || !Number.isInteger(height)) throw new Error(`cannot read the size of ${file}`);
+  return { width, height };
+}
+
 function prepareImage(src, out, crop) {
   const filters = [];
   if (crop) filters.push(`crop=iw:${crop.h}:0:${crop.y}`);
@@ -131,20 +146,31 @@ async function main() {
     plan.push({ key, kind: 'video', sig, clip, poster, bytes, crf, posterBytes, alt: v.alt });
   }
   for (const [key, img] of Object.entries(content.images)) {
-    if (img.source === 'shopify') { plan.push({ key, kind: 'image', url: img.url, sig: signature(img) }); continue; }
     const sig = signature(img);
-    if (!FORCE && existing[key]?.signature === sig) { plan.push({ key, kind: 'image', skip: true }); continue; }
+    const known = existing[key];
+    // A file already in Shopify whose size was never recorded: probe its CDN copy.
+    const probe = async (url) => dimensions(await download(url, join(WORK, `${key}-cdn.jpg`)));
+    if (img.source === 'shopify') {
+      const dims = Number.isInteger(known?.width) ? { width: known.width, height: known.height } : await probe(img.url);
+      plan.push({ key, kind: 'image', url: img.url, sig, ...dims });
+      continue;
+    }
+    if (!FORCE && known?.signature === sig) {
+      const dims = Number.isInteger(known.width) ? null : await probe(known.url);
+      plan.push({ key, kind: 'image', skip: true, dims });
+      continue;
+    }
     const src = await download(asset(img.submissionId), join(WORK, `${key}-src.img`));
     const out = join(WORK, `presell-cream-${key}.jpg`);
     const bytes = prepareImage(src, out, img.crop);
-    plan.push({ key, kind: 'image', sig, file: out, bytes, alt: img.alt });
+    plan.push({ key, kind: 'image', sig, file: out, bytes, alt: img.alt, ...dimensions(out) });
   }
 
   for (const p of plan) {
-    if (p.skip) console.log(`  ${p.key.padEnd(14)} already in media.json (unchanged source), skipped`);
+    if (p.skip) console.log(`  ${p.key.padEnd(14)} already in media.json (unchanged source), skipped${p.dims ? `; backfill size ${p.dims.width}x${p.dims.height}` : ''}`);
     else if (p.url) console.log(`  ${p.key.padEnd(14)} existing Shopify file, referenced by url`);
     else if (p.kind === 'video') console.log(`  ${p.key.padEnd(14)} video ${(p.bytes / 1024).toFixed(0)} KB (crf ${p.crf}), poster ${(p.posterBytes / 1024).toFixed(0)} KB`);
-    else console.log(`  ${p.key.padEnd(14)} image ${(p.bytes / 1024).toFixed(0)} KB`);
+    else console.log(`  ${p.key.padEnd(14)} image ${(p.bytes / 1024).toFixed(0)} KB, ${p.width}x${p.height}`);
   }
   console.log(`  work dir: ${WORK}`);
   if (!APPLY) { console.log('DRY RUN: nothing uploaded. Re-run with --apply.'); return; }
@@ -163,17 +189,18 @@ async function main() {
         const url = await getFileUrl(id);
         if (url && url !== e[field]) { console.log(`  ${p.key}.${field} refreshed -> ${url}`); e[field] = url; }
       }
+      if (p.dims) Object.assign(e, p.dims);
       save();
       continue;
     }
-    if (p.url) { media[p.key] = { url: p.url, kind: 'image', signature: p.sig }; save(); continue; }
+    if (p.url) { media[p.key] = { url: p.url, kind: 'image', width: p.width, height: p.height, signature: p.sig }; save(); continue; }
     if (p.kind === 'video') {
       const v = await uploadFileToShopify(p.clip, { mimeType: 'video/mp4', alt: p.alt });
       const poster = await uploadFileToShopify(p.poster, { mimeType: 'image/jpeg', alt: p.alt });
       media[p.key] = { url: v.url, poster: poster.url, kind: 'video', fileId: v.id, posterFileId: poster.id, bytes: p.bytes, signature: p.sig };
     } else {
       const f = await uploadFileToShopify(p.file, { mimeType: 'image/jpeg', alt: p.alt });
-      media[p.key] = { url: f.url, kind: 'image', fileId: f.id, bytes: p.bytes, signature: p.sig };
+      media[p.key] = { url: f.url, kind: 'image', fileId: f.id, bytes: p.bytes, width: p.width, height: p.height, signature: p.sig };
     }
     save(); // after every upload, so a crash mid-run never forgets a file already in Shopify
     console.log(`  uploaded ${p.key} -> ${media[p.key].url}`);

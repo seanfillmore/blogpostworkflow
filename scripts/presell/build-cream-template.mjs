@@ -4,7 +4,7 @@
  *
  *   data/presell/coconut-cream/content.json  (copy, gated by
  *                                             tests/theme/presell-cream-copy.test.js)
- *   data/presell/coconut-cream/media.json    (Shopify CDN urls and posters)
+ *   data/presell/coconut-cream/media.json    (Shopify CDN urls, posters, image sizes)
  *     -> theme/templates/page.presell-cream.json
  *
  * The copy lives in section and block SETTINGS so it stays editable in the theme
@@ -70,6 +70,11 @@ export function buildTemplate(content, media) {
   if (content.notes.length !== 2) throw new Error('the notes block has two slots');
   const hero = media[content.hero.key];
   if (!hero || hero.kind !== 'image') throw new Error('the hero must be a still image');
+  const buyImage = media[content.buyBox.image.key];
+  if (!buyImage || buyImage.kind !== 'image') throw new Error('the buy-box image must be a still image');
+  if (!Number.isInteger(buyImage.width) || !Number.isInteger(buyImage.height)) {
+    throw new Error(`media.json has no size for ${content.buyBox.image.key}; run prepare-cream-media.mjs`);
+  }
 
   const reviews = { heading: content.reviewsHeading };
   content.reviews.forEach((r, i) => {
@@ -101,10 +106,25 @@ export function buildTemplate(content, media) {
     ['buy-box', {
       type: 'buy-box',
       settings: {
+        image_url: buyImage.url,
+        image_alt: content.images[content.buyBox.image.key].alt,
+        image_width: buyImage.width,
+        image_height: buyImage.height,
         title: content.buyBox.title,
         price_note: content.buyBox.priceNote,
+        price_note_multi: content.buyBox.priceNoteMulti,
         scent_label: content.buyBox.scentLabel,
+        quantity_label: content.buyBox.quantityLabel,
+        quantity_less: content.buyBox.quantityLess,
+        quantity_more: content.buyBox.quantityMore,
+        quantity_max: content.buyBox.maxQuantity,
         cta: content.buyBox.cta,
+        cta_multi: content.buyBox.ctaMulti,
+        pack_headline: content.buyBox.pack.headline,
+        pack_line: content.buyBox.pack.line,
+        pack_cta: content.buyBox.pack.cta,
+        pack_hint: content.buyBox.pack.hint,
+        pack_hint_cta: content.buyBox.pack.hintCta,
         shipping: content.buyBox.shipping,
         guarantee: content.guarantee,
       },
@@ -125,6 +145,12 @@ export function buildTemplate(content, media) {
           default_variant_id: content.product.defaultVariantId,
           default_scent: content.product.defaultScent,
           price_token: content.product.price,
+          pack_handle: content.product.packHandle,
+          pack_count: content.product.packCount,
+          quantity_token: content.product.quantityToken,
+          total_token: content.product.totalToken,
+          pack_price_token: content.product.packPriceToken,
+          pack_unit_token: content.product.packUnitToken,
         },
         blocks: Object.fromEntries(ordered),
         block_order: ordered.map(([id]) => id),

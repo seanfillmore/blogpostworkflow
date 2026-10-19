@@ -17,16 +17,36 @@
 
   PRICE IS LIVE. Copy carries "$28" (settings.price_token); it is replaced with
   the default variant's live price at render, so a price change cannot leave the
-  page quoting a stale number.
+  page quoting a stale number. The multi-jar copy carries "2" and "$56"
+  (quantity_token, total_token) and the pack copy "$84" and "$21"
+  (pack_price_token, pack_unit_token); the script swaps in the chosen count,
+  live price x count, the live pack price and pack price / pack_count.
 
   BUY BOX CONTRACT (assets/presell-buy.js binds to it, do not rename):
     form[data-presell-buy]#presell-buy > select[name=id] (one option per
-    available scent, the default variant selected), button[type=submit]
-    [data-presell-submit], p[data-presell-error][hidden]; and the sticky phone
-    bar a[data-presell-sticky][href="#presell-buy"]. Options carry data-scent and
-    data-price so the script can relabel the buttons on a scent change. Each
-    data-presell-label element carries data-presell-template (the unreplaced
-    copy) and the form carries data-price-token / data-scent-token.
+    available scent, the default variant selected), the quantity stepper
+    [data-presell-qty][data-max] with button[data-presell-qty-dec] /
+    button[data-presell-qty-inc] / output[data-presell-qty-value], the hidden
+    input[name=quantity], button[type=submit][data-presell-submit],
+    p[data-presell-error][hidden]; the 4-pack banner [data-presell-pack] with
+    button[data-presell-pack-buy] and p[data-presell-pack-error][hidden]; and the
+    sticky phone bar a[data-presell-sticky][href="#presell-buy"]. Under the
+    stepper, p[data-presell-qty-hint][hidden] with button
+    [data-presell-qty-hint-buy] appears at 3 jars when the pack banner does
+    (3 singles cost as much as the pack) and buys the pack the same way. Options carry
+    data-scent, data-price, data-price-cents and, when the scent has an
+    available 4-pack, data-pack-id / data-pack-price / data-pack-unit /
+    data-pack-cents, so the script can relabel the buttons and show or hide the
+    banner on a scent change. Each data-presell-label element carries
+    data-presell-template (the unreplaced copy), and the multi-jar ones also
+    data-presell-template-multi; the form carries every token.
+
+  4-PACK BANNER: "buy 3, get the 4th free" is only TRUE while the pack costs at
+  most three single jars, so the banner renders hidden unless the default scent
+  has an available pack variant priced at or under three singles, and the
+  script applies the same test on every scent change. Pack variants are named
+  "4x <Scent>"; the leading "<n>x " is stripped to match a single jar's scent.
+  Pack prices are live from all_products, never hardcoded.
 
   No Recurpay widget: this is a page, not a product template, so the app embed's
   product-form injection has no product to attach to. presell.css hides its
@@ -50,6 +70,13 @@
   endunless
   assign live_price = dv.price | money_without_trailing_zeros
   assign live_scent = dv.option1 | default: scent_token
+
+  assign pk = all_products[section.settings.pack_handle]
+  assign pack_count = section.settings.pack_count | default: 4
+  assign quantity_token = section.settings.quantity_token | default: '@@no-quantity-token@@'
+  assign total_token = section.settings.total_token | default: '@@no-total-token@@'
+  assign pack_price_token = section.settings.pack_price_token | default: '@@no-pack-price-token@@'
+  assign pack_unit_token = section.settings.pack_unit_token | default: '@@no-pack-unit-token@@'
 
   assign rating = p.metafields.reviews.rating.value
   assign rating_count = p.metafields.reviews.rating_count.value | plus: 0
@@ -179,26 +206,114 @@
         </aside>
 
       {%- when 'buy-box' -%}
-        {%- assign img = dv.featured_image | default: p.featured_image -%}
+        {%- liquid
+          comment
+            The default scent's 4-pack, for the server render of the banner.
+            The per-scent packs are matched again inside the option loop below.
+          endcomment
+          assign dv_pack = false
+          for pv in pk.variants
+            unless pv.available
+              continue
+            endunless
+            assign pscent = pv.option1 | default: pv.title
+            assign first = pscent | split: ' ' | first
+            assign last_char = first | slice: -1
+            if last_char == 'x' or last_char == 'X'
+              assign digits = first | remove_last: last_char
+              assign n = digits | plus: 0
+              assign back = n | append: ''
+              if back == digits and n > 0
+                assign pscent = pscent | remove_first: first | strip
+              endif
+            endif
+            if pscent == dv.option1
+              assign dv_pack = pv
+              break
+            endif
+          endfor
+          if dv_pack
+            assign three_singles = dv.price | times: 3
+            if dv_pack.price > three_singles
+              assign dv_pack = false
+            endif
+          endif
+          assign dv_pack_price = ''
+          assign dv_pack_unit = ''
+          if dv_pack
+            assign dv_pack_price = dv_pack.price | money_without_trailing_zeros
+            assign dv_unit_cents = dv_pack.price | times: 1.0 | divided_by: pack_count | round
+            assign dv_pack_unit = dv_unit_cents | money_without_trailing_zeros
+          endif
+          assign bjoin = '?'
+          if s.image_url contains '?'
+            assign bjoin = '&'
+          endif
+        -%}
         <section class="presell-buy" {{ block.shopify_attributes }}>
-          {%- if img -%}
-            <img class="presell-buy-img" src="{{ img | image_url: width: 700 }}"
-              width="350" height="{{ 350 | divided_by: img.aspect_ratio | round }}"
-              alt="{{ img.alt | default: s.title | escape }}" loading="lazy" decoding="async">
+          <div class="presell-pack" data-presell-pack{% unless dv_pack %} hidden{% endunless %}>
+            <p class="presell-pack-headline">{{ s.pack_headline | escape }}</p>
+            <p class="presell-pack-line" data-presell-label data-presell-template="{{ s.pack_line | escape }}">{{ s.pack_line | escape | replace: pack_price_token, dv_pack_price | replace: pack_unit_token, dv_pack_unit }}</p>
+            <button type="button" class="presell-button presell-button--full presell-button--pack" data-presell-pack-buy data-presell-label data-presell-template="{{ s.pack_cta | escape }}">{{ s.pack_cta | escape | replace: pack_price_token, dv_pack_price | replace: pack_unit_token, dv_pack_unit }}</button>
+            <p class="presell-error" data-presell-pack-error hidden role="alert"></p>
+          </div>
+          {%- if s.image_url != blank -%}
+            <img class="presell-buy-img" src="{{ s.image_url }}{{ bjoin }}width=700"
+              srcset="{{ s.image_url }}{{ bjoin }}width=350 350w, {{ s.image_url }}{{ bjoin }}width=700 700w"
+              sizes="260px"
+              width="{{ s.image_width }}" height="{{ s.image_height }}"
+              alt="{{ s.image_alt | escape }}" loading="lazy" decoding="async">
           {%- endif -%}
           <h2 class="presell-buy-title" data-presell-label data-presell-template="{{ s.title | escape }}">{{ s.title | escape | replace: scent_token, live_scent }}</h2>
-          <p class="presell-buy-price">{{ s.price_note | escape | replace: price_token, live_price }}</p>
-          <form data-presell-buy data-price-token="{{ price_token | escape }}" data-scent-token="{{ scent_token | escape }}" id="presell-buy" class="presell-form" action="{{ routes.cart_add_url }}" method="post">
+          <p class="presell-buy-price" data-presell-label data-presell-template="{{ s.price_note | escape }}" data-presell-template-multi="{{ s.price_note_multi | escape }}">{{ s.price_note | escape | replace: price_token, live_price }}</p>
+          <form data-presell-buy data-price-token="{{ price_token | escape }}" data-scent-token="{{ scent_token | escape }}" data-quantity-token="{{ quantity_token | escape }}" data-total-token="{{ total_token | escape }}" data-pack-price-token="{{ pack_price_token | escape }}" data-pack-unit-token="{{ pack_unit_token | escape }}" id="presell-buy" class="presell-form" action="{{ routes.cart_add_url }}" method="post">
             <label class="presell-select-label" for="presell-scent">{{ s.scent_label | escape }}</label>
             <select id="presell-scent" name="id" class="presell-select">
               {%- for v in p.variants -%}
                 {%- if v.available -%}
-                  <option value="{{ v.id }}" data-scent="{{ v.option1 | escape }}" data-price="{{ v.price | money_without_trailing_zeros }}"{% if v.id == dv.id %} selected{% endif %}>{{ v.option1 | escape }}</option>
+                  {%- liquid
+                    assign vpack = false
+                    for pv in pk.variants
+                      unless pv.available
+                        continue
+                      endunless
+                      assign pscent = pv.option1 | default: pv.title
+                      assign first = pscent | split: ' ' | first
+                      assign last_char = first | slice: -1
+                      if last_char == 'x' or last_char == 'X'
+                        assign digits = first | remove_last: last_char
+                        assign n = digits | plus: 0
+                        assign back = n | append: ''
+                        if back == digits and n > 0
+                          assign pscent = pscent | remove_first: first | strip
+                        endif
+                      endif
+                      if pscent == v.option1
+                        assign vpack = pv
+                        break
+                      endif
+                    endfor
+                  -%}
+                  <option value="{{ v.id }}" data-scent="{{ v.option1 | escape }}" data-price="{{ v.price | money_without_trailing_zeros }}" data-price-cents="{{ v.price }}"
+                    {%- if vpack -%}
+                      {%- assign unit_cents = vpack.price | times: 1.0 | divided_by: pack_count | round %} data-pack-id="{{ vpack.id }}" data-pack-price="{{ vpack.price | money_without_trailing_zeros }}" data-pack-unit="{{ unit_cents | money_without_trailing_zeros }}" data-pack-cents="{{ vpack.price }}"
+                    {%- endif -%}
+                    {% if v.id == dv.id %} selected{% endif %}>{{ v.option1 | escape }}</option>
                 {%- endif -%}
               {%- endfor -%}
             </select>
+            <span class="presell-select-label" id="presell-qty-label">{{ s.quantity_label | escape }}</span>
+            <div class="presell-qty" data-presell-qty data-max="{{ s.quantity_max }}" role="group" aria-labelledby="presell-qty-label">
+              <button type="button" class="presell-qty-btn" data-presell-qty-dec aria-label="{{ s.quantity_less | escape }}" disabled>&minus;</button>
+              <output class="presell-qty-value" data-presell-qty-value aria-live="polite">1</output>
+              <button type="button" class="presell-qty-btn" data-presell-qty-inc aria-label="{{ s.quantity_more | escape }}">+</button>
+            </div>
+            <p class="presell-qty-hint" data-presell-qty-hint hidden>
+              <span>{{ s.pack_hint | escape }}</span>
+              <button type="button" class="presell-qty-hint-btn" data-presell-qty-hint-buy data-presell-label data-presell-template="{{ s.pack_hint_cta | escape }}">{{ s.pack_hint_cta | escape | replace: pack_price_token, dv_pack_price | replace: pack_unit_token, dv_pack_unit }}</button>
+            </p>
             <input type="hidden" name="quantity" value="1">
-            <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label data-presell-template="{{ s.cta | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
+            <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label data-presell-template="{{ s.cta | escape }}" data-presell-template-multi="{{ s.cta_multi | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
             <p class="presell-error" data-presell-error hidden role="alert"></p>
           </form>
           <p class="presell-buy-meta">{{ s.shipping | escape }}</p>
@@ -283,7 +398,13 @@
     { "type": "text", "id": "product_handle", "label": "Product handle", "default": "coconut-moisturizer" },
     { "type": "text", "id": "default_variant_id", "label": "Preselected variant id", "default": "44179428475050" },
     { "type": "text", "id": "default_scent", "label": "Preselected scent name, as written in the copy", "default": "Coconut Breeze" },
-    { "type": "text", "id": "price_token", "label": "Price as written in the copy (replaced by the live price)", "default": "$28" }
+    { "type": "text", "id": "price_token", "label": "Price as written in the copy (replaced by the live price)", "default": "$28" },
+    { "type": "text", "id": "pack_handle", "label": "4-pack product handle", "default": "coconut-moisturizer-4-pack" },
+    { "type": "number", "id": "pack_count", "label": "Jars in the pack", "default": 4 },
+    { "type": "text", "id": "quantity_token", "label": "Jar count as written in the multi-jar copy", "default": "2" },
+    { "type": "text", "id": "total_token", "label": "Total as written in the multi-jar copy", "default": "$56" },
+    { "type": "text", "id": "pack_price_token", "label": "Pack price as written in the copy", "default": "$84" },
+    { "type": "text", "id": "pack_unit_token", "label": "Per-jar pack price as written in the copy", "default": "$21" }
   ],
   "blocks": [
     {
@@ -350,10 +471,25 @@
       "name": "Buy box",
       "limit": 1,
       "settings": [
+        { "type": "text", "id": "image_url", "label": "Image URL" },
+        { "type": "text", "id": "image_alt", "label": "Image alt text" },
+        { "type": "number", "id": "image_width", "label": "Image width (px)" },
+        { "type": "number", "id": "image_height", "label": "Image height (px)" },
         { "type": "text", "id": "title", "label": "Product title" },
         { "type": "text", "id": "price_note", "label": "Price line" },
+        { "type": "text", "id": "price_note_multi", "label": "Price line, more than one jar" },
         { "type": "text", "id": "scent_label", "label": "Scent picker label" },
+        { "type": "text", "id": "quantity_label", "label": "Quantity label" },
+        { "type": "text", "id": "quantity_less", "label": "Minus button label (screen readers)" },
+        { "type": "text", "id": "quantity_more", "label": "Plus button label (screen readers)" },
+        { "type": "number", "id": "quantity_max", "label": "Most single jars (more is the pack)", "default": 3 },
         { "type": "text", "id": "cta", "label": "Button label" },
+        { "type": "text", "id": "cta_multi", "label": "Button label, more than one jar" },
+        { "type": "text", "id": "pack_headline", "label": "4-pack banner headline" },
+        { "type": "text", "id": "pack_line", "label": "4-pack banner price line" },
+        { "type": "text", "id": "pack_cta", "label": "4-pack banner button" },
+        { "type": "text", "id": "pack_hint", "label": "Hint at 3 jars" },
+        { "type": "text", "id": "pack_hint_cta", "label": "Hint button at 3 jars" },
         { "type": "text", "id": "shipping", "label": "Shipping line" },
         { "type": "textarea", "id": "guarantee", "label": "Guarantee" }
       ]

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ship the Coconut Moisturizer pre-sell page: five theme files and one Shopify page.
+ * Ship the Coconut Moisturizer pre-sell page: four theme files and one Shopify page.
  *
  *   node scripts/presell/publish-cream-presell.mjs --theme <preview id> [--apply]
  *   node scripts/presell/publish-cream-presell.mjs --live [--apply]
@@ -12,8 +12,10 @@
  * THEME FILES are read from git HEAD (`git show HEAD:theme/<key>`), never from the
  * working tree, so what ships is exactly what was reviewed, `\/` escaping intact.
  * Each write is GUARDED: the target theme's current copy must be either
- *   - the expected "before" (absent for the four new files; the pre-change cream
- *     template at BASELINE_REF for product.landing-page-cream.json), or
+ *   - the expected "before": the version merged to main (LIVE_BASE_REF,
+ *     `git show origin/main:theme/<key>`), which is what PR #1087 put live, or
+ *     (only accepted while HEAD contains origin/main; a branch main has moved
+ *     past is refused outright, so it cannot overwrite newer live files)
  *   - already the new content (a re-run is a no-op).
  *   - an earlier version of the file committed on this branch (a previous run of
  *     this script shipped it; a fix is being redeployed).
@@ -49,16 +51,37 @@ export const PAGE = {
   template_suffix: 'presell-cream',
 };
 
-/** The commit before Task 4 changed the cream product template. */
-export const BASELINE_REF = 'a1a6a181';
+/**
+ * The page is live (PR #1087), so each file's expected "before" is the version on
+ * main. The product template (product.landing-page-cream.json) shipped with that
+ * PR and is deliberately NOT in this list: this script never writes it again.
+ */
+export const LIVE_BASE_REF = 'origin/main';
 
 export const FILES = [
-  { key: 'sections/presell-listicle.liquid', before: null },
-  { key: 'assets/presell.css', before: null },
-  { key: 'assets/presell-buy.js', before: null },
-  { key: 'templates/page.presell-cream.json', before: null },
-  { key: 'templates/product.landing-page-cream.json', before: BASELINE_REF },
+  { key: 'sections/presell-listicle.liquid', before: LIVE_BASE_REF },
+  { key: 'assets/presell.css', before: LIVE_BASE_REF },
+  { key: 'assets/presell-buy.js', before: LIVE_BASE_REF },
+  { key: 'templates/page.presell-cream.json', before: LIVE_BASE_REF },
 ];
+
+const gitRun = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'ignore' });
+
+/**
+ * True when HEAD contains LIVE_BASE_REF. Accepting "live == origin/main" is only
+ * safe from a branch built on that main: once main moves on (another PR ships a
+ * newer version of these files), a stale branch would see live == main and
+ * overwrite the newer files with its older copy. `run` throws on a non-zero exit.
+ */
+export function headContainsBase(run = gitRun) {
+  try { run(['merge-base', '--is-ancestor', LIVE_BASE_REF, 'HEAD']); return true; } catch { return false; }
+}
+
+export function assertHeadContainsBase(run = gitRun) {
+  if (!headContainsBase(run)) {
+    throw new Error(`HEAD does not contain ${LIVE_BASE_REF}: rebase this branch on main (git fetch && git rebase origin/main) before shipping. Nothing written.`);
+  }
+}
 
 function gitShow(ref, key) {
   return execFileSync('git', ['show', `${ref}:theme/${key}`], { cwd: ROOT, encoding: 'utf8', maxBuffer: 16 << 20 });
@@ -109,6 +132,7 @@ async function readBack(shopify, themeId, key, target, { tries = 12, waitMs = 50
 }
 
 async function shipTheme(shopify, themeId, apply, record) {
+  assertHeadContainsBase();
   const plan = [];
   for (const f of FILES) {
     const target = gitShow('HEAD', f.key);

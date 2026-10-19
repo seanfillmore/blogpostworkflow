@@ -286,6 +286,79 @@
   font-size: 1.7rem; /* 16px+ so iOS does not zoom on focus */
 }
 .presell-error { color: #b00020; font-size: 1.5rem; }
+
+/* Quantity stepper: single jars, 1 to 3 (4 or more is the pack banner). */
+.presell-qty {
+  display: inline-grid;
+  grid-template-columns: 48px 56px 48px;
+  align-items: stretch;
+  justify-self: start;
+  border: 1px solid var(--ps-ink);
+  border-radius: var(--ps-radius);
+  background: #ffffff;
+  overflow: hidden;
+}
+.presell-qty-btn {
+  min-height: 48px;
+  border: 0;
+  background: transparent;
+  color: var(--ps-ink);
+  font-family: inherit;
+  font-size: 2.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.presell-qty-btn[disabled] { color: #b3b3b3; cursor: default; }
+.presell-qty-value {
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  border-left: 1px solid var(--ps-line);
+  border-right: 1px solid var(--ps-line);
+}
+
+.presell-qty-hint {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin-top: -2px !important;
+}
+.presell-qty-hint-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ps-ink);
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.presell-qty-hint-btn[disabled] { opacity: 0.6; cursor: wait; }
+
+/* 4-pack banner: top of the buy box, always offered (when it is a real deal). */
+.presell-pack {
+  margin: 0 0 18px;
+  padding: 14px 14px 12px;
+  background: #ffffff;
+  border: 2px solid var(--ps-ink);
+  border-radius: 4px;
+  display: grid;
+  gap: 8px;
+}
+.presell-pack-headline {
+  justify-self: center;
+  background: var(--ps-green);
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.presell-pack-line { font-size: 1.7rem; font-weight: 600; }
+.presell-button--pack { min-height: 48px; padding: 12px 18px; font-size: 1.7rem; }
 .presell-buy-meta { font-size: 1.5rem; margin-top: 12px !important; }
 .presell-guarantee { font-size: 1.5rem; color: var(--ps-muted); margin-top: 6px !important; }
 
