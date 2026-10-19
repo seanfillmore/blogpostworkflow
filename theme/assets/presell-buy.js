@@ -22,7 +22,7 @@
           })
           .then(function (res) {
             if (res && res.ok) {
-              deps.navigate('/checkout');
+              try { deps.navigate('/checkout'); } catch (e) { return done({ ok: false, error: FALLBACK }); }
               return done({ ok: true });
             }
             return Promise.resolve(res && res.json ? res.json() : null)
@@ -31,7 +31,7 @@
                 return done({ ok: false, error: (d && (d.description || d.message)) || FALLBACK });
               });
           }, function (err) {
-            return done({ ok: false, error: (err && err.message) || FALLBACK });
+            return done({ ok: false, error: FALLBACK });
           });
       }
     };
@@ -44,7 +44,8 @@
     return out;
   }
 
-  function bind(doc) {
+  function bind(doc, win) {
+    win = win || window;
     var form = doc.querySelector('form[data-presell-buy]');
     if (!form) return;
     var select = form.querySelector('select[name=id]');
@@ -53,8 +54,8 @@
     var tokens = { priceToken: form.getAttribute('data-price-token') || '', scentToken: form.getAttribute('data-scent-token') || '' };
     var labels = doc.querySelectorAll('[data-presell-label][data-presell-template]');
     var buy = createBuy({
-      fetch: function (u, o) { return window.fetch(u, o); },
-      navigate: function (u) { window.location.href = u; }
+      fetch: function (u, o) { return win.fetch(u, o); },
+      navigate: function (u) { win.location.href = u; }
     });
 
     function refresh() {
@@ -67,6 +68,15 @@
     }
     select.addEventListener('change', refresh);
     refresh();
+
+    // Back from /checkout can restore this page from the bfcache with the button
+    // still disabled from the successful add.
+    win.addEventListener('pageshow', function (e) {
+      if (e && e.persisted) {
+        button.disabled = false;
+        errorEl.hidden = true;
+      }
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
@@ -83,7 +93,7 @@
     });
   }
 
-  var api = { createBuy: createBuy, relabel: relabel };
+  var api = { createBuy: createBuy, relabel: relabel, bind: bind };
   if (typeof window !== 'undefined') {
     window.PresellBuy = api;
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { bind(document); });

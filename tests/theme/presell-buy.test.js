@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 // the way a classic script would run, with a CommonJS `module` in scope.
 const mod = { exports: {} };
 new Function('module', readFileSync(new URL('../../theme/assets/presell-buy.js', import.meta.url), 'utf8'))(mod);
-const { createBuy, relabel } = mod.exports;
+const { createBuy, relabel, bind } = mod.exports;
 
 function harness(response) {
   const calls = []; const nav = [];
@@ -39,11 +39,11 @@ test('non-2xx without a body gets a friendly fallback', async () => {
   assert.ok(r.error && !/—/.test(r.error));
   assert.equal(h.nav.length, 0);
 });
-test('rejected fetch returns error, no navigation', async () => {
-  const h = harness(() => Promise.reject(new Error('offline')));
+test('rejected fetch returns friendly error, not the raw message, no navigation', async () => {
+  const h = harness(() => Promise.reject(new Error('Failed to fetch')));
   const r = await h.buy.submit('1');
   assert.equal(r.ok, false);
-  assert.ok(r.error);
+  assert.ok(r.error && !/Failed to fetch/.test(r.error) && !/\u2014/.test(r.error));
   assert.equal(h.nav.length, 0);
 });
 test('double submit while pending posts once', async () => {
@@ -67,4 +67,35 @@ test('submit works again after a failure', async () => {
 test('relabel swaps scent and price tokens', () => {
   assert.equal(relabel('Get Coconut Breeze for $28', { priceToken: '$28', scentToken: 'Coconut Breeze' }, { scent: 'Lavender', price: '$30' }), 'Get Lavender for $30');
   assert.equal(relabel('Buy', { priceToken: '@@a', scentToken: '@@b' }, { scent: 'X', price: '$1' }), 'Buy');
+});
+
+test('a throwing navigate does not leave submit stuck', async () => {
+  const calls = [];
+  const buy = createBuy({ fetch: (u, o) => { calls.push(u); return Promise.resolve(ok); }, navigate: () => { throw new Error('nav'); } });
+  assert.equal((await buy.submit('1')).ok, false);
+  assert.equal((await buy.submit('1')).ok, false);
+  assert.equal(calls.length, 2);
+});
+test('pageshow persisted re-enables the button and hides the error', async () => {
+  const handlers = {};
+  const mk = () => ({ listeners: {}, addEventListener(n, f) { this.listeners[n] = f; } });
+  const form = mk(), select = mk(), win = mk();
+  select.options = [{ getAttribute: () => 'x', text: 'x' }]; select.selectedIndex = 0; select.value = '5';
+  const button = { disabled: false };
+  const errorEl = { hidden: true, textContent: '' };
+  form.getAttribute = () => '';
+  form.querySelector = (q) => (q.includes('select') ? select : q.includes('submit') ? button : errorEl);
+  const doc = { querySelector: () => form, querySelectorAll: () => [] };
+  win.fetch = () => Promise.resolve(ok);
+  win.location = { href: '' };
+  bind(doc, win);
+  form.listeners.submit({ preventDefault() {} });
+  assert.equal(button.disabled, true);
+  errorEl.hidden = false;
+  win.listeners.pageshow({ persisted: false });
+  assert.equal(button.disabled, true);
+  win.listeners.pageshow({ persisted: true });
+  assert.equal(button.disabled, false);
+  assert.equal(errorEl.hidden, true);
+  await new Promise((r) => setTimeout(r, 5));
 });
