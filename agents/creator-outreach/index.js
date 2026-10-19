@@ -37,7 +37,7 @@ import { hushmailCredentials, sendMail, fetchInboxFrom, fetchSentTo, isTransient
 import {
   DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems,
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
-  withQuotedThread, senderLabel,
+  withQuotedThread, senderLabel, composeThanks, thanksHistory, reelsForCreator, THANKS_SYSTEM, THANKS_SUBJECT,
 } from '../../lib/creator-outreach.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
 import { extractInstagramHandle, mergeSocials, handleFor, recordHandle, recordDecline, DECLINE_TAG_PATTERN } from '../../lib/creator-socials.js';
@@ -51,6 +51,9 @@ const INBOX_LOOKBACK_DAYS = 14;
 const REPLY_MODEL = LLM_MODELS.standard;
 /** Message-IDs kept for a References header; Gmail threads on any one of them. */
 const MAX_THREAD_REFS = 20;
+/** Earlier thank-yous kept per creator, for the no-repeat checks. */
+const MAX_THANKS_HISTORY = 12;
+const REELS_LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
 
 function loadEnv(root = ROOT) {
   try {
@@ -102,6 +105,18 @@ async function draftWithModel(c, msg, env) {
   return parseDraft((res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(''));
 }
 
+/** Default thank-you writer: returns the model's raw text; composeThanks parses and checks it. */
+async function writeThanksWithModel(prompt, env) {
+  const { default: Anthropic } = await import('../../lib/anthropic.js');
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+  const res = await client.messages.create({
+    model: REPLY_MODEL, max_tokens: 600, system: THANKS_SYSTEM,
+    messages: [{ role: 'user', content: prompt }],
+  });
+  if (res.stop_reason === 'max_tokens') throw new Error('thank-you draft truncated at max_tokens');
+  return (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
+}
+
 /**
  * One run. Every dependency is injectable so the orchestration is testable
  * without a mailbox, Shopify, Trybe or a model.
@@ -119,6 +134,9 @@ export async function runOutreach({
   readSent,
   send,
   draft = (c, msg) => draftWithModel(c, msg, env),
+  writeThanks = (prompt) => writeThanksWithModel(prompt, env),
+  // The Reels ledger is server-only; missing means no Reel can be mentioned.
+  loadReels = () => (existsSync(REELS_LEDGER_PATH) ? JSON.parse(readFileSync(REELS_LEDGER_PATH, 'utf8')) : null),
   escalate = async () => {},
   loadHomepage = () => JSON.parse(readFileSync(HOMEPAGE_PATH, 'utf8')),
   log = console.log,
@@ -134,7 +152,7 @@ export async function runOutreach({
   const byEmail = new Map(roster.map((c) => [c.email, c]));
   state.processed ||= [];
   const done = new Set(state.processed);
-  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], handles: [], declinedTags: [], plan: null };
+  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], heldThanks: [], handles: [], declinedTags: [], plan: null };
 
   // Instagram handles we already hold (state.socials + the homepage list). A
   // failure to build the list means nobody is asked this run; see planScheduled.
@@ -291,22 +309,60 @@ export async function runOutreach({
   // ── 2. Scheduled emails. ──
   const plan = planScheduled(roster, state, { now, config, socials });
   result.plan = plan;
+  let reelLedger = null;
+  if (plan.sends.some((s) => s.kind === 'thanks')) {
+    try { reelLedger = loadReels(); } catch (err) { log(`  Reels ledger unavailable (${err.message}); thank-yous will not mention a Reel`); }
+  }
   for (const s of plan.sends) {
-    if (!apply) { result.scheduled.push(s); continue; }
     const rec = touch(state, s.email);
     const st = creatorState(state, s.email);
+    let thanks = null;
+    if (s.kind === 'thanks') {
+      // A held note is retried once a day, not every 30 minutes.
+      if (rec.thanksHeldDay === today) { result.heldThanks.push({ email: s.email, name: s.name, reason: rec.thanksHeldReason }); continue; }
+      const c = byEmail.get(s.email);
+      const history = thanksHistory(rec);
+      thanks = await composeThanks({
+        c, extra: s.extra, history, reels: reelsForCreator(reelLedger, c),
+        threaded: Boolean(rec.thanksThread), write: writeThanks,
+      });
+      if (thanks.held) {
+        result.heldThanks.push({ email: s.email, name: s.name, reason: thanks.held });
+        if (apply) { rec.thanksHeldDay = today; rec.thanksHeldReason = thanks.held; saveState(state); }
+        continue;
+      }
+      // A later thank-you answers the earlier one, like a person would.
+      s.subject = rec.thanksThread ? replySubject(rec.thanksThread.subject) : history.length ? thanks.subject : THANKS_SUBJECT;
+      s.text = thanks.text;
+      s.source = thanks.source;
+    }
+    if (!apply) { result.scheduled.push(s); continue; }
     try {
       const threaded = s.kind.startsWith('nudge') || s.kind === 'final';
       const refs = rec.threadRefs?.length ? rec.threadRefs : st.threadMessageId ? [st.threadMessageId] : [];
-      const text = threaded ? withQuotedThread(s.text, rec.thread) : s.text;
-      const sent = await send({
-        to: s.email, subject: s.subject, text,
-        ...(threaded && refs.length ? { inReplyTo: refs[refs.length - 1], references: refs.join(' ') } : {}),
-      });
+      const thanksRefs = rec.thanksThread?.refs || [];
+      let text = threaded ? withQuotedThread(s.text, rec.thread) : s.text;
+      let headers = threaded && refs.length ? { inReplyTo: refs[refs.length - 1], references: refs.join(' ') } : {};
+      if (thanks && rec.thanksThread) {
+        text = withQuotedThread(s.text, rec.thanksThread.last);
+        if (thanksRefs.length) headers = { inReplyTo: thanksRefs[thanksRefs.length - 1], references: thanksRefs.join(' ') };
+      }
+      const sent = await send({ to: s.email, subject: s.subject, text, ...headers });
       const at = new Date(now).toISOString();
       if (threaded || s.kind === 'welcome') {
         rec.thread = { date: at, from: us, text };
         if (threaded && refs.length) rec.threadRefs = [...refs, sent.messageId].slice(-MAX_THREAD_REFS);
+      }
+      if (thanks) {
+        rec.thanksThread = {
+          subject: rec.thanksThread?.subject || s.subject,
+          refs: [...thanksRefs, sent.messageId].filter(Boolean).slice(-MAX_THREAD_REFS),
+          last: { date: at, from: us, text },
+        };
+        rec.thanksHistory = [...(rec.thanksHistory || thanksHistory(rec)), {
+          at, subject: s.subject, body: thanks.body, products: s.extra.products, source: thanks.source,
+        }].slice(-MAX_THANKS_HISTORY);
+        delete rec.thanksHeldDay; delete rec.thanksHeldReason;
       }
       rec.sent = { ...(rec.sent || {}), [s.kind]: s.kind === 'thanks' ? (rec.sent?.thanks || 0) + 1 : at };
       if (s.kind === 'thanks' && s.extra?.askSocials) rec.sent.socials = at;
@@ -328,7 +384,14 @@ export function renderSummary(r, { apply }) {
   const who = (x) => `${x.name} <${x.email}>`;
   if (r.scheduled.length) {
     lines.push(`Scheduled emails ${apply ? 'sent' : 'due'}:`);
-    for (const s of r.scheduled) lines.push(`  - ${s.kind}: ${who(s)}`);
+    for (const s of r.scheduled) {
+      lines.push(`  - ${s.kind}: ${who(s)}${s.source ? ` (${s.source === 'model' ? 'written fresh' : `fallback ${s.source}`})` : ''}`);
+      if (s.kind === 'thanks') lines.push(`    subject: ${s.subject}\n    "${s.text.split('\n').slice(2).join(' ').replace(/\s+/g, ' ').slice(0, 300)}"`);
+    }
+  }
+  if (r.heldThanks?.length) {
+    lines.push('Thank-yous HELD (no fresh wording passed the checks; retried tomorrow):');
+    for (const h of r.heldThanks) lines.push(`  - ${who(h)}: ${h.reason}`);
   }
   if (r.plan?.deferredByWindow?.length) {
     lines.push(`${r.plan.deferredByWindow.length} scheduled email(s) waiting for the send window:`);
@@ -447,7 +510,7 @@ async function main() {
     });
     const { subject, body } = renderSummary(run, { apply });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length;
+    const acted = run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length || run.heldThanks.length;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'creators' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
