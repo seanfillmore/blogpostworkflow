@@ -103,6 +103,22 @@ Optional, builder's judgement: the two honest notes from the product page ("bees
 
 Repointing the moisturizer ads to the new page and relaunching the campaign is a separate step, Sean's call, done in the Monday creative batch per the campaign's cadence.
 
+## Creator videos (Sean, 2026-10-19: "use videos as well as statics")
+
+The page uses 2-3 approved Trybe videos of the Coconut Moisturizer alongside the statics, each placed beside the reason it matches. Sean has the rights to use Trybe creator content on the site. Candidates (approved submissions, `products` = Coconut Moisturizer | 4oz):
+
+- **Rebecca West**, "When was the last time you turned your body cream around and read the label?..." → reason #1.
+- **Kaitlynn Eliason**, "Ever wonder what butter feels like on your skin?..." → reason #2 (also running in ads).
+- **Kristin Crane**, "I just shaved... my legs are as dry as the Sahara Desert..." → reason #2 or #3 (real dry-skin moment).
+- **Marianne Dike** (four videos, "keep it simple" angle) → alternate.
+- **Exclude Marvin Aboagye**'s video: it says the cream has "6 ingredients", which is the lotion's count.
+
+Rules:
+- Every clip's transcript (Trybe `transcript.text`) passes `checkSeoCopyFields` on the commercial surface before it goes on the page, and its on-screen product must be the cream jar (flip-top jar, not a pump).
+- Muted, looping, autoplay, `playsinline`, with burned-in or overlaid captions so it works on mute; a poster frame; tap to unmute is optional.
+- Lazy-loaded (only fetched near the viewport) and hosted in Shopify Files. **No video above the fold**: the first screen keeps a still so the page loads fast on a phone.
+- Keep each file small (compressed, short); check the page on a throttled mobile connection.
+
 ## Images *(my call)*
 
 Sean has the rights to Trybe creator images. Prefer, in order: the creatives already approved and run in the moisturizer ads (they show the Coconut Breeze jar), then approved Trybe submissions for `coconut-moisturizer` that the visual review marks LOOKS READY, then the PDP's real in-use photo (`cream-in-use-real.jpg`). Never use a submission flagged for showing the wrong product (e.g. a pump bottle). Product-page images are archived/handled per the image rules in CLAUDE.md; this page only references them.
