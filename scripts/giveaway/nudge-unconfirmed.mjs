@@ -136,7 +136,9 @@ async function main() {
       // Re-issuing the subscribe is what makes Klaviyo re-send its opt-in email. The
       // stamp is written only after that succeeds, so a failure retries next run rather
       // than silently consuming one of the entrant's three chances.
-      await subscribeToList(config.listId, { email: d.email, firstName: d.firstName, properties: {} });
+      const r = await subscribeToList(config.listId, { email: d.email, firstName: d.firstName, properties: {} });
+      // Suppressed: nothing was sent, so no nudge may be recorded against them.
+      if (!r.subscribed) { console.log(`  skipped ${d.email} (suppressed: ${r.suppression.join(', ')})`); continue; }
       await updateProfileProperties(d.email, {
         gv_confirm_nudges: d.nudgeNumber,
         gv_last_nudge_at: new Date().toISOString(),
