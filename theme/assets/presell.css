@@ -1,0 +1,311 @@
+/* theme/assets/presell.css
+ *
+ * The Coconut Moisturizer pre-sell listicle (sections/presell-listicle.liquid).
+ * Loaded only by that section, so the chrome rules below touch no other page.
+ *
+ * Mobile first: nearly every visitor is a Meta click on a phone (~390px wide).
+ * Palette from data/brand/brand-kit.json: black #000000, sand #EDE5D8, green
+ * #AEDEAC (ONE accent, spent on the number badges), grey #EDEDED. Fonts are the
+ * theme's own Cabin/Outfit variables, so the page loads no extra fonts.
+ *
+ * 1rem IS ~11px ON THIS THEME (html is 62.5% x a 1.1 body scale). Write (N/10)rem
+ * for Npx; body copy is 1.7rem here. See theme/assets/giveaway.css for the story.
+ */
+
+/* ── Chrome: keep the logo and announcement bar, drop every way to wander off ── */
+[id$="__footer"],
+[id$="__mobile-dock"],
+#shopify-section-similar-products,
+[id$="__header"] .header__left,
+[id$="__header"] .header__right,
+[id$="__header"] .header__inline-menu { display: none !important; }
+
+/* Belt and braces: no subscription widget may appear on this page. */
+.recurpay-pdp-widget,
+.recurpay__widget { display: none !important; }
+
+.presell [hidden] { display: none !important; }
+
+.presell {
+  --ps-ink: #000000;
+  --ps-sand: #EDE5D8;
+  --ps-green: #AEDEAC;
+  --ps-line: #EDEDED;
+  --ps-muted: #4d4d4d;
+  --ps-radius: var(--button-radius, 8px);
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 16px 16px 120px;
+  font-family: var(--font-body-family, 'Outfit', sans-serif);
+  color: var(--ps-ink);
+  font-size: 1.7rem;
+  line-height: 1.55;
+}
+.presell h1,
+.presell h2,
+.presell h3 {
+  font-family: var(--font-heading-family, 'Cabin', sans-serif);
+  color: var(--ps-ink);
+  letter-spacing: -0.01em;
+}
+.presell p { margin: 0; }
+.presell img,
+.presell video { display: block; max-width: 100%; }
+
+/* ── First screen ──────────────────────────────────────────────────────────── */
+.presell-eyebrow {
+  display: inline-block;
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--ps-sand);
+  padding: 4px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px !important;
+}
+.presell-headline {
+  font-size: clamp(2.7rem, 7.4vw, 4.2rem);
+  line-height: 1.12;
+  margin: 0 0 10px;
+  text-wrap: balance;
+}
+.presell-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.4rem;
+  color: var(--ps-muted);
+  margin-bottom: 12px !important;
+}
+.presell-stars {
+  position: relative;
+  display: inline-block;
+  width: 7.4rem;
+  height: 1.4rem;
+  background: var(--ps-line);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cg%3E%3Cpath d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(24)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(48)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(72)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(96)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 24'%3E%3Cg%3E%3Cpath d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(24)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(48)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(72)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3Cpath transform='translate(96)' d='M12 1l3.1 7 7.6.7-5.8 5 1.8 7.4L12 17.3 5.3 21.1l1.8-7.4-5.8-5 7.6-.7z'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 100% 100% no-repeat;
+}
+.presell-stars > span { position: absolute; inset: 0 auto 0 0; background: #e8a317; }
+.presell-hero-img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  object-position: 50% 30%;
+  border-radius: 4px;
+  background: var(--ps-sand);
+}
+.presell-intro {
+  font-size: 1.75rem;
+  margin: 14px 0 0 !important;
+}
+
+/* ── Reasons ───────────────────────────────────────────────────────────────── */
+.presell-reason { margin-top: 36px; }
+.presell-reason-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 2.4rem;
+  line-height: 1.2;
+  margin: 0 0 14px;
+}
+.presell-num {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 3.8rem;
+  height: 3.8rem;
+  border-radius: 50%;
+  background: var(--ps-green);
+  font-size: 2rem;
+  line-height: 1;
+}
+.presell-media { margin: 0 0 14px; position: relative; }
+.presell-media--image img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: 4px;
+  background: var(--ps-sand);
+}
+.presell-media--video {
+  width: min(100%, 320px);
+  margin-left: auto;
+  margin-right: auto;
+}
+.presell-video {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: 6px;
+  background: var(--ps-sand);
+}
+.presell-caption {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 14px;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #ffffff;
+  font-size: 1.5rem;
+  line-height: 1.35;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 4px;
+}
+.presell-visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Label comparison: ours short and bold, theirs long and dense ───────────── */
+.presell-labels {
+  margin-top: 36px;
+  background: var(--ps-sand);
+  border-radius: 4px;
+  padding: 18px 14px;
+}
+.presell-labels-heading { font-size: 2.2rem; margin: 0 0 12px; text-align: center; }
+.presell-labels-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.presell-label {
+  background: #ffffff;
+  border-radius: 4px;
+  padding: 12px 10px;
+}
+.presell-label h3 { font-size: 1.5rem; line-height: 1.25; margin: 0 0 8px; }
+.presell-label ol { margin: 0; padding-left: 1.9em; }
+.presell-label--ours { border: 2px solid var(--ps-ink); }
+.presell-label--ours li {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: 6px;
+}
+.presell-label--theirs { color: var(--ps-muted); }
+.presell-label--theirs li {
+  font-size: 1.15rem;
+  line-height: 1.3;
+  margin-bottom: 1px;
+}
+.presell-label-note { font-size: 1.3rem; line-height: 1.4; margin-top: 8px !important; }
+
+/* ── Reviews ───────────────────────────────────────────────────────────────── */
+.presell-reviews { margin-top: 40px; }
+.presell-reviews h2 { font-size: 2.2rem; margin: 0 0 14px; }
+.presell-review {
+  margin: 0 0 12px;
+  padding: 14px;
+  border: 1px solid var(--ps-line);
+  border-radius: 4px;
+}
+.presell-review-stars { color: #e8a317; font-size: 1.6rem; letter-spacing: 2px; }
+.presell-review blockquote { margin: 6px 0 8px; padding: 0; border: 0; }
+.presell-review blockquote p { font-size: 1.6rem; }
+.presell-review figcaption { font-size: 1.4rem; font-weight: 600; }
+.presell-review figcaption span { font-weight: 400; color: var(--ps-muted); margin-left: 6px; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+.presell-button {
+  display: inline-block;
+  min-height: 52px;
+  padding: 15px 22px;
+  border: 0;
+  border-radius: var(--ps-radius);
+  background: var(--ps-ink);
+  color: #ffffff !important;
+  font-family: inherit;
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.presell-button:hover,
+.presell-button:focus-visible { background: #222222; }
+.presell-button[disabled] { opacity: 0.6; cursor: wait; }
+.presell-button--full { width: 100%; }
+.presell-cta-wrap { margin-top: 28px !important; text-align: center; }
+.presell-cta-wrap .presell-button { width: 100%; }
+
+/* ── Notes ─────────────────────────────────────────────────────────────────── */
+.presell-notes {
+  margin-top: 36px;
+  border-left: 4px solid var(--ps-green);
+  padding: 4px 0 4px 14px;
+}
+.presell-notes h2 { font-size: 1.9rem; margin: 0 0 8px; }
+.presell-notes ul { margin: 0; padding-left: 1.2em; }
+.presell-notes li { margin-bottom: 6px; font-size: 1.6rem; }
+
+/* ── Buy box ───────────────────────────────────────────────────────────────── */
+.presell-buy {
+  margin-top: 40px;
+  padding: 20px 16px;
+  background: var(--ps-sand);
+  border-radius: 4px;
+  text-align: center;
+  scroll-margin-top: 90px;
+}
+#presell-buy { scroll-margin-top: 140px; }
+.presell-buy-img {
+  width: 100%;
+  max-width: 260px;
+  height: auto;
+  margin: 0 auto 12px;
+  border-radius: 4px;
+  background: #ffffff;
+}
+.presell-buy-title { font-size: 2.2rem; line-height: 1.2; margin: 0 0 6px; }
+.presell-buy-price { font-size: 1.8rem; font-weight: 700; margin-bottom: 14px !important; }
+.presell-form { display: grid; gap: 10px; text-align: left; }
+.presell-select-label { font-size: 1.4rem; font-weight: 600; }
+.presell-select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--ps-ink);
+  border-radius: var(--ps-radius);
+  background: #ffffff;
+  color: var(--ps-ink);
+  font-family: inherit;
+  font-size: 1.7rem; /* 16px+ so iOS does not zoom on focus */
+}
+.presell-error { color: #b00020; font-size: 1.5rem; }
+.presell-buy-meta { font-size: 1.5rem; margin-top: 12px !important; }
+.presell-guarantee { font-size: 1.5rem; color: var(--ps-muted); margin-top: 6px !important; }
+
+/* ── Sticky phone CTA ──────────────────────────────────────────────────────── */
+.presell-sticky {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: translateY(160%);
+  transition: transform 0.25s ease;
+}
+.presell-sticky.is-visible { transform: translateY(0); }
+@media (min-width: 750px) {
+  .presell { padding-top: 32px; }
+  .presell-sticky { display: none; }
+  .presell-label--theirs li { font-size: 1.3rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .presell-sticky { transition: none; }
+}
