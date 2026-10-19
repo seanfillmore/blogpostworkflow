@@ -45,9 +45,10 @@ test('subscribeToList upserts the profile BEFORE requesting consent', async () =
     properties: { gv_entrant: true, gv_entries: 1 },
   });
 
-  assert.equal(calls.length, 2, 'an upsert and a subscribe — profile data cannot ride along on the subscribe');
+  assert.equal(calls.length, 3, 'an upsert, a suppression read, and a subscribe — profile data cannot ride along on the subscribe');
   assert.match(calls[0].url, /profile-import/, 'the upsert must come first: consent triggers the opt-in email, and it must not go out before first_name exists');
-  assert.match(calls[1].url, /profile-subscription-bulk-create-jobs/);
+  assert.match(calls[1].url, /\/profiles\/\?filter=/, 'suppression is read before consent is requested');
+  assert.match(calls[2].url, /profile-subscription-bulk-create-jobs/);
 });
 
 test('the upsert carries first_name and properties, normalised', async () => {
@@ -78,7 +79,7 @@ test('the subscribe job carries NOTHING Klaviyo rejects — this is the assertio
     properties: { gv_entrant: true },
   });
 
-  const profile = calls[1].body.data.attributes.profiles.data[0];
+  const profile = calls[2].body.data.attributes.profiles.data[0];
   assert.deepEqual(
     Object.keys(profile.attributes).sort(),
     ['email', 'subscriptions'],
@@ -90,7 +91,7 @@ test('the subscribe job carries NOTHING Klaviyo rejects — this is the assertio
     'SUBSCRIBED',
     'consent must be requested so the list double-opt-in flow fires',
   );
-  assert.equal(calls[1].body.data.relationships.list.data.id, 'ABC123');
+  assert.equal(calls[2].body.data.relationships.list.data.id, 'ABC123');
 });
 
 test('a profile with no firstName still upserts, without sending a null first_name', async () => {
@@ -99,8 +100,47 @@ test('a profile with no firstName still upserts, without sending a null first_na
 
   await subscribeToList('ABC123', { email: 'sean@example.com' });
 
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
   assert.ok(!('first_name' in calls[0].body.data.attributes), 'a null first_name would overwrite a real one on a resubmit');
+});
+
+// A subscribe call LIFTS a suppression. Klaviyo's bot protection records its
+// suppression as a manual one, and between 2026-08-21 and 2026-09-14 this
+// function reversed it on 331 giveaway entrants; each reversal then blocked
+// re-suppression for 90 days (Klaviyo case 4231290). So a suppressed profile is
+// upserted (the entry is still recorded) and never subscribed.
+const withSuppression = (suppression) => ({ url }) => (url.includes('/profiles/?filter=')
+  ? { json: { data: [{ id: 'P1', attributes: { email: 'sean@example.com', subscriptions: { email: { marketing: { consent: 'NEVER_SUBSCRIBED', suppression } } } } }] } }
+  : { json: { data: { id: 'P1' } } });
+
+test('a suppressed profile is upserted but NOT subscribed — subscribing would lift the suppression', async () => {
+  stubFetch(withSuppression([{ reason: 'USER_SUPPRESSED', timestamp: '2026-08-22T00:00:00Z' }]));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  const r = await subscribeToList('ABC123', { email: 'sean@example.com', properties: { gv_entrant: true } });
+
+  assert.ok(calls.some((c) => /profile-import/.test(c.url)), 'the entry must still be recorded on the profile');
+  assert.ok(!calls.some((c) => /profile-subscription-bulk-create-jobs/.test(c.url)), 'no subscribe call may reach a suppressed profile');
+  assert.equal(r.subscribed, false);
+  assert.deepEqual(r.suppression, ['USER_SUPPRESSED']);
+});
+
+test('an unsuppressed profile is subscribed and says so', async () => {
+  stubFetch(withSuppression([]));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  const r = await subscribeToList('ABC123', { email: 'sean@example.com' });
+
+  assert.ok(calls.some((c) => /profile-subscription-bulk-create-jobs/.test(c.url)));
+  assert.equal(r.subscribed, true);
+});
+
+test('a suppression read that FAILS refuses rather than subscribing — unreadable is not unsuppressed', async () => {
+  stubFetch(({ url }) => (url.includes('/profiles/?filter=') ? { status: 400, json: { errors: [{ detail: 'bad' }] } } : { json: { data: { id: 'P1' } } }));
+  const { subscribeToList } = await import('../../lib/klaviyo-profiles.js');
+
+  await assert.rejects(subscribeToList('ABC123', { email: 'sean@example.com' }));
+  assert.ok(!calls.some((c) => /profile-subscription-bulk-create-jobs/.test(c.url)));
 });
 
 test('listSubscribedProfiles excludes unconfirmed profiles and follows pagination', async () => {
