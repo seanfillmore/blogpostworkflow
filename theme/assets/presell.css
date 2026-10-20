@@ -20,6 +20,23 @@
 [id$="__header"] .header__right,
 [id$="__header"] .header__inline-menu { display: none !important; }
 
+/* No Klaviyo popup or flyout signup form on this paid-traffic page (Sean,
+   2026-10-19). Klaviyo's API cannot target a form away from one page, so its
+   dialogs are made invisible on arrival here (only its own "POPUP Form" / "FLYOUT
+   Form" labels, never the cart drawer, search or an embedded signup form),
+   presell-buy.js closes them through Klaviyo's close button, and Klaviyo's
+   body scroll lock can never freeze the page. */
+div[role="dialog"][aria-label="POPUP Form"],
+div[role="dialog"][aria-label="FLYOUT Form"] {
+  /* Never "display" none: Klaviyo ignores its close button on an undisplayed
+     dialog (measured 2026-10-19), which would leave it open with the scroll
+     lock on. Invisible and inert instead. */
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.klaviyo-prevent-body-scrolling { overflow-y: auto !important; }
+
 /* Belt and braces: no subscription widget may appear on this page. */
 .recurpay-pdp-widget,
 .recurpay__widget { display: none !important; }

@@ -240,11 +240,89 @@
     if (form.removeAttribute) form.removeAttribute('action');
   }
 
-  var api = { createBuy: createBuy, relabel: relabel, bind: bind, clampQuantity: clampQuantity, formatMoney: formatMoney };
+  /**
+   * Keep Klaviyo's popup and flyout signup forms (the "30% off your first
+   * order" popup) off this page. Klaviyo cannot target a form away from one
+   * page through its API, so: presell.css hides those dialogs on arrival, and
+   * this closes them through Klaviyo's OWN close button, which records the
+   * close and releases Klaviyo's scroll lock (body.klaviyo-prevent-body-
+   * scrolling). Only dialogs holding [data-testid=POPUP|FLYOUT] are touched:
+   * never the cart drawer, search or an embedded signup form. Triggered by
+   * Klaviyo's `klaviyoForms` open event, with a MutationObserver fallback.
+   */
+  var KLAVIYO_OVERLAY = '[data-testid="POPUP"], [data-testid="FLYOUT"]';
+  var KLAVIYO_LOCK = 'klaviyo-prevent-body-scrolling';
+
+  function blockPopups(doc, win) {
+    win = win || window;
+    if (!doc || !doc.body) return;
+    var tries = []; // { overlay, close, n } per Klaviyo dialog seen
+    var MAX_TRIES = 5;
+    var RETRY_MS = 500;
+
+    function unlock() {
+      var body = doc.body;
+      if (!body.classList || !body.classList.contains(KLAVIYO_LOCK)) return;
+      body.classList.remove(KLAVIYO_LOCK);
+      // Klaviyo locked the page; clear an inline lock it may have left too.
+      // Without Klaviyo's class the theme owns overflow (its cart drawer), so
+      // nothing is touched then.
+      if (body.style && body.style.overflow === 'hidden') body.style.overflow = '';
+      var html = doc.documentElement;
+      if (html && html.style && html.style.overflow === 'hidden') html.style.overflow = '';
+    }
+    function stillOpen(overlay) {
+      var now = doc.querySelectorAll(KLAVIYO_OVERLAY);
+      for (var i = 0; i < now.length; i++) if (now[i] === overlay) return true;
+      return false;
+    }
+    // A click can land before Klaviyo has mounted its handler, so a dialog that
+    // is still there half a second later is clicked again, a few times at most.
+    function attempt(rec) {
+      if (rec.n >= MAX_TRIES || !stillOpen(rec.overlay)) return;
+      rec.n++;
+      try { rec.close.click(); } catch (e) { /* the CSS still hides it */ }
+      unlock();
+      if (rec.n < MAX_TRIES && win.setTimeout) {
+        win.setTimeout(function () { attempt(rec); }, RETRY_MS);
+      }
+    }
+
+    function closeAll() {
+      var overlays = doc.querySelectorAll(KLAVIYO_OVERLAY);
+      for (var i = 0; i < overlays.length; i++) {
+        var dialog = overlays[i].closest ? overlays[i].closest('div[role="dialog"]') : null;
+        var close = dialog ? dialog.querySelector('.klaviyo-close-form') : null;
+        if (!close) continue;
+        var known = false;
+        for (var j = 0; j < tries.length; j++) if (tries[j].close === close) known = true;
+        if (known) continue; // already being closed on its own timer
+        var rec = { overlay: overlays[i], close: close, n: 0 };
+        tries.push(rec);
+        attempt(rec);
+      }
+      if (overlays.length) unlock();
+    }
+
+    if (win.addEventListener) {
+      win.addEventListener('klaviyoForms', function (e) {
+        if (e && e.detail && e.detail.type === 'open') closeAll();
+      });
+    }
+    if (win.MutationObserver) {
+      new win.MutationObserver(function () {
+        if (doc.querySelector(KLAVIYO_OVERLAY)) closeAll();
+      }).observe(doc.body, { childList: true, subtree: true });
+    }
+    closeAll();
+  }
+
+  var api = { createBuy: createBuy, relabel: relabel, bind: bind, blockPopups: blockPopups, clampQuantity: clampQuantity, formatMoney: formatMoney };
   if (typeof window !== 'undefined') {
     window.PresellBuy = api;
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function () { bind(document); });
-    else bind(document);
+    var init = function () { bind(document); blockPopups(document, window); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })();
