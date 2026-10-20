@@ -337,6 +337,7 @@
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
+  text-wrap: balance; /* "Buy 3, get / the 4th free" when it takes two lines */
 }
 .presell-qty-free { font-size: 1.5rem; font-weight: 600; margin-top: -2px !important; }
 
