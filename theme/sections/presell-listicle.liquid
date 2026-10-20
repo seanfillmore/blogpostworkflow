@@ -51,6 +51,10 @@
   to match a single jar's scent. Pack prices are live from all_products, never
   hardcoded.
 
+  NO KLAVIYO POPUP on this page (Sean, 2026-10-19): presell.css hides Klaviyo's
+  POPUP/FLYOUT dialogs and presell-buy.js closes them with Klaviyo's own close
+  button (tests/theme/presell-popup.test.js). Every other page keeps it.
+
   No Recurpay widget: this is a page, not a product template, so the app embed's
   product-form injection has no product to attach to. presell.css hides its
   classes anyway as a belt-and-braces.
