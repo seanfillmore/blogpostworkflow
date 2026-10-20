@@ -36,7 +36,7 @@ test('parseBatch fills defaults and trims', () => {
   const b = parseBatch({ product: ' coconut-soap ', concepts: [{ headline: ' Pure. Unscented. ', subhead: '  ' }] });
   assert.equal(b.product, 'coconut-soap');
   assert.equal(b.count, DEFAULT_COUNT);
-  assert.deepEqual(b.concepts, [{ headline: 'Pure. Unscented.', subhead: null }]);
+  assert.deepEqual(b.concepts, [{ headline: 'Pure. Unscented.', subhead: null, cta: null }]);
   assert.deepEqual(b.scenes, []);
 });
 
@@ -391,4 +391,66 @@ test('renderScene checks a set against one reference per product', async () => {
     assert.equal(r.ok, true);
     assert.equal(imagesSent, 3);
   } finally { globalThis.fetch = realFetch; }
+});
+
+// ── animated style (2026-10-20) ──────────────────────────────────────────────
+test('parseBatch takes style, typeStyle and a per-concept cta; refuses an unknown style', () => {
+  const b = parseBatch({ product: 'coconut-moisturizer', style: 'animated', typeStyle: 'marker on sticky notes',
+    concepts: [{ headline: 'Your grandma used real cream.', cta: ' See real cream → ' }] });
+  assert.equal(b.style, 'animated');
+  assert.equal(b.typeStyle, 'marker on sticky notes');
+  assert.equal(b.concepts[0].cta, 'See real cream →');
+  assert.equal(parseBatch({ product: 'x', concepts: [{ headline: 'h' }] }).style, 'photo');
+  assert.throws(() => parseBatch({ product: 'x', style: 'claymation', concepts: [{ headline: 'h' }] }), /style/);
+});
+
+test('screenConcepts screens the cta too', () => {
+  const { skipped } = screenConcepts([{ headline: 'Soft skin', subhead: null, cta: 'Heal eczema now' }]);
+  assert.equal(skipped.length, 1);
+});
+
+test('library scenes are picked only for their own style', () => {
+  const animated = library.scenes.filter(s => s.style === 'animated');
+  assert.ok(animated.length >= 8);
+  for (const s of animated) assert.ok(s.scene && s.typeStyle && library.families.includes(s.family), s.id);
+  const photo = selectLibraryScenes({ library, category: 'skin', n: 12, seed: 'p' });
+  assert.ok(photo.every(s => !s.style), 'a photo batch never gets an animated scene');
+  const anim = selectLibraryScenes({ library, category: 'skin', n: 6, seed: 'a', style: 'animated' });
+  assert.equal(anim.length, 6);
+  assert.ok(anim.every(s => s.style === 'animated'));
+});
+
+test('buildPrompt animated: cartoon world, photo-real product, smaller placement, cta button', () => {
+  const concept = { headline: 'Your grandma used real cream.', subhead: "You're buying ULTRA-REPAIR 24HR+.", cta: 'See real cream →' };
+  const { prompt } = buildPrompt({ product: CREAM, concept, scene: { scene: 'two cartoon women', typeStyle: 't' }, style: 'animated' });
+  for (const s of ['3D-animated', 'photo-real', '25-35% of the frame height', '"See real cream →"', 'parody name', '"moisturizing body cream"', 'No other text']) assert.ok(prompt.includes(s), s);
+  assert.ok(!prompt.includes('Premium commercial photography'));
+  assert.ok(!prompt.includes('45-55%'));
+  const photo = buildPrompt({ product: CREAM, concept: { headline: 'h' }, scene: { scene: 'x', typeStyle: 't' } }).prompt;
+  assert.ok(photo.includes('Premium commercial photography') && photo.includes('45-55%') && !photo.includes('3D-animated') && !photo.includes('pill'));
+});
+
+test('decide requires the cta and does not count it as extra text', () => {
+  const concept = { headline: '7 Simple Ingredients', subhead: null, cta: 'See real cream →' };
+  const read = { ...goodRead, lettering: ['7 Simple Ingredients', 'See real cream →'] };
+  assert.equal(decide({ read, concept, product: CREAM, shown: 'packaged' }).ok, true);
+  const missing = decide({ read: { ...goodRead, lettering: ['7 Simple Ingredients'] }, concept, product: CREAM, shown: 'packaged' });
+  assert.ok(missing.reasons.some(r => /cta/.test(r)));
+});
+
+test('checkPrompt animated tolerates cartoon hands; photo does not mention them', () => {
+  assert.match(checkPrompt({ product: CREAM, shown: 'packaged', style: 'animated' }), /four-fingered/);
+  assert.doesNotMatch(checkPrompt({ product: CREAM, shown: 'packaged' }), /four-fingered/);
+});
+
+test('planScenes animated uses animated library scenes and passes style to the planner; custom scenes take typeStyle', async () => {
+  let asked = '';
+  const fake = { messages: { create: async ({ messages }) => { asked = messages[0].content; return { content: [{ text: '[{"id":"gym","family":"activity","scene":"a cartoon gym","typeStyle":"bold"}]' }] }; } } };
+  // 12 wanted, 10 animated library scenes suit skin, so the planner is asked for the rest.
+  const { scenes } = await planScenes({ batch: { count: 12, scenes: [], style: 'animated' }, concept: { headline: 'h' }, product: CREAM, library, usage: {}, taken: new Set(), anthropic: fake });
+  assert.ok(scenes.some(s => s.source === 'fresh'));
+  assert.ok(scenes.every(s => s.style === 'animated'));
+  assert.match(asked, /3D-animated/);
+  const custom = await planScenes({ batch: { count: 2, scenes: ['a'], typeStyle: 'marker' }, concept: { headline: 'h' }, product: CREAM, library, usage: {}, taken: new Set(), anthropic: fake });
+  assert.equal(custom.scenes[0].typeStyle, 'marker');
 });

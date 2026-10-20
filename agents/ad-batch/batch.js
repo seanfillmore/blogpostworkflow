@@ -18,6 +18,12 @@ export const MIN_SET_PRODUCTS = 2;
 export const MAX_SET_PRODUCTS = 3;
 export const MAX_COUNT = 20;
 export const DEFAULT_COUNT = 16;
+// How the ad is drawn. 'photo' is the original look (a commercial product photograph).
+// 'animated' is a stylized 3D-animated scene with characters acting out the headline,
+// while OUR product stays photo-real and exact (Sean, 2026-10-20: animated statics are
+// rising, after Iwo Cybulski's Local Revival set). Library scenes are tagged per style.
+export const STYLES = ['photo', 'animated'];
+export const DEFAULT_STYLE = 'photo';
 
 // Product category decides which library scenes suit it. Keyed on the handle, because
 // that is what the manifest and the batch file both carry.
@@ -48,8 +54,8 @@ export function categoryFor(handle) {
  * the list (one entry for a single product); `product`/`variant` are kept for single runs.
  *
  * @returns {{product:string|null, variant:string|null, items:Array<{product:string, variant:string|null}>,
- *            title:string|null, count:number, form:string|null,
- *            concepts:Array<{headline:string, subhead:string|null}>, scenes:string[]}}
+ *            title:string|null, count:number, form:string|null, style:string, typeStyle:string|null,
+ *            concepts:Array<{headline:string, subhead:string|null, cta:string|null}>, scenes:string[]}}
  */
 export function parseBatch(raw) {
   const errors = [];
@@ -87,6 +93,10 @@ export function parseBatch(raw) {
     errors.push('"form" must be packaged, unwrapped or mixed');
   }
   if (isSet && form && form !== 'packaged') errors.push('a set is always shown packaged; drop "form" or set it to packaged');
+  const style = raw.style == null ? DEFAULT_STYLE : String(raw.style).trim();
+  if (!STYLES.includes(style)) errors.push(`"style" must be ${STYLES.join(' or ')} (got ${raw.style})`);
+  // Lettering for a custom scene list, which otherwise gets the generic pairing.
+  const typeStyle = str(raw.typeStyle);
   const concepts = [];
   if (!Array.isArray(raw.concepts) || raw.concepts.length === 0) {
     errors.push('"concepts" must be a non-empty list of { headline, subhead? }');
@@ -95,14 +105,16 @@ export function parseBatch(raw) {
       const headline = typeof c?.headline === 'string' ? c.headline.trim() : '';
       if (!headline) { errors.push(`concepts[${i}] has no headline`); return; }
       const subhead = typeof c.subhead === 'string' && c.subhead.trim() ? c.subhead.trim() : null;
-      concepts.push({ headline, subhead });
+      // A small button-style call to action ("See real cream →"), rendered and checked like the copy.
+      const cta = typeof c.cta === 'string' && c.cta.trim() ? c.cta.trim() : null;
+      concepts.push({ headline, subhead, cta });
     });
   }
   const scenes = Array.isArray(raw.scenes)
     ? raw.scenes.map(s => String(s || '').trim()).filter(Boolean)
     : [];
   if (errors.length) throw new Error('ad-batch: invalid batch file:\n  - ' + errors.join('\n  - '));
-  return { product, variant, items, title, count, form, concepts, scenes };
+  return { product, variant, items, title, count, form, style, typeStyle, concepts, scenes };
 }
 
 /**
@@ -114,7 +126,7 @@ export function screenConcepts(concepts) {
   const ok = [];
   const skipped = [];
   for (const c of concepts) {
-    const r = checkSeoCopyFields({ headline: c.headline, subhead: c.subhead || '' }, { surface: COMMERCIAL_SURFACE });
+    const r = checkSeoCopyFields({ headline: c.headline, subhead: c.subhead || '', cta: c.cta || '' }, { surface: COMMERCIAL_SURFACE });
     if (r.ok) ok.push(c);
     else skipped.push({ ...c, reasons: r.blocking.map(b => `${b.field}: "${b.match}" (${b.why})`) });
   }

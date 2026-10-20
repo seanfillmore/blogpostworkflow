@@ -60,3 +60,14 @@ A spike on 2026-10-06 proved the quality before anything was built. OpenAI `gpt-
 - Automatic promotion of fresh scenes into the library. Add a good one by hand.
 - Ad copy.
 - Uploading to Meta.
+
+## Addendum 2026-10-20: animated style
+
+Sean asked for animated statics after Iwo Cybulski's Local Revival set (3D cartoon characters, a parody rival product, a "See real soap →" button). The batch file gains:
+
+- `style`: `photo` (default) or `animated`. Animated swaps "premium commercial photography" for a stylized 3D-animated look with characters acting out the headline, keeps OUR product photo-real and exact, and sizes it at 25-35% of the frame (held by a character or in the foreground) instead of 45-55%. A rival product may only be generic or carry a made-up parody name.
+- `typeStyle`: lettering for a custom `scenes` list.
+- `concepts[].cta`: a pill-button line, screened by the copy gate and required letter by letter in the check, like the headline and subhead.
+
+Library scenes carry `style` (absent means photo). `selectLibraryScenes` only picks scenes of the batch's style, because a photo scene fights an animated prompt. The fresh-scene planner has an animated brief: 1-2 characters, everyday cosmetic annoyances exaggerated for comedy, never a disease, wound or medical setting. The check tells the vision model that simplified, four-fingered cartoon hands are not defects. Label, count, fidelity and claim checks are unchanged.
+
