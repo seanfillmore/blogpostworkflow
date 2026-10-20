@@ -8,7 +8,10 @@ import { join } from 'node:path';
 import { buildLabelStrings } from '../ad-studio/index.js';
 import { checkSeoCopyFields, COMMERCIAL_SURFACE } from '../../lib/seo-copy-health-gate.js';
 
-export const MIN_COUNT = 15;
+// `count` is PER HEADLINE, and an ad set is one set of images in total (Sean,
+// 2026-10-07: 15-18; 2026-10-19: 8). Two headlines must be able to split a
+// small total, so the floor is 1 and the batch size is the caller's decision.
+export const MIN_COUNT = 1;
 // A set ad shows 2-3 different products together. More than three and no single label
 // is large enough to read at feed size, which is the check every render has to pass.
 export const MIN_SET_PRODUCTS = 2;
