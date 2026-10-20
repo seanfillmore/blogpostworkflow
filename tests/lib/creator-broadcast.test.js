@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { planBroadcast, recordBroadcast } from '../../lib/creator-broadcast.js';
+import { sendMail } from '../../lib/hushmail.js';
 
 // FAKE DATA ONLY: invented people on example.com.
 const msg = (email) => ({ email, subject: 'Ideas', body: 'Hi' });
@@ -37,4 +38,16 @@ test('recording marks the broadcast and restarts the scheduled-mail gap', () => 
   const rec = recordBroadcast({ broadcasts: { old: { at: 'a' } } }, 'cream-ideas', { at: 't', messageId: '<m>', subject: 'S', attachments: ['b.pdf'] });
   assert.deepEqual(Object.keys(rec.broadcasts), ['old', 'cream-ideas']);
   assert.equal(rec.lastScheduledAt, 't');
+});
+
+test('a planned message is accepted by sendMail as-is (the 2026-10-20 bug: it lacked "to")', async () => {
+  const { send } = planBroadcast([msg('ok@example.com')], state, 'cream-ideas');
+  let body;
+  await sendMail({ user: 'sean@realskincare.com', pass: 'x' }, { ...send[0].message, attachments: [{ filename: 'b.pdf', content: Buffer.from('x') }] }, {
+    via: 'resend', resendKey: 'k',
+    fetchImpl: async (_u, init) => { body = JSON.parse(init.body); return { ok: true, text: async () => '{"id":"r"}' }; },
+    appendSent: async () => {},
+  });
+  assert.deepEqual(body.to, ['ok@example.com']);
+  assert.equal(body.text, 'Hi');
 });

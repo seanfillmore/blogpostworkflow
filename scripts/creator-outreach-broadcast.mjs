@@ -64,7 +64,7 @@ async function main() {
   console.log(`broadcast "${id}": ${send.length} to send, ${skipped.length} skipped${attachments.length ? `, attaching ${attachments.map((a) => `${a.filename} (${a.content.length} bytes)`).join(', ')}` : ''}`);
   for (const s of skipped) console.log(`  SKIP ${s.email}: ${s.reason}`);
   if (!apply) {
-    for (const m of send) console.log(`  would send to ${m.email}: "${m.subject}"`);
+    for (const m of send) console.log(`  would send to ${m.message.to}: "${m.message.subject}"`);
     console.log('dry run; add --apply to send');
     return;
   }
@@ -81,10 +81,10 @@ async function main() {
   try {
     for (const m of send) {
       try {
-        const r = await sendMail(creds, { ...m, attachments }, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
+        const r = await sendMail(creds, { ...m.message, attachments }, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
         const fresh = readState();
         recordBroadcast(fresh.creators[m.email], id, {
-          at: new Date().toISOString(), messageId: r.messageId, subject: m.subject, attachments: attachments.map((a) => a.filename),
+          at: new Date().toISOString(), messageId: r.messageId, subject: m.message.subject, attachments: attachments.map((a) => a.filename),
         });
         writeState(fresh);
         sent.push(m.email);
