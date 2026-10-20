@@ -75,15 +75,16 @@ function loadEnv() {
 
 /** Scenes for one concept: Sean's list if given, else library + fresh. */
 export async function planScenes({ batch, concept, product, library, usage, taken, anthropic }) {
-  if (batch.scenes.length) return { scenes: customScenes(batch.scenes), degraded: null };
+  if (batch.scenes.length) return { scenes: customScenes(batch.scenes, { typeStyle: batch.typeStyle }), degraded: null };
+  const style = batch.style || 'photo';
   const nLib = Math.min(LIBRARY_SHARE, batch.count);
-  const lib = selectLibraryScenes({ library, category: product.category, n: nLib, usage, seed: concept.headline, exclude: taken });
+  const lib = selectLibraryScenes({ library, category: product.category, n: nLib, usage, seed: concept.headline, exclude: taken, style });
   const want = batch.count - lib.length;
-  const fresh = await generateFreshScenes({ anthropic, model: LLM_MODELS.standard, product, concept, chosen: lib, k: want, library });
+  const fresh = await generateFreshScenes({ anthropic, model: LLM_MODELS.standard, product, concept, chosen: lib, k: want, library, style });
   let scenes = [...lib, ...fresh.scenes];
   if (scenes.length < batch.count) {
     // Planner short: top up from the library rather than ship a thin batch.
-    const more = selectLibraryScenes({ library, category: product.category, n: batch.count, usage, seed: concept.headline + '#topup', exclude: taken })
+    const more = selectLibraryScenes({ library, category: product.category, n: batch.count, usage, seed: concept.headline + '#topup', exclude: taken, style })
       .filter(s => !scenes.some(x => x.id === s.id));
     scenes = [...scenes, ...more.slice(0, batch.count - scenes.length)];
   }
@@ -94,7 +95,7 @@ async function refForCheck(path) {
   return (await sharp(path).rotate().resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64');
 }
 
-async function visionCheck({ anthropic, refsB64, imageBuf, product, shown }) {
+async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style }) {
   const img = (await sharp(imageBuf).resize(1200, 1200, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
   const res = await anthropic.messages.create({
     model: LLM_MODELS.standard,
@@ -102,7 +103,7 @@ async function visionCheck({ anthropic, refsB64, imageBuf, product, shown }) {
     messages: [{ role: 'user', content: [
       ...refsB64.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
-      { type: 'text', text: checkPrompt({ product, shown }) },
+      { type: 'text', text: checkPrompt({ product, shown, style }) },
     ] }],
   });
   return parseCheck((res.content || []).map(c => c.text || '').join(''));
@@ -119,8 +120,8 @@ async function pool(items, n, fn) {
 
 /** Render one scene: up to two OpenAI tries, then Gemini; keep the first that passes. */
 export async function renderScene({ job, clients, budget, refCache, log }) {
-  const { product, concept, scene, form } = job;
-  const { prompt, refs, shown } = buildPrompt({ product, concept, scene, form });
+  const { product, concept, scene, form, style = 'photo' } = job;
+  const { prompt, refs, shown } = buildPrompt({ product, concept, scene, form, style });
   const attempts = [];
   let last = null;
   for (const engine of ATTEMPTS) {
@@ -142,7 +143,7 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
     for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
     let read = null;
-    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown }); }
+    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style }); }
     catch (err) { log(`    check failed to run: ${err.message}`); }
     const verdict = decide({ read, concept, product, shown });
     attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });
@@ -175,7 +176,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   const usage = loadUsage(args.out);
   const taken = new Set();
 
-  log(`ad-batch: ${product.title}${product.variant ? ' / ' + product.variant : ''} · ${concepts.length} headline(s) × ${batch.count} scenes`);
+  log(`ad-batch: ${product.title}${product.variant ? ' / ' + product.variant : ''} · ${batch.style} · ${concepts.length} headline(s) × ${batch.count} scenes`);
   const plans = [];
   for (const concept of concepts) {
     const { scenes, degraded } = await planScenes({ batch, concept, product, library, usage, taken, anthropic });
@@ -187,11 +188,11 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   const totalRenders = plans.reduce((n, p) => n + p.scenes.length, 0);
   if (args.dryRun) {
     for (const p of plans) {
-      log(`\n"${p.concept.headline}"${p.concept.subhead ? ' / ' + p.concept.subhead : ''}`);
+      log(`\n"${p.concept.headline}"${p.concept.subhead ? ' / ' + p.concept.subhead : ''}${p.concept.cta ? ` [${p.concept.cta}]` : ''}`);
       p.scenes.forEach((s, i) => log(`  ${String(i + 1).padStart(2)}. [${s.source}/${s.family}] ${s.id}: ${s.scene.slice(0, 90)}`));
     }
     log(`\nDry run: ${totalRenders} images planned (≥${totalRenders} renders, ≤${Math.min(totalRenders * ATTEMPTS.length, args.maxRenders)} with retries).`);
-    log('\nFirst prompt:\n' + buildPrompt({ product, concept: plans[0].concept, scene: plans[0].scenes[0], form: batch.form }).prompt);
+    log('\nFirst prompt:\n' + buildPrompt({ product, concept: plans[0].concept, scene: plans[0].scenes[0], form: batch.form, style: batch.style }).prompt);
     return { dryRun: true, plans };
   }
 
@@ -203,14 +204,14 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   const record = {
     generatedAt: new Date().toISOString(),
     product: { handle: product.handle, variant: product.variant, title: product.title, items: product.items?.map(i => ({ handle: i.handle, variant: i.variant })) },
-    skipped, concepts: [],
+    style: batch.style, skipped, concepts: [],
   };
 
   for (const [ci, plan] of plans.entries()) {
     const dir = ensureDir(join(batchDir, conceptDirName(ci, plan.concept)));
     log(`\n▶ "${plan.concept.headline}" → ${dir}`);
     const results = await pool(plan.scenes, args.concurrency, async (scene, i) => {
-      const r = await renderScene({ job: { product, concept: plan.concept, scene, form: batch.form }, clients, budget, refCache, log });
+      const r = await renderScene({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, clients, budget, refCache, log });
       const name = imageName(i, scene);
       if (r.buffer) {
         const path = join(r.ok ? dir : ensureDir(join(dir, '_rejected')), name);

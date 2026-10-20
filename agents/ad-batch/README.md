@@ -27,6 +27,9 @@ npm run ad-batch -- batch.json --dry-run  # plan the scenes, print the first pro
 - **`count`**: 1-20 images per headline. Default 16. It is per headline, so total images = concepts × count. Size the total to the ad set and split it between headlines.
 - **`form`**: bar soap only. `packaged`, `unwrapped` or `mixed`. The default puts the bare bar in in-use scenes and the wrapped bar everywhere else.
 - **`scenes`**: optional. A list of one-line scenes that replaces the library for this batch.
+- **`style`**: `photo` (default) or `animated`. Animated is a stylized 3D-animated scene: cartoon characters act out the headline, and OUR product is the one object kept photo-real and exact, at 25-35% of the frame (held by a character or in the foreground) instead of half of it. A character may hold a rival product only if it is generic or carries a made-up parody name. Library scenes are tagged by style, the fresh-scene planner writes character scenes, and the check accepts cartoon hands. The label check is unchanged.
+- **`typeStyle`**: optional lettering for a custom `scenes` list, which otherwise gets a generic pairing.
+- **`concepts[].cta`**: optional. A short button line ("See real cream →") set in a pill under the headline. It is gated and checked letter by letter like the headline.
 
 Output goes to `~/Desktop/Ad Batches/<date> <product>/<NN headline>/`:
 - passing images;
@@ -35,7 +38,7 @@ Output goes to `~/Desktop/Ad Batches/<date> <product>/<NN headline>/`:
 - `scenes.md`;
 - the batch's `run.json`.
 
-**Adding scenes:** edit `data/ad-batch/scenes.json`. Give each scene a family, a one-line scene, a type style and the product categories it suits.
+**Adding scenes:** edit `data/ad-batch/scenes.json`. Give each scene a family, a one-line scene, a type style and the product categories it suits. Add `"style": "animated"` for an animated scene; untagged scenes are photo scenes.
 
 **Adding reference photos:** list them in `data/ad-batch/references.json`. Paths are relative to `data/product-images/`, which is gitignored and lives locally.
 
