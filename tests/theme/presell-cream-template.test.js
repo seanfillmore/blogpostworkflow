@@ -89,7 +89,6 @@ function expectedSection() {
       quantity_token: content.product.quantityToken,
       total_token: content.product.totalToken,
       pack_price_token: content.product.packPriceToken,
-      pack_unit_token: content.product.packUnitToken,
     },
     blocks: [
       { type: 'reason', settings: reasonSettings(r1) },
@@ -121,6 +120,7 @@ function expectedSection() {
           title: content.buyBox.title,
           price_note: content.buyBox.priceNote,
           price_note_multi: content.buyBox.priceNoteMulti,
+          price_note_pack: content.buyBox.priceNotePack,
           scent_label: content.buyBox.scentLabel,
           quantity_label: content.buyBox.quantityLabel,
           quantity_less: content.buyBox.quantityLess,
@@ -128,11 +128,9 @@ function expectedSection() {
           quantity_max: content.buyBox.maxQuantity,
           cta: content.buyBox.cta,
           cta_multi: content.buyBox.ctaMulti,
-          pack_headline: content.buyBox.pack.headline,
-          pack_line: content.buyBox.pack.line,
-          pack_cta: content.buyBox.pack.cta,
-          pack_hint: content.buyBox.pack.hint,
-          pack_hint_cta: content.buyBox.pack.hintCta,
+          cta_pack: content.buyBox.ctaPack,
+          pack_badge: content.buyBox.pack.badge,
+          pack_add_free: content.buyBox.pack.addFree,
           shipping: content.buyBox.shipping,
           guarantee: content.guarantee,
         },
@@ -222,8 +220,8 @@ test('buy-box markup contract Task 3 binds to', () => {
   assert.match(l, /<a[^>]*data-presell-sticky[^>]*href="#presell-buy"/);
   assert.match(l, /<form[^>]*data-price-token="[^"]*"[^>]*data-scent-token="/);
   const labelled = l.match(/<[^>]*data-presell-label[^>]*>/g) || [];
-  // mid-page CTA, buy title, price line, buy button, sticky bar, pack line, pack button, 3-jar hint button
-  assert.equal(labelled.length, 8);
+  // mid-page CTA, buy title, price line, buy button, sticky bar
+  assert.equal(labelled.length, 5);
   for (const tag of labelled) assert.match(tag, /data-presell-template="{{ s\.\w+ \| escape }}"/);
   assert.match(l, /<script src="{{ 'presell-buy\.js' \| asset_url }}" defer><\/script>/);
   assert.match(l, /money_without_trailing_zeros/, 'price is live from the product');
@@ -387,22 +385,41 @@ test('the buy-box image is rendered from settings with width/height, lazy, alt',
   assert.ok(!/featured_image/.test(bb), 'no longer the variant featured image');
 });
 
-test('the 4-pack banner sits at the TOP of the buy box and is honesty-gated', () => {
+test('no pack button or banner remains; pack data is live and honesty-gated', () => {
   const bb = buyBoxMarkup();
-  const banner = bb.indexOf('data-presell-pack');
-  assert.ok(banner > 0, 'banner markup');
-  assert.ok(banner < bb.indexOf('presell-buy-img'), 'banner above the image');
-  assert.ok(banner < bb.indexOf('<form'), 'banner above the form');
-  assert.match(bb, /<button[^>]*type="button"[^>]*data-presell-pack-buy/);
-  assert.match(bb, /data-presell-pack-error[^>]*hidden/);
+  for (const gone of ['data-presell-pack-buy', 'data-presell-pack-error', 'data-presell-qty-hint', 'class="presell-pack"', 'data-presell-pack ']) {
+    assert.ok(!markup().includes(gone), `${gone} still in the section`);
+  }
+  assert.equal((bb.match(/<button\b/g) || []).length, 3, 'only minus, plus and the buy button');
   const l = liquid();
   assert.match(l, /all_products\[section\.settings\.pack_handle\]/);
   assert.match(l, /times: 3/, 'pack price compared with three singles');
-  for (const a of ['data-pack-id', 'data-pack-price', 'data-pack-unit', 'data-pack-cents', 'data-price-cents']) {
+  for (const a of ['data-pack-id', 'data-pack-price', 'data-pack-cents', 'data-price-cents', 'data-pack-count']) {
     assert.ok(bb.includes(a), a);
   }
-  // Pack prices are live: no literal dollar amount in the markup.
+  // Prices are live: no literal dollar amount in the markup.
   assert.ok(!/\$\d/.test(bb.replace(/{[{%][\s\S]*?[}%]}/g, '')), 'hardcoded price in the buy box');
+});
+
+test('the badge sits on the stepper row, to its right; the free-4th note sits under the row', () => {
+  const bb = buyBoxMarkup();
+  const row = bb.match(/<div class="presell-qty-row">([\s\S]*?)<\/div>\s*<p[^>]*data-presell-qty-free/);
+  assert.ok(row, 'stepper row followed by the note');
+  const inRow = row[1];
+  assert.ok(inRow.indexOf('data-presell-qty-inc') < inRow.indexOf('data-presell-pack-badge'), 'badge after (right of) the stepper');
+  assert.match(inRow, /<span[^>]*data-presell-pack-badge[^>]*>{{ s\.pack_badge \| escape }}<\/span>/);
+  assert.match(bb, /<p[^>]*data-presell-qty-free[^>]*hidden[^>]*>{{ s\.pack_add_free \| escape }}<\/p>/);
+  assert.match(bb, /<s[^>]*data-presell-compare[^>]*hidden/);
+  const css = readFileSync(CSS_FILE, 'utf8');
+  assert.match(css, /\.presell-qty-row\s*{[^}]*display:\s*flex[^}]*flex-wrap:\s*wrap/);
+});
+
+test('the buy button, price line, sticky bar and mid CTA carry the quantity templates', () => {
+  const l = markup();
+  assert.match(l, /data-presell-submit[^>]*data-presell-template-multi="{{ s\.cta_multi \| escape }}"[^>]*data-presell-template-pack="{{ s\.cta_pack \| escape }}"/);
+  assert.match(l, /class="presell-buy-price"[^>]*data-presell-template-multi="{{ s\.price_note_multi \| escape }}"[^>]*data-presell-template-pack="{{ s\.price_note_pack \| escape }}"/);
+  assert.match(l, /<a[^>]*data-presell-sticky[^>]*data-presell-follow/);
+  assert.match(l, /<a class="presell-button" href="#presell-buy"[^>]*data-presell-follow/);
 });
 
 test('the quantity stepper is accessible and bounded', () => {
@@ -428,15 +445,4 @@ test('media.json records dimensions for the buy-box and breeze images', () => {
   }
   assert.ok(media.breeze.width <= 1200);
   assert.match(media.breeze.signature, /submission_f21e1811-/);
-});
-
-test('the 3-jar hint sits directly under the stepper, hidden, with a type=button pack button', () => {
-  const bb = buyBoxMarkup();
-  const stepperEnd = bb.indexOf('data-presell-qty-inc');
-  const hint = bb.indexOf('data-presell-qty-hint');
-  assert.ok(hint > stepperEnd, 'hint after the stepper');
-  assert.ok(hint < bb.indexOf('data-presell-submit'), 'hint before the buy button');
-  assert.match(bb, /<p[^>]*data-presell-qty-hint[^>]*hidden/);
-  assert.match(bb, /<button[^>]*type="button"[^>]*data-presell-qty-hint-buy[^>]*data-presell-template="{{ s\.pack_hint_cta \| escape }}"/);
-  assert.match(bb, /{{ s\.pack_hint \| escape }}/);
 });

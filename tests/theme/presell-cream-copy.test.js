@@ -124,14 +124,14 @@ test('media.json, once written, covers every media key with a CDN url', () => {
   }
 });
 
-// ── Quantity and 4-pack banner copy (2026-10-19) ─────────────────────────────
+// ── Quantity stepper and the buy-3-get-1 badge (2026-10-19) ──────────────────
 
 test('buy-box quantity and pack copy clears the commercial gate as named fields, no em dash', () => {
   const b = load().buyBox;
   const fields = {
-    'pack headline': b.pack.headline, 'pack line': b.pack.line, 'pack button': b.pack.cta,
-    'pack hint': b.pack.hint, 'pack hint button': b.pack.hintCta,
+    'pack badge': b.pack.badge, 'add a 4th note': b.pack.addFree,
     'multi price line': b.priceNoteMulti, 'multi button': b.ctaMulti,
+    'pack price line': b.priceNotePack, 'pack button': b.ctaPack,
     'quantity label': b.quantityLabel, 'quantity less': b.quantityLess, 'quantity more': b.quantityMore,
   };
   for (const [k, v] of Object.entries(fields)) {
@@ -140,6 +140,12 @@ test('buy-box quantity and pack copy clears the commercial gate as named fields,
   }
   const res = checkSeoCopyFields(fields);
   assert.equal(res.ok, true, JSON.stringify(res.blocking));
+});
+
+test('the old banner and hint copy is gone (no "Get 4 jars" button copy remains)', () => {
+  const b = load().buyBox;
+  for (const k of ['headline', 'line', 'cta', 'hint', 'hintCta']) assert.ok(!(k in b.pack), `buyBox.pack.${k}`);
+  assert.ok(!('packUnitToken' in load().product));
 });
 
 test('the breeze image text and alt clear the gate', () => {
@@ -152,23 +158,23 @@ test('the breeze image text and alt clear the gate', () => {
 test('copy tokens are consistent with the prices they stand for', () => {
   const c = load();
   const p = c.product;
+  const b = c.buyBox;
   const cents = (s) => Math.round(Number(s.replace(/[^0-9.]/g, '')) * 100);
   assert.equal(cents(p.totalToken), cents(p.price) * Number(p.quantityToken), 'total token = price x quantity token');
-  assert.equal(cents(p.packUnitToken) * p.packCount, cents(p.packPriceToken), 'unit token = pack price / pack count');
   assert.ok(cents(p.packPriceToken) <= cents(p.price) * 3, '"4th free" is true at the copy prices');
   assert.equal(p.packCount, 4);
-  assert.match(c.buyBox.pack.headline, /4th free/);
-  for (const t of [c.buyBox.ctaMulti, c.buyBox.priceNoteMulti]) {
+  assert.match(b.pack.badge, /4th free/);
+  assert.ok(!b.pack.addFree.includes('$'), 'the note carries no price');
+  for (const t of [b.ctaMulti, b.priceNoteMulti]) {
     assert.equal(t.split(p.quantityToken).length - 1, 1, `quantity token once in ${t}`);
     assert.ok(t.includes(p.totalToken), `total token in ${t}`);
     assert.ok(!t.includes(p.price), `per-jar price in a multi template: ${t}`);
   }
-  assert.ok(c.buyBox.pack.line.includes(p.packPriceToken) && c.buyBox.pack.line.includes(p.packUnitToken));
-  assert.ok(c.buyBox.pack.cta.includes(p.packPriceToken));
-  // The 3-jar hint shows only while the pack costs no more than three singles,
-  // so it may claim exactly that and no more ("same price" would be false if
-  // the pack were ever cheaper).
-  assert.ok(c.buyBox.pack.hintCta.includes(p.packPriceToken), 'hint button carries the live pack price');
-  assert.ok(!/same price/i.test(c.buyBox.pack.hint), 'hint must not claim equal prices');
-  assert.ok(!c.buyBox.pack.hint.includes('$'), 'hint text carries no price of its own');
+  for (const t of [b.ctaPack, b.priceNotePack]) {
+    assert.ok(t.includes(p.packPriceToken), `pack price token in ${t}`);
+    assert.ok(t.includes(`${p.packCount} jars`), `jar count in ${t}`);
+    assert.ok(!t.includes(p.price) && !t.includes(p.totalToken), `single-jar price in a pack template: ${t}`);
+  }
+  assert.ok(b.ctaPack.includes(p.defaultScent), 'scent token in the pack button');
+  assert.match(b.priceNotePack, /\(1 free\)/);
 });

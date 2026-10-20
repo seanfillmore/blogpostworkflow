@@ -16,8 +16,7 @@
         "pack_count": 4,
         "quantity_token": "2",
         "total_token": "$56",
-        "pack_price_token": "$84",
-        "pack_unit_token": "$21"
+        "pack_price_token": "$84"
       },
       "blocks": {
         "reason-1": {
@@ -130,6 +129,7 @@
             "title": "Coconut Breeze Moisturizing Body Cream, 4oz",
             "price_note": "$28 for one jar",
             "price_note_multi": "$56 for 2 jars",
+            "price_note_pack": "$84 for 4 jars (1 free)",
             "scent_label": "Scent",
             "quantity_label": "Quantity",
             "quantity_less": "One fewer jar",
@@ -137,11 +137,9 @@
             "quantity_max": 3,
             "cta": "Get Coconut Breeze, $28",
             "cta_multi": "Get 2 jars of Coconut Breeze, $56",
-            "pack_headline": "Buy 3, get the 4th free",
-            "pack_line": "4 jars for $84 ($21 a jar)",
-            "pack_cta": "Get 4 jars for $84",
-            "pack_hint": "4 jars cost no more than 3.",
-            "pack_hint_cta": "Get 4 for $84",
+            "cta_pack": "Get 4 jars of Coconut Breeze, $84",
+            "pack_badge": "Buy 3, get the 4th free",
+            "pack_add_free": "Add a 4th jar for free",
             "shipping": "Ships in 1-2 business days.",
             "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back."
           }
