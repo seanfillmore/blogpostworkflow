@@ -64,7 +64,11 @@ function klaviyoDialog(kind, body) {
   const dialog = node('div', { role: 'dialog', 'aria-label': `${kind} Form` }, [
     node('div', {}, [node('div', { 'data-testid': kind }, [node('form', { 'data-testid': 'klaviyo-form-UHDGhw' }), close])]),
   ]);
-  close.onclick = () => { body.classList.remove('klaviyo-prevent-body-scrolling'); };
+  // Like Klaviyo: closing removes the dialog and releases the scroll lock.
+  close.onclick = () => {
+    if (dialog.parent) dialog.parent.children = dialog.parent.children.filter((c) => c !== dialog);
+    body.classList.remove('klaviyo-prevent-body-scrolling');
+  };
   return { dialog, close };
 }
 
@@ -163,12 +167,29 @@ test('without a Klaviyo lock, an overflow the theme set (cart drawer) is left al
   assert.equal(p.body.style.overflow, 'hidden');
 });
 
-test('a popup is clicked closed once, not on every later mutation', () => {
+test('a popup that stays open is clicked again on a timer, at most 5 times in all', () => {
+  const p = page();
+  const timers = [];
+  p.win.setTimeout = (fn, ms) => { timers.push(ms); fn(); };
+  blockPopups(p.doc, p.win);
+  const pop = p.addPopup('POPUP');
+  pop.close.onclick = null; // Klaviyo ignores the click (e.g. not mounted yet)
+  p.fire('klaviyoForms', { type: 'open', formId: 'UHDGhw' });
+  p.mutate(); p.mutate();
+  assert.equal(pop.close.clicks, 5);
+  assert.ok(timers.length >= 4 && timers.every((ms) => ms >= 300), `retry delays ${timers}`);
+});
+
+test('once a popup closes, no further clicks are made', () => {
   const p = page();
   blockPopups(p.doc, p.win);
   const pop = p.addPopup('POPUP');
-  pop.close.onclick = null;
-  p.mutate(); p.mutate(); p.fire('klaviyoForms', { type: 'open', formId: 'UHDGhw' });
+  pop.close.onclick = () => { // Klaviyo removes the dialog on close
+    p.body.children = p.body.children.filter((c) => c !== pop.dialog);
+    p.body.classList.remove('klaviyo-prevent-body-scrolling');
+  };
+  p.fire('klaviyoForms', { type: 'open', formId: 'UHDGhw' });
+  p.mutate();
   assert.equal(pop.close.clicks, 1);
 });
 
@@ -177,7 +198,12 @@ test('presell.css hides Klaviyo POPUP/FLYOUT dialogs on arrival and never locks 
     assert.ok(css.includes(`div[role="dialog"][aria-label="${kind} Form"]`), `${kind} dialog selector`);
   }
   const rule = css.match(/div\[role="dialog"\]\[aria-label="POPUP Form"\][^{]*{([^}]*)}/);
-  assert.ok(rule && /display:\s*none\s*!important/.test(rule[1]));
+  // NOT display:none: measured on live 2026-10-19, Klaviyo ignores a click on
+  // its close button while the dialog is display:none, so the popup would stay
+  // open (invisibly) with the scroll lock on. Invisible and inert instead.
+  assert.ok(rule && /visibility:\s*hidden\s*!important/.test(rule[1]) && /opacity:\s*0\s*!important/.test(rule[1])
+    && /pointer-events:\s*none\s*!important/.test(rule[1]), rule && rule[1]);
+  assert.ok(!/display:\s*none/.test(rule[1]), 'display:none blocks Klaviyo\'s close');
   assert.match(css, /body\.klaviyo-prevent-body-scrolling\s*{[^}]*overflow-y:\s*auto\s*!important/);
   // Only Klaviyo's own dialog labels: nothing that matches the cart drawer,
   // search, or an embedded form.

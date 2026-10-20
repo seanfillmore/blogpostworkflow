@@ -256,7 +256,9 @@
   function blockPopups(doc, win) {
     win = win || window;
     if (!doc || !doc.body) return;
-    var clicked = [];
+    var tries = []; // { overlay, close, n } per Klaviyo dialog seen
+    var MAX_TRIES = 5;
+    var RETRY_MS = 500;
 
     function unlock() {
       var body = doc.body;
@@ -269,16 +271,35 @@
       var html = doc.documentElement;
       if (html && html.style && html.style.overflow === 'hidden') html.style.overflow = '';
     }
+    function stillOpen(overlay) {
+      var now = doc.querySelectorAll(KLAVIYO_OVERLAY);
+      for (var i = 0; i < now.length; i++) if (now[i] === overlay) return true;
+      return false;
+    }
+    // A click can land before Klaviyo has mounted its handler, so a dialog that
+    // is still there half a second later is clicked again, a few times at most.
+    function attempt(rec) {
+      if (rec.n >= MAX_TRIES || !stillOpen(rec.overlay)) return;
+      rec.n++;
+      try { rec.close.click(); } catch (e) { /* the CSS still hides it */ }
+      unlock();
+      if (rec.n < MAX_TRIES && win.setTimeout) {
+        win.setTimeout(function () { attempt(rec); }, RETRY_MS);
+      }
+    }
 
     function closeAll() {
       var overlays = doc.querySelectorAll(KLAVIYO_OVERLAY);
       for (var i = 0; i < overlays.length; i++) {
         var dialog = overlays[i].closest ? overlays[i].closest('div[role="dialog"]') : null;
         var close = dialog ? dialog.querySelector('.klaviyo-close-form') : null;
-        if (close && clicked.indexOf(close) === -1) {
-          clicked.push(close);
-          try { close.click(); } catch (e) { /* the CSS still hides it */ }
-        }
+        if (!close) continue;
+        var known = false;
+        for (var j = 0; j < tries.length; j++) if (tries[j].close === close) known = true;
+        if (known) continue; // already being closed on its own timer
+        var rec = { overlay: overlays[i], close: close, n: 0 };
+        tries.push(rec);
+        attempt(rec);
       }
       if (overlays.length) unlock();
     }
