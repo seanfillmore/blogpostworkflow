@@ -24,7 +24,7 @@ npm run ad-batch -- batch.json --dry-run  # plan the scenes, print the first pro
 - **`product`**: a handle from `data/product-images/manifest.json`.
 - **`products`** (instead of `product`): a set of 2-3 `{ "product", "variant" }` entries, shown one of each, side by side, in every image. Add `"title"` to name the set (it names the output folder). Each product's first reference photo goes to the image model and to the check, in order, and the check reads every label and count separately. A set is always shown packaged.
 - **`variant`**: the scent folder.
-- **`count`**: 15-20 images per headline. Default 16.
+- **`count`**: 1-20 images per headline. Default 16. It is per headline, so total images = concepts × count. Size the total to the ad set and split it between headlines.
 - **`form`**: bar soap only. `packaged`, `unwrapped` or `mixed`. The default puts the bare bar in in-use scenes and the wrapped bar everywhere else.
 - **`scenes`**: optional. A list of one-line scenes that replaces the library for this batch.
 
