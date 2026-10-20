@@ -149,38 +149,43 @@ test('relabel is single pass: a replacement is never rescanned for another token
   assert.equal(relabel('A $28', { priceToken: '$28' }, { price: '$&$1' }), 'A $&$1');
 });
 
-// A small fake DOM: elements keyed by selector.
+// ── Fake DOM for bind(): elements keyed by selector ──────────────────────────
 function el(attrs = {}) {
   return {
     attrs: { ...attrs }, listeners: {}, hidden: false, disabled: false, textContent: '', value: attrs.value ?? '',
     getAttribute(n) { return n in this.attrs ? this.attrs[n] : null; },
     setAttribute(n, v) { this.attrs[n] = String(v); },
     hasAttribute(n) { return n in this.attrs; },
-    removeAttribute(n) { delete this.attrs[n]; this.removed = (this.removed || []).concat(n); },
+    removeAttribute(n) { delete this.attrs[n]; },
     addEventListener(n, f) { this.listeners[n] = f; },
   };
 }
+const BUY_TEMPLATES = {
+  'data-presell-template': 'Get Coconut Breeze, $28',
+  'data-presell-template-multi': 'Get 2 jars of Coconut Breeze, $56',
+  'data-presell-template-pack': 'Get 4 jars of Coconut Breeze, $84',
+};
 function buyDom({ options, selected = 0, max = '3' }) {
   const opts = options.map((o) => el(o));
   const select = el(); select.options = opts; select.selectedIndex = selected;
   Object.defineProperty(select, 'value', { get() { return opts[this.selectedIndex].attrs.value; } });
-  const button = el({ 'data-presell-label': '', 'data-presell-template': 'Get Coconut Breeze, $28', 'data-presell-template-multi': 'Get 2 jars of Coconut Breeze, $56' });
-  const priceLine = el({ 'data-presell-label': '', 'data-presell-template': '$28 for one jar', 'data-presell-template-multi': '$56 for 2 jars' });
-  const sticky = el({ 'data-presell-label': '', 'data-presell-template': 'Get Coconut Breeze, $28' });
-  const packLine = el({ 'data-presell-label': '', 'data-presell-template': '4 jars for $84 ($21 a jar)' });
-  const packCta = el({ 'data-presell-label': '', 'data-presell-template': 'Get 4 jars for $84' });
-  const hint = el(); hint.hidden = true;
-  const hintCta = el({ 'data-presell-label': '', 'data-presell-template': 'Get 4 for $84' });
+  const button = el({ 'data-presell-label': '', ...BUY_TEMPLATES });
+  const priceLine = el({ 'data-presell-label': '', 'data-presell-template': '$28 for one jar',
+    'data-presell-template-multi': '$56 for 2 jars', 'data-presell-template-pack': '$84 for 4 jars (1 free)' });
+  // Sticky bar and mid-page CTA carry only the per-jar template and follow the buy button.
+  const sticky = el({ 'data-presell-label': '', 'data-presell-template': 'Get Coconut Breeze, $28', 'data-presell-follow': '' });
+  const midCta = el({ 'data-presell-label': '', 'data-presell-template': 'Get Coconut Breeze, $28', 'data-presell-follow': '' });
+  const title = el({ 'data-presell-label': '', 'data-presell-template': 'Coconut Breeze Moisturizing Body Cream, 4oz' });
+  const compare = el(); compare.hidden = true;
   const errorEl = el(); errorEl.hidden = true;
-  const packError = el(); packError.hidden = true;
   const stepper = el({ 'data-max': max });
   const dec = el(), inc = el(), out = el(), qtyInput = el({ value: '1' });
-  const banner = el();
-  const formAttrs = {
+  const badge = el(); badge.hidden = true;
+  const freeNote = el(); freeNote.hidden = true;
+  const form = el({
     action: '/cart/add', 'data-price-token': '$28', 'data-scent-token': 'Coconut Breeze',
-    'data-quantity-token': '2', 'data-total-token': '$56', 'data-pack-price-token': '$84', 'data-pack-unit-token': '$21',
-  };
-  const form = el(formAttrs);
+    'data-quantity-token': '2', 'data-total-token': '$56', 'data-pack-price-token': '$84', 'data-pack-count': '4',
+  });
   const order = [];
   const origAdd = form.addEventListener.bind(form);
   form.addEventListener = (n, f) => { order.push(`listen:${n}`); origAdd(n, f); };
@@ -190,16 +195,13 @@ function buyDom({ options, selected = 0, max = '3' }) {
     'select[name=id]': select, '[data-presell-submit]': button, '[data-presell-error]': errorEl,
     '[data-presell-qty]': stepper, '[data-presell-qty-dec]': dec, '[data-presell-qty-inc]': inc,
     '[data-presell-qty-value]': out, 'input[name=quantity]': qtyInput,
-    '[data-presell-qty-hint]': hint, '[data-presell-qty-hint-buy]': hintCta,
+    '[data-presell-pack-badge]': badge, '[data-presell-qty-free]': freeNote,
   };
   form.querySelector = (q) => inForm[q] || null;
-  const inDoc = {
-    'form[data-presell-buy]': form, '[data-presell-pack]': banner,
-    '[data-presell-pack-buy]': packCta, '[data-presell-pack-error]': packError,
-  };
+  const inDoc = { 'form[data-presell-buy]': form, '[data-presell-compare]': compare };
   const doc = {
     querySelector: (q) => inDoc[q] || null,
-    querySelectorAll: (q) => (q === '[data-presell-label][data-presell-template]' ? [button, priceLine, sticky, packLine, packCta, hintCta] : []),
+    querySelectorAll: (q) => (q === '[data-presell-label][data-presell-template]' ? [midCta, title, priceLine, button, sticky] : []),
   };
   const fetched = [];
   const win = el();
@@ -207,86 +209,132 @@ function buyDom({ options, selected = 0, max = '3' }) {
   win.addEventListener = (n, f) => { order.push(`win:${n}`); winAdd(n, f); };
   win.fetch = (u, o) => { fetched.push(JSON.parse(o.body)); return Promise.resolve(ok); };
   win.location = { href: '' };
-  return { doc, win, form, select, button, priceLine, sticky, packLine, packCta, hint, hintCta, stepper, errorEl, packError, dec, inc, out, qtyInput, banner, fetched, order };
+  return { doc, win, form, select, button, priceLine, sticky, midCta, title, compare, errorEl, stepper, dec, inc, out, qtyInput, badge, freeNote, fetched, order };
 }
 const BREEZE = { value: '44179428475050', 'data-scent': 'Coconut Breeze', 'data-price': '$28', 'data-price-cents': '2800',
-  'data-pack-id': '67602073387178', 'data-pack-price': '$84', 'data-pack-unit': '$21', 'data-pack-cents': '8400' };
+  'data-pack-id': '67602073387178', 'data-pack-price': '$84', 'data-pack-cents': '8400' };
 const UNSCENTED_NOPACK = { value: '45828182114474', 'data-scent': 'Pure Unscented', 'data-price': '$27.50', 'data-price-cents': '2750' };
 const flush = () => new Promise((r) => setTimeout(r, 5));
+const click = (b) => b.listeners.click({ preventDefault() {} });
+const submit = async (d) => { d.form.listeners.submit({ preventDefault() {} }); await flush(); };
+const choose = (d, i) => { d.select.selectedIndex = i; d.select.listeners.change(); };
 
-test('stepper: bounds, disabled ends, live label and multiplied price with cents', () => {
-  const d = buyDom({ options: [BREEZE, UNSCENTED_NOPACK] });
+test('stepper 1-3 without a pack: bounds, disabled ends, label and price x qty with cents', () => {
+  const d = buyDom({ options: [UNSCENTED_NOPACK] });
   bind(d.doc, d.win);
-  assert.equal(d.out.textContent, '1');
-  assert.equal(d.dec.disabled, true);
-  assert.equal(d.inc.disabled, false);
-  assert.equal(d.button.textContent, 'Get Coconut Breeze, $28');
-  d.inc.listeners.click({ preventDefault() {} });
-  assert.equal(d.out.textContent, '2');
-  assert.equal(d.qtyInput.value, '2');
-  assert.equal(d.button.textContent, 'Get 2 jars of Coconut Breeze, $56');
-  assert.equal(d.priceLine.textContent, '$56 for 2 jars');
-  assert.equal(d.sticky.textContent, 'Get Coconut Breeze, $28', 'elements without a multi template stay per-jar');
-  d.inc.listeners.click({ preventDefault() {} });
-  assert.equal(d.out.textContent, '3');
-  assert.equal(d.inc.disabled, true);
-  d.inc.listeners.click({ preventDefault() {} });
-  assert.equal(d.out.textContent, '3', 'max is 3');
-  d.select.selectedIndex = 1; d.select.listeners.change();
-  assert.equal(d.button.textContent, 'Get 3 jars of Pure Unscented, $82.50');
-  d.dec.listeners.click({ preventDefault() {} }); d.dec.listeners.click({ preventDefault() {} }); d.dec.listeners.click({ preventDefault() {} });
   assert.equal(d.out.textContent, '1');
   assert.equal(d.dec.disabled, true);
   assert.equal(d.button.textContent, 'Get Pure Unscented, $27.50');
+  click(d.inc);
+  assert.equal(d.out.textContent, '2');
+  assert.equal(d.qtyInput.value, '2');
+  assert.equal(d.button.textContent, 'Get 2 jars of Pure Unscented, $55');
+  assert.equal(d.priceLine.textContent, '$55 for 2 jars');
+  click(d.inc); click(d.inc);
+  assert.equal(d.out.textContent, '3', 'max 3 without a pack');
+  assert.equal(d.inc.disabled, true);
+  assert.equal(d.button.textContent, 'Get 3 jars of Pure Unscented, $82.50');
+  assert.equal(d.badge.hidden, true, 'no badge without a pack');
+  assert.equal(d.freeNote.hidden, true, 'no free-jar note without a pack');
 });
-test('buy posts the stepper quantity for the selected single jar', async () => {
+
+test('with an honest pack: max 4, badge shown, "add a 4th" note at 3, pack price and strike-through at 4', () => {
   const d = buyDom({ options: [BREEZE] });
   bind(d.doc, d.win);
-  d.inc.listeners.click({ preventDefault() {} });
-  d.form.listeners.submit({ preventDefault() {} });
-  await flush();
-  assert.deepEqual(d.fetched, [{ items: [{ id: 44179428475050, quantity: 2 }] }]);
-  assert.equal(d.win.location.href, '/checkout');
+  assert.equal(d.badge.hidden, false);
+  assert.equal(d.freeNote.hidden, true, 'qty 1');
+  assert.equal(d.compare.hidden, true);
+  click(d.inc); click(d.inc);
+  assert.equal(d.out.textContent, '3');
+  assert.equal(d.inc.disabled, false, 'a 4th is allowed');
+  assert.equal(d.freeNote.hidden, false, 'qty 3 invites the free 4th');
+  assert.equal(d.button.textContent, 'Get 3 jars of Coconut Breeze, $84');
+  click(d.inc);
+  assert.equal(d.out.textContent, '4');
+  assert.equal(d.inc.disabled, true);
+  assert.equal(d.freeNote.hidden, true, 'qty 4 has it');
+  assert.equal(d.button.textContent, 'Get 4 jars of Coconut Breeze, $84');
+  assert.equal(d.priceLine.textContent, '$84 for 4 jars (1 free)');
+  assert.equal(d.compare.hidden, false);
+  assert.equal(d.compare.textContent, '$112', 'four singles, struck through');
+  click(d.inc);
+  assert.equal(d.out.textContent, '4', 'max is 4');
+  click(d.dec);
+  assert.equal(d.compare.hidden, true);
+  assert.equal(d.button.textContent, 'Get 3 jars of Coconut Breeze, $84');
 });
-test('pack button posts the selected scent\'s 4-pack variant with quantity 1', async () => {
+
+test('a pack priced over three singles is not offered: max 3, no badge', () => {
+  const d = buyDom({ options: [{ ...BREEZE, 'data-pack-cents': '8401', 'data-pack-price': '$84.01' }] });
+  bind(d.doc, d.win);
+  assert.equal(d.badge.hidden, true);
+  click(d.inc); click(d.inc); click(d.inc);
+  assert.equal(d.out.textContent, '3');
+  assert.equal(d.freeNote.hidden, true);
+});
+
+test('quantities 1-3 post the single jar with the quantity', async () => {
+  for (const n of [1, 2, 3]) {
+    const d = buyDom({ options: [BREEZE] });
+    bind(d.doc, d.win);
+    for (let i = 1; i < n; i++) click(d.inc);
+    await submit(d);
+    assert.deepEqual(d.fetched, [{ items: [{ id: 44179428475050, quantity: n }] }], `qty ${n}`);
+    assert.equal(d.win.location.href, '/checkout');
+  }
+});
+
+test('quantity 4 posts the scent\'s 4-pack variant with quantity 1', async () => {
   const d = buyDom({ options: [BREEZE] });
   bind(d.doc, d.win);
-  d.inc.listeners.click({ preventDefault() {} });
-  d.packCta.listeners.click({ preventDefault() {} });
-  assert.equal(d.packCta.disabled, true);
-  assert.equal(d.button.disabled, true, 'double-tap protection covers both buttons');
-  d.form.listeners.submit({ preventDefault() {} });
-  await flush();
+  click(d.inc); click(d.inc); click(d.inc);
+  await submit(d);
   assert.deepEqual(d.fetched, [{ items: [{ id: 67602073387178, quantity: 1 }] }]);
   assert.equal(d.win.location.href, '/checkout');
 });
-test('banner shows for a scent with an honest pack and hides for a scent without one', () => {
+
+test('switching from 4 to a scent without a pack drops to 3 and relabels as singles', async () => {
   const d = buyDom({ options: [BREEZE, UNSCENTED_NOPACK] });
   bind(d.doc, d.win);
-  assert.equal(d.banner.hidden, false);
-  assert.equal(d.packLine.textContent, '4 jars for $84 ($21 a jar)');
-  d.select.selectedIndex = 1; d.select.listeners.change();
-  assert.equal(d.banner.hidden, true);
-  d.select.selectedIndex = 0; d.select.listeners.change();
-  assert.equal(d.banner.hidden, false);
+  click(d.inc); click(d.inc); click(d.inc);
+  assert.equal(d.out.textContent, '4');
+  choose(d, 1);
+  assert.equal(d.out.textContent, '3');
+  assert.equal(d.qtyInput.value, '3');
+  assert.equal(d.inc.disabled, true);
+  assert.equal(d.badge.hidden, true);
+  assert.equal(d.compare.hidden, true);
+  assert.equal(d.button.textContent, 'Get 3 jars of Pure Unscented, $82.50');
+  await submit(d);
+  assert.deepEqual(d.fetched, [{ items: [{ id: 45828182114474, quantity: 3 }] }]);
 });
-test('banner hides when the pack costs more than three singles (no "4th free" claim)', () => {
-  const pricey = { ...BREEZE, 'data-pack-cents': '8401', 'data-pack-price': '$84.01' };
-  const d = buyDom({ options: [pricey] });
-  bind(d.doc, d.win);
-  assert.equal(d.banner.hidden, true);
-});
-test('pack failure shows its own error and re-enables both buttons', async () => {
+
+test('the sticky bar and mid-page CTA follow the buy button\'s quantity and price', () => {
   const d = buyDom({ options: [BREEZE] });
-  d.win.fetch = () => Promise.resolve({ ok: false, status: 422, json: async () => ({ description: 'Sold out.' }) });
   bind(d.doc, d.win);
-  d.packCta.listeners.click({ preventDefault() {} });
+  assert.equal(d.sticky.textContent, 'Get Coconut Breeze, $28');
+  click(d.inc);
+  assert.equal(d.sticky.textContent, 'Get 2 jars of Coconut Breeze, $56');
+  assert.equal(d.midCta.textContent, 'Get 2 jars of Coconut Breeze, $56');
+  click(d.inc); click(d.inc);
+  assert.equal(d.sticky.textContent, 'Get 4 jars of Coconut Breeze, $84');
+  assert.equal(d.title.textContent, 'Coconut Breeze Moisturizing Body Cream, 4oz', 'no multi template, stays');
+});
+
+test('double-tap protection and failure recovery on the buy button', async () => {
+  const d = buyDom({ options: [BREEZE] });
+  d.win.fetch = (u, o) => { d.fetched.push(JSON.parse(o.body)); return Promise.resolve({ ok: false, status: 422, json: async () => ({ description: 'Sold out.' }) }); };
+  bind(d.doc, d.win);
+  d.form.listeners.submit({ preventDefault() {} });
+  assert.equal(d.button.disabled, true);
+  d.form.listeners.submit({ preventDefault() {} });
   await flush();
-  assert.equal(d.packError.hidden, false);
-  assert.equal(d.packError.textContent, 'Sold out.');
-  assert.equal(d.packCta.disabled, false);
+  assert.equal(d.fetched.length, 1);
+  assert.equal(d.errorEl.hidden, false);
+  assert.equal(d.errorEl.textContent, 'Sold out.');
   assert.equal(d.button.disabled, false);
 });
+
 test('the form action is removed LAST in bind, after every listener is attached', () => {
   const d = buyDom({ options: [BREEZE] });
   bind(d.doc, d.win);
@@ -296,49 +344,9 @@ test('the form action is removed LAST in bind, after every listener is attached'
   assert.ok(d.order.includes('win:pageshow'));
 });
 
-// ── Follow-ups (review 2026-10-19): the 3-jar hint and the data-max fallback ──
-const click = (b) => b.listeners.click({ preventDefault() {} });
-
-test('at 3 jars with an honest pack, a hint offers the 4-pack; hidden otherwise', () => {
-  const d = buyDom({ options: [BREEZE, UNSCENTED_NOPACK] });
-  bind(d.doc, d.win);
-  assert.equal(d.hint.hidden, true, 'qty 1');
-  click(d.inc);
-  assert.equal(d.hint.hidden, true, 'qty 2');
-  click(d.inc);
-  assert.equal(d.hint.hidden, false, 'qty 3 with a pack');
-  assert.equal(d.hintCta.textContent, 'Get 4 for $84');
-  d.select.selectedIndex = 1; d.select.listeners.change();
-  assert.equal(d.hint.hidden, true, 'qty 3, scent without a pack');
-  d.select.selectedIndex = 0; d.select.listeners.change();
-  assert.equal(d.hint.hidden, false);
-  click(d.dec);
-  assert.equal(d.hint.hidden, true, 'back to 2');
-});
-test('the hint stays hidden at 3 when the pack costs more than three singles', () => {
-  const d = buyDom({ options: [{ ...BREEZE, 'data-pack-cents': '8401', 'data-pack-price': '$84.01' }] });
-  bind(d.doc, d.win);
-  click(d.inc); click(d.inc);
-  assert.equal(d.out.textContent, '3');
-  assert.equal(d.hint.hidden, true);
-});
-test('the hint button adds the pack exactly like the banner button, guarded against double taps', async () => {
-  const d = buyDom({ options: [BREEZE] });
-  bind(d.doc, d.win);
-  click(d.inc); click(d.inc);
-  click(d.hintCta);
-  assert.equal(d.hintCta.disabled, true);
-  assert.equal(d.packCta.disabled, true);
-  assert.equal(d.button.disabled, true);
-  click(d.packCta);
-  d.form.listeners.submit({ preventDefault() {} });
-  await flush();
-  assert.deepEqual(d.fetched, [{ items: [{ id: 67602073387178, quantity: 1 }] }]);
-  assert.equal(d.win.location.href, '/checkout');
-});
 for (const bad of ['', 'abc', '0']) {
-  test(`stepper max falls back to 3 when data-max is ${JSON.stringify(bad)}`, () => {
-    const d = buyDom({ options: [BREEZE], max: bad });
+  test(`stepper base max falls back to 3 when data-max is ${JSON.stringify(bad)}`, () => {
+    const d = buyDom({ options: [UNSCENTED_NOPACK], max: bad });
     bind(d.doc, d.win);
     click(d.inc); click(d.inc); click(d.inc);
     assert.equal(d.out.textContent, '3');

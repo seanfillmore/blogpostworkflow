@@ -9,8 +9,7 @@
     "packCount": 4,
     "quantityToken": "2",
     "totalToken": "$56",
-    "packPriceToken": "$84",
-    "packUnitToken": "$21"
+    "packPriceToken": "$84"
   },
   "eyebrow": "Winter skin",
   "headline": "5 reasons people are switching to a body cream with a 7-ingredient base this winter",
@@ -161,20 +160,19 @@
     "title": "Coconut Breeze Moisturizing Body Cream, 4oz",
     "priceNote": "$28 for one jar",
     "priceNoteMulti": "$56 for 2 jars",
+    "priceNotePack": "$84 for 4 jars (1 free)",
     "shipping": "Ships in 1-2 business days.",
     "cta": "Get Coconut Breeze, $28",
     "ctaMulti": "Get 2 jars of Coconut Breeze, $56",
+    "ctaPack": "Get 4 jars of Coconut Breeze, $84",
     "scentLabel": "Scent",
     "quantityLabel": "Quantity",
     "quantityLess": "One fewer jar",
     "quantityMore": "One more jar",
     "maxQuantity": 3,
     "pack": {
-      "headline": "Buy 3, get the 4th free",
-      "line": "4 jars for $84 ($21 a jar)",
-      "cta": "Get 4 jars for $84",
-      "hint": "4 jars cost no more than 3.",
-      "hintCta": "Get 4 for $84"
+      "badge": "Buy 3, get the 4th free",
+      "addFree": "Add a 4th jar for free"
     }
   },
   "videos": {

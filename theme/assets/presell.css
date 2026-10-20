@@ -318,47 +318,39 @@
   border-right: 1px solid var(--ps-line);
 }
 
-.presell-qty-hint {
-  font-size: 1.5rem;
-  line-height: 1.4;
-  margin-top: -2px !important;
+/* Badge on the stepper's row, to its right; wraps under it on very narrow
+   screens. The note below the row appears at 3 jars when a 4th is free. */
+.presell-qty-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
 }
-.presell-qty-hint-btn {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--ps-ink);
-  font-family: inherit;
-  font-size: inherit;
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-.presell-qty-hint-btn[disabled] { opacity: 0.6; cursor: wait; }
-
-/* 4-pack banner: top of the buy box, always offered (when it is a real deal). */
-.presell-pack {
-  margin: 0 0 18px;
-  padding: 14px 14px 12px;
-  background: #ffffff;
-  border: 2px solid var(--ps-ink);
-  border-radius: 4px;
-  display: grid;
-  gap: 8px;
-}
-.presell-pack-headline {
-  justify-self: center;
+.presell-qty-badge {
+  flex: 1 1 120px;
+  max-width: 190px;
+  padding: 6px 12px;
   background: var(--ps-green);
-  padding: 4px 12px;
   border-radius: 999px;
   font-family: var(--font-heading-family, 'Cabin', sans-serif);
-  font-size: 1.9rem;
+  font-size: 1.5rem;
   font-weight: 700;
   line-height: 1.2;
+  text-align: center;
+  text-wrap: balance; /* "Buy 3, get / the 4th free" when it takes two lines */
 }
-.presell-pack-line { font-size: 1.7rem; font-weight: 600; }
-.presell-button--pack { min-height: 48px; padding: 12px 18px; font-size: 1.7rem; }
+.presell-qty-free { font-size: 1.5rem; font-weight: 600; margin-top: -2px !important; }
+
+/* Price line, with the struck-through price of four single jars at 4 jars. */
+.presell-buy-price-row {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.presell-buy-price-row .presell-buy-price { margin-bottom: 0 !important; }
+.presell-buy-compare { font-size: 1.6rem; color: var(--ps-muted); }
 .presell-buy-meta { font-size: 1.5rem; margin-top: 12px !important; }
 .presell-guarantee { font-size: 1.5rem; color: var(--ps-muted); margin-top: 6px !important; }
 

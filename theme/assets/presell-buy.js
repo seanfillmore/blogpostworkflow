@@ -1,7 +1,8 @@
 /* presell-buy.js: buy box for the pre-sell page (sections/presell-listicle.liquid).
-   Posts the chosen scent and quantity (or the scent's 4-pack) to /cart/add.js,
-   then goes straight to /checkout. Without JS the form still posts one jar to
-   /cart/add. */
+   Posts the chosen scent and quantity to /cart/add.js, then goes straight to
+   /checkout. 1 to 3 jars are single jars; 4 jars is ONE unit of that scent's
+   4-pack (offered only while the pack costs at most three singles). Without JS
+   the form still posts one jar to /cart/add. */
 (function () {
   var FALLBACK = 'Sorry, that did not go through. Please try again.';
   var MAX_QTY = 10;
@@ -64,7 +65,7 @@
   // token name -> pick field
   var TOKEN_FIELDS = [
     ['priceToken', 'price'], ['scentToken', 'scent'], ['quantityToken', 'quantity'],
-    ['totalToken', 'total'], ['packPriceToken', 'packPrice'], ['packUnitToken', 'packUnit']
+    ['totalToken', 'total'], ['packPriceToken', 'packPrice']
   ];
 
   /**
@@ -113,20 +114,19 @@
     var inc = form.querySelector('[data-presell-qty-inc]');
     var qtyOut = form.querySelector('[data-presell-qty-value]');
     var qtyInput = form.querySelector('input[name=quantity]');
-    var hint = form.querySelector('[data-presell-qty-hint]');
-    var hintButton = form.querySelector('[data-presell-qty-hint-buy]');
-    var banner = doc.querySelector('[data-presell-pack]');
-    var packButton = doc.querySelector('[data-presell-pack-buy]');
-    var packError = doc.querySelector('[data-presell-pack-error]');
+    var badge = form.querySelector('[data-presell-pack-badge]');
+    var freeNote = form.querySelector('[data-presell-qty-free]');
+    var compare = doc.querySelector('[data-presell-compare]');
     var attr = function (n) { return form.getAttribute(n) || ''; };
     var tokens = {
       priceToken: attr('data-price-token'), scentToken: attr('data-scent-token'),
       quantityToken: attr('data-quantity-token'), totalToken: attr('data-total-token'),
-      packPriceToken: attr('data-pack-price-token'), packUnitToken: attr('data-pack-unit-token')
+      packPriceToken: attr('data-pack-price-token')
     };
+    var packCount = intAttr(form, 'data-pack-count') || 4;
     var labels = doc.querySelectorAll('[data-presell-label][data-presell-template]');
     var rawMax = intAttr(stepper, 'data-max');
-    var maxQty = rawMax && rawMax > 0 ? clampQuantity(rawMax) : DEFAULT_STEPPER_MAX;
+    var singleMax = rawMax && rawMax > 0 ? clampQuantity(rawMax) : DEFAULT_STEPPER_MAX;
     var qty = 1;
     var buy = createBuy({
       fetch: function (u, o) { return win.fetch(u, o); },
@@ -144,78 +144,58 @@
       var unitCents = intAttr(opt, 'data-price-cents');
       if (!id || packCents === null || unitCents === null || packCents <= 0) return null;
       if (packCents > unitCents * 3) return null; // "get the 4th free" would be false
-      return { id: id, price: opt.getAttribute('data-pack-price') || '', unit: opt.getAttribute('data-pack-unit') || '' };
+      return { id: id, price: opt.getAttribute('data-pack-price') || '' };
     }
+    function maxFor(pack) { return pack ? Math.max(singleMax, packCount) : singleMax; }
+    /** Which copy applies: 'pack' (4 jars = the pack), 'multi' (2-3 singles) or 'single'. */
+    function mode(pack) { return pack && qty === packCount ? 'pack' : qty > 1 ? 'multi' : 'single'; }
 
     function refresh() {
       var opt = current();
       if (!opt) return;
+      var pack = packFor(opt);
+      var max = maxFor(pack);
+      if (qty > max) qty = max; // e.g. 4 jars, then a scent with no pack: 3 singles
+      var m = mode(pack);
       var price = opt.getAttribute('data-price') || '';
       var cents = intAttr(opt, 'data-price-cents');
       var prefix = '';
       for (var k = 0; k < price.length && (price.charAt(k) < '0' || price.charAt(k) > '9'); k++) prefix += price.charAt(k);
-      var pack = packFor(opt);
-      var pick = {
-        scent: opt.getAttribute('data-scent') || opt.text,
-        price: price,
-        packPrice: pack ? pack.price : undefined,
-        packUnit: pack ? pack.unit : undefined
-      };
+      var scent = opt.getAttribute('data-scent') || opt.text;
       // The quantity token is a bare digit ("2"), so it is only ever applied to
-      // the multi-jar templates it was written for, never to per-jar copy.
-      var multiPick = {
-        scent: pick.scent,
-        price: price,
-        quantity: String(qty),
-        total: cents === null ? price : formatMoney(cents * qty, prefix)
+      // the multi-jar templates it was written for, never to other copy.
+      var picks = {
+        single: { scent: scent, price: price },
+        multi: { scent: scent, price: price, quantity: String(qty), total: cents === null ? price : formatMoney(cents * qty, prefix) },
+        pack: { scent: scent, packPrice: pack ? pack.price : '' }
       };
       for (var i = 0; i < labels.length; i++) {
-        var multi = labels[i].getAttribute('data-presell-template-multi');
-        labels[i].textContent = qty > 1 && multi
-          ? relabel(multi, tokens, multiPick)
-          : relabel(labels[i].getAttribute('data-presell-template'), tokens, pick);
+        var src = labels[i].hasAttribute && labels[i].hasAttribute('data-presell-follow') && button ? button : labels[i];
+        var tpl = m !== 'single' ? src.getAttribute('data-presell-template-' + m) : null;
+        labels[i].textContent = tpl
+          ? relabel(tpl, tokens, picks[m])
+          : relabel(labels[i].getAttribute('data-presell-template'), tokens, picks.single);
       }
       if (qtyOut) qtyOut.textContent = String(qty);
       if (qtyInput) qtyInput.value = String(qty);
       if (dec) dec.disabled = qty <= 1;
-      if (inc) inc.disabled = qty >= maxQty;
-      if (banner) banner.hidden = !pack;
-      // At 3 jars the single-jar total equals (or beats) the pack price, so
-      // point at the 4th jar. Same honesty guard as the banner.
-      if (hint) hint.hidden = !(pack && qty >= 3);
+      if (inc) inc.disabled = qty >= max;
+      if (badge) badge.hidden = !pack;
+      if (freeNote) freeNote.hidden = !(pack && qty === packCount - 1);
+      if (compare) {
+        compare.hidden = m !== 'pack' || cents === null;
+        compare.textContent = m === 'pack' && cents !== null ? formatMoney(cents * packCount, prefix) : '';
+      }
     }
 
     function step(delta) {
       return function (e) {
         if (e && e.preventDefault) e.preventDefault();
         var next = qty + delta;
-        if (next < 1 || next > maxQty) return;
+        if (next < 1 || next > maxFor(packFor(current()))) return;
         qty = next;
         refresh();
       };
-    }
-
-    function setBusy(busy) {
-      if (button) button.disabled = busy;
-      if (packButton) packButton.disabled = busy;
-      if (hintButton) hintButton.disabled = busy;
-    }
-    function hideErrors() {
-      if (errorEl) errorEl.hidden = true;
-      if (packError) packError.hidden = true;
-    }
-    function run(variantId, quantity, errTarget) {
-      setBusy(true);
-      hideErrors();
-      buy.submit(variantId, quantity).then(function (r) {
-        if (!r.ok) {
-          if (errTarget) {
-            errTarget.textContent = r.error;
-            errTarget.hidden = false;
-          }
-          setBusy(false);
-        }
-      });
     }
 
     on(select, 'change', refresh);
@@ -224,33 +204,32 @@
     refresh();
 
     // Back from /checkout can restore this page from the bfcache with the
-    // buttons still disabled from the successful add.
+    // button still disabled from the successful add.
     on(win, 'pageshow', function (e) {
       if (e && e.persisted) {
-        setBusy(false);
-        hideErrors();
+        if (button) button.disabled = false;
+        if (errorEl) errorEl.hidden = true;
       }
     });
 
-    function busy() {
-      return (button && button.disabled) || (packButton && packButton.disabled) || (hintButton && hintButton.disabled);
-    }
-    function buyPack(errTarget) {
-      return function (e) {
-        if (e && e.preventDefault) e.preventDefault();
-        if (busy()) return;
-        var pack = packFor(current());
-        if (!pack) return;
-        run(pack.id, 1, errTarget);
-      };
-    }
-    on(packButton, 'click', buyPack(packError));
-    on(hintButton, 'click', buyPack(errorEl));
-
     on(form, 'submit', function (e) {
       e.preventDefault();
-      if (busy()) return;
-      run(select.value, qty, errorEl);
+      if (button.disabled) return;
+      var pack = packFor(current());
+      var id = select.value;
+      var count = qty;
+      if (mode(pack) === 'pack') { id = pack.id; count = 1; } // 4 jars = one 4-pack
+      button.disabled = true;
+      if (errorEl) errorEl.hidden = true;
+      buy.submit(id, count).then(function (r) {
+        if (!r.ok) {
+          if (errorEl) {
+            errorEl.textContent = r.error;
+            errorEl.hidden = false;
+          }
+          button.disabled = false;
+        }
+      });
     });
 
     // LAST, after every listener is attached. The cart-drawer app (Zipify OCU)
