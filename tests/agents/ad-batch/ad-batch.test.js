@@ -454,3 +454,10 @@ test('planScenes animated uses animated library scenes and passes style to the p
   const custom = await planScenes({ batch: { count: 2, scenes: ['a'], typeStyle: 'marker' }, concept: { headline: 'h' }, product: CREAM, library, usage: {}, taken: new Set(), anthropic: fake });
   assert.equal(custom.scenes[0].typeStyle, 'marker');
 });
+
+test('a jar is open or closed, never cream through a closed lid (prompt and check)', () => {
+  const jar = { ...CREAM, description: 'A short wide-mouth plastic jar with a black screw-on cap.' };
+  const { prompt } = buildPrompt({ product: jar, concept: { headline: 'h' }, scene: { scene: 'x', typeStyle: 't' } });
+  assert.match(prompt, /Never show cream on top of, around or coming through a lid/);
+  assert.match(checkPrompt({ product: CREAM, shown: 'packaged' }), /coming through a lid that is still on/);
+});

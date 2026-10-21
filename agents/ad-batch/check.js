@@ -56,6 +56,10 @@ export function inventedClaims(extraText) {
 // hands are the style, not a defect. Without this the check would reject the look itself.
 const ANIMATED_NOTE = ' This ad is a stylized 3D-animated illustration: judge OUR product against the reference exactly as for a photo, but stylized cartoon character hands (simplified, four-fingered) are NOT a defect; report only hands that are fused, broken or anatomically impossible even for a cartoon.';
 
+// 2026-10-20: a render showed cream heaped on top of a CLOSED jar lid, which no label
+// read catches. It is a wrong physical product, so it is a fidelity MISMATCH.
+const PHYSICS_NOTE = ' Physically impossible packaging is a MISMATCH: product (cream) shown on top of, around or coming through a lid that is still on the container.';
+
 const isSet = (product) => Array.isArray(product?.items) && product.items.length > 1;
 
 /** The check for a SET: one reference image per product, then the ad; each product read on its own. */
@@ -76,7 +80,7 @@ ${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many uni
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
 }
 
-Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
+Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
 }
 
 export function checkPrompt({ product, shown, style = 'photo' }) {
@@ -98,7 +102,7 @@ Answer about Image 2 ONLY, as JSON, transcribing letter by letter exactly as ren
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
 }
 
-Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
+Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
 }
 
 export function parseCheck(text) {

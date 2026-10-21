@@ -58,7 +58,7 @@ The printed label reads exactly: ${product.labelStrings.map(s => `"${s}"`).join(
     prompt: `Design a finished, scroll-stopping vertical social media ad (4:5) for Real Skin Care "${product.title}".
 
 ${isSet ? productBlock : `${productBlock}
-Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar.' : ''} ${animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}
+Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar. The jar is EITHER open (lid fully off and set aside, cream visible inside the rim) OR closed (lid screwed on, no cream visible anywhere). Never show cream on top of, around or coming through a lid that is on the jar.' : ''} ${animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}
 
 SCENE / THEME: ${scene.scene}. ${animated ? ANIMATED_RENDER : 'Premium commercial photography, shallow depth of field, rich and believable.'}
 
