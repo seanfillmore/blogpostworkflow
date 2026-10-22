@@ -36,9 +36,7 @@ import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shop
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
-import { loadNotes } from '../../lib/founder-notes-store.js';
-import { selectFounderNotes, founderNotesBlock } from '../../lib/founder-notes.js';
-import { clusterForText } from '../../lib/cluster-revenue.js';
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
 import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
@@ -172,18 +170,6 @@ async function buildArticleIndex() {
 }
 
 // ── claude refresh ────────────────────────────────────────────────────────────
-
-// Founder notes for this refresh: never throws. A load failure is an empty block.
-function loadFounderNotesFor(keyword, slug) {
-  try {
-    const clusters = [clusterForText(keyword || '')].filter(Boolean);
-    const selected = selectFounderNotes(loadNotes(), { clusters, ref: slug, surface: 'editorial' });
-    return { block: founderNotesBlock(selected, { surface: 'editorial' }) || '', ids: selected.map((n) => n.id) };
-  } catch (err) {
-    console.warn(`  Warning: founder notes unavailable (${err.message}) — continuing without them.`);
-    return { block: '', ids: [] };
-  }
-}
 
 async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = [], founderBlock = '') {
   const bodyText = article.body_html
@@ -550,7 +536,7 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const founder = loadFounderNotesFor(keyword, slug);
+      const founder = founderNotesFor({ keyword, slug });
       const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns, founder.block);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
@@ -655,7 +641,7 @@ ${afCheck.intro?.html || ''}`,
 
       // Stamp which founder notes were offered to this refresh, on the post the
       // refreshed content was written to. Failure is logged, never fatal.
-      if (founder.ids.length) {
+      {
         try {
           writePostMeta(slug, { founder_notes_offered: founder.ids });
         } catch (err) {

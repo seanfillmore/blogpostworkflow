@@ -68,3 +68,22 @@ test('appendNotes dedupes within a single batch', () => {
   assert.equal(appendNotes([note('a', 'x'), note('a', 'x'), note('b', 'y')], { dir }), 2);
   assert.deepEqual(loadNotes({ dir }).map((n) => n.id), ['a', 'b']);
 });
+
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
+
+test('founderNotesFor never throws on a corrupt notes file', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 'notes.jsonl'), '{not json\n');
+  assert.deepEqual(founderNotesFor({ keyword: 'natural deodorant', slug: 's', dir }), { block: '', ids: [] });
+  rmSync(dir, { recursive: true });
+});
+
+test('founderNotesFor returns a block and ids for a normal case', () => {
+  const dir = tmp();
+  appendNotes([{ ...note('a', 'We pick coconut oil because it is simple.'), clusters: ['deodorant'] }], { dir });
+  const r = founderNotesFor({ keyword: 'natural deodorant', slug: 's', dir });
+  assert.ok(Array.isArray(r.ids));
+  assert.equal(typeof r.block, 'string');
+  assert.equal(r.block === '', r.ids.length === 0);
+  rmSync(dir, { recursive: true });
+});

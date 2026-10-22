@@ -25,9 +25,7 @@ import { withRetry } from '../../lib/retry.js';
 import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta, writePostMeta } from '../../lib/posts.js';
-import { loadNotes } from '../../lib/founder-notes-store.js';
-import { selectFounderNotes, founderNotesBlock } from '../../lib/founder-notes.js';
-import { clusterForText } from '../../lib/cluster-revenue.js';
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
@@ -230,18 +228,6 @@ const POST_TYPE_LABELS = {
   informational: 'INFORMATIONAL / EDUCATIONAL',
   supply: 'SUPPLY / MAKER-SOURCING',
 };
-
-// Founder notes for this post: never throws. A load failure is an empty block.
-function loadFounderNotesFor(keyword, slug) {
-  try {
-    const clusters = [clusterForText(keyword || '')].filter(Boolean);
-    const selected = selectFounderNotes(loadNotes(), { clusters, ref: slug, surface: 'editorial' });
-    return { block: founderNotesBlock(selected, { surface: 'editorial' }) || '', ids: selected.map((n) => n.id) };
-  } catch (err) {
-    console.warn(`  Warning: founder notes unavailable (${err.message}) — continuing without them.`);
-    return { block: '', ids: [] };
-  }
-}
 
 function buildSystemPrompt(productIngredients, postType, contentDepth, format, founderBlock = '') {
   if (!POST_TYPE_LABELS[postType]) {
@@ -611,7 +597,7 @@ async function writePost(briefPath) {
   const blogPosts = loadBlogPosts(brief.target_keyword);
   const productIngredients = detectProductIngredients(brief.target_keyword);
 
-  const founder = loadFounderNotesFor(brief.target_keyword, slug);
+  const founder = founderNotesFor({ keyword: brief.target_keyword, slug });
 
   process.stdout.write('  Streaming from Claude... ');
 
@@ -802,7 +788,7 @@ ${badIntro?.html || ''}`,
   replacePostMeta(metaPath, meta);
   // Stamp which founder notes were offered to this draft (after the authored write,
   // via the merging writer, so composeAuthoredMeta's declared keys are untouched).
-  if (founder.ids.length) {
+  {
     try {
       writePostMeta(slug, { founder_notes_offered: founder.ids });
     } catch (err) {
