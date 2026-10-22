@@ -21,6 +21,7 @@ node agents/founder-notes/index.js --ingest [--apply] [--now <iso>]
 - `enabled`: off switch.
 - `sendVia`: `resend` (default) or the Hushmail transport.
 - `newsQueries`: search queries used to find the news question.
+- `newsDomains`: the only outlets a news question may come from (beauty trade press, major news, fda.gov). Homepages, section, author, tag and sponsored pages are skipped. Without this list Tavily's news search returned a brand's own blog post.
 
 ## Crons (UTC, no `TZ=` prefix)
 

@@ -49,7 +49,7 @@ const REDACTION_MIN_RATIO = 0.6;
 /** The question email's opening line: a body starting with it is our own email, whatever its Message-ID. */
 export const EMAIL_OPENING = 'Reply under each number.';
 
-const DEFAULT_CONFIG = Object.freeze({ enabled: true, sendVia: 'resend', newsQueries: [] });
+const DEFAULT_CONFIG = Object.freeze({ enabled: true, sendVia: 'resend', newsQueries: [], newsDomains: [] });
 
 function loadEnv(root = ROOT) {
   try {
@@ -85,6 +85,7 @@ function phrasingPrompt(sources) {
     `Below are ${sources.length} sources. Write exactly one question for each source, in the same order.`,
     'Each question is one short conversational sentence asking Sean for his reaction, a story or his opinion about that source.',
     'Do not quote the source in the question (it is shown under the question). No dashes. No names of customers.',
+    'When a review names its product, refer to that product by its plain type (for example "the body lotion" or "the bar soap"). Never call it a different kind of product.',
     `Return ONLY a JSON array of ${sources.length} strings.`,
     '',
     ...blocks,
@@ -344,7 +345,10 @@ function buildDeps(env, config) {
       config,
       log: console.log,
       fetchReviews: async (days) => (judgemeToken && shopifyStore ? fetchRecentReviews(days, shopifyStore, judgemeToken) : []),
-      searchNews: async (q) => (tavilyKey ? searchWeb(tavilyKey, q, { maxResults: 5, topic: 'news', timeRange: 'week' }) : []),
+      searchNews: async (q) => (tavilyKey ? searchWeb(tavilyKey, q, {
+        maxResults: 8, topic: 'news', timeRange: 'week',
+        includeDomains: config.newsDomains?.length ? config.newsDomains : null,
+      }) : []),
       loadCalendar: readCalendar,
       complete: async ({ model, prompt, maxTokens }) => {
         const { default: Anthropic } = await import('../../lib/anthropic.js');
