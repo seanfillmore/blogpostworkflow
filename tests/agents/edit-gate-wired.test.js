@@ -78,6 +78,7 @@ const ALLOWLIST = [
   { file: 'scripts/remediate-live-health-claims.js', kind: 'compliance', why: 'removes blocking health claims' },
   { file: 'scripts/remediate-tea-tree-11-benefits-post.js', kind: 'compliance', why: 'removes health claims from one post' },
   { file: 'scripts/remediate-toothpaste-safety-claims.mjs', kind: 'compliance', why: 'removes oral drug claims' },
+  { file: 'scripts/remediate-coconut-oil-toothpaste-winner.mjs', kind: 'compliance', why: 'hand-reviewed claim and citation fixes on a locked winner (2026-10-22)' },
 ];
 
 const KINDS = new Set(['compliance', 'repair', 'enhance', 'serp', 'rewrite']);
