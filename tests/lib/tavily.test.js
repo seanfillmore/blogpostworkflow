@@ -113,3 +113,29 @@ test('downloadImage rejects oversize payloads', async () => {
   });
   assert.equal(await downloadImage('https://x', { fetchImpl, maxBytes: 1024 * 1024 }), null);
 });
+
+test('searchWeb includes topic and time_range in body when provided', async () => {
+  let capturedBody = null;
+  const fetchImpl = mockFetch([
+    async (url, init) => {
+      capturedBody = JSON.parse(init.body);
+      return jsonResponse({ results: [] });
+    },
+  ]);
+  await searchWeb('key', 'news query', { topic: 'news', timeRange: 'week', fetchImpl });
+  assert.equal(capturedBody.topic, 'news');
+  assert.equal(capturedBody.time_range, 'week');
+});
+
+test('searchWeb omits topic and time_range when not provided', async () => {
+  let capturedBody = null;
+  const fetchImpl = mockFetch([
+    async (url, init) => {
+      capturedBody = JSON.parse(init.body);
+      return jsonResponse({ results: [] });
+    },
+  ]);
+  await searchWeb('key', 'normal query', { fetchImpl });
+  assert.equal(capturedBody.topic, undefined);
+  assert.equal(capturedBody.time_range, undefined);
+});
