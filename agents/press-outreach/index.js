@@ -84,7 +84,7 @@ import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib, pickProducts, prepareArticle } from '../../lib/press-pitch.js';
 import { selectFounderNotes, pressEligibleNotes } from '../../lib/founder-notes.js';
-import { loadNotesOrEmpty } from '../../lib/founder-notes-store.js';
+import { loadNotesOrEmpty, stampFounderNoteUses } from '../../lib/founder-notes-store.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
 import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange, articleLinks } from '../../lib/press-links.js';
@@ -851,6 +851,12 @@ export async function runPressOutreach({
       const sentAt = r.at;
       // Sent: from here on nothing may make it look unsent.
       try { saveDraft(markSent(d, { now: Date.parse(sentAt), messageId: r.messageId, resendId: r.resendId || null })); } catch (err) { log(`  could not save sent draft ${d.id}: ${err.message}`); }
+      // Record founder-note uses from the text actually sent. Best effort, never alters the send.
+      try {
+        if (d.founder_notes_offered?.length) {
+          stampFounderNoteUses({ text: `${subject}\n${text}`, offered: d.founder_notes_offered, surface: 'commercial', ref: d.id, at: sentAt });
+        }
+      } catch (err) { log(`  could not record founder note uses for ${d.id}: ${err.message}`); }
       recordDraftSent(d, c, { messageId: r.messageId, sentAt, subject, row });
       state.first_sent_at ||= sentAt;
       persistState(row);
