@@ -33,7 +33,11 @@ const GATED = [
   { file: 'agents/answer-first-rewriter/index.js', kind: 'rewrite', records: true },
   { file: 'agents/refresh-runner/index.js', kind: 'rewrite', records: true },
   { file: 'agents/content-refresher/index.js', kind: 'rewrite', records: true },
-  { file: 'agents/legacy-rebuilder/index.js', kind: 'rewrite', records: true },
+  // Asks the gate but records nothing itself: the full path delegates to
+  // refresh-runner (which records) and the light path's only rewriting step,
+  // answer-first-rewriter, records its own. A self-stamp locked 29 blocked
+  // pages for 28 days on edits that rewrote nothing (2026-10-21).
+  { file: 'agents/legacy-rebuilder/index.js', kind: 'rewrite', records: false },
   { file: 'agents/featured-product-injector/index.js', kind: 'enhance', records: false },
   { file: 'agents/schema-injector/index.js', kind: 'enhance', records: false },
   { file: 'agents/faq-rewriter/index.js', kind: 'rewrite', records: true },
