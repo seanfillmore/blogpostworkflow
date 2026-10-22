@@ -105,3 +105,27 @@ test('long note needs 3 bigrams', () => {
   const three = 'summer mornings harvesting fragrant lavender fields';
   assert.deepEqual(notesUsedIn(three, [n]), [n.id]);
 });
+
+test('short note is detected when its phrase appears, not otherwise', () => {
+  const n = note('I make it in small batches');
+  assert.deepEqual(notesUsedIn('We work in small batches here.', [n]), [n.id]);
+  assert.deepEqual(notesUsedIn('We work in large batches here and small shops.', [n]), []);
+});
+
+test('single-content-word note matches contiguously; empty note never used', () => {
+  assert.deepEqual(notesUsedIn('Made in a kitchen', [note('kitchen')]), ['fn-2026-W43-1']);
+  assert.deepEqual(notesUsedIn('anything at all', [note('I am so')]), []);
+});
+
+test('html entities do not inject words', () => {
+  const n = note('I started making lotion in my kitchen and the coconut oil kept separating on me');
+  const t = 'I started making lotion in my kitchen&rsquo;s coconut&nbsp;oil kept separating';
+  assert.deepEqual(notesUsedIn(t, [n]), [n.id]);
+  const m = note('We make small batches');
+  assert.deepEqual(notesUsedIn('small&nbsp;batches', [m]), [m.id]);
+});
+
+test('select throws on unknown surface', () => {
+  assert.throws(() => selectFounderNotes([], { surface: 'press' }));
+  assert.throws(() => selectFounderNotes([], {}));
+});
