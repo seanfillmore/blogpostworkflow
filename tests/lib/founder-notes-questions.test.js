@@ -75,3 +75,32 @@ test('renderEmail subject, numbering, first name, no dashes', () => {
   assert.ok(!text.includes('Smith'));
   assert.ok(text.includes('https://example.com/n'));
 });
+
+const render = (source) => renderEmail({ week: '2026-W44', questions: [{ text: 'Q?', source }], now: new Date('2026-10-26T15:35Z') }).text;
+
+test('renderEmail: missing or blank reviewer renders A customer', () => {
+  const s = buildSources({ reviews: [rev({ reviewer: undefined })] })[0];
+  assert.ok(render(s).includes('(A customer, 5 stars)'));
+  const b = buildSources({ reviews: [rev({ reviewer: '  ' })] })[0];
+  assert.ok(render(b).includes('(A customer, 5 stars)'));
+  assert.ok(!render(s).includes('undefined'));
+});
+
+test('renderEmail: missing or non-integer rating omits stars', () => {
+  for (const rating of [undefined, null, 4.5, 'x']) {
+    const t = render(buildSources({ reviews: [rev({ rating })] })[0]);
+    assert.ok(t.includes('(Jenna)'), String(rating));
+    assert.ok(!/stars|undefined|null/.test(t));
+  }
+});
+
+test('renderEmail: a title with a newline stays on one line', () => {
+  const t = render(buildSources({ reviews: [], news: { url: 'https://example.com/n', title: 'Line one\nLine two', content: '' } })[0]);
+  assert.ok(t.includes('   Line one Line two\n   https://example.com/n'));
+});
+
+test('renderEmail: upcoming block renders its title, never raw context', () => {
+  const t = render(buildSources({ reviews: [], upcoming: { slug: 'sl', keyword: 'kw', title: 'Post Title', publish_date: '2026-10-30' } })[0]);
+  assert.ok(t.includes('Upcoming post: Post Title'));
+  assert.ok(!t.includes('keyword:'));
+});
