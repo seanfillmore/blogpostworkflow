@@ -7,5 +7,25 @@
     "FDA cosmetics regulation MoCRA",
     "skincare ingredient safety study",
     "body care industry trend"
+  ],
+  "_newsDomainsNote": "News questions only draw from these outlets. Without the list, Tavily's news topic returned a brand's own blog post (2026-10-21).",
+  "newsDomains": [
+    "cosmeticsbusiness.com",
+    "cosmeticsdesign.com",
+    "beautyindependent.com",
+    "premiumbeautynews.com",
+    "happi.com",
+    "glossy.co",
+    "wwd.com",
+    "beautymatter.com",
+    "allure.com",
+    "byrdie.com",
+    "fda.gov",
+    "reuters.com",
+    "apnews.com",
+    "nbcnews.com",
+    "nytimes.com",
+    "cnn.com",
+    "businessinsider.com"
   ]
 }

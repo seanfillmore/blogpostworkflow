@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   weekId, pickReviews, pickNews, pickUpcoming, buildSources, templateQuestion,
-  renderEmail, MAX_QUESTIONS, MIN_QUESTIONS,
+  renderEmail, MAX_QUESTIONS, MIN_QUESTIONS, isStoryUrl,
 } from '../../lib/founder-notes-questions.js';
 
 const body = (n) => Array.from({ length: n }, (_, i) => `word${i}`).join(' ');
@@ -103,4 +103,36 @@ test('renderEmail: upcoming block renders its title, never raw context', () => {
   const t = render(buildSources({ reviews: [], upcoming: { slug: 'sl', keyword: 'kw', title: 'Post Title', publish_date: '2026-10-30' } })[0]);
   assert.ok(t.includes('Upcoming post: Post Title'));
   assert.ok(!t.includes('keyword:'));
+});
+
+test('isStoryUrl rejects homepages, listing, author, sponsored and paged URLs', () => {
+  assert.equal(isStoryUrl('https://www.cosmeticsbusiness.com/beauty-has-outperformed-the-broader-consumer-market'), true);
+  assert.equal(isStoryUrl('https://www.nytimes.com/section/style/self-care?page=5'), false);
+  assert.equal(isStoryUrl('https://www.nytimes.com/by/kari-molvar?page=9'), false);
+  assert.equal(isStoryUrl('https://www.allure.com/sponsored/story/new-series-drop'), false);
+  assert.equal(isStoryUrl('https://www.example.com/'), false);
+  assert.equal(isStoryUrl('not a url'), false);
+});
+
+test('pickNews skips a listing page and takes the first real story', () => {
+  const picked = pickNews([
+    { url: 'https://www.nytimes.com/section/style/self-care?page=5', title: 'Self-Care - Page 5' },
+    { url: 'https://www.example.com/news/talc-free-beauty', title: 'Why brands are going talc-free' },
+  ]);
+  assert.equal(picked.url, 'https://www.example.com/news/talc-free-beauty');
+});
+
+test('a review source names its product to the phrasing model and in the email', () => {
+  const [s] = buildSources({ reviews: [rev({ product_title: 'Coconut Bar Soap' })] });
+  assert.match(s.context, /wrote about the product "Coconut Bar Soap"/);
+  assert.doesNotMatch(s.context, /Jenna/);
+  const { text } = renderEmail({ week: '2026-W44', questions: [{ text: 'Q?', source: s }], now: new Date('2026-10-26T15:35Z') });
+  assert.match(text, /\(Jenna, 5 stars, on Coconut Bar Soap\)/);
+});
+
+test('a review with no product title renders as before', () => {
+  const [s] = buildSources({ reviews: [rev()] });
+  assert.match(s.context, /^A customer \(5 stars\) wrote: /);
+  const { text } = renderEmail({ week: '2026-W44', questions: [{ text: 'Q?', source: s }], now: new Date('2026-10-26T15:35Z') });
+  assert.match(text, /\(Jenna, 5 stars\)/);
 });
