@@ -406,3 +406,43 @@ test('2026-10-05: draftPitch refuses a homepage target before calling the model'
   assert.match(r.reason, /homepage/);
   assert.equal(calls, 0);
 });
+
+// ---- Founder notes (invented text) ----
+const NOTE = { id: 'fn-1', answer: 'I started making lotion in my kitchen because nothing on the shelf felt right.' };
+
+test('buildFactSheet offers founder notes in their own first-person section', () => {
+  const { text, skippedFacts, founderNoteIds } = buildFactSheet(FACTS, ['lotion'], { founderNotes: [NOTE] });
+  assert.match(text, /FOUNDER NOTES \(your own words; first person; never restate as a brand fact; numbers only exactly as written\):/);
+  assert.match(text, /- I started making lotion in my kitchen because nothing on the shelf felt right\./);
+  assert.ok(text.indexOf('FOUNDER NOTES') > text.indexOf('handmade in small batches'), 'after the brand facts');
+  assert.deepEqual(skippedFacts, []);
+  assert.deepEqual(founderNoteIds, ['fn-1']);
+});
+
+test('a founder note failing the claim gate is skipped and reported, never sent', () => {
+  const bad = { id: 'fn-bad', answer: 'A customer told me our lotion cures eczema.' };
+  const { text, skippedFacts, founderNoteIds } = buildFactSheet(FACTS, ['lotion'], { founderNotes: [bad, NOTE] });
+  assert.doesNotMatch(text, /eczema/);
+  assert.match(text, /kitchen/);
+  assert.deepEqual(skippedFacts.map((s) => s.where), ['founder_notes.fn-bad']);
+  assert.deepEqual(founderNoteIds, ['fn-1']);
+});
+
+test('with no founder notes the fact sheet is byte-identical, and no section appears when all fail', () => {
+  assert.equal(buildFactSheet(FACTS, ['lotion'], { founderNotes: [] }).text, buildFactSheet(FACTS, ['lotion']).text);
+  assert.equal(buildFactSheet(FACTS).text, buildFactSheet(FACTS, undefined, {}).text);
+  const allBad = buildFactSheet(FACTS, ['lotion'], { founderNotes: [{ id: 'x', answer: 'it heals eczema' }] });
+  assert.equal(allBad.text, buildFactSheet(FACTS, ['lotion']).text);
+});
+
+test('draftPitch shows founder notes to the model and reports which it offered', async () => {
+  const prompts = [];
+  const generate = async (p) => { prompts.push(p); return { subject: 'Samples for your lotion roundup', product: 'lotion', opener_quote: 'felt like nothing at all', body: CLEAN_BODY }; };
+  const r = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT, founderNotes: [NOTE] });
+  assert.equal(r.ok, true, r.reason);
+  assert.match(prompts[0], /FOUNDER NOTES/);
+  assert.deepEqual(r.founder_notes_offered, ['fn-1']);
+  const none = await draftPitch({ prospect: PROSPECT, articleText: ARTICLE, pressFacts: FACTS, generate, postalAddress: ADDRESS, contact: CONTACT });
+  assert.deepEqual(none.founder_notes_offered, []);
+  assert.doesNotMatch(prompts[1], /FOUNDER NOTES/);
+});

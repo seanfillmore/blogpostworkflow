@@ -626,3 +626,44 @@ test('an explicit --limit above draftRunMax is honoured for pitches (no follow-u
   assert.equal(r.drafted.length, 5);
   assert.equal(saved.drafts.filter((d) => d.kind === 'pitch').length, 5);
 });
+
+// ---- Founder notes (invented text, injected; never read from data/founder-notes) ----
+const fnote = (id, answer, clusters = ['lotion']) => ({
+  id, answer, question: 'q?', clusters, redaction: 'ok', gate: { commercial: 'ok', editorial: 'ok' }, uses: [], answered_at: '2026-10-01T00:00:00Z', source: { type: 'review', ref: 'r1' },
+});
+
+test('founder notes for the pitched product are passed to draftPitch and the offer is persisted', async () => {
+  const calls = [];
+  const { args, saved } = harness({
+    pressFacts: { brand: { facts: [] }, products: { lotion: { name: 'Body Lotion' } } },
+    loadFounderNotes: () => [fnote('fn-1', 'I first mixed this lotion in a borrowed kitchen.'), fnote('fn-2', 'Soap note.', ['soap'])],
+    draftPitch: async (a) => { calls.push(a); return { ok: true, founder_notes_offered: (a.founderNotes || []).map((n) => n.id), draft: { subject: 'S', text: 'Hi', openerQuote: 'a long article about lotion', products: ['lotion'] } }; },
+  });
+  await runDrafting(args);
+  assert.ok(calls.length > 0);
+  assert.deepEqual(calls[0].founderNotes.map((n) => n.id), ['fn-1']);
+  assert.deepEqual(saved.drafts[0].founder_notes_offered, ['fn-1']);
+});
+
+test('with no founder notes draftPitch gets no founderNotes and the draft carries no offer field', async () => {
+  const calls = [];
+  const { args, saved } = harness({ draftPitch: async (a) => { calls.push(a); return { ok: true, founder_notes_offered: [], draft: { subject: 'S', text: 'Hi', openerQuote: 'q', products: ['lotion'] } }; } });
+  await runDrafting(args);
+  assert.equal('founderNotes' in calls[0], false);
+  assert.equal('founder_notes_offered' in saved.drafts[0], false);
+});
+
+test('a founder note failing the claim gate is reported in skippedFacts', async () => {
+  const { args } = harness({
+    pressFacts: { brand: { facts: [] }, products: { lotion: { name: 'Body Lotion' } } },
+    loadFounderNotes: () => [fnote('fn-bad', 'Our lotion cures eczema.')],
+  });
+  const r = await runDrafting(args);
+  assert.deepEqual(r.skippedFacts.map((s) => s.where), ['founder_notes.fn-bad']);
+});
+
+test('a throwing founder-note loader never stops drafting', async () => {
+  const { args } = harness({ loadFounderNotes: () => { throw new Error('corrupt'); } });
+  const r = await runDrafting(args);
+  assert.ok(r.drafted.length > 0);
+});

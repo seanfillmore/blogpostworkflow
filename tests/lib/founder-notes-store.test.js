@@ -87,3 +87,14 @@ test('founderNotesFor returns a block and ids for a normal case', () => {
   assert.equal(r.block === '', r.ids.length === 0);
   rmSync(dir, { recursive: true });
 });
+
+import { loadNotesOrEmpty } from '../../lib/founder-notes-store.js';
+
+test('loadNotesOrEmpty reads a corrupt file as no notes instead of throwing', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 'notes.jsonl'), '{not json\n');
+  assert.deepEqual(loadNotesOrEmpty({ dir }), []);
+  writeFileSync(join(dir, 'notes.jsonl'), '{"id":"a"}\n');
+  assert.deepEqual(loadNotesOrEmpty({ dir }).map((n) => n.id), ['a']);
+  rmSync(dir, { recursive: true });
+});

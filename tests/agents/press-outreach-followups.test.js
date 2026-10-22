@@ -504,3 +504,26 @@ test('--redraft-followups: a failed redraft keeps its old draft, so its opening 
   assert.deepEqual(r.failed.map((x) => x.contactId).sort(), ['kim', 'sam']);
   assert.match(r.failed.find((x) => x.contactId === 'kim').reason, /opener-collision/);
 });
+
+test('a follow-up offered a founder note records it on the draft', async () => {
+  const note = { id: 'fn-1', answer: 'I first mixed this lotion in a borrowed kitchen.', question: 'q?', clusters: ['lotion'], redaction: 'ok', gate: { commercial: 'ok' }, uses: [], answered_at: '2026-10-01T00:00:00Z', source: { type: 'general' } };
+  const seen = [];
+  const writeFollowUp = async (a) => { seen.push(a); return { ok: true, text: 'Hi Sam,\n\nBody.\n\nSean', body: 'Body.', articleQuote: null, founder_notes_offered: a.founderNotes?.some((n) => n.fact === a.fact) ? ['fn-1'] : undefined }; };
+  const { args, saved } = draftHarness({ loadFounderNotes: () => [note], writeFollowUp });
+  const r = await runDrafting(args);
+  assert.equal(r.followUps.length, 1, JSON.stringify(r.followUpFailed));
+  assert.equal(seen[0].fact, note.answer, 'founder tier comes before brand facts');
+  assert.deepEqual(seen[0].founderNotes, [{ id: 'fn-1', fact: note.answer }]);
+  const d = saved.drafts.find((x) => x.kind === 'followup');
+  assert.deepEqual(d.founder_notes_offered, ['fn-1']);
+  assert.equal(d.new_fact, note.answer);
+});
+
+test('a follow-up with no founder notes passes none and records none', async () => {
+  const seen = [];
+  const writeFollowUp = async (a) => { seen.push(a); return { ok: true, text: 'Hi Sam,\n\nBody.\n\nSean', body: 'Body.', articleQuote: null }; };
+  const { args, saved } = draftHarness({ writeFollowUp });
+  await runDrafting(args);
+  assert.equal('founderNotes' in seen[0], false);
+  assert.equal('founder_notes_offered' in saved.drafts.find((x) => x.kind === 'followup'), false);
+});
