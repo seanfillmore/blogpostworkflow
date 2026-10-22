@@ -16,6 +16,9 @@ const CASES = [
   ['Browse our SLS-free collection', 'coconut-oil-toothpaste', 'Browse our SLS-free toothpaste'],
   ['Real Skin Care collection', 'coconut-lotion', 'Real Skin Care lotion'],
   ['collection', 'coconut-oil-toothpaste', 'toothpaste'],
+  ['full natural deodorant collection', 'coconut-oil-deodorant', 'natural deodorant'],
+  ["Real Skin Care's full natural toothpaste collection", 'coconut-oil-toothpaste', "Real Skin Care's natural toothpaste"],
+  ['Lip Balm Collection', 'coconut-oil-lip-balm', 'Lip Balm'],
   ['Browse our full collection of natural deodorants for kids and the whole family.', 'coconut-oil-deodorant',
     'Browse our natural deodorants for kids and the whole family.'],
 ];
