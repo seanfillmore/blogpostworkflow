@@ -33,6 +33,8 @@ Both are defined in `scripts/setup-cron.sh`. Output goes to `data/reports/schedu
 
 - A message counts as a reply if it references our question email (Message-ID or In-Reply-To) or its body starts with the email's opening line, `Reply under each number.`
 - Numbered answers (`1.`, `2.` and so on) are split by number.
+- Note ids are `fn-<week>-<8 hex of sha1(Message-ID)>-<answer position>`, so a re-file after a partial write is caught by the id dedupe.
+- A trailing mobile signature ("Sent from my iPhone", "Get Outlook for iOS") is stripped from the last answer.
 - Inline replies, where Sean types under the quoted questions, are parsed by marker.
 - A reply that parses to nothing is never marked read. It is reported in the digest until the question set expires (14 days).
 - Private names are redacted by a fast model. If redaction fails or removes too little, the note is stored but withheld everywhere.

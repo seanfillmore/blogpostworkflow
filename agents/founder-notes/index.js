@@ -22,6 +22,7 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { hushmailCredentials, sendMail, fetchFromAllFolders, stripQuoted } from '../../lib/hushmail.js';
@@ -102,6 +103,21 @@ function parseQuestionArray(text, count) {
   });
 }
 
+/** True when a phrased question contains the reviewer's first name as a whole word. */
+export function mentionsReviewer(text, source) {
+  if (source?.type !== 'review') return false;
+  const first = String(source.reviewer ?? '').trim().split(/\s+/)[0];
+  if (!first) return false;
+  const esc = first.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'iu').test(String(text ?? ''));
+}
+
+const SIGNATURE_RE = /(?:\s*(?:Sent from my (?:iPhone|iPad|Android(?: phone)?)|Get Outlook for (?:iOS|Android))\.?\s*)+$/i;
+/** Drop a trailing mobile-client signature from an answer. */
+export function stripMobileSignature(text) {
+  return String(text ?? '').replace(SIGNATURE_RE, '').trimEnd();
+}
+
 async function gatherNews(deps, week, askedUrls) {
   for (let attempt = 0; attempt < NEWS_TRIES; attempt++) {
     const q = newsQueryFor(deps.config.newsQueries, week, attempt);
@@ -154,7 +170,9 @@ export async function runSend({ now = new Date(), apply = false, deps }) {
     log(`  question phrasing failed (${err.message}); using template questions`);
     texts = sources.map(templateQuestion);
   }
-  const questions = sources.map((source, i) => ({ index: i + 1, text: texts[i], source }));
+  const questions = sources.map((source, i) => ({
+    index: i + 1, text: mentionsReviewer(texts[i], source) ? templateQuestion(source) : texts[i], source,
+  }));
   const email = renderEmail({ week, questions, now });
 
   if (!apply) return { status: 'dry-run', week, questions, counts, email };
@@ -208,24 +226,12 @@ function gateFor(answer) {
   };
 }
 
-function nextNoteNumber(notes, week) {
-  const prefix = `fn-${week}-`;
-  let max = 0;
-  for (const n of notes) {
-    if (!String(n.id).startsWith(prefix)) continue;
-    const k = Number(String(n.id).slice(prefix.length));
-    if (Number.isFinite(k) && k > max) max = k;
-  }
-  return max + 1;
-}
-
 /**
  * @returns {Promise<{filed:number, weeks:string[], notes:Array}>}
  */
 export async function runIngest({ now = new Date(), apply = false, deps }) {
   const log = deps.log || console.log;
   const sets = loadQuestionSets({ dir: deps.dir });
-  const existing = loadNotes({ dir: deps.dir });
   const filedNotes = [];
   const weeks = [];
   const unparsed = [];
@@ -250,12 +256,16 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
       .sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0));
     if (!messages.length) continue;
 
-    let n = nextNoteNumber([...existing, ...filedNotes], set.week);
     const replies = [...(set.replies || [])];
     let filedForSet = 0;
     for (const msg of messages) {
       const body = msg.fullText ?? msg.text ?? '';
       const answers = hasInlineMarkers(body, qCount) ? parseInlineReply(body, qCount) : parseAnswers(stripQuoted(body), qCount);
+      if (answers.length) {
+        const last = answers[answers.length - 1];
+        const cleaned = stripMobileSignature(last.answer);
+        if (cleaned) last.answer = cleaned; else answers.pop();
+      }
       if (!answers.length) {
         // Never mark it read: text is never discarded, and a parser fix can still file it.
         log(`  ${set.week}: reply received, nothing parsed (${msg.subject || msg.messageId})`);
@@ -263,14 +273,17 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
         continue;
       }
       const notes = [];
+      const msgHash = createHash('sha1').update(String(msg.messageId)).digest('hex').slice(0, 8);
+      let pos = 0;
       for (const a of answers) {
+        pos++;
         const q = a.index == null ? null : set.questions.find((x) => x.index === a.index) || set.questions[a.index - 1];
         const question = q ? q.text : '';
         const source = q ? { type: q.source?.type ?? null, ref: q.source?.ref ?? null } : { type: 'general', ref: null };
         const { answer, redaction } = await redact(deps, a.answer);
         const cluster = clusterForText(`${question} ${answer}`);
         notes.push({
-          id: `fn-${set.week}-${n++}`,
+          id: `fn-${set.week}-${msgHash}-${pos}`,
           week: set.week,
           asked_at: set.sent_at,
           answered_at: msg.date || now.toISOString(),
@@ -346,6 +359,18 @@ function buildDeps(env, config) {
   };
 }
 
+export function withheldLines(notes) {
+  const ns = notes || [];
+  const redact = ns.filter((n) => n.redaction === 'failed').length;
+  const ed = ns.filter((n) => n.gate?.editorial === 'blocked').length;
+  const co = ns.filter((n) => n.gate?.commercial === 'blocked').length;
+  const out = [];
+  if (redact) out.push(`${redact} withheld (name redaction failed)`);
+  if (ed) out.push(`${ed} blocked on editorial by the claim gate`);
+  if (co) out.push(`${co} blocked on commercial by the claim gate`);
+  return out;
+}
+
 function usesLastWeek(notes, now) {
   const cutoff = now.getTime() - 7 * DAY;
   const out = [];
@@ -415,6 +440,7 @@ async function main() {
     status: 'info', category: 'founder-notes',
     body: [
       ...r.unparsed.map((u) => `reply received, nothing parsed (${u.subject})`),
+      ...withheldLines(r.notes),
       `Notes on file: ${notes.length}`,
       `Uses in the last 7 days: ${uses.length ? uses.join('; ') : 'none'}`,
     ].join('\n'),

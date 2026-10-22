@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { runSend, runIngest, newsQueryFor } from '../../agents/founder-notes/index.js';
+import { createHash } from 'node:crypto';
+import { runSend, runIngest, newsQueryFor, withheldLines, stripMobileSignature } from '../../agents/founder-notes/index.js';
 import { loadNotes, loadQuestionSets, saveQuestionSet } from '../../lib/founder-notes-store.js';
 
 // All fixture text is invented. No network calls anywhere in this file.
@@ -136,6 +137,7 @@ function ingestDeps(dir, messages, over = {}) {
   };
 }
 
+const H = (id) => createHash('sha1').update(id).digest('hex').slice(0, 8);
 const LATER = new Date('2026-10-27T16:12:00Z');
 
 test('ingest ignores the question email itself', async () => {
@@ -168,8 +170,8 @@ test('ingest files one note per numbered answer, redacted', async () => {
     assert.deepEqual(r.weeks, ['2026-W44']);
     const notes = loadNotes({ dir });
     assert.equal(notes.length, 2);
-    assert.equal(notes[0].id, 'fn-2026-W44-1');
-    assert.equal(notes[1].id, 'fn-2026-W44-2');
+    assert.equal(notes[0].id, `fn-2026-W44-${H('<reply-1@example.com>')}-1`);
+    assert.equal(notes[1].id, `fn-2026-W44-${H('<reply-1@example.com>')}-2`);
     assert.equal(notes[0].answer, 'a story about a customer');
     assert.equal(notes[0].answer_raw, 'a story about Jenna');
     assert.equal(notes[0].redaction, 'ok');
@@ -218,10 +220,10 @@ test('a second reply continues numbering, general text is filed, dry run writes 
     await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [REPLY, second]) });
     const notes = loadNotes({ dir });
     assert.equal(notes.length, 4);
-    assert.equal(notes[2].id, 'fn-2026-W44-3');
+    assert.equal(notes[2].id, `fn-2026-W44-${H('<reply-2@example.com>')}-1`);
     assert.deepEqual(notes[2].source, { type: 'general', ref: null });
     assert.equal(notes[2].question, '');
-    assert.equal(notes[3].id, 'fn-2026-W44-4');
+    assert.equal(notes[3].id, `fn-2026-W44-${H('<reply-2@example.com>')}-2`);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -321,4 +323,67 @@ test('a failed question-set save after a successful send is reported, not thrown
     assert.equal(sent.length, 1);
     assert.equal(r.saveError, 'disk full');
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('reviewer first name in a phrased question falls back to the template', async () => {
+  const dir = tmpDir();
+  try {
+    const { sent, deps } = sendDeps(dir, {
+      complete: async () => JSON.stringify(["What did you think of Pat's comment?", 'Q b?', 'Q c?', 'Q d?']),
+    });
+    const r = await runSend({ now: NOW, apply: true, deps });
+    assert.doesNotMatch(r.questions[0].text, /Pat/);
+    assert.match(r.questions[0].text, /A customer wrote the review/);
+    assert.equal(r.questions[1].text, 'Q b?');
+    assert.doesNotMatch(sent[0].text.split('\n')[2], /Pat/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the phrasing prompt never carries the reviewer name', async () => {
+  const dir = tmpDir();
+  try {
+    let prompt = '';
+    const { deps } = sendDeps(dir, { complete: async (a) => { prompt = a.prompt; return JSON.stringify(['a?', 'b?', 'c?', 'd?']); } });
+    await runSend({ now: NOW, apply: false, deps });
+    assert.doesNotMatch(prompt, /Pat Example/);
+    assert.match(prompt, /A customer \(5 stars\) wrote/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('re-filing after a partial write keeps ids stable and dedupes', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [REPLY]) });
+    // simulate saveQuestionSet failing after appendNotes: the reply is unmarked
+    const set = loadQuestionSets({ dir })[0];
+    saveQuestionSet({ ...set, replies: [] }, { dir });
+    await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [REPLY]) });
+    assert.equal(loadNotes({ dir }).length, 2);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('mobile signatures are stripped from the last answer', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    const msg = { ...REPLY, text: '1. a story\n2. my lotion take\n\nSent from my iPhone' };
+    await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [msg]) });
+    const notes = loadNotes({ dir });
+    assert.equal(notes[1].answer_raw, 'my lotion take');
+    assert.equal(stripMobileSignature('hi\nGet Outlook for Android'), 'hi');
+    assert.equal(stripMobileSignature('Sent from my iPad is how I read it'), 'Sent from my iPad is how I read it');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('withheldLines counts failed redaction and gate blocks', () => {
+  const ns = [
+    { redaction: 'failed', gate: { editorial: 'ok', commercial: 'blocked' } },
+    { redaction: 'ok', gate: { editorial: 'blocked', commercial: 'blocked' } },
+    { redaction: 'ok', gate: { editorial: 'ok', commercial: 'ok' } },
+  ];
+  assert.deepEqual(withheldLines(ns), [
+    '1 withheld (name redaction failed)', '1 blocked on editorial by the claim gate', '2 blocked on commercial by the claim gate',
+  ]);
+  assert.deepEqual(withheldLines([]), []);
 });
