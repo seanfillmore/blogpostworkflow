@@ -36,7 +36,7 @@ test('recordUses adds a use and is idempotent for the same surface+ref', () => {
 test('question sets round trip, one file per week', () => {
   const dir = tmp();
   saveQuestionSet({ week: '2026-W43', sent_at: 'a', message_id: 'm', questions: [{ n: 1, text: 'q', source: { type: 'review', ref: 'r1' } }], replies: [] }, { dir });
-  saveQuestionSet({ week: '2026-W44', sent_at: 'b', message_id: 'm2', questions: [{ n: 1, text: 'q', source: { type: 'url', ref: 'https://example.com/p' } }, { n: 2, text: 'q', source: { type: 'slug', ref: 's1' } }], replies: [] }, { dir });
+  saveQuestionSet({ week: '2026-W44', sent_at: 'b', message_id: 'm2', questions: [{ n: 1, text: 'q', source: { type: 'world', ref: 'https://example.com/p' } }, { n: 2, text: 'q', source: { type: 'upcoming', ref: 's1' } }], replies: [] }, { dir });
   const sets = loadQuestionSets({ dir });
   assert.equal(sets.length, 2);
   const r = askedRefs(sets);
@@ -61,4 +61,10 @@ test('stampFounderNoteUses returns [] when the dir is unreadable', () => {
   const dir = tmp();
   writeFileSync(join(dir, 'notes.jsonl'), '{not json\n');
   assert.deepEqual(stampFounderNoteUses({ text: 'x', offered: ['a'], surface: 's', ref: 'r', at: 't' }, { dir }), []);
+});
+
+test('appendNotes dedupes within a single batch', () => {
+  const dir = tmp();
+  assert.equal(appendNotes([note('a', 'x'), note('a', 'x'), note('b', 'y')], { dir }), 2);
+  assert.deepEqual(loadNotes({ dir }).map((n) => n.id), ['a', 'b']);
 });
