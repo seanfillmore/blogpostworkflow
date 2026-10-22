@@ -370,6 +370,12 @@ data/reports/authored-titles/
 # backed up offsite by scripts/backup-snapshots-offsite.sh (set `press`).
 # Pinned by tests/repo/press-contacts-private.test.js.
 data/press/
+
+# Founder notes — Sean's private answers to weekly questions. This repository is
+# PUBLIC, so they must never be committed. Server-only, backed up offsite by
+# scripts/backup-snapshots-offsite.sh (set `founder-notes`).
+# Pinned by tests/repo/founder-notes-private.test.js.
+data/founder-notes/
 data/reports/amazon-ads-audit/
 docs/*.pdf
 

@@ -15,8 +15,8 @@
 #   are the only surviving record and cannot be re-fetched. Everything else is one
 #   25 GB droplet whose disk filled once and silently killed cron for four days.
 #
-# FIVE SETS, ONE UPLOAD PATH (the two newest, `creator-outreach` and
-# `ugc-reels`, are single gitignored state files documented at their blocks below)
+# SIX SETS, ONE UPLOAD PATH (the three newest, `creator-outreach`, `ugc-reels`
+# and `founder-notes`, are gitignored state documented at their blocks below)
 #   `snapshots`  — the tree above.
 #   `post-state` — data/posts/*/state.json, the server-owned half of the post
 #                  metadata split out of meta.json. It is GITIGNORED, so unlike
@@ -65,6 +65,7 @@ readonly STATE_PREFIX="post-state"   # data/posts/*/state.json — tiny; same re
 readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR contact book
 readonly OUTREACH_PREFIX="creator-outreach"  # data/creator-outreach/state.json
 readonly REELS_PREFIX="ugc-reels"        # data/ugc-reels/ledger.json
+readonly FOUNDER_PREFIX="founder-notes"  # data/founder-notes/ (notes + question sets)
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -218,4 +219,18 @@ if [[ -f "$ROOT/$REELS_LEDGER" ]]; then
   push_archive "$REELS_PREFIX" "$reels_archive" 1
 else
   echo "[$REELS_PREFIX] no $REELS_LEDGER — nothing to back up."
+fi
+
+# ── set 6: founder notes ─────────────────────────────────────────────────────
+# Sean's private answers to the weekly questions (agents/founder-notes) and the
+# question sets that track what has been asked. Gitignored (public repository),
+# so this is their only copy. Skipped with a notice when the directory is
+# absent; that never aborts the other sets.
+FOUNDER_DIR="data/founder-notes"
+if [[ -d "$ROOT/$FOUNDER_DIR" ]]; then
+  founder_archive="$tmp/${FOUNDER_PREFIX}-${stamp}.tar.gz"
+  tar czf "$founder_archive" -C "$ROOT" "$FOUNDER_DIR"
+  push_archive "$FOUNDER_PREFIX" "$founder_archive" 1
+else
+  echo "[$FOUNDER_PREFIX] no $FOUNDER_DIR — nothing to back up."
 fi
