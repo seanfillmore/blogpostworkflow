@@ -35,9 +35,10 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getContentPath, getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
+import { listAllSlugs, getContentPath, getPostMeta, getMetaPath, replacePostMeta, getEditorReportPath } from '../../lib/posts.js';
+import { isPassing } from '../../lib/editor-remediation.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
-import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
 import { partitionByEditGate, renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import { hasInjectedSchema } from '../../lib/injected-schema.js';
 import { excludeWrittenOff } from '../../lib/refresh-writeoff.js';
@@ -169,14 +170,28 @@ function isLegacy(slug) {
   return isLegacyHtml(readFileSync(p, 'utf8'));
 }
 
+/**
+ * Should this agent pick the post up at all?
+ *
+ * Two signals: no injected schema (built before the pipeline existed), or an
+ * editor-tagged needs_rebuild. The second one is NOT ours for a `rising` post
+ * that already carries schema: its treatment is the light refresh, which never
+ * touches body copy, so it cannot fix a content blocker. It only re-pushed the
+ * same body, and until 2026-10-21 it also stamped a 28-day `rewrite` that locked
+ * blocked-post-resolver (the agent that DOES fix blockers) out of 29 such posts.
+ * Those posts belong to the resolver, which reads the editor report directly.
+ */
+export function isLegacyCandidate({ legacy, meta }) {
+  if (legacy) return true;
+  if (!meta?.needs_rebuild) return false;
+  return meta.legacy_bucket !== 'rising';
+}
+
 function findLegacyPosts() {
-  // Two signals: no injected schema at all (old posts built before the pipeline
-  // existed), or editor-tagged needs_rebuild (posts that failed the editor this
-  // week).
   const candidates = listAllSlugs()
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
     .filter((p) => p.meta && p.meta.shopify_article_id)
-    .filter((p) => isLegacy(p.slug) || p.meta.needs_rebuild);
+    .filter((p) => isLegacyCandidate({ legacy: isLegacy(p.slug), meta: p.meta }));
 
   // Drop posts whose last refresh the publisher's mirror gate REFUSED and whose
   // mirror has not changed since. Both signals above are structurally unable to
@@ -247,14 +262,21 @@ async function lightRefresh(slug) {
     return false;
   }
 
-  // Clear the needs_rebuild tag on success
-  const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
-  const updated = { ...rest, refreshed_at: new Date().toISOString() };
-  replacePostMeta(slug, updated);
+  // Clear needs_rebuild ONLY if the editor's report passes. The editor ran with
+  // --in-pipeline, so it did not tag anything itself; clearing unconditionally
+  // hid real blockers until the weekly Sunday re-gate found them again.
+  let report = '';
+  try { report = readFileSync(getEditorReportPath(slug), 'utf8'); } catch { /* no report → not passing */ }
+  const passing = report && isPassing(report);
+  const current = getPostMeta(slug) || {};
+  const { needs_rebuild: _drop, ...rest } = current;
+  replacePostMeta(slug, { ...(passing ? rest : current), refreshed_at: new Date().toISOString() });
+  if (!passing) console.log('  Editor still reports blockers — needs_rebuild kept for blocked-post-resolver');
 
-  // The light refresh rewrote the intro and re-pushed the body: start the
-  // page's measurement window (lib/post-edit-gate.js).
-  recordMaterialEdit(slug, 'rewrite', 'legacy-rebuilder');
+  // No recordMaterialEdit here, deliberately. answer-first-rewriter stamps its
+  // own `rewrite` when it actually rewrites the intro; the buy box, schema and
+  // year fixes are enhance/repair edits that start no measurement window.
+  // Stamping `rewrite` unconditionally locked 29 blocked pages for 28 days.
   console.log(`  ✓ Light refresh complete`);
   return true;
 }
