@@ -267,6 +267,13 @@ export const PLAN = [
     before: 'for 15-20 minutes to pull toxins and bacteria.',
     after: 'for 15-20 minutes to loosen and carry away bacteria.',
   },
+  // ── 2026-10-22: link text must match where it sends people ──
+  {
+    id: 'sls-link-destination',
+    why: '"toothpastes with SLS" (other brands) linked to OUR SLS-free toothpaste; now goes to the SLS explainer',
+    before: '<a href="https://www.realskincare.com/products/coconut-oil-toothpaste" title="Affordable Sls-free Toothpaste Buy Online">toothpastes with SLS</a>',
+    after: '<a href="https://www.realskincare.com/blogs/news/sls-toothpaste-what-it-is-why-to-go-sls-free" title="What SLS is and why to go SLS-free">toothpastes with SLS</a>',
+  },
 ];
 
 export function occurrences(hay, needle) {

@@ -70,3 +70,31 @@ test('rewriteRedirectLinks retexts a link it repoints from a collection to a pro
   assert.match(r.html, /lotion collection<\/a>/, 'an anchor it did not repoint is not its business');
   assert.equal(r.retexted.length, 1);
 });
+
+test('shortProductName keeps the product name and drops the descriptor', async () => {
+  const { shortProductName } = await import('../../lib/anchor-destination.js');
+  assert.equal(shortProductName('Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free'), 'Coconut Oil Toothpaste');
+  assert.equal(shortProductName('Non-Toxic Body Lotion Made With Only 6 Clean Ingredients'), 'Non-Toxic Body Lotion');
+  assert.equal(shortProductName('Best Coconut Oil Deodorant — All Natural Formula | 2oz'), 'Best Coconut Oil Deodorant');
+  assert.equal(shortProductName('Coconut Moisturizer | 4oz'), 'Coconut Moisturizer');
+  assert.equal(shortProductName('Coconut Lip Balm'), 'Coconut Lip Balm');
+});
+
+test('buyButtonText fixes title-derived labels only', async () => {
+  const { buyButtonText } = await import('../../lib/anchor-destination.js');
+  const t = 'Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free';
+  assert.equal(buyButtonText('Shop Coconut Oil Toothpaste — Natural Oral Care, Fluoride Fr →', t), 'Shop Coconut Oil Toothpaste →');
+  assert.equal(buyButtonText('Shop Non-Toxic Body Lotion Made With Only 6 Clean Ingredient →', 'Non-Toxic Body Lotion Made With Only 6 Clean Ingredients'), 'Shop Non-Toxic Body Lotion →');
+  assert.equal(buyButtonText('Shop Now →', t), null);
+  assert.equal(buyButtonText('Add to Cart', t), null);
+  assert.equal(buyButtonText('Shop Coconut Oil Toothpaste →', t), null);
+});
+
+test('alignBuyButtons rewrites a truncated buy-box label from the live title', async () => {
+  const { alignBuyButtons } = await import('../../lib/anchor-destination.js');
+  const html = '<a href="https://www.realskincare.com/products/coconut-oil-toothpaste" style="background:#1e1b4b">Shop Coconut Oil Toothpaste — Natural Oral Care, Fluoride Fr →</a> <a href="/products/coconut-oil-toothpaste">Shop Now</a>';
+  const { html: out, changes } = alignBuyButtons(html, new Map([['coconut-oil-toothpaste', 'Coconut Oil Toothpaste — Natural Oral Care, Fluoride Free']]));
+  assert.equal(changes.length, 1);
+  assert.match(out, /background:#1e1b4b">Shop Coconut Oil Toothpaste →<\/a>/);
+  assert.match(out, />Shop Now<\/a>/);
+});

@@ -21,6 +21,7 @@ import { sanitizeProductCategoryTerm } from '../../lib/product-category-terms.js
 // blocks the whole `toxicity` vocabulary, and "non-toxic" / "free from harmful
 // chemicals" is this brand's central content position and appears verbatim in
 // real customer reviews — CLAUDE.md names reusing it here as the over-correction.
+import { shortProductName } from '../../lib/anchor-destination.js';
 import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
 import { mayEditLivePost } from '../../lib/post-edit-gate.js';
 import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
@@ -330,7 +331,9 @@ export function buildCtaCopy({ product, keyword }) {
   // The button repeats the title, so it fails exactly when the headline's
   // keyword-free form does. 'Add to Cart' is buildFeaturedProductHtml's own
   // default, so this is the no-copy path rather than a new string.
-  const shopLabel = `Shop ${name}`.slice(0, 60);
+  // The product's short name, never a blind character cut: .slice(0, 60) left
+  // "…Fluoride Fr →" on 25 live buy boxes (2026-10-22).
+  const shopLabel = `Shop ${shortProductName(name)}`;
   const buttonText = checkSeoCopyFields({ 'cta button': shopLabel }).ok ? shopLabel : 'Add to Cart';
 
   return { headline, buttonText };

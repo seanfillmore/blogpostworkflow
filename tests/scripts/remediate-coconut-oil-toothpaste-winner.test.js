@@ -15,10 +15,11 @@ test('no AFTER uses the remineralize verb/adjective or "fights cavities"', () =>
   }
 });
 
-test('the brain-imaging link is gone and every new citation points at NCBI', () => {
+test('the brain-imaging link is gone and every new external citation points at NCBI', () => {
   for (const e of PLAN) {
     assert.doesNotMatch(e.after, /PMC5024049/, e.id);
     for (const [, href] of e.after.matchAll(/href="([^"]+)"/g)) {
+      if (href.startsWith('https://www.realskincare.com/')) continue; // internal link, not a citation
       assert.match(href, /^https:\/\/(pmc|pubmed)\.ncbi\.nlm\.nih\.gov\//, `${e.id}: ${href}`);
     }
   }
