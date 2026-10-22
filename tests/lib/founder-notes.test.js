@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   selectFounderNotes,
+  pressEligibleNotes,
   founderNotesBlock,
   notesUsedIn,
   MAX_USES,
@@ -128,4 +129,24 @@ test('html entities do not inject words', () => {
 test('select throws on unknown surface', () => {
   assert.throws(() => selectFounderNotes([], { surface: 'press' }));
   assert.throws(() => selectFounderNotes([], {}));
+});
+
+test('pressEligibleNotes: a note on 2 open drafts is excluded; closed drafts do not count', () => {
+  const a = { id: 'a', uses: [] };
+  const b = { id: 'b', uses: [{ surface: 'press', ref: 'x' }] };
+  const c = { id: 'c', uses: [] };
+  const openDrafts = [
+    { status: 'pending', founder_notes_offered: ['a', 'b'] },
+    { status: 'approved', founder_notes_offered: ['a'] },
+    { status: 'sent', founder_notes_offered: ['c'] },
+    { status: 'rejected', founder_notes_offered: ['c'] },
+    { status: 'pending' },
+  ];
+  assert.deepEqual(pressEligibleNotes([a, b, c], { openDrafts }).map((n) => n.id), ['c']);
+  assert.deepEqual(pressEligibleNotes([a, b, c]).map((n) => n.id), ['a', 'b', 'c']);
+});
+
+test('pressEligibleNotes: a note offered earlier in the same run is excluded', () => {
+  const run = new Set(['a']);
+  assert.deepEqual(pressEligibleNotes([{ id: 'a' }, { id: 'b' }], { offeredThisRun: run }).map((n) => n.id), ['b']);
 });

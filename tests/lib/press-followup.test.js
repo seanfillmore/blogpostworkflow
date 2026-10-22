@@ -452,12 +452,14 @@ test('a founder note failing the claim gate is never offered', () => {
 
 test('draftFollowUp records founder_notes_offered only when the fact is a founder note', async () => {
   const body = { body: 'Cold weather roundups need a lotion readers trust, and my grandmother kept a jar of coconut oil by the sink for every scrape. Would a bottle help?', article_quote: null };
-  const { generate } = stub(body);
+  const { generate, prompts } = stub(body);
   const r = await draftFollowUp({ ...base({ article: null, fact: FOUNDER.fact, founderNotes: [FOUNDER] }), generate, usedOpenings: new Set() });
   assert.equal(r.ok, true, r.reason);
   assert.deepEqual(r.founder_notes_offered, ['fn-1']);
-  const { generate: g2 } = stub(GOOD);
+  assert.match(prompts[0], /This detail is your own experience: write it in first person/);
+  const { generate: g2, prompts: p2 } = stub(GOOD);
   const r2 = await draftFollowUp({ ...base({ founderNotes: [FOUNDER] }), generate: g2, usedOpenings: new Set() });
   assert.equal(r2.ok, true, r2.reason);
   assert.equal('founder_notes_offered' in r2, false);
+  assert.doesNotMatch(p2[0], /your own experience/);
 });

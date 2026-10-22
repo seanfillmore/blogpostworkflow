@@ -667,3 +667,21 @@ test('a throwing founder-note loader never stops drafting', async () => {
   const r = await runDrafting(args);
   assert.ok(r.drafted.length > 0);
 });
+
+test('a note is offered to one draft per run, and not past MAX_USES counting open drafts', async () => {
+  const calls = [];
+  const pressFacts = { brand: { facts: [] }, products: { lotion: { name: 'Body Lotion' } } };
+  const draftPitch = async (a) => { calls.push(a); return { ok: true, founder_notes_offered: (a.founderNotes || []).map((n) => n.id), draft: { subject: 'S', text: 'Hi', openerQuote: 'q', products: ['lotion'] } }; };
+  const one = harness({ pressFacts, draftPitch, loadFounderNotes: () => [fnote('fn-1', 'I first mixed this lotion in a borrowed kitchen.')] });
+  await runDrafting(one.args);
+  assert.ok(calls.length >= 2);
+  assert.deepEqual(calls.map((c) => (c.founderNotes || []).map((n) => n.id)), [['fn-1'], ...calls.slice(1).map(() => [])]);
+  assert.equal(one.saved.drafts.filter((d) => d.founder_notes_offered).length, 1);
+
+  calls.length = 0;
+  const open = [1, 2].map((i) => ({ id: `o${i}`, kind: 'pitch', status: 'pending', created_at: '2026-10-04T00:00:00Z', to: `x${i}@other.example.com`, founder_notes_offered: ['fn-1'] }));
+  const two = harness({ pressFacts, draftPitch, drafts: open, config: { ...CONFIG, queueTarget: 4 }, loadFounderNotes: () => [fnote('fn-1', 'I first mixed this lotion in a borrowed kitchen.')] });
+  await runDrafting(two.args);
+  assert.ok(calls.length >= 1);
+  assert.ok(calls.every((c) => !('founderNotes' in c)), 'two open drafts already hold it');
+});

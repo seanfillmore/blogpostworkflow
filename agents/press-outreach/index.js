@@ -83,7 +83,7 @@ import {
 import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
 import { buildFactSheet, draftPitch as draftPitchLib, pickProducts, prepareArticle } from '../../lib/press-pitch.js';
-import { selectFounderNotes } from '../../lib/founder-notes.js';
+import { selectFounderNotes, pressEligibleNotes } from '../../lib/founder-notes.js';
 import { loadNotesOrEmpty } from '../../lib/founder-notes-store.js';
 import { clusterForText } from '../../lib/cluster-revenue.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
@@ -1492,6 +1492,10 @@ export async function runDrafting({
     ? founderNotesForProducts(founderNotes, pressFacts, Object.keys(pressFacts?.products || {}), { limit: Infinity })
     : [];
   const { skippedFacts } = buildFactSheet(pressFacts, undefined, { founderNotes: candidateNotes });
+  // MAX_USES counts open drafts too, and one run offers a note to one draft.
+  const offeredThisRun = new Set();
+  const eligibleNotes = () => (founderNotes.length ? pressEligibleNotes(founderNotes, { openDrafts: drafts, offeredThisRun }) : []);
+  const markOffered = (d) => { for (const id of d?.founder_notes_offered || []) offeredThisRun.add(id); };
   const result = { skippedFacts, drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null, followUps: [], followUpFailed: [], followUpSkipped: [] };
   // Elapsed real time on top of `now`, so an injected `now` still moves.
   if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
@@ -1561,11 +1565,12 @@ export async function runDrafting({
       const thread = { subject: reSubject(pitch.subject), inReplyTo: pitch.message_id, references: refsOf(pitch.references, pitch.message_id) };
       let out;
       try {
-        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, run, now, writer: writeFollowUp, founderNotes });
+        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, run, now, writer: writeFollowUp, founderNotes: eligibleNotes() });
       } catch (err) { out = { ok: false, reason: `follow-up error: ${err.message}` }; }
       onProgress();
       if (out.ok) {
         try { saveDraft(out.draft); } catch (err) { out = { ok: false, reason: `draft save failed: ${err.message}` }; }
+        if (out.ok) markOffered(out.draft);
       }
       if (!out.ok) {
         const reason = out.reason === findOriginalMissing && sent.error ? `${out.reason}; the Sent folder could not be read (${sent.error})` : out.reason;
@@ -1724,9 +1729,10 @@ export async function runDrafting({
     let out;
     try {
       const pitchArgs = { prospect: p, articleText, pressFacts, generate, postalAddress, contact: up.contact };
-      if (founderNotes.length) {
+      const eligible = eligibleNotes();
+      if (eligible.length) {
         // The same single product draftPitch will pick, so the notes match it.
-        const notes = founderNotesForProducts(founderNotes, pressFacts, pickProducts(p, prepareArticle(articleText)).slice(0, 1));
+        const notes = founderNotesForProducts(eligible, pressFacts, pickProducts(p, prepareArticle(articleText)).slice(0, 1));
         if (notes.length) pitchArgs.founderNotes = notes;
       }
       out = await draftPitch(pitchArgs);
@@ -1751,6 +1757,7 @@ export async function runDrafting({
         ...(out.founder_notes_offered?.length ? { founder_notes_offered: out.founder_notes_offered } : {}),
       };
       saveDraft(draft);
+      markOffered(draft);
     } catch (err) {
       result.failed.push({ ...row, reason: fail(p, `draft save failed: ${err.message}`) });
       return false;

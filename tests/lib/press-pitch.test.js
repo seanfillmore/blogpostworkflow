@@ -412,7 +412,7 @@ const NOTE = { id: 'fn-1', answer: 'I started making lotion in my kitchen becaus
 
 test('buildFactSheet offers founder notes in their own first-person section', () => {
   const { text, skippedFacts, founderNoteIds } = buildFactSheet(FACTS, ['lotion'], { founderNotes: [NOTE] });
-  assert.match(text, /FOUNDER NOTES \(your own words; first person; never restate as a brand fact; numbers only exactly as written\):/);
+  assert.match(text, /FOUNDER NOTES \(your own words; first person; never restate as a brand fact; numbers only exactly as written; never add detail the note does not contain\):/);
   assert.match(text, /- I started making lotion in my kitchen because nothing on the shelf felt right\./);
   assert.ok(text.indexOf('FOUNDER NOTES') > text.indexOf('handmade in small batches'), 'after the brand facts');
   assert.deepEqual(skippedFacts, []);

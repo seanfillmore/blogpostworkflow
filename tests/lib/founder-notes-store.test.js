@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   loadNotes, appendNotes, recordUses, saveQuestionSet, loadQuestionSets,
-  askedRefs, stampFounderNoteUses,
+  askedRefs, stampFounderNoteUses, founderNotesFor, loadNotesOrEmpty,
 } from '../../lib/founder-notes-store.js';
 
 const tmp = () => mkdtempSync(join(tmpdir(), 'fn-store-'));
@@ -69,7 +69,6 @@ test('appendNotes dedupes within a single batch', () => {
   assert.deepEqual(loadNotes({ dir }).map((n) => n.id), ['a', 'b']);
 });
 
-import { founderNotesFor } from '../../lib/founder-notes-store.js';
 
 test('founderNotesFor never throws on a corrupt notes file', () => {
   const dir = tmp();
@@ -88,7 +87,6 @@ test('founderNotesFor returns a block and ids for a normal case', () => {
   rmSync(dir, { recursive: true });
 });
 
-import { loadNotesOrEmpty } from '../../lib/founder-notes-store.js';
 
 test('loadNotesOrEmpty reads a corrupt file as no notes instead of throwing', () => {
   const dir = tmp();
