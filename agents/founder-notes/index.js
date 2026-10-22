@@ -9,7 +9,9 @@
  *
  * Dry by default: a dry --send prints the email it would send and writes
  * nothing; a dry --ingest reports what it would file. --apply sends / writes.
- * --now <iso> overrides the clock.
+ * --now <iso> overrides the clock. A dry run still makes real READ-ONLY calls:
+ * Judge.me, Tavily, the IMAP inbox and one or more LLM calls. It sends and
+ * writes nothing.
  *
  * Mail goes through lib/hushmail.js only, from and to HUSHMAIL_USER. The store
  * is server-only and gitignored (this repo is public). Every notify() is
@@ -32,7 +34,7 @@ import { LLM_MODELS } from '../../config/llm-models.js';
 import {
   weekId, pickReviews, pickNews, pickUpcoming, buildSources, templateQuestion, renderEmail, MIN_QUESTIONS,
 } from '../../lib/founder-notes-questions.js';
-import { isReplyTo, parseAnswers } from '../../lib/founder-notes-replies.js';
+import { isReplyTo, parseAnswers, parseInlineReply, hasInlineMarkers } from '../../lib/founder-notes-replies.js';
 import { loadNotes, appendNotes, saveQuestionSet, loadQuestionSets, askedRefs } from '../../lib/founder-notes-store.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -43,6 +45,8 @@ export const REVIEW_DAYS = 7;
 export const QUESTION_EXPIRY_DAYS = 14;
 const NEWS_TRIES = 2;
 const REDACTION_MIN_RATIO = 0.6;
+/** The question email's opening line: a body starting with it is our own email, whatever its Message-ID. */
+export const EMAIL_OPENING = 'Reply under each number.';
 
 const DEFAULT_CONFIG = Object.freeze({ enabled: true, sendVia: 'resend', newsQueries: [] });
 
@@ -157,12 +161,21 @@ export async function runSend({ now = new Date(), apply = false, deps }) {
 
   const to = deps.creds.user;
   const res = await deps.sendMail({ to, subject: email.subject, text: email.text, agent: 'founder-notes' });
-  saveQuestionSet({
-    week, sent_at: now.toISOString(), message_id: res.messageId, subject: email.subject,
-    questions, replies: [],
-  }, { dir: deps.dir });
   if (res.sentCopy) log(`  ${res.sentCopy}`);
-  return { status: 'sent', week, questions, counts, email };
+  let saveError = null;
+  try {
+    (deps.saveQuestionSet || saveQuestionSet)({
+      week, sent_at: now.toISOString(), message_id: res.messageId, subject: email.subject,
+      questions, replies: [],
+    }, { dir: deps.dir });
+  } catch (err) {
+    // The email is already out. Without the set, replies cannot be matched by
+    // Message-ID (the [FN-week] subject tag still works) and next Monday's
+    // already-sent check will not see this week.
+    saveError = err.message;
+    console.error(`!!! founder-notes: EMAIL SENT (${res.messageId}) BUT THE QUESTION SET WAS NOT SAVED: ${err.message}`);
+  }
+  return { status: 'sent', week, questions, counts, email, ...(saveError ? { saveError } : {}) };
 }
 
 function redactionPrompt(text) {
@@ -215,6 +228,7 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
   const existing = loadNotes({ dir: deps.dir });
   const filedNotes = [];
   const weeks = [];
+  const unparsed = [];
 
   for (const set of sets) {
     if (set.expired) continue;
@@ -225,10 +239,14 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
       continue;
     }
     const seen = new Set(set.replies || []);
-    let messages = await deps.fetchReplies({ since: new Date(set.sent_at) });
-    messages = (messages || [])
-      .filter((m) => m?.messageId && m.messageId !== set.message_id && !seen.has(m.messageId))
+    const qCount = (set.questions || []).length;
+    const fetched = await deps.fetchReplies({ since: new Date(set.sent_at) });
+    const unique = new Map();
+    for (const m of fetched || []) if (m?.messageId && !unique.has(m.messageId)) unique.set(m.messageId, m);
+    const messages = [...unique.values()]
+      .filter((m) => m.messageId !== set.message_id && !seen.has(m.messageId))
       .filter((m) => isReplyTo(m, { messageId: set.message_id, week: set.week }))
+      .filter((m) => !stripQuoted(m.fullText ?? m.text ?? '').trim().startsWith(EMAIL_OPENING))
       .sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0));
     if (!messages.length) continue;
 
@@ -236,7 +254,14 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
     const replies = [...(set.replies || [])];
     let filedForSet = 0;
     for (const msg of messages) {
-      const answers = parseAnswers(stripQuoted(msg.fullText ?? msg.text ?? ''), (set.questions || []).length);
+      const body = msg.fullText ?? msg.text ?? '';
+      const answers = hasInlineMarkers(body, qCount) ? parseInlineReply(body, qCount) : parseAnswers(stripQuoted(body), qCount);
+      if (!answers.length) {
+        // Never mark it read: text is never discarded, and a parser fix can still file it.
+        log(`  ${set.week}: reply received, nothing parsed (${msg.subject || msg.messageId})`);
+        unparsed.push({ week: set.week, subject: msg.subject || msg.messageId });
+        continue;
+      }
       const notes = [];
       for (const a of answers) {
         const q = a.index == null ? null : set.questions.find((x) => x.index === a.index) || set.questions[a.index - 1];
@@ -270,7 +295,7 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
     }
     if (filedForSet && !weeks.includes(set.week)) weeks.push(set.week);
   }
-  return { filed: filedNotes.length, weeks, notes: filedNotes };
+  return { filed: filedNotes.length, weeks, notes: filedNotes, unparsed };
 }
 
 // ── main ────────────────────────────────────────────────────────────────────
@@ -363,7 +388,11 @@ async function main() {
     const uses = usesLastWeek(notes, now);
     await notify({
       subject, status: 'info', category: 'founder-notes',
-      body: [`Notes on file: ${notes.length}`, `Uses in the last 7 days: ${uses.length ? uses.join('; ') : 'none'}`].join('\n'),
+      body: [
+        ...(r.saveError ? [`EMAIL SENT BUT THE QUESTION SET WAS NOT SAVED: ${r.saveError}`] : []),
+        `Notes on file: ${notes.length}`,
+        `Uses in the last 7 days: ${uses.length ? uses.join('; ') : 'none'}`,
+      ].join('\n'),
     });
     return;
   }
@@ -375,13 +404,20 @@ async function main() {
   const r = await runIngest({ now, apply, deps });
   console.log(`${apply ? 'Filed' : '[dry run] would file'} ${r.filed} answer(s)${r.weeks.length ? ` for ${r.weeks.join(', ')}` : ''}`);
   for (const n of r.notes) console.log(`  ${n.id} [${n.source.type}] redaction=${n.redaction} gate=${n.gate.editorial}/${n.gate.commercial}`);
-  if (!apply || r.filed === 0) return;
+  for (const u of r.unparsed) console.log(`  reply received, nothing parsed (${u.subject})`);
+  if (!apply || (r.filed === 0 && r.unparsed.length === 0)) return;
   const notes = loadNotes({ dir: deps.dir });
   const uses = usesLastWeek(notes, now);
   await notify({
-    subject: `Founder notes: ${r.filed} answers filed for ${r.weeks.join(', ')}`,
+    subject: r.filed
+      ? `Founder notes: ${r.filed} answers filed for ${r.weeks.join(', ')}`
+      : `Founder notes: ${r.unparsed.length} reply(s) received, nothing parsed`,
     status: 'info', category: 'founder-notes',
-    body: [`Notes on file: ${notes.length}`, `Uses in the last 7 days: ${uses.length ? uses.join('; ') : 'none'}`].join('\n'),
+    body: [
+      ...r.unparsed.map((u) => `reply received, nothing parsed (${u.subject})`),
+      `Notes on file: ${notes.length}`,
+      `Uses in the last 7 days: ${uses.length ? uses.join('; ') : 'none'}`,
+    ].join('\n'),
   });
 }
 

@@ -56,3 +56,47 @@ test('parseAnswers drops blank answers and empty input', () => {
   assert.deepEqual(parseAnswers('1.\n2. real', 2), [{ index: 2, answer: 'real' }]);
   assert.deepEqual(parseAnswers('', 2), []);
 });
+
+import { parseInlineReply, hasInlineMarkers } from '../../lib/founder-notes-replies.js';
+
+const INLINE = [
+  'On Mon, Oct 26, 2026 at 8:35 AM Sean <founder@example.com>',
+  'wrote:',
+  '',
+  '> Reply under each number. Skip any you like.',
+  '>',
+  '> 1. What was your reaction to this review?',
+  '>',
+  '>    "Invented review text here." (Pat, 5 stars)',
+  '',
+  'Loved it, we hear that a lot.',
+  'Second line.',
+  '',
+  '> 2. Your take on the news?',
+  '>    Some headline',
+  '',
+  '> 3. Anything on the upcoming post?',
+  '',
+].join('\n');
+
+test('parseInlineReply assigns unquoted text under each quoted question', () => {
+  assert.deepEqual(parseInlineReply(INLINE, 3), [
+    { index: 1, answer: 'Loved it, we hear that a lot.\nSecond line.' },
+  ]);
+  assert.equal(hasInlineMarkers(INLINE, 3), true);
+  assert.equal(hasInlineMarkers('1. plain', 3), false);
+});
+
+test('parseInlineReply sends a top-post through parseAnswers and drops attribution', () => {
+  const text = ['Quick general note', '', 'On Mon, Oct 26, 2026, at 8:35 AM, Sean <founder@example.com> wrote:', '> 1. Q one', 'one', '> #2 Q two', 'two'].join('\n');
+  assert.deepEqual(parseInlineReply(text, 2), [
+    { index: null, answer: 'Quick general note' },
+    { index: 1, answer: 'one' },
+    { index: 2, answer: 'two' },
+  ]);
+});
+
+test('parseInlineReply ignores out-of-range quoted markers and blank answers', () => {
+  const text = ['> 1) Q', '', '> 9. not ours', 'still answer one'].join('\n');
+  assert.deepEqual(parseInlineReply(text, 2), [{ index: 1, answer: 'still answer one' }]);
+});

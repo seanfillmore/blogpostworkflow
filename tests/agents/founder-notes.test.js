@@ -237,3 +237,88 @@ test('sets older than the expiry window are marked expired and not read', async 
     assert.equal(loadQuestionSets({ dir })[0].expired, true);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
+
+const INLINE_BODY = [
+  'On Mon, Oct 26, 2026 at 8:35 AM Sean <founder@example.com>',
+  'wrote:',
+  '',
+  '> Reply under each number. Skip any you like.',
+  '>',
+  '> 1. What is the story?',
+  '>',
+  '>    "Invented review text." (Pat, 5 stars)',
+  '',
+  'A story about Jenna and the lotion.',
+  '',
+  '> 2. Your take on the lotion news?',
+  '>    A headline',
+  '>    https://example.com/n',
+  '',
+  'Mostly hype.',
+  '',
+  'Sent from my iPhone',
+].join('\n');
+
+test('an inline reply (answers under quoted questions, no numbers) is filed', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    const msg = { ...REPLY, messageId: '<inline-1@example.com>', fullText: INLINE_BODY, text: 'Sent from my iPhone' };
+    const r = await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [msg]) });
+    assert.equal(r.filed, 2);
+    const notes = loadNotes({ dir });
+    assert.equal(notes[0].question, 'What is the story?');
+    assert.equal(notes[0].answer, 'A story about a customer and the lotion.');
+    assert.equal(notes[1].question, 'Your take on the lotion news?');
+    assert.match(notes[1].answer, /^Mostly hype\./);
+    assert.deepEqual(loadQuestionSets({ dir })[0].replies, ['<inline-1@example.com>']);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('our own question email is rejected by its opening line even with a rewritten Message-ID', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    const own = {
+      messageId: '<rewritten-by-relay@example.com>', subject: 'Founder notes, week of Oct 26 [FN-2026-W44]',
+      fullText: 'Reply under each number. Skip any you like.\n\n1. What is the story?\n\n2. Your take?',
+      date: LATER.toISOString(), references: [],
+    };
+    const r = await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [own]) });
+    assert.equal(r.filed, 0);
+    assert.equal(r.unparsed.length, 0);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a matching reply that parses to nothing is reported and not marked read', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    const empty = { ...REPLY, messageId: '<empty-1@example.com>', text: '', fullText: '> quoted only' };
+    const r = await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [empty]) });
+    assert.equal(r.filed, 0);
+    assert.deepEqual(r.unparsed, [{ week: '2026-W44', subject: REPLY.subject }]);
+    assert.deepEqual(loadQuestionSets({ dir })[0].replies, []);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('the same message seen in two folders is filed once', async () => {
+  const dir = tmpDir();
+  try {
+    seedSet(dir);
+    const r = await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [REPLY, { ...REPLY, folder: 'Other' }]) });
+    assert.equal(r.filed, 2);
+    assert.equal(loadNotes({ dir }).length, 2);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('a failed question-set save after a successful send is reported, not thrown', async () => {
+  const dir = tmpDir();
+  try {
+    const { sent, deps } = sendDeps(dir, { saveQuestionSet: () => { throw new Error('disk full'); } });
+    const r = await runSend({ now: NOW, apply: true, deps });
+    assert.equal(r.status, 'sent');
+    assert.equal(sent.length, 1);
+    assert.equal(r.saveError, 'disk full');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
