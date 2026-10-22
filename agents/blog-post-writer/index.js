@@ -24,7 +24,10 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
-import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta, writePostMeta } from '../../lib/posts.js';
+import { loadNotes } from '../../lib/founder-notes-store.js';
+import { selectFounderNotes, founderNotesBlock } from '../../lib/founder-notes.js';
+import { clusterForText } from '../../lib/cluster-revenue.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
@@ -228,7 +231,19 @@ const POST_TYPE_LABELS = {
   supply: 'SUPPLY / MAKER-SOURCING',
 };
 
-function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
+// Founder notes for this post: never throws. A load failure is an empty block.
+function loadFounderNotesFor(keyword, slug) {
+  try {
+    const clusters = [clusterForText(keyword || '')].filter(Boolean);
+    const selected = selectFounderNotes(loadNotes(), { clusters, ref: slug, surface: 'editorial' });
+    return { block: founderNotesBlock(selected, { surface: 'editorial' }) || '', ids: selected.map((n) => n.id) };
+  } catch (err) {
+    console.warn(`  Warning: founder notes unavailable (${err.message}) — continuing without them.`);
+    return { block: '', ids: [] };
+  }
+}
+
+function buildSystemPrompt(productIngredients, postType, contentDepth, format, founderBlock = '') {
   if (!POST_TYPE_LABELS[postType]) {
     throw new Error(`buildSystemPrompt: unhandled post type "${postType}" — add it to POST_TYPE_LABELS and give it explicit CTA rules; do not let it fall through to the product branch`);
   }
@@ -501,7 +516,7 @@ HTML RULES:
 - All links must be absolute URLs (https://...)
 - No markdown, no CSS classes, no <div> tags
 - Inline styles exactly as shown in the templates above — do not deviate
-- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}${vocBlock}`;
+- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}${vocBlock}${founderBlock ? `\n\n${founderBlock}` : ''}`;
 }
 
 function buildUserPrompt(brief, sitemapCtx, blogPosts) {
@@ -596,6 +611,8 @@ async function writePost(briefPath) {
   const blogPosts = loadBlogPosts(brief.target_keyword);
   const productIngredients = detectProductIngredients(brief.target_keyword);
 
+  const founder = loadFounderNotesFor(brief.target_keyword, slug);
+
   process.stdout.write('  Streaming from Claude... ');
 
   let html = '';
@@ -616,7 +633,7 @@ async function writePost(briefPath) {
       const stream = client.messages.stream({
         model: LLM_MODELS.standard,
         max_tokens: 8000,
-        system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
+        system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide', founder.block),
         messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
       }, { signal: dl.signal });
 
@@ -783,6 +800,15 @@ ${badIntro?.html || ''}`,
     tokens_used: { input: inputTokens, output: outputTokens },
   }, 'blog-post-writer');
   replacePostMeta(metaPath, meta);
+  // Stamp which founder notes were offered to this draft (after the authored write,
+  // via the merging writer, so composeAuthoredMeta's declared keys are untouched).
+  if (founder.ids.length) {
+    try {
+      writePostMeta(slug, { founder_notes_offered: founder.ids });
+    } catch (err) {
+      console.warn(`  Warning: could not stamp founder_notes_offered (${err.message})`);
+    }
+  }
 
   console.log(`  Saved: ${htmlPath}`);
   console.log(`  Meta:  ${metaPath}`);

@@ -35,7 +35,10 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { loadNotes } from '../../lib/founder-notes-store.js';
+import { selectFounderNotes, founderNotesBlock } from '../../lib/founder-notes.js';
+import { clusterForText } from '../../lib/cluster-revenue.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
 import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
 import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
@@ -170,7 +173,19 @@ async function buildArticleIndex() {
 
 // ── claude refresh ────────────────────────────────────────────────────────────
 
-async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = []) {
+// Founder notes for this refresh: never throws. A load failure is an empty block.
+function loadFounderNotesFor(keyword, slug) {
+  try {
+    const clusters = [clusterForText(keyword || '')].filter(Boolean);
+    const selected = selectFounderNotes(loadNotes(), { clusters, ref: slug, surface: 'editorial' });
+    return { block: founderNotesBlock(selected, { surface: 'editorial' }) || '', ids: selected.map((n) => n.id) };
+  } catch (err) {
+    console.warn(`  Warning: founder notes unavailable (${err.message}) — continuing without them.`);
+    return { block: '', ids: [] };
+  }
+}
+
+async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = [], founderBlock = '') {
   const bodyText = article.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -287,7 +302,7 @@ IMPORTANT:
   const verdict = loadPerformanceVerdict(slug);
   if (!verdict) return '';
   return `\n\n---\n\nPOST-PERFORMANCE VERDICT (why this post is being refreshed):\nAt the ${verdict.milestone || 'latest'}-day review this post was flagged ${verdict.verdict}. ${verdict.reason || ''}\n\nTarget your rewrite directly at this cause. Do not do a generic refresh. If the verdict says the projected traffic wasn't hit, figure out why — weak intro, missing topical coverage, title mismatch, thin sections — and fix that specific problem. If the verdict says BLOCKED (zero impressions), the issue is probably intent mismatch or indexing; focus on making the opening paragraph unambiguously match the target keyword and add a clearer content structure.`;
-})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}`,
+})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}${founderBlock ? `\n\n---\n\n${founderBlock}` : ''}`,
     }],
   });
 
@@ -535,7 +550,8 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns);
+      const founder = loadFounderNotesFor(keyword, slug);
+      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns, founder.block);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
       process.stdout.write('    Summarizing changes... ');
@@ -634,6 +650,16 @@ ${afCheck.intro?.html || ''}`,
           console.log('done');
         } catch (e) {
           console.error(`failed: ${e.message}`);
+        }
+      }
+
+      // Stamp which founder notes were offered to this refresh, on the post the
+      // refreshed content was written to. Failure is logged, never fatal.
+      if (founder.ids.length) {
+        try {
+          writePostMeta(slug, { founder_notes_offered: founder.ids });
+        } catch (err) {
+          console.warn(`    founder_notes_offered stamp failed (non-fatal): ${err.message}`);
         }
       }
 
