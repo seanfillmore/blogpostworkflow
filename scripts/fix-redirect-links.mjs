@@ -153,7 +153,7 @@ async function main() {
   for (const art of scope) {
     if (touched >= limit) break;
     const before = art.body_html || '';
-    const { html: after, rewrites, skipped } = rewriteRedirectLinks(before, map);
+    const { html: after, rewrites, skipped, retexted } = rewriteRedirectLinks(before, map);
     for (const s of skipped) bump(s.reason);
     if (!rewrites.length) continue;
 
@@ -184,6 +184,7 @@ async function main() {
     totalRewrites += rewrites.length;
     rows.push({ handle: art.handle, count: rewrites.length, mirror: Boolean(mirror) });
     console.log(`  ${APPLY ? '✎' : '·'} ${art.handle} — ${rewrites.length} link(s)${mirror ? '' : ' (no local mirror)'}`);
+    for (const c of retexted || []) console.log(`      text: "${c.from}" → "${c.to}"`);
     for (const r of rewrites.slice(0, 3)) console.log(`      ${r.from} → ${r.to}${r.hops > 1 ? ` (${r.hops} hops)` : ''}`);
     if (rewrites.length > 3) console.log(`      … and ${rewrites.length - 3} more`);
 

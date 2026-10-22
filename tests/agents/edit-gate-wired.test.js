@@ -60,6 +60,7 @@ const ALLOWLIST = [
   { file: 'agents/meta-ab-tracker/index.js', kind: 'repair', why: 'reverts a losing legacy variant to A' },
   { file: 'agents/publish-drift/index.js', kind: 'repair', why: 're-publishes a page that silently reverted to draft' },
   { file: 'scripts/fix-redirect-links.mjs', kind: 'repair', why: 'repoints links off redirected URLs' },
+  { file: 'scripts/align-anchor-text.mjs', kind: 'repair', why: 'link text matched to its destination; only anchor text changes' },
   { file: 'scripts/backfill-buyer-intent-tags.mjs', kind: 'repair', why: 'article tags only; no title, meta or body' },
   { file: 'scripts/clear-invalid-article-template-suffix.mjs', kind: 'repair', why: 'clears a template_suffix the live theme lacks' },
   { file: 'scripts/remediate-body-dump-meta-descriptions.mjs', kind: 'repair', why: 'replaces a description that is a raw body dump' },
