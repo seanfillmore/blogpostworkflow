@@ -75,7 +75,9 @@ export const PLAN = [
     id: 'trial-accuracy',
     why: 'misdescribed the 2025 trial (S. mutans, "comparable" to chlorhexidine); now cited and accurate',
     before: '<p>A 2025 clinical trial published in <em>Clinical Oral Investigations</em> found that coconut oil with high lauric acid content (47.92%) significantly reduced harmful oral bacteria. Lauric acid specifically fights <em>Streptococcus mutans</em>, one of the main bacteria responsible for tooth decay and cavities. The study showed coconut oil had comparable antibacterial effects to chlorhexidine (a common prescription mouthwash) but with fewer side effects.</p>',
-    after: `<p>A 2025 triple-blind trial in <em>Clinical Oral Investigations</em> (${ext(TRIAL, 'Pardiñas López et al.')}) gave people with gum disease a virgin coconut oil (47.92% lauric acid) or 0.12% chlorhexidine, a standard dental mouthwash, alongside their usual dental care. The coconut oil group showed lower levels of several gum bacteria and of two inflammation markers. The authors also point out chlorhexidine's known downsides with long use: tooth staining, taste changes and a burning feeling.</p>`,
+    after: `<p>A 2025 randomized trial in <em>Clinical Oral Investigations</em> (${ext(TRIAL, 'Pardiñas López et al.')}) gave people with gum disease either a virgin coconut oil (47.92% lauric acid) or 0.12% chlorhexidine, a standard dental mouthwash. Both were used alongside their usual dental care. The coconut oil group showed lower levels of several gum bacteria and of two inflammation markers. The authors also note chlorhexidine's downsides with long use: tooth staining, taste changes and a burning feeling.</p>`,
+    // Pass 3 reworded pass 1's own text (jargon, one dense sentence).
+    previously: [`<p>A 2025 triple-blind trial in <em>Clinical Oral Investigations</em> (${ext(TRIAL, 'Pardiñas López et al.')}) gave people with gum disease a virgin coconut oil (47.92% lauric acid) or 0.12% chlorhexidine, a standard dental mouthwash, alongside their usual dental care. The coconut oil group showed lower levels of several gum bacteria and of two inflammation markers. The authors also point out chlorhexidine's known downsides with long use: tooth staining, taste changes and a burning feeling.</p>`],
   },
   {
     id: 'plaque-gums',
@@ -222,6 +224,49 @@ export const PLAN = [
     before: '(SLS is a major trigger)',
     after: '(SLS is a common trigger for some people)',
   },
+  // ── Pass 3 (2026-10-22): puffery and paragraph length the editor named ──
+  {
+    id: 'faq-cavities-length',
+    why: 'answer ran to 5 sentences; the closing line repeats the one above it',
+    before: 'so ask your dentist what fits your teeth. It works best as part of a complete oral care routine.</p>',
+    after: 'so ask your dentist what fits your teeth.</p>',
+  },
+  {
+    id: 'backed-by-research',
+    why: 'unqualified "backed by research"',
+    before: '<li>Natural antibacterial properties backed by research</li>',
+    after: '<li>Antibacterial properties that researchers have studied</li>',
+  },
+  {
+    id: 'ultimate-clean',
+    why: 'puffery: "the ultimate clean ingredient"',
+    before: 'Coconut oil represents the ultimate clean ingredient—just one thing, straight from nature, with benefits you can understand.',
+    after: 'Coconut oil appeals because it is a single ingredient you can recognize.',
+  },
+  {
+    id: 'pure-coconut-free',
+    why: '"completely free from ... additives" overstated, and read as a product benefit',
+    before: '<p>Pure coconut oil is completely free from preservatives, foaming agents, synthetic dyes, artificial sweeteners, and other additives found in conventional toothpastes.</p>',
+    after: '<p>Plain coconut oil is a single ingredient, so it has none of the foaming agents, synthetic dyes or artificial sweeteners found in many conventional toothpastes.</p>',
+  },
+  {
+    id: 'thousands-report',
+    why: 'unsupported "thousands of people report real benefits"',
+    before: 'The research backs up its antibacterial properties, and thousands of people report real benefits from using it.',
+    after: 'Research supports its antibacterial properties, and many people like how it feels.',
+  },
+  {
+    id: 'pull-toxins',
+    why: '"pulls toxins" is not a supported mechanism',
+    before: 'The extended time allows the oil to "pull" bacteria and toxins from your mouth.',
+    after: 'The idea is that the oil loosens and carries away bacteria as you swish.',
+  },
+  {
+    id: 'faq-pull-toxins',
+    why: '"pull toxins" is not a supported mechanism',
+    before: 'for 15-20 minutes to pull toxins and bacteria.',
+    after: 'for 15-20 minutes to loosen and carry away bacteria.',
+  },
 ];
 
 export function occurrences(hay, needle) {
@@ -241,8 +286,10 @@ export function applyPlan(html, plan = PLAN) {
     // BEFORE survives the edit; a BEFORE may contain its AFTER (date-stamp-lead deletes
     // from it), so its AFTER pre-exists. Both cases decide on the right count.
     const done = e.after.includes(e.before) ? a >= 1 : b === 0 && a >= 1;
+    const prev = (e.previously || []).find((p) => occurrences(out, p) === 1);
     if (done) rows.push({ id: e.id, action: 'already-applied' });
     else if (b === 1) { out = out.replace(e.before, () => e.after); rows.push({ id: e.id, action: 'applied' }); }
+    else if (prev) { out = out.replace(prev, () => e.after); rows.push({ id: e.id, action: 'upgraded' }); }
     else throw new Error(`${e.id}: BEFORE found ${b}x, AFTER ${a}x — the live body moved; re-review`);
   }
   return { html: out, rows };

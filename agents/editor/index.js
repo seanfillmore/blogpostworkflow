@@ -1065,6 +1065,7 @@ async function runEditor(htmlPath) {
       name: variant ? `${p.name} — ${variant.name}` : p.name,
       format: p.format,
       ingredients,
+      freeFrom: Array.isArray(p.free_from) ? p.free_from : null,
     };
   }
   // Load context data
@@ -1106,8 +1107,15 @@ async function runEditor(htmlPath) {
   }
 
   const formatNote = productIngredients?.format ? ` | Product format: ${productIngredients.format}` : '';
+  // An explicit free-from list lets "made without X" copy be CONFIRMED rather than
+  // left as "the spec neither supports nor contradicts it, please confirm", which
+  // kept a correct locked winner blocked (2026-10-22). The ingredient list is the
+  // label, so anything on this list is verified absent.
+  const freeFromNote = productIngredients?.freeFrom?.length
+    ? ` | Verified free from (label): ${productIngredients.freeFrom.join(', ')}. "Made without" any of these is accurate.`
+    : '';
   const productIngredientsContext = productIngredients
-    ? `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}`
+    ? `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}${freeFromNote}`
     : 'N/A — this post is topical-authority content, not tied to a specific product we sell. Skip the INGREDIENT ACCURACY section entirely (mark it as N/A).';
 
   if (isTopicalAuthority) {
