@@ -78,6 +78,10 @@ test('shortProductName keeps the product name and drops the descriptor', async (
   assert.equal(shortProductName('Best Coconut Oil Deodorant — All Natural Formula | 2oz'), 'Best Coconut Oil Deodorant');
   assert.equal(shortProductName('Coconut Moisturizer | 4oz'), 'Coconut Moisturizer');
   assert.equal(shortProductName('Coconut Lip Balm'), 'Coconut Lip Balm');
+  assert.equal(shortProductName('Coconut Body Lotion — 4-Pack'), 'Coconut Body Lotion 4-Pack');
+  assert.equal(shortProductName('Coconut Bar Soap — 12-Pack'), 'Coconut Bar Soap 12-Pack');
+  assert.equal(shortProductName('Natural Coconut Oil Lip Balm | 0.15oz | Four Pack'), 'Natural Coconut Oil Lip Balm Four Pack');
+  assert.equal(shortProductName('Moisturizing Coconut Soap | 3.4oz'), 'Moisturizing Coconut Soap');
 });
 
 test('buyButtonText fixes title-derived labels only', async () => {
