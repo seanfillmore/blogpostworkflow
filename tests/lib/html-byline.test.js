@@ -178,6 +178,70 @@ test('extractByline rejects a URL that JSON-LD put in the author slot', () => {
   assert.equal(out.author_rejected, 'url');
 });
 
+// The 2026-10-22 fix. Fixtures are trimmed copies of the live pages' own markup.
+test('a URL in article:author no longer hides the JSON-LD Person (marieclaire.com)', () => {
+  const html = `<meta property="article:author" content="https://www.marieclaire.com/author/sophia-vilensky/">
+    <script type="application/ld+json">{"@type":"Article","author":{"@type":"Person","name":"Sophia Vilensky","url":"https://www.marieclaire.com/author/sophia-vilensky/"}}</script>`;
+  const out = extractByline(html, { domain: 'marieclaire.com' });
+  assert.equal(out.author, 'Sophia Vilensky');
+  assert.equal(out.author_rejected, null);
+});
+
+test('a facebook page in article:author falls through to the next source (thefiltery.com)', () => {
+  const html = `<meta property="article:author" content="https://www.facebook.com/thefiltery" />
+    <p class="entry-author">By <a href="https://thefiltery.com/author/abbie/">Abbie Davidson</a></p>`;
+  assert.equal(extractByline(html, { domain: 'thefiltery.com' }).author, 'Abbie Davidson');
+});
+
+test('content-before-name meta order is read (wellnessmama.com)', () => {
+  const html = `<meta property="article:author" content="https://www.facebook.com/profile.php?id=1" />
+    <meta content="Katie Wells" name="author" />`;
+  assert.equal(extractByline(html, { domain: 'wellnessmama.com' }).author, 'Katie Wells');
+});
+
+test('a multi-author meta string yields its first name, not too-long (businessinsider.com)', () => {
+  const html = `<meta\n property="author"\n content="Dominique Michelle Astorino, André V. Ritter"\n>`;
+  assert.equal(extractByline(html, { domain: 'businessinsider.com' }).author, 'Dominique Michelle Astorino');
+});
+
+test('a JSON-LD author given only by @id resolves to the Person node (nationalgeographic.com)', () => {
+  const html = `<script type="application/ld+json">{"@graph":[
+      {"@type":"NewsArticle","author":[{"@id":"https://x.com/a#person-0"}]},
+      {"@type":"Person","@id":"https://x.com/a#person-0","name":"Natalia Mesa"}]}</script>`;
+  assert.equal(extractByline(html, { domain: 'nationalgeographic.com' }).author, 'Natalia Mesa');
+});
+
+test('a link inside a class="...author" element is read (houstonmethodist.org)', () => {
+  const html = `<div class="blog-metadata-author"><a href='https://www.houstonmethodist.org/blog/authors/katie-mccallum/' title='View Katie McCallum's Profile'>Katie McCallum</a></div>`;
+  assert.equal(extractByline(html, { domain: 'houstonmethodist.org' }).author, 'Katie McCallum');
+});
+
+test('an Organization author is never taken as a person', () => {
+  const html = `<script type="application/ld+json">{"@type":"Article","author":{"@type":"Organization","name":"Sensodyne Pronamel"}}</script>`;
+  const out = extractByline(html, { domain: 'pronamel.us' });
+  assert.equal(out.author, null);
+});
+
+test('when NO candidate passes, the first is reported with its reason (webmd.com)', () => {
+  const html = `<meta property="article:author" content="https://www.facebook.com/WebMD" />
+    <script type="application/ld+json">{"author":[{"@type":"Person","name":"WebMD Editorial Team"}]}</script>`;
+  const out = extractByline(html, { domain: 'webmd.com' });
+  assert.equal(out.author, null);
+  assert.equal(out.author_raw, 'https://www.facebook.com/WebMD');
+  assert.equal(out.author_rejected, 'url');
+});
+
+test('a valid first candidate keeps winning, so already-resolved pages do not change', () => {
+  const html = `<meta name="author" content="Kate Arceo">
+    <script type="application/ld+json">{"author":{"@type":"Person","name":"Someone Else"}}</script>`;
+  assert.equal(extractByline(html, { domain: 'thegoodtrade.com' }).author, 'Kate Arceo');
+});
+
+test('HTML entities in a name are decoded', () => {
+  const html = `<meta name="author" content="Mary O&#039;Brien">`;
+  assert.equal(extractByline(html, { domain: 'x.com' }).author, "Mary O'Brien");
+});
+
 test('extractByline still falls back to the domain for publication', () => {
   assert.equal(extractByline('<html></html>', { domain: 'health.com' }).publication, 'health.com');
   assert.equal(extractByline(null, { domain: 'health.com' }).author, null);
@@ -196,4 +260,12 @@ test('pageMentionsBrand is case-insensitive and needs an alias', () => {
 test('looksLikeStore needs two signals', () => {
   assert.equal(looksLikeStore('<a href="/cart">Cart</a>'), false);
   assert.equal(looksLikeStore('<script src="https://cdn.shopify.com/x"></script><button>Add to cart</button>'), true);
+});
+
+test('byline furniture is never a name: "Written by", "Reviewed by", footnote marks, departments', () => {
+  const a = extractByline(`<span class="authors">Written by <!--[--><a href="/bio/x">WebMD Editorial Contributors</a></span>`, { domain: 'webmd.com' });
+  assert.equal(a.author, null);
+  assert.equal(nonPersonReason('Reviewed by'), 'boilerplate');
+  assert.equal(extractByline(`<meta name="citation_author" content="Katrin Klotz*">`, { domain: 'nih.gov' }).author, 'Katrin Klotz');
+  assert.equal(extractByline(`<div class="author">Family Medicine</div>`, { domain: 'scripps.org' }).author, null);
 });
