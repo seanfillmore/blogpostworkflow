@@ -18,3 +18,18 @@ test('ingredient accuracy accepts cold-pressed coconut oil', () => {
 test('ingredient accuracy accepts "all organic"', () => {
   assert.match(rule, /all organic/i);
 });
+
+test('a product free_from list reaches the ingredient-accuracy context', () => {
+  assert.match(SRC, /freeFrom: Array\.isArray\(p\.free_from\)/);
+  assert.match(SRC, /\$\{formatNote\}\$\{freeFromNote\}/);
+});
+
+test('the toothpaste spec lists what it is verified free from', async () => {
+  const { readFileSync: r } = await import('node:fs');
+  const ing = JSON.parse(r(new URL('../../config/ingredients.json', import.meta.url), 'utf8'));
+  const t = ing.toothpaste;
+  for (const x of ['glycerin', 'preservatives', 'fluoride']) assert.ok(t.free_from.includes(x), x);
+  // A free-from entry may never contradict the ingredient list itself.
+  const all = [...t.base_ingredients, ...t.variations.flatMap((v) => v.essential_oils || [])].join(' ').toLowerCase();
+  for (const x of t.free_from) assert.ok(!all.includes(x.split(' ')[0].toLowerCase()), `${x} is in the ingredient list`);
+});
