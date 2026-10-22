@@ -82,7 +82,10 @@ import {
 } from '../../lib/press-contacts.js';
 import { buildProspects, draftBlockReason } from '../../lib/press-prospects.js';
 import { findAddress as findAddressLib, hunterClient, tavilyClient } from '../../lib/contact-finder.js';
-import { buildFactSheet, draftPitch as draftPitchLib } from '../../lib/press-pitch.js';
+import { buildFactSheet, draftPitch as draftPitchLib, pickProducts, prepareArticle } from '../../lib/press-pitch.js';
+import { selectFounderNotes, pressEligibleNotes } from '../../lib/founder-notes.js';
+import { loadNotesOrEmpty, stampFounderNoteUses } from '../../lib/founder-notes-store.js';
+import { clusterForText } from '../../lib/cluster-revenue.js';
 import { fetchWithOutcome, renderOutcomeTally } from '../../lib/fetch-pool.js';
 import { checkLinks, applyLinkFindings, funnel, renderFunnel, referringDomainsChange, articleLinks } from '../../lib/press-links.js';
 import { draftFollowUp as draftFollowUpLib, pickNewFact, isArticleUrl, offerGiftHook, createFollowUpRun, openingKey } from '../../lib/press-followup.js';
@@ -848,6 +851,12 @@ export async function runPressOutreach({
       const sentAt = r.at;
       // Sent: from here on nothing may make it look unsent.
       try { saveDraft(markSent(d, { now: Date.parse(sentAt), messageId: r.messageId, resendId: r.resendId || null })); } catch (err) { log(`  could not save sent draft ${d.id}: ${err.message}`); }
+      // Record founder-note uses from the text actually sent. Best effort, never alters the send.
+      try {
+        if (d.founder_notes_offered?.length) {
+          stampFounderNoteUses({ text: `${subject}\n${text}`, offered: d.founder_notes_offered, surface: 'commercial', ref: d.id, at: sentAt });
+        }
+      } catch (err) { log(`  could not record founder note uses for ${d.id}: ${err.message}`); }
       recordDraftSent(d, c, { messageId: r.messageId, sentAt, subject, row });
       state.first_sent_at ||= sentAt;
       persistState(row);
@@ -1064,6 +1073,22 @@ export async function findRecentArticle({ contact, pitch, authorUrls = new Map()
   } catch { return null; }
 }
 
+// Founder notes offered to one pitch or follow-up: Sean approves every send,
+// so his own words may go in as first-person colour (still claim-gated).
+export const FOUNDER_NOTES_PER_DRAFT = 2;
+
+/**
+ * The founder notes to offer for `products` (press-facts product keys): the
+ * clusters are clusterForText over each product's name. [] on no notes.
+ */
+export function founderNotesForProducts(notes, pressFacts, products, { limit = FOUNDER_NOTES_PER_DRAFT } = {}) {
+  if (!Array.isArray(notes) || !notes.length) return [];
+  const clusters = [...new Set((products || [])
+    .map((k) => clusterForText(pressFacts?.products?.[k]?.name || ''))
+    .filter(Boolean))];
+  return selectFounderNotes(notes, { clusters, surface: 'commercial', limit });
+}
+
 /**
  * Write one follow-up draft for a contact. `thread` is { subject, inReplyTo,
  * references }: what the draft replies under. `run` is the batch's shared
@@ -1073,17 +1098,23 @@ export async function findRecentArticle({ contact, pitch, authorUrls = new Map()
  */
 export async function draftFollowUpForContact({
   contact, pitch, n, thread, drafts = [], sentCopies = [], authorUrls = new Map(), fetchPage, pressFacts,
-  generate, run = createFollowUpRun({ drafts }), now = Date.now(), writer = draftFollowUpLib,
+  generate, run = createFollowUpRun({ drafts }), now = Date.now(), writer = draftFollowUpLib, founderNotes = [],
 }) {
   const original = findOriginalPitch({ contact, pitch, drafts, sentCopies });
   if (!original) return { ok: false, reason: findOriginalMissing };
   const article = await findRecentArticle({ contact, pitch, authorUrls, fetchPage });
-  const fact = pickNewFact(pressFacts, pitch.products || [], original.body, run.facts);
+  // Founder notes join the fact tiers (after the product's own facts) only when
+  // there are some; with none, pressFacts is passed through untouched.
+  const offered = founderNotesForProducts(founderNotes, pressFacts, pitch.products || []);
+  const facts = offered.length ? { ...pressFacts, founder_notes: offered.map((n) => ({ id: n.id, fact: n.answer })) } : pressFacts;
+  const fact = pickNewFact(facts, pitch.products || [], original.body, run.facts);
   const giftHook = offerGiftHook({ original, ordinal: run.ordinal, nowMs: now });
   run.ordinal += 1;
   let out;
   try {
-    out = await writer({ contact, n, subject: thread.subject, original, article, fact, generate, usedOpenings: run.openings, giftHook, now });
+    const args = { contact, n, subject: thread.subject, original, article, fact, generate, usedOpenings: run.openings, giftHook, now };
+    if (offered.length) args.founderNotes = facts.founder_notes;
+    out = await writer(args);
   } catch (err) {
     return { ok: false, reason: `writer error: ${err.message}` };
   }
@@ -1103,6 +1134,7 @@ export async function draftFollowUpForContact({
       gift_hook: giftHook,
       original_source: original.source,
       pitch_date: pitch.date,
+      ...(out.founder_notes_offered?.length ? { founder_notes_offered: out.founder_notes_offered } : {}),
     },
   };
 }
@@ -1445,6 +1477,9 @@ export async function runDrafting({
   readSentBodies = null,
   writeFollowUp = draftFollowUpLib,
   authorUrls = null,
+  // Sean's founder notes, loaded once per run. Injectable so tests never read
+  // data/founder-notes; the real run passes loadNotesOrEmpty.
+  loadFounderNotes = () => [],
 } = {}) {
   if (!apply) { saveDraft = () => {}; saveBook = () => {}; saveState = () => {}; }
   state.draft_attempts ||= {};
@@ -1455,7 +1490,18 @@ export async function runDrafting({
   const concept = `pitch-${today.slice(0, 7)}`;
   // Facts the claim gate refused are reported on every run, so a bad fact
   // Sean added is visible the next morning rather than silently ignored.
-  const { skippedFacts } = buildFactSheet(pressFacts);
+  let founderNotes = [];
+  try { founderNotes = loadFounderNotes() || []; } catch (err) { log(`  founder notes unavailable (${err.message}); drafting without them`); }
+  // Every note a draft could be offered goes through the same claim gate in
+  // the run-level sheet, so one that fails is reported here every morning.
+  const candidateNotes = founderNotes.length
+    ? founderNotesForProducts(founderNotes, pressFacts, Object.keys(pressFacts?.products || {}), { limit: Infinity })
+    : [];
+  const { skippedFacts } = buildFactSheet(pressFacts, undefined, { founderNotes: candidateNotes });
+  // MAX_USES counts open drafts too, and one run offers a note to one draft.
+  const offeredThisRun = new Set();
+  const eligibleNotes = () => (founderNotes.length ? pressEligibleNotes(founderNotes, { openDrafts: drafts, offeredThisRun }) : []);
+  const markOffered = (d) => { for (const id of d?.founder_notes_offered || []) offeredThisRun.add(id); };
   const result = { skippedFacts, drafted: [], noAddress: [], failed: [], skipped: [], hunterSpent: 0, queueSkipped: 0, dead: 0, pending: 0, want: 0, stoppedAtDeadline: false, leftAtDeadline: 0, deadline: null, followUps: [], followUpFailed: [], followUpSkipped: [] };
   // Elapsed real time on top of `now`, so an injected `now` still moves.
   if (!clock) { const startedReal = Date.now(); clock = () => now + (Date.now() - startedReal); }
@@ -1525,11 +1571,12 @@ export async function runDrafting({
       const thread = { subject: reSubject(pitch.subject), inReplyTo: pitch.message_id, references: refsOf(pitch.references, pitch.message_id) };
       let out;
       try {
-        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, run, now, writer: writeFollowUp });
+        out = await draftFollowUpForContact({ contact, pitch, n, thread, drafts, sentCopies: sent.rows, authorUrls: authors, fetchPage: fetchArticle, pressFacts, generate, run, now, writer: writeFollowUp, founderNotes: eligibleNotes() });
       } catch (err) { out = { ok: false, reason: `follow-up error: ${err.message}` }; }
       onProgress();
       if (out.ok) {
         try { saveDraft(out.draft); } catch (err) { out = { ok: false, reason: `draft save failed: ${err.message}` }; }
+        if (out.ok) markOffered(out.draft);
       }
       if (!out.ok) {
         const reason = out.reason === findOriginalMissing && sent.error ? `${out.reason}; the Sent folder could not be read (${sent.error})` : out.reason;
@@ -1687,7 +1734,14 @@ export async function runDrafting({
     const to = emailOf(up.contact) || found.address;
     let out;
     try {
-      out = await draftPitch({ prospect: p, articleText, pressFacts, generate, postalAddress, contact: up.contact });
+      const pitchArgs = { prospect: p, articleText, pressFacts, generate, postalAddress, contact: up.contact };
+      const eligible = eligibleNotes();
+      if (eligible.length) {
+        // The same single product draftPitch will pick, so the notes match it.
+        const notes = founderNotesForProducts(eligible, pressFacts, pickProducts(p, prepareArticle(articleText)).slice(0, 1));
+        if (notes.length) pitchArgs.founderNotes = notes;
+      }
+      out = await draftPitch(pitchArgs);
     } catch (err) {
       out = { ok: false, reason: `draft error: ${err.message}` };
     }
@@ -1706,8 +1760,10 @@ export async function runDrafting({
           source: p.source, targetUrl: p.targetUrl, openerQuote: out.draft.openerQuote, products: out.draft.products || [], concept, now,
         }),
         address_source: found.source,
+        ...(out.founder_notes_offered?.length ? { founder_notes_offered: out.founder_notes_offered } : {}),
       };
       saveDraft(draft);
+      markOffered(draft);
     } catch (err) {
       result.failed.push({ ...row, reason: fail(p, `draft save failed: ${err.message}`) });
       return false;
@@ -1845,6 +1901,7 @@ async function runDraftMode(args, apply, env, config) {
       findAddress: makeFindAddress({ fetchPage, tavilySearch, hunter, budget: { hunterUsageStop: config.hunterUsageStop }, today }),
       draftPitch: draftPitchLib,
       generate: (prompt) => generateWithModel(prompt, env),
+      loadFounderNotes: () => loadNotesOrEmpty(),
       onProgress: touchLock,
       // Original pitches with no draft file (the September ones) are read from Sent.
       readSentBodies: creds ? (q) => fetchSentBodiesTo(creds, q) : null,

@@ -425,3 +425,41 @@ test('a fact whose numbers were all in the first email is not offered as new', (
   assert.notEqual(pickNewFact(facts, ['lotion'], orig), 'Body Lotion: 94 customer reviews averaging 4.9 stars');
   assert.equal(pickNewFact(facts, ['lotion'], 'No numbers here.'), 'Body Lotion: 94 customer reviews averaging 4.9 stars');
 });
+
+// ---- Founder notes (invented text) ----
+const FOUNDER = { id: 'fn-1', fact: 'My grandmother kept a jar of coconut oil by the sink for every scrape.' };
+
+test('pickNewFact offers a founder note ahead of brand facts when the product has no own facts', () => {
+  const facts = { ...pressFacts, founder_notes: [FOUNDER] };
+  assert.equal(pickNewFact(facts, ['lotion'], original.body), FOUNDER.fact);
+  assert.equal(pickNewFact(facts, [], ''), FOUNDER.fact, 'founder before brand');
+});
+
+test('a product own fact still comes before a founder note', () => {
+  const facts = { ...pressFacts, founder_notes: [FOUNDER], products: { lotion: { ...pressFacts.products.lotion, facts: ['unscented option available'] } } };
+  assert.equal(pickNewFact(facts, ['lotion'], original.body), 'Body Lotion: unscented option available');
+});
+
+test('a founder note whose numbers all appeared in the pitch is a repeat', () => {
+  const facts = { ...pressFacts, founder_notes: [{ id: 'fn-2', fact: 'We have made 94 batches by hand.' }] };
+  assert.notEqual(pickNewFact(facts, [], 'We sold 94 batches.'), 'We have made 94 batches by hand.');
+});
+
+test('a founder note failing the claim gate is never offered', () => {
+  const facts = { ...pressFacts, founder_notes: [{ id: 'fn-bad', fact: 'Our lotion cures eczema.' }] };
+  assert.equal(pickNewFact(facts, [], ''), 'Handmade in small batches, made in the USA');
+});
+
+test('draftFollowUp records founder_notes_offered only when the fact is a founder note', async () => {
+  const body = { body: 'Cold weather roundups need a lotion readers trust, and my grandmother kept a jar of coconut oil by the sink for every scrape. Would a bottle help?', article_quote: null };
+  const { generate, prompts } = stub(body);
+  const r = await draftFollowUp({ ...base({ article: null, fact: FOUNDER.fact, founderNotes: [FOUNDER] }), generate, usedOpenings: new Set() });
+  assert.equal(r.ok, true, r.reason);
+  assert.deepEqual(r.founder_notes_offered, ['fn-1']);
+  assert.match(prompts[0], /This detail is your own experience: write it in first person/);
+  const { generate: g2, prompts: p2 } = stub(GOOD);
+  const r2 = await draftFollowUp({ ...base({ founderNotes: [FOUNDER] }), generate: g2, usedOpenings: new Set() });
+  assert.equal(r2.ok, true, r2.reason);
+  assert.equal('founder_notes_offered' in r2, false);
+  assert.doesNotMatch(p2[0], /your own experience/);
+});

@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "sendVia": "resend",
+  "newsQueries": [
+    "natural deodorant news",
+    "clean beauty ingredient news",
+    "FDA cosmetics regulation MoCRA",
+    "skincare ingredient safety study",
+    "body care industry trend"
+  ]
+}

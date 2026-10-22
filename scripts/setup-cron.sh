@@ -211,6 +211,12 @@ PRESS_OUTREACH_DRAFT="20 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outr
 # digest still goes out, marked "not written to the contact book this week".
 PRESS_OUTREACH_LINKS="25 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --check-links --apply >> data/reports/scheduler/press-outreach-links.log 2>&1"
 
+# Founder notes: Monday 15:35 UTC emails Sean 2-4 questions (Hushmail); the daily
+# 16:12 UTC run reads his reply, redacts private names and files each answer as a
+# note. UTC only, no TZ= prefix (it schedules nothing on this host).
+WEEKLY_FOUNDER_NOTES_SEND="35 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/founder-notes/index.js --send --apply >> data/reports/scheduler/founder-notes.log 2>&1"
+DAILY_FOUNDER_NOTES_INGEST="12 16 * * * cd \"$PROJECT_DIR\" && $NODE agents/founder-notes/index.js --ingest --apply >> data/reports/scheduler/founder-notes.log 2>&1"
+
 # Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
 # folders Sean already uses. Rules are learned from those folders; moves, never
 # deletes. 13:40 UTC = 6:40am PDT, before the working day.
@@ -624,6 +630,8 @@ $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
 $PRESS_OUTREACH_LINKS
+$WEEKLY_FOUNDER_NOTES_SEND
+$DAILY_FOUNDER_NOTES_INGEST
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
 # ── Daily digest ──
