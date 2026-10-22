@@ -185,6 +185,43 @@ export const PLAN = [
     before: 'American Dental Association. (2024). "Coconut Oil for Teeth: What the Research Shows."',
     after: 'Colgate Oral Care Center. "Should You Try Coconut Toothpaste?"',
   },
+  // ── Pass 2 (2026-10-22, from the editor's verdict on the pass-1 live page) ──
+  {
+    id: 'date-stamp-lead',
+    why: 'answer-first gate: a date stamp was the first paragraph',
+    before: '<p><strong>Last Updated: February 2026</strong></p>\n\n<p>Coconut oil toothpaste can freshen',
+    after: '<p>Coconut oil toothpaste can freshen',
+  },
+  {
+    id: 'date-stamp-after-intro',
+    why: 'keeps a freshness line, after the answer, and true as of this edit',
+    before: 'So it works best as part of your routine, not the whole thing.</p>',
+    after: 'So it works best as part of your routine, not the whole thing.</p>\n\n<p><em>Last updated: October 2026</em></p>',
+  },
+  {
+    id: 'xylitol-claim-and-dogs',
+    why: 'uncited cavity-bacteria claim; xylitol is toxic to dogs and the recipe never said so',
+    before: '<li>Xylitol adds sweetness and has been shown to reduce cavity-causing bacteria.</li>',
+    after: '<li>Xylitol adds sweetness without feeding mouth bacteria. Keep it, and anything made with it, away from dogs: xylitol is toxic to them.</li>',
+  },
+  {
+    id: 'tea-tree-swallow',
+    why: 'tea tree oil must not be swallowed; the recipe sold it as "antibacterial power"',
+    before: '<li>5 drops tea tree oil (optional, for extra antibacterial power)</li>',
+    after: '<li>5 drops tea tree oil (optional; spit it out, never swallow tea tree oil)</li>',
+  },
+  {
+    id: 'sls-canker-overstated',
+    why: 'overstated: SLS triggers canker sores for some people, not "many"; "doesn\'t cause" is absolute',
+    before: '(which causes canker sores in many people), coconut oil is gentle and soothing. It doesn\'t cause tissue irritation, burning, or peeling that some people experience with commercial toothpastes.',
+    after: '(which some people find triggers canker sores), coconut oil is gentle. It is unlikely to cause the irritation, burning, or peeling some people notice with commercial toothpastes.',
+  },
+  {
+    id: 'sls-trigger',
+    why: 'overstated trigger claim',
+    before: '(SLS is a major trigger)',
+    after: '(SLS is a common trigger for some people)',
+  },
 ];
 
 export function occurrences(hay, needle) {
@@ -200,8 +237,12 @@ export function applyPlan(html, plan = PLAN) {
   for (const e of plan) {
     const b = occurrences(out, e.before);
     const a = occurrences(out, e.after);
-    if (b === 1) { out = out.replace(e.before, () => e.after); rows.push({ id: e.id, action: 'applied' }); }
-    else if (b === 0 && a >= 1) rows.push({ id: e.id, action: 'already-applied' });
+    // An AFTER may CONTAIN its BEFORE (date-stamp-after-intro inserts after it), so its
+    // BEFORE survives the edit; a BEFORE may contain its AFTER (date-stamp-lead deletes
+    // from it), so its AFTER pre-exists. Both cases decide on the right count.
+    const done = e.after.includes(e.before) ? a >= 1 : b === 0 && a >= 1;
+    if (done) rows.push({ id: e.id, action: 'already-applied' });
+    else if (b === 1) { out = out.replace(e.before, () => e.after); rows.push({ id: e.id, action: 'applied' }); }
     else throw new Error(`${e.id}: BEFORE found ${b}x, AFTER ${a}x — the live body moved; re-review`);
   }
   return { html: out, rows };

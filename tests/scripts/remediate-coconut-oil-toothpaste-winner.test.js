@@ -40,3 +40,15 @@ test('applyPlan is re-run safe and refuses a body that moved', () => {
   assert.ok(applyPlan(once).rows.every((r) => r.action === 'already-applied'));
   assert.throws(() => applyPlan('<p>unrelated</p>'), /BEFORE found 0x/);
 });
+
+test('an entry that deletes into its own AFTER, and one that inserts after its BEFORE, each apply once', () => {
+  const lead = PLAN.find((e) => e.id === 'date-stamp-lead');
+  const tail = PLAN.find((e) => e.id === 'date-stamp-after-intro');
+  const body = `<article>\n\n${lead.before} x. ${tail.before}`;
+  const once = applyPlan(body, [lead, tail]);
+  assert.deepEqual(once.rows.map((r) => r.action), ['applied', 'applied']);
+  assert.equal(occurrences(once.html, 'Last Updated: February 2026'), 0);
+  assert.equal(occurrences(once.html, 'Last updated: October 2026'), 1);
+  const twice = applyPlan(once.html, [lead, tail]);
+  assert.equal(twice.html, once.html);
+});
