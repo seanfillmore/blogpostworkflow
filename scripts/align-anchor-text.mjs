@@ -4,7 +4,8 @@
  *
  * The 62 → 5 collection consolidation repointed links to single product pages
  * and left their text saying "collection": measured 2026-10-22, 157 links on 64
- * live articles. lib/redirect-links.js now retexts as it repoints, so new ones
+ * live articles. It also repairs buy-box buttons cut mid-word by a 60-character
+ * slice ("…Fluoride Fr →", 50 live buttons). lib/redirect-links.js now retexts as it repoints, so new ones
  * cannot appear; this sweeps the ones already live. Rules: lib/anchor-destination.js.
  *
  *   node scripts/align-anchor-text.mjs                 # DRY RUN, every published article
@@ -20,7 +21,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { alignProductAnchors } from '../lib/anchor-destination.js';
+import { alignProductAnchors, alignBuyButtons } from '../lib/anchor-destination.js';
 import { listAllSlugs, getPostMeta, getContentPath } from '../lib/posts.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -45,8 +46,15 @@ function mirrorIndex() {
 }
 
 async function main() {
-  const { getBlogs, getArticles, updateArticle } = await import('../lib/shopify.js');
+  const { getBlogs, getArticles, updateArticle, getProducts } = await import('../lib/shopify.js');
   const mirrors = mirrorIndex();
+  // Buy-box buttons are rebuilt from the LIVE product title (lib/anchor-destination.js buyButtonText).
+  const titles = new Map((await getProducts()).map((p) => [p.handle, p.title]));
+  const align = (h) => {
+    const a = alignProductAnchors(h);
+    const b = alignBuyButtons(a.html, titles);
+    return { html: b.html, changes: [...a.changes, ...b.changes] };
+  };
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const backupDir = join(ROOT, 'data', 'reports', 'anchor-text', stamp);
   let pages = 0; let links = 0;
@@ -56,7 +64,7 @@ async function main() {
       if (pages >= LIMIT) break;
       if (!art.published_at || (SLUG && art.handle !== SLUG)) continue;
       const before = art.body_html || '';
-      const { html: after, changes } = alignProductAnchors(before);
+      const { html: after, changes } = align(before);
       if (!changes.length) continue;
       if (anchors(before) !== anchors(after) || skeleton(before) !== skeleton(after)) {
         console.log(`  ⚠ ${art.handle}: something other than link text would change; skipped`);
@@ -73,7 +81,7 @@ async function main() {
       const mirror = mirrors.get(String(art.id));
       if (mirror) {
         const m = readFileSync(mirror, 'utf8');
-        const aligned = alignProductAnchors(m).html;
+        const aligned = align(m).html;
         if (aligned !== m) {
           writeFileSync(join(backupDir, `${art.handle}.mirror.html`), m);
           writeFileSync(mirror, aligned);
