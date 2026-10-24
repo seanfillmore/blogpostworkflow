@@ -27,6 +27,7 @@ function switchTab(name, btn) {
   if (name === 'tech-seo' && data) renderTechnicalSeoTab(data);
   if (name === 'ideas') renderIdeasTab();
   if (name === 'outreach') renderOutreachTab();
+  if (name === 'social') renderSocialTab();
   // Update chat sidebar when tab switches
   if (tabChatOpen) {
     var chatTitle = document.getElementById('tab-chat-title');
@@ -4802,6 +4803,7 @@ async function loadData() {
 loadData();
 setInterval(loadData, 3600000);
 if (location.hash === '#outreach') switchTab('outreach', document.getElementById('pill-outreach'));
+if (location.hash === '#social') switchTab('social', document.getElementById('pill-social'));
 
 // ── Ideas tab ─────────────────────────────────────────────────────────────────
 
@@ -4930,6 +4932,215 @@ async function rejectIdea(slug) {
   } else {
     alert('Error: ' + (d.error || 'unknown'));
   }
+}
+
+// ── Social tab: approve ad images for Instagram + the Facebook Page ─────────────────
+// Items come from scripts/social-queue-ingest.mjs (run at the end of every ad batch).
+// agents/social-poster posts APPROVED items, oldest approval first, to both platforms.
+// The caption gate runs on the server; every string is escaped before it is rendered.
+var socialData = { pending: [], approved: [], posted: [] };
+
+function socialSafeUrl(u) {
+  return /^https:\/\//i.test(u || '') ? u : '';
+}
+
+async function renderSocialTab() {
+  var panel = document.getElementById('social-panel');
+  panel.innerHTML = '<div class="empty-state">Loading the Social queue...</div>';
+  ensureIdeasStyles();
+  if (!document.getElementById('social-styles')) {
+    var style = document.createElement('style');
+    style.id = 'social-styles';
+    style.textContent = [
+      '.social-card{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border);align-items:flex-start}',
+      '.social-card:last-child{border-bottom:none}',
+      '.social-img{width:220px;flex:0 0 220px;border-radius:6px;border:1px solid var(--border)}',
+      '.social-body{flex:1;min-width:0}',
+      '.social-meta{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}',
+      '.social-badge{font-size:10px;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:var(--border);color:var(--text)}',
+      '.social-badge.warn{background:#f59e0b;color:#fff}',
+      '.social-problems{color:var(--red);font-size:12px;margin:6px 0 10px;padding-left:18px}',
+      '.social-caption{min-height:150px;font-family:inherit;width:100%}',
+      '.social-stats{font-size:12px;color:var(--muted);margin-top:6px}',
+      '@media (max-width:700px){.social-card{flex-direction:column}.social-img{width:100%;flex-basis:auto}}',
+    ].join('');
+    document.head.appendChild(style);
+  }
+  try {
+    var res = await fetch('/api/social/items');
+    var d = await res.json();
+    if (!d.ok) throw new Error(d.error || 'load failed');
+    socialData = d;
+  } catch (e) {
+    panel.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state">Could not load the Social queue.</div></div></div>';
+    return;
+  }
+  var clean = socialData.pending.filter(function(x) { return x.gate && x.gate.ok; });
+  panel.innerHTML =
+    '<div class="card"><div class="card-header accent-indigo">' +
+      '<span class="card-title">Social: waiting for approval</span>' +
+      '<span class="card-subtitle">' + socialData.pending.length + ' pending. Approved images post to Instagram and the Facebook Page, one a day at 18:20 UTC.</span>' +
+      '<button class="btn-approve" style="margin-left:auto" onclick="approveAllCleanSocial()"' + (clean.length ? '' : ' disabled') + '>Approve all clean (' + clean.length + ')</button>' +
+    '</div><div class="card-body">' +
+      (socialData.pending.length ? socialData.pending.map(socialPendingHtml).join('') : '<div class="empty-state" style="padding:24px 0">Nothing waiting. New ad batches land here automatically.</div>') +
+    '</div></div>' +
+    '<div class="card"><div class="card-header accent-indigo"><span class="card-title">Approved, in posting order</span>' +
+      '<span class="card-subtitle">' + socialData.approved.length + ' to post</span></div><div class="card-body">' +
+      (socialData.approved.length ? socialData.approved.map(socialApprovedHtml).join('') : '<div class="empty-state" style="padding:24px 0">Nothing approved is waiting to post.</div>') +
+    '</div></div>' +
+    '<div class="card"><div class="card-header accent-indigo"><span class="card-title">Posted</span>' +
+      '<span class="card-subtitle">' + socialData.posted.length + ' posted' + (socialData.rejected ? ' &middot; ' + socialData.rejected + ' rejected' : '') + '</span></div><div class="card-body">' +
+      (socialData.posted.length ? socialData.posted.map(socialPostedHtml).join('') : '<div class="empty-state" style="padding:24px 0">Nothing posted yet.</div>') +
+    '</div></div>';
+}
+
+function socialImgHtml(x) {
+  var u = socialSafeUrl(x.image_url);
+  return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer"><img class="social-img" loading="lazy" src="' + esc(u) + '" alt="' + esc(x.headline || x.id) + '"></a>' : '<div class="social-img"></div>';
+}
+
+function socialMetaHtml(x) {
+  return '<div class="social-meta">' +
+    (x.needs_human_review ? '<span class="social-badge warn" title="' + esc((x.review_notes || []).join('; ')) + '">check image</span>' : '') +
+    (x.edited ? '<span class="social-badge">edited</span>' : '') +
+    '<span>' + esc(x.id) + '</span>' +
+    (x.batch ? '<span>' + esc(x.batch) + '</span>' : '') +
+    (x.headline ? '<span>&ldquo;' + esc(x.headline) + '&rdquo;</span>' : '') +
+  '</div>';
+}
+
+function socialProblemsHtml(x) {
+  var p = (x.gate && x.gate.problems) || [];
+  if (!x.caption && x.suggested_caption_reason) p = p.concat(['No suggested caption: ' + x.suggested_caption_reason]);
+  return '<ul class="social-problems" id="social-problems-' + esc(x.id) + '"' + (p.length ? '' : ' style="display:none"') + '>' +
+    p.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>';
+}
+
+function socialPendingHtml(x) {
+  var id = esc(x.id);
+  return '<div class="social-card" id="social-card-' + id + '">' + socialImgHtml(x) +
+    '<div class="social-body">' + socialMetaHtml(x) +
+      '<textarea class="idea-input social-caption" id="social-caption-' + id + '">' + esc(x.caption || '') + '</textarea>' +
+      socialProblemsHtml(x) +
+      '<div class="idea-row-actions">' +
+        '<button class="btn-approve" onclick="approveSocial(this)" data-id="' + id + '">Approve</button>' +
+        '<button class="btn-idea-reject" style="color:var(--text)" onclick="saveSocial(this)" data-id="' + id + '">Save edit</button>' +
+        '<button class="btn-idea-reject" onclick="rejectSocial(this)" data-id="' + id + '">Reject</button>' +
+      '</div></div></div>';
+}
+
+function socialApprovedHtml(x, i) {
+  var id = esc(x.id);
+  var partial = (x.instagram && x.instagram.posted_at) || (x.facebook && x.facebook.posted_at);
+  var fails = (x.failures || []).map(function(f) { return f.platform + ': ' + f.error; });
+  return '<div class="social-card" id="social-card-' + id + '">' + socialImgHtml(x) +
+    '<div class="social-body">' + socialMetaHtml(x) +
+      '<div class="social-meta"><span class="social-badge">#' + (i + 1) + ' in line</span>' +
+        (partial ? '<span class="social-badge">' + (x.instagram && x.instagram.posted_at ? 'on Instagram' : 'on Facebook') + ', finishing the other</span>' : '') +
+      '</div>' +
+      (partial ? '<div style="white-space:pre-wrap;font-size:13px">' + esc(x.caption) + '</div>' : '<textarea class="idea-input social-caption" id="social-caption-' + id + '">' + esc(x.caption || '') + '</textarea>') +
+      socialProblemsHtml(x) +
+      (fails.length ? '<ul class="social-problems">' + fails.map(function(t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' : '') +
+      (partial ? '' : '<div class="idea-row-actions">' +
+        '<button class="btn-idea-reject" style="color:var(--text)" onclick="saveSocial(this)" data-id="' + id + '">Save edit</button>' +
+        '<button class="btn-idea-reject" onclick="unapproveSocial(this)" data-id="' + id + '">Un-approve</button>' +
+      '</div>') +
+    '</div></div>';
+}
+
+function socialStat(label, v) { return v === undefined || v === null ? '' : label + ' ' + esc(v) + ' &middot; '; }
+
+function socialPostedHtml(x) {
+  var ig = x.instagram || {}, fb = x.facebook || {};
+  var igI = ig.insights || {}, fbI = fb.insights || {};
+  var link = function(u, t) { u = socialSafeUrl(u); return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">' + t + '</a>' : t; };
+  return '<div class="social-card">' + socialImgHtml(x) +
+    '<div class="social-body">' + socialMetaHtml(x) +
+      '<div style="white-space:pre-wrap;font-size:13px">' + esc(x.caption) + '</div>' +
+      '<div class="social-stats"><b>' + link(ig.permalink, 'Instagram') + '</b> ' + (ig.posted_at ? esc(ig.posted_at.slice(0, 10)) + (ig.detected ? ' (found already live)' : '') : 'not yet') + ': ' +
+        socialStat('views', igI.views) + socialStat('reach', igI.reach) + socialStat('likes', igI.likes) + socialStat('saves', igI.saved) + socialStat('shares', igI.shares) + '</div>' +
+      '<div class="social-stats"><b>' + link(fb.permalink, 'Facebook') + '</b> ' + (fb.posted_at ? esc(fb.posted_at.slice(0, 10)) + (fb.detected ? ' (found already live)' : '') : 'not yet') + ': ' +
+        socialStat('views', fbI.media_views) + socialStat('reactions', fbI.reactions) + socialStat('comments', fbI.comments) + socialStat('shares', fbI.shares) + '</div>' +
+    '</div></div>';
+}
+
+function socialShowProblems(id, problems) {
+  var ul = document.getElementById('social-problems-' + id);
+  if (!ul) { alert((problems || []).join('\n')); return; }
+  ul.innerHTML = (problems || []).map(function(p) { return '<li>' + esc(p) + '</li>'; }).join('');
+  ul.style.display = (problems && problems.length) ? '' : 'none';
+}
+
+async function socialRerenderKeepScroll() {
+  var y = window.scrollY;
+  await renderSocialTab();
+  window.scrollTo(0, y);
+}
+
+async function socialPatch(id) {
+  var el = document.getElementById('social-caption-' + id);
+  var res = await fetch('/api/social/items/' + encodeURIComponent(id), {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ caption: el ? el.value : '' }),
+  });
+  return res.json();
+}
+
+async function saveSocial(btn) {
+  var id = btn.getAttribute('data-id');
+  try {
+    var d = await socialPatch(id);
+    await socialRerenderKeepScroll();
+    if (!d.ok) socialShowProblems(id, (d.problems || [d.error || 'could not save']).concat(d.saved ? ['Saved, but it does not pass yet, so it cannot post. An approved item that stops passing goes back to pending.'] : []));
+  } catch (e) { alert('Could not save: ' + e.message); }
+}
+
+async function approveSocial(btn) {
+  var id = btn.getAttribute('data-id');
+  try {
+    var pd = await socialPatch(id);
+    if (!pd.ok) { socialShowProblems(id, pd.problems || [pd.error || 'could not save']); return; }
+    var res = await fetch('/api/social/items/' + encodeURIComponent(id) + '/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    var d = await res.json();
+    if (!d.ok) { socialShowProblems(id, d.problems || [d.error || 'could not approve']); return; }
+    await socialRerenderKeepScroll();
+  } catch (e) { alert('Could not approve: ' + e.message); }
+}
+
+async function unapproveSocial(btn) {
+  var id = btn.getAttribute('data-id');
+  try {
+    var res = await fetch('/api/social/items/' + encodeURIComponent(id) + '/unapprove', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    var d = await res.json();
+    if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
+    await socialRerenderKeepScroll();
+  } catch (e) { alert('Could not un-approve: ' + e.message); }
+}
+
+async function rejectSocial(btn) {
+  var id = btn.getAttribute('data-id');
+  var reason = prompt('Reject this image? Optional reason:');
+  if (reason === null) return;
+  try {
+    var res = await fetch('/api/social/items/' + encodeURIComponent(id) + '/reject', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: reason }),
+    });
+    var d = await res.json();
+    if (!d.ok) { alert('Error: ' + (d.error || 'unknown')); return; }
+    await socialRerenderKeepScroll();
+  } catch (e) { alert('Could not reject: ' + e.message); }
+}
+
+async function approveAllCleanSocial() {
+  var ids = socialData.pending.filter(function(x) { return x.gate && x.gate.ok; }).map(function(x) { return x.id; });
+  if (!ids.length || !confirm('Approve ' + ids.length + ' image(s) with their current saved captions? They post to Instagram and Facebook, one a day.')) return;
+  try {
+    var res = await fetch('/api/social/items/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids: ids }) });
+    var d = await res.json();
+    var bad = Object.keys(d.results || {}).filter(function(k) { return !d.results[k].ok; });
+    await socialRerenderKeepScroll();
+    if (bad.length) alert(bad.length + ' could not be approved: ' + bad.join(', '));
+  } catch (e) { alert('Could not approve: ' + e.message); }
 }
 
 // ── Outreach tab: approve, edit and reject press pitch drafts ───────────────────────

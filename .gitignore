@@ -400,6 +400,8 @@ data/creatives/bundle-galleries/
 data/reports/amazon-keyword-coverage/
 # ugc-reels ledger: server-owned record of every Reel posted, its caption, style and insights (backed up offsite)
 data/ugc-reels/
+# Social queue: server-owned approval queue for Instagram + Facebook posts (backed up offsite with the ugc-reels set)
+data/social-queue/
 
 # Google Ads Transparency research reports (scripts/google-ads-research.mjs).
 # Hand-run research output with downloaded ad images; regenerable on demand.
