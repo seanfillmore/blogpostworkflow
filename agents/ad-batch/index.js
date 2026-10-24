@@ -9,7 +9,7 @@
 //
 // Usage:
 //   node agents/ad-batch/index.js <batch.json> [--dry-run] [--out <dir>]
-//                                 [--max-renders N] [--concurrency N]
+//                                 [--max-renders N] [--concurrency N] [--no-social]
 //
 // Batch file:
 //   { "product": "coconut-moisturizer", "variant": "coconut-breeze",
@@ -24,6 +24,9 @@
 //
 // Output: ~/Desktop/Ad Batches/<date> <product>/<NN headline>/ — images, _rejected/,
 // _contact sheet.jpg, scenes.md — plus run.json for the batch. Nothing is published.
+// At the end of a successful run the kept images are queued as PENDING items in the
+// dashboard's Social tab (scripts/social-queue-ingest.mjs); nothing posts until Sean
+// approves one. --no-social skips that; a failure there never fails the batch.
 // Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
 
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -49,10 +52,11 @@ export const DEFAULT_MAX_RENDERS = 120;
 export const DEFAULT_CONCURRENCY = 4;
 
 export function parseArgs(argv) {
-  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY };
+  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, social: true };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--no-social') args.social = false;
     else if (a === '--out') args.out = resolve(argv[++i]);
     else if (a === '--max-renders') args.maxRenders = Number(argv[++i]);
     else if (a === '--concurrency') args.concurrency = Number(argv[++i]);
@@ -157,7 +161,25 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
   };
 }
 
-export async function main(argv = process.argv.slice(2), { log = console.log } = {}) {
+/**
+ * Queue the batch's kept images in the Social tab. Never throws: the images are
+ * already on disk and a queue failure must not turn a paid batch into a failed run.
+ */
+export async function queueForSocial(batchDir, { log = console.log, ingest } = {}) {
+  const cmd = `node scripts/social-queue-ingest.mjs --batch "${batchDir}" --apply`;
+  try {
+    const run = ingest || (async (dir) => (await import('../../scripts/social-queue-ingest.mjs')).runIngest({ batchDir: dir, apply: true, log }));
+    log('\nQueueing the kept images for the Social tab...');
+    const s = await run(batchDir);
+    log(`Social queue: ${s.created.length} added, ${s.already.length} already queued${s.failed.length ? `, ${s.failed.length} FAILED (re-run: ${cmd})` : ''}.`);
+    return s;
+  } catch (err) {
+    log(`⚠ Could not queue this batch for the Social tab: ${err.message}\n  Re-run: ${cmd}`);
+    return null;
+  }
+}
+
+export async function main(argv = process.argv.slice(2), { log = console.log, ingest } = {}) {
   const args = parseArgs(argv);
   const env = { ...loadEnv(), ...process.env };
   const batch = parseBatch(JSON.parse(readFileSync(resolve(args.batchFile), 'utf8')));
@@ -238,6 +260,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log } =
   writeFileSync(join(batchDir, 'run.json'), JSON.stringify(record, null, 2));
   const kept = record.concepts.reduce((n, c) => n + c.kept, 0);
   log(`\nDone: ${kept} images kept from ${budget.used} renders, est. $${record.estimatedCostUsd}. ${batchDir}`);
+  if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });
   return record;
 }
 

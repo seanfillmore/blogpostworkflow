@@ -217,6 +217,9 @@ if [[ -f "$ROOT/$REELS_LEDGER" ]]; then
   reels_archive="$tmp/${REELS_PREFIX}-${stamp}.tar.gz"
   reels_files=("$REELS_LEDGER")
   [[ -f "$ROOT/data/ugc-reels/statics-ledger.json" ]] && reels_files+=("data/ugc-reels/statics-ledger.json")
+  # The Social queue (lib/social-queue.js): every approved image, its caption and
+  # what it posted where. Gitignored, so this is its only other copy.
+  [[ -d "$ROOT/data/social-queue" ]] && reels_files+=("data/social-queue")
   tar czf "$reels_archive" -C "$ROOT" "${reels_files[@]}"
   push_archive "$REELS_PREFIX" "$reels_archive" 1
 else

@@ -1,0 +1,8 @@
+{
+  "_note": "agents/social-poster. posts_per_day caps how many approved items START posting per UTC day; a retry of a platform that failed never counts against it. cron_utc must match DAILY_SOCIAL_POSTER in scripts/setup-cron.sh (pinned by a test). Cron is UTC-only on the server.",
+  "posts_per_day": 1,
+  "cron_utc": ["20 18 * * *"],
+  "platforms": ["instagram", "facebook"],
+  "instagram_user_id": "17841428233225633",
+  "facebook_page_id": "113847674946808"
+}
