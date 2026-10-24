@@ -235,6 +235,11 @@ DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review
 DAILY_UGC_REELS="20 16,20,1 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --apply >> data/reports/scheduler/ugc-reels.log 2>&1"
 WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --report --notify >> data/reports/scheduler/ugc-reels.log 2>&1"
 
+# Static ads (agents/ig-statics) as feed images, one a day at 18:20 UTC, between
+# the 16:20 and 20:20 Reels. Posts config/ig-statics.json in order, each once;
+# an empty queue posts nothing.
+DAILY_IG_STATICS="20 18 * * * cd \"$PROJECT_DIR\" && $NODE agents/ig-statics/index.js --apply >> data/reports/scheduler/ig-statics.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -626,6 +631,7 @@ $DAILY_AMAZON_ACCOUNT_HEALTH
 $DAILY_TRYBE_REVIEW
 $DAILY_UGC_REELS
 $WEEKLY_UGC_REELS_REPORT
+$DAILY_IG_STATICS
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
