@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { planBroadcast, recordBroadcast } from '../../lib/creator-broadcast.js';
+import { planBroadcast, recordBroadcast, holdUntilDelivered, isExpired } from '../../lib/creator-broadcast.js';
 import { sendMail } from '../../lib/hushmail.js';
 
 // FAKE DATA ONLY: invented people on example.com.
@@ -50,4 +50,38 @@ test('a planned message is accepted by sendMail as-is (the 2026-10-20 bug: it la
   });
   assert.deepEqual(body.to, ['ok@example.com']);
   assert.equal(body.text, 'Hi');
+});
+
+// FAKE DATA ONLY: invented sample orders.
+const order = (email, fulfillments, extra = {}) => ({ email, tags: ['sample-request', 'trybe'], note: 'Trybe sample request for Test Person', fulfillments, ...extra });
+const NOW = Date.parse('2026-10-24T12:00:00Z');
+
+test('holds a message until the sample is delivered and old enough', () => {
+  const orders = [
+    order('ready@example.com', [{ status: 'SUCCESS', displayStatus: 'DELIVERED', deliveredAt: '2026-10-17T10:00:00Z' }]),
+    order('fresh@example.com', [{ status: 'SUCCESS', displayStatus: 'DELIVERED', deliveredAt: '2026-10-22T10:00:00Z' }]),
+    order('transit@example.com', [{ status: 'SUCCESS', displayStatus: 'IN_TRANSIT' }]),
+    order('notsample@example.com', [{ status: 'SUCCESS', displayStatus: 'DELIVERED', deliveredAt: '2026-10-01T10:00:00Z' }], { tags: ['wholesale'] }),
+  ];
+  const { ready, waiting } = holdUntilDelivered(
+    [msg('Ready@example.com'), msg('fresh@example.com'), msg('transit@example.com'), msg('notsample@example.com'), msg('noorder@example.com')],
+    orders, { now: NOW, afterDays: 5 });
+  assert.deepEqual(ready.map((m) => m.email), ['Ready@example.com']);
+  assert.deepEqual(waiting.map((w) => w.email), ['fresh@example.com', 'transit@example.com', 'notsample@example.com', 'noorder@example.com']);
+  assert.match(waiting[0].reason, /waiting until 5 days/);
+});
+
+test('a creator with an older delivered sample is ready even while a newer one is in transit', () => {
+  const orders = [
+    order('two@example.com', [{ status: 'SUCCESS', displayStatus: 'DELIVERED', deliveredAt: '2026-10-02T10:00:00Z' }]),
+    order('two@example.com', [{ status: 'SUCCESS', displayStatus: 'IN_TRANSIT' }]),
+  ];
+  assert.equal(holdUntilDelivered([msg('two@example.com')], orders, { now: NOW, afterDays: 5 }).ready.length, 1);
+});
+
+test('expiry is inclusive of its own day and rejects a malformed date', () => {
+  assert.equal(isExpired(undefined, NOW), false);
+  assert.equal(isExpired('2026-10-24', NOW), false);
+  assert.equal(isExpired('2026-10-23', NOW), true);
+  assert.throws(() => isExpired('Nov 15', NOW), /YYYY-MM-DD/);
 });

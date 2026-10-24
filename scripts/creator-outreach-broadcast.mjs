@@ -11,6 +11,14 @@
  * state is server-owned, and the skip rules (open escalation, unknown creator,
  * already sent) read it. Takes the agent's own lock so a scheduled run cannot
  * interleave. Skip rules live in lib/creator-broadcast.js.
+ *
+ * Delivery-gated (for a review ask, which must not land before the product does):
+ *   --only-delivered        send only once the creator's Trybe sample order is delivered
+ *   --delivered-days <n>    ...and at least n days ago (default 0)
+ *   --expires <YYYY-MM-DD>  after this date, send nothing and say so. Required with
+ *                           --only-delivered, because that mode is meant to run daily
+ *                           from cron until everyone is ready, and a daily job with
+ *                           no end date is a hold nobody remembers.
  */
 import { readFileSync, existsSync, mkdirSync, statSync, writeFileSync, unlinkSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
@@ -18,7 +26,8 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../lib/is-direct-run.js';
 import { notify } from '../lib/notify.js';
 import { hushmailCredentials, sendMail, validateAttachments } from '../lib/hushmail.js';
-import { planBroadcast, recordBroadcast } from '../lib/creator-broadcast.js';
+import { planBroadcast, recordBroadcast, holdUntilDelivered, isExpired } from '../lib/creator-broadcast.js';
+import { fetchSampleOrders } from '../lib/trybe-sample-orders.js';
 import { readState, writeState, loadConfig, STATE_PATH } from '../agents/creator-outreach/index.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -51,6 +60,15 @@ async function main() {
   const [messagesPath] = argValues(args, '--messages');
   if (!id || !messagesPath) throw new Error('usage: --id <id> --messages <file.json> [--attach <file>]... [--apply]');
 
+  const onlyDelivered = args.includes('--only-delivered');
+  const [deliveredDaysArg] = argValues(args, '--delivered-days');
+  const [expires] = argValues(args, '--expires');
+  if (onlyDelivered && !expires) throw new Error('--only-delivered needs --expires YYYY-MM-DD');
+  if (isExpired(expires)) {
+    console.log(`broadcast "${id}" expired ${expires}; sending nothing. Remove its cron line.`);
+    return;
+  }
+
   const config = loadConfig();
   if (config.enabled === false) throw new Error('creator-outreach is disabled in config/creator-outreach.json; refusing to send');
   const state = readState();
@@ -58,8 +76,16 @@ async function main() {
 
   const attachments = argValues(args, '--attach').map((p) => ({ filename: basename(p), content: readFileSync(p) }));
   validateAttachments(attachments);
-  const messages = JSON.parse(readFileSync(messagesPath, 'utf8'));
-  const { send, skipped } = planBroadcast(messages, state, id);
+  let messages = JSON.parse(readFileSync(messagesPath, 'utf8'));
+  const waiting = [];
+  if (onlyDelivered) {
+    const orders = await fetchSampleOrders();
+    const held = holdUntilDelivered(messages, orders, { afterDays: Number(deliveredDaysArg || 0) });
+    messages = held.ready;
+    waiting.push(...held.waiting);
+  }
+  const { send, skipped: planSkipped } = planBroadcast(messages, state, id);
+  const skipped = [...planSkipped, ...waiting];
 
   console.log(`broadcast "${id}": ${send.length} to send, ${skipped.length} skipped${attachments.length ? `, attaching ${attachments.map((a) => `${a.filename} (${a.content.length} bytes)`).join(', ')}` : ''}`);
   for (const s of skipped) console.log(`  SKIP ${s.email}: ${s.reason}`);
@@ -68,6 +94,8 @@ async function main() {
     console.log('dry run; add --apply to send');
     return;
   }
+  // A daily delivery-gated run usually has nobody ready; that is not news.
+  if (!send.length) return;
 
   mkdirSync(dirname(LOCK_PATH), { recursive: true });
   if (existsSync(LOCK_PATH) && Date.now() - statSync(LOCK_PATH).mtimeMs < 25 * 60_000) {
