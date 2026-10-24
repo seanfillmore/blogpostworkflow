@@ -4,6 +4,7 @@
  *
  *   node scripts/social-queue-ingest.mjs --batch "<ad batch dir>"          # dry run
  *   node scripts/social-queue-ingest.mjs --batch "<ad batch dir>" --apply  # caption, upload, queue
+ *   ... --post-by 2026-10-31   # seasonal: posts ahead of its product's other items, never after that UTC day
  *
  * Run on the Mac (it needs the image files). Every KEPT image in the batch's
  * run.json becomes a PENDING item on the production dashboard, with a suggested
@@ -55,9 +56,9 @@ export async function liveDeps({ apply, log = console.log }) {
   };
 }
 
-export async function runIngest({ batchDir, apply = false, log = console.log }) {
+export async function runIngest({ batchDir, apply = false, log = console.log, postBy = null }) {
   const deps = await liveDeps({ apply, log });
-  return ingestBatch({ batchDir: resolve(batchDir), apply, deps });
+  return ingestBatch({ batchDir: resolve(batchDir), apply, deps, postBy });
 }
 
 async function main() {
@@ -66,8 +67,10 @@ async function main() {
   const batchDir = i !== -1 ? args[i + 1] : null;
   if (!batchDir) { console.error('Usage: node scripts/social-queue-ingest.mjs --batch "<ad batch dir>" [--apply]'); process.exit(64); }
   const apply = args.includes('--apply');
+  const pb = args.indexOf('--post-by');
+  const postBy = pb !== -1 ? args[pb + 1] : null;
   console.log(`Social queue ingest${apply ? '' : ' (dry run)'}: ${batchDir}`);
-  const s = await runIngest({ batchDir, apply });
+  const s = await runIngest({ batchDir, apply, postBy });
   console.log(`\n${s.kept} kept image(s): ${s.already.length} already queued, ${apply ? `${s.created.length} added, ${s.failed.length} failed` : `${s.wouldAdd.length} would be added`}${s.missing.length ? `, ${s.missing.length} file(s) missing` : ''}.`);
   if (s.uncaptioned.length) console.log(`${s.uncaptioned.length} added with no suggested caption (write one in the Social tab).`);
   if (s.failed.length) { console.log(`Re-run to retry: ${rerunCommand(batchDir)}`); process.exit(1); }

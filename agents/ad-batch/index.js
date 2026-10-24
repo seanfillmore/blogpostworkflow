@@ -29,7 +29,7 @@
 // approves one. --no-social skips that; a failure there never fails the batch.
 // Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
 
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -44,7 +44,7 @@ import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
 import {
   DEFAULT_OUT_ROOT, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
-  ensureDir, writeContactSheet, scenesMarkdown,
+  ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
 } from './output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -257,7 +257,10 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
   saveUsage(args.out, usage);
   record.renders = budget.used;
   record.estimatedCostUsd = Math.round(budget.costUsd * 100) / 100;
-  writeFileSync(join(batchDir, 'run.json'), JSON.stringify(record, null, 2));
+  const runPath = join(batchDir, 'run.json');
+  let prior = null;
+  if (existsSync(runPath)) { try { prior = JSON.parse(readFileSync(runPath, 'utf8')); } catch { prior = null; } }
+  writeFileSync(runPath, JSON.stringify(mergeRunRecord(prior, record), null, 2));
   const kept = record.concepts.reduce((n, c) => n + c.kept, 0);
   log(`\nDone: ${kept} images kept from ${budget.used} renders, est. $${record.estimatedCostUsd}. ${batchDir}`);
   if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });

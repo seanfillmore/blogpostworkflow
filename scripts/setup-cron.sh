@@ -236,12 +236,14 @@ DAILY_UGC_REELS="20 16,20,1 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/
 WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --report --notify >> data/reports/scheduler/ugc-reels.log 2>&1"
 
 # Social queue (agents/social-poster): APPROVED ad images from the dashboard's
-# Social tab, posted to Instagram AND the Facebook Page, one new item a day at
-# 18:20 UTC (between the 16:20 and 20:20 Reels). A platform that failed is retried
+# Social tab, posted to Instagram AND the Facebook Page. Three a day since
+# 2026-10-24 (Sean: "three statics a day and rotate between the products"):
+# 18:20, 22:20 and 03:20 UTC, one new item per run, each between two Reels
+# (16:20, 20:20, 01:20). posts_per_day caps it at 3 per UTC day. A platform that failed is retried
 # alone on the next run. Must match cron_utc in config/social-queue.json (pinned by
 # tests/agents/social-poster.test.js). Replaced DAILY_IG_STATICS (agents/ig-statics)
 # on 2026-10-24, in the same minute; the old job is retired here AND live.
-DAILY_SOCIAL_POSTER="20 18 * * * cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
+DAILY_SOCIAL_POSTER="20 18,22,3 * * * cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
 
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
