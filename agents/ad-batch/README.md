@@ -5,6 +5,7 @@ One concept in, 15-20 finished 4:5 ad images out. You write the headlines. The t
 ```bash
 npm run ad-batch -- batch.json            # render
 npm run ad-batch -- batch.json --dry-run  # plan the scenes, print the first prompt, render nothing
+npm run ad-batch -- --copy-only "<batch dir>" [--rewrite-copy] [--landing /pages/x]   # Meta copy only, no renders
 ```
 
 ```json
@@ -29,6 +30,7 @@ npm run ad-batch -- batch.json --dry-run  # plan the scenes, print the first pro
 - **`scenes`**: optional. A list of one-line scenes that replaces the library for this batch.
 - **`style`**: `photo` (default) or `animated`. Animated is a stylized 3D-animated scene: cartoon characters act out the headline, and OUR product is the one object kept photo-real and exact, at 25-35% of the frame (held by a character or in the foreground) instead of half of it. A character may hold a rival product only if it is generic or carries a made-up parody name. Library scenes are tagged by style, the fresh-scene planner writes character scenes, and the check accepts cartoon hands. The label check is unchanged.
 - **`typeStyle`**: optional lettering for a custom `scenes` list, which otherwise gets a generic pairing.
+- **`landing`**: optional. The realskincare.com URL or path the ad sends people to. Default: the product page, or for a set the bundle in `config/bundles.json` with exactly those products.
 - **`concepts[].cta`**: optional. A short button line ("See real cream →") set in a pill under the headline. It is gated and checked letter by letter like the headline.
 
 Output goes to `~/Desktop/Ad Batches/<date> <product>/<NN headline>/`:
@@ -36,7 +38,10 @@ Output goes to `~/Desktop/Ad Batches/<date> <product>/<NN headline>/`:
 - `_rejected/`, which holds failed images with the reason in `scenes.md`;
 - `_contact sheet.jpg`, where ✋ marks hands;
 - `scenes.md`;
-- the batch's `run.json`.
+- the batch's `run.json`;
+- `meta-copy.md`: the Meta ad copy, 4 primary texts (each under 300 characters, at least one under 125) and 4 headlines (40 characters or fewer), the landing page, which copy goes with which folder, and the source of every claim.
+
+**Meta copy.** After rendering, and before the images are queued in the Social tab, the tool writes `meta-copy.md` (`meta-copy.js`). The Social tab's suggested captions are grounded in it. Sources are the live product page, `data/brand/product-catalog.json`, ingredient lists by scent from `config/ingredients.json`, the brand facts in `config/press-facts.json` (no prices, percentages or review counts) and screened 4-5 star reviews. Every string goes through the shared gates: the commercial health-claim gate with one retry (`lib/seo-copy-gate-loop.js`), ad-concepts' `gateCopy` (ad health gate, claim sourcing, competitors, sibling scents, "antiperspirant"), no dashes, no prices, and every number must be quoted in a sourced claim for that field. If the copy fails twice, no file is written and the captions fall back to the image headlines; the batch never fails over copy. An existing `meta-copy.md` is left alone unless you pass `--rewrite-copy` (the old one is kept as `meta-copy.previous-<time>.md`). `--no-copy` skips the step. The outcome is in `run.json` under `metaCopy`.
 
 **Adding scenes:** edit `data/ad-batch/scenes.json`. Give each scene a family, a one-line scene, a type style and the product categories it suits. Add `"style": "animated"` for an animated scene; untagged scenes are photo scenes.
 
