@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { negativeBlocks, findConflicts, findMissingDemand, buildMarkdown, deadSpendQueries } from '../../agents/shopping-calibrator/index.js';
+import { negativeBlocks, findConflicts, findMissingDemand, buildMarkdown, deadSpendQueries, advertisedPrice } from '../../agents/shopping-calibrator/index.js';
 
 test('negativeBlocks mirrors Google match semantics', () => {
   assert.equal(negativeBlocks('natural lotion for stretch marks', 'stretch marks', 'PHRASE'), true);
@@ -151,4 +151,14 @@ test('buildMarkdown does not claim negatives were added when the safety rail ski
   }, '2026-10-04');
   assert.doesNotMatch(md, /Added as negatives/);
   assert.match(md, /Added 0 as negatives; 1 skipped/);
+});
+
+test('our price is the cheapest ADVERTISED item, matched case-insensitively', () => {
+  const products = [
+    { itemId: 'shopify_US_1_10', price: 13 }, { itemId: 'rsc_pack_20', price: 39 }, { itemId: 'shopify_US_9_90', price: 30 },
+  ];
+  assert.equal(advertisedPrice(['shopify_us_1_10', 'rsc_pack_20'], products), 13);
+  assert.equal(advertisedPrice(['shopify_us_9_90'], products), 30);
+  assert.equal(advertisedPrice(['shopify_us_404_0'], products), null);
+  assert.equal(advertisedPrice([], products), null);
 });
