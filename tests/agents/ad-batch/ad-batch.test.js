@@ -10,7 +10,7 @@ import { selectLibraryScenes, parseFreshScenes, customScenes, suitsCategory, gen
 import { buildPrompt, productForm } from '../../../agents/ad-batch/prompt.js';
 import { tokens, findRun, decide, requiredLabelStrings, inventedClaims, parseCheck, checkPrompt } from '../../../agents/ad-batch/check.js';
 import { openAiCostUsd, ATTEMPTS } from '../../../agents/ad-batch/render.js';
-import { slug, batchDirName, conceptDirName, imageName, scenesMarkdown } from '../../../agents/ad-batch/output.js';
+import { slug, batchDirName, conceptDirName, imageName, scenesMarkdown, mergeRunRecord } from '../../../agents/ad-batch/output.js';
 import { parseArgs, planScenes, renderScene } from '../../../agents/ad-batch/index.js';
 
 const library = JSON.parse(readFileSync(new URL('../../../data/ad-batch/scenes.json', import.meta.url)));
@@ -471,4 +471,13 @@ test('queueForSocial never throws and prints the re-run command on failure', asy
   const ok = await queueForSocial('/x/batch', { log: () => {}, ingest: async () => ({ created: ['a'], already: [], failed: [] }) });
   assert.deepEqual(ok.created, ['a']);
   assert.equal(parseArgs(['b.json', '--no-social']).social, false);
+});
+
+test('mergeRunRecord keeps an earlier batch in the same folder, replaces a re-rendered concept', () => {
+  const prior = { product: { handle: 'p' }, concepts: [{ dir: '/b/01 Parody', kept: 5 }, { dir: '/b/01 Dry', kept: 1 }] };
+  const now = { product: { handle: 'p' }, concepts: [{ dir: '/b/01 Dry', kept: 5 }] };
+  const m = mergeRunRecord(prior, now);
+  assert.deepEqual(m.concepts.map(c => [c.dir, c.kept]), [['/b/01 Parody', 5], ['/b/01 Dry', 5]]);
+  assert.equal(mergeRunRecord(null, now), now);
+  assert.equal(mergeRunRecord({ junk: true }, now), now);
 });

@@ -13,7 +13,8 @@
  *      item's record is lost (a caption found live is recorded `detected`);
  *   3. RETRY: finishes at most one item that posted on one platform and still
  *      owes the other (never counted against posts_per_day);
- *   4. FRESH: posts the oldest approved item that has posted nowhere, unless
+ *   4. FRESH: posts the next approved item that has posted nowhere, rotating
+ *      between products (nextInRotation in lib/social-queue.js), unless
  *      posts_per_day items already started today (UTC);
  *   5. records each platform's result on the item the moment it lands.
  * A platform that fails is retried next run, alone; after two failures it is
@@ -24,7 +25,7 @@
  *   node agents/social-poster/index.js --apply      # post (cron)
  *   node agents/social-poster/index.js --report     # what posted, with insights
  *
- * Cron: DAILY_SOCIAL_POSTER (18:20 UTC) in scripts/setup-cron.sh; config in
+ * Cron: DAILY_SOCIAL_POSTER (18:20, 22:20 and 03:20 UTC) in scripts/setup-cron.sh; config in
  * config/social-queue.json. Requires META_USER_ACCESS_TOKEN (system user: holds
  * instagram_content_publish and pages_manage_posts).
  */

@@ -5,7 +5,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import {
   captionProblems, alreadyPosted, newItem, editCaption, approveItem, unapproveItem, rejectItem,
-  postingOrder, planRun, insightsDue, loadItems, saveItem, readItem, updateItem, ID_RE, MAX_PLATFORM_FAILURES,
+  postingOrder, planRun, nextInRotation, insightsDue, loadItems, saveItem, readItem, updateItem, ID_RE, MAX_PLATFORM_FAILURES,
 } from '../../lib/social-queue.js';
 
 const OK = 'Our body cream starts from a 7-ingredient base.\n\nLink in bio.\n\n#realskincare #bodycream';
@@ -132,4 +132,54 @@ test('store: atomic save, read, update; an unreadable file is skipped, not throw
   assert.equal(readItem(dir, 'nope-1'), null);
   assert.ok(!readdirSync(dir).some((n) => n.includes('.tmp-')), 'no temp files left behind');
   assert.throws(() => saveItem(dir, { id: '../x' }), /slug/);
+});
+
+// ── rotation and post_by (2026-10-24: three a day, rotate between products) ──
+const POSTED = (at) => ({ media_id: 'm', posted_at: at });
+
+test('planRun rotates: the product posted least recently goes next, never-posted first', () => {
+  const items = [
+    approved('cream-1', '2026-10-20T00:00:00Z', { product: 'cream', instagram: POSTED('2026-10-24T03:20:00Z'), facebook: POSTED('2026-10-24T03:20:00Z') }),
+    approved('cream-2', '2026-10-20T00:00:01Z', { product: 'cream' }),
+    approved('tp-1', '2026-10-21T00:00:00Z', { product: 'toothpaste', instagram: POSTED('2026-10-23T22:20:00Z'), facebook: POSTED('2026-10-23T22:20:00Z') }),
+    approved('tp-2', '2026-10-21T00:00:01Z', { product: 'toothpaste' }),
+    approved('soap-1', '2026-10-22T00:00:00Z', { product: 'soap' }),
+  ];
+  assert.equal(planRun(items, { postsPerDay: 3, now: NOW }).fresh.item.id, 'soap-1', 'a product that never posted goes first');
+  const soapDone = items.map((i) => (i.id === 'soap-1' ? { ...i, instagram: POSTED('2026-10-24T18:20:00Z'), facebook: POSTED('2026-10-24T18:20:00Z') } : i));
+  assert.equal(planRun(soapDone, { postsPerDay: 3, now: NOW }).fresh.item.id, 'tp-2', 'then the least recently posted product, not the oldest approval');
+});
+
+test('post_by goes first within its product, and is skipped once the day has passed', () => {
+  const i = newItem({ id: 'hw-1', image_url: 'https://cdn.shopify.com/a.jpg', post_by: '2026-10-31' });
+  assert.equal(i.post_by, '2026-10-31');
+  assert.equal(newItem({ id: 'hw-2', image_url: 'https://cdn.shopify.com/a.jpg', post_by: 'Halloween' }).post_by, null);
+  const items = [
+    approved('tp-a', '2026-10-20T00:00:00Z', { product: 'toothpaste' }),
+    approved('tp-halloween', '2026-10-23T00:00:00Z', { product: 'toothpaste', post_by: '2026-10-31' }),
+  ];
+  assert.equal(planRun(items, { postsPerDay: 3, now: NOW }).fresh.item.id, 'tp-halloween');
+  const late = planRun(items, { postsPerDay: 3, now: Date.parse('2026-11-01T18:20:00Z') });
+  assert.equal(late.fresh.item.id, 'tp-a');
+  assert.ok(late.skipped.some((s) => s.id === 'tp-halloween' && /post-by/.test(s.reason)));
+});
+
+test('three runs in a day post three different products, then the cap stops a fourth', () => {
+  let items = ['cream', 'toothpaste', 'soap', 'lotion'].flatMap((p) => [1, 2].map((n) => approved(`${p}-${n}`, `2026-10-2${n}T00:00:00Z`, { product: p })));
+  const posted = [];
+  const day = Date.parse('2026-10-25T00:00:00Z');
+  for (const h of [3, 18, 22, 23]) {
+    const now = day + h * 3_600_000;
+    const plan = planRun(items, { postsPerDay: 3, now });
+    if (!plan.fresh) { assert.match(plan.reason, /posts_per_day 3/); continue; }
+    const at = new Date(now).toISOString();
+    posted.push(plan.fresh.item.product);
+    items = items.map((i) => (i.id === plan.fresh.item.id ? { ...i, instagram: POSTED(at), facebook: POSTED(at) } : i));
+  }
+  assert.equal(posted.length, 3);
+  assert.equal(new Set(posted).size, 3);
+});
+
+test('nextInRotation: nothing to choose is null', () => {
+  assert.equal(nextInRotation([], []), null);
 });

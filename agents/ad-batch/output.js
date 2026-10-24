@@ -86,3 +86,21 @@ export function scenesMarkdown({ concept, results }) {
   });
   return lines.join('\n') + '\n';
 }
+
+/**
+ * The run.json to write for a batch folder that may already hold one. Two batches
+ * of one product on one day share a folder (batchDirName is date + product), and
+ * the second used to OVERWRITE the first's run.json, so its concepts vanished from
+ * the record the Social ingest reads (found 2026-10-24: a 5-image parody batch and
+ * two toothpaste batches could not be queued). Earlier concepts are kept unless this
+ * run re-rendered the same concept folder; a prior file that cannot be read is
+ * replaced, as before.
+ */
+export function mergeRunRecord(prior, record) {
+  if (!prior || !Array.isArray(prior.concepts)) return record;
+  const dirs = new Set(record.concepts.map(c => c.dir));
+  const earlier = prior.concepts.filter(c => !dirs.has(c.dir));
+  if (!earlier.length) return record;
+  return { ...record, concepts: [...earlier, ...record.concepts] };
+}
+
