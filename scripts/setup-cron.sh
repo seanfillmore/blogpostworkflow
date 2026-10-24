@@ -225,6 +225,10 @@ DAILY_INBOX_SORTER="40 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/inbox-sorter
 # rules and reports in the digest; emails immediately the first time a rule is
 # hit. Reports only, never pauses. 12:10 UTC, ahead of the 13:00 digest.
 DAILY_AD_TEST_MONITOR="10 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/ad-test-monitor/index.js --notify >> data/reports/scheduler/ad-test-monitor.log 2>&1"
+# Pack listings: Shopify's Google channel refuses componentized bundles, so packs
+# (config/pack-listings.json) are written to our own Merchant Center data source.
+# Daily so price and stock follow the store. 11:50 UTC, ahead of the 13:00 digest.
+DAILY_PACK_LISTINGS="50 11 * * * cd \"$PROJECT_DIR\" && $NODE scripts/sync-pack-listings.mjs --apply >> data/reports/scheduler/pack-listings.log 2>&1"
 DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
 # Creator review ask (one-off, EXPIRES 2026-11-15): sends the approved honest-review
 # email to the 4 creators whose samples were still in transit on 2026-10-24, each
@@ -638,6 +642,7 @@ $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_AMAZON_ACCOUNT_HEALTH
 # ── Creator program (daily, before the digest) ──
+$DAILY_PACK_LISTINGS
 $DAILY_TRYBE_REVIEW
 $DAILY_CREATOR_REVIEW_ASK
 $DAILY_UGC_REELS
