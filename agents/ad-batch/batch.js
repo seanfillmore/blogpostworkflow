@@ -54,7 +54,7 @@ export function categoryFor(handle) {
  * the list (one entry for a single product); `product`/`variant` are kept for single runs.
  *
  * @returns {{product:string|null, variant:string|null, items:Array<{product:string, variant:string|null}>,
- *            title:string|null, count:number, form:string|null, style:string, typeStyle:string|null,
+ *            title:string|null, count:number, form:string|null, style:string, typeStyle:string|null, landing:string|null,
  *            concepts:Array<{headline:string, subhead:string|null, cta:string|null}>, scenes:string[]}}
  */
 export function parseBatch(raw) {
@@ -97,6 +97,11 @@ export function parseBatch(raw) {
   if (!STYLES.includes(style)) errors.push(`"style" must be ${STYLES.join(' or ')} (got ${raw.style})`);
   // Lettering for a custom scene list, which otherwise gets the generic pairing.
   const typeStyle = str(raw.typeStyle);
+  // Where the ad sends people (meta-copy.md's landing page). A realskincare.com URL or a path.
+  const landing = str(raw.landing);
+  if (landing && !/^\//.test(landing) && !/^https:\/\/(www\.)?realskincare\.com(\/|$)/i.test(landing)) {
+    errors.push('"landing" must be a https://www.realskincare.com URL or a path starting with /');
+  }
   const concepts = [];
   if (!Array.isArray(raw.concepts) || raw.concepts.length === 0) {
     errors.push('"concepts" must be a non-empty list of { headline, subhead? }');
@@ -114,7 +119,7 @@ export function parseBatch(raw) {
     ? raw.scenes.map(s => String(s || '').trim()).filter(Boolean)
     : [];
   if (errors.length) throw new Error('ad-batch: invalid batch file:\n  - ' + errors.join('\n  - '));
-  return { product, variant, items, title, count, form, style, typeStyle, concepts, scenes };
+  return { product, variant, items, title, count, form, style, typeStyle, landing, concepts, scenes };
 }
 
 /**

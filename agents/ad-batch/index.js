@@ -10,6 +10,8 @@
 // Usage:
 //   node agents/ad-batch/index.js <batch.json> [--dry-run] [--out <dir>]
 //                                 [--max-renders N] [--concurrency N] [--no-social]
+//                                 [--no-copy] [--rewrite-copy]
+//   node agents/ad-batch/index.js --copy-only "<batch dir>" [--rewrite-copy] [--landing <url>]
 //
 // Batch file:
 //   { "product": "coconut-moisturizer", "variant": "coconut-breeze",
@@ -22,8 +24,16 @@
 //                   { "product": "coconut-moisturizer", "variant": "pure-unscented" } ],
 //     "title": "Sensitive Skin Moisturizing Set", "concepts": [ ... ] }
 //
+// Optional "landing": a realskincare.com URL or path the ad sends people to (default: the
+// product page, or for a set the matching bundle in config/bundles.json).
+//
 // Output: ~/Desktop/Ad Batches/<date> <product>/<NN headline>/ — images, _rejected/,
 // _contact sheet.jpg, scenes.md — plus run.json for the batch. Nothing is published.
+// After rendering, meta-copy.md is written for the batch (agents/ad-batch/meta-copy.js):
+// 4 primary texts and 4 headlines, every claim sourced and gated, which the Social tab's
+// captions are grounded in. An existing meta-copy.md is never replaced without
+// --rewrite-copy; --no-copy skips the step; a copy failure never fails the batch.
+// --copy-only writes the copy for an existing batch folder from its run.json, rendering nothing.
 // At the end of a successful run the kept images are queued as PENDING items in the
 // dashboard's Social tab (scripts/social-queue-ingest.mjs); nothing posts until Sean
 // approves one. --no-social skips that; a failure there never fails the batch.
@@ -42,6 +52,7 @@ import { selectLibraryScenes, customScenes, generateFreshScenes, LIBRARY_SHARE }
 import { buildPrompt } from './prompt.js';
 import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
+import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
 import {
   DEFAULT_OUT_ROOT, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
   ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
@@ -52,17 +63,27 @@ export const DEFAULT_MAX_RENDERS = 120;
 export const DEFAULT_CONCURRENCY = 4;
 
 export function parseArgs(argv) {
-  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, social: true };
+  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, social: true, copy: true, rewriteCopy: false, copyOnly: null, landing: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
     else if (a === '--no-social') args.social = false;
+    else if (a === '--no-copy') args.copy = false;
+    else if (a === '--rewrite-copy') args.rewriteCopy = true;
+    else if (a === '--copy-only') args.copyOnly = resolve(argv[++i] || '');
+    else if (a === '--landing') args.landing = argv[++i] || null;
     else if (a === '--out') args.out = resolve(argv[++i]);
     else if (a === '--max-renders') args.maxRenders = Number(argv[++i]);
     else if (a === '--concurrency') args.concurrency = Number(argv[++i]);
     else if (!a.startsWith('--') && !args.batchFile) args.batchFile = a;
     else throw new Error(`ad-batch: unknown argument ${a}`);
   }
+  if (args.copyOnly) {
+    if (args.batchFile) throw new Error('ad-batch: --copy-only takes a batch folder, not a batch file');
+    if (!args.copy) throw new Error('ad-batch: --copy-only and --no-copy contradict each other');
+    return args;
+  }
+  if (args.landing) throw new Error('ad-batch: --landing is for --copy-only; put "landing" in the batch file instead');
   if (!args.batchFile) throw new Error('ad-batch: usage: node agents/ad-batch/index.js <batch.json> [--dry-run]');
   if (!(args.maxRenders > 0)) throw new Error('ad-batch: --max-renders must be a positive number');
   if (!(args.concurrency >= 1)) throw new Error('ad-batch: --concurrency must be at least 1');
@@ -179,9 +200,39 @@ export async function queueForSocial(batchDir, { log = console.log, ingest } = {
   }
 }
 
-export async function main(argv = process.argv.slice(2), { log = console.log, ingest } = {}) {
+/** Write meta-copy.md for a batch folder and stamp the outcome into its run.json. Never throws. */
+export async function writeCopyForBatch(batchDir, record, { rewrite = false, log = console.log, deps } = {}) {
+  let outcome;
+  try {
+    outcome = await writeBatchMetaCopy({ batchDir, record, rewrite, deps, log });
+  } catch (err) {
+    outcome = { status: 'failed', reason: err.message };
+    log(`⚠ Meta copy step failed: ${err.message}`);
+  }
+  try {
+    const runPath = join(batchDir, 'run.json');
+    const run = existsSync(runPath) ? JSON.parse(readFileSync(runPath, 'utf8')) : record;
+    writeFileSync(runPath, JSON.stringify({ ...run, metaCopy: outcome }, null, 2));
+  } catch (err) { log(`⚠ could not record the meta copy outcome in run.json: ${err.message}`); }
+  return outcome;
+}
+
+/** --copy-only: the copy step alone, for an existing batch folder. No renders, no social. */
+export async function copyOnly(args, { log = console.log, deps } = {}) {
+  const runPath = join(args.copyOnly, 'run.json');
+  if (!existsSync(runPath)) throw new Error(`ad-batch: no run.json in ${args.copyOnly}`);
+  const run = JSON.parse(readFileSync(runPath, 'utf8'));
+  const record = args.landing ? { ...run, landing: args.landing } : run;
+  return writeCopyForBatch(args.copyOnly, record, { rewrite: args.rewriteCopy, log, deps });
+}
+
+export async function main(argv = process.argv.slice(2), { log = console.log, ingest, copyDeps } = {}) {
   const args = parseArgs(argv);
   const env = { ...loadEnv(), ...process.env };
+  if (args.copyOnly) {
+    const deps = copyDeps || await defaultMetaCopyDeps({ root: ROOT, anthropic: new Anthropic(), env });
+    return copyOnly(args, { log, deps });
+  }
   const batch = parseBatch(JSON.parse(readFileSync(resolve(args.batchFile), 'utf8')));
   const manifest = JSON.parse(readFileSync(join(ROOT, 'data/product-images/manifest.json'), 'utf8'));
   const references = JSON.parse(readFileSync(join(ROOT, 'data/ad-batch/references.json'), 'utf8'));
@@ -226,7 +277,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
   const record = {
     generatedAt: new Date().toISOString(),
     product: { handle: product.handle, variant: product.variant, title: product.title, items: product.items?.map(i => ({ handle: i.handle, variant: i.variant })) },
-    style: batch.style, skipped, concepts: [],
+    style: batch.style, landing: batch.landing, skipped, concepts: [],
   };
 
   for (const [ci, plan] of plans.entries()) {
@@ -263,6 +314,14 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
   writeFileSync(runPath, JSON.stringify(mergeRunRecord(prior, record), null, 2));
   const kept = record.concepts.reduce((n, c) => n + c.kept, 0);
   log(`\nDone: ${kept} images kept from ${budget.used} renders, est. $${record.estimatedCostUsd}. ${batchDir}`);
+  if (args.copy && kept > 0) {
+    let deps = copyDeps || null;
+    try { deps = deps || await defaultMetaCopyDeps({ root: ROOT, anthropic, env }); }
+    catch (err) { log(`⚠ Meta copy skipped, could not load its sources: ${err.message}`); }
+    record.metaCopy = deps
+      ? await writeCopyForBatch(batchDir, record, { rewrite: args.rewriteCopy, log, deps })
+      : { status: 'failed', reason: 'could not load the copy sources' };
+  }
   if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });
   return record;
 }
