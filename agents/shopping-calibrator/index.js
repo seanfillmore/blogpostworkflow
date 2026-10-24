@@ -43,7 +43,27 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'shopping-calibrator');
 
 const SHARED_SET_NAME = 'RSC | Shopping — Master Negatives';
 const CAMPAIGN_PREFIX = 'RSC | Shopping Test';
-const DEFAULT_PRICE = 30; // Shopify lotion price — what the Google feed shows
+const DEFAULT_PRICE = 30; // fallback only: the lotion price the first Shopping test advertised
+
+/**
+ * The price the waste rule judges against: the CHEAPEST item the enabled test
+ * campaigns actually advertise. It used to be the hardcoded $30 lotion, which
+ * was right while the only test sold lotion and became actively harmful when the
+ * campaign switched to toothpaste on 2026-10-24: against $30, a $13 tube's whole
+ * search market reads as "clears below 60% of our price" and gets negated. The
+ * minimum is the conservative choice, since a higher price negates more.
+ *
+ * @param {string[]} advertisedItemIds  listing-group item ids (Google lower-cases them)
+ * @param {Array<{itemId: string, price: number}>} products  shopping_product prices
+ * @returns {number|null}  null when nothing advertised has a known price
+ */
+export function advertisedPrice(advertisedItemIds, products) {
+  const want = new Set(advertisedItemIds.map((id) => String(id).toLowerCase()));
+  const prices = products
+    .filter((p) => want.has(String(p.itemId).toLowerCase()) && Number(p.price) > 0)
+    .map((p) => Number(p.price));
+  return prices.length ? Math.min(...prices) : null;
+}
 
 // ── pure helpers ──────────────────────────────────────────────────────────────
 
@@ -202,7 +222,24 @@ async function main() {
   const args = process.argv.slice(2);
   const APPLY = args.includes('--apply');
   const priceArg = args.indexOf('--price');
-  const ourPrice = priceArg !== -1 ? Number(args[priceArg + 1]) : DEFAULT_PRICE;
+  let ourPrice = priceArg !== -1 ? Number(args[priceArg + 1]) : null;
+  if (ourPrice == null) {
+    const units = await gaqlQuery(`
+      SELECT ad_group_criterion.listing_group.case_value.product_item_id.value
+      FROM ad_group_criterion
+      WHERE ad_group_criterion.type = 'LISTING_GROUP' AND ad_group_criterion.listing_group.type = 'UNIT'
+        AND ad_group_criterion.negative = FALSE AND ad_group_criterion.status = 'ENABLED'
+        AND ad_group.status = 'ENABLED' AND campaign.status = 'ENABLED'
+        AND campaign.name LIKE '${CAMPAIGN_PREFIX}%'`);
+    const ids = units.map((r) => r.adGroupCriterion.listingGroup?.caseValue?.productItemId?.value).filter(Boolean);
+    const prods = (await gaqlQuery('SELECT shopping_product.item_id, shopping_product.price_micros FROM shopping_product'))
+      .map((r) => ({ itemId: r.shoppingProduct.itemId, price: Number(r.shoppingProduct.priceMicros) / 1e6 }));
+    const found = advertisedPrice(ids, prods);
+    ourPrice = found ?? DEFAULT_PRICE;
+    console.log(found != null
+      ? `Our price: $${found.toFixed(2)}, the cheapest of ${ids.length} advertised item(s).`
+      : `No advertised item with a known price; falling back to $${DEFAULT_PRICE}.`);
+  }
 
   const { rows, weeks } = loadSqp();
   // The price-gap, missing-demand and conflict checks all need Amazon SQP. The
