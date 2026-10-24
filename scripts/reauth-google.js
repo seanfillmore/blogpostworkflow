@@ -10,6 +10,13 @@
  *   - analytics.readonly     (GA4 reporting API)
  *   - adwords                (Google Ads API)
  *   - datamanager            (Data Manager API — offline conversion upload)
+ *   - content                (Merchant API — Shopify's Google channel refuses
+ *                             componentized bundles, so multipack listings and
+ *                             promotions have to be written to Merchant Center
+ *                             directly; added 2026-10-23)
+ *
+ * The new token REPLACES the old one, so every scope above is re-requested.
+ * Copy the new GOOGLE_REFRESH_TOKEN to the server's .env as well.
  *
  * Prerequisites: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET must be in .env
  *
@@ -36,6 +43,7 @@ const SCOPES = [
   'https://www.googleapis.com/auth/analytics.readonly',   // GA4 reporting
   'https://www.googleapis.com/auth/adwords',              // Google Ads API
   'https://www.googleapis.com/auth/datamanager',          // Data Manager API (offline conversion upload)
+  'https://www.googleapis.com/auth/content',              // Merchant API (multipack listings, promotions, product issues)
 ].join(' ');
 
 function loadEnv() {
