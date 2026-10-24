@@ -1,0 +1,9 @@
+{
+  "_note": "Shopify packs (componentized bundles) to list in Google Merchant Center directly. Shopify's Google & YouTube channel refuses bundles ('does not support variant-fixed bundles'), so scripts/sync-pack-listings.mjs writes them to our own API data source. Approved by Sean 2026-10-23. Adding a handle here lists it on the next daily sync; removing one deletes its items.",
+  "merchantId": "729030085",
+  "dataSourceName": "RSC packs (API)",
+  "handles": [
+    "coconut-toothpaste-3-pack",
+    "coconut-lotion-4-pack"
+  ]
+}
