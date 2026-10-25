@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Dish contest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/tv.css">
+</head>
+<body>
+<div class="gingham gingham-top" aria-hidden="true"></div>
+
+<main id="stage" class="stage" aria-live="polite">
+  <section class="screen screen-loading" id="screen-loading">
+    <p class="loading-text">Getting the dishes ready</p>
+  </section>
+
+  <!-- setup + open share one layout: wall on the left, clock and QR on the right -->
+  <section class="screen screen-wall" id="screen-wall" hidden>
+    <header class="wall-head">
+      <p class="event-title" id="wall-title"></p>
+      <h1 class="wall-heading" id="wall-heading">Vote for your favorites</h1>
+    </header>
+    <div class="wall-body">
+      <div class="wall" id="wall"></div>
+      <aside class="side">
+        <div class="clock-block" id="clock-block">
+          <p class="clock-label" id="clock-label">Time left to vote</p>
+          <p class="clock" id="clock" role="timer">--:--</p>
+        </div>
+        <div class="qr-card">
+          <img class="qr" src="/contest/qr.svg" alt="QR code for the voting page">
+          <p class="qr-caption" id="qr-caption">Scan to vote</p>
+        </div>
+        <p class="short-url">vote.realskincare.com/contest/vote</p>
+        <p class="tally-line" id="tally-line"></p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="screen screen-closed" id="screen-closed" hidden>
+    <div class="closed-inner">
+      <p class="event-title" id="closed-title"></p>
+      <h1 class="closed-heading" id="closed-heading"></h1>
+      <svg class="swash" viewBox="0 0 600 40" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M6 28 C 120 6, 260 36, 380 16 S 560 10, 594 22"/>
+      </svg>
+      <p class="turnout" id="turnout"></p>
+      <p class="coming-up">Results coming up<span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></p>
+    </div>
+  </section>
+
+  <section class="screen screen-reveal" id="screen-reveal" hidden>
+    <header class="reveal-head">
+      <p class="reveal-progress" id="reveal-progress"></p>
+      <h1 class="reveal-cat" id="reveal-cat"></h1>
+      <p class="reveal-tease">And the winners are<span class="dots" aria-hidden="true"><i>.</i><i>.</i><i>.</i></span></p>
+    </header>
+    <div class="podium" id="podium"></div>
+  </section>
+
+  <section class="screen screen-done" id="screen-done" hidden>
+    <header class="done-head">
+      <p class="event-title" id="done-title"></p>
+      <h1 class="done-heading">Congratulations to our winners</h1>
+    </header>
+    <div class="done-grid" id="done-grid"></div>
+  </section>
+</main>
+
+<div class="gingham gingham-bottom" aria-hidden="true"></div>
+<canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+<p class="fs-hint" id="fs-hint">Tap for full screen</p>
+<span class="net-dot" id="net-dot" hidden aria-hidden="true"></span>
+
+<script type="module" src="/contest/assets/tv.js"></script>
+</body>
+</html>

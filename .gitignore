@@ -11,6 +11,7 @@ client_secret_*.json
 /Shopify/
 
 # Large binary assets (images already live on Shopify CDN)
+data/contest/
 data/images/
 data/product-images/
 

@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Contest admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/contest.css">
+<style>
+  /* Admin-only layout. Tokens come from contest.css. */
+  body.admin { font-size: 17px; }
+  .admin-wrap { max-width: 900px; margin: 0 auto; padding: 8px 16px 80px; }
+  .admin-wrap > section { margin-top: 26px; }
+  .admin-wrap h2 { margin: 0 0 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .panel {
+    background: var(--paper); border: 2px solid var(--line); border-radius: var(--r-lg);
+    padding: 16px; box-shadow: var(--shadow-card);
+  }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row > .input { flex: 1 1 200px; width: auto; }
+  .btn-sm { min-height: 44px; padding: 8px 16px; font-size: 16px; }
+  .btn-xs { min-height: 40px; min-width: 40px; padding: 6px 10px; font-size: 15px; }
+  .btn-danger { background: var(--paper); color: var(--berry); border-color: var(--berry); }
+  @media (hover: hover) { .btn-danger:hover { background: var(--berry-tint); color: var(--berry); border-color: var(--berry); } }
+  .btn-stop { background: var(--berry); border-color: var(--berry); }
+  @media (hover: hover) { .btn-stop:hover { background: #8f1d31; border-color: #8f1d31; } }
+  .btn-go { background: var(--leaf); border-color: var(--leaf); }
+  @media (hover: hover) { .btn-go:hover { background: #24603e; border-color: #24603e; } }
+  .count {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 30px;
+    padding: 0 9px; border-radius: 999px; background: var(--berry); color: #fff;
+    font: 800 17px/1 var(--font-body);
+  }
+  .tag {
+    display: inline-block; font-size: 14px; font-weight: 700; padding: 2px 10px; border-radius: 999px;
+    background: var(--blueberry-tint); color: var(--blueberry-dark); border: 1.5px solid #a9bbe3;
+  }
+  .tag-warn { background: var(--butter-tint); color: #4d3d00; border-color: #d8b93d; }
+  .tag-new { background: var(--berry-tint); color: #6e1022; border-color: #e3a1ad; }
+
+  /* ---- sticky night-of control panel ---------------------------------- */
+  .ctl {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--ink); color: #fff;
+    box-shadow: 0 4px 18px -8px rgba(0, 0, 0, 0.6);
+  }
+  .ctl-inner { max-width: 900px; margin: 0 auto; padding: 10px 16px 12px; }
+  .ctl-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ctl-title { font: 800 18px/1.2 var(--font-head); margin: 0; flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+  .pill { font: 800 15px/1 var(--font-body); padding: 7px 12px; border-radius: 999px; background: #3b4a3f; color: #fff; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .pill-open { background: var(--leaf); }
+  .pill-closed { background: var(--berry); }
+  .pill-revealing, .pill-done { background: var(--butter); color: #3b2f00; }
+  .ctl .clock { background: #fff; color: var(--ink); font-size: 20px; }
+  .ctl .clock.urgent { background: var(--berry); color: #fff; }
+  .ctl-stats { font-size: 16px; color: #d7e0d8; white-space: nowrap; }
+  .tv-line { margin: 6px 0 0; font-size: 16px; color: #d7e0d8; }
+  .tv-line strong { color: #fff; }
+  .ctl-actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .ctl-actions .input { width: 92px; min-height: 48px; padding: 8px 10px; flex: none; }
+  .ctl-actions input[type="time"] { width: 140px; }
+  .ctl-actions label { font-weight: 700; }
+  .ctl-actions .linkish { background: none; border: 0; color: #cfe0ff; text-decoration: underline; font: inherit; font-size: 15px; cursor: pointer; padding: 6px 2px; }
+  .ctl .btn-quiet { background: transparent; color: #fff; border-color: #9fb0a3; }
+  @media (hover: hover) { .ctl .btn-quiet:hover { background: rgba(255,255,255,0.12); color: #fff; } }
+  .extend { display: flex; gap: 8px; align-items: center; white-space: nowrap; color: #d7e0d8; font-weight: 700; font-size: 16px; }
+  details.reopen { width: 100%; }
+  details.reopen > summary { cursor: pointer; color: #cfe0ff; font-size: 15px; text-decoration: underline; padding: 4px 0; }
+  details.reopen .ctl-actions { margin-top: 6px; }
+  .reveal-row { display: flex; gap: 10px; width: 100%; align-items: stretch; }
+  .btn-reveal {
+    flex: 1 1 auto; min-height: 84px; font-size: 24px; line-height: 1.15; border-radius: var(--r-lg);
+    background: var(--butter); border-color: var(--butter); color: #3b2f00; flex-direction: column; gap: 2px;
+  }
+  .btn-reveal .sub { font-size: 15px; font-weight: 700; opacity: 0.85; }
+  @media (hover: hover) { .btn-reveal:hover { background: #f0cb45; border-color: #f0cb45; color: #3b2f00; } }
+  .btn-back { flex: none; min-height: 84px; border-radius: var(--r-lg); font-size: 16px; padding: 8px 14px; }
+  .flash { margin-top: 10px; border-radius: var(--r-sm); padding: 10px 12px; font-weight: 700; font-size: 16px; }
+  .flash-error { background: var(--berry-tint); color: #6e1022; border: 2px solid var(--berry); }
+  .flash-ok { background: var(--leaf-tint); color: #17452b; border: 2px solid var(--leaf); }
+
+  /* ---- cards and lists -------------------------------------------------- */
+  .card-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+  .review-card { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .review-card .thumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: var(--r-md); background: #e4e9e2; }
+  .review-card h3 { font: 700 22px/1.2 var(--font-head); margin: 0; overflow-wrap: anywhere; }
+  .review-card h4 { font: 700 16px/1.2 var(--font-body); margin: 12px 0 4px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.04em; }
+  .review-card .prose { font-size: 16px; max-height: 240px; overflow: auto; background: var(--linen); border-radius: var(--r-sm); padding: 8px 10px; }
+  .review-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .review-actions .btn-go { flex: 1 1 160px; }
+  .meta { margin: 2px 0 0; color: var(--ink-soft); overflow-wrap: anywhere; }
+  @media (min-width: 720px) {
+    .review-card { grid-template-columns: 260px 1fr; }
+  }
+  .review-section { border-left: 6px solid var(--berry); padding-left: 12px; }
+
+  .cat-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 8px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+  .cat-row:first-child { border-top: 0; }
+  .cat-row .num { font: 800 20px/1 var(--font-head); color: var(--ink-soft); text-align: center; }
+  .cat-row .ctrls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  @media (max-width: 600px) {
+    .cat-row { grid-template-columns: 30px 1fr; }
+    .cat-row .ctrls { grid-column: 2; justify-content: flex-start; }
+  }
+
+  .dish-group h3 { font: 700 20px/1.2 var(--font-head); margin: 18px 0 8px; display: flex; gap: 8px; align-items: baseline; }
+  .dish-row { display: grid; grid-template-columns: 72px 1fr; gap: 12px; align-items: start; padding: 10px; background: var(--paper); border: 2px solid var(--line); border-radius: var(--r-md); }
+  .dish-row .mini { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); background: #e4e9e2; }
+  .dish-row .nm { font-weight: 700; font-size: 18px; overflow-wrap: anywhere; }
+  .dish-row .ctrls { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .dish-row .badges { margin-top: 4px; }
+
+  /* ---- private standings ----------------------------------------------- */
+  details.private {
+    border: 3px dashed var(--berry); border-radius: var(--r-lg); background: #fff7f8; padding: 0;
+  }
+  details.private > summary {
+    cursor: pointer; list-style: none; padding: 16px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    font: 700 20px/1.2 var(--font-head);
+  }
+  details.private > summary::-webkit-details-marker { display: none; }
+  details.private > summary::before { content: "\25B8"; font-size: 18px; color: var(--berry); }
+  details.private[open] > summary::before { content: "\25BE"; }
+  .private-label { font: 800 15px/1.2 var(--font-body); color: #fff; background: var(--berry); padding: 5px 10px; border-radius: 999px; }
+  .standings-body { padding: 0 16px 16px; }
+  .standings-body table { width: 100%; border-collapse: collapse; margin: 6px 0 16px; background: var(--paper); }
+  .standings-body caption { text-align: left; font: 700 18px/1.2 var(--font-head); padding: 6px 0; }
+  .standings-body th, .standings-body td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); font-size: 16px; }
+  .standings-body td.n, .standings-body th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  .standings-body td.dname { overflow-wrap: anywhere; }
+
+  .share-row { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .share-row:first-child { border-top: 0; }
+  .share-row .input { font-size: 16px; }
+
+  dialog.admin-sheet { max-width: 680px; }
+  @media (min-width: 720px) {
+    dialog.admin-sheet { margin: auto; border-radius: var(--r-lg); max-height: 90vh; }
+  }
+  dialog.confirm { border: 0; border-radius: var(--r-lg); padding: 22px; max-width: 460px; width: calc(100% - 32px); }
+  dialog.confirm::backdrop { background: rgba(20, 28, 22, 0.55); }
+  dialog.confirm h3 { font: 700 22px/1.2 var(--font-head); margin: 0 0 8px; }
+  dialog.confirm p { margin: 0 0 18px; overflow-wrap: anywhere; }
+  .confirm-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+  .radios { display: grid; gap: 8px; margin: 10px 0 14px; }
+</style>
+</head>
+<body class="admin">
+<div class="tablecloth" aria-hidden="true"></div>
+
+<!-- Night-of controls: always on screen. -->
+<div class="ctl" id="ctl">
+  <div class="ctl-inner">
+    <div class="ctl-top">
+      <span class="pill" id="phase-pill">Loading</span>
+      <p class="ctl-title" id="ctl-title"></p>
+      <span class="clock" id="ctl-clock" role="timer" hidden></span>
+      <span class="ctl-stats" id="ctl-stats"></span>
+    </div>
+    <p class="tv-line" id="tv-line"></p>
+    <div class="ctl-actions" id="ctl-actions"></div>
+    <div class="flash" id="flash" role="alert" hidden></div>
+  </div>
+</div>
+
+<main class="admin-wrap">
+  <section id="sec-review" class="review-section" hidden>
+    <h2>Needs your review <span class="count" id="review-count"></span></h2>
+    <p class="small">New entries stay off the voting page and the TV until you approve them.</p>
+    <ul class="card-list" id="review-list"></ul>
+  </section>
+
+  <section id="sec-contest">
+    <h2>Contest</h2>
+    <div class="panel">
+      <form id="title-form" class="row">
+        <label class="sr-only" for="title-input">Contest title</label>
+        <input class="input" id="title-input" maxlength="80" data-key="title" autocomplete="off">
+        <button class="btn btn-sm" type="submit">Save title</button>
+      </form>
+      <div class="row" style="margin-top:14px">
+        <p id="subs-status" style="margin:0;flex:1 1 240px"></p>
+        <button class="btn btn-sm" type="button" id="subs-btn"></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="sec-categories">
+    <h2>Categories <span class="small" id="cat-count"></span></h2>
+    <div class="panel">
+      <div id="cat-list"></div>
+      <form id="cat-add-form" class="row" style="margin-top:12px">
+        <label class="sr-only" for="cat-add-input">New category name</label>
+        <input class="input" id="cat-add-input" maxlength="40" placeholder="New category, for example Desserts" data-key="cat-add" autocomplete="off">
+        <button class="btn btn-sm" type="submit" id="cat-add-btn">Add category</button>
+      </form>
+      <p class="small" id="cat-note" hidden></p>
+    </div>
+  </section>
+
+  <section id="sec-dishes">
+    <h2>Dishes <span class="small" id="dish-count"></span></h2>
+    <div class="row">
+      <button class="btn btn-sm" type="button" id="add-dish-btn">Add a dish</button>
+      <span class="small">For cooks who did not enter online. It is approved right away.</span>
+    </div>
+    <div id="dish-groups"></div>
+  </section>
+
+  <section id="sec-standings">
+    <details class="private" id="standings">
+      <summary>Live standings <span class="private-label">Private: do not show on the TV</span></summary>
+      <div class="standings-body" id="standings-body"></div>
+    </details>
+  </section>
+
+  <section id="sec-share">
+    <h2>Share</h2>
+    <div class="panel">
+      <div id="share-list"></div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-sm" type="button" id="print-btn">Print table cards</button>
+        <span class="small">4 cards per page with the QR code. Print as many copies as you have tables.</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="sec-reset">
+    <h2>Reset for the next event</h2>
+    <div class="panel">
+      <p class="small" style="margin-top:0">The current contest is saved to the archive first, then every vote is cleared and the contest goes back to setup.</p>
+      <div class="radios">
+        <label class="check"><input type="radio" name="reset-mode" value="keep" checked> Keep dishes and categories</label>
+        <label class="check"><input type="radio" name="reset-mode" value="clear"> Clear everything (dishes, photos, categories)</label>
+      </div>
+      <button class="btn btn-sm btn-danger" type="button" id="reset-btn">Reset contest</button>
+    </div>
+  </section>
+</main>
+
+<!-- Add / edit a dish. -->
+<dialog class="sheet admin-sheet" id="dish-dialog" aria-labelledby="dish-dialog-title">
+  <div class="sheet-close-row"><button class="btn btn-quiet btn-sm" type="button" id="dish-cancel">Close</button></div>
+  <form class="sheet-body" id="dish-form" novalidate>
+    <h2 id="dish-dialog-title" style="margin-top:0">Add a dish</h2>
+    <div class="field">
+      <label for="f-cook">Cook's name</label>
+      <input class="input" id="f-cook" maxlength="80" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-name">Name of the dish</label>
+      <input class="input" id="f-name" maxlength="80" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="f-category">Category</label>
+      <select class="input" id="f-category"></select>
+    </div>
+    <div class="field">
+      <span class="label" id="f-photo-label">Photo of the dish</span>
+      <span class="hint" id="f-photo-hint"></span>
+      <label class="photo-pick" id="f-photo-pick">
+        <input type="file" id="f-photo" accept="image/*" aria-labelledby="f-photo-label">
+        <span id="f-photo-empty"><span>Tap to add a photo</span><br><span class="sub">Take a picture or choose a file</span></span>
+        <img id="f-photo-preview" alt="Dish photo" hidden>
+      </label>
+    </div>
+    <div class="field">
+      <label for="f-ingredients">Ingredients</label>
+      <textarea class="input" id="f-ingredients" maxlength="2000"></textarea>
+    </div>
+    <fieldset class="field">
+      <legend>Does the dish contain any of these?</legend>
+      <div class="checks" id="f-allergens"></div>
+      <p class="disclaimer">Allergen information is entered by the cook and is not checked by the organizers.</p>
+    </fieldset>
+    <div class="field">
+      <label for="f-recipe">Recipe <span class="small">(optional)</span></label>
+      <textarea class="input" id="f-recipe" maxlength="8000"></textarea>
+    </div>
+    <div class="notice notice-error" id="dish-error" role="alert" hidden></div>
+    <button class="btn btn-big btn-block" type="submit" id="dish-save">Save dish</button>
+  </form>
+</dialog>
+
+<!-- Confirm destructive actions. -->
+<dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title">
+  <h3 id="confirm-title"></h3>
+  <p id="confirm-text"></p>
+  <div class="confirm-actions">
+    <button class="btn btn-quiet btn-sm" type="button" id="confirm-no">Cancel</button>
+    <button class="btn btn-sm btn-stop" type="button" id="confirm-yes">Delete</button>
+  </div>
+</dialog>
+
+<script type="module" src="/contest/assets/admin.js"></script>
+</body>
+</html>
