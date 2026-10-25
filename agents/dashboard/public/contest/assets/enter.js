@@ -1,5 +1,8 @@
 // Competitor page: enter a dish, or edit it later with the private ?edit=<token> link.
 // Every piece of user text goes into the page with textContent, never innerHTML.
+import {
+  CAP_INGREDIENTS, dishNameFrom, fitLines, buildRecipeText,
+} from './recipe-text.js';
 
 const $ = (id) => document.getElementById(id);
 const editToken = new URLSearchParams(location.search).get('edit');
@@ -289,9 +292,6 @@ const IMPORT_TIMEOUT_MS = 15_000;
 const IMPORT_MIN_SHOW_MS = 1_200; // long enough to see the pot, even on a fast site
 const MSG_TIMEOUT = 'That site took too long to answer. Try again, or type your recipe below.';
 const MSG_OPEN_FAILED = "We couldn't open that page. Check the link, or type your recipe below.";
-const CAP_INGREDIENTS = 2000;
-const CAP_RECIPE = 8000;
-const CAP_NAME = 80;
 let importing = false;
 let statusTimer = null;
 
@@ -326,59 +326,6 @@ function importFail(text) {
   $('import-fail').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
-/** Join lines into at most `max` characters, cutting only between lines. */
-function fitLines(lines, max) {
-  let text = '';
-  let cut = false;
-  for (const line of lines) {
-    const next = text ? `${text}\n${line}` : line;
-    if (next.length > max) {
-      cut = true;
-      if (!text) text = line.slice(0, max); // one giant line: hard cut
-      break;
-    }
-    text = next;
-  }
-  return { text, cut };
-}
-
-function servesLine(y) {
-  if (!y) return null;
-  if (/^\d+$/.test(y)) return `Serves ${y}`;
-  const m = y.match(/^(\d+(?:\s*(?:to|-|–)\s*\d+)?)\s+(?:servings?|people|persons?|portions?)$/i);
-  return m ? `Serves ${m[1]}` : `Makes ${y}`;
-}
-
-function timeLine(minutes) {
-  if (!minutes || minutes < 1) return null;
-  const h = Math.floor(minutes / 60);
-  const r = minutes % 60;
-  const hours = `${h} hour${h === 1 ? '' : 's'}`;
-  if (!h) return `About ${r} min`;
-  return r ? `About ${hours} ${r} min` : `About ${hours}`;
-}
-
-function buildRecipeText(recipe, sourceUrl) {
-  const head = [servesLine(recipe.recipeYield), timeLine(recipe.totalMinutes)].filter(Boolean).join(' · ');
-  const headingSet = new Set(recipe.headings || []);
-  const stepLines = [];
-  let n = 0;
-  (recipe.steps || []).forEach((step, i) => {
-    if (headingSet.has(i)) {
-      if (stepLines.length) stepLines.push('');
-      stepLines.push(step);
-    } else {
-      n += 1;
-      stepLines.push(`${n}. ${step}`);
-    }
-  });
-  const source = `Source: ${sourceUrl}`;
-  const prefix = head ? [head, ''] : [];
-  const room = CAP_RECIPE - source.length - 2; // "\n\n" before the source line
-  const body = fitLines([...prefix, ...stepLines], room);
-  return { text: `${body.text}\n\n${source}`, cut: body.cut, steps: n };
-}
-
 function flash(el) {
   el.classList.remove('just-filled');
   void el.offsetWidth; // restart the animation
@@ -404,7 +351,7 @@ function applyRecipe(recipe, sourceUrl) {
   const ingredientCount = ingredients.text ? ingredients.text.split('\n').length : 0;
   setField(ing, ingredients.text);
   setField(rec, built.text);
-  if (!$('name').value.trim() && recipe.name) setField($('name'), recipe.name.slice(0, CAP_NAME));
+  if (!$('name').value.trim() && recipe.name) setField($('name'), dishNameFrom(recipe.name));
 
   const plural = (k, word) => `${k} ${word}${k === 1 ? '' : 's'}`;
   const from = recipe.siteName ? ` from ${recipe.siteName}` : '';

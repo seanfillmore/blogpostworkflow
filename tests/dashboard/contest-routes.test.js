@@ -578,6 +578,7 @@ test('recipe import: every failure code maps to its status and plain message', a
     ['unreachable', 422, "We couldn't open that page. Check the link, or type your recipe below."],
     ['http_error', 422, "We couldn't open that page. Check the link, or type your recipe below."],
     ['timeout', 422, 'That site took too long to answer. Try again, or type your recipe below.'],
+    ['site_blocked', 422, "That site doesn't let us read its recipes automatically. Please type your ingredients and recipe below."],
     ['not_html', 422, "That link isn't a recipe page we can read. You can type your recipe below."],
     ['too_large', 422, "That link isn't a recipe page we can read. You can type your recipe below."],
     ['bad_url', 400, "That doesn't look like a web link. Paste the full address, starting with https://"],
@@ -673,6 +674,7 @@ test('recipe import: only a few fetches run at once process-wide; the rest get a
   assert.equal(gates.length, 2, 'both imports in flight');
   const busy = await importCall(routes, undefined, '4.4.4.3');
   assert.equal(busy.res.statusCode, 429);
+  assert.equal(busy.res.json().code, 'busy');
   gates.forEach((g) => g());
   assert.equal((await p1).res.statusCode, 200);
   assert.equal((await p2).res.statusCode, 200);

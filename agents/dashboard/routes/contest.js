@@ -111,6 +111,7 @@ export const RECIPE_IMPORT_MESSAGES = {
   no_recipe: [422, "We couldn't find a recipe card on that page. You can type your ingredients and recipe below."],
   unreachable: [422, OPEN_FAILED],
   http_error: [422, OPEN_FAILED],
+  site_blocked: [422, "That site doesn't let us read its recipes automatically. Please type your ingredients and recipe below."],
   timeout: [422, 'That site took too long to answer. Try again, or type your recipe below.'],
   not_html: [422, UNREADABLE],
   too_large: [422, UNREADABLE],
@@ -530,7 +531,7 @@ export function createContestRoutes({
         const url = body && typeof body.url === 'string' ? body.url.trim() : '';
         if (!url) return fail('bad_url');
         if (importsInFlight >= lim.maxConcurrentImports) {
-          return sendJson(res, 429, { ok: false, error: 'Lots of people are fetching recipes right now. Please try again in a minute.' });
+          return sendJson(res, 429, { ok: false, code: 'busy', error: 'Lots of people are fetching recipes right now. Please try again in a minute.' });
         }
         importsInFlight += 1;
         try {

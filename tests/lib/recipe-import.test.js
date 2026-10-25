@@ -9,10 +9,12 @@ import { test } from 'node:test';
 import http from 'node:http';
 import zlib from 'node:zlib';
 import { readFileSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   extractRecipe, parseDurationMinutes, isPublicAddress, fetchRecipePage, importRecipeFromUrl, RecipeImportError,
+  resolvePublicDns,
 } from '../../lib/recipe-import.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -286,11 +288,13 @@ test('fetchRecipePage: redirects are followed and every hop is re-validated', as
 
     // The redirect target is re-checked with the REAL address guard: a lifted guard is
     // only used for the test server's own address, so a hop to the metadata IP is refused.
+    // A refused HOP reads as "couldn't open that page" (unreachable), never as "that's not
+    // a link": the cook pasted a perfectly good link; the site sent us somewhere we won't go.
     const realGuardForOthers = (ip) => ip === '127.0.0.1';
-    assert.equal(await codeOf(fetchRecipePage(`${base}/to-metadata`, lifted({ isAllowedAddress: realGuardForOthers }))), 'blocked_url');
+    assert.equal(await codeOf(fetchRecipePage(`${base}/to-metadata`, lifted({ isAllowedAddress: realGuardForOthers }))), 'unreachable');
     const lookup = async (host) => (host === 'internal.example' ? [{ address: '10.0.0.9', family: 4 }] : [{ address: '127.0.0.1', family: 4 }]);
-    assert.equal(await codeOf(fetchRecipePage(`${base}/to-internal`, lifted({ lookup, isAllowedAddress: realGuardForOthers }))), 'blocked_url');
-    assert.equal(await codeOf(fetchRecipePage(`${base}/to-ftp`, lifted())), 'bad_url');
+    assert.equal(await codeOf(fetchRecipePage(`${base}/to-internal`, lifted({ lookup, isAllowedAddress: realGuardForOthers }))), 'unreachable');
+    assert.equal(await codeOf(fetchRecipePage(`${base}/to-ftp`, lifted())), 'unreachable');
     assert.equal(await codeOf(fetchRecipePage(`${base}/loop`, lifted({ maxRedirects: 3 }))), 'unreachable');
   });
 });
@@ -361,5 +365,142 @@ test('importRecipeFromUrl: extracts, or throws no_recipe', async () => {
     const r = await importRecipeFromUrl(`http://r.example:${port}/stew`, lifted());
     assert.equal(r.name, 'Stew');
     assert.equal(await codeOf(importRecipeFromUrl(`http://r.example:${port}/plain`, lifted())), 'no_recipe');
+  });
+});
+
+// ---- review fixes: hostile pages, DNS, @type, status codes, decompressor -----------
+
+const MB3 = 3_000_000;
+const timed = (fn) => { const t0 = performance.now(); const out = fn(); return { out, ms: performance.now() - t0 }; };
+
+test('extractRecipe stays linear on hostile 3 MB pages (each < 300 ms)', () => {
+  const ingredientOfAngles = JSON.stringify({ '@type': 'Recipe', name: 'Bad', recipeIngredient: ['<'.repeat(MB3)] });
+  const shapes = {
+    'repeated <script>': '<script>'.repeat(Math.ceil(MB3 / 8)),
+    'repeated <script (no >)': '<script '.repeat(Math.ceil(MB3 / 8)),
+    'ingredient of 3 MB of <': `<script type="application/ld+json">${ingredientOfAngles}</script>`,
+    'many <meta without >': '<meta property="og:site_name" '.repeat(Math.ceil(MB3 / 31)),
+    'type= then 3 MB of spaces': `<script type=${' '.repeat(MB3)}></script>`,
+    'step string of 3 MB of <p': JSON.stringify({ '@type': 'Recipe', name: 'B', recipeInstructions: '<p'.repeat(MB3 / 2) }).replace(/^/, '<script type="application/ld+json">').concat('</script>'),
+    'many <br without >': `<script type="application/ld+json">${JSON.stringify({ '@type': 'Recipe', name: 'C', recipeInstructions: '<br '.repeat(MB3 / 4) })}</script>`,
+    'totalTime of 3 MB': `<script type="application/ld+json">${JSON.stringify({ '@type': 'Recipe', name: 'D', recipeIngredient: ['a'], totalTime: `P${'1'.repeat(MB3)}` })}</script>`,
+    'many tiny script blocks': '<script type="application/ld+json">{}</script>'.repeat(Math.ceil(MB3 / 45)),
+  };
+  for (const [label, html] of Object.entries(shapes)) {
+    const { ms } = timed(() => extractRecipe(html));
+    assert.ok(ms < 300, `${label}: ${ms.toFixed(0)} ms`);
+  }
+  // And the truncation keeps a usable result for the big-ingredient page.
+  const r = extractRecipe(shapes['ingredient of 3 MB of <']);
+  assert.ok(r === null || r.ingredients.every((i) => i.length <= 2000));
+});
+
+test('extractRecipe caps very long ingredient and step arrays before cleaning', () => {
+  const html = page({ '@type': 'Recipe', name: 'Long', recipeIngredient: Array(100_000).fill('salt'), recipeInstructions: Array(100_000).fill('stir') });
+  const { out, ms } = timed(() => extractRecipe(html));
+  assert.equal(out.ingredients.length, 200);
+  assert.equal(out.steps.length, 200);
+  assert.ok(ms < 300, `${ms.toFixed(0)} ms`);
+});
+
+test('extractRecipe: an @type that is an object (even with a toString key) is ignored, never thrown on', () => {
+  const html = page(
+    { '@type': { toString: 'x' }, name: 'weird' },
+    { '@type': ['Thing', { toString: 1 }, 'Recipe'], name: 'Mixed', recipeIngredient: ['a'] },
+    { '@type': 'Recipe', name: 'Plain', recipeIngredient: ['b'] },
+  );
+  assert.doesNotThrow(() => extractRecipe(html));
+  assert.equal(extractRecipe(html).name, 'Mixed');
+  assert.equal(extractRecipe(page({ '@type': { a: 'Recipe' }, name: 'N', recipeIngredient: ['x'] })), null);
+});
+
+test('fetchRecipePage passes an abort signal to the injected lookup and a timed-out lookup is cancelled', async () => {
+  let gotSignal = null;
+  const slow = (host, opts) => new Promise((_, reject) => {
+    gotSignal = opts && opts.signal;
+    gotSignal.addEventListener('abort', () => reject(new Error('cancelled')));
+  });
+  assert.equal(await codeOf(fetchRecipePage('https://slow.example/', { lookup: slow, timeoutMs: 100 })), 'timeout');
+  assert.ok(gotSignal && gotSignal.aborted, 'the lookup saw the deadline abort');
+});
+
+test('resolvePublicDns uses c-ares resolve4/resolve6 (no thread pool), merges answers, and maps no-records to unreachable', async () => {
+  const calls = [];
+  const fake = (answers) => class {
+    constructor(opts) { calls.push(['new', opts]); }
+    resolve4(h) { calls.push(['4', h]); return answers.v4(h); }
+    resolve6(h) { calls.push(['6', h]); return answers.v6(h); }
+    cancel() { calls.push(['cancel']); }
+  };
+  const nodata = () => { const e = new Error('nodata'); e.code = 'ENODATA'; return Promise.reject(e); };
+  const both = await resolvePublicDns('r.example', { Resolver: fake({ v4: async () => ['93.184.216.34'], v6: async () => ['2606:2800::1'] }) });
+  assert.deepEqual(both, [{ address: '93.184.216.34', family: 4 }, { address: '2606:2800::1', family: 6 }]);
+  assert.deepEqual(calls[0], ['new', { timeout: 2000, tries: 1 }]);
+  const v4only = await resolvePublicDns('r.example', { Resolver: fake({ v4: async () => ['8.8.8.8'], v6: nodata }) });
+  assert.deepEqual(v4only, [{ address: '8.8.8.8', family: 4 }]);
+  await assert.rejects(resolvePublicDns('r.example', { Resolver: fake({ v4: nodata, v6: nodata }) }), (e) => e.code === 'unreachable');
+  // Cancelled when the deadline fires.
+  calls.length = 0;
+  const ac = new AbortController();
+  const hang = resolvePublicDns('r.example', { signal: ac.signal, Resolver: fake({ v4: () => new Promise(() => {}), v6: () => new Promise(() => {}) }) });
+  ac.abort();
+  await assert.rejects(hang, (e) => e.code === 'timeout');
+  assert.ok(calls.some((c) => c[0] === 'cancel'), 'resolver.cancel() called');
+});
+
+test('fetchRecipePage: 401/403/429 are site_blocked; other errors stay http_error', async () => {
+  await withServer((req, res) => {
+    const code = Number(req.url.slice(1));
+    res.writeHead(code, { 'content-type': 'text/html' });
+    res.end('<html>no</html>');
+  }, async (port) => {
+    for (const code of [401, 403, 429]) {
+      assert.equal(await codeOf(fetchRecipePage(`http://r.example:${port}/${code}`, lifted())), 'site_blocked', String(code));
+    }
+    for (const code of [404, 410, 500, 503]) {
+      assert.equal(await codeOf(fetchRecipePage(`http://r.example:${port}/${code}`, lifted())), 'http_error', String(code));
+    }
+  });
+});
+
+test('fetchRecipePage: the decompressor is destroyed when the response is cut off', async () => {
+  const created = [];
+  const createDecoder = (enc) => { const z = zlib.createGunzip(); created.push([enc, z]); return z; };
+  await withServer((req, res) => {
+    const gz = zlib.gzipSync(`<html>${randomBytes(30_000).toString('hex')}</html>`); // incompressible, so a partial write really is partial
+    res.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip', 'content-length': String(gz.length) });
+    res.write(gz.subarray(0, 100));
+    setTimeout(() => res.socket.destroy(), 30); // cut mid-body
+  }, async (port) => {
+    assert.equal(await codeOf(fetchRecipePage(`http://r.example:${port}/`, lifted({ createDecoder }))), 'unreachable');
+  });
+  assert.equal(created.length, 1);
+  await new Promise((r) => setImmediate(r));
+  assert.equal(created[0][1].destroyed, true, 'decompressor destroyed on close');
+});
+
+test('fetchRecipePage: the decompressor is destroyed when the deadline aborts a trickling body', async () => {
+  const created = [];
+  const createDecoder = () => { const z = zlib.createGunzip(); created.push(z); return z; };
+  await withServer((req, res) => {
+    const gz = zlib.gzipSync(`<html>${randomBytes(30_000).toString('hex')}</html>`); // incompressible, so a partial write really is partial
+    res.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' });
+    let i = 0;
+    const t = setInterval(() => { res.write(gz.subarray(i, i + 10)); i += 10; }, 20);
+    res.on('close', () => clearInterval(t));
+  }, async (port) => {
+    assert.equal(await codeOf(fetchRecipePage(`http://r.example:${port}/`, lifted({ createDecoder, timeoutMs: 200 }))), 'timeout');
+  });
+  await new Promise((r) => setTimeout(r, 20));
+  assert.equal(created[0].destroyed, true);
+});
+
+test('fetchRecipePage: a completed gzip body is NOT cut short by the close handler', async () => {
+  await withServer((req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html', 'content-encoding': 'gzip' });
+    res.end(zlib.gzipSync('<html>' + 'z'.repeat(200_000) + 'END</html>'));
+  }, async (port) => {
+    const out = await fetchRecipePage(`http://r.example:${port}/`, lifted());
+    assert.ok(out.html.endsWith('END</html>'));
   });
 });
