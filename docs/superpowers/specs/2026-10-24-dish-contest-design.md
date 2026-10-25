@@ -64,7 +64,7 @@ It is hosted on the existing dashboard server (`seo-dashboard`, PM2, DigitalOcea
 ### Pieces
 
 - `lib/contest.js` — **pure**, no I/O: state transitions, vote validation, tallying, ranking, and `publicView(state, now)`, the only function that shapes what the public sees. Everything risky (leaks, ranking, ties, deadline) is unit-tested here.
-- `lib/contest-store.js` — reads/writes `data/contest/state.json` with temp file + rename; photos in `data/contest/photos/<dishId>.webp`. A reset moves the state file to `data/contest/archive/<timestamp>.json`. `data/contest/` is gitignored.
+- `lib/contest-store.js` — reads/writes `data/contest/state.json` with temp file + rename; photos in `data/contest/photos/<dishId>-<version>.webp` (versioned, staged before the state write). A reset moves the state file to `data/contest/archive/<timestamp>.json`. `data/contest/` is gitignored.
 - `agents/dashboard/routes/contest.js` — the HTTP routes.
 - `agents/dashboard/public/contest/vote.html`, `tv.html`, `admin.html` (+ small JS/CSS files). `vote.html` and `tv.html` are served on the public allowlist; `admin.html` only behind auth.
 
@@ -87,17 +87,17 @@ Ballots hold only the current pick, so a changed vote replaces the old one. Tall
 
 ### Phases
 
-`setup` → admin opens with a deadline → `open` → deadline passes (checked on every request against server time) or admin closes → `closed` → admin starts the reveal → `revealing` → last step of last category → `done`. The admin can extend the deadline while `open`, and reopen from `closed` with a new deadline (before any reveal). Reset returns to `setup` with an empty ballot box, keeping or clearing dishes (admin's choice).
+`setup` → admin opens with a deadline → `open` → deadline passes (checked on every request against server time) or admin closes → `closed` → admin starts the reveal → `revealing` → last step of last category → `done`. The admin can extend the deadline while `open`, and reopen from `closed` with a new deadline (before any reveal). Reset returns to `setup` with an empty ballot box, keeping or clearing dishes (admin's choice); kept dishes keep their review status, so a pending submission stays pending.
 
 ### Public API (no auth)
 
 - `GET /api/contest/public` → `publicView`: title, phase, `deadline`, `serverNow` (for clock skew), categories, **approved** dishes only (in admin order, never sorted by votes; ingredients, allergens and recipe included; never the edit token), `voterCount`, `voteCount`, `voteEvents`, and **only revealed** podium entries. Polled every 2 s by the TV and every 10 s by the vote page.
 - `POST /api/contest/vote` `{ voterId, categoryId, dishId }` → accepts only while `open` and before the deadline; validates that the dish belongs to the category; returns that voter's ballot. Body capped at 1 KB.
 - `GET /api/contest/my-ballot?voterId=` → that voter's picks (so a refreshed phone restores its state).
-- `GET /contest/photos/<dishId>.webp` and `GET /contest/qr.svg` (the voting URL as a QR code).
+- `GET /contest/photos/<dishId>-<version>.webp` and `GET /contest/qr.svg` (the voting URL as a QR code).
 - `GET /api/contest/submission-form` → categories and whether submissions are open.
 - `POST /api/contest/submit` (multipart: photo + fields) → creates a `pending` dish and returns a one-time edit URL `/contest/enter?edit=<token>`. Only the token's SHA-256 hash is stored. Text fields are length-capped (name 80, ingredients 2,000, recipe 8,000 chars) and rendered as text, never HTML.
-- `GET/POST /api/contest/submission?token=` → read or update your own submission while `phase` is `setup`. Editing an approved dish keeps it approved but flags it "edited since approval" on the admin page.
+- `GET/POST /api/contest/submission?token=` → read or update your own submission while `phase` is `setup`. Editing the text of an approved dish keeps it approved but flags it "edited since approval" on the admin page; replacing the PHOTO of an approved dish sends it back to pending, so no unreviewed image reaches the TV. Token, phase and open-submission checks run before the upload is read.
 - `voterId`: a random UUID the vote page creates and keeps in `localStorage` plus a cookie. The server rejects anything that is not a v4 UUID.
 
 ### Admin API (basic auth)
@@ -114,8 +114,8 @@ The TV compares `voteEvents` between polls; for each new event (capped at, say, 
 
 ### Abuse limits
 
-- Per IP: loose (e.g. 600 vote posts / 10 min), because the whole room shares one IP. Per voterId: e.g. 60 vote posts / 10 min. Both via `createRateLimiter`.
-- Submissions: per IP, e.g. 20 / hour (a church hall may share Wi-Fi too); a cap of e.g. 80 dishes in total; photo upload via the shared multer 20 MB cap, resized by `sharp` before storage. Rejected uploads (not an image) answer 400 and store nothing.
+- Per IP: loose (3,000 vote posts / 10 min; raised from 600 after the rehearsal showed 100 diners on one Wi-Fi exceed it in the opening minutes), because the whole room shares one IP. Per voterId: 60 vote posts / 10 min. Both via `createRateLimiter`.
+- Submissions: per IP, 60 / hour, covering new submissions and own-dish edits (a church hall may share Wi-Fi too); a cap of 80 dishes in total; photo upload via the shared multer 20 MB cap, resized by `sharp` before storage; only JPEG, PNG, WebP and HEIF are accepted, with a 100-megapixel input limit so a decompression bomb cannot exhaust the box's memory. Admin walk-in dishes may have no photo (a placeholder tile is shown). Rejected uploads (not an image) answer 400 and store nothing.
 - Max distinct voterIds per contest, e.g. 1,000, so a script cannot grow `state.json` without bound. The admin sees the voter count live and can judge it against the ~100 people in the room.
 
 ### Hosting
