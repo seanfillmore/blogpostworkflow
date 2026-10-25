@@ -20,6 +20,7 @@ import {
   createContestRoutes, isPublicContestPath, DEFAULT_LIMITS, UPLOAD_LIMITS,
 } from '../../agents/dashboard/routes/contest.js';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
+import { RecipeImportError } from '../../lib/recipe-import.js';
 
 const NOW = new Date('2026-11-01T18:00:00Z');
 
@@ -27,13 +28,14 @@ function tmpDir(tag) {
   return fs.mkdtempSync(join(os.tmpdir(), `contest-${tag}-`));
 }
 
-function setup({ publicDir, limits, wrapStore } = {}) {
+function setup({ publicDir, limits, wrapStore, importRecipe } = {}) {
   const dir = tmpDir('data');
   const uploadDir = tmpDir('upl');
   const store = createContestStore({ dir, now: () => NOW });
   const upload = multer({ dest: uploadDir, limits: UPLOAD_LIMITS });
   const routes = createContestRoutes({
     store: wrapStore ? wrapStore(store) : store, now: () => NOW, upload, publicDir: publicDir || tmpDir('pub'), limits,
+    importRecipe: importRecipe || (async () => { throw new Error('importRecipe not stubbed for this test'); }),
   });
   return { dir, uploadDir, store, routes };
 }
@@ -122,7 +124,8 @@ const filesIn = (d) => fs.readdirSync(d);
 test('isPublicContestPath: public exactly for the listed paths, never for admin', () => {
   for (const p of ['/contest/vote', '/contest/enter', '/contest/tv', '/contest/qr.svg',
     '/contest/assets/app.js', '/contest/photos/x.webp', '/api/contest/public', '/api/contest/vote',
-    '/api/contest/my-ballot', '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission']) {
+    '/api/contest/my-ballot', '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission',
+    '/api/contest/recipe-import']) {
     assert.equal(isPublicContestPath(p), true, p);
   }
   for (const p of ['/api/contest/admin/state', '/contest/admin', '/api/contest/admin/reset',
@@ -152,9 +155,10 @@ test('the 61st vote from one voterId inside the window is a 429', async () => {
   assert.equal(res.statusCode, 429);
 });
 
-test('rate limit defaults: 3000 votes / 10 min / IP, 60 / voter, 60 submissions / hour / IP', () => {
+test('rate limit defaults: 3000 votes / 10 min / IP, 60 / voter, 60 submissions and 30 recipe imports / hour / IP', () => {
   assert.deepEqual(DEFAULT_LIMITS, {
     votesPerIp: 3000, votesPerVoter: 60, voteWindowMs: 10 * 60_000, submitsPerIp: 60, submitWindowMs: 60 * 60_000,
+    importsPerIp: 30, importWindowMs: 60 * 60_000, maxConcurrentImports: 4,
   });
   assert.equal(UPLOAD_LIMITS.fieldSize, 64 * 1024);
   assert.equal(UPLOAD_LIMITS.fileSize, 20 * 1024 * 1024);
@@ -542,4 +546,140 @@ test('a vote whose body is JSON null, an array or a scalar is a 400, never a 500
     assert.equal(res.statusCode, 400, `${body}: ${res.body}`);
     assert.equal(res.json().ok, false);
   }
+});
+
+// ---- recipe import ---------------------------------------------------------------
+
+const RECIPE = {
+  name: 'Smoked Turkey Recipe', ingredients: ['turkey', 'rub'], steps: ['Smoke it.'], headings: [],
+  recipeYield: '12', totalMinutes: 370, siteName: 'Dinner at the Zoo',
+};
+const importCall = (routes, url = 'https://www.dinneratthezoo.com/smoked-turkey-recipe/', ip = '2.2.2.2') => call(routes, {
+  method: 'POST', url: '/api/contest/recipe-import', ...json({ url }), ip,
+});
+
+test('isPublicContestPath: the recipe import route is public', () => {
+  assert.equal(isPublicContestPath('/api/contest/recipe-import'), true);
+  assert.equal(isPublicContestPath('/api/contest/admin/recipe-import'), false);
+});
+
+test('recipe import: success returns the recipe and passes ONLY the url to the importer', async () => {
+  const seen = [];
+  const { routes } = setup({ importRecipe: async (...args) => { seen.push(args); return RECIPE; } });
+  const { res } = await importCall(routes);
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.json(), { ok: true, recipe: RECIPE });
+  assert.deepEqual(seen, [['https://www.dinneratthezoo.com/smoked-turkey-recipe/']]);
+});
+
+test('recipe import: every failure code maps to its status and plain message', async () => {
+  const cases = [
+    ['no_recipe', 422, "We couldn't find a recipe card on that page. You can type your ingredients and recipe below."],
+    ['unreachable', 422, "We couldn't open that page. Check the link, or type your recipe below."],
+    ['http_error', 422, "We couldn't open that page. Check the link, or type your recipe below."],
+    ['timeout', 422, 'That site took too long to answer. Try again, or type your recipe below.'],
+    ['not_html', 422, "That link isn't a recipe page we can read. You can type your recipe below."],
+    ['too_large', 422, "That link isn't a recipe page we can read. You can type your recipe below."],
+    ['bad_url', 400, "That doesn't look like a web link. Paste the full address, starting with https://"],
+    ['blocked_url', 400, "That doesn't look like a web link. Paste the full address, starting with https://"],
+  ];
+  for (const [code, status, error] of cases) {
+    const { routes } = setup({ importRecipe: async () => { throw new RecipeImportError(code, 'secret <html> from the page'); } });
+    const { res } = await importCall(routes);
+    assert.equal(res.statusCode, status, code);
+    assert.deepEqual(res.json(), { ok: false, code, error }, code);
+    assert.equal(/—/.test(error), false, 'no em dashes');
+  }
+});
+
+test('recipe import: an unexpected error is a 422 unreachable, never a 500, and never echoes the error', async () => {
+  const { routes } = setup({ importRecipe: async () => { throw new TypeError('boom: fetched <script>evil</script>'); } });
+  const { res } = await importCall(routes);
+  assert.equal(res.statusCode, 422);
+  assert.deepEqual(res.json(), { ok: false, code: 'unreachable', error: "We couldn't open that page. Check the link, or type your recipe below." });
+  assert.equal(String(res.body).includes('evil'), false);
+});
+
+test('recipe import: a missing or non-string url is a bad_url 400 without calling the importer', async () => {
+  let called = 0;
+  const { routes } = setup({ importRecipe: async () => { called += 1; return RECIPE; } });
+  for (const body of [{}, { url: 42 }, { url: '' }, { url: ['https://a.example'] }]) {
+    const { res } = await call(routes, { method: 'POST', url: '/api/contest/recipe-import', ...json(body) });
+    assert.equal(res.statusCode, 400, JSON.stringify(body));
+    assert.equal(res.json().code, 'bad_url');
+  }
+  assert.equal(called, 0);
+});
+
+test('recipe import: 409 once the contest has left setup, before the importer runs', async () => {
+  let called = 0;
+  const { routes, store } = setup({ importRecipe: async () => { called += 1; return RECIPE; } });
+  await seedOpen(store);
+  const { res } = await importCall(routes);
+  assert.equal(res.statusCode, 409);
+  assert.equal(res.json().ok, false);
+  assert.equal(called, 0);
+});
+
+test('recipe import: works in setup even when new entries are closed (edit links still use it)', async () => {
+  const { routes, store } = setup({ importRecipe: async () => RECIPE });
+  await store.update((s) => setSubmissionsOpen(s, false));
+  const { res } = await importCall(routes);
+  assert.equal(res.statusCode, 200);
+});
+
+test('recipe import: the 31st request from one IP inside an hour is a 429; another IP still works', async () => {
+  assert.equal(DEFAULT_LIMITS.importsPerIp, 30);
+  assert.equal(DEFAULT_LIMITS.importWindowMs, 60 * 60_000);
+  const { routes } = setup({ importRecipe: async () => RECIPE });
+  for (let i = 0; i < 30; i += 1) {
+    const { res } = await importCall(routes);
+    assert.equal(res.statusCode, 200, `request ${i + 1}`);
+  }
+  const blocked = await importCall(routes);
+  assert.equal(blocked.res.statusCode, 429);
+  assert.equal(blocked.res.json().ok, false);
+  const other = await importCall(routes, undefined, '3.3.3.3');
+  assert.equal(other.res.statusCode, 200);
+});
+
+test('recipe import: the per-IP limit is overridable through the factory', async () => {
+  const { routes } = setup({ limits: { importsPerIp: 2 }, importRecipe: async () => RECIPE });
+  assert.equal((await importCall(routes)).res.statusCode, 200);
+  assert.equal((await importCall(routes)).res.statusCode, 200);
+  assert.equal((await importCall(routes)).res.statusCode, 429);
+});
+
+test('recipe import: a body over 2 KB is a 413 and the importer never runs', async () => {
+  let called = 0;
+  const { routes } = setup({ importRecipe: async () => { called += 1; return RECIPE; } });
+  const big = JSON.stringify({ url: `https://a.example/${'x'.repeat(2100)}` });
+  const { res, req } = await call(routes, { method: 'POST', url: '/api/contest/recipe-import', ...json({}), body: big });
+  assert.equal(res.statusCode, 413);
+  assert.equal(res.json().ok, false);
+  assert.equal(req.destroyed, true);
+  assert.equal(called, 0);
+});
+
+test('recipe import: only a few fetches run at once process-wide; the rest get a 429', async () => {
+  const gates = [];
+  const { routes } = setup({
+    limits: { maxConcurrentImports: 2 },
+    importRecipe: () => new Promise((resolve) => gates.push(() => resolve(RECIPE))),
+  });
+  const p1 = importCall(routes, undefined, '4.4.4.1');
+  const p2 = importCall(routes, undefined, '4.4.4.2');
+  for (let i = 0; gates.length < 2 && i < 200; i += 1) await new Promise((r) => setImmediate(r));
+  assert.equal(gates.length, 2, 'both imports in flight');
+  const busy = await importCall(routes, undefined, '4.4.4.3');
+  assert.equal(busy.res.statusCode, 429);
+  gates.forEach((g) => g());
+  assert.equal((await p1).res.statusCode, 200);
+  assert.equal((await p2).res.statusCode, 200);
+  // Slots are released, failures included.
+  const againP = importCall(routes, undefined, '4.4.4.4');
+  for (let i = 0; gates.length < 3 && i < 200; i += 1) await new Promise((r) => setImmediate(r));
+  assert.equal(gates.length, 3, 'a slot was free again');
+  gates[2]();
+  assert.equal((await againP).res.statusCode, 200);
 });

@@ -44,6 +44,51 @@
   <form id="dish-form" novalidate hidden>
     <p id="intro" class="small">Fill this in once. You will get a private link to make changes until voting opens.</p>
 
+    <!-- Recipe link import: fills Ingredients and Recipe from a recipe site's card. -->
+    <section class="import-card" id="import-card" aria-labelledby="import-heading">
+      <h2 id="import-heading">Have a recipe link?</h2>
+      <p class="import-lead">Paste it here and we'll fill in the ingredients and steps for you.</p>
+      <label class="sr-only" for="recipe-url">Recipe link</label>
+      <div class="import-row">
+        <input class="input" id="recipe-url" type="url" inputmode="url" placeholder="https://" autocomplete="url"
+          autocapitalize="off" spellcheck="false" enterkeyhint="go">
+        <button type="button" class="btn" id="import-btn">Get recipe</button>
+      </div>
+
+      <div class="import-working" id="import-working" hidden>
+        <svg class="pot" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <g class="steam">
+            <path class="wisp wisp-1" d="M42 34c-6-7 6-11 0-18s6-10 0-16" />
+            <path class="wisp wisp-2" d="M60 32c-6-7 6-11 0-18s6-10 0-16" />
+            <path class="wisp wisp-3" d="M78 34c-6-7 6-11 0-18s6-10 0-16" />
+          </g>
+          <g class="spoon">
+            <rect x="74" y="14" width="5" height="34" rx="2.5" />
+            <ellipse cx="76.5" cy="50" rx="7" ry="4.5" />
+          </g>
+          <rect class="pot-rim" x="18" y="44" width="84" height="9" rx="4.5" />
+          <path class="pot-body" d="M24 52h72v18c0 12-9 20-21 20H45c-12 0-21-8-21-20z" />
+          <path class="pot-band" d="M24 62h72v6H24z" />
+          <rect class="pot-handle" x="8" y="54" width="16" height="6" rx="3" />
+          <rect class="pot-handle" x="96" y="54" width="16" height="6" rx="3" />
+        </svg>
+        <p class="import-status" id="import-status" aria-live="polite">Visiting the recipe page…</p>
+      </div>
+
+      <div class="import-result import-ok" id="import-ok" hidden role="status" tabindex="-1">
+        <p id="import-ok-text"></p>
+        <p class="import-allergen-note">Recipe sites don't list allergens. Please tick the boxes below yourself, and check labels on things like rubs, broths and sauces.</p>
+      </div>
+      <div class="import-result import-fail" id="import-fail" hidden role="alert" tabindex="-1">
+        <svg class="import-fail-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 7v6.5" />
+          <circle class="dot" cx="12" cy="17" r="1.3" />
+        </svg>
+        <p id="import-fail-text"></p>
+      </div>
+    </section>
+
     <div class="field">
       <label for="cook">Your name</label>
       <input class="input" id="cook" name="cook" maxlength="80" autocomplete="name" required data-counter>
