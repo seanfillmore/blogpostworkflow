@@ -18,6 +18,7 @@ import { ROOT } from '../lib/paths.js';
 import { readJsonBody } from '../lib/responses.js';
 import { createRateLimiter, getClientIp } from '../lib/rate-limit.js';
 import { createContestStore } from '../../../lib/contest-store.js';
+import { importRecipeFromUrl, RecipeImportError } from '../../../lib/recipe-import.js';
 import {
   ContestError, ALLERGEN_LABELS, LIMITS, isUuidV4, effectivePhase, publicView, adminView, ballotFor, photoUrl,
   castVote, validateDishFields, submitDish, findByToken, updateOwnDish, setDishPhoto,
@@ -30,6 +31,7 @@ const PUBLIC_EXACT = new Set([
   '/contest/vote', '/contest/enter', '/contest/tv', '/contest/qr.svg',
   '/api/contest/public', '/api/contest/vote', '/api/contest/my-ballot',
   '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission',
+  '/api/contest/recipe-import',
 ]);
 const ASSET_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 // Versioned photo files only: /contest/photos/<dishId>-<version>.webp
@@ -90,10 +92,31 @@ const MULTER_MESSAGES = {
 /** Multer limits for the contest uploads (photo 20 MB, text fields 64 KB each). */
 export const UPLOAD_LIMITS = { fileSize: 20 * 1024 * 1024, files: 1, fields: 40, fieldSize: 64 * 1024 };
 
-/** Default rate limits. Votes are per 10 minutes, submissions per hour. */
+/**
+ * Default rate limits. Votes are per 10 minutes, submissions and recipe imports per hour.
+ * maxConcurrentImports caps outbound recipe fetches process-wide (each may hold up to
+ * 3 MB for up to 8 s on a 961 MB box shared with the whole dashboard).
+ */
 export const DEFAULT_LIMITS = {
   votesPerIp: 3000, votesPerVoter: 60, voteWindowMs: 10 * 60_000,
   submitsPerIp: 60, submitWindowMs: 60 * 60_000,
+  importsPerIp: 30, importWindowMs: 60 * 60_000, maxConcurrentImports: 4,
+};
+
+const OPEN_FAILED = "We couldn't open that page. Check the link, or type your recipe below.";
+const UNREADABLE = "That link isn't a recipe page we can read. You can type your recipe below.";
+const NOT_A_LINK = "That doesn't look like a web link. Paste the full address, starting with https://";
+/** RecipeImportError code → [status, message]. Plain words, never the fetched content. */
+export const RECIPE_IMPORT_MESSAGES = {
+  no_recipe: [422, "We couldn't find a recipe card on that page. You can type your ingredients and recipe below."],
+  unreachable: [422, OPEN_FAILED],
+  http_error: [422, OPEN_FAILED],
+  site_blocked: [422, "That site doesn't let us read its recipes automatically. Please type your ingredients and recipe below."],
+  timeout: [422, 'That site took too long to answer. Try again, or type your recipe below.'],
+  not_html: [422, UNREADABLE],
+  too_large: [422, UNREADABLE],
+  bad_url: [400, NOT_A_LINK],
+  blocked_url: [400, NOT_A_LINK],
 };
 
 class UploadError extends ContestError {}
@@ -184,6 +207,7 @@ export function createContestRoutes({
   upload,
   publicDir = join(ROOT, 'agents', 'dashboard', 'public', 'contest'),
   limits = {},
+  importRecipe = importRecipeFromUrl,
 } = {}) {
   if (!store) throw new Error('createContestRoutes requires a store');
   if (!upload) throw new Error('createContestRoutes requires an upload (multer) instance');
@@ -191,6 +215,8 @@ export function createContestRoutes({
   const voteIpLimiter = createRateLimiter({ windowMs: lim.voteWindowMs, max: lim.votesPerIp });
   const voteVoterLimiter = createRateLimiter({ windowMs: lim.voteWindowMs, max: lim.votesPerVoter });
   const submitLimiter = createRateLimiter({ windowMs: lim.submitWindowMs, max: lim.submitsPerIp });
+  const importLimiter = createRateLimiter({ windowMs: lim.importWindowMs, max: lim.importsPerIp });
+  let importsInFlight = 0;
   let qrSvg = null;
 
   /** ContestError → its status; JSON body errors → 413/400; anything else → router 500. */
@@ -482,6 +508,40 @@ export function createContestRoutes({
           const state = store.read();
           return sendJson(res, 200, { ok: true, dish: ownDishView(state.dishes.find((d) => d.id === dish.id), state, now()) });
         });
+      }),
+    },
+    {
+      // Read a recipe card from a link the cook pasted. Public, so: per-IP limit, a
+      // process-wide in-flight cap, a 2 KB body, setup phase only, and the importer
+      // (lib/recipe-import.js) does the private-address guard, byte cap and timeout.
+      method: 'POST',
+      match: (url) => pathOf(url) === '/api/contest/recipe-import',
+      handler: handle(async (req, res) => {
+        if (!importLimiter.check(getClientIp(req))) {
+          return refuseAndClose(req, res, 429, 'You have fetched a lot of recipes. Please wait a while, or type your recipe below.');
+        }
+        if (store.read().phase !== 'setup') {
+          return refuseAndClose(req, res, 409, 'Entries can no longer be changed, so recipe links are closed.');
+        }
+        const body = await jsonBody(req, res, 2048);
+        const fail = (code) => {
+          const [status, error] = RECIPE_IMPORT_MESSAGES[code] || RECIPE_IMPORT_MESSAGES.unreachable;
+          return sendJson(res, status, { ok: false, code: RECIPE_IMPORT_MESSAGES[code] ? code : 'unreachable', error });
+        };
+        const url = body && typeof body.url === 'string' ? body.url.trim() : '';
+        if (!url) return fail('bad_url');
+        if (importsInFlight >= lim.maxConcurrentImports) {
+          return sendJson(res, 429, { ok: false, code: 'busy', error: 'Lots of people are fetching recipes right now. Please try again in a minute.' });
+        }
+        importsInFlight += 1;
+        try {
+          const recipe = await importRecipe(url);
+          return sendJson(res, 200, { ok: true, recipe });
+        } catch (err) {
+          return fail(err instanceof RecipeImportError ? err.code : 'unreachable');
+        } finally {
+          importsInFlight -= 1;
+        }
       }),
     },
 

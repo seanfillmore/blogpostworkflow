@@ -253,6 +253,123 @@ textarea.input { min-height: 140px; resize: vertical; }
 }
 .progress > span { display: block; height: 100%; width: 0; background: var(--blueberry); transition: width 0.2s; }
 
+/* ---- recipe link import ------------------------------------------------ */
+/* A recipe card pinned to the tablecloth: the same gingham as the page band,
+   as a strip across its top edge. The pot is the one moving thing on the page. */
+
+.import-card {
+  position: relative;
+  background: var(--paper);
+  border: 2px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 26px 18px 18px;
+  margin: 6px 0 28px;
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.import-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 10px;
+  background-color: #fff;
+  background-image:
+    linear-gradient(90deg, rgba(43, 76, 155, 0.45) 50%, transparent 50%),
+    linear-gradient(rgba(43, 76, 155, 0.45) 50%, transparent 50%);
+  background-size: 10px 10px;
+}
+.import-card h2 { margin: 0 0 4px; font-size: 24px; }
+.import-lead { margin: 0 0 14px; color: var(--ink-soft); }
+
+.import-row { display: grid; gap: 10px; }
+.import-row .btn { width: 100%; }
+@media (min-width: 460px) {
+  .import-row { grid-template-columns: 1fr auto; }
+  .import-row .btn { width: auto; }
+}
+
+.import-working {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 10px 14px 10px 6px;
+  border-radius: var(--r-md);
+  background: var(--butter-tint);
+}
+.import-status { margin: 0; font-weight: 700; color: #4d3d00; }
+
+.pot { width: 104px; height: 84px; flex: none; overflow: visible; }
+.pot-body { fill: var(--blueberry); }
+.pot-band { fill: var(--blueberry-dark); }
+.pot-rim, .pot-handle { fill: var(--ink); }
+.spoon { fill: #c28a3a; transform-origin: 76px 46px; animation: stir 1.6s ease-in-out infinite; }
+.wisp {
+  fill: none;
+  stroke: #8a8270;
+  stroke-width: 4;
+  stroke-linecap: round;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: steam 2.4s ease-out infinite;
+}
+.wisp-2 { animation-delay: 0.8s; }
+.wisp-3 { animation-delay: 1.6s; }
+
+@keyframes steam {
+  0% { opacity: 0; transform: translateY(10px) scaleY(0.7); }
+  25% { opacity: 0.95; }
+  100% { opacity: 0; transform: translateY(-12px) scaleY(1.1); }
+}
+@keyframes stir {
+  0%, 100% { transform: rotate(-14deg); }
+  50% { transform: rotate(16deg); }
+}
+
+.import-result {
+  margin-top: 14px;
+  border-radius: var(--r-md);
+  padding: 14px 16px;
+  border: 2px solid;
+}
+.import-result p { margin: 0; }
+.import-result:focus { outline: none; }
+.import-result:focus-visible { outline: 3px solid var(--blueberry); outline-offset: 2px; }
+.import-ok { border-color: var(--leaf); background: var(--leaf-tint); color: #17452b; }
+.import-ok #import-ok-text { font-weight: 700; }
+.import-allergen-note {
+  margin-top: 10px !important;
+  padding-left: 12px;
+  border-left: 4px solid var(--butter);
+  font-size: 16px;
+}
+/* Gentle, not alarming: a warm apricot rather than the form's berry red. */
+.import-fail {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border-color: #d98a3d;
+  background: #fff1e2;
+  color: #5c3300;
+}
+.import-fail[hidden] { display: none; }
+.import-fail-icon { width: 26px; height: 26px; flex: none; margin-top: 1px; }
+.import-fail-icon circle { fill: none; stroke: #c06f1f; stroke-width: 2.2; }
+.import-fail-icon path { stroke: #c06f1f; stroke-width: 2.4; stroke-linecap: round; }
+.import-fail-icon .dot { fill: #c06f1f; stroke: none; }
+
+/* A soft butter glow on the fields we just filled. */
+textarea.input.just-filled, input.input.just-filled {
+  border-color: #d8b93d;
+  background-color: var(--butter-tint);
+  animation: filled-glow 1.8s ease-out;
+}
+@keyframes filled-glow {
+  0% { box-shadow: 0 0 0 0 rgba(246, 216, 107, 0.95); }
+  100% { box-shadow: 0 0 0 14px rgba(246, 216, 107, 0); }
+}
+
 /* ---- edit link card ---------------------------------------------------- */
 
 .link-card {

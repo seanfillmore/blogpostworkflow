@@ -1,5 +1,8 @@
 // Competitor page: enter a dish, or edit it later with the private ?edit=<token> link.
 // Every piece of user text goes into the page with textContent, never innerHTML.
+import {
+  CAP_INGREDIENTS, dishNameFrom, fitLines, buildRecipeText,
+} from './recipe-text.js';
 
 const $ = (id) => document.getElementById(id);
 const editToken = new URLSearchParams(location.search).get('edit');
@@ -272,6 +275,139 @@ form.addEventListener('submit', async (e) => {
   if (tip && chosenFile) lines.push(tip);
   if (status === 409 && /closed|no longer/i.test(serverMsg)) lines.push('Please contact the organizer.');
   formError(lines);
+});
+
+// ---- recipe link import -------------------------------------------------------
+// The server fetches the page and reads its recipe card; we only ever put the result
+// into form fields (.value) and messages (.textContent). Allergens are never ticked and
+// the site's photo is never used: the cook has to own both.
+
+const IMPORT_LINES = [
+  'Visiting the recipe page…',
+  'Looking for the recipe card…',
+  'Copying the ingredients…',
+  'Copying the steps…',
+];
+const IMPORT_TIMEOUT_MS = 15_000;
+const IMPORT_MIN_SHOW_MS = 1_200; // long enough to see the pot, even on a fast site
+const MSG_TIMEOUT = 'That site took too long to answer. Try again, or type your recipe below.';
+const MSG_OPEN_FAILED = "We couldn't open that page. Check the link, or type your recipe below.";
+let importing = false;
+let statusTimer = null;
+
+function normaliseLink(value) {
+  const v = value.trim();
+  if (!v) return '';
+  return /^[a-z][a-z0-9+.-]*:/i.test(v) ? v : `https://${v}`;
+}
+
+function setWorking(on) {
+  importing = on;
+  $('recipe-url').disabled = on;
+  $('import-btn').disabled = on;
+  $('import-btn').textContent = on ? 'Getting recipe…' : 'Get recipe';
+  show($('import-working'), on);
+  clearInterval(statusTimer);
+  if (!on) return;
+  let i = 0;
+  $('import-status').textContent = IMPORT_LINES[0];
+  statusTimer = setInterval(() => {
+    i = Math.min(i + 1, IMPORT_LINES.length - 1);
+    $('import-status').textContent = IMPORT_LINES[i];
+    if (i === IMPORT_LINES.length - 1) clearInterval(statusTimer);
+  }, 1500);
+}
+
+function importFail(text) {
+  show($('import-ok'), false);
+  $('import-fail-text').textContent = text;
+  show($('import-fail'));
+  $('import-fail').focus({ preventScroll: true });
+  $('import-fail').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function flash(el) {
+  el.classList.remove('just-filled');
+  void el.offsetWidth; // restart the animation
+  el.classList.add('just-filled');
+  setTimeout(() => el.classList.remove('just-filled'), 2400);
+}
+
+function setField(el, value) {
+  el.value = value;
+  el.dispatchEvent(new Event('input', { bubbles: true })); // counters and red outlines
+  flash(el);
+}
+
+function applyRecipe(recipe, sourceUrl) {
+  const ing = $('ingredients');
+  const rec = $('recipe');
+  if ((ing.value.trim() || rec.value.trim())
+    && !window.confirm("Replace the ingredients and recipe you've already typed?")) {
+    return;
+  }
+  const ingredients = fitLines(recipe.ingredients || [], CAP_INGREDIENTS);
+  const built = buildRecipeText(recipe, sourceUrl);
+  const ingredientCount = ingredients.text ? ingredients.text.split('\n').length : 0;
+  setField(ing, ingredients.text);
+  setField(rec, built.text);
+  if (!$('name').value.trim() && recipe.name) setField($('name'), dishNameFrom(recipe.name));
+
+  const plural = (k, word) => `${k} ${word}${k === 1 ? '' : 's'}`;
+  const from = recipe.siteName ? ` from ${recipe.siteName}` : '';
+  const shortened = ingredients.cut || built.cut ? ' (shortened to fit)' : '';
+  $('import-ok-text').textContent = `Done! We added ${plural(ingredientCount, 'ingredient')} and ${plural(built.steps, 'step')}${from}${shortened}. Please check them and add any changes you made.`;
+  show($('import-fail'), false);
+  show($('import-ok'));
+  $('import-ok').focus({ preventScroll: true });
+}
+
+async function runImport() {
+  if (importing) return;
+  show($('import-ok'), false);
+  show($('import-fail'), false);
+  const url = normaliseLink($('recipe-url').value);
+  if (!url) {
+    importFail('Paste the link to your recipe in the box first.');
+    $('recipe-url').focus();
+    return;
+  }
+  setWorking(true);
+  const started = Date.now();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), IMPORT_TIMEOUT_MS);
+  let status = 0;
+  let body = null;
+  try {
+    const res = await fetch('/api/contest/recipe-import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    status = res.status;
+    try { body = await res.json(); } catch { /* not JSON */ }
+  } catch {
+    status = controller.signal.aborted ? -1 : 0;
+  } finally {
+    clearTimeout(timer);
+  }
+  const wait = IMPORT_MIN_SHOW_MS - (Date.now() - started);
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  setWorking(false);
+
+  if (status === 200 && body && body.ok && body.recipe) return applyRecipe(body.recipe, url);
+  if (status === -1) return importFail(MSG_TIMEOUT);
+  if (status === 0) return importFail('We could not reach the contest. Check your internet connection and try again.');
+  return importFail(body && body.error ? String(body.error) : MSG_OPEN_FAILED);
+}
+
+$('import-btn').addEventListener('click', runImport);
+$('recipe-url').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  e.preventDefault(); // Enter here gets the recipe; it must never submit the entry form
+  runImport();
 });
 
 // ---- after a new entry: the private link -----------------------------------
