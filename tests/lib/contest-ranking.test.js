@@ -119,7 +119,7 @@ test('photoUrl is versioned, and null until a photo exists', () => {
   const { state, A } = scored();
   state.dishes.find((d) => d.id === A.id).photoVersion = 3;
   const view = publicView(state, T0);
-  assert.equal(view.dishes.find((d) => d.id === A.id).photoUrl, `/contest/photos/${A.id}.webp?v=3`);
+  assert.equal(view.dishes.find((d) => d.id === A.id).photoUrl, `/contest/photos/${A.id}-3.webp`);
   assert.equal(view.dishes.find((d) => d.name === 'B').photoUrl, null);
 });
 

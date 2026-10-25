@@ -60,7 +60,7 @@ function catName(id) {
 }
 
 function photoUrl(dish) {
-  return dish.photoVersion > 0 ? `/contest/photos/${dish.id}.webp?v=${dish.photoVersion}` : null;
+  return dish.photoVersion > 0 ? `/contest/photos/${dish.id}-${dish.photoVersion}.webp` : null;
 }
 
 function photoNode(dish, className) {
@@ -654,7 +654,7 @@ function openDishForm(dish) {
   buildAllergenChecks(dish ? dish.allergens : []);
   $('f-photo').value = '';
   setPreview(dish ? photoUrl(dish) : null);
-  $('f-photo-hint').textContent = dish ? 'Leave it to keep the current photo, or tap to replace it.' : 'Required. Take a picture of the dish on the table.';
+  $('f-photo-hint').textContent = dish ? 'Leave it to keep the current photo, or tap to replace it.' : 'Optional. Add a picture of the dish if you have one.';
   $('dish-error').hidden = true;
   $('dish-save').textContent = dish ? 'Save changes' : 'Add dish';
   $('dish-save').disabled = false;

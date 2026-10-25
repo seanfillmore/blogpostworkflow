@@ -153,8 +153,29 @@ test('setDishPhoto bumps the version that feeds photoUrl', () => {
   const a = adminAddDish(state, fields(cat));
   const once = setDishPhoto(a.state, a.dish.id);
   const twice = setDishPhoto(once, a.dish.id);
-  assert.equal(publicView(once, T0).dishes[0].photoUrl, `/contest/photos/${a.dish.id}.webp?v=1`);
+  assert.equal(publicView(once, T0).dishes[0].photoUrl, `/contest/photos/${a.dish.id}-1.webp`);
   assert.equal(twice.dishes[0].photoVersion, 2);
+});
+
+test('setDishPhoto with an expected version refuses a stale one (409)', () => {
+  const { state, cat } = setup();
+  const a = adminAddDish(state, fields(cat));
+  const once = setDishPhoto(a.state, a.dish.id, 0);
+  assert.equal(once.dishes[0].photoVersion, 1);
+  throwsStatus(() => setDishPhoto(once, a.dish.id, 0), 409);
+});
+
+test('a cook replacing the photo on an approved dish sends it back to pending; text-only stays approved', () => {
+  const { state, cat } = setup();
+  const sub = submitDish(setSubmissionsOpen(state, true), T0, fields(cat));
+  const approved = approveDish(sub.state, sub.dish.id);
+  const textOnly = updateOwnDish(approved, T0, sub.editToken, fields(cat, { name: 'Better chili' }));
+  assert.equal(textOnly.dish.status, 'approved');
+  assert.equal(textOnly.dish.editedSinceApproval, true);
+  const withPhoto = updateOwnDish(approved, T0, sub.editToken, fields(cat), { newPhoto: true });
+  assert.equal(withPhoto.dish.status, 'pending');
+  assert.equal(withPhoto.dish.editedSinceApproval, false);
+  assert.equal(publicView(withPhoto.state, T0).dishes.length, 0, 'a re-pending dish leaves the public list');
 });
 
 test('reorderDishes sets the order every view uses and rejects partial lists', () => {

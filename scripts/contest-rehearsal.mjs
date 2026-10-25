@@ -175,13 +175,13 @@ for (let v = 0; v < opts.voters; v++) {
 }
 events.sort((a, b) => a.t - b.t);
 
-// One IP casts every ballot, and the server allows 600 votes per 10 minutes per IP.
+// One IP casts every ballot, and the server allows 3000 votes per 10 minutes per IP.
 const WINDOW_10 = 600_000;
-const cap = 540 * Math.max(1, windowMs / WINDOW_10); // votes the IP may send inside the schedule
+const cap = 2700 * Math.max(1, windowMs / WINDOW_10); // votes the IP may send inside the schedule
 let scale = 1;
 if (events.length > cap) {
   scale = events.length / cap;
-  console.warn(`WARNING: ${events.length} votes exceed the 600 per 10 min per-IP limit in ${opts.minutes} min; stretching the schedule ${scale.toFixed(1)}x (the deadline may pass: use more --minutes or fewer --voters).`);
+  console.warn(`WARNING: ${events.length} votes exceed the 3000 per 10 min per-IP limit in ${opts.minutes} min; stretching the schedule ${scale.toFixed(1)}x (the deadline may pass: use more --minutes or fewer --voters).`);
 }
 const startedAt = Date.now();
 let sent = 0;

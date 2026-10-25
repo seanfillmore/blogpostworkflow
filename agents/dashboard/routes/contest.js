@@ -19,7 +19,7 @@ import { readJsonBody } from '../lib/responses.js';
 import { createRateLimiter, getClientIp } from '../lib/rate-limit.js';
 import { createContestStore } from '../../../lib/contest-store.js';
 import {
-  ContestError, ALLERGEN_LABELS, isUuidV4, effectivePhase, publicView, adminView, ballotFor,
+  ContestError, ALLERGEN_LABELS, LIMITS, isUuidV4, effectivePhase, publicView, adminView, ballotFor, photoUrl,
   castVote, validateDishFields, submitDish, findByToken, updateOwnDish, setDishPhoto,
   setTitle, addCategory, renameCategory, deleteCategory, reorderCategories,
   adminAddDish, adminUpdateDish, approveDish, unapproveDish, deleteDish, reorderDishes,
@@ -32,7 +32,8 @@ const PUBLIC_EXACT = new Set([
   '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission',
 ]);
 const ASSET_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-const PHOTO_PATH = /^\/contest\/photos\/([^/]+)\.webp$/;
+// Versioned photo files only: /contest/photos/<dishId>-<version>.webp
+const PHOTO_PATH = /^\/contest\/photos\/([0-9a-f-]{36})-([1-9][0-9]{0,8})\.webp$/i;
 
 const pathOf = (url) => String(url || '/').split('?')[0];
 const queryOf = (url) => new URLSearchParams(String(url || '').split('?')[1] || '');
@@ -82,6 +83,17 @@ const MULTER_MESSAGES = {
   LIMIT_FILE_SIZE: 'That photo is too large. The limit is 20 MB.',
   LIMIT_FILE_COUNT: 'Please attach only one photo.',
   LIMIT_UNEXPECTED_FILE: 'Please attach only one photo.',
+  LIMIT_FIELD_VALUE: 'Some of the text you entered is too long. Please shorten it and try again.',
+  LIMIT_FIELD_COUNT: 'That form has too many fields. Please reload the page and try again.',
+};
+
+/** Multer limits for the contest uploads (photo 20 MB, text fields 64 KB each). */
+export const UPLOAD_LIMITS = { fileSize: 20 * 1024 * 1024, files: 1, fields: 40, fieldSize: 64 * 1024 };
+
+/** Default rate limits. Votes are per 10 minutes, submissions per hour. */
+export const DEFAULT_LIMITS = {
+  votesPerIp: 3000, votesPerVoter: 60, voteWindowMs: 10 * 60_000,
+  submitsPerIp: 60, submitWindowMs: 60 * 60_000,
 };
 
 class UploadError extends ContestError {}
@@ -146,7 +158,7 @@ function ownDishView(dish, state, now) {
     recipe: dish.recipe,
     allergens: [...dish.allergens],
     status: dish.status,
-    photoUrl: dish.photoVersion > 0 ? `/contest/photos/${dish.id}.webp?v=${dish.photoVersion}` : null,
+    photoUrl: photoUrl(dish),
     editable: state.phase === 'setup' && effectivePhase(state, now) === 'setup',
   };
 }
@@ -175,10 +187,7 @@ export function createContestRoutes({
 } = {}) {
   if (!store) throw new Error('createContestRoutes requires a store');
   if (!upload) throw new Error('createContestRoutes requires an upload (multer) instance');
-  const lim = {
-    votesPerIp: 600, votesPerVoter: 60, voteWindowMs: 10 * 60_000,
-    submitsPerIp: 20, submitWindowMs: 60 * 60_000, ...limits,
-  };
+  const lim = { ...DEFAULT_LIMITS, ...limits };
   const voteIpLimiter = createRateLimiter({ windowMs: lim.voteWindowMs, max: lim.votesPerIp });
   const voteVoterLimiter = createRateLimiter({ windowMs: lim.voteWindowMs, max: lim.votesPerVoter });
   const submitLimiter = createRateLimiter({ windowMs: lim.submitWindowMs, max: lim.submitsPerIp });
@@ -245,22 +254,58 @@ export function createContestRoutes({
     }),
   });
 
+  // One photo operation per dish at a time, so two uploads never stage the same version.
+  const dishLocks = new Map();
+  function withDishLock(dishId, fn) {
+    const prior = dishLocks.get(dishId) || Promise.resolve();
+    const run = prior.then(fn, fn);
+    const tail = run.catch(() => {});
+    dishLocks.set(dishId, tail);
+    tail.then(() => { if (dishLocks.get(dishId) === tail) dishLocks.delete(dishId); });
+    return run;
+  }
+
+  /**
+   * Replace a dish's photo: stage photos/<id>-<v+1>.webp FIRST, then run `mutate(state, v)`
+   * (which must bump photoVersion via setDishPhoto(state, id, v)) in one store update. A failed
+   * update deletes the staged file; a successful one deletes the previous version's file.
+   */
+  function withNewPhoto(dishId, file, mutate) {
+    return withDishLock(dishId, async () => {
+      const dish = store.read().dishes.find((d) => d.id === dishId);
+      if (!dish) throw new ContestError(404, 'dish not found');
+      const prev = dish.photoVersion || 0;
+      const buf = await readFile(file.path);
+      await store.savePhoto(dishId, prev + 1, buf);
+      let result;
+      try {
+        result = await store.update((s) => mutate(s, prev));
+      } catch (err) {
+        try { store.deletePhoto(dishId, prev + 1); } catch { /* nothing staged */ }
+        throw err;
+      }
+      if (prev > 0) {
+        try { store.deletePhoto(dishId, prev); } catch { /* already gone */ }
+      }
+      return result;
+    });
+  }
+
   /** Save a photo for a dish that already exists and bump its photoVersion. */
-  async function attachPhoto(dishId, file) {
-    const buf = await readFile(file.path);
-    await store.savePhoto(dishId, buf);
-    await store.update((s) => setDishPhoto(s, dishId));
+  function attachPhoto(dishId, file) {
+    return withNewPhoto(dishId, file, (s, prev) => setDishPhoto(s, dishId, prev));
   }
 
   /** Create a dish (via `create`), then its photo; roll the dish back if the photo fails. */
-  async function createWithPhoto(fields, file, create) {
+  async function createWithPhoto(fields, file, create, { requirePhoto = true } = {}) {
     const state = store.read();
     const v = validateDishFields(fields, state);
     if (!v.ok) throw new ContestError(400, v.error);
-    if (!file) throw new ContestError(400, 'A photo of the dish is required.');
+    if (!file && requirePhoto) throw new ContestError(400, 'A photo of the dish is required.');
     const result = await store.update((s) => create(s, fields));
     const dishId = result.dish.id;
     const editToken = result.editToken;
+    if (!file) return { dishId, editToken };
     try {
       await attachPhoto(dishId, file);
     } catch (err) {
@@ -290,11 +335,11 @@ export function createContestRoutes({
       method: 'GET',
       match: (url) => PHOTO_PATH.test(pathOf(url)),
       handler: async (req, res) => {
-        const id = pathOf(req.url).match(PHOTO_PATH)[1];
+        const [, id, version] = pathOf(req.url).match(PHOTO_PATH);
         if (!isUuidV4(id)) return sendText(res, 404, 'Not found');
         let buf;
         try {
-          buf = await readFile(store.photoPath(id));
+          buf = await readFile(store.photoPath(id, Number(version)));
         } catch (err) {
           if (err.code === 'ENOENT') return sendText(res, 404, 'Not found');
           throw err;
@@ -385,6 +430,14 @@ export function createContestRoutes({
         if (!submitLimiter.check(getClientIp(req))) {
           return refuseAndClose(req, res, 429, 'Too many entries from this network. Please try again later.');
         }
+        // Refuse before parsing the upload, so a closed or full contest never reads 20 MB.
+        const st = store.read();
+        if (!st.submissionsOpen || st.phase !== 'setup') {
+          return refuseAndClose(req, res, 409, 'dish entries are closed');
+        }
+        if (st.dishes.length >= LIMITS.maxDishes) {
+          return refuseAndClose(req, res, 409, `the contest is full (${LIMITS.maxDishes} dishes)`);
+        }
         return withUpload(upload, req, res, async (body, file) => {
           const fields = dishFields(body);
           const { editToken } = await createWithPhoto(fields, file, (s, f) => submitDish(s, now(), f));
@@ -405,22 +458,31 @@ export function createContestRoutes({
     {
       method: 'POST',
       match: (url) => pathOf(url) === '/api/contest/submission',
-      handler: handle(async (req, res) => withUpload(upload, req, res, async (body, file) => {
-        const token = queryOf(req.url).get('token');
-        const fields = dishFields(body);
-        // Validate token, phase and fields on a copy before touching the photo.
-        const { dish } = updateOwnDish(store.read(), now(), token, fields);
-        if (file) {
-          const buf = await readFile(file.path);
-          await store.savePhoto(dish.id, buf);
+      handler: handle(async (req, res) => {
+        if (!submitLimiter.check(getClientIp(req))) {
+          return refuseAndClose(req, res, 429, 'Too many changes from this network. Please try again later.');
         }
-        await store.update((s) => {
-          const r = updateOwnDish(s, now(), token, fields);
-          return file ? setDishPhoto(r.state, dish.id) : r.state;
+        const token = queryOf(req.url).get('token');
+        // Refuse before parsing the upload: unknown token or a contest past setup.
+        const st = store.read();
+        if (!findByToken(st, token)) return refuseAndClose(req, res, 404, 'entry not found');
+        if (st.phase !== 'setup') return refuseAndClose(req, res, 409, 'entries can no longer be edited');
+        return withUpload(upload, req, res, async (body, file) => {
+          const fields = dishFields(body);
+          // Validate token, phase and fields on a copy before touching the photo.
+          const { dish } = updateOwnDish(store.read(), now(), token, fields);
+          if (file) {
+            await withNewPhoto(dish.id, file, (s, prev) => {
+              const r = updateOwnDish(s, now(), token, fields, { newPhoto: true });
+              return setDishPhoto(r.state, dish.id, prev);
+            });
+          } else {
+            await store.update((s) => updateOwnDish(s, now(), token, fields).state);
+          }
+          const state = store.read();
+          return sendJson(res, 200, { ok: true, dish: ownDishView(state.dishes.find((d) => d.id === dish.id), state, now()) });
         });
-        const state = store.read();
-        return sendJson(res, 200, { ok: true, dish: ownDishView(state.dishes.find((d) => d.id === dish.id), state, now()) });
-      })),
+      }),
     },
 
     // ---- admin (auth enforced by index.js: none of these paths are public) ----
@@ -438,7 +500,7 @@ export function createContestRoutes({
     admin('dish-approve', (s, b) => approveDish(s, b.id)),
     admin('dish-unapprove', (s, b) => unapproveDish(s, b.id)),
     admin('dish-delete', (s, b) => deleteDish(s, b.id), (b) => {
-      if (isUuidV4(b.id)) store.deletePhoto(b.id);
+      if (isUuidV4(b.id)) store.deletePhoto(b.id); // every version
     }),
     admin('dish-reorder', (s, b) => reorderDishes(s, b.ids)),
     admin('submissions', (s, b) => setSubmissionsOpen(s, b.open)),
@@ -461,7 +523,8 @@ export function createContestRoutes({
       method: 'POST',
       match: (url) => pathOf(url) === '/api/contest/admin/dish-add',
       handler: handle(async (req, res) => withUpload(upload, req, res, async (body, file) => {
-        await createWithPhoto(dishFields(body), file, (s, f) => adminAddDish(s, f));
+        // The admin may add a dish without a photo (competitor entries still need one).
+        await createWithPhoto(dishFields(body), file, (s, f) => adminAddDish(s, f), { requirePhoto: false });
         return sendJson(res, 200, adminState());
       })),
     },
@@ -473,13 +536,10 @@ export function createContestRoutes({
         const fields = dishFields(body);
         adminUpdateDish(store.read(), id, fields); // validate before touching the photo
         if (file) {
-          const buf = await readFile(file.path);
-          await store.savePhoto(id, buf);
+          await withNewPhoto(id, file, (s, prev) => setDishPhoto(adminUpdateDish(s, id, fields), id, prev));
+        } else {
+          await store.update((s) => adminUpdateDish(s, id, fields));
         }
-        await store.update((s) => {
-          const next = adminUpdateDish(s, id, fields);
-          return file ? setDishPhoto(next, id) : next;
-        });
         return sendJson(res, 200, adminState());
       })),
     },
@@ -492,5 +552,5 @@ fs.mkdirSync(defaultUploadDir, { recursive: true });
 
 export default createContestRoutes({
   store: createContestStore({ dir: join(ROOT, 'data', 'contest') }),
-  upload: multer({ dest: defaultUploadDir, limits: { fileSize: 20 * 1024 * 1024, files: 1, fields: 40, fieldSize: 16 * 1024 } }),
+  upload: multer({ dest: defaultUploadDir, limits: UPLOAD_LIMITS }),
 });

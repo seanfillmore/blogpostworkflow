@@ -14,9 +14,11 @@ import multer from 'multer';
 import sharp from 'sharp';
 import { createContestStore } from '../../lib/contest-store.js';
 import {
-  addCategory, adminAddDish, openVoting, setSubmissionsOpen,
+  addCategory, adminAddDish, approveDish, openVoting, setSubmissionsOpen, LIMITS,
 } from '../../lib/contest.js';
-import { createContestRoutes, isPublicContestPath } from '../../agents/dashboard/routes/contest.js';
+import {
+  createContestRoutes, isPublicContestPath, DEFAULT_LIMITS, UPLOAD_LIMITS,
+} from '../../agents/dashboard/routes/contest.js';
 import { dispatch } from '../../agents/dashboard/lib/router.js';
 
 const NOW = new Date('2026-11-01T18:00:00Z');
@@ -25,12 +27,14 @@ function tmpDir(tag) {
   return fs.mkdtempSync(join(os.tmpdir(), `contest-${tag}-`));
 }
 
-function setup({ publicDir } = {}) {
+function setup({ publicDir, limits, wrapStore } = {}) {
   const dir = tmpDir('data');
   const uploadDir = tmpDir('upl');
   const store = createContestStore({ dir, now: () => NOW });
-  const upload = multer({ dest: uploadDir, limits: { fileSize: 20 * 1024 * 1024 } });
-  const routes = createContestRoutes({ store, now: () => NOW, upload, publicDir: publicDir || tmpDir('pub') });
+  const upload = multer({ dest: uploadDir, limits: UPLOAD_LIMITS });
+  const routes = createContestRoutes({
+    store: wrapStore ? wrapStore(store) : store, now: () => NOW, upload, publicDir: publicDir || tmpDir('pub'), limits,
+  });
   return { dir, uploadDir, store, routes };
 }
 
@@ -148,8 +152,16 @@ test('the 61st vote from one voterId inside the window is a 429', async () => {
   assert.equal(res.statusCode, 429);
 });
 
-test('the 601st vote from one IP is a 429 while another voter on another IP succeeds', async () => {
-  const { routes, store } = setup();
+test('rate limit defaults: 3000 votes / 10 min / IP, 60 / voter, 60 submissions / hour / IP', () => {
+  assert.deepEqual(DEFAULT_LIMITS, {
+    votesPerIp: 3000, votesPerVoter: 60, voteWindowMs: 10 * 60_000, submitsPerIp: 60, submitWindowMs: 60 * 60_000,
+  });
+  assert.equal(UPLOAD_LIMITS.fieldSize, 64 * 1024);
+  assert.equal(UPLOAD_LIMITS.fileSize, 20 * 1024 * 1024);
+});
+
+test('the per-IP vote cap is a 429 while another voter on another IP succeeds', async () => {
+  const { routes, store } = setup({ limits: { votesPerIp: 600 } });
   const { catId, dishId } = await seedOpen(store);
   const voters = Array.from({ length: 11 }, () => randomUUID());
   for (let i = 0; i < 600; i++) {
@@ -219,7 +231,7 @@ test('submit with a real image stores the dish and returns an edit URL; temp fil
   const dish = store.read().dishes[0];
   assert.equal(dish.photoVersion, 1);
   assert.deepEqual(dish.allergens, ['milk']);
-  assert.ok(fs.existsSync(join(dir, 'photos', `${dish.id}.webp`)));
+  assert.ok(fs.existsSync(join(dir, 'photos', `${dish.id}-1.webp`)));
 
   const token = editUrl.split('edit=')[1];
   const own = await call(routes, { url: `/api/contest/submission?token=${token}` });
@@ -295,4 +307,239 @@ test('qr.svg is an SVG of the public vote URL', async () => {
   assert.equal(res.statusCode, 200);
   assert.match(res.headers['Content-Type'], /image\/svg\+xml/);
   assert.match(String(res.body), /<svg/);
+});
+
+// ---- final-review fix wave -------------------------------------------------
+
+const pngOf = (color) => sharp({ create: { width: 40, height: 30, channels: 3, background: color } }).png().toBuffer();
+
+async function openSubmissions(store) {
+  let catId;
+  await store.update((s) => {
+    const a = addCategory(s, 'Mains');
+    catId = a.category.id;
+    return setSubmissionsOpen(a.state, true);
+  });
+  return catId;
+}
+
+async function submitWithPhoto(routes, catId, ip = '1.1.1.1') {
+  const mp = multipart(
+    { categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' },
+    { name: 'stew.png', type: 'image/png', data: await pngOf('#c33') },
+  );
+  const { res } = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp, ip });
+  assert.equal(res.statusCode, 200, res.body);
+  return res.json().editUrl.split('edit=')[1];
+}
+
+test('a cook photo edit on an approved dish re-pends it, versions the file and deletes the old one', async () => {
+  const { routes, store, dir, uploadDir } = setup();
+  const catId = await openSubmissions(store);
+  const token = await submitWithPhoto(routes, catId);
+  const id = store.read().dishes[0].id;
+  await store.update((s) => approveDish(s, id));
+
+  // Text-only edit: stays approved, flagged.
+  const text = multipart({ categoryId: catId, name: 'Beef stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' });
+  const t = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...text });
+  assert.equal(t.res.statusCode, 200, t.res.body);
+  assert.equal(store.read().dishes[0].status, 'approved');
+  assert.equal(store.read().dishes[0].editedSinceApproval, true);
+
+  // New photo: back to pending, version 2, v1 file gone.
+  const mp = multipart(
+    { categoryId: catId, name: 'Beef stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' },
+    { name: 'new.png', type: 'image/png', data: await pngOf('#3c3') },
+  );
+  const p = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...mp });
+  assert.equal(p.res.statusCode, 200, p.res.body);
+  const dish = store.read().dishes[0];
+  assert.equal(dish.status, 'pending');
+  assert.equal(dish.photoVersion, 2);
+  assert.equal(p.res.json().dish.photoUrl, `/contest/photos/${id}-2.webp`);
+  assert.deepEqual(filesIn(join(dir, 'photos')), [`${id}-2.webp`]);
+  assert.deepEqual(filesIn(uploadDir), []);
+
+  const img = await call(routes, { url: `/contest/photos/${id}-2.webp` });
+  assert.equal(img.res.statusCode, 200);
+  assert.equal(img.res.headers['Content-Type'], 'image/webp');
+  assert.match(img.res.headers['Cache-Control'], /immutable/);
+  const old = await call(routes, { url: `/contest/photos/${id}-1.webp` });
+  assert.equal(old.res.statusCode, 404);
+  const legacy = await call(routes, { url: `/contest/photos/${id}.webp` });
+  assert.equal(legacy.matched, false, 'unversioned photo URLs are no longer served');
+  const pub = await call(routes, { url: '/api/contest/public' });
+  assert.equal(pub.res.json().dishes.length, 0, 'the re-pended dish left the public list');
+});
+
+test('if the state update fails after staging a photo, the staged file is deleted and the old one kept', async () => {
+  let failUpdates = false;
+  const { routes, store, dir, uploadDir } = setup({
+    wrapStore: (real) => ({
+      ...real,
+      update: (fn) => (failUpdates ? Promise.reject(new Error('disk full')) : real.update(fn)),
+    }),
+  });
+  let catId; let id;
+  await store.update((s) => {
+    const a = addCategory(s, 'Mains');
+    catId = a.category.id;
+    const d = adminAddDish(a.state, { categoryId: catId, name: 'Pie', cook: 'Ann', ingredients: 'apples', allergens: ['none'] });
+    id = d.dish.id;
+    return { ...d.state, dishes: d.state.dishes.map((x) => ({ ...x, photoVersion: 1 })) };
+  });
+  await store.savePhoto(id, 1, await pngOf('#c33'));
+  failUpdates = true;
+  const mp = multipart(
+    { id, categoryId: catId, name: 'Pie', cook: 'Ann', ingredients: 'apples', allergens: 'none' },
+    { name: 'pie.png', type: 'image/png', data: await pngOf('#33c') },
+  );
+  const r = await call(routes, { method: 'POST', url: '/api/contest/admin/dish-update', ...mp }).catch((e) => e);
+  assert.notEqual(r?.res?.statusCode, 200);
+  assert.deepEqual(filesIn(join(dir, 'photos')), [`${id}-1.webp`], 'staged v2 removed, v1 intact');
+  assert.equal(store.read().dishes[0].photoVersion, 1);
+  assert.deepEqual(filesIn(uploadDir), []);
+});
+
+test('admin dish-update with a photo bumps the version and deletes the old file', async () => {
+  const { routes, store, dir } = setup();
+  const { catId, dishId } = await seedOpen(store);
+  const add = (color) => pngOf(color).then((data) => multipart(
+    { id: dishId, categoryId: catId, name: 'Pie', cook: 'Ann', ingredients: 'apples', allergens: 'none' },
+    { name: 'pie.png', type: 'image/png', data },
+  ));
+  for (const color of ['#111', '#222']) {
+    const r = await call(routes, { method: 'POST', url: '/api/contest/admin/dish-update', ...(await add(color)) });
+    assert.equal(r.res.statusCode, 200, r.res.body);
+  }
+  assert.equal(store.read().dishes[0].photoVersion, 2);
+  assert.equal(store.read().dishes[0].status, 'approved', 'an admin edit never re-pends');
+  assert.deepEqual(filesIn(join(dir, 'photos')), [`${dishId}-2.webp`]);
+});
+
+test('admin dish-add may have no photo; competitor submit still needs one', async () => {
+  const { routes, store } = setup();
+  const catId = await openSubmissions(store);
+  const mp = multipart({ categoryId: catId, name: 'Rolls', cook: 'Cy', ingredients: 'flour', allergens: 'wheat' });
+  const r = await call(routes, { method: 'POST', url: '/api/contest/admin/dish-add', ...mp });
+  assert.equal(r.res.statusCode, 200, r.res.body);
+  const dish = store.read().dishes[0];
+  assert.equal(dish.photoVersion, 0);
+  assert.equal(dish.status, 'approved');
+  assert.equal(r.res.json().state.dishes[0].name, 'Rolls');
+});
+
+test('submit is refused before the upload is parsed when entries are closed or the contest is full', async () => {
+  const { routes, store, uploadDir } = setup();
+  let catId;
+  await store.update((s) => { const a = addCategory(s, 'Mains'); catId = a.category.id; return a.state; });
+  const mp = multipart(
+    { categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' },
+    { name: 'stew.png', type: 'image/png', data: await pngOf('#c33') },
+  );
+  const closed = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp });
+  assert.equal(closed.res.statusCode, 409);
+  assert.equal(closed.res.json().error, 'dish entries are closed');
+  assert.equal(closed.req.destroyed, true);
+  assert.deepEqual(filesIn(uploadDir), [], 'multer never ran');
+
+  await store.update((s) => {
+    const st = setSubmissionsOpen(s, true);
+    st.dishes = Array.from({ length: LIMITS.maxDishes }, () => ({ id: randomUUID(), categoryId: catId, name: 'x', cook: 'y', ingredients: 'z', recipe: '', allergens: ['none'], status: 'pending', source: 'competitor', editedSinceApproval: false, photoVersion: 0 }));
+    return st;
+  });
+  const full = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp });
+  assert.equal(full.res.statusCode, 409);
+  assert.match(full.res.json().error, /full/);
+  assert.deepEqual(filesIn(uploadDir), []);
+});
+
+test('own-dish update is refused before parsing for an unknown token or a contest past setup', async () => {
+  const { routes, store, uploadDir } = setup();
+  const catId = await openSubmissions(store);
+  const token = await submitWithPhoto(routes, catId);
+  const mp = () => pngOf('#c33').then((data) => multipart(
+    { categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' },
+    { name: 'stew.png', type: 'image/png', data },
+  ));
+  const bad = await call(routes, { method: 'POST', url: '/api/contest/submission?token=nope', ...(await mp()) });
+  assert.equal(bad.res.statusCode, 404);
+  assert.equal(bad.req.destroyed, true);
+  await store.update((s) => openVoting(approveDish(s, s.dishes[0].id), NOW, new Date(NOW.getTime() + 3600_000)));
+  const late = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...(await mp()) });
+  assert.equal(late.res.statusCode, 409);
+  assert.equal(late.req.destroyed, true);
+  assert.deepEqual(filesIn(uploadDir), []);
+});
+
+test('own-dish updates share the per-IP submission limiter', async () => {
+  const { routes, store } = setup({ limits: { submitsPerIp: 3 } });
+  const catId = await openSubmissions(store);
+  const token = await submitWithPhoto(routes, catId, '5.5.5.5');
+  const text = () => multipart({ categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' });
+  for (let i = 0; i < 2; i++) {
+    const r = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...text(), ip: '5.5.5.5' });
+    assert.equal(r.res.statusCode, 200, r.res.body);
+  }
+  const blocked = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...text(), ip: '5.5.5.5' });
+  assert.equal(blocked.res.statusCode, 429);
+  const other = await call(routes, { method: 'POST', url: `/api/contest/submission?token=${token}`, ...text(), ip: '6.6.6.6' });
+  assert.equal(other.res.statusCode, 200);
+});
+
+test('the 61st submission from one IP inside an hour is a 429', async () => {
+  const { routes, store } = setup();
+  const catId = await openSubmissions(store);
+  const mp = () => multipart({ categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' });
+  for (let i = 0; i < 60; i++) {
+    const { res } = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp(), ip: '7.7.7.7' });
+    assert.equal(res.statusCode, 400, `submit ${i + 1}: ${res.body}`); // no photo, but counted
+  }
+  const { res } = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp(), ip: '7.7.7.7' });
+  assert.equal(res.statusCode, 429);
+});
+
+test('a text field over 64 KB and too many fields are plain 400s with no temp file left', async () => {
+  const { routes, store, uploadDir } = setup();
+  const catId = await openSubmissions(store);
+  const long = multipart(
+    { categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'x'.repeat(64 * 1024 + 10), allergens: 'none' },
+    { name: 'stew.png', type: 'image/png', data: await pngOf('#c33') },
+  );
+  const r1 = await call(routes, { method: 'POST', url: '/api/contest/submit', ...long });
+  assert.equal(r1.res.statusCode, 400);
+  assert.match(r1.res.json().error, /too long/);
+  const many = {};
+  for (let i = 0; i < 41; i++) many[`f${i}`] = 'x';
+  const r2 = await call(routes, { method: 'POST', url: '/api/contest/submit', ...multipart(many) });
+  assert.equal(r2.res.statusCode, 400);
+  assert.match(r2.res.json().error, /too many fields/);
+  assert.deepEqual(filesIn(uploadDir), []);
+  assert.equal(store.read().dishes.length, 0);
+});
+
+test('a GIF or SVG submitted as the photo is a plain 400 and nothing is stored', async () => {
+  const { routes, store, uploadDir, dir } = setup();
+  const catId = await openSubmissions(store);
+  const gif = await sharp({ create: { width: 20, height: 20, channels: 3, background: '#c33' } }).gif().toBuffer();
+  for (const [name, type, data] of [['a.gif', 'image/gif', gif], ['a.svg', 'image/svg+xml', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="9" height="9"/>')]]) {
+    const mp = multipart({ categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef', allergens: 'none' }, { name, type, data });
+    const { res } = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp });
+    assert.equal(res.statusCode, 400, name);
+    assert.equal(res.json().error, 'That file is not a supported image');
+  }
+  assert.equal(store.read().dishes.length, 0);
+  assert.deepEqual(filesIn(uploadDir), []);
+  assert.equal(fs.existsSync(join(dir, 'photos')) ? filesIn(join(dir, 'photos')).length : 0, 0);
+});
+
+test('a vote whose body is JSON null, an array or a scalar is a 400, never a 500', async () => {
+  const { routes, store } = setup();
+  await seedOpen(store);
+  for (const body of ['null', '[]', '"x"', '42']) {
+    const { res } = await call(routes, { method: 'POST', url: '/api/contest/vote', headers: { 'content-type': 'application/json' }, body });
+    assert.equal(res.statusCode, 400, `${body}: ${res.body}`);
+    assert.equal(res.json().ok, false);
+  }
 });
