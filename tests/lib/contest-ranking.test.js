@@ -5,7 +5,7 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
 import {
-  ContestError, emptyContest, addCategory, openVoting, closeVoting, castVote, tally, revealSteps,
+  ContestError, emptyContest, addCategory, deleteCategory, openVoting, closeVoting, castVote, tally, revealSteps,
   startReveal, revealNext, revealBack, publicView, adminView,
 } from '../../lib/contest.js';
 
@@ -187,4 +187,22 @@ test('adminView hides token hashes but includes the tally', () => {
   assert.ok(!JSON.stringify(view).includes('SECRETHASH'));
   assert.ok(Array.isArray(view.tally[mains.id]));
   assert.ok(view.dishes.some((d) => d.status === 'pending'));
+});
+
+test('deleting the empty current category mid-reveal is a 409, not a later TypeError', () => {
+  const { state, desserts } = scored();
+  let s = startReveal(closeVoting(state, T0), T0);
+  s = revealNext(s); s = revealNext(s); s = revealNext(s); // now at category 1
+  assert.equal(s.reveal.categoryIndex, 1);
+  const emptied = { ...s, dishes: s.dishes.filter((d) => d.categoryId !== desserts.id) };
+  assert.throws(() => deleteCategory(emptied, desserts.id), (e) => e instanceof ContestError && e.status === 409);
+});
+
+test('reveal functions throw ContestError, not TypeError, when the category is missing or absent', () => {
+  const none = { ...emptyContest(T0), phase: 'closed' };
+  assert.throws(() => startReveal(none, T0), (e) => e instanceof ContestError && e.status === 409);
+  const { state } = scored();
+  const broken = { ...startReveal(closeVoting(state, T0), T0), categories: [] };
+  assert.throws(() => revealNext(broken), (e) => e instanceof ContestError && e.status === 409);
+  assert.throws(() => revealBack(broken), (e) => e instanceof ContestError && e.status === 409);
 });

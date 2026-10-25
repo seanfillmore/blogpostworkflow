@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import {
   ContestError, emptyContest, addCategory, openVoting, castVote, ballotFor, tally, publicView, adminView,
   validateDishFields, submitDish, findByToken, updateOwnDish, adminAddDish, adminUpdateDish,
-  approveDish, unapproveDish, deleteDish, setDishPhoto, setSubmissionsOpen, reorderDishes, LIMITS,
+  approveDish, unapproveDish, deleteDish, reorderCategories, deleteCategory, setDishPhoto, setSubmissionsOpen, reorderDishes, LIMITS,
 } from '../../lib/contest.js';
 
 const T0 = new Date('2026-11-01T12:00:00Z');
@@ -173,4 +173,19 @@ test('dish changes are refused once the reveal has started', () => {
   const revealing = { ...a.state, phase: 'revealing' };
   throwsStatus(() => adminAddDish(revealing, fields(cat)), 409);
   throwsStatus(() => adminUpdateDish(revealing, a.dish.id, fields(cat)), 409);
+});
+
+test('category and dish edits are refused once the reveal has started (409)', () => {
+  const { state, cat } = setup();
+  const a = adminAddDish(state, fields(cat));
+  for (const phase of ['revealing', 'done']) {
+    const s = { ...a.state, phase };
+    throwsStatus(() => deleteDish(s, a.dish.id), 409);
+    throwsStatus(() => approveDish(s, a.dish.id), 409);
+    throwsStatus(() => unapproveDish(s, a.dish.id), 409);
+    throwsStatus(() => reorderDishes(s, [a.dish.id]), 409);
+    throwsStatus(() => addCategory(s, 'New'), 409);
+    throwsStatus(() => deleteCategory(s, cat.id), 409);
+    throwsStatus(() => reorderCategories(s, [cat.id]), 409);
+  }
 });
