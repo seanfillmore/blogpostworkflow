@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Enter your dish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/contest.css">
+</head>
+<body>
+<div class="tablecloth" aria-hidden="true"></div>
+<header class="page-head">
+  <h1 id="page-title">Enter your dish</h1>
+  <p id="contest-title"></p>
+</header>
+
+<main class="wrap">
+  <p id="loading" class="small">Loading…</p>
+
+  <div id="message" class="notice" hidden role="status"></div>
+
+  <!-- Shown once after a new entry: the private edit link. -->
+  <section id="done" hidden>
+    <div class="notice notice-ok"><strong>Thank you! Your dish is entered.</strong>
+      <p>The organizer will look it over before it appears on the voting page.</p></div>
+    <div class="link-card">
+      <h2>Save your private link</h2>
+      <p>Save this link to edit your dish until voting opens. It is the only way back to your entry, and only you have it.</p>
+      <div class="link-box" id="edit-url"></div>
+      <div class="link-actions">
+        <button type="button" class="btn btn-big" id="copy-btn">Copy link</button>
+        <a class="btn btn-quiet" id="sms-link" href="#">Text it to yourself</a>
+        <a class="btn btn-quiet" id="mail-link" href="#">Email it to yourself</a>
+      </div>
+      <p class="small" id="copy-status" role="status"></p>
+    </div>
+    <p><a id="open-edit" href="#">Open my entry to check or change it</a></p>
+  </section>
+
+  <form id="dish-form" novalidate hidden>
+    <p id="intro" class="small">Fill this in once. You will get a private link to make changes until voting opens.</p>
+
+    <div class="field">
+      <label for="cook">Your name</label>
+      <input class="input" id="cook" name="cook" maxlength="80" autocomplete="name" required data-counter>
+    </div>
+
+    <div class="field">
+      <label for="name">Name of your dish</label>
+      <input class="input" id="name" name="name" maxlength="80" required data-counter>
+    </div>
+
+    <div class="field">
+      <label for="categoryId">Category</label>
+      <select class="input" id="categoryId" name="categoryId" required></select>
+    </div>
+
+    <div class="field">
+      <span class="label" id="photo-label">Photo of your dish</span>
+      <label class="photo-pick" id="photo-pick">
+        <input type="file" id="photo" name="photo" accept="image/*" aria-labelledby="photo-label">
+        <span id="photo-empty"><span>Tap to add a photo</span><br><span class="sub">Take a picture or choose one from your phone</span></span>
+        <img id="photo-preview" alt="Your dish photo" hidden>
+      </label>
+      <span class="hint" id="photo-hint" hidden>Tap the photo to choose a different one.</span>
+    </div>
+
+    <div class="field">
+      <label for="ingredients">Ingredients</label>
+      <span class="hint">List everything that goes into your dish.</span>
+      <textarea class="input" id="ingredients" name="ingredients" maxlength="2000" required data-counter></textarea>
+    </div>
+
+    <fieldset class="field">
+      <legend>Does your dish contain any of these?</legend>
+      <span class="hint">Tick every one that applies.</span>
+      <div class="checks" id="allergens"></div>
+      <p class="disclaimer">Allergen information is entered by the cook and is not checked by the organizers.</p>
+    </fieldset>
+
+    <div class="field">
+      <label for="recipe">Recipe <span class="small">(optional)</span></label>
+      <span class="hint">Share how you made it, if you like.</span>
+      <textarea class="input" id="recipe" name="recipe" maxlength="8000" data-counter></textarea>
+    </div>
+
+    <div id="form-error" class="notice notice-error" hidden role="alert"></div>
+
+    <div id="upload-state" hidden>
+      <p class="status-line" id="upload-text">Uploading…</p>
+      <div class="progress"><span id="upload-bar"></span></div>
+    </div>
+
+    <button type="submit" class="btn btn-big btn-block" id="submit-btn">Enter my dish</button>
+  </form>
+</main>
+<script type="module" src="/contest/assets/enter.js"></script>
+</body>
+</html>

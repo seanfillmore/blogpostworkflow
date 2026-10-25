@@ -146,6 +146,18 @@ test('a closed contest with nothing revealed can be reopened', () => {
   assert.equal(reopened.closedAt, null);
 });
 
+test('a contest whose deadline lapsed on its own can be reopened with a new deadline', () => {
+  const { state } = base();
+  const open = openVoting(state, T0, DEADLINE);
+  const later = new Date(DEADLINE.getTime() + 60_000);
+  assert.equal(effectivePhase(open, later), 'closed');
+  const reopened = openVoting(open, later, new Date(later.getTime() + 5 * 60_000));
+  assert.equal(reopened.phase, 'open');
+  assert.equal(effectivePhase(reopened, later), 'open');
+  // but a contest still running cannot be "reopened"; that is what extend is for
+  throwsStatus(() => openVoting(open, T0, DEADLINE), 409);
+});
+
 test('functions never mutate the state they are given', () => {
   const { state, a, dA } = base();
   const open = openVoting(state, T0, DEADLINE);
