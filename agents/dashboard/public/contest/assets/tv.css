@@ -280,6 +280,8 @@ img { display: block; }
   box-shadow: 0 0 0 calc(var(--s) * 0.6) var(--butter);
 }
 .qr {
+  display: block;
+  margin: 0 auto;
   width: calc(var(--s) * 27);
   height: calc(var(--s) * 27);
 }
