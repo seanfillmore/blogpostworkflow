@@ -1,6 +1,6 @@
 # Dish Contest Voting — Design
 
-Date: 2026-10-24 · Owner: Sean · Status: draft for approval
+Date: 2026-10-24 · Owner: Sean · Status: APPROVED 2026-10-25
 
 ## Intent
 
@@ -11,7 +11,7 @@ It is hosted on the existing dashboard server (`seo-dashboard`, PM2, DigitalOcea
 ## Goals
 
 1. **Admin page** (behind the dashboard's existing basic auth): create and name 1-5 categories; open and close competitor submissions; review submissions and approve, edit or delete them; add dishes directly for anyone who did not submit (same fields as the competitor page); set a deadline (a countdown in minutes, or an end time); open voting; close early or extend; see the live standings privately; step through the reveal; reset for the next event.
-2. **Competitor page** (public, no login, reached by a link the admin shares ahead of the event): a contestant enters their name, dish name, category (from the admin's list), a photo, the ingredient list (required), allergens (checkboxes for the nine major allergens: milk, eggs, fish, shellfish, tree nuts, peanuts, wheat, soy, sesame, plus "none of these"), and the recipe (optional). After submitting they get a private edit link so they can fix it until voting opens.
+2. **Competitor page** (public, no login, reached by a link the admin shares ahead of the event): a contestant enters their name, dish name, category (from the admin's list), a photo, the ingredient list (required), allergens (checkboxes for the nine major allergens: milk, eggs, fish, shellfish, tree nuts, peanuts, wheat, soy, sesame, plus citrus at Sean's request, plus "none of these"), and the recipe (optional). After submitting they get a private edit link so they can fix it until voting opens.
 3. **Voting page** (public, phone-first, no login): one pick per category, shown as a photo list per category. Each dish card shows allergen badges, and tapping it opens the full details: photo, ingredients, allergens and recipe. Dish details are viewable as soon as dishes are approved, before voting opens, so diners can check for allergies before eating. A diner can change any pick as often as they like until the deadline. The page shows which picks they have made and the time left. After the deadline it says voting is closed and shows their final picks.
 4. **TV page** (public, 16:9, full screen, no interaction needed):
    - **Voting open:** a photo wall of every dish, the countdown, and the voting QR code. On every vote cast or changed, a **random** tile sparkles — never the tile that received the vote.
