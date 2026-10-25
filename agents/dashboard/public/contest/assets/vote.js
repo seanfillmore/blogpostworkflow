@@ -3,6 +3,7 @@
 
 const $ = (id) => document.getElementById(id);
 const POLL_MS = 10_000;
+const FETCH_TIMEOUT_MS = 8_000;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLERGEN_LABELS = {
   milk: 'Milk', eggs: 'Eggs', fish: 'Fish', shellfish: 'Shellfish', 'tree-nuts': 'Tree nuts',
@@ -73,14 +74,24 @@ function pickFor(categoryId) {
 
 // ---- network ----------------------------------------------------------------
 
+/** fetch with a timeout: a stalled request rejects (so `pending` clears) instead of hanging. */
 async function fetchJson(url, options) {
-  const res = await fetch(url, { cache: 'no-store', ...options });
-  let body = null;
-  try { body = await res.json(); } catch { /* not JSON */ }
-  return { status: res.status, body };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), FETCH_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { cache: 'no-store', ...options, signal: ctrl.signal });
+    let body = null;
+    try { body = await res.json(); } catch { /* not JSON */ }
+    return { status: res.status, body };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
+let ballotLoaded = false; // my-ballot has answered once; until then every poll retries it
+
 async function poll() {
+  if (!ballotLoaded) loadBallot();
   const t0 = Date.now();
   try {
     const { status, body } = await fetchJson('/api/contest/public');
@@ -101,10 +112,11 @@ async function loadBallot() {
   try {
     const { status, body } = await fetchJson(`/api/contest/my-ballot?voterId=${encodeURIComponent(voterId)}`);
     if (status === 200 && body && body.ballot) {
+      ballotLoaded = true;
       ballot = { ...body.ballot };
       updatePicks();
     }
-  } catch { /* the next vote will return the ballot anyway */ }
+  } catch { /* retried on the next poll; the next vote returns the ballot anyway */ }
 }
 
 function showError(text) {
@@ -143,7 +155,7 @@ async function vote(categoryId, dishId) {
     if (body && body.phase && data) data.phase = body.phase;
   } else if (status === 404) {
     showError('That dish is no longer on the list. The page has been refreshed.');
-    await poll();
+    await pollLoop();
   } else if (status === 429) {
     showError((body && body.error) || 'Too many changes. Please wait a few minutes.');
   } else if (status === 0) {
@@ -436,9 +448,23 @@ function tick() {
 }
 
 setInterval(tick, 1000);
-setInterval(poll, POLL_MS);
+
+// Self-rescheduling poll: the next one is only scheduled once this one has finished,
+// so a slow network never stacks requests on top of each other.
+let pollTimer = null;
+let polling = false;
+async function pollLoop() {
+  clearTimeout(pollTimer);
+  if (polling) return;
+  polling = true;
+  try { await poll(); } finally {
+    polling = false;
+    pollTimer = setTimeout(pollLoop, POLL_MS);
+  }
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') { poll(); loadBallot(); }
+  if (document.visibilityState === 'visible') { pollLoop(); loadBallot(); }
 });
 
-poll().then(loadBallot);
+pollLoop();

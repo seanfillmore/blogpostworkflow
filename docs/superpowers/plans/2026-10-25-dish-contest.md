@@ -201,5 +201,5 @@ Behaviour (desktop and phone; served behind basic auth):
 
 - Merge PR, deploy (`git pull && npm ci --omit=dev` if `qrcode` is new on the box, `pm2 restart seo-dashboard`).
 - Cloudflare API: create `vote.realskincare.com` A record → `137.184.119.230`, **proxied: false**.
-- nginx `/etc/nginx/sites-available/vote` modelled on `entries`: port 80 for ACME + redirect; 443 proxying `location ^~ /contest/` and `location ^~ /api/contest/` to `127.0.0.1:4242`, with `location ~ ^/(api/)?contest/admin { return 404; }` first; `client_max_body_size 25m`; everything else 404. `certbot --nginx -d vote.realskincare.com`.
+- nginx `/etc/nginx/sites-available/vote` modelled on `entries`: port 80 for ACME + redirect; 443 proxying `location ^~ /contest/` and `location ^~ /api/contest/` to `127.0.0.1:4242`, with `location ^~ /contest/admin { return 404; }` and `location ^~ /api/contest/admin { return 404; }` (longest `^~` prefix wins and stops regex evaluation, so a regex admin block would never be consulted); `client_max_body_size 25m`; everything else 404. `certbot --nginx -d vote.realskincare.com`.
 - Verify from outside: vote/enter/tv load over HTTPS; `/contest/admin` and `/api/contest/admin/state` 404 on that host; `free -m` unchanged; then run the rehearsal against production with `--allow-remote`, reset, leave it in `setup`.
