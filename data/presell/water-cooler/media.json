@@ -1,0 +1,53 @@
+{
+  "video-answer": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/28d525ba0a9b42bdab0bf5938afc32ff.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-water-cooler-video-answer-poster.jpg?v=1792979817",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46197481734314",
+    "posterFileId": "gid://shopify/MediaImage/46197484519594",
+    "bytes": 610727,
+    "signature": "81d0fa5a525d012d"
+  },
+  "video-compliment": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/32a7ce6285eb491f8c66396a4ded213b.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-water-cooler-video-compliment-poster.jpg?v=1792979842",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46197485174954",
+    "posterFileId": "gid://shopify/MediaImage/46197488517290",
+    "bytes": 549524,
+    "signature": "af7f1a4cd5b2328e"
+  },
+  "video-scoop": {
+    "url": "https://cdn.shopify.com/videos/c/o/v/fe1f148354ef4224ad07635278d2944f.mp4",
+    "poster": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-video-scoop-poster.jpg?v=1792447617",
+    "kind": "video",
+    "fileId": "gid://shopify/Video/46120704573610",
+    "posterFileId": "gid://shopify/MediaImage/46120704934058",
+    "bytes": 1294750,
+    "signature": "{\"id\":\"submission_eb6eb0af-ac34-4070-8b2f-4a86c92c87d8\",\"trim\":{\"start\":37,\"end\":52},\"crop\":null}",
+    "reusedFrom": "coconut-cream"
+  },
+  "hero": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/hero.jpg?v=1792979846",
+    "kind": "image",
+    "fileId": "gid://shopify/MediaImage/46197489369258",
+    "bytes": 174396,
+    "width": 1080,
+    "height": 1350,
+    "signature": "de45df7cc6b6a94a"
+  },
+  "jar-unscented": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/real_skin_care_body_cream_unscented.jpg",
+    "kind": "image",
+    "width": 2000,
+    "height": 2000,
+    "signature": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/real_skin_care_body_cream_unscented.jpg"
+  },
+  "in-use": {
+    "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg",
+    "kind": "image",
+    "width": 1206,
+    "height": 1206,
+    "signature": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg"
+  }
+}

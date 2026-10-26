@@ -1,0 +1,219 @@
+{
+  "page": "Water cooler pre-sell (follows the Baby Drama water cooler ad)",
+  "product": {
+    "handle": "coconut-moisturizer",
+    "defaultVariantId": "45828182114474",
+    "defaultScent": "Pure Unscented",
+    "price": "$28",
+    "packHandle": "coconut-moisturizer-4-pack",
+    "packCount": 4,
+    "quantityToken": "2",
+    "totalToken": "$56",
+    "packPriceToken": "$84"
+  },
+  "eyebrow": "Overheard at the water cooler",
+  "headline": "“What are you doing differently?” 5 reasons the answer is a 7-ingredient body cream",
+  "intro": "From Real Skin Care. When someone asks what you changed, the answer can fit in one breath: coconut cream, seven ingredients, every night. Our Coconut Moisturizer starts from a 7-ingredient base, Pure Unscented is that base and nothing else, and one 4oz jar is $28.",
+  "hero": {
+    "kind": "image",
+    "key": "hero",
+    "alt": "Two coworkers talking by the office water cooler, from the Real Skin Care ad"
+  },
+  "reasons": [
+    {
+      "n": 1,
+      "title": "Coconut cream. Seven ingredients. Every night.",
+      "body": "Our cream starts from a 7-ingredient base: purified spring water plus six organic ingredients, virgin coconut oil, plant-based emulsifying wax, palm stearic, grapefruit seed extract, beeswax and red palm oil. Pure Unscented is that base alone. A popular drugstore coconut lotion lists 34 ingredients.",
+      "media": {
+        "kind": "video",
+        "key": "video-answer"
+      }
+    },
+    {
+      "n": 2,
+      "title": "The kind of soft people notice.",
+      "body": "Beeswax and coconut oil make it richer than a lotion, so it goes on like butter and works in without a slick film. It is made for the spots that get dry first: hands, heels and elbows.",
+      "media": {
+        "kind": "video",
+        "key": "video-compliment"
+      }
+    },
+    {
+      "n": 3,
+      "title": "A little goes a long way.",
+      "body": "A small scoop covers a lot of skin. Used every night, one 4oz jar lasts about a month, which works out to under $1 a day.",
+      "media": {
+        "kind": "video",
+        "key": "video-scoop"
+      }
+    },
+    {
+      "n": 4,
+      "title": "Nothing added. Not even scent.",
+      "body": "Pure Unscented has no fragrance, synthetic or natural. It is the 7-ingredient base and nothing else. No parabens and no synthetic fragrance in any of our creams.",
+      "media": {
+        "kind": "image",
+        "key": "jar-unscented"
+      }
+    },
+    {
+      "n": 5,
+      "title": "Try it for 30 days.",
+      "body": "If you don't love it, email us within 30 days and we will refund you. You don't have to send the jar back.",
+      "media": {
+        "kind": "image",
+        "key": "in-use"
+      }
+    }
+  ],
+  "notes": [
+    "Beeswax firms up in the cold. Warm a little between your fingers and it spreads easily.",
+    "Real coconut oil can separate a little in the jar. That is normal, and a quick stir brings it back together."
+  ],
+  "reviewsHeading": "What customers say",
+  "reviews": [
+    {
+      "quote": "I'm obsessed with all things Real Skin Care. This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy. We use it all over and love it!",
+      "name": "Nicole H.",
+      "judgemeId": 759721043,
+      "verified": "verified-purchase",
+      "excerpt": false
+    },
+    {
+      "quote": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+      "name": "Ella M.",
+      "judgemeId": 514327202,
+      "verified": "buyer",
+      "excerpt": false
+    }
+  ],
+  "labelCompare": {
+    "heading": "Read both labels",
+    "oursTitle": "Our 7-ingredient base",
+    "oursNote": "Pure Unscented is this base alone, with nothing added.",
+    "theirsTitle": "A popular drugstore coconut lotion: 34 ingredients"
+  },
+  "ourLabel": [
+    "purified spring water",
+    "organic virgin coconut oil",
+    "organic plant-based emulsifying wax",
+    "organic palm stearic",
+    "organic grapefruit seed extract",
+    "organic beeswax",
+    "organic red palm oil"
+  ],
+  "theirLabel": {
+    "ingredients": [
+      "Water (aqua)",
+      "cocos nucifera (coconut) fruit extract",
+      "butyrospermum parkii (shea) butter",
+      "cetyl alcohol",
+      "palmitic acid",
+      "isopropyl myristate",
+      "propylene glycol",
+      "stearic acid",
+      "cocos nucifera (coconut) oil",
+      "tocopherol",
+      "tocopheryl acetate",
+      "coffea robusta seed extract",
+      "gardenia tahitensis flower extract",
+      "prunus amygdalus dulcis (sweet almond) oil",
+      "macadamia ternifolia seed oil",
+      "aloe barbadensis leaf juice",
+      "theobroma cacao (cocoa) seed butter",
+      "squalane",
+      "leuconostoc/radish root ferment filtrate",
+      "citric acid",
+      "glycerin",
+      "ethylhexylglycerin",
+      "potassium sorbate",
+      "carbomer",
+      "sodium benzoate",
+      "tetrasodium edta",
+      "aminomethyl propanol",
+      "peg-40 stearate",
+      "stearyl alcohol",
+      "phenoxyethanol",
+      "fragrance (parfum)",
+      "benzyl benzoate",
+      "coumarin",
+      "benzyl alcohol"
+    ],
+    "product": "Coconut Oil Formula body lotion (sold now as Coconut Hydrate Daily Body Lotion), 13.5 fl oz",
+    "sourceUrl": "https://www.vitacost.com/products/palmer-s-coconut-hydrate-daily-body-lotion-13-5-fl-oz-400-ml-106654",
+    "manufacturerUrl": "https://palmers.com/products/coconut-oil-body-lotion",
+    "sourceNote": "The manufacturer page lists only key ingredients, so the full label is copied word for word from the retailer listing.",
+    "checkedOn": "2026-10-19"
+  },
+  "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back.",
+  "buyBox": {
+    "image": {
+      "key": "jar-unscented"
+    },
+    "title": "Pure Unscented Moisturizing Body Cream, 4oz",
+    "priceNote": "$28 for one jar",
+    "priceNoteMulti": "$56 for 2 jars",
+    "priceNotePack": "$84 for 4 jars (1 free)",
+    "shipping": "Ships in 1-2 business days.",
+    "cta": "Get Pure Unscented, $28",
+    "ctaMulti": "Get 2 jars of Pure Unscented, $56",
+    "ctaPack": "Get 4 jars of Pure Unscented, $84",
+    "scentLabel": "Scent",
+    "quantityLabel": "Quantity",
+    "quantityLess": "One fewer jar",
+    "quantityMore": "One more jar",
+    "maxQuantity": 3,
+    "pack": {
+      "badge": "Buy 3, get the 4th free",
+      "addFree": "Add a 4th jar for free"
+    }
+  },
+  "videos": {
+    "video-answer": {
+      "source": "local",
+      "path": "data/presell/water-cooler/source/answer.mp4",
+      "burnedInCaptions": true,
+      "caption": "Coconut cream. Seven ingredients. Every night.",
+      "alt": "From the ad: one coworker asks about her friend's skin, and she answers coconut cream, seven ingredients, every night",
+      "transcript": "Your skin. It looks amazing. Coconut cream. Seven ingredients. Every night."
+    },
+    "video-compliment": {
+      "source": "local",
+      "path": "data/presell/water-cooler/source/compliment.mp4",
+      "burnedInCaptions": true,
+      "caption": "Carol. Your skin looks amazing.",
+      "alt": "From the ad: a coworker walks up to the water cooler and compliments her skin",
+      "transcript": "Carol. Your skin looks amazing. I need the name of that cream. Now."
+    },
+    "video-scoop": {
+      "submissionId": "submission_eb6eb0af-ac34-4070-8b2f-4a86c92c87d8",
+      "creator": "Kristin Crane",
+      "trim": {
+        "start": 37,
+        "end": 52
+      },
+      "burnedInCaptions": true,
+      "caption": "Just scoop some up. It just glides right in.",
+      "alt": "Creator scooping cream from the jar and smoothing it onto her leg",
+      "transcript": "I just shaved. You wanna know what that means? My legs are parched. My legs are as dry as the Sahara Desert. And I'm not joking. Take a look for yourself. Ash dry. Okay? I'm using Real Skin Care. Body great. It's coconut-based. It's good for your body, okay? It locks in moisture. It's got clean ingredients. And it's gonna be your best friend. Let me show you how easy it is to apply. Here's what it looks like. Creamy goodness. Just scoop some up. Right on the skin. It just glides right in. It absorbs pretty fast. Look how shiny my legs are. Give it a try for yourself. If you also want smooth, happy skin after shaving.",
+      "reuseFrom": "coconut-cream"
+    }
+  },
+  "images": {
+    "hero": {
+      "source": "local",
+      "path": "data/presell/water-cooler/source/hero.jpg",
+      "alt": "Two coworkers talking by the office water cooler, from the Real Skin Care ad"
+    },
+    "jar-unscented": {
+      "source": "shopify",
+      "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/real_skin_care_body_cream_unscented.jpg",
+      "alt": "Real Skin Care Pure Unscented moisturizing body cream, 4oz jar"
+    },
+    "in-use": {
+      "source": "shopify",
+      "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cream-in-use-real.jpg",
+      "alt": "A customer smoothing body cream onto her arm"
+    }
+  }
+}
