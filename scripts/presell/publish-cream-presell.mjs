@@ -5,6 +5,7 @@
  *   node scripts/presell/publish-cream-presell.mjs --theme <preview id> [--apply]
  *   node scripts/presell/publish-cream-presell.mjs --live [--apply]
  *   node scripts/presell/publish-cream-presell.mjs --page [--publish] [--apply]
+ *   ... --target water-cooler   ship the water cooler page instead (see TARGETS)
  *
  * Dry by default: without --apply it reports what each step would do and writes
  * nothing. Flags combine (`--live --page --publish --apply` is the go-live run).
@@ -64,6 +65,22 @@ export const FILES = [
   { key: 'assets/presell-buy.js', before: LIVE_BASE_REF },
   { key: 'templates/page.presell-cream.json', before: LIVE_BASE_REF },
 ];
+
+/**
+ * Other pre-sell pages that reuse the same section, css and js. Their own
+ * template is new, so its expected "before" is ABSENT (null); the shared files
+ * are expected to equal main (normally an 'already' no-op).
+ */
+export const TARGETS = {
+  'coconut-cream': { page: PAGE, files: FILES },
+  'water-cooler': {
+    page: { handle: 'skin-looks-amazing', title: 'Your Skin Looks Amazing', template_suffix: 'presell-water-cooler' },
+    files: [
+      ...FILES.filter((f) => f.key !== 'templates/page.presell-cream.json'),
+      { key: 'templates/page.presell-water-cooler.json', before: null },
+    ],
+  },
+};
 
 const gitRun = (args) => execFileSync('git', args, { cwd: ROOT, stdio: 'ignore' });
 
@@ -131,10 +148,10 @@ async function readBack(shopify, themeId, key, target, { tries = 12, waitMs = 50
   return { ok: false, tries };
 }
 
-async function shipTheme(shopify, themeId, apply, record) {
+async function shipTheme(shopify, themeId, apply, record, files = FILES) {
   assertHeadContainsBase();
   const plan = [];
-  for (const f of FILES) {
+  for (const f of files) {
     const target = gitShow('HEAD', f.key);
     const before = f.before === null ? null : gitShow(f.before, f.key);
     const current = await readAsset(shopify, themeId, f.key);
@@ -158,7 +175,7 @@ async function shipTheme(shopify, themeId, apply, record) {
   }
 }
 
-async function shipPage(shopify, { publish, apply }, record) {
+async function shipPage(shopify, { publish, apply }, record, PAGE) {
   const found = (await shopify.getPages({ handle: PAGE.handle })).find((p) => p.handle === PAGE.handle);
   console.log(`  page ${PAGE.handle}: ${found ? `exists (id ${found.id}, ${found.published_at ? 'published' : 'unpublished'})` : 'absent → create'}`);
   record.page = { before: found ? { id: found.id, published_at: found.published_at, template_suffix: found.template_suffix } : null };
@@ -188,6 +205,9 @@ export async function main(argv = process.argv.slice(2)) {
   const page = argv.includes('--page');
   const publish = argv.includes('--publish');
   const themeArg = argv.includes('--theme') ? argv[argv.indexOf('--theme') + 1] : null;
+  const targetName = argv.includes('--target') ? argv[argv.indexOf('--target') + 1] : 'coconut-cream';
+  const target = TARGETS[targetName];
+  if (!target) { console.error(`unknown --target ${targetName}; known: ${Object.keys(TARGETS).join(', ')}`); return 2; }
   if (!live && !themeArg && !page) {
     console.error('usage: publish-cream-presell.mjs (--theme <id> | --live) [--page [--publish]] [--apply]');
     return 2;
@@ -195,7 +215,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (live && themeArg) { console.error('--live and --theme are exclusive'); return 2; }
 
   const shopify = await import('../../lib/shopify.js');
-  const record = { at: new Date().toISOString(), apply, argv, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim() };
+  const record = { at: new Date().toISOString(), apply, argv, target: targetName, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8' }).trim() };
   console.log(apply ? 'APPLY' : 'DRY RUN (pass --apply to write)');
   let code = 0;
   try {
@@ -205,9 +225,9 @@ export async function main(argv = process.argv.slice(2)) {
       if (themeArg && String(themeArg) === liveId) throw new Error(`--theme ${themeArg} is the LIVE theme; use --live`);
       const themeId = live ? liveId : String(themeArg);
       console.log(`theme ${themeId}${live ? ' (LIVE)' : ' (preview)'}`);
-      await shipTheme(shopify, themeId, apply, record);
+      await shipTheme(shopify, themeId, apply, record, target.files);
     }
-    if (page) await shipPage(shopify, { publish, apply }, record);
+    if (page) await shipPage(shopify, { publish, apply }, record, target.page);
   } catch (err) {
     console.error(`FAILED: ${err.message}`);
     record.error = err.message;

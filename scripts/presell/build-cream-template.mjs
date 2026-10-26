@@ -21,7 +21,9 @@
  * every "/" escaped as "\/", trailing newline. Deterministic, so re-running it is
  * byte-identical. Local file only; this script never touches a live theme.
  *
- * Usage: node scripts/presell/build-cream-template.mjs [--check]
+ * Usage: node scripts/presell/build-cream-template.mjs [--page <name>] [--check]
+ *   --page   which pre-sell page to build (default coconut-cream); see PAGES.
+ *            Every page renders through the same presell-listicle section.
  *   --check  exit 1 if the template on disk differs from a fresh build
  */
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -31,6 +33,13 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const TEMPLATE_PATH = 'theme/templates/page.presell-cream.json';
+
+/** Pre-sell pages built from data/presell/<name>/{content,media}.json. */
+export const PAGES = {
+  'coconut-cream': { dir: 'data/presell/coconut-cream', template: TEMPLATE_PATH },
+  // Follows the Baby Drama water cooler ad (Pure Unscented, 2026-10-25).
+  'water-cooler': { dir: 'data/presell/water-cooler', template: 'theme/templates/page.presell-water-cooler.json' },
+};
 
 // No header comment: the Admin API strips a comment from a JSON template on
 // write, so a commented file can never read back byte-equal to git, and the
@@ -159,9 +168,13 @@ export function buildTemplate(content, media) {
 }
 
 function main() {
+  const name = process.argv.includes('--page') ? process.argv[process.argv.indexOf('--page') + 1] : 'coconut-cream';
+  const page = PAGES[name];
+  if (!page) { console.error(`unknown page ${name}; known: ${Object.keys(PAGES).join(', ')}`); process.exit(2); }
+  const TEMPLATE_PATH = page.template;
   const read = (p) => JSON.parse(readFileSync(join(ROOT, p), 'utf8'));
-  const content = read('data/presell/coconut-cream/content.json');
-  const media = read('data/presell/coconut-cream/media.json');
+  const content = read(`${page.dir}/content.json`);
+  const media = read(`${page.dir}/media.json`);
   const out = serialize(buildTemplate(content, media));
   const target = join(ROOT, TEMPLATE_PATH);
   let current = null;

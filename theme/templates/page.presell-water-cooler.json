@@ -1,0 +1,163 @@
+{
+  "sections": {
+    "main": {
+      "type": "presell-listicle",
+      "settings": {
+        "eyebrow": "Overheard at the water cooler",
+        "headline": "“What are you doing differently?” 5 reasons the answer is a 7-ingredient body cream",
+        "intro": "From Real Skin Care. When someone asks what you changed, the answer can fit in one breath: coconut cream, seven ingredients, every night. Our Coconut Moisturizer starts from a 7-ingredient base, Pure Unscented is that base and nothing else, and one 4oz jar is $28.",
+        "hero_image": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/hero.jpg?v=1792979846",
+        "hero_alt": "Two coworkers talking by the office water cooler, from the Real Skin Care ad",
+        "product_handle": "coconut-moisturizer",
+        "default_variant_id": "45828182114474",
+        "default_scent": "Pure Unscented",
+        "price_token": "$28",
+        "pack_handle": "coconut-moisturizer-4-pack",
+        "pack_count": 4,
+        "quantity_token": "2",
+        "total_token": "$56",
+        "pack_price_token": "$84"
+      },
+      "blocks": {
+        "reason-1": {
+          "type": "reason",
+          "settings": {
+            "number": 1,
+            "title": "Coconut cream. Seven ingredients. Every night.",
+            "body": "Our cream starts from a 7-ingredient base: purified spring water plus six organic ingredients, virgin coconut oil, plant-based emulsifying wax, palm stearic, grapefruit seed extract, beeswax and red palm oil. Pure Unscented is that base alone. A popular drugstore coconut lotion lists 34 ingredients.",
+            "media_kind": "video",
+            "media_url": "https:\/\/cdn.shopify.com\/videos\/c\/o\/v\/28d525ba0a9b42bdab0bf5938afc32ff.mp4",
+            "media_alt": "From the ad: one coworker asks about her friend's skin, and she answers coconut cream, seven ingredients, every night",
+            "poster_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/presell-water-cooler-video-answer-poster.jpg?v=1792979817",
+            "caption": "Coconut cream. Seven ingredients. Every night.",
+            "captions_burned_in": true
+          }
+        },
+        "label-compare": {
+          "type": "label-compare",
+          "settings": {
+            "heading": "Read both labels",
+            "ours_title": "Our 7-ingredient base",
+            "ours_note": "Pure Unscented is this base alone, with nothing added.",
+            "ours_list": "purified spring water\norganic virgin coconut oil\norganic plant-based emulsifying wax\norganic palm stearic\norganic grapefruit seed extract\norganic beeswax\norganic red palm oil",
+            "theirs_title": "A popular drugstore coconut lotion: 34 ingredients",
+            "theirs_list": "Water (aqua)\ncocos nucifera (coconut) fruit extract\nbutyrospermum parkii (shea) butter\ncetyl alcohol\npalmitic acid\nisopropyl myristate\npropylene glycol\nstearic acid\ncocos nucifera (coconut) oil\ntocopherol\ntocopheryl acetate\ncoffea robusta seed extract\ngardenia tahitensis flower extract\nprunus amygdalus dulcis (sweet almond) oil\nmacadamia ternifolia seed oil\naloe barbadensis leaf juice\ntheobroma cacao (cocoa) seed butter\nsqualane\nleuconostoc\/radish root ferment filtrate\ncitric acid\nglycerin\nethylhexylglycerin\npotassium sorbate\ncarbomer\nsodium benzoate\ntetrasodium edta\naminomethyl propanol\npeg-40 stearate\nstearyl alcohol\nphenoxyethanol\nfragrance (parfum)\nbenzyl benzoate\ncoumarin\nbenzyl alcohol"
+          }
+        },
+        "reason-2": {
+          "type": "reason",
+          "settings": {
+            "number": 2,
+            "title": "The kind of soft people notice.",
+            "body": "Beeswax and coconut oil make it richer than a lotion, so it goes on like butter and works in without a slick film. It is made for the spots that get dry first: hands, heels and elbows.",
+            "media_kind": "video",
+            "media_url": "https:\/\/cdn.shopify.com\/videos\/c\/o\/v\/32a7ce6285eb491f8c66396a4ded213b.mp4",
+            "media_alt": "From the ad: a coworker walks up to the water cooler and compliments her skin",
+            "poster_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/presell-water-cooler-video-compliment-poster.jpg?v=1792979842",
+            "caption": "Carol. Your skin looks amazing.",
+            "captions_burned_in": true
+          }
+        },
+        "reason-3": {
+          "type": "reason",
+          "settings": {
+            "number": 3,
+            "title": "A little goes a long way.",
+            "body": "A small scoop covers a lot of skin. Used every night, one 4oz jar lasts about a month, which works out to under $1 a day.",
+            "media_kind": "video",
+            "media_url": "https:\/\/cdn.shopify.com\/videos\/c\/o\/v\/fe1f148354ef4224ad07635278d2944f.mp4",
+            "media_alt": "Creator scooping cream from the jar and smoothing it onto her leg",
+            "poster_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/presell-cream-video-scoop-poster.jpg?v=1792447617",
+            "caption": "Just scoop some up. It just glides right in.",
+            "captions_burned_in": true
+          }
+        },
+        "reviews": {
+          "type": "reviews",
+          "settings": {
+            "heading": "What customers say",
+            "quote_1": "I'm obsessed with all things Real Skin Care. This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy. We use it all over and love it!",
+            "name_1": "Nicole H.",
+            "quote_2": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+            "name_2": "Ella M."
+          }
+        },
+        "cta": {
+          "type": "cta",
+          "settings": {
+            "label": "Get Pure Unscented, $28"
+          }
+        },
+        "reason-4": {
+          "type": "reason",
+          "settings": {
+            "number": 4,
+            "title": "Nothing added. Not even scent.",
+            "body": "Pure Unscented has no fragrance, synthetic or natural. It is the 7-ingredient base and nothing else. No parabens and no synthetic fragrance in any of our creams.",
+            "media_kind": "image",
+            "media_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/real_skin_care_body_cream_unscented.jpg",
+            "media_alt": "Real Skin Care Pure Unscented moisturizing body cream, 4oz jar"
+          }
+        },
+        "reason-5": {
+          "type": "reason",
+          "settings": {
+            "number": 5,
+            "title": "Try it for 30 days.",
+            "body": "If you don't love it, email us within 30 days and we will refund you. You don't have to send the jar back.",
+            "media_kind": "image",
+            "media_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/cream-in-use-real.jpg",
+            "media_alt": "A customer smoothing body cream onto her arm"
+          }
+        },
+        "notes": {
+          "type": "notes",
+          "settings": {
+            "note_1": "Beeswax firms up in the cold. Warm a little between your fingers and it spreads easily.",
+            "note_2": "Real coconut oil can separate a little in the jar. That is normal, and a quick stir brings it back together."
+          }
+        },
+        "buy-box": {
+          "type": "buy-box",
+          "settings": {
+            "image_url": "https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/real_skin_care_body_cream_unscented.jpg",
+            "image_alt": "Real Skin Care Pure Unscented moisturizing body cream, 4oz jar",
+            "image_width": 2000,
+            "image_height": 2000,
+            "title": "Pure Unscented Moisturizing Body Cream, 4oz",
+            "price_note": "$28 for one jar",
+            "price_note_multi": "$56 for 2 jars",
+            "price_note_pack": "$84 for 4 jars (1 free)",
+            "scent_label": "Scent",
+            "quantity_label": "Quantity",
+            "quantity_less": "One fewer jar",
+            "quantity_more": "One more jar",
+            "quantity_max": 3,
+            "cta": "Get Pure Unscented, $28",
+            "cta_multi": "Get 2 jars of Pure Unscented, $56",
+            "cta_pack": "Get 4 jars of Pure Unscented, $84",
+            "pack_badge": "Buy 3, get the 4th free",
+            "pack_add_free": "Add a 4th jar for free",
+            "shipping": "Ships in 1-2 business days.",
+            "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back."
+          }
+        }
+      },
+      "block_order": [
+        "reason-1",
+        "label-compare",
+        "reason-2",
+        "reason-3",
+        "reviews",
+        "cta",
+        "reason-4",
+        "reason-5",
+        "notes",
+        "buy-box"
+      ]
+    }
+  },
+  "order": [
+    "main"
+  ]
+}
