@@ -27,7 +27,8 @@
 // Optional "landing": a realskincare.com URL or path the ad sends people to (default: the
 // product page, or for a set the matching bundle in config/bundles.json).
 //
-// Output: ~/Desktop/Ad Batches/<date> <product>/<NN headline>/ — images, _rejected/,
+// Output: Drive Real Skin Care/Creatives/01 Static Ads/<message>/<date> <product>/<NN headline>/
+// (falls back to ~/Desktop/Ad Batches/<date> <product>/ without that folder) — images, _rejected/,
 // _contact sheet.jpg, scenes.md — plus run.json for the batch. Nothing is published.
 // After rendering, meta-copy.md is written for the batch (agents/ad-batch/meta-copy.js):
 // 4 primary texts and 4 headlines, every claim sourced and gated, which the Social tab's
@@ -54,7 +55,7 @@ import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
 import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
 import {
-  DEFAULT_OUT_ROOT, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
+  DEFAULT_OUT_ROOT, messageFolder, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
   ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
 } from './output.js';
 
@@ -270,7 +271,13 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
   }
 
   const date = new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD: the folder is for Sean, not a log
-  const batchDir = ensureDir(join(args.out, batchDirName({ date, product })));
+  // The creatives library files each batch under its message folder; an explicit
+  // --out (or the Desktop fallback) stays flat, as before.
+  const message = args.out === DEFAULT_OUT_ROOT && DEFAULT_OUT_ROOT.endsWith('01 Static Ads')
+    ? messageFolder({ message: batch.message, headlines: concepts.map(c => c.headline), productTitle: product.title })
+    : null;
+  if (message) log(`Filing under: ${message}`);
+  const batchDir = ensureDir(join(args.out, ...(message ? [message] : []), batchDirName({ date, product })));
   const budget = { used: 0, max: args.maxRenders, costUsd: 0 };
   const clients = { openaiKey: env.OPENAI_API_KEY, gemini, anthropic };
   const refCache = new Map();
