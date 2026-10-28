@@ -54,7 +54,7 @@ export function categoryFor(handle) {
  * the list (one entry for a single product); `product`/`variant` are kept for single runs.
  *
  * @returns {{product:string|null, variant:string|null, items:Array<{product:string, variant:string|null}>,
- *            title:string|null, count:number, form:string|null, style:string, typeStyle:string|null, landing:string|null,
+ *            title:string|null, count:number, form:string|null, style:string, typeStyle:string|null, landing:string|null, message:string|null,
  *            concepts:Array<{headline:string, subhead:string|null, cta:string|null}>, scenes:string[]}}
  */
 export function parseBatch(raw) {
@@ -97,6 +97,9 @@ export function parseBatch(raw) {
   if (!STYLES.includes(style)) errors.push(`"style" must be ${STYLES.join(' or ')} (got ${raw.style})`);
   // Lettering for a custom scene list, which otherwise gets the generic pairing.
   const typeStyle = str(raw.typeStyle);
+  // The creatives-library message folder (output.js messageFolder). It was documented
+  // but never parsed until 2026-10-27, so every batch filed by its headlines alone.
+  const message = str(raw.message);
   // Where the ad sends people (meta-copy.md's landing page). A realskincare.com URL or a path.
   const landing = str(raw.landing);
   if (landing && !/^\//.test(landing) && !/^https:\/\/(www\.)?realskincare\.com(\/|$)/i.test(landing)) {
@@ -119,7 +122,7 @@ export function parseBatch(raw) {
     ? raw.scenes.map(s => String(s || '').trim()).filter(Boolean)
     : [];
   if (errors.length) throw new Error('ad-batch: invalid batch file:\n  - ' + errors.join('\n  - '));
-  return { product, variant, items, title, count, form, style, typeStyle, landing, concepts, scenes };
+  return { product, variant, items, title, count, form, style, typeStyle, landing, message, concepts, scenes };
 }
 
 /**

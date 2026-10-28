@@ -58,7 +58,7 @@ test('planBatch: kept images only, with slug ids and source keys the migration a
   const plan = planBatch(JSON.parse(readFileSync(join(dir, 'run.json'), 'utf8')), dir);
   assert.equal(plan.length, 2);
   assert.equal(plan[0].source, `${BATCH}/01 5 reasons people are switching/01-aurora-sky.png`);
-  assert.equal(plan[0].id, '2026-10-19-coconut-moisturizer-coconut-breeze-c1-aurora-sky');
+  assert.equal(plan[0].id, '2026-10-19-coconut-moisturizer-coconut-breeze-c1-5-reasons-people-are-switching-aurora-sky');
   assert.ok(plan.every((p) => ID_RE.test(p.id)));
   assert.equal(plan[1].needs_human_review, true);
   assert.equal(plan[0].needs_human_review, false);
@@ -106,8 +106,8 @@ test('ingestBatch dry run: no model, no upload, skips what the server already ho
   const remote = stubRemote({ ids: [], sources: [`${BATCH}/01 5 reasons people are switching/01-aurora-sky.png`] });
   const s = await ingestBatch({ batchDir: dir, apply: false, deps: { remote, log: () => {} } });
   assert.equal(s.kept, 2);
-  assert.deepEqual(s.already, ['2026-10-19-coconut-moisturizer-coconut-breeze-c1-aurora-sky']);
-  assert.deepEqual(s.wouldAdd, ['2026-10-19-coconut-moisturizer-coconut-breeze-c1-dark-slate']);
+  assert.deepEqual(s.already, ['2026-10-19-coconut-moisturizer-coconut-breeze-c1-5-reasons-people-are-switching-aurora-sky']);
+  assert.deepEqual(s.wouldAdd, ['2026-10-19-coconut-moisturizer-coconut-breeze-c1-5-reasons-people-are-switching-dark-slate']);
   assert.equal(remote.sent.length, 0);
 });
 
@@ -138,4 +138,12 @@ test('remoteQueue sends basic auth and refuses without credentials', async () =>
   assert.deepEqual((await q.known()).ids, ['a']);
   assert.equal(seen[0].url, 'https://dash.example/api/social/items');
   assert.equal(seen[0].init.headers.authorization, `Basic ${Buffer.from('u:p').toString('base64')}`);
+});
+
+test('planBatch: two batches sharing a folder name and scene ids get different ids by headline', () => {
+  const run = (headline) => ({ product: { handle: 'coconut-moisturizer' }, concepts: [{ headline, images: [{ ok: true, file: '/x/01-custom-01.png', scene: { id: 'custom-01' }, notes: [] }] }] });
+  const a = planBatch(run('No Tricks in This Jar'), '/x');
+  const b = planBatch(run('Sweater Weather Is Here'), '/x');
+  assert.notEqual(a[0].id, b[0].id);
+  assert.ok([a[0].id, b[0].id].every((id) => ID_RE.test(id)));
 });

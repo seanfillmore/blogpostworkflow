@@ -481,3 +481,8 @@ test('mergeRunRecord keeps an earlier batch in the same folder, replaces a re-re
   assert.equal(mergeRunRecord(null, now), now);
   assert.equal(mergeRunRecord({ junk: true }, now), now);
 });
+
+test('parseBatch keeps the message folder name, null when absent', () => {
+  assert.equal(parseBatch({ product: 'coconut-moisturizer', message: ' Fall - Body Cream ', concepts: [{ headline: 'x' }] }).message, 'Fall - Body Cream');
+  assert.equal(parseBatch({ product: 'coconut-moisturizer', concepts: [{ headline: 'x' }] }).message, null);
+});
