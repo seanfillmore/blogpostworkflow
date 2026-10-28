@@ -35,6 +35,10 @@ test('real headlines file under the message folder the library keeps them in', (
 test('an explicit batch message wins, matched case-insensitively, but only for a known folder', () => {
   assert.equal(messageFolder({ message: 'dry skin pain points', headlines: ['Deep moisture. Zero junk.'] }), 'Dry Skin Pain Points');
   assert.equal(messageFolder({ message: 'Product & Scent Spotlight' }), 'Product & Scent Spotlight');
+  // Seasonal folders no headline rule reaches: a cream title would otherwise match "moistur".
+  for (const m of ['Halloween - Body Cream', 'Fall - Body Cream', 'Holiday - Body Cream']) {
+    assert.equal(messageFolder({ message: m, headlines: ['Nothing Scary Inside'], productTitle: 'Coconut Moisturizer | 4oz' }), m);
+  }
   // A typo never invents a new folder: it falls through to the rules.
   assert.equal(messageFolder({ message: 'Dry Skin Pain Pionts', headlines: ['Deep moisture. Zero junk.'] }), 'Short Ingredient List');
 });

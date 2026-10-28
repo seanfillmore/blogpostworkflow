@@ -277,6 +277,13 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
     ? messageFolder({ message: batch.message, headlines: concepts.map(c => c.headline), productTitle: product.title })
     : null;
   if (message) log(`Filing under: ${message}`);
+  // A message that names no known folder falls through to the headline rules, by
+  // design (a typo must not invent a folder). Say so, or the batch is misfiled in
+  // silence: the 2026-10-27 Halloween cream set asked for "Halloween" and landed in
+  // "Soft, Hydrated Skin" because the product title matched "moistur".
+  if (message && batch.message && message.toLowerCase() !== String(batch.message).trim().toLowerCase()) {
+    log(`⚠ message "${batch.message}" is not a known folder (see MESSAGES in output.js); filed under "${message}" by the headline rules instead.`);
+  }
   const batchDir = ensureDir(join(args.out, ...(message ? [message] : []), batchDirName({ date, product })));
   const budget = { used: 0, max: args.maxRenders, costUsd: 0 };
   const clients = { openaiKey: env.OPENAI_API_KEY, gemini, anthropic };

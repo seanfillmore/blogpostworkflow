@@ -38,8 +38,12 @@ export const MESSAGE_RULES = [
   ['Dry Skin Pain Points', /\bdry\b|tight|flaky|cracked|thirsty|dusty|ashy|itch|lotion (twice|habit|every)|reapply/i],
   ['Soft, Hydrated Skin', /\bsoft\b|hydrat|moistur/i],
 ];
+// Folders a batch reaches only by naming them in `message`: no headline rule points at
+// them. The seasonal body cream sets (2026-10-27) say "nothing scary" or "no tricks",
+// not "halloween", so only an explicit message can file them.
 export const MESSAGES = [...MESSAGE_RULES.map(([name]) => name), 'Product & Scent Spotlight',
-  'Baby-Soft Skin (Baby Drama)', "This One's For You", 'Creator UGC Edits'];
+  'Baby-Soft Skin (Baby Drama)', "This One's For You", 'Creator UGC Edits',
+  'Halloween - Body Cream', 'Fall - Body Cream', 'Holiday - Body Cream'];
 export const UNSORTED_MESSAGE = '_New (to sort)';
 
 /**
