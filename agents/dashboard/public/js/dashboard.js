@@ -2739,8 +2739,11 @@ async function dismissAlert() {
 }
 
 function esc(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // Not just strings: Social insights (views, reach, likes) are numbers, and a
+  // number here used to throw, which left the whole Social tab stuck on
+  // "Loading" once the first post had stats (2026-10-28). 0 renders as "0".
+  if (s === null || s === undefined || s === false) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function mdToHtml(md) {
@@ -4976,6 +4979,7 @@ async function renderSocialTab() {
     return;
   }
   var clean = socialData.pending.filter(function(x) { return x.gate && x.gate.ok; });
+  try {
   panel.innerHTML =
     '<div class="card"><div class="card-header accent-indigo">' +
       '<span class="card-title">Social: waiting for approval</span>' +
@@ -4992,6 +4996,11 @@ async function renderSocialTab() {
       '<span class="card-subtitle">' + socialData.posted.length + ' posted' + (socialData.rejected ? ' &middot; ' + socialData.rejected + ' rejected' : '') + '</span></div><div class="card-body">' +
       (socialData.posted.length ? socialData.posted.map(socialPostedHtml).join('') : '<div class="empty-state" style="padding:24px 0">Nothing posted yet.</div>') +
     '</div></div>';
+  } catch (e) {
+    // A render error must say so, not leave "Loading the Social queue..." up forever.
+    console.error(e);
+    panel.innerHTML = '<div class="card"><div class="card-body"><div class="empty-state">The Social queue loaded but could not be displayed: ' + esc(e.message) + '</div></div></div>';
+  }
 }
 
 function socialImgHtml(x) {
