@@ -407,3 +407,6 @@ data/social-queue/
 # Google Ads Transparency research reports (scripts/google-ads-research.mjs).
 # Hand-run research output with downloaded ad images; regenerable on demand.
 data/reports/google-ads-research/
+
+# Amazon review-request ledger (server-written; losing it is harmless)
+data/reports/amazon-review-requests/
