@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   parseCsv, campaignBrands, duplicateTargets, breakEvenRows, financeByAsin,
-  isOneToOne, isAuto, NEGATION_CLICK_FLOOR,
+  isOneToOne, isAuto, NEGATION_CLICK_FLOOR, otherAdSpend,
 } from '../../scripts/amazon/culina-ppc-audit.mjs';
 
 test('parseCsv handles quoted fields, embedded commas and Amazon money formatting', () => {
@@ -122,4 +122,28 @@ test('an ASIN with no COGS is REPORTED as unpriced, never assumed free', () => {
 
 test('the negation click floor is a real floor, not zero', () => {
   assert.ok(NEGATION_CLICK_FLOOR >= 5, 'below ~5 clicks a zero-order term is noise, not evidence');
+});
+
+const W = { start: '2026-10-01', end: '2026-10-30' };
+const sbRow = (name, spend, w = W) => ({ 'Campaign Name': name, Spend: spend, 'Start Date': w.start, 'End Date': w.end });
+
+test('otherAdSpend sums SB/SD spend in the SP window and excludes RSC campaigns by ASIN', () => {
+  const r = otherAdSpend([
+    sbRow('SB - B08BTQK5Z9 - 3 Pack - Broad', 100.5),
+    sbRow('SB - PC - Search Terms3 - Broad', 20),
+    sbRow('SB - B0BSTLKV6N - Body Lotion', 999),
+  ], { window: W, rscAsins: new Set(['B0BSTLKV6N']) });
+  assert.deepEqual(r, { included: true, spend: 120.5, campaigns: 2 });
+});
+
+test('otherAdSpend REFUSES a report from another window rather than subtracting stale spend', () => {
+  const r = otherAdSpend([sbRow('SB - x', 50, { start: '2026-08-01', end: '2026-08-31' })], { window: W });
+  assert.equal(r.included, false);
+  assert.equal(r.spend, 0);
+  assert.match(r.reason, /does not match/);
+});
+
+test('otherAdSpend: a missing report is NOT a zero, an empty one is', () => {
+  assert.equal(otherAdSpend(null, { window: W }).included, false, 'missing must make the all-ads net unknown');
+  assert.deepEqual(otherAdSpend([], { window: W }), { included: true, spend: 0, campaigns: 0 });
 });
