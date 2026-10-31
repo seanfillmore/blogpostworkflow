@@ -30,8 +30,9 @@
  *   Sponsored_Products_Advertised_product_report.xlsx   (required — carries SKU→ASIN)
  *   Sponsored_Products_Search_term_report.xlsx          (required for §2)
  *   Sponsored_Products_Targeting_report.xlsx            (required for §3)
- *   Sponsored_Brands_Campaign_report.xlsx               (optional, spend reconciliation)
- *   Sponsored_Display_Campaign_report.xlsx              (optional, same)
+ *   Sponsored_Brands_Campaign_report.csv                (SB spend, for NET AFTER ALL ADS)
+ *   Sponsored_Display_Campaign_report.csv               (SD spend, same)
+ *   Without both, from the same window as the SP pull, the all-ads net prints UNKNOWN.
  *
  * ATTRIBUTION. Sponsored Products is 7-day; SB/SD are 14-day. Spend is comparable
  * across ad types, SALES ARE NOT — never sum sales across them. Everything below §0
@@ -274,6 +275,40 @@ export function breakEvenRows({ finance, adSpend, cogsTable }) {
   return { rows, unpriced };
 }
 
+/**
+ * Sponsored Brands + Display SPEND, for the all-ads net line.
+ *
+ * WHY: the break-even table is Sponsored Products only, because SP is the one ad type
+ * that carries SKU → ASIN. But the finance gross counts EVERY sale, including the ones
+ * SB/SD ads drove, so a net that subtracts only SP spend credits the account with SB/SD
+ * revenue and none of its cost. On 2026-10-30 that read +$1,050 when the true all-ads
+ * net was about −$900 ($1,927 of SB + SD spend left out).
+ *
+ * Spend only, never sales: SB/SD sales are 14-day attribution and SP is 7-day.
+ * Not allocated per ASIN: these reports are campaign level and a split would be
+ * invention. A report from a DIFFERENT window than the SP pull is refused rather than
+ * subtracted, because a stale September export against October finance is a wrong
+ * number that looks right. RSC campaigns are excluded by the ASIN in the name.
+ */
+export function otherAdSpend(rows, { window, rscAsins = new Set() } = {}) {
+  if (!rows) return { included: false, reason: 'report missing', spend: 0, campaigns: 0 };
+  if (!rows.length) return { included: true, spend: 0, campaigns: 0 };
+  const w = { start: rows[0]['Start Date'] ?? null, end: rows[0]['End Date'] ?? null };
+  if (!window?.start || w.start !== window.start || w.end !== window.end) {
+    return { included: false, reason: `window ${w.start ?? '?'} → ${w.end ?? '?'} does not match the SP window ${window?.start ?? '?'} → ${window?.end ?? '?'}`, spend: 0, campaigns: 0 };
+  }
+  const isRsc = (name) => (String(name).toUpperCase().match(/B0[0-9A-Z]{8}/g) ?? []).some((a) => rscAsins.has(a));
+  const mine = rows.filter((r) => !isRsc(r['Campaign Name']));
+  return { included: true, spend: r2(mine.reduce((a, r) => a + num(r, 'Spend'), 0)), campaigns: mine.length };
+}
+
+async function loadOptionalSheet(fragment) {
+  // CSV only: the xlsx files left in this directory are September hand exports, and
+  // falling back to them would hand otherAdSpend a stale window to refuse anyway.
+  const csv = readdirSync(ADS_DIR).find((x) => x.toLowerCase().endsWith('.csv') && x.toLowerCase().includes(fragment));
+  return csv ? parseCsv(readFileSync(join(ADS_DIR, csv), 'utf8')) : null;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const refresh = args.includes('--refresh');
@@ -312,13 +347,27 @@ async function main() {
   // §3 self-competition
   const { dupes, totalTargets } = duplicateTargets(tg, isCulina);
 
+  const window = { start: ap[0]?.['Start Date'] ?? null, end: ap[0]?.['End Date'] ?? null };
+  const rscAsins = new Set(ap.filter((r) => /^RSC-/i.test(String(r['Advertised SKU']).trim())).map((r) => r['Advertised ASIN']));
+  const sb = otherAdSpend(await loadOptionalSheet('sponsored_brands'), { window, rscAsins });
+  const sd = otherAdSpend(await loadOptionalSheet('sponsored_display'), { window, rscAsins });
+  const spNet = r2(rows.reduce((a, r) => a + r.net, 0));
+  const gross = r2(rows.reduce((a, r) => a + r.gross, 0));
+  const allAdSpend = r2(rows.reduce((a, r) => a + r.adSpend, 0) + sb.spend + sd.spend);
+
   const report = {
     generated_at: new Date().toISOString(),
-    window: { start: ap[0]?.['Start Date'] ?? null, end: ap[0]?.['End Date'] ?? null },
+    window,
     totals: {
-      gross: r2(rows.reduce((a, r) => a + r.gross, 0)),
+      gross,
       adSpend: r2(rows.reduce((a, r) => a + r.adSpend, 0)),
-      net: r2(rows.reduce((a, r) => a + r.net, 0)),
+      net: spNet,
+      sponsoredBrands: sb,
+      sponsoredDisplay: sd,
+      allAdSpend,
+      // null, never a number, when either report is missing or from another window
+      netAfterAllAds: sb.included && sd.included ? r2(spNet - sb.spend - sd.spend) : null,
+      tacos: sb.included && sd.included && gross ? allAdSpend / gross : null,
     },
     breakEven: rows,
     unpricedAsins: unpriced,
@@ -341,7 +390,15 @@ async function main() {
   for (const r of rows) {
     console.log(`${r.asin}  ${String(r.units).padStart(5)} ${usd(r.gross)} ${usd(r.amazonFees)} ${usd(-r.cogsTotal)} ${usd(r.contribBeforeAds)} ${usd(-r.adSpend)} ${usd(r.net)}   ${pct(r.breakEvenAcos)}  ${pct(r.actualAcos)}`);
   }
-  console.log(`${''.padEnd(13)}${String(rows.reduce((a, r) => a + r.units, 0)).padStart(5)} ${usd(report.totals.gross)} ${''.padStart(29)} ${usd(-report.totals.adSpend)} ${usd(report.totals.net)}`);
+  console.log(`${''.padEnd(13)}${String(rows.reduce((a, r) => a + r.units, 0)).padStart(5)} ${usd(report.totals.gross)} ${''.padStart(29)} ${usd(-report.totals.adSpend)} ${usd(report.totals.net)}   ← Sponsored Products spend only`);
+  for (const [label, x] of [['Sponsored Brands ', sb], ['Sponsored Display', sd]]) {
+    console.log(x.included
+      ? `  ${label} spend ${usd(-x.spend)}  (${x.campaigns} campaigns)`
+      : `  ${label} NOT INCLUDED: ${x.reason}. Run pull-ads-reports.mjs.`);
+  }
+  console.log(report.totals.netAfterAllAds === null
+    ? '  ⚠ NET AFTER ALL ADS UNKNOWN: the net above omits SB/SD spend and OVERSTATES profit.'
+    : `  NET AFTER ALL ADS ${usd(report.totals.netAfterAllAds)}   TACoS ${pct(report.totals.tacos)}   (before the agency fee)`);
   if (unpriced.length) {
     console.log(`\n  ! ${unpriced.length} CULINA ASIN(s) sold but carry NO COGS in config/culina-cogs.json:`);
     for (const u of unpriced) console.log(`      ${u.asin}  gross ${usd(u.gross)}  spend ${usd(u.spend)}`);
