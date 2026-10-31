@@ -180,6 +180,14 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # before the 13:00 UTC daily-summary. No TZ= prefix: it schedules nothing here.
 DAILY_AMAZON_ACCOUNT_HEALTH="5 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-account-health/index.js >> data/reports/scheduler/amazon-account-health.log 2>&1"
 
+# Amazon review requests (daily). Sends Amazon's standard "Request a Review" email
+# for shipped orders aged 10-31 days that NOTHING ELSE has requested yet; the agency's
+# follow-up tool covers most orders around day 5-8, so this fills its gaps. Amazon's
+# eligibility check is re-read before every send, so it can never double-send.
+# 10:20 UTC is a free minute, and the digest row lands at 13:00 the same morning.
+# No TZ= prefix: it schedules nothing here.
+DAILY_AMAZON_REVIEW_REQUESTS="20 10 * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-review-requests/index.js --apply >> data/reports/scheduler/amazon-review-requests.log 2>&1"
+
 # Trybe creator review (daily). Screens each PENDING creator submission's
 # transcript through the commercial claim gate and sends a revision request
 # quoting any health claim; never approves or rejects. Also reports creator
@@ -641,6 +649,7 @@ $DAILY_POST_META_GATE
 $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_AMAZON_ACCOUNT_HEALTH
+$DAILY_AMAZON_REVIEW_REQUESTS
 # ── Creator program (daily, before the digest) ──
 $DAILY_PACK_LISTINGS
 $DAILY_TRYBE_REVIEW
