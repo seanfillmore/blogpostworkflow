@@ -41,6 +41,8 @@ import {
 } from '../../lib/serp-copy.js';
 import { getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayTestMetadata } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
@@ -51,6 +53,7 @@ import { assessDistinctness } from '../../lib/ctr-copy-distinctness.js';
 import {
   holdMetaCandidates, excludeHoldout, prioritiseTreatment,
   readWaveDesignated, designatedMissingFromPool, openTestHandles, excludeOpenTests,
+  excludeEditGated,
 } from './lib/hold.js';
 import {
   rankClusters, renderEfficiencyLines, efficiencyBanner,
@@ -65,6 +68,7 @@ import {
   SEO_COPY_COMPLIANCE_RULE, renderGateSkipLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -159,7 +163,7 @@ async function rewriteMeta(currentTitle, currentMeta, keyword, position, impress
   const groundingBlock = groundingLines.length ? `\n${groundingLines.join('\n')}\n` : '';
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -266,6 +270,9 @@ async function runRefreshStaleYears({ apply }) {
           const fields = {};
           if (titleResult.changed) fields.title = titleResult.text;
           if (summaryResult.changed) fields.summary_html = summaryResult.text;
+          // edit-gate kind: repair — a deterministic year bump, no model call.
+          // Not gated: holding it would leave "2025" in a live title, which a
+          // gate is not allowed to do (see lib/post-edit-gate.js).
           await updateArticle(blog.id, article.id, fields);
           record.applied = true;
 
@@ -541,9 +548,21 @@ async function main() {
     console.log('');
   }
 
+  // ── Live-article edit gate, BEFORE the cap ────────────────────────────────
+  // One material change per page, then measure 28 days (lib/post-edit-gate.js).
+  // A page frozen or still inside its measurement window is withheld here so it
+  // cannot eat one of the --limit slots; it is asked again next run.
+  const { kept: editGateKept, excluded: editGated } = excludeEditGated(waveOrdered, {
+    mayEdit: mayEditLivePost,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  const editGateHeld = editGated.map((e) => ({ target: e.handle, kind: e.kind, reason: e.reason, until: e.until }));
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
+  if (editGateHeld.length) console.log('');
+
   const pageFiltered = ONLY_PAGES
-    ? waveOrdered.filter((c) => ONLY_PAGES.has(String(c.url || kwToPage.get(c.keyword) || '').split('/').pop()))
-    : waveOrdered;
+    ? editGateKept.filter((c) => ONLY_PAGES.has(String(c.url || kwToPage.get(c.keyword) || '').split('/').pop()))
+    : editGateKept;
   if (ONLY_PAGES) console.log(`  --pages: ${pageFiltered.length} candidate(s) on ${ONLY_PAGES.size} named page(s)`);
 
   const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(pageFiltered, hold, {
@@ -817,6 +836,14 @@ async function main() {
           console.warn(`    ! baseline page CTR unavailable (${e.message}) — falling back to keyword CTR`);
         }
 
+        // Re-ask at the write site: two candidates can land on one page, and
+        // the first write in this run starts that page's cooldown.
+        const editGate = mayEditLivePost(pageUrl, 'serp');
+        if (!editGate.allowed) {
+          console.log(`    ⏸ Edit gate: ${editGate.reason} — skipped`);
+          editGateHeld.push({ target: pageUrl, kind: 'serp', reason: editGate.reason, until: editGate.until });
+          continue;
+        }
         try {
           // The SERP fields, not article.title / summary_html — see
           // lib/serp-copy.js. The on-page H1 and excerpt are left alone.
@@ -825,6 +852,7 @@ async function main() {
           if (!echoed) await upsertMetafield('articles', article.id, 'global', DESCRIPTION_TAG, proposed.meta_description);
           result.applied = true;
           result.descriptionWritten = !echoed;
+          recordMaterialEdit(pageUrl, 'serp', 'meta-optimizer');
           console.log(`    ✓ Updated in Shopify (title_tag${echoed ? '; description unchanged — proposal echoed the current one' : ' + description_tag'})`);
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
@@ -906,6 +934,14 @@ async function main() {
   // skip that is not written here reaches nobody. A skip is the gate working, so
   // it renders as a normal section on the deferred success path — never
   // `immediate: true`, never `status: 'error'`. It vanishes on a clean run.
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — held (page unchanged, asked again next run)');
+    lines.push('');
+    for (const l of editGateLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
+
   const skipLines = renderGateSkipLines(gateSkipped);
   if (skipLines.length) {
     lines.push('## Health-claim gate — skipped');
@@ -986,14 +1022,15 @@ async function main() {
   // Returned so the caller can put the held count in the notify subject. A hold
   // is the policy working, so it stays on the normal deferred success path —
   // never `immediate: true`, never `status: 'error'`.
-  return { held, gateSkipped };
+  return { held, gateSkipped, editGateHeld };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main()
     .then((outcome) => notifyLatestReport(
       `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}` +
-        gateSkipSummaryFragment(outcome?.gateSkipped || []),
+        gateSkipSummaryFragment(outcome?.gateSkipped || []) +
+        editGateSummaryFragment(outcome?.editGateHeld || []),
       join(ROOT, 'data', 'reports', 'meta-optimizer'),
     ))
     .catch((err) => {

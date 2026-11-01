@@ -25,6 +25,7 @@ import { getBlogs, getArticles, getArticle } from '../../lib/shopify.js';
 import { slugFromMetaPath } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { positionalArg } from '../../lib/positional-arg.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -166,7 +167,7 @@ function checkFreshness(article) {
 async function verifyClaimsWithClaude(article) {
   const text = article.body_html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   const msg = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',

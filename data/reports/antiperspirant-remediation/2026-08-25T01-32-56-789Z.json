@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-08-25T01:32:57.675Z",
+  "mode": "apply",
+  "backup_dir": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z",
+  "planned": 6,
+  "written": 0,
+  "already_applied": 6,
+  "drifted": 0,
+  "missing_mirrors": 0,
+  "errors": 0,
+  "results": [
+    {
+      "id": "cta-travel-size-antiperspirant",
+      "target": "travel-size-antiperspirant-what-to-know-before-you-pack [body_html #564256243882]",
+      "kind": "article",
+      "caught_by": "arm-a+arm-b",
+      "why": "featured-product buy-box headline. \"Our pick for <X>: <our product>\" makes our deodorant the referent of the category name, directly above an Add-to-Cart button.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/cta-travel-size-antiperspirant.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    },
+    {
+      "id": "mirror-travel-size-antiperspirant",
+      "target": "data/posts/travel-size-antiperspirant/content.html",
+      "kind": "file",
+      "caught_by": "arm-a+arm-b",
+      "why": "local mirror of the above — agents/publisher republishes this file over body_html.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/mirror-travel-size-antiperspirant.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    },
+    {
+      "id": "cta-aluminum-free-antiperspirant",
+      "target": "aluminum-free-antiperspirant-what-it-is-does-it-work-2 [body_html #563512180906]",
+      "kind": "article",
+      "caught_by": "arm-a+arm-b",
+      "why": "featured-product buy-box headline, same generator, same defect. The raw target keyword makes this headline clumsy as well as wrong; only the wrong part is fixed here.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/cta-aluminum-free-antiperspirant.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    },
+    {
+      "id": "mirror-aluminum-free-antiperspirant",
+      "target": "data/posts/aluminum-free-antiperspirant-what-it-is-does-it-work/content.html",
+      "kind": "file",
+      "caught_by": "arm-a+arm-b",
+      "why": "local mirror of the above — agents/publisher republishes this file over body_html.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/mirror-aluminum-free-antiperspirant.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    },
+    {
+      "id": "heading-natural-antiperspirant-buying-guide",
+      "target": "natural-antiperspirant-what-works-why-it-matters [body_html #563582435498]",
+      "kind": "article",
+      "caught_by": "judgement",
+      "why": "BORDERLINE, included on judgement rather than on the rule. A buying-guide heading is product-recommendation copy on a page whose buy box sells our deodorant; the section body already says \"Shopping for natural deodorant\", and the article itself argues four paragraphs earlier that a natural antiperspirant cannot legally exist. 20 of the post's 21 occurrences of the phrase are kept, title and H1 included.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/heading-natural-antiperspirant-buying-guide.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    },
+    {
+      "id": "mirror-natural-antiperspirant-buying-guide",
+      "target": "data/posts/natural-antiperspirant/content.html",
+      "kind": "file",
+      "caught_by": "judgement",
+      "why": "local mirror of the above — agents/publisher republishes this file over body_html.",
+      "backup": "data/reports/antiperspirant-remediation/backups/2026-08-25T01-32-56-789Z/mirror-natural-antiperspirant-buying-guide.txt",
+      "action": "already-applied",
+      "occurrences": 0,
+      "expected_occurrences": 1
+    }
+  ]
+}

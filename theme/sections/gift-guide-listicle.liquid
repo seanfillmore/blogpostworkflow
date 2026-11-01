@@ -1,0 +1,205 @@
+{%- comment -%}
+  Holiday gift-guide listicle (templates/page.presell-gifts.json), the
+  November follow-up to the cream pre-sell page. Paid traffic lands here and
+  each pick sends the visitor to that product's own page to choose a scent
+  and buy, so there is no custom buy box (Zipify One Click Upsell hijacks any
+  custom form posting to /cart/add; a plain product link avoids that).
+
+  COPY IS NOT AUTHORED HERE. Every string comes from section/block settings,
+  rendered by scripts/presell/build-gift-guide-template.mjs from
+  data/presell/gift-guide/content.json, the file
+  tests/theme/gift-guide-copy.test.js gates. Edit content.json and rebuild.
+
+  STOCK AND PRICE ARE LIVE, and that is the point of the design. On
+  2026-10-19 three of the six picks (Gift Box, Head-to-Toe, Sensitive Skin
+  Set) were sold out because the lotion they contain was. So:
+    - a pick whose product has no available variant is NOT RENDERED, and the
+      remaining picks are numbered 1..n with no gaps;
+    - the headline carries "{count}", replaced by n, so the page never
+      promises six gifts and shows three;
+    - price and compare-at come from the product, never from copy. The
+      "Save $X" line only renders when compare_at_price > price, and X is
+      computed here, so it cannot go stale or become untrue.
+  Images are the product's featured image, also live.
+{%- endcomment -%}
+
+{%- liquid
+  assign count_token = '{count}'
+  assign shown = 0
+  assign hero_img = false
+  for block in section.blocks
+    if block.type == 'pick'
+      assign gp = all_products[block.settings.product_handle]
+      if gp.available
+        assign shown = shown | plus: 1
+        unless hero_img
+          assign hero_img = gp.featured_image
+        endunless
+      endif
+    endif
+  endfor
+  if section.settings.hero_image != blank
+    assign hero_url = section.settings.hero_image
+  else
+    assign hero_url = false
+  endif
+-%}
+
+{{ 'presell.css' | asset_url | stylesheet_tag }}
+<style>
+  .gift-pick-price { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem; margin: .75rem 0 1rem; font-size: 1.15rem; font-weight: 700; }
+  .gift-pick-price s { font-weight: 400; opacity: .6; }
+  .gift-pick-save { font-size: .9rem; font-weight: 700; padding: .15rem .5rem; border-radius: 999px; background: #1f3d2b; color: #fff; }
+  .gift-pick-for { margin: 0 0 .5rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; opacity: .75; }
+  .gift-closing { margin: 2.5rem 0 1rem; }
+</style>
+
+<article class="presell" data-gift-guide data-gift-count="{{ shown }}">
+
+  <header class="presell-hero">
+    <p class="presell-eyebrow">{{ section.settings.eyebrow | escape }}</p>
+    <h1 class="presell-headline">{{ section.settings.headline | escape | replace: count_token, shown }}</h1>
+    {%- if hero_url -%}
+      {%- assign hero_join = '?' -%}
+      {%- if hero_url contains '?' -%}{%- assign hero_join = '&' -%}{%- endif -%}
+      <img class="presell-hero-img" src="{{ hero_url }}{{ hero_join }}width=900"
+        srcset="{{ hero_url }}{{ hero_join }}width=600 600w, {{ hero_url }}{{ hero_join }}width=900 900w, {{ hero_url }}{{ hero_join }}width=1200 1200w"
+        sizes="(min-width: 720px) 680px, 100vw" width="900" height="900"
+        alt="{{ section.settings.hero_alt | escape }}" fetchpriority="high" loading="eager" decoding="async">
+    {%- elsif hero_img -%}
+      {{ hero_img | image_url: width: 1200 | image_tag:
+        class: 'presell-hero-img', sizes: '(min-width: 720px) 680px, 100vw',
+        widths: '600, 900, 1200', fetchpriority: 'high', loading: 'eager',
+        alt: section.settings.hero_alt }}
+    {%- endif -%}
+    <p class="presell-intro">{{ section.settings.intro | escape }}</p>
+  </header>
+
+  {%- assign n = 0 -%}
+  {%- for block in section.blocks -%}
+    {%- assign s = block.settings -%}
+    {%- case block.type -%}
+      {%- when 'pick' -%}
+        {%- assign gp = all_products[s.product_handle] -%}
+        {%- unless gp.available -%}{%- continue -%}{%- endunless -%}
+        {%- assign n = n | plus: 1 -%}
+        {%- assign v = gp.selected_or_first_available_variant -%}
+        <section class="presell-reason gift-pick" data-gift-pick="{{ gp.handle }}" {{ block.shopify_attributes }}>
+          <h2 class="presell-reason-title">
+            <span class="presell-num" aria-hidden="true">{{ n }}</span>
+            <span>{{ s.title | escape }}</span>
+          </h2>
+          {%- if gp.featured_image -%}
+            {%- assign pick_alt = gp.featured_image.alt | default: gp.title -%}
+            <figure class="presell-media presell-media--image">
+              {{ gp.featured_image | image_url: width: 900 | image_tag:
+                sizes: '(min-width: 720px) 680px, 100vw', widths: '600, 900',
+                loading: 'lazy', alt: pick_alt }}
+            </figure>
+          {%- endif -%}
+          {%- if s.for_who != blank -%}<p class="gift-pick-for">{{ s.for_who | escape }}</p>{%- endif -%}
+          <p class="presell-body">{{ s.body | escape }}</p>
+          <p class="gift-pick-price">
+            <span>{{ v.price | money_without_trailing_zeros }}</span>
+            {%- if v.compare_at_price > v.price -%}
+              <s aria-label="Regular price">{{ v.compare_at_price | money_without_trailing_zeros }}</s>
+              <span class="gift-pick-save">Save {{ v.compare_at_price | minus: v.price | money_without_trailing_zeros }}</span>
+            {%- endif -%}
+          </p>
+          <p class="presell-cta-wrap">
+            <a class="presell-button" href="{{ gp.url }}" data-gift-link>{{ s.button | escape }}</a>
+          </p>
+        </section>
+
+      {%- when 'reviews' -%}
+        {%- comment -%}
+          Five stars is a FACT about these reviews: each is checked 5/5 on
+          Judge.me (ids in content.json). Swap one for a lower-rated review and
+          this must change.
+        {%- endcomment -%}
+        <section class="presell-reviews" {{ block.shopify_attributes }}>
+          <h2>{{ s.heading | escape }}</h2>
+          {%- for i in (1..3) -%}
+            {%- assign qk = 'quote_' | append: i -%}
+            {%- assign nk = 'name_' | append: i -%}
+            {%- if s[qk] != blank -%}
+              <figure class="presell-review">
+                <p class="presell-review-stars" aria-label="5 out of 5 stars">&#9733;&#9733;&#9733;&#9733;&#9733;</p>
+                <blockquote><p>{{ s[qk] | escape }}</p></blockquote>
+                <figcaption>{{ s[nk] | escape }} <span>Verified buyer</span></figcaption>
+              </figure>
+            {%- endif -%}
+          {%- endfor -%}
+        </section>
+
+      {%- when 'notes' -%}
+        <aside class="presell-notes" {{ block.shopify_attributes }}>
+          <h2>{{ s.heading | escape }}</h2>
+          <ul>
+            {%- for i in (1..3) -%}
+              {%- assign nk = 'note_' | append: i -%}
+              {%- if s[nk] != blank -%}<li>{{ s[nk] | escape }}</li>{%- endif -%}
+            {%- endfor -%}
+          </ul>
+        </aside>
+    {%- endcase -%}
+  {%- endfor -%}
+
+  {%- if section.settings.closing != blank -%}
+    <p class="presell-intro gift-closing">{{ section.settings.closing | escape }}</p>
+  {%- endif -%}
+</article>
+
+{% schema %}
+{
+  "name": "Gift guide listicle",
+  "tag": "section",
+  "settings": [
+    { "type": "header", "content": "Copy lives in data/presell/gift-guide/content.json" },
+    { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
+    { "type": "textarea", "id": "headline", "label": "Headline ({count} becomes the number of picks in stock)" },
+    { "type": "textarea", "id": "intro", "label": "Intro" },
+    { "type": "text", "id": "hero_image", "label": "Hero image URL (blank uses the first in-stock pick's image)" },
+    { "type": "text", "id": "hero_alt", "label": "Hero image alt text" },
+    { "type": "textarea", "id": "closing", "label": "Closing line" }
+  ],
+  "blocks": [
+    {
+      "type": "pick",
+      "name": "Gift pick",
+      "settings": [
+        { "type": "text", "id": "product_handle", "label": "Product handle (hidden while sold out)" },
+        { "type": "text", "id": "title", "label": "Title" },
+        { "type": "text", "id": "for_who", "label": "Who it is for" },
+        { "type": "textarea", "id": "body", "label": "Body (no prices: price is live)" },
+        { "type": "text", "id": "button", "label": "Button label" }
+      ]
+    },
+    {
+      "type": "reviews",
+      "name": "Reviews",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "textarea", "id": "quote_1", "label": "Quote 1" },
+        { "type": "text", "id": "name_1", "label": "Name 1" },
+        { "type": "textarea", "id": "quote_2", "label": "Quote 2" },
+        { "type": "text", "id": "name_2", "label": "Name 2" },
+        { "type": "textarea", "id": "quote_3", "label": "Quote 3" },
+        { "type": "text", "id": "name_3", "label": "Name 3" }
+      ]
+    },
+    {
+      "type": "notes",
+      "name": "Notes",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "text", "id": "note_1", "label": "Note 1" },
+        { "type": "text", "id": "note_2", "label": "Note 2" },
+        { "type": "text", "id": "note_3", "label": "Note 3" }
+      ]
+    }
+  ]
+}
+{% endschema %}

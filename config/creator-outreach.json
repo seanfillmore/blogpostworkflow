@@ -1,0 +1,4 @@
+{
+  "_note": "agents/creator-outreach. Set enabled to false to stop every email, scheduled and reply alike. Thresholds are in lib/creator-outreach.js DEFAULT_CONFIG; any key here overrides it.",
+  "enabled": true
+}

@@ -39,7 +39,10 @@ import { getArticle, updateArticle } from '../../lib/shopify.js';
 import { checkAnswerFirst, extractFirstBodyParagraph } from '../../lib/answer-first.js';
 import { getContentPath, getPostMeta, listAllSlugs, POSTS_DIR } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -207,7 +210,7 @@ GOOD (warm + answer-first — what TO write):
 Now write the rewrite for THIS post. Output ONLY the new paragraph wrapped in a single <p> tag. No explanation, no code fence, no preamble.`;
 
   const res = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.standard,
     max_tokens: 400,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -314,11 +317,20 @@ function replaceParagraph(bodyHtml, oldText, newPHtml) {
   return $('body').html();
 }
 
+/** The live article a post points at, for the edit gate. */
+function gateTargetOf(post) {
+  return post.meta?.shopify_handle || post.slug;
+}
+
 async function applyRewriteToShopify(post, intro, rewriteHtml) {
   const { shopify_blog_id: blogId, shopify_article_id: articleId } = post.meta;
   if (!blogId || !articleId) {
     return { ok: false, reason: 'missing shopify_blog_id or shopify_article_id in local meta' };
   }
+  // EDIT GATE — replacing the intro of a live article is a `rewrite`
+  // (lib/post-edit-gate.js). Re-asked at the write site.
+  const editGate = mayEditLivePost(gateTargetOf(post), 'rewrite');
+  if (!editGate.allowed) return { ok: false, editGate: true, reason: `edit gate: ${editGate.reason}` };
   // Fetch the LIVE article body — local HTML may be stale
   const live = await getArticle(blogId, articleId);
   const liveBody = live.body_html || '';
@@ -340,6 +352,7 @@ async function applyRewriteToShopify(post, intro, rewriteHtml) {
   }
 
   await updateArticle(blogId, articleId, { body_html: newBody });
+  recordMaterialEdit(gateTargetOf(post), 'rewrite', 'answer-first-rewriter');
   return { ok: true, backupPath };
 }
 
@@ -355,6 +368,7 @@ async function main() {
   console.log(`  Auditing ${posts.length} post(s)\n`);
 
   const results = [];
+  const editGateHeld = [];
   for (let i = 0; i < posts.length; i++) {
     const post = posts[i];
     process.stdout.write(`  [${i + 1}/${posts.length}] ${post.slug.slice(0, 55).padEnd(56)} `);
@@ -362,6 +376,17 @@ async function main() {
     const intro = result.intro;
     const check = { passes: result.passes, reasons: result.reasons };
     let rewrite = null;
+    // Edit gate BEFORE the paid rewrite: a live page that may not be rewritten
+    // now is not worth a model call now. Asked only when we would apply.
+    if (!check.passes && apply && post.meta.shopify_article_id) {
+      const editGate = mayEditLivePost(gateTargetOf(post), 'rewrite');
+      if (!editGate.allowed) {
+        editGateHeld.push({ target: gateTargetOf(post), kind: 'rewrite', reason: editGate.reason, until: editGate.until });
+        results.push({ post, intro, check, rewrite: null });
+        console.log(`⏸ edit gate: ${editGate.reason}`);
+        continue;
+      }
+    }
     if (!check.passes && !noRewrite) {
       try {
         rewrite = await generateRewrite(post, intro, check.reasons);
@@ -378,7 +403,10 @@ async function main() {
   // Write reports
   mkdirSync(REWRITES_DIR, { recursive: true });
   const reportPath = join(REPORTS_DIR, 'answer-first-report.md');
-  writeFileSync(reportPath, buildReport(results));
+  const editGateLines = renderEditGateLines(editGateHeld);
+  writeFileSync(reportPath, buildReport(results)
+    + (editGateLines.length ? `\n\n## Edit gate — held (no rewrite generated, page unchanged)\n\n${editGateLines.map((l) => `- ${l.trim()}`).join('\n')}\n` : ''));
+  for (const l of editGateLines) console.log(`  ${l}`);
   console.log(`\n  Report:   ${reportPath}`);
 
   for (const r of results.filter((x) => !x.check.passes)) {

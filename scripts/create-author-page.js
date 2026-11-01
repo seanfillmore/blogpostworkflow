@@ -25,6 +25,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getPages, createPage, updatePage } from '../lib/shopify.js';
+import { LLM_MODELS } from '../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -77,7 +78,7 @@ async function generateBio(author) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',

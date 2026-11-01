@@ -47,11 +47,13 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { getBlogs, getArticle, createArticle, updateArticle, uploadImageToShopifyCDN, STORE } from '../../lib/shopify.js';
-import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta, requirePostMeta, getPostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getEditorReportPath, slugFromMetaPath, replacePostMeta, writePostMeta, requirePostMeta, getPostMeta } from '../../lib/posts.js';
 import { isPassing } from '../../lib/editor-remediation.js';
 import { positionalArg } from '../../lib/positional-arg.js';
 import { assessRepublish } from '../../lib/content-mirror.js';
 import { EXIT_MIRROR_DIVERGED } from '../../lib/refresh-writeoff.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { stampFounderNoteUses } from '../../lib/founder-notes-store.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -135,8 +137,25 @@ async function publishApprovedQueueItems() {
       if (!postMeta.shopify_article_id) { console.warn(`    [skip] ${item.slug}: no shopify_article_id`); continue; }
       if (!existsSync(item.refreshed_html_path)) { console.warn(`    [skip] ${item.slug}: no refreshed HTML`); continue; }
 
+      // Live-article edit gate: an approved refresh replaces a live body, a
+      // `rewrite` (lib/post-edit-gate.js). Held items stay `approved` and are
+      // asked again on the next publisher run; never dismissed.
+      const gateTarget = postMeta.shopify_handle || item.slug;
+      const editGate = mayEditLivePost(gateTarget, 'rewrite');
+      if (!editGate.allowed) { console.warn(`    [held] ${item.slug}: edit gate — ${editGate.reason}`); continue; }
+
       const refreshedHtml = readFileSync(item.refreshed_html_path, 'utf8');
       await updateArticle(blogId, postMeta.shopify_article_id, { body_html: refreshedHtml });
+      recordMaterialEdit(gateTarget, 'rewrite', 'publisher (approved queue item)');
+
+      // Record founder-note uses from the body just sent. Best effort, never fails the publish.
+      try {
+        const offered = postMeta.founder_notes_offered;
+        if (Array.isArray(offered) && offered.length) {
+          const used = stampFounderNoteUses({ text: refreshedHtml, offered, surface: 'editorial', ref: item.slug, at: new Date().toISOString() }) || [];
+          if (used.length) writePostMeta(item.slug, { founder_notes_used: [...new Set([...(postMeta.founder_notes_used || []), ...used])] });
+        }
+      } catch (err) { console.warn(`    [founder-notes] could not record uses for ${item.slug}: ${err.message}`); }
 
       // Copy refreshed HTML over canonical
       writeFileSync(getContentPath(item.slug), refreshedHtml);
@@ -352,6 +371,11 @@ async function main() {
       console.warn(`\n  ⚠ Mirror gate (${verdict.severity}): ${verdict.reason}`);
     }
 
+    // edit-gate: not asked here. This update branch is TRANSPORT — the caller
+    // decided what kind of edit it is and asked lib/post-edit-gate.js itself
+    // (refresh-runner: rewrite; scheduler.js link repair: repair; pipeline.js
+    // and calendar-runner publish their own new post). See
+    // tests/agents/edit-gate-wired.test.js.
     process.stdout.write(`  Updating existing article ${meta.shopify_article_id}... `);
     article = await updateArticle(blogId, meta.shopify_article_id, articleFields);
     console.log('done');
@@ -378,6 +402,16 @@ async function main() {
   else if (published) delete meta.shopify_publish_at;
   if (imageField?.src) meta.shopify_image_url = imageField.src;
   meta.uploaded_at = new Date().toISOString();
+
+  // Record which founder notes the body sent to Shopify used (after the write
+  // succeeded). Best effort: never fails or alters the publish.
+  try {
+    const offered = meta.founder_notes_offered;
+    if (Array.isArray(offered) && offered.length) {
+      const used = stampFounderNoteUses({ text: articleFields.body_html, offered, surface: 'editorial', ref: slug, at: meta.uploaded_at }) || [];
+      if (used.length) meta.founder_notes_used = [...new Set([...(meta.founder_notes_used || []), ...used])];
+    }
+  } catch (err) { console.warn(`  [founder-notes] could not record uses for ${slug}: ${err.message}`); }
 
   replacePostMeta(metaPath, meta);
 

@@ -412,8 +412,8 @@ test('responseText reads the text block past a thinking block, and refuses trunc
 });
 
 test('models are current-generation IDs, not the 4.6 pins that the 413 was masking', () => {
-  assert.equal(ANALYZER_MODEL, 'claude-opus-5');
-  assert.equal(REVIEW_MODEL, 'claude-sonnet-5');
+  assert.equal(ANALYZER_MODEL, 'claude-opus-5-5');
+  assert.equal(REVIEW_MODEL, 'claude-sonnet-5-5');
 });
 
 // ── source scan: the crash path reaches the digest ──────────────────────────

@@ -24,10 +24,12 @@ import { fileURLToPath } from 'url';
 import { withRetry } from '../../lib/retry.js';
 import { streamDeadline } from '../../lib/stream-deadline.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
-import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, getImagePath, ensurePostDir, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta, writePostMeta } from '../../lib/posts.js';
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
 import { composeAuthoredMeta } from '../../lib/post-meta-reconcile.js';
 import { sliceVocSections, BLOG_VOC_HEADINGS, vocForCopy } from '../../lib/voice-of-customer.js';
 import { classifySearchIntent } from '../../lib/search-intent.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 /**
  * Wall-clock ceiling for the one streaming call in this agent. Measured 2026-08-23: a full
@@ -227,7 +229,7 @@ const POST_TYPE_LABELS = {
   supply: 'SUPPLY / MAKER-SOURCING',
 };
 
-function buildSystemPrompt(productIngredients, postType, contentDepth, format) {
+function buildSystemPrompt(productIngredients, postType, contentDepth, format, founderBlock = '') {
   if (!POST_TYPE_LABELS[postType]) {
     throw new Error(`buildSystemPrompt: unhandled post type "${postType}" — add it to POST_TYPE_LABELS and give it explicit CTA rules; do not let it fall through to the product branch`);
   }
@@ -500,7 +502,7 @@ HTML RULES:
 - All links must be absolute URLs (https://...)
 - No markdown, no CSS classes, no <div> tags
 - Inline styles exactly as shown in the templates above — do not deviate
-- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}${vocBlock}`;
+- Use exact product/collection URLs provided in the brief${feedback ? `\n\n═══════════════════════════════════\nSTANDING FEEDBACK (from insight-aggregator)\n═══════════════════════════════════\n${feedback}` : ''}${vocBlock}${founderBlock ? `\n\n${founderBlock}` : ''}`;
 }
 
 function buildUserPrompt(brief, sitemapCtx, blogPosts) {
@@ -595,6 +597,8 @@ async function writePost(briefPath) {
   const blogPosts = loadBlogPosts(brief.target_keyword);
   const productIngredients = detectProductIngredients(brief.target_keyword);
 
+  const founder = founderNotesFor({ keyword: brief.target_keyword, slug });
+
   process.stdout.write('  Streaming from Claude... ');
 
   let html = '';
@@ -613,9 +617,9 @@ async function writePost(briefPath) {
     const dl = streamDeadline(BLOG_STREAM_DEADLINE_MS, 'blog-post-writer');
     try {
       const stream = client.messages.stream({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 8000,
-        system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide'),
+        system: buildSystemPrompt(productIngredients, detectPostType(brief), brief.content_depth || null, brief.content_type || 'guide', founder.block),
         messages: [{ role: 'user', content: buildUserPrompt(brief, sitemapCtx, blogPosts) }],
       }, { signal: dl.signal });
 
@@ -693,7 +697,7 @@ async function writePost(briefPath) {
     try {
       const badIntro = extractFirstBodyParagraph(html);
       const repairMsg = await client.messages.create({
-        model: 'claude-sonnet-4-6',
+        model: LLM_MODELS.standard,
         max_tokens: 300,
         messages: [{
           role: 'user',
@@ -782,6 +786,15 @@ ${badIntro?.html || ''}`,
     tokens_used: { input: inputTokens, output: outputTokens },
   }, 'blog-post-writer');
   replacePostMeta(metaPath, meta);
+  // Stamp which founder notes were offered to this draft (after the authored write,
+  // via the merging writer, so composeAuthoredMeta's declared keys are untouched).
+  {
+    try {
+      writePostMeta(slug, { founder_notes_offered: founder.ids });
+    } catch (err) {
+      console.warn(`  Warning: could not stamp founder_notes_offered (${err.message})`);
+    }
+  }
 
   console.log(`  Saved: ${htmlPath}`);
   console.log(`  Meta:  ${metaPath}`);

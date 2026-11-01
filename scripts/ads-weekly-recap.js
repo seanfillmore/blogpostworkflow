@@ -14,6 +14,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../lib/notify.js';
+import { LLM_MODELS } from '../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -194,7 +195,7 @@ Changes applied: ${applied.total} (${applied.keyword_pause} paused, ${applied.ke
 
 Be concise and specific. Focus on the single most important thing to watch or act on next week.`;
     const r = await client.messages.create({
-      model: 'claude-opus-4-6', max_tokens: 256,
+      model: LLM_MODELS.flagship, max_tokens: 256,
       messages: [{ role: 'user', content: prompt }],
     }).catch(() => null);
     outlook = r?.content?.[0]?.text || '';

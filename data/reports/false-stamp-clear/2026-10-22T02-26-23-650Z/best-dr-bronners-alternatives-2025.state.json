@@ -1,0 +1,43 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:02:59.345Z",
+    "last_crawled": "2026-10-15T22:27:56Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-dr-bronners-alternatives-2025",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562320900266,
+  "shopify_handle": "best-dr-bronners-alternatives-2025",
+  "legacy_synced_at": "2026-04-09T23:17:12.633Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 12, 1160 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:27.629Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "refreshed_at": "2026-10-15T15:11:18.089Z",
+  "blocked_resolved_at": "2026-08-23T15:47:54.839Z",
+  "publisher_block": {
+    "flagged_at": "2026-10-15T15:10:41.893Z",
+    "flagged_by": "featured-product-injector",
+    "reason": "no relevant product to feature — off product scope; holding for review"
+  },
+  "last_material_edit": {
+    "at": "2026-10-15T15:11:18.089Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:42:46.434Z",
+    "reasons": [
+      "1 CTA/format issue(s)",
+      "content blockers: topical relevance, brand voice"
+    ]
+  },
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-dr-bronners-alternatives-2025",
+  "uploaded_at": "2026-10-16T15:00:51.408Z"
+}

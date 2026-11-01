@@ -663,6 +663,7 @@ async function publishDueArticles() {
       continue;
     }
     try {
+      // edit-gate: not gated — this flips a NEW scheduled draft live; no ranked page changes.
       await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { published: true });
       meta.shopify_status = 'published';
       meta.published_at = new Date().toISOString();

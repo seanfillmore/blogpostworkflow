@@ -22,6 +22,7 @@ import { extractPageStructure } from './scraper.js';
 import { deduplicateChanges } from './brief-writer.js';
 import { getCompetitors as fetchCompetitors, getTopPages as fetchTopPages, getSerpResults } from '../../lib/dataforseo.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -186,7 +187,7 @@ Return ONLY valid JSON with this exact schema:
 }`;
 
   const msg = await anthropic.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 2048,
     messages: [{
       role: 'user',

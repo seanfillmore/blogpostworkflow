@@ -1,0 +1,29 @@
+{
+  "applied": true,
+  "results": [
+    {
+      "sku": "RSC-TP-MI-08",
+      "action": "apply",
+      "fields": [
+        "bullet_point"
+      ],
+      "why": "live matches BEFORE on bullet_point"
+    },
+    {
+      "sku": "RSC-TP-NA-08",
+      "action": "apply",
+      "fields": [
+        "bullet_point"
+      ],
+      "why": "live matches BEFORE on bullet_point"
+    },
+    {
+      "sku": "RSC-TP-CI-08",
+      "action": "apply",
+      "fields": [
+        "bullet_point"
+      ],
+      "why": "live matches BEFORE on bullet_point"
+    }
+  ]
+}

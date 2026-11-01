@@ -1,0 +1,11 @@
+{
+  "slug": "best-unscented-lotion-clean-fragrance-free-picks",
+  "archived_at": "2026-09-08",
+  "archived_by": "claude-code — digest review 2026-09-08",
+  "reason": "ORPHAN DIRECTORY SHADOWING A LIVE POST. This directory is named after the Shopify article HANDLE, not the local slug — the PR #679 slug-mismatch pattern. The real post is data/posts/best-unscented-lotion (article 563553173674, published 2026-06-30, live and HTTP 200 at the handle this directory is named after). Because this directory carried a meta.json, resolvePostSlug('best-unscented-lotion-clean-fragrance-free-picks') matched it at step 1 (exact dir) and SHADOWED the real post — the exact hazard CLAUDE.md records for best-soap-for-tattoos. It also made the 5 AM digest report 'Action Required — 1 post hard-blocked' every morning for a page that is live and healthy.",
+  "resolved_target": "data/posts/best-unscented-lotion",
+  "content_verdict": "SUPERSEDED AND DEFECTIVE — not lost work. content.html here is a 2026-09-06 draft the editor BLOCKED for a real self-contradiction: it pasted a SCENTED variant's essential oils into an article about the Pure Unscented lotion while also claiming 'zero fragrance compounds'. Its successor was written 2026-09-08 against the new writer standing rule and is preserved at data/posts/best-unscented-lotion/redraft-variant-fix-2026-09-08.html (an inert filename — no reader globs *.html).",
+  "live_post_untouched": true,
+  "restore": "mv data/posts/_orphaned/best-unscented-lotion-clean-fragrance-free-picks data/posts/best-unscented-lotion-clean-fragrance-free-picks",
+  "note": "scripts/rehome-orphan-refreshes.mjs did NOT detect this: it looks for an orphan holding content-refreshed.html, and this is an orphan DRAFT holding content.html. Extending that script to cover the draft shape is the follow-up."
+}

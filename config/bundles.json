@@ -777,7 +777,7 @@
     {
       "handle": "coconut-hand-soap-4-pack",
       "title": "Coconut Hand Soap — 4-Pack",
-      "status": "live",
+      "status": "draft",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
@@ -787,7 +787,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "The top rung of the liquid-soap ladder, and the ladder STOPS HERE. Sean, 2026-09-05, asked why bar soap runs 1/4/12 while this runs 1/2/4: \"Bar soap makes sense with 12 packs, bars are easier to store. 12 liquid pump soaps does not make sense.\" The binding constraint is the BUYER'S SHELF, not the economics — a carton of twelve 8oz pump bottles is something nobody has anywhere to put, so the per-unit saving that carries the bar soap 12-pack cannot rescue it. Do not add a 12-pack here on the grounds that bar soap has one. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05.",
+      "story": "The top rung of the liquid-soap ladder, and the ladder STOPS HERE. Sean, 2026-09-05, asked why bar soap runs 1/4/12 while this runs 1/2/4: \"Bar soap makes sense with 12 packs, bars are easier to store. 12 liquid pump soaps does not make sense.\" The binding constraint is the BUYER'S SHELF, not the economics — a carton of twelve 8oz pump bottles is something nobody has anywhere to put, so the per-unit saving that carries the bar soap 12-pack cannot rescue it. Do not add a 12-pack here on the grounds that bar soap has one. Reached only from the pump PDP — noindexed via the ladder-tier tag, in no collection, never a destination. Replaced the Hand Soap Set (0 units in 365 days) on 2026-09-05. RETIRED to draft 2026-10-08, replaced by coconut-hand-soap-5-pack (buy 4, get 1 free at $52; Sean: 'Pump soap change to buy 4 get 1 free').",
       "options": [
         {
           "name": "Scent",
@@ -857,6 +857,94 @@
               "product": "organic-foaming-hand-soap",
               "variant": "Pure Unscented",
               "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-hand-soap-5-pack",
+      "title": "Coconut Hand Soap — 5-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "hand-soap",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-08): five 8 oz pumps for $52, exactly 4 x the $13 single, so the ladder renders the free-unit framing like the lotion, cream and lip balm. Replaced the 4-pack, whose $44 was carried over from the retired Hand Soap Set and never re-priced: it framed as '4 bottles for $44', and at $44 sat $1 under the $45 free-shipping bar. $52 clears it. Contribution $20.66 an order against $17.15 for the 4-pack (scripts/bundle-economics.mjs, 2026-10-08). Five is still storable; twelve is not (Sean, 2026-09-05), so the ladder stops at five. Reached only from the pump PDP, noindexed via ladder-tier, never a destination.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Calming Lavender",
+            "5x Orange Zest",
+            "5x Coconut Breeze",
+            "5x Pure Unscented"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Calming Lavender"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Calming Lavender",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Calming Lavender",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Orange Zest"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Orange Zest",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Orange Zest",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Coconut Breeze",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 52,
+          "compareAtPrice": 65,
+          "contents": "5 × Pure Unscented",
+          "components": [
+            {
+              "product": "organic-foaming-hand-soap",
+              "variant": "Pure Unscented",
+              "qty": 5
             }
           ]
         }
@@ -1254,7 +1342,7 @@
       "handle": "coconut-deodorant-4-pack",
       "title": "Coconut Deodorant — 4-Pack",
       "status": "live",
-      "templateSuffix": "scoped-gallery",
+      "templateSuffix": null,
       "packaging": 0,
       "tags": [
         "bundle",
@@ -1264,7 +1352,7 @@
         "value-set"
       ],
       "collections": [],
-      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription. Template is scoped-gallery and must stay on a gang-scoping template: all 10 of its images carry #scent_ alt tokens, and that mechanism only runs where hide_variants is false. The roster recorded null (the default PDP, hide_variants: true), so build-bundle.mjs --all would have silently turned gang scoping off and unscoped every image. Verified 2026-08-25 by reading hide_variants off all three templates: product.json true, scoped-gallery false, bundle-landing false.",
+      "story": "Subscription vehicle for deodorant, mirroring the bar soap 4-pack. Replaces the single-deodorant subscription. Template is the DEFAULT product template (hide_variants: true) since 2026-10-07, when scripts/publish-ladder-galleries.mjs replaced its ten gang-scoped (#scent_) code composites with generated frames: one hero per variant, ATTACHED to that variant, plus shared unattached frames. It was on scoped-gallery until then because those #scent_ images only render where hide_variants is false; none remain, so the default template is now correct and scoped-gallery would show every variant's hero at once.",
       "options": [
         {
           "name": "Scent",
@@ -1472,18 +1560,17 @@
     {
       "handle": "coconut-lotion-4-pack",
       "title": "Coconut Body Lotion — 4-Pack",
-      "status": "draft",
+      "status": "live",
       "templateSuffix": null,
       "packaging": 0,
       "tags": [
         "bundle",
-        "lotion",
+        "body-lotion",
         "ladder-tier",
-        "subscription",
         "value-set"
       ],
       "collections": [],
-      "story": "The depth play for the hero SKU. Lotion is 72% of revenue and has the largest repeat cohort (417 first-time buyers, 20.6% repurchase), yet it was the only repeat-purchase category with no quantity offer — soap, deodorant and toothpaste all had one. Priced as buy-3-get-1 ($90 against a $120 list) rather than '25% off': identical arithmetic, and the free-portion framing is the one the offer playbook prefers. One bottle is one month (config/consumption-rates.json, merchant-corrected 2026-08-30), so four bottles is a season — that is the quantity argument, and it is measured rather than invented. Built as the intended default tier for paid traffic: at ~$53 contribution it is the only lotion offer whose max CPC reaches the $0.59 actually being paid. TWO SCENTS ONLY, per the two-scent rule in lib/bundle-roster.js — Lavender & Rose has the deepest stock (28 units) and is deliberately ineligible; this bundle is the demand test that rule says it is waiting for. Ships as DRAFT: inventory supports only ~9 packs (Pure Unscented 20 + Coconut Breeze 18), about three weeks at $50/day, so stock has to be ordered before this backs a campaign. templateSuffix is null (default PDP, hide_variants: true) and must move to scoped-gallery if images carrying #scent_ alt tokens are ever added — see the deodorant 4-pack's story for what that mistake costs.",
+      "story": "Buy 3, get 1 free (Sean, 2026-10-08): four bottles for $90, exactly 3 x the $30 single, so the ladder renders the free-unit framing. Back as the lotion's top rung after two days of the $120 buy-4-get-1 5-pack; Sean: 'I think the lotion cost is too high with 4 get 1 free.' $120 is over twice the store's $56 average order; $90 is a smaller ask, and four is a quantity a real customer chose (4 lotions, 2026-09-14). Contribution $59.18 vs $83.39 for the 5-pack (scripts/bundle-economics.mjs), still above 2x the $25 CAC; the 4-pack needs ~1.4x the 5-pack's take rate to earn the same. Subscription tag removed: no product sells new subscriptions since 2026-10-06. Reached only from the lotion PDP and the homepage offer line, noindexed via ladder-tier.",
       "options": [
         {
           "name": "Scent",
@@ -1525,6 +1612,278 @@
           ]
         }
       ]
+    },
+    {
+      "handle": "coconut-moisturizer-5-pack",
+      "title": "Coconut Moisturizer — 5-Pack",
+      "status": "draft",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-cream",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05). $112 is exactly 4 x the $28 single, so the ladder renders the free-unit framing. Replaces the cream's subscription as its repeat-purchase offer: RSC moved off subscriptions to multi-unit purchases for AOV. Two scents only, per the two-scent rule. Stock supports it (Pure Unscented 200, Coconut Breeze 52 on 2026-10-05). No subscription tag: nothing on this page is subscribable any more. A bare ladder tier, like coconut-hand-soap-2-pack: no template, no collection, noindexed by ladder-tier. RETIRED to draft 2026-10-08, replaced by the buy-3-get-1-free 4-pack at $84 to match the lotion.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Pure Unscented",
+            "5x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 112,
+          "compareAtPrice": 140,
+          "contents": "5 × Coconut Moisturizer, 4oz — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 112,
+          "compareAtPrice": 140,
+          "contents": "5 × Coconut Moisturizer, 4oz — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-moisturizer-4-pack",
+      "title": "Coconut Moisturizer — 4-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-cream",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 3, get 1 free (Sean, 2026-10-08): four jars for $84, exactly 3 x the $28 single, matching the lotion's buy-3-get-1 4-pack. Replaced the $112 buy-4-get-1 5-pack after two days live. Contribution $52.31 vs $74.32 for the 5-pack (scripts/bundle-economics.mjs), above 2x the $25 CAC. Reached only from the cream PDP and the homepage card, noindexed via ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "4x Pure Unscented",
+            "4x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "4x Pure Unscented"
+          },
+          "price": 84,
+          "compareAtPrice": 112,
+          "contents": "4 × Coconut Moisturizer, 4oz — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 4
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "4x Coconut Breeze"
+          },
+          "price": 84,
+          "compareAtPrice": 112,
+          "contents": "4 × Coconut Moisturizer, 4oz — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-lotion-5-pack",
+      "title": "Coconut Body Lotion — 5-Pack",
+      "status": "draft",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-lotion",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 4, get 1 free (Sean, 2026-10-05), replacing the draft buy-3-get-1 4-pack as the lotion's ladder tier. $120 is exactly 4 x the $30 single. Ships as DRAFT: on 2026-10-05 the two allowed scents held 11 (Pure Unscented) and 8 (Coconut Breeze) bottles, against ~27 sold per scent per 90 days, so a 5-unit tier would stock the hero SKU out. Flipped LIVE 2026-10-06 on Sean's go-ahead at that stock (2 + 1 packs available), and the lotion PDP converted to the 1/5 ladder by scripts/convert-pdp-to-ladder.mjs. RETIRED to draft 2026-10-08, replaced by the buy-3-get-1-free 4-pack at $90 (Sean: lotion cost too high at $120).",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "5x Pure Unscented",
+            "5x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "5x Pure Unscented"
+          },
+          "price": 120,
+          "compareAtPrice": 150,
+          "contents": "5 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 5
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "5x Coconut Breeze"
+          },
+          "price": 120,
+          "compareAtPrice": 150,
+          "contents": "5 × Body Lotion — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "handle": "coconut-lip-balm-3-pack",
+      "title": "Coconut Oil Lip Balm — 3 Four-Packs",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "lip-balm",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "Buy 2, get 1 free (Sean, 2026-10-06): three of the $15 four-packs (12 tubes) for $30, so the ladder renders the free-unit framing. Chosen over a 5-pack ($60, 20 tubes) because 20 tubes is more lip balm than most buyers want at once. Gives the lip balm PDP the same ladder as every other PDP. Every base scent plus the Variety Pack (the two-scent rule covers lotion and cream only). Stock on 2026-10-06: 83 four-packs (Pure Unscented 27, Sweet Tangerine 24, Vanilla Dream 15, Variety 14, Coconut Breeze 3). A bare ladder tier: no template, no collection, noindexed by ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "3x Pure Unscented",
+            "3x Vanilla Dream",
+            "3x Sweet Tangerine",
+            "3x Coconut Breeze",
+            "3x Variety Pack"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "3x Pure Unscented"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Pure Unscented",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Pure Unscented",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Vanilla Dream"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Vanilla Dream",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Vanilla Dream",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Sweet Tangerine"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Sweet Tangerine",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Sweet Tangerine",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Coconut Breeze"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Coconut Breeze",
+              "qty": 3
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "3x Variety Pack"
+          },
+          "price": 30,
+          "compareAtPrice": 45,
+          "contents": "3 × Coconut Oil Lip Balm four-pack (12 tubes), Variety Pack",
+          "components": [
+            {
+              "product": "coconut-oil-lip-balm",
+              "variant": "Variety Pack",
+              "qty": 3
+            }
+          ]
+        }
+      ]
     }
   ],
   "ladders": [
@@ -1538,7 +1897,14 @@
       "default": "coconut-bar-soap-12-pack",
       "template": "product.landing-page-bar-soap.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "bar"
+      "unit_noun": "bar",
+      "review": {
+        "judgeme_id": 534053314,
+        "name": "Stephen H.",
+        "text": "Bar soap lathers up very well. The unscented is an excellent choice for sensitive people. My #1 go to bar soap. Customer service is top notch.",
+        "source_body": "Bar soap lathers up very well. The unscented is an excellent choice for sensitive people. My #1 go to bar soap. Customer service is top notch.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-oil-deodorant",
@@ -1549,7 +1915,14 @@
       "default": "coconut-deodorant-4-pack",
       "template": "product.landing-page-deodorant.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "unit"
+      "unit_noun": "unit",
+      "review": {
+        "judgeme_id": 601017507,
+        "name": "Mike G.",
+        "text": "This is my second purchase of the deodorant. This time I got the frankincense. The scents are enjoyable and not over powering.",
+        "source_body": "This is my second purchase of the deodorant. This time I got the frankincense. The scents are enjoyable and not over powering. I use this in the evening after I shower from the gym when I don't need anti-perspirant. It works great.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-oil-toothpaste",
@@ -1560,7 +1933,14 @@
       "default": "coconut-toothpaste-3-pack",
       "template": "product.landing-page-toothpaste.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "unit"
+      "unit_noun": "unit",
+      "review": {
+        "judgeme_id": 597981700,
+        "name": "Mike G.",
+        "text": "This is my first time trying natural toothpaste and I am impressed. The cinnamon taste is just enough to make it pleasant and this leaves your teeth feeling clean and mouth feeling fresh.",
+        "source_body": "This is my first time trying natural toothpaste and I am impressed. The cinnamon taste is just enough to make it pleasant and this leaves your teeth feeling clean and mouth feeling fresh. As you can tell from my picture, I am a fan of all of their products.",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "coconut-lotion",
@@ -1571,19 +1951,69 @@
       "default": "coconut-lotion-4-pack",
       "template": "product.landing-page-lotion.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "bottle"
+      "unit_noun": "bottle",
+      "review": {
+        "judgeme_id": 759720336,
+        "name": "Nicole H.",
+        "text": "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!",
+        "source_body": "This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day. It doesn't irritate their skin further like other lotions do. I even use on their faces. Absolutely recommend all Real Skin Care products!",
+        "approved": "Sean, 2026-10-06"
+      }
     },
     {
       "base": "organic-foaming-hand-soap",
       "tiers": [
         "organic-foaming-hand-soap",
         "coconut-hand-soap-2-pack",
-        "coconut-hand-soap-4-pack"
+        "coconut-hand-soap-5-pack"
       ],
-      "default": "coconut-hand-soap-4-pack",
+      "default": "coconut-hand-soap-5-pack",
       "template": "product.landing-page-liquid-soap.json",
       "block_id": "quantity-ladder",
-      "unit_noun": "pump"
+      "unit_noun": "pump",
+      "review": {
+        "judgeme_id": 514327211,
+        "name": "Laura S.",
+        "text": "The scent is great. Foams up nicely and doesn't leave hands dry at all!",
+        "source_body": "The scent is great. Foams up nicely and doesn't leave hands dry at all!",
+        "approved": "Sean, 2026-10-06"
+      }
+    },
+    {
+      "base": "coconut-moisturizer",
+      "tiers": [
+        "coconut-moisturizer",
+        "coconut-moisturizer-4-pack"
+      ],
+      "default": "coconut-moisturizer-4-pack",
+      "template": "product.landing-page-cream.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "jar",
+      "review": {
+        "judgeme_id": 514327202,
+        "name": "Ella M.",
+        "text": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+        "source_body": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+        "approved": "Sean, 2026-10-06"
+      }
+    },
+    {
+      "base": "coconut-oil-lip-balm",
+      "tiers": [
+        "coconut-oil-lip-balm",
+        "coconut-lip-balm-3-pack"
+      ],
+      "default": "coconut-lip-balm-3-pack",
+      "template": "product.landing-page-lip-balm.json",
+      "block_id": "quantity-ladder",
+      "unit_noun": "four-pack",
+      "review": {
+        "judgeme_id": 514327213,
+        "name": "Laurel E.",
+        "text": "I love the smell of this lip balm. It smells exactly the way you would want a coconut scent to smell. It’s warm and soft and definitely feels tropical. It goes on nicely on your lips and is very hydrating. Definitely worth picking up!",
+        "source_body": "I love the smell of this lip balm. It smells exactly the way you would want a coconut scent to smell. It’s warm and soft and definitely feels tropical. It goes on nicely on your lips and is very hydrating. Definitely worth picking up!",
+        "approved": "Sean, 2026-10-06"
+      }
     }
   ]
 }

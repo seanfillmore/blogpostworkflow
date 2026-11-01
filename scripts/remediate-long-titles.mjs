@@ -65,6 +65,16 @@
  *   node scripts/remediate-long-titles.mjs --mint          # dry run incl. minting
  *   node scripts/remediate-long-titles.mjs --mint --apply
  *   node scripts/remediate-long-titles.mjs --limit 10 --apply
+ *   node scripts/remediate-long-titles.mjs --mint --auto --apply   # what cron runs
+ *
+ * --auto is the unattended mode (scheduled Sundays after agents/tech-seo-steward).
+ * It adds two things a human used to do by hand: pages under a CTR experiment
+ * are left alone (lib/ctr-protected.js), and every mechanical trim is read by a
+ * model, which keeps it or rewrites a fragment ("Ivory Soap Alternatives: 6
+ * Gentle Natural") into a complete title. A rewrite must keep the title's
+ * ranking words, invent no number, fit the rendered limit and clear the health
+ * gate (lib/tech-seo-steward.js titleRewriteProblems); one that cannot is
+ * skipped and named, never written as a fragment. OVERRIDES still win.
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -79,6 +89,14 @@ import {
 } from '../lib/seo-copy-length.js';
 import { checkSeoCopy } from '../lib/seo-copy-health-gate.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { mayEditLivePost, recordMaterialEdit } from '../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines } from '../lib/edit-gate-filter.js';
+import { ctrProtectedHandles } from '../lib/ctr-protected.js';
+import { titleRewriteProblems } from '../lib/tech-seo-steward.js';
+import { notify } from '../lib/notify.js';
+import Anthropic from '../lib/anthropic.js';
+import { LLM_MODELS } from '../config/llm-models.js';
+import { readFileSync } from 'node:fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPORT_DIR = join(ROOT, 'data', 'reports', 'long-title-remediation');
@@ -88,6 +106,7 @@ const argv = process.argv.slice(2);
 const APPLY = argv.includes('--apply');
 const LIST_ONLY = argv.includes('--list');
 const MINT = argv.includes('--mint');
+const AUTO = argv.includes('--auto');
 const LIMIT = (() => {
   const i = argv.indexOf('--limit');
   return i === -1 ? Infinity : Number(argv[i + 1]) || Infinity;
@@ -143,6 +162,43 @@ const OVERRIDES = {
   'cheap-lip-balms-best-natural-affordable-picks-for-soft-lips': {
     title: 'Best Cheap Natural Lip Balms',
     why: 'mechanical trim ended on the dangling adjective "Best Natural, Affordable"',
+  },
+
+  // Added 2026-11-01, operator-approved, after the Ahrefs crawl of 2026-10-31.
+  // Eight MINT candidates whose trim ends on a fragment ("6 Gentle Natural",
+  // "Why Gentler Flavor", "What It Does"). Every count is the article's own
+  // count from its full title, so no number here is unsupported by the body.
+  'ivory-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Ivory Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'dial-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Dial Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'irish-spring-soap-alternative-6-natural-bar-soaps-that-work': {
+    title: '6 Natural Irish Spring Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Natural"',
+  },
+  'secret-deodorant-alternatives-8-natural-picks-that-actually-work': {
+    title: '8 Natural Secret Deodorant Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "8 Natural"',
+  },
+  'mild-mint-toothpaste-why-gentler-flavor-wins': {
+    title: 'Mild Mint Toothpaste: Gentler Flavor Wins',
+    why: 'mechanical trim dropped the verb, leaving "Why Gentler Flavor"',
+  },
+  'coconut-oil-soap-benefits-what-it-does-for-your-skin': {
+    title: 'Coconut Oil Soap: Benefits for Your Skin',
+    why: 'mechanical trim ended on the incomplete clause "What It Does"',
+  },
+  'vegan-soap-what-it-is-benefits-what-to-look-for': {
+    title: 'Vegan Soap: Benefits & What to Look For',
+    why: 'mechanical trim left the awkward list "What It Is, Benefits"',
+  },
+  'unscented-lip-balm-how-to-choose-a-fragrance-free-natural-one': {
+    title: 'Unscented Lip Balm: How to Pick a Clean One',
+    why: 'mechanical trim ended on the objectless "How to Choose"',
   },
 };
 
@@ -283,6 +339,21 @@ async function main() {
     });
   }
 
+  // Live-article edit gate, BEFORE --limit: a new SERP title on a blog ARTICLE
+  // is a `serp` edit (lib/post-edit-gate.js) — refused on a frozen page or one
+  // inside the 28-day window of its last title/meta or body change. Products,
+  // collections and pages are not articles and are not asked.
+  const { kept: gatedPlan, held: editGateHeld } = partitionByEditGate(plan, {
+    kind: 'serp', mayEdit: mayEditLivePost, targetOf: (c) => (c.kind === 'article' ? c.handle : null),
+  });
+  plan.length = 0;
+  plan.push(...gatedPlan);
+
+  const auto = AUTO ? await autoReview(plan) : { ctrHeld: [], rewritten: [], unresolved: [] };
+  const editGateLines = renderEditGateLines(editGateHeld);
+  for (const l of editGateLines) console.log(`  ${l}`);
+  if (editGateLines.length) console.log('');
+
   const trims = plan.filter((p) => p.action === 'trim');
   const mints = plan.filter((p) => p.action === 'mint');
   console.log(`  TRIM  (shorten an existing title_tag) : ${trims.length}`);
@@ -333,6 +404,8 @@ async function main() {
     mint_enabled: MINT,
     refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
     refused_health: healthBlocked,
+    auto: AUTO ? auto : undefined,
+    edit_gate_held: editGateHeld.map((h) => ({ handle: h.target, kind: h.kind, reason: h.reason, until: h.until || null })),
     // Excluded before measurement — see the UNREADABLE note above. Recorded so
     // a run that quietly saw less of the site than it thought is legible later.
     excluded_unreadable: unreadable.map((c) => ({ kind: c.kind, handle: c.handle })),
@@ -358,6 +431,7 @@ async function main() {
   for (const c of plan.slice(0, LIMIT)) {
     try {
       await upsertMetafield(c.resource, c.id, 'global', 'title_tag', c.proposed);
+      if (c.kind === 'article') recordMaterialEdit(c.handle, 'serp', 'remediate-long-titles');
       written++;
       console.log(`  ✓ ${c.action === 'mint' ? 'minted ' : 'trimmed'} ${c.handle}`);
     } catch (e) {
@@ -365,6 +439,65 @@ async function main() {
     }
   }
   console.log(`\n  Wrote ${written} title(s).\n`);
+  if (AUTO) {
+    const lines = [
+      `Titles written: ${written} (rendered over ${MAX}: ${over.length}; edit-gate held ${editGateHeld.length}; CTR experiment held ${auto.ctrHeld.length})`,
+      ...plan.slice(0, LIMIT).map((c) => `  ${c.handle}: ${c.proposed}${c.autoRewritten ? ' (rewritten by model)' : ''}`),
+      ...auto.unresolved.map((u) => `  skipped ${u.handle}: ${u.why}`),
+    ];
+    await notify({ subject: `Long titles: ${written} fixed`, body: lines.join('\n'), status: 'success', category: 'technical-seo' });
+  }
+}
+
+/**
+ * --auto review. Mutates `plan` in place: drops CTR-protected articles and
+ * unresolvable fragments, and replaces fragmentary trims with a model rewrite.
+ */
+async function autoReview(plan) {
+  const protectedHandles = ctrProtectedHandles(ROOT);
+  const ctrHeld = []; const rewritten = []; const unresolved = [];
+  const keep = [];
+  const env = {};
+  try {
+    for (const l of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
+      const i = l.indexOf('='); if (i > 0 && !l.trim().startsWith('#')) env[l.slice(0, i).trim()] = l.slice(i + 1).trim();
+    }
+  } catch { /* subscription transport needs no key */ }
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+  for (const c of plan) {
+    if (c.kind === 'article' && protectedHandles.has(c.handle)) { ctrHeld.push(c.handle); continue; }
+    if (c.override) { keep.push(c); continue; }
+    const source = c.titleTag ?? c.fallback ?? '';
+    const budget = MAX - [...renderTitle('x')].length + 1;
+    const prompt = [
+      'A page title on realskincare.com is too long for Google, so it was shortened mechanically. Decide whether the short version reads as a complete, natural title.',
+      `Full title: ${source}`,
+      `Shortened: ${c.proposed}`,
+      '',
+      'If the shortened version is a complete phrase a person would write, reply exactly: KEEP',
+      `Otherwise reply with ONE better title of at most ${budget} characters that keeps the main topic words (the part before any colon), uses only numbers from the full title, makes no health claims, and uses no em dashes. Reply with only the title.`,
+    ].join('\n');
+    let reply = '';
+    try {
+      const res = await client.messages.create({ model: LLM_MODELS.standard, max_tokens: 100, messages: [{ role: 'user', content: prompt }] });
+      if (res.stop_reason === 'max_tokens') throw new Error('reply truncated');
+      reply = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim().replace(/^["']|["']$/g, '');
+    } catch (e) { unresolved.push({ handle: c.handle, why: `model call failed: ${e.message}` }); continue; }
+    if (/^KEEP\b/i.test(reply)) { keep.push(c); continue; }
+    const problems = titleRewriteProblems(reply, source);
+    const health = checkSeoCopy({ title: reply });
+    if (!health.ok) problems.push(`health gate: ${health.blocking.map((b) => b.match).join(', ')}`);
+    if (problems.length) { unresolved.push({ handle: c.handle, why: `rewrite "${reply}" rejected: ${problems.join('; ')}` }); continue; }
+    rewritten.push({ handle: c.handle, from: c.proposed, to: reply });
+    keep.push({ ...c, proposed: reply, proposedRendered: renderTitle(reply), autoRewritten: true });
+  }
+  plan.length = 0;
+  plan.push(...keep);
+  for (const r of rewritten) console.log(`  AUTO rewrite ${r.handle}: "${r.from}" → "${r.to}"`);
+  for (const u of unresolved) console.log(`  AUTO skip ${u.handle}: ${u.why}`);
+  if (ctrHeld.length) console.log(`  AUTO held (CTR experiment): ${ctrHeld.join(', ')}`);
+  return { ctrHeld, rewritten, unresolved };
 }
 
 if (isDirectRun(import.meta.url)) {

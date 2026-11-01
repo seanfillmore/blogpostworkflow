@@ -206,3 +206,15 @@ await assert.rejects(
 }
 
 console.log('✓ transcript-source pure-helper tests pass');
+
+// ── detailText: a 402 must show TranscriptAPI's reason, not [object Object] ──
+{
+  const { detailText } = await import('../../lib/transcript-source.js');
+  const live = { message: 'You don’t have an active paid plan yet.', reason: 'no_active_paid_plan', action_url: 'https://transcriptapi.com/billing' };
+  const text = detailText(live);
+  assert.match(text, /active paid plan/);
+  assert.match(text, /no_active_paid_plan/);
+  assert.doesNotMatch(text, /\[object Object\]/);
+  assert.equal(detailText('plain'), 'plain');
+  assert.equal(detailText(null), null);
+}

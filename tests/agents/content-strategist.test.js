@@ -54,17 +54,10 @@ test('briefQueueToCalendarItems assigns sequential weeks (2 posts/week, Mon then
   ];
   // Pin "today" to a known weekday (Sunday Apr 27 2025 UTC)
   const items = briefQueueToCalendarItems(queue, null, new Date('2025-04-27T00:00:00Z'));
-  assert.equal(items[0].week, 1);
-  assert.equal(items[1].week, 1);
-  assert.equal(items[2].week, 2);
-  assert.equal(items[3].week, 2);
-
-  // First publish should be next Monday (Apr 28). Second is the same week's Thu (May 1).
-  const d0 = new Date(items[0].publish_date);
-  const d1 = new Date(items[1].publish_date);
-  assert.equal(d0.getUTCDay(), 1, 'first item should publish on Monday');
-  assert.equal(d1.getUTCDay(), 4, 'second item should publish on Thursday');
-  assert.equal((d1 - d0) / (24 * 3600 * 1000), 3, '3-day gap Mon→Thu');
+  // Four a week (lib/publish-schedule.js PUBLISH_DAYS): Mon, Tue, Thu, Fri.
+  assert.deepEqual(items.map((i) => i.week), [1, 1, 1, 1]);
+  assert.deepEqual(items.map((i) => new Date(i.publish_date).getUTCDay()), [1, 2, 4, 5]);
+  assert.equal(items[0].publish_date, '2025-04-28T15:00:00.000Z', 'first item publishes next Monday');
 });
 
 test('briefQueueToCalendarItems stamps validation_source via keyword-index', () => {
@@ -126,7 +119,7 @@ test('briefQueueToCalendarItems does not put a new item on a date an existing it
   const dates = items.map((i) => i.publish_date);
   assert.equal(new Set(dates).size, 2, 'every item needs its own publish date');
   assert.equal(items[1].publish_date, '2026-08-24T15:00:00.000Z', 'existing item keeps its slot');
-  assert.equal(items[0].publish_date, '2026-08-27T15:00:00.000Z', 'new item takes the next free slot');
+  assert.equal(items[0].publish_date, '2026-08-25T15:00:00.000Z', 'new item takes the next free slot (Tue, a publish day)');
 });
 
 test('briefQueueToCalendarItems derives week from the final date, not queue position', () => {

@@ -81,3 +81,36 @@ test('clearNeedsRebuild tolerates a null meta', () => {
 });
 
 console.log('✓ legacy-rebuilder tests pass');
+
+// ── 2026-10-21: the light refresh locked 29 blocked posts out of every fix ────
+// It stamped a 28-day `rewrite` on pages whose intro it never rewrote (0 of 29
+// answer-first runs applied anything), then cleared needs_rebuild whatever the
+// editor said. blocked-post-resolver could not touch any of them.
+import { readFileSync } from 'node:fs';
+import { isLegacyCandidate } from '../../agents/legacy-rebuilder/index.js';
+
+const SRC = readFileSync(new URL('../../agents/legacy-rebuilder/index.js', import.meta.url), 'utf8');
+const lightRefreshBody = SRC.slice(SRC.indexOf('async function lightRefresh'), SRC.indexOf('async function rebuildPost'));
+
+test('the light refresh records no material edit of its own', () => {
+  // answer-first-rewriter stamps `rewrite` itself when it actually rewrites;
+  // buy box, schema and year fixes are enhance/repair and start no clock.
+  assert.ok(lightRefreshBody.length > 100, 'lightRefresh not found');
+  assert.doesNotMatch(lightRefreshBody, /recordMaterialEdit\(/);
+});
+
+test('the light refresh clears needs_rebuild only when the editor report passes', () => {
+  assert.match(lightRefreshBody, /isPassing\(/);
+});
+
+test('a schema-carrying rising post with needs_rebuild is left to blocked-post-resolver', () => {
+  // A light refresh never touches body copy, so it cannot fix a content blocker.
+  assert.equal(isLegacyCandidate({ legacy: false, meta: { legacy_bucket: 'rising', needs_rebuild: { reasons: ['x'] } } }), false);
+});
+
+test('legacy (schema-less) posts and flagged non-rising posts are still candidates', () => {
+  assert.equal(isLegacyCandidate({ legacy: true, meta: { legacy_bucket: 'rising' } }), true);
+  assert.equal(isLegacyCandidate({ legacy: false, meta: { legacy_bucket: 'flop', needs_rebuild: { reasons: ['x'] } } }), true);
+  assert.equal(isLegacyCandidate({ legacy: false, meta: { needs_rebuild: { reasons: ['x'] } } }), true);
+  assert.equal(isLegacyCandidate({ legacy: false, meta: { legacy_bucket: 'flop' } }), false);
+});

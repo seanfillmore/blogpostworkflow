@@ -1,0 +1,312 @@
+{
+  "target_keyword": "organic bar soap",
+  "slug": "organic-bar-soap-guide",
+  "search_intent": "commercial",
+  "content_type": "guide",
+  "content_depth": "comprehensive",
+  "recommended_title": "Organic Bar Soap: The Complete Guide to Clean Skin",
+  "meta_description": "Discover what makes organic bar soap better for your skin and the planet. Learn key ingredients, benefits, and shop Real Skin Care's natural bar soap collection.",
+  "target_word_count": 2400,
+  "content_angle": "Real Skin Care positions this guide as the authoritative, ingredient-first resource on organic bar soap — going beyond product listings to explain exactly what separates a genuinely organic bar from greenwashed alternatives, backed by the brand's coconut oil expertise and commitment to clean formulation.",
+  "key_differentiators": [
+    "Opens with a direct, confident answer to what 'organic bar soap' actually means — including the distinction between certified organic ingredients and loosely marketed 'natural' claims — something no current top-10 result explains clearly",
+    "Includes a practical ingredient decoder section that empowers readers to read labels confidently, rather than just listing product names",
+    "Leverages Real Skin Care's coconut oil expertise as a credibility signal, connecting the brand's formulation philosophy to the benefits shoppers are searching for",
+    "Incorporates a clear comparison of bar soap vs. liquid soap formats to capture related commercial intent and support internal linking",
+    "Provides skin-type matching guidance so readers can self-select the right bar soap format — a content layer missing from all current top-10 results"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a direct answer to the implicit question behind the search: what makes a bar soap truly 'organic,' and why does it matter for your skin and health. Do not open with a generic wellness statement or a brand history paragraph — top-ranking pages that open with product grids and no editorial context are a gap this post exploits. Acknowledge the confusion shoppers face (labels saying 'natural' vs. 'organic' vs. 'plant-based') and promise the reader this guide will clear it up. Briefly preview what the post covers: what organic bar soap is, how to read ingredient labels, which skin types benefit most, and how to shop confidently. Include the phrase 'organic bar soap' naturally in the first 100 words. Tone: warm, knowledgeable, direct — not clinical or preachy.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "natural soap",
+        "all natural soap",
+        "clean skin"
+      ]
+    },
+    {
+      "section": "H2: What Is Organic Bar Soap — And What Does 'Organic' Actually Mean?",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Explain the difference between USDA-certified organic ingredients and loosely used marketing terms like 'natural,' 'plant-based,' and 'eco-friendly.' Clarify that in the US, personal care products cannot carry the USDA Organic seal on the product itself unless the formulation meets strict ingredient thresholds — and that most bars labeled 'organic' contain some but not all certified organic ingredients. Explain what saponification is in plain language (the soap-making process that turns oils and lye into soap and glycerin). Note that the lye is consumed in this reaction and does not remain in the finished bar. This section should make readers feel informed, not intimidated. Reference the broader category of handmade soap and castile soap where relevant. Do NOT name any competitor brands.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "natural soap",
+        "handmade soap",
+        "soap making",
+        "castile soap",
+        "what is castile soap",
+        "all natural soap"
+      ]
+    },
+    {
+      "section": "H2: Key Ingredients in a High-Quality Organic Bar Soap",
+      "type": "h2",
+      "word_count_target": 380,
+      "guidance": "Break this into a scannable ingredient-by-ingredient walkthrough. Cover the most common base oils and additives found in quality organic bars and explain what each does for the skin. Must cover: (1) coconut oil — cleansing, lathering, antimicrobial properties; tie this to Real Skin Care's coconut oil expertise; (2) olive oil — moisturizing, gentle, high in oleic acid; (3) shea butter — emollient, skin barrier support; (4) castor oil — lather boosting, humectant; (5) essential oils vs. synthetic fragrance — why pure essential oils like lavender, tea tree, and eucalyptus are preferred; (6) optional natural additives like turmeric (brightening, antioxidant), goat milk (lactic acid, gentle exfoliation), oat (soothing for sensitive skin), and activated charcoal (pore-cleansing). For each, write 2–3 sentences. Avoid absolute efficacy claims (e.g. 'cures acne') — use softened language ('may help,' 'is known for,' 'traditionally used'). Include a brief note on what ingredients to avoid: SLS, synthetic fragrance, parabens, artificial dyes.",
+      "keywords_to_include": [
+        "organic coconut oil soap",
+        "coconut soap bar",
+        "turmeric soap",
+        "turmeric soap bar",
+        "goat milk soap",
+        "handcrafted soap",
+        "unscented soap",
+        "natural handmade bar soap"
+      ]
+    },
+    {
+      "section": "H2: Organic Bar Soap by Skin Type — How to Choose the Right One",
+      "type": "h2",
+      "word_count_target": 320,
+      "guidance": "This section is a key differentiator — no current top-10 result offers skin-type-specific guidance in editorial form. Structure as a short subsection per skin type: (1) Dry skin — look for high shea butter and olive oil content, avoid high-coconut-oil bars that strip; (2) Oily or acne-prone skin — activated charcoal, tea tree oil, and clay-based bars; (3) Sensitive skin — unscented, oat or goat milk-based, no essential oils or additives; (4) Normal/combination skin — most organic bars work well, focus on scent and texture preference; (5) Mature skin — look for antioxidant-rich ingredients like turmeric or vitamin E. Keep each sub-section to 3–4 sentences. This section should feel like advice from a knowledgeable friend, not a clinical skin guide. Do not make dermatological claims — soften all guidance language.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "natural skin soap",
+        "unscented soap",
+        "turmeric soap bar",
+        "goat milk soap",
+        "handmade natural soap bar"
+      ]
+    },
+    {
+      "section": "H2: Organic Bar Soap vs. Liquid Soap — Which Is Better for You?",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Compare bar soap and liquid soap formats as product types — not brand vs. brand. Cover: (1) ingredient transparency — bars tend to have shorter, simpler ingredient lists; (2) environmental footprint — bars typically use less packaging and water; (3) pH balance — well-formulated organic bars are close to skin's natural pH, liquid soaps can vary; (4) lather and feel — bars can feel more luxurious with the right oil blend; (5) convenience — liquid soap or foaming hand soap formats are preferred at sinks for hygiene reasons. Acknowledge that both have a place in a clean skincare routine. This section supports an internal link to the bar soap vs. liquid soap blog post. Include a brief mention of coconut foaming hand soap as a complementary format for those who prefer liquid at the sink — this bridges to the organic foaming hand soap product page.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "natural soap",
+        "coconut hand soap",
+        "coconut foaming hand soap",
+        "coconut oil hand soap",
+        "handmade bar soap"
+      ]
+    },
+    {
+      "section": "H2: How Organic Bar Soap Is Made — The Cold Process Explained",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Give readers a behind-the-scenes look at cold-process soap making — the method used by most artisan and organic soap makers. Explain the steps briefly: blending oils, adding lye solution (sodium hydroxide + water), saponification, pouring into molds, curing (4–6 weeks). Emphasize that cold-process preserves more of the beneficial properties of base oils and retains natural glycerin, which commercial soap manufacturers often remove and sell separately. Contrast briefly with hot-process and commercially manufactured soap (which strips glycerin and adds synthetic detergents). This section addresses the 'soap making' and 'homemade soap' semantic keywords and captures readers at the education stage of the funnel. Do not provide a DIY recipe — this is not a how-to post and the intent is commercial, not instructional.",
+      "keywords_to_include": [
+        "soap making",
+        "homemade soap",
+        "handmade soap",
+        "handcrafted soap",
+        "organic castile soap",
+        "tallow soap"
+      ]
+    },
+    {
+      "section": "H2: What to Look for on the Label — Reading Organic Bar Soap Ingredients",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Practical, empowering label-reading guide. Explain that ingredients are listed in descending order by weight (INCI format). Walk through what to look for: (1) the first 3–5 ingredients should be recognizable plant oils; (2) 'sodium cocoate' = saponified coconut oil, 'sodium olivate' = saponified olive oil — demystify INCI names; (3) fragrance vs. 'essential oil of [plant]' — the latter is preferable; (4) the presence of glycerin as a natural byproduct is a good sign in cold-process bars. What to avoid: 'fragrance' or 'parfum' (can contain undisclosed synthetic chemicals), sodium lauryl sulfate, artificial colors (FD&C dyes), parabens, and PEG compounds. Keep this section practical and scannable — use a short list format within the prose.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "all natural soap",
+        "natural handmade soap",
+        "unscented soap",
+        "organic coconut oil soap"
+      ]
+    },
+    {
+      "section": "H2: Shop Real Skin Care Organic Bar Soaps",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "This is the mid-to-bottom-of-funnel conversion section. Do NOT write a generic 'why buy from us' paragraph. Instead, briefly describe Real Skin Care's approach to formulating organic bar soaps — coconut oil base, clean ingredient commitment, no synthetic fragrance, no SLS. Highlight 1–2 specific product attributes (e.g. coconut oil-based bar, available scents or unscented option) if product data is available. Include a clear CTA to the organic bar soap collection page and the natural bar soap collection page. Mention that those who prefer a liquid format can also explore the organic foaming hand soap. Tone: confident and inviting, not pushy. This section should feel like a natural editorial recommendation, not an ad.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "coconut soap bar",
+        "natural skin soap",
+        "affordable coco soap",
+        "organic coconut oil soap",
+        "natural handmade bar soap"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions About Organic Bar Soap",
+      "type": "faq",
+      "word_count_target": 220,
+      "guidance": "Include 4–5 concise FAQ entries targeting question-format searches. Suggested questions: (1) Is organic bar soap better than regular soap? — Yes, in that it avoids synthetic detergents and potentially irritating additives; use softened language. (2) Can organic bar soap be used on the face? — Yes for many skin types, but recommend patch testing; unscented and oat-based bars are best for sensitive facial skin. (3) Does organic bar soap expire? — Handmade bars are best used within 1–2 years; store in a dry soap dish. (4) Is castile soap the same as organic bar soap? — Explain the distinction: castile soap is traditionally olive-oil-based and a type of natural soap, but not all organic bar soaps are castile. (5) What is the difference between natural and organic soap? — Brief, clear distinction. Each answer should be 2–4 sentences. Format so each Q is bold. Schema: FAQPage markup recommended for this section.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "castile soap",
+        "what is castile soap",
+        "organic castile soap",
+        "unscented soap",
+        "handmade natural soap bars",
+        "natural soap"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 70,
+      "guidance": "Close with a 2–3 sentence summary reinforcing the main takeaway: choosing organic bar soap means choosing cleaner ingredients, more transparency, and better long-term skin health. End with a single, confident CTA directing readers to explore the Real Skin Care organic bar soap collection. Do not introduce new information. Tone: warm, affirming, brand-forward.",
+      "keywords_to_include": [
+        "organic bar soap",
+        "natural soap",
+        "clean skin"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "organic bar soap",
+    "natural soap",
+    "all natural soap",
+    "handmade soap",
+    "handcrafted soap",
+    "natural handmade bar soap",
+    "handmade natural bar soap",
+    "handmade bar soap",
+    "handmade natural soap bars",
+    "castile soap",
+    "organic castile soap",
+    "what is castile soap",
+    "soap making",
+    "homemade soap",
+    "turmeric soap",
+    "turmeric soap bar",
+    "goat milk soap",
+    "unscented soap",
+    "tallow soap",
+    "coconut soap bar",
+    "coconut hand soap",
+    "coconut oil hand soap",
+    "coconut foaming hand soap",
+    "organic coconut oil soap",
+    "coconut scented soap",
+    "natural skin soap",
+    "affordable coco soap",
+    "soap nuts",
+    "native soap",
+    "cold process soap",
+    "plant-based soap",
+    "clean beauty bar",
+    "sulfate-free bar soap",
+    "glycerin soap",
+    "essential oil soap"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "organic bar soap collection",
+      "url": "https://www.realskincare.com/collections/organic-bar-soap",
+      "placement_guidance": "Place in the 'Shop Real Skin Care Organic Bar Soaps' section as the primary CTA link. Use once more in the conclusion."
+    },
+    {
+      "anchor_text": "natural bar soap",
+      "url": "https://www.realskincare.com/collections/natural-bar-soap",
+      "placement_guidance": "Link in the 'Shop Real Skin Care Organic Bar Soaps' section as a secondary collection CTA alongside the organic bar soap collection link."
+    },
+    {
+      "anchor_text": "organic foaming hand soap",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "placement_guidance": "Link naturally in the 'Organic Bar Soap vs. Liquid Soap' section when mentioning coconut foaming hand soap as a complementary format for sink use."
+    },
+    {
+      "anchor_text": "bar soap vs. liquid hand soap",
+      "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "placement_guidance": "Link at the end of the 'Organic Bar Soap vs. Liquid Soap' H2 section with a 'read our full comparison' style anchor to deepen the topic for interested readers."
+    },
+    {
+      "anchor_text": "the benefits of coconut oil bar soap",
+      "url": "https://www.realskincare.com/blogs/news/discover-the-soothing-power-of-coconut-oil-bar-soap",
+      "placement_guidance": "Link in the 'Key Ingredients' section when discussing coconut oil as a base oil — position as a deeper dive for readers who want more detail on coconut oil specifically."
+    },
+    {
+      "anchor_text": "natural bar soap guide",
+      "url": "https://www.realskincare.com/blogs/news/natural-soap-bar-the-clean-skin-guide-you-need",
+      "placement_guidance": "Link contextually in the introduction or conclusion as a related resource for readers exploring the broader natural soap category."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Include a brief author bio or byline noting relevant expertise (e.g. clean beauty formulation background, certified organic skincare knowledge) — do not publish anonymously",
+    "Cite at least two authoritative external sources: one for the claim about USDA organic certification standards for personal care products (link to USDA.gov or FDA.gov), and one for any skin benefit claims tied to specific ingredients (peer-reviewed source or reputable dermatology organization)",
+    "Demonstrate first-hand product knowledge by referencing Real Skin Care's specific formulation choices — coconut oil base, cold-process method, no synthetic fragrance — rather than speaking generically",
+    "Include a last-updated date in the post metadata so readers and Google can see the content is actively maintained",
+    "Use appropriately hedged, non-absolute language for all skin benefit claims to reflect responsible expertise rather than overclaiming",
+    "Where possible, include a brief note on certifications Real Skin Care holds or pursues (e.g. cruelty-free, vegan, USDA organic ingredients) with any supporting documentation or third-party verification"
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "The following claims in this post require outbound citations to credible authoritative sources — do not publish without them: (1) Any statement about USDA organic certification thresholds for personal care products must link to USDA.gov or FDA.gov guidance on cosmetic labeling; (2) Claims about coconut oil's antimicrobial or cleansing properties should cite a peer-reviewed study or NIH/PubMed source; (3) Any claim about lye being fully consumed during saponification should be grounded in basic chemistry — cite a food-science or cosmetic chemistry reference if needed; (4) Claims about synthetic fragrance or 'parfum' potentially containing undisclosed chemicals should cite the FDA cosmetic ingredient disclosure guidance or a peer-reviewed toxicology reference; (5) Any pH-related claims about bar soap vs. skin's natural pH should cite a dermatology source. Avoid absolute language such as 'cures,' 'eliminates,' 'proven to treat' — replace with 'may help,' 'is associated with,' 'has been studied for.' Do not claim that Real Skin Care products are USDA certified unless this is verifiable — if uncertain, use 'made with organic ingredients' language consistent with FTC guidelines.",
+  "writer_notes": "Tone and voice: warm, knowledgeable, and confident — like a trusted friend who knows clean beauty inside-out, not a clinical skincare professional or a salesperson. Write for an audience that is already interested in clean living and organic products but may not have deep formulation knowledge. Avoid jargon without explanation. Do not write in a listicle format — this is a prose-driven guide with scannable subheads. Do not name or reference any competitor brands anywhere in the post. Do not write a DIY soap recipe or frame any section as instructional how-to content — the intent is commercial/educational, not crafting tutorial. SERP research note: the top 3 ranking pages (positions 1–4) are all product collection pages with minimal editorial content and no ingredient guidance — this is the structural gap this post exploits. This post is the editorial layer that those pages lack, and it should read as the most helpful, trust-building resource in the SERP. Seasonality note: search volume peaks in August (3,600/mo) and in spring (March–May) — publish no later than early March to capture the spring ramp. Consider refreshing the post or adding a seasonal CTA banner ahead of August. Product CTA placement: include exactly one CTA to the organic bar soap collection in the 'Shop' section and once more in the conclusion — do not pepper CTAs throughout the post as this signals low editorial trust. The FAQ section should be marked up with FAQPage schema in addition to the Article schema on the overall post — coordinate this with the developer or CMS schema plugin. Confirm with the brand team whether Real Skin Care's bar soap is cold-process formulated before publishing that claim — if not confirmed, soften to 'traditionally crafted' or 'small-batch formulated.' Word count discipline: target 2,400 words. Do not pad sections to reach word count — if a section is complete at fewer words, leave it. Quality over volume.",
+  "search_volume": 2400,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://oregonsoapcompany.com/collections/bar-soap?srsltid=AfmBOortqgKbG4wcTFlJ-jrf4zrLCdPxk2l_lnwZBenBQQxbPdK1qX3n",
+      "title": "Natural Bar Soaps",
+      "domain": "oregonsoapcompany.com",
+      "description": "Natural and organic bar soap - plant based, cruelty free, vegan, non-toxic, all natural artisanally crafted handmade."
+    },
+    {
+      "position": 2,
+      "url": "https://www.naplessoap.com/collections/natural-soap?srsltid=AfmBOoqWCzoryuqZZuXArIKou52PPlr6NpYHaB3uGzp_Hyc0RG3wr2Zu",
+      "title": "Natural Soap Bars - Handmade with Natural Ingredients",
+      "domain": "www.naplessoap.com",
+      "description": "Shop natural soap bars formulated with coconut oil, olive oil, and shea butter. Our gentle handmade bars cleanse and hydrate the face ..."
+    },
+    {
+      "position": 3,
+      "url": "https://www.herbneden.com/collections/original-bars?srsltid=AfmBOooIJDyYmPkBMcKD9VvNC23jnDymgSRrjvHNGqT2zpHTyLmw605Q",
+      "title": "Natural Plant-Based Bar Soaps",
+      "domain": "www.herbneden.com",
+      "description": "Herb'N Eden's all natural, all original, plant-based bar soaps have a base of coconut oil, palm oil, shea butter for a deep nourishing clean."
+    },
+    {
+      "position": 4,
+      "url": "https://www.chagrinvalleysoapandsalve.com/collections/natural-soap?srsltid=AfmBOop525dDkDi_fs_LhF_oCJvSi31IZWSxH4HIrmDw_bpZOnc7Pdh2",
+      "title": "Natural & Organic Soap Bars For Healthy Skin",
+      "domain": "www.chagrinvalleysoapandsalve.com",
+      "description": "Handmade Organic Soap Bars. Cold-processed from scratch using certified organic ingredients, our natural soap bars go beyond a simple cleanse."
+    },
+    {
+      "position": 5,
+      "url": "https://goodearthsoap.com/collections/handmade-soap?srsltid=AfmBOorEk6O9sYtqQWYWMvMK59lPvrPWETRAyUh7W7XGZ7Rn5w21cGhG",
+      "title": "Handmade Soap - Natural Bar Soap, Organic Vegan Soap",
+      "domain": "goodearthsoap.com",
+      "description": "Shop our handmade soap, natural and organic bar soaps that are handcrafted with essential oils. We carry tea tree soap, lavender soap, sandalwood soap, ..."
+    },
+    {
+      "position": 6,
+      "url": "https://www.prettyorganicgirl.com/bar-soap",
+      "title": "The Best Organic Bar Soap Brands 2026",
+      "domain": "www.prettyorganicgirl.com",
+      "description": "7 days ago — These Organic Bar Soap Bars are made with organic ingredients such as Organic Tea Tree Oil, Organic Aloe Vera, and Rosemary Extract."
+    },
+    {
+      "position": 7,
+      "url": "https://www.amazon.com/Skin-Said-Yes-Organic-Soaps/dp/B0BD89ZVP9",
+      "title": "Skin Said Yes Organic Soap Bar (Pack of 8)",
+      "domain": "www.amazon.com",
+      "description": "Made with the holy grail of natural olive oil, coconut oil, & shea butter, this vegan skin care set set of 8 olive soap bars is for natural skincare lovers."
+    },
+    {
+      "position": 8,
+      "url": "https://humblebrands.com/collections/natural-soap?srsltid=AfmBOooqJyMHgVqRe_K7lPwN5U4Q74fpp-_eXenRDW2VSiTJCGMBJy-m",
+      "title": "Natural Bar Soap",
+      "domain": "humblebrands.com",
+      "description": "All Natural, Very Moisturizing Soap Our luxurious handcrafted, cold-process bars are made traditionally by saponifying plant-based whole oils."
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "soap",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 3,
+    "medianWordCount": 10887,
+    "avgH2": 11.33,
+    "targetWordCount": 3000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

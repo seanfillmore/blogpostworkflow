@@ -1,0 +1,334 @@
+{
+  "generated_at": "2026-08-23T14:00:04.540Z",
+  "script": "scripts/consolidate-tattoo-soap-calendar-2026-08-23.mjs",
+  "winner": {
+    "slug": "best-soap-for-tattoos-what-to-use-for-safe-healing-2",
+    "url": "https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2",
+    "target_keyword": "best soap to use on new tattoo",
+    "gsc_90d": {
+      "impressions": 16553,
+      "clicks": 102,
+      "ctr": 0.0062
+    }
+  },
+  "refresh_command": "node agents/content-refresher/index.js --slug best-soap-for-tattoos-what-to-use-for-safe-healing-2 --apply",
+  "refresh_item_slug": "best-soap-for-tattoos-refresh",
+  "kept_distinct": "coconut-oil-soap-benefits",
+  "removed_items": [
+    {
+      "slug": "what-soap-to-use-for-tattoo",
+      "keyword": "what soap to use for tattoo",
+      "gsc_90d": {
+        "impressions": 120,
+        "clicks": 5,
+        "position": 8.2
+      },
+      "winner_share": 834,
+      "item": {
+        "slug": "what-soap-to-use-for-tattoo",
+        "keyword": "what soap to use for tattoo",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 33,
+        "status_override": null,
+        "status": "review",
+        "impressions": 968,
+        "added_at": "2026-08-19T13:30:04.101Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "what-soap-can-i-use-to-wash-my-tattoo",
+      "keyword": "what soap can i use to wash my tattoo",
+      "gsc_90d": {
+        "impressions": 65,
+        "clicks": 5,
+        "position": 9.1
+      },
+      "winner_share": 211,
+      "item": {
+        "slug": "what-soap-can-i-use-to-wash-my-tattoo",
+        "keyword": "what soap can i use to wash my tattoo",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 9,
+        "status_override": null,
+        "status": "review",
+        "impressions": 356,
+        "added_at": "2026-08-19T13:30:04.134Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "best-soaps-for-tattoos",
+      "keyword": "best soaps for tattoos",
+      "gsc_90d": {
+        "impressions": 246,
+        "clicks": 4,
+        "position": 10.5
+      },
+      "winner_share": 173,
+      "item": {
+        "slug": "best-soaps-for-tattoos",
+        "keyword": "best soaps for tattoos",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 6,
+        "status_override": null,
+        "status": "review",
+        "impressions": 238,
+        "added_at": "2026-08-18T13:30:03.779Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "best-soap-for-fresh-tattoo",
+      "keyword": "best soap for fresh tattoo",
+      "gsc_90d": {
+        "impressions": 330,
+        "clicks": 2,
+        "position": 10.3
+      },
+      "winner_share": 160,
+      "item": {
+        "slug": "best-soap-for-fresh-tattoo",
+        "keyword": "best soap for fresh tattoo",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 8,
+        "status_override": null,
+        "status": "review",
+        "impressions": 342,
+        "added_at": "2026-08-19T13:30:04.139Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "what-soap-to-use-for-tattoos",
+      "keyword": "what soap to use for tattoos",
+      "gsc_90d": {
+        "impressions": 49,
+        "clicks": 3,
+        "position": 10.5
+      },
+      "winner_share": 255,
+      "item": {
+        "slug": "what-soap-to-use-for-tattoos",
+        "keyword": "what soap to use for tattoos",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 7,
+        "status_override": null,
+        "status": "review",
+        "impressions": 280,
+        "added_at": "2026-08-19T13:30:04.143Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "best-antibacterial-soap-for-tattoos",
+      "keyword": "best antibacterial soap for tattoos",
+      "gsc_90d": {
+        "impressions": 617,
+        "clicks": 4,
+        "position": 11.8
+      },
+      "winner_share": 372,
+      "item": {
+        "slug": "best-antibacterial-soap-for-tattoos",
+        "keyword": "best antibacterial soap for tattoos",
+        "title": "Best Antibacterial Soap for Tattoos: Safe Picks for New Ink",
+        "category": "Bar Soap",
+        "content_type": "guide",
+        "priority": "normal",
+        "week": 1,
+        "publish_date": "2026-08-27T15:00:00.000Z",
+        "original_publish_date": "2026-09-17T15:00:00.000Z",
+        "kd": null,
+        "volume": null,
+        "source": "content_strategist",
+        "topical_hub": null,
+        "priority_score": 9,
+        "status_override": null,
+        "status": "review",
+        "impressions": 381,
+        "added_at": "2026-08-14T13:30:03.710Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "best-tattoo-soap",
+      "keyword": "best tattoo soap",
+      "gsc_90d": {
+        "impressions": 265,
+        "clicks": 2,
+        "position": 13.3
+      },
+      "winner_share": 155,
+      "item": {
+        "slug": "best-tattoo-soap",
+        "keyword": "best tattoo soap",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 6,
+        "status_override": null,
+        "status": "review",
+        "impressions": 253,
+        "added_at": "2026-08-18T13:30:03.774Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    },
+    {
+      "slug": "best-soap-for-new-tattoo",
+      "keyword": "best soap for new tattoo",
+      "gsc_90d": {
+        "impressions": 774,
+        "clicks": 8,
+        "position": 17.6
+      },
+      "winner_share": 520,
+      "item": {
+        "slug": "best-soap-for-new-tattoo",
+        "keyword": "best soap for new tattoo",
+        "title": null,
+        "category": null,
+        "content_type": null,
+        "priority": "Medium",
+        "week": null,
+        "publish_date": null,
+        "original_publish_date": null,
+        "kd": null,
+        "volume": null,
+        "source": "gsc_opportunity",
+        "topical_hub": null,
+        "priority_score": 27,
+        "status_override": null,
+        "status": "review",
+        "impressions": 771,
+        "added_at": "2026-08-19T13:30:04.130Z",
+        "last_updated": "2026-08-23T14:00:02.808Z"
+      }
+    }
+  ],
+  "added_rejections": [
+    {
+      "keyword": "what soap to use for tattoo",
+      "slug": "what-soap-to-use-for-tattoo",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "what soap can i use to wash my tattoo",
+      "slug": "what-soap-can-i-use-to-wash-my-tattoo",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "best soaps for tattoos",
+      "slug": "best-soaps-for-tattoos",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "best soap for fresh tattoo",
+      "slug": "best-soap-for-fresh-tattoo",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "what soap to use for tattoos",
+      "slug": "what-soap-to-use-for-tattoos",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "best antibacterial soap for tattoos",
+      "slug": "best-antibacterial-soap-for-tattoos",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "best tattoo soap",
+      "slug": "best-tattoo-soap",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    },
+    {
+      "keyword": "best soap for new tattoo",
+      "slug": "best-soap-for-new-tattoo",
+      "matchType": "broad",
+      "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
+      "rejected_at": "2026-08-23T14:00:04.540Z",
+      "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+    }
+  ],
+  "calendar_backup": "/root/seo-claude/data/calendar/calendar.json.bak-consolidate-tattoo-2026-08-23T14-00-04-540Z"
+}

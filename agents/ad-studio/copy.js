@@ -273,18 +273,13 @@ export function buildClaimRules({ sourceIds, unit = 'zone' }) {
 - Pure persuasion with no factual assertion is fine: set factual: false and omit sourceId.`;
 }
 
-// The golden-thread rule ships in the FIRST prompt, not only in the retry — same policy as
-// SEO_COPY_COMPLIANCE_RULE, and for the same reason: most runs should never need the second
-// call. See golden-thread.js for why an LLM produces this defect by default.
-export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry, objective = DEFAULT_OBJECTIVE, retryNote = null }) {
-  const zoneList = format.zones
-    .map(z => {
-      const cap = format.zoneCapacity?.[z];
-      return cap ? `  - ${z} (maximum ${cap} items — the layout cannot carry more)` : `  - ${z}`;
-    })
-    .join('\n');
+/**
+ * The VARIANT block of buildCopyPrompt, exported so agents/ad-concepts tells its writers the
+ * same thing in the same words (a second copy would drift). Empty string when no variant.
+ */
+export function buildVariantBlock(variant) {
   const unscented = variant && UNSCENTED_VARIANT_RE.test(variant);
-  const variantBlock = variant
+  return variant
     ? `\nVARIANT: ${variant} — this copy is for THIS variant ONLY. The PRODUCT PAGE COPY and ` +
       `catalog text below describe the whole product line, including sibling variants. Describe ` +
       `only what is actually in THIS variant — never claim or imply an ingredient, scent, or ` +
@@ -298,6 +293,19 @@ export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, re
         : '') +
       '\n'
     : '';
+}
+
+// The golden-thread rule ships in the FIRST prompt, not only in the retry — same policy as
+// SEO_COPY_COMPLIANCE_RULE, and for the same reason: most runs should never need the second
+// call. See golden-thread.js for why an LLM produces this defect by default.
+export function buildCopyPrompt({ format, product, pdpBody, persona, tactics, reviews = [], variant, giveaway, sourceIndex, brandKit, catalogEntry, objective = DEFAULT_OBJECTIVE, retryNote = null }) {
+  const zoneList = format.zones
+    .map(z => {
+      const cap = format.zoneCapacity?.[z];
+      return cap ? `  - ${z} (maximum ${cap} items — the layout cannot carry more)` : `  - ${z}`;
+    })
+    .join('\n');
+  const variantBlock = buildVariantBlock(variant);
   // BOTH read the one predicate. A `sale` run sees neither the rules nor "giveaway" in its
   // source list, so the writer is never invited to cite something it was not shown.
   const citable = giveawayIsCitable(objective, giveaway);

@@ -35,7 +35,7 @@ const HANDLES = [
   'coconut-bar-soap-4-pack',
   'coconut-deodorant-4-pack',
   'coconut-toothpaste-3-pack',
-  'coconut-hand-soap-4-pack',
+  'coconut-hand-soap-5-pack', // replaced the 4-pack 2026-10-08
   'clean-swap',
   'head-to-toe',
   '99-coconut-reset-digital',

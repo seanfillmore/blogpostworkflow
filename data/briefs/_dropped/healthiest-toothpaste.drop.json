@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "healthiest-toothpaste",
+  "keyword": "healthiest toothpaste",
+  "dropped_at": "2026-09-21T16:00:39.579Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-00-39-579Z-2378550",
+  "reason": "post killed: no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "healthiest-toothpaste.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore healthiest-toothpaste",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

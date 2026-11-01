@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Enter your dish</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/contest.css">
+</head>
+<body>
+<div class="tablecloth" aria-hidden="true"></div>
+<header class="page-head">
+  <h1 id="page-title">Enter your dish</h1>
+  <p id="contest-title"></p>
+</header>
+
+<main class="wrap">
+  <p id="loading" class="small">Loading…</p>
+
+  <div id="message" class="notice" hidden role="status"></div>
+
+  <!-- Shown once after a new entry: the private edit link. -->
+  <section id="done" hidden>
+    <div class="notice notice-ok"><strong>Thank you! Your dish is entered.</strong>
+      <p>The organizer will look it over before it appears on the voting page.</p></div>
+    <div class="link-card">
+      <h2>Save your private link</h2>
+      <p>Save this link to edit your dish until voting opens. It is the only way back to your entry, and only you have it.</p>
+      <div class="link-box" id="edit-url"></div>
+      <div class="link-actions">
+        <button type="button" class="btn btn-big" id="copy-btn">Copy link</button>
+        <a class="btn btn-quiet" id="sms-link" href="#">Text it to yourself</a>
+        <a class="btn btn-quiet" id="mail-link" href="#">Email it to yourself</a>
+      </div>
+      <p class="small" id="copy-status" role="status"></p>
+    </div>
+    <p><a id="open-edit" href="#">Open my entry to check or change it</a></p>
+  </section>
+
+  <form id="dish-form" novalidate hidden>
+    <p id="intro" class="small">Fill this in once. You will get a private link to make changes until voting opens.</p>
+
+    <!-- Recipe link import: fills Ingredients and Recipe from a recipe site's card. -->
+    <section class="import-card" id="import-card" aria-labelledby="import-heading">
+      <h2 id="import-heading">Have a recipe link?</h2>
+      <p class="import-lead">Paste it here and we'll fill in the ingredients and steps for you.</p>
+      <label class="sr-only" for="recipe-url">Recipe link</label>
+      <div class="import-row">
+        <input class="input" id="recipe-url" type="url" inputmode="url" placeholder="https://" autocomplete="url"
+          autocapitalize="off" spellcheck="false" enterkeyhint="go">
+        <button type="button" class="btn" id="import-btn">Get recipe</button>
+      </div>
+
+      <div class="import-working" id="import-working" hidden>
+        <svg class="pot" viewBox="0 0 120 96" aria-hidden="true" focusable="false">
+          <g class="steam">
+            <path class="wisp wisp-1" d="M42 34c-6-7 6-11 0-18s6-10 0-16" />
+            <path class="wisp wisp-2" d="M60 32c-6-7 6-11 0-18s6-10 0-16" />
+            <path class="wisp wisp-3" d="M78 34c-6-7 6-11 0-18s6-10 0-16" />
+          </g>
+          <g class="spoon">
+            <rect x="74" y="14" width="5" height="34" rx="2.5" />
+            <ellipse cx="76.5" cy="50" rx="7" ry="4.5" />
+          </g>
+          <rect class="pot-rim" x="18" y="44" width="84" height="9" rx="4.5" />
+          <path class="pot-body" d="M24 52h72v18c0 12-9 20-21 20H45c-12 0-21-8-21-20z" />
+          <path class="pot-band" d="M24 62h72v6H24z" />
+          <rect class="pot-handle" x="8" y="54" width="16" height="6" rx="3" />
+          <rect class="pot-handle" x="96" y="54" width="16" height="6" rx="3" />
+        </svg>
+        <p class="import-status" id="import-status" aria-live="polite">Visiting the recipe page…</p>
+      </div>
+
+      <div class="import-result import-ok" id="import-ok" hidden role="status" tabindex="-1">
+        <p id="import-ok-text"></p>
+        <p class="import-allergen-note">Recipe sites don't list allergens. Please tick the boxes below yourself, and check labels on things like rubs, broths and sauces.</p>
+      </div>
+      <div class="import-result import-fail" id="import-fail" hidden role="alert" tabindex="-1">
+        <svg class="import-fail-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 7v6.5" />
+          <circle class="dot" cx="12" cy="17" r="1.3" />
+        </svg>
+        <p id="import-fail-text"></p>
+      </div>
+    </section>
+
+    <div class="field">
+      <label for="cook">Your name</label>
+      <input class="input" id="cook" name="cook" maxlength="80" autocomplete="name" required data-counter>
+    </div>
+
+    <div class="field">
+      <label for="name">Name of your dish</label>
+      <input class="input" id="name" name="name" maxlength="80" required data-counter>
+    </div>
+
+    <div class="field">
+      <label for="categoryId">Category</label>
+      <select class="input" id="categoryId" name="categoryId" required></select>
+    </div>
+
+    <div class="field">
+      <span class="label" id="photo-label">Photo of your dish</span>
+      <label class="photo-pick" id="photo-pick">
+        <input type="file" id="photo" name="photo" accept="image/*" aria-labelledby="photo-label">
+        <span id="photo-empty"><span>Tap to add a photo</span><br><span class="sub">Take a picture or choose one from your phone</span></span>
+        <img id="photo-preview" alt="Your dish photo" hidden>
+      </label>
+      <span class="hint" id="photo-hint" hidden>Tap the photo to choose a different one.</span>
+    </div>
+
+    <div class="field">
+      <label for="ingredients">Ingredients</label>
+      <span class="hint">List everything that goes into your dish.</span>
+      <textarea class="input" id="ingredients" name="ingredients" maxlength="2000" required data-counter></textarea>
+    </div>
+
+    <fieldset class="field">
+      <legend>Does your dish contain any of these?</legend>
+      <span class="hint">Tick every one that applies.</span>
+      <div class="checks" id="allergens"></div>
+      <p class="disclaimer">Allergen information is entered by the cook and is not checked by the organizers.</p>
+    </fieldset>
+
+    <div class="field">
+      <label for="recipe">Recipe <span class="small">(optional)</span></label>
+      <span class="hint">Share how you made it, if you like.</span>
+      <textarea class="input" id="recipe" name="recipe" maxlength="8000" data-counter></textarea>
+    </div>
+
+    <div id="form-error" class="notice notice-error" hidden role="alert"></div>
+
+    <div id="upload-state" hidden>
+      <p class="status-line" id="upload-text">Uploading…</p>
+      <div class="progress"><span id="upload-bar"></span></div>
+    </div>
+
+    <button type="submit" class="btn btn-big btn-block" id="submit-btn">Enter my dish</button>
+  </form>
+</main>
+<script type="module" src="/contest/assets/enter.js"></script>
+</body>
+</html>

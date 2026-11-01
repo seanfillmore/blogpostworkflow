@@ -1,0 +1,340 @@
+{
+  "target_keyword": "best natural liquid hand soap",
+  "slug": "best-natural-liquid-hand-soap",
+  "search_intent": "commercial",
+  "content_type": "listicle",
+  "content_depth": "comprehensive",
+  "recommended_title": "Best Natural Liquid Hand Soap: 7 Picks for Clean, Soft Hands",
+  "meta_description": "Looking for the best natural liquid hand soap? See 7 gentle, non-toxic picks, what to avoid on labels, and how to choose. Find your clean hand soap now.",
+  "target_word_count": 2400,
+  "content_angle": "A practical, ingredient-first roundup that sorts natural liquid hand soaps by the need they solve (sensitive skin, dry hands, tattoos, eco-refills), puts Real Skin Care's own organic foaming hand soap first, and debunks the 'antibacterial' myth with CDC and FDA sources. Most competitors are either brand-pushing product pages or unsourced lists.",
+  "key_differentiators": [
+    "Name and link the Real Skin Care Organic Foaming Hand Soap in the first section (intro plus pick #1), with only ingredient and feature claims verified on the live product page.",
+    "Organize picks by use case rather than brand lists, with a clear 'best for' label and a one-line reason for each.",
+    "Include a sourced 'Do you need antibacterial soap?' section citing CDC and FDA. This also captures the antibacterial-soap query cluster without chasing off-topic body-wash terms.",
+    "Give a label-reading checklist (ingredients to look for, ingredients to question, and the meaning of 'natural' vs 'organic' on labels) that competitors only touch lightly.",
+    "Add practical hand-care follow-through that links to the existing hand lotion and moisturizer posts, which keeps readers on site."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open with the problem: frequent handwashing dries out hands, and 'natural' on a label means very little. State the verdict up front: the best natural liquid hand soap has a short, recognizable ingredient list, cleans without stripping, and suits your skin. Name the Real Skin Care Organic Foaming Hand Soap in this section as our top pick and link it. Mention that this is a roundup of 7 picks by need. Do not say 'we tested' unless the team actually did.",
+      "keywords_to_include": [
+        "best natural liquid hand soap",
+        "natural hand soap",
+        "non toxic hand soap"
+      ]
+    },
+    {
+      "section": "H2: How We Chose These Natural Hand Soaps",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Briefly list the criteria: short ingredient list, plant-derived cleansers, no synthetic dyes, no unnecessary fragrance, gentle on skin, packaging and refill options. Be honest that picks are categories of soap, with Real Skin Care's product as the featured option. Do not invent testing data, panels, or scores.",
+      "keywords_to_include": [
+        "best hand soap",
+        "non toxic hand soap"
+      ]
+    },
+    {
+      "section": "H2: 1. Organic Foaming Hand Soap — Best Overall Gentle Daily Soap",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Feature the Real Skin Care Organic Foaming Hand Soap. Pull ingredients, scent, and size only from the live product page and do not invent any. Explain why a foaming format uses less product per wash and feels light on skin. Include one clear CTA link to the product page and one to the foaming hand soap collection. Keep claims modest ('formulated with simple ingredients', not 'cures dryness').",
+      "keywords_to_include": [
+        "foaming hand soap",
+        "natural liquid hand soap",
+        "coconut hand soap"
+      ]
+    },
+    {
+      "section": "H2: 2. Fragrance-Free Plant-Based Liquid Soap — Best for Sensitive Skin",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Describe this category generically, with no brand names. Explain that fragrance is a common irritant for sensitive skin and that fragrance-free or lightly scented soaps are a safer starting point. Add a note on patch-testing. Cite AAD or NIH if making any irritation claim.",
+      "keywords_to_include": [
+        "sensitive skin",
+        "unscented hand soap",
+        "gentle hand soap"
+      ]
+    },
+    {
+      "section": "H2: 3. Glycerin- and Oil-Rich Liquid Soap — Best for Dry, Cracked Hands",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Explain what to look for (glycerin, plant oils, aloe) and why moisturizing ingredients matter after frequent washing. Link naturally to the hand lotion and moisturizer posts as the next step after washing.",
+      "keywords_to_include": [
+        "dry hands",
+        "natural hand soap",
+        "moisturizing hand soap"
+      ]
+    },
+    {
+      "section": "H2: 4. Coconut Oil-Based Liquid Soap — Best for a Rich, Clean Lather",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Explain what coconut oil soap is (saponified coconut oil is a traditional soap base) and why it lathers well. Note honestly that coconut-based soaps can feel more cleansing than creamy, so people with very dry skin should pair them with a moisturizer. Do not claim antimicrobial benefits without a cited source.",
+      "keywords_to_include": [
+        "coconut oil soap",
+        "coconut hand soap"
+      ]
+    },
+    {
+      "section": "H2: 5. Castile-Style Liquid Soap — Best Multi-Purpose Pick",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Describe olive-oil-based castile-style liquid soap as versatile and minimal. Mention that concentrated versions must be diluted, and that it can feel drying for some. Mention that DIY recipes exist but that homemade soap needs correct dilution and preservation, with a cautious tone and no recipe steps.",
+      "keywords_to_include": [
+        "non toxic hand soap",
+        "natural liquid hand soap"
+      ]
+    },
+    {
+      "section": "H2: 6. Gentle Soap for Tattoo Care — Best for Healing Skin",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Briefly explain that fresh tattoos need fragrance-free, mild cleansing and that the artist's aftercare instructions come first. Link to the tattoo soap post for the full guide. Make no medical or healing-speed claims. Suggest consulting the tattoo artist or a doctor.",
+      "keywords_to_include": [
+        "tattoo soap",
+        "good soap for tattoos",
+        "best soap to wash tattoo"
+      ]
+    },
+    {
+      "section": "H2: 7. Refillable Liquid Soap — Best for Less Waste",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Cover refill pouches and concentrates, plus the cost-per-wash angle. Keep it practical and avoid environmental statistics unless sourced.",
+      "keywords_to_include": [
+        "refillable hand soap",
+        "eco-friendly hand soap"
+      ]
+    },
+    {
+      "section": "H2: Do You Really Need Antibacterial Soap?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Explain that plain soap and water is effective for handwashing according to CDC, and that FDA has stated antibacterial soaps have not been shown to be better than plain soap and water for consumers. Briefly explain proper technique (20 seconds). Naturally address 'how do I choose an effective antibacterial soap' and 'antibacterial soap' searcher intent without overpromising. Do not make germ-kill percentage claims.",
+      "keywords_to_include": [
+        "antibacterial soap",
+        "how do i choose an effective antibacterial soap",
+        "foaming antibacterial hand soap"
+      ]
+    },
+    {
+      "section": "H2: How to Read a Natural Hand Soap Label",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Give a checklist: short ingredient list, named plant oils, essential oils vs 'fragrance', dyes, and the fact that 'natural' is not a regulated term on personal care labels. Explain 'organic' only as sourced from USDA NOP info. Do not assert that SLS or any ingredient causes harm unless a named source is cited; if none is found, mark 'do not assert' and say only that some people find it irritating.",
+      "keywords_to_include": [
+        "non toxic hand soap",
+        "natural hand soap",
+        "body soap"
+      ]
+    },
+    {
+      "section": "H2: Liquid vs. Foaming vs. Bar Soap",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Short comparison of the three formats by convenience, waste, and skin feel. Link to the bar vs liquid post, the women's and men's bar soap posts, and the bar soap collection. Avoid a table of competitor brands.",
+      "keywords_to_include": [
+        "foaming hand soap",
+        "bar soap",
+        "liquid hand soap"
+      ]
+    },
+    {
+      "section": "H2: Hand-Care Tips After Washing",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Give 3-4 practical tips: lukewarm water, pat dry, moisturize right after, use gloves for dishes. Link to the hand lotion and moisturizer posts.",
+      "keywords_to_include": [
+        "dry hands",
+        "natural hand lotion"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 250,
+      "guidance": "4-5 short questions with direct 2-3 sentence answers: Is natural hand soap as effective as regular? What is the best natural hand soap for sensitive skin? Is foaming soap better than liquid? Is castile soap good for hands? How often should I wash my hands? Cite CDC where relevant. Phrase answers cautiously.",
+      "keywords_to_include": [
+        "best natural liquid hand soap",
+        "natural hand soap",
+        "antibacterial soap"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 80,
+      "guidance": "Recap how to choose (ingredients, skin type, format). Close with a soft CTA to the Real Skin Care Organic Foaming Hand Soap and the foaming hand soap collection.",
+      "keywords_to_include": [
+        "natural liquid hand soap"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "natural hand soap",
+    "non toxic hand soap",
+    "best hand soap",
+    "foaming hand soap",
+    "organic hand soap",
+    "coconut hand soap",
+    "coconut oil soap",
+    "castile-style liquid soap",
+    "fragrance-free hand soap",
+    "unscented hand soap",
+    "hand soap for sensitive skin",
+    "hand soap for dry hands",
+    "moisturizing hand soap",
+    "antibacterial soap",
+    "foaming antibacterial hand soap",
+    "how do i choose an effective antibacterial soap",
+    "tattoo soap",
+    "good soap for tattoos",
+    "best soap to wash tattoo",
+    "refillable hand soap",
+    "plant-based hand soap",
+    "gentle hand soap",
+    "body soap",
+    "bar soap"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "Real Skin Care Organic Foaming Hand Soap",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "placement_guidance": "In the intro and in pick #1, with a CTA again in the conclusion."
+    },
+    {
+      "anchor_text": "shop our foaming hand soap collection",
+      "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+      "placement_guidance": "In pick #1 and the conclusion."
+    },
+    {
+      "anchor_text": "bar soap vs. liquid hand soap",
+      "url": "https://www.realskincare.com/blogs/news/bar-soap-vs-liquid-hand-soap-which-is-better",
+      "placement_guidance": "In the liquid vs. foaming vs. bar section."
+    },
+    {
+      "anchor_text": "best soap for tattoos",
+      "url": "https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing",
+      "placement_guidance": "In pick #6 (tattoo care)."
+    },
+    {
+      "anchor_text": "best natural hand lotion for dry, cracked hands",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-hand-lotion-for-dry-cracked-hands",
+      "placement_guidance": "In pick #3 or the hand-care tips section."
+    },
+    {
+      "anchor_text": "best moisturizer for dry hands",
+      "url": "https://www.realskincare.com/blogs/news/best-moisturizer-for-dry-hands-natural-options-that-work",
+      "placement_guidance": "In the hand-care tips section."
+    },
+    {
+      "anchor_text": "natural bar soap for women",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-bar-soap-for-women-clean-picks-that-work",
+      "placement_guidance": "In the liquid vs. bar section."
+    },
+    {
+      "anchor_text": "natural bar soap for men",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-bar-soap-for-men-clean-skin-starts-here",
+      "placement_guidance": "In the liquid vs. bar section."
+    },
+    {
+      "anchor_text": "natural bar soap collection",
+      "url": "https://www.realskincare.com/collections/natural-bar-soap",
+      "placement_guidance": "After the bar soap mention in the format comparison."
+    },
+    {
+      "anchor_text": "men's natural soap",
+      "url": "https://www.realskincare.com/collections/mens-natural-soap",
+      "placement_guidance": "Optional, near the men's bar soap post link."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Byline by a named author with credentials or a reviewing clinician (esthetician or dermatology reviewer) if one is available. Do not invent credentials.",
+    "Cite CDC and FDA on handwashing and antibacterial soap, and AAD/NIH on irritation and dermatitis.",
+    "Explain the ingredient logic behind each pick rather than just asserting that it is 'best'.",
+    "Be transparent that Real Skin Care makes one of the featured products, and show the ingredient list copied from the live product page.",
+    "Add a 'last reviewed' date and a note to patch-test and consult a dermatologist for eczema or persistent irritation."
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "Every health or efficacy claim needs a named source with URL; if no credible source is found, mark the claim 'do not assert' and remove or soften it. Required citations: (1) CDC handwashing guidance that soap and water work and the 20-second technique (verify live URL, e.g. https://www.cdc.gov/clean-hands/about/index.html); (2) FDA consumer guidance that antibacterial soaps have not been shown to be better than plain soap and water (verify live URL on fda.gov, e.g. the 'Antibacterial Soap? You Can Skip It, Use Plain Soap and Water' consumer update); (3) AAD or NIH for handwashing-related dry skin or hand dermatitis and fragrance as an irritant; (4) USDA National Organic Program for any 'organic' definition. Do NOT assert that SLS, sulfates, or other ingredients are toxic or harmful, and do not state canker-sore or similar statistics, unless a peer-reviewed or government source is found. Avoid absolute words such as 'best for everyone', 'chemical-free', 'toxin-free', 'kills germs', or 'heals'. Do not fabricate reviews, testing, or awards.",
+  "writer_notes": "Tone: warm, practical, trustworthy, with no hype and no fear-mongering. Do not name competitor brands anywhere, including from the SERP (picks are product types, not brands), and do not create brand comparison tables. Do not include off-topic related keywords (body wash, shower gel, smelly feet, armpits, men's body wash); the low-volume exact keyword has little demand, so focus on a genuinely useful, linkable roundup. Product details for the Real Skin Care soap must be copied from the live product page. Use only the internal URLs given in this brief. EDITORIAL CHECK BEFORE PUBLISHING: this brief could not verify the live post index or GSC ranked queries. Site shows 1 impression at position 44, so some page may already exist. Confirm there is no existing post (including -1/-2 duplicates) for 'natural liquid hand soap' or similar; if one exists, convert this to a refresh brief for content-refresher. Also avoid the earlier 'handmade soap' flop pattern (niche, low-demand angle) by keeping the post tied to commercial hand soap intent and linking it to the product and collection.",
+  "search_volume": 30,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://chrislovesjulia.com/we-tested-30-hand-soaps-to-find-the-best-of-the-best/",
+      "title": "We Tested 30 Hand Soaps to find the best of the best!",
+      "domain": "chrislovesjulia.com",
+      "description": "Mar 22, 2021 — We Tested 30 Hand Soaps to find the best of the best! · 1. Mrs. Meyer's: rainwater $3 · 2. Jr. Watkins: lemon $3 · 3. Puracy: lavender & vanilla $7 Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.malie.com/blogs/organic-hair-body-botanical-care/4-best-natural-hand-soaps-you-ll-love-use-every-day?srsltid=AU7gw4V1mME4esPWRQSJ4ub5FJMhKYNrL4tnCmVR3qSUMkZ0N-xjDWxI",
+      "title": "4 Best Natural Hand Soaps You'll Love To Use Every Day",
+      "domain": "www.malie.com",
+      "description": "Apr 5, 2025 — Koke'e Natural Hand Soap · Plumeria Natural Hand Soap · Pikake Natural Hand Soap · Mango Nectar Natural Hand Soap. Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.bendsoap.com/blogs/sudsy-scoop/best-natural-hand-soap-for-healthy-skin?srsltid=AU7gw4X9il9S6gM8IqpDlrCUW2JNl6pt0Wr10z8Eh4yTOaGqq2bp0HB0",
+      "title": "The Best Natural Hand Soap for Healthier, Happier Skin",
+      "domain": "www.bendsoap.com",
+      "description": "Mar 4, 2025 — When you're checking a label, look for things like goat milk, coconut oil, olive oil, and aloe barbadensis leaf juice. As a general rule of ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.bcpp.org/create-your-own-at-home-non-toxic-hand-soap/",
+      "title": "Create Your Own At-Home Non-Toxic Hand Soap",
+      "domain": "www.bcpp.org",
+      "description": "Jul 21, 2022 — Castile is an olive oil-based soap that can be found in many everyday soap and cleaning products. But it's safe and effective all on its own. Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://www.instyle.com/best-hand-soaps-7373431",
+      "title": "The 33 Best Hand Soaps for a Luxurious Lather Every Time",
+      "domain": "www.instyle.com",
+      "description": "Apr 30, 2026 — Mrs. Meyer's Liquid Hand Soap … is made with a slew of natural ingredients. Made with plant-derived cleansers, this soap effectively washes ..."
+    },
+    {
+      "position": 6,
+      "url": "https://whisperingwillow.com/collections/liquids?srsltid=AU7gw4VMIBSSowTQvWBorTRAZbpcNPBkMQSGg5BcsiyBUY-f0I_tfuwT",
+      "title": "Natural Liquid Soap | Whispering Willow",
+      "domain": "whisperingwillow.com",
+      "description": "Made with organic oils and essential oils and certified cruelty free, you can feel confident Whispering Willow's liquid soap is the perfect choice for you ..."
+    },
+    {
+      "position": 7,
+      "url": "https://www.pinterest.com/pin/13-best-all-natural-hand-soaps-for-nontoxic-living--886857351600839105/",
+      "title": "13 Best All Natural Hand Soaps for Non-Toxic Living",
+      "domain": "www.pinterest.com",
+      "description": "Switch to all-natural hand soap for a cleaner and non-toxic life. Check out our picks of the best ones!"
+    },
+    {
+      "position": 8,
+      "url": "https://www.glennavesoap.com/collections/foaming-hand-soap?srsltid=AU7gw4XA377GlcC1KZ-GcfLCtpVRXPKS4wy-8HO4rxn3k_3BGanhrqoG",
+      "title": "Foaming Hand Soap - Handmade - Organic",
+      "domain": "www.glennavesoap.com",
+      "description": "Glenn Avenue offers Foaming Hand Soaps - simple, natural ingredients - amazing essential oil fragrances - rich silky lather - smooth and soft for your skin."
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "soap",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 7282,
+    "avgH2": 11,
+    "targetWordCount": 3000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

@@ -263,7 +263,19 @@ test('computePlan: refresh cooldown blocks a refresh-type promotion', () => {
 
 test('computePlan: backlog below low-water emits an alert', () => {
   const plan = computePlan(baseInputs()); // 2 ideas < lowWater 5
-  assert.ok(plan.alerts.some((a) => /backlog/i.test(a)));
+  assert.ok(plan.alerts.some((a) => /pipeline low/i.test(a)));
+});
+
+test('computePlan: posts already scheduled ahead count toward the low-water mark', () => {
+  // 2026-10-13 shape: content-strategist dated every item it planned, so the
+  // undated backlog read 0 while 20 posts were booked through December.
+  const plan = computePlan(baseInputs({ backlog: [], upcomingScheduled: 20 }));
+  assert.equal(plan.alerts.length, 0);
+});
+
+test('computePlan: a thin pipeline still alerts when scheduled + undated is under low-water', () => {
+  const plan = computePlan(baseInputs({ backlog: [], upcomingScheduled: 3 }));
+  assert.ok(plan.alerts.some((a) => /3 post\(s\)/.test(a)));
 });
 
 test('computePlan: never assigns two promotions to the same slot', () => {
@@ -348,4 +360,22 @@ test('buildContributionIndex still emits the weak-signal suggestions list', () =
   const { suggestions } = buildContributionIndex(
     [{ type: 'unmapped', key: 'weak', strength: 600, cluster: null }], IDX_CFG);
   assert.ok(Array.isArray(suggestions));
+});
+
+import { partitionCalendar } from '../../lib/pipeline-priority.js';
+
+test('partitionCalendar: an undated BRIEFED item is backlog, not buffer', () => {
+  const ymd = (d) => new Date(d).toISOString().slice(0, 10);
+  const items = [
+    { slug: 'dated-briefed', keyword: 'a', publish_date: '2026-10-19T15:00:00.000Z' },
+    { slug: 'undated-briefed', keyword: 'b', publish_date: null },
+    { slug: 'undated-idea', keyword: 'c', publish_date: null },
+    { slug: 'undated-written', keyword: 'd', publish_date: null },
+  ];
+  const st = { 'dated-briefed': 'briefed', 'undated-briefed': 'briefed', 'undated-idea': 'pending', 'undated-written': 'written' };
+  const p = partitionCalendar(items, { statusOf: (i) => st[i.slug], today: '2026-10-14', ymd });
+  assert.deepEqual(p.backlog.map((b) => b.slug), ['undated-briefed', 'undated-idea']);
+  assert.equal(p.backlog[0].briefed, true);
+  assert.equal(p.bufferReady, 1);
+  assert.equal(p.upcomingScheduled, 1);
 });

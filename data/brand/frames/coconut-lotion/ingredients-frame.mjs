@@ -3,7 +3,7 @@
  * PDP gallery frame and its Amazon twin.
  *
  * Structure borrowed from a supplement ad (count headline, product centred, every
- * ingredient labelled around it, offer badge, guarantee bar) with the argument
+ * ingredient labelled around it, guarantee bar) with the argument
  * flipped: theirs sells MORE ingredients, ours sells FEWER. What was deliberately
  * NOT borrowed, each for a reason that would otherwise ship a wrong claim:
  *
@@ -36,7 +36,6 @@
 import { readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { shopifyGraphQL } from '../../../../lib/shopify.js';
 import { checkSeoCopyFields } from '../../../../lib/seo-copy-health-gate.js';
 import { hasHealthClaim } from '../../../../agents/ad-studio/health-claims.js';
 import { forbiddenEvenNegated } from '../../../../scripts/pdp-lotion-cream-sections.mjs';
@@ -50,7 +49,10 @@ const GREEN = '#AEDEAC';
 
 const SCENT = 'Pure Unscented';
 const CUTOUT = 'data/brand/cutouts/component-lotion-pure-unscented.png';
-const SUBSCRIPTION_PERCENT = 15;
+// NO SUBSCRIBE BADGE. The frame carried "Subscribe & save 15%" until
+// 2026-10-06; lotion sells no new subscriptions since 2026-10-05 (multi-unit
+// over subscriptions), and its plan stays attached only so existing contracts
+// renew, so a selling plan existing is no longer evidence the badge is true.
 
 /**
  * The six labels, in the order the live Ingredients tab lists them. Each must
@@ -79,7 +81,6 @@ function copy({ offer }) {
     headline1: `${LABELS.length} ingredients.`,
     headline2: "That's the whole bottle.",
     footnote: `Scented versions add ${min}–${max} named essential oils, each one listed on the page.`,
-    badge: offer ? `Subscribe & save ${SUBSCRIPTION_PERCENT}%` : null,
     guarantee: offer ? "Try it for 30 days. Don't love it? Full refund — no need to send it back." : null,
   };
 }
@@ -112,21 +113,9 @@ export function ingredientsFrame({ name, offer }) {
         if (!/30 days/.test(page) || !/send (it|the product) back/.test(page)) {
           throw new Error('the live PDP no longer states the 30-day no-return refund — the guarantee bar would be stale');
         }
-        const r = await shopifyGraphQL(`{ productByIdentifier(identifier:{handle:"coconut-lotion"}) {
-          sellingPlanGroups(first:10){nodes{sellingPlans(first:20){nodes{name pricingPolicies{
-            ... on SellingPlanFixedPricingPolicy { adjustmentType adjustmentValue {
-              ... on SellingPlanPricingPolicyPercentageValue { percentage } } } } }}}} } }`);
-        const plans = r.productByIdentifier.sellingPlanGroups.nodes.flatMap((g) => g.sellingPlans.nodes);
-        if (!plans.length) throw new Error('coconut-lotion has no selling plans — the subscribe badge would be false');
-        for (const p of plans) {
-          const pol = p.pricingPolicies[0];
-          if (pol?.adjustmentType !== 'PERCENTAGE' || pol.adjustmentValue?.percentage !== SUBSCRIPTION_PERCENT) {
-            throw new Error(`selling plan "${p.name}" is not ${SUBSCRIPTION_PERCENT}% off — the badge would be wrong`);
-          }
-        }
       }
 
-      const text = [c.kicker, c.headline1, c.headline2, c.footnote, c.badge, c.guarantee, ...LABELS].filter(Boolean);
+      const text = [c.kicker, c.headline1, c.headline2, c.footnote, c.guarantee, ...LABELS].filter(Boolean);
       const gate = checkSeoCopyFields(Object.fromEntries(text.map((t, i) => [`frame text ${i + 1}`, t])));
       if (!gate.ok) throw new Error(`SEO health gate: ${gate.blocking.map((v) => v.match).join(', ')}`);
       const flagged = text.filter((t) => hasHealthClaim(t));
@@ -141,7 +130,7 @@ export function ingredientsFrame({ name, offer }) {
       return [
         `${SCENT} body lotion bottle surrounded by its ${LABELS.length} ingredients: ${LABELS.map((l) => l.toLowerCase()).join(', ')}.`,
         c.footnote,
-        offer ? `Subscribe and save ${SUBSCRIPTION_PERCENT}%. Try it for 30 days with a full refund, no need to send it back.` : '',
+        offer ? 'Try it for 30 days with a full refund, no need to send it back.' : '',
       ].filter(Boolean).join(' ');
     },
 
@@ -170,18 +159,6 @@ export function ingredientsFrame({ name, offer }) {
           ${items.map((t) => label(t, side)).join('')}
         </div>`;
 
-      // Top-right corner of the FRAME, the one area nothing else occupies. The
-      // first render hung it off the bottle's shoulder, where it hid the cap and
-      // the first label's connector — a badge may never cover the product.
-      const badge = c.badge ? `
-        <div style="position:absolute;right:70px;top:60px;width:330px;height:330px;border-radius:50%;
-                    background:${GREEN};border:6px solid ${BLACK};display:flex;align-items:center;justify-content:center;
-                    text-align:center;transform:rotate(8deg);">
-          <div style="font-family:Cabin;font-weight:700;font-size:50px;line-height:1.02;color:${BLACK};">
-            Subscribe<br>&amp; save<br><span style="font-size:100px;">${SUBSCRIPTION_PERCENT}%</span>
-          </div>
-        </div>` : '';
-
       // text-wrap:balance, because at phone-legible size this line is two lines,
       // and an unbalanced wrap left "back." alone on the second.
       const bar = c.guarantee ? `
@@ -193,8 +170,6 @@ export function ingredientsFrame({ name, offer }) {
 
       return `<div style="position:relative;width:100%;height:100%;background:${GROUND};display:flex;flex-direction:column;
                           align-items:center;padding:${offer ? 80 : 120}px 80px ${offer ? 70 : 120}px;">
-        ${badge}
-
         <div style="font-family:Outfit;font-weight:600;font-size:48px;letter-spacing:.24em;text-transform:uppercase;
                     color:${BLACK};opacity:.6;">${c.kicker}</div>
 

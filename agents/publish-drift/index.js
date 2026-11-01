@@ -194,6 +194,7 @@ async function main() {
     for (const d of drafts) {
       const a = live.get(String(d.articleId));
       try {
+        // edit-gate kind: repair — re-publishing a page that silently reverted to draft.
         await updateArticle(a.blogId, a.id, { published: true });
         fixed.push(d.slug);
         console.log(`    republished: ${d.slug}`);

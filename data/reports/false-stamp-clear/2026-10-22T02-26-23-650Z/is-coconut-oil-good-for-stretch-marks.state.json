@@ -1,0 +1,128 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:13:14.576Z",
+    "last_crawled": "2026-08-25T08:11:10Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-the-truth",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2679,
+  "generated_at": "2026-04-17T10:16:08.465Z",
+  "brief_path": "/root/seo-claude/data/briefs/is-coconut-oil-good-for-stretch-marks.json",
+  "tokens_used": {
+    "input": 10632,
+    "output": 5158
+  },
+  "image_path": "data/posts/is-coconut-oil-good-for-stretch-marks/image.webp",
+  "image_prompt": "Lifestyle photography, a woman in a white long-sleeve shirt and light linen trousers sitting on the edge of a freestanding white soaking tub, gently massaging coconut oil into her lower leg and ankle area with both hands, the skin visibly moisturized and glowing in warm natural light, a small open glass jar of unbranded organic virgin coconut oil resting on a folded white linen towel on the tub ledge beside her, a wooden spatula resting across the jar's rim, a halved fresh coconut placed naturally on the towel beside the jar, bright airy white bathroom setting with white hex tile floor, white shiplap walls, and a frosted window allowing soft warm natural light to flood in from the left, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-04-19T10:03:21.572Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563511918762,
+  "shopify_handle": "is-coconut-oil-good-for-stretch-marks-the-truth",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/is-coconut-oil-good-for-stretch-marks-the-truth",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_45c3305d-99f9-4d45-8afd-d6a347497915.webp?v=1778585549",
+  "uploaded_at": "2026-05-12T11:32:33.036Z",
+  "published_at": "2026-04-25T15:11:42.513Z",
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "submitted_at": "2026-05-10T11:30:02.313Z",
+      "result": "error",
+      "error": "Indexing API permission denied — verify owner status in GSC. {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"ACCESS_TOKEN_SCOPE_INSUFFICIENT\",\n        \"domain\": \"googleapis.com\",\n        \"metadata\": {\n          \"method\": \"google.indexing.v3.UrlService.PublishUrlNotification\",\n          \"service\": \"indexing.googleapis.com\"\n        }\n      }\n    ]\n  }\n}\n"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-05-11T11:30:03.513Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ],
+  "last_refreshed_at": "2026-09-01T15:10:13.286Z",
+  "publisher_block": {
+    "flagged_at": "2026-10-09T15:11:23.768Z",
+    "flagged_by": "featured-product-injector",
+    "reason": "no relevant product to feature — off product scope; holding for review"
+  },
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 13, 116 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:38.554Z",
+  "refreshed_at": "2026-10-09T15:11:42.756Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:12.253Z",
+      "age_days": 91,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "NOT_INDEXED",
+      "reason": "Zero impressions and zero clicks after 30 days because the page is not indexed (state: crawled_not_indexed). The indexing-checker flagged this; refreshing content will not help — fix indexing first.",
+      "superseded_at": "2026-09-21T14:19:03.053Z",
+      "superseded_by": "2026-09-01T15:10:13.286Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-07-25T17:14:12.351Z",
+      "age_days": 91,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T14:19:03.053Z",
+      "superseded_by": "2026-09-01T15:10:13.286Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-07-25T17:14:12.452Z",
+      "age_days": 91,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T14:19:03.053Z",
+      "superseded_by": "2026-09-01T15:10:13.286Z"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-10-02T13:30:03.755Z",
+      "age_days": 30,
+      "impressions": 242,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 8.119834710743802,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 242 impressions, 0 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-10T13:30:04.279Z",
+      "superseded_by": "2026-10-09T15:11:42.756Z"
+    }
+  ],
+  "last_material_edit": {
+    "at": "2026-10-09T15:11:42.757Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:50:25.712Z",
+    "reasons": [
+      "1 deterministic issue(s)",
+      "3 uncited statistical/health claim(s) (fact-check gate)",
+      "content blockers: factual concerns"
+    ]
+  }
+}

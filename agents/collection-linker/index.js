@@ -37,6 +37,19 @@ import { fileURLToPath } from 'url';
 import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
 import { injectLink } from '../../lib/internal-link-inject.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines } from '../../lib/edit-gate-filter.js';
+
+// Adding a link edits the SOURCE article's body: an `enhance` edit
+// (lib/post-edit-gate.js), refused only on a frozen page. Filtered BEFORE the
+// --limit slice so a frozen page cannot take a slot.
+const EDIT_GATE_HELD = [];
+function editGateReportLines() {
+  const lines = renderEditGateLines(EDIT_GATE_HELD);
+  for (const l of lines) console.log(`  ${l}`);
+  return lines.length ? ['', '## Edit gate — source pages held (no links added)', '', ...lines.map((l) => `- ${l.trim()}`)] : [];
+}
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 // Suggestion-call parse failures for this run. Collected rather than thrown: the
 // agent loops over many articles and one bad response must not abandon the batch,
@@ -166,7 +179,7 @@ async function findLinkOpportunities(article, targetUrl, targetKeyword, targetTi
   const typeLabel = type === 'collection' ? 'product collection page' : 'product page';
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -226,7 +239,11 @@ Return ONLY valid JSON, no markdown.`,
 async function analyzeTarget(targetUrl, targetKeyword, targetTitle, allArticles) {
   const pool = allArticles.filter((a) => !alreadyLinksTo(a.body_html || '', targetUrl));
 
-  const candidates = pool.filter((a) => isTopicallyRelevant(a, targetKeyword));
+  const relevant = pool.filter((a) => isTopicallyRelevant(a, targetKeyword));
+  const { kept: candidates, held } = partitionByEditGate(relevant, {
+    kind: 'enhance', mayEdit: apply ? mayEditLivePost : null, targetOf: (a) => a?.handle || null,
+  });
+  EDIT_GATE_HELD.push(...held);
   const toProcess = candidates.slice(0, limitArg);
 
   const results = [];
@@ -395,6 +412,7 @@ async function main() {
     mkdirSync(REPORTS_DIR, { recursive: true });
     const safeHandle = handle.replace(/[^a-z0-9-]/gi, '-');
     const reportPath = join(REPORTS_DIR, `${safeHandle}-collection-links.md`);
+    lines.push(...editGateReportLines());
     writeFileSync(reportPath, lines.join('\n'));
 
     console.log(`\n  Report saved: ${reportPath}`);
@@ -509,6 +527,7 @@ async function main() {
 
   mkdirSync(REPORTS_DIR, { recursive: true });
   const reportPath = join(REPORTS_DIR, 'top-collection-links.md');
+  reportLines.push(...editGateReportLines());
   writeFileSync(reportPath, reportLines.join('\n'));
 
   console.log(`\n  Report saved: ${reportPath}`);

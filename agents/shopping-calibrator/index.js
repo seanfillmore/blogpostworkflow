@@ -43,7 +43,27 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'shopping-calibrator');
 
 const SHARED_SET_NAME = 'RSC | Shopping — Master Negatives';
 const CAMPAIGN_PREFIX = 'RSC | Shopping Test';
-const DEFAULT_PRICE = 30; // Shopify lotion price — what the Google feed shows
+const DEFAULT_PRICE = 30; // fallback only: the lotion price the first Shopping test advertised
+
+/**
+ * The price the waste rule judges against: the CHEAPEST item the enabled test
+ * campaigns actually advertise. It used to be the hardcoded $30 lotion, which
+ * was right while the only test sold lotion and became actively harmful when the
+ * campaign switched to toothpaste on 2026-10-24: against $30, a $13 tube's whole
+ * search market reads as "clears below 60% of our price" and gets negated. The
+ * minimum is the conservative choice, since a higher price negates more.
+ *
+ * @param {string[]} advertisedItemIds  listing-group item ids (Google lower-cases them)
+ * @param {Array<{itemId: string, price: number}>} products  shopping_product prices
+ * @returns {number|null}  null when nothing advertised has a known price
+ */
+export function advertisedPrice(advertisedItemIds, products) {
+  const want = new Set(advertisedItemIds.map((id) => String(id).toLowerCase()));
+  const prices = products
+    .filter((p) => want.has(String(p.itemId).toLowerCase()) && Number(p.price) > 0)
+    .map((p) => Number(p.price));
+  return prices.length ? Math.min(...prices) : null;
+}
 
 // ── pure helpers ──────────────────────────────────────────────────────────────
 
@@ -101,6 +121,40 @@ export function deadSpendQueries(termRows, { minClicks = 25, minSpend = 15, prot
     .sort((a, b) => b.cost - a.cost);
 }
 
+/**
+ * Is "0 conversions" evidence of broken tracking, or just too few clicks?
+ *
+ * The old guard read ANY all-zero month as broken tracking. On 2026-10-04 the
+ * Shopping campaign had 14 clicks / $4.69 in 30 days, where 0 conversions is
+ * the expected result, and the digest told the operator conversion tracking
+ * "looks broken" while ads-conversion-uploader was working correctly (28
+ * orders, none from a Google click). TRACKING_JUDGE_MIN_CLICKS is where 0 starts
+ * to mean something: at the site's measured ~0.8% CVR, 375 clicks expect 3
+ * conversions and P(0) is about 5%.
+ *
+ * The dead-spend rule needs 'alive'. Below the floor it would find nothing
+ * anyway (it needs 25 clicks on a single query).
+ */
+export const TRACKING_JUDGE_MIN_CLICKS = 375;
+
+export function trackingVerdict({ totalClicks, totalConversions }) {
+  if (totalConversions > 0) return 'alive';
+  if (totalClicks < TRACKING_JUDGE_MIN_CLICKS) return 'too-few-clicks';
+  return 'looks-broken';
+}
+
+/**
+ * Digest severity. 'error' means a human must fix something broken, and the
+ * only thing here that qualifies is tracking that looks broken. A negative
+ * blocking a converting query is a FINDING the calibrator exists to report, so
+ * it is 'info' (it used to be 'error', putting a weekly finding in the
+ * Failures block every Sunday since at least 2026-09-20).
+ */
+export function calibratorStatus({ verdict, conflicts }) {
+  if (verdict === 'looks-broken') return 'error';
+  return conflicts > 0 ? 'info' : 'success';
+}
+
 export function findMissingDemand(sqpRows, seenQueries, { minSales = 1 } = {}) {
   const seen = new Set([...seenQueries].map(norm));
   return sqpRows
@@ -110,7 +164,7 @@ export function findMissingDemand(sqpRows, seenQueries, { minSales = 1 } = {}) {
     .sort((a, b) => b.ourPurchases - a.ourPurchases);
 }
 
-export function buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied }, date) {
+export function buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied, appliedCount }, date) {
   const money = (v) => (v === null || v === undefined ? '—' : `$${v.toFixed(2)}`);
   let md = `# Shopping Calibrator — ${date}\n\n`;
   md += `Calibrated against ${weeks} weeks of Amazon SQP purchase data. Our feed price: ${money(ourPrice)}.\n\n`;
@@ -119,7 +173,9 @@ export function buildMarkdown({ waste, missing, conflicts, converting, weeks, ou
   if (!waste.length) md += `_None — no high-volume query clears meaningfully below our price._\n\n`;
   else {
     md += `The market buys these far below what we charge, so a paid click cannot convert.\n`;
-    md += `${applied ? 'Added as negatives.' : 'Run with --apply to add as negatives.'}\n\n`;
+    if (!applied) md += `Run with --apply to add as negatives.\n\n`;
+    else if (appliedCount === undefined || appliedCount === waste.length) md += `Added as negatives.\n\n`;
+    else md += `Added ${appliedCount} as negatives; ${waste.length - appliedCount} skipped because a PHRASE negative would also block queries that sold.\n\n`;
     md += `| Query | Volume | Market sales | Market price | vs ours |\n|---|--:|--:|--:|--:|\n`;
     for (const r of waste.slice(0, 25)) {
       md += `| ${r.query} | ${r.volume} | ${r.marketPurchases} | ${money(r.marketPrice)} | ${(r.priceRatio * 100).toFixed(0)}% |\n`;
@@ -166,7 +222,24 @@ async function main() {
   const args = process.argv.slice(2);
   const APPLY = args.includes('--apply');
   const priceArg = args.indexOf('--price');
-  const ourPrice = priceArg !== -1 ? Number(args[priceArg + 1]) : DEFAULT_PRICE;
+  let ourPrice = priceArg !== -1 ? Number(args[priceArg + 1]) : null;
+  if (ourPrice == null) {
+    const units = await gaqlQuery(`
+      SELECT ad_group_criterion.listing_group.case_value.product_item_id.value
+      FROM ad_group_criterion
+      WHERE ad_group_criterion.type = 'LISTING_GROUP' AND ad_group_criterion.listing_group.type = 'UNIT'
+        AND ad_group_criterion.negative = FALSE AND ad_group_criterion.status = 'ENABLED'
+        AND ad_group.status = 'ENABLED' AND campaign.status = 'ENABLED'
+        AND campaign.name LIKE '${CAMPAIGN_PREFIX}%'`);
+    const ids = units.map((r) => r.adGroupCriterion.listingGroup?.caseValue?.productItemId?.value).filter(Boolean);
+    const prods = (await gaqlQuery('SELECT shopping_product.item_id, shopping_product.price_micros FROM shopping_product'))
+      .map((r) => ({ itemId: r.shoppingProduct.itemId, price: Number(r.shoppingProduct.priceMicros) / 1e6 }));
+    const found = advertisedPrice(ids, prods);
+    ourPrice = found ?? DEFAULT_PRICE;
+    console.log(found != null
+      ? `Our price: $${found.toFixed(2)}, the cheapest of ${ids.length} advertised item(s).`
+      : `No advertised item with a known price; falling back to $${DEFAULT_PRICE}.`);
+  }
 
   const { rows, weeks } = loadSqp();
   // The price-gap, missing-demand and conflict checks all need Amazon SQP. The
@@ -219,19 +292,24 @@ async function main() {
   // lossy GA4 import), and the rule would negate every query we have. Skip loudly rather
   // than act on data that cannot be true.
   const totalConversions = terms.reduce((s, t) => s + t.conversions, 0);
-  const trackingLooksAlive = totalConversions > 0;
+  const totalClicks = terms.reduce((s, t) => s + t.clicks, 0);
+  const verdict = trackingVerdict({ totalClicks, totalConversions });
+  const trackingLooksAlive = verdict === 'alive';
   const deadSpend = trackingLooksAlive
     ? deadSpendQueries(terms, { protectedSet }).filter(
         (d) => !negatives.some(([t, m]) => negativeBlocks(d.query, t, m)))
     : [];
-  if (!trackingLooksAlive) {
-    console.log('  dead-spend rule SKIPPED — 0 conversions across all search terms, which means '
+  if (verdict === 'looks-broken') {
+    console.log(`  dead-spend rule SKIPPED — 0 conversions across ${totalClicks} clicks, which means `
       + 'broken conversion tracking, not universally bad queries. Check the ads-conversion-uploader.');
+  } else if (verdict === 'too-few-clicks') {
+    console.log(`  dead-spend rule idle — ${totalClicks} clicks in 30 days, too few to judge (needs ${TRACKING_JUDGE_MIN_CLICKS}).`);
   }
 
   console.log(`  ${waste.length} price-mismatched · ${deadSpend.length} dead-spend · ${missing.length} missing demand · ${conflicts.length} conflicts · ${protectedSet.size} protected`);
 
   let applied = false;
+  let appliedCount = 0;
   if (APPLY && waste.length) {
     const sets = await gaqlQuery(`
       SELECT shared_set.resource_name, shared_set.name FROM shared_set
@@ -259,6 +337,7 @@ async function main() {
       })));
     }
     applied = true;
+    appliedCount = safe.length;
     console.log(`  applied ${safe.length} price-mismatch negatives`);
   }
 
@@ -281,35 +360,42 @@ async function main() {
   }
 
   const date = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-  const md = buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied }, date)
+  const md = buildMarkdown({ waste, missing, conflicts, converting, weeks, ourPrice, applied, appliedCount }, date)
     + (deadSpend.length
       ? `\n## Dead spend (0 conversions)\n\n| Query | Clicks | Cost | Action |\n|---|---:|---:|---|\n`
         + deadSpend.map((d) => `| ${d.query} | ${d.clicks} | $${d.cost.toFixed(2)} | ${appliedDead ? 'negated EXACT' : 'proposed'} |`).join('\n') + '\n'
       : '')
-    + (!trackingLooksAlive
-      ? '\n## ⚠️ Dead-spend rule skipped\n\n0 conversions across every search term. That is the signature of broken '
+    + (verdict === 'looks-broken'
+      ? `\n## ⚠️ Dead-spend rule skipped\n\n0 conversions across ${totalClicks} clicks. That is the signature of broken `
         + 'conversion tracking, not universally bad queries — check `agents/ads-conversion-uploader`.\n'
-      : '');
+      : verdict === 'too-few-clicks'
+        ? `\n## Dead-spend rule idle\n\n${totalClicks} clicks in 30 days, too few for 0 conversions to mean anything `
+          + `(judged from ${TRACKING_JUDGE_MIN_CLICKS}).\n`
+        : '');
   mkdirSync(REPORTS_DIR, { recursive: true });
   writeFileSync(join(REPORTS_DIR, `${date}.md`), md);
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify(
-    { date, weeks, ourPrice, waste, deadSpend, missing, conflicts, applied, appliedDead, trackingLooksAlive }, null, 2));
+    { date, weeks, ourPrice, waste, deadSpend, missing, conflicts, applied, appliedCount, appliedDead, trackingLooksAlive, trackingVerdict: verdict, totalClicks }, null, 2));
   console.log(md);
 
   const parts = [];
   if (conflicts.length) parts.push(`${conflicts.length} negative(s) blocking converting queries`);
-  if (waste.length) parts.push(`${waste.length} price-mismatched quer${waste.length === 1 ? 'y' : 'ies'}${applied ? ' (negated)' : ''}`);
+  if (waste.length) parts.push(`${waste.length} price-mismatched quer${waste.length === 1 ? 'y' : 'ies'}${applied ? ` (${appliedCount} negated)` : ''}`);
   if (deadSpend.length) parts.push(`${deadSpend.length} dead-spend quer${deadSpend.length === 1 ? 'y' : 'ies'}${appliedDead ? ' (negated)' : ''}`);
-  if (!trackingLooksAlive) parts.push('dead-spend rule SKIPPED (conversion tracking looks broken)');
+  if (verdict === 'looks-broken') parts.push(`dead-spend rule SKIPPED (0 conversions on ${totalClicks} clicks: tracking looks broken)`);
   if (missing.length) parts.push(`${missing.length} converting quer${missing.length === 1 ? 'y' : 'ies'} we are absent for`);
-  notify({
+  await notify({
     subject: `Shopping calibrator: ${parts.join(' · ') || 'no changes needed'}`,
     body: md,
-    status: conflicts.length ? 'error' : 'success',
+    status: calibratorStatus({ verdict, conflicts: conflicts.length }),
     category: 'ads',
   });
 }
 
 if (process.argv[1] && import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((e) => { console.error('FAILED:', e.message); process.exit(1); });
+  main().catch(async (e) => {
+    console.error('FAILED:', e.message);
+    await notify({ subject: 'Shopping calibrator failed', body: e.message || String(e), status: 'error', category: 'ads' }).catch(() => {});
+    process.exit(1);
+  });
 }

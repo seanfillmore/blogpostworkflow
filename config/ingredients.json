@@ -470,6 +470,8 @@
     "name": "Natural Toothpaste",
     "format": "squeeze bottle",
     "shopify_handle": "coconut-oil-toothpaste",
+    "free_from_note": "Derived from the complete ingredient list (base_ingredients plus each variation's essential_oils), which is the label. Lets the editor confirm 'made without X' copy instead of asking a human every run (2026-10-22).",
+    "free_from": ["fluoride", "sodium lauryl sulfate (SLS)", "glycerin", "preservatives", "artificial sweeteners", "artificial flavors", "dyes"],
     "base_ingredients": [
       "purified spring water",
       "organic virgin coconut oil",

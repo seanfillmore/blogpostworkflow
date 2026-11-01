@@ -17,6 +17,7 @@ import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, readdirSync, statSync, mkdirSync } from 'fs';
 import { join, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -411,7 +412,7 @@ async function run() {
   const prompt = buildPrompt(budgeted);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{ role: 'user', content: prompt }],
     system: `You are an experienced SEO content operations analyst. You read agent reports and synthesize recurring patterns into clear, actionable standing instructions. Be specific, concise, and evidence-based. Today's date: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`,

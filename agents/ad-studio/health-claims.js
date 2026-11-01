@@ -85,7 +85,45 @@ export const HEALTH_CLAIM_PATTERNS = [
     // aimed at a dental condition. "cavity-causing bacteria" is excluded by lookahead, since
     // it names the bacteria rather than the disease. "gentle on enamel", "softer than
     // enamel" and "neutralizes oral acid" are ordinary cosmetic language and do not match.
-    pattern: /\b(remineraliz(?:e|es|ed|ing)|remineralis(?:e|es|ed|ing)|(?:supports?|supporting|promotes?|promoting|boosts?|boosting|aids?|aiding|encourages?|encouraging|enhances?|enhancing|improves?|improving|helps?|helping)\s+(?:your\s+|the\s+)?(?:natural\s+|enamel\s+|tooth\s+)*reminerali[sz]\w*|(?:rebuild|repair|restor|regrow|regenerat|strengthen|harden)\w*\s+(?:your\s+|the\s+|tooth\s+|teeth\s+)?enamel|enamel\s+(?:repair|rebuild\w*|regrowth|restoration)|anti-?cavity|anticaries|cavity[-\s]+(?:protection|fighting)|(?:protects?|protecting|fights?|fighting|combats?|combating|stops?|stopping|reduces?|reducing|reverses?|reversing|treats?|treating|heals?|healing|cures?|curing|prevents?|preventing|eliminates?|eliminating|gets?\s+rid\s+of)\s+(?:against\s+)?(?:the\s+|early\s+)?(?:cavities|cavity|tooth\s+decay|dental\s+caries|gum\s+disease|gingivitis|periodontitis|inflamed\s+gums)(?![-\s]+causing)|helps?\s+(?:with|against|prevent)\s+(?:cavities|tooth\s+decay|gum\s+disease|gingivitis)(?![-\s]+causing))\b/i,
+    //
+    // WIDENED 2026-10-10 by one alternation (the first one below), after the live Amazon
+    // Fresh Mint description said coconut oil's lauric acid helps "reduce bacteria associated
+    // with bad breath and tooth decay" and nothing caught it: the fix verb is aimed at the
+    // BACTERIA, with the dental condition one relative clause away. The 2026-09-13 ruling is
+    // untouched — "cavity-causing bacteria" alone names the bacteria and still passes.
+    pattern: /\b((?:kills?|killing|reduces?|reducing|fights?|fighting|combats?|combating|eliminates?|eliminating|targets?|targeting|attacks?|attacking|destroys?|destroying)\s+(?:the\s+|harmful\s+|oral\s+|bad\s+)*bacteria\s+(?:associated\s+with|that\s+causes?|linked\s+to|responsible\s+for|behind|known\s+to\s+cause)\s+(?:bad\s+breath\s+(?:and|or)\s+)?(?:cavities|tooth\s+decay|dental\s+caries|gum\s+disease|gingivitis|periodontitis)|remineraliz(?:e|es|ed|ing)|remineralis(?:e|es|ed|ing)|(?:supports?|supporting|promotes?|promoting|boosts?|boosting|aids?|aiding|encourages?|encouraging|enhances?|enhancing|improves?|improving|helps?|helping)\s+(?:your\s+|the\s+)?(?:natural\s+|enamel\s+|tooth\s+)*reminerali[sz]\w*|(?:rebuild|repair|restor|regrow|regenerat|strengthen|harden)\w*\s+(?:your\s+|the\s+|tooth\s+|teeth\s+)?enamel|enamel\s+(?:repair|rebuild\w*|regrowth|restoration)|anti-?cavity|anticaries|cavity[-\s]+(?:protection|fighting)|(?:protects?|protecting|fights?|fighting|combats?|combating|stops?|stopping|reduces?|reducing|reverses?|reversing|treats?|treating|heals?|healing|cures?|curing|prevents?|preventing|eliminates?|eliminating|gets?\s+rid\s+of)\s+(?:against\s+)?(?:the\s+|early\s+)?(?:cavities|cavity|tooth\s+decay|dental\s+caries|gum\s+disease|gingivitis|periodontitis|inflamed\s+gums)(?![-\s]+causing)|helps?\s+(?:with|against|prevent)\s+(?:cavities|tooth\s+decay|gum\s+disease|gingivitis)(?![-\s]+causing))\b/i,
+  },
+  {
+    category: 'drug-property',
+    why: 'attributes a DRUG property to the product — antimicrobial, antibacterial, antiseptic and anti-inflammatory are effects the FDA regulates as OTC drug claims (antiseptics and antibacterial washes have their own rules), not things a cosmetic may promise',
+    // ADDED 2026-10-10. The live Amazon Fresh Mint toothpaste description said coconut oil
+    // has "antimicrobial properties" and myrrh "anti-inflammatory properties", and four live
+    // collection drafts said the same of coconut oil. None of these words was in any pattern.
+    //
+    // SURFACE-AWARE in the SEO gate, exactly like `disease`: BLOCKING on commercial copy (the
+    // product speaking), ADVISORY on editorial. Measured 2026-10-10 over 1,736 live strings:
+    // 10 editorial titles/summaries/title_tags carry "antibacterial" — the antibacterial-soap
+    // articles, whose ranking query IS that word — and cited ingredient research in a blog
+    // post is information, not a promise about what we sell. Only 1 live commercial string
+    // carried any of these (the Mint description, rewritten the same day). In ADS this reads
+    // the pattern directly and blocks everywhere, which is right: an ad is always the product
+    // speaking.
+    pattern: /\b(anti-?microbials?|anti-?bacterials?|anti-?inflammator(?:y|ies)|antiseptics?|anti-?virals?)\b/i,
+  },
+  {
+    category: 'skin-structure',
+    why: 'claims the product changes the STRUCTURE of skin (removes wrinkles, fine lines, scars, stretch marks, age spots, cellulite) — a cosmetic may only say it improves their APPEARANCE',
+    // ADDED 2026-10-10, after "Reduce Fine Lines and Wrinkles" sat in a live Amazon lotion
+    // title and bullet header and nothing caught it. The FDA line is the word "appearance":
+    // "reduces the appearance of fine lines" describes how skin looks (cosmetic), "reduces
+    // wrinkles" claims to change skin (drug). The pattern needs the target IMMEDIATELY after
+    // the verb (an optional "your"/"the"), so "reduce the appearance of fine lines" cannot
+    // match: "appearance" is not a target. Tests pin both directions.
+    //
+    // SURFACE-AWARE like drug-property: the one live editorial hit is a question about an
+    // ingredient ("Can coconut oil really reduce stretch marks?"), which is the debunking
+    // frame and stays advisory there.
+    pattern: /\b(?:reduc(?:e|es|ed|ing)|diminish(?:es|ed|ing)?|eliminat(?:e|es|ed|ing)|eras(?:e|es|ed|ing)|remov(?:e|es|ed|ing)|fights?|fighting|minimi[sz](?:e|es|ed|ing)|smooths?\s+away|gets?\s+rid\s+of)\s+(?:your\s+|the\s+)?(?:fine\s+lines|wrinkles|crow'?s[-\s]feet|age\s+spots|stretch\s+marks|scars?|cellulite)\b/i,
   },
   {
     category: 'systemic-absorption',

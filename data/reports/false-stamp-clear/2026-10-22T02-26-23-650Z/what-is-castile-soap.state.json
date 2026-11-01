@@ -1,0 +1,96 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:19:37.737Z",
+    "last_crawled": "2026-10-19T04:42:48Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2969,
+  "generated_at": "2026-04-04T16:56:11.853Z",
+  "brief_path": "/root/seo-claude/data/briefs/what-is-castile-soap.json",
+  "tokens_used": {
+    "input": 9241,
+    "output": 6713
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563424329898,
+  "shopify_handle": "what-is-castile-soap-uses-benefits-ingredients",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-04-22T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/what-is-castile-soap.webp?v=1775321879",
+  "uploaded_at": "2026-04-04T16:58:02.738Z",
+  "legacy_bucket": "winner",
+  "legacy_triage_reason": "Position 10, 165 impressions. Page 1 — auto-locked.",
+  "legacy_locked": true,
+  "legacy_triaged_at": "2026-08-04T04:03:45.519Z",
+  "published_at": "2026-08-05T15:42:50.964Z",
+  "performance_review": {
+    "30d": {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:59:27.457Z",
+      "age_days": 47,
+      "impressions": 95,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 10.68421052631579,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 95 impressions, 0 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21"
+    },
+    "60d": {
+      "milestone": 60,
+      "reviewed_at": "2026-10-05T13:30:05.327Z",
+      "age_days": 60,
+      "impressions": 205,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 12.64390243902439,
+      "projection": 0.8,
+      "verdict": "ON_TRACK",
+      "reason": "expected 0.8 clicks from 205 impressions at position 12.6 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21"
+    }
+  },
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-07T13:30:07.149Z",
+      "age_days": 32,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:54.019Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:42:54.111Z",
+      "age_days": 47,
+      "impressions": 95,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 10.68421052631579,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 95 impressions, 0 clicks over first 30 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:27.359Z",
+      "superseded_by": "basis-change"
+    }
+  ],
+  "last_material_edit": {
+    "at": "2026-10-08T15:10:24.384Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  }
+}

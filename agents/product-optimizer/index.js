@@ -82,6 +82,7 @@ import {
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -415,7 +416,7 @@ async function rewriteProduct(product, keyword, gscData, constraint = '', ingred
   } catch { /* ignore */ }
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 2048,
     messages: [{
       role: 'user',
@@ -474,7 +475,7 @@ async function rewriteCollection(collection, keyword, gscData, constraint = '') 
     : `No GSC data yet for this page — fresh optimization opportunity.`;
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 2048,
     messages: [{
       role: 'user',
@@ -551,7 +552,7 @@ async function rewriteProductMeta(product, topQueries, gscData, ground, constrai
   const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -609,7 +610,7 @@ async function rewritePageMeta(page, topQueries, gscData, constraint = '') {
     .join('\n');
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -670,7 +671,7 @@ async function rewriteProductTitle(product, topQueries, gscData, ground, constra
   const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -1258,7 +1259,7 @@ async function expandFaqMode() {
   // own voice is precisely what FDA intended-use doctrine reads as a drug claim.
   const generateFaq = async (constraint = '') => {
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{
       role: 'user',

@@ -7,6 +7,7 @@ import {
   validateContacts, loadContacts, contactsByDomain, dueFollowUps, eligibleFor,
   recordPitch, setOutcome, normalizeDomain, addDays, lastPitch, splitDomainHits,
   DEFAULT_COOLDOWN_DAYS, PITCHABLE_STATUSES,
+  updatePitch, autoFollowUpsDue, openPitchByAddress, emailOf, PITCH_OUTCOMES,
 } from '../../lib/press-contacts.js';
 
 const FIXTURE = join(dirname(fileURLToPath(import.meta.url)), '..', 'fixtures', 'press-contacts.example.json');
@@ -137,4 +138,89 @@ test('splitDomainHits: a researched-but-unpitched contact is NOT "already pitche
 
 test('only active and unverified contacts can be pitched', () => {
   assert.deepEqual([...PITCHABLE_STATUSES].sort(), ['active', 'unverified']);
+});
+
+// Task 1: Extend the contact book
+
+const H = 3_600_000, D = 24 * H;
+const book = (pitchOver = {}, contactOver = {}) => ({ contacts: [{
+  id: 'jane-doe', name: 'Jane Doe', status: 'active', domains: ['example.com'],
+  channels: [{ type: 'email', address: 'Jane@Example.com', verified: true, source: 'https://example.com/about' }],
+  pitches: [{ date: '2026-10-01', concept: 'intro', outcome: 'sent', message_id: '<a@realskincare.com>',
+    last_sent_at: '2026-10-01T17:00:00Z', follow_ups_sent: 0, ...pitchOver }],
+  ...contactOver,
+}] });
+
+test('new outcomes are valid', () => {
+  assert.ok(PITCH_OUTCOMES.includes('sample-accepted'));
+  assert.ok(PITCH_OUTCOMES.includes('escalated'));
+});
+
+test('validation rejects a malformed new field and accepts a good one', () => {
+  assert.equal(validateContacts(book()).ok, true);
+  assert.equal(validateContacts(book({ follow_ups_sent: 3 })).ok, false);
+  assert.equal(validateContacts(book({ source: 'blast' })).ok, false);
+  assert.equal(validateContacts(book({ link_earned: { url: 'x' } })).ok, false, 'link_earned needs found_at');
+});
+
+test('updatePitch merges onto the latest pitch and re-validates', () => {
+  const next = updatePitch(book(), 'jane-doe', { follow_ups_sent: 1, last_sent_at: '2026-10-06T17:00:00Z' });
+  assert.equal(next.contacts[0].pitches[0].follow_ups_sent, 1);
+  assert.throws(() => updatePitch(book(), 'jane-doe', { outcome: 'nope' }));
+  assert.throws(() => updatePitch(book(), 'nobody', {}));
+});
+
+test('first follow-up is due 5 days after the pitch, second 7 days after the first', () => {
+  const now = Date.parse('2026-10-06T18:00:00Z');
+  assert.deepEqual(autoFollowUpsDue(book().contacts, now).map((r) => r.n), [1]);
+  assert.equal(autoFollowUpsDue(book().contacts, now - D).length, 0, 'day 4: not yet');
+  const after1 = book({ follow_ups_sent: 1, last_sent_at: '2026-10-06T17:00:00Z' }).contacts;
+  assert.equal(autoFollowUpsDue(after1, Date.parse('2026-10-12T18:00:00Z')).length, 0);
+  assert.deepEqual(autoFollowUpsDue(after1, Date.parse('2026-10-13T18:00:00Z')).map((r) => r.n), [2]);
+  const after2 = book({ follow_ups_sent: 2 }).contacts;
+  assert.equal(autoFollowUpsDue(after2, Date.parse('2026-12-01T00:00:00Z')).length, 0, 'never a third');
+});
+
+test('no automatic follow-up without a thread id, a non-sent outcome, or a non-pitchable contact', () => {
+  const now = Date.parse('2026-10-20T18:00:00Z');
+  assert.equal(autoFollowUpsDue(book({ message_id: undefined }).contacts, now).length, 0);
+  assert.equal(autoFollowUpsDue(book({ outcome: 'replied' }).contacts, now).length, 0);
+  assert.equal(autoFollowUpsDue(book({}, { status: 'do_not_contact' }).contacts, now).length, 0);
+});
+
+test('openPitchByAddress keys on the lowercased email of contacts whose latest pitch is open', () => {
+  const m = openPitchByAddress(book().contacts);
+  assert.equal(m.get('jane@example.com').contact.id, 'jane-doe');
+  assert.equal(emailOf(book().contacts[0]), 'jane@example.com');
+  assert.equal(openPitchByAddress(book({ outcome: 'declined' }).contacts).size, 0);
+});
+
+test('tracking_sent_at and checkin_sent_at must be ISO datetimes when present', () => {
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', tracking_sent_at: '2026-10-19T18:00:00.000Z', checkin_sent_at: '2026-11-10T18:00:00Z' })).ok, true);
+  const bad = validateContacts(book({ outcome: 'samples-sent', tracking_sent_at: '2026-10-19', checkin_sent_at: 'soon' }));
+  assert.equal(bad.ok, false);
+  assert.ok(bad.errors.some((e) => /tracking_sent_at must be an ISO datetime/.test(e)));
+  assert.ok(bad.errors.some((e) => /checkin_sent_at must be an ISO datetime/.test(e)));
+});
+
+test('checkin_skipped_at must be an ISO datetime when present', () => {
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: '2026-10-19T18:00:00Z' })).ok, true);
+  assert.equal(validateContacts(book({ outcome: 'samples-sent', checkin_skipped_at: 'never' })).ok, false);
+});
+
+test('I3: a placed pitch is reply-matched only within 120 days of the link (else the last touch)', async () => {
+  const { PLACED_REPLY_WINDOW_DAYS, REPLY_MATCH_OUTCOMES, OPEN_OUTCOMES } = await import('../../lib/press-contacts.js');
+  const now = Date.parse('2026-10-12T12:00:00Z'); const D = 86_400_000;
+  const iso = (ms) => new Date(ms).toISOString();
+  const c = (id, p) => ({ id, name: id, status: 'active', domains: ['example.com'], channels: [{ type: 'email', address: `${id}@example.com` }], pitches: [{ date: '2026-01-01', concept: 'c', outcome: 'placed', ...p }] });
+  const m = openPitchByAddress([
+    c('recent', { link_earned: { url: 'https://example.com/a', found_at: iso(now - 119 * D) } }),
+    c('stale', { link_earned: { url: 'https://example.com/a', found_at: iso(now - 121 * D) } }),
+    c('touch', { last_sent_at: iso(now - 30 * D) }),
+    c('old', { last_sent_at: iso(now - 130 * D) }),
+  ], now);
+  assert.deepEqual([...m.keys()].sort(), ['recent@example.com', 'touch@example.com']);
+  assert.equal(PLACED_REPLY_WINDOW_DAYS, 120);
+  assert.ok(!OPEN_OUTCOMES.includes('placed'), 'placed is not an open conversation');
+  assert.ok(REPLY_MATCH_OUTCOMES.includes('placed'));
 });

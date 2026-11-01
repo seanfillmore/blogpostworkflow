@@ -1,0 +1,292 @@
+{
+  "target_keyword": "natural deodorant vs antiperspirant",
+  "slug": "natural-deodorant-vs-antiperspirant",
+  "search_intent": "informational",
+  "content_depth": "comprehensive",
+  "recommended_title": "Natural Deodorant vs Antiperspirant: Which Is Right for You?",
+  "meta_description": "Natural deodorant vs antiperspirant — what's the real difference? Learn how each works, what ingredients to avoid, and how to make the clean switch confidently.",
+  "target_word_count": 2200,
+  "content_angle": "A science-backed, ingredient-honest comparison that goes beyond surface-level differences — explaining the biology of sweat and odor, the real health debate around aluminum, and how coconut oil-based natural deodorants work — so readers can make a confident, informed choice without fear or confusion.",
+  "key_differentiators": [
+    "Lead with a 40–60 word definitional answer optimized for AI citation extraction — something no current top-10 result does cleanly",
+    "Explain the actual biology of why sweat smells (bacterial interaction, not sweat itself) to build reader trust and differentiate from surface-level competitor coverage",
+    "Cover the aluminum safety debate with cited, balanced scientific context — rather than alarmism or dismissal — positioning Real Skin Care as credible and trustworthy",
+    "Address the natural deodorant transition period honestly and practically, including a day-by-day expectation guide that competitors either skip or undertreat",
+    "Include a dedicated section for specific use-case readers (hyperhidrosis, sensitive skin, men, women) to capture the full semantic keyword cluster organically"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 130,
+      "guidance": "Open with the core definitional answer in 40–60 words — structured for AI extraction: 'Natural deodorant and antiperspirant are not the same thing. Antiperspirants use aluminum-based compounds to block sweat glands and reduce perspiration. Natural deodorants allow sweating but neutralize the bacteria that cause odor, typically using plant-based ingredients like coconut oil, baking soda alternatives, or mineral salts. Neither is universally better — the right choice depends on your body, lifestyle, and ingredient priorities.' Then briefly frame what the post will cover: the science of sweat and odor, ingredient breakdowns, the health debate, and how to find what works for you. Do not use a rhetorical question opener. Do not use hype language.",
+      "keywords_to_include": [
+        "natural deodorant vs antiperspirant",
+        "antiperspirant vs deodorant",
+        "difference between antiperspirant and deodorant",
+        "deodorant vs antiperspirant"
+      ]
+    },
+    {
+      "section": "H2: How Sweat and Body Odor Actually Work",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Explain the biology clearly and accessibly. Key points to cover: (1) The body has two types of sweat glands — eccrine (all over the body, mostly water and salt) and apocrine (concentrated in armpits and groin, producing proteins and lipids). (2) Sweat itself is essentially odorless. (3) Body odor is caused by bacteria on the skin breaking down apocrine sweat compounds into volatile fatty acids and thioalcohols. (4) This is why deodorant targets odor (the bacteria) and antiperspirant targets the sweat itself. Cite a dermatological or scientific source for the bacterial mechanism — for example, a peer-reviewed journal article or the American Academy of Dermatology. This section establishes authority and sets up the comparison logically. Do not use the word 'toxins.' Keep tone educational, not alarmist.",
+      "keywords_to_include": [
+        "body odor deodorant",
+        "deodorant for body odor",
+        "body odor"
+      ]
+    },
+    {
+      "section": "H2: What Is an Antiperspirant — and How Does It Work?",
+      "type": "h2",
+      "word_count_target": 230,
+      "guidance": "Define antiperspirant clearly. Cover: (1) Active ingredient is always an aluminum-based compound (aluminum chlorohydrate, aluminum zirconium tetrachlorohydrex, etc.) — these are classified as OTC drugs by the FDA, not cosmetics. (2) Mechanism: aluminum salts dissolve in sweat and form a temporary gel plug in the eccrine sweat duct, reducing the amount of sweat that reaches the skin surface. (3) Effect: reduces visible wetness and odor by limiting sweat volume. (4) Most conventional deodorant/antiperspirant combos on the market are actually antiperspirants. Mention 'clinical strength' variants for hyperhidrosis briefly. Keep factual and neutral in tone — this is not a scare section. Writer should cite the FDA's OTC drug classification of antiperspirants as a source.",
+      "keywords_to_include": [
+        "antiperspirant deodorant",
+        "best antiperspirant deodorant",
+        "best antiperspirant",
+        "best antiperspirant for men",
+        "deodorant for hyperhidrosis"
+      ]
+    },
+    {
+      "section": "H2: What Is Natural Deodorant — and How Does It Work?",
+      "type": "h2",
+      "word_count_target": 230,
+      "guidance": "Define natural deodorant clearly and distinguish it from antiperspirant. Cover: (1) Natural deodorants do not contain aluminum — they do not stop sweating. (2) They work by neutralizing the bacterial environment in the armpit through antimicrobial or pH-altering ingredients. (3) Common natural active ingredients include coconut oil (antimicrobial properties from lauric acid — cite a published study, e.g., Dayrit 2015 in the Journal of the American Oil Chemists' Society or similar peer-reviewed source), mineral salts (magnesium hydroxide or potassium alum), baking soda, arrowroot powder, and plant-based fragrance. (4) Confirm Real Skin Care's natural deodorant uses coconut oil as a key active ingredient — do NOT attribute baking soda to the formula unless confirmed on the product page. (5) Clarify that 'aluminum-free' and 'natural' are not always synonymous — some aluminum-free deodorants still contain synthetic preservatives or fragrance. Emphasize that Real Skin Care uses clean, minimal ingredients. Internally link to the natural deodorant collection page here.",
+      "keywords_to_include": [
+        "aluminum-free natural deodorant",
+        "native aluminum free deodorant",
+        "aluminum free deodorant for women",
+        "best aluminum free deodorant",
+        "natural deodorant for women"
+      ]
+    },
+    {
+      "section": "H2: The Aluminum Debate — What Does the Science Actually Say?",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "This is the most trust-building section in the post. Do NOT use alarmist language. Present the science fairly: (1) The concern: aluminum compounds in antiperspirants have been studied for potential links to breast cancer and Alzheimer's disease, partly because aluminum is applied near breast tissue and can be absorbed through skin. (2) The current scientific consensus: major health bodies — including the American Cancer Society, the National Cancer Institute, and the Alzheimer's Association — have stated there is insufficient evidence to establish a causal link between antiperspirant use and either breast cancer or Alzheimer's disease. Cite at least one of these organizations directly. (3) The nuance: while population studies haven't confirmed risk, some researchers note that long-term low-level aluminum absorption through damaged or freshly shaved skin is an understudied area. It's reasonable for health-conscious consumers to prefer aluminum-free options as a precautionary choice. (4) The FDA recall angle: briefly mention that there have been FDA recalls of certain conventional deodorant and antiperspirant products for benzene contamination (a known carcinogen), which is a separate but related concern about conventional formulas. Do not sensationalize. This positions the preference for natural deodorant as a reasonable, evidence-informed personal decision rather than fear-based marketing.",
+      "keywords_to_include": [
+        "fda recalls deodorant",
+        "hypoallergenic deodorant",
+        "deodorant for sensitive skin"
+      ]
+    },
+    {
+      "section": "H2: Switching to Natural Deodorant — The Transition Period Explained",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "This section directly addresses the most common reason people give up on natural deodorant. It must be practical and honest. Cover: (1) Why the transition happens: when you stop using antiperspirant, your sweat glands — which may have been partially blocked for years — begin functioning normally again. This can feel like increased sweating initially. Simultaneously, armpit microbiome composition shifts as the bacterial environment adjusts. (2) Realistic timeline: most people experience 2–4 weeks of adjustment. Some experience more odor than usual; some experience more moisture. Frame this as temporary normalization, not failure. (3) Tips to ease the transition: apply natural deodorant to clean, dry skin; reapply midday if needed during the first two weeks; wear breathable fabrics; exfoliate armpits gently 1–2x per week to help remove buildup. (4) Internally link to the 'complete guide to clean pits' blog post at this section. Do not promise that the transition is easy or fast — be honest and supportive.",
+      "keywords_to_include": [
+        "natural deodorant for women",
+        "best deodorant for smelly armpits",
+        "whole body deodorant"
+      ]
+    },
+    {
+      "section": "H2: Who Should Use What — Finding the Right Fit for Your Body",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Use sub-sections or a clear paragraph-per-use-case structure (H3s optional but not required). Cover these reader scenarios without being prescriptive: (1) Heavy sweaters / hyperhidrosis: Acknowledge that for people with clinical hyperhidrosis, natural deodorant alone may not provide sufficient moisture control. Mention that a dermatologist consultation is worthwhile for this group. Note that Real Skin Care's formula can still address odor even for heavy sweaters. Internally link to the deodorant for sensitive skin post here. (2) Sensitive skin: Natural formulas without synthetic fragrance, parabens, or alcohol are often better tolerated. Coconut oil-based formulas tend to be gentle. Link to the sensitive skin deodorant blog post. (3) Women: address concerns about application around breast tissue — this is why many women specifically seek aluminum-free options. Link to best natural deodorant for women post. (4) Men: acknowledge that male body odor intensity can be higher due to higher apocrine gland activity — natural deodorant still works but application consistency matters. Link to best natural deodorant for men post. (5) Kids and teens: briefly note this demographic and link to the kids natural deodorant blog post.",
+      "keywords_to_include": [
+        "deodorant for hyperhidrosis",
+        "best deodorant for men",
+        "best deodorant for women",
+        "deodorant for women",
+        "hypoallergenic deodorant",
+        "deodorant for sensitive skin",
+        "native deodorant for men",
+        "native deodorant for women",
+        "gel deodorant"
+      ]
+    },
+    {
+      "section": "H2: What to Look for in a Natural Deodorant (and What to Avoid)",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Practical ingredient guidance that builds confidence in making the switch. Cover: LOOK FOR — coconut oil (antimicrobial), magnesium hydroxide (odor neutralizer, gentle alternative to baking soda), arrowroot or tapioca starch (moisture absorption), plant-based or essential oil fragrance, shea butter or other skin-conditioning agents. AVOID — aluminum compounds (if seeking aluminum-free), synthetic fragrance (common irritant), propylene glycol, parabens, triclosan. Briefly note that 'natural' on a label is not regulated — readers should look at the actual ingredients list. Do not name competitor brands. Position Real Skin Care as a brand that practices ingredient transparency. Link to 'why use natural deodorants' blog post here. Keep tone empowering, not fear-based.",
+      "keywords_to_include": [
+        "aluminum-free natural deodorant",
+        "best aluminum free deodorant",
+        "native aluminum free deodorant",
+        "best deodorant",
+        "natural deodorant for women"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 240,
+      "guidance": "Include 4–5 concise FAQ items targeting high-volume semantic queries. Each answer should be 40–60 words — optimized for featured snippet and AI extraction. Suggested questions: (1) 'Is natural deodorant the same as antiperspirant?' — No. Natural deodorant neutralizes odor without blocking sweat. Antiperspirant contains aluminum-based compounds that plug sweat ducts to reduce perspiration. They work through completely different mechanisms and serve different primary functions. (2) 'Does natural deodorant actually work?' — Yes, for most people — though it works differently. Rather than stopping sweat, it controls the bacterial activity that causes odor. Results vary based on body chemistry, activity level, and formula. Consistency and a transition period of 2–4 weeks typically lead to good results. (3) 'Is aluminum in antiperspirant dangerous?' — Current evidence from major health organizations does not confirm a causal link between antiperspirant aluminum and breast cancer or Alzheimer's disease. However, some health-conscious consumers prefer to avoid it as a precautionary measure, especially given skin absorption near sensitive areas. (4) 'What is the best natural deodorant for heavy sweating?' — For heavy sweaters, look for a formula with strong antimicrobial ingredients like coconut oil and odor-neutralizing agents like magnesium hydroxide. Managing odor rather than sweat volume is the primary goal with natural options. Severe hyperhidrosis may warrant a dermatologist consultation. (5) 'Can I use natural deodorant on sensitive skin?' — Yes. Natural deodorants without synthetic fragrance, alcohol, or baking soda are generally well-tolerated by sensitive skin. Coconut oil-based formulas are particularly gentle.",
+      "keywords_to_include": [
+        "antiperspirant vs deodorant",
+        "deodorant for hyperhidrosis",
+        "best deodorant for smelly armpits",
+        "deodorant for sensitive skin",
+        "difference between antiperspirant and deodorant",
+        "best natural deodorant",
+        "aluminum free deodorant for women"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 150,
+      "guidance": "Summarize the key takeaways without repeating everything verbatim: natural deodorant and antiperspirant work through fundamentally different mechanisms; neither is universally superior — the right choice depends on body chemistry, lifestyle, and ingredient values; for most people, natural deodorant works well with the right formula and a brief transition period. End with a clear, low-pressure CTA pointing to Real Skin Care's natural deodorant collection. Something like: 'If you're ready to make the switch to a cleaner formula, Real Skin Care's natural deodorant is made with coconut oil and plant-based ingredients — no aluminum, no synthetic fragrance, no compromise.' Include the internal link to the natural deodorant collection page in the CTA. Do not make medical claims. Do not use phrases like 'toxic chemicals' or 'poison your body.'",
+      "keywords_to_include": [
+        "natural deodorant vs antiperspirant",
+        "best deodorant",
+        "aluminum-free natural deodorant",
+        "whole body deodorant"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "natural deodorant vs antiperspirant",
+    "antiperspirant deodorant",
+    "antiperspirant vs deodorant",
+    "deodorant vs antiperspirant",
+    "difference between antiperspirant and deodorant",
+    "aluminum-free natural deodorant",
+    "aluminum free deodorant for women",
+    "best aluminum free deodorant",
+    "native aluminum free deodorant",
+    "deodorant for hyperhidrosis",
+    "best deodorant for men",
+    "best deodorant for women",
+    "best deodorant",
+    "best deodorant for smelly armpits",
+    "body odor deodorant",
+    "deodorant for body odor",
+    "deodorant for women",
+    "deodorant for sensitive skin",
+    "hypoallergenic deodorant",
+    "whole body deodorant",
+    "natural deodorant for women",
+    "gel deodorant",
+    "fda recalls deodorant",
+    "best antiperspirant deodorant",
+    "best antiperspirant",
+    "best antiperspirant for men",
+    "lume deodorant for women",
+    "whole body deodorant"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "natural deodorant collection",
+      "url": "https://www.realskincare.com/collections/natural-deodorant",
+      "placement_guidance": "Place in the 'What Is Natural Deodorant' section when first introducing Real Skin Care's product, and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "complete guide to switching to natural deodorant",
+      "url": "https://www.realskincare.com/blogs/news/natural-deodorant-the-complete-guide-to-clean-pits",
+      "placement_guidance": "Place in the transition period section when advising readers on how to ease the switch."
+    },
+    {
+      "anchor_text": "why use natural deodorants",
+      "url": "https://www.realskincare.com/blogs/news/why-use-natural-deodorants",
+      "placement_guidance": "Place in the 'What to Look for in a Natural Deodorant' section when discussing ingredient transparency and clean formulation."
+    },
+    {
+      "anchor_text": "best natural deodorant for sensitive skin",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-deodorant-for-sensitive-skin-in-2026",
+      "placement_guidance": "Place in the 'Who Should Use What' section under the sensitive skin sub-topic."
+    },
+    {
+      "anchor_text": "best natural deodorant for women",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-deodorant-for-women-clean-picks-that-work",
+      "placement_guidance": "Place in the 'Who Should Use What' section under the women sub-topic."
+    },
+    {
+      "anchor_text": "best natural deodorant for men",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-deodorant-for-men-in-2025-that-works",
+      "placement_guidance": "Place in the 'Who Should Use What' section under the men sub-topic."
+    },
+    {
+      "anchor_text": "best natural deodorant for kids",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-deodorant-for-kids-safe-effective-picks",
+      "placement_guidance": "Place in the 'Who Should Use What' section under the kids and teens sub-topic."
+    },
+    {
+      "anchor_text": "do natural antiperspirants actually work",
+      "url": "https://www.realskincare.com/blogs/news/natural-antiperspirant-what-works-why-it-matters",
+      "placement_guidance": "Place in the aluminum debate section or FAQ as a contextual 'read more' link for readers wanting deeper detail on antiperspirant alternatives."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite at least one peer-reviewed study on the antimicrobial mechanism of lauric acid in coconut oil — use hyperlinked anchor text, not a bare URL (e.g., Dayrit FM, Journal of the American Oil Chemists' Society, 2015 or equivalent).",
+    "Cite the FDA's classification of antiperspirants as OTC drugs — link directly to the FDA's OTC drug page for antiperspirants.",
+    "Cite the American Cancer Society or National Cancer Institute's position on the aluminum-breast cancer link — link directly to the organization's published statement.",
+    "Confirm Real Skin Care's deodorant formula ingredients against the live product page before finalizing the draft — do not attribute baking soda or any ingredient not confirmed in the formula.",
+    "Include a brief author byline or editorial note indicating the post was reviewed for ingredient accuracy — even a single line improves E-E-A-T signals for health-adjacent content.",
+    "Use first-person brand voice sparingly but authentically — e.g., 'At Real Skin Care, we formulate without aluminum because...' to demonstrate real-world product expertise.",
+    "Avoid absolute health claims (e.g., 'aluminum causes cancer') — frame all health-adjacent statements as 'current research suggests' or 'health organizations note' to reflect scientific accuracy."
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "TONE AND VOICE: Calm, honest, and empowering. Real Skin Care speaks to health-conscious adults who are skeptical of both fear-mongering and greenwashing. Do not use alarmist language ('toxic,' 'poison,' 'chemical-laden') — this undermines credibility. Do not over-promise product performance. Acknowledge trade-offs honestly (e.g., natural deodorant doesn't stop sweating). The brand voice is knowledgeable without being clinical, clean without being preachy. STRUCTURE: Use short paragraphs (3–4 sentences max). Use H2 and H3 headings to aid scanability. The FAQ section must use proper schema-compatible markup. CITATIONS: Every factual ingredient or health claim must be backed by a hyperlinked external source — this is a standing editorial requirement. Do not submit the draft without external citations in place. PRODUCT ACCURACY: Before writing the section on how Real Skin Care's deodorant works, verify the full ingredients list on the live product page at realskincare.com/collections/natural-deodorant. The deodorant is coconut oil-based. Do not attribute baking soda to the formula without confirmation. COMPETITOR BRANDS: Do not name any competitor brands in the post — not in comparisons, not as examples, not in passing. RESEARCH NOTES FOR HANDOFF — (1) Top competing pages: theblackstuff.com (~11,000 words, broad coverage but thin on science citations), healthline.com (~7,500 words, medically thorough but not product-forward), wearemakewaves.com (~3,000 words, practical but light on ingredient detail). Our angle is: science-grounded, ingredient-honest, and directly tied to Real Skin Care's coconut oil formula. (2) Key claims needing sourcing: bacterial mechanism of body odor (AAD or peer-reviewed journal), lauric acid antimicrobial properties (Dayrit 2015 or equivalent), FDA OTC drug classification of antiperspirants, ACS or NCI position on aluminum safety. (3) Product CTA: primary CTA should link to realskincare.com/collections/natural-deodorant. Secondary CTAs can link to the women's and men's deodorant blog posts. AI CITATION OPTIMIZATION: The introduction must open with a 40–60 word direct definitional answer structured for AI extraction. This is a brand priority for improving citation presence in AI search results for natural deodorant queries.",
+  "search_volume": 20,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://theblackstuff.com/blogs/news/natural-deodorant-vs-antiperspirant?srsltid=AfmBOoqaQDbHzljpo6aCiFKwECDKsrbXnD6nkYIjyHWx9ItckqFvsZch",
+      "title": "Natural Deodorant vs Antiperspirant: The Great Debate",
+      "domain": "theblackstuff.com",
+      "description": "Sep 7, 2024 — In comparing natural deodorant vs regular antiperspirant, it's clear that there are striking differences. While antiperspirants block sweat, ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://wearemakewaves.com/blogs/news/antiperspirant-vs-deodorant?srsltid=AfmBOooz9zHi6NyNkfuRtfmuUP-h9EpQiOJGRr9zM4wQkrE--sHgz_Yg",
+      "title": "Antiperspirant vs Deodorant: Which Is Right For Me?",
+      "domain": "wearemakewaves.com",
+      "description": "Nov 11, 2024 — Both antiperspirant and deodorant work to keep you smelling fresh, but only antiperspirant is designed to keep your armpits dry and those embarrassing sweat ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.healthline.com/health/deodorant-vs-antiperspirant",
+      "title": "Deodorants vs. Antiperspirants: Health Benefits and Risks",
+      "domain": "www.healthline.com",
+      "description": "Antiperspirants and deodorants work in different ways to reduce body odor. Antiperspirants reduce sweat, and deodorants increase skin acidity."
+    },
+    {
+      "position": 4,
+      "url": "https://nalacare.com/blogs/journal/is-natural-deodorant-the-same-as-antiperspirant?srsltid=AfmBOoqNu2ztjavcl-9jbhnl6r_Vq_xmUk1gzcpmgr6xjyGRrYlAm3am",
+      "title": "Is natural deodorant the same as antiperspirant?",
+      "domain": "nalacare.com",
+      "description": "Antiperspirants aim to halt sweating altogether, while natural deodorants enable sweating while effectively neutralizing the unpleasant odors that may ... Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://www.youtube.com/watch?v=_M4b8-k6lzU",
+      "title": "Battle of the Underarms: Deodorants vs Antiperspirants",
+      "domain": "www.youtube.com",
+      "description": null
+    },
+    {
+      "position": 6,
+      "url": "https://www.feroculture.com/blogs/learnmore/deodorant-vs-antiperspirant?srsltid=AfmBOoq9io9JYGzmDRDnSAvPNMy0dYD-PCYKcHk_drH31Rm4Q-n8ACka",
+      "title": "Deodorant vs Antiperspirant – Which One Is Right for You?",
+      "domain": "www.feroculture.com",
+      "description": "\"Deodorant\" comes from Latin and roughly means \"to remove odor,\" while \"antiperspirant\" means \"against perspiration.\" A deodorant helps neutralize body odor ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.saltoftheearthnatural.com/en/blog/article/antiperspirants-vs-natural-deodorants?srsltid=AfmBOopBRAG6dqB7EcS-lkZcZd2Ymiv9ZfB_SMDsPCHU9BtRL7uqDrRc",
+      "title": "Conventional Antiperspirants vs Natural Deodorants",
+      "domain": "www.saltoftheearthnatural.com",
+      "description": "Jun 25, 2014 — Conventional antiperspirants reduce body odour by using a synthetic ingredient (typically Aluminium Chlorohydrate) to 'plug' the skin's pores, ... Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://shopmando.com/blogs/mando-blog/whats-the-difference-between-deodorant-and-antiperspirant",
+      "title": "WHAT'S THE DIFFERENCE BETWEEN DEODORANT ...",
+      "domain": "shopmando.com",
+      "description": "Aug 1, 2023 — Deodorant masks the stink with a musk & barbecue scent (or whatever you like) while antiperspirants stop you from perspiranting (whatever that means). Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

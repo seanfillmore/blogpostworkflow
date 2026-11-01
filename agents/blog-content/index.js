@@ -123,6 +123,7 @@ async function update(blogId, articleId, filePath) {
 
   console.log(`Updating fields: ${Object.keys(payload).join(', ')}`);
 
+  // edit-gate: not gated — a hand-run `update` push; the operator chose this edit and its timing.
   const updated = await updateArticle(blogId, articleId, payload);
 
   console.log(`\nUpdated: "${updated.title}"`);
@@ -234,6 +235,7 @@ async function fixLinks({ dryRun = false } = {}) {
     totalFixed += remapped + removed;
 
     if (!dryRun) {
+      // edit-gate kind: repair — stripping/remapping broken internal links.
       await updateArticle(entry.blogId, entry.articleId, { body_html: fixedHtml });
       const refreshed = { ...article, body_html: fixedHtml };
       writeFileSync(join(ARTICLES_DIR, `${entry.articleId}.json`), JSON.stringify(refreshed, null, 2));

@@ -34,27 +34,15 @@ export function selectReferencePhotos(dir, max = 4) {
 }
 
 /**
- * @param {{format:object, zones:object, product:object, brandKit:object, mode:'finished'|'plate'}} args
- * @returns {string}
+ * The product half of every render prompt: reference-photo fidelity, the manifest's physical
+ * description, the exact label and badge strings. Exported so agents/ad-concepts builds its
+ * scene prompts around the SAME words, not a second copy that drifts.
+ *
+ * `allowPeople` exists for concept scenes that put a person in frame on purpose. It only
+ * replaces the closing no-people sentence; every fidelity instruction is unchanged.
  */
-export function buildRenderPrompt({ format, zones, product, brandKit, mode, ratio = '' }) {
-  if (mode !== 'finished' && mode !== 'plate') throw new Error(`unknown mode: ${mode}`);
-
-  // Template literals stringify undefined rather than failing, so a format missing its
-  // brief would ship the word "undefined" to a paid image call and render whatever the
-  // model made of it. formats.js validates the real table at load; this catches a caller
-  // that hand-builds a format object.
-  const briefField = mode === 'plate' ? 'plateBrief' : 'layoutBrief';
-  // resolvePlateBrief SUBSTITUTES the format's own ground colour into the brief. Every studio
-  // format used to hardcode the same warm sand, so a three-format set came back as three
-  // photographs of one thing — see PLATE_GROUND_DEFAULT. A format with no plateGround resolves
-  // to exactly the string it always was.
-  const brief = (mode === 'plate' ? resolvePlateBrief(format) : String(format?.[briefField] || '')).trim();
-  if (!brief) throw new Error(`ad-studio: format "${format?.key}" has no ${briefField}`);
-
-  const palette = (brandKit?.palette_hexes || []).join(', ');
+export function buildProductFidelityBlock(product, { allowPeople = false } = {}) {
   const labels = (product.labelStrings || []).map(s => `  - "${s}"`).join('\n');
-
   // The manifest's prose description of the physical product. Naming what the label SAYS
   // without describing what the bottle IS is how a live frame came back squat and wide,
   // with a short disc cap and no black accent bar, while spelling every string correctly
@@ -138,6 +126,35 @@ ${badgeBlock}Apart from the strings listed above (including the badge), render N
 product. Never render any other volume, size or count on the product.
 The product must be generated as part of the scene, lit and shadowed to match it, resting
 naturally on the surface. Do not paste it in flat. No human hands or faces.`;
+  if (!allowPeople) return fidelity;
+  return fidelity.replace(
+    /No human hands or faces\.$/,
+    "People may appear where the scene describes them, but never touching, covering or obscuring the product's label.",
+  );
+}
+
+/**
+ * @param {{format:object, zones:object, product:object, brandKit:object, mode:'finished'|'plate'}} args
+ * @returns {string}
+ */
+export function buildRenderPrompt({ format, zones, product, brandKit, mode, ratio = '' }) {
+  if (mode !== 'finished' && mode !== 'plate') throw new Error(`unknown mode: ${mode}`);
+
+  // Template literals stringify undefined rather than failing, so a format missing its
+  // brief would ship the word "undefined" to a paid image call and render whatever the
+  // model made of it. formats.js validates the real table at load; this catches a caller
+  // that hand-builds a format object.
+  const briefField = mode === 'plate' ? 'plateBrief' : 'layoutBrief';
+  // resolvePlateBrief SUBSTITUTES the format's own ground colour into the brief. Every studio
+  // format used to hardcode the same warm sand, so a three-format set came back as three
+  // photographs of one thing — see PLATE_GROUND_DEFAULT. A format with no plateGround resolves
+  // to exactly the string it always was.
+  const brief = (mode === 'plate' ? resolvePlateBrief(format) : String(format?.[briefField] || '')).trim();
+  if (!brief) throw new Error(`ad-studio: format "${format?.key}" has no ${briefField}`);
+
+  const palette = (brandKit?.palette_hexes || []).join(', ');
+
+  const fidelity = buildProductFidelityBlock(product);
 
   const brand = `Brand palette: ${palette}. Premium natural personal-care; clean grocery-modern,
 not clinical, not crunchy. Bold geometric sans headlines.`;

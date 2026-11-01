@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-08-23T15:59:47.648Z",
+  "mode": "apply",
+  "backup_dir": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z",
+  "planned": 8,
+  "written": 0,
+  "already_applied": 8,
+  "drifted": 0,
+  "errors": 0,
+  "results": [
+    {
+      "slug": "best-soap-for-tattoos-what-to-use-for-safe-healing-2",
+      "field": "summary_html",
+      "articleId": 563512344746,
+      "why": "The subject is \"the best soap for tattoos\" — this catalogue's product — and \"supports real healing\" is the exact 2026-08-22 incident string. The title and description_tag on this page were already fixed by hand; the excerpt was missed and still renders at the top of the live article and on the blog listing. Replacement clause is the operator's own wording from the description_tag they wrote.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/best-soap-for-tattoos-what-to-use-for-safe-healing-2.summary_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "best-fragrance-free-body-lotion-2025",
+      "field": "summary_html",
+      "articleId": 562333909162,
+      "why": "A lotion that \"should actually heal\" is a therapeutic claim with the product as subject. \"Soothe\" is ordinary cosmetic performance language and is on health-claims.js's explicitly-allowed list.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/best-fragrance-free-body-lotion-2025.summary_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "how-to-choose-the-right-body-cream",
+      "field": "summary_html",
+      "articleId": 559784296618,
+      "why": "\"Treating and preventing\" are therapeutic verbs taking the product as their subject — intended-use language. \"Easing the look and feel of\" says the same useful thing about appearance instead.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/how-to-choose-the-right-body-cream.summary_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "how-to-choose-the-right-body-cream",
+      "field": "description_tag",
+      "articleId": 559784296618,
+      "why": "This one RENDERS as the live SERP meta description (verified by fetching the page). \"Prevent\" is a therapeutic verb; \"keep your skin from feeling dry\" is the same promise about feel, not prevention.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/how-to-choose-the-right-body-cream.description_tag.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "why-should-you-use-moisturizers-everday",
+      "field": "summary_html",
+      "articleId": 559549874346,
+      "why": "The worst of the set: \"used medically\" plus two named diseases (eczema, psoriasis) on the brand's own moisturizer content is textbook unapproved-drug intended use. Nothing survives rewording, so the sentence is replaced with the honest version of the same \"more than you think\" thrust.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/why-should-you-use-moisturizers-everday.summary_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "incorporating-vanilla-skin-care-into-your-beauty-regimen",
+      "field": "summary_html",
+      "articleId": 559636119722,
+      "why": "\"Medicinal properties that can help with skin problems\" is a drug-category claim about an ingredient this brand sells. One clause changes; the rest of the excerpt is untouched.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/incorporating-vanilla-skin-care-into-your-beauty-regimen.summary_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "soothing-lip-balm-best-natural-picks-for-dry-lips",
+      "field": "body_html",
+      "articleId": 563829407914,
+      "why": "An <h2> inside the product CTA block, directly above \"Real Skin Care's Coconut Oil Lip Balm\" and an Add to Cart button. The subject is unambiguously the product and it sits in the conversion path — the same shape as the 2026-08-22 incident. Highest-severity find of this scan.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/soothing-lip-balm-best-natural-picks-for-dry-lips.body_html.txt",
+      "action": "already-applied"
+    },
+    {
+      "slug": "best-moisturizer-for-dry-hands-natural-options-that-work",
+      "field": "body_html",
+      "articleId": 563825574058,
+      "why": "The same string twice: the visible product-CTA <h2> above a buy button, and a mirrored JSON-LD FAQPage question whose answer promotes the moisturizer. Both are marketing material; replacing the literal string fixes them together and keeps the schema in sync with the page.",
+      "backup": "data/reports/health-claim-remediation/backups/2026-08-23T15-59-45-887Z/best-moisturizer-for-dry-hands-natural-options-that-work.body_html.txt",
+      "action": "already-applied"
+    }
+  ]
+}

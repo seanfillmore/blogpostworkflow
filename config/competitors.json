@@ -3,5 +3,7 @@
   { "name": "Native", "domain": "nativecos.com", "feed": "https://www.nativecos.com/blogs/news.atom" },
   { "name": "Schmidt's Naturals", "domain": "schmidtsnaturals.com", "feed": "https://schmidtsnaturals.com/blogs/news.atom" },
   { "name": "Captain Blankenship", "domain": "captainblankenship.com", "feed": "https://captainblankenship.com/blogs/news.atom" },
-  { "name": "Weleda", "domain": "weleda.com", "feed": "https://www.weleda.com/blog/feed" }
+  { "name": "Weleda", "domain": "weleda.com", "feed": "https://www.weleda.com/blog/feed" },
+  { "name": "Moon Valley Organics", "domain": "moonvalleyorganics.com", "feed": "https://moonvalleyorganics.com/blogs/news.atom" },
+  { "name": "Bubble & Bee Organic", "domain": "bubbleandbee.com", "feed": "https://www.bubbleandbee.com/rss.php?action=newblogs&type=rss" }
 ]

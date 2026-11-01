@@ -1,0 +1,302 @@
+{
+  "target_keyword": "handcrafted soap",
+  "slug": "handcrafted-soap",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Handcrafted Soap: What It Is & Why It's Better",
+  "meta_description": "Discover what makes handcrafted soap better for your skin than mass-produced bars. Shop Real Skin Care's natural, coconut oil-based handcrafted soaps today.",
+  "target_word_count": 2200,
+  "content_angle": "This post serves as a definitive MOF guide that educates shoppers on what genuine handcrafted soap is, what ingredients and processes separate it from commercial bars, and then clearly positions Real Skin Care's natural soap lineup as the best-formulated, cleanest option available — moving readers from curiosity to confident purchase.",
+  "funnel_stage": "MOF",
+  "content_format_directive": "MOF = comparison + informational. Post must combine ingredient education with a product comparison table that positions RSC natural bar soaps as the superior choice based on formulation, avoided ingredients, and coconut oil base.",
+  "key_differentiators": [
+    "Goes beyond a product listing page — unlike all top-ranking competitors which are pure ecommerce collection pages with minimal editorial content, this post delivers substantive educational depth about soap-making methods, ingredient quality, and skin benefits that earns trust before asking for the sale.",
+    "Includes a clear ingredient transparency comparison table contrasting typical commercial soap bars (synthetic detergents, artificial fragrance, parabens, sulfates) against Real Skin Care's handcrafted natural bars, making RSC the obvious winner without naming competitor brands.",
+    "Covers the full spectrum of handcrafted soap types — cold process, goat milk, castile, tallow, turmeric, unscented — so the post captures the entire semantic cluster in one authoritative resource.",
+    "Speaks directly to seasonal gifting intent (November peak, December secondary peak) by weaving in gift-set and bulk-purchase language that matches holiday search behavior.",
+    "Integrates internal links to RSC's coconut soap, natural bar soap, vegan soap, and men's soap collections in contextually relevant moments, creating a conversion pathway from educational content to product page."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable moment: the reader picks up a soap bar at a farmers market or artisan shop and wonders what makes it different from the bar sitting in their shower right now. Briefly acknowledge that the word 'handcrafted' gets thrown around a lot, but there are real, measurable differences in how the soap is made, what goes into it, and what it does to skin. Promise the reader they'll leave knowing exactly what to look for, what to avoid, and which handcrafted soaps are worth their money. Naturally work in 'handcrafted soap,' 'natural soap,' and 'handmade soap' in the first 100 words. Do not use a generic 'In today's world' opener.",
+      "keywords_to_include": [
+        "handcrafted soap",
+        "natural soap",
+        "handmade soap",
+        "natural soap bar"
+      ]
+    },
+    {
+      "section": "H2: What Is Handcrafted Soap, Really?",
+      "type": "h2",
+      "word_count_target": 230,
+      "guidance": "Define handcrafted soap in plain language: soap made in small batches by hand, typically using the cold process or hot process method, with whole food-grade oils, butters, and botanicals rather than synthetic detergents. Distinguish it from 'soap' sold at mass-market retailers, which is often technically classified as a synthetic detergent bar — explain that many commercial bars strip glycerin out of the final product (glycerin is a natural byproduct of saponification that handcrafted makers leave in because it moisturizes skin). Note that terms like 'homemade soap,' 'artisan soap,' and 'handmade soap bars' are largely interchangeable with handcrafted soap. Keep tone educational and warm, not condescending.",
+      "keywords_to_include": [
+        "handmade soap",
+        "homemade soap",
+        "soap making",
+        "natural handmade bar soap",
+        "handmade bar soap"
+      ]
+    },
+    {
+      "section": "H2: How Handcrafted Soap Is Made — Cold Process vs. Hot Process",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Walk through the two dominant handcrafted soap-making methods. Cold process: oils and lye (sodium hydroxide) are combined at room temperature, poured into molds, and cured for 4–6 weeks — this produces a gentle, glycerin-rich bar that retains more of the skin-benefiting properties of the base oils. Hot process: similar but heat is applied (slow cooker or oven) to speed saponification; produces a more rustic bar, slightly shorter cure time, but can be less smooth. Briefly mention milled soap (rebatching) as a third method. Reassure readers that no lye remains in finished cold or hot process soap — lye is a processing agent that is fully consumed during saponification. This section should feel like a knowledgeable friend explaining something, not a chemistry lecture.",
+      "keywords_to_include": [
+        "soap making",
+        "homemade soap",
+        "handmade natural soap bars",
+        "organic bar soap"
+      ]
+    },
+    {
+      "section": "H2: Key Ingredients That Define a High-Quality Handcrafted Soap",
+      "type": "h2",
+      "word_count_target": 320,
+      "guidance": "This is the core ingredient education section — it directly supports the comparison table that follows. Cover the most important base oils and what each contributes to the bar: coconut oil (cleansing power, lather, hardness), olive oil/castile (mild, moisturizing, good for sensitive skin — use this as the anchor for a brief explainer of castile soap as an olive-oil-dominant formula), shea butter (rich, conditioning, locks in moisture), and tallow (traditional, highly skin-compatible, rich in vitamins A/D/K — note it's not vegan). Then briefly cover popular additive ingredients: goat milk (lactic acid, gentle exfoliation, extra creaminess), turmeric (antioxidant, brightening, popular for uneven skin tone — use 'turmeric soap bar' naturally here), and botanical herbs/essential oils vs. synthetic fragrance. End the section by noting what a quality bar should NOT include: sulfates, parabens, artificial dyes, synthetic preservatives. This sets up the comparison table perfectly.",
+      "keywords_to_include": [
+        "castile soap",
+        "goat milk soap",
+        "turmeric soap",
+        "tallow soap",
+        "unscented soap",
+        "organic castile soap",
+        "turmeric soap bar",
+        "natural handmade bar soap"
+      ]
+    },
+    {
+      "section": "H2: Handcrafted Soap vs. Commercial Soap — What You're Actually Comparing",
+      "type": "h2",
+      "word_count_target": 350,
+      "guidance": "This is the MOF comparison section. Lead with a short paragraph explaining that most people don't realize standard drugstore soap bars are often legally classified as 'beauty bars' or 'cleansing bars' — not soap — because they're formulated with synthetic surfactants rather than saponified oils. Then introduce the comparison table. TABLE SPEC: The table should compare across these rows: (1) Base formula, (2) Glycerin retained, (3) Synthetic surfactants, (4) Artificial fragrance, (5) Parabens/preservatives, (6) Batch size, (7) Cure time. Columns should be: 'Typical Commercial Bar' | 'Generic Handcrafted Soap' | 'Real Skin Care Natural Bar Soap'. Position RSC as the winner on every row — particularly highlight: coconut oil base, glycerin retained, no synthetic surfactants, no artificial fragrance, no parabens, small batch, properly cured. Do not name any specific commercial brands. After the table, write 2–3 sentences summarizing why the RSC bar wins and linking to the natural bar soap collection. RSC product to position as winner: coconut soap / natural bar soap collection.",
+      "keywords_to_include": [
+        "handmade natural soap bar",
+        "natural soap",
+        "organic bar soap",
+        "handcrafted soap",
+        "homemade natural bar soap"
+      ]
+    },
+    {
+      "section": "H2: Popular Types of Handcrafted Soap and Who They're Best For",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Create a scannable subsection rundown (can use H3s for each type or a bold-lead paragraph format) covering: (1) Castile soap bars — best for sensitive skin, babies, minimalist routines; (2) Goat milk soap — best for dry, irritated, or eczema-prone skin; (3) Turmeric soap — best for brightening and targeting uneven skin tone; (4) Unscented soap — best for fragrance-sensitive individuals, allergy-prone skin; (5) Coconut oil soap — best all-rounder: great lather, deeply cleansing, still gentle; (6) Men's natural soap — briefly note that handcrafted soap works for everyone but certain formulas (charcoal, cedar, eucalyptus) skew toward men's grooming needs. For each type, keep it to 2–3 sentences. This section is designed to capture the broad semantic cluster and help readers self-select into a product category.",
+      "keywords_to_include": [
+        "castile soap",
+        "goat milk soap",
+        "turmeric soap",
+        "unscented soap",
+        "handmade bar soap",
+        "natural soap",
+        "homemade organic soap bars"
+      ]
+    },
+    {
+      "section": "H2: How to Choose the Best Handcrafted Soap for Your Skin Type",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Give readers a practical decision framework. Dry skin: look for olive oil, shea butter, goat milk bases; avoid high-coconut-oil-only formulas (coconut is great but very cleansing — best when balanced). Oily/acne-prone skin: activated charcoal, tea tree, clay, or turmeric formulations. Sensitive skin: unscented, minimal-ingredient bars, castile or goat milk bases. Normal skin: coconut oil bars, essential-oil-scented bars, sea salt bars all work well. Men: charcoal, eucalyptus, cedarwood. Gift buyers (tie into holiday peak): gift sets or bulk handcrafted bars in popular scents like citrus, vanilla, lavender. End with a brief note encouraging readers to check the ingredient list before buying and to look for makers who list every ingredient — including the lye source — transparently.",
+      "keywords_to_include": [
+        "handcrafted soap",
+        "natural soap bar",
+        "homemade natural soap bars",
+        "handmade natural bar soap",
+        "organic bar soap"
+      ]
+    },
+    {
+      "section": "H2: Real Skin Care's Handcrafted Natural Soaps",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "This is the soft sell section — keep it editorial, not pushy. Introduce Real Skin Care's philosophy: small-batch, coconut oil-based, free of synthetic additives, made for people who want clean personal care they can trust. Mention the coconut soap as a flagship example — describe its coconut oil base, what it does for skin (rich lather, cleansing without stripping), and who it's perfect for. Then point readers to the full natural bar soap collection and the vegan soap collection. Also note the men's natural soap line briefly. Include a clear, natural CTA: 'If you're ready to make the switch to genuinely handcrafted natural soap, explore the full Real Skin Care natural bar soap collection.' Place internal links here to coconut soap product page, natural bar soap collection, and vegan soap collection.",
+      "keywords_to_include": [
+        "handcrafted soap",
+        "natural soap",
+        "handmade bar soap",
+        "vegan soap",
+        "coconut soap"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions About Handcrafted Soap",
+      "type": "faq",
+      "word_count_target": 220,
+      "guidance": "Include 4 FAQ items formatted as H3 questions with concise answers (3–5 sentences each). Questions: (1) 'Is handcrafted soap better for your skin than store-bought?' — Yes, explain glycerin retention and no synthetic surfactants. (2) 'Does handcrafted soap last as long as commercial bars?' — With proper storage (a draining soap dish, kept dry between uses) a well-cured bar lasts just as long or longer. (3) 'What is the difference between handcrafted soap and castile soap?' — Castile is a specific type of handcrafted soap made predominantly with olive oil; not all handcrafted soaps are castile. (4) 'Is handcrafted soap safe for sensitive skin?' — Generally yes, especially unscented or goat milk formulas, but always check the ingredient list. These FAQs are designed to capture featured snippet and People Also Ask real estate.",
+      "keywords_to_include": [
+        "handcrafted soap",
+        "castile soap",
+        "handmade soap",
+        "natural soap",
+        "unscented soap",
+        "goat milk soap",
+        "homemade soap"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 120,
+      "guidance": "Bring it home with a brief, confident wrap-up. Reinforce the core idea: handcrafted soap isn't a trend — it's a return to the way soap was always supposed to be made, with real ingredients, honest processes, and skin that actually feels better for it. Give one final CTA pointing to the natural bar soap collection or the coconut soap product page. Keep tone warm and direct — like a knowledgeable friend giving a final recommendation, not a salesperson closing a pitch.",
+      "keywords_to_include": [
+        "handcrafted soap",
+        "natural soap",
+        "handmade natural soap bars"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "handcrafted soap",
+    "handmade soap",
+    "natural soap",
+    "natural soap bar",
+    "homemade soap",
+    "soap making",
+    "castile soap",
+    "what is castile soap",
+    "organic castile soap",
+    "goat milk soap",
+    "turmeric soap",
+    "turmeric soap bar",
+    "tallow soap",
+    "unscented soap",
+    "organic bar soap",
+    "handmade bar soap",
+    "handmade natural soap bars",
+    "homemade organic soap bars",
+    "homemade natural soap bars",
+    "natural homemade soap bars",
+    "handmade natural bar soap",
+    "natural handmade bar soap",
+    "handmade natural natural bar soap",
+    "homemade natural soap bar",
+    "homemade natural bar soap",
+    "handmade natural soap bar",
+    "natural handmade soap bars",
+    "cold process soap",
+    "small batch soap",
+    "artisan soap",
+    "coconut oil soap",
+    "vegan soap bar",
+    "men's natural soap",
+    "natural bar soap",
+    "glycerin soap",
+    "botanical soap",
+    "essential oil soap",
+    "sulfate-free soap",
+    "paraben-free soap",
+    "clean ingredients soap",
+    "handcrafted natural soap"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut soap",
+      "url": "https://www.realskincare.com/products/coconut-soap",
+      "placement_guidance": "Link in the 'Key Ingredients' section when discussing coconut oil as a base, and again in the 'Real Skin Care's Handcrafted Natural Soaps' section when describing the flagship product."
+    },
+    {
+      "anchor_text": "natural bar soap collection",
+      "url": "https://www.realskincare.com/collections/natural-bar-soap",
+      "placement_guidance": "Link at the end of the comparison table section and again in the conclusion CTA. This is the primary conversion destination."
+    },
+    {
+      "anchor_text": "vegan soap",
+      "url": "https://www.realskincare.com/collections/vegan-soap",
+      "placement_guidance": "Link in the 'Real Skin Care's Handcrafted Natural Soaps' section when mentioning vegan-friendly formulas, and optionally in the 'Popular Types' section when discussing plant-based soap options."
+    },
+    {
+      "anchor_text": "men's natural soap",
+      "url": "https://www.realskincare.com/collections/mens-natural-soap",
+      "placement_guidance": "Link in the 'Popular Types of Handcrafted Soap' section when discussing soaps that appeal to men's grooming needs, and in the 'How to Choose' section under the men's skin type guidance."
+    },
+    {
+      "anchor_text": "foaming hand soap",
+      "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+      "placement_guidance": "Link naturally in the introduction or conclusion as a related clean-soap option for readers who prefer liquid formats — frame it as 'if you prefer a liquid handcrafted formula, explore our foaming hand soap line.'"
+    },
+    {
+      "anchor_text": "organic foaming hand soap",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "placement_guidance": "Optional secondary link in the conclusion or in the 'How to Choose' section as an alternative format for readers who prefer pump dispensers over bar soap."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Briefly note in the introduction or author bio that Real Skin Care formulates its soaps with food-grade, traceable ingredients — this establishes brand credibility without sounding corporate.",
+    "Accurately explain the saponification process (lye + oils = soap + glycerin) and clarify that no lye remains in finished soap — this is a common reader concern and addressing it correctly demonstrates real formulation knowledge.",
+    "Distinguish between true soap (saponified oils) and synthetic detergent bars using the FDA's classification distinction — this is factual, authoritative, and builds trust.",
+    "Include a note on proper soap curing — explain that quality handcrafted bars are cured 4–6 weeks before sale, which hardens the bar and ensures complete saponification — this signals hands-on production knowledge.",
+    "Avoid vague claims like 'all-natural is always better' — instead make specific, ingredient-level arguments (retained glycerin, avoided sulfates, etc.) that are verifiable and science-backed.",
+    "If the brand has any certifications (organic, cruelty-free, vegan) relevant to the soap line, reference them in the RSC product section to add third-party credibility.",
+    "Structure FAQs to directly answer the most common consumer doubts (lye safety, bar longevity, sensitive skin compatibility) — this demonstrates the brand understands its customers' real concerns."
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "FUNNEL STAGE: MOF (Middle of Funnel). This post is for a reader who already knows they want natural or handcrafted soap — they're comparing options and evaluating quality. The job of this post is to educate them on what quality looks like, show them that Real Skin Care meets every standard, and move them to the natural bar soap collection page or coconut soap product page. TONE: Warm, knowledgeable, direct. Write like a well-informed friend who works in skincare — not a scientist, not a salesperson. Use 'you' freely. Short paragraphs (2–4 sentences max). Vary sentence length. SEASONALITY NOTE: The keyword peaks hard in November (33,100 searches) and December (18,100). While this post is evergreen, include at least one natural reference to handcrafted soap as a thoughtful gift option — this captures holiday-intent readers without making the whole post feel seasonal. COMPARISON TABLE: The table in the 'Handcrafted Soap vs. Commercial Soap' section is mandatory. Follow the spec in the outline exactly. Do not name any commercial soap brands — refer to them generically as 'typical commercial bar' or 'mass-produced bar.' RSC must win every row. DO NOT: write a listicle of 'the best handcrafted soap brands,' name any competitor soap brands anywhere in the post, include a brand comparison section, or write a how-to DIY soap-making tutorial (that is a different keyword and content type — this post is commercial, not a craft guide). DO NOT pad the post to hit word count — every paragraph must earn its place. FORMAT: Use H2s and H3s as specified in the outline. Bold key terms on first use (e.g., cold process, saponification, castile soap). The comparison table should be a proper HTML/markdown table. FAQs should use H3 for each question. BRAND VOICE: Real Skin Care is confident but never arrogant, clean but not clinical, natural but not crunchy-preachy. The brand believes in transparency, simple ingredients, and real results.",
+  "search_volume": 6600,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://mionartisansoap.com/collections/artisan-soaps?srsltid=AfmBOortSoCcmxaK5Z-X7t1PyVewjVyP4dOB4O9THStN_iU2zkh956OW",
+      "title": "Hand Crafted Artisan Soaps",
+      "domain": "mionartisansoap.com",
+      "description": "Artisan soaps made with natural ingredients including essential oils, butters and herbs. Products are free of chemicals, parabens and preservatives."
+    },
+    {
+      "position": 2,
+      "url": "https://www.naturalhandcraftedsoap.com/?srsltid=AfmBOoq99qswDIbT7VFlifjOZDekJhgf75AcH4EVIlF8nL20Xvyn_Vwr",
+      "title": "Grandma's Natural Handcrafted Soap- Handmade Cold ...",
+      "domain": "www.naturalhandcraftedsoap.com",
+      "description": "Natural, handcrafted soaps using organic, handmade olive oil from a family farm in Greece. Small-batch artisan care for smooth, nourished skin."
+    },
+    {
+      "position": 3,
+      "url": "https://www.royaltysoaps.com/collections/artisan-soaps?srsltid=AfmBOooqpPcTU8Awd3qPM3FcGcJ3XQZIuj7plHmJObckoHhxcoESdq44",
+      "title": "Handmade Artisan Soaps",
+      "domain": "www.royaltysoaps.com",
+      "description": "Our mission is pretty simple. We love people through bath + body goodies and want to share the art of soap making with the world. Instagram · YouTube · TikTok ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://littleflowersoap.com/collections/all-soaps?srsltid=AfmBOorVdaT2_rtOMw1Trf6waLU2QyCb9LoAAU-0CL3JZ2QiF5unwhq_",
+      "title": "Handmade Soap",
+      "domain": "littleflowersoap.com",
+      "description": "Shop handmade soap infused with essential oils in fresh, natural scents. Choose bar soaps, gift sets, liquid soaps, lotions, and wood soap dishes."
+    },
+    {
+      "position": 5,
+      "url": "https://thesoapguy.com/",
+      "title": "The Soap Guy: Wholesale Handmade Soap $1.39, Bulk ...",
+      "domain": "thesoapguy.com",
+      "description": "America's wholesale handmade soap source. 300+ fragrances, bulk soap bars, bath bombs, body butter & private label options. Ships from Indiana."
+    },
+    {
+      "position": 6,
+      "url": "https://www.naturalhandcraftedsoapcompany.com/?srsltid=AfmBOopgXKDjnRzJqBeY-qCW4RlFUB3AaNjQXtgSNljkKsuDHWS2FHMm",
+      "title": "Grandma's Natural Soap Handmade Artisan Handcrafted All ...",
+      "domain": "www.naturalhandcraftedsoapcompany.com",
+      "description": "Natural Handcrafted Soap is made in small batches using the traditional cold-process method, with natural, organic, wild‑harvested, and sustainable ingredients ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.youtube.com/watch?v=1KkCLRsOcLg",
+      "title": "Handmade Soap Making ~ Cold Process Soap ~ Homemade ...",
+      "domain": "www.youtube.com",
+      "description": "The basics of cold process soap making ~ homemade soap ~ diy soap rack ~ natural handmade soap."
+    },
+    {
+      "position": 8,
+      "url": "https://www.amazon.com/stores/page/534BC8F8-2899-413D-BA68-230B51699086",
+      "title": "Natural Handcrafted Soap Company: Floral Scent",
+      "domain": "www.amazon.com",
+      "description": "All Natural Aged Soap Bar French Jasmine Lilac with Organic Shea Butter 15 Oz - Handcrafted Chemical-Free Skin Cleaning Soap. Image of Natural Handcrafted ... Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

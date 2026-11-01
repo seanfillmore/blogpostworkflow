@@ -1,0 +1,296 @@
+{
+  "target_keyword": "toothpaste without titanium dioxide",
+  "slug": "toothpaste-without-titanium-dioxide",
+  "search_intent": "informational",
+  "content_type": "guide",
+  "content_depth": "standard",
+  "recommended_title": "Toothpaste Without Titanium Dioxide: What It Is & How to Pick",
+  "meta_description": "Looking for toothpaste without titanium dioxide? Learn what TiO2 does, how to spot it on labels, and shop clean, SLS-free natural toothpaste formulas.",
+  "target_word_count": 1600,
+  "content_angle": "A calm, evidence-graded explainer that separates what is actually known about titanium dioxide in toothpaste from social-media alarm. It gives readers a practical label-reading method and a clear path to clean, naturally formulated options. Competing results are a product page, forum threads, social reels and a Q&A post, and none of them cites primary sources.",
+  "key_differentiators": [
+    "Cite primary sources (EFSA, IARC, peer-reviewed nanoparticle research) and label each claim's evidence strength as strong, mixed or weak. No top-ranking result does this.",
+    "Give a step-by-step label-reading method: how to find TiO2 in the 'inactive ingredients' list under its aliases (CI 77891, titanium dioxide, TiO2, 'white pigment'). Forum and social results only gesture at this.",
+    "Be honest about the regulatory split: TiO2 was banned as a food additive in the EU but is not banned in toothpaste. State plainly that the evidence on oral-care exposure is limited, so readers aren't misled or scared.",
+    "Explain why TiO2 is in toothpaste (opacifier and whitener, purely cosmetic, no cleaning or cavity benefit) and what natural formulas use instead, so the page serves both the curious and the ready-to-switch reader.",
+    "Handle the fluoride question with integrity: note that titanium dioxide-free and fluoride-free are separate choices, and give balanced, sourced guidance on the fluoride decision."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 120,
+      "guidance": "Open by answering the query directly: yes, toothpaste without titanium dioxide is easy to find once you know how to read the label, and many natural formulas skip it. Acknowledge that readers are often prompted by a social post or a pasted ingredient list. Promise three things: what TiO2 is doing in toothpaste, what the evidence does and doesn't say, and how to choose a clean alternative. Keep the tone reassuring, not alarmist.",
+      "keywords_to_include": [
+        "toothpaste without titanium dioxide",
+        "titanium dioxide in toothpaste",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: What Is Titanium Dioxide, and Why Is It in Toothpaste?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Define TiO2 as a mineral-derived white pigment used as an opacifier. Explain it makes paste look bright white and uniform, and that it is cosmetic: it does not clean teeth, prevent cavities or whiten enamel on its own. Explain briefly the micro versus nano particle size distinction, which drives most of the debate. Note that it can appear as CI 77891. Cite the Weir et al. 2012 Environmental Science & Technology paper on TiO2 nanoparticles in food and personal care products as the exposure/background source.",
+      "keywords_to_include": [
+        "titanium dioxide in toothpaste",
+        "what is titanium dioxide",
+        "white pigment",
+        "artificial colors"
+      ]
+    },
+    {
+      "section": "H2: Is Titanium Dioxide in Toothpaste Safe? What the Evidence Says",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Use an evidence-graded format. (1) EFSA's 2021 opinion concluded TiO2 could no longer be considered safe as a food additive (E171) because genotoxicity concerns could not be ruled out, leading to the EU food ban. Evidence strength: strong for the regulatory conclusion, but it concerns ingested food additives. (2) IARC classifies TiO2 as Group 2B (possibly carcinogenic to humans) based on inhalation of dust, not oral care use. Evidence: relevant to inhalation only. (3) Toothpaste is spat out, so oral and swallowed exposure is lower; direct evidence on harm from toothpaste TiO2 is limited. Mark this as weak or mixed. State clearly that toothpaste is not banned and that no authority has concluded toothpaste TiO2 harms users. Present avoiding it as a reasonable precautionary preference, not a medical necessity. Before publishing, check the current U.S. FDA position on TiO2 as a color additive and state it with a date.",
+      "keywords_to_include": [
+        "is titanium dioxide safe",
+        "nano titanium dioxide",
+        "titanium dioxide free",
+        "non toxic"
+      ]
+    },
+    {
+      "section": "H2: How to Spot Titanium Dioxide on a Toothpaste Label",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Give a short numbered or bulleted method. Check 'Inactive Ingredients' (US drug-facts format) or the INCI list. Look for 'titanium dioxide', 'CI 77891' and 'TiO2'. Note that 'whitening' or 'bright white' pastes and sparkly or colored pastes often contain it. Tell readers that a 'natural' claim on the front does not guarantee absence, so always check the back. Mention that a few other common flags (artificial colors, artificial sweeteners, SLS) sit in the same list, so one scan covers them all. Link to the SLS-free collection here.",
+      "keywords_to_include": [
+        "sls free toothpaste",
+        "toothpaste without sls",
+        "sodium lauryl sulfate free toothpaste",
+        "artificial colors",
+        "clean toothpaste ingredients"
+      ]
+    },
+    {
+      "section": "H2: What Do Titanium Dioxide-Free Toothpastes Use Instead?",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Explain that TiO2-free pastes are usually naturally off-white, cream or slightly translucent, and that this is normal. Cover generic ingredient approaches: gentle abrasives (e.g. hydrated silica, calcium carbonate, baking soda), hydroxyapatite-based formulas, coconut oil-based pastes, and plant flavors like mint or cinnamon. Be accurate: avoid claiming any of these 'whiten' teeth beyond mild surface stain removal. Include a short, honest note on fluoride: titanium dioxide-free and fluoride-free are separate decisions. Cite the 2019 Cochrane review on fluoride toothpaste for caries prevention (strong evidence that fluoride prevents decay), then explain that some people still choose fluoride-free formulas and should discuss this with their dentist, especially for children. Link to the fluoride-free and non-fluoride collections and the kids' fluoride-free blog post. Do not claim hydroxyapatite equals fluoride unless a cited source supports it, and mark that evidence as mixed or emerging.",
+      "keywords_to_include": [
+        "hydroxyapatite toothpaste",
+        "nano hydroxyapatite toothpaste",
+        "toothpaste without fluoride",
+        "fluoride toothpaste",
+        "baking soda toothpaste",
+        "toothpaste cinnamon",
+        "non fluoride toothpaste"
+      ]
+    },
+    {
+      "section": "H2: A Clean Option: Real Skin Care Coconut Oil Toothpaste",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Position Real Skin Care as the authoritative natural choice without adding a comparison chart or naming other brands. Before writing, confirm against the current product label and ingredient list that the product is free of titanium dioxide (CI 77891), SLS and artificial colors, and write only what the label supports. Describe the coconut oil base, flavor options and texture in plain terms. Warn honestly that the paste will not look stark white and explain why that is a feature. Include one product link and one collection link. Avoid disease-treatment or cavity-prevention claims.",
+      "keywords_to_include": [
+        "coconut oil toothpaste",
+        "non toxic coconut toothpaste organic",
+        "natural toothpaste",
+        "organic toothpaste",
+        "vegan toothpaste"
+      ]
+    },
+    {
+      "section": "H2: How to Choose by Need: Sensitivity, Kids, and Whitening",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Give three short decision blocks. Sensitive teeth or gums: suggest checking with a dentist and favoring gentle, low-abrasion, SLS-free formulas; note the SLS and canker sore evidence is mixed (Herlofson & Barkvoll 1994, small preliminary study). Kids: point to the kids' fluoride-free guide and suggest dentist input on fluoride, and emphasize supervised, pea-sized use. Whitening: set expectations, because TiO2-free pastes won't look dramatically whitening and no paste changes natural tooth color. Mention that charcoal and similar abrasive trends deserve caution because of abrasivity. Frame all of this as practical guidance, not medical advice.",
+      "keywords_to_include": [
+        "sensitive teeth toothpaste",
+        "kids toothpaste without fluoride",
+        "whitening toothpaste",
+        "charcoal toothpaste",
+        "toothpaste tablets"
+      ]
+    },
+    {
+      "section": "H2: FAQ",
+      "type": "faq",
+      "word_count_target": 130,
+      "guidance": "Four short answers of about 30 words each, written for featured snippets: (1) Is titanium dioxide in toothpaste dangerous? (2) Does toothpaste have to contain titanium dioxide? (3) How do I know if my toothpaste has titanium dioxide? (4) Is titanium dioxide-free toothpaste also fluoride-free? Each answer should be direct and hedged to the evidence.",
+      "keywords_to_include": [
+        "titanium dioxide in toothpaste",
+        "toothpaste without titanium dioxide",
+        "toothpaste ingredients"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 50,
+      "guidance": "Recap in two or three sentences: TiO2 is purely cosmetic, evidence on toothpaste exposure is limited but precaution is a fair choice, and label reading makes avoiding it simple. End with a CTA to browse the natural toothpaste collection. Remind readers to ask their dentist about fluoride and individual needs.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "toothpaste without titanium dioxide"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "titanium dioxide in toothpaste",
+    "titanium dioxide free toothpaste",
+    "toothpaste without titanium dioxide",
+    "TiO2 toothpaste",
+    "CI 77891",
+    "nano titanium dioxide",
+    "natural toothpaste",
+    "non toxic toothpaste",
+    "non toxic coconut toothpaste organic",
+    "coconut oil toothpaste",
+    "sls free toothpaste",
+    "toothpaste without sls",
+    "sodium lauryl sulfate free toothpaste",
+    "toothpaste without sodium lauryl sulfate",
+    "sls free toothpaste list",
+    "toothpaste without fluoride",
+    "non fluoride toothpaste",
+    "fluoride free toothpaste",
+    "fluoride toothpaste",
+    "hydroxyapatite toothpaste",
+    "nano hydroxyapatite toothpaste",
+    "baking soda toothpaste",
+    "charcoal toothpaste",
+    "toothpaste tablets",
+    "toothpaste cinnamon",
+    "toothpaste without glycerin",
+    "artificial colors in toothpaste",
+    "clean toothpaste ingredients",
+    "vegan toothpaste",
+    "how to make natural toothpaste",
+    "toothpaste for sensitive teeth",
+    "kids toothpaste without fluoride"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "natural toothpaste",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "Link in the introduction or the 'What do TiO2-free toothpastes use instead?' section as the main hub link, and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "coconut oil toothpaste",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "placement_guidance": "Link once in the Real Skin Care product section, where the product is described. Confirm label claims first."
+    },
+    {
+      "anchor_text": "SLS-free toothpaste",
+      "url": "https://www.realskincare.com/collections/sls-free-toothpaste",
+      "placement_guidance": "Link in the label-reading section where SLS is mentioned as another ingredient to check. Link to the collection, not the previously unindexed blog post."
+    },
+    {
+      "anchor_text": "fluoride-free toothpaste",
+      "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+      "placement_guidance": "Link in the fluoride note within the 'instead' section."
+    },
+    {
+      "anchor_text": "non-fluoride toothpaste",
+      "url": "https://www.realskincare.com/collections/non-fluoride-toothpaste",
+      "placement_guidance": "Use a single link in the same section as the fluoride-free link or in the choose-by-need section. Do not stack both in one sentence."
+    },
+    {
+      "anchor_text": "kids' toothpaste without fluoride: what parents need to know",
+      "url": "https://www.realskincare.com/blogs/news/kids-toothpaste-without-fluoride-what-parents-need-to-know",
+      "placement_guidance": "Link in the 'kids' block of the choose-by-need section."
+    },
+    {
+      "anchor_text": "cinnamon toothpaste",
+      "url": "https://www.realskincare.com/collections/cinnamon-toothpaste",
+      "placement_guidance": "Link where flavor options are mentioned in the Real Skin Care product section."
+    },
+    {
+      "anchor_text": "mint toothpaste",
+      "url": "https://www.realskincare.com/collections/mint-toothpaste",
+      "placement_guidance": "Link alongside the cinnamon link where flavor options are listed."
+    },
+    {
+      "anchor_text": "vegan toothpaste",
+      "url": "https://www.realskincare.com/collections/vegan-toothpaste",
+      "placement_guidance": "Optional: link in the 'instead' section or FAQ where ingredient values are discussed."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Add a byline and a short author or reviewer note. If a dental professional or cosmetic chemist can review the post, include their name and credentials and a 'Reviewed by' line with the review date.",
+    "Show 'Last updated' with the publish date, and commit to refreshing the post as regulatory status changes. Fresh, sourced content is easier to win citations with when older roundups go stale.",
+    "Cite primary sources inline: EFSA's 2021 E171 opinion, IARC Monograph Vol. 93, Weir et al. 2012, the Cochrane fluoride review (Walsh et al. 2019), and Herlofson & Barkvoll 1994 for SLS. Label evidence strength as strong, mixed or weak.",
+    "State the limits of the evidence openly: most TiO2 safety concerns concern ingestion or inhalation, and toothpaste-specific data is limited.",
+    "Include a short 'how we formulate' note describing Real Skin Care's ingredient standards, based only on verified label and formulation facts from the team.",
+    "Add a brief disclaimer that this is educational content, not dental or medical advice, and that readers should consult their dentist."
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "Every health, safety or efficacy claim needs an authoritative citation (.gov, .edu, medical organisation or peer-reviewed journal), and the writer must verify each link and DOI before publishing. Do not cite from memory.\n\nSuggested primary sources, with evidence strength:\n(1) EFSA Panel on Food Additives, 'Safety assessment of titanium dioxide (E171) as a food additive', EFSA Journal 2021;19(5):6585, doi:10.2903/j.efsa.2021.6585. Strong for the regulatory conclusion, but applies to food additives.\n(2) IARC Monographs Vol. 93 (2010), carbon black, titanium dioxide and talc; Group 2B based on inhalation. Relevant to inhalation only.\n(3) Weir A. et al., 'Titanium dioxide nanoparticles in food and personal care products', Environmental Science & Technology 2012;46(4):2242-2250, doi:10.1021/es204168d. Supports the claim that TiO2 is widespread in toothpaste, with nano-sized fractions. Evidence on harm from toothpaste use: weak.\n(4) Walsh T. et al., 'Fluoride toothpastes of different concentrations for preventing dental caries', Cochrane Database of Systematic Reviews 2019, CD007868. Strong evidence that fluoride toothpaste prevents caries.\n(5) Herlofson BB, Barkvoll P., 'Sodium lauryl sulfate and recurrent aphthous ulcers: a preliminary study', Acta Odontologica Scandinavica 1994;52(4):257-259. Mixed or weak evidence, because it is a small early study. Do not state that SLS causes canker sores.\n\nFor hydroxyapatite efficacy, find and cite a recent systematic review or randomised trial. Describe the evidence as mixed or emerging, and never state that it matches or beats fluoride.\n\nDo not make these claims: that TiO2 in toothpaste causes cancer or other disease; that TiO2-free toothpaste is 'safer' as an absolute; that natural pastes whiten, cure, prevent cavities or treat sensitivity; or that coconut oil has proven dental benefits. Soften or remove anything that lacks a source. Check the current FDA and EU status of TiO2 immediately before publishing and date-stamp it in the text. Do not cite competitor product pages or social media as evidence.",
+  "writer_notes": "Tone: calm, knowledgeable and non-alarmist, in a trusted-friend voice. Do not use fear-based language like 'toxic' about TiO2. Brand policy: do not name competitor brands anywhere, and do not build brand comparison tables or competitor sections. Do not carry over SERP brand names, even in examples. A small table comparing ingredient types (for example, 'TiO2 whitener vs. natural off-white base') is fine if it helps.\n\nFormatting: short paragraphs, descriptive H2s, one scannable list in the label-reading section, and an FAQ written for snippets. Use the exact keyword 'toothpaste without titanium dioxide' in the intro, one H2 or FAQ, and the conclusion, with natural variants elsewhere; do not stuff.\n\nIndexing: a previous post in this cluster ('best-sls-free-toothpaste-2025') was never indexed. Do not duplicate it or its topic. Make this page substantively distinct, and give the publishing team a checklist: confirm it is in the XML sitemap, internally linked from the natural toothpaste collection or a relevant hub page, has a self-referencing canonical, is not noindexed, and is submitted for inspection in Search Console after launch. Avoid thin or near-duplicate content.\n\nCTR: the page currently sits at position 29 with essentially no impressions, so the title and meta description should lead with the exact keyword. Add a visible 'Last updated' date.\n\nSeasonality: demand peaks in Q4 and Q1 (October to January, with March the peak), so publish early and plan a refresh in September.\n\nConversion: this keyword has a proven conversion signal on the site, so keep CTAs low-pressure and place them after value is delivered. Verify every product claim against the live label.",
+  "search_volume": 320,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.amazon.com/SuperMouth-Nano-Hydroxyapatite-Toothpaste-Dentist-Developed/dp/B0DSQ7WH1Q",
+      "title": "SuperMouth 10% Nano Hydroxyapatite Toothpaste ...",
+      "domain": "www.amazon.com",
+      "description": "Clean, Safe, & Expertly Crafted: Our toothpaste is free of SLS, titanium dioxide, artificial colors, flavors, or sweeteners. Developed by dental ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.reddit.com/r/DentalHygiene/comments/1vr4yac/toothpaste_with_no_sls_but/",
+      "title": "Toothpaste with no SLS but... : r/DentalHygiene",
+      "domain": "www.reddit.com",
+      "description": "So here is the question, what toothpaste would you advise me to address déminéralisation that contains no SLS and titanium dioxide ? PS : I ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.instagram.com/reel/DW36PANGIy0/",
+      "title": "The reason you're seeing sooooo many fluoride free toothpaste ...",
+      "domain": "www.instagram.com",
+      "description": "We switched to elementa silver toothpaste and mouthwash, for my daughter and she had so many cavities this last check up!"
+    },
+    {
+      "position": 4,
+      "url": "https://www.facebook.com/groups/dyefreefamily/posts/2544727585864497/",
+      "title": "Complete Care toothpaste contains dyes like titanium ...",
+      "domain": "www.facebook.com",
+      "description": "Nicotinamide Toothpaste, Complete Care Toothpaste is not dye free.\n\nmy husbands mom got this toothpaste she wanted us to try and its punk and blue and sparkly ..."
+    },
+    {
+      "position": 5,
+      "url": "https://www.nuskin.com/us/en/mysite/greenapple/product/ap24-whitening-toothpaste-7pack-US",
+      "title": "AP 24 Whitening Fluoride Free Toothpaste 7 Pack",
+      "domain": "www.nuskin.com",
+      "description": "AP 24 Whitening Fluoride-Free Toothpaste helps lighten teeth without peroxide while removing plaque during brushing and reducing plaque buildup. Enhanced with a ... Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://www.reddit.com/r/PasDeQuestionIdiote/comments/1jgocgb/vous_choisissez_comment_votre_dentifrice/?tl=en",
+      "title": "How do you choose your toothpaste?",
+      "domain": "www.reddit.com",
+      "description": "It's all in the title. \n\nEvery time I find myself like an idiot in front of the shelf seeing 120 different products for 2 brands, wondering \"but uh, what's ..."
+    },
+    {
+      "position": 7,
+      "url": "https://www.researchgate.net/post/Titane_dioxide_TiO2_in_toothpaste_What_is_the_potential_risk_of_the_nanoscale_particules",
+      "title": "Titane dioxide (TiO2) in toothpaste : What is the potential ...",
+      "domain": "www.researchgate.net",
+      "description": "Feb 5, 2020 — Ratio of micro/nano particules of TiO2 in toothpaste which could be tolerated"
+    },
+    {
+      "position": 8,
+      "url": "https://www.instagram.com/reel/DIVHL0oNA8D/",
+      "title": "Toothpaste swap! Skip toothpaste with titanium dioxide, fluoride ...",
+      "domain": "www.instagram.com",
+      "description": "Toothpaste swap! Skip toothpaste with titanium dioxide, fluoride, and artificial flavor; instead try these two better options."
+    }
+  ],
+  "index_validation": {
+    "validation_source": "gsc_ga4",
+    "cluster": "toothpaste",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 12055.5,
+    "avgH2": 4.5,
+    "targetWordCount": 3000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

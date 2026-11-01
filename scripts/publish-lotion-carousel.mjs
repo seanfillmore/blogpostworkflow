@@ -52,6 +52,8 @@ const headers = { 'X-Shopify-Access-Token': await getAccessToken(), 'Content-Typ
 const REMOVE = ['final-offer.jpg', 'final-proof.jpg', 'final-transform.jpg', 'final-compare.jpg'];
 
 const ADD = [
+  // clean-offer.jpg was DETACHED 2026-10-06 (lotion sells no new subscriptions) — see
+  // scripts/remove-lotion-subscription-frames-2026-10-06.mjs. Do not re-run this entry.
   { file: 'clean-offer.jpg', position: 7,
     alt: 'Subscribe and save 15% on Real Skin Care coconut body lotion — $25.50 per 8 oz bottle, free shipping on every subscription order, pause, skip or cancel anytime' },
   { file: 'clean-proof.jpg', position: 8,

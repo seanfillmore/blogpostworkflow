@@ -1,0 +1,174 @@
+{
+  "indexing_state": {
+    "state": "unknown",
+    "coverage": "Page with redirect",
+    "last_checked": "2026-10-21T11:04:28.684Z",
+    "last_crawled": "2026-10-20T07:26:53Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562322768042,
+  "shopify_handle": "best-natural-toothpaste-2025",
+  "shopify_publish_at": "2026-03-09T17:04:51-06:00",
+  "legacy_synced_at": "2026-04-09T23:17:12.634Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 13, 3812 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:29.588Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-24T11:30:02.557Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-26T11:30:03.033Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-27T11:30:02.793Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-28T11:30:02.921Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-29T11:30:02.079Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-09-30T11:30:02.179Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-01T11:30:01.901Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-02T11:30:02.585Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-03T11:30:02.364Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-04T11:30:02.298Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-05T11:30:02.362Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-06T11:30:03.415Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-07T11:30:02.808Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-08T11:30:02.495Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-09T11:30:03.516Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-10T11:30:03.020Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-11T11:30:02.939Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-12T11:30:02.104Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-13T11:30:03.357Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-14T11:30:03.262Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-15T11:30:02.312Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-16T11:30:03.139Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-17T11:30:02.490Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-18T11:30:03.458Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-19T11:30:03.061Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-20T11:30:03.172Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-10-21T11:30:03.034Z",
+      "result": "ok"
+    }
+  ],
+  "refreshed_at": "2026-10-11T15:11:17.927Z",
+  "last_material_edit": {
+    "at": "2026-10-11T15:11:17.928Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:45:47.788Z",
+    "reasons": [
+      "1 deterministic issue(s)",
+      "8 uncited statistical/health claim(s) (fact-check gate)",
+      "content blockers: factual concerns, ingredient accuracy, competitor names in FAQ, topical relevance, brand voice"
+    ]
+  }
+}

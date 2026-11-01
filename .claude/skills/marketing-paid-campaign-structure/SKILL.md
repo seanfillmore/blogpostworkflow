@@ -35,8 +35,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 
 ## Assign each piece of customer evidence to exactly one funnel stage and never spend the same point twice — the price rebuttal and the product mechanics stay collected but non-load-bearing in the attention ad, then become load-bearing in the next-stage ad, so the sequence completes one conversation instead of repeating it.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** Sequential messaging across stages means each ad advances the buyer rather than re-arguing what the previous ad already argued. When every ad in the account carries the full case, a person who has already seen the case gets shown it again, which is spend on re-litigating a settled objection. Splitting the evidence by stage — attention ad earns the click, the next-stage ad clarifies value and kills the price objection — is what lets a funnel build cash flow instead of paying repeatedly to have the same conversation with the same person.
 
 **Evidence offered:** Demonstrated in the ring-assignment report, where mapped evidence was explicitly marked as collected-but-not-load-bearing for the current job and reserved for the clarify-value ring. Single worked artefact, no comparative performance data.
@@ -134,8 +132,6 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
 ## Once ads at least break even, stop asking 'how much should I spend' and reverse the budget from a customer target — customers wanted × cost per customer, padded roughly 20% because ads get less efficient as they scale — then commit to the daily number.
-
-**Stage:** scale — parked until the scale phase opens.
 
 **Why it works:** A budget derived from capacity and CAC turns spend into an arithmetic consequence of a goal rather than a nerve-based decision made fresh every week, and the 20% pad prices in the efficiency decay that arrives with higher spend instead of treating it as a nasty surprise.
 

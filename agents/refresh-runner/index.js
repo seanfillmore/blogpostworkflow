@@ -53,6 +53,8 @@ import { execSync } from 'node:child_process';
 import { notify } from '../../lib/notify.js';
 import { getContentPath, getMetaPath, getRefreshedPath, getBackupsDir, getEditorReportPath, listAllSlugs, POSTS_DIR, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import { refreshableFlops, renderFlopSkipLines } from '../../lib/flop-candidates.js';
 import { runEditGateWithRepair } from '../../lib/edit-gate-repair.js';
 import {
@@ -120,6 +122,16 @@ export function holdSlugs(slugs, hold, { includeHeld = false, metaFor = () => nu
   });
 }
 
+/**
+ * Split slugs by the live-article edit gate (lib/post-edit-gate.js). A refresh
+ * that publishes replaces a live body, so it is a `rewrite`. Applied BEFORE
+ * --limit, like the hold. `mayEdit` is injected so this is testable.
+ * @returns {{kept:string[], held:Array}}
+ */
+export function gateSlugs(slugs, mayEdit) {
+  return partitionByEditGate(slugs, { kind: 'rewrite', mayEdit, targetOf: (s) => s });
+}
+
 function metaForSlug(slug) {
   try { return requirePostMeta(slug); } catch { return null; }
 }
@@ -127,7 +139,7 @@ function metaForSlug(slug) {
 function gatherSlugs() {
   // Manual single slug wins — an operator naming a post is never held, and the
   // agents that call this with one slug have already applied the hold upstream.
-  if (SLUG_ARG) return { slugs: [SLUG_ARG], held: [], hold: null };
+  if (SLUG_ARG) return { slugs: [SLUG_ARG], held: [], hold: null, editGated: [] };
 
   const slugs = new Set();
 
@@ -162,7 +174,13 @@ function gatherSlugs() {
   const hold = loadClusterHold({ root: ROOT });
   const banner = holdBanner(hold);
   if (banner) console.log(`${banner}\n`);
-  const { kept, held } = holdSlugs([...slugs], hold, { includeHeld: INCLUDE_HELD, metaFor: metaForSlug });
+  const { kept: notHeld, held } = holdSlugs([...slugs], hold, { includeHeld: INCLUDE_HELD, metaFor: metaForSlug });
+  // Edit gate BEFORE --limit, same reason: a frozen page, or one still inside
+  // the 28-day window of its last material change, must not eat a slot. Only
+  // when this run publishes; --no-publish edits nothing live.
+  const { kept, held: editGated } = FLAG_PUBLISH
+    ? gateSlugs(notHeld, mayEditLivePost)
+    : { kept: notHeld, held: [] };
 
   // ORDERED before --limit for the same reason it is HELD before --limit: a
   // budget of three spent on the least efficient cluster is a budget spent on
@@ -175,7 +193,7 @@ function gatherSlugs() {
     limit: LIMIT,
     describe: (s) => ({ slug: s, keyword: metaForSlug(s)?.target_keyword }),
   });
-  return { slugs: efficiency.items.slice(0, LIMIT), held, hold, ranking, efficiency };
+  return { slugs: efficiency.items.slice(0, LIMIT), held, hold, ranking, efficiency, editGated };
 }
 
 function run(cmd, label) {
@@ -238,6 +256,17 @@ function refreshOne(slug) {
       return { slug, ok: false, skipped: true, writtenOff: true, reason: `written off: ${rec.reason}` };
     }
   } catch { /* unreadable meta — unknown means allow, same as every other gate here */ }
+
+  // Live-article edit gate, alongside the winner lock (not instead of it).
+  // Re-asked here because a single-slug call skips gatherSlugs, and because it
+  // must be asked BEFORE content-refresher, the paid step.
+  if (FLAG_PUBLISH) {
+    const editGate = mayEditLivePost(slug, 'rewrite');
+    if (!editGate.allowed) {
+      console.log(`  [held] ${slug}: edit gate — ${editGate.reason}`);
+      return { slug, ok: false, skipped: true, editGate: true, reason: `edit gate: ${editGate.reason}` };
+    }
+  }
 
   console.log(`\n══ Refreshing: ${slug} ══`);
 
@@ -359,6 +388,7 @@ function refreshOne(slug) {
   if (FLAG_PUBLISH) {
     try {
       run(`node agents/publisher/index.js "${metaPath}"`, 'publisher');
+      recordMaterialEdit(slug, 'rewrite', 'refresh-runner');
     } catch (e) {
       return abort(`publisher failed: ${e.message}`, e.status);
     }
@@ -372,18 +402,20 @@ function refreshOne(slug) {
 async function main() {
   console.log('\nRefresh Runner\n');
 
-  const { slugs, held, hold, ranking, efficiency } = gatherSlugs();
+  const { slugs, held, hold, ranking, efficiency, editGated = [] } = gatherSlugs();
   for (const line of renderHoldLines(held)) console.log(`  ${line}`);
+  const editGateLines = renderEditGateLines(editGated);
+  for (const line of editGateLines) console.log(`  ${line}`);
   const rankLines = renderEfficiencyLines(ranking, efficiency);
   for (const line of rankLines) console.log(`  ${line}`);
   if (!slugs.length) {
     console.log('  No slugs to refresh. Provide a slug argument or use --from-post-performance / --from-quick-wins / --aging-quarterly.');
     // A run that refreshed nothing BECAUSE everything was held has to say so —
     // otherwise the hold looks like the agent quietly stopping.
-    if (held.length) {
+    if (held.length || editGated.length) {
       await notify({
-        subject: `Refresh Runner: 0 refreshed${holdSummaryFragment(held)}`,
-        body: [...renderHoldLines(held), ...renderDisagreementLines(hold)].join('\n'),
+        subject: `Refresh Runner: 0 refreshed${holdSummaryFragment(held)}${editGateSummaryFragment(editGated)}`,
+        body: [...renderHoldLines(held), ...editGateLines, ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -420,11 +452,13 @@ async function main() {
   if (failed.length) counts.push(`${failed.length} failed`);
   if (skipped.length) counts.push(`${skipped.length} skipped`);
   if (held.length) counts.push(`${held.length} held`);
+  if (editGated.length) counts.push(`${editGated.length} edit-gate held`);
   await notify({
     subject: `Refresh Runner: ${counts.join(', ')}`,
     body: [
       results.map((r) => `${r.ok ? '[ok]' : r.skipped ? '[skip]' : '[fail]'} ${r.slug}${r.reason ? ` — ${r.reason}` : ''}`).join('\n'),
       ...renderHoldLines(held),
+      ...editGateLines,
       ...rankLines,
       ...renderDisagreementLines(hold),
     ].join('\n'),

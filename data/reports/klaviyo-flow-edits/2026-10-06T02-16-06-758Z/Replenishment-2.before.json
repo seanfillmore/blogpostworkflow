@@ -1,0 +1,6 @@
+{
+  "action": "112464444",
+  "template_id": "Tyigfs",
+  "flow_template": "Tyigfs",
+  "subject_line": "Never run out of {{ event.Items|first|default:\"your Real Skin Care favorites\" }} 🥥"
+}

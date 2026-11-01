@@ -1,6 +1,6 @@
 ---
 name: marketing-scarcity-urgency-framing
-description: Use when putting a deadline on something — deciding what actually expires when the product is always in stock, surfacing genuine batch/capacity limits as honest scarcity, announcing a dated opening for an offer that isn't buyable yet, running a whisper-tease-shout launch cadence and showing the build behind the scenes, giving a promotion a believable reason why and a real end date, naming and re-wrapping a recurring monthly promotion, scheduling the closing reminder at the end of a promo window, and creating urgency on evergreen surfaces (Amazon listings, always-on PDPs) where no honest deadline exists at all.
+description: Use when putting a deadline on something — deciding what actually expires when the product is always in stock, surfacing genuine batch/capacity limits as honest scarcity, announcing a dated opening for an offer that isn't buyable yet, running a whisper-tease-shout launch cadence and showing the build behind the scenes, giving a promotion a believable reason why and a real end date, naming and re-wrapping a recurring monthly promotion, scheduling the closing reminder at the end of a promo window, and creating urgency on evergreen surfaces (Amazon listings, always-on PDPs) where no honest deadline exists at all — via order-conditional bonuses or the cost of delaying.
 ---
 
 # Scarcity and Urgency Framing
@@ -27,13 +27,23 @@ description: Use when putting a deadline on something — deciding what actually
 
 ## Where nothing can honestly expire, attach the bonus to the act of ordering instead of to a calendar.
 
-**Why it works:** Some surfaces cannot hold a deadline at all — an Amazon listing is evergreen and policy-constrained, an always-on PDP has no countdown, and a permanently-running ad that claims an expiry is simply lying. Conditional phrasing solves this by tying the extra value to the action rather than the date: 'order now and the lip balm ships with it.' The reader feels they must act to get everything on the table, and the seller never asserts an end date that will not arrive. This is the fallback when the section above has nothing to point at, not a replacement for a real promotion window.
+**Why it works:** Some surfaces cannot hold a deadline at all — an Amazon listing is evergreen and policy-constrained, an always-on PDP has no countdown, and a permanently-running ad that claims an expiry is simply lying. Conditional phrasing solves this by tying the extra value to the action rather than the date: 'order now and the lip balm ships with it.' The reader feels they must act to get everything on the table, and the seller never asserts an end date that will not arrive. This is one of two fallbacks when the sections above have nothing to point at (the other, cost-of-delay, is directly below), not a replacement for a real promotion window.
 
 **Evidence offered:** Observation only: Schefren notes that because the commercial ran continuously Billy 'couldn't have a time limit or an expiration date, but the way he described it made you feel that you needed to order now'. No data.
 
-**Fit here (6/10):** Fills the real hole in the rest of this skill, which prescribes only honoured deadlines and seasonal re-wraps while the two surfaces carrying most revenue cannot hold a deadline — Amazon (~$1,800/mo) and the always-on Shopify PDP. The honest translation is conditional bonus phrasing on the PDP and in cart/post-purchase copy ('add the refill now and the lip balm ships with it'), with a hard guardrail: **the bonus must actually be attached to that order, never merely implied to be expiring.** Capped at 5 because the source's own version leans on manufactured feeling — exactly the drift the 'deadline must be genuinely honored' rule below prohibits — and at ~54 orders/month the effect will be judged, never measured.
+**Fit here (6/10):** Fills a real hole in the rest of this skill, which prescribes only honoured deadlines and seasonal re-wraps while the two surfaces carrying most revenue cannot hold a deadline — Amazon (~$1,800/mo) and the always-on Shopify PDP. The honest translation is conditional bonus phrasing on the PDP and in cart/post-purchase copy ('add the refill now and the lip balm ships with it'), with a hard guardrail: **the bonus must actually be attached to that order, never merely implied to be expiring.** Capped at 5 because the source's own version leans on manufactured feeling — exactly the drift the 'deadline must be genuinely honored' rule below prohibits — and at ~54 orders/month the effect will be judged, never measured.
 
 *Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 3 of 3)*
+
+## The other evergreen option: build urgency from the cost of delay — name what gets worse or stays broken while they wait.
+
+**Why it works:** Urgency exists to stop the viewer filing the decision away for later. A limited-time sale is the easy source, but when no deadline is honest the problem's own trajectory supplies one: if the condition compounds while they do nothing, acting now is objectively better than acting later, and nothing has to be fabricated to say so. The chiropractor's version — 'address the back pain before it turns into something life-altering' — carries real urgency with no promotion attached. Practical generation step: ask an LLM to enumerate urgency factors specific to this product, then keep only the ones that are literally true.
+
+**Evidence offered:** Assertion with two worked examples — the AI-opportunity 'don't miss the train' framing for his own course, and the chiropractor back-pain example — plus a suggested prompt to generate product-specific urgency factors. No data.
+
+**Fit here (6/10):** Gives the evergreen surfaces (Amazon listing, PDP, nurture emails) a second non-promotional urgency lever besides the order-conditional bonus above, and unlike that one it does not require a bonus to exist. Honest RSC forms: every month of delay is another month of aluminium and irritant exposure, another month of the odour problem unsolved, another month of buying the drugstore stick you already dislike. Free, solo-executable, no deadline to honour and nothing to retract. Held at 6 because for a $12 deodorant the compounding harm is real but mild — overstating it tips into health claims the brand cannot substantiate, so the copy must stay at 'the problem persists' rather than 'the problem escalates into something serious'.
+
+*Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 5 of 6)*
 
 ## Give every promotion an explicit, believable reason why and a real end date — then re-wrap the same core promotion with a new seasonal name and fresh dates.
 

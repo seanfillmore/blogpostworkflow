@@ -27,6 +27,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
+import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
+import { rowsInWindow, daysBetween } from '../../lib/digest-window.js';
+import { renderCreatorReviewSection, awaitingSubmissions } from '../../lib/digest-creator-review.js';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // The A/B dead-band and its classifier come from the module that OWNS the
@@ -48,6 +51,7 @@ import {
   listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
 } from '../../lib/posts.js';
 import { classifyBlockedReport } from '../../lib/blocked-posts.js';
+import { freezeFollowupsDue } from '../../lib/post-edit-gate.js';
 
 // Collector/snapshot agents — suppress their success entries from the digest
 const SILENT_ON_SUCCESS = new Set([
@@ -686,12 +690,19 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // why nothing upstream ever drops on it. Same row shape again, so this stays
   // ONE renderer; a withheld topic that appeared nowhere would be the silent
   // drop this whole path exists to prevent.
+  //
+  // FOURTH PRODUCER, 2026-10-13: agents/amazon-account-health. An open Amazon
+  // policy violation is a decision only a human can take (fix and appeal, or
+  // delete the listing), and the SP-API cannot submit an appeal. The Geranium
+  // deodorant sat removed for ten weeks, unseen, blocking Remote Fulfillment
+  // for Amazon.ca. Same row shape.
   let decisionSection = '';
   try {
     const stuck = [
       join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
       join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
       join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'amazon-account-health', 'latest.json'),
     ].flatMap((p) => {
       if (!existsSync(p)) return [];
       try {
@@ -977,7 +988,14 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // Decisions awaiting you — posts blocked from publish. A hard-blocked post
   // genuinely needs a person and nothing else reports it; the optimization
   // queue used to share this slot and no longer does.
-  const decisionsBody = `${decisionSection}${blockedSection}`;
+  // A flop a human must decide (merge or remove a no-demand page) is a
+  // decision too, and the subject line already counts it ("1 flop to decide").
+  // The section was built but dropped from the layout in the revenue-first
+  // strip-down, so the subject promised a row the body never showed. Only
+  // rendered when something needs a person; the automated count alone stays off.
+  const flopNeedsDecision = flops.some((f) => f.automated !== true);
+  const creatorReviewSection = renderCreatorReviewSection(visible, esc);
+  const decisionsBody = `${creatorReviewSection}${decisionSection}${flopNeedsDecision ? flopSection : ''}${blockedSection}`;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;
@@ -1086,6 +1104,19 @@ function checkSystemHealth() {
     });
   }
 
+  // Edit freezes that have ended and carry a deferred follow-up
+  // (scripts/post-edit-freeze.mjs --followup). The freeze held the page still
+  // so a change could be measured; the follow-up is the work that waited on it.
+  try {
+    const metas = listAllSlugs().map((s) => [s, getPostMeta(s)]);
+    for (const f of freezeFollowupsDue(metas)) {
+      issues.push({
+        title: `Edit freeze ended on "${f.slug}" (${f.until.slice(0, 10)}): follow-up due`,
+        detail: `${f.followup} Then lift it: \`node scripts/post-edit-freeze.mjs --handle ${f.slug} --clear --apply\`.`,
+      });
+    }
+  } catch { /* posts unreadable — the post-meta gate reports that separately */ }
+
   // Leftover git stashes — per the deploy hygiene rule the list should be empty
   // outside an active deploy. A non-empty list means a past `git stash pop` was
   // skipped and data updates are stranded.
@@ -1103,6 +1134,15 @@ function checkSystemHealth() {
   return issues;
 }
 
+const LAST_SENT_PATH = () => join(DAILY_SUMMARY_DIR, 'last-sent.json');
+function readLastSent() {
+  try { return JSON.parse(readFileSync(LAST_SENT_PATH(), 'utf8')).until || null; } catch { return null; }
+}
+function writeLastSent(until) {
+  try { writeFileSync(LAST_SENT_PATH(), JSON.stringify({ until }, null, 2) + '\n'); }
+  catch (err) { log(`could not record the digest window end: ${err.message}`); }
+}
+
 async function main() {
   // Default to yesterday's date (runs at 5 AM, reporting on previous day)
   const dateArg = process.argv.indexOf('--date');
@@ -1117,11 +1157,45 @@ async function main() {
 
   const digestFile = join(DAILY_SUMMARY_DIR, `${targetDate}.jsonl`);
 
-  let entries = [];
-  if (existsSync(digestFile)) {
-    const lines = readFileSync(digestFile, 'utf8').trim().split('\n').filter(Boolean);
-    entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const readRows = (file) => (existsSync(file)
+    ? readFileSync(file, 'utf8').trim().split('\n').filter(Boolean)
+      .map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)
+    : []);
+  // WHICH ROWS: everything written since the last digest was sent, up to now.
+  // Reading only the calendar day before meant anything written between midnight
+  // and the 13:00 UTC send (the 12:20-12:50 gates, trybe-review at 12:55) reached
+  // Sean a DAY late: on 2026-10-04 he got the previous morning's Trybe review,
+  // without the verdicts, while that morning's sat in a file nobody read yet.
+  // `--date` keeps the old whole-calendar-day view for inspecting a past day.
+  const nowIso = new Date().toISOString();
+  let entries;
+  let laterRows = [];
+  let windowUntil = null;
+  if (dateArg !== -1) {
+    entries = readRows(digestFile);
+    for (let d = new Date(`${targetDate}T00:00:00Z`); ;) {
+      d = new Date(d.getTime() + 86_400_000);
+      const day = d.toISOString().slice(0, 10);
+      if (day > nowIso.slice(0, 10)) break;
+      laterRows.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+  } else {
+    const since = readLastSent() || `${targetDate}T00:00:00.000Z`;
+    windowUntil = nowIso;
+    entries = [];
+    for (const day of daysBetween(since.slice(0, 10), nowIso.slice(0, 10))) {
+      entries.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+    entries = rowsInWindow(entries, { since, until: windowUntil });
+    log(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
   }
+
+  // A failure that a later run of the same agent has already recovered from is
+  // not news (Sean, 2026-10-04): drop it before anything counts or renders it.
+  // See lib/digest-recovery.js.
+  const { kept, recovered } = dropRecoveredFailures(entries, laterRows);
+  if (recovered.length) log(`Dropped ${recovered.length} failure(s) that later recovered: ${[...new Set(recovered.map(e => e.subject))].join('; ')}`);
+  entries = kept;
 
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
@@ -1177,6 +1251,8 @@ async function main() {
   // are the fleet working, not news.
   const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
   if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
+  const toReview = awaitingSubmissions(entries).items.length;
+  if (toReview > 0) parts.push(`${toReview} creator submission${toReview > 1 ? 's' : ''} to review`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
@@ -1195,6 +1271,8 @@ async function main() {
     html,
   );
 
+  // Only a real send advances the window; a preview or a --date run never does.
+  if (windowUntil) writeLastSent(windowUntil);
   log('Daily summary sent.');
 }
 

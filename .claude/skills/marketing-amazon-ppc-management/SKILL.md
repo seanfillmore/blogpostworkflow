@@ -243,8 +243,6 @@ description: Use when running, pruning or restructuring Amazon Sponsored Product
 
 ## Harvest search terms that converted (a minimum order count at or below your ACoS target) out of the auto campaign into a manual exact campaign at a chosen bid, and negate them in the source campaign so the two campaigns stop bidding against each other.
 
-**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
-
 **Why it works:** An auto campaign discovers demand but bids generically; moving a proven term to exact match lets you set an intentional bid against known economics and stops the auto campaign paying to re-discover something you already know converts. Negating in the source prevents internal competition on the same term.
 
 **Evidence offered:** Demo showed two search terms at 7.2% and 4.6% ACoS being moved to the manual exact campaign at a bid of ₹8.45 with negative-exact applied to the auto campaign. Assertion plus one account's screen.

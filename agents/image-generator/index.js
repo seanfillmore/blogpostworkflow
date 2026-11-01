@@ -46,6 +46,7 @@ import { getMetaPath, getImagePath, listAllSlugs, ensurePostDir, POSTS_DIR, ROOT
 import { buildImageAlt } from '../../lib/image-alt.js';
 import { SHOT_TYPES, shotTypePool } from '../../lib/image-variety.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const IMAGES_DIR = join(ROOT, 'data', 'images');
@@ -238,7 +239,7 @@ async function buildImagePrompt(meta, usedScenes, usedTemplateKeys = [], cdRejec
     : '';
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 700,
     messages: [{
       role: 'user',
@@ -370,7 +371,7 @@ async function creativeDirectorReview(imagePath, mediaType = 'image/png', allowP
   const hasRefs = contentParts.length > 1;
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 700,
     messages: [{
       role: 'user',
@@ -588,7 +589,7 @@ async function describeProducts() {
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-opus-4-6',
+      model: LLM_MODELS.flagship,
       max_tokens: 600,
       messages: [{
         role: 'user',

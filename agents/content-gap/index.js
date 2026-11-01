@@ -17,6 +17,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getKeywordIdeas, getCompetitors, getRankedKeywords, getTopPages, getSerpResults } from '../../lib/dataforseo.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -350,7 +351,7 @@ async function analyzeGaps({ inventory, contentGap, ownKeywords, categoryKeyword
     .map((p) => `${p.path} — ${p.clicks} clicks, ${p.impressions} impr, pos ${p.position}`);
 
   const message = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{
       role: 'user',

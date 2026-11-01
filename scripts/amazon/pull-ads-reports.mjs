@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Pull the three Sponsored Products reports `culina-ppc-audit.mjs` needs, straight from
+ * Pull the three Sponsored Products reports `culina-ppc-audit.mjs` needs, plus the
+ * Sponsored Brands and Display campaign reports its net line subtracts, straight from
  * the Ads API. READ ONLY — GETs plus POSTs to /reporting/reports, which creates a report
  * and cannot mutate a campaign.
  *
@@ -132,6 +133,34 @@ async function main() {
     )
   );
   console.log(`  targeting: ${tg.length} rows`);
+
+  // 4-5. Sponsored Brands and Display, campaign level — the audit subtracts their SPEND
+  // from net. Sales are 14-day on these ad types and are written only for display; they
+  // are never summed with Sponsored Products' 7-day sales.
+  for (const [adProduct, reportTypeId, file] of [
+    ['SPONSORED_BRANDS', 'sbCampaigns', 'Sponsored_Brands_Campaign_report.csv'],
+    ['SPONSORED_DISPLAY', 'sdCampaigns', 'Sponsored_Display_Campaign_report.csv'],
+  ]) {
+    const rows = await runReport(client, {
+      name: reportTypeId, startDate, endDate, onProgress: log,
+      configuration: {
+        adProduct, timeUnit: 'SUMMARY', format: 'GZIP_JSON', groupBy: ['campaign'], reportTypeId,
+        columns: ['campaignName', 'cost', 'sales', 'purchases', 'clicks', 'impressions'],
+      },
+    });
+    writeFileSync(
+      join(OUT, file),
+      toCsv(
+        rows.map((r) => ({
+          'Campaign Name': r.campaignName, Impressions: r.impressions, Clicks: r.clicks, Spend: r.cost,
+          '14 Day Total Sales': r.sales, '14 Day Total Orders (#)': r.purchases,
+          'Start Date': startDate, 'End Date': endDate,
+        })),
+        ['Campaign Name', 'Impressions', 'Clicks', 'Spend', '14 Day Total Sales', '14 Day Total Orders (#)', 'Start Date', 'End Date']
+      )
+    );
+    console.log(`  ${reportTypeId}: ${rows.length} rows`);
+  }
 
   console.log(`\n✓ ${OUT}`);
   console.log('  Now run: node scripts/amazon/culina-ppc-audit.mjs');

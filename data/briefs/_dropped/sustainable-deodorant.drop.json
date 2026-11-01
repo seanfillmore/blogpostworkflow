@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "sustainable-deodorant",
+  "keyword": "sustainable deodorant",
+  "dropped_at": "2026-10-14T13:32:19.667Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-10-14T13-32-19-667Z-445295",
+  "reason": "post killed: low demand: 2 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "sustainable-deodorant.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore sustainable-deodorant",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

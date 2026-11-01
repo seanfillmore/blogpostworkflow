@@ -24,6 +24,7 @@ import { join } from 'path';
 import { partitionHeld } from '../../../lib/cluster-hold.js';
 import { orderByEfficiency } from '../../../lib/cluster-efficiency.js';
 import { handleFromUrl } from '../../../lib/posts.js';
+import { partitionByEditGate } from '../../../lib/edit-gate-filter.js';
 
 /**
  * Split low-CTR candidates into what runs and what is held.
@@ -319,4 +320,22 @@ export function excludeOpenTests(candidates, { openHandles, pageForKeyword = () 
     else kept.push(c);
   }
   return { kept, excluded };
+}
+
+/**
+ * Pages the live-article edit gate (lib/post-edit-gate.js) refuses a `serp`
+ * edit to right now: frozen, or still inside the 28-day measurement window of
+ * the last title/meta or body change. Applied BEFORE the --limit cap, the same
+ * placement as every other filter here, so a held page cannot eat a slot.
+ *
+ * `mayEdit` is injected (the caller passes mayEditLivePost) so this stays pure.
+ * A candidate whose page cannot be resolved is kept; the write site re-checks.
+ */
+export function excludeEditGated(candidates, { mayEdit, pageForKeyword = () => null } = {}) {
+  const { kept, held } = partitionByEditGate(candidates, {
+    kind: 'serp',
+    mayEdit,
+    targetOf: (c) => handleOf(c?.url || pageForKeyword(c?.keyword)) || null,
+  });
+  return { kept, excluded: held.map((h) => ({ keyword: h.item?.keyword, handle: h.target, kind: h.kind, reason: h.reason, until: h.until })) };
 }

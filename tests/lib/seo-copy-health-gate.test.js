@@ -353,3 +353,47 @@ test('an undeclared surface gets the STRICT answer', () => {
   assert.equal(checkSeoCopy({ title: 'Best Body Lotion for Eczema' }).ok, false);
   assert.equal(checkSeoCopy({ title: 'Best Body Lotion for Eczema' }, { surface: 'editorial' }).ok, true);
 });
+
+// ── 2026-10-10: drug-property, skin-structure, oral bacteria claim ──────────────────
+// Each was a live Amazon line no gate caught. Both directions pinned: the claim blocks,
+// and the legitimate neighbour it must never take with it still passes.
+import { EDITORIAL_SURFACE as _ED, SURFACE_TIERED_CATEGORIES } from '../../lib/seo-copy-health-gate.js';
+
+describe('2026-10-10 gate widening', () => {
+  const blocks = (t, s) => findSeoCopyClaims(t, s).blocking.map((h) => h.category);
+  const advises = (t, s) => findSeoCopyClaims(t, s).advisory.map((h) => h.category);
+
+  test('the three live Amazon lines that passed every gate now block on commercial copy', () => {
+    assert.ok(blocks('lauric acid, known for its antimicrobial properties').includes('drug-property'));
+    assert.ok(blocks('traditionally used for its soothing and anti-inflammatory properties').includes('drug-property'));
+    assert.ok(blocks('helps reduce bacteria associated with bad breath and tooth decay').includes('oral-drug-claim'));
+    assert.ok(blocks('Moisturizer for Dry Skin, Reduce Fine Lines and Wrinkles').includes('skin-structure'));
+  });
+
+  test('drug properties and skin-structure claims are ADVISORY on editorial copy', () => {
+    for (const t of ['Antibacterial Body Soap: What to Look For', 'Can coconut oil really reduce stretch marks?']) {
+      assert.deepEqual(blocks(t, _ED), [], t);
+      assert.equal(advises(t, _ED).length, 1, t);
+    }
+    assert.ok(SURFACE_TIERED_CATEGORIES.has('drug-property') && SURFACE_TIERED_CATEGORIES.has('skin-structure'));
+  });
+
+  test('APPEARANCE language stays allowed everywhere', () => {
+    for (const t of [
+      'reduces the appearance of fine lines and wrinkles',
+      'diminish the look of fine lines',
+      'smooths and softens dry skin',
+      'Lip Repair for Dry Cracked Lips',
+    ]) assert.deepEqual(blocks(t), [], t);
+  });
+
+  test('naming cavity-causing bacteria is still information (2026-09-13 ruling)', () => {
+    assert.deepEqual(blocks('glycerin, cavity-causing bacteria and what fluoride does'), []);
+    assert.deepEqual(blocks('bacteria associated with tooth decay feed on sugar'), []);
+  });
+
+  test('the compliance prompt states the new rules, with the APPEARANCE carve-out', () => {
+    assert.match(SEO_COPY_COMPLIANCE_RULE, /antimicrobial, antibacterial, antiseptic or anti-inflammatory/);
+    assert.match(SEO_COPY_COMPLIANCE_RULE, /APPEARANCE/);
+  });
+});

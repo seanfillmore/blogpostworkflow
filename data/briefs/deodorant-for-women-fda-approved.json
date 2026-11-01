@@ -1,0 +1,233 @@
+{
+  "target_keyword": "deodorant for women fda approved",
+  "slug": "deodorant-for-women-fda-approved",
+  "search_intent": "informational",
+  "content_type": "answer",
+  "content_depth": "quick",
+  "recommended_title": "Deodorant for Women FDA Approved? What the Label Really Means",
+  "meta_description": "Deodorant for women FDA approved? The FDA doesn't approve deodorants, but it regulates them. Learn what to look for and shop safe, aluminum-free picks.",
+  "target_word_count": 800,
+  "content_angle": "Answer the 'FDA approved' question in the first two sentences: the FDA does not pre-approve deodorants, which are cosmetics, while antiperspirants are regulated as OTC drugs. Then turn the confusion into a practical, non-fearmongering checklist for choosing a safe women's deodorant, with Real Skin Care's natural formulas as the natural next step.",
+  "key_differentiators": [
+    "Give the direct answer in the first 50 words, with the regulatory distinction (cosmetic deodorant vs OTC-drug antiperspirant) that the FDA page buries in Q&A format",
+    "Pair the regulatory facts with a plain-language buyer's checklist (ingredients, aluminum, sensitive-skin triggers) that the FDA and cosmeticsinfo pages don't provide",
+    "Correct the 'FDA approved' marketing myth without overclaiming. Explain what 'FDA registered', 'dermatologist tested' and 'clean' do and don't mean",
+    "Add a short FAQ with FAQPage schema targeting snippet queries (is deodorant FDA regulated, is aluminum-free deodorant safe, can deodorant go in carry-on)",
+    "Use a CTR-focused title and meta that mirror the searcher's exact phrasing, since the page already ranks around #5 but earns 0 clicks"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 80,
+      "guidance": "Open with the direct answer: no deodorant is 'FDA approved' because the FDA doesn't pre-approve cosmetics, but it does regulate them and the antiperspirant active ingredients. Promise a quick checklist for choosing a safe deodorant. Keep it to 2-3 short paragraphs so it can be lifted as a snippet.",
+      "keywords_to_include": [
+        "deodorant for women fda approved",
+        "fda regulated deodorant"
+      ]
+    },
+    {
+      "section": "H2: Is Any Deodorant Actually FDA Approved?",
+      "type": "h2",
+      "word_count_target": 140,
+      "guidance": "Explain that deodorants are classed as cosmetics, so products and ingredients don't need FDA premarket approval (color additives excepted). The FDA can act on unsafe or misbranded products. Clarify that labels like 'FDA registered' or 'FDA compliant' are marketing language, not approval. Cite the FDA cosmetics Q&A page.",
+      "keywords_to_include": [
+        "FDA regulated",
+        "cosmetic vs drug",
+        "deodorant ingredients safety"
+      ]
+    },
+    {
+      "section": "H2: Deodorant vs. Antiperspirant: Where FDA Oversight Differs",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Deodorants mask or reduce odor. Antiperspirants reduce sweat and are OTC drugs, with aluminum salts as the permitted active ingredients. Present a brief 2-row type comparison (deodorant vs antiperspirant: purpose, regulation, key ingredient). Link to the existing natural deodorant vs antiperspirant post for depth.",
+      "keywords_to_include": [
+        "antiperspirant vs deodorant",
+        "aluminum free deodorant",
+        "natural deodorant for women"
+      ]
+    },
+    {
+      "section": "H2: What to Look for in a Safe Deodorant for Women",
+      "type": "h2",
+      "word_count_target": 160,
+      "guidance": "Give a short bulleted checklist: a full ingredient list, no aluminum if preferred, minimal fragrance irritants, a gentle odor-neutralizing base, and skin-friendly moisturizers. Note that baking soda can irritate some people. Briefly introduce Real Skin Care's natural deodorant as a formula that fits the checklist, factually and without exaggeration. Don't make medical claims.",
+      "keywords_to_include": [
+        "best natural deodorants sensitive skin",
+        "clean deodorant for women",
+        "coconut oil deodorant",
+        "aluminum-free"
+      ]
+    },
+    {
+      "section": "H2: Choosing for Sensitive Skin",
+      "type": "h2",
+      "word_count_target": 110,
+      "guidance": "Give practical tips: patch test, avoid applying right after shaving, and watch for baking soda and fragrance. Mention when to see a dermatologist (persistent rash, excessive sweating). Link to the sensitive-skin and hypoallergenic posts. Do not claim any product is 'dermatologist recommended' unless Real Skin Care can substantiate it.",
+      "keywords_to_include": [
+        "best deodorant for sensitive skin dermatologist recommended",
+        "hypoallergenic deodorant"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 120,
+      "guidance": "3-4 answers of ~30 words each: Is deodorant regulated by the FDA? Is aluminum-free deodorant safe/effective? Is deodorant a liquid for TSA (link to the TSA post)? Is there aluminum-free deodorant for men (link to the men's post)? Keep answers factual and source-backed.",
+      "keywords_to_include": [
+        "is deodorant a liquid",
+        "aluminum free deodorant for men",
+        "deodorant stick"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 50,
+      "guidance": "Restate: 'FDA approved' isn't the right test. Ingredients, transparency and your skin's response are. Add a soft CTA to shop Real Skin Care natural deodorant.",
+      "keywords_to_include": [
+        "natural deodorant",
+        "deodorant for women"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "fda regulated deodorant",
+    "is deodorant fda approved",
+    "fda approved antiperspirant ingredients",
+    "deodorant vs antiperspirant",
+    "aluminum free deodorant for women",
+    "natural deodorant for women",
+    "best natural deodorants sensitive skin",
+    "best deodorant for sensitive skin dermatologist recommended",
+    "hypoallergenic deodorant",
+    "clean deodorant ingredients",
+    "is deodorant a liquid",
+    "aluminum free deodorant for men",
+    "deodorant stick",
+    "cosmetic vs drug regulation",
+    "safe deodorant ingredients"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "natural deodorant vs antiperspirant",
+      "url": "https://www.realskincare.com/blogs/news/natural-deodorant-vs-antiperspirant-which-is-right-for-you",
+      "placement_guidance": "In the deodorant vs antiperspirant section, as the deeper-dive reference."
+    },
+    {
+      "anchor_text": "what to look for in the healthiest deodorant",
+      "url": "https://www.realskincare.com/blogs/news/the-healthiest-deodorant-what-to-look-for-top-picks",
+      "placement_guidance": "In the 'what to look for' checklist section."
+    },
+    {
+      "anchor_text": "hypoallergenic deodorant for sensitive skin",
+      "url": "https://www.realskincare.com/blogs/news/best-hypoallergenic-deodorant-for-sensitive-skin-2026",
+      "placement_guidance": "In the sensitive skin section."
+    },
+    {
+      "anchor_text": "choosing deodorant for sensitive skin",
+      "url": "https://www.realskincare.com/blogs/news/best-deodorant-for-sensitive-skin-what-to-look-for",
+      "placement_guidance": "Second link in the sensitive skin section, with different anchor wording."
+    },
+    {
+      "anchor_text": "does coconut oil deodorant work",
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-does-it-work-is-it-safe",
+      "placement_guidance": "In the checklist section where coconut oil is mentioned."
+    },
+    {
+      "anchor_text": "TSA rules for deodorant",
+      "url": "https://www.realskincare.com/blogs/news/is-deodorant-a-liquid-for-tsa-full-travel-rules",
+      "placement_guidance": "In the FAQ answer about deodorant being a liquid."
+    },
+    {
+      "anchor_text": "aluminum-free deodorant for men",
+      "url": "https://www.realskincare.com/blogs/news/best-aluminum-free-deodorant-for-men-that-actually-works",
+      "placement_guidance": "In the FAQ or conclusion, as a pointer for readers shopping for men."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite the FDA's own cosmetics and OTC antiperspirant guidance for every regulatory statement",
+    "Add a reviewed-by line or author byline with relevant credentials, and a last-updated date",
+    "Be transparent about Real Skin Care's formulation approach and full ingredient lists, without overclaiming",
+    "Recommend seeing a dermatologist for persistent irritation or excessive sweating",
+    "State plainly that the brand's products are cosmetics and not 'FDA approved'. This builds trust"
+  ],
+  "schema_type": "FAQPage",
+  "citation_guidance": "Link to the FDA cosmetics Q&A page and FDA OTC antiperspirant (drug monograph) guidance for the claims that deodorants are cosmetics not requiring premarket approval, that antiperspirants are OTC drugs, and that aluminum salts are the permitted actives. Cite the FDA/MoCRA or TSA.gov pages for any facility-registration or liquid-rule statements. Any claims about aluminum safety, breast cancer or skin irritation must cite the National Cancer Institute, the American Cancer Society or peer-reviewed research, and should be worded cautiously (for example 'research has not established a link'). Avoid absolute claims such as 'completely safe', 'toxin-free' or 'chemical-free', and don't state that any product is dermatologist recommended or clinically proven without documentation.",
+  "writer_notes": "TREAT THIS AS A REFRESH, NOT A NEW POST. The site already ranks around #5 for this keyword (1,564 impressions, 0 clicks over 90 days). Per standing guidance, confirm the existing ranking URL in Search Console and update that page in place, keeping its URL, rather than publishing a competing page, which would cannibalize. The main goals are a CTR-improving title and meta and a direct answer at the top. Use the title and meta provided. Tone is friendly, clear and brand-authentic, with no fearmongering. Don't pad: aim for ~800 words, in line with the SERP median. Ignore the unrelated supplied keywords (collagen, minoxidil, hair growth, sunscreen, multivitamin, etc.) as they are off-topic. Do not mention competitor brands. Do not write about a 'frankincense deodorant' or 'magandang deodorant' unless the product team confirms a real Real Skin Care product exists. Avoid the 'when was the deodorant stick invented' tangent. Don't add lotion or skincare cross-sells, as new lotion and skincare content is on hold.",
+  "search_volume": 0,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.fda.gov/cosmetics/resources-consumers-cosmetics/cosmetics-safety-qa-personal-care-products",
+      "title": "Cosmetics Safety Q&A: Personal Care Products",
+      "domain": "www.fda.gov",
+      "description": "Feb 25, 2022 — deodorants. These products and their ingredients are not subject to FDA premarket approval, except color additives (other than coal tar hair ..."
+    },
+    {
+      "position": 2,
+      "url": "https://www.cosmeticsinfo.org/product/antiperspirants-and-deodorants/",
+      "title": "Antiperspirants & Deodorants",
+      "domain": "www.cosmeticsinfo.org",
+      "description": "Antiperspirants are regulated by the U.S. Food and Drug Administration (FDA ) Individual active ingredients in antiperspirants are reviewed for safety by FDA,"
+    },
+    {
+      "position": 3,
+      "url": "https://www.verywellfit.com/best-deodorants-for-women-4158696",
+      "title": "The 8 Best Deodorants for Women of 2026, Tested by Editors",
+      "domain": "www.verywellfit.com",
+      "description": "May 7, 2026 — We tested 47 deodorants with dermatologist input to find the best for odor control, workout freshness, and no white marks."
+    },
+    {
+      "position": 4,
+      "url": "https://www.target.com/s/non+toxic+deodorant+women",
+      "title": "Non-Toxic Deodorants for Women | Aluminum-Free & Safe",
+      "domain": "www.target.com",
+      "description": "Explore a variety of non-toxic deodorants for women, featuring aluminum-free options in scents like peony rose, soft powder, and clean tangerine."
+    },
+    {
+      "position": 5,
+      "url": "https://www.ewg.org/skindeep/browse/category/antiperspirant/",
+      "title": "EWG Skin Deep® | Ratings for All Antiperspirant/Deodorants",
+      "domain": "www.ewg.org",
+      "description": "EWG's Skin Deep® database gives you practical solutions to protect yourself and your family from everyday exposures to chemicals in personal care products."
+    },
+    {
+      "position": 6,
+      "url": "https://secret.com/en-us/articles/antiperspirants-vs-deodorants-whats-the-difference",
+      "title": "What is the difference between an antiperspirant and a ...",
+      "domain": "secret.com",
+      "description": "Specific aluminum salts are the only FDA approved ingredients that fight sweat. The difference between deodorant and antiperspirant is the aluminum active ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.greenbootlife.com/blog/best-natural-non-toxic-deodorants",
+      "title": "Best Natural and Non-Toxic Deodorants That Actually Work ...",
+      "domain": "www.greenbootlife.com",
+      "description": "Best Natural and Non-Toxic Deodorants That Actually Work (Tested & Approved) · Ursa Major Forest Fix Spray Deodorant · Kaia Naturals The Takesumi Detox Deodorant. Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://www.degreedeodorant.com/us/en/products/women.html",
+      "title": "Degree - Deodorants & Antiperspirants for Women",
+      "domain": "www.degreedeodorant.com",
+      "description": "Degree women's deodorants offer either 48-hour or 72-hour sweat and odor protection, dermatologist-tested, prescription-strength wetness protection."
+    }
+  ],
+  "index_validation": {
+    "validation_source": "gsc_untapped",
+    "cluster": "deodorant",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 824,
+    "avgH2": 3,
+    "targetWordCount": 800
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

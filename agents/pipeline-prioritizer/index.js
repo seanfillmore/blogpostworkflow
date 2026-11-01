@@ -26,7 +26,7 @@ import { loadCalendar, upsertItem, writeCalendar } from '../../lib/calendar-stor
 import { listAllSlugs, getPostMeta } from '../../lib/posts.js';
 import { newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS, freshnessOfFile, staleNote } from '../../lib/seo-impact-freshness.js';
-import { computePlan, applyHysteresis, buildContributionIndex } from '../../lib/pipeline-priority.js';
+import { partitionCalendar, computePlan, applyHysteresis, buildContributionIndex } from '../../lib/pipeline-priority.js';
 import { slugify } from '../../lib/keyword-dedup.js';
 import { isInProductScope } from '../../lib/product-scope.js';
 import { getSearchVolume } from '../../lib/dataforseo.js';
@@ -209,32 +209,9 @@ async function main() {
   const calendar = loadCalendar();
   const { covered, clusterRecent, refreshRecent } = buildContext(calendar, today);
 
-  // partition: backlog ideas = pending items with no publish_date
-  const backlog = [];
-  let bufferReady = 0;
-  const takenSlots = new Set();
-  const statusBySlug = new Map(); // slug → derived status, reused by the attribution ledger
-  for (const it of calendar.items) {
-    const st = statusOf(it);
-    statusBySlug.set(it.slug, st);
-    if (['written', 'scheduled', 'draft', 'briefed'].includes(st)) bufferReady++;
-    if (it.publish_date) takenSlots.add(ymd(it.publish_date));
-    if (st === 'pending' && !it.publish_date) {
-      backlog.push({
-        slug: it.slug, keyword: it.keyword,
-        cluster: (it.category || it.topical_hub || '').toLowerCase() || null,
-        volume: it.volume, kd: it.kd, search_intent: it.search_intent || 'commercial',
-        impressions: it.impressions ?? null,
-        task_type: it.source === 'refresh' ? 'refresh' : 'new',
-        source: it.source, status_override: it.status_override || null,
-        // Persisted on the calendar item by this agent's own injection and by
-        // agents/gsc-opportunity's ideas-inbox push. Carried into the backlog so
-        // the demotion holds on every later run, not only the run that flagged it.
-        possible_duplicate: Boolean(it.possible_duplicate),
-        duplicate_of: it.ranked_match ?? it.duplicate_of ?? null,
-      });
-    }
-  }
+  // partition: backlog = undated pending or briefed items (lib/pipeline-priority.js)
+  const { backlog, bufferReady, upcomingScheduled, takenSlots, statusBySlug } =
+    partitionCalendar(calendar.items, { statusOf, today, ymd });
 
   // hysteresis
   const rawSignals = collectSignals(today);
@@ -246,10 +223,10 @@ async function main() {
     console.log(`  ${flaggedSignals.length} signal(s) carry possible_duplicate — DEMOTED below every clean idea, never dropped:`);
     for (const s of flaggedSignals) console.log(`    "${s.key}" — ${evidenceLine(s.duplicateOf)}`);
   }
-  console.log(`  Backlog ideas: ${backlog.length} | buffer ready: ${bufferReady}/${cfg.buffer.target}`);
+  console.log(`  Backlog ideas: ${backlog.length} | scheduled ahead: ${upcomingScheduled} | buffer ready: ${bufferReady}/${cfg.buffer.target}`);
 
   const plan = computePlan({
-    backlog, signals: active, bufferReady, takenSlots, clusterRecent, refreshRecent,
+    backlog, signals: active, bufferReady, takenSlots, upcomingScheduled, clusterRecent, refreshRecent,
     coveredIndex: covered, rejections: rejections(), today, now, cfg,
   });
 
@@ -374,10 +351,11 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, `${today}.md`), buildReport(payload));
   console.log(`  Applied: ${plan.injections.length} injected, ${plan.promotions.length} promoted.`);
 
-  // 5) alerts bypass digest deferral (errors email immediately)
+  // 5) alerts go to the deferred digest as 'info': a thin pipeline is a FINDING
+  // for a human to act on, not this agent breaking (CLAUDE.md severity rule).
   if (plan.alerts.length) {
-    await notify({ subject: `⚠️ Pipeline prioritizer: ${plan.alerts.length} alert(s)`,
-      body: plan.alerts.join('\n'), status: 'error', category: 'content' }).catch(() => {});
+    await notify({ subject: `Pipeline prioritizer: ${plan.alerts.length} alert(s)`,
+      body: plan.alerts.join('\n'), status: 'info', category: 'content' }).catch(() => {});
   }
   console.log('\nPrioritizer complete.');
 }

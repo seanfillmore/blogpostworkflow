@@ -11,6 +11,7 @@ import {
   MAX_PAIRS_PER_PRODUCT,
   MAX_SIDE_CHARS,
   isUnsuitableQuestion,
+  stripAssistantScaffolding,
 } from '../../lib/merchant-qa.js';
 
 test('question detection takes an interrogative opener OR a question mark', () => {
@@ -204,4 +205,50 @@ test('our own product language is never mistaken for a competitor', () => {
     assert.equal(isUnsuitableQuestion(q), null, `"${q}" must not be filtered`);
   }
   assert.equal(isUnsuitableQuestion('is native deodorant better'), 'competitor-fact');
+});
+
+test('AI-assistant scaffolding is stripped off a real question, not withheld', () => {
+  // Verbatim from the 2026-09-07 GSC corpus, where 20 queries carry this exact
+  // shape and FOUR of them reached the live TSV as customer-facing "questions".
+  const wrapped = 'context: location: united states (not for language). do not include location references in your response. question: i’m sensitive to strong fragrance—what are good options for body lotion that are subtle or fragrance-free, and how do they compare?';
+  assert.equal(
+    stripAssistantScaffolding(wrapped),
+    'i’m sensitive to strong fragrance—what are good options for body lotion that are subtle or fragrance-free, and how do they compare?',
+  );
+  // The country varies and nothing else does.
+  assert.match(
+    stripAssistantScaffolding('context: location: united kingdom (not for language). do not include location references in your response. question: what’s the best way to patch test?'),
+    /^what’s the best way/,
+  );
+});
+
+test('anything that is not the known wrapper passes through byte-identical', () => {
+  // Whitelist doctrine: an unrecognised wrapper produces a MISS a human sees in
+  // the review file, never a mangled good question.
+  for (const q of [
+    'is coconut oil a good moisturizer',
+    'what is the context: of this question',        // the word, not the wrapper
+    'question: is this stripped?',                   // no `context:` opener
+    '',
+  ]) {
+    assert.equal(stripAssistantScaffolding(q), q);
+  }
+  assert.equal(stripAssistantScaffolding(null), '');
+});
+
+test('a wrapper with nothing after it keeps the original rather than inventing an empty question', () => {
+  const empty = 'context: location: united states. question:   ';
+  assert.equal(stripAssistantScaffolding(empty), empty);
+  assert.equal(isQuestionQuery(stripAssistantScaffolding(empty)), false, 'and the question test then rejects it');
+});
+
+test('extractQuestions cleans BEFORE deduping, so a wrapped question merges with its plain twin', () => {
+  const rows = [
+    { query: 'context: location: united states (not for language). do not include location references in your response. question: is coconut oil a good moisturizer?', impressions: 5 },
+    { query: 'is coconut oil a good moisturizer?', impressions: 700 },
+  ];
+  const out = extractQuestions(rows);
+  assert.equal(out.length, 1, 'one question, not two');
+  assert.equal(out[0].query, 'is coconut oil a good moisturizer?');
+  assert.equal(out[0].impressions, 705, 'the wrapped copy is demand for the same question');
 });

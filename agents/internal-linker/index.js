@@ -43,6 +43,9 @@ import { identifyPillar } from '../../lib/cluster-architecture.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { parseScoredSuggestions, summarizeSuggestionFailures } from '../../lib/llm-json-suggestions.js';
 import { injectLink } from '../../lib/internal-link-inject.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines } from '../../lib/edit-gate-filter.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 // Suggestion-call parse failures for this run. Collected rather than thrown: the
 // agent loops over many articles and one bad response must not abandon the batch,
@@ -147,6 +150,26 @@ function pickTopTargets(rows, n, quickWinSlugs = new Set()) {
 }
 
 /** Extract the slug (last path segment) from a full URL. */
+// ── Live-article edit gate ──────────────────────────────────────────────────
+// Adding a link edits the SOURCE article's body, so each source page is asked
+// for an `enhance` edit (lib/post-edit-gate.js): allowed unless the page is
+// frozen. Filtered BEFORE the --limit slice so a frozen page cannot take a slot.
+const EDIT_GATE_HELD = [];
+function gateSources(candidates) {
+  const { kept, held } = partitionByEditGate(candidates, {
+    kind: 'enhance',
+    mayEdit: mayEditLivePost,
+    targetOf: (a) => a?.handle || null,
+  });
+  EDIT_GATE_HELD.push(...held);
+  return kept;
+}
+function editGateReportLines() {
+  const lines = renderEditGateLines(EDIT_GATE_HELD);
+  for (const l of lines) console.log(`  ${l}`);
+  return lines.length ? ['', '## Edit gate — source pages held (no links added)', '', ...lines.map((l) => `- ${l.trim()}`)] : [];
+}
+
 function urlToSlug(url) {
   try { return new URL(url).pathname.split('/').filter(Boolean).pop(); }
   catch { return url.split('/').filter(Boolean).pop(); }
@@ -253,7 +276,7 @@ async function findLinkOpportunities(article, targetPost, targetUrl) {
     .slice(0, 6000);
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -325,7 +348,7 @@ async function analyzeTarget(slug, allArticles, preloadedMeta = null) {
     return isTopicallyRelevant(a, targetKeyword);
   });
 
-  const toProcess = candidates.slice(0, limitArg);
+  const toProcess = gateSources(candidates).slice(0, limitArg);
   const results = [];
   let totalLinksAdded = 0;
 
@@ -488,7 +511,11 @@ async function main() {
       const ownHandle = targetMeta.shopify_handle || slug;
       const ownArticle = allArticles.find((a) => a.handle === ownHandle);
 
-      if (ownArticle && !alreadyLinksTo(ownArticle.body_html || '', pillarUrl)) {
+      const ownGate = ownArticle ? mayEditLivePost(ownArticle.handle, 'enhance') : null;
+      if (ownGate && !ownGate.allowed) {
+        EDIT_GATE_HELD.push({ target: ownArticle.handle, kind: 'enhance', reason: ownGate.reason, until: ownGate.until });
+        console.log(`  Pillar link: edit gate held this post — ${ownGate.reason}`);
+      } else if (ownArticle && !alreadyLinksTo(ownArticle.body_html || '', pillarUrl)) {
         // Synthesise a minimal meta object for the pillar target
         const pillarMeta = {
           title: pillarKeyword.replace(/\b\w/g, (c) => c.toUpperCase()),
@@ -582,6 +609,7 @@ async function main() {
       lines.push('');
     }
 
+    lines.push(...editGateReportLines());
     const reportPath = getInternalLinksPath(slug);
     mkdirSync(dirname(reportPath), { recursive: true });
     writeFileSync(reportPath, lines.join('\n'));
@@ -718,7 +746,7 @@ async function main() {
         if (alreadyLinksTo(a.body_html || '', targetUrl)) return false;
         return isTopicallyRelevant(a, targetKeyword);
       });
-      const toProcess = candidates.slice(0, limitArg);
+      const toProcess = gateSources(candidates).slice(0, limitArg);
 
       console.log(`     "${targetMeta.title.slice(0, 60)}"`);
       console.log(`     ${candidates.length} candidate(s), processing ${toProcess.length}`);
@@ -802,6 +830,7 @@ async function main() {
   }
 
   mkdirSync(REPORTS_DIR, { recursive: true });
+  reportLines.push(...editGateReportLines());
   const reportPath = join(REPORTS_DIR, 'top-targets-internal-links.md');
   writeFileSync(reportPath, reportLines.join('\n'));
 

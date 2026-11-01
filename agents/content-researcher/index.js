@@ -38,6 +38,7 @@ import { loadIndex } from '../../lib/keyword-index/consumer.js';
 import { mergeRelatedKeywords, buildResearchIndexContext } from './lib/index-context.js';
 import { computeCompetitorBenchmark } from '../../lib/content-benchmark.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 // GSC is optional — gracefully skip if not configured
 let gsc = null;
@@ -96,7 +97,7 @@ if (!env.DATAFORSEO_PASSWORD) { console.error('Missing DATAFORSEO_PASSWORD in .e
 async function getRelatedKeywordsFallback(keyword) {
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -405,7 +406,7 @@ Return only the JSON object. No markdown fences, no explanation.${(() => {
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: LLM_MODELS.standard,
       max_tokens: 8192,
       messages: [{ role: 'user', content: prompt }],
     }),

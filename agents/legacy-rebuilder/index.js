@@ -35,8 +35,11 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listAllSlugs, getContentPath, getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
+import { listAllSlugs, getContentPath, getPostMeta, getMetaPath, replacePostMeta, getEditorReportPath } from '../../lib/posts.js';
+import { isPassing } from '../../lib/editor-remediation.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { mayEditLivePost } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import { hasInjectedSchema } from '../../lib/injected-schema.js';
 import { excludeWrittenOff } from '../../lib/refresh-writeoff.js';
 import { getArticle } from '../../lib/shopify.js';
@@ -65,14 +68,22 @@ import {
  * @returns {{kept:Array, held:Array, overridden:Array, efficiency:object|null}}
  */
 export function selectLegacyPosts(posts, {
-  hold = null, includeHeld = false, ranking = null, limit = null,
+  hold = null, includeHeld = false, ranking = null, limit = null, mayEdit = null,
 } = {}) {
   const describe = (p) => ({
     slug: p?.slug,
     keyword: p?.meta?.target_keyword,
     title: p?.meta?.title,
   });
-  const out = partitionHeld(posts, hold, { includeHeld, describe });
+  const held0 = partitionHeld(posts, hold, { includeHeld, describe });
+  // Live-article edit gate (lib/post-edit-gate.js), BEFORE the cap like the
+  // hold: every rebuild tier edits the live body, so it is asked as a
+  // `rewrite`. A held post keeps its needs_rebuild tag and is asked again
+  // tomorrow. Injected so this stays testable; absent means no gate.
+  const { kept: gateKept, held: editGated } = partitionByEditGate(held0.kept, {
+    kind: 'rewrite', mayEdit, targetOf: (p) => p?.meta?.shopify_handle || p?.slug,
+  });
+  const out = { ...held0, kept: gateKept, editGated };
   if (!ranking) return { ...out, efficiency: null };
   const efficiency = orderByEfficiency(out.kept, ranking, { limit, describe });
   return { ...out, kept: efficiency.items, efficiency };
@@ -159,14 +170,28 @@ function isLegacy(slug) {
   return isLegacyHtml(readFileSync(p, 'utf8'));
 }
 
+/**
+ * Should this agent pick the post up at all?
+ *
+ * Two signals: no injected schema (built before the pipeline existed), or an
+ * editor-tagged needs_rebuild. The second one is NOT ours for a `rising` post
+ * that already carries schema: its treatment is the light refresh, which never
+ * touches body copy, so it cannot fix a content blocker. It only re-pushed the
+ * same body, and until 2026-10-21 it also stamped a 28-day `rewrite` that locked
+ * blocked-post-resolver (the agent that DOES fix blockers) out of 29 such posts.
+ * Those posts belong to the resolver, which reads the editor report directly.
+ */
+export function isLegacyCandidate({ legacy, meta }) {
+  if (legacy) return true;
+  if (!meta?.needs_rebuild) return false;
+  return meta.legacy_bucket !== 'rising';
+}
+
 function findLegacyPosts() {
-  // Two signals: no injected schema at all (old posts built before the pipeline
-  // existed), or editor-tagged needs_rebuild (posts that failed the editor this
-  // week).
   const candidates = listAllSlugs()
     .map((slug) => ({ slug, meta: getPostMeta(slug) }))
     .filter((p) => p.meta && p.meta.shopify_article_id)
-    .filter((p) => isLegacy(p.slug) || p.meta.needs_rebuild);
+    .filter((p) => isLegacyCandidate({ legacy: isLegacy(p.slug), meta: p.meta }));
 
   // Drop posts whose last refresh the publisher's mirror gate REFUSED and whose
   // mirror has not changed since. Both signals above are structurally unable to
@@ -237,11 +262,21 @@ async function lightRefresh(slug) {
     return false;
   }
 
-  // Clear the needs_rebuild tag on success
-  const { needs_rebuild: _drop, ...rest } = getPostMeta(slug) || {};
-  const updated = { ...rest, refreshed_at: new Date().toISOString() };
-  replacePostMeta(slug, updated);
+  // Clear needs_rebuild ONLY if the editor's report passes. The editor ran with
+  // --in-pipeline, so it did not tag anything itself; clearing unconditionally
+  // hid real blockers until the weekly Sunday re-gate found them again.
+  let report = '';
+  try { report = readFileSync(getEditorReportPath(slug), 'utf8'); } catch { /* no report → not passing */ }
+  const passing = report && isPassing(report);
+  const current = getPostMeta(slug) || {};
+  const { needs_rebuild: _drop, ...rest } = current;
+  replacePostMeta(slug, { ...(passing ? rest : current), refreshed_at: new Date().toISOString() });
+  if (!passing) console.log('  Editor still reports blockers — needs_rebuild kept for blocked-post-resolver');
 
+  // No recordMaterialEdit here, deliberately. answer-first-rewriter stamps its
+  // own `rewrite` when it actually rewrites the intro; the buy box, schema and
+  // year fixes are enhance/repair edits that start no measurement window.
+  // Stamping `rewrite` unconditionally locked 29 blocked pages for 28 days.
   console.log(`  ✓ Light refresh complete`);
   return true;
 }
@@ -285,6 +320,13 @@ async function rebuildPost(slug) {
       console.log('  Cleared stale needs_rebuild tag');
     }
     return true;
+  }
+  // Live-article edit gate, alongside the winner lock above (not instead of
+  // it). A held post keeps its needs_rebuild tag; it is asked again tomorrow.
+  const editGate = mayEditLivePost(meta.shopify_handle || slug, 'rewrite');
+  if (bucket !== 'broken' && !editGate.allowed) {
+    console.log(`\nHeld: ${slug} — edit gate: ${editGate.reason}`);
+    return { editGate: true, slug, reason: editGate.reason, until: editGate.until };
   }
   if (bucket === 'broken') {
     console.log(`\nSkipping: ${slug}`);
@@ -361,9 +403,10 @@ async function main() {
   // An explicit slug is an operator asking for that post; the hold only ever
   // stops unattended spend, so it does not apply to a hand-typed request — and
   // neither does the ranking, which would otherwise silently reorder a list of one.
-  const { kept: legacy, held, efficiency } = slugArg
-    ? { kept: findLegacyPosts(), held: [], efficiency: null }
-    : selectLegacyPosts(findLegacyPosts(), { hold, includeHeld, ranking, limit });
+  const { kept: legacy, held, efficiency, editGated = [] } = slugArg
+    ? { kept: findLegacyPosts(), held: [], efficiency: null, editGated: [] }
+    : selectLegacyPosts(findLegacyPosts(), { hold, includeHeld, ranking, limit, mayEdit: apply ? mayEditLivePost : null });
+  const editGateHeld = [...editGated];
 
   if (held.length) {
     for (const line of renderHoldLines(held)) console.log(`  ${line}`);
@@ -417,6 +460,7 @@ async function main() {
   for (const p of toRebuild) {
     try {
       const ok = await rebuildPost(p.slug);
+      if (ok?.editGate) { editGateHeld.push({ target: ok.slug, kind: 'rewrite', reason: ok.reason, until: ok.until }); continue; }
       if (ok) succeeded++;
       // rebuildPost returns false after already logging its own reason, so there
       // is no error object to carry here — record the slug so the digest can at
@@ -428,11 +472,14 @@ async function main() {
     }
   }
 
+  const editGateLines = renderEditGateLines(editGateHeld);
+  for (const line of editGateLines) console.log(`  ${line}`);
   await notify({
-    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failures.length} failed${holdSummaryFragment(held)}`,
+    subject: `Legacy Rebuilder: ${succeeded} rebuilt, ${failures.length} failed${holdSummaryFragment(held)}${editGateSummaryFragment(editGateHeld)}`,
     body: [
       renderRebuildSummary({ succeeded, failures, remaining: legacy.length - succeeded }),
       ...(held.length ? ['', ...renderHoldLines(held)] : []),
+      ...(editGateLines.length ? ['', ...editGateLines] : []),
       ...(writtenOffLines.length ? ['', ...writtenOffLines] : []),
       ...(rankLines.length ? ['', ...rankLines] : []),
       ...(hold.disagreements.length ? ['', ...renderDisagreementLines(hold)] : []),

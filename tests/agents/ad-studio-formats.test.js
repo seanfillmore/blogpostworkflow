@@ -5,18 +5,19 @@ import { FORMATS, selectFormats, formatByKey, visibleFormats, formatForVariation
 // 2026-08-15 from reference creatives that are actually running (Bonafide, Magic Spoon /
 // MUD\WTR, a kids' supplement before/after), `giveaway-entry` added 2026-08-18,
 // `fact-hook` / `spec-panel` the same day to close the unaware / most-aware gap, and
-// `in-use-handwash` / `shower-shelf` on 2026-08-19 — the first plates with people in them.
-assert.equal(FORMATS.length, 14);
+// `in-use-handwash` / `shower-shelf` on 2026-08-19 — the first plates with people in them —
+// and `generic-villain` on 2026-10-03, the first plate with a face.
+assert.equal(FORMATS.length, 15);
 const keys = FORMATS.map(f => f.key);
 assert.deepEqual(
   [...keys].sort(),
   [
-    'fact-hook', 'giveaway-entry', 'in-use-handwash', 'ingredient-callout', 'manifesto',
+    'fact-hook', 'generic-villain', 'giveaway-entry', 'in-use-handwash', 'ingredient-callout', 'manifesto',
     'offer-focused', 'problem-aware', 'shower-shelf', 'spec-panel', 'stat-stack',
     'state-contrast', 'testimonial', 'top-x-review', 'us-vs-them',
   ]
 );
-assert.equal(new Set(keys).size, 14, 'format keys must be unique');
+assert.equal(new Set(keys).size, 15, 'format keys must be unique');
 
 // ── giveaway-entry is INVISIBLE unless a giveaway is actually running ────────────────
 //
@@ -45,7 +46,7 @@ assert.equal(new Set(keys).size, 14, 'format keys must be unique');
   // requiresGiveaway must gate exactly one format, so the rotation with no giveaway live is
   // every format except giveaway-entry.
   assert.equal(visibleFormats().length, FORMATS.length - 1, 'the no-giveaway rotation is everything but the giveaway format');
-  assert.equal(visibleFormats().length, 13, 'and that is 13 formats today');
+  assert.equal(visibleFormats().length, 14, 'and that is 14 formats today');
 
   // Declaration order is what makes it the PROPOSED product-aware format while live, and
   // leaves offer-focused proposed otherwise (formatsForAngle takes the first match).
@@ -175,11 +176,11 @@ for (const f of FORMATS) {
 // has no default precisely because 'scene' quietly licenses props.
 assert.deepEqual(
   FORMATS.filter(f => f.plateSetting === 'scene').map(f => f.key).sort(),
-  ['in-use-handwash', 'problem-aware', 'shower-shelf', 'top-x-review'],
+  ['generic-villain', 'in-use-handwash', 'problem-aware', 'shower-shelf', 'top-x-review'],
 );
 // A scene plate still has to leave clear space for the type the operator sets by hand —
 // otherwise "keep the scene" quietly becomes "there is nowhere to put the headline".
-for (const key of ['problem-aware', 'top-x-review']) {
+for (const key of ['problem-aware', 'top-x-review', 'generic-villain']) {
   assert.ok(/clear|quiet|negative space/i.test(formatByKey(key).plateBrief),
     `${key}'s scene must still leave room for copy`);
 }
@@ -212,8 +213,8 @@ assert.equal(formatByKey('spec-panel').productProminent, true);
 
 // selectFormats. "Full rotation" means the VISIBLE rotation — a giveaway format is opt-in
 // by name and must never arrive by default, because the default is what you get by accident.
-assert.equal(selectFormats().length, 13, 'no args returns the full visible rotation');
-assert.equal(selectFormats([]).length, 13, 'empty array returns the full visible rotation');
+assert.equal(selectFormats().length, 14, 'no args returns the full visible rotation');
+assert.equal(selectFormats([]).length, 14, 'empty array returns the full visible rotation');
 assert.ok(!selectFormats().some(f => f.key === 'giveaway-entry'), 'the default rotation excludes it');
 assert.deepEqual(
   selectFormats(['giveaway-entry']).map(f => f.key),
@@ -472,4 +473,16 @@ for (const f of FORMATS) {
     () => resolvePlateBrief({ key: 'x', plateBrief: `A ${PLATE_GROUND_DEFAULT.name} ${PLATE_GROUND_DEFAULT.hex} ground.`, plateGround: { name: 'green' } }),
     /missing name or hex/,
   );
+}
+
+// generic-villain (2026-10-03): the stand-in must stay unbranded, unlabelled on the plate
+// (plates carry no text), physically distinct from our product, and never a competitor.
+{
+  const g = formatByKey('generic-villain');
+  assert.ok(/completely blank\s+label and no printing, logo or colour/i.test(g.plateBrief), 'the villain renders blank');
+  assert.ok(/clearly a different object from the product/i.test(g.plateBrief), 'and cannot read as a second unit of ours');
+  assert.ok(/no text anywhere in the picture/i.test(g.plateBrief), 'plates carry no text');
+  assert.ok(/never a real competitor/i.test(g.layoutBrief), 'a category, never a named competitor');
+  assert.ok(/never called\s+an antiperspirant/i.test(g.layoutBrief), 'RSC sells a deodorant');
+  assert.ok(/no depiction of skin or a skin condition/i.test(g.layoutBrief));
 }

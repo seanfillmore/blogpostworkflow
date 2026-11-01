@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "body-scrub",
+  "keyword": "body scrub",
+  "dropped_at": "2026-09-21T16:00:35.225Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-00-35-225Z-2378531",
+  "reason": "post killed: no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "body-scrub.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore body-scrub",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

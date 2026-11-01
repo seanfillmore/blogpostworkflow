@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "natural-lip-balm",
+  "keyword": "natural lip balm",
+  "dropped_at": "2026-09-21T15:44:26.695Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T15-44-26-695Z-2376924",
+  "reason": "post killed: no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "natural-lip-balm.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore natural-lip-balm",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

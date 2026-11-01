@@ -17,6 +17,7 @@ import { getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -300,7 +301,7 @@ async function main() {
   // Call Claude to synthesize the report
   console.log('\n  Generating report with Claude...');
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 2000,
     messages: [{
       role: 'user',

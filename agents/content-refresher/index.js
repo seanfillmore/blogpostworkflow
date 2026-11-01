@@ -35,12 +35,16 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -167,7 +171,7 @@ async function buildArticleIndex() {
 
 // ── claude refresh ────────────────────────────────────────────────────────────
 
-async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = []) {
+async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = [], founderBlock = '') {
   const bodyText = article.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -205,7 +209,7 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
   } catch { /* ignore */ }
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{
       role: 'user',
@@ -284,7 +288,7 @@ IMPORTANT:
   const verdict = loadPerformanceVerdict(slug);
   if (!verdict) return '';
   return `\n\n---\n\nPOST-PERFORMANCE VERDICT (why this post is being refreshed):\nAt the ${verdict.milestone || 'latest'}-day review this post was flagged ${verdict.verdict}. ${verdict.reason || ''}\n\nTarget your rewrite directly at this cause. Do not do a generic refresh. If the verdict says the projected traffic wasn't hit, figure out why — weak intro, missing topical coverage, title mismatch, thin sections — and fix that specific problem. If the verdict says BLOCKED (zero impressions), the issue is probably intent mismatch or indexing; focus on making the opening paragraph unambiguously match the target keyword and add a clearer content structure.`;
-})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}`,
+})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}${founderBlock ? `\n\n---\n\n${founderBlock}` : ''}`,
     }],
   });
 
@@ -307,7 +311,7 @@ async function summarizeChanges(originalHtml, refreshedHtml, keyword) {
   const refreshedText = refreshedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -382,6 +386,7 @@ async function main() {
 
   // Select targets
   let targets = [];
+  const editGateHeld = [];
 
   // Separate normal keywords from long-form queries (likely AI-generated or
   // conversational searches). Long queries contain real user concerns that
@@ -443,6 +448,17 @@ async function main() {
     }
     console.log(`  ${candidates.length} candidates`);
 
+    // Live-article edit gate, BEFORE the --count cap: with --apply a refresh
+    // replaces a live body (`rewrite`, lib/post-edit-gate.js), so a frozen page
+    // or one inside its 28-day measurement window must not take a slot.
+    if (apply) {
+      const { kept, held } = partitionByEditGate(candidates, {
+        kind: 'rewrite', mayEdit: mayEditLivePost, targetOf: (c) => gateTargetHandle(c.url),
+      });
+      candidates = kept;
+      editGateHeld.push(...held);
+    }
+
     for (const candidate of candidates.slice(0, count)) {
       const handle = candidate.url.split('/').filter(Boolean).pop();
       const article = byHandle.get(handle);
@@ -500,6 +516,18 @@ async function main() {
       continue;
     }
 
+    // Edit gate, alongside the lock (not instead of it). Only when this run
+    // will write a LIVE article: refresh-runner calls without --apply, having
+    // asked the gate itself. Asked before the paid generation.
+    if (apply && article.published_at) {
+      const editGate = mayEditLivePost(article.handle, 'rewrite');
+      if (!editGate.allowed) {
+        console.log(`    [held] ${slug}: edit gate — ${editGate.reason}`);
+        editGateHeld.push({ target: article.handle, kind: 'rewrite', reason: editGate.reason, until: editGate.until });
+        continue;
+      }
+    }
+
     console.log(`\n  [${i + 1}/${targets.length}] Refreshing "${article.title}"...`);
     process.stdout.write('    Generating refreshed content... ');
 
@@ -508,7 +536,8 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns);
+      const founder = founderNotesFor({ keyword, slug });
+      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns, founder.block);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
       process.stdout.write('    Summarizing changes... ');
@@ -523,7 +552,7 @@ async function main() {
         process.stdout.write(`    Intro failed answer-first (${afCheck.reasons.join('; ')}) — repairing... `);
         try {
           const repairMsg = await client.messages.create({
-            model: 'claude-sonnet-4-6',
+            model: LLM_MODELS.standard,
             max_tokens: 300,
             messages: [{
               role: 'user',
@@ -603,9 +632,20 @@ ${afCheck.intro?.html || ''}`,
             published: wasPublished,
           });
           applied = true;
+          if (wasPublished) recordMaterialEdit(article.handle, 'rewrite', 'content-refresher');
           console.log('done');
         } catch (e) {
           console.error(`failed: ${e.message}`);
+        }
+      }
+
+      // Stamp which founder notes were offered to this refresh, on the post the
+      // refreshed content was written to. Failure is logged, never fatal.
+      {
+        try {
+          writePostMeta(slug, { founder_notes_offered: founder.ids });
+        } catch (err) {
+          console.warn(`    founder_notes_offered stamp failed (non-fatal): ${err.message}`);
         }
       }
 
@@ -658,6 +698,16 @@ ${afCheck.intro?.html || ''}`,
     }
     lines.push('');
     lines.push('---');
+    lines.push('');
+  }
+
+  // The digest body IS this report (notifyLatestReport). A hold is the policy
+  // working: named here, never status 'error'.
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — held (page unchanged, asked again next run)');
+    lines.push('');
+    for (const l of editGateLines) { lines.push(`- ${l.trim()}`); console.log(`  ${l}`); }
     lines.push('');
   }
 

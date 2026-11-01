@@ -22,10 +22,13 @@ import { shopifyGraphQL } from '../lib/shopify.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const APPLY = process.argv.includes('--apply');
+// --only=<slug> uploads one asset, so an unchanged sibling is not re-sent
+// under its existing name (Shopify would create a suffixed duplicate).
+const ONLY = (process.argv.find((a) => a.startsWith('--only=')) || '').split('=')[1];
 
 const ASSETS = [
   { slug: 'routine-tracker', remote: '90-Day-Calm-Skin-Routine-and-Tracker-v3.pdf', alt: 'The 90-Day Calm-Skin Routine & Tracker' },
-  { slug: 'field-guide', remote: 'Coconut-Skincare-Field-Guide-v3.pdf', alt: 'The Coconut Skincare Field Guide' },
+  { slug: 'field-guide', remote: 'Coconut-Skincare-Field-Guide-v4.pdf', alt: 'The Coconut Skincare Field Guide' },
 ];
 
 async function stageUpload(filename, fileSize) {
@@ -80,6 +83,7 @@ async function waitForUrl(id, attempts = 20, delayMs = 2000) {
 async function main() {
   const out = {};
   for (const a of ASSETS) {
+    if (ONLY && a.slug !== ONLY) continue;
     const path = join(ROOT, 'data', 'digital-assets', `${a.slug}.pdf`);
     if (!existsSync(path)) throw new Error(`missing ${path} — run build-digital-assets.mjs first`);
     const buf = readFileSync(path);

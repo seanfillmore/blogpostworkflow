@@ -22,6 +22,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scrape, metaAdLibraryUrl } from '../../lib/firecrawl.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -120,7 +121,7 @@ async function extractPatternsViaClaude(client, competitorName, scrapedText) {
     return { angles: [], hooks: [], themes: [] };
   }
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{ role: 'user', content: buildPatternPrompt(competitorName, scrapedText) }],
   });

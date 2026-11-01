@@ -114,7 +114,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { checkSeoCopy } from '../lib/seo-copy-health-gate.js';
+import { checkSeoCopy, SURFACE_TIERED_CATEGORIES } from '../lib/seo-copy-health-gate.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
 import {
   occurrences,
@@ -594,6 +594,20 @@ export const KEPT = [
 // --- pure helpers (exported for the tests) ------------------------------------
 
 /**
+ * The gate's blocking hits that apply to an ARTICLE body.
+ *
+ * This plan gates on the strict commercial default (it predates surfaces, and that
+ * keeps `disease` strict for it). The categories added 2026-10-10 are tiered by
+ * surface ALONE, advisory on editorial copy, and these rewrites report tea tree OIL's
+ * cited antibacterial / anti-inflammatory research inside an article: the editorial
+ * case the tier exists for. Dropping only those two categories keeps every other
+ * blocking verdict this plan was approved under.
+ */
+export function articleBlocking(blocking) {
+  return blocking.filter((b) => !SURFACE_TIERED_CATEGORIES.has(b.category));
+}
+
+/**
  * Re-gate every AFTER in the slot its entry declares.
  *
  * `checkSeoCopy` takes an OBJECT and returns `ok: true` for a bare string, so the
@@ -603,9 +617,9 @@ export const KEPT = [
 export function gatePlan(plan) {
   const failures = [];
   for (const e of plan) {
-    const res = checkSeoCopy({ [e.gateSlot]: e.after });
-    if (!res.ok) {
-      failures.push({ id: e.id, matches: res.blocking.map((b) => b.match) });
+    const blocking = articleBlocking(checkSeoCopy({ [e.gateSlot]: e.after }).blocking);
+    if (blocking.length) {
+      failures.push({ id: e.id, matches: blocking.map((b) => b.match) });
     }
   }
   return { ok: failures.length === 0, failures };

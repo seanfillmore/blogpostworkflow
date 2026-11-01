@@ -118,7 +118,8 @@ async function main() {
   let failed = 0;
   for (const d of due) {
     try {
-      await subscribeToList(config.listId, { email: d.email, firstName: d.firstName });
+      const r = await subscribeToList(config.listId, { email: d.email, firstName: d.firstName });
+      if (!r.subscribed) { console.log(`  skipped ${d.email} (suppressed: ${r.suppression.join(', ')})`); continue; }
       // Stamped AFTER the subscribe so a failed write is retried next run rather
       // than being recorded as done. NOT gv_confirmed — see the header.
       await updateProfileProperties(d.email, { [BACKFILL_STAMP]: new Date().toISOString() });
