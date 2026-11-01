@@ -132,6 +132,8 @@ function expectedSection() {
           pack_badge: content.buyBox.pack.badge,
           pack_add_free: content.buyBox.pack.addFree,
           shipping: content.buyBox.shipping,
+          shipping_multi: content.buyBox.shippingMulti,
+          shipping_pack: content.buyBox.shippingPack,
           guarantee: content.guarantee,
         },
       },
@@ -220,8 +222,8 @@ test('buy-box markup contract Task 3 binds to', () => {
   assert.match(l, /<a[^>]*data-presell-sticky[^>]*href="#presell-buy"/);
   assert.match(l, /<form[^>]*data-price-token="[^"]*"[^>]*data-scent-token="/);
   const labelled = l.match(/<[^>]*data-presell-label[^>]*>/g) || [];
-  // mid-page CTA, buy title, price line, buy button, sticky bar
-  assert.equal(labelled.length, 5);
+  // mid-page CTA, buy title, price line, buy button, shipping line, sticky bar
+  assert.equal(labelled.length, 6);
   for (const tag of labelled) assert.match(tag, /data-presell-template="{{ s\.\w+ \| escape }}"/);
   assert.match(l, /<script src="{{ 'presell-buy\.js' \| asset_url }}" defer><\/script>/);
   assert.match(l, /money_without_trailing_zeros/, 'price is live from the product');

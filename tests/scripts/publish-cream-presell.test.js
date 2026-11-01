@@ -44,3 +44,13 @@ test('the guard refuses unless HEAD contains origin/main (a stale branch cannot 
   // This branch is built on main, so the real check passes here.
   assert.equal(headContainsBase(), true);
 });
+
+// Verbatim from the live page.presell-water-cooler.json after a theme-editor
+// save (2026-10-26): the only difference from git was this header.
+const EDITOR_HEADER = "/*\n * ------------------------------------------------------------\n * IMPORTANT: The contents of this file are auto-generated.\n *\n * This file may be updated by the Shopify admin theme editor\n * or related systems. Please exercise caution as any changes\n * made to this file may be overwritten.\n * ------------------------------------------------------------\n */\n\n";
+test('guard ignores the header the theme editor prepends, and nothing else', () => {
+  assert.equal(guardVerdict({ current: EDITOR_HEADER + 'B', before: 'B', target: 'N' }), 'write');
+  assert.equal(guardVerdict({ current: EDITOR_HEADER + 'N', before: 'B', target: 'N' }), 'already');
+  assert.equal(guardVerdict({ current: EDITOR_HEADER + 'X', before: 'B', target: 'N' }), 'refuse');
+  assert.equal(guardVerdict({ current: '/* my note */\nB', before: 'B', target: 'N' }), 'refuse');
+});

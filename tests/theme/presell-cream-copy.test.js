@@ -178,3 +178,25 @@ test('copy tokens are consistent with the prices they stand for', () => {
   assert.ok(b.ctaPack.includes(p.defaultScent), 'scent token in the pack button');
   assert.match(b.priceNotePack, /\(1 free\)/);
 });
+
+// The live free-shipping bar: General profile, Domestic, Standard $0 when
+// TOTAL_PRICE >= 45 (read from Shopify 2026-10-31). The buy box tells a
+// one-jar shopper that a second jar ships free, so that has to stay TRUE:
+// one jar under the bar, two jars and the pack at or over it.
+const FREE_SHIPPING_MIN = 45;
+for (const page of ['coconut-cream', 'water-cooler']) {
+  test(`${page}: the free-shipping line is true at every quantity`, () => {
+    const c = JSON.parse(readFileSync(join(ROOT, 'data', 'presell', page, 'content.json'), 'utf8'));
+    const unit = Number(c.product.price.replace(/[^0-9.]/g, ''));
+    const pack = Number(c.product.packPriceToken.replace(/[^0-9.]/g, ''));
+    const b = c.buyBox;
+    assert.ok(unit < FREE_SHIPPING_MIN, 'one jar is under the bar, so the single line must not say it ships free');
+    assert.doesNotMatch(b.shipping.replace(/second jar for free shipping/i, ''), /free/i);
+    assert.match(b.shipping, /second jar for free shipping/i);
+    assert.ok(unit * 2 >= FREE_SHIPPING_MIN, 'two jars must clear the bar for "a second jar ships free"');
+    assert.ok(pack >= FREE_SHIPPING_MIN, 'the pack must clear the bar');
+    assert.match(b.shippingMulti, /free US shipping/i);
+    assert.match(b.shippingPack, /free US shipping/i);
+    for (const s of [b.shipping, b.shippingMulti, b.shippingPack]) assert.doesNotMatch(s, /—/);
+  });
+}

@@ -67,8 +67,8 @@ export const FILES = [
 ];
 
 /**
- * Other pre-sell pages that reuse the same section, css and js. Their own
- * template is new, so its expected "before" is ABSENT (null); the shared files
+ * Other pre-sell pages that reuse the same section, css and js. A page's own
+ * template is ABSENT (before: null) until it first ships, then main; the shared files
  * are expected to equal main (normally an 'already' no-op).
  */
 export const TARGETS = {
@@ -77,7 +77,9 @@ export const TARGETS = {
     page: { handle: 'skin-looks-amazing', title: 'Your Skin Looks Amazing', template_suffix: 'presell-water-cooler' },
     files: [
       ...FILES.filter((f) => f.key !== 'templates/page.presell-cream.json'),
-      { key: 'templates/page.presell-water-cooler.json', before: null },
+      // Live since 2026-10-25 (PR for the Baby Drama ad), so like the cream
+      // template its expected "before" is now main, not absent.
+      { key: 'templates/page.presell-water-cooler.json', before: LIVE_BASE_REF },
     ],
   },
 };
@@ -122,7 +124,14 @@ function branchVersions(key) {
  * `prior` lists earlier branch versions this script may have shipped.
  * @returns {'write'|'already'|'refuse'}
  */
-export function guardVerdict({ current, before, target, prior = [] }) {
+// The comment Shopify prepends to a JSON template whenever the theme editor
+// saves it. It is not content (the Admin API strips it again on our write), so
+// a template that differs from git only by this header is still "before".
+const EDITOR_HEADER = /^\/\*\s*\n\s*\* -+\s*\n\s*\* IMPORTANT: The contents of this file are auto-generated\.[\s\S]*?\*\/\s*\n/;
+export const stripEditorHeader = (s) => (typeof s === 'string' ? s.replace(EDITOR_HEADER, '') : s);
+
+export function guardVerdict({ current: raw, before, target, prior = [] }) {
+  const current = stripEditorHeader(raw);
   if (current === target) return 'already';
   if (before === null ? current === undefined : current === before) return 'write';
   if (current !== undefined && prior.includes(current)) return 'write';
