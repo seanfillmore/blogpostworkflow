@@ -282,7 +282,11 @@ export async function runIngest({ now = new Date(), apply = false, deps }) {
         const question = q ? q.text : '';
         const source = q ? { type: q.source?.type ?? null, ref: q.source?.ref ?? null } : { type: 'general', ref: null };
         const { answer, redaction } = await redact(deps, a.answer);
-        const cluster = clusterForText(`${question} ${answer}`);
+        // The QUESTION names the topic; the answer only fills in when it does
+        // not. Classifying both together let the first-matching rule win on a
+        // word Sean used in passing ("soaps, deodorants") and filed a bar-soap
+        // answer under deodorant (2026-W44).
+        const cluster = clusterForText(question) || clusterForText(answer);
         notes.push({
           id: `fn-${set.week}-${msgHash}-${pos}`,
           week: set.week,
