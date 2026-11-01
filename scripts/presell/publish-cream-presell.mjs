@@ -122,7 +122,14 @@ function branchVersions(key) {
  * `prior` lists earlier branch versions this script may have shipped.
  * @returns {'write'|'already'|'refuse'}
  */
-export function guardVerdict({ current, before, target, prior = [] }) {
+// The comment Shopify prepends to a JSON template whenever the theme editor
+// saves it. It is not content (the Admin API strips it again on our write), so
+// a template that differs from git only by this header is still "before".
+const EDITOR_HEADER = /^\/\*\s*\n\s*\* -+\s*\n\s*\* IMPORTANT: The contents of this file are auto-generated\.[\s\S]*?\*\/\s*\n/;
+export const stripEditorHeader = (s) => (typeof s === 'string' ? s.replace(EDITOR_HEADER, '') : s);
+
+export function guardVerdict({ current: raw, before, target, prior = [] }) {
+  const current = stripEditorHeader(raw);
   if (current === target) return 'already';
   if (before === null ? current === undefined : current === before) return 'write';
   if (current !== undefined && prior.includes(current)) return 'write';
