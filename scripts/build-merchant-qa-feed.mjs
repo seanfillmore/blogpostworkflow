@@ -195,7 +195,7 @@ async function draftAnswers(handle, product, questions, pdp) {
   // **every one of the 14 large products failed that way in one run** — the
   // ceiling stopped being a ceiling and became a refusal.
   //
-  // Probed live on 2026-09-07 against `claude-sonnet-5`: 16,000 OK, 18,000 OK,
+  // Probed live on 2026-09-07 against the then-current Sonnet model: 16,000 OK, 18,000 OK,
   // 20,000 OK, 21,800 REFUSED. So 20,000 is the measured wall and is used as-is.
   //
   // It binds from n >= 28, where it yields 667/pair — still above the worst
