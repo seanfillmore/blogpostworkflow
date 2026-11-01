@@ -1,0 +1,6 @@
+{
+  "action": "112464442",
+  "template_id": "Y8wJn7",
+  "flow_template": "Y8wJn7",
+  "subject_line": "Running low on {{ event.Items|first|default:\"your Real Skin Care favorites\" }}?"
+}

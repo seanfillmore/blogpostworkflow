@@ -1,0 +1,44 @@
+{
+  "at": "2026-11-01T03:43:58.794Z",
+  "apply": false,
+  "argv": [
+    "--live",
+    "--target",
+    "water-cooler"
+  ],
+  "target": "water-cooler",
+  "head": "07797fedd99a40e0505683b2c20bd0fa78ca2ab3",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 27111,
+        "targetBytes": 27111
+      },
+      {
+        "key": "assets/presell.css",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 12954,
+        "targetBytes": 12954
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 14154,
+        "targetBytes": 14154
+      },
+      {
+        "key": "templates/page.presell-water-cooler.json",
+        "before": "origin/main",
+        "verdict": "write",
+        "currentBytes": 8936,
+        "targetBytes": 9129
+      }
+    ]
+  }
+}
