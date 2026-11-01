@@ -1,0 +1,38 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:18:27.249Z",
+    "last_crawled": "2026-10-11T17:08:53Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 559771746474,
+  "shopify_handle": "toxic-chemicals-in-soap-to-keep-an-eye-on",
+  "legacy_synced_at": "2026-04-09T23:17:12.626Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 12, 3666 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:44.327Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "last_refreshed_at": "2026-08-27T15:10:38.160Z",
+  "refreshed_at": "2026-10-08T15:10:02.313Z",
+  "last_material_edit": {
+    "at": "2026-10-08T15:10:02.331Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:53:12.042Z",
+    "reasons": [
+      "2 internal link issue(s)",
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  },
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/toxic-chemicals-in-soap-to-keep-an-eye-on",
+  "uploaded_at": "2026-10-09T15:00:47.143Z"
+}

@@ -1,26 +1,29 @@
 # Editor Report — Discover the Soothing Power of Coconut Oil Bar Soap
 **Post:** data/posts/discover-the-soothing-power-of-coconut-oil-bar-soap/content.html
 **Target keyword:** 
-**Reviewed:** April 16, 2026
+**Reviewed:** October 7, 2026
 
 ---
 ## 1. Link Health
 
-**9 links OK** | **0 broken/unreachable**
+**3 links OK** | **0 broken/unreachable**
 
 All links returned a valid HTTP response.
 
 ---
 ## 2. Internal Link Validation
 
-The following internal links could not be verified against the sitemap or blog index:
-
-- **Blog URL not in blog index:** `https://www.realskincare.com/blogs/news/benefits-of-using-coconut-oil-lotion-1` (anchor: "moisturize")
+All internal product, collection, and blog links resolve.
 
 ---
 ## 2b. CTA & Formatting Check
 
-**Pass** — Product/collection CTA links found: [Coconut Oil Bar Soap](https://www.realskincare.com/products/coconut-soap), [Shop Coconut Bar Soap](https://www.realskincare.com/products/coconut-soap), [Unscented Bar Soap](https://www.realskincare.com/products/coconut-soap), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Organic Body Cream](https://www.realskincare.com/products/coconut-moisturizer), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Organic Body Cream](https://www.realskincare.com/products/coconut-moisturizer), [Coconut Oil Bar Soap](https://www.realskincare.com/products/coconut-soap), [Organic Foaming Hand Soap](https://www.realskincare.com/products/organic-foaming-hand-soap), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Organic Body Cream](https://www.realskincare.com/products/coconut-moisturizer), [Coconut Oil Bar Soap](https://www.realskincare.com/products/coconut-soap), [Shop Now](https://www.realskincare.com/products/coconut-soap), [Bar Soap Collection](https://www.realskincare.com/collections/natural-bar-soap), [Browse All Bar Soaps](https://www.realskincare.com/collections/natural-bar-soap)
+**Pass** — Product/collection CTA links found: [Coconut Bar Soap](https://www.realskincare.com/products/coconut-soap), [Coconut Body Lotion](https://www.realskincare.com/products/coconut-lotion), [Organic Body Cream](https://www.realskincare.com/products/coconut-moisturizer), [Coconut Bar Soap](https://www.realskincare.com/products/coconut-soap), [Shop Now](https://www.realskincare.com/products/coconut-soap)
+
+---
+## 2c. Uncited Claims
+
+✅ No uncited statistical/health claims.
 
 ---
 ## 3. Source Verification
@@ -32,99 +35,105 @@ No external source links found in the post.
 
 The following posts are in the same topical cluster and should be linked from this post (or vice versa) as the cluster grows:
 
-- **[Why Glycerin-Free Toothpaste Matters](https://www.realskincare.com/blogs/news/why-glycerin-free-toothpaste-matters)** *(0 inbound links)*
-- **[Coconut Oil for Skin: Benefits and Everyday Uses](https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides)** *(orphan — no inbound links yet)*
-- **[DIY Coconut Oil Soap: Easy Recipe & How-To](https://www.realskincare.com/blogs/news/diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars)** *(orphan — no inbound links yet)*
-- **[Can You Use Coconut Oil as Toothpaste? Here’s What Science Says](https://www.realskincare.com/blogs/news/can-coconut-oil-replace-toothpaste-discover-the-benefits-of-this-natural-alternative)** *(0 inbound links)*
-- **[Coconut Oil Pulling: Benefits for Oral Health](https://www.realskincare.com/blogs/news/coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine)** *(0 inbound links)*
-- **[Coconut Oil for Stretch Marks: What Actually Works](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-using-coconut-oil-for-pregnancy-stretch-marks)** *(orphan — no inbound links yet)*
-- **[Is Coconut Oil a Good Moisturizer? Here's the Truth](https://www.realskincare.com/blogs/news/is-coconut-oil-a-good-moisturizer-exploring-the-benefits-and-uses-of-coconut-oil-for-skin)** *(0 inbound links)*
-- **[Coconut Oil as Deodorant: What Actually Works](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free)** *(orphan — no inbound links yet)*
-- **[Coconut Oil Soap Benefits for Healthy, Clean Skin](https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap)** *(0 inbound links)*
-- **[Can You Use Coconut Oil as Toothpaste? 2026 Guide + DIY Recipes](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste)** *(0 inbound links)*
-- **[Get Silky Smooth Lips with Coconut Oil Lip Balm](https://www.realskincare.com/blogs/news/get-silky-smooth-lips-with-coconut-oil-lip-balm)** *(orphan — no inbound links yet)*
-- **[Discover the Power of Coconut Whitening Toothpaste](https://www.realskincare.com/blogs/news/discover-the-power-of-coconut-whitening-toothpaste)** *(orphan — no inbound links yet)*
-- **[Discover the Secrets of Organic Natural Body Lotion](https://www.realskincare.com/blogs/news/discover-the-secrets-of-organic-natural-body-lotion)** *(orphan — no inbound links yet)*
-- **[Real Skin Care: Embrace Organic Natural Beauty](https://www.realskincare.com/blogs/news/embrace-natural-beauty-with-real-skin-cares-organic-products)** *(orphan — no inbound links yet)*
-- **[How To Choose The Right Body Cream](https://www.realskincare.com/blogs/news/how-to-choose-the-right-body-cream)** *(orphan — no inbound links yet)*
-- **[Why Use Unscented Skincare Products](https://www.realskincare.com/blogs/news/why-use-unscented-skincare-products)** *(orphan — no inbound links yet)*
-- **[Vanilla Skin Care Tips for a Natural Beauty Routine](https://www.realskincare.com/blogs/news/incorporating-vanilla-skin-care-into-your-beauty-regimen)** *(orphan — no inbound links yet)*
-- **[Why You Should Moisturize Every Day](https://www.realskincare.com/blogs/news/why-should-you-use-moisturizers-everday)** *(0 inbound links)*
-- **[Why Use Organic Lip Balm in Your Routine](https://www.realskincare.com/blogs/news/why-add-organic-lip-balms-to-your-skin-care-routine)** *(orphan — no inbound links yet)*
-- **[11 Tea Tree Oil Benefits for Skin and Daily Use](https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life)** *(0 inbound links)*
-- **[How To Do A Skin Care Patch Test - Updated for 2025](https://www.realskincare.com/blogs/news/how-to-do-a-skin-care-patch-test)** *(13 inbound links)*
-- **[Definitive Guide to Clean Skin Care Products (2025)](https://www.realskincare.com/blogs/news/definitive-guide-to-clean-skin-care-products)** *(orphan — no inbound links yet)*
+- **[Coconut Soap Bar: Benefits, Ingredients & How to Choose](https://www.realskincare.com/blogs/news/coconut-soap-bar-benefits-ingredients-how-to-choose)** *(0 inbound links)*
+- **[Coconut Oil Soap Benefits: What It Does for Your Skin](https://www.realskincare.com/blogs/news/coconut-oil-soap-benefits-what-it-does-for-your-skin)** *(0 inbound links)*
+- **[Best Soap for Tattoos: What to Use for Safe Healing](https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-3)** *(0 inbound links)*
+- **[Soap Making: A Complete Beginner's Guide (Step by Step)](https://www.realskincare.com/blogs/news/soap-making-a-complete-beginners-guide-step-by-step)** *(0 inbound links)*
+- **[Best Moisturizing Bar Soap for Soft, Hydrated Skin](https://www.realskincare.com/blogs/news/best-moisturizing-bar-soap-for-soft-hydrated-skin)** *(0 inbound links)*
+- **[Turmeric Soap: Benefits, Uses & What to Look For](https://www.realskincare.com/blogs/news/turmeric-soap-benefits-uses-what-to-look-for)** *(0 inbound links)*
+- **[Tallow Soap: Benefits, Ingredients & Natural Alternatives](https://www.realskincare.com/blogs/news/tallow-soap-benefits-ingredients-natural-alternatives)** *(0 inbound links)*
+- **[Pine Tar Soap: Benefits, Ingredients & Natural Alternatives](https://www.realskincare.com/blogs/news/pine-tar-soap-benefits-ingredients-natural-alternatives)** *(0 inbound links)*
+- **[Native Soap: What It Really Means & Better Natural Alternatives](https://www.realskincare.com/blogs/news/native-soap-what-it-really-means-better-natural-alternatives)** *(0 inbound links)*
+- **[Handcrafted Soap: What It Is & Why It's Better](https://www.realskincare.com/blogs/news/handcrafted-soap-what-it-is-why-its-better)** *(0 inbound links)*
+- **[Goat Milk Soap: Benefits, Ingredients & Natural Alternatives](https://www.realskincare.com/blogs/news/goat-milk-soap-benefits-ingredients-natural-alternatives)** *(0 inbound links)*
+- **[Handmade Soap: Benefits, Ingredients & How to Choose](https://www.realskincare.com/blogs/news/handmade-soap-benefits-ingredients-how-to-choose)** *(0 inbound links)*
+- **[Tea Tree Oil Soap: Benefits, Uses & What to Look For](https://www.realskincare.com/blogs/news/tea-tree-oil-soap-benefits-uses-what-to-look-for)** *(0 inbound links)*
+- **[Natural Soap: The Complete Guide to Clean Skin](https://www.realskincare.com/blogs/news/natural-soap-the-complete-guide-to-clean-skin)** *(0 inbound links)*
+- **[What Is Castile Soap? Uses, Benefits & Ingredients](https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients-2)** *(0 inbound links)*
+- **[How Does Soap Work? The Science Behind Clean Skin](https://www.realskincare.com/blogs/news/how-does-soap-work-the-science-behind-clean-skin-1)** *(0 inbound links)*
+- **[Best Soap for Tattoos – Clean & Gentle](https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2)** *(0 inbound links)*
+- **[Antibacterial Body Soap: What to Look For & Why It Matters](https://www.realskincare.com/blogs/news/antibacterial-body-soap-what-to-look-for-why-it-matters-2)** *(0 inbound links)*
+- **[What Is Castile Soap? Uses, Benefits & Ingredients](https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients-1)** *(0 inbound links)*
+- **[Best Soap for Tattoos: What to Use for Safe Healing](https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-1)** *(0 inbound links)*
+- **[Unscented Antibacterial Soap: What to Look For & Why](https://www.realskincare.com/blogs/news/unscented-antibacterial-soap-what-to-look-for-why)** *(0 inbound links)*
+- **[Antibacterial Body Soap: What to Look For](https://www.realskincare.com/blogs/news/antibacterial-body-soap-what-to-look-for-why-it-matters)** *(0 inbound links)*
+- **[How Does Soap Work? The Science Behind Clean Skin](https://www.realskincare.com/blogs/news/how-does-soap-work-the-science-behind-clean-skin)** *(0 inbound links)*
+- **[Best Soap for Tattoos: Protect Your Ink Naturally](https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing)** *(0 inbound links)*
+- **[What Is Castile Soap? Uses, Benefits & Ingredients](https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients)** *(0 inbound links)*
 - **[Natural Soap Bar: The Clean Skin Guide You Need](https://www.realskincare.com/blogs/news/natural-soap-bar-the-clean-skin-guide-you-need)** *(0 inbound links)*
 - **[Best Natural Bar Soap for Women: Clean Picks That Work](https://www.realskincare.com/blogs/news/best-natural-bar-soap-for-women-clean-picks-that-work)** *(0 inbound links)*
 - **[Best Natural Bar Soap for Men: Clean Skin Starts Here](https://www.realskincare.com/blogs/news/best-natural-bar-soap-for-men-clean-skin-starts-here)** *(0 inbound links)*
 - **[DIY Coconut Oil Soap: Easy Recipe & How-To](https://www.realskincare.com/blogs/news/diy-coconut-oil-soap-benefits-recipe-essential-tips-for-perfect-bars)** *(orphan — no inbound links yet)*
-- **[Coconut Oil Soap Benefits for Healthy, Clean Skin](https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap)** *(0 inbound links)*
+- **[Is Coconut Soap Good for Your Skin?](https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap)** *(0 inbound links)*
+- **[Coconut Soap Bar: Benefits, Ingredients & How to Choose](https://www.realskincare.com/blogs/news/coconut-soap-bar-benefits-ingredients-how-to-choose)** *(0 inbound links)*
+- **[Coconut Oil Soap Benefits: What It Does for Your Skin](https://www.realskincare.com/blogs/news/coconut-oil-soap-benefits-what-it-does-for-your-skin)** *(0 inbound links)*
+- **[Coconut Oil on Armpits: Benefits, Risks & How to Use It](https://www.realskincare.com/blogs/news/coconut-oil-on-armpits-benefits-risks-how-to-use-it)** *(0 inbound links)*
+- **[Coconut Oil Fatty Acids: What They Are & Why They Matter](https://www.realskincare.com/blogs/news/coconut-oil-fatty-acids-what-they-are-why-they-matter)** *(0 inbound links)*
+- **[Best Coconut Scented Lotion: Natural Picks for Soft Skin](https://www.realskincare.com/blogs/news/best-coconut-scented-lotion-natural-picks-for-soft-skin)** *(0 inbound links)*
+- **[Coconut Oil for Face: Benefits, Uses & Who Should Try It](https://www.realskincare.com/blogs/news/coconut-oil-for-face-benefits-uses-who-should-try-it)** *(0 inbound links)*
+- **[Coconut Lotion Benefits for Soft, Hydrated Skin](https://www.realskincare.com/blogs/news/coconut-lotion-benefits-for-soft-hydrated-skin)** *(0 inbound links)*
+- **[Coconut Toothpaste: Benefits, Ingredients & What to Look For](https://www.realskincare.com/blogs/news/coconut-toothpaste-benefits-ingredients-what-to-look-for)** *(0 inbound links)*
+- **[Coconut Based Cosmetics: Benefits for Skin & Body Care](https://www.realskincare.com/blogs/news/coconut-based-cosmetics-benefits-for-skin-body-care)** *(0 inbound links)*
+- **[Coconut Oil as Moisturizer: Benefits, Uses & Tips](https://www.realskincare.com/blogs/news/coconut-oil-as-moisturizer-benefits-uses-tips)** *(0 inbound links)*
+- **[Does Coconut Oil Help With Stretch Marks? The Truth](https://www.realskincare.com/blogs/news/does-coconut-oil-help-with-stretch-marks-the-truth-1)** *(0 inbound links)*
+- **[Can Coconut Oil Replace Toothpaste? The Honest Answer](https://www.realskincare.com/blogs/news/can-coconut-oil-replace-toothpaste-the-honest-answer)** *(0 inbound links)*
+- **[Organic Coconut Oil for Skin: Benefits & How to Use It](https://www.realskincare.com/blogs/news/organic-coconut-oil-for-skin-benefits-how-to-use-it)** *(0 inbound links)*
+- **[Coconut Oil Deodorant for Sensitive Skin | Real Skin Care](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-does-it-work-is-it-safe)** *(0 inbound links)*
+- **[Benefits of Coconut Oil on Skin Everyday: Full Guide](https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-on-skin-everyday-full-guide-1)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Stretch Marks? The Truth](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-stretch-marks-the-truth)** *(0 inbound links)*
+- **[Coconut Oil for Stretch Marks: Does It Really Work?](https://www.realskincare.com/blogs/news/coconut-oil-for-stretch-marks-does-it-really-work-1)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Your Hair? Benefits & How to Use It](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-your-hair-benefits-how-to-use-it-1)** *(0 inbound links)*
+- **[Benefits of Coconut Oil on Skin Everyday: Full Guide](https://www.realskincare.com/blogs/news/benefits-of-coconut-oil-on-skin-everyday-full-guide)** *(0 inbound links)*
+- **[Organic Coconut Oil: Types, Uses & Benefits for Skin](https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin)** *(0 inbound links)*
+- **[Is Coconut Oil Good for Your Hair? Benefits & How to Use It](https://www.realskincare.com/blogs/news/is-coconut-oil-good-for-your-hair-benefits-how-to-use-it)** *(0 inbound links)*
+- **[Can You Use Coconut Oil as Toothpaste? What to Know](https://www.realskincare.com/blogs/news/can-you-use-coconut-oil-as-toothpaste-what-to-know)** *(0 inbound links)*
+- **[Coconut Oil for Skin: Benefits and Everyday Uses](https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides)** *(orphan — no inbound links yet)*
+- **[Coconut Oil as Deodorant: Does It Actually Work?](https://www.realskincare.com/blogs/news/coconut-oil-deodorant-the-natural-way-to-stay-fresh-and-odor-free)** *(orphan — no inbound links yet)*
+- **[Coconut Oil for Skin: Why It Still Reigns Supreme](https://www.realskincare.com/blogs/news/why-choose-coconut-skin-care-products)** *(orphan — no inbound links yet)*
 
 > Note: As new deodorant posts are published, revisit this post to add cross-links to the growing cluster.
 
 ---
 ## 5. Editorial Review
 
-# Editorial Review: "Discover the Soothing Power of Coconut Oil Bar Soap"
+## Topical Relevance
+VERDICT: Pass
+NOTES: The body stays focused on coconut oil bar soap: what it is, benefits, use, care, and FAQ. No target keyword was supplied, so I judged against the title. The sustainability section is brief and still relevant to the bar format.
 
----
+## Brand Voice & Readability
+VERDICT: Pass
+NOTES: Tone is warm and plain, with "you/your" throughout and short paragraphs. "Lauric acid" and "saponification" are each followed by a plain-language explanation ("In plain terms, it lifts away dirt…"; "coconut oil reacts with a lye solution and cures into a firm, gentle bar"). No paragraph exceeds 4 sentences. Reading level looks like about 8th grade.
 
-## 1. TOPICAL RELEVANCE
-**VERDICT:** Good  
-**NOTES:** Post is tightly focused on coconut oil bar soap benefits, usage, and product positioning. No significant off-topic tangents. Title and body align well. Minor note: The header "Upgrade Your Clean Routine" in the opening is more promotional than topical, but it doesn't distract from the core message.
-
----
-
-## 2. BRAND VOICE & READABILITY
-**VERDICT:** Good  
-**NOTES:** Voice is warm and conversational with strong use of "you/your." Sentence length is mostly short and scannable. Bullet-point heavy structure aids readability. One paragraph runs slightly long in "What Is Coconut Oil Bar Soap?" but overall hits ~8th-grade level well. No unexplained jargon; "saponified" is explained clearly in context.
-
----
-
-## 3. INGREDIENT ACCURACY
-**VERDICT:** Pass  
-**NOTES:** Post correctly identifies the core ingredient (saponified organic virgin coconut oil) and accurately notes the bar is unscented or scented with essential oils (lavender, tea tree, lemongrass per spec). The claim "no dyes, no artificial fragrance, and no mystery preservatives" aligns with product spec. No format errors; product is correctly described as a bar.
-
----
+## Ingredient Accuracy
+VERDICT: Pass
+NOTES: The unscented bar is described as saponified organic virgin coconut oil only, and the scented bars add organic essential oils of lavender, tea tree, or lemongrass. Both match the spec. The format is a bar, and the post says so. One small note: "organic virgin coconut oil (saponified)" in the opening box and "Coconut Body Lotion or Organic Body Cream" in the usage steps are fine, but the lotion variant isn't named. Since this post is about the soap, that's acceptable.
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass
-**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale year references detected. Any YYYY patterns in href slugs, id attributes, or other HTML attributes are ignored by design (immutable technical identifiers).
+**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale current-year references detected. Legitimate historical references (e.g. "since 2020", "a 2021 study"), and any YYYY patterns in href slugs, id attributes, or other HTML attributes, are ignored by design.
 
 ---
 
----
-
-## 5. FACTUAL CONCERNS
-**VERDICT:** Caution — Minor  
-**NOTES:** Claims are mostly well-grounded and qualified ("helps cleanse," "supports skin barrier," "most users notice"). One phrase — "lifts away dirt and oil without sulfates" — is accurate for this product but leans slightly promotional; consider softening to "designed to lift away dirt and oil" for stricter neutrality. The claim about bar longevity ("several weeks of daily use") is reasonable but would benefit from a caveat that longevity depends on water exposure and usage patterns. No exaggerated or unsubstantiated claims detected overall.
+## 5. Factual Concerns
+**VERDICT:** Pass
+**NOTES:** Citation sufficiency is governed by the deterministic uncited-claims check (section 2c), which is within threshold. General consumer-guidance health phrasing does not each require its own source.
 
 ---
 
-## 6. CTA QUALITY
-**VERDICT:** Excellent  
-**NOTES:** Multiple, well-placed CTAs throughout. "Shop Coconut Bar Soap" appears early (above fold), "Browse All Bar Soaps" in mid-body, and "Shop Now" at close. Related Products section links to complementary items (Body Lotion, Body Cream, Foaming Hand Soap). CTAs feel natural and tied to context, not forced. Link health pre-check confirms all 9 CTA URLs return HTTP 200.
+## CTA Quality
+VERDICT: Pass (with a minor flag)
+NOTES: CTAs appear at the top, mid-post, and end, and all point to `/products/coconut-soap`. The pre-check verified link health, so I'm not raising URL concerns. Anchor mismatch: "Shop Coconut Bar Soap" and "Browse our Coconut Bar Soap" read like a collection, but the destination is a single product page. Reword to "Shop our Coconut Oil Bar Soap" or point to a real collection. The lotion and moisturizer links are natural cross-sells.
 
----
-
-## 7. FORMATTING
-**VERDICT:** Good  
-**NOTES:** Clean heading hierarchy (H2s only, no H1 in body per code pre-check). Sections are well-spaced with bullet lists breaking up longer content. No orphaned sections. "Related Real Skin Care Blog Posts" and "Related Products" sections are properly formatted and support SEO and cross-sell. Paragraph lengths are reasonable; longest body paragraph is ~4 sentences, within acceptable range.
-
----
+## Formatting
+VERDICT: Pass
+NOTES: There is no H1 in the body, and the hierarchy is H2 with H3 for sub-items. The "Clean Skin, Simple Ingredients" H2 is a promo block placed before the main intro H2, which is slightly unusual but not an orphan. The "Want a soap with one clean ingredient?" H3 sits inside the benefits section as a CTA block, which works. The list markup has stray blank lines, so check the rendered output.
 
 ## 8. COMPETITOR NAMES IN FAQ
 **VERDICT:** Pass
-**NOTES:** Scanned 5 FAQ Q&As against 38 competitor aliases. None found.
+**NOTES:** Scanned 7 FAQ Q&As against 40 competitor aliases. None found.
 
 ---
 
----
-
-## 9. OVERALL QUALITY
-**VERDICT:** Good  
-**NOTES:** Post is well-structured, on-brand, and commercially strong. Ingredient accuracy is solid, CTAs are plentiful and natural, and voice is warm and accessible. Minor factual softening suggested (noted above) to tighten claims, but post is publication-ready. Meets all standing QA requirements: year is current (no "2025" slug detected), H1 is external to body, and product CTA appears well above 25% mark.
-
----
-
-### ✅ **READY FOR PUBLICATION** with optional copyedit on factual softening.
+## Overall Quality
+VERDICT: Good
+NOTES: No blockers. The post is accurate on ingredients, readable, and well structured. Before publishing, soften the unsourced skin-barrier and "gentle for sensitive skin" claims, add at least one credible external source for the health claims, and fix the "collection" anchor wording that points to a product page.

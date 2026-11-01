@@ -1,0 +1,6 @@
+{
+  "orphaned_at": "2026-10-03T17:42:14Z",
+  "reason": "Held cannibalization merge draft (2026-09-27) written under the article HANDLE instead of the local slug. Repaired (Pure Unscented variant naming, petroleum wording, lotion product links, USDA citation via 7 CFR 205.301), gated PASS, then copied into data/posts/natural-lotion-what-it-is-how-to-choose-the-best and published 2026-10-03 (operator approved). Kept so it stops shadowing resolvePostSlug for the handle.",
+  "resolved_target": "data/posts/natural-lotion-what-it-is-how-to-choose-the-best",
+  "restore": "mv data/posts/_orphaned/natural-lotion-what-it-is-how-to-choose-the-best-1 data/posts/natural-lotion-what-it-is-how-to-choose-the-best-1"
+}

@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-08-24T00:18:45.919Z",
+  "mode": "apply",
+  "backup_dir": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z",
+  "planned": 11,
+  "written": 0,
+  "already_applied": 11,
+  "drifted": 0,
+  "missing": 0,
+  "errors": 0,
+  "results": [
+    {
+      "id": "coconut-why-antibacterial-antifungal",
+      "target": "why-choose-coconut-skin-care-products [body_html #559604236458]",
+      "kind": "article",
+      "why": "\"Antifungal\" is an OTC drug category, not a cosmetic attribute, and the heading asserts the property flatly rather than reporting it. The post is a \"why choose these products\" piece with a Coconut Body Lotion buy box two sections below, so the page as a whole reads as the product speaking. Deodorancy — what the section actually evidences — is an ordinary cosmetic claim.",
+      "body_verdict": "HEADING ONLY. The paragraph is already about odor (\"reduced odor-causing bacteria\", \"targets the bacteria responsible for body odor\") and hedges the rest (\"may help minimize minor breakouts\"). Its one lab-study sentence is about monolaurin as a compound, not about what the product does for the reader, and with the heading no longer asserting the property it reads as ingredient science. Nothing in it needed changing.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/coconut-why-antibacterial-antifungal.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "tea-tree-11-wound-healing",
+      "target": "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life [body_html #559520252074]",
+      "kind": "article",
+      "why": "A wound-care claim on a page whose mid-article CTA sells the Tea Tree Bar Soap variant of /products/coconut-soap. \"Wound\" is a disease term and \"healing\" is a therapeutic verb with the oil as its subject; the appearance claim underneath it (smooth, even-looking skin) is the part a cosmetic may keep.",
+      "body_verdict": "HEADING + BODY. The paragraph carries the claim on its own — \"may promote faster recovery of minor cuts and abrasions\", \"minimize the risk of scarring\". Softening only the heading would have left the sentence that matters, so both are replaced as one block. The section necessarily narrows: a therapeutic benefit has no honest cosmetic equivalent, and the explicit \"not a first-aid product\" line is there so the narrowing is visible to a reader rather than implied.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/tea-tree-11-wound-healing.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "tea-tree-11-fungal-infections",
+      "target": "11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life [body_html #559520252074]",
+      "kind": "article",
+      "why": "The strongest case in the set. The heading names a disease category and the paragraph names three specific ones (athlete’s foot, ringworm, yeast infections) with an unhedged efficacy claim (\"effective against\"). On a page selling soap that is textbook unapproved-drug intended use, and no rewording of the heading alone rescues it.",
+      "body_verdict": "HEADING + BODY. Nothing in the paragraph survives — \"is a natural antifungal\", \"effective against\", and the mechanism sentence exists only to support the efficacy claim. Replaced with the cosmetic reason the ingredient is actually in a soap bar (freshness) plus a see-a-provider pointer, which is what the section should have said to a reader with a real problem.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/tea-tree-11-fungal-infections.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "tea-tree-soap-antifungal-heading",
+      "target": "tea-tree-oil-soap-benefits-uses-what-to-look-for [body_html #563577487530]",
+      "kind": "article",
+      "why": "Sits under \"The Evidence-Backed Benefits of Tea Tree Oil Soap\" — the `<h2>` names the SOAP, so the `<h3>` beneath it reads as a property of the product, and \"antifungal\" is a drug category. The heading is also the scannable element: it is what a reader skimming, and what a SERP snippet, picks up. mustContain is deliberately empty — nothing in \"Antifungal Support\" is a claim a cosmetic may keep, so nothing carries over; the section subject (foot care) does.",
+      "body_verdict": "HEADING + ONE SENTENCE. The paragraph is cited third-party research (Satchell et al., 2002, Australasian Journal of Dermatology) reported accurately about the OIL, which is the editorial majority case CLAUDE.md says not to rewrite — removing it would make the page less accurate. Only the final sentence took a PRODUCT as the subject of the verb, and that is the one that changes (see tea-tree-soap-antifungal-clause). The research sentences keep the words \"antifungal activity\" and \"ringworm\" on purpose: a documented finding about an ingredient is not an intended-use claim about this catalogue.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/tea-tree-soap-antifungal-heading.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "tea-tree-soap-antifungal-clause",
+      "target": "tea-tree-oil-soap-benefits-uses-what-to-look-for [body_html #563577487530]",
+      "kind": "article",
+      "why": "The one sentence in an otherwise-editorial section where a PRODUCT is the subject: \"Using a tea tree oil antifungal soap … may help manage these conditions\". That is the line the two tiers of the gate draw — \"the product does X\" is a claim, \"here is information about X\" is not. The see-a-provider advice it already carried is kept and promoted, not dropped.",
+      "body_verdict": "Paired with tea-tree-soap-antifungal-heading. Two entries rather than one block so the research sentences between them are visibly untouched in the run record.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/tea-tree-soap-antifungal-clause.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "coconut-guide-overnight-spot-treatment",
+      "target": "coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides [body_html #562063114410]",
+      "kind": "article",
+      "why": "The mildest of the six and the only one where a single word is the whole problem. \"Spot treatment\" is ordinary industry vocabulary, but \"treatment\" is a therapeutic noun and this is a how-to section on a page selling body lotion. \"Layer\" is the word the paragraph itself already uses (\"apply a generous layer at night\"), so the heading now matches its own instructions.",
+      "body_verdict": "HEADING ONLY. The paragraph is entirely cosmetic — cracked heels, rough elbows, socks, \"visible within a week\". No disease, no therapeutic verb, nothing to soften. Rewriting it would have been the over-correction the brief warns about.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/coconut-guide-overnight-spot-treatment.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "vanilla-supports-skin-healing",
+      "target": "incorporating-vanilla-skin-care-into-your-beauty-regimen [body_html #559636119722]",
+      "kind": "article",
+      "why": "\"Healing\" is a therapeutic verb and the heading states it flatly, while the paragraph beneath it is careful. A heading a reader scans should not promise more than the sentence under it does. \"Resilience\" is the register the corpus already uses for the same idea (\"Supports Healthy Skin Barrier\" on the tea-tree post), so it reads as house style rather than a hedge.",
+      "body_verdict": "HEADING ONLY. The paragraph is doubly hedged and attributes the effect to the ingredient, not the product: \"Traditional use and emerging research suggest vanilla’s antioxidant and antibacterial activity MAY SUPPORT the skin’s natural repair processes.\" That is information about an ingredient, and it is what the new heading now promises — no more.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/vanilla-supports-skin-healing.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "mirror-tea-tree-11-wound-healing",
+      "target": "data/posts/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life/content.html",
+      "kind": "file",
+      "why": "Byte-identical mirror of tea-tree-11-wound-healing, so a republish cannot push the claim back.",
+      "body_verdict": "Mirror of a HEADING + BODY entry — see tea-tree-11-wound-healing.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/mirror-tea-tree-11-wound-healing.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "mirror-tea-tree-11-fungal-infections",
+      "target": "data/posts/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life/content.html",
+      "kind": "file",
+      "why": "Byte-identical mirror of tea-tree-11-fungal-infections, so a republish cannot push the claim back.",
+      "body_verdict": "Mirror of a HEADING + BODY entry — see tea-tree-11-fungal-infections.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/mirror-tea-tree-11-fungal-infections.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "mirror-vanilla-supports-skin-healing",
+      "target": "data/posts/incorporating-vanilla-skin-care-into-your-beauty-regimen/content.html",
+      "kind": "file",
+      "why": "Byte-identical mirror of vanilla-supports-skin-healing, so a republish cannot push the claim back.",
+      "body_verdict": "Mirror of a HEADING ONLY entry — see vanilla-supports-skin-healing.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/mirror-vanilla-supports-skin-healing.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    },
+    {
+      "id": "mirror-coconut-why-antibacterial-stale-draft",
+      "target": "data/posts/why-choose-coconut-skin-care-products/content.html",
+      "kind": "file",
+      "why": "NOT a copy of the live string. This local file is an older draft of the article: it numbers the section 5 and words it differently (\"mild antibacterial and antifungal benefits\"). It is still the file `agents/publisher` would republish from, so it is toned down on its own terms rather than skipped. \"Antifungal\" is the blocking word here.",
+      "body_verdict": "HEADING + BODY, because in this older wording the claim IS the paragraph (\"offers mild antibacterial and antifungal benefits\"). The hedged tail about breakouts and minor irritations is kept verbatim.",
+      "backup": "data/reports/health-claim-remediation/headings/backups/2026-08-24T00-18-44-723Z/mirror-coconut-why-antibacterial-stale-draft.txt",
+      "action": "already-applied",
+      "occurrences": 0
+    }
+  ]
+}

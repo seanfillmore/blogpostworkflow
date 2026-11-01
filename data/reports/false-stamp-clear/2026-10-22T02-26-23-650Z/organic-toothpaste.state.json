@@ -1,0 +1,98 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:15:34.937Z",
+    "last_crawled": "2026-10-19T16:27:51Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2813,
+  "generated_at": "2026-03-17T07:02:05.071Z",
+  "brief_path": "/root/seo-claude/data/briefs/organic-toothpaste.json",
+  "tokens_used": {
+    "input": 10160,
+    "output": 6548
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563324649642,
+  "shopify_handle": "best-organic-toothpaste-what-to-look-for-why-it-matters",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-organic-toothpaste-what-to-look-for-why-it-matters",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-04-02T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-toothpaste_9612c3a9-7ec7-4c35-af70-2ec36e54eaee.webp?v=1774339293",
+  "uploaded_at": "2026-03-25T15:00:52.489Z",
+  "published_at": "2026-04-02T15:00:02.322Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 1438 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:41.706Z",
+  "performance_review": {},
+  "last_refreshed_at": "2026-09-30T15:06:08.309Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-08-04T13:30:08.501Z",
+      "age_days": 123,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 250,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T14:19:03.208Z",
+      "superseded_by": "2026-08-30T15:06:45.667Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-04T13:30:08.614Z",
+      "age_days": 123,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 500,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 500 (0% of target). Under 25% threshold — refresh candidate.",
+      "superseded_at": "2026-09-21T14:19:03.208Z",
+      "superseded_by": "2026-08-30T15:06:45.667Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-08-04T13:30:08.728Z",
+      "age_days": 123,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 750,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 750 (0% of target). Under 50% threshold — consider merging, refreshing, or removing. [softened to REFRESH: \"toothpaste\" is a page-1 cluster (weight +2) — worth reinforcing, not removing.]",
+      "superseded_at": "2026-09-21T14:19:03.208Z",
+      "superseded_by": "2026-08-30T15:06:45.667Z"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-30T13:30:04.302Z",
+      "age_days": 30,
+      "impressions": 1416,
+      "clicks": 1,
+      "ctr": 0.0007062146892655367,
+      "position": 17.345338983050848,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 1416 impressions, 1 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-01T13:30:04.515Z",
+      "superseded_by": "2026-09-30T15:06:08.309Z"
+    }
+  ],
+  "refreshed_at": "2026-10-19T15:22:25.939Z",
+  "last_material_edit": {
+    "at": "2026-10-19T15:22:25.941Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  }
+}

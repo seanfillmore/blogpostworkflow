@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "natural-soap-bar-the-clean-skin-guide-you-need",
+  "keyword": "natural soap bar the clean skin guide you need",
+  "dropped_at": "2026-09-21T16:31:07.576Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-31-07-575Z-2381340",
+  "reason": "post killed: no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); duplicate of original",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "natural-soap-bar-the-clean-skin-guide-you-need.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore natural-soap-bar-the-clean-skin-guide-you-need",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

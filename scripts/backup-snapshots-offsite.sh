@@ -66,6 +66,7 @@ readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR conta
 readonly OUTREACH_PREFIX="creator-outreach"  # data/creator-outreach/state.json
 readonly REELS_PREFIX="ugc-reels"        # data/ugc-reels/ledger.json
 readonly FOUNDER_PREFIX="founder-notes"  # data/founder-notes/ (notes + question sets)
+readonly SERVER_STATE_PREFIX="server-state"  # cron-owned state untracked from git 2026-11-01
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -238,4 +239,25 @@ if [[ -d "$ROOT/$FOUNDER_DIR" ]]; then
   push_archive "$FOUNDER_PREFIX" "$founder_archive" 1
 else
   echo "[$FOUNDER_PREFIX] no $FOUNDER_DIR — nothing to back up."
+fi
+
+# ── set 7: server-owned state untracked from git on 2026-11-01 ──────────────
+# These used to be TRACKED, so git held a (stale) second copy. They were untracked
+# because cron rewrites them and they kept the server tree dirty; this set replaces
+# that redundancy. The change-log windows are the 28-day measurement record, the
+# A/B tracker is what lets meta-ab-checker evaluate and revert a live title, and the
+# performance queue and calendar are pending work. Each path is optional.
+SERVER_STATE_PATHS=()
+for p in data/changes/events data/changes/windows data/reports/meta-ab/meta-ab-tracker.json \
+         data/performance-queue data/calendar/calendar.json data/competitor-watcher \
+         data/context/feedback.md data/context/feedback-manifest.json \
+         data/context/writer-standing-rules.md data/context/writer-standing-rules-changelog.json; do
+  [[ -e "$ROOT/$p" ]] && SERVER_STATE_PATHS+=("$p")
+done
+if (( ${#SERVER_STATE_PATHS[@]} )); then
+  state2_archive="$tmp/${SERVER_STATE_PREFIX}-${stamp}.tar.gz"
+  tar czf "$state2_archive" -C "$ROOT" "${SERVER_STATE_PATHS[@]}"
+  push_archive "$SERVER_STATE_PREFIX" "$state2_archive" "${#SERVER_STATE_PATHS[@]}"
+else
+  echo "[$SERVER_STATE_PREFIX] none of the server-state paths exist — nothing to back up."
 fi

@@ -47,7 +47,9 @@ const ARTICLE_ID = 559520252074;
 
 const fileEntries = () => PLAN.filter((e) => e.target.kind === 'file');
 const articleEntries = () => PLAN.filter((e) => e.target.kind === 'article');
-const mirrorHtml = () => readFileSync(join(ROOT, MIRROR_PATH), 'utf8');
+// Frozen copy of the article the plan was written for: see tests/fixtures/remediation-mirrors/README.md.
+const FIXTURES = join(ROOT, 'tests', 'fixtures', 'remediation-mirrors');
+const mirrorHtml = () => readFileSync(join(FIXTURES, MIRROR_PATH), 'utf8');
 
 /** The whole plan applied to one string, in plan order — what --apply does. */
 function applyAll(html, entries) {

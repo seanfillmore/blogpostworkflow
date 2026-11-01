@@ -1,0 +1,9 @@
+{
+  "slug": "toothpaste-without-sls-what-to-know-best-options",
+  "archived_at": "2026-10-04T00:45:46.865Z",
+  "archived_by": "scripts/revert-sls-page-2026-10-03.mjs",
+  "action": "archive",
+  "reason": "second directory for article 563313508522 created by cannibalization-resolver on 2026-09-13 (keyed by article handle); its meta.json shadowed data/posts/toothpaste-without-sls in resolvePostSlug and hid that post's legacy_locked: true",
+  "resolved_target": "toothpaste-without-sls",
+  "restore": "mv data/posts/_orphaned/toothpaste-without-sls-what-to-know-best-options data/posts/toothpaste-without-sls-what-to-know-best-options"
+}

@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-10-14T13:21:03.260Z",
+  "applied": true,
+  "slug": null,
+  "results": [
+    {
+      "id": "efsa-e171-year",
+      "handle": "toothpaste-ingredients-to-avoid-for-a-cleaner-smile",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "darbre-citation-year",
+      "handle": "natural-antiperspirant-what-works-why-it-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    }
+  ]
+}

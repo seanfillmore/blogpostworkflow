@@ -1,0 +1,355 @@
+{
+  "target_keyword": "7 Ingredients to Avoid in Natural Toothpaste",
+  "slug": "7-ingredients-to-avoid-in-natural-toothpaste",
+  "search_intent": "informational",
+  "recommended_title": "7 Ingredients to Avoid in Natural Toothpaste (And Why)",
+  "meta_description": "Choosing natural toothpaste? Avoid these 7 harmful ingredients hiding in even 'clean' formulas. Learn what to look for — and what Real Skin Care leaves out.",
+  "target_word_count": 2200,
+  "content_angle": "Unlike dental clinic blogs that list scary-sounding chemicals without sourcing, this post combines peer-reviewed ingredient evidence with a natural skincare brand's first-hand formulation perspective — giving readers both the 'why it's harmful' and the 'what a genuinely clean alternative looks like' in one authoritative place.",
+  "key_differentiators": [
+    "Every ingredient claim must be backed by at least one cited peer-reviewed study or credible regulatory source (e.g., PubMed, FDA, EWG) — included in the brief below and woven naturally into the prose, not just listed in a reference block",
+    "Go beyond the standard 'avoid SLS' list by explaining the mechanism of harm for each ingredient (e.g., how SLS disrupts oral mucosal tissue, not just that it 'causes canker sores'), giving readers real understanding rather than fear-based bullet points",
+    "Include a brief 'what to look for instead' callout for each ingredient so the post is constructive and actionable, not only cautionary — this is a structural gap in all top-10 competitors",
+    "Address the 'natural toothpaste loophole' — the fact that products marketed as natural can still contain several of these seven ingredients — to build trust and position Real Skin Care as a transparent formulator",
+    "Naturally integrate high-volume semantic questions (fluoride-free, pH of toothpaste, what is the best natural toothpaste) as contextual answers within the body copy rather than as bolted-on FAQ padding"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable friction point: the reader picked up a tube labeled 'natural' or 'clean' at the store, flipped it over, and couldn't pronounce half the ingredient list. Validate that confusion without being alarmist. Establish the post's promise: by the end they'll know exactly which 7 ingredients to scan for, why each one matters, and what a genuinely clean formula looks like instead. Mention briefly that even products marketed as natural can contain problematic ingredients — this is the 'natural toothpaste loophole' hook. Do NOT use a numbered teaser list here; save the list for the body. Naturally work in 'what is the best natural toothpaste' as a framing question and 'what toothpaste is fluoride free' as a signal that fluoride will be addressed. Keep tone warm and empowering, not fearmongering.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "toothpaste ingredients to avoid",
+        "clean toothpaste",
+        "what is the best natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Why 'Natural' on the Label Doesn't Always Mean Clean",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Explain that the word 'natural' on personal care packaging is not regulated by the FDA for toothpaste — any brand can use it. This section sets up the entire post's credibility. Note that the FDA regulates toothpaste as an OTC drug (when it contains fluoride) or as a cosmetic, but neither classification requires all ingredients to be naturally derived. Briefly mention the pH of toothpaste (should be roughly 6.5–8.5 for oral health) as a formulation quality signal readers can check — this addresses the semantic question 'what is the ph of toothpaste.' Keep this section tight; its job is to earn trust and set stakes, not to lecture.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "what is the ph of toothpaste",
+        "clean toothpaste ingredients",
+        "toothpaste label claims"
+      ]
+    },
+    {
+      "section": "H2: The 7 Ingredients to Avoid in Natural Toothpaste",
+      "type": "h2",
+      "word_count_target": 50,
+      "guidance": "This is a brief transitional header only — one or two sentences introducing the list. Something like: 'Here are the seven ingredients worth knowing before your next purchase — what they are, how they function, and why a growing number of people are choosing formulas without them.' Do not list the ingredients here; each gets its own H3 below.",
+      "keywords_to_include": [
+        "ingredients to avoid in natural toothpaste",
+        "toothpaste ingredients"
+      ]
+    },
+    {
+      "section": "H3: 1. Sodium Lauryl Sulfate (SLS)",
+      "type": "h3",
+      "word_count_target": 200,
+      "guidance": "Explain that SLS is a surfactant (foaming agent) derived from petroleum or palm oil. Its mechanism of harm: it disrupts the oral mucosal epithelium, which can increase susceptibility to aphthous ulcers (canker sores). Cite: Herlofson BB, Barkvoll P (1994) 'Sodium lauryl sulfate and recurrent aphthous ulcers,' Acta Odontologica Scandinavica, 52(5):257–259 — include this citation naturally in prose (e.g., 'A 1994 study in Acta Odontologica Scandinavica found…'). Also note SLS can alter taste perception temporarily by suppressing taste receptor phospholipids, which explains the bitter taste after brushing. Close the sub-section with a 'What to look for instead' callout box note: foaming agents derived from coconut (e.g., sodium cocoyl glutamate) or simply a low-foam formula. Link to the SLS-free toothpaste internal post here.",
+      "keywords_to_include": [
+        "SLS in toothpaste",
+        "sodium lauryl sulfate toothpaste",
+        "SLS-free toothpaste",
+        "foaming agent toothpaste"
+      ]
+    },
+    {
+      "section": "H3: 2. Artificial Sweeteners (Saccharin, Aspartame, Sucralose)",
+      "type": "h3",
+      "word_count_target": 180,
+      "guidance": "Explain that artificial sweeteners are added to mask the bitter taste of other ingredients. The concern: while amounts in toothpaste are small and spit out, habitual exposure is questioned for microbiome effects. Note that saccharin in particular has an International Agency for Research on Cancer (IARC) history (it was previously Group 2B, later delisted, but debate continues). More directly relevant: the oral microbiome can be influenced by sweetener residue. Cite: Suez J et al. (2014) 'Artificial sweeteners induce glucose intolerance by altering the gut microbiota,' Nature, 514:181–186 — note this is gut-focused but relevant to broader microbiome conversations; writer should frame it accurately (oral microbiome parallel, not a direct causation claim). 'What to look for instead' note: xylitol (naturally derived, actually inhibits Streptococcus mutans — briefly note this positive) or stevia.",
+      "keywords_to_include": [
+        "artificial sweeteners in toothpaste",
+        "saccharin toothpaste",
+        "xylitol toothpaste",
+        "natural toothpaste sweeteners"
+      ]
+    },
+    {
+      "section": "H3: 3. Triclosan",
+      "type": "h3",
+      "word_count_target": 180,
+      "guidance": "Triclosan is an antibacterial agent that the FDA banned from over-the-counter antiseptic wash products in 2016, though it had a grace period in toothpaste (Colgate Total used it; it was phased out by 2019 but may still appear in some formulas or older stock). Explain endocrine disruption concerns — triclosan has been shown to interfere with thyroid hormone signaling. Cite: Koeppe ES et al. (2013) 'Relationship between urinary triclosan and parameters of thyroid function,' Thyroid, 23(12):1600–1605. Also note the antimicrobial resistance concern flagged by the FDA. 'What to look for instead': essential oil-based antibacterials like tea tree oil or neem, which have demonstrated antimicrobial activity in oral studies without the endocrine risk profile.",
+      "keywords_to_include": [
+        "triclosan in toothpaste",
+        "antibacterial toothpaste ingredients",
+        "endocrine disruptors toothpaste",
+        "FDA triclosan ban"
+      ]
+    },
+    {
+      "section": "H3: 4. Parabens",
+      "type": "h3",
+      "word_count_target": 160,
+      "guidance": "Parabens (methylparaben, propylparaben, butylparaben) are preservatives used to extend shelf life. Concern: they are known xenoestrogens — they weakly mimic estrogen in the body. While research is ongoing, the EU has banned certain long-chain parabens in cosmetics and restricted others. Cite: Routledge EJ et al. (1998) 'Some alkyl hydroxy benzoate preservatives (parabens) are estrogenic,' Toxicology and Applied Pharmacology, 153(1):12–19. Note that parabens appear on EWG's Skin Deep database with moderate concern ratings. 'What to look for instead': natural preservatives such as vitamin E (tocopherol) or rosemary extract.",
+      "keywords_to_include": [
+        "parabens in toothpaste",
+        "paraben-free toothpaste",
+        "preservatives in natural toothpaste",
+        "clean toothpaste formula"
+      ]
+    },
+    {
+      "section": "H3: 5. Propylene Glycol",
+      "type": "h3",
+      "word_count_target": 160,
+      "guidance": "Propylene glycol is a synthetic alcohol used as a humectant to keep toothpaste from drying out. It is also an industrial antifreeze component, though food/cosmetic grades differ. The EWG flags it as a moderate irritant. Concerns relevant to oral use include absorption through mucous membranes — the oral cavity is highly permeable — and potential systemic accumulation with heavy use. Cite the EWG Skin Deep database rating and note that the FDA classifies it as 'generally recognized as safe' (GRAS) for food use at low levels, but its presence in a daily-use oral product is worth noting for clean-conscious consumers. 'What to look for instead': vegetable glycerin (naturally derived, moisturizing, non-toxic).",
+      "keywords_to_include": [
+        "propylene glycol toothpaste",
+        "humectant in toothpaste",
+        "vegetable glycerin toothpaste",
+        "toothpaste absorption"
+      ]
+    },
+    {
+      "section": "H3: 6. Microbeads / Microplastics (Polyethylene)",
+      "type": "h3",
+      "word_count_target": 160,
+      "guidance": "Polyethylene microbeads were used in some toothpastes as abrasive scrubbers and for visual texture. The Microbead-Free Waters Act (2015) banned rinse-off cosmetic microbeads in the US, but enforcement timelines varied and international products may still contain them. Beyond environmental harm, dentists flagged that microbeads can lodge in gum tissue, creating pockets for bacterial growth. Cite: Mason SA et al. (2016) 'Microplastic pollution is widely detected in US municipal wastewater treatment plant effluent,' Environmental Pollution, 218:1045–1054 — frame this as environmental evidence of microplastic prevalence. Note the gum tissue concern from dental literature. 'What to look for instead': natural abrasives like baking soda, calcium carbonate, or activated charcoal (used carefully — see note on abrasiveness).",
+      "keywords_to_include": [
+        "microbeads in toothpaste",
+        "microplastics toothpaste",
+        "polyethylene toothpaste",
+        "natural abrasive toothpaste"
+      ]
+    },
+    {
+      "section": "H3: 7. Diethanolamine (DEA) and Related Ethanolamines (MEA, TEA)",
+      "type": "h3",
+      "word_count_target": 160,
+      "guidance": "DEA, MEA, and TEA are pH adjusters and foam boosters. The concern: they can react with other ingredients (particularly nitrites, which may be present as preservatives or contaminants) to form nitrosamines — compounds classified as probable human carcinogens by the IARC. The EU restricts DEA in cosmetics. Cite: Lijinsky W (1999) 'N-Nitroso compounds in the diet,' Mutation Research, 443(1-2):129–138 — note the nitrosamine formation pathway. Also note the California Prop 65 listing for DEA-related nitrosamines. 'What to look for instead': formulas that use naturally alkaline ingredients like baking soda for pH balance, avoiding the need for ethanolamines entirely.",
+      "keywords_to_include": [
+        "DEA in toothpaste",
+        "diethanolamine toothpaste",
+        "nitrosamines toothpaste",
+        "ethanolamine toothpaste ingredients"
+      ]
+    },
+    {
+      "section": "H2: A Note on Fluoride — The Controversial Eighth Ingredient",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Fluoride is conspicuously absent from the numbered list — address this directly and transparently. Acknowledge that fluoride is by far the most debated toothpaste ingredient: mainstream dentistry supports it for cavity prevention; many natural health consumers prefer to avoid it. Present both sides fairly. The 'avoid' case: at high doses fluoride is toxic (briefly note the 'how much toothpaste is poisonous' concern — this is why fluoride toothpaste tubes carry a poison control warning; acute toxicity threshold is approximately 5 mg/kg body weight per the CDC; this is why small children should use only a rice-grain amount). The 'keep' case: decades of clinical evidence support fluoride's role in remineralization. Conclude with: for those choosing fluoride-free, hydroxyapatite is a well-researched natural alternative (cite: Kensche A et al., 2017, 'Efficacy of a mouthrinse based on hydroxyapatite to reduce initial bacterial adherence,' Archives of Oral Biology). Address 'is fluoride in toothpaste necessary' and 'what toothpaste is fluoride free' as in-copy answers. Note that Real Skin Care's natural toothpaste is fluoride-free and formulated with clean alternatives — link to the natural toothpaste collection here.",
+      "keywords_to_include": [
+        "fluoride in toothpaste",
+        "is fluoride in toothpaste necessary",
+        "what toothpaste is fluoride free",
+        "fluoride-free toothpaste",
+        "hydroxyapatite toothpaste",
+        "how much toothpaste is poisonous"
+      ]
+    },
+    {
+      "section": "H2: How to Read a Toothpaste Ingredient Label in 60 Seconds",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Give readers a practical, fast-scan checklist framework. Explain that toothpaste regulated as an OTC drug will list 'Active Ingredients' separately from 'Inactive Ingredients' — most of the problematic ingredients appear in the Inactive section, which people often skip. Advise: (1) scan the inactive list for the seven ingredients above, (2) check for any ingredient with 'PEG' or numbered chemical suffixes as a proxy for synthetic processing, (3) look for certifications like USDA Organic or EWG Verified as a shortcut signal. This section makes the post actionable and differentiates it from competitor posts that stop at 'avoid these' without a practical next step. Keep the tone empowering — 'you can do this in under a minute at the store.'",
+      "keywords_to_include": [
+        "how to read toothpaste ingredients",
+        "natural toothpaste label",
+        "clean toothpaste",
+        "EWG toothpaste",
+        "organic toothpaste certification"
+      ]
+    },
+    {
+      "section": "H2: What Makes a Natural Toothpaste Actually Natural?",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Pivot to the constructive answer: what should a genuinely clean formula contain? Highlight: baking soda (gentle abrasive, pH-balancing), xylitol (natural sweetener with proven anti-caries effect), peppermint or cinnamon essential oil (natural flavoring with antimicrobial properties), vegetable glycerin (humectant), calcium carbonate (abrasive). This is the section where Real Skin Care's philosophy shines — write from the brand's formulation values, not as a product pitch. Tie in 'what is the best natural toothpaste' as a framing device. Mention cinnamon as a natural flavor option (link to the cinnamon toothpaste collection and the best cinnamon toothpaste blog post). Mention mint as the classic option (link to the mint toothpaste collection).",
+      "keywords_to_include": [
+        "what is the best natural toothpaste",
+        "natural toothpaste ingredients",
+        "cinnamon toothpaste",
+        "mint toothpaste",
+        "baking soda toothpaste",
+        "xylitol toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions",
+      "type": "faq",
+      "word_count_target": 300,
+      "guidance": "Include 4–5 FAQ items targeting semantic search questions. Use FAQ schema. Questions and guidance for each: (1) 'Is toothpaste considered a liquid by TSA?' — Answer: Yes, TSA classifies toothpaste as a gel/paste subject to the 3.4 oz (100ml) liquid rule for carry-on bags. Keep brief; this is a semantic traffic opportunity, not the post's core topic. (2) 'Is natural toothpaste safe for people with braces?' — Answer: Generally yes; avoid highly abrasive formulas; look for low-RDA (Relative Dentin Abrasivity) ratings; fluoride-containing formulas are typically recommended by orthodontists but fluoride-free hydroxyapatite options exist. (3) 'Is toothpaste tested on animals?' — Address cruelty-free toothpaste broadly without naming specific brands; note Leaping Bunny and PETA cruelty-free certifications as signals to look for. (4) 'Can men use natural toothpaste?' — Address the 'is toothpaste made for men' query: toothpaste has no biological gender requirement; 'for men' marketing is largely cosmetic positioning. (5) 'What are the ingredients for elephant toothpaste?' — Briefly clarify this is a chemistry experiment (hydrogen peroxide + yeast + dish soap), entirely unrelated to oral care toothpaste. One or two sentences only; include only to capture the semantic query.",
+      "keywords_to_include": [
+        "is toothpaste considered a liquid by tsa",
+        "does tsa consider toothpaste a liquid",
+        "what toothpaste is best for braces",
+        "is crest toothpaste cruelty-free",
+        "is toothpaste made for men",
+        "what are the ingredients for elephant toothpaste"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 150,
+      "guidance": "Bring it home with a clear, empowering summary: now that the reader knows these seven ingredients — SLS, artificial sweeteners, triclosan, parabens, propylene glycol, microplastics, and DEA/ethanolamines — plus the fluoride debate, they have everything they need to make a confident swap. Reinforce the brand's position: Real Skin Care was built around the belief that what goes in your mouth matters as much as what goes on your skin. Close with a soft CTA to explore the natural toothpaste collection — not a hard sell, just an invitation. Link to the natural toothpaste collection as the primary CTA and the best natural toothpaste 2026 blog post as a secondary resource.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "clean toothpaste",
+        "toothpaste ingredients to avoid",
+        "ingredients to avoid in natural toothpaste"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "natural toothpaste",
+    "toothpaste ingredients to avoid",
+    "clean toothpaste",
+    "ingredients to avoid in natural toothpaste",
+    "SLS-free toothpaste",
+    "sodium lauryl sulfate toothpaste",
+    "fluoride-free toothpaste",
+    "is fluoride in toothpaste necessary",
+    "what toothpaste is fluoride free",
+    "what is the best natural toothpaste",
+    "triclosan in toothpaste",
+    "parabens in toothpaste",
+    "paraben-free toothpaste",
+    "propylene glycol toothpaste",
+    "microbeads in toothpaste",
+    "microplastics toothpaste",
+    "DEA in toothpaste",
+    "diethanolamine toothpaste",
+    "artificial sweeteners in toothpaste",
+    "xylitol toothpaste",
+    "hydroxyapatite toothpaste",
+    "organic toothpaste",
+    "clean oral care",
+    "non-toxic toothpaste",
+    "toothpaste label reading",
+    "EWG toothpaste",
+    "baking soda toothpaste",
+    "cinnamon toothpaste",
+    "mint toothpaste",
+    "what is the ph of toothpaste",
+    "how much toothpaste is poisonous",
+    "is toothpaste considered a liquid by tsa",
+    "does tsa consider toothpaste a liquid",
+    "what toothpaste is best for braces",
+    "is toothpaste made for men",
+    "what are the ingredients for elephant toothpaste",
+    "cruelty-free toothpaste",
+    "natural toothpaste ingredients",
+    "toothpaste without SLS",
+    "foaming agent toothpaste",
+    "endocrine disruptors toothpaste",
+    "nitrosamines toothpaste",
+    "vegetable glycerin toothpaste",
+    "natural abrasive toothpaste",
+    "oral care clean ingredients"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "SLS-free toothpaste",
+      "url": "https://www.realskincare.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making",
+      "placement_guidance": "Place within the SLS (Ingredient #1) H3 section, in the 'what to look for instead' callout or the closing sentence of that section."
+    },
+    {
+      "anchor_text": "natural toothpaste collection",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "Place in the fluoride section where Real Skin Care's fluoride-free positioning is introduced, and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "cinnamon toothpaste",
+      "url": "https://www.realskincare.com/collections/cinnamon-toothpaste",
+      "placement_guidance": "Place in the 'What Makes a Natural Toothpaste Actually Natural?' H2 section when cinnamon is mentioned as a natural flavoring option."
+    },
+    {
+      "anchor_text": "best cinnamon toothpaste: benefits and what to know",
+      "url": "https://www.realskincare.com/blogs/news/best-cinnamon-toothpaste-benefits-brands-what-to-know",
+      "placement_guidance": "Place as a secondary link in the 'What Makes a Natural Toothpaste Actually Natural?' section, near the cinnamon mention, as a 'learn more' resource."
+    },
+    {
+      "anchor_text": "mint toothpaste",
+      "url": "https://www.realskincare.com/collections/mint-toothpaste",
+      "placement_guidance": "Place in the 'What Makes a Natural Toothpaste Actually Natural?' H2 section when mint/peppermint essential oil is mentioned."
+    },
+    {
+      "anchor_text": "best natural toothpaste in 2026",
+      "url": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-2026",
+      "placement_guidance": "Place in the conclusion as a secondary CTA resource for readers who want a curated product guide after reading the ingredient education post."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite at least one peer-reviewed study per ingredient claim (specific citations are listed in each H3 guidance section above — the writer must include these as in-prose references, e.g., 'A study published in [Journal Name] found…', not just a footnote)",
+    "Include a brief author bio note or editorial stamp indicating the post was reviewed by someone with a background in natural formulation or oral health (e.g., 'Reviewed by [Name], natural product formulator' — coordinate with editorial team to confirm the appropriate reviewer before publishing)",
+    "Reference FDA and EWG regulatory positions by name to anchor claims in recognized third-party authority",
+    "Write from demonstrated brand experience: Real Skin Care formulates natural toothpaste and has made specific choices to exclude these ingredients — frame relevant callouts as 'why we don't use this' rather than generic advice",
+    "Use precise, non-sensationalist language throughout — avoid words like 'poison' or 'toxic' without qualification; this builds credibility vs. the fear-based framing used by several top competitors",
+    "Include a 'Last reviewed' or publication date visible on the post to signal freshness — the post is entering a SERP where competitors have dates from 2019 and 2024; a 2025/2026 date with cited current sources is a trust differentiator",
+    "Link to primary regulatory sources (FDA OTC monograph for toothpaste, EWG Skin Deep) as external authority signals"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "FUNNEL STAGE: This is a mid-funnel (MOF) educational post. The content gap team has flagged that the brand's queue is heavy on MOF/BOF — if this brief is being scheduled alongside other toothpaste roundups, flag to the content strategist to ensure a TOF lifestyle post is queued within the same four-week window (see standing instructions). TONE: Warm, informed, and empowering — the voice of a knowledgeable friend who formulates clean products, not a scare-mongering blog or a clinical textbook. Avoid alarmist language ('poison,' 'toxic chemicals,' 'deadly') used by some competing dental clinic posts; Real Skin Care's authority comes from transparency and evidence, not fear. CANNIBALIZATION CHECK: This is the brand's live post at position 4. This brief is for a REFRESH of that existing post — do not create a second URL. All edits should be made to https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste. The goal is to upgrade the existing content to outrank positions 1–3 by adding the sourced ingredient evidence, improved structure, FAQ schema, and internal linking that the current version likely lacks. BRAND POLICY: Do not name any competitor toothpaste brands anywhere in the post body. Do not create comparison tables featuring other brands. Do not target competitor brand queries. CITATIONS: The specific peer-reviewed citations listed in each H3 guidance block are mandatory — the writer must verify full citation accuracy before publishing (journal name, volume, page numbers) and include them as readable in-prose references, not just a bibliography. This is a standing instruction from the editorial team following the content refresher audit. ELEPHANT TOOTHPASTE: Address this briefly in the FAQ only — it is purely a semantic traffic capture. Do not let it distract from the post's core authority topic. TSA QUESTION: Same guidance — two to three sentences in FAQ only; it is a semantic query capture, not a content pillar. INTERNAL LINKING: All six internal links listed above should be placed as directed. Do not add links to the natural lip balm or non-toxic body lotion posts — those are off-topic for this specific piece and would dilute thematic relevance.",
+  "search_volume": 0,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://gcholisticdentalcare.com.au/7-toothpaste-ingredients-to-avoid.html",
+      "title": "7 Harmful Toothpaste Ingredients to Avoid | GC Holistic",
+      "domain": "gcholisticdentalcare.com.au",
+      "description": "Sep 9, 2019 — 1. Fluoride · 2. Triclosan · 3. Sodium Lauryl Sulphate (SLS) · 4. Propylene Glycol · 5. Artificial Sweeteners · 6. Diethanolamine (DEA) · 7. Parabens. Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.carolinasdentist.com/toothpaste-ingredients-guide/",
+      "title": "Best & Worst Toothpaste Ingredients",
+      "domain": "www.carolinasdentist.com",
+      "description": "May 16, 2025 — Fluoride: Still one of the most important ingredients in any toothpaste. · Potassium Nitrate: Found in many sensitivity-focused toothpastes, this ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.larawayfamilydentistry.com/7-hidden-poisons-toothpaste/",
+      "title": "7 Hidden Poisons in Your Toothpaste",
+      "domain": "www.larawayfamilydentistry.com",
+      "description": "1) Fluoride. · 2) Artificial sweeteners. · 3) Sodium lauryl sulphate (SLS). · 4) Triclosan. · 5) MEA, DEA, TEA. · 6) Microplastics. · 7) Propylene Glycol. Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.realskincare.com/blogs/news/7-ingredients-to-avoid-in-natural-toothpaste?srsltid=AfmBOopTNzEKUsU_L-Te3NrVREgMQ0ynekBIMo8I4Y2zdnhqBJtpGoXw",
+      "title": "7 Ingredients to Avoid in Natural Toothpaste",
+      "domain": "www.realskincare.com",
+      "description": "Jul 5, 2025 — 7 Ingredients to Avoid in Natural Toothpaste · 1. Sodium Lauryl Sulfate (SLS) · 2. Glycerin · 3. Artificial Sweeteners (e.g., Saccharin, Sucralose). Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://www.vitacost.com/blog/toothpaste-ingredients/",
+      "title": "Toothpaste Ingredients: What to Avoid + Safer Alternatives",
+      "domain": "www.vitacost.com",
+      "description": "Feb 26, 2026 — Here are just a few of the toothpaste ingredients you may wish to avoid: Fluoride, This remains a controversial subject, with many dentists continuing to ... Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://nobsroutines.com/blogs/learn/what-to-avoid-in-toothpaste?srsltid=AfmBOopTE271ZvKR2UAJ3Ev-VG0FsosZBY2onvl9rD-8P-XTe8zMFdNI",
+      "title": "What to Avoid in Toothpaste - NOBS Routines",
+      "domain": "nobsroutines.com",
+      "description": "Feb 17, 2024 — Risky Ingredient #1: Sodium Fluoride · Risky Ingredient #2: Charcoal · Risky Ingredient #3: Triclosan · Risky Ingredient #4: Hydrogen Peroxide. Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.fremontdentalgroup.com/the-best-and-worst-toothpaste-ingredients/",
+      "title": "The Best and Worst Toothpaste Ingredients",
+      "domain": "www.fremontdentalgroup.com",
+      "description": "Nov 26, 2024 — Avoid toothpastes with artificial sweeteners like aspartame ... Natural colorings from ingredients like beetroot can be a better option. Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://behuppy.com/blogs/news/toothpaste-ingredients-to-avoid?srsltid=AfmBOoppqIXBsZ2SBmGy5NLvzZdOuwBkpXuqNolGn_REmkJ684RUL4st",
+      "title": "Toothpaste Ingredients to Avoid: The Complete Guide",
+      "domain": "behuppy.com",
+      "description": "Mar 24, 2026 — 1. Sodium Lauryl Sulfate (SLS) · 2. Artificial Sweeteners · 3. Triclosan · 4. Microbeads (Polyethylene) · 5. Parabens · 6. Carrageenan · 7. Artificial ... Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

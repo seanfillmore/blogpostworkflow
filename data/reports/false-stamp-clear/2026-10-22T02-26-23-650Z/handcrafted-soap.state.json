@@ -1,0 +1,52 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:11:07.188Z",
+    "last_crawled": "2026-08-25T11:31:37Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/handcrafted-soap-what-it-is-why-its-better",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2270,
+  "generated_at": "2026-06-02T10:33:02.799Z",
+  "brief_path": "/root/seo-claude/data/briefs/handcrafted-soap.json",
+  "tokens_used": {
+    "input": 10600,
+    "output": 6258
+  },
+  "image_path": "data/posts/handcrafted-soap/image.webp",
+  "image_prompt": "Lifestyle photography, a rustic wooden workshop counter surface styled to evoke the handcrafted soap-making process, centered on a plain unbranded white round puck-shaped bar of soap resting on a small white ceramic soap dish surrounded by a light foam of white lather, flanked by a small glass bowl of saponified organic virgin coconut oil with a wooden spatula resting across it and a halved fresh coconut placed naturally to one side, the counter surface showing faint traces of white soap powder and natural texture suggesting artisan handcraft, a worn wooden-handled tool such as a spatula or mold scraper lying casually nearby, the background softly blurred to suggest a warm rustic workspace with natural wood shelving and warm neutral tones, lit by broad soft natural window light coming from the upper left casting gentle even shadows, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-06-02T10:33:29.936Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563829178538,
+  "shopify_handle": "handcrafted-soap-what-it-is-why-its-better",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/handcrafted-soap-what-it-is-why-its-better",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_af0ccc0d-6a9d-4d95-be33-cfd7ba4e5c50.webp?v=1781054860",
+  "uploaded_at": "2026-06-10T01:27:43.393Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-10T11:30:01.522Z",
+      "result": "ok"
+    }
+  ],
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 81 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:36.203Z",
+  "refreshed_at": "2026-10-07T15:17:47.571Z",
+  "last_material_edit": {
+    "at": "2026-10-07T15:17:47.577Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:50:04.853Z",
+    "reasons": [
+      "1 internal link issue(s)",
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

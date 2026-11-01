@@ -411,3 +411,91 @@ data/reports/google-ads-research/
 # Amazon review-request ledger (server-written; losing it is harmless)
 data/reports/amazon-review-requests/
 data/reports/tech-seo-steward/
+
+# ── Server-written machine output, untracked 2026-11-01 ──────────────────────────────
+# Cron rewrites every path below on the production box. While tracked they left the
+# server tree permanently dirty (177 modified tracked files on 2026-11-01), served
+# months-stale copies to anyone reading git, and could abort a deploy pull. Same rule as
+# the 2026-09-06 latest.json untracking: the server copy is authoritative; irreplaceable
+# state (changes, A/B tracker, queue, calendar) is in the offsite `server-state` set.
+# Post intermediates (content.html, meta.json, editor-report.md, answer-first.md) STAY
+# tracked: remediation-plan tests read the committed mirrors.
+data/changes/events/*
+data/changes/windows/*
+!data/changes/events/.gitkeep
+!data/changes/windows/.gitkeep
+data/performance-queue/
+data/calendar/calendar.json
+data/competitor-watcher/
+data/quota/
+data/rank-snapshots/
+data/backups/legacy-rebuild/
+data/creatives/session-*/
+data/creative-sessions/
+data/reference-images/
+data/ads-optimizer/
+data/meta-ads-insights/
+data/meta-tests/
+data/collection-content/
+data/blog-index.json
+data/topical-map.json
+data/topical-map-report.md
+data/keyword-research.json
+data/keyword-research-report.md
+data/category-competitors.json
+data/context/feedback.md
+data/context/feedback-manifest.json
+data/context/writer-standing-rules.md
+data/context/writer-standing-rules-changelog.json
+data/rejected-keywords.json.bak-*
+data/calendar/calendar.json.bak*
+data/posts/_orphaned/*/state.json
+data/posts/*/content-refreshed*.html
+data/posts/*/content.backup-*.html
+data/posts/*/content.html.bak
+data/posts/*/discarded-refresh-*
+data/posts/*/internal-links.md
+data/posts/*/image.webp
+data/posts/*/backups/
+# Server-run remediation latest.json pointers (the dated run records beside them stay tracked)
+data/reports/*/latest.json
+data/reports/*/*/latest.json
+# Cron reports (regenerated every run)
+data/reports/answer-first/
+data/reports/anchor-text/
+data/reports/backlinks/
+data/reports/calendar-runner/
+data/reports/cannibalization/
+data/reports/collection-linker/
+data/reports/competitor-ads/
+data/reports/competitor-watcher/
+data/reports/content-gap/
+data/reports/content-refresher/
+data/reports/content-strategist/
+data/reports/ga4-content-feedback/
+data/reports/gsc-opportunity/
+data/reports/gsc-query-miner/
+data/reports/indexing/
+data/reports/keyword-index/
+data/reports/meta-ab/
+data/reports/meta-optimizer/
+data/reports/meta-tests/
+data/reports/pagespeed/
+data/reports/pipeline-prioritizer/
+data/reports/post-performance/
+data/reports/post-retirement/
+data/reports/product-optimizer/
+data/reports/quick-wins/
+data/reports/rank-tracker/
+data/reports/redirect-links/
+data/reports/schema/
+data/reports/shopping-test-monitor/
+data/reports/technical-seo/
+data/reports/theme-seo-audit/
+data/reports/voice-of-customer/
+data/reports/verifier-report.md
+data/reports/prune-ad-studio.log
+# Server-side run records that carry customer data. THIS REPO IS PUBLIC.
+data/reports/judgeme-dedupe/
+data/reports/judgeme-suppress/
+data/reports/giveaway-prune/

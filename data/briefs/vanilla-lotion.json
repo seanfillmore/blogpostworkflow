@@ -1,0 +1,312 @@
+{
+  "target_keyword": "vanilla lotion",
+  "slug": "vanilla-lotion",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Vanilla Lotion: Best Natural Options for Soft Skin",
+  "meta_description": "Looking for the best vanilla lotion? Discover why natural, coconut oil-based vanilla body lotion beats conventional options for deep, lasting moisture. Shop now.",
+  "target_word_count": 2200,
+  "content_angle": "This post positions Real Skin Care as the authoritative source on natural vanilla body lotion by combining ingredient education, a clean-beauty buying guide, and a transparent product comparison — countering the commodity-listing approach of mass retailers and the single-SKU focus of smaller competitors, while guiding readers from curiosity to confident purchase.",
+  "funnel_stage": "MOF",
+  "content_format_directive": "MOF = comparison + informational: educate on what makes a vanilla lotion clean and effective, compare key product formats (body lotion, body butter, body oil, hand lotion), and include a comparison table that positions Real Skin Care's coconut oil-based vanilla lotion as the superior natural choice.",
+  "comparison_table_spec": {
+    "rsc_product": "Real Skin Care Coconut Oil Vanilla Body Lotion (https://www.realskincare.com/products/coconut-lotion)",
+    "competitor_products_to_include": [
+      "Conventional drugstore vanilla body lotion (shea butter + synthetic fragrance baseline)",
+      "Mass-market vanilla body butter (high ingredient count, silicones)",
+      "Standard natural-brand vanilla lotion (fair trade shea, minimal actives)"
+    ],
+    "differentiating_features_to_highlight": [
+      "Coconut oil as primary moisturizing base vs. water-diluted formulas",
+      "Short, recognizable ingredient list",
+      "Free from parabens, silicones, synthetic fragrance, and mineral oil",
+      "Real vanilla extract vs. synthetic vanilla fragrance (vanillin)",
+      "Suitability for sensitive and dry skin"
+    ]
+  },
+  "competitor_content_gap_notes": {
+    "primallypure_ranking": false,
+    "desertessence_ranking": false,
+    "humblebrands_ranking": false,
+    "gap_identified": "Top-ranking pages are either mass-retailer product listing pages (no educational depth) or single-SKU product pages with minimal ingredient transparency. No competitor currently owns a comprehensive MOF guide that educates on vanilla lotion ingredients AND drives toward a natural/clean product. RSC can own the 'clean ingredient education + buying guide' angle that converts readers comparing conventional vs. natural options."
+  },
+  "key_differentiators": [
+    "Provide genuine ingredient education — explain the difference between real vanilla extract and synthetic vanillin fragrance, and why it matters for skin and health, rather than simply listing products",
+    "Include a transparent comparison table showing RSC's coconut oil-based vanilla lotion vs. conventional formats on ingredient count, avoided ingredients, and moisturizing mechanism — something no current top-10 result offers",
+    "Cover all relevant vanilla lotion formats (body lotion, body butter, body oil, hand lotion) to capture the full semantic keyword cluster and serve readers at different stages of their search",
+    "Address seasonal gifting intent explicitly (peaks in November–December) with gift-use framing and holiday-season dry skin context, capitalizing on the keyword's strong Q4 seasonality",
+    "Anchor the post to a clean-beauty values framework — short ingredient lists, no synthetic fragrance, no parabens/silicones — that reflects the Real Skin Care brand and differentiates from commodity Amazon-listing content"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with the sensory and emotional appeal of vanilla lotion — warmth, comfort, the kind of scent that feels like self-care. Immediately pivot to the problem: most vanilla lotions on the market rely on synthetic vanillin fragrance and watered-down bases that smell great but don't actually nourish skin. Introduce the post's promise: a practical guide to understanding what's in vanilla body lotion, what to look for in a clean formula, and how to find one that genuinely hydrates. Mention that vanilla lotion search spikes in fall and winter — the same season dry skin peaks — making ingredient quality especially important. Do NOT open with a generic definition. Do NOT mention any competitor brands by name. End with a natural transition to the first H2.",
+      "keywords_to_include": [
+        "vanilla lotion",
+        "vanilla body lotion",
+        "body lotion for dry skin",
+        "moisturizing body lotion"
+      ]
+    },
+    {
+      "section": "H2: What Makes a Vanilla Lotion Actually Good for Your Skin?",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "This is the foundational ingredient-education section — RSC's primary differentiator over listing-page competitors. Cover two parallel tracks: (1) What vanilla actually does for skin: vanilla extract contains antioxidants (vanillin, polyphenols) that help protect against environmental stress; it has mild anti-inflammatory properties; and the scent itself has documented calming, stress-reducing effects — cite general aromatherapy research, not branded studies. (2) What the BASE matters more than the scent: explain that the moisturizing base (coconut oil, shea butter, body butter, body oil) determines how well the lotion actually hydrates. A lotion can smell like vanilla and still be mostly water and synthetic fragrance — that's the critical distinction. Use this to introduce the concept of short, clean ingredient lists. Naturally weave in 'body lotion', 'moisturizing body cream', 'body butter', and 'body oil moisturizer'. Keep tone warm and educational — like a knowledgeable friend explaining, not a clinical white paper.",
+      "keywords_to_include": [
+        "vanilla body lotion",
+        "body lotion",
+        "body butter",
+        "body oil moisturizer",
+        "moisturizing body cream",
+        "best body lotion"
+      ]
+    },
+    {
+      "section": "H3: Real Vanilla Extract vs. Synthetic Vanilla Fragrance — Why It Matters",
+      "type": "h3",
+      "word_count_target": 220,
+      "guidance": "Drill into the real vanilla vs. synthetic vanillin distinction — this is a high-trust, high-differentiation content beat that no current SERP competitor covers. Explain: real vanilla extract (from vanilla planifolia beans) contains naturally occurring antioxidants and has a complex, warm scent profile. Synthetic vanilla fragrance (vanillin) is petroleum-derived, provides no skin benefit, and is a common skin irritant and allergen for sensitive skin types. Note that the FDA does not require companies to disclose what's inside 'fragrance' on a label — so a lotion listed as containing 'fragrance' or 'parfum' may contain vanillin plus dozens of undisclosed chemicals. This section should feel empowering and slightly eye-opening — give readers a practical tip: look for 'vanilla extract,' 'vanilla planifolia fruit extract,' or 'vanilla planifolia seed oil' on the ingredient label rather than 'fragrance' or 'parfum'. Avoid naming any competitor brand products.",
+      "keywords_to_include": [
+        "vanilla body lotion",
+        "non-toxic body lotion",
+        "clean body lotion",
+        "natural body lotion"
+      ]
+    },
+    {
+      "section": "H2: Choosing the Right Vanilla Lotion Format: Lotion, Butter, Oil, or Cream?",
+      "type": "h2",
+      "word_count_target": 300,
+      "guidance": "This section captures the semantic cluster around related product formats and helps readers self-select based on skin type and need. Cover four formats clearly and concisely: (1) Body Lotion — lighter texture, absorbs quickly, ideal for daily use and normal-to-combination skin; great for full-body application post-shower. (2) Body Butter — thicker, richer, excellent for very dry or rough areas (elbows, heels, knees); often shea- or coconut-based; longer-lasting moisture. (3) Body Oil / Body Oil Moisturizer — fast-absorbing oils (coconut, jojoba, argan) that lock in moisture; best applied to slightly damp skin; good for dry skin that finds lotions too light. (4) Moisturizing Body Cream / Hand Cream — mid-weight, often used on hands and face; more occlusive than lotion but less heavy than butter. Briefly note that all four formats can feature vanilla scent, and the format choice should depend on skin type and use case — not just the fragrance. Naturally work in 'hand lotion', 'hand cream', 'body lotion for dry skin', 'body butter', 'best body oil'. Include a brief callout box or bolded tip: 'For dry winter skin, reach for a coconut oil-based body lotion or body butter — the fatty acids in coconut oil create a protective barrier that lighter water-based lotions can't match.'",
+      "keywords_to_include": [
+        "body butter",
+        "body oil moisturizer",
+        "hand cream",
+        "hand lotion",
+        "body lotion for dry skin",
+        "moisturizing body cream",
+        "best body oil",
+        "body lotion"
+      ]
+    },
+    {
+      "section": "H2: What to Avoid in a Vanilla Body Lotion (Ingredient Red Flags)",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "This section directly supports RSC's non-toxic body lotion positioning and handles a key MOF objection: 'Why does ingredient quality matter if it just smells good?' List and briefly explain 5 red-flag ingredients commonly found in conventional vanilla lotions: (1) Parabens (methylparaben, propylparaben) — synthetic preservatives linked to hormone disruption; (2) Synthetic fragrance / parfum — undisclosed chemical cocktails, common allergens; (3) Mineral oil — petroleum by-product that sits on top of skin rather than absorbing; (4) Dimethicone / silicones — create a temporary smoothing effect but don't hydrate; can clog pores for acne-prone skin; (5) Propylene glycol — can cause irritation in sensitive individuals. Keep this section factual and empowering — not fear-mongering. Frame it as: 'Here's what to scan for quickly when you flip over a bottle.' This builds trust and positions RSC's short-ingredient philosophy as the obvious alternative. Use 'non-toxic body lotion', 'organic body lotion', 'clean body lotion' naturally here.",
+      "keywords_to_include": [
+        "non-toxic body lotion",
+        "organic body lotion",
+        "clean body lotion",
+        "natural body lotion",
+        "body lotion for dry skin"
+      ]
+    },
+    {
+      "section": "H2: Natural Vanilla Body Lotion Comparison: What Separates Clean Formulas from Conventional Ones",
+      "type": "h2",
+      "word_count_target": 350,
+      "guidance": "This is the MOF comparison table section — the most conversion-critical section of the post. DO NOT name specific competitor brand products. Instead, build the comparison table around formula TYPES/archetypes: (Row 1) Conventional mass-market vanilla body lotion — typical characteristics: water as first ingredient, synthetic fragrance, silicones, 20–30+ ingredients, paraben-preserved. (Row 2) Natural-brand vanilla body lotion with shea butter base — better profile: no parabens, fair trade shea, still may use 'fragrance' label, 15–20 ingredients. (Row 3) Real Skin Care Coconut Oil Vanilla Lotion — short ingredient list, coconut oil as primary moisturizing base, real vanilla extract (not synthetic fragrance), free from parabens/silicones/mineral oil, suitable for sensitive skin. Table columns: Primary moisturizing base | Vanilla ingredient (real vs. synthetic) | Ingredient count | Key avoided ingredients | Best for. After the table, write 2–3 sentences explaining why RSC's coconut oil base is particularly effective: medium-chain fatty acids in coconut oil (lauric acid, caprylic acid) penetrate the skin barrier more effectively than heavy synthetic emollients, delivering moisture at the cellular level. Link to the RSC coconut lotion product page with anchor 'coconut oil body lotion' and to the natural body lotion collection with anchor 'natural body lotion'. Keep tone confident and factual — not dismissive of other options, but clearly positioning RSC's formula as the clean-ingredient winner.",
+      "keywords_to_include": [
+        "vanilla body lotion",
+        "coconut oil body lotion",
+        "natural body lotion",
+        "organic body lotion",
+        "non-toxic body lotion",
+        "best body lotion",
+        "body lotion for dry skin"
+      ]
+    },
+    {
+      "section": "H2: How to Get the Most Out of Your Vanilla Body Lotion",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "A practical application guide that adds value beyond the buying decision and captures 'how-to' intent within the broader keyword cluster. Cover 4 quick tips: (1) Apply to damp skin within 2–3 minutes of showering — skin absorbs moisturizer most effectively when the barrier is open and slightly moist; (2) Layer with a body oil for extra-dry areas in winter — apply oil first, lotion on top, or mix a few drops of body oil into your lotion; (3) For hands, apply hand lotion or hand cream after every wash, not just once a day — washing strips the skin barrier repeatedly; (4) For gift use (nodding to the November/December seasonality spike), vanilla lotion pairs beautifully with a matching body wash or body scrub for a complete sensory routine. Naturally weave in 'moisturizing body wash', 'body scrub', 'hand lotion'. Keep this section punchy — short paragraphs or a numbered list format works well here.",
+      "keywords_to_include": [
+        "moisturizing body wash",
+        "body scrub",
+        "hand lotion",
+        "body lotion for dry skin",
+        "body oil moisturizer"
+      ]
+    },
+    {
+      "section": "H2: Why Vanilla Lotion Is the Perfect Fall and Holiday Skincare Staple",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Capitalize on the keyword's clear seasonal intent (peak November, strong October–December). Frame this as both a practical skincare-seasonal timing argument AND a gifting/lifestyle angle. Points to hit: (1) Cold, dry air in fall and winter strips skin moisture faster — richer, oil-based vanilla lotions become especially important Oct–Jan; (2) Vanilla's warm, cozy scent profile is uniquely suited to the holiday season — it layers naturally under holiday fragrances and doesn't clash; (3) Vanilla lotion makes an excellent clean-beauty gift — a thoughtful, usable alternative to synthetic-fragrance gift sets, especially when made with real vanilla and clean ingredients; (4) Brief mention: if gifting, look for a vanilla body lotion that's packaged well and has a short ingredient list — that's a quality signal. This section should feel warm and seasonal in tone. Short paragraphs. Do not mention specific retail holidays by name in a way that feels forced.",
+      "keywords_to_include": [
+        "vanilla body lotion",
+        "vanilla lotion",
+        "body lotion for dry skin",
+        "moisturizing body cream",
+        "natural body lotion"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions About Vanilla Lotion",
+      "type": "faq",
+      "word_count_target": 240,
+      "guidance": "Include 4 FAQ items structured for FAQ schema markup. Write each answer in 2–4 sentences — concise, accurate, and genuinely useful. Questions and answer guidance: (1) 'Is vanilla lotion good for dry skin?' — Yes, especially when the base is a nourishing oil like coconut oil or shea butter. The key is looking beyond the scent to the moisturizing base and ingredient quality. (2) 'What is the difference between vanilla body lotion and vanilla body butter?' — Body lotion is lighter and absorbs quickly; body butter is thicker and richer, better for very dry or rough skin areas. Both can feature vanilla scent. (3) 'Does vanilla lotion contain real vanilla?' — Most conventional vanilla lotions use synthetic vanillin fragrance rather than real vanilla extract. Look for 'vanilla planifolia fruit extract' in the ingredient list for a product with real vanilla. (4) 'Is vanilla lotion safe for sensitive skin?' — It can be, but only if it's free from synthetic fragrance, parabens, and silicones — all common irritants. A short, clean ingredient list is the best indicator of a formula that's genuinely gentle for sensitive skin.",
+      "keywords_to_include": [
+        "vanilla lotion",
+        "vanilla body lotion",
+        "body lotion for dry skin",
+        "body butter",
+        "non-toxic body lotion",
+        "natural body lotion"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 150,
+      "guidance": "Bring the post to a warm, confident close that reinforces the core message: vanilla lotion is more than a pleasant scent — it's an opportunity to choose a formula that actually nourishes your skin. Briefly recap the three most important takeaways: (1) real vanilla extract vs. synthetic fragrance matters; (2) the moisturizing base (especially coconut oil) is what determines actual hydration; (3) a short, clean ingredient list is the simplest quality signal. End with a direct, natural CTA pointing to RSC's coconut oil body lotion and natural body lotion collection. Suggested CTA language: 'Ready to upgrade your vanilla lotion routine? Real Skin Care's coconut oil-based vanilla body lotion delivers real moisture with a short, clean ingredient list — crafted for skin that deserves better.' Include the product page link and collection page link here. Tone should be warm, encouraging, and brand-confident — not salesy or pushy.",
+      "keywords_to_include": [
+        "vanilla lotion",
+        "vanilla body lotion",
+        "natural body lotion",
+        "coconut oil body lotion",
+        "body lotion for dry skin"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "vanilla lotion",
+    "vanilla body lotion",
+    "body lotion",
+    "body lotion for dry skin",
+    "best body lotion",
+    "natural body lotion",
+    "organic body lotion",
+    "non-toxic body lotion",
+    "clean body lotion",
+    "moisturizing body cream",
+    "body butter",
+    "body oil moisturizer",
+    "best body oil",
+    "hand lotion",
+    "hand cream",
+    "moisturizing body wash",
+    "body scrub",
+    "coconut oil body lotion",
+    "vanilla extract skin care",
+    "vanilla planifolia extract",
+    "synthetic fragrance in lotion",
+    "paraben-free body lotion",
+    "silicone-free body lotion",
+    "short ingredient list lotion",
+    "clean beauty body lotion",
+    "body lotion sensitive skin",
+    "daily moisturizer body",
+    "long-lasting body moisturizer",
+    "natural vanilla fragrance",
+    "winter body moisturizer",
+    "holiday skincare gift",
+    "coconut oil moisturizer",
+    "plant-based body lotion",
+    "vegan body lotion",
+    "cruelty-free body lotion",
+    "organic hand lotion",
+    "body lotion ingredients to avoid"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut oil body lotion",
+      "url": "https://www.realskincare.com/products/coconut-lotion",
+      "placement_guidance": "Use in the comparison table section (H2: Natural Vanilla Body Lotion Comparison) when describing RSC's product, and again in the Conclusion CTA. Primary product link — use at least twice."
+    },
+    {
+      "anchor_text": "natural body lotion",
+      "url": "https://www.realskincare.com/collections/natural-body-lotion",
+      "placement_guidance": "Use in the comparison table section and in the Conclusion CTA. This is the primary collection link for this post."
+    },
+    {
+      "anchor_text": "non-toxic body lotion",
+      "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+      "placement_guidance": "Use in the H2 section on ingredient red flags (What to Avoid), where the concept of non-toxic formulation is directly discussed."
+    },
+    {
+      "anchor_text": "organic body lotion",
+      "url": "https://www.realskincare.com/collections/organic-body-lotion",
+      "placement_guidance": "Use in the ingredient education or comparison section when discussing organic vs. conventional formulations."
+    },
+    {
+      "anchor_text": "body lotion for dry skin",
+      "url": "https://www.realskincare.com/collections/body-lotion-for-dry-skin",
+      "placement_guidance": "Use in the format comparison section (H2: Choosing the Right Vanilla Lotion Format) when discussing options specifically for dry skin."
+    },
+    {
+      "anchor_text": "organic hand lotion",
+      "url": "https://www.realskincare.com/collections/organic-hand-lotion",
+      "placement_guidance": "Use in the application tips section (H2: How to Get the Most Out of Your Vanilla Body Lotion) when discussing hand lotion application frequency."
+    },
+    {
+      "anchor_text": "coconut oil lotion collection",
+      "url": "https://www.realskincare.com/collections/coconut-oil-lotion",
+      "placement_guidance": "Use as a secondary link in the comparison table section or conclusion, offering readers a broader view of RSC's coconut oil lotion range."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite specific phytochemical properties of vanilla extract (vanillin, polyphenols, antioxidant activity) with reference to publicly available cosmetic chemistry or dermatology sources — do not invent claims, link to or paraphrase credible sources",
+    "Explain the FDA's fragrance disclosure loophole accurately — this demonstrates regulatory knowledge and builds reader trust",
+    "Provide the specific INCI (International Nomenclature of Cosmetic Ingredients) name for real vanilla extract ('vanilla planifolia fruit extract' or 'vanilla planifolia seed oil') so readers can verify claims on ingredient labels themselves — this is a concrete expertise signal",
+    "Use the comparison table with real, verifiable criteria (ingredient count, specific avoided ingredients, moisturizing base type) rather than vague quality claims",
+    "Include a brief author bio note or editorial note confirming the post was reviewed by someone with cosmetic formulation knowledge or a clean beauty expertise background",
+    "Reference the role of coconut oil's medium-chain fatty acids (lauric acid, caprylic acid) in skin barrier penetration — specific biochemistry that signals genuine ingredient expertise",
+    "Ensure all product claims about RSC's formulas are accurate and verifiable against the actual ingredient list on the product page — no unsupported superlatives"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "TONE AND VOICE: Warm, knowledgeable, and empowering — like a trusted friend who happens to know a lot about clean beauty. Not clinical or preachy. Not salesy. The goal is to help readers make a genuinely better purchasing decision, and Real Skin Care earns their trust (and purchase) by being the most honest, most useful resource on the page. Avoid superlatives like 'the best ever' without substantiation. Avoid fear-mongering about conventional products — present the facts clearly and let readers draw their own conclusions. BRAND POSITIONING: RSC is the authoritative natural option, not one item in a comparison list. The post should feel like it was written by RSC because RSC knows more about clean vanilla body lotion formulation than anyone else — not because RSC is trying to sell something. SEASONAL AWARENESS: This keyword peaks November–December. While the post should be evergreen, the gifting and dry-skin-season framing should feel timely and relevant to that peak audience. COMPETITOR BRANDS: Do not mention any competitor brand names anywhere in the post — not in the body, not in the comparison table, not in parenthetical examples. The comparison table uses formula archetypes only. NO AI TELL PHRASES: Avoid 'In conclusion,' 'It's worth noting,' 'In the realm of,' 'delve into,' or any filler transition language. Write tight, purposeful sentences. COMPARISON TABLE FORMAT: The writer should produce the comparison table in a simple HTML table or markdown table format that the CMS can render. Columns: Formula Type | Primary Moisturizing Base | Vanilla Ingredient | Ingredient Count (approx.) | Key Avoided Ingredients | Best For. RSC's row should be last and clearly the cleanest profile. INTERNAL LINKS: Place links naturally within sentence context — do not use 'click here' or 'learn more' as anchor text. Use the exact anchor texts specified in the internal_links section. WORD COUNT: Target 2,200 words. Section targets in the outline sum to 2,200. Do not pad sections to hit counts — if a section is complete at fewer words, that is fine. Do not exceed 2,400 words total. FAQ SCHEMA: The 4 FAQ questions in the FAQ section should be formatted in a way that supports FAQPage schema markup — clearly delineated question and answer pairs.",
+  "search_volume": 5400,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.amazon.com/vanilla-lotion/s?k=vanilla+lotion",
+      "title": "Vanilla Lotion",
+      "domain": "www.amazon.com",
+      "description": "Browse vanilla body lotions with long-lasting hydration. Find options with shea butter, vitamin E, and plant-based ingredients."
+    },
+    {
+      "position": 2,
+      "url": "https://www.alaffia.com/products/everyday-shea-body-lotion-vanilla-16fl-oz?srsltid=AfmBOor2d2V7LGkzyLyQWgSKrp8PxPgfR0lohF5DJJNaBYIRN-Xylmbg",
+      "title": "EveryDay Shea Body Lotion - Vanilla 16 oz",
+      "domain": "www.alaffia.com",
+      "description": "Our body lotion is prepared with fair trade unrefined shea butter, calming lemongrass, antioxidant-rich shea leaf, and vanilla. For EveryDay use on normal to ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.aveeno.com/products/daily-moisturizing-body-lotion-cocoa-butter-vanilla-scent",
+      "title": "Daily Moisturizing Body Lotion Cocoa Butter Vanilla Scent",
+      "domain": "www.aveeno.com",
+      "description": "It absorbs quickly without feeling greasy and keeps skin moisturized all day, even for sensitive skin. The cocoa butter and vanilla scent is warm, subtle, and ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.bathandbodyworks.com/p/vanilla-romance-body-lotion-028004228?srsltid=AfmBOoo6OFTx-99I0SOE-9vbyyTCQRncJ5-u-6SKLlN_JrKKS9sbFyjV",
+      "title": "Vanilla Romance Body Lotion",
+      "domain": "www.bathandbodyworks.com",
+      "description": "What it smells like: a love letter to a trending yet timeless ingredient. Fragrance notes: fresh cardamom, vanilla absolute and captivating woods. Overview. Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://fitasamamabear.com/easy-homemade-vanilla-lotion/",
+      "title": "Easy Homemade Vanilla Lotion For Dry Skin",
+      "domain": "fitasamamabear.com",
+      "description": "Jul 5, 2025 — This homemade vanilla lotion contains only six ingredients. A homemade body lotion to help nourish dry skin and made with real vanilla bean."
+    },
+    {
+      "position": 6,
+      "url": "https://evolutionofsmooth.com/products/vanilla-cashmere-travel-size-body-cream?srsltid=AfmBOopoGo786zgI27FUV5zsXPoxW0ge4IecJHvVIZD60n2VhSNjbMrx",
+      "title": "Vanilla Cashmere Travel Size Body Lotion",
+      "domain": "evolutionofsmooth.com",
+      "description": "A rich blend of whipped vanilla, soft musk, and caramel creates a smooth, comforting scent that wraps skin in warmth. Sweet, creamy, and irresistible. Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

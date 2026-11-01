@@ -1,0 +1,338 @@
+{
+  "target_keyword": "non toxic toothpaste",
+  "slug": "non-toxic-toothpaste",
+  "search_intent": "commercial",
+  "content_type": "listicle",
+  "content_depth": "comprehensive",
+  "recommended_title": "Non Toxic Toothpaste: 7 Ingredients to Avoid and What to Choose",
+  "meta_description": "Looking for non toxic toothpaste? Learn which 7 ingredients to avoid, what the evidence says on fluoride and SLS, and how to choose a safe formula. Read now.",
+  "target_word_count": 2200,
+  "content_angle": "An evidence-graded guide that separates ingredients with real safety concerns from ones where the science is mixed or overstated, so shoppers can judge 'non-toxic' claims for themselves. It stays honest about fluoride's proven cavity-prevention benefit while helping readers who choose fluoride-free pick a well-formulated option, with Real Skin Care's coconut oil toothpaste as the natural conclusion.",
+  "key_differentiators": [
+    "Label each ingredient with an evidence-strength tag (strong / mixed / weak) and link primary sources (journal, year, DOI or PubMed). Top results are forum threads, product pages and roundups with few or no cited sources.",
+    "Define 'non-toxic' explicitly. Separate hazard from dose and from marketing claims, rather than treating every synthetic ingredient as dangerous. Reddit and Facebook answers are anecdotal, and roundups just assert safety.",
+    "Give a balanced, honest fluoride section (benefits, fluorosis risk in young children, who should talk to a dentist) instead of fear-based framing. This builds trust and is the main gap in the SERP.",
+    "Include a TYPE-level comparison table (fluoride-free paste, hydroxyapatite paste, tablets, coconut oil-based paste, DIY) covering pros, cons and who each suits. No brand tables.",
+    "Add a practical label-reading checklist and a visible 'Last reviewed: October 2026' date, since many roundups cited by AI engines are stale (400+ days old). Reviewed by a dental professional if possible."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open by acknowledging the confusion: 'non-toxic' isn't a regulated term for toothpaste. State the post's promise up front: 7 ingredients worth scrutinizing, an honest evidence rating for each, and how to pick a formula that fits you. Mention briefly that the post covers fluoride-free options and that fluoride is addressed candidly. Include the keyword in the first 100 words. Add a 'Last reviewed' date and reviewer line.",
+      "keywords_to_include": [
+        "non toxic toothpaste",
+        "fluoride free toothpaste",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: What 'Non-Toxic Toothpaste' Actually Means",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Explain that toothpaste is regulated (FDA: fluoride toothpaste is an OTC drug; others are cosmetics) and 'non-toxic' is a marketing term. Introduce the three-tier evidence tag used throughout (strong / mixed / weak). Explain that toxicity depends on dose, and that toothpaste is spit out, not swallowed. Set expectations that the list covers ingredients people commonly ask about, not all being equally risky.",
+      "keywords_to_include": [
+        "non toxic toothpaste",
+        "toothpaste ingredients",
+        "safe toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 1. Triclosan and Other Antibacterial Additives",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Brief history: FDA removed triclosan from consumer antiseptic washes (2016) over safety and effectiveness data gaps. Explain that it has been phased out of most US toothpastes, but readers should still scan labels on older or imported products. Offer what to look for instead (plant-based antimicrobials like essential oils, with a note that evidence for these is limited). Tag evidence as 'strong' for the regulatory decision and 'weak' for natural alternatives.",
+      "keywords_to_include": [
+        "toothpaste without chemicals",
+        "antibacterial toothpaste",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 2. Sodium Lauryl Sulfate (SLS)",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Explain that SLS is a foaming surfactant that is not carcinogenic or 'toxic' in toothpaste. The honest concern is irritation, with small studies suggesting it may aggravate recurrent canker sores in some people. Tag evidence as MIXED and say so plainly. Suggest SLS-free paste as a reasonable trial for people with frequent canker sores or sensitive mouths. Cover alternative terms (SLS free toothpaste, toothpaste without sodium lauryl sulfate). Do NOT link to the old SLS-free post.",
+      "keywords_to_include": [
+        "sls free toothpaste",
+        "toothpaste without sls",
+        "sodium lauryl sulfate free toothpaste",
+        "toothpaste without sodium lauryl sulfate"
+      ]
+    },
+    {
+      "section": "H2: 3. Artificial Sweeteners, Dyes and Flavors",
+      "type": "h2",
+      "word_count_target": 110,
+      "guidance": "Cover saccharin and synthetic dyes (e.g. FD&C colors) and explain they are generally permitted at toothpaste exposure levels. The reason to avoid them is that they add nothing functional, and some people prefer to skip them. Mention that natural flavors like mint or cinnamon are a simple swap. Tag evidence as WEAK for harm. Keep a calm tone, no alarmism.",
+      "keywords_to_include": [
+        "toothpaste cinnamon",
+        "natural flavors",
+        "dye free toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 4. Overly Abrasive Ingredients (Including Charcoal)",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Explain abrasivity and enamel wear in simple terms (RDA value concept). Address charcoal toothpaste directly: the ADA-published literature review found insufficient evidence for safety and efficacy, and concerns about abrasiveness. Recommend gentler abrasives (hydrated silica, calcium carbonate) and advise readers to ask the manufacturer for RDA values. Tag evidence as MIXED/limited.",
+      "keywords_to_include": [
+        "charcoal toothpaste",
+        "whitening toothpaste",
+        "enamel safe toothpaste",
+        "abrasive toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 5. Heavy Metal Contamination",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Explain that contamination (lead, arsenic) is a quality-control problem rather than an ingredient, and mostly associated with certain clays, minerals and imported or unregulated products, including some tooth powders. Advise readers to look for brands that publish third-party heavy-metal testing. Cite an authoritative source (FDA / CDC lead guidance, or a published product-testing study) and clearly separate verified findings from speculation. Mention lead free toothpaste as a search term. Tag evidence as MIXED.",
+      "keywords_to_include": [
+        "lead free toothpaste",
+        "heavy metal tested toothpaste",
+        "third-party tested"
+      ]
+    },
+    {
+      "section": "H2: 6. Titanium Dioxide and Unnecessary Whiteners",
+      "type": "h2",
+      "word_count_target": 100,
+      "guidance": "Explain that titanium dioxide is used as a whitening/opacity agent, that the EU banned it as a food additive (2022) over genotoxicity uncertainty, and that this does not directly translate into a toothpaste ruling. Be precise. Tag evidence as MIXED/weak for toothpaste and present it as a precautionary 'optional to skip' item. Don't overstate.",
+      "keywords_to_include": [
+        "titanium dioxide free toothpaste",
+        "clean toothpaste ingredients"
+      ]
+    },
+    {
+      "section": "H2: 7. Fluoride: What the Evidence Says (and Who Should Be Careful)",
+      "type": "h2",
+      "word_count_target": 160,
+      "guidance": "Most important credibility section. State plainly that topical fluoride has strong evidence for preventing cavities (Cochrane review), and that dental organisations recommend fluoride toothpaste. Explain the real risk: dental fluorosis from swallowing too much while teeth are forming, so young children need pea-size or rice-grain amounts under supervision. Note the 2024 NTP monograph on fluoride and neurodevelopment concerns elevated exposure levels in drinking water and is not a finding about toothpaste. Then acknowledge why some people choose fluoride-free toothpaste or non fluoride toothpaste (personal preference, young children, water already fluoridated) and recommend discussing this with a dentist, especially for people prone to cavities. Do NOT call fluoride 'toxic' or call fluoride-free 'safer'. Tag evidence as STRONG for benefit and MIXED for non-dental concerns.",
+      "keywords_to_include": [
+        "fluoride toothpaste",
+        "toothpaste without fluoride",
+        "non fluoride toothpaste",
+        "sodium fluoride toothpaste",
+        "stannous fluoride toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Fluoride-Free Toothpaste Types Compared",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Include a compact comparison table of product TYPES (not brands) with columns: how it works, pros, cons, best for. Rows: fluoride-free paste with natural abrasives, hydroxyapatite paste (including nano-hydroxyapatite), toothpaste tablets (fluoride-free toothpaste tablets), coconut oil-based paste, DIY recipes. Follow with 2-3 short paragraphs. Hydroxyapatite: the research is promising (dentin sensitivity, remineralization) but evidence is thinner than for fluoride; say so, and note the nano hydroxyapatite toothpaste vs fluoride question remains actively studied. Tablets: convenient and low waste, but check for fluoride and abrasivity. Coconut oil: moisturizing base, but evidence on oil pulling/coconut oil for plaque is weak. DIY (how to make natural toothpaste): advise caution, because homemade baking soda or clay mixes can be abrasive and are unregulated. Do not recommend DIY as a fluoride substitute.",
+      "keywords_to_include": [
+        "hydroxyapatite toothpaste",
+        "nano hydroxyapatite toothpaste",
+        "nano hydroxyapatite toothpaste vs fluoride",
+        "toothpaste tablets",
+        "fluoride free toothpaste tablets",
+        "how to make natural toothpaste",
+        "toothpaste without glycerin"
+      ]
+    },
+    {
+      "section": "H2: How Real Skin Care Formulates Its Toothpaste",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Position the brand as the authoritative, transparent choice. Describe the coconut oil toothpaste's approach: fluoride-free, a short, readable ingredient list, no artificial sweeteners/dyes, and the specific SLS and abrasive choices. VERIFY every claim against the actual product page and ingredient list before writing, and don't claim anything about testing, certifications or efficacy that the brand cannot document. Be upfront that it is fluoride-free and suited to people who have chosen that path, and suggest talking to a dentist about individual cavity risk. Link to the product and the fluoride-free collection. No competitor mentions.",
+      "keywords_to_include": [
+        "non toxic coconut toothpaste organic",
+        "coconut oil toothpaste",
+        "fluoride free toothpaste",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Label-Reading Checklist: How to Choose a Non-Toxic Toothpaste",
+      "type": "h2",
+      "word_count_target": 160,
+      "guidance": "A scannable 6-8 bullet checklist: check fluoride status against your needs; scan for the ingredients above; look for a published full ingredient list; look for third-party testing; check abrasivity info; choose a flavor you will actually use; check recommended age; consult the dentist. Add a short note on the ADA Seal of Acceptance (a useful signal, but it generally requires fluoride, so most fluoride-free products won't carry it).",
+      "keywords_to_include": [
+        "safe toothpaste",
+        "toothpaste ingredients to avoid",
+        "sls free toothpaste list"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 300,
+      "guidance": "4-5 concise Q&As (50-70 words each), direct answers first. Suggested: 'Is non-toxic toothpaste as effective as regular toothpaste?' (honest: depends on fluoride and individual cavity risk); 'Is fluoride-free toothpaste safe for kids?' (safe to swallow in small amounts, but discuss cavity prevention with a pediatric dentist; mention infant toothpaste with fluoride as the dentist-recommended default); 'Is hydroxyapatite toothpaste better than fluoride?' (promising, but evidence is less extensive; no definitive superiority); 'Is SLS dangerous?' ; 'Can I make my own toothpaste?'. Mark with FAQPage-friendly Q&A formatting.",
+      "keywords_to_include": [
+        "toothpaste with hydroxyapatite",
+        "infant toothpaste with fluoride",
+        "fluoride free hydroxyapatite toothpaste",
+        "toothpaste without fluoride"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 70,
+      "guidance": "Recap: 'non-toxic' means reading labels and weighing evidence, not avoiding everything unfamiliar. Reinforce the key takeaway (match the formula to your needs, and talk to a dentist about fluoride). End with a soft CTA to the fluoride-free toothpaste collection, plus a one-line mention of the brand's non-toxic deodorant and body lotion collections for readers who want to extend the clean-label approach.",
+      "keywords_to_include": [
+        "non toxic toothpaste",
+        "natural toothpaste"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "non toxic toothpaste",
+    "fluoride free toothpaste",
+    "non fluoride toothpaste",
+    "toothpaste without fluoride",
+    "natural toothpaste",
+    "sls free toothpaste",
+    "toothpaste without sls",
+    "sodium lauryl sulfate free toothpaste",
+    "toothpaste without sodium lauryl sulfate",
+    "sls free toothpaste list",
+    "hydroxyapatite toothpaste",
+    "nano hydroxyapatite toothpaste",
+    "toothpaste with hydroxyapatite",
+    "toothpaste with nano-hydroxyapatite",
+    "fluoride-free hydroxyapatite toothpaste",
+    "micro hydroxyapatite toothpaste",
+    "nano hydroxyapatite toothpaste vs fluoride",
+    "fluoride toothpaste",
+    "sodium fluoride toothpaste",
+    "stannous fluoride toothpaste",
+    "infant toothpaste with fluoride",
+    "toothpaste tablets",
+    "fluoride free toothpaste tablets",
+    "lead free toothpaste",
+    "charcoal toothpaste",
+    "toothpaste without glycerin",
+    "toothpaste cinnamon",
+    "non toxic coconut toothpaste organic",
+    "coconut oil toothpaste",
+    "how to make natural toothpaste",
+    "toothpaste ingredients to avoid",
+    "safe toothpaste ingredients",
+    "toothpaste without chemicals",
+    "enamel remineralization",
+    "sensitive teeth toothpaste",
+    "dental fluorosis",
+    "abrasivity RDA"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "fluoride-free toothpaste",
+      "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+      "placement_guidance": "Primary commercial link. Use in the introduction or the Fluoride section (item 7) and again in the conclusion CTA. Use this one URL for 'fluoride free' anchors to avoid splitting signals across the similar collections."
+    },
+    {
+      "anchor_text": "Real Skin Care coconut oil toothpaste",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "placement_guidance": "In the 'How Real Skin Care Formulates Its Toothpaste' section, next to the ingredient description."
+    },
+    {
+      "anchor_text": "natural toothpaste options",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "In the toothpaste types comparison section or the checklist section, when discussing natural formulas generally."
+    },
+    {
+      "anchor_text": "non-fluoride toothpaste",
+      "url": "https://www.realskincare.com/collections/non-fluoride-toothpaste",
+      "placement_guidance": "Once, in the fluoride-free options discussion (item 7 or the types comparison). Use varied anchor wording and don't repeat the same anchor as the primary link."
+    },
+    {
+      "anchor_text": "non-toxic deodorant",
+      "url": "https://www.realskincare.com/collections/non-toxic-deodorant",
+      "placement_guidance": "Conclusion only, as a one-sentence extension of the clean-label approach."
+    },
+    {
+      "anchor_text": "non-toxic body lotion",
+      "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+      "placement_guidance": "Conclusion only, in the same sentence as the deodorant link."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Add a byline with a named author and credentials, plus a 'Medically reviewed by [DDS/DMD]' line if a dental reviewer can be arranged. If not, add a clear 'This article is educational and not a substitute for dental advice' disclaimer.",
+    "Show 'Last reviewed: October 2026' and commit to a refresh before the April-June demand peak.",
+    "Tag every ingredient claim with an evidence-strength label (strong / mixed / weak) and link to the primary source in-line.",
+    "Be transparent about what Real Skin Care's toothpaste does and does not contain, and openly state that it is fluoride-free.",
+    "Reference regulatory and professional bodies (FDA, CDC, ADA, NTP) accurately and in context, without cherry-picking.",
+    "Describe the brand's formulation and quality-testing process only where it can be documented, and link to testing or ingredient pages if they exist."
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "Every health, safety or efficacy claim needs an authoritative outbound citation (.gov, .edu, medical organisations, peer-reviewed journals). Per standing guidance, give 2-4 verifiable primary sources per claim area with title, journal, year and DOI or PubMed link, and label evidence strength (strong / mixed / weak) in the text. The writer MUST open and verify each source and DOI before publishing, and must not cite anything that cannot be confirmed. Suggested starting points, to be verified: (1) Fluoride and cavity prevention [STRONG]: Walsh et al., 'Fluoride toothpastes of different concentrations for preventing dental caries', Cochrane Database of Systematic Reviews, 2019 (DOI 10.1002/14651858.CD007868.pub3); ADA and CDC fluoride guidance, including the pea-size/rice-grain amounts for young children. (2) Fluorosis and neurodevelopment [MIXED]: CDC fluorosis pages; NTP State of the Science Monograph on Fluoride Exposure and Neurodevelopment and Cognition (2024). Make clear that findings concern higher drinking-water exposure. (3) SLS and canker sores [MIXED]: small clinical studies, e.g. Herlofson & Barkvoll, Acta Odontologica Scandinavica, 1994; Chahine et al., Oral Surg Oral Med Oral Pathol Oral Radiol Endod, 1997. Note small sample sizes and say the evidence is not conclusive. (4) Charcoal [MIXED/weak]: Brooks, Bashir & Brooks, 'Charcoal and charcoal-based dentifrices: a literature review', J Am Dent Assoc, 2017. (5) Hydroxyapatite [MIXED, promising]: seek recent systematic reviews on hydroxyapatite and remineralization or dentin hypersensitivity (e.g. Limeback et al., 2023, Biomimetics) and state the limits of the trials. (6) Triclosan: FDA 2016 final rule on consumer antiseptic washes, plus the Cochrane review on triclosan/copolymer toothpastes. (7) Titanium dioxide: EFSA 2021 opinion and the EU 2022 food-additive ban, with the clarification that this was for food, not toothpaste. (8) Heavy metals: FDA/CDC lead pages. (9) Coconut oil/oil pulling [WEAK]: cite a systematic review and note small trials. Avoid absolute claims such as 'toxic', 'safe for everyone', 'proven to remineralize', 'better than fluoride' or 'cures cavities'. Soften or remove any claim that lacks a source. Do not cite marketing pages or competitor product pages as evidence. Do not state or imply that fluoride is dangerous at toothpaste doses.",
+  "writer_notes": "Tone: calm, trustworthy, evidence-first, never fear-based. Educate rather than scare, and respect readers who choose either path on fluoride. Brand policy: do not name competitor brands anywhere (including ollie-, davids-, euthymol- or bite-type brand queries and products in the reference materials). Do not create brand comparison tables or brand-specific sections, and compare only product types. Format: this is a listicle, so keep the 7 ingredient items as individual H2s with numbered titles and ~100-160 words each, and use short paragraphs, bullets and one table. Competitive benchmark: the top-ranking roundups and editorial pieces tend to open with a quick answer, explain the selection criteria, and then work through items. Mirror that scannable structure and criteria-led approach, and add the evidence tags and primary sources they lack. Seasonality: demand peaks in June (and April, July, December), so publish now and schedule a refresh in March-April 2027. INDEXING WARNING: the previous 'best-sls-free-toothpaste-2025' post was never indexed (zero impressions). Do not duplicate or rewrite it. Do not link to it. Keep this post substantially unique, since the SLS item here is only a short section. After publishing, ensure the page is in the XML sitemap, is not noindexed or canonicalised elsewhere, has at least 3 internal links from already indexed pages (e.g. the fluoride-free and natural toothpaste collections), and request indexing in Search Console. Check indexation status after 7 days, and escalate to the technical team if the page is not indexed. Avoid: unverified brand claims, 'toxin-free' absolutes, medical treatment claims, keyword stuffing, and recommending DIY toothpaste as a replacement for professional dental care. Include a short disclaimer encouraging readers to consult a dentist.",
+  "search_volume": 8100,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.reddit.com/r/Microbiome/comments/1jjk6hi/what_is_the_best_natural_toothpaste_with_no/",
+      "title": "What is the best natural toothpaste with no fluoride or xylitol?",
+      "domain": "www.reddit.com",
+      "description": "What is the best natural toothpaste that doesn't destroy your oral microbiome? Edit:I've found it but it's over $50 after shipping https://japanesetaste.com/pro ..."
+    },
+    {
+      "position": 2,
+      "url": "https://davids-usa.com/?srsltid=AU7gw4Ume0CqTU0bSgRnrtPAgL0Q_McrOmOMc13zq0P-w4Le6YcPiGYo",
+      "title": "Non-Fluoride Toothpaste & Oral Care Products | Davids ...",
+      "domain": "davids-usa.com",
+      "description": "We use premium, natural eucalyptus and tea tree oils for their ability to fight the bad bacteria and harmful microbes that cause plaque while the ultra-fine ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.facebook.com/groups/cleanlivingfinds/posts/1363545051327636/",
+      "title": "What is a good non-fluoride, non-toxic toothpaste?",
+      "domain": "www.facebook.com",
+      "description": "Looking for a non-floride, non-toxic toothpaste. Any suggestion?"
+    },
+    {
+      "position": 4,
+      "url": "https://www.enml.com/blogs/learn/best-non-toxic-toothpaste?srsltid=AU7gw4V6J57NiTdSkhK80nz4OikwJ4mP7nF6he-FOX3N8Hm_h7DM8x0F",
+      "title": "Best Non-Toxic Toothpaste - ENML",
+      "domain": "www.enml.com",
+      "description": "May 12, 2025 — Unlike fluoride, nHA is non-toxic and safe to swallow in small amounts, making it an excellent choice for children and adults alike. Are There ... Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://www.implasticfree.com/best-toothpaste-without-plastic-and-bpa/",
+      "title": "10 Best Toothpaste Without Plastic and BPA",
+      "domain": "www.implasticfree.com",
+      "description": "Feb 6, 2026 — 10 Best Non-toxic, Plastic Free Toothpaste as Alternatives to Traditional Toothpaste · 1. Etee's Zero Waste Chewpaste · 2. SuperBee Dentos ... Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://organicbeautylover.com/wellness/best-natural-toothpastes/",
+      "title": "9 Best Natural Non-Toxic Toothpastes",
+      "domain": "organicbeautylover.com",
+      "description": "Dec 20, 2023 — Boka toothpastes are 100% biocompatible and non-toxic, and contain aloe vera, bacteria-fighting xylitol, antioxidant-rich green tea and ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://mouthology.com/collections/non-toxic-toothpaste?srsltid=AU7gw4VzBXhEx9s2EDWyn2aTOcm0TWYA3AiFdp4dH1rSXggxq5x36u4e",
+      "title": "Non Toxic Toothpaste",
+      "domain": "mouthology.com",
+      "description": "Mouthology Toothpaste is a non-toxic, vegan, and chemical-free oral care solution for sensitive teeth and healthier gums. 6 products. 6 products. Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://ecoternatives.co/blogs/articles/toothpaste-tablets-the-good-the-bad-and-the-eco-friendly?srsltid=AU7gw4XgspUONDHl05lf89FBUSt1Qb5ClTBk13gdMkLOpMBh7x7IVpmV",
+      "title": "I Tested The Top 6 Zero Waste Toothpaste's So You Don't ...",
+      "domain": "ecoternatives.co",
+      "description": "Jul 6, 2024 — Bite Toothpaste ($11.99); Georganics ($12.50). Note: I've also tried Unpaste Tabs in the past, but didn't care for them. It's actually what ... Read more"
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "toothpaste",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 2425.5,
+    "avgH2": 8.5,
+    "targetWordCount": 2400
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

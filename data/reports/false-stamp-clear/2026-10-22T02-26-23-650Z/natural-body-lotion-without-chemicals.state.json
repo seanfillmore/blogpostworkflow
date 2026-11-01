@@ -1,0 +1,156 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:14:24.724Z",
+    "last_crawled": "2026-08-29T03:50:30Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/natural-body-lotion-without-chemicals-what-to-look-for",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2522,
+  "generated_at": "2026-04-28T10:04:56.785Z",
+  "brief_path": "/root/seo-claude/data/briefs/natural-body-lotion-without-chemicals.json",
+  "tokens_used": {
+    "input": 10994,
+    "output": 5579
+  },
+  "image_path": "data/posts/natural-body-lotion-without-chemicals/image.webp",
+  "image_prompt": "Looking at this blog post, the topic is \"Natural Body Lotion Without Chemicals: What to Look For\" — this is a product-focused post where the lotion IS the hero. The keyword is \"natural body lotion without chemicals\" and the tags include body lotion and moisturizer. The scene should communicate: here is a natural body lotion and its clean, pure ingredients.\n\nChecking the previous rejection note: the product bottles had pump dispensers but the reference shows a flip-top/disc cap squeeze bottle. I need to describe the cap correctly.\n\nChecking already-used scenes to avoid repeats — many flat lays with lotion bottles and coconut oil have been used (67, 68, 70, 73, 74, 89, 97, 99, 100, 104, 109, 110, 128, 136, 139, etc.). I need a fresh composition.\n\nThe ingredient prop rule limits me to: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil. I'll use coconut oil (jar, unbranded) and jojoba (small amber bottle, unbranded/generic) as ingredient props — these are recognizable and visually beautiful.\n\nFor the template, since this is product-focused, I'll use a template. Many of the flat-lay and marble templates have been heavily used. The [white-oak-table] hasn't been used for a lotion-focused scene with this specific combination. Let me go with [outdoor-stone] for a fresh look — it provides a natural, clean-ingredient feel with the garden background reinforcing \"natural.\" Checking used scenes — scene 1 used a slate/outdoor table but was for coconut oil/deodorant/jar styling, not a lotion bottle hero scene. The combination will be distinct.\n\nI'll include 2–3 lotion bottle variants (flip-top squeeze caps as per reference), a small unbranded glass jar of coconut oil with a wooden spatula, and a small glass bottle of jojoba oil (unbranded/generic amber bottle). Keep it clean and minimal.\n\nSELECTED_TEMPLATE: outdoor-stone\nProduct photography, three Real Skin Care Non-Toxic Body Lotion bottles in Pure Unscented, Coconut Breeze, and Lavender & Rose variants arranged in a loose cluster at the center of a smooth natural slate stone surface outdoors, each bottle a soft white squeeze bottle with a flat flip-top disc cap, accompanied by a small unbranded clear glass jar of solid white coconut oil with a wooden spatula resting across the lid and a small unbranded amber glass dropper bottle of golden jojoba oil standing beside it, smooth natural slate stone surface on a garden table with blurred soft green garden foliage bokeh background, bright natural diffused daylight with slight dappled shadow, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-04-28T10:06:27.922Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563553108138,
+  "shopify_handle": "natural-body-lotion-without-chemicals-what-to-look-for",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/natural-body-lotion-without-chemicals-what-to-look-for",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_12e52599-904b-4b26-a979-018358ef644d.webp?v=1783769533",
+  "uploaded_at": "2026-07-11T11:32:17.088Z",
+  "published_at": "2026-06-08T15:52:28.632Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-16T11:30:02.307Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-17T11:30:02.412Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-18T11:30:02.567Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-19T11:30:01.946Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-20T11:30:02.576Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-21T11:30:02.706Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-22T11:30:02.123Z",
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-06-23T11:30:03.148Z",
+      "notification_time": null,
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-06-24T11:30:02.947Z",
+      "notification_time": null,
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-25T11:30:01.939Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-26T11:30:02.658Z",
+      "result": "ok"
+    }
+  ],
+  "indexing_blocked": false,
+  "indexing_blocked_reason": null,
+  "indexing_blocked_at": "2026-07-10T11:30:02.144Z",
+  "last_refreshed_at": "2026-09-06T15:12:52.744Z",
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 25, 22 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:39.685Z",
+  "indexing_unblocked_at": "2026-08-04T11:30:01.984Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:13.634Z",
+      "age_days": 47,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T14:19:03.091Z",
+      "superseded_by": "2026-09-06T15:12:52.744Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-08T13:30:04.300Z",
+      "age_days": 60,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T14:19:03.091Z",
+      "superseded_by": "2026-09-06T15:12:52.744Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-09T13:30:05.588Z",
+      "age_days": 92,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T15:42:40.095Z",
+      "superseded_by": "gsc-measurement-fix"
+    }
+  ],
+  "refreshed_at": "2026-10-05T15:26:17.075Z",
+  "last_material_edit": {
+    "at": "2026-10-05T15:26:17.076Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:51:05.687Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

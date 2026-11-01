@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-09-13T23:27:04.352Z",
+  "applied": true,
+  "slug": null,
+  "results": [
+    {
+      "id": "restore-glycerin-formula-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-glycerin-list-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-glycerin-faq-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "restore-glycerin-formula-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-glycerin-list-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-glycerin-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "restore-families-product-safe-if-swallowed",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-families-faq-toddlers",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "restore-families-product-safe-if-swallowed",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-families-faq-toddlers",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "restore-families-description-tag",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "description_tag",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)",
+      "before_value": "Discover the best natural toothpaste for families in 2025. Real Skin Care’s All Natural formula offers clean, effective oral care without harsh ingredients."
+    },
+    {
+      "id": "restore-fluoride-free-faq-kids",
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "restore-fluoride-free-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "restore-seven-ingredients-cta-safe-for-kids",
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "restore-seven-ingredients-cta-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "mirror": "content-refreshed.html",
+      "changed": false,
+      "rows": [
+        {
+          "id": "restore-seven-ingredients-cta-safe-for-kids",
+          "action": "absent",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "id": "restore-sls-kids-faq-coconut-oil-safe",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 2 occurrence(s)"
+    },
+    {
+      "id": "restore-sls-kids-faq-yes-prose",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-sls-kids-faq-yes-jsonld",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-whitening-faq-question-prose",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-whitening-faq-answer-prose",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-whitening-faq-question-jsonld",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "restore-whitening-faq-answer-jsonld",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "restore-whitening-faq-question-prose",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-whitening-faq-answer-prose",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-whitening-faq-question-jsonld",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "restore-whitening-faq-answer-jsonld",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

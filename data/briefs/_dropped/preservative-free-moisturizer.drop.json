@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "preservative-free-moisturizer",
+  "keyword": "preservative free moisturizer",
+  "dropped_at": "2026-10-03T17:42:52.038Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-10-03T17-42-52-038Z-123552",
+  "reason": "post killed: false premise: RSC moisturizers contain water and grapefruit seed extract, no preservative-free product to sell; ~70/mo",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "preservative-free-moisturizer.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore preservative-free-moisturizer",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

@@ -1,0 +1,215 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:15:15.618Z",
+    "last_crawled": "2026-08-25T13:16:28Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/non-toxic-body-lotion-what-to-look-for-why-it-matters",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2410,
+  "generated_at": "2026-04-17T10:05:27.389Z",
+  "brief_path": "/root/seo-claude/data/briefs/non-toxic-body-lotion.json",
+  "tokens_used": {
+    "input": 10450,
+    "output": 6163
+  },
+  "image_path": "data/posts/non-toxic-body-lotion-guide/image.webp",
+  "image_prompt": "Product photography, three white squeeze bottles of Real Skin Care body lotion with black flip-top disc caps arranged in a loose natural cluster — Pure Unscented, Coconut Breeze, and Calming Lavender variants — on a smooth white-oak wood tabletop with visible grain, accompanied by a small open glass jar of organic virgin coconut oil with a wooden spatula resting across the rim and a halved fresh coconut placed casually beside the bottles, background of blurred soft green foliage, warm golden morning side light from the left casting gentle soft shadows, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-04-18T15:01:32.621Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563509788842,
+  "shopify_handle": "non-toxic-body-lotion-what-to-look-for-why-it-matters",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/non-toxic-body-lotion-what-to-look-for-why-it-matters",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-04-24T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_a34e3c15-0000-48e3-b6bf-0d3a4a59bda0.webp?v=1776524539",
+  "uploaded_at": "2026-04-18T15:02:22.360Z",
+  "published_at": "2026-04-24T15:33:43.348Z",
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "submitted_at": "2026-05-09T11:30:03.172Z",
+      "result": "error",
+      "error": "Indexing API permission denied — verify owner status in GSC. {\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Request had insufficient authentication scopes.\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"ACCESS_TOKEN_SCOPE_INSUFFICIENT\",\n        \"domain\": \"googleapis.com\",\n        \"metadata\": {\n          \"service\": \"indexing.googleapis.com\",\n          \"method\": \"google.indexing.v3.UrlService.PublishUrlNotification\"\n        }\n      }\n    ]\n  }\n}\n"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-05-11T11:30:03.602Z",
+      "notification_time": null,
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-17T11:30:02.081Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-18T11:30:02.482Z",
+      "result": "ok"
+    }
+  ],
+  "indexing_blocked": false,
+  "indexing_blocked_reason": null,
+  "indexing_blocked_at": "2026-05-25T11:30:02.421Z",
+  "indexing_unblocked_at": "2026-06-14T15:16:10.428Z",
+  "indexing_unblocked_by": "clear-stale-indexing-blocks (auth-outage cleanup)",
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 29, 206 impressions. Meta-only optimization candidate.",
+  "legacy_locked": false,
+  "legacy_triaged_at": "2026-09-21T16:29:56.171Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:15.729Z",
+      "age_days": 92,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:45.119Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-07-25T17:14:15.821Z",
+      "age_days": 92,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T15:42:45.119Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-07-25T17:14:15.914Z",
+      "age_days": 92,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T15:42:45.119Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:42:45.230Z",
+      "age_days": 150,
+      "impressions": 71,
+      "clicks": 1,
+      "ctr": 0.014084507042253521,
+      "position": 7.605633802816901,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 71 impressions, 1 clicks over first 30 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:18.579Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:42:45.323Z",
+      "age_days": 150,
+      "impressions": 144,
+      "clicks": 1,
+      "ctr": 0.006944444444444444,
+      "position": 8.847222222222221,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 1 clicks, 144 impressions over 60 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:18.583Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:42:45.427Z",
+      "age_days": 150,
+      "impressions": 206,
+      "clicks": 3,
+      "ctr": 0.014563106796116505,
+      "position": 8.810679611650485,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 3 clicks, 206 impressions over 90 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:18.583Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:59:18.692Z",
+      "age_days": 150,
+      "impressions": 71,
+      "clicks": 1,
+      "ctr": 0.014084507042253521,
+      "position": 7.605633802816901,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 71 impressions, 1 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-24T13:30:04.954Z",
+      "superseded_by": "2026-09-23T15:19:56.915Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:59:18.798Z",
+      "age_days": 150,
+      "impressions": 144,
+      "clicks": 1,
+      "ctr": 0.006944444444444444,
+      "position": 8.847222222222221,
+      "projection": 0.6,
+      "verdict": "ON_TRACK",
+      "reason": "expected 0.6 clicks from 144 impressions at position 8.8 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-24T13:30:04.954Z",
+      "superseded_by": "2026-09-23T15:19:56.915Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:59:18.915Z",
+      "age_days": 150,
+      "impressions": 206,
+      "clicks": 3,
+      "ctr": 0.014563106796116505,
+      "position": 8.810679611650485,
+      "projection": 1,
+      "verdict": "ON_TRACK",
+      "reason": "expected 1.0 clicks from 206 impressions at position 8.8 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-24T13:30:04.954Z",
+      "superseded_by": "2026-09-23T15:19:56.915Z"
+    }
+  ],
+  "legacy_lock_cleared_at": "2026-09-21T16:29:56.171Z",
+  "legacy_lock_cleared_reason": "lock re-check: 206 impressions/90d at position 29.0 (keep needs ≥200 and ≤20)",
+  "last_refreshed_at": "2026-09-23T15:19:56.915Z",
+  "refreshed_at": "2026-10-05T15:26:38.588Z",
+  "last_material_edit": {
+    "at": "2026-10-05T15:26:38.589Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:51:25.681Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "toothpaste-without-sodium-lauryl-sulfate",
+  "keyword": "toothpaste without sodium lauryl sulfate",
+  "dropped_at": "2026-09-21T16:31:16.825Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-31-16-825Z-2381370",
+  "reason": "post killed: no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); consolidated into the SLS-free toothpaste winner",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "toothpaste-without-sodium-lauryl-sulfate.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore toothpaste-without-sodium-lauryl-sulfate",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

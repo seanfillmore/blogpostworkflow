@@ -1,0 +1,44 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:14:05.629Z",
+    "last_crawled": "2026-10-17T09:48:45Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-moisturizing-lip-balm-natural-picks-for-soft-lips",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2666,
+  "generated_at": "2026-05-05T10:01:51.474Z",
+  "brief_path": "/root/seo-claude/data/briefs/moisturizing-lip-balm.json",
+  "tokens_used": {
+    "input": 11233,
+    "output": 5874
+  },
+  "image_path": "data/posts/moisturizing-lip-balm/image.webp",
+  "image_prompt": "Product photography, a centered flat lay arrangement featuring three Real Skin Care lip balm tubes — Vanilla Dream, Sweet Tangerine, and Coconut Breeze variants — standing upright and slightly fanned out in the center of the frame, each tube described exactly as it appears in the reference images with its specific cap type and label detail, surrounded by a small glass jar of organic virgin coconut oil with a tiny wooden spoon resting across the rim, and a few drops of golden jojoba oil pooled naturally on the linen surface beside the tubes, surface is natural undyed linen fabric spread flat filling the full frame edge to edge with the fabric texture softly visible, background is the same linen fabric slightly blurred at the edges, soft diffused overcast window light with no harsh shadows, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-05-05T10:02:25.436Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563582402730,
+  "shopify_handle": "best-moisturizing-lip-balm-natural-picks-for-soft-lips",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-moisturizing-lip-balm-natural-picks-for-soft-lips",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_47f77b76-f94e-465a-9a0a-3ba18be1ae06.webp?v=1782140962",
+  "uploaded_at": "2026-06-22T15:09:25.614Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 15, 174 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:39.235Z",
+  "refreshed_at": "2026-10-08T15:14:15.421Z",
+  "last_material_edit": {
+    "at": "2026-10-08T15:14:15.423Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:50:45.082Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

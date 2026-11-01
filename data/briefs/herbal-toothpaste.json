@@ -1,0 +1,357 @@
+{
+  "target_keyword": "herbal toothpaste",
+  "slug": "herbal-toothpaste",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Herbal Toothpaste: Benefits, Key Herbs & What to Look For",
+  "meta_description": "Discover what makes herbal toothpaste effective, which natural ingredients actually work, and how to choose the best fluoride-free formula for your oral health.",
+  "target_word_count": 2200,
+  "content_angle": "This post combines peer-reviewed dental research with transparent ingredient education to position Real Skin Care's herbal toothpaste as the scientifically grounded, clean-label choice — going deeper than product listing pages (Amazon) and brand-only pages (Auromere, Adiva) by explaining the 'why' behind each key herb with citations, and guiding readers through exactly what to look for and avoid in a formula.",
+  "key_differentiators": [
+    "Cites peer-reviewed dental research (minimum one PubMed/journal source per substantive herb or efficacy claim) rather than making unsubstantiated marketing claims — directly differentiating from product listing pages that provide zero scientific context",
+    "Provides a transparent, ingredient-level breakdown of what Real Skin Care's herbal toothpaste actually contains (INCI list, format, certifications must be supplied by brand before writing begins), so readers can verify claims rather than take them on faith",
+    "Covers the full decision-making journey: what herbal toothpaste is, which herbs matter and why, what harmful ingredients to avoid, and how to shop — rather than simply listing SKUs or describing one product",
+    "Integrates practical guidance on fluoride-free, SLS-free, vegan, and organic considerations in one cohesive post, capturing the full semantic cluster (natural fluoride-free toothpaste, vegan toothpaste, organic toothpaste) without thin sub-pages",
+    "Written for Real Skin Care's audience of ingredient-conscious adults, not a general consumer audience — tone is informed and direct, trust is earned through transparency and evidence, not through aspirational lifestyle copy"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable pain point: the reader has picked up a conventional toothpaste tube, flipped it over, and struggled to recognize most of the ingredients. Transition immediately to the core promise of herbal toothpaste — effective oral care powered by plants, with nothing hidden. In 2–3 sentences, tell the reader what this post will cover: what herbal toothpaste is, which herbs and natural ingredients actually work (with research to back it up), what to avoid in a formula, and how Real Skin Care approaches it. Do NOT open with a dictionary-style definition. Do NOT use hype language like 'revolutionary' or 'game-changing'. End the intro with a natural transition into the first H2.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "natural toothpaste",
+        "toothpaste with natural ingredients"
+      ]
+    },
+    {
+      "section": "H2: What Is Herbal Toothpaste?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Define herbal toothpaste clearly and practically: it is a toothpaste formulated primarily with plant-derived active ingredients — herbs, botanical extracts, and natural minerals — in place of synthetic chemicals like triclosan, artificial surfactants, or synthetic whitening agents. Clarify that 'herbal' is not a regulated term in the US, which means label-reading matters. Distinguish herbal toothpaste from conventional toothpaste by pointing to the ingredient categories that differ (surfactants, preservatives, flavoring, active agents). Mention that herbal formulas are often — but not always — fluoride-free, SLS-free, and vegan. Briefly note that the 2014 PMC study (Tatikonda et al., Journal of International Society of Preventive and Community Dentistry) found herbal dentifrices clinically as effective as conventional dentifrices for plaque control — use this as early credibility. Do not over-promise; do not undermine the reader's existing dental routine.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "natural toothpaste",
+        "all natural toothpaste",
+        "organic toothpaste",
+        "healthy toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Key Herbs Found in Herbal Toothpaste — and What the Research Says",
+      "type": "h2",
+      "word_count_target": 600,
+      "guidance": "This is the authority core of the post. Cover 5–6 specific herbs commonly found in herbal toothpaste formulations. For each herb, provide: (1) what it is, (2) its traditional oral care use, (3) at least one peer-reviewed citation supporting its efficacy or mechanism. Writer must not invent or paraphrase research — only include claims for which citations are verified and provided in this brief (see Pre-Verified Citations section in writer notes). Suggested herbs to cover: Neem (antimicrobial, anti-plaque — cite Pai et al. or equivalent PubMed source on neem's antibacterial activity against Streptococcus mutans), Clove/Eugenol (analgesic, antimicrobial properties — cite peer-reviewed dental pharmacology source), Cinnamon (antimicrobial, antifungal — cite verified source on cinnamon bark extract in oral health), Myrrh (anti-inflammatory, gum support — reference traditional use and available research), Sage (antimicrobial in oral context — cite if available), Coconut Oil (mechanism via oil pulling research or lauric acid antimicrobial activity — tie naturally to Real Skin Care's coconut oil toothpaste product). Use H3 subheadings for each herb to aid scannability. Keep each herb sub-section to approximately 80–100 words. Do not include any competitor brand names. Do not make therapeutic or disease-treatment claims (e.g., do not say 'treats gum disease' — say 'supports gum health' or 'shown to reduce plaque-forming bacteria in vitro'). Flag any claim that cannot be verified with a citation for editorial review before publication.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "toothpaste herbal",
+        "toothpaste with natural ingredients",
+        "natural toothpaste",
+        "healthiest toothpaste"
+      ]
+    },
+    {
+      "section": "H3: Neem",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Cover neem's traditional Ayurvedic use (chewing sticks, called 'datun') and its documented antimicrobial properties. Cite: Pai MR et al., 'Evaluation of antiplaque activity of Azadirachta indica leaf extract gel,' Journal of Ethnopharmacology, 2004, or the closest verified PubMed equivalent provided by the brand research team. Note it is commonly found in fluoride-free and Ayurvedic toothpaste formulations. Keep factual and precise.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "natural fluoride-free toothpaste"
+      ]
+    },
+    {
+      "section": "H3: Clove",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Focus on eugenol, the active compound in clove, and its well-documented analgesic and antimicrobial properties in dentistry. Note it has been used in dental cements and temporary fillings. Cite a peer-reviewed dental pharmacology source (to be verified and provided by research team). Mention its role in freshening breath naturally.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "toothpaste with natural ingredients"
+      ]
+    },
+    {
+      "section": "H3: Cinnamon",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Note cinnamon bark's antimicrobial and antifungal properties in oral care contexts. If the brand's cinnamon toothpaste collection is relevant here, reference it with an internal link. Cite a peer-reviewed source on cinnamon's antibacterial activity. Keep claims conservative and factual.",
+      "keywords_to_include": [
+        "all natural toothpaste",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H3: Myrrh",
+      "type": "h3",
+      "word_count_target": 80,
+      "guidance": "Describe myrrh resin's historical use in oral care (ancient Egypt, Ayurvedic practice) and its anti-inflammatory properties. Note it is frequently found in herbal toothpastes alongside frankincense. Cite available research on myrrh and oral health, or if no peer-reviewed source is available, clearly attribute its use to traditional practice only — do not fabricate citations.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "healthy toothpaste"
+      ]
+    },
+    {
+      "section": "H3: Coconut Oil",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Describe coconut oil's lauric acid content and its documented antimicrobial properties. Reference oil pulling research if available (Shanbhag VK, 'Oil pulling for maintaining oral hygiene — A review,' Journal of Traditional and Complementary Medicine, 2017 is a commonly cited source — verify before use). Transition naturally to Real Skin Care's coconut oil toothpaste as a product that uses this ingredient — include internal link here.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "toothpaste with natural ingredients",
+        "all natural fluoride free toothpaste"
+      ]
+    },
+    {
+      "section": "H2: What to Look for in a Herbal Toothpaste Formula",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Shift from ingredient education to practical shopping guidance. Tell the reader what a high-quality herbal toothpaste formula should include: (1) a short, recognizable ingredient list with botanical names, (2) a natural abrasive like calcium carbonate, baking soda, or silica instead of microplastics, (3) a natural binding agent, (4) plant-based flavoring rather than artificial flavor compounds, (5) certifications that matter: certified organic, vegan, cruelty-free, non-GMO. Briefly explain what certifications are meaningful versus decorative. Note that 'natural' on a label has no regulatory definition in the US — certifications provide more accountability. This section should be genuinely useful and trust-building, not a veiled sales section. Internal link to the natural toothpaste collection and fluoride-free toothpaste collection naturally here.",
+      "keywords_to_include": [
+        "best natural toothpaste",
+        "natural toothpaste brands",
+        "organic toothpaste",
+        "toothpaste with natural ingredients",
+        "vegan toothpaste",
+        "healthiest toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Ingredients to Avoid in Conventional Toothpaste",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Cover the most common problematic ingredients found in conventional toothpastes that herbal/natural formulas typically exclude. Address: (1) Sodium Lauryl Sulfate (SLS) — link to the SLS-free toothpaste collection; note it is a foaming agent linked to mouth ulcers in some studies, cite if available, (2) Artificial sweeteners and dyes — note consumer concern around long-term exposure, (3) Triclosan — note it was banned by the FDA in hand soaps in 2016 and has been removed from most toothpastes but is worth noting, (4) Carrageenan — note it is a controversial additive, (5) Parabens. For each, be factual and measured — do not make fear-based claims that overstate risk. Cite where possible. This section reinforces why a reader would choose herbal over conventional without being alarmist. Internal link to the blog post on the healthiest toothpaste.",
+      "keywords_to_include": [
+        "natural fluoride-free toothpaste",
+        "natural toothpaste without fluoride",
+        "all natural toothpaste",
+        "healthy toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Is Herbal Toothpaste Effective? What the Research Shows",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Address the skepticism head-on — many readers will wonder if herbal toothpaste 'actually works' compared to conventional options. Cite the Tatikonda et al. (2014) PMC study directly: 'Effects of herbal and non-herbal toothpastes on plaque and gingivitis,' Journal of International Society of Preventive and Community Dentistry — it found herbal dentifrices as effective as conventional for plaque and gingivitis control. Acknowledge what herbal toothpaste does not replace: professional dental cleanings, twice-daily brushing technique, flossing. If the formula is fluoride-free, acknowledge that fluoride has a strong evidence base for cavity prevention and that people choosing fluoride-free formulas should discuss this with their dentist. This honesty builds trust and satisfies E-E-A-T standards. Do not be dismissive of fluoride; present it as an informed personal choice.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "best natural toothpaste",
+        "natural fluoride-free toothpaste",
+        "healthiest toothpaste",
+        "best healthy toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Who Is Herbal Toothpaste Best For?",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Briefly outline the audience profiles who benefit most from switching to herbal toothpaste: (1) People with SLS sensitivity or recurring canker sores, (2) Individuals seeking a vegan and cruelty-free oral care routine, (3) Those reducing synthetic chemical exposure across their personal care routine, (4) Parents looking for a natural infant or children's toothpaste option (note: natural infant toothpaste is a related keyword — address briefly but do not make pediatric health claims without dental professional attribution), (5) Eco-conscious consumers who want organic and sustainably sourced ingredients. Keep this section conversational and inclusive — do not make it feel like a gated audience. Internal link to vegan toothpaste collection.",
+      "keywords_to_include": [
+        "vegan toothpaste",
+        "natural infant toothpaste",
+        "all natural toothpaste",
+        "organic toothpaste",
+        "natural toothpaste alternatives"
+      ]
+    },
+    {
+      "section": "H2: How Real Skin Care Approaches Herbal Toothpaste",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "This is the brand's credibility and product section. Describe Real Skin Care's philosophy: clean, transparent ingredient lists, no synthetic chemicals, coconut oil as a hero base ingredient. Reference the coconut oil toothpaste product directly with an internal link. Mention the key collections available (natural toothpaste, fluoride-free, cinnamon, mint, SLS-free) with contextual internal links. If the brand holds certifications (organic, vegan, cruelty-free, non-GMO), list them here — these must be verified against actual product certifications before publication. Do not make ingredient or formulation claims that are not confirmed in the product INCI list supplied alongside this brief. Writer note: the product formula (INCI ingredient list, format, certifications) MUST be provided by the brand team before this section is written. Do not fabricate or assume any ingredient details.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "herbal toothpaste",
+        "best natural toothpaste",
+        "natural organic toothpaste",
+        "toothpaste natural"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 200,
+      "guidance": "Include 4 concise FAQ entries targeting common search queries and voice search patterns. Suggested questions: (1) 'Is herbal toothpaste as effective as regular toothpaste?' — Answer: cite Tatikonda et al. 2014, note technique and frequency matter most. (2) 'Is herbal toothpaste safe for kids?' — Answer: generally yes for natural formulas, but confirm fluoride status with a pediatric dentist; note natural infant toothpaste options. (3) 'What herbs are best for oral health?' — Answer: briefly name neem, clove, cinnamon, coconut oil, reference the detailed section above. (4) 'Is herbal toothpaste fluoride-free?' — Answer: many are, but not all; explain the distinction and link to fluoride-free collection. Keep each answer to 2–4 sentences. This section supports FAQPage schema markup.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "natural fluoride-free toothpaste",
+        "natural infant toothpaste",
+        "best natural toothpaste",
+        "toothpaste herbal"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 120,
+      "guidance": "Summarize the core takeaway in 2–3 sentences: herbal toothpaste offers a plant-powered, ingredient-transparent alternative to conventional formulas, and the research supports its efficacy for plaque and gum health when used consistently. Reinforce Real Skin Care's position as a brand that takes that seriously. End with a clear, low-pressure CTA directing readers to explore the natural toothpaste collection — do not use aggressive sales language. Example: 'If you're ready to make the switch, explore our full range of herbal and natural toothpaste formulas — each one built around ingredients you can actually recognize.' Include internal link to the natural toothpaste collection.",
+      "keywords_to_include": [
+        "herbal toothpaste",
+        "natural toothpaste",
+        "best natural toothpaste"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "herbal toothpaste",
+    "natural toothpaste",
+    "natural whitening toothpaste",
+    "best natural toothpaste",
+    "toothpaste with natural ingredients",
+    "natural fluoride-free toothpaste",
+    "all natural toothpaste",
+    "natural toothpaste without fluoride",
+    "natural toothpaste brands",
+    "organic toothpaste",
+    "toothpaste herbal",
+    "vegan toothpaste",
+    "healthy toothpaste",
+    "all natural fluoride free toothpaste",
+    "healthiest toothpaste",
+    "natural infant toothpaste",
+    "toothpaste natural",
+    "best healthy toothpaste",
+    "natural toothpaste recipe",
+    "natural toothpaste alternatives",
+    "natural organic toothpaste",
+    "fluoride-free toothpaste",
+    "SLS-free toothpaste",
+    "plant-based toothpaste",
+    "botanical toothpaste",
+    "coconut oil toothpaste",
+    "neem toothpaste",
+    "clove toothpaste",
+    "cinnamon toothpaste",
+    "Ayurvedic toothpaste",
+    "herbal dentifrice",
+    "natural oral care",
+    "clean toothpaste ingredients",
+    "non-toxic toothpaste"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut oil toothpaste",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "placement_guidance": "Place in the Coconut Oil herb sub-section (H3) and again in the 'How Real Skin Care Approaches Herbal Toothpaste' H2 section. Use naturally within a sentence describing how Real Skin Care uses coconut oil as a hero ingredient."
+    },
+    {
+      "anchor_text": "natural toothpaste collection",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "Place in the 'What to Look for in a Herbal Toothpaste Formula' section and in the Conclusion CTA. Primary navigation link for the post."
+    },
+    {
+      "anchor_text": "fluoride-free toothpaste",
+      "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+      "placement_guidance": "Place in the 'What to Look for in a Herbal Toothpaste Formula' section and in the FAQ answer about fluoride-free formulas."
+    },
+    {
+      "anchor_text": "cinnamon toothpaste",
+      "url": "https://www.realskincare.com/collections/cinnamon-toothpaste",
+      "placement_guidance": "Place naturally within the Cinnamon herb sub-section (H3) when discussing cinnamon's role in oral health formulas."
+    },
+    {
+      "anchor_text": "SLS-free toothpaste",
+      "url": "https://www.realskincare.com/collections/sls-free-toothpaste",
+      "placement_guidance": "Place in the 'Ingredients to Avoid' H2 section when SLS is discussed as a conventional toothpaste ingredient to avoid."
+    },
+    {
+      "anchor_text": "mint toothpaste",
+      "url": "https://www.realskincare.com/collections/mint-toothpaste",
+      "placement_guidance": "Place in the 'How Real Skin Care Approaches Herbal Toothpaste' section when listing available formula varieties."
+    },
+    {
+      "anchor_text": "vegan toothpaste",
+      "url": "https://www.realskincare.com/collections/vegan-toothpaste",
+      "placement_guidance": "Place in the 'Who Is Herbal Toothpaste Best For?' section when addressing vegan and cruelty-free audience."
+    },
+    {
+      "anchor_text": "non-fluoride toothpaste",
+      "url": "https://www.realskincare.com/collections/non-fluoride-toothpaste",
+      "placement_guidance": "Place in the 'Is Herbal Toothpaste Effective?' section as a secondary reference when discussing fluoride-free choices."
+    },
+    {
+      "anchor_text": "what to look for in the healthiest toothpaste",
+      "url": "https://www.realskincare.com/blogs/news/the-healthiest-toothpaste-what-to-look-for-avoid",
+      "placement_guidance": "Place in the 'Ingredients to Avoid' section as a deeper-dive reference. Use anchor text that signals the post's topic naturally, e.g. 'for a deeper breakdown of what makes the healthiest toothpaste, see our guide on what to look for and avoid.'"
+    },
+    {
+      "anchor_text": "eco-friendly toothpaste guide",
+      "url": "https://www.realskincare.com/blogs/news/eco-friendly-toothpaste-what-to-look-for-why-it-matters",
+      "placement_guidance": "Place in the 'Who Is Herbal Toothpaste Best For?' section when addressing eco-conscious consumers. Reference it as a related resource for sustainability-focused readers."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite the Tatikonda et al. 2014 PMC study ('Effects of herbal and non-herbal toothpastes on plaque and gingivitis,' Journal of International Society of Preventive and Community Dentistry) by full title, author, journal, and year — not just a URL",
+    "Cite at least one peer-reviewed source per key herb claim (neem, clove, cinnamon, coconut oil minimum); all citations must be verified by the brand research team before writing begins and listed in writer notes",
+    "Include a note recommending readers consult their dentist before switching to a fluoride-free formula — this demonstrates responsible health communication and is not a disclaimer but a genuine recommendation",
+    "The 'How Real Skin Care Approaches Herbal Toothpaste' section must reference verified product certifications (organic, vegan, cruelty-free, non-GMO) only — no speculative or unconfirmed claims; brand team must supply the INCI ingredient list and certification documentation before this section is written",
+    "Author bio or byline should indicate relevant expertise (e.g., written or reviewed by someone with a background in natural formulation, nutrition, or dental hygiene) — if no in-house expert is available, note that the post was reviewed against published dental research",
+    "Do not make disease-treatment claims (e.g., 'treats gingivitis,' 'prevents cavities') — use evidence-supported language such as 'associated with reduced plaque-forming bacteria' or 'shown in clinical studies to support gum health'",
+    "Acknowledge limitations of the research where they exist — for example, note if a cited study was in vitro rather than a large clinical trial; this intellectual honesty strengthens credibility rather than undermining it"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "TONE AND VOICE: Informed, direct, and trustworthy. Real Skin Care's audience are ingredient-conscious adults who are skeptical of greenwashing and respond to transparency over hype. Write the way a knowledgeable friend who happens to know a lot about natural formulation would explain this — no jargon without explanation, no fear-mongering, no over-promising. Avoid phrases like 'transform your routine,' 'revolutionary formula,' 'chemical-free' (nothing is chemical-free), or 'toxic ingredients.' Use 'synthetic' instead of 'chemical' when describing what herbal toothpaste avoids. BRAND POLICY REMINDERS: Do not name any competitor brands anywhere in the post. Do not create comparison tables featuring other products. Do not write sections that center on comparing Real Skin Care to named competitors. CITATIONS — MANDATORY: Every substantive health or ingredient efficacy claim must have a verified peer-reviewed citation. The following citations are pre-cleared for use and must be verified by the brand research team before writing begins: (1) Tatikonda A et al., 'Effects of herbal and non-herbal toothpastes on plaque and gingivitis — a clinical and microbial study,' Journal of International Society of Preventive and Community Dentistry, 2014 — PMC4278105. (2) Pai MR et al., 'Evaluation of antiplaque activity of Azadirachta indica leaf extract gel,' Journal of Ethnopharmacology, 2004 — verify PMID before use. (3) Shanbhag VK, 'Oil pulling for maintaining oral hygiene — A review,' Journal of Traditional and Complementary Medicine, 2017 — verify PMID before use. Additional citations for clove/eugenol and cinnamon must be sourced and verified by the research team and appended to this brief before the writer begins drafting. If a citation cannot be verified, the claim must be removed or reframed as traditional use only. PRODUCT FORMULA REQUIREMENT (per standing brand policy): The INCI ingredient list, product format (tube, jar, etc.), and all certifications for Real Skin Care's herbal toothpaste products MUST be supplied by the brand team to the writer before any ingredient-specific or product-specific claims are written. The writer must not assume or invent formulation details. If this information is not available before the deadline, the 'How Real Skin Care Approaches Herbal Toothpaste' section should be drafted with placeholder brackets (e.g., [INSERT CERTIFIED ORGANIC CLAIM IF VERIFIED]) and flagged for editorial review before publication. SEASONALITY NOTE: Search volume peaks in September (1,600), January, November, and December (1,300 each). If this post is scheduled for publication, prioritize a September or late-August publish date to capture peak demand. Consider refreshing the post in late November for the secondary peak. EXISTING SERP POSITION: The site already ranks at position 2 for this keyword with 5 impressions and 0 clicks over 90 days. The priority is CTR improvement as much as ranking improvement — ensure the title tag and meta description are compelling, specific, and differentiated from the Amazon and product listing pages dominating the SERP. The title and meta description approved in this brief should be implemented exactly as written. Do not pad word count — if a section has said what it needs to say, stop. The target is 2,200 words total; do not exceed 2,400.",
+  "search_volume": 1000,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.amazon.com/Herbal-Toothpaste/s?k=Herbal+Toothpaste",
+      "title": "Herbal Toothpaste",
+      "domain": "www.amazon.com",
+      "description": "Herbodent® Premium Toothpaste - 5.82 Oz Pack of 1 | 21 Herbs for Strong Teeth & Healthy Gums- Neem, Clove, Cinnamon, Cardamom with Natural Mouthwash-No ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.auromere.com/category/dental-care/toothpaste/?srsltid=AfmBOooqITrOS-B1IHlw05HDI_pTuoxdPTU7kXVCspmqdXn0Znci8Ah8",
+      "title": "Ayurvedic Toothpaste — Fluoride-Free Neem Formula",
+      "domain": "www.auromere.com",
+      "description": "Super-concentrated Ayurvedic toothpaste with 23 herbal extracts including neem and peelu. Fluoride-free, vegan, non-GMO. Lasts 3x longer. Five flavors."
+    },
+    {
+      "position": 3,
+      "url": "https://adivanaturals.com/products/frankincense-herbal-toothpaste?srsltid=AfmBOoroC-PdF7EbVQnQcspLtzqcWfPtlqXL1akx17I1jJe1UGH1Cl63",
+      "title": "Frankincense Herbal Toothpaste",
+      "domain": "adivanaturals.com",
+      "description": "This unique formulation integrates Myrrh, Sage, Sandalwood, and Palco Santa for a holistic oral care solution without fluoride. Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.parodontax.com/en-sg/products/parodontax-toothpaste/herbal/",
+      "title": "parodontax Herbal Toothpaste",
+      "domain": "www.parodontax.com",
+      "description": "With ginger extracts, bee balm and eucalyptus, parodontax Herbal Toothpaste is clinically proven to help stop and prevent bleeding gums."
+    },
+    {
+      "position": 5,
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4278105/",
+      "title": "Effects of herbal and non-herbal toothpastes on plaque ... - PMC",
+      "domain": "pmc.ncbi.nlm.nih.gov",
+      "description": "by A Tatikonda · 2014 · Cited by 79 — It can be concluded that clinically, herbal dentifrices are as effective as non-herbal (conventional) dentifrices in the control of plaque and gingivitis. Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://www.amazon.com/Dental-Herb-Company-Essentials-Toothpaste/dp/B079C5SZ5X",
+      "title": "Essentials Fluoride-Free Toothpaste, Plant-Based Daily ...",
+      "domain": "www.amazon.com",
+      "description": "Crafted by Dental Herb Company since 1996., Designed to support gum care during daily brushing., Fluoride-free and SLS-free formula., Helps freshen breath., ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.youtube.com/watch?v=l-bWfnOyDGA",
+      "title": "Organic Herbal Toothpaste",
+      "domain": "www.youtube.com",
+      "description": null
+    },
+    {
+      "position": 8,
+      "url": "https://africaimports.com/health-beauty/toothpaste-dental/?srsltid=AfmBOooe287kCACg5GDZqeMjf0KMDNMFUVyYSqUuCmlj5iPTgFp_yzWP",
+      "title": "Wholesale Toothpaste - Herbal, Natural & Organic",
+      "domain": "africaimports.com",
+      "description": "Discover wholesale herbal toothpaste at Africa Imports. Natural ingredients like neem oil, black seed, and more. Fight bacteria, prevent gum disease."
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}
