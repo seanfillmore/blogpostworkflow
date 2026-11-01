@@ -387,3 +387,23 @@ test('withheldLines counts failed redaction and gate blocks', () => {
   ]);
   assert.deepEqual(withheldLines([]), []);
 });
+
+test('a note is filed under the cluster its QUESTION names, not a word in passing in the answer (2026-W44)', async () => {
+  const dir = tmpDir();
+  try {
+    saveQuestionSet({
+      week: '2026-W44', sent_at: NOW.toISOString(), message_id: '<agent-1@example.com>',
+      subject: 'Founder notes, week of Oct 26 [FN-2026-W44]',
+      questions: [
+        { index: 1, text: 'What makes a bar soap for men worth switching to?', source: { type: 'upcoming', ref: 'dr-squatch-soap-alternatives' } },
+        { index: 2, text: "What is your take on men's grooming trends?", source: { type: 'world', ref: 'https://example.com/n' } },
+      ],
+      replies: [],
+    }, { dir });
+    const reply = { ...REPLY, text: '1. Men use soaps, deodorants and hair products that all carry fragrance.\n2. Men deserve good lotion too.' };
+    await runIngest({ now: LATER, apply: true, deps: ingestDeps(dir, [reply]) });
+    const notes = loadNotes({ dir });
+    assert.deepEqual(notes[0].clusters, ['soap']);
+    assert.deepEqual(notes[1].clusters, ['lotion'], 'falls back to the answer when the question names no cluster');
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
