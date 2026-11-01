@@ -146,6 +146,43 @@ const OVERRIDES = {
     title: 'Best Cheap Natural Lip Balms',
     why: 'mechanical trim ended on the dangling adjective "Best Natural, Affordable"',
   },
+
+  // Added 2026-11-01, operator-approved, after the Ahrefs crawl of 2026-10-31.
+  // Eight MINT candidates whose trim ends on a fragment ("6 Gentle Natural",
+  // "Why Gentler Flavor", "What It Does"). Every count is the article's own
+  // count from its full title, so no number here is unsupported by the body.
+  'ivory-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Ivory Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'dial-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Dial Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'irish-spring-soap-alternative-6-natural-bar-soaps-that-work': {
+    title: '6 Natural Irish Spring Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Natural"',
+  },
+  'secret-deodorant-alternatives-8-natural-picks-that-actually-work': {
+    title: '8 Natural Secret Deodorant Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "8 Natural"',
+  },
+  'mild-mint-toothpaste-why-gentler-flavor-wins': {
+    title: 'Mild Mint Toothpaste: Gentler Flavor Wins',
+    why: 'mechanical trim dropped the verb, leaving "Why Gentler Flavor"',
+  },
+  'coconut-oil-soap-benefits-what-it-does-for-your-skin': {
+    title: 'Coconut Oil Soap: Benefits for Your Skin',
+    why: 'mechanical trim ended on the incomplete clause "What It Does"',
+  },
+  'vegan-soap-what-it-is-benefits-what-to-look-for': {
+    title: 'Vegan Soap: Benefits & What to Look For',
+    why: 'mechanical trim left the awkward list "What It Is, Benefits"',
+  },
+  'unscented-lip-balm-how-to-choose-a-fragrance-free-natural-one': {
+    title: 'Unscented Lip Balm: How to Pick a Clean One',
+    why: 'mechanical trim ended on the objectless "How to Choose"',
+  },
 };
 
 /**
