@@ -1,0 +1,62 @@
+{
+  "at": "2026-10-19T22:34:34.706Z",
+  "apply": true,
+  "argv": [
+    "--theme",
+    "188094054570",
+    "--page",
+    "--apply"
+  ],
+  "head": "e57902b08b1be6cb3ebc824bb54f6b7a00041a02",
+  "theme": {
+    "themeId": "188094054570",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": null,
+        "verdict": "already",
+        "currentBytes": 18185,
+        "targetBytes": 18185
+      },
+      {
+        "key": "assets/presell.css",
+        "before": null,
+        "verdict": "already",
+        "currentBytes": 10245,
+        "targetBytes": 10245
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": null,
+        "verdict": "already",
+        "currentBytes": 4063,
+        "targetBytes": 4063
+      },
+      {
+        "key": "templates/page.presell-cream.json",
+        "before": null,
+        "verdict": "already",
+        "currentBytes": 8231,
+        "targetBytes": 8231
+      },
+      {
+        "key": "templates/product.landing-page-cream.json",
+        "before": "a1a6a181",
+        "verdict": "already",
+        "currentBytes": 74940,
+        "targetBytes": 74940
+      }
+    ]
+  },
+  "page": {
+    "before": null,
+    "after": {
+      "id": 162903883946,
+      "handle": "coconut-body-cream",
+      "published_at": null,
+      "template_suffix": "presell-cream",
+      "seo_hidden": 1,
+      "metafield_id": 190976666534058
+    }
+  }
+}

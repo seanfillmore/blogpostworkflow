@@ -1,0 +1,124 @@
+{
+  "source": "PPC Skincare invoice 30/2026",
+  "plan": [
+    {
+      "product": "Coconut Moisturizer | 4oz",
+      "variant": "Coconut Breeze",
+      "inventoryItemId": "gid://shopify/InventoryItem/46219054448810",
+      "before": "5.18",
+      "after": 5.96
+    },
+    {
+      "product": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "variant": "Orange Zest",
+      "inventoryItemId": "gid://shopify/InventoryItem/46219098161322",
+      "before": "4.26",
+      "after": 5.33
+    },
+    {
+      "product": "Moisturizing Coconut Soap | 3.4oz",
+      "variant": "Calming Lavender",
+      "inventoryItemId": "gid://shopify/InventoryItem/46219111628970",
+      "before": "2.99",
+      "after": 3.74
+    },
+    {
+      "product": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "variant": "Coconut Breeze",
+      "inventoryItemId": "gid://shopify/InventoryItem/46447979004074",
+      "before": "5.49",
+      "after": 6.86
+    },
+    {
+      "product": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "variant": "Pure Unscented",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855590703274",
+      "before": "4.92",
+      "after": 6.15
+    },
+    {
+      "product": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "variant": "Rose Petal",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855590736042",
+      "before": "5.49",
+      "after": 6.86
+    },
+    {
+      "product": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "variant": "Lavender & Rose",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855590768810",
+      "before": "5.49",
+      "after": 6.86
+    },
+    {
+      "product": "Non-Toxic Body Lotion Made With Only 6 Clean Ingredients",
+      "variant": "Calming Lavender",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855590801578",
+      "before": "5.49",
+      "after": 6.86
+    },
+    {
+      "product": "Moisturizing Coconut Soap | 3.4oz",
+      "variant": "Nourishing Tea Tree",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855591817386",
+      "before": "2.99",
+      "after": 3.74
+    },
+    {
+      "product": "Moisturizing Coconut Soap | 3.4oz",
+      "variant": "Refreshing Lemongrass",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855591850154",
+      "before": "2.99",
+      "after": 3.74
+    },
+    {
+      "product": "Moisturizing Coconut Soap | 3.4oz",
+      "variant": "Pure Unscented",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855591882922",
+      "before": "2.99",
+      "after": 3.74
+    },
+    {
+      "product": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "variant": "Coconut Breeze",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855592243370",
+      "before": "4.26",
+      "after": 5.33
+    },
+    {
+      "product": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "variant": "Calming Lavender",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855592308906",
+      "before": "4.26",
+      "after": 5.33
+    },
+    {
+      "product": "Foaming Liquid Coconut Oil Soap | 8oz",
+      "variant": "Pure Unscented",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855592374442",
+      "before": "3.36",
+      "after": 4.2
+    },
+    {
+      "product": "Coconut Moisturizer | 4oz",
+      "variant": "Lavender & Rose",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855593750698",
+      "before": "5.18",
+      "after": 5.96
+    },
+    {
+      "product": "Coconut Moisturizer | 4oz",
+      "variant": "Calming Lavender",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855593783466",
+      "before": "5.18",
+      "after": 5.96
+    },
+    {
+      "product": "Coconut Moisturizer | 4oz",
+      "variant": "Rose Petal",
+      "inventoryItemId": "gid://shopify/InventoryItem/47855593816234",
+      "before": "5.18",
+      "after": 5.96
+    }
+  ]
+}

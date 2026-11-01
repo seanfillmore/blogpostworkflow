@@ -1,0 +1,91 @@
+{
+  "at": "2026-10-19T22:55:46.441Z",
+  "apply": true,
+  "argv": [
+    "--live",
+    "--page",
+    "--publish",
+    "--apply"
+  ],
+  "head": "f9d88b94aedcc7cb3d81782bf7319f61533a6de8",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 18350,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 18350
+        }
+      },
+      {
+        "key": "assets/presell.css",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 10245,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 10245
+        }
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 4471,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 4471
+        }
+      },
+      {
+        "key": "templates/page.presell-cream.json",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 8231,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 8231
+        }
+      },
+      {
+        "key": "templates/product.landing-page-cream.json",
+        "before": "a1a6a181",
+        "verdict": "write",
+        "currentBytes": 74293,
+        "targetBytes": 74940,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 74940
+        }
+      }
+    ]
+  },
+  "page": {
+    "before": {
+      "id": 162903883946,
+      "published_at": null,
+      "template_suffix": "presell-cream"
+    },
+    "after": {
+      "id": 162903883946,
+      "handle": "coconut-body-cream",
+      "published_at": "2026-10-19T16:55:53-06:00",
+      "template_suffix": "presell-cream",
+      "seo_hidden": 1,
+      "metafield_id": 190976666534058
+    }
+  }
+}

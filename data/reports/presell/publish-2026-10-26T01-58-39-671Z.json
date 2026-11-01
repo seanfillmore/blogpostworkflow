@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-26T01:58:39.671Z",
+  "apply": true,
+  "argv": [
+    "--target",
+    "water-cooler",
+    "--live",
+    "--page",
+    "--publish",
+    "--apply"
+  ],
+  "target": "water-cooler",
+  "head": "6595eecd0531f82deec0df81c275e8da91c3923b",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 26664,
+        "targetBytes": 26664
+      },
+      {
+        "key": "assets/presell.css",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 12954,
+        "targetBytes": 12954
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 14154,
+        "targetBytes": 14154
+      },
+      {
+        "key": "templates/page.presell-water-cooler.json",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 8936,
+        "readBack": {
+          "ok": true,
+          "tries": 1,
+          "bytes": 8936
+        }
+      }
+    ]
+  },
+  "page": {
+    "before": null,
+    "after": {
+      "id": 163177234602,
+      "handle": "skin-looks-amazing",
+      "published_at": "2026-10-25T19:58:42-06:00",
+      "template_suffix": "presell-water-cooler",
+      "seo_hidden": 1,
+      "metafield_id": 191286017261738
+    }
+  }
+}
