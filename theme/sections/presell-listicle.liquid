@@ -311,7 +311,7 @@
             <button type="submit" class="presell-button presell-button--full" data-presell-submit data-presell-label data-presell-template="{{ s.cta | escape }}" data-presell-template-multi="{{ s.cta_multi | escape }}" data-presell-template-pack="{{ s.cta_pack | escape }}">{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</button>
             <p class="presell-error" data-presell-error hidden role="alert"></p>
           </form>
-          <p class="presell-buy-meta">{{ s.shipping | escape }}</p>
+          <p class="presell-buy-meta" data-presell-label data-presell-template="{{ s.shipping | escape }}" data-presell-template-multi="{{ s.shipping_multi | default: s.shipping | escape }}" data-presell-template-pack="{{ s.shipping_pack | default: s.shipping_multi | default: s.shipping | escape }}">{{ s.shipping | escape }}</p>
           <p class="presell-guarantee">{{ s.guarantee | escape }}</p>
         </section>
         <a class="presell-sticky presell-button" data-presell-sticky href="#presell-buy" aria-hidden="true" tabindex="-1" data-presell-label data-presell-template="{{ s.cta | escape }}" data-presell-follow>{{ s.cta | escape | replace: price_token, live_price | replace: scent_token, live_scent }}</a>
@@ -484,6 +484,8 @@
         { "type": "text", "id": "pack_badge", "label": "Badge beside the quantity picker" },
         { "type": "text", "id": "pack_add_free", "label": "Note at 3 jars" },
         { "type": "text", "id": "shipping", "label": "Shipping line" },
+        { "type": "text", "id": "shipping_multi", "label": "Shipping line, 2-3 jars" },
+        { "type": "text", "id": "shipping_pack", "label": "Shipping line, 4 jars (the pack)" },
         { "type": "textarea", "id": "guarantee", "label": "Guarantee" }
       ]
     }

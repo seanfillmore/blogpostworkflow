@@ -140,7 +140,9 @@
             "cta_pack": "Get 4 jars of Coconut Breeze, $84",
             "pack_badge": "Buy 3, get the 4th free",
             "pack_add_free": "Add a 4th jar for free",
-            "shipping": "Ships in 1-2 business days.",
+            "shipping": "Add a second jar for free shipping. Ships in 1-2 business days.",
+            "shipping_multi": "Free US shipping. Ships in 1-2 business days.",
+            "shipping_pack": "Free US shipping. Ships in 1-2 business days.",
             "guarantee": "30-day money-back guarantee. Don't love it? Email us and we will refund you, no need to send it back."
           }
         }

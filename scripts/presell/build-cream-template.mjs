@@ -134,6 +134,8 @@ export function buildTemplate(content, media) {
         pack_badge: content.buyBox.pack.badge,
         pack_add_free: content.buyBox.pack.addFree,
         shipping: content.buyBox.shipping,
+        shipping_multi: content.buyBox.shippingMulti,
+        shipping_pack: content.buyBox.shippingPack,
         guarantee: content.guarantee,
       },
     }],
