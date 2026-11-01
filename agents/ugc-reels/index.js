@@ -44,7 +44,9 @@ import {
   eligibleVideos, pickNext, chooseHookStyle, captionFormatCheck, composeCaption,
   learningsForPrompt, insightsDue, isFinalRead, renderStyleTable, transcriptText,
   firstName, productKey, HOOK_STYLES,
+  dueScheduled, renderOtherReels, SCHEDULED_ID_PREFIX,
 } from '../../lib/ugc-reels.js';
+import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
@@ -56,6 +58,16 @@ const CONFIG_PATH = join(ROOT, 'config', 'ugc-reels.json');
 export function loadExcluded(path = CONFIG_PATH) {
   if (!existsSync(path)) return [];
   return JSON.parse(readFileSync(path, 'utf8')).excluded || [];
+}
+
+/**
+ * Our own ad videos to post once, on or after a date (config `scheduled[]`):
+ * { id, not_before, video_url, caption, product_key, note }. Same parse rule as
+ * the exclusions: a config that will not parse throws.
+ */
+export function loadScheduled(path = CONFIG_PATH) {
+  if (!existsSync(path)) return [];
+  return JSON.parse(readFileSync(path, 'utf8')).scheduled || [];
 }
 
 /**
@@ -180,6 +192,7 @@ export async function runOnce({
   publish = publishReel,
   socials: socialsIn = null,
   excluded = loadExcluded(),
+  scheduled = loadScheduled(),
   ledgerPath = LEDGER_PATH,
   now = Date.now(),
   log = console.log,
@@ -188,6 +201,42 @@ export async function runOnce({
   const ledger = readLedger(ledgerPath);
   const insights = apply ? await refreshInsights({ ledger, token, fetchImpl, now, log }) : { read: 0, failed: 0 };
   if (apply && insights.read) writeLedger(ledger, ledgerPath);
+
+  // A due scheduled ad takes this run's slot. Its caption is written by hand
+  // and checked again here; one that fails is recorded and the run falls back
+  // to a creator video.
+  const due = dueScheduled(scheduled, ledger, now);
+  const scheduledNotes = due.givenUp.map((g) => `Scheduled Reel ${g.id} failed twice and is no longer tried.`);
+  if (due.item) {
+    const item = due.item;
+    const sid = SCHEDULED_ID_PREFIX + item.id;
+    const gate = checkSeoCopyFields({ caption: item.caption });
+    const fmt = captionFormatCheck({ transcript: '' }).check({ caption: item.caption }).filter((h) => !/quotes words/.test(h.why));
+    const problems = [...gate.blocking.map((b) => `${b.category}: ${b.match}`), ...fmt.map((h) => h.why)];
+    const entry = {
+      submission_id: sid, trybe_id: null, creator: null, tagged: null,
+      product_key: item.product_key, cycle: 1, hook_style: 'ad', style_reason: 'scheduled ad', kind: 'ad',
+      body: item.caption, caption: item.caption,
+    };
+    if (problems.length) {
+      scheduledNotes.push(`Scheduled Reel ${item.id} not posted, caption failed: ${problems.join('; ')}`);
+      if (apply) { ledger.failures.push({ submission_id: sid, at: new Date(now).toISOString(), kind: 'caption', error: problems.join('; ') }); writeLedger(ledger, ledgerPath); }
+    } else if (!apply) {
+      return { posted: { ...entry, dryRun: true }, attempts: [], skipped: [], eligibleCount: 0, insights, ledger, scheduledNotes };
+    } else {
+      try {
+        const r = await publish({ videoUrl: item.video_url, caption: item.caption }, { token, fetchImpl });
+        Object.assign(entry, { posted_at: new Date(now).toISOString(), media_id: r.mediaId, permalink: r.permalink });
+        ledger.posts.push(entry);
+        writeLedger(ledger, ledgerPath);
+        return { posted: entry, attempts: [], skipped: [], eligibleCount: 0, insights, ledger, scheduledNotes };
+      } catch (err) {
+        ledger.failures.push({ submission_id: sid, at: new Date(now).toISOString(), kind: 'publish', error: err.message });
+        writeLedger(ledger, ledgerPath);
+        scheduledNotes.push(`Scheduled Reel ${item.id} failed to publish: ${err.message}`);
+      }
+    }
+  }
 
   const submissions = await listSubmissions({ status: 'approved', apiKey: trybeKey, fetchImpl });
   const { eligible, skipped } = eligibleVideos(submissions, ledger, { excluded });
@@ -248,13 +297,17 @@ export async function runOnce({
     }
   }
 
-  return { posted, attempts, skipped, eligibleCount: eligible.length, insights, ledger };
+  return { posted, attempts, skipped, eligibleCount: eligible.length, insights, ledger, scheduledNotes };
 }
 
 export function renderRun(run) {
   const lines = [];
   const p = run.posted;
-  if (p) {
+  if (p && p.kind === 'ad') {
+    lines.push(`${p.dryRun ? 'Would post' : 'Posted'} scheduled ad Reel: ${p.product_key} (${p.submission_id})`);
+    if (p.permalink) lines.push(p.permalink);
+    lines.push('', p.caption, '');
+  } else if (p) {
     lines.push(`${p.dryRun ? 'Would post' : 'Posted'}: ${p.product_key || productKey(p.submission)} by ${firstName(p.submission.creator?.name)} · cycle ${p.cycle} · style ${p.hook_style || p.style}`);
     if (p.permalink) lines.push(p.permalink);
     lines.push('', p.caption, '');
@@ -265,6 +318,8 @@ export function renderRun(run) {
     if (a.skipped) lines.push(`Nothing to post: ${a.skipped}`);
     else lines.push(`Skipped ${a.submission.trybe_id || a.submission.id} (${productKey(a.submission)}): ${a.error}`);
   }
+  for (const n of run.scheduledNotes || []) lines.push(n);
+  if (p && p.kind === 'ad') return lines.join('\n');
   lines.push(`${run.eligibleCount} eligible video(s); ${run.skipped.length} approved video(s) not eligible.`);
   for (const s of run.skipped) lines.push(`  - ${s.submission.trybe_id || s.submission.id} (${firstName(s.submission.creator?.name)}, ${productKey(s.submission)}): ${s.reason}`);
   if (run.insights.read || run.insights.failed) lines.push(`Insights refreshed for ${run.insights.read} post(s)${run.insights.failed ? `, ${run.insights.failed} unavailable` : ''}.`);
@@ -279,7 +334,8 @@ async function main() {
 
   if (args.includes('--report')) {
     const ledger = readLedger();
-    const body = [`${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger)].join('\n');
+    const other = renderOtherReels(ledger);
+    const body = [`${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger), ...(other ? ['', other] : [])].join('\n');
     console.log(body);
     if (args.includes('--notify')) await notify({ subject: `Instagram Reels: what is working (${ledger.posts.length} posted)`, body, status: 'info', category: 'social' });
     return;
@@ -309,7 +365,9 @@ async function main() {
     await notify({ subject: 'Instagram Reels: nothing posted, every candidate failed', body, status: 'error', category: 'social' });
     return;
   }
-  const subject = p
+  const subject = p && p.kind === 'ad'
+    ? `Instagram Reel posted: scheduled ad, ${p.product_key}`
+    : p
     ? `Instagram Reel posted: ${p.product_key} by ${p.creator} (${p.hook_style}, cycle ${p.cycle})`
     : 'Instagram Reels: nothing to post';
   await notify({ subject, body, status: 'info', category: 'social' });

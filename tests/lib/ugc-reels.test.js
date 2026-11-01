@@ -208,3 +208,16 @@ test('eligibleVideos: a video excluded in config never posts, and the reason is 
   assert.deepEqual(eligible.map((s) => s.id), ['y']);
   assert.match(skipped[0].reason, /excluded in config\/ugc-reels\.json: Sean: exclude/);
 });
+
+test('ad Reels: reported in their own table, never in the caption test or its examples', async () => {
+  const { renderOtherReels, renderStyleTable, learningsForPrompt, isCaptionTestPost } = await import('../../lib/ugc-reels.js');
+  const old = '2026-10-01T00:00:00Z';
+  const ad = { submission_id: 'scheduled:x', hook_style: 'ad', product_key: 'Coconut Moisturizer (ad)', posted_at: old, permalink: 'https://instagram.com/reel/AD', body: 'AD BODY', insights: { views: 999999, reach: 5, total_interactions: 1 } };
+  const ugc = Array.from({ length: 6 }, (_, i) => ({ submission_id: `s${i}`, hook_style: 'question', posted_at: old, body: `ugc ${i}`, insights: { views: i, reach: 1, total_interactions: 0 } }));
+  const ledger = { posts: [...ugc, ad] };
+  assert.equal(isCaptionTestPost(ad), false);
+  assert.match(renderOtherReels(ledger), /Coconut Moisturizer \(ad\).*999999.*reel\/AD/);
+  assert.doesNotMatch(renderStyleTable(ledger), /999999/);
+  assert.doesNotMatch(learningsForPrompt(ledger, Date.parse('2026-11-01T00:00:00Z')), /AD BODY/);
+  assert.equal(renderOtherReels({ posts: ugc }), '');
+});
