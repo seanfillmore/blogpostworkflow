@@ -8,5 +8,16 @@
       "reason": "Sean, 2026-10-16: exclude. Moisturizer + toothpaste + lotion video; every generated caption gave the moisturizer the lotion's 6-ingredient count.",
       "at": "2026-10-16"
     }
+  ],
+  "_scheduledNote": "Our own ad videos agents/ugc-reels posts ONCE, on the first run on or after not_before (UTC), in place of that run's creator video. Caption is hand-written and must pass the commercial claim gate and the caption format rules (tests/config/ugc-reels-scheduled.test.js); the agent re-checks it. Ledger id is 'scheduled:<id>'. Reported under 'Ad Reels' in --report, never in the caption-style test.",
+  "scheduled": [
+    {
+      "id": "water-cooler-15s",
+      "not_before": "2026-11-08T16:00:00Z",
+      "product_key": "Coconut Moisturizer (Water Cooler ad, 15s)",
+      "video_url": "https://cdn.shopify.com/videos/c/o/v/54267aa794a641ff9f995ca55f001c20.mp4",
+      "note": "Sean 2026-11-01: post the 15s cutdown at least a week after the 29s cut (posted 2026-11-01, https://www.instagram.com/reel/DfN4ZOtjbVb/). Shopify file gid://shopify/Video/46288460382378.",
+      "caption": "\"I need the name of that cream. Now.\"\n\nIt's our Coconut Moisturizer. It starts from a 7-ingredient base: organic virgin coconut oil, beeswax, red palm oil and a few more you can read in one breath. Pure Unscented is the base alone, with nothing added.\n\nRich enough for dry hands, heels and elbows this winter, and it comes with a 30-day money-back guarantee.\n\nLink in bio.\n\nMade with AI.\n\n#bodycream #coconutoil #winterskin #cleanskincare #shortingredientlist"
+    }
   ]
 }

@@ -27,7 +27,7 @@ test('runOnce dry run: writes a caption and posts nothing', async () => {
   const ledgerPath = tmpLedger();
   let published = 0;
   const run = await runOnce({
-    apply: false, trybeKey: 'k', token: 't', ledgerPath,
+    apply: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async () => { published++; },
@@ -41,7 +41,7 @@ test('runOnce dry run: writes a caption and posts nothing', async () => {
 test('runOnce --apply: publishes and records the post before returning', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath,
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async () => ({ mediaId: 'm1', permalink: 'https://instagram.com/reel/x' }),
@@ -56,7 +56,7 @@ test('runOnce --apply: publishes and records the post before returning', async (
 test('runOnce: a caption that fails the gate twice skips to the next video', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath,
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a'), sub('b', { created_at: '2026-10-02T00:00:00Z' })]),
     client: client(['Heals your eczema fast', 'Cures eczema overnight', 'Soft skin, every morning. Link in bio.']),
     publish: async () => ({ mediaId: 'm2', permalink: null }),
@@ -70,7 +70,7 @@ test('runOnce: a caption that fails the gate twice skips to the next video', asy
 test('runOnce: an Instagram refusal is recorded as a failure, not a post', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, maxCandidates: 1,
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [], maxCandidates: 1,
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio.']),
     publish: async () => { throw new Error('instagram: container ERROR'); },
@@ -124,4 +124,55 @@ test('waitForContainer: ERROR throws with Instagram\'s reason', async () => {
 test('the committed exclusion list parses and names the zeeey.xo video', async () => {
   const { loadExcluded } = await import('../../agents/ugc-reels/index.js');
   assert.ok(loadExcluded().some((e) => e.trybe_id === 'c2ba0f1d'));
+});
+
+const AD = {
+  id: 'ad-1', not_before: '2026-11-08T16:00:00Z', product_key: 'Coconut Moisturizer (ad)',
+  video_url: 'https://cdn.shopify.com/videos/ad.mp4',
+  caption: 'It starts from a 7-ingredient base. Link in bio.\n\nMade with AI.\n\n#bodycream',
+};
+const NOV9 = Date.parse('2026-11-09T16:20:00Z');
+
+test('runOnce: a due scheduled ad takes the slot, is recorded as an ad, and posts once', async () => {
+  const ledgerPath = tmpLedger();
+  const urls = [];
+  const opts = {
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: NOV9,
+    fetchImpl: trybeFetch([sub('a')]),
+    client: client(['Soft skin, every morning. Link in bio. #realskincare', 'Soft skin again. Link in bio. #realskincare']),
+    publish: async ({ videoUrl }) => { urls.push(videoUrl); return { mediaId: `m${urls.length}`, permalink: 'p' }; },
+  };
+  const first = await runOnce(opts);
+  assert.equal(first.posted.kind, 'ad');
+  assert.deepEqual(urls, [AD.video_url]);
+  const second = await runOnce(opts);
+  assert.equal(second.posted.submission_id, 'a', 'next run is a creator video again');
+  const ledger = readLedger(ledgerPath);
+  assert.deepEqual(ledger.posts.map((p) => p.submission_id), ['scheduled:ad-1', 'a']);
+  assert.equal(ledger.posts[0].hook_style, 'ad');
+});
+
+test('runOnce: a scheduled ad before its date is ignored', async () => {
+  const ledgerPath = tmpLedger();
+  const run = await runOnce({
+    apply: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: Date.parse('2026-11-08T01:20:00Z'),
+    fetchImpl: trybeFetch([sub('a')]),
+    client: client(['Soft skin, every morning. Link in bio. #realskincare']),
+    publish: async () => { throw new Error('no'); },
+  });
+  assert.equal(run.posted.submission.id, 'a');
+});
+
+test('runOnce: a scheduled caption that fails the claim gate is not posted and the run falls back', async () => {
+  const ledgerPath = tmpLedger();
+  const bad = { ...AD, caption: 'Heals eczema overnight. Link in bio.' };
+  const run = await runOnce({
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [bad], now: NOV9,
+    fetchImpl: trybeFetch([sub('a')]),
+    client: client(['Soft skin, every morning. Link in bio. #realskincare']),
+    publish: async ({ videoUrl }) => { assert.notEqual(videoUrl, bad.video_url); return { mediaId: 'm1', permalink: 'p' }; },
+  });
+  assert.equal(run.posted.submission_id, 'a');
+  assert.ok(run.scheduledNotes.some((n) => /caption failed/.test(n)));
+  assert.equal(readLedger(ledgerPath).failures[0].submission_id, 'scheduled:ad-1');
 });
