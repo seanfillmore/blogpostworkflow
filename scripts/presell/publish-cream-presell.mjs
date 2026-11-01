@@ -67,8 +67,8 @@ export const FILES = [
 ];
 
 /**
- * Other pre-sell pages that reuse the same section, css and js. Their own
- * template is new, so its expected "before" is ABSENT (null); the shared files
+ * Other pre-sell pages that reuse the same section, css and js. A page's own
+ * template is ABSENT (before: null) until it first ships, then main; the shared files
  * are expected to equal main (normally an 'already' no-op).
  */
 export const TARGETS = {
@@ -77,7 +77,9 @@ export const TARGETS = {
     page: { handle: 'skin-looks-amazing', title: 'Your Skin Looks Amazing', template_suffix: 'presell-water-cooler' },
     files: [
       ...FILES.filter((f) => f.key !== 'templates/page.presell-cream.json'),
-      { key: 'templates/page.presell-water-cooler.json', before: null },
+      // Live since 2026-10-25 (PR for the Baby Drama ad), so like the cream
+      // template its expected "before" is now main, not absent.
+      { key: 'templates/page.presell-water-cooler.json', before: LIVE_BASE_REF },
     ],
   },
 };
