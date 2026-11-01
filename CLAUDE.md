@@ -843,6 +843,16 @@ Rules:
 - If the filter removes all broken links for a page, skip that page.
 - Add a note in the audit report explaining how many pages were filtered and why.
 
+### Technical SEO is closed-loop: `agents/tech-seo-steward` (2026-11-01)
+
+**Operator instruction: "The technical SEO for the site should be managed automatically."** The Sunday DataForSEO crawl (`agents/site-crawler`) had been detecting the right problems and fixing almost none of them: uncertain redirects went to `redirect-proposals.json` and `fix-links-review-queue.json`, which nothing read (51 entries, including the exact redirect a human made by hand that day); `technical-seo fix-redirects` read a crawl field the crawler never writes and processed **0 pages every week** while 160 internal links passed through redirects; long titles and meta descriptions were counted and never fixed. The Sunday block now runs, after `site-crawler` and `create-redirects` (HIGH-confidence, unchanged):
+
+1. **`tech-seo-steward --apply`** — every remaining 404 with inbound links gets a 301; the model picks BY NUMBER from a closed list of live pages and the target must answer 200. **Scheduled and draft articles are never redirected** (they 404 until their publish date; `chlorophyll-deodorant-…` was linked from 22 posts while scheduled). Scheme-less hrefs (`href="www.x.org"`, which resolves relative and 404s) are repaired in bodies, store policies and mirrors. Noindexed sitemap URLs, and `/pages/` orphans with zero GSC impressions in 90 days, get `seo.hidden` (still load; out of the sitemap). Over-long meta descriptions get a gated `description_tag`, 15 per run, skipping CTR-experiment pages (`lib/ctr-protected.js`) and the 28-day edit window.
+2. **`scripts/fix-redirect-links.mjs --apply`** — repoints links that pass through any redirect, including the steward's new ones.
+3. **`scripts/remediate-long-titles.mjs --mint --auto --apply`** — `--auto` skips CTR-experiment pages and has the model rewrite any trim that reads as a fragment; a rewrite must keep the ranking words and invent no count (`titleRewriteProblems`), else the page is skipped, never written as a fragment.
+
+`fix-links` and `fix-redirects` were removed from the schedule. The crawler drops `cdn-cgi/l/email-protection` at source. One deferred digest row per step lists every decision. **Do not reintroduce a review queue** for these decisions; if the steward cannot resolve something it is named in the digest as unresolved.
+
 ### Ahrefs Site Audit — a third-party crawl nothing in this repo reads, and its two standing FALSE POSITIVES
 
 **Ahrefs Site Audit crawls `realskincare.com` weekly and emails the diff to the operator (project 6404711). No agent ingests it.** It is the only independent crawl of the site, and it measures defect classes the fleet's own tools do not — which is genuinely useful, and is how the meta-description length gate was found. But **two of its headline numbers are artifacts, and both were re-investigated from scratch on 2026-09-06 because nothing recorded that they had been settled.** Do not repeat that investigation.

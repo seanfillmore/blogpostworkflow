@@ -408,15 +408,26 @@ if (new Date().getDay() === 0) {
   // Step 7c: site crawl via DataForSEO On-Page API
   runStep('site-crawler', `"${NODE}" agents/site-crawler/index.js`, { indent: '    ' });
 
-  // Step 7c.1: redirect creation + link fixes against fresh broken-link data.
-  //   - create-redirects: scoring + cluster disambiguation; HIGH-confidence
-  //     auto-apply, MEDIUM/LOW queued to redirect-proposals.json for review.
-  //   - fix-links: rewrites internal links pointing to 404 pages
-  //   - fix-redirects: rewrites internal links pointing to redirected URLs
-  // These need fresh crawl data so they only run after site-crawler.
+  // Step 7c.1: deterministic HIGH-confidence redirects against fresh crawl
+  // data. Whatever it is unsure of is resolved by the steward below, not left
+  // in redirect-proposals.json.
   runStep('create-redirects', `"${NODE}" agents/technical-seo/index.js create-redirects${dryFlag}`, { indent: '    ' });
-  runStep('fix-links', `"${NODE}" agents/technical-seo/index.js fix-links${dryFlag}`, { indent: '    ' });
-  runStep('fix-redirects', `"${NODE}" agents/technical-seo/index.js fix-redirects${dryFlag}`, { indent: '    ' });
+
+  // Step 7c.2 (2026-11-01): the steward FINISHES what the crawl found — it
+  // resolves every remaining 404 with inbound links (model picks from a closed
+  // list of live pages, target verified 200), repairs scheme-less hrefs, hides
+  // noindexed/orphan URLs from the sitemap, and rewrites over-long meta
+  // descriptions. It replaces `fix-links` (whose MEDIUM items went to a review
+  // queue nothing read) and `fix-redirects` (which read a crawl field the
+  // crawler never writes and so always processed 0 pages).
+  runStep('tech-seo-steward', `"${NODE}" agents/tech-seo-steward/index.js${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
+  // Repoint every internal link that now passes through a redirect, including
+  // the ones the steward just created. Reads Shopify's redirect table directly
+  // (with the live-path guard) and updates the local mirrors.
+  runStep('fix-redirect-links', `"${NODE}" scripts/fix-redirect-links.mjs${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
+  // Over-long SERP titles: mechanical trim, model review of fragments, CTR
+  // experiment pages and the 28-day edit window respected.
+  runStep('long-titles', `"${NODE}" scripts/remediate-long-titles.mjs --mint --auto${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
 
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });

@@ -72,6 +72,10 @@ function normalizePages(pages) {
       'no._of_all_inlinks': inlinks,
     };
 
+    // Cloudflare's email-obfuscation endpoint 404s to any raw-HTML crawler and
+    // sits in the footer of every page. It is not a broken link (CLAUDE.md,
+    // Ahrefs section); counting it buried the real handful under ~200 rows.
+    if (isFalsePositiveTarget(url)) continue;
     if (statusCode >= 400) {
       issues.error_404.push(row);
       continue;
@@ -179,6 +183,7 @@ async function verifyBrokenLinks(allLinks) {
   const dfsBroken = [];
   const candidates = [];
   for (const [url, e] of targets.entries()) {
+    if (isFalsePositiveTarget(url)) continue;
     if (e.isBroken || (e.status != null && e.status >= 400)) {
       dfsBroken.push({ url, status: e.status || 404, sources: [...e.sources] });
       continue;
@@ -220,6 +225,10 @@ async function verifyBrokenLinks(allLinks) {
 
   console.log(`    HEAD-verify found ${newlyBroken.length} additional broken URLs`);
   return [...dfsBroken, ...newlyBroken];
+}
+
+export function isFalsePositiveTarget(url) {
+  return String(url || '').includes('/cdn-cgi/l/email-protection');
 }
 
 function rowFromTarget(t) {
