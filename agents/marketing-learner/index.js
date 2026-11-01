@@ -99,7 +99,11 @@ import {
   assertNewSkillGating,
   liveTacticHeadings,
   regateAdopted,
+  findCappedScores,
+  rescoreCapped,
+  raiseFitScore,
   insertStageMarker,
+  removeStageMarker,
   validateSkillEdit,
   extractStagedTactics,
   isStageActive,
@@ -120,7 +124,8 @@ const REPORT_DIR = join(ROOT, 'data', 'reports', 'marketing-learner');
 
 const FLAGS = {
   '--extract-only': 'extractOnly', '--no-pr': 'noPr', '--refetch': 'refetch',
-  '--readjudicate': 'readjudicate', '--all': 'all', '--regate': 'regate', '--apply': 'apply',
+  '--readjudicate': 'readjudicate', '--all': 'all', '--regate': 'regate', '--rescore': 'rescore', '--apply': 'apply',
+  '--parked': 'parked',
 };
 
 /** Repo convention: agents read .env themselves. There is no dotenv import anywhere here. */
@@ -150,7 +155,7 @@ export function parseArgs(argv) {
     urls: [], published: [], extractOnly: false, noPr: false, refetch: false,
     falsify: null, claim: null, reason: null, staged: null, regate: false, apply: false,
     file: null, author: null, title: null, chunkWords: 4500, splitOn: null, sourceKind: null,
-    readjudicate: false, all: false,
+    readjudicate: false, all: false, parked: false, rescore: false,
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -185,7 +190,14 @@ export function parseArgs(argv) {
     }
     return out;
   }
-  if (out.apply) throw new Error('--apply is only valid with --regate.');
+  // `--rescore` is checked BEFORE this guard, since it is the second mode that writes.
+  if (out.rescore) {
+    if (out.urls.length || out.file || out.falsify || out.staged || out.readjudicate || out.regate) {
+      throw new Error('--rescore cannot be combined with URLs, --file, --falsify, --staged, --readjudicate or --regate — it is a separate mode over the live skills.');
+    }
+    return out; // a mode, like --regate: it takes no source and must not fall through
+  }
+  if (out.apply) throw new Error('--apply is only valid with --regate or --rescore.');
 
   if (out.readjudicate) {
     if (out.urls.length || out.file || out.falsify || out.staged) {
@@ -194,7 +206,7 @@ export function parseArgs(argv) {
     return out;
   }
   if (out.all) throw new Error('--all is only valid with --readjudicate.');
-
+  if (out.parked && !out.regate) throw new Error('--parked is only valid with --regate.');
   if (out.staged) {
     if (out.staged !== 'all' && !STAGES.includes(out.staged)) {
       throw new Error(`--staged takes one of: ${STAGES.join(', ')} (or no value for all). Got "${out.staged}".`);
@@ -600,6 +612,121 @@ export function collectRejects(reportDir = REPORT_DIR, { all = false } = {}) {
 const READJUDICATE_BATCH = 25;
 
 /**
+ * Re-gate in batches, for the same reason readjudicate does.
+ *
+ * `regateAdopted` sends one prompt and THROWS on `stop_reason: 'max_tokens'` — correctly,
+ * since a truncated decision list cannot be safely applied. Unbatched that is a live
+ * scaling failure: the fleet carries 476 live tactics across 41 skills, and one call
+ * asking for 476 indexed decisions overruns the output ceiling and refuses the whole run.
+ * 25 matches the readjudicate batch, which is the only size with production evidence.
+ */
+const REGATE_BATCH = 25;
+const RESCORE_BATCH = 20;
+
+/**
+ * Repair scores that were LOWERED for reasons the stage rules forbid — current volume,
+ * budget, list size, or "we could not measure it at this scale".
+ *
+ * 63 live tactics across 19 skills carry that defect. It is not cosmetic: the scores reach
+ * the fleet projection creative-packager reads as its copy-tactic menu, and adopted tactics
+ * sort by score, so a tactic capped at 5 instead of 8 is buried twice — once behind its gate
+ * and once down the list.
+ *
+ * ONE-DIRECTIONAL BY CONSTRUCTION. `rescoreCapped` throws if the model returns a lower
+ * score and only returns risers; `raiseFitScore` refuses a downward move. This repairs a
+ * specific systematic error — it is not a licence to re-judge the corpus.
+ *
+ * The capping sentence is deliberately LEFT IN THE FILE. It is the record of why the score
+ * was wrong, and a reader who meets "held at 6 … at this volume" beside an 8/10 can see the
+ * cap was overruled. Deleting it would erase the evidence of the repair.
+ *
+ * CONSEQUENCE, STATED RATHER THAN DISCOVERED: because that sentence stays, `findCappedScores`
+ * still returns the same 63 sections after a successful run — so this mode is NOT idempotent
+ * the way `--regate` is. A second run re-judges the same set, and while the prompt asks for a
+ * merit-only score (which should come back unchanged), nothing stops a model ratcheting 8 → 9.
+ * **Run it once after a constraint-block change, not on a schedule, and read the dry run.**
+ * The clean fix is a marker on a repaired section that the detector skips; that is a separate
+ * change, and inventing an untested marker mechanism inside this repair was not worth it.
+ */
+async function runRescore({ client, args }) {
+  const inventory = scanSkillInventory(SKILLS_DIR);
+  const capped = findCappedScores(inventory);
+  console.log(`${capped.length} live tactics carry a score capped on volume, budget or `
+    + `measurability, across ${new Set(capped.map((c) => c.skill)).size} skills.`);
+  if (!capped.length) return;
+
+  const risen = [];
+  for (let i = 0; i < capped.length; i += RESCORE_BATCH) {
+    const batch = capped.slice(i, i + RESCORE_BATCH);
+    process.stdout.write(`  batch ${Math.floor(i / RESCORE_BATCH) + 1}/${Math.ceil(capped.length / RESCORE_BATCH)}: ${batch.length} tactics… `);
+    const got = await rescoreCapped({ items: batch, client });
+    risen.push(...got);
+    console.log(`${got.length} raised`);
+  }
+
+  if (!risen.length) {
+    console.log('\nNo score moved — every cap turned out to rest on a real merit judgement.');
+    return;
+  }
+
+  const bySkill = {};
+  for (const r of risen) (bySkill[r.skill] ??= []).push(r);
+  for (const [name, list] of Object.entries(bySkill)) {
+    console.log(`\n── ${name} ──`);
+    for (const r of list) {
+      console.log(`  ${r.score} → ${r.newScore}   ${r.claim.slice(0, 88)}`);
+      console.log(`            ↳ ${r.reasoning}`);
+    }
+  }
+  const delta = risen.reduce((s, r) => s + (r.newScore - r.score), 0);
+  console.log(`\n${risen.length} of ${capped.length} tactics would rise, +${delta} points total.`);
+
+  if (!args.apply) {
+    console.log('\nDry run — pass --apply to write.');
+    return;
+  }
+
+  let written = 0, failed = 0;
+  for (const [name, list] of Object.entries(bySkill)) {
+    const path = join(SKILLS_DIR, name, 'SKILL.md');
+    const before = readFileSync(path, 'utf8');
+    let after = before;
+    try {
+      for (const r of list) after = raiseFitScore(after, r.claim, r.score, r.newScore);
+      // No `supersedes`: this touches a digit in a Fit heading and nothing else, so every
+      // guard — the graveyard, the stage markers, the shrink floor — must still hold.
+      validateSkillEdit(before, after);
+    } catch (err) {
+      console.error(`  ✗ ${name}: ${err.message}`);
+      failed++;
+      continue;
+    }
+    writeFileSync(path, after);
+    written += list.length;
+    console.log(`  ✓ ${name}: ${list.length} score(s) raised`);
+  }
+  console.log(`\nRaised ${written} scores across ${Object.keys(bySkill).length - failed} skills.`
+    + (failed ? ` ${failed} skill(s) refused — see above.` : ''));
+  syncContextMirror();
+
+  await notify({
+    subject: `Marketing re-score: ${written} capped score${written === 1 ? '' : 's'} repaired`
+      + (failed ? ` (${failed} skill${failed === 1 ? '' : 's'} refused)` : ''),
+    body: [
+      `${capped.length} tactics carried a score capped on volume, budget or measurability;`,
+      `${risen.length} were judged higher on merit alone (+${delta} points).`,
+      '',
+      ...Object.entries(bySkill).map(([name, list]) =>
+        `${name}:\n` + list.map((r) => `  - ${r.score} → ${r.newScore}  ${r.claim.slice(0, 80)}`).join('\n')),
+      '',
+      'Timing belongs in the `stage` marker, never in the score. The capping sentences are',
+      'left in place as the record of what was overruled.',
+    ].join('\n'),
+    status: failed ? 'error' : 'ok',
+  });
+}
+
+/**
  * Add stage markers to tactics that are already adopted and live but were never eligible
  * for a gate, because the extraction schema had no `stage` field before 2026-08-23.
  *
@@ -610,35 +737,69 @@ const READJUDICATE_BATCH = 25;
  * worth reading before it does.
  */
 async function runRegate({ client, args }) {
+  // EVERY live tactic is re-judged, parked or not. This used to `continue` past anything
+  // already carrying a marker, which — together with regateAdopted dropping its `null`
+  // verdicts — made parking a one-way door: a tactic parked behind a mis-stated gate could
+  // never be recovered by any run. Carrying the current stage in is what lets the model
+  // answer "runnable today" about something already parked.
   const inventory = scanSkillInventory(SKILLS_DIR);
   const items = [];
   for (const s of inventory) {
-    const gated = new Set(extractStagedTactics(s.content).map((t) => t.claim));
+    const stageOf = new Map(extractStagedTactics(s.content).map((t) => [t.claim, t.stage]));
     for (const claim of liveTacticHeadings(s.content)) {
-      if (gated.has(claim)) continue;
       const sec = s.content.split(/^(?=## )/m).find((x) => x.startsWith(`## ${claim}`)) ?? '';
       const fit = (sec.match(/\*\*Fit here \(([^)]*)\):\*\* ([^\n]*)/) ?? [])
         .slice(1).join(' — ').slice(0, 400);
-      items.push({ skill: s.name, claim, fit });
+      items.push({ skill: s.name, claim, fit, stage: stageOf.get(claim) ?? null });
     }
   }
 
-  console.log(`${items.length} live tactics carry no stage, across ${inventory.length} skills.`);
-  if (!items.length) return;
+  const parkedNow = items.filter((i) => i.stage).length;
+  console.log(`${items.length} live tactics across ${inventory.length} skills `
+    + `(${parkedNow} parked, ${items.length - parkedNow} runnable today).`);
 
-  const gated = await regateAdopted({ items, client });
-  if (!gated.length) {
-    console.log('Nothing needs a gate — every live tactic is runnable today.');
+  // `--parked` scopes the pass to what is ALREADY behind a gate. That is the cheap,
+  // focused shape of this job: "a gate turned out to be mis-stated, recover what it
+  // wrongly hid." Re-judging all 476 also risks PARKING things that are fine today,
+  // which is a much larger blast radius than the question being asked.
+  const scoped = args.parked ? items.filter((i) => i.stage) : items;
+  if (args.parked) console.log(`--parked: re-judging the ${scoped.length} gated tactics only.`);
+  if (!scoped.length) return;
+
+  const changes = [];
+  for (let i = 0; i < scoped.length; i += REGATE_BATCH) {
+    const batch = scoped.slice(i, i + REGATE_BATCH);
+    process.stdout.write(`  batch ${Math.floor(i / REGATE_BATCH) + 1}/${Math.ceil(scoped.length / REGATE_BATCH)}: ${batch.length} tactics… `);
+    const got = await regateAdopted({ items: batch, client });
+    changes.push(...got);
+    console.log(`${got.length} moved`);
+  }
+  if (!changes.length) {
+    console.log('No stage changes — every live tactic is already behind the right gate.');
     return;
   }
 
+  const parked = changes.filter((c) => c.action === 'park');
+  const unparked = changes.filter((c) => c.action === 'unpark');
+  const reparked = changes.filter((c) => c.action === 'repark');
+
+  if (unparked.length) {
+    console.log(`\n── UNPARK → runnable today (${unparked.length}) ──`);
+    for (const g of unparked) {
+      console.log(`  ${g.skill}  [was ${g.previousStage}]\n    ${g.claim.slice(0, 96)}`);
+    }
+  }
   const byGate = {};
-  for (const g of gated) (byGate[g.stage] ??= []).push(g);
+  for (const g of [...parked, ...reparked]) (byGate[g.stage] ??= []).push(g);
   for (const [stage, list] of Object.entries(byGate)) {
     console.log(`\n── ${stage} (${list.length}) ──`);
-    for (const g of list) console.log(`  ${g.skill}\n    ${g.claim.slice(0, 96)}\n    ↳ ${g.reasoning}`);
+    for (const g of list) {
+      const from = g.previousStage ? ` [was ${g.previousStage}]` : '';
+      console.log(`  ${g.skill}${from}\n    ${g.claim.slice(0, 96)}\n    ↳ ${g.reasoning}`);
+    }
   }
-  console.log(`\n${gated.length} of ${items.length} tactics would be parked.`);
+  console.log(`\n${changes.length} of ${items.length} tactics would move: `
+    + `${parked.length} parked, ${unparked.length} un-parked, ${reparked.length} re-gated.`);
 
   if (!args.apply) {
     console.log('\nDry run — pass --apply to write the markers.');
@@ -647,15 +808,36 @@ async function runRegate({ client, args }) {
 
   // Group by skill so each file is read once, written once, and validated as a whole.
   const bySkill = {};
-  for (const g of gated) (bySkill[g.skill] ??= []).push(g);
+  for (const g of changes) (bySkill[g.skill] ??= []).push(g);
   let written = 0, failed = 0;
   for (const [name, list] of Object.entries(bySkill)) {
     const path = join(SKILLS_DIR, name, 'SKILL.md');
     const before = readFileSync(path, 'utf8');
     let after = before;
     try {
-      for (const g of list) after = insertStageMarker(after, g.claim, g.stage);
-      validateSkillEdit(before, after);
+      for (const g of list) {
+        // A repark is a remove-then-insert: insertStageMarker refuses a tactic that
+        // already carries one, so re-gating has to clear the old marker first.
+        if (g.action === 'unpark' || g.action === 'repark') after = removeStageMarker(after, g.claim);
+        if (g.stage) after = insertStageMarker(after, g.claim, g.stage);
+      }
+      // validateSkillEdit REFUSES an edit that drops a `**Stage:**` marker, because a
+      // parked tactic silently losing one walks straight into the fleet projection. That
+      // guard is right and stays on for every other path — but an un-park is exactly that
+      // removal, done on purpose, so it has to declare itself. `supersedes` is the hatch
+      // the guard's own error message names.
+      //
+      // Passed ONLY for a batch that actually contains an un-park, and never blanket:
+      // it disables the marker check for the whole file, so a run that merely re-gates
+      // or parks still gets the full guard. Safe here because the re-gate is pure text
+      // surgery (removeStageMarker / insertStageMarker, one claim at a time) with no LLM
+      // rewrite of the file that could lose an unrelated marker along the way.
+      const unparks = list.filter((g) => g.action === 'unpark');
+      const supersedes = unparks.length
+        ? `re-gate un-parked ${unparks.length} tactic(s) judged runnable today by the solo `
+          + `operator: ${unparks.map((g) => `"${g.claim.slice(0, 60)}…" (was ${g.previousStage})`).join('; ')}`
+        : null;
+      validateSkillEdit(before, after, { supersedes });
     } catch (err) {
       console.error(`  ✗ ${name}: ${err.message}`);
       failed++;
@@ -663,22 +845,40 @@ async function runRegate({ client, args }) {
     }
     writeFileSync(path, after);
     written += list.length;
-    console.log(`  ✓ ${name}: +${list.length} staged`);
+    const n = (a) => list.filter((g) => g.action === a).length;
+    console.log(`  ✓ ${name}: ${list.length} moved (${n('park')} parked, ${n('unpark')} un-parked, ${n('repark')} re-gated)`);
   }
-  console.log(`\nStaged ${written} tactics across ${Object.keys(bySkill).length - failed} skills.` +
+  console.log(`\nMoved ${written} tactics across ${Object.keys(bySkill).length - failed} skills.` +
     (failed ? ` ${failed} skill(s) refused — see above.` : ''));
   syncContextMirror();
 
-  // This runs unattended on the 1st and mutates every skill it touches. A parked tactic
-  // disappears from the live projection, so a run that reports nothing is a change nobody
-  // can trace six weeks later — the same reasoning the cluster-hold agents follow.
-  // Deferred, never immediate: parking is the policy working, not a failure.
+  // SCHEDULED monthly, on the 1st, through scripts/marketing-regate-pr.mjs (scheduler.js step 15),
+  // which runs this mode inside a throwaway worktree and ships the result as a merged PR. Never
+  // schedule `--regate --apply` against the live checkout: the skills are tracked files, and an
+  // uncommitted edit there aborted the deploy pull on 2026-11-01. (A 2026-09-07 comment here said
+  // "NOT SCHEDULED"; that was true then and stopped being true when step 15 was added. Read
+  // scheduler.js and `crontab -l`, never a comment.)
+  //
+  // It still notifies, because it is hand-run rarely and mutates every skill it touches: a
+  // parked tactic disappears from the live projection, and an un-parked one appears in it,
+  // so a run that reports nothing is a change nobody can trace six weeks later — the same
+  // reasoning the cluster-hold agents follow. Deferred, never immediate: re-gating is the
+  // policy working, not a failure.
   await notify({
-    subject: `Marketing re-gate: ${written} tactic${written === 1 ? '' : 's'} parked` +
-      (failed ? ` (${failed} skill${failed === 1 ? '' : 's'} refused)` : ''),
+    subject: `Marketing re-gate: ${parked.length} parked, ${unparked.length} un-parked`
+      + (reparked.length ? `, ${reparked.length} re-gated` : '')
+      + (failed ? ` (${failed} skill${failed === 1 ? '' : 's'} refused)` : ''),
     body: [
-      `${items.length} live tactics carried no stage; ${gated.length} needed one.`,
+      `${items.length} live tactics re-judged; ${changes.length} moved.`,
       '',
+      // Un-parked first: it is the direction that ADDS to the live projection, so it is
+      // the half a reader has to see. Parking hides a tactic quietly; un-parking changes
+      // what the fleet will actually propose tomorrow.
+      ...(unparked.length ? [
+        `UN-PARKED → now live in the projection (${unparked.length}):`,
+        ...unparked.map((g) => `  - ${g.skill} [was ${g.previousStage}]: ${g.claim.slice(0, 90)}`),
+        '',
+      ] : []),
       ...Object.entries(byGate).map(([stage, list]) =>
         `${stage} (${list.length}):\n` + list.map((g) => `  - ${g.skill}: ${g.claim.slice(0, 90)}`).join('\n')),
       '',
@@ -1075,6 +1275,10 @@ async function main() {
 
   if (args.regate) {
     return runRegate({ client, args });
+  }
+
+  if (args.rescore) {
+    return runRescore({ client, args });
   }
 
   if (args.readjudicate) {

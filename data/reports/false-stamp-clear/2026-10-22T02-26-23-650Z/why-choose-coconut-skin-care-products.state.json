@@ -1,0 +1,36 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:20:41.707Z",
+    "last_crawled": "2026-10-12T21:08:08Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/why-choose-coconut-skin-care-products",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 559604236458,
+  "shopify_handle": "why-choose-coconut-skin-care-products",
+  "shopify_publish_at": "2022-12-16T06:05:35-07:00",
+  "legacy_synced_at": "2026-04-09T23:17:12.624Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 17, 1035 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:46.705Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "last_refreshed_at": "2026-07-14T12:08:16.541Z",
+  "refreshed_at": "2026-10-12T15:21:45.945Z",
+  "last_material_edit": {
+    "at": "2026-10-12T15:21:45.946Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:53:44.305Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

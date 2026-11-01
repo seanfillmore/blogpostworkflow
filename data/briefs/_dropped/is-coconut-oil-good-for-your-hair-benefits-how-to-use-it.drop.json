@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
+  "keyword": "is coconut oil good for your hair benefits how to use it",
+  "dropped_at": "2026-09-21T16:00:30.338Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-00-30-337Z-2378519",
+  "reason": "post killed: no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

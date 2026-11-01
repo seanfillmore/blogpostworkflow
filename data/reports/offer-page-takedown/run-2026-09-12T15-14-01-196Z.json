@@ -1,0 +1,13 @@
+{
+  "at": "2026-09-12T15:14:04.320Z",
+  "page": "gid://shopify/Page/108276613290",
+  "handle": "offer-page",
+  "wasPublished": true,
+  "unpublished": true,
+  "redirect": {
+    "id": "gid://shopify/UrlRedirect/461206159530",
+    "path": "/pages/offer-page",
+    "target": "/products/coconut-soap"
+  },
+  "reason": "Operator 2026-09-12: \"That page should never have been published, take it down.\" Leftover Replo template copy: scents RSC does not make, a Hair Care Kit, and a disease claim. No menu/body/theme links, 0 GSC clicks/impressions and 0 orders in 90d. Redirect kept for any off-site (e.g. old Meta ad) link. Restore: pageUpdate isPublished true, then urlRedirectDelete."
+}

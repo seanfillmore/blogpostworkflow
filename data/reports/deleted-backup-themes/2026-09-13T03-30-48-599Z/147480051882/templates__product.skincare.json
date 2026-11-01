@@ -1,0 +1,86 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "vendor": {
+          "type": "text",
+          "settings": {
+            "text": "{{ product.vendor }}",
+            "text_style": "subtitle"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "rating": {
+          "type": "rating",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button"
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true
+          }
+        },
+        "key_benefits": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "star",
+            "heading": "Key benefits",
+            "content": "<p>Highlight 3-5 hero benefits, e.g. hydration, brightening, anti-aging.<\/p>"
+          }
+        },
+        "ingredients": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "leaf",
+            "heading": "Ingredients",
+            "content": "<p>Full ingredient list with INCI names. Bold actives, link to ingredient glossary.<\/p>"
+          }
+        },
+        "how_to_use": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "clipboard",
+            "heading": "How to use",
+            "content": "<p>Step-by-step routine: AM\/PM, frequency, layer order, patch test note.<\/p>"
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "rating",
+        "price",
+        "variant_picker",
+        "buy_buttons",
+        "key_benefits",
+        "ingredients",
+        "how_to_use",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

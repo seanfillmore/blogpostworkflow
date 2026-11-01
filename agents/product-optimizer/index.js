@@ -43,6 +43,7 @@
  */
 
 import Anthropic from '../../lib/anthropic.js';
+import { buildPageMetricsMap, canonicalPageKey } from '../../lib/gsc-url-aggregate.js';
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -56,7 +57,12 @@ import {
   updateCustomCollection,
   updateSmartCollection,
   upsertMetafield,
+  getMainThemeId,
+  getThemeAsset,
 } from '../../lib/shopify.js';
+import {
+  ingredientAbsenceCheck, ingredientPromptBlock, ingredientTextFromTemplate,
+} from '../../lib/ingredient-absence-claims.js';
 import * as gsc from '../../lib/gsc.js';
 import { getKeywordIdeas } from '../../lib/dataforseo.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
@@ -76,6 +82,7 @@ import {
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -354,9 +361,41 @@ async function pickBestKeyword(url, fallbackTitle) {
   return { keyword: (fallbackTitle || '').toLowerCase(), gscData: null, source: 'title-fallback' };
 }
 
+// ── ingredient grounding ──────────────────────────────────────────────────────
+//
+// On 2026-09-10 this agent published "no water" / "no water padding" for
+// coconut-lotion, whose Ingredients tab lists purified spring water first. The
+// prompt carried no ingredient list, so the model guessed. Every product prompt
+// now carries the list the shopper reads on the live page, and every product
+// generation is gated against denying any of it (lib/ingredient-absence-claims.js).
+// It is read from the product's LIVE template because that is the copy a shopper
+// can check; a product with no Ingredients tab gets no check and a prompt that
+// forbids guessing.
+
+let themeIdPromise = null;
+const templateIngredients = new Map();
+
+async function productIngredients(product) {
+  const suffix = product?.template_suffix;
+  if (!suffix) return null;
+  if (!templateIngredients.has(suffix)) {
+    templateIngredients.set(suffix, (async () => {
+      try {
+        themeIdPromise ??= getMainThemeId();
+        const raw = await getThemeAsset(await themeIdPromise, `templates/product.${suffix}.json`);
+        return ingredientTextFromTemplate(raw);
+      } catch (e) {
+        console.warn(`  (ingredient list unavailable for template "${suffix}": ${e.message})`);
+        return null;
+      }
+    })());
+  }
+  return templateIngredients.get(suffix);
+}
+
 // ── claude rewriter ───────────────────────────────────────────────────────────
 
-async function rewriteProduct(product, keyword, gscData, constraint = '') {
+async function rewriteProduct(product, keyword, gscData, constraint = '', ingredients = null) {
   const currentDesc = stripHtml(product.body_html).slice(0, 2000);
   const currentWords = wordCount(product.body_html);
   const gscNote = gscData?.impressions > 0
@@ -377,7 +416,7 @@ async function rewriteProduct(product, keyword, gscData, constraint = '') {
   } catch { /* ignore */ }
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 2048,
     messages: [{
       role: 'user',
@@ -387,6 +426,8 @@ PRODUCT: ${product.title}
 TARGET KEYWORD: "${keyword}"
 CURRENT DESCRIPTION (${currentWords} words): ${currentDesc || '(none)'}
 ${gscNote}${reviewNote}
+
+${ingredientPromptBlock(ingredients)}
 
 Write an improved product description that:
 1. Opens with a compelling hook that includes the target keyword naturally
@@ -434,7 +475,7 @@ async function rewriteCollection(collection, keyword, gscData, constraint = '') 
     : `No GSC data yet for this page — fresh optimization opportunity.`;
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 2048,
     messages: [{
       role: 'user',
@@ -503,7 +544,7 @@ function formatGroundingBlock(ground) {
   return lines.length ? `\n${lines.join('\n')}\n` : '';
 }
 
-async function rewriteProductMeta(product, topQueries, gscData, ground, constraint = '') {
+async function rewriteProductMeta(product, topQueries, gscData, ground, constraint = '', ingredients = null) {
   const queriesFormatted = topQueries.slice(0, 5)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}, ${(q.ctr * 100).toFixed(1)}%`)
     .join('\n');
@@ -511,7 +552,7 @@ async function rewriteProductMeta(product, topQueries, gscData, ground, constrai
   const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -529,6 +570,8 @@ GSC DATA (last 90 days):
 TOP QUERIES:
 ${queriesFormatted}
 ${groundingBlock}
+${ingredientPromptBlock(ingredients)}
+
 Write improved meta tags only (no body content):
 - SEO title (50–60 chars, includes top keyword naturally)
 - Meta description (benefit-driven, includes keyword, ends with a call-to-action or value prop — see LENGTH LIMITS below)
@@ -567,7 +610,7 @@ async function rewritePageMeta(page, topQueries, gscData, constraint = '') {
     .join('\n');
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 1024,
     messages: [{
       role: 'user',
@@ -620,7 +663,7 @@ No explanation, no markdown fences.`,
 
 // ── product title rewriter (GSC-driven keyword enrichment) ──────────────────
 
-async function rewriteProductTitle(product, topQueries, gscData, ground, constraint = '') {
+async function rewriteProductTitle(product, topQueries, gscData, ground, constraint = '', ingredients = null) {
   const queriesFormatted = topQueries.slice(0, 8)
     .map((q) => `"${q.keyword}" — ${q.impressions} impr, pos #${Math.round(q.position)}`)
     .join('\n');
@@ -628,7 +671,7 @@ async function rewriteProductTitle(product, topQueries, gscData, ground, constra
   const groundingBlock = formatGroundingBlock(ground);
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -645,6 +688,7 @@ GSC DATA (last 90 days for this product page):
 TOP SEARCH QUERIES (what people search to find this product):
 ${queriesFormatted}
 ${groundingBlock}
+${ingredientPromptBlock(ingredients)}
 
 Write an improved product title that:
 1. Includes the highest-volume relevant keyword naturally
@@ -681,7 +725,7 @@ No explanation, no markdown fences.`,
 function selectTitleCandidates(products, gscMap, activeQueueSlugs) {
   return products
     .map((p) => {
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 50) return null;
       if (activeQueueSlugs.has(p.handle)) return null;
@@ -722,13 +766,8 @@ async function optimizeTitlesMode() {
   const topPages = await gsc.getTopPages(500, 90);
   console.log('done');
 
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   const active = activeSlugs();
   const filtered = productPages.filter((p) => !EXCLUDED_HANDLES.has(p.handle));
@@ -768,6 +807,7 @@ async function optimizeTitlesMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
+      const ingredients = await productIngredients(c.raw);
 
       // ── health-claim gate ────────────────────────────────────────────────
       // The single highest-exposure string this fleet writes: a PRODUCT TITLE
@@ -775,8 +815,12 @@ async function optimizeTitlesMode() {
       // Shopify puts in the <title> tag, and it is what a shopper reads first.
       // Nothing checked it before 2026-08-24.
       const gated = await gateGeneratedCopy(
-        (constraint) => rewriteProductTitle(c, topQueries, c.gsc, ground, constraint),
-        { extract: (p) => ({ 'product title': p?.new_title }), required: ['product title'] },
+        (constraint) => rewriteProductTitle(c, topQueries, c.gsc, ground, constraint, ingredients),
+        {
+          extract: (p) => ({ 'product title': p?.new_title }),
+          required: ['product title'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
+        },
       );
       if (!gated.ok) {
         if (recordGateSkip(gateSkipped, { label: c.title, pageUrl: c.url, gated }, limit)) break;
@@ -850,7 +894,7 @@ function productIndexContext(product, idx) {
 function selectProductMetaCandidates(products, gscMap, activeQueueSlugs) {
   return products
     .map((p) => {
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 100) return null;
       if (gscEntry.ctr >= 0.01) return null;
@@ -920,13 +964,8 @@ async function fromGscMode() {
   console.log('done');
 
   // Build URL → GSC map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // Filter candidates
   const active = activeSlugs();
@@ -974,14 +1013,16 @@ async function fromGscMode() {
     try {
       const topQueries = await gsc.getPageKeywords(c.url, 10, 90);
       const ground = buildPromptGrounding(c.idx.entry, c.idx.clusterEntries);
+      const ingredients = await productIngredients(c.raw);
       const gated = await gateGeneratedCopy(
         (constraint) => rewriteProductMeta(
           { title: c.title, currentMetaTitle: null, currentMetaDesc: null },
-          topQueries, c.gsc, ground, constraint,
+          topQueries, c.gsc, ground, constraint, ingredients,
         ),
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description }),
           required: ['title'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.
@@ -1038,13 +1079,8 @@ async function pagesFromGscMode() {
   console.log('done');
 
   // Build URL → GSC map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // One builder, aggregated by page — see lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // Non-commercial pages that should never be rewritten for SEO
   const SKIP_HANDLES = new Set([
@@ -1064,7 +1100,7 @@ async function pagesFromGscMode() {
   const candidates = pageEntries
     .map((p) => {
       if (SKIP_HANDLES.has(p.handle)) return null;
-      const gscEntry = gscMap.get(p.url);
+      const gscEntry = gscMap.get(canonicalPageKey(p.url));
       if (!gscEntry) return null;
       if (gscEntry.impressions < 50) return null;
       if (gscEntry.ctr >= 0.02) return null;
@@ -1223,7 +1259,7 @@ async function expandFaqMode() {
   // own voice is precisely what FDA intended-use doctrine reads as a drug claim.
   const generateFaq = async (constraint = '') => {
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{
       role: 'user',
@@ -1565,15 +1601,17 @@ async function main() {
   const topPages = await gsc.getTopPages(500, 90);
   console.log('done');
 
-  // Build URL → best keyword + metrics map
-  const gscMap = new Map();
-  for (const p of gscPages) {
-    if (!gscMap.has(p.url)) gscMap.set(p.url, { keyword: p.keyword, ...p });
-  }
-  // Fill in any remaining with top pages data
-  for (const p of topPages) {
-    if (!gscMap.has(p.page)) gscMap.set(p.page, { keyword: p.page.split('/').pop().replace(/-/g, ' '), url: p.page, ...p });
-  }
+  // Build URL → best keyword + metrics map.
+  //
+  // AGGREGATED BY PAGE, not first-wins on the exact URL. A Shopify product has
+  // many URLs — Shopify's product_sync rows carry ?variant=…&utm_content=
+  // sag_organic — and first-wins kept whichever arrived first. Measured on
+  // production 2026-09-09 that made the HERO PRODUCT invisible: coconut-lotion
+  // (65% of store revenue) scored on its clean URL's 1 impression / position 26
+  // while 407 impressions at position 1 sat on its variant URLs, so it ranked
+  // below six products from the two least efficient clusters and had never been
+  // selected. See lib/gsc-url-aggregate.js.
+  const gscMap = buildPageMetricsMap(gscPages, topPages);
 
   // ── Score and select candidates ────────────────────────────────────────────
 
@@ -1587,7 +1625,7 @@ async function main() {
     })
     .map((page) => {
       const wc = wordCount(page.body_html);
-      const gscEntry = gscMap.get(page.url);
+      const gscEntry = gscMap.get(canonicalPageKey(page.url));
       const isThin = wc < minWords;
       const hasGscData = !!gscEntry;
       // Prioritize: thin content with impressions > thin without > thick with very low CTR
@@ -1654,13 +1692,15 @@ async function main() {
       // SEO fields. Measured against the current live copy on 2026-08-24: 1 of
       // 19 product bodies and 32 of 82 collection bodies carry blocking-tier
       // language today, so the retry earns its keep here.
+      const ingredients = candidate.type === 'product' ? await productIngredients(candidate.raw) : null;
       const gated = await gateGeneratedCopy(
         (constraint) => (candidate.type === 'product'
-          ? rewriteProduct(candidate.raw, keyword, gscData, constraint)
+          ? rewriteProduct(candidate.raw, keyword, gscData, constraint, ingredients)
           : rewriteCollection(candidate.raw, keyword, gscData, constraint)),
         {
           extract: (p) => ({ title: p?.seo_title, meta: p?.seo_description, body: p?.body_html }),
           required: ['title', 'body'],
+          extraChecks: [ingredientAbsenceCheck(ingredients)],
           // `meta` is the SERP snippet; the truncation check rides inside the
           // existing two-attempt budget (lib/seo-copy-length.js). `title` is not
           // declared — the theme appends a suffix to the rendered <title>.

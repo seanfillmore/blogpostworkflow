@@ -16,6 +16,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { getSearchVolume } from '../../lib/dataforseo.js';
 import { loadIndex, lookupByKeyword, topAmazonValidatedForAds } from '../../lib/keyword-index/consumer.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -279,7 +280,7 @@ When Previous Recommendation History is provided:
 
   process.stdout.write('  Running AI analysis... ');
   const response = await client.messages.create({
-    model: 'claude-opus-4-6',
+    model: LLM_MODELS.flagship,
     max_tokens: 4096,
     system: systemPrompt,
     messages: [{ role: 'user', content: parts }],

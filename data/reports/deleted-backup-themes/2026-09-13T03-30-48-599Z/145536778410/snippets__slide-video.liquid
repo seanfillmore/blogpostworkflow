@@ -1,0 +1,34 @@
+<div class="slideshow__image-wrapper media-wrapper banner__media">
+  <div class="slideshow__image media media--{{ section.settings.image_ratio }} media-mobile--{{ section.settings.mobile_image_ratio }}">
+    {%- if block.settings.video != blank -%}
+      <video-section data-video-hero data-type="mp4" data-loop="1">
+        {{
+          block.settings.video
+          | video_tag:
+            autoplay: true,
+            loop: true,
+            muted: true,
+            controls: false,
+            preload: 'auto',
+            playsinline: true
+        }}
+      </video-section>
+    {%- elsif block.settings.video_url != blank -%}
+      <video-section
+        data-video-hero
+        data-type="{{ block.settings.video_url.type }}"
+        data-video-id="{{ block.settings.video_url.id }}"
+        data-loop="1"
+      >
+      </video-section>
+    {%- else -%}
+      <div class="slideshow__image slideshow__image--placeholder media media--{{ section.settings.image_ratio }} media-mobile--{{ section.settings.mobile_image_ratio }}">
+        {%- assign current = position | modulo: 2 | plus: 1 -%}
+        {{ 'lifestyle-' | append: current | placeholder_svg_tag: 'placeholder' }}
+      </div>
+    {%- endif -%}
+  </div>
+  {%- if block.settings.button_link != blank -%}
+    <a href="{{ block.settings.button_link }}" class="full-unstyled-link">&nbsp;</a>
+  {%- endif -%}
+</div>

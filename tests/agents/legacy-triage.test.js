@@ -83,3 +83,29 @@ test('staleBlockedSlugs tolerates missing metas and empty input', () => {
   assert.deepEqual(staleBlockedSlugs([], () => ({})), []);
   assert.deepEqual(staleBlockedSlugs(null, () => ({})), []);
 });
+
+import { lockStillHolds, WINNER_MIN_IMPRESSIONS, LOCK_KEEP_MAX_POSITION } from '../../agents/legacy-triage/index.js';
+
+// 2026-09-21: six "winners" locked at 46-195 impressions per 90 days sat on the
+// post-performance card as low-demand pages nothing could refresh or retire.
+test('a page-1 ranking on almost no demand is not a winner', () => {
+  const r = classify({ ...base, meta: {}, indexState: 'indexed', gscMetrics: { position: 5.7, impressions: 87 } });
+  assert.notEqual(r.bucket, 'winner');
+  const w = classify({ ...base, meta: {}, indexState: 'indexed', gscMetrics: { position: 5.9, impressions: 181102 } });
+  assert.equal(w.bucket, 'winner');
+});
+
+test('winner floor is the low-demand line, so the two can never both hold', () => {
+  assert.equal(WINNER_MIN_IMPRESSIONS, 200);
+});
+
+test('lock re-check: demand and still ranking, with hysteresis past page 1', () => {
+  assert.equal(lockStillHolds({ position: 11.2, impressions: 16666 }), true, 'sls-free-toothpaste-list stays protected');
+  assert.equal(lockStillHolds({ position: 5.7, impressions: 87 }), false, 'coconut-oil-toothpaste: no demand');
+  assert.equal(lockStillHolds({ position: 34.7, impressions: 2065 }), false, 'fell off page 2');
+  assert.equal(lockStillHolds({ position: LOCK_KEEP_MAX_POSITION, impressions: 200 }), true);
+});
+
+test('an unreadable measurement keeps the lock', () => {
+  assert.equal(lockStillHolds({ position: null, impressions: null }), true);
+});

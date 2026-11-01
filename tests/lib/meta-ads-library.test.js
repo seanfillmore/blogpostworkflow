@@ -93,3 +93,33 @@ assert.equal(slugifyPageName('  spaces  '), 'spaces');
 assert.equal(extractNextCursor({}), null);
 
 console.log('✓ meta-ads-library unit tests pass');
+
+// authHint — names the user token on the two Ad Library auth subcodes
+{
+  const { authHint } = await import('../../lib/meta-ads-library.js');
+  assert.match(authHint('{"error":{"error_subcode":2332004}}'), /FACEBOOK_ACCESS_TOKEN/);
+  assert.match(authHint('{"error":{"error_subcode":2332002}}'), /FACEBOOK_ACCESS_TOKEN/);
+  assert.equal(authHint('{"error":{"code":4,"message":"rate limit"}}'), '');
+}
+
+// the Ad Library reads FACEBOOK_ACCESS_TOKEN, never the app or system token
+// (both measured to fail on ads_archive, 2026-10-05)
+{
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../../lib/meta-ads-library.js', import.meta.url), 'utf8');
+  const decl = src.split('\n').find(l => l.startsWith('const ACCESS_TOKEN'));
+  assert.match(decl, /FACEBOOK_ACCESS_TOKEN/);
+  assert.doesNotMatch(decl, /META_APP_ACCESS_TOKEN|META_USER_ACCESS_TOKEN/);
+}
+
+// nextPageUrl — page 2 keeps the search, only the cursor changes
+{
+  const { nextPageUrl } = await import('../../lib/meta-ads-library.js');
+  const first = buildAdArchiveUrl({ searchTerms: 'natural deodorant', adReachedCountries: ['US'] });
+  const next = new URL(nextPageUrl(first, 'CURSOR2'));
+  assert.equal(next.searchParams.get('search_terms'), 'natural deodorant');
+  assert.equal(next.searchParams.get('after'), 'CURSOR2');
+  const third = new URL(nextPageUrl(next.toString(), 'CURSOR3'));
+  assert.equal(third.searchParams.get('after'), 'CURSOR3');
+  assert.equal(third.searchParams.getAll('after').length, 1);
+}

@@ -394,3 +394,78 @@ test('every rule composes without ever exceeding the limit or emptying the title
     assert.equal(shortenToRenderedLimit(out), out, `"${out}" is not idempotent`);
   }
 });
+
+test('the hand-authored title overrides fit and are compliant', async () => {
+  // Pinned here rather than trusted at run time: these two are the cases a
+  // shortener must not touch (raw HTML in the tag; a trim ending on a dangling
+  // adjective), so they are hand-authored — and a hand-authored value still has
+  // to clear the same gates as a generated one.
+  const { checkSeoCopy } = await import('../../lib/seo-copy-health-gate.js');
+  for (const t of [
+    'Coconut Oil As A Toothpaste',
+    'Boka Toothpaste Alternative',
+    // 'Best Body Lotion for Dry, Irritated Skin' was here until 2026-09-20. Its
+    // page was deleted and 301'd that day — it was live (not the draft the
+    // override claimed) and positioned a cosmetic FOR a disease.
+    // Added 2026-09-20 — both trim to a dangling fragment ("…What They",
+    // "…Best Natural, Affordable") that tidyTail cannot reach, because these
+    // titles are title case and its word list is lower-case by design.
+    'Coconut Oil Fatty Acids Explained',
+    'Best Cheap Natural Lip Balms',
+  ]) {
+    assert.equal(checkCopyLength({ title: t }, { title: 'title' }).ok, true, `${t} is too long rendered`);
+    assert.equal(checkSeoCopy({ title: t }).ok, true, `${t} trips the health gate`);
+    // And they must be stable under the shortener — a later sweep must not
+    // re-trim an operator's chosen wording.
+    assert.equal(shortenToRenderedLimit(t), t, `${t} is not stable under the shortener`);
+  }
+});
+
+test('a title-cased pronoun or article at the end is dangling in ANY case', () => {
+  // These are real minted-title outputs. "Your", "You" and "How" are capitalised
+  // by title case, so the lower-case-only list cannot see them — hence the
+  // second, case-insensitive list.
+  assert.equal(
+    shortenToRenderedLimit('The Ultimate Guide To Moisturizing Your Skin Every Day – Real Skin Care'),
+    'The Ultimate Guide To Moisturizing',
+  );
+  assert.equal(
+    shortenToRenderedLimit('Natural Soap Bar: The Clean Skin Guide You Have Been Missing – Real Skin Care'),
+    'Natural Soap Bar: The Clean Skin Guide',
+  );
+});
+
+test('the always-dangling list must NOT swallow a real particle', () => {
+  // The counter-check that bounds the list above. "for" is deliberately absent
+  // from it, so "What to Look For" survives; adding "for" would silently start
+  // producing "…What to Look".
+  assert.equal(
+    shortenToRenderedLimit('Best Organic Toothpaste: What to Look For & Why It | | Real – Real Skin Care'),
+    'Best Organic Toothpaste: What to Look For',
+  );
+});
+
+import { shortenToRenderedLimit as shortenQ, renderTitle as renderQ } from '../../lib/seo-copy-length.js';
+
+// 2026-09-21: 11 live title_tags minted by this shortener ended in a title-case
+// question stub — "SLS Free Toothpaste: Top Picks & What" on the biggest page.
+test('no title ends in an orphaned question stub after a clause break', () => {
+  for (const t of [
+    'Is Aluminum in Deodorant Dangerous? What You Need to Know',
+    'Turmeric Soap: Benefits, Uses & What to Look For',
+    'Probiotic Deodorant: What It Is & How It Works',
+    'Natural Antiperspirant: What Works & Why It Matters',
+    'Unscented Deodorant: What It Is and Why It Works',
+    'Charcoal Toothpaste: Does It Work & Is It Safe?',
+    'No Fluoride Toothpaste: What to Use & Why It Works',
+  ]) {
+    const s = shortenQ(t);
+    assert.doesNotMatch(s, /(?:[&,?]|\band)\s*(?:what|why|how|is|does)(?:\s+it)?$/i, `${t} → ${s}`);
+    assert.ok(renderQ(s).length <= 60, s);
+  }
+});
+
+test('a complete "What to Look For" phrase is never stripped', () => {
+  assert.equal(shortenQ('Best Organic Toothpaste: What to Look For & Why It Matters'), 'Best Organic Toothpaste: What to Look For');
+  assert.equal(shortenQ('Is Aluminum in Deodorant Dangerous? What You Need to Know'), 'Is Aluminum in Deodorant Dangerous?');
+});

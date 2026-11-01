@@ -1,0 +1,36 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:03:31.342Z",
+    "last_crawled": "2026-10-13T20:43:08Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-hello-toothpaste-alternatives-2025",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562333974698,
+  "shopify_handle": "best-hello-toothpaste-alternatives-2025",
+  "shopify_publish_at": "2025-06-17T10:00:02-06:00",
+  "legacy_synced_at": "2026-04-09T23:17:12.636Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 1045 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:28.374Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "refreshed_at": "2026-10-11T15:10:07.684Z",
+  "last_material_edit": {
+    "at": "2026-10-11T15:10:07.686Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:44:28.258Z",
+    "reasons": [
+      "1 internal link issue(s)",
+      "content blockers: ingredient accuracy"
+    ]
+  }
+}

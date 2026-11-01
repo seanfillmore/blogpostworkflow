@@ -10,6 +10,10 @@
  *   node agents/legacy-triage/index.js
  *   node agents/legacy-triage/index.js --dry-run
  *   node agents/legacy-triage/index.js --force   # re-triage already-bucketed posts
+ *   node agents/legacy-triage/index.js --recheck-locks [--dry-run]
+ *       re-check ONLY currently locked posts against real 90-day demand and
+ *       unlock those that no longer hold a lock (see lockStillHolds). Touches no
+ *       other post's bucket, so it cannot enrol anything new into a paid rebuild.
  */
 
 import { readFileSync, writeFileSync, existsSync, readdirSync, mkdirSync } from 'node:fs';
@@ -17,7 +21,8 @@ import { join, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
-import { listAllSlugs, getPostMeta as readPostMeta, getMetaPath, getContentPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta as readPostMeta, getMetaPath, getContentPath, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { LOW_DEMAND_IMPRESSIONS_PER_90D } from '../../lib/peer-yield.js';
 import { loadDeviceWeights, effectivePosition } from '../../lib/device-weights.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -26,6 +31,7 @@ const REPORTS_DIR = join(ROOT, 'data', 'reports', 'legacy-triage');
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
 const FORCE = args.includes('--force');
+const RECHECK_LOCKS = args.includes('--recheck-locks');
 
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'site.json'), 'utf8'));
 const CANONICAL_ROOT = (config.url || '').replace(/\/$/, '');
@@ -127,6 +133,30 @@ export const BROKEN_STATES = new Set(['excluded_noindex', 'excluded_robots', 'ex
  */
 const LIVE_STATE_WINS = new Set(['indexed', 'not_found', 'crawled_not_indexed', 'discovered_not_crawled']);
 
+/** Impressions per 90 days a page must carry to be locked as a winner. */
+export const WINNER_MIN_IMPRESSIONS = LOW_DEMAND_IMPRESSIONS_PER_90D;
+
+/**
+ * Worst position at which an EXISTING lock is kept. Getting a lock needs page 1;
+ * keeping one needs page 1-2. The gap is hysteresis: without it a winner
+ * drifting between positions 10 and 11 would lock and unlock on every run.
+ * Measured 2026-09-21: `sls-free-toothpaste-list` holds 16,666 impressions at
+ * position 11.2 — a page worth protecting that a strict "page 1 or unlock" rule
+ * would have exposed to a body rewrite.
+ */
+export const LOCK_KEEP_MAX_POSITION = 20;
+
+/**
+ * Does a currently locked post still deserve its lock? Real demand AND still
+ * ranking. An UNKNOWN reading keeps the lock — "could not measure" is never
+ * evidence a winner stopped winning (same rule as lib/post-lock.js).
+ */
+export function lockStillHolds({ position, impressions } = {}) {
+  if (impressions == null) return true;
+  if (impressions < WINNER_MIN_IMPRESSIONS) return false;
+  return position != null && position <= LOCK_KEEP_MAX_POSITION;
+}
+
 export function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
   if (BROKEN_STATES.has(indexState)) {
     return { bucket: 'broken', reason: `Indexing state: ${indexState}. Technical fix required.` };
@@ -150,8 +180,17 @@ export function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
   const impressions = gscMetrics?.impressions ?? 0;
   const isIndexed = indexState === 'indexed' || impressions > 0;
 
-  if (isIndexed && position != null && position <= 10 && impressions >= 10) {
+  // A winner must rank on page 1 AND carry real demand. The floor was 10
+  // impressions in 90 days, which locked pages at position 5 with 63
+  // impressions: nothing to protect, and a lock never expired, so they could
+  // never be refreshed or retired. The floor is lib/peer-yield.js's low-demand
+  // line, so "winner" and "low demand" can never both be true of one page.
+  if (isIndexed && position != null && position <= 10 && impressions >= WINNER_MIN_IMPRESSIONS) {
     return { bucket: 'winner', reason: `Position ${Math.round(position)}, ${impressions} impressions. Page 1 — auto-locked.` };
+  }
+
+  if (isIndexed && position != null && position <= 10) {
+    return { bucket: 'rising', reason: `Position ${Math.round(position)} but only ${impressions} impressions in 90 days — too little demand to protect with a lock. Meta-only candidate.` };
   }
 
   if (isIndexed && position != null && position >= 11 && position <= 30 && impressions >= 10) {
@@ -177,7 +216,53 @@ export function classify({ meta, indexState, rankEntry, gscMetrics, words }) {
   return { bucket: 'rising', reason: `Position ${Math.round(position)}, ${impressions} impressions. Default: meta-only.` };
 }
 
+function unlockFields(reason) {
+  return { legacy_locked: false, legacy_lock_cleared_at: new Date().toISOString(), legacy_lock_cleared_reason: reason };
+}
+
+/**
+ * --recheck-locks: re-measure ONLY the locked posts and unlock those that fail
+ * lockStillHolds. A lock was stamped once and never re-examined, so a page
+ * locked on a thin reading stayed protected forever — six of them sat on the
+ * post-performance card as "almost no searches or visits" that nothing could
+ * refresh or retire. Other posts' buckets are untouched on purpose: a full
+ * re-triage can move posts into `flop`, which legacy-rebuilder spends on.
+ */
+async function recheckLocks() {
+  console.log(`\nLegacy Triage — re-check winner locks${DRY_RUN ? ' (DRY RUN)' : ''}\n`);
+  const rankData = loadRankData();
+  const indexStates = loadIndexingStates();
+  const unlocked = [];
+  let kept = 0, locked = 0;
+  for (const slug of listAllSlugs()) {
+    const meta = readPostMeta(slug);
+    if (!meta?.legacy_locked) continue;
+    locked++;
+    const url = toCanonicalUrl(meta);
+    const gscMetrics = url ? await loadGscPerformance(url) : null;
+    const rankEntry = rankData[slug] || (url ? rankData[url] : null) || null;
+    const position = rankEntry?.position ?? gscMetrics?.position ?? null;
+    const impressions = gscMetrics ? gscMetrics.impressions : null;
+    if (lockStillHolds({ position, impressions })) { kept++; continue; }
+    const { bucket, reason } = classify({ meta: { ...meta, slug }, indexState: indexStates[slug] || (url ? indexStates[url] : null), rankEntry, gscMetrics, words: wordCount(slug) });
+    const why = `lock re-check: ${impressions} impressions/90d at position ${position == null ? '?' : position.toFixed(1)} (keep needs ≥${WINNER_MIN_IMPRESSIONS} and ≤${LOCK_KEEP_MAX_POSITION})`;
+    unlocked.push({ slug, impressions, position, bucket });
+    console.log(`  ${DRY_RUN ? 'would unlock' : 'unlock'} ${slug} — ${why} → ${bucket}`);
+    if (!DRY_RUN) writePostMeta(slug, { ...unlockFields(why), legacy_bucket: bucket, legacy_triage_reason: reason, legacy_triaged_at: new Date().toISOString() });
+  }
+  console.log(`\n  Locked: ${locked} · kept: ${kept} · ${DRY_RUN ? 'would unlock' : 'unlocked'}: ${unlocked.length}`);
+  if (!DRY_RUN && unlocked.length) {
+    await notify({
+      subject: `Legacy Triage: ${unlocked.length} winner lock(s) released`,
+      body: unlocked.map((u) => `${u.slug}: ${u.impressions} impressions/90d, position ${u.position == null ? '?' : u.position.toFixed(1)} → ${u.bucket}`).join('\n'),
+      status: 'info',
+      category: 'seo',
+    }).catch(() => {});
+  }
+}
+
 async function main() {
+  if (RECHECK_LOCKS) return recheckLocks();
   console.log('\nLegacy Post Triage\n');
 
   mkdirSync(REPORTS_DIR, { recursive: true });
@@ -197,7 +282,6 @@ async function main() {
       // routing, so every post needs one. The legacy prefix on the field
       // names is historical; this now runs as a general triage pass.
       if (meta.legacy_bucket && !FORCE) continue;
-      meta._file = getMetaPath(slug);
       posts.push(meta);
     } catch { /* skip */ }
   }
@@ -246,13 +330,13 @@ async function main() {
     console.log(`  [${icon}] ${slug} — ${reason.slice(0, 80)}`);
 
     if (!DRY_RUN) {
-      meta.legacy_bucket = bucket;
-      meta.legacy_triage_reason = reason;
-      if (bucket === 'winner') meta.legacy_locked = true;
-      meta.legacy_triaged_at = new Date().toISOString();
-      const cleaned = { ...meta };
-      delete cleaned._file;
-      writeFileSync(meta._file, JSON.stringify(cleaned, null, 2));
+      // Through writePostMeta: it MERGES and routes these server-owned fields to
+      // state.json. The raw write this replaces serialised the MERGED view back
+      // into the git-tracked meta.json — the leak the meta/state split ended.
+      const changes = { legacy_bucket: bucket, legacy_triage_reason: reason, legacy_triaged_at: new Date().toISOString() };
+      if (bucket === 'winner') changes.legacy_locked = true;
+      else if (meta.legacy_locked) Object.assign(changes, unlockFields(`re-triaged as ${bucket}: ${reason}`));
+      writePostMeta(slug, changes);
     }
   }
 

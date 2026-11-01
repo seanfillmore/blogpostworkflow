@@ -2,7 +2,12 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 import {
   HEADROOM_BY_AWARENESS, scorePersona, scoreProof, scoreCommercial, scoreHeadroom, scoreBrief,
+  CEILING_ORDERS, REVENUE_CEILING_USD, REVENUE_POINTS,
 } from '../../lib/ad-brief-score.js';
+import { AOV_TRAILING_90D } from '../../lib/business-baseline.js';
+
+/** The module keeps COMMERCIAL_NEUTRAL private; the tests assert against its value. */
+const COMMERCIAL_NEUTRAL_FOR_TEST = 12;
 
 const P1 = { id: 'p1', evidence_count: 18, emotional_intensity: 9.2 };
 const P_WEAK = { id: 'p9', evidence_count: 1, emotional_intensity: 2 };
@@ -15,11 +20,16 @@ const ANGLE = {
 
 const REVIEWS = [{ body: 'I have tried prescription strength lotions, steroids, you name it, to no avail' }];
 
+// Migrated to the product basis 2026-09-21 with scoreCommercial itself. The SHAPE of the
+// signal is deliberately unchanged — lotion earning and growing, soap present but silent —
+// so every assertion built on this fixture still means what it was written to mean. The
+// entry-page fields are kept and deliberately CONTRADICT the product ones, so a regression
+// back to `revenue` fails loudly here rather than passing on a coincidence.
 const SEO = {
   clusters: [
-    { cluster: 'body lotion', revenue: 177.8, revenueDelta: 111.8 },
-    { cluster: 'lotion', revenue: 30, revenueDelta: -29.4 },
-    { cluster: 'soap', revenue: 0, revenueDelta: 0 },
+    { cluster: 'body lotion', revenue: 0, revenueDelta: 0, product_revenue_all_channels: 177.8, product_organic_revenue_delta: 111.8 },
+    { cluster: 'lotion', revenue: 0, revenueDelta: 0, product_revenue_all_channels: 30, product_organic_revenue_delta: -29.4 },
+    { cluster: 'soap', revenue: 900, revenueDelta: 900, product_revenue_all_channels: 0, product_organic_revenue_delta: 0 },
   ],
 };
 
@@ -108,37 +118,95 @@ test('a matched cluster with zero revenue and no momentum scores neutral, not ze
 // "body lotion" on the server was rev=0, delta=-25.2 the day this was found. That is
 // evidence of a real decline, not silence, and must score below the no-signal neutral.
 test('a matched cluster with zero revenue but genuine negative momentum scores low, not neutral', () => {
-  const DECLINING = { clusters: [{ cluster: 'body lotion', revenue: 0, revenueDelta: -25.2 }] };
+  const DECLINING = { clusters: [{ cluster: 'body lotion', product_revenue_all_channels: 0, product_organic_revenue_delta: -25.2 }] };
   const declining = scoreCommercial('coconut-lotion', DECLINING);
   assert.ok(declining < 12, `a real decline must score below the no-signal neutral, got ${declining}`);
 });
 
-// THE PRODUCT FIELDS ARE IGNORED, AND THAT IS A DECISION (2026-08-23).
+// THE BASIS IS THE PRODUCT FIGURE, AND THE CEILING WAS RE-DERIVED WITH IT (2026-09-21).
 //
-// The $0-cluster gate moved off entry-page attribution onto what a category's PRODUCTS
-// SOLD over 90 days, and `clusters[]` gained `product_organic_revenue` /
-// `product_revenue_all_channels` alongside the untouched `revenue`. This score was NOT
-// migrated: its $200 saturation ceiling was calibrated on entry-page figures, which
-// rarely reach it, and product figures usually do — so reading them without re-deriving
-// the ceiling would push most categories to the 20/20 cap and flatten the component.
-// See lib/ad-brief-score.js's scoreCommercial docstring.
-//
-// This test exists so the migration, when it happens, is deliberate rather than a side
-// effect of someone renaming a field.
-test('scoreCommercial reads the entry-page figure and ignores the product figures', () => {
-  const entryOnly = { clusters: [{ cluster: 'soap', revenue: 62.4, revenueDelta: 62.4 }] };
-  const withProduct = {
-    clusters: [{
-      cluster: 'soap', revenue: 62.4, revenueDelta: 62.4,
-      // The real 2026-08-23 production figures. The all-channel one is well past
-      // the $200 ceiling; the organic one is not, which is the point — swapping
-      // the field would change the score by a different amount per channel view,
-      // so which one to read is part of the deferred decision, not a detail.
-      product_organic_revenue: 123.7, product_revenue_all_channels: 324.85,
-    }],
+// This replaces the test that pinned the 2026-08-23 DEFERRAL. That deferral named two
+// conditions for migrating — move the field AND re-derive the $200 ceiling in the same
+// change, or most categories flatten at the 20/20 cap. Both are done, and these tests pin
+// the result so a later rename cannot quietly move it back to entry-page attribution.
+
+test('scoreCommercial reads the all-channel product figure, not the entry-page one', () => {
+  // Same cluster, the two bases far apart: an ad is not organic search, and the question
+  // "should we spend on an ad for this product" is answered by what the category SOLD.
+  const entryHeavy = {
+    clusters: [{ cluster: 'soap', revenue: 900, revenueDelta: 900, product_revenue_all_channels: 0 }],
   };
-  assert.equal(scoreCommercial('coconut-soap', withProduct), scoreCommercial('coconut-soap', entryOnly));
-  assert.ok(scoreCommercial('coconut-soap', entryOnly) < 25, 'and the entry-page figure has not saturated it');
+  const productHeavy = {
+    clusters: [{ cluster: 'soap', revenue: 0, revenueDelta: 0, product_revenue_all_channels: 400 }],
+  };
+  assert.ok(scoreCommercial('coconut-soap', productHeavy) > scoreCommercial('coconut-soap', entryHeavy),
+    'a category that SOLD must outrank one that merely landed traffic');
+  assert.equal(scoreCommercial('coconut-soap', entryHeavy), COMMERCIAL_NEUTRAL_FOR_TEST,
+    'an entry-page-only row now carries no product signal at all — neutral, not a high score');
+});
+
+test('the ceiling is derived in ORDERS through the measured AOV, never spelled in dollars', () => {
+  // Stated in orders so an AOV re-measurement cannot silently re-tune the component.
+  assert.equal(REVENUE_CEILING_USD, CEILING_ORDERS * AOV_TRAILING_90D);
+  assert.equal(CEILING_ORDERS, 7.5, 'a third of the store\'s 22 all-channel orders per 28 days');
+});
+
+test('the re-derived ceiling saturates nothing on the live report, where a naive swap saturates two', () => {
+  // The measured 2026-09-20 production figures. This is the assertion the deferral was
+  // really about: the field swap alone was never the safe half of the change.
+  const LIVE = [
+    { cluster: 'lotion', product_revenue_all_channels: 341.76, product_organic_revenue_delta: -200.9 },
+    { cluster: 'soap', product_revenue_all_channels: 329.15, product_organic_revenue_delta: 195 },
+    { cluster: 'toothpaste', product_revenue_all_channels: 93.26, product_organic_revenue_delta: 82.1 },
+    { cluster: 'deodorant', product_revenue_all_channels: 34.02, product_organic_revenue_delta: -25.5 },
+  ];
+  const seoImpact = { clusters: LIVE };
+  const revenueTerm = r => Math.min(r, REVENUE_CEILING_USD) / REVENUE_CEILING_USD * REVENUE_POINTS;
+
+  for (const c of LIVE) {
+    assert.ok(revenueTerm(c.product_revenue_all_channels) < REVENUE_POINTS,
+      `${c.cluster} must not saturate the re-derived ceiling`);
+    // ...whereas at the OLD $200 ceiling the two leaders both would have.
+  }
+  const naiveSaturated = LIVE.filter(c => c.product_revenue_all_channels >= 200).map(c => c.cluster);
+  assert.deepEqual(naiveSaturated, ['lotion', 'soap'],
+    'a naive field swap flattens the two leading categories together at 20/20');
+
+  // And the surviving order is monotone in what each category actually sold.
+  assert.ok(scoreCommercial('coconut-lotion', seoImpact) > scoreCommercial('natural-toothpaste', seoImpact));
+  assert.ok(scoreCommercial('natural-toothpaste', seoImpact) > scoreCommercial('coconut-deodorant', seoImpact));
+});
+
+test('momentum reads the product delta, and only its SIGN', () => {
+  // product_organic_revenue_delta is the only product-basis delta the report emits, so it
+  // is paired with an all-channel level on purpose — safe because no magnitude is read.
+  const base = { cluster: 'soap', product_revenue_all_channels: 100 };
+  const up = { clusters: [{ ...base, product_organic_revenue_delta: 0.01 }] };
+  const bigUp = { clusters: [{ ...base, product_organic_revenue_delta: 9999 }] };
+  const flat = { clusters: [{ ...base, product_organic_revenue_delta: 0 }] };
+  assert.equal(scoreCommercial('coconut-soap', up), scoreCommercial('coconut-soap', bigUp),
+    'the growth bonus is a flag, not a magnitude');
+  assert.ok(scoreCommercial('coconut-soap', up) > scoreCommercial('coconut-soap', flat));
+
+  // The entry-page delta must no longer move anything.
+  const entryDeltaOnly = { clusters: [{ ...base, product_organic_revenue_delta: 0, revenueDelta: 500 }] };
+  assert.equal(scoreCommercial('coconut-soap', entryDeltaOnly), scoreCommercial('coconut-soap', flat));
+});
+
+test('a cluster with no product fields at all is no-signal, not worthless', () => {
+  // `coconut oil` is live and this shape forever: RSC ships no coconut-oil product, so
+  // every product field on that row is undefined rather than zero.
+  const absent = { clusters: [{ cluster: 'coconut oil', revenue: 0, clicks: 11 }] };
+  assert.equal(scoreCommercial('coconut-oil', absent), COMMERCIAL_NEUTRAL_FOR_TEST);
+});
+
+test('zero product revenue WITH a real decline still scores below neutral', () => {
+  // `lip balm` on the live report: all-channel $0, organic delta -60. Evidence, not silence.
+  const declining = {
+    clusters: [{ cluster: 'lip balm', product_revenue_all_channels: 0, product_organic_revenue_delta: -60 }],
+  };
+  assert.ok(scoreCommercial('organic-lip-balm', declining) < COMMERCIAL_NEUTRAL_FOR_TEST,
+    'a real decline must rank below the no-signal neutral, never be laundered into it');
 });
 
 // ── headroom ────────────────────────────────────────────────────────────────────────
@@ -188,7 +256,7 @@ test('the total is exactly 100 at maximum everything, and cannot exceed it', () 
     angle: { awareness: 'unaware', source_quotes: [MAXED_QUOTE] },
     reviews: [{ body: MAXED_QUOTE }],
     productHandle: 'coconut-lotion',
-    seoImpact: { clusters: [{ cluster: 'lotion', revenue: 1e9, revenueDelta: 1e9 }] },
+    seoImpact: { clusters: [{ cluster: 'lotion', product_revenue_all_channels: 1e9, product_organic_revenue_delta: 1e9 }] },
   });
   // Named individually so a failure says WHICH cap leaked rather than only that the sum did.
   assert.equal(s.persona, 30, 'persona must cap at 30');

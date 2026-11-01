@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Vote for your favourite dishes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/contest.css">
+</head>
+<body>
+<div class="tablecloth" aria-hidden="true"></div>
+<header class="page-head">
+  <h1 id="title">Vote for your favourite dishes</h1>
+  <p id="lede">Pick one favourite in each category. You can change your mind until time runs out.</p>
+</header>
+
+<div class="vote-bar" id="vote-bar" hidden>
+  <div class="vote-bar-inner">
+    <div class="vote-bar-row">
+      <span class="status-line" id="progress-text" aria-live="polite"></span>
+      <span class="clock" id="clock" role="timer" aria-live="off" hidden></span>
+    </div>
+    <div class="progress" id="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+    <nav class="cat-nav" id="cat-nav" aria-label="Categories"></nav>
+  </div>
+</div>
+
+<main class="wrap">
+  <p id="loading" class="small">Loading the dishes…</p>
+  <div id="banner" class="notice" hidden role="status"></div>
+  <div id="vote-error" class="notice notice-error" hidden role="alert"></div>
+  <div id="categories"></div>
+  <p class="disclaimer" id="footer-note" hidden>Allergen information is entered by each cook and is not checked by the organizers. If you have an allergy, please ask the cook.</p>
+</main>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-name">
+  <div class="sheet-close-row">
+    <button type="button" class="btn btn-quiet" id="sheet-close">Close</button>
+  </div>
+  <div class="sheet-body">
+    <img id="sheet-photo" alt="">
+    <h2 id="sheet-name"></h2>
+    <p class="dish-cook" id="sheet-cook"></p>
+    <h3>Allergens</h3>
+    <ul class="badges" id="sheet-badges"></ul>
+    <p class="disclaimer">Allergen information is entered by the cook and is not checked by the organizers.</p>
+    <h3>Ingredients</h3>
+    <p class="prose" id="sheet-ingredients"></p>
+    <div id="sheet-recipe-wrap">
+      <h3>Recipe</h3>
+      <p class="prose" id="sheet-recipe"></p>
+    </div>
+    <div id="sheet-vote" style="margin-top:22px"></div>
+  </div>
+</dialog>
+
+<script type="module" src="/contest/assets/vote.js"></script>
+</body>
+</html>

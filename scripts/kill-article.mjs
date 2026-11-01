@@ -16,13 +16,18 @@ import { positionalArg } from '../lib/positional-arg.js';
 
 const args = process.argv.slice(2);
 // positionalArg, not args.find: `--reason <text>` would otherwise be read as the slug.
-const slug = positionalArg(args, ['--reason']);
+const slug = positionalArg(args, ['--reason', '--redirect-to']);
 const reasonIdx = args.indexOf('--reason');
 const reason = reasonIdx !== -1 ? args[reasonIdx + 1] : 'killed via CLI';
 const skipConfirm = args.includes('--yes');
+// Optional. A LIVE article is redirected either way — killPost derives the
+// destination from the page's own buy box when this is absent, and refuses the
+// delete outright if no redirect can be created.
+const redirectIdx = args.indexOf('--redirect-to');
+const redirectTo = redirectIdx !== -1 ? args[redirectIdx + 1] : null;
 
 if (!slug) {
-  console.error('Usage: node scripts/kill-article.mjs <slug> [--reason "..."] [--yes]');
+  console.error('Usage: node scripts/kill-article.mjs <slug> [--reason "..."] [--redirect-to /collections/x] [--yes]');
   process.exit(1);
 }
 
@@ -49,7 +54,7 @@ if (!skipConfirm) {
   }
 }
 
-const result = await killPost(slug, { reason });
+const result = await killPost(slug, { reason, redirectTo });
 
 console.log('\nKill summary:');
 for (const [k, v] of Object.entries(result)) {

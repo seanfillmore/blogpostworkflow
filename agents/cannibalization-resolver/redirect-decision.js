@@ -143,3 +143,50 @@ export function findLoserClicks({ groups, query, loserPath }) {
   if (!page || typeof page.clicks !== 'number') return null;
   return page.clicks;
 }
+
+// ── The loser's disposition, added 2026-09-09 ────────────────────────────────
+//
+// A redirect this agent creates has never fired. Shopify serves a URL redirect
+// only when the path does not already resolve, and the loser article stayed
+// PUBLISHED — so the 301 sat inert, both pages kept competing for the query,
+// and the run reported "1 redirects created" while nothing had changed.
+// Verified on production 2026-09-09: /blogs/news/best-toothpaste-without-sls-2025
+// returned 200, cache-busted, with its redirect in the table.
+//
+// The losers that ARE properly redirected today (best-toothpaste-without-sls-2026,
+// sls-free-toothpaste-the-gentle-switch-worth-making) are DELETED or DRAFT —
+// finished by hand. CLAUDE.md records the same shape: the tattoo merge sat held
+// "until an operator redirected it by hand". So this agent has arguably never
+// completed a consolidation on its own.
+//
+// THE RULE NEEDS NO SECOND TRAFFIC TEST, AND ADDING ONE WOULD BE THE BUG.
+// `decideHeldMergeRedirect` above already encodes every judgement about whether
+// this loser may be redirected — held or not, clicks or not, data or not. A
+// redirect we create and do not make fire is never correct, and a redirect we
+// decline to create must not be accompanied by an unpublish. So disposition
+// simply FOLLOWS the redirect decision. Two independent traffic tests would
+// drift, and the second one would be the one nobody re-derives.
+//
+// UNPUBLISH, NEVER DELETE. Unpublishing is reversible (set published_at back)
+// and keeps the article, its handle and its metafields; deleting is a one-way
+// door and this project has already destroyed work that way. It is also what
+// makes the redirect fire, which is the whole objective — deletion is not
+// required for a 301 and buys nothing but risk.
+
+/**
+ * What should happen to the loser ARTICLE once the redirect decision is known?
+ *
+ * @param {object} p
+ * @param {boolean} p.createRedirect  the verdict from decideHeldMergeRedirect
+ * @param {string}  [p.reason]        that verdict's reason, carried through
+ * @returns {{ unpublish: boolean, reason: string }}
+ *   reason is one of:
+ *     'redirect_created_must_fire' — unpublish, or the 301 stays inert
+ *     'no_redirect_leave_live'     — nothing was redirected; the page stays as it is
+ */
+export function decideLoserDisposition({ createRedirect, reason } = {}) {
+  if (createRedirect) {
+    return { unpublish: true, reason: 'redirect_created_must_fire' };
+  }
+  return { unpublish: false, reason: reason ? `no_redirect_leave_live:${reason}` : 'no_redirect_leave_live' };
+}

@@ -1,0 +1,47 @@
+{%- comment -%}
+  no-subscription: this page sells NO new subscriptions (multi-unit over
+  subscriptions, Sean 2026-10-05), but the product still carries a Recurpay
+  selling plan so the existing contracts keep renewing.
+
+  Removing the theme's Recurpay app block is not enough. Recurpay's app EMBED
+  (global, in settings_data) injects its own widget into the product form for
+  any product with a selling plan, with SUBSCRIBE PRE-SELECTED, which puts
+  `selling_plan` into the form a shopper submits. Measured live 2026-10-06 on
+  lotion and cream. On the ladder page it is also a dead control: the ladder
+  posts its own /cart/add.js call and never reads it.
+
+  So: hide the widget, switch it to one-time (Recurpay's own handler then
+  drops the plan), and strip any `selling_plan` field from every add-to-cart
+  form, again at submit time as the last word.
+{%- endcomment -%}
+<style>
+  .recurpay-pdp-widget, .recurpay__widget { display: none !important; }
+</style>
+<script>
+(function () {
+  function strip() {
+    document.querySelectorAll('.recurpay-pdp-widget input[type="radio"][value="one-time"]').forEach(function (r) {
+      if (!r.checked) r.click();
+    });
+    document.querySelectorAll('form[action*="/cart/add"] [name="selling_plan"]').forEach(function (i) {
+      i.parentNode && i.parentNode.removeChild(i);
+    });
+  }
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; strip(); });
+  }
+  strip();
+  document.addEventListener('DOMContentLoaded', strip);
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+  // Capture phase runs before the theme's product-form.js builds its FormData.
+  document.addEventListener('submit', function (e) {
+    var f = e.target;
+    if (f && f.querySelectorAll) {
+      f.querySelectorAll('[name="selling_plan"]').forEach(function (i) { i.parentNode && i.parentNode.removeChild(i); });
+    }
+  }, true);
+})();
+</script>

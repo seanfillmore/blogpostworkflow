@@ -1,0 +1,361 @@
+{
+  "target_keyword": "body moisturizer",
+  "slug": "body-moisturizer",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Best Natural Body Moisturizer for Soft, Healthy Skin",
+  "meta_description": "Looking for the best natural body moisturizer? Discover clean, organic formulas that hydrate dry skin without harsh chemicals. Shop Real Skin Care today.",
+  "target_word_count": 2200,
+  "content_angle": "Real Skin Care positions itself as the definitive guide to choosing a clean, natural body moisturizer — cutting through the noise of conventional options to explain exactly what ingredients to look for, what to avoid, and why organic formulas outperform chemically-laden alternatives for long-term skin health.",
+  "key_differentiators": [
+    "Leads with a 'Quick Answer' best pick box and comparison table in the first 40% of the post to capture featured snippet eligibility and commercial intent — something no top-10 competitor does in an editorial/blog context",
+    "Focuses specifically on clean and non-toxic formulations, filling a gap left by conventional retailers like Bath & Body Works and Amazon category pages that do not address ingredient safety or transparency",
+    "Includes a practical ingredient guide (what to look for vs. what to avoid) to build trust and position Real Skin Care as an authoritative educational resource, not just a product listing",
+    "Addresses skin-type-specific moisturizing needs (dry, sensitive, aging, combination) in a single structured post — something competitors either ignore or spread across multiple pages",
+    "Integrates internal links to Real Skin Care's own collection and product pages naturally, supporting commercial conversion without feeling like a hard sell"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open with a relatable pain point: most people reach for a body moisturizer without thinking about what's actually in it — and conventional formulas are often loaded with synthetic fragrances, parabens, and petroleum-derived ingredients. Briefly introduce the promise of the post: a complete guide to finding the best natural body moisturizer for your skin type, with clean ingredient standards, usage tips, and product recommendations from Real Skin Care. Include the primary keyword 'body moisturizer' in the first 100 words. Mention that peak moisturizing season runs fall through winter (October, December) but healthy skin hydration is a year-round practice.",
+      "keywords_to_include": [
+        "body moisturizer",
+        "natural body moisturizer",
+        "clean body lotion",
+        "dry skin"
+      ]
+    },
+    {
+      "section": "Quick Answer: Best Natural Body Moisturizer",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Place a 'Best Pick' callout box immediately after the intro. This is critical for featured snippet eligibility and high-CTR commercial intent. Highlight Real Skin Care's coconut moisturizer as the top recommendation. Include: product name, key ingredients (coconut oil, shea butter, or equivalent), format (lotion, cream, butter), and one-sentence benefit statement. Keep this section tight and scannable — it should function as an answer box, not a paragraph. Link directly to the coconut moisturizer product page here.",
+      "keywords_to_include": [
+        "best body moisturizer",
+        "best body lotion",
+        "natural body moisturizer",
+        "coconut oil"
+      ]
+    },
+    {
+      "section": "Natural Body Moisturizer Comparison Table",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Create a comparison table featuring at least 5 Real Skin Care body moisturizer products or formula types (e.g., body lotion, body cream, body butter, body oil, coconut moisturizer). For each entry include: product name or type, key active ingredients, best for (skin type or concern), and format. This table must appear before the 40% mark of the article per standing instructions. Do not include competitor brand products. The table intro text should explain that not all body moisturizers are created equal and that ingredient quality matters as much as format. Link to the natural body lotion collection and body cream collection from this section.",
+      "keywords_to_include": [
+        "moisturizing body cream",
+        "body butter",
+        "body oil moisturizer",
+        "body lotion for dry skin",
+        "organic body lotion"
+      ]
+    },
+    {
+      "section": "What Is a Body Moisturizer and Why Does It Matter?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Define body moisturizer clearly for readers who may be new to building a skincare routine. Explain the three functional types: humectants (draw water into skin), emollients (soften and smooth), and occlusives (seal moisture in). Briefly distinguish between body lotion (lightweight, water-based), body cream (richer, oil-to-water balance), body butter (heaviest, oil-dominant), and body oil. Explain why daily moisturizing matters for skin barrier function, elasticity, and long-term skin health. This section builds topical authority without being overly technical. Keep tone accessible and warm.",
+      "keywords_to_include": [
+        "body lotion",
+        "moisturizing body cream",
+        "body butter",
+        "body oil moisturizer",
+        "in shower body lotion"
+      ]
+    },
+    {
+      "section": "How to Choose the Best Natural Body Moisturizer for Your Skin Type",
+      "type": "h2",
+      "word_count_target": 300,
+      "guidance": "This is a core editorial section. Break into H3 subsections by skin type. For each skin type, give a 2-3 sentence recommendation on format and ingredients to prioritize. Cover: Dry/Very Dry Skin (reach for body butter or cream with coconut oil, shea butter, cocoa butter — avoid alcohol-heavy formulas), Sensitive Skin (fragrance-free, minimal ingredient lists, soothing botanicals), Aging or Crepey Skin (look for ingredients that support elasticity — plant oils, vitamins E and C), Combination Skin (lightweight body lotion rather than heavy cream). Naturally weave in the internal link to 'body lotion for dry skin' collection under the dry skin subsection. Avoid naming competitor brands.",
+      "keywords_to_include": [
+        "best lotion for dry skin",
+        "best lotion for extremely dry skin",
+        "best body lotion for dry skin",
+        "best body lotion for aging skin",
+        "lotion for extremely dry skin",
+        "body lotion for dry skin",
+        "dermatologist-recommended body lotion"
+      ]
+    },
+    {
+      "section": "H3: Best Body Moisturizer for Dry Skin",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Nest under the skin type H2 above. Recommend a thick, occlusive-leaning formula such as a coconut-oil-based body cream or body butter. Explain why dry skin needs heavier emollients and occlusives. Mention applying right after showering to lock in moisture. Link to the body lotion for dry skin collection.",
+      "keywords_to_include": [
+        "best body lotion for dry skin",
+        "body lotion for dry skin",
+        "best lotion for extremely dry skin"
+      ]
+    },
+    {
+      "section": "H3: Best Body Moisturizer for Sensitive Skin",
+      "type": "h3",
+      "word_count_target": 80,
+      "guidance": "Nest under the skin type H2 above. Emphasize fragrance-free or naturally scented formulas, short ingredient lists, and avoidance of synthetic dyes or preservatives. Mention that non-toxic body lotion is ideal for reactive skin. Link to the non-toxic body lotion collection.",
+      "keywords_to_include": [
+        "non-toxic body lotion",
+        "clean body lotion",
+        "natural body moisturizer"
+      ]
+    },
+    {
+      "section": "H3: Best Body Moisturizer for Aging Skin",
+      "type": "h3",
+      "word_count_target": 80,
+      "guidance": "Nest under the skin type H2 above. Focus on plant oils rich in antioxidants (vitamin E, rosehip, jojoba), which support skin elasticity and reduce the appearance of crepey texture. Recommend body cream or body oil for aging skin. Link to the natural body cream collection.",
+      "keywords_to_include": [
+        "best body lotion for aging skin",
+        "dermatologist-recommended body lotion for crepey skin",
+        "body oil moisturizer"
+      ]
+    },
+    {
+      "section": "Clean Ingredients to Look For in a Body Moisturizer",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "This section builds E-E-A-T and differentiates Real Skin Care editorially. List 5-6 clean, effective moisturizing ingredients with a brief explanation of what each does for skin: coconut oil (occlusive, antimicrobial, deeply nourishing), shea butter (rich emollient, anti-inflammatory), cocoa butter (seals in moisture, improves skin tone), jojoba oil (mimics skin's natural sebum, balances oil production), vitamin E (antioxidant, supports barrier repair), aloe vera (humectant, soothing). Frame this as a 'clean ingredient checklist' readers can use when shopping. Naturally weave in the brand's coconut oil heritage. This section should feel like expert guidance, not a product pitch.",
+      "keywords_to_include": [
+        "coconut oil",
+        "body butter",
+        "organic body lotion",
+        "moisturizing body cream",
+        "natural body moisturizer"
+      ]
+    },
+    {
+      "section": "Ingredients to Avoid in Body Moisturizers",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "List 4-5 common synthetic or potentially harmful ingredients found in conventional body moisturizers, with plain-language explanations of why to avoid them: parabens (hormone-disrupting preservatives), synthetic fragrances (common allergen, can mask harmful compounds), mineral oil/petrolatum (petroleum-derived occlusives, comedogenic, not sustainably sourced), phthalates (fragrance stabilizers linked to endocrine disruption), SLS/SLES (harsh surfactants that strip skin barrier when found in lotion bases). Frame this as empowering the reader to make informed choices — not fear-mongering. Keep tone confident and educational.",
+      "keywords_to_include": [
+        "non-toxic body lotion",
+        "clean body lotion",
+        "natural body moisturizer",
+        "body lotion recommended by dermatologist"
+      ]
+    },
+    {
+      "section": "How to Apply Body Moisturizer for Maximum Hydration",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Practical how-to section — give readers 4-5 actionable tips for getting the most out of their body moisturizer: (1) Apply within 3 minutes of showering to damp skin to lock in moisture, (2) Use circular motions to encourage absorption and circulation, (3) Pay extra attention to elbows, knees, heels, and dry hands, (4) Consider using a body scrub first 1-2x per week to remove dead skin cells that block absorption, (5) Layer a body oil under cream for very dry areas in winter. Mention that in-shower body lotion is a convenient option for busy routines. Naturally link to the moisturizing body cream collection here. Keep tone helpful and practical.",
+      "keywords_to_include": [
+        "in shower body lotion",
+        "body scrub",
+        "moisturizing body cream",
+        "dry hands moisturizer",
+        "moisturizing hand lotion",
+        "hand lotion"
+      ]
+    },
+    {
+      "section": "Why Choose a Natural Body Moisturizer Over Conventional Options?",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Make the case for clean beauty without being preachy. Cover: (1) what you put on your skin is absorbed into your body — ingredient quality matters, (2) natural formulas are generally better for sensitive or reactive skin, (3) sustainably sourced plant-based ingredients are better for the environment, (4) clean formulas can be just as effective — or more so — than synthetic alternatives when properly formulated. Reference that Real Skin Care builds products around trusted ingredients like coconut oil. This section should naturally lead into the product CTA. Link to the organic body lotion collection.",
+      "keywords_to_include": [
+        "organic body lotion",
+        "natural body moisturizer",
+        "clean body lotion",
+        "non-toxic body lotion",
+        "body lotion recommended by dermatologist"
+      ]
+    },
+    {
+      "section": "Frequently Asked Questions About Body Moisturizers",
+      "type": "faq",
+      "word_count_target": 250,
+      "guidance": "Include 4-5 FAQ entries formatted for FAQ schema markup. Questions should reflect real user searches. Suggested questions: (1) What is the difference between body lotion, body cream, and body butter? (2) How often should you apply body moisturizer? (3) Is body moisturizer the same as face moisturizer? (4) Can you use body moisturizer on your hands? (5) What makes a body moisturizer 'natural' or 'clean'? Keep answers concise (2-4 sentences each), accurate, and written in a direct, helpful tone. Naturally include semantic keywords in answers without keyword stuffing.",
+      "keywords_to_include": [
+        "body lotion",
+        "moisturizing body cream",
+        "body butter",
+        "body oil moisturizer",
+        "moisturizing hand lotion",
+        "hand lotion",
+        "clean body lotion",
+        "natural body moisturizer"
+      ]
+    },
+    {
+      "section": "Conclusion: Find Your Perfect Natural Body Moisturizer",
+      "type": "conclusion",
+      "word_count_target": 120,
+      "guidance": "Wrap up with a brief summary of the key takeaways: choosing the right body moisturizer comes down to your skin type, the ingredients in the formula, and how consistently you apply it. Reinforce that clean, plant-based moisturizers are the best choice for healthy, hydrated skin. End with a clear CTA directing readers to shop Real Skin Care's natural body lotion and body cream collections. Tone should be warm, confident, and encouraging — not pushy. Link to the collections/natural-body-lotion and collections/natural-body-cream pages.",
+      "keywords_to_include": [
+        "natural body moisturizer",
+        "best body lotion",
+        "organic body lotion",
+        "body lotion for dry skin"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "body moisturizer",
+    "natural body moisturizer",
+    "body lotion",
+    "body lotion for dry skin",
+    "best body lotion",
+    "best body lotion for dry skin",
+    "best lotion for dry skin",
+    "best lotion for extremely dry skin",
+    "lotion for extremely dry skin",
+    "best body lotion for aging skin",
+    "moisturizing body cream",
+    "body butter",
+    "body oil moisturizer",
+    "clean body lotion",
+    "non-toxic body lotion",
+    "organic body lotion",
+    "natural body lotion",
+    "in shower body lotion",
+    "body scrub",
+    "moisturizing body wash",
+    "best body wash",
+    "body lotion recommended by dermatologist",
+    "dermatologist-recommended body lotion for crepey skin",
+    "dry hands moisturizer",
+    "moisturizing hand lotion",
+    "hand lotion",
+    "coconut oil body moisturizer",
+    "shea butter body lotion",
+    "fragrance-free body lotion",
+    "sensitive skin body moisturizer",
+    "plant-based body lotion",
+    "hydrating body lotion",
+    "skin barrier moisturizer",
+    "daily body moisturizer",
+    "lightweight body lotion",
+    "rich body cream",
+    "deep hydration body lotion"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut moisturizer",
+      "url": "https://www.realskincare.com/products/coconut-moisturizer",
+      "placement_guidance": "Link in the Quick Answer / Best Pick box near the top of the post, and again naturally in the clean ingredients section when discussing coconut oil as a hero ingredient."
+    },
+    {
+      "anchor_text": "natural body lotion",
+      "url": "https://www.realskincare.com/collections/natural-body-lotion",
+      "placement_guidance": "Link in the comparison table section intro and in the conclusion CTA."
+    },
+    {
+      "anchor_text": "body cream",
+      "url": "https://www.realskincare.com/collections/body-cream",
+      "placement_guidance": "Link in the comparison table or when distinguishing between lotion and cream formats in the 'What Is a Body Moisturizer' section."
+    },
+    {
+      "anchor_text": "natural body cream",
+      "url": "https://www.realskincare.com/collections/natural-body-cream",
+      "placement_guidance": "Link in the H3 for aging skin and in the conclusion CTA alongside the natural body lotion link."
+    },
+    {
+      "anchor_text": "non-toxic body lotion",
+      "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+      "placement_guidance": "Link in the H3 for sensitive skin and in the 'Ingredients to Avoid' section."
+    },
+    {
+      "anchor_text": "moisturizing body cream",
+      "url": "https://www.realskincare.com/collections/moisturizing-body-cream",
+      "placement_guidance": "Link in the 'How to Apply Body Moisturizer' section when recommending layering techniques."
+    },
+    {
+      "anchor_text": "coconut body cream",
+      "url": "https://www.realskincare.com/collections/coconut-body-cream",
+      "placement_guidance": "Link in the clean ingredients section when highlighting coconut oil as a hero moisturizing ingredient."
+    },
+    {
+      "anchor_text": "organic body lotion",
+      "url": "https://www.realskincare.com/collections/organic-body-lotion",
+      "placement_guidance": "Link in the 'Why Choose a Natural Body Moisturizer' section."
+    },
+    {
+      "anchor_text": "body lotion for dry skin",
+      "url": "https://www.realskincare.com/collections/body-lotion-for-dry-skin",
+      "placement_guidance": "Link in the H3 for dry skin and in the skin type selection section intro."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Include a brief author byline or editorial note indicating the post was written or reviewed by a skincare formulator or natural beauty expert",
+    "Reference the brand's use of organic, sustainably sourced ingredients and any third-party certifications (e.g., USDA Organic, EWG Verified, cruelty-free) where applicable",
+    "Cite general dermatological consensus on skin barrier function and moisturizer ingredient categories (humectants, emollients, occlusives) using plain-language explanations grounded in science",
+    "Use first-person plural brand voice ('At Real Skin Care, we formulate with...') to reinforce direct expertise and product knowledge rather than generic advice",
+    "Include a 'last updated' date on the post to signal content freshness, particularly relevant given peak search seasonality in October and December",
+    "Avoid making clinical claims that require medical disclaimers; position advice as educational guidance from a clean beauty brand with deep ingredient expertise"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "Tone: warm, knowledgeable, and empowering — like advice from a trusted friend who knows skincare ingredients inside and out. Not clinical, not salesy, not preachy. The brand voice is clean beauty meets practical wellness: honest, confident, and ingredient-forward. Do NOT name any competitor brands anywhere in the post — not in comparisons, not as examples, not in passing. The post should feel like the definitive clean beauty resource on body moisturizers, not a comparison article. The comparison table must feature only Real Skin Care product types or formulations. The 'Quick Answer / Best Pick' box and comparison table must appear within the first 40% of the article (before word 880) to maximize featured snippet eligibility. Use plain subheadings that reflect real search queries where possible. Avoid fluffy transitions and filler sentences — every paragraph should earn its place. Do not pad to hit word count. Target word count is 2200 words; do not exceed 2400. For the FAQ section, format questions and answers in a way that is compatible with FAQ schema (question/answer pairs clearly delineated). Seasonality note: this keyword peaks in October and December — if the post is published in Q3, include a seasonal hook in the intro about prepping skin for colder months. If published in spring, reframe around year-round hydration rather than winter skin.",
+  "search_volume": 9900,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.bathandbodyworks.com/c/body-care/body-lotion?srsltid=AfmBOope25rV7GSskmCF9Oev1rs4DeXu3DVymHwXK5KGg3NpXvY_9291",
+      "title": "Body Lotions and Moisturizers",
+      "domain": "www.bathandbodyworks.com",
+      "description": "Our powerful 24-hour formula mixes hydrating vitamin E, skin-nourishing coconut oil and creamy shea butter into a lightweight blend that melts right into your ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.amazon.com/Body-Moisturizers/b?ie=UTF8&node=11060661",
+      "title": "Body Moisturizers",
+      "domain": "www.amazon.com",
+      "description": "Saltair Multi-Lipid Body Butter – Hydrating 24-Hour Moisture – Body Cream for Soft Skin & Barrier Support – Ceramides, Coconut Oil & Shea Butter for Dry ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.consumerreports.org/health/lotions/best-body-lotions-a3097871012/",
+      "title": "6 Best Body Lotions of 2026, Tested by Experts",
+      "domain": "www.consumerreports.org",
+      "description": "Jan 29, 2026 — 6 Best Body Lotions of 2026 to Perk Up Dull, Dry Skin, Tested by Experts. We tested 12 moisturizers and found that quality varies widely. Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.nytimes.com/wirecutter/reviews/best-body-lotions/",
+      "title": "The 8 Best Body Lotions of 2026 | Reviews by Wirecutter",
+      "domain": "www.nytimes.com",
+      "description": "Mar 25, 2025 — We tested dozens of lotions and found eight creamy, hydrating, supremely spreadable picks to help keep your skin healthy."
+    },
+    {
+      "position": 5,
+      "url": "https://www.cerave.com/skincare/moisturizers/body-moisturizers",
+      "title": "Body Moisturizers, Lotions, and Ointment",
+      "domain": "www.cerave.com",
+      "description": "Browse body lotions, creams, and ointments formulated with essential ceramides, plus targeted body moisturizer formulas for rough, itchy, dry skin."
+    },
+    {
+      "position": 6,
+      "url": "https://www.sephora.com/shop/body-moisturizers",
+      "title": "Body Moisturizers",
+      "domain": "www.sephora.com",
+      "description": "Shop the bath and body lotion assortment at Sephora. Find products to hydrate your skin from top brands."
+    },
+    {
+      "position": 7,
+      "url": "https://credobeauty.com/collections/body-moisturizers?srsltid=AfmBOopuO42xPNE0klaFIyD7lJrgDRh9360fc5i1xQoDBLLAXFtdoplD",
+      "title": "Clean Body Moisturizers | Credo Beauty",
+      "domain": "credobeauty.com",
+      "description": "Discover a wide range of clean, nontoxic body moisturizers, body oils and body balms and salves at Credo and enjoy free samples of other safe and effective ... Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://www.victoriassecret.com/us/vs/beauty/body-lotions-and-moisturizers",
+      "title": "Scented Body Lotions: Moisturizers, Body Oils, and More",
+      "domain": "www.victoriassecret.com",
+      "description": "For smooth skin, shop our collection of body lotions, oils, and moisturizers. Shop your favorite scented body lotions from rose to vanilla fragrances ..."
+    }
+  ],
+  "index_validation": {
+    "validation_source": "gsc_ga4",
+    "cluster": null,
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

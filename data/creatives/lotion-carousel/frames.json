@@ -1,0 +1,46 @@
+[
+  {
+    "id": "offer",
+    "source": "Live PDP 2026-09-08: \"Save 15%\" subscription, \"Free shipping on orders $45+ and on every subscription order\", \"Pause, skip, or cancel anytime\". Price $30.00 → $25.50 at 15%.",
+    "strings": [
+      "SUBSCRIBE & SAVE 15%",
+      "$25.50",
+      "per 8 oz bottle when you subscribe",
+      "Free shipping on every subscription order",
+      "Pause, skip or cancel anytime"
+    ]
+  },
+  {
+    "id": "proof",
+    "source": "Judge.me, coconut-lotion, Nicole Hoopman, 5 stars, verified-purchase. Verbatim excerpt of the first two sentences. No review count shown: the API reports 26 product reviews while the on-page widget badge reads 174, and an unreconciled count may not be published.",
+    "strings": [
+      "\"This is the perfect moisturizer for my kids in the summer. It absorbs quickly yet is effective all day.\"",
+      "Nicole H.",
+      "Verified purchase"
+    ]
+  },
+  {
+    "id": "transform",
+    "source": "Routine contrast, not a skin result. Grounded in the live PDP benefit \"Absorbs without a film\" and the mechanism frame \"built to absorb into skin instead of sitting on top of it\". Depicts waiting to dress, never a change in skin condition.",
+    "strings": [
+      "Still waiting to get dressed.",
+      "Dressed and out the door."
+    ]
+  },
+  {
+    "id": "compare",
+    "source": "Rows sourced from the live PDP frames: product title \"Made With Only 6 Clean Ingredients\"; \"not in it\" frame (no mineral oil, no petroleum jelly, no silicones, no parabens); mechanism frame (\"absorb into skin instead of sitting on top of it\"). Comparison column is the generic category — no competitor brand is named.",
+    "strings": [
+      "Real Skin Care",
+      "Conventional lotion",
+      "6 ingredients you can read",
+      "20+ ingredient list",
+      "No mineral oil or petrolatum",
+      "Mineral oil, petrolatum",
+      "No silicones or parabens",
+      "Silicones, parabens",
+      "Absorbs in, leaves no film",
+      "Sits on top of skin"
+    ]
+  }
+]

@@ -1,6 +1,6 @@
 ---
 name: marketing-team-training-systems
-description: Handing marketing work to another person: checklist-based training loops, coaching rules, hiring bar and costing unpaid-channel labor.
+description: Delegating marketing execution once there is someone to delegate to — training loops, coaching rules, the hiring bar, which role to hand off first, and how to cost unpaid-channel labor.
 ---
 
 # Team Training Systems
@@ -52,3 +52,15 @@ description: Handing marketing work to another person: checklist-based training 
 **Fit here (4/10):** Durable hiring principle blocked by the team gate. Merit when unblocked is limited here — the first hire will likely be a single part-time VA where a bad pick costs weeks of the operator's own time, so 'hire anyone willing' is weaker advice at one-hire scale. Recorded mainly because it is the precondition the checklist-training loop assumes.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 13 of 16))*
+
+## In a content system, video editing is the first role to hand off — outsource it as soon as you can afford to.
+
+**Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
+
+**Why it works:** Editing is the most time-consuming and most delegable step in the content loop; removing it frees the owner for strategy, topic selection and on-camera delivery, which nobody else can do.
+
+**Evidence offered:** Assertion plus a referral link to editors the creator works with.
+
+**Fit here (5/10):** Carrying this out means paying and managing a freelance editor — another person's employment — so it parks behind the team gate. Trigger: content is already producing measurable revenue and editing hours are demonstrably the cap on posting volume, not idea supply. At ~$2,700/mo combined revenue an editor retainer is not affordable, and the existing acquisition-channel claim ('run the daily advertising action yourself until it earns enough to pay someone else') already covers the general principle — this only adds that editing is the first role to go.
+
+*Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*

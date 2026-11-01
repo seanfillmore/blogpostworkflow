@@ -1,0 +1,12 @@
+{
+  "_note": "Approved Trybe videos that agents/ugc-reels must never post. Add an entry with the reason; removing one makes the video eligible again.",
+  "excluded": [
+    {
+      "submission_id": "submission_37fbdc30-17a8-40e9-bc52-9d55c2ba0f1d",
+      "trybe_id": "c2ba0f1d",
+      "creator": "zeeey.xo",
+      "reason": "Sean, 2026-10-16: exclude. Moisturizer + toothpaste + lotion video; every generated caption gave the moisturizer the lotion's 6-ingredient count.",
+      "at": "2026-10-16"
+    }
+  ]
+}

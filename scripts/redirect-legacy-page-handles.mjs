@@ -50,7 +50,7 @@
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getPages, getRedirects, createRedirect } from '../lib/shopify.js';
+import { getPages, getAllRedirects, createRedirect } from '../lib/shopify.js';
 
 const APPLY = process.argv.includes('--apply');
 const STORE = 'https://www.realskincare.com';
@@ -74,7 +74,7 @@ async function status(url) {
 
 async function main() {
   const pages = await getPages({ limit: 250 });
-  const redirects = await getRedirects({ limit: 250 });
+  const redirects = await getAllRedirects();
   const results = [];
 
   for (const entry of PLAN) {

@@ -46,7 +46,9 @@ import { findStaleYears, bumpStaleYears, isHistoricalYearReference } from '../..
 import { reconcileOverallQuality, llmBlockerReasons } from '../../lib/editor-remediation.js';
 import { partitionInternalLinkIssues, indexLinkResults } from '../../lib/internal-link-validation.js';
 import { productKeyFromLinks, resolveProductKey, soapFormatIsExplicit } from '../../lib/product-format.js';
+import { variantIngredients } from '../../lib/product-variant.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -276,7 +278,7 @@ async function verifySource(link, pageText) {
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: LLM_MODELS.standard,
       max_tokens: 256,
       messages: [{
         role: 'user',
@@ -617,7 +619,7 @@ Review each post on these dimensions:
 
 1. TOPICAL RELEVANCE — Tightly focused on target keyword? Off-topic tangents? IMPORTANT: URL slugs and post handles are PERMANENT once indexed and MAY contain outdated year references (e.g., a slug like "/best-x-2024-at-our-site/" whose body content has been refreshed to the current year). This is intentional — we preserve the slug to keep the post's ranking equity. Do NOT flag slug/body year mismatches as topical-relevance failures. Evaluate topical relevance based on the body content vs. target keyword, ignoring any year embedded in the URL path.
 2. BRAND VOICE & READABILITY — Conversational and warm, ~8th grade level. Flag clinical/jargon phrases without plain-language follow-up. Flag paragraphs over 4 sentences. Good signals: short sentences, "you/your", plain words.
-3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list.
+3. INGREDIENT ACCURACY — Does the post correctly highlight OUR ingredients? Wrong product format description? IMPORTANT: If PRODUCT INGREDIENTS below says "N/A" (topical-authority post not tied to a specific SKU), output "VERDICT: N/A" and "NOTES: Topical-authority post — no product spec to validate against." Do NOT compare against any other product's ingredient list. OWNER-CONFIRMED FACTS, never flag: our coconut oil is cold-pressed, unrefined organic virgin coconut oil, so "cold-pressed" is accurate even where the spec only says "organic virgin"; and "all organic" ingredients is accurate (water and the plant-based emulsifying wax count). "The spec does not say it" is not the same as "it is false".
 4. YEAR ACCURACY — Pre-checked by code (see note below). If stale years were found, report them here; otherwise VERDICT: Pass. IMPORTANT: The following technical identifiers are PERMANENT and MUST NOT be flagged as year issues: (a) URL slug paths like "/blogs/news/best-x-2025", (b) href attribute values, (c) id attribute values on headings like <h2 id="best-x-2024">, (d) any year inside an HTML attribute. Only flag visible, human-readable year text that a reader would see — body text, heading text, and link anchor text.
 5. FACTUAL CONCERNS — Exaggerated, unsubstantiated, or potentially inaccurate claims? IMPORTANT: Do NOT claim any brand/product "does not exist" unless the VERIFIED PRODUCTS PRE-CHECK below has marked it as ✗ NOT FOUND. Entries marked ✓ EXISTS are SERP-verified and should be treated as real products. This prevents false-positive blockers where the LLM hallucinates non-existence of legitimate products like Dr. Bronner's toothpaste, Tom's of Maine, Hello toothpaste, etc.
 6. CTA QUALITY — Natural, well-placed CTA to Real Skin Care product/collection? Flag if missing.
@@ -648,7 +650,7 @@ NOTES: [2-4 sentences]${fb ? `\n\nSTANDING FEEDBACK — apply in addition to abo
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: LLM_MODELS.standard,
       max_tokens: 1800,
       // No cache_control. This carried `{ type: 'ephemeral' }` for a long time and
       // it never once cached: the minimum cacheable prefix on Haiku 4.5 is 4,096
@@ -908,7 +910,11 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
     for (const prefix of bodyYearPatterns) {
       const yearRegex = new RegExp(`\\b(${prefix} )${year}\\b`, 'gi');
       const before = fixed;
-      fixed = fixed.replace(yearRegex, (m, p) => `${p}${currentYear}`);
+      // The guard is consulted here too. Without it "In 2021, EFSA concluded" and
+      // "banned it in food in 2022" were rewritten to 2026 on 2026-10-12 and the
+      // draft was then blocked for the factual errors this pass had introduced.
+      fixed = fixed.replace(yearRegex, (m, p, offset, full) =>
+        (isHistoricalYearReference(full, offset + p.length) ? m : `${p}${currentYear}`));
       if (fixed !== before) {
         changes.push(`Corrected year: "${prefix} ${year}" → "${prefix} ${currentYear}"`);
       }
@@ -929,9 +935,11 @@ function applyPreReviewAutoFixes(htmlPath, html, { linksToRemove = [] } = {}) {
   // Stale years inside heading tags. Almost always "current year" markers
   // like "Best X 2025" — safe to bump.
   fixed = fixed.replace(/<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi, (match, level, attrs, inner) => {
-    const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr) => {
+    const updated = inner.replace(/\b(20\d{2})\b/g, (yearMatch, yr, off, whole) => {
       const n = parseInt(yr, 10);
-      return n >= 2020 && n < currentYear ? String(currentYear) : yearMatch;
+      if (n < 2020 || n >= currentYear) return yearMatch;
+      // "The 2021 EFSA Ruling" is a dated fact, not an edition marker.
+      return isHistoricalYearReference(whole, off) ? yearMatch : String(currentYear);
     });
     if (updated !== inner) {
       changes.push(`Corrected year in <h${level}>: "${inner.replace(/<[^>]+>/g, '').trim().slice(0, 60)}"`);
@@ -1041,11 +1049,24 @@ async function runEditor(htmlPath) {
   // ACCURACY check downstream — comparing a DIY hair-mask post against the
   // body lotion ingredient spec produces meaningless false-positive blockers.
   // The post still gets full editorial review on every other dimension.
+  // SCOPED TO THE VARIANT THE POST IS ABOUT — see lib/product-variant.js.
+  // This used to union EVERY variant's essential oils into one "ingredients"
+  // list, so a correct post about `Pure Unscented` (6 ingredients, zero oils)
+  // was fact-checked against the four SCENTED variants' oils and blocked for
+  // "contains N essential oils but claims fragrance-free". It could not pass at
+  // any quality of writing — a refused-rebuild loop burning a paid generation
+  // per attempt. Scoping only ever REMOVES ingredients from the comparison, so
+  // it can only turn a false blocker into a pass; an unresolved variant still
+  // falls back to the union, which is the old behaviour exactly.
   function flattenProduct(p) {
     if (!p) return null;
-    const base = p.base_ingredients || p.ingredients || [];
-    const oils = (p.variations || []).flatMap((v) => v.essential_oils || []);
-    return { name: p.name, format: p.format, ingredients: [...new Set([...base, ...oils])] };
+    const { ingredients, variant } = variantIngredients(p, `${keyword} ${slug}`);
+    return {
+      name: variant ? `${p.name} — ${variant.name}` : p.name,
+      format: p.format,
+      ingredients,
+      freeFrom: Array.isArray(p.free_from) ? p.free_from : null,
+    };
   }
   // Load context data
   const sitemap = loadSitemap();
@@ -1086,8 +1107,15 @@ async function runEditor(htmlPath) {
   }
 
   const formatNote = productIngredients?.format ? ` | Product format: ${productIngredients.format}` : '';
+  // An explicit free-from list lets "made without X" copy be CONFIRMED rather than
+  // left as "the spec neither supports nor contradicts it, please confirm", which
+  // kept a correct locked winner blocked (2026-10-22). The ingredient list is the
+  // label, so anything on this list is verified absent.
+  const freeFromNote = productIngredients?.freeFrom?.length
+    ? ` | Verified free from (label): ${productIngredients.freeFrom.join(', ')}. "Made without" any of these is accurate.`
+    : '';
   const productIngredientsContext = productIngredients
-    ? `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}`
+    ? `${productIngredients.name}: ${productIngredients.ingredients.join(', ')}${formatNote}${freeFromNote}`
     : 'N/A — this post is topical-authority content, not tied to a specific product we sell. Skip the INGREDIENT ACCURACY section entirely (mark it as N/A).';
 
   if (isTopicalAuthority) {
@@ -1154,6 +1182,7 @@ async function runEditor(htmlPath) {
         if (titleChanged) update.title = newTitle;
         if (metaChanged) update.summary_html = `<p>${newMetaDesc}</p>`;
         try {
+          // edit-gate kind: repair — a deterministic stale-year bump.
           await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, update);
           console.log(`  Pushed corrected title/meta to Shopify`);
         } catch (e) {
@@ -1393,6 +1422,7 @@ async function runEditor(htmlPath) {
     const currentHtml = readFileSync(htmlPath, 'utf8');
     if (currentHtml !== html) {
       try {
+        // edit-gate kind: repair — syncing pre-review auto-fixes (years, dead-link removal).
         await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: currentHtml });
         console.log(`\n  ✓ Pushed body_html to Shopify (article_id: ${meta.shopify_article_id})`);
       } catch (e) {

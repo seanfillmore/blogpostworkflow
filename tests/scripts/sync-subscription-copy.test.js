@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { saveLine, describe as describeCopy } from '../../scripts/sync-subscription-copy.mjs';
+import { saveLine, describe as describeCopy, plainLines, cadenceMismatch } from '../../scripts/sync-subscription-copy.mjs';
 
 const at = (pct) => ({ pricing_polices: [{ discount: { type: 'percentage', value: pct } }] });
 
@@ -70,4 +70,46 @@ test('importing this script must not RUN it', () => {
     if (i === -1) continue;
     assert.ok(i > guardAt, `${call} runs at module scope — importing this file would call Recurpay`);
   }
+});
+
+test('paste-ready output is PLAIN TEXT, never HTML', () => {
+  // Recurpay's description field is a QUILL rich-text editor (its stored value
+  // is `<ol><li><span class="ql-ui">…`). This script used to print `<p>✓ …</p>`
+  // and an operator pasted it into the WYSIWYG on 2026-09-06.
+  const lines = plainLines(at(5), 'Delivered every 2 months');
+  for (const l of lines) assert.doesNotMatch(l, /[<>]/, `HTML in a paste line: ${l}`);
+  assert.deepEqual(lines, [
+    'Save 5% on every order',
+    'Free shipping on any subscription order',
+    'Delivered every 2 months',
+    'Pause, skip, or cancel anytime',
+    '30-day money-back guarantee',
+  ]);
+});
+
+test('a plan with no discount gets four lines, not an invented save', () => {
+  const lines = plainLines({}, 'Delivered every month');
+  assert.equal(lines.length, 4);
+  assert.doesNotMatch(lines.join(' '), /Save/);
+});
+
+test('a description stating the wrong cadence is a finding', () => {
+  // Live on 2026-09-06: positions 2/3/4 of plan 11152263 all read "every 1
+  // Month" while delivering every 2, 3 and 4 — an operator adding two bullets
+  // carried position 1's cadence line with them. The DELIVERY POLICY was
+  // untouched, so the customer is billed correctly and told otherwise.
+  const sp = (deliver, says) => ({
+    delivery_policy: { frequency: deliver, interval: 'month' },
+    description: `<ol><li>You will receive an order every ${says} Month</li></ol>`,
+  });
+  assert.deepEqual(cadenceMismatch(sp(2, 1)), { says: 1, delivers: 2 });
+  assert.equal(cadenceMismatch(sp(2, 2)), null);
+});
+
+test('cadenceMismatch stays silent when it cannot tell', () => {
+  // No claim to check, or no policy to check it against, is not a finding —
+  // reporting one would train the reader to ignore the row.
+  assert.equal(cadenceMismatch({ delivery_policy: { frequency: 2 }, description: 'no cadence stated' }), null);
+  assert.equal(cadenceMismatch({ description: 'every 2 Month' }), null);
+  assert.equal(cadenceMismatch(undefined), null);
 });

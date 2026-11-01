@@ -262,6 +262,21 @@ export function parseRankings(device = 'desktop') {
   };
 }
 
+/**
+ * The fields of a GSC snapshot the browser reads (aggregateGSC and the CRO cards):
+ * date, summary, topQueries, topPages. `queriesByPage` is ~75% of every snapshot and
+ * nothing client-side reads it. Shipping it in 90 snapshots made /api/data 54.7 MB
+ * (cro.gscAll alone 46 MB, measured 2026-10-28), and building that response every
+ * hour pushed the dashboard past PM2's 300 MB cap: it was restarted at :09:53 each
+ * hour, ~6s after the open tab's hourly refresh, cutting the download off mid-stream
+ * and leaving the page dead until a reload. Keep the payload to what is rendered.
+ */
+export function slimGscSnapshot(snap) {
+  if (!snap || typeof snap !== 'object') return null;
+  const { queriesByPage, ...rest } = snap;
+  return rest;
+}
+
 export function parseCROData() {
   // Load up to 60 clarity snapshots (supports 30-day view + prior period comparison)
   let clarityAll = [];
@@ -298,7 +313,7 @@ export function parseCROData() {
   if (existsSync(GSC_SNAPSHOTS_DIR)) {
     const files = readdirSync(GSC_SNAPSHOTS_DIR)
       .filter(f => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort().reverse().slice(0, 90);
-    gscAll = files.map(f => safeReadJson(join(GSC_SNAPSHOTS_DIR, f))).filter(Boolean);
+    gscAll = files.map(f => slimGscSnapshot(safeReadJson(join(GSC_SNAPSHOTS_DIR, f)))).filter(Boolean);
   }
 
   // Load up to 60 GA4 snapshots

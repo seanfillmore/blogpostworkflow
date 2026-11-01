@@ -25,8 +25,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 
 ## Insert an advertorial or listicle pre-sell page between the ad and the product page so paid traffic can be opened to colder, non-in-market audiences the PDP cannot convert.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** A PDP assumes the reader is already problem- and product-aware; a pre-sell page does the education and belief-building work first, so the ad can target people who were previously unsellable. That is what expands the addressable pool once the in-market buyers are exhausted — the constraint stops being creative quality and becomes how much of the market the landing surface is capable of converting.
 
 **Evidence offered:** Reverse-engineered customer journeys of a set of eight-figure brands — the creator states every one of them ran some form of pre-sell page — plus seven years of building them. No per-variant test data.
@@ -37,8 +35,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 
 ## Assign each piece of customer evidence to exactly one funnel stage and never spend the same point twice — the price rebuttal and the product mechanics stay collected but non-load-bearing in the attention ad, then become load-bearing in the next-stage ad, so the sequence completes one conversation instead of repeating it.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** Sequential messaging across stages means each ad advances the buyer rather than re-arguing what the previous ad already argued. When every ad in the account carries the full case, a person who has already seen the case gets shown it again, which is spend on re-litigating a settled objection. Splitting the evidence by stage — attention ad earns the click, the next-stage ad clarifies value and kills the price objection — is what lets a funnel build cash flow instead of paying repeatedly to have the same conversation with the same person.
 
 **Evidence offered:** Demonstrated in the ring-assignment report, where mapped evidence was explicitly marked as collected-but-not-load-bearing for the current job and reserved for the clarify-value ring. Single worked artefact, no comparative performance data.
@@ -48,8 +44,6 @@ description: Use when configuring a small-budget Meta account, or deciding wheth
 *Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
 
 ## On a small budget run only lead or sales campaign objectives — never awareness, traffic, or engagement — because Meta's optimizer is literal and will deliver exactly the cheap action you asked for.
-
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** The objective tells the algorithm which event to find people likely to perform. Ask for engagement and it finds commenters; ask for traffic and it finds clickers who never buy; ask for purchases and it optimizes toward purchases. With no budget to spare, every campaign must point directly at the conversion event you actually want.
 
@@ -139,8 +133,6 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 
 ## Once ads at least break even, stop asking 'how much should I spend' and reverse the budget from a customer target — customers wanted × cost per customer, padded roughly 20% because ads get less efficient as they scale — then commit to the daily number.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** A budget derived from capacity and CAC turns spend into an arithmetic consequence of a goal rather than a nerve-based decision made fresh every week, and the 20% pad prices in the efficiency decay that arrives with higher spend instead of treating it as a nasty surprise.
 
 **Evidence offered:** Assertion with a worked example (100 customers × $100 CAC = $10,000, padded to $12,000, or $400/day). No account data.
@@ -150,8 +142,6 @@ Highest volume (rather than a cost or ROAS cap) lets the algorithm spend the bud
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
 ## Once a campaign is live, make no major changes for at least 7 days — 10-14 at low conversion volume — because every edit restarts Meta's learning phase.
-
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
 
 **Why it works:** The learning phase is where Meta tests placements, frequency, and which users inside the audience convert; it exits on accumulated conversions. A small budget produces few conversions, so learning is already slow, and each edit resets the counter — meaning a constantly-tinkered account never reaches stable optimized delivery. Analysis and creative prep can continue in the meantime; only the account edits are frozen.
 
@@ -185,8 +175,6 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 
 ## Aim to break even on the first purchase from paid ads rather than turn a profit, because the email and SMS backend converts that customer into profit later — win on day 30, not day 1.
 
-**Stage:** traffic — gate OPEN as of 2026-08-17. Live; no longer parked.
-
 **Why it works:** If the backend flows reliably generate repeat purchases, a break-even first order means the customer was acquired for free and all subsequent lifetime value is margin.
 
 **Evidence offered:** Framed as a mindset shift; supported only by the claim that email is ~30% of his revenue.
@@ -217,7 +205,7 @@ Take the 10-14 day end of the range rather than 7. The freeze covers account edi
 
 **Evidence offered:** A worked back-of-napkin calculation on one client account: 25% trial-to-paid, 80% taking $200/yr and 20% taking $35/mo, therefore ~$41.50 per trial user and a ~$40 breakeven CPL — which exactly matched that client's observed scaling ceiling. Single account, self-reported, no data beyond the arithmetic.
 
-**Fit here (7/10):** Durable-principle class (unit economics), so age is irrelevant. Directly live: a $30/day Meta campaign is driving giveaway entries right now, and "what is an entry worth" is the exact question this answers. Run the arithmetic as **entry→purchase rate × contribution margin per order** at a **$50.46 AOV**, plus the repeat-purchase tail implied by the **18–22.5% repeat rate**. That product is the ceiling on cost per entry, and it is what the 5%-step scaling rule above is comparing against. The additive part relative to the break-even framing above is the calculation itself and the *diagnostic ordering*: compute the ceiling first, and only then ask whether the creative is the problem. Held at 7 because at ~54 orders/month the entry→purchase rate will be a small-sample estimate for months, so the ceiling is a working number to revise, not a measurement.
+**Fit here (9/10):** Durable-principle class (unit economics), so age is irrelevant. Directly live: a $30/day Meta campaign is driving giveaway entries right now, and "what is an entry worth" is the exact question this answers. Run the arithmetic as **entry→purchase rate × contribution margin per order** at a **$50.46 AOV**, plus the repeat-purchase tail implied by the **18–22.5% repeat rate**. That product is the ceiling on cost per entry, and it is what the 5%-step scaling rule above is comparing against. The additive part relative to the break-even framing above is the calculation itself and the *diagnostic ordering*: compute the ceiling first, and only then ask whether the creative is the problem. Held at 7 because at ~54 orders/month the entry→purchase rate will be a small-sample estimate for months, so the ceiling is a working number to revise, not a measurement.
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #10: Don't Forget The Other 75%" (social post)*
 

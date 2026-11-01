@@ -142,6 +142,8 @@ if (!dryFlag) {
         // Re-run editor to refresh the verdict (clears the blocker on the dashboard/digest).
         execSync(`"${NODE}" agents/editor/index.js data/posts/${slug}/content.html`, { stdio: 'inherit', cwd: __dirname, timeout: STEP_TIMEOUT_MS });
         if (onShopify) {
+          // edit-gate kind: repair — a broken link fixed in a live body; always
+          // allowed by lib/post-edit-gate.js, so the gate is not asked here.
           // Already live on Shopify — push the repaired body back up.
           // --force skips the editor gate since the post is already published.
           // Preserve a future shopify_publish_at so scheduled posts don't flip
@@ -406,15 +408,26 @@ if (new Date().getDay() === 0) {
   // Step 7c: site crawl via DataForSEO On-Page API
   runStep('site-crawler', `"${NODE}" agents/site-crawler/index.js`, { indent: '    ' });
 
-  // Step 7c.1: redirect creation + link fixes against fresh broken-link data.
-  //   - create-redirects: scoring + cluster disambiguation; HIGH-confidence
-  //     auto-apply, MEDIUM/LOW queued to redirect-proposals.json for review.
-  //   - fix-links: rewrites internal links pointing to 404 pages
-  //   - fix-redirects: rewrites internal links pointing to redirected URLs
-  // These need fresh crawl data so they only run after site-crawler.
+  // Step 7c.1: deterministic HIGH-confidence redirects against fresh crawl
+  // data. Whatever it is unsure of is resolved by the steward below, not left
+  // in redirect-proposals.json.
   runStep('create-redirects', `"${NODE}" agents/technical-seo/index.js create-redirects${dryFlag}`, { indent: '    ' });
-  runStep('fix-links', `"${NODE}" agents/technical-seo/index.js fix-links${dryFlag}`, { indent: '    ' });
-  runStep('fix-redirects', `"${NODE}" agents/technical-seo/index.js fix-redirects${dryFlag}`, { indent: '    ' });
+
+  // Step 7c.2 (2026-11-01): the steward FINISHES what the crawl found — it
+  // resolves every remaining 404 with inbound links (model picks from a closed
+  // list of live pages, target verified 200), repairs scheme-less hrefs, hides
+  // noindexed/orphan URLs from the sitemap, and rewrites over-long meta
+  // descriptions. It replaces `fix-links` (whose MEDIUM items went to a review
+  // queue nothing read) and `fix-redirects` (which read a crawl field the
+  // crawler never writes and so always processed 0 pages).
+  runStep('tech-seo-steward', `"${NODE}" agents/tech-seo-steward/index.js${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
+  // Repoint every internal link that now passes through a redirect, including
+  // the ones the steward just created. Reads Shopify's redirect table directly
+  // (with the live-path guard) and updates the local mirrors.
+  runStep('fix-redirect-links', `"${NODE}" scripts/fix-redirect-links.mjs${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
+  // Over-long SERP titles: mechanical trim, model review of fragments, CTR
+  // experiment pages and the 28-day edit window respected.
+  runStep('long-titles', `"${NODE}" scripts/remediate-long-titles.mjs --mint --auto${dryFlag ? '' : ' --apply'}`, { indent: '    ' });
 
   // Step 8: cannibalization detection + resolution
   runStep('cannibalization-resolver', `"${NODE}" agents/cannibalization-resolver/index.js --apply --report-json${dryFlag}`, { indent: '    ' });
@@ -457,6 +470,19 @@ if (new Date().getDay() === 0) {
 
   // Step 8d: turn the citation data into a ranked PR target list (runs AFTER the
   // tracker so it consumes the freshest snapshot, with full citation URLs).
+  //
+  // No `--enrich` and no `--concurrency` are passed on purpose: the agent's own
+  // defaults (400 targets at pool width 6, raised from a serial 150 on
+  // 2026-09-21) are the one place those numbers live. Enrichment is one plain
+  // GET per target, 8s timeout, bounded per publisher — measured at ~62s
+  // typical and ~9 min worst case against this step's own 150-min
+  // STEP_TIMEOUT_MS, which is faster in BOTH directions than the serial pass at
+  // 150 was. It buys the byline, the publication AND the article's own
+  // last-modified date, without which a target's currency is never checked at
+  // all — and on 2026-09-21 only 103 of 502 ranked targets had any of it.
+  //
+  // This agent has NO crontab line of its own — it rides this scheduler run —
+  // so a change to that budget deploys with `git pull`, not `setup-cron.sh`.
   runStep('pr-target-finder', `"${NODE}" agents/pr-target-finder/index.js`, { indent: '    ' });
 
   // Step 8e: generate llms.txt for LLM crawlers
@@ -510,6 +536,14 @@ if (new Date().getDate() === 1) {
   // from last month's personas instead of the ones just written.
   runStep('demand-miner', `"${NODE}" agents/demand-miner/index.js`, { indent: '    ' });
 
+  // Step 14b: amazon-keyword-coverage — REPORT ONLY. Compares every RSC listing's live
+  // title, bullets and backend search terms against the searches Amazon's Search Query
+  // Performance says showed it (the weekly amazon-explore-sqp dumps), and lists the
+  // highest-volume searches containing a word the listing does not index. Never writes
+  // to Amazon. Added 2026-10-10 after the listing copy turned out never to have been
+  // checked against Amazon's own search data.
+  runStep('amazon-keyword-coverage', `"${NODE}" agents/amazon-keyword-coverage/index.js`, { indent: '    ' });
+
   // Step 15: marketing-learner --regate — park live tactics that need a gate.
   //
   // A backstop, not the primary mechanism: extraction now emits `stage` itself, so a
@@ -524,7 +558,12 @@ if (new Date().getDate() === 1) {
   // tactic that already carries one, and validateSkillEdit still guards every write. The
   // failure mode is an over-parked tactic hidden from the projection, which `npm run
   // learn -- --staged` lists and one edit reverses.
-  runStep('marketing-regate', `"${NODE}" agents/marketing-learner/index.js --regate --apply`, { indent: '    ' });
+  //
+  // It runs through scripts/marketing-regate-pr.mjs, NEVER the agent directly. The skills are
+  // tracked files: run here, --apply edited them in the live checkout and nothing committed
+  // them, so on 2026-11-01 the next deploy's `git pull` aborted on 10 SKILL.md files. The
+  // wrapper re-gates in a throwaway worktree off origin/main and ships any change as a merged PR.
+  runStep('marketing-regate', `"${NODE}" scripts/marketing-regate-pr.mjs --apply`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }

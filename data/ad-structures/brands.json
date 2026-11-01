@@ -1,0 +1,32 @@
+{
+  "note": "Advertisers and keyword searches the 2026-10-03 research covered. pageId is the Facebook page id or vanity slug; a brand without one is found by keyword search on its name.",
+  "brands": [
+    {"key": "kopari", "name": "Kopari Beauty", "pageId": "koparibeauty"},
+    {"key": "sol-de-janeiro", "name": "Sol de Janeiro"},
+    {"key": "necessaire", "name": "Nécessaire", "pageId": "necessaireinc"},
+    {"key": "cocokind", "name": "Cocokind"},
+    {"key": "primally-pure", "name": "Primally Pure Skincare", "pageId": "primallypure"},
+    {"key": "bushbalm", "name": "Bushbalm"},
+    {"key": "native", "name": "Native"},
+    {"key": "osea", "name": "OSEA", "pageId": "oseamalibu"},
+    {"key": "glow-recipe", "name": "Glow Recipe"},
+    {"key": "kiehls", "name": "Kiehl's"},
+    {"key": "weleda", "name": "Weleda"},
+    {"key": "palmers", "name": "Palmer's", "pageId": "palmers"},
+    {"key": "eucerin", "name": "Eucerin", "pageId": "EucerinUS"},
+    {"key": "cerave", "name": "CeraVe"},
+    {"key": "ancestral-cosmetics", "name": "Ancestral Cosmetics", "pageId": "ancestralskin"},
+    {"key": "beauty-from-bees", "name": "Beauty From Bees", "pageId": "beautyfrombee"},
+    {"key": "wild-gold-tallow", "name": "Wild Gold Tallow", "pageId": "wildgoldtallow"},
+    {"key": "carolina-tallow", "name": "Carolina Tallow", "pageId": "61567478880542"},
+    {"key": "cottage-design", "name": "Cottage Design - Pahrump", "pageId": "61577283657959"},
+    {"key": "based-supplies", "name": "Based Supplies", "pageId": "100095526962088"},
+    {"key": "tallowed-truth", "name": "The Tallowed Truth", "pageId": "100090950379938"},
+    {"key": "tallowed-truth-founder", "name": "Ben Corkery Founder at The Tallowed Truth", "pageId": "61573915867947"},
+    {"key": "penrose", "name": "Penrose Skin", "pageId": "61578241696269"},
+    {"key": "pure-good", "name": "Pure Good", "pageId": "shoppuregood"},
+    {"key": "tallow-twins", "name": "Tallow Twins", "pageId": "100092633201065"},
+    {"key": "sarah-miller-kp", "name": "Sarah Miller", "pageId": "61583582420602"}
+  ],
+  "keywords": ["body lotion", "body butter", "tallow balm", "coconut lotion", "dry skin lotion"]
+}

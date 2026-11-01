@@ -1,0 +1,96 @@
+{
+  "sections": {
+    "a708f1f1-4d75-4944-9d55-2503a5fddb5e": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "narrow": false,
+        "padding_top": 60,
+        "padding_bottom": 60
+      }
+    },
+    "rich_text_Li8YiW": {
+      "type": "rich-text",
+      "blocks": {
+        "heading_D3mk6F": {
+          "type": "heading",
+          "settings": {
+            "heading": "Wholesale Organic Skincare",
+            "heading_size": "h1",
+            "heading_tag": "h1"
+          }
+        }
+      },
+      "block_order": [
+        "heading_D3mk6F"
+      ],
+      "custom_css": [
+        "H1 {text-align: center;}"
+      ],
+      "name": "t:sections.rich-text.presets.name",
+      "settings": {
+        "text_alignment": "left",
+        "mobile_text_alignment": "left",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "colors_highlight": "#bbff00",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "forms": {
+      "type": "apps",
+      "blocks": {
+        "bd92038c-a04a-4a6a-a601-1a29d1dd80ba": {
+          "type": "shopify:\/\/apps\/forms\/blocks\/inline\/8744a304-fcb1-4347-b211-bb6b4759a76a",
+          "settings": {
+            "form_id": "441761",
+            "text_color": "#202020",
+            "button_background_color": "#202020",
+            "button_label_color": "#ffffff",
+            "links_color": "#1878b9",
+            "errors_color": "#e02229",
+            "text_alignment": "center",
+            "form_alignment": "center",
+            "padding_top": 0,
+            "padding_bottom": 0,
+            "padding_right": 0,
+            "padding_left": 0
+          }
+        }
+      },
+      "block_order": [
+        "bd92038c-a04a-4a6a-a601-1a29d1dd80ba"
+      ],
+      "disabled": true,
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "1748886310e877e521": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 36
+      }
+    }
+  },
+  "order": [
+    "a708f1f1-4d75-4944-9d55-2503a5fddb5e",
+    "rich_text_Li8YiW",
+    "forms",
+    "1748886310e877e521"
+  ]
+}

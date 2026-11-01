@@ -1,8 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  planCollectionGap, matchProductsForGap, publishCollectionGap, fixUnclosedHtml, isArticleGoneError,
+  planCollectionGap, matchProductsForGap, publishCollectionGap, fixUnclosedHtml, isArticleGoneError, publishBlogRefresh,
 } from '../../lib/queue-apply.js';
+import { mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { getContentPath, getMetaPath, getPostDir } from '../../lib/posts.js';
 
 // A body long enough to clear validateCollectionSpec's 300-word floor.
 const FAT_BODY = `<p>${'clean coconut oil toothpaste without sulfates '.repeat(60)}</p>`;
@@ -122,4 +124,65 @@ test('isArticleGoneError still separates a deleted article from a transient fail
   assert.equal(isArticleGoneError(new Error('HTTP 404: {"errors":"Not Found"}')), true);
   assert.equal(isArticleGoneError(new Error('HTTP 500')), false);
   assert.equal(isArticleGoneError(null), false);
+});
+
+// ── founder-note usage stamping on a queue-driven refresh ───────────────────
+
+async function withRefreshPost(metaExtra, fn) {
+  const slug = `zz-founder-notes-test-${process.pid}-${Date.now()}`;
+  const dir = getPostDir(slug);
+  mkdirSync(dir, { recursive: true });
+  try {
+    writeFileSync(getMetaPath(slug), JSON.stringify({ slug, shopify_article_id: 77, ...metaExtra }));
+    const refreshed = `${dir}/content-refreshed.html`;
+    writeFileSync(refreshed, '<p>refreshed body</p>');
+    await fn({ slug, item: { slug, refreshed_html_path: refreshed } });
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
+const refreshDeps = (over = {}) => {
+  const writes = [];
+  return {
+    writes,
+    getBlogs: async () => [{ id: 1 }],
+    getArticle: async () => ({}),
+    updateArticle: async () => ({}),
+    mayEditLivePost: () => ({ allowed: true }),
+    recordMaterialEdit: () => {},
+    writePostMeta: (slug, changes) => writes.push(changes),
+    now: () => '2026-10-21T00:00:00.000Z',
+    ...over,
+  };
+};
+
+test('publishBlogRefresh stamps founder note uses from the refreshed HTML', async () => {
+  await withRefreshPost({ founder_notes_offered: ['a', 'b'], founder_notes_used: ['a'] }, async ({ slug, item }) => {
+    const calls = [];
+    const deps = refreshDeps({ stampFounderNoteUses: (args) => { calls.push(args); return ['b']; } });
+    const r = await publishBlogRefresh(item, deps);
+    assert.equal(r.published, true);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].text, '<p>refreshed body</p>');
+    assert.deepEqual(calls[0].offered, ['a', 'b']);
+    assert.equal(calls[0].surface, 'editorial');
+    assert.equal(calls[0].ref, slug);
+    assert.deepEqual(deps.writes.at(-1), { founder_notes_used: ['a', 'b'] });
+  });
+});
+
+test('publishBlogRefresh is not failed by a throwing founder note stamp', async () => {
+  await withRefreshPost({ founder_notes_offered: ['a'] }, async ({ item }) => {
+    const deps = refreshDeps({ stampFounderNoteUses: () => { throw new Error('boom'); } });
+    const r = await publishBlogRefresh(item, deps);
+    assert.equal(r.published, true);
+  });
+});
+
+test('publishBlogRefresh skips stamping when no notes were offered', async () => {
+  await withRefreshPost({}, async ({ item }) => {
+    let called = false;
+    const deps = refreshDeps({ stampFounderNoteUses: () => { called = true; return []; } });
+    await publishBlogRefresh(item, deps);
+    assert.equal(called, false);
+  });
 });

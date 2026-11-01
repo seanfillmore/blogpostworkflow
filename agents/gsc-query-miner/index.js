@@ -42,6 +42,7 @@ import {
   getAllQueryPageRows,
 } from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -251,7 +252,7 @@ A numbered list of the top 10 concrete actions, ordered by expected impact. Each
 Be specific. Use the actual query text and URL paths from the data. Skip generic advice.`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{ role: 'user', content: prompt }],
   });

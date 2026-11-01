@@ -7,8 +7,6 @@ description: Use when deciding whether to open Google Ads for an ecommerce catal
 
 ## Run the Google Ads campaign types eligible to serve inside AI Mode and AI Overview — Performance Max, AI Max and Shopping — because AI Max matches the long conversational queries no manual keyword list can enumerate, and because final URL expansion means your collection and comparison pages become part of the targeting and must carry strong descriptive copy.
 
-**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
-
 **Why it works:** Google is placing product ads inside the AI answer experience; AI Max reads query meaning plus behavioural signals rather than exact keywords, so it captures the long-tail conversational searches that individually have no volume, and dynamically rewrites headlines to the query context.
 
 **Evidence offered:** Agency claims success running AI Max across a number of accounts; a pet-carrier query example sourced to Google; no figures.

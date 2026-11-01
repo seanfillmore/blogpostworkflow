@@ -1,0 +1,793 @@
+# AI Creator Course: AI ad creation lessons
+
+**Creator:** Anthony Gallo (ContentCreator.com)  
+**Source:** transcript — `ai-creator-course-ai-ad-creation-lessons`  
+**Published:** 2026  
+
+
+
+Found 76 tactics: 52 adopted, 24 rejected.
+
+## Adopted
+
+### Build every recurring character from a filled-in structured spec rather than a free-form description — name, description, voice (tone, cadence, emotion, accent), personality (core traits, humour style, attitude to the product), appearance (age, build, hair, facial hair, wardrobe), a delivery example, and default camera angle and framing — then paste that same block into every generation prompt and reuse it across future ads. — 8/10
+
+**Why it works:** A template forces every attribute that drives consistency to be specified once in a structured form, so the generation space collapses around your intended character and repeat runs return recognisably the same person; freehand descriptions underspecify and the model fills the gaps differently each time. The voice and delivery fields also hold the performance steady, which a reference image cannot carry.
+
+**Evidence:** Creator says 'a lot of people get this wrong right off the bat' by writing a random prompt; side-by-side demonstration shows four images from the same vague prompt all look like different people while four from the templated prompt look consistent; a downloadable character-sheet template and a JSON character spec with Loom walkthrough are supplied.
+
+**Fit:** The product-image-stack skill already prescribes an enduring non-founder likeness across frames and the B-roll skill already warns faces drift across threads, but neither holds the production artifact that makes it happen. A written spec is the cheap, solo-runnable mechanism for both, and it extends to voice and delivery.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 1 of 6; part 3 of 6; part 6 of 6
+
+### Treat AI generation as shooting coverage on a film set, not as hunting for one flawless render — re-run the identical prompt to get a different take, keep the best individual shot out of each generation, and stitch the winners together in the edit. — 8/10
+
+**Why it works:** Model output varies run to run, so no single generation will be perfect across every cut; the job during generation is to accumulate as much usable footage as possible, and the assembly decision is deferred to the editor where you can take shots 1–2 from take one and shot 3 from take two. Expecting perfection in one pass wastes credits re-prompting something that was never a prompt problem.
+
+**Evidence:** Repeated worked examples: the pool sequence (first two shots from take one, Sophia-in-water from take two), the glass-breaking shot abandoned entirely, and an unchanged re-run of the horse prompt that produced a better take unprompted.
+
+**Fit:** The durable-principle core of the excerpt: it reframes how a solo operator should budget production effort — variance is harvested, not fought. It matches how he already works with image generations (expect to discard more than you keep) and extends it to video, where cost per attempt is higher. Runnable today with one editor and one account.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Give the ad a visual villain by generating a deliberately bland, unbranded stand-in for the product class the buyer already owns — a plain white bottle labelled 'Weak Soap', with the label explicitly prompted to look uninspired — then build the category-swap shot by uploading a real photo of your own product and prompting 'replace the generic product with this one — change nothing else in the scene.' — 8/10
+
+**Why it works:** The contrast the copy makes needs something on screen to point at, and an invented generic prop lets you stage it with no legal exposure and no free advertising for a rival. Holding every pixel of the scene fixed except the product then makes the swap read as a transformation rather than a cut — the visual form of the us-vs-them argument: the thing they already own becomes the thing you sell, in one frame, with no competitor named.
+
+**Evidence:** Demonstrated in the course prompt doc: 'holding up a plain, generic-looking bottle of body wash labeled "Weak Soap". The label should look intentionally bland and uninspired', reused as a standalone outdoor product shot and then swapped for the real bar, with the creator stressing 'it's very important that nothing else in the scene changed'.
+
+**Fit:** The best-fitting tactic in the work. RSC's recorded playbook already demands us-vs-them and 'eliminate the alternatives aimed at the product class the buyer already owns, never a named competitor' — a generic unbranded stand-in is exactly that, legally safe, and this is the production method for it in statics, gallery frames and the opening shot of a social video for deodorant, soap and toothpaste.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 3 of 6; part 5 of 6
+
+### Create a transformation shot by generating it as a first-frame/last-frame pair — supply the start image and the end image, describe only what happens in between, and state the transition duration. — 8/10
+
+**Why it works:** Fixing both endpoints removes the model's freedom to drift, so the clip is guaranteed to begin on the 'before' and land on the 'after'; the prompt only has to carry the in-between motion. Naming the duration ('one second') stops the model stretching the morph across the whole clip.
+
+**Evidence:** Demonstration — a weak soap bottle morphing into the 'dad strength' soap, and a young dad morphing into the older dad, both generated this way; creator notes doing it manually 'would take forever'.
+
+**Fit:** The highest-value shot type for RSC's catalogue: aluminium antiperspirant morphing into the natural deodorant, an old cracked bar into the body bar, a drugstore tube into the toothpaste. It is a visual way to encode the us-vs-them and before/after claims the product-image and creative-testing skills already want, and it is runnable by one person with an image reference and a video model. Distinct from the existing frame-chaining claim, which is about continuity between consecutive clips rather than specifying both endpoints of one transformation.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 4 of 6
+
+### Cap the environment in every generation prompt with an explicit realism ceiling — 'a moderately nice, clean, realistic, well-lit kitchen/bathroom, but not overly luxurious' — and apply the same ceiling to the product shot ('like a genuine lifestyle product photo, not a luxury ad'). — 8/10
+
+**Why it works:** Image models default to aspirational magazine interiors, which reads as advertising and breaks identification. Naming the tier of the set — nice but ordinary — makes the frame look like the viewer's own home, so the scene is believed instead of admired.
+
+**Evidence:** Assertion only; the instruction is repeated verbatim across every scene prompt in the lesson's own worked example, which is the creator's implicit proof that it is load-bearing.
+
+**Fit:** RSC's creative is produced by one person with AI image models, and the surfaces are bathroom/kitchen scenes for deodorant, soap and body care — exactly the set type this prompt governs. It complements the existing anti-gloss base-layer block by controlling set dressing rather than photo treatment, and the failure mode it fixes (the beautiful-over-believable render) is already a named concern in the imagery skill.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 6 of 6
+
+### Generate the clean scene first, then download that result, re-upload it as the reference and add the headline (top) and a CTA button (bottom corner) in a second generation pass. — 7/10
+
+**Why it works:** Asking one prompt to nail both a photoreal scene and legible marketing typography overloads it; splitting the job means the frame is locked as a known-good base and the text layer becomes a cheap, repeatable edit — and the model will often inherit the product's colour scheme into the headline, so the ad reads as one designed piece with an explicit action and reward on it.
+
+**Evidence:** Creator demonstrates it twice (course box ad and roofing ad) and says this exact ad is 'working really well online right now'; otherwise assertion only.
+
+**Fit:** RSC's operator produces his own statics for Meta and his own Amazon/Shopify frames. A two-pass method that reliably lands a legible headline plus an offer CTA on a generated frame is directly usable for deodorant/lotion statics, and complements the existing product-image-stack rule that one frame's single job is stating the offer. Platform-mechanics class but current (2026 tooling).
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### Address each uploaded reference explicitly in the prompt (the new @-mention syntax, or bracketed [img1]/[img2] labels) so you can compose one frame out of several references — this person, that product, that environment. — 7/10
+
+**Why it works:** Without explicit per-reference addressing the model blends all uploads and guesses which attribute to take from which image; naming the reference per noun in the sentence tells it exactly which asset supplies the face, which supplies the packaging and which supplies the setting, so composites land first try.
+
+**Evidence:** Live demo: man from image 1 holding mug from image 2 standing in environment from image 3, 'followed those instructions perfectly'.
+
+**Fit:** Every RSC lifestyle frame is exactly this composite — real deodorant packaging + a person + a bathroom/gym setting. The existing skill tells him to ground generations in his own phone photos but never how to bind multiple references to specific elements, which is where garbled packaging comes from. Fast-decaying platform mechanic, but 2026-current.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### Turn any reference you will reuse — a person, a place, or the product — into a saved named 'element' with several images from different angles attached, then call that element by name in future prompts. — 7/10
+
+**Why it works:** The element injects all of its angle references automatically every time it is called, so the model gets multi-angle data on the same subject instead of one flat shot or its own fading memory — which is what holds a face or a package consistent across a whole batch of ads, and it removes the re-upload step at the start of every fresh chat.
+
+**Evidence:** Demonstrated creating an 'Anthony in Office' character element; asserts multiple angles 'will help improve the consistency of that character'.
+
+**Fit:** Directly supports two things RSC already needs: product packaging that must look identical across every frame, and the recurring non-founder likeness the product-image-stack skill already prescribes. It is the mechanism behind the existing 'carry the same reference image into every thread' rule, and it is a one-person, laptop-only task.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### Screenshot an ad whose design you like from a company completely outside your industry, upload it as a reference, and prompt the model to recreate that exact ad while swapping in your product and rewriting the on-image text. — 7/10
+
+**Why it works:** Image-to-image recreation transfers the whole working layout — product placement, sale-text block, button position, hierarchy — without you having to reverse-engineer it into words; restricting the source to out-of-category advertisers means you inherit a proven composition without cloning a competitor buyers may recognise.
+
+**Evidence:** Demonstrated with a lawn-care irrigation ad recreated around his own product box, including swapping the headline, sale percentage and button copy; notes the leftover competitor logo is one more prompt to remove.
+
+**Fit:** RSC's statics are produced by one person with no designer, and the existing skill only covers reverse-engineering a reference into a prompt or building a converting-ad reference board. Direct recreation with per-element swaps is a faster, more faithful mechanism, and the out-of-category guardrail keeps it clear of natural-deodorant competitors. Requires a legal/compliance sanity check that no competitor branding survives in the export.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### For a UGC-style static, specify the capture position rather than the vibe: selfie POV from an outstretched arm, the capturing phone explicitly not visible in the final image, the product held up into the foreground with its on-pack text stated as clearly legible and in sharp focus. — 7/10
+
+**Why it works:** Generic 'make it look like UGC' leaves the model free to invent a second visible phone, a tripod composition, or a blurred/garbled label; naming the arm position, excluding the device, and demanding the packaging text be sharp makes the frame read as a real selfie while keeping the one element that has to survive scrutiny — the product name — readable.
+
+**Evidence:** Demonstrated with a drugstore acne wash; 'first try, I would say we got pretty much exactly what we wanted'; only noted fix was text size.
+
+**Fit:** RSC's statics live or die on whether the deodorant or lotion package is legible in a native-looking frame, and the existing base-layer prompt block covers grain and framing but not the capture position or label legibility. Keep it inside the existing anti-fabrication rule: a generated person may hold the product, but must never be presented as a verified customer or the author of a real review.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### Treat every edit pass on a reference image as a quality tax — never feed an edited frame into a video model — and where you must edit (e.g. a wardrobe change), rebuild the final reference by pasting the face from the original 100%-quality generation over the degraded edited version in a basic photo editor before it reaches the video model. — 7/10
+
+**Why it works:** Each edit in the image model smooths out fine skin and facial micro-detail; because the video model inherits almost all of its fidelity from the start frame, a once- or twice-edited reference is what produces the 'plastic AI' look in the finished clip — the defect is introduced upstream, not by the video tool. Re-compositing the original high-quality face restores the detail without losing the wardrobe or framing the edits bought you.
+
+**Evidence:** Side-by-side comparisons of original versus once- and twice-edited faces, with the creator estimating 100% → ~70% quality after one outfit edit; 'if we take this edited image and put it straight into our video model, we're much more likely to get that plastic AI look', and the restoration move called 'probably one of the easiest ways to dramatically improve the quality of your AI video'.
+
+**Fit:** RSC's operator films and edits his own short-form and would use AI B-roll the same way, and he already needs a recurring non-founder character held consistent across frames, so any generated video hits exactly this degradation problem. The existing skill says clip quality is decided by the start frame but never names compounding edit loss as the cause. It is a photo-editor layer operation one person does in minutes, free to apply today, and the principle survives tool churn.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 1 of 6; part 2 of 6
+
+### Build a dedicated reference sheet for every prop the characters interact with repeatedly — the product itself plus any recurring object — not just for characters and locations. — 7/10
+
+**Why it works:** The video model will invent a different version of an unspecified object in every generation; giving each recurring object its own locked reference sheet means its shape, colour and details stay identical across every cut, so the sequence reads as one continuous piece of footage instead of a series of unrelated clips.
+
+**Evidence:** Worked example: sunglasses, margarita, horse and car each get their own prop sheet; assertion only as to the consistency benefit.
+
+**Fit:** This is the highest-stakes version of the problem for RSC because the prop IS the product — a deodorant stick or lotion bottle that changes label, shape or cap between cuts destroys the ad and, on Amazon, the asset is non-compliant if the render does not match the real product. A locked prop sheet built from his own phone photos is the fix, and it is a laptop task for one person.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 2 of 6
+
+### Render every character, location and prop reference at a three-quarter angle rather than flat straight-on. — 7/10
+
+**Why it works:** A three-quarter view exposes shape, depth and detail on two planes at once, giving the video model substantially more visual information to extrapolate movement and camera motion from than a flat frontal shot, which it has to guess the volume of.
+
+**Evidence:** Stated as the reason the scene and product prompt templates both hard-code the angle; assertion only.
+
+**Fit:** A one-line, free addition to any generation prompt the operator writes, and it transfers straight to the product-render work he already does for Amazon and PDP imagery as well as video. Durable-principle class — it is about how much information a reference frame carries, not a specific model's feature set.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 2 of 6
+
+### Install a reusable 'director' skill in the LLM and have it convert the full script into a per-cut shot list specifying camera angle, focal length, action, blocking and camera movement, then work from that shot list as the single source of truth for every generation. — 7/10
+
+**Why it works:** The shot list is the brain of the video: it moves you out of asset creation and into the director's seat, so each generation prompt is derived from one coherent plan rather than invented ad hoc. Because the instructions live in a reusable skill, the same directing standard is applied to every project without re-briefing.
+
+**Evidence:** Walkthrough of installing and invoking the custom Director skill, showing the shot list it produced with camera angle, actions and movement per cut; downloadable skill offered.
+
+**Fit:** A solo operator who is also his own director benefits most from an externalised directing standard, and the shot list is what makes a multi-cut ad tractable for one person. Runnable today — an LLM skill, a script and a video model, no second person and no spend floor.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Ask the video model for several cuts inside one long generation rather than generating each shot separately, so a single credit spend can return three usable shots. — 7/10
+
+**Why it works:** Generation cost is charged per generation (and per duration), not per usable shot, so packing cut 1, cut 2 and cut 3 into one 30-second request multiplies the footage you get for the same credits — and the cuts come back already matched in lighting and character appearance.
+
+**Evidence:** Demonstrated on the pool sequence (three cuts in one generation) and the sunset sequence (two scenes combined into one six-cut 30-second generation), described as 'a super effective way to create more footage without burning through your credits'.
+
+**Fit:** Cost-efficiency per usable asset is the operative constraint for a solo operator producing video creative himself, and this materially raises the number of shippable shots per dollar of generation credits. Runnable today on a single subscription or pay-per-use account.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### When only part of a multi-cut sequence fails, delete the cuts that already worked out of the prompt, renumber the remaining ones, shorten the requested duration to match, and regenerate only those. — 7/10
+
+**Why it works:** Credits are spent on seconds of generated video, so re-requesting cuts you already have is pure waste; trimming the prompt down to the three failing cuts and dropping a 30-second request to 10 seconds spends roughly a third as much for the same result.
+
+**Evidence:** Worked example on the sunset sequence — kept cuts 1–3 from the first 30-second generation, regenerated only cuts 4–6 at 10 seconds — plus the stated rule 'don't regenerate an entire scene just because one part is wrong'.
+
+**Fit:** Concrete credit discipline that compounds across every video the operator makes, and it pairs with the multi-cut batching tactic as the other half of the cost equation. One person, one account, runnable today.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### When you are unsure which of two ways to construct a shot or sequence is stronger, generate both and compare them side by side instead of guessing. — 7/10
+
+**Why it works:** Generation is cheap enough that the decision cost of debating a creative choice exceeds the cost of producing both and watching them; the comparison is immediate and unambiguous in a way an argument about the storyboard is not.
+
+**Evidence:** Worked example on the payoff shot — close-up match cut versus wide establishing shot cutting into the close-up — generated both and picked the wide-to-close version as telling the story better.
+
+**Fit:** A genuinely cheap decision-making move for a solo operator who has nobody to argue the storyboard with. Note it is a craft-level judgement comparison, not a statistical ad test — it needs no order volume or spend to resolve, so it is runnable today and is not gated behind scale.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Build an AI video ad in five fixed stages in order — script outline, character generation, storyboard, video generation, edit — rather than prompting a video model straight from an idea. — 7/10
+
+**Why it works:** Each stage's output is the next stage's input: the script decides how many characters exist, the characters become the reference images, every storyboard frame becomes the literal start frame of a clip, and the clips become the edit. Skipping a stage means regenerating everything downstream, because image-to-video inherits whatever the frame got wrong.
+
+**Evidence:** Demonstrated end to end on one ad; creator asserts the same style of ad took a company from $5M to $100M in a year, and that the whole piece cost under $30 to produce.
+
+**Fit:** RSC publishes its own short-form video and runs Meta creative, and the operator does every craft role himself — this pipeline lets him produce a scripted, multi-character ad with no second person on camera and no shoot day, in a category (natural soap/deodorant) that is Dr. Squatch's own. The fixed order is the part that survives tool churn; the named tools are fast-decaying platform mechanics.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Storyboard in a plain Google Doc — paste the script, drop each generated frame directly under the line of script it illustrates, keep only the images you will actually use in the doc, then export everything at once with File > Download > Web Page to get an organised folder of high-resolution frames. — 7/10
+
+**Why it works:** The doc gives a bird's-eye view of how every scene starts and connects before any generation credits are spent on video, and because the frame sits under its own line of script the mapping from dialogue to clip never gets lost. The web-page export solves the file-management problem of dozens of near-identical downloads, and the doc stays open as the running order while you generate, since exported files do not keep storyboard order.
+
+**Evidence:** Demonstrated live; creator contrasts it with 'fancy software' and notes it costs nothing.
+
+**Fit:** A solo operator producing multi-scene video has exactly this problem — dozens of generated frames and no record of which belongs where. Zero cost, zero tooling, runnable today, and it directly supports the organic short-form surface RSC already publishes to.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Write every scene prompt from a fixed template in a fixed order — generation intent plus reference style, camera framing and composition, main subject and prop detail, lighting and tone, background action or secondary subjects, overall mood and emotional direction — because a vague scene prompt ('a man holding soap standing in front of another man who looks like he is about to fall') regenerates a radically different scene every run and makes incremental adjustment impossible. — 7/10
+
+**Why it works:** Consistent inputs produce consistent outputs: once every field is specified, changing one field changes one thing in the image, which is what lets you iterate toward the shot in your head instead of re-rolling the whole scene. The fixed order also works as a checklist so nothing is silently omitted, and it front-loads the decisions the model weights most heavily (intent, framing, subject) ahead of atmospheric detail.
+
+**Evidence:** Side-by-side of the vague prompt versus the templated prompt, described as 'an absolute massive difference'; the template is supplied as a reusable fill-in block with a Loom walkthrough and is visible in the structure of every worked prompt in the lesson.
+
+**Fit:** Extends the SCENE / SUBJECT / EMOTIONAL READ format already recorded for B-roll frames with the fields that matter once a frame has to become a moving clip — camera framing, lighting, background action — and supplies the prompt-assembly order the imagery skill lacks. One caveat to record: this is more structure than the existing 'write short plain-language prompts' claim advises, so it belongs on deliberate scene frames, not a straightforward white-background hero render.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 3 of 6; part 6 of 6
+
+### Derive the 'before' version of a character by uploading the finished hero character image and prompting the model for a modified version of that same person (younger, clean-shaven, softer), so a before/after gag or transformation runs on one identifiable individual. — 7/10
+
+**Why it works:** The before-state is generated from the after-state image rather than from scratch, so the viewer reads the two frames as the same person changing rather than two unrelated models — which is the whole payload of a transformation shot.
+
+**Evidence:** Demonstrated: the 'manly dad' image prompted into a 'youthful, clean-shaven' version, then transformed back in a later scene.
+
+**Fit:** RSC's product image stack already requires transformation frames and a routine-contrast substitute where an honest before/after does not exist — this is the generation method that makes the two states read as one person. Directly usable for deodorant and body-care contrast frames on social video and PDP galleries.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Repair or standardise a face across generated shots with an explicit face-replacement edit rather than regenerating the frame: load the defective shot as the base, upload the correct character as the target, and prompt 'replace the face of the person in Shot 1 with the face of the person in Shot 2, maintaining the same lighting, angle and framing from Shot 1 so the replacement looks natural and seamless.' — 7/10
+
+**Why it works:** Asking the model to re-generate the whole character in every new scene lets the face drift; a face-replacement edit constrains the change to one region and names the three things that make a composite look fake — lighting, angle, framing — so the composition you already approved is preserved and one chosen face can be imposed on an entire batch after the fact.
+
+**Evidence:** Demonstrated: a derived close-up came back wearing the wrong character's face and was fixed with this exact prompt; the verbatim reusable edit prompt is supplied in the course doc alongside the preceding 'generate a clean in-focus close-up' step.
+
+**Fit:** The existing B-roll skill warns that faces drift across a batch but offers only prevention (carry the reference into every thread); this is the surgical repair — one operator, one prompt, no reshoot — and it also lets the founder persona the copy skills hold constant be placed into generated frames. The adopted version must inherit the anti-fabrication rule: never swap in a real person's face without consent and never present the result as a verified customer.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 3 of 6; part 5 of 6; part 6 of 6
+
+### Shoot each beat as coverage at two shot sizes rather than one frame: generate the wide establishing shot that shows who is in frame and what happens, then derive the matched close-ups from that approved frame with named instructions ('an in-focus close-up of the man in the plaid shirt; the man in the blue shirt should not be in the image'). — 7/10
+
+**Why it works:** A cut needs two angles of the same moment — the wide carries the situation and the close-up carries the emotion, and intercutting them creates pace without new content. Deriving the close-ups from the approved master rather than generating them independently means all coverage inherits one set, one wardrobe and one lighting condition, so continuity comes free when the clips are edited together.
+
+**Evidence:** Demonstrated across several scenes (driveway wide → dad close-up; father-and-son bathroom wide → son's sniff close-up → father close-up), with all three prompts for the same beat supplied in the linked prompt doc and the edit session then cutting between them.
+
+**Fit:** RSC already rebuilds talking-head pieces with generated B-roll per beat, but the existing claim is one frame per beat — coverage at two shot sizes doubles usable cuts per beat at no extra filming cost, and the derivation step is the only honest way one person gets matched multi-angle coverage with no camera. Applies equally to phone-shot deodorant demos.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 3 of 6; part 5 of 6; part 6 of 6
+
+### Write every image-to-video prompt by answering four fixed questions in as much detail as possible — what is the person saying and in what tone, what is the camera doing, what is the action in the shot, what is the context around it — and leave the platform's prompt-expansion setting on. — 7/10
+
+**Why it works:** Those four questions cover the only dimensions the video model actually controls (dialogue, camera behaviour, subject action, environment), so answering all four stops the model inventing its own camera move or staging; the expansion setting then fills that structured answer out into a fuller prompt on the back end.
+
+**Evidence:** Demonstrated with a full example prompt and the resulting clip.
+
+**Fit:** Runnable today on RSC's own social-video surface by one person with credits. The four-question structure is a durable principle; the named 'Enhance' toggle is fast-decaying platform mechanics and should be recorded as 'the platform's prompt-expansion setting, if it has one'.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Accept a visually imperfect generated clip when you know you will cut away from it, and judge it instead on audio clarity and delivery, because the voice can be replaced later but the tone and timing of the performance cannot. — 7/10
+
+**Why it works:** The edit decides what the viewer actually sees — a wide shot that only has to hold for two seconds before the close-up does not need to be flawless. But performance tone is baked into the generation, so that is the one attribute worth re-rolling for, and voice replacement in the edit makes vocal quality a non-criterion.
+
+**Evidence:** Demonstrated on the first clip: 'the full shot doesn't have to be exactly perfect... as long as the audio is clear and the delivery sounds good... that is something we will not be able to change'.
+
+**Fit:** A concrete acceptance test that stops a solo operator burning credits and hours re-rolling frames the edit will cover anyway. Complements the existing rule to reject clips for shaky-camera and auto-zoom defects by naming what is NOT worth rejecting for.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### When a video model repeatedly refuses or ignores a specific shot instruction, copy the identical prompt into a different model rather than rewriting the prompt. — 7/10
+
+**Why it works:** Prompt-following is a property of the model, not the wording — different models have different weaknesses, so an instruction one ignores another obeys, and holding the prompt constant isolates the model as the variable rather than sending you into an endless rewrite loop.
+
+**Evidence:** Demonstrated: the locked-off tripod shot (camera static while the subject falls out of frame) failed repeatedly in Veo 3.1, was pasted unchanged into Kling 2.6 and returned a usable clip on the first generation; the creator adds that he routes product push-ins and child subjects to the second model as a matter of course.
+
+**Fit:** The operator films, edits and publishes RSC's own short-form video himself, so generation-tool work is runnable today on a laptop, and model-switching is a cheap unblock for the exact shots a body-care ad wants (product push-in, a hand demonstrating use). It also stops him attributing a model limitation to his own prompting. Specific model names are fast-decaying platform mechanics; the portable rule is 'carry the prompt to a second model before rewriting it'.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 3 of 6; part 4 of 6
+
+### Deliver the product's ingredients and mechanism inside comedic exaggeration of the buyer's identity rather than stating them straight — attack the product they currently use, then make the absurd claim carry the formulation detail ('forged from oak, coffee and a lot of responsibility', 'use a base of olive oil, coconut oil and shea butter'). — 7/10
+
+**Why it works:** The joke buys the attention that a straight ingredient claim cannot, and because the ingredient line is the punchline's setup the viewer absorbs the formulation while laughing instead of skipping it. The identity frame ('you're not a dish, you're a man') gives the buyer a role to display alongside the physical benefit.
+
+**Evidence:** Creator points to Dr. Squatch running this same pattern across all their videos and asserts this style of ad helped a company go from $5M to over $100M in a year.
+
+**Fit:** Dr. Squatch is a direct category analogue — natural soap and body care sold on identity — so this is the closest thing to a proven messaging template for RSC's own catalogue. The recorded playbook already covers eliminating the alternatives and giving the buyer a role to display; what is new is comedy as the delivery vehicle for mechanism copy, which nothing in the skill set currently names.
+
+**Target skill:** `marketing-conversion-copy-angles` (edit)
+
+**Merged from:** part 3 of 6
+
+### Use the expressive (V3) voice model rather than the older tier, and steer each line's delivery with bracketed director cues such as [depressed], [excited], [confident] placed in the script text. — 7/10
+
+**Why it works:** The newer model reads expressively rather than flatly, and the bracket cues are interpreted as performance direction, so the same sentence can be re-rendered as depressed or excited without rewriting a word — letting you tune tone per line instead of accepting one default read.
+
+**Evidence:** Demonstration — the same line 'you need dad strength by Dr. Squatch' rendered in V2 vs V3 and then with [depressed] and [excited] cues, each played back; two generations are returned per run so you can pick or regenerate.
+
+**Fit:** Directly runnable today by one person and the most consequential lever in the voice workflow: a flat synthetic read kills a hook, and tone is the difference between an ad that reads as a person and one that reads as a robot. Platform-mechanics class on the specific model tier and bracket syntax, so re-check the named model; the 'direct the read per line' principle is durable.
+
+**Target skill:** `marketing-ai-voiceover-production` (create)
+
+**Merged from:** part 4 of 6
+
+### Delete the video model's own audio from every generated clip and lay your separately cast voice under it instead — aligning the waveform to the mouth movement and confirming by ear, or routing model-generated dialogue through a voice-changer onto the cast voice — and keep the narration track on the top layer, pushing any clip's own audio down a layer wherever narration is playing. — 7/10
+
+**Why it works:** Clips generated with native audio come back in whatever voice the model invented, which does not match the voices you cast — a mismatch the viewer hears as amateurish, and dropped onto the same layer as the narration that embedded audio masks the voiceover the whole ad is built on. A voice changer keeps the timing and performance of the generated clip while replacing the timbre, so lip-sync survives; layer order and explicit deletion of the superseded track are the controls that keep the argument audible.
+
+**Evidence:** Demonstrated: the narrator line and the dad's line, both generated with Veo audio, dropped into the Voice Changer and re-rendered into the cast voices ('now that audio matches the rest of the narration'); the ElevenLabs 'that's what manhood smells like' line aligned under the clip by eye and ear, the clip's native track option-clicked and deleted, and the transition clip moved up a layer after its native audio covered the narrator.
+
+**Fit:** He writes, films, voices and edits RSC's own social video, so controlling the voice on an AI or hybrid clip is directly his job, and mismatched voices or a buried narration track is exactly the class of technical-execution defect the existing creator-sourcing skill already rejects clips for. The durable part — generate voice separately from picture, align it, protect the narration layer — survives whichever video model is current; only the tool names decay.
+
+**Target skill:** `marketing-ai-voiceover-production` (create)
+
+**Merged from:** part 4 of 6; part 4 of 6; part 5 of 6
+
+### Trim every clip backwards from its beat: pick the exact frame you want to END on, cut there and delete everything after it, then pull the head in to the frame where the movement actually starts — holding a reaction only one or two frames longer than feels finished and butting the next clip flush so no dead air survives between them. — 7/10
+
+**Why it works:** A generated clip is always longer than the usable moment inside it and the end frame is what the viewer is left holding, so choosing the out-point first preserves the payoff instead of letting the clip trail off past the audio, and absorbing the surplus at the front means every frame on screen is doing work. Snapping the next clip flush to the line lands the cut on the dialogue rather than after a pause, which is what makes a three-shot sequence read as a montage rather than a slideshow.
+
+**Evidence:** Demonstrated repeatedly on the timeline — the transformation, grocery, thunderstorm and pickle-jar shots each cut to end on a chosen payoff frame (smoke drifting past, the celebration after the jar opens) — and walked through live on the father/son bathroom beat: find the sniff frame, split, delete, pull the reaction in, extend 'one or two more frames', pull the dad's clip head back to the frame before the line, move the two flush, preview.
+
+**Fit:** Organic short-form is a live surface the solo operator shoots, cuts and publishes himself, and cut timing is exactly where a homemade clip reads as amateur. Pure craft on a timeline in a free editor, applying equally to a phone-shot deodorant demo and to AI clips. The existing short-form skill says to replicate a reference's pacing but never says how to find a clip's in and out points.
+
+**Target skill:** `marketing-short-form-video-production` (edit)
+
+**Merged from:** part 4 of 6; part 5 of 6
+
+### Salvage the believable seconds out of a flawed generation instead of regenerating it — scrub the clip, reject the segments where the artefacts show, and cut only the window that holds up. — 7/10
+
+**Why it works:** AI clips fail unevenly; the rain looked fake on the actor's face at the head of the clip and the grill was not visible at the lightning strike, so the middle section was the only honest footage — and a two-second usable window is enough when the clip only has to cover one line.
+
+**Evidence:** Demonstration — the thunderstorm clip's head rejected for fake-looking rain on the face, its chosen end frame moved to a mid-clip moment with drifting smoke; the boy's sniff reaction cut to begin as his shoulders rise because the earlier reaction 'isn't the best'.
+
+**Fit:** Runnable today and the most transferable idea in the editing section: it converts the high reject rate of AI generation from a cost into a selection step, which matters a lot when one person is paying per generation. Complements — rather than duplicates — the existing imagery rule to always pick the believable render over the beautiful one, because this is about choosing which seconds of a single clip are believable.
+
+**Target skill:** `marketing-short-form-video-production` (edit)
+
+**Merged from:** part 4 of 6
+
+### When you do not have enough customer results to carry the social-proof section, substitute your own first-person story of achievement and make it as relatable to the average viewer as possible, so they see themselves in your shoes rather than in a stranger's. — 7/10
+
+**Why it works:** Social proof works by building positive belief — 'if that person got there, I can'. A founder's own story performs the same belief-shifting job as a testimonial, and the more ordinary the starting point sounds, the more transferable the result feels. It is also the only proof asset you fully control when the review corpus is thin.
+
+**Evidence:** Assertion only, offered as the fallback branch of his social-proof 'enhancer' ('if you're just getting started and you don't have a ton of testimonials just yet, the key would be to lean more heavily into your own personal story').
+
+**Fit:** RSC is a solo founder with a small review corpus across 12 SKUs, so the available proof is his own skin and his own reason for formulating. The existing credibility skill covers the no-testimonial case only as 'describe the buyer's problem in extreme detail' — the founder-story substitution is a different asset, and it lands on his own social video, Meta primary text and the product page's story block.
+
+**Target skill:** `marketing-copy-credibility-and-proof` (edit)
+
+**Merged from:** part 5 of 6
+
+### When the product's differentiator is an identity attribute rather than a visible result, build the visual beats as exaggerated everyday feats that embody that attribute — grilling through a thunderstorm, forcing open a stuck pickle jar with an 'arghhh' face — keep the product out of those frames entirely, and reveal the full product lineup only in the final shot. — 7/10
+
+**Why it works:** An identity claim like 'dad strength' cannot be demonstrated on the product itself, so the frames dramatise the trait through unrelated ordinary situations the buyer recognises. Because the product is absent, the viewer reads the scenes as entertainment rather than advertising and is still watching when the reveal lands.
+
+**Evidence:** Assertion only; carried entirely by the worked Dr. Squatch 'Dad Strength' example sequence.
+
+**Fit:** Natural deodorant and soap are the canonical case where the differentiator is non-demonstrable — the existing product-image-stack rule is to relegate non-demonstrable attributes to text, and this supplies a visual route for them instead, a real addition rather than a restatement. It is also the concrete production method for the already-recorded 'give the product a role the buyer gets to display' principle, and one person with an image model can shoot it today.
+
+**Target skill:** `marketing-product-image-stack` (edit)
+
+**Merged from:** part 6 of 6
+
+### Set the aspect ratio from what the composition needs and where the ad will run — 1:1 for a feed static, 9:16 for a vertical UGC ad, 16:9 when a two-panel side-by-side needs horizontal room. — 6/10
+
+**Why it works:** A split-screen comparison crammed into a square loses the room each panel needs to read, and a vertical placement served a square gives up screen real estate; deciding ratio before generating avoids regenerating the whole frame later.
+
+**Evidence:** Demonstrated switching to 16:9 for the before/after roofing ad and 9:16 for the vertical UGC skincare ad; assertion only beyond that.
+
+**Fit:** A small but concrete rule the operator will hit every time he generates an us-vs-them or routine-contrast frame, and it sharpens the existing output-format claim which currently assumes a fixed 1:1 square. Low ceiling as a tactic, not a volume issue.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6
+
+### Prefer pay-per-generation access to AI image and video models over stacking several monthly subscriptions, so a month with little output costs little. — 6/10
+
+**Why it works:** Subscription pricing charges the same whether you generate one asset or a hundred, which taxes exactly the irregular output pattern a solo operator actually has; per-generation billing makes creative volume a variable cost tied to the work done.
+
+**Evidence:** Assertion only — creator's own preference, promoted via his own pay-per-use marketplace (promptedit.com) in a retrofitted insert, with no cost or output comparison; the affiliate/ownership motive is visible.
+
+**Fit:** At $30/day reference spend, two or three $40/mo creative subscriptions are a real share of the media budget, so cost structure genuinely gates how many statics get produced. Record only the durable per-generation-vs-subscription test, never the named vendor: the aggregator landscape is fast-decaying platform mechanics and the creator has a disclosed commercial interest in the specific tool.
+
+**Target skill:** `marketing-ai-product-imagery` (edit)
+
+**Merged from:** part 1 of 6; part 2 of 6; part 3 of 6
+
+### Generate the character's alternate outfits during the asset phase, by uploading the locked character and prompting only the wardrobe change, before you start assembling the ad. — 6/10
+
+**Why it works:** Deriving each outfit from the already-approved character keeps the same face across wardrobe changes; generating outfits later, mid-build, forces you to re-establish the character and risks a different person appearing between scenes.
+
+**Evidence:** Assertion with demonstration: 'because character consistency is so important in making something look realistic, we actually want to create different outfits right now during the asset creation phase'.
+
+**Fit:** Extends the existing characters-then-environments-then-product production order with a wardrobe sub-step, which matters for any multi-scene RSC piece (morning routine, gym, evening) using a recurring likeness. Narrower than the character-spec tactic it depends on, hence the moderate score.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 1 of 6
+
+### Strip a character reference sheet down to exactly one visible face — delete the heads from the other panels — so the video model has no ambiguity about which face to reference. — 6/10
+
+**Why it works:** A multi-face character sheet gives the video model two or more candidate faces of differing quality; it does not know which one to lock onto, and if it drifts toward the weaker one the entire clip inherits that sloppy, obviously-generated look. One clean face removes the choice.
+
+**Evidence:** Demonstration on a character sheet with two faces of visibly different quality, plus a prompt provided to perform the head removal; assertion only as to the drift mechanism.
+
+**Fit:** Directly runnable by one person on a laptop and relevant to any AI-generated video featuring a recurring buyer-avatar character for RSC's deodorant or skin line. Narrower in reach than the quality-restoration move because it only applies to multi-panel sheets.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 2 of 6
+
+### Give every asset a simple descriptive filename in one Assets folder, register each one with the LLM as an @-name plus a one-line description, and have the shot list call assets by that @-name so each reference maps one-to-one onto the video tool's media picker. — 6/10
+
+**Why it works:** A shared naming convention across the LLM and the video tool turns prompt assembly into mechanical substitution — you highlight @jack_beach in the generated prompt and pick the matching element — instead of re-describing the character and hunting for files on every shot. The organisation cost is paid once and saves time on every generation thereafter.
+
+**Evidence:** Demonstrated end to end: naming files Jack / Jack_Beach, declaring '@Jack — Jack in NYC' to Claude, uploading identically-named elements under Characters in the video tool.
+
+**Fit:** Pure operational hygiene, but it is the difference between a one-person AI video workflow that scales to many ads and one that collapses under its own file naming. Runnable today at zero cost; below the directing and coverage tactics because it is enabling plumbing rather than something that changes what the ad says.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Feed the director the full script with wardrobe, setting, actions, feelings and reactions specified per scene — not a loose summary — because a generic brief produces generic output. — 6/10
+
+**Why it works:** The shot list can only be as specific as the story it is derived from; if the model has to invent wardrobe, location and emotional beats it will default to averaged, interchangeable choices, and every downstream generation inherits that vagueness. 'Give Claude generic AI slop and you get generic AI slop.'
+
+**Evidence:** Stated explicitly while uploading the script, with the script's level of detail enumerated; assertion only.
+
+**Fit:** Translates cleanly to RSC: the wardrobe, bathroom or gym setting and the emotional beat of a deodorant ad are exactly the details that decide whether a generated clip looks like his buyer's actual morning. Sits at 6 rather than higher because it is adjacent to existing claims about not briefing a model cold — the new material is specifically which fields the script must carry before shot-listing.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### When a generated shot is wrong, go back to the director document and issue one named change scoped to that scene ('in scene one, do not punch into a 50mm, keep the whole action in one continuous 35mm shot') rather than hand-rewriting the generation prompt. — 6/10
+
+**Why it works:** Editing upstream regenerates only the affected prompt while leaving every other scene in the shot list untouched, so the plan stays internally consistent and you never lose the rest of the work; hand-editing the prompt desynchronises the shot list from what you actually generated.
+
+**Evidence:** Four worked corrections — removing a punch-in, switching to a car-mounted frontal shot, forcing one continuous shot, converting a cut to POV — each followed by a visibly better generation.
+
+**Fit:** A direct, repeatable iteration loop the operator can run alone today. It is the video analogue of the already-recorded 'correct a near-miss by naming the specific defect' move for statics, so it earns adoption on the new part — correcting in the upstream shot list so the rest of the sequence is preserved.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Close the ad on a deliberately chosen, well-framed clean product shot built from a reference photo of the real pack — scrub for the best-composed frame, cut away the clip's remaining motion, and extend that frame to hold under the final narration line. — 6/10
+
+**Why it works:** The last frame is what the viewer carries to the shelf or the listing, so ending on an unobstructed pack shot makes the product recognisable at the moment of search or scroll past. An AI or phone clip rarely ends on the frame you want, so letting it play out closes the ad on whatever the camera happened to be doing; cutting to the chosen frame and holding it keeps the product and brand name on screen long enough to register while the CTA plays.
+
+**Evidence:** Assertion ('a lot of these ecommerce brands wrap up their ads with a clean product shot') plus a demonstrated generation, and in the edit session he scrubs for 'a great ending shot... perfect framing', cuts, removes the head of the clip, moves that frame to the end and extends it back out.
+
+**Fit:** Cheap, durable convention that costs one generation and one timeline move in the free editor he already uses, and it matters for a catalogue sold on both Shopify and Amazon where the viewer has to recognise the pack later. Governs one second of the asset, which is what holds it mid.
+
+**Target skill:** `marketing-short-form-video-production` (edit)
+
+**Merged from:** part 3 of 6; part 5 of 6
+
+### Inside the video prompt, state the emotional register by naming a famous commercial it should feel like ('funny and over the top, similar to a classic Old Spice commercial') and explicitly instruct 'no music, no sound effects.' — 6/10
+
+**Why it works:** A named reference commercial transfers a whole tone in three words that would take a paragraph to describe. Suppressing generated music and SFX returns clean plates, so music, voiceover and sound design are decisions made once in the edit rather than fought with on every clip.
+
+**Evidence:** Demonstrated inside the worked example prompt.
+
+**Fit:** Both halves are runnable today and the clean-plate instruction is the kind of thing that silently ruins a batch when skipped — generated backing music on individual clips cannot be removed and will not match across cuts.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Write an explicit camera instruction into every shot prompt — locked off on a tripod, slow zoom in, camera tracking backwards as the subject walks forward — rather than describing only the action. — 6/10
+
+**Why it works:** The model will otherwise choose its own camera behaviour, which reads as generic AI footage; naming the move is what gives a montage a cinematic feel and lets each shot differ visually from its neighbours.
+
+**Evidence:** Demonstration — a slow zoom on the boy sniffing the soap, a backwards track on the dad carrying bags, a slow push-in on the product, a locked tripod for the fall.
+
+**Fit:** Runnable today by the solo operator and directly useful for the product push-in and demonstration shots RSC's own social video needs. Scores mid because it is craft refinement on an asset that still has to win on angle and hook. Prompt syntax shifts, but the underlying 'name the camera move' instruction is durable.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 4 of 6
+
+### Direct the delivery of a spoken line inside the video prompt itself — tell the character to say it 'like he's trying to sound impressive and proud'. — 6/10
+
+**Why it works:** The generated performance, not just the words, is what sells the line; naming the intended emotional register in the prompt gets the model to act rather than merely speak.
+
+**Evidence:** Demonstration — the 'that's what manhood smells like' line generated with an explicit delivery instruction, which the creator judged 'pretty solid'.
+
+**Fit:** One person at a laptop can do this today, and delivery is exactly what the existing creator-sourcing skill judges a clip on (energy, vocal variety, opening mid-conversation). Worth recording because an AI-generated line defaults to a flat read unless directed. Mid score because it refines an asset rather than changing what is claimed.
+
+**Target skill:** `marketing-ai-voiceover-production` (create)
+
+**Merged from:** part 4 of 6
+
+### Cast the voiceover deliberately from a synthetic-voice library — filter by language, accent and age, audition candidates, and cast the voice carrying the most lines first. — 6/10
+
+**Why it works:** The narrator has the most lines and is the most important voice in the ad, so it anchors the asset's tone; filtering narrows hundreds of options to a shortlist you can actually listen through in a couple of minutes.
+
+**Evidence:** Demonstration — filtered to English / middle-aged, auditioned, chose a slightly Australian narrator voice and a deep calm voice for the dad; notes only two of three characters speak so only two voices are needed.
+
+**Fit:** Runnable today for a few dollars a month, and it unblocks video ads that do not require the operator to be on camera — useful for RSC where the operator is the only available face. Mid score because voice selection improves an asset whose hook and angle still do the converting.
+
+**Target skill:** `marketing-ai-voiceover-production` (create)
+
+**Merged from:** part 4 of 6
+
+### Assemble the edit against the storyboard one line at a time — look up the next narration line, drop that audio onto the timeline first, then find its generated clip and time the clip to the words. — 6/10
+
+**Why it works:** The audio is the spine the viewer follows, so laying it first makes every visual decision a question of fitting the picture to a fixed length; working from the storyboard in order stops you hunting through a folder of generations with no plan, and keeps the visuals in service of the argument rather than the other way round.
+
+**Evidence:** Extended demonstration — the creator repeats the exact loop (storyboard, audio folder, video folder, drag, align, trim) for every shot in the ad, narrating it as 'let's go back to the storyboard, and our last line right here is...'.
+
+**Fit:** The operator cuts RSC's own video himself, so this is runnable today in any editor. Useful because it imposes an order on multi-shot assembly, which is where a one-person edit normally stalls. Scored mid as process hygiene rather than a demand lever.
+
+**Target skill:** `marketing-short-form-video-production` (edit)
+
+**Merged from:** part 4 of 6; part 5 of 6
+
+### Time a cut so the visual beat lands on the specific word in the narration that it illustrates. — 6/10
+
+**Why it works:** Synchronising the picture to the word the line is about ties audio and visual into one statement; the creator slides the falling-man clip until the fall begins exactly on 'like your grip', and nudges it earlier when the fall reads as starting late.
+
+**Evidence:** Demonstration — repeated frame-level nudging to land the fall on 'grip' and the montage shots on 'groceries', 'thunderstorm' and 'pickle jar'.
+
+**Fit:** Runnable today in a free editor by one person. Directly relevant to RSC's own organic short-form, where a demonstration landing on the claim word is what makes a 15-second clip feel deliberate. Durable editing principle, not platform mechanics.
+
+**Target skill:** `marketing-short-form-video-production` (edit)
+
+**Merged from:** part 4 of 6
+
+### On an evergreen offer with no sale running, build urgency from the cost of delay instead of a deadline — name what gets worse or what is missed by waiting (the chiropractor's 'address the back pain before it turns into something life-altering') — and ask the LLM to enumerate urgency factors for that specific product. — 6/10
+
+**Why it works:** Urgency exists to stop the viewer filing the decision away for later. A limited-time sale is the easy source, but when no deadline is honest, the problem's own trajectory supplies one: if the condition compounds while they do nothing, acting now is objectively better than acting later, and nothing has to be fabricated to say so.
+
+**Evidence:** Assertion with two worked examples — the AI-opportunity 'don't miss the train' framing for his own course, and the chiropractor back-pain example — plus a suggested prompt to generate product-specific urgency factors.
+
+**Fit:** RSC's surfaces are mostly always-on (Amazon listing, PDP, nurture emails) where no honest deadline exists, and the existing urgency skill's answer for that case is only 'attach the bonus to the act of ordering'. Cost-of-delay urgency gives it a second, non-promotional option — continued aluminium/irritation exposure, the odour problem persisting another month. Moderate because for a $12 deodorant the compounding harm is real but mild.
+
+**Target skill:** `marketing-scarcity-urgency-framing` (edit)
+
+**Merged from:** part 5 of 6
+
+### Upload the ad's actual music track into the video model as a reference element and instruct the character to move to the beat, naming the movement style explicitly. — 5/10
+
+**Why it works:** Without the track the model generates arbitrary motion that visibly fights the soundtrack in the edit; giving it the audio plus a named movement style ('smooth 80s disco moves to the beat') lets it time the action so the finished cut feels choreographed rather than pasted together.
+
+**Evidence:** Worked example: dancers initially too aggressive and off-beat, fixed by uploading the song as a reference element and re-directing the movement style.
+
+**Fit:** Real mechanism and runnable today, but the surface it serves — beat-matched character motion — is a smaller slice of what RSC's short-form and Meta video needs than the shot-list and coverage tactics. It applies when he cuts a music-led brand or lifestyle piece, not to the demonstration and testimonial formats that will carry most of the work.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Add branding to the final shot by feeding the finished clip plus a logo image back into the video model and asking it to animate the logo in at a specified position that does not cover the product. — 5/10
+
+**Why it works:** The video tool can composite and animate a supplied logo over existing footage, so you get a branded end frame without an animation step in a separate editor — and constraining the placement ('keep it in the upper third') protects the product from being occluded at the exact moment the ad asks for the sale.
+
+**Evidence:** Demonstrated: logo generated on a black background in the image model, then animated onto the final video with a stated upper-third placement constraint.
+
+**Fit:** Runnable today and useful for every video he ships, but it is a finishing step with modest leverage next to the directing and coverage decisions — and the placement rule (never occlude the product at the close) is the durable half, since compositing inside the video model is fast-decaying platform mechanics.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 2 of 6
+
+### Anchor the character description by naming two or three real public figures whose blend you are after ('between Chris Pratt, Ryan Reynolds and James Schrader'), after closing your eyes and visualising the role. — 5/10
+
+**Why it works:** Named faces are dense, unambiguous descriptors the model already understands, so a hybrid of several gets the archetype and energy you pictured without a paragraph of facial-feature prompting — and blending several avoids landing on one recognisable person.
+
+**Evidence:** Assertion plus demonstration on three characters (narrator, father, son).
+
+**Fit:** A cheap, real prompting shortcut for the recurring-character likeness RSC's image stack already calls for, and runnable today. Scored mid because it needs a guardrail the source does not give: the output must be a blend that resembles nobody identifiable, since a recognisable celebrity likeness in a paid ad is a legal exposure, not a creative choice.
+
+**Target skill:** `marketing-ai-video-ad-production` (create)
+
+**Merged from:** part 3 of 6
+
+### Route a shot to whichever model's content policy permits it — one model refuses any subject who appears under 18, another is more permissive. — 5/10
+
+**Why it works:** Generation refusals are policy differences, not quality differences, so the shot is not impossible — it just has to be produced somewhere else.
+
+**Evidence:** Demonstration — Veo 3.1 returned an error on the boy sniffing the soap, Kling 2.6 generated it.
+
+**Fit:** Honest translation exists — a family bathroom scene, a kid using the soap or toothpaste, is a plausible RSC angle, and the operator can run both tools today. Scored mid on merit: it unblocks a narrow subset of shots rather than improving the ads generally. Platform-mechanics class, so the particular policy named here should be re-checked rather than trusted after ~18 months.
+
+**Target skill:** `marketing-ai-broll-generation` (edit)
+
+**Merged from:** part 4 of 6
+
+## Rejected
+
+### Describe your simple ad idea to ChatGPT — or hand it a reusable fill-in prompt template for scenes and products — and have it write the long, detailed generation prompt you paste into the image model. — 4/10
+
+**Rejected because:** Duplicate: marketing-ai-product-imagery already holds 'have the LLM turn the already-approved story into several numbered image-generation concepts, then paste each generation prompt into the image tool' plus the structured SCENE/SUBJECT/EMOTIONAL READ concept pass, and already resolves the tension with its own short-plain-prompt claim. The only genuinely new content (fixed field order, three-quarter angle) is adopted as its own tactics.
+
+**Fit reasoning:** Right practice, already recorded in a sharper form.
+
+### Treat the storyboard as the foundation of the whole piece because the process is image-to-video — every image you generate is literally the start frame of a clip, and starting from a high-resolution still almost guarantees a good-looking clip. — 4/10
+
+**Rejected because:** Duplicate of marketing-ai-broll-generation: 'the image model makes the frames and the video model only animates them... because clip quality is decided almost entirely by the start frame you feed it'. Re-recording would degrade skill triggering.
+
+**Fit reasoning:** Correct and relevant but already recorded verbatim in substance.
+
+### Every profitable ad runs the same five elements in order: hook, problem, solution, offer, call to action. — 4/10
+
+**Rejected because:** marketing-copy-body-structure already holds the six-step skeleton (problem/want, mechanism, why your mechanism is better, result, bridge the skepticism, call to action) — the same sequence with the proof and objection beats spelled out more fully. Re-adding a thinner version would degrade triggering.
+
+**Fit reasoning:** Sound and durable, but a thinner version of a recorded skeleton.
+
+### Test the same ad body with several different hooks, because changing one or two opening lines can turn an underperforming ad into the highest performer in the account. — 4/10
+
+**Rejected because:** Duplicate — hook-swap testing against a fixed body is already held in the existing creative-testing and copy skills.
+
+**Fit reasoning:** Correct and relevant but already recorded twice.
+
+### In the problem section, prove you understand the viewer's situation to the point that you could write a day in their diary — neither vague and surface-level nor explained like a PhD scientist — because people only trust solutions from people who understand their problem. — 4/10
+
+**Rejected because:** Already recorded — describing the buyer's problem in extreme detail to earn the right to pitch is held in the credibility and awareness-level skills. The 'diary' phrasing is a nice articulation, not a new mechanism.
+
+**Fit reasoning:** Durable principle, already held.
+
+### Frame a desire as a problem the viewer is currently in, because pain motivates action more than the desire to gain something. — 4/10
+
+**Rejected because:** Already held as negative framing and as the dual-direction angle inventory in the existing copy skills.
+
+**Fit reasoning:** Durable and true, already recorded.
+
+### Only mention what the customer already perceives as valuable — if you know something is a major benefit but the customer does not see it as valuable, leave it out of the ad entirely. — 4/10
+
+**Rejected because:** Duplicate — the existing angle and messaging skills already rank claims by buyer-perceived value and instruct cutting the ones the buyer does not register.
+
+**Fit reasoning:** Right, and already covered from both directions.
+
+### Add a guarantee as an enhancer — at minimum a refund policy, and at the advanced end a results- or speed-based guarantee such as a finished website in under a week. — 4/10
+
+**Rejected because:** Already recorded, including how to structure a guarantee by ticket size — this version adds no new mechanism.
+
+**Fit reasoning:** Durable and relevant but already held in more operational form.
+
+### Fill in a thorough offer worksheet, then prompt ChatGPT with 'act as a professional ad copywriter... write a high-converting Facebook ad in my personal writing style using the Hook, Problem, Solution, Offer, Call to Action framework, emotionally engaging, under 150 words' and paste the completed worksheet beneath it. — 4/10
+
+**Rejected because:** Duplicate of the recorded positioning interview and persistent project brief claims; the only new element is the specific prompt wording.
+
+**Fit reasoning:** Right practice, already recorded twice.
+
+### Create a dedicated ChatGPT Project and paste the completed worksheet into its custom instructions, so that any hook or outline you drop in afterwards is automatically written up as a full ad against that brief. — 4/10
+
+**Rejected because:** Duplicate — the persistent project brief in LLM custom instructions is already a recorded claim.
+
+**Fit reasoning:** Already held verbatim.
+
+### Lay a foundation for the model rather than letting it originate: write the hook yourself (or an outline with the specific points, such as a new customer result, that you want included), paste it in, and have the LLM build out the rest of the ad from the standing brief — recycling the back half of a proven ad and changing only the hook. — 4/10
+
+**Rejected because:** Both halves — write the hook yourself and have the LLM assemble the body from a standing brief, and swap only the hook on a proven body — are already recorded claims.
+
+**Fit reasoning:** The right division of labour for a solo operator — which is why it is already recorded.
+
+### Remix winners: paste the script of an ad that is performing or has performed well and prompt 'analyze this script and write a new and unique ad that builds off the same concept', then ask for three to four more hook variations made as shocking or interesting as possible. — 4/10
+
+**Rejected because:** Duplicate — the instruction to produce many deliberate iterations of a dissected winner and to ask the model for ten more variants around a hook that landed is already recorded; this is the same claim reworded as an LLM prompt.
+
+**Fit reasoning:** Correct strategy, already held.
+
+### Generate a detailed full-lineup product shot with some units in branded packaging and one or two unboxed, earthy brand props alongside, shallow depth of field, warm natural window light, on a nice-but-not-luxurious counter. — 4/10
+
+**Rejected because:** marketing-product-image-stack already holds the main-image lever list including the product shown alongside its packaging and everything included in a multipack, plus fixing a brand visual identity once; marketing-ai-product-imagery already covers generating the lifestyle-in-a-room shot. The only unrecorded detail — the realism ceiling — is adopted as its own tactic.
+
+**Fit reasoning:** Duplicate of recorded lever lists and generation guidance.
+
+### Make the ad visually shocking, scary or funny — something people are not used to seeing, like riding an eagle or appearing as a TV character — and now that AI makes production cheap, take bigger visual swings with the same script (deliver it while skydiving or hunting dinosaurs rather than at a desk). — 3/10
+
+**Rejected because:** Duplicate of recorded claims: marketing-paid-creative-testing already holds placing every static concept at one end of the clarity spectrum (uber-clear or deliberately surreal purely to stop the scroll) and giving the image exactly one job, and the actionable core of the bigger-swings version — hold the script and audio fixed, change only the visuals with AI — is also already recorded. Re-adding would degrade skill triggering.
+
+**Fit reasoning:** Relevant in substance but already held, and partly motivational framing.
+
+### Build the ad as a side-by-side before/after split screen — the destroyed state on the left, the fixed state on the right — so the problem and the solution are both visible in one frame. — 3/10
+
+**Rejected because:** Duplicate of marketing-product-image-stack: 'Show the transformation rather than describing the after-state — and where an honest before/after does not exist, build the frame as a routine contrast instead', plus the required transformation formats and the prescribed gallery slot for a before/after. The existing version is better calibrated for RSC, where an honest deodorant before/after usually does not exist.
+
+**Fit reasoning:** Already held in a better-calibrated form.
+
+### Set the batch quantity to two or four so every prompt returns several versions, then pick the best one. — 3/10
+
+**Rejected because:** Duplicate of marketing-ai-product-imagery, which already holds that you should expect to discard more generations than you keep and generate several options before choosing.
+
+**Fit reasoning:** A settings-panel restatement of a rule already recorded.
+
+### Do the assembly in a free desktop editor such as DaVinci Resolve. — 3/10
+
+**Rejected because:** Already covered: marketing-short-form-video-production holds the claim to edit in a basic editor (Reels native or CapCut) rather than auto-editing templates or one-shot AI editors. Swapping in another tool name restates it and would blur triggering.
+
+**Fit reasoning:** Tool-name restatement of an existing claim.
+
+### Treat length as a prompt variable — change 'under 150 words' to 'under 500 words' in the same prompt to get a much more detailed version of the same ad. — 3/10
+
+**Rejected because:** Conflicts with the recorded principle that length is angle count — you lengthen or shorten by adding or cutting angles, not by asking the model for more words.
+
+**Fit reasoning:** A prompt detail rather than a tactic, and it conflicts with a sharper recorded principle.
+
+### Every ad must call out a specific problem the product solves or a burning desire it fulfils, because that is the only reason anyone ever buys anything. — 2/10
+
+**Rejected because:** Already covered multiple times: marketing-awareness-level-messaging ranks candidate desires and checks the winner is a pain felt today, and marketing-problem-solution-inventory enumerates every problem in the buyer's sequence and inverts each into what the asset must say.
+
+**Fit reasoning:** True but wholly covered by existing skills.
+
+### AI lets you make a $300,000-quality, professional-looking ad in one day for under $100 — or under $30 — in credits, because it removes the need for actors, expensive cameras, writers and a visual effects team, so you can test more ideas and get feedback faster. — 2/10
+
+**Rejected because:** No instruction, threshold or testable step — the actionable content sits in the specific workflow tactics extracted separately, and 'produce creative yourself with AI instead of hiring' is already recorded in marketing-ai-product-imagery.
+
+**Fit reasoning:** Framing for why the course matters rather than an executable tactic.
+
+### Relabel the product inside a generated image — swap the real product in and then prompt 'change the name of the soap from Wood Barrel Bourbon to Dad Strength' — to create the SKU the ad concept needs. — 2/10
+
+**Rejected because:** marketing-ai-product-imagery already holds the identical text-replacement edit plus a proofreading pass, and marketing-product-image-stack holds that a generated render must match the real product exactly or the listing gets taken down. Inventing packaging the business does not sell invites a compliance takedown and a buyer who receives something other than what they saw.
+
+**Fit reasoning:** Duplicates a recorded edit move and conflicts with a recorded compliance guardrail.
+
+### Learn AI ad creation so you can sell it as a service — put businesses on a $500–$1,000/month retainer producing weekly or monthly image and video ads for them. — 1/10
+
+**Rejected because:** This is agency offer-building and retainer pricing — a different business, not a bigger version of RSC. Not a scale or headcount problem, so it cannot be parked either.
+
+**Fit reasoning:** B2B service pricing with no honest translation to an ecommerce catalogue at any size.
+
+### Write the script by asking ChatGPT to follow a named competitor's storytelling formula — strong hook, humour and education around the product, then a call to action — after having it generate candidate product angles to pick from. — 0/10
+
+**Rejected because:** Duplicate: marketing-competitor-messaging-teardown already holds briefing an LLM off a surviving ad to produce your own version of its structure, and marketing-copy-body-structure holds 'Don't brief the model cold — look up the canonical published structure for the format you are writing and have it draft against that structure'.
+
+**Fit reasoning:** Identical instruction to two recorded claims with a different example substituted.
+
+### Hold character consistency across every scene by feeding the same generated character image into each scene prompt as the base. — 0/10
+
+**Rejected because:** Duplicate of marketing-ai-broll-generation: 'carry the same reference image into every thread rather than relying on the model's memory' and 'do the production in a fixed order — characters first, environments second, product last'.
+
+**Fit reasoning:** Already held.
+
+## Skills touched
+
+- `marketing-ai-product-imagery` (edit)
+- `marketing-ai-broll-generation` (edit)
+- `marketing-ai-video-ad-production` (create)
+- `marketing-short-form-video-production` (edit)
+- `marketing-conversion-copy-angles` (edit)
+- `marketing-ai-voiceover-production` (create)
+- `marketing-copy-credibility-and-proof` (edit)
+- `marketing-scarcity-urgency-framing` (edit)
+- `marketing-product-image-stack` (edit)

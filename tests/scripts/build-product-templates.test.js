@@ -50,7 +50,11 @@ test('the ported guarantee carries NO product-specific testimonial', () => {
   // lotion keeps its own, as an extra rather than a second copy of the promise
   const lotion = blockSource('trust-line', 'product.landing-page-lotion.json', read);
   assert.ok(lotion.startsWith(g));
-  assert.match(lotion, /Ariel/);
+  // A coconut-lotion review (Judge.me 593827114). The Ariel M. "ABSORBS" quote
+  // that sat here until 2026-09-11 is filed under coconut-moisturizer — it was
+  // the cream's endorsement shown as the lotion's.
+  assert.match(lotion, /Mike G\./);
+  assert.doesNotMatch(lotion, /Ariel|ABSORBS/);
 });
 
 test('applyManifest REFUSES to drop a block the page actually renders', () => {
@@ -83,7 +87,11 @@ test('the guarantee lands directly under the buy CTA on every page that gains it
     const t = tpl(f);
     applyManifest(t, f, read);
     const order = t.sections.main.block_order;
-    assert.equal(order[order.indexOf(anchor) + 1], 'trust-line', `${f}: not adjacent to ${anchor}`);
+    // Only the payment-icons row may sit between the CTA and the guarantee
+    // (Sean, 2026-10-07: card icons directly under the buy button).
+    const between = order.slice(order.indexOf(anchor) + 1, order.indexOf('trust-line'));
+    assert.ok(between.every((b) => b === 'payment-icons'), `${f}: not adjacent to ${anchor} (${between.join(',')})`);
+    assert.ok(order.indexOf('trust-line') > order.indexOf(anchor), `${f}: guarantee above ${anchor}`);
     // The anchor must be whatever carries the Add to cart on THAT page:
     // buy_buttons on variant-picker pages, the ladder where it owns the box.
     assert.ok(['buy_buttons', 'quantity-ladder'].includes(anchor), `${f}: odd anchor ${anchor}`);
@@ -116,7 +124,9 @@ test('tab-shipping is one paragraph with ONE token, not two forked copies', () =
   const src = read('theme/blocks/tab-shipping.liquid');
   assert.equal((src.match(/%%SUBSCRIPTION%%/g) ?? []).length, 1);
   assert.doesNotMatch(src, /subscription order/);
-  const on = blockSource('tab-shipping', 'product.landing-page-lotion.json', read);
+  // No live page carries the clause since 2026-10-06, so the ON variant is
+  // built from the source the same way a subscribable page would get it.
+  const on = expandSubscription(src, true);
   const off = blockSource('tab-shipping', 'product.landing-page-lip-balm.json', read);
   assert.match(on, /\$45\+ and on every subscription order\./);
   assert.match(off, /\$45\+\. Standard/);
@@ -134,18 +144,12 @@ test('the subscription claim appears exactly where something IS subscribable', (
   // Measured live 2026-09-05 per page, across EVERY tier the page sells --
   // the three ladder pages qualify only because a multipack TIER carries the
   // selling plan while the single unit does not.
+  // No template sells a NEW subscription since 2026-10-06 (Sean: "Remove all
+  // of the subscriptions for now"). Products that still carry a plan for
+  // existing contracts are marked retiredPlan instead.
   const SUBSCRIBABLE = {
-    toothpaste: true,          // coconut-toothpaste-3-pack
-    deodorant: true,           // coconut-deodorant-4-pack
-    'bar-soap': true,          // coconut-bar-soap-4-pack
-    lotion: true,
-    cream: true,
-    'sensitive-skin-set-lander': true,
-    'lip-balm': false,         // no tier has a plan
-    // Per-PRODUCT: the pump and its 2-/4-pack tiers have no plan; the 32oz
-    // refill gained Recurpay plan 11152263 (1/2/3/4-month) on 2026-09-05.
-    'liquid-soap': ['foam-soap-refill-32oz'],
-    'bundle-landing': false,   // none of its six bundles
+    toothpaste: false, deodorant: false, 'bar-soap': false, lotion: false, cream: false,
+    'sensitive-skin-set-lander': false, 'lip-balm': false, 'liquid-soap': false, 'bundle-landing': false,
   };
   for (const [f, spec] of Object.entries(MANIFEST)) {
     assert.deepEqual(spec.subscribable, SUBSCRIBABLE[templateNick(f)], `${f} subscribable flag`);
@@ -263,7 +267,7 @@ test('ladderTiers reads the baked handles, and is empty without a ladder', () =>
     ladderTiers(tpl('product.landing-page-toothpaste.json')),
     ['coconut-oil-toothpaste', 'coconut-toothpaste-3-pack'],
   );
-  assert.deepEqual(ladderTiers(tpl('product.landing-page-lotion.json')), []);
+  assert.deepEqual(ladderTiers(tpl('product.bundle-landing.json')), []);
 });
 
 // Per-PRODUCT subscribability. The liquid-soap template serves the foaming
@@ -272,7 +276,8 @@ test('ladderTiers reads the baked handles, and is empty without a ladder', () =>
 // right for both.
 
 test('a per-product template emits a handle conditional, not a flat claim', () => {
-  const out = blockSource('tab-shipping', 'product.landing-page-liquid-soap.json', read);
+  // Mechanism test: no template uses a per-product list since 2026-10-06.
+  const out = expandSubscription(read('theme/blocks/tab-shipping.liquid'), ['foam-soap-refill-32oz']);
   assert.match(out, /\{%- if product\.handle == 'foam-soap-refill-32oz' -%\}/);
   const refill = out.replace(/\{%- if [^%]*-%\}([\s\S]*?)\{%- else -%\}[\s\S]*?\{%- endif -%\}/, '$1');
   const pump = out.replace(/\{%- if [^%]*-%\}[\s\S]*?\{%- else -%\}([\s\S]*?)\{%- endif -%\}/, '$1');
@@ -312,4 +317,49 @@ test('expandSubscription: flat for a boolean, conditional for a list', () => {
   assert.match(expandSubscription(core, ['x', 'y']), /product\.handle == 'x' or product\.handle == 'y'/);
   // A source with no token is untouched whatever the flag says.
   assert.equal(expandSubscription('<p>no token</p>', ['x']), '<p>no token</p>');
+});
+
+test('a page that sells no new subscription suppresses the Recurpay EMBED widget', () => {
+  // Removing the theme's Recurpay app block is not enough: the app EMBED
+  // injects its own widget, subscribe pre-selected, for any product that still
+  // carries a selling plan (lotion and cream do, for existing subscribers).
+  // Measured live 2026-10-06: the lotion buy form posted selling_plan.
+  for (const nick of ['lotion', 'cream']) {
+    const f = `product.landing-page-${nick}.json`;
+    const spec = MANIFEST[f];
+    assert.equal(spec.subscribable, false, `${f} is not subscribable`);
+    assert.ok(spec.shared.includes('no-subscription'), `${f} keeps no-subscription in sync`);
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const main = t.sections.main;
+    assert.ok(main.block_order.includes('no-subscription'), `${f}: block rendered`);
+    assert.match(main.blocks['no-subscription'].settings.custom_liquid, /\[name="selling_plan"\]/);
+  }
+  const src = blockSource('no-subscription', 'product.landing-page-lotion.json', read);
+  assert.match(src, /\.recurpay-pdp-widget[^{]*\{\s*display:\s*none !important/);
+  assert.match(src, /value="one-time"/);
+  // Stripped again in the CAPTURE phase, ahead of product-form.js's FormData.
+  assert.match(src, /addEventListener\('submit'[\s\S]*\}, true\)/);
+});
+
+test('payment icons sit under the buy CTA, and the layout block comes after every tab', () => {
+  for (const f of Object.keys(MANIFEST)) {
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const m = t.sections.main;
+    const order = m.block_order;
+    const cta = order.includes('quantity-ladder') ? 'quantity-ladder' : 'buy_buttons';
+    assert.equal(order[order.indexOf(cta) + 1], 'payment-icons', `${f}: icons not under ${cta}`);
+    const lastTab = Math.max(...order.map((k, i) => (m.blocks[k].type === 'collapsible_tab' ? i : -1)));
+    assert.ok(order.indexOf('pdp-layout') > lastTab, `${f}: pdp-layout must follow the last tab (its script moves them)`);
+  }
+});
+
+test('every info tab starts closed', () => {
+  for (const f of Object.keys(MANIFEST)) {
+    const t = tpl(f);
+    applyManifest(t, f, read);
+    const m = t.sections.main;
+    for (const k of m.block_order) if (m.blocks[k].type === 'collapsible_tab') assert.equal(m.blocks[k].settings.keep_open, false, `${f}: ${k} opens by default`);
+  }
 });

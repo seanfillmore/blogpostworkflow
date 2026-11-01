@@ -1,0 +1,5 @@
+{
+  "orphaned_at": "2026-10-03T17:42:50Z",
+  "reason": "Never published. Draft passed the editor 2026-10-03 but its premise is false: it calls Coconut Moisturizer waterless/anhydrous with no preservatives, while the formula leads with purified spring water and contains grapefruit seed extract. RSC sells no preservative-free product; keyword ~70/mo with no GSC impressions. Operator rule 2026-10-03: publish only if it adds value. Keyword rejected via kill-article.",
+  "restore": "mv data/posts/_orphaned/preservative-free-moisturizer data/posts/preservative-free-moisturizer"
+}

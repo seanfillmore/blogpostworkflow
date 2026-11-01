@@ -128,3 +128,18 @@ test('a malformed claim is rejected before any rate lookup', () => {
 });
 
 console.log('✓ supply-duration tests pass');
+
+test('supplyLabel: merchant rates, rounded down, never above the box', async () => {
+  const { supplyLabel } = await import('../../lib/supply-duration.js');
+  assert.equal(supplyLabel('coconut-moisturizer', 1), '30-day supply');
+  assert.equal(supplyLabel('coconut-moisturizer', 5), '5-month supply');
+  assert.equal(supplyLabel('coconut-lotion', 5), '5-month supply');
+  // A bar's merchant range is 20-30 days; the SHORT end is used.
+  assert.equal(supplyLabel('coconut-soap', 1), '20-day supply');
+  assert.equal(supplyLabel('coconut-soap', 12), '8-month supply');
+  // Toothpaste is shared, so the label says per person.
+  assert.equal(supplyLabel('coconut-oil-toothpaste', 3), '4-month supply per person');
+  assert.equal(supplyLabel('organic-foaming-hand-soap', 4), '4-month supply');
+  // No rate means no claim at all.
+  assert.equal(supplyLabel('no-such-product', 2), null);
+});

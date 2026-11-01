@@ -14,7 +14,12 @@
 // so these 400s still consume a slot -- which is exactly what this test
 // relies on to exhaust a budget cheaply.
 import { strict as assert } from 'node:assert';
-import { test } from 'node:test';
+import { test as nodeTest } from 'node:test';
+import { entryPeriodGate } from '../helpers/giveaway-entry-period.js';
+
+// Skips itself while the Entry Period is closed — see the helper for why these
+// are retired rather than deleted, and how they revive on the next giveaway.
+const { test } = entryPeriodGate({ test: nodeTest });
 import routes from '../../agents/dashboard/routes/giveaway.js';
 
 function findRoute(method, path) {

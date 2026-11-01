@@ -50,8 +50,11 @@ import rejectedImagesRoutes from './routes/rejected-images.js';
 import postsKillRoutes from './routes/posts-kill.js';
 import cannibalizationRoutes from './routes/cannibalization.js';
 import ideasRoutes from './routes/ideas.js';
+import pressOutreachRoutes from './routes/press-outreach.js';
+import socialQueueRoutes from './routes/social-queue.js';
 import rumRoutes from './routes/rum.js';
 import giveawayRoutes from './routes/giveaway.js';
+import contestRoutes, { isPublicContestPath } from './routes/contest.js';
 
 const {
   ROOT, PUBLIC_DIR,
@@ -118,8 +121,11 @@ const ROUTES = [
   ...postsKillRoutes,
   ...cannibalizationRoutes,
   ...ideasRoutes,
+  ...pressOutreachRoutes,
+  ...socialQueueRoutes,
   ...rumRoutes,
   ...giveawayRoutes,
+  ...contestRoutes,
 ];
 
 const adsInFlight = new Set(); // concurrency guard: 'date/id' key
@@ -189,7 +195,7 @@ const server = http.createServer((req, res) => {
   // dashboard basic-auth, and those credentials must never appear in theme JS.
   // Abuse is bounded inside each route module: capped bodies, strict enum
   // validation, and no unbounded writes.
-  if (urlPath === '/api/rum' || urlPath.startsWith('/api/giveaway/')) {
+  if (urlPath === '/api/rum' || urlPath.startsWith('/api/giveaway/') || isPublicContestPath(urlPath)) {
     if (dispatch(ROUTES, req, res, ctx)) return;
   }
 

@@ -1,0 +1,215 @@
+{
+  "generated_at": "2026-10-10T17:31:37.746Z",
+  "applied": false,
+  "results": [
+    {
+      "sku": "RSC-DE-CL-02",
+      "asin": "B0B687583D",
+      "productType": "BODY_DEODORANT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "f67bdd962f904f2eb170750b8f6087e0",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-DE-WF-02",
+      "asin": "B0B6873YQ7",
+      "productType": "BODY_DEODORANT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "90ff39a20ed8496a9c61e837ce3dc8f1",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-DE-MC-02",
+      "asin": "B0B686R9FZ",
+      "productType": "BODY_DEODORANT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "1af1305bcbef4f4b9bcb49380152e027",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-TP-MI-08",
+      "asin": "B0B6DYZF5H",
+      "productType": "TOOTH_CLEANING_AGENT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "natural organic fluoride free sls free glycerin free baking soda myrrh peppermint spearmint mint vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "79cfc917751144d78535aca608389a24",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-TP-NA-08",
+      "asin": "B0B6DHNCW3",
+      "productType": "TOOTH_CLEANING_AGENT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "natural organic fluoride free sls free glycerin free baking soda myrrh peppermint spearmint mint cinnamon clove herbal vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "04c8f420df924ce8afe6215cfd5e6df0",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-TP-CI-08",
+      "asin": "B0B6DQTL11",
+      "productType": "TOOTH_CLEANING_AGENT",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "natural organic fluoride free sls free glycerin free baking soda myrrh cinnamon clove spice herbal vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "b3aa48be41d243ae82a45167ef21890f",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-LO-PU-08-stickerless",
+      "asin": "B08GMCDMQ7",
+      "productType": "SKIN_MOISTURIZER",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "bfe35d2cda74476abbf14b47cb57676e",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-LO-CB-08-FBA-stickerless",
+      "asin": "B09QJFBPJ1",
+      "productType": "SKIN_MOISTURIZER",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "ebc889fb67e9497496ad0e525209e32d",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-LO-RP-08-stickerless",
+      "asin": "B08GMB9F6F",
+      "productType": "SKIN_MOISTURIZER",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "e7e5c9d7b8674fe89b58362507e9912b",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-LO-LR-08-stickerless",
+      "asin": "B08GM9CRMC",
+      "productType": "SKIN_MOISTURIZER",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "df07a1397e9f4357bc2bf3bacabd5c00",
+        "issues": []
+      }
+    },
+    {
+      "sku": "RSC-LO-CL-08-FBA-stickerless",
+      "asin": "B09QJF93J3",
+      "productType": "SKIN_MOISTURIZER",
+      "action": "apply",
+      "fields": [
+        "generic_keyword"
+      ],
+      "why": "live matches BEFORE on generic_keyword",
+      "before_live": {
+        "generic_keyword": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten"
+      },
+      "submission": {
+        "mode": "VALIDATION_PREVIEW",
+        "status": "VALID",
+        "submissionId": "181ae320e33343ecb5afb84fb970ec56",
+        "issues": []
+      }
+    }
+  ]
+}

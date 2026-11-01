@@ -26,13 +26,14 @@
  *   exit 1  a claim overstates / is incoherent / has no evidence   error
  *   exit 2  a product's template is MISSING from the theme         error
  *   exit 3  a template could not be read                           error
+ *   exit 4  the og:image fallback drifted off the theme            error
  *
  * Nothing here is routine. Unlike DAILY_POST_META_GATE — where the box being
  * ahead of git is the normal state and is reported quietly — every finding on
  * this surface is a live page telling a customer something untrue.
  */
 import { getMainThemeId, getThemeAssetRaw, listThemeAssets, shopifyGraphQL } from '../lib/shopify.js';
-import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments } from '../lib/theme-claim-audit.js';
+import { parseDurationClaim, auditClaim, findMissingTemplates, summarize, branchForHandle, stripLiquidComments, auditShareImage } from '../lib/theme-claim-audit.js';
 import { bindingDuration } from '../lib/supply-duration.js';
 import { notify } from '../lib/notify.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
@@ -101,7 +102,22 @@ export async function audit() {
       }
     }
   }
-  return summarize({ missing, claims, unreadable });
+  // The og:image fallback is a stock-file customization this theme's updater
+  // has already wiped once. Reading the assets is the same mechanism as above
+  // and costs two GETs; a null means "could not read", which auditShareImage
+  // reports rather than treating as absent.
+  const readOrNull = async (key) => {
+    // getThemeAssetRaw returns the asset OBJECT; the text is on .value (see the
+    // template read above). Returning the object here would make every regex
+    // test below fail against "[object Object]" and report a false drift.
+    try { return (await getThemeAssetRaw(themeId, key))?.value ?? null; } catch { return null; }
+  };
+  const shareImage = auditShareImage({
+    metaTagsLiquid: await readOrNull('snippets/meta-tags.liquid'),
+    settingsDataJson: await readOrNull('config/settings_data.json'),
+  });
+
+  return summarize({ missing, claims, unreadable, shareImage });
 }
 
 function render(s) {
@@ -122,7 +138,13 @@ function render(s) {
     for (const u of s.unreadable) lines.push(`  · ${u.key}: ${u.error}`);
     lines.push('');
   }
-  if (!lines.length) lines.push('Every landing-page supply claim is supported, and every templateSuffix resolves.');
+  if (s.shareImage?.length) {
+    lines.push('The og:image fallback has DRIFTED — shared links to non-product pages render with no preview image:');
+    for (const p of s.shareImage) lines.push(`  · ${p}`);
+    lines.push('Re-apply theme/snippets/meta-tags.liquid and re-set Social sharing image in the customizer.');
+    lines.push('');
+  }
+  if (!lines.length) lines.push('Every landing-page supply claim is supported, every templateSuffix resolves, and the og:image fallback is intact.');
   lines.push('Fix with scripts/update-theme-asset.mjs put <key> <file> --apply. This gate never writes.');
   return lines.join('\n');
 }
@@ -149,7 +171,12 @@ async function main() {
     status: s.code === 0 ? 'success' : 'error',
     subject: s.code === 0
       ? 'Theme claims: all supply claims supported'
-      : `Theme claims: ${s.missing.length} missing template(s), ${s.bad.length} unsupported claim(s)`,
+      : s.code === 4
+        // Exit 4 carries no missing templates and no bad claims, so the generic
+        // subject would read "0 missing, 0 unsupported" above a real finding —
+        // the post-meta gate's headline bug, which this avoids by name.
+        ? 'Theme drift: the og:image fallback is gone (shared links have no preview)'
+        : `Theme claims: ${s.missing.length} missing template(s), ${s.bad.length} unsupported claim(s)`,
     body,
   });
 }

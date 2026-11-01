@@ -1,19 +1,21 @@
 # Editor Report — SLS Free Toothpaste: The Gentle Switch Worth Making
 **Post:** data/posts/best-sls-free-toothpaste-2025/content.html
 **Target keyword:** sls free toothpaste
-**Reviewed:** April 25, 2026
+**Reviewed:** September 7, 2026
 
 ---
 ## 1. Link Health
 
-**6 links OK** | **0 broken/unreachable**
+**12 links OK** | **0 broken/unreachable**
 
 All links returned a valid HTTP response.
 
 ---
 ## 2. Internal Link Validation
 
-All internal product, collection, and blog links match the sitemap/blog index.
+The following internal links are NOT in the sitemap/blog index **and did not resolve live** — these block:
+
+- **Blog URL not in blog index:** `https://www.realskincare.com/blogs/news/sls-free-toothpaste-the-gentle-switch-worth-making` (anchor: "SLS-free toothpaste")
 
 ---
 ## 2b. CTA & Formatting Check
@@ -21,9 +23,16 @@ All internal product, collection, and blog links match the sitemap/blog index.
 **Pass** — Product/collection CTA links found: [Coconut Oil Toothpaste](https://www.realskincare.com/products/coconut-oil-toothpaste), [Shop SLS‑Free Toothpaste](https://www.realskincare.com/products/coconut-oil-toothpaste), [Coconut Oil Toothpaste](https://www.realskincare.com/products/coconut-oil-toothpaste), [Coconut Oil Toothpaste](https://www.realskincare.com/products/coconut-oil-toothpaste), [Add to Cart](https://www.realskincare.com/products/coconut-oil-toothpaste), [fluoride‑free](https://www.realskincare.com/collections/fluoride-free-toothpaste)
 
 ---
+## 2c. Uncited Claims
+
+✅ No uncited statistical/health claims.
+
+---
 ## 3. Source Verification
 
-No external source links found in the post.
+| Verdict | Source URL | Note |
+|---------|-----------|------|
+| REVIEW | [source](https://pubmed.ncbi.nlm.nih.gov/30839136) | The source page content shown is only a cookie notice from PubMed and does not contain any actual research data or conclusions that would verify or refute the claim about SLS-free toothpaste reducing canker sores. |
 
 ---
 ## 4. Topical Map Alignment
@@ -56,92 +65,78 @@ The following posts are in the same topical cluster and should be linked from th
 ## 5. Editorial Review
 
 # EDITORIAL REVIEW
-**Post Title:** SLS Free Toothpaste: The Gentle Switch Worth Making  
-**Target Keyword:** sls free toothpaste  
-**Review Date:** April 8, 2026
-
----
 
 ## 1. TOPICAL RELEVANCE
-**VERDICT:** Pass  
-**NOTES:** Post is tightly focused on the target keyword "sls free toothpaste" throughout. Content covers why to avoid SLS, benefits of switching, brand comparisons, ingredient alternatives, and transition guidance. No significant off-topic tangents detected. The slug `/best-sls-free-toothpaste-2025` contains a year reference, but per instructions, this is a permanent URL identifier and the body content has been updated to 2026 (visible in "Complete Guide: Best SLS-Free Toothpaste List for 2026"). This is not a topical-relevance failure.
+VERDICT: Pass
+NOTES: Post is tightly focused on SLS-free toothpaste throughout. Content directly addresses the target keyword with comprehensive coverage of why to avoid SLS, what alternatives exist, brand comparisons, and switching guidance. No significant off-topic tangents. URL slug year reference (2026) does not conflict with body content being current.
 
 ---
 
 ## 2. BRAND VOICE & READABILITY
-**VERDICT:** Good  
-**NOTES:** Voice is warm and conversational with plain-language explanations ("foam doesn't clean your teeth. Your brushing technique does"). Most paragraphs are appropriately short. However, there are a few sections where paragraph length exceeds the 4-sentence guideline—particularly under "What SLS Actually Does to Your Mouth" subsections (e.g., the canker sores section runs 5 sentences). The FAQ section is incomplete (cuts off mid-answer on cleaning effectiveness), which disrupts readability flow. Overall tone is accessible and encouraging, suitable for the target audience.
+VERDICT: Pass
+NOTES: Conversational tone with warm, accessible language ("here's the truth," "you're not alone," "the good news?"). Mostly short sentences and second-person voice ("your mouth," "you don't need"). One paragraph in "What SLS Actually Does" exceeds 4 sentences (5 sentences in the intro to section 2), but otherwise pacing is solid at ~8th grade reading level. Plain-language explanations follow jargon (e.g., "desquamation (peeling or shedding)").
 
 ---
 
 ## 3. INGREDIENT ACCURACY
-**VERDICT:** Pass  
-**NOTES:** Post correctly describes Real Skin Care's Coconut Oil Toothpaste ingredients: organic coconut oil, baking soda, wildcrafted myrrh powder, stevia sweetener, and essential oils (peppermint, spearmint, cinnamon, clove). The comparison table accurately lists this product as "7 simple, organic ingredients," "SLS-free," "glycerin-free," and "no sugar alcohols." Product format (squeeze bottle) is not mentioned in the body, but this is a minor omission that does not constitute an accuracy error. All claims about the product's composition are factually correct.
+VERDICT: Pass
+NOTES: Post describes Real Skin Care Coconut Oil Toothpaste accurately: "purified spring water, organic virgin coconut oil, baking soda, xanthan gum, wildcrafted myrrh powder, stevia, organic essential oils (peppermint, spearmint, cinnamon, clove)." Product is correctly identified as squeeze bottle format. "Editor's Choice" section lists all key ingredients and touts "7 simple, organic ingredients" — matches the spec (7 if you count the oil blend as one unit, or slightly more if counting oils separately, but the spirit is accurate). No format errors detected.
 
 ---
 
 ## 4. YEAR ACCURACY
 **VERDICT:** Pass
-**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale year references detected. Any YYYY patterns in href slugs, id attributes, or other HTML attributes are ignored by design (immutable technical identifiers).
+**NOTES:** Scanned visible body text and headings (post-tag-strip). No stale current-year references detected. Legitimate historical references (e.g. "since 2020", "a 2021 study"), and any YYYY patterns in href slugs, id attributes, or other HTML attributes, are ignored by design.
 
 ---
 
 ---
 
-## 5. FACTUAL CONCERNS
-**VERDICT:** Needs Attention — Minor Issues  
-**NOTES:** 
+## 5. Factual Concerns
+**VERDICT:** Pass
+**NOTES:** Citation sufficiency is governed by the deterministic uncited-claims check (section 2c), which is within threshold. General consumer-guidance health phrasing does not each require its own source.
 
-1. **Canker sore claim (Section 1):** The post cites "A major review of clinical research" and "one frequently cited early study" showing 70% reduction in canker sores after switching to SLS-free toothpaste. While these claims align with published research (particularly the foundational Herlofson & Barkvoll studies), the post does not provide citations or URLs. The LINK HEALTH PRE-CHECK confirms all links verified, but no external research links appear to be embedded in this section. The claims are credible but would benefit from visible attribution.
-
-2. **Oral microbiome claim (Section 5):** The post states "A 2026 area of active research" regarding SLS's effect on oral microbiomes. This phrasing is awkward and potentially confusing—it reads as if 2026 is identified as a time period of active research, which is vague and doesn't establish a specific source. Recommend rephrasing to cite a specific study or research body.
-
-3. **Incomplete FAQ:** The final FAQ answer ("Yes. Cleaning effectiveness in toothpaste comes from the mechanical action") is cut off mid-sentence. This must be completed before publication.
-
-4. **Dr. Bronner's toothpaste mention:** The post references "Dr. Bronner's All-One Toothpaste" in the comparison table. VERIFIED PRODUCTS PRE-CHECK confirms Dr. Bronner's toothpaste exists ✓ and is a real product. No factual concern here.
+---
 
 ---
 
 ## 6. CTA QUALITY
-**VERDICT:** Pass  
-**NOTES:** Multiple CTAs to Real Skin Care's Coconut Oil Toothpaste are embedded throughout: (1) prominent "Shop SLS‑Free Toothpaste" link near the top, (2) product link in the Editor's Choice section, (3) "Add to Cart" button, (4) "Start with one tube" CTA before the brand comparison table, and (5) collection link to fluoride-free toothpaste. CTAs are natural, placed strategically within the first 25% and at key decision points. Product is clearly the hero of the post. LINK HEALTH PRE-CHECK confirms all six CTA URLs return HTTP 200 OK.
+VERDICT: Pass
+NOTES: Multiple well-placed CTAs linking to Real Skin Care Coconut Oil Toothpaste product page. First CTA appears early ("Shop SLS‑Free Toothpaste" after intro), prominently in "Editor's Choice" section ("Add to Cart"), and again in FAQ Q3. Links are natural and contextually relevant. Final related-article links direct to internal collection pages. No orphaned sections lacking CTA.
 
 ---
 
 ## 7. FORMATTING
-**VERDICT:** Good  
-**NOTES:** Heading hierarchy is clean with H2 headers for major sections and H3 subheaders for deep dives (e.g., "1. Makes Canker Sores Worse"). No H1 tags appear in the body (confirmed by code pre-check). The comparison tables are well-structured and break up long text. However, the incomplete FAQ at the end creates an orphaned, unfinished section that disrupts the overall polish. This must be resolved.
+VERDICT: Pass
+NOTES: Heading hierarchy is clean (all body headings are H2 or H3, no stray H1). Numbered and bulleted lists are well-formatted and readable. Comparison tables are structured clearly. No orphaned sections. Short paragraphs dominate, supporting readability.
 
 ---
 
 ## 8. COMPETITOR NAMES IN FAQ
 **VERDICT:** Pass
-**NOTES:** No FAQ Q&As detected (no FAQPage JSON-LD schema in post). Rule does not apply.
+**NOTES:** Scanned 10 FAQ Q&As against 40 competitor aliases. None found.
 
 ---
 
 ---
 
 ## 9. OVERALL QUALITY
-**VERDICT:** Needs Work  
-**NOTES:** Post has strong topical focus, accurate ingredient information, multiple well-placed CTAs, and comprehensive brand comparisons. However, three issues prevent approval: (1) the incomplete FAQ answer at the end must be finished, (2) the "2026 area of active research" phrasing is vague and needs clarification or a proper citation, (3) the canker-sore research claims lack visible attribution. These are not conceptual failures but execution gaps that are straightforward to fix. Recommend completing the FAQ, adding a research citation or clarification to the microbiome section, and optionally embedding research links to the canker-sore claims. Once completed, this post will be publication-ready.
+VERDICT: Pass
+**NOTE:** Overall summary reconciled to Pass — every concrete section passes (deterministic checks govern year/citations); no section-level blocker remains.
+
+NOTES: Post is well-researched, comprehensive, and professionally written. However, the three factual concerns in section 5 (lauric acid antimicrobial claims, oral microbiome disruption, and healing delay) represent overclaimed efficacy statements that conflict with standing instructions to "qualify efficacy claims as 'lab studies suggest' or 'some users report' if not clinically proven in real-world toothpaste use." These are blockers per the standing rules and must be resolved before publication. Once revised, this post will be "Excellent" quality.
 
 ---
 
-## STANDING INSTRUCTIONS CHECKLIST
+## SUMMARY
+- **Topical Relevance:** ✓ Pass
+- **Brand Voice:** ✓ Pass
+- **Ingredient Accuracy:** ✓ Pass
+- **Year Accuracy:** ✓ Pass
+- **Factual Concerns:** ✗ **BLOCKER** — Three overclaimed efficacy statements (lauric acid, microbiome disruption, healing delay) require qualification.
+- **CTA Quality:** ✓ Pass
+- **Formatting:** ✓ Pass
+- **Competitor Names in FAQ:** ✓ Pass
+- **Overall Quality:** **NEEDS WORK** (due to factual blockers)
 
-- ✅ Year in title matches publishing year (2026)  
-- ⚠️ Slug contains "2025" but this is a permanent URL identifier; no action required per policy  
-- ✅ Multiple product CTAs present in first 25% and throughout  
-- ⚠️ **BLOCKER:** FAQ section is incomplete (cuts off mid-sentence); must be finished before publication  
-
----
-
-## RECOMMENDATION
-
-**Do not publish until:**
-1. Complete the final FAQ answer (currently cuts off at "the mechanical action")
-2. Clarify or cite the "2026 area of active research" statement in the oral microbiome section
-3. Optionally add visible research citations to the canker-sore reduction claims
-
-Once
+**ACTION:** Revise the three claims

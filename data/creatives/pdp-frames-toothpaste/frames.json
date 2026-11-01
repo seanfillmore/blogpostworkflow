@@ -1,0 +1,20 @@
+[
+  {
+    "id": "offer",
+    "handle": "coconut-oil-toothpaste",
+    "ref": "tp-three-ref.png",
+    "source": "Live catalogue 2026-09-11: coconut-oil-toothpaste $13.00 (3 of 3 variants in stock); coconut-toothpaste-3-pack $34.00, 4 of 4 variants in stock (Variety — one of each, 3x Fresh Mint, 3x All Natural, 3x Cinnamon Spice). 3 x 13 = 39, saving 5; 34 / 3 = 11.33. The 3-pack body states both figures: \"a $5 saving against three singles, or $11.33 per tube\"."
+  },
+  {
+    "id": "proof",
+    "handle": "coconut-oil-toothpaste",
+    "ref": "tp-fresh-mint.png",
+    "source": "Judge.me, coconut-oil-toothpaste, Mike Gray, 5 stars, 2024-06-04, \"Impressive toothpaste\". Verbatim: the review's FIRST SENTENCE alone (attempt 1 rendered the two-sentence version with a duplicated word). Judge.me records the source as \"email\", NOT verified-purchase, so NO verification label is shown — attribution only, same as the foaming hand soap frame. Only 2 of 20 published reviews are verified-purchase and neither is quotable (\"Works wonders\"; a 4-star about the cap clogging). No review count shown."
+  },
+  {
+    "id": "compare",
+    "handle": "coconut-oil-toothpaste",
+    "ref": "tp-fresh-mint.png",
+    "source": "All four rows verbatim from the live toothpaste-not-in-it.png frame, and each also appears in the live PDP body (\"No SLS, no fluoride, no titanium dioxide, no synthetic sweeteners\"). Comparison column is the generic category; no competitor named."
+  }
+]

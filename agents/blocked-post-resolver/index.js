@@ -58,8 +58,11 @@ import { fileURLToPath } from 'node:url';
 import {
   listAllSlugs, getPostMeta, getMetaPath, getContentPath, getEditorReportPath, ROOT, replacePostMeta } from '../../lib/posts.js';
 import { classifyBlockedReport, reportFingerprint } from '../../lib/blocked-posts.js';
+import { RETIRED_STATUSES } from '../../lib/post-publish-state.js';
 import { isPassing, parseEditorBlockers, firstBlockerReason } from '../../lib/editor-remediation.js';
 import { notify } from '../../lib/notify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import {
   loadClusterHold, partitionHeld, renderHoldLines, renderDisagreementLines, holdBanner,
   holdSummaryFragment, HOLD_FLAG,
@@ -100,7 +103,7 @@ const DEFAULT_LIMIT = 5;
  */
 export function selectBlockedPostsWithHold(entries, {
   now = Date.now(), limit = null, slug = null, hold = null, includeHeld = false,
-  ranking = null,
+  ranking = null, mayEdit = null,
 } = {}) {
   const classified = (entries || [])
     .map((e) => {
@@ -128,13 +131,50 @@ export function selectBlockedPostsWithHold(entries, {
     out = efficiency.items;
   }
   if (slug) out = out.filter((e) => e.slug === slug);
+  // Live-article edit gate (lib/post-edit-gate.js), BEFORE the limit: pushing a
+  // remediated body onto a LIVE page is a `rewrite`, so a frozen page, a locked
+  // winner or one inside its 28-day measurement window is withheld here rather
+  // than eating a slot. Pre-publish posts are not live and are never asked.
+  // Injected so this stays pure; the flag is left set, asked again next run.
+  const { kept: gateKept, held: editGated } = partitionByEditGate(out, {
+    kind: 'rewrite',
+    mayEdit,
+    targetOf: (e) => (e.live ? (e.meta?.shopify_handle || e.slug) : null),
+  });
+  out = gateKept;
   if (limit) out = out.slice(0, limit);
-  return { kept: out, held, overridden, efficiency };
+  return { kept: out, held, overridden, efficiency, editGated };
 }
 
 /** The selection alone. Kept as the call shape everything already uses. */
 export function selectBlockedPosts(entries, opts = {}) {
   return selectBlockedPostsWithHold(entries, opts).kept;
+}
+
+/**
+ * This agent used to keep its own copy of the out-of-circulation status list.
+ * It is now `RETIRED_STATUSES` in lib/post-publish-state.js, imported above —
+ * a second copy of a vocabulary is a second copy that drifts, and this one had
+ * already drifted from what `resolvePublishStatus` recognised: the comment here
+ * claimed the resolver folded all three into 'unknown', when in fact only
+ * 'redirected' did, which is exactly the hole that let a retired post render as
+ * ACTION REQUIRED on the dashboard (fixed 2026-09-20).
+ */
+
+/**
+ * Is this error Shopify telling us the post's own article no longer exists?
+ *
+ * A consolidated loser's article is DELETED and its handle 301s to the winner,
+ * so there is no live body to pull and never will be again. That is not the
+ * agent breaking — it is the cannibalization resolver's merge having worked —
+ * and it must not reach the `failed` bucket. Matched on the article id as well
+ * as the status so an unrelated 404 elsewhere in a run cannot be swallowed.
+ */
+export function isDeletedArticleError(err, meta) {
+  const msg = err?.message || String(err ?? '');
+  if (!/\b404\b/.test(msg)) return false;
+  const id = meta?.shopify_article_id;
+  return Boolean(id) && msg.includes(String(id));
 }
 
 /**
@@ -146,6 +186,23 @@ export function planPost(entry) {
   const meta = entry?.meta || {};
   if (!meta.shopify_article_id || !meta.shopify_blog_id) {
     return { slug: entry.slug, action: 'skip', reason: 'not on Shopify (no article/blog id) — owned by the publish pipeline' };
+  }
+  // Same reasoning, one step later: the id is recorded but the article behind it
+  // was deleted when the post was merged away. Skipping on the RECORDED state
+  // costs no API call; the 404 guard in the run loop is the safety net for a
+  // deletion nobody has recorded yet.
+  //
+  // Since 2026-09-20 `classifyBlockedReport` drops a retired post before it can
+  // become a candidate, so on the scheduled path this is belt-and-braces. It is
+  // KEPT: `planPost` is exported and unit-tested on its own, and a guard that
+  // costs one Set lookup is not worth removing to make a diff smaller.
+  const status = typeof meta.shopify_status === 'string' ? meta.shopify_status.toLowerCase() : '';
+  if (RETIRED_STATUSES.has(status)) {
+    return {
+      slug: entry.slug,
+      action: 'skip',
+      reason: `${status} — the article was merged away; there is no live body to remediate`,
+    };
   }
   return { slug: entry.slug, action: 'remediate', reason: null };
 }
@@ -258,6 +315,8 @@ function collectEntries() {
 }
 
 const NODE = process.execPath;
+/** scripts/remediate-live-post.js exits with this when the edit gate held the page. */
+const EDIT_GATE_HELD_EXIT = 3;
 /** Run a child step. Returns the exit code (0 = ok); never throws. */
 function runStep(cmd) {
   try { execSync(cmd, { cwd: ROOT, stdio: 'inherit' }); return 0; }
@@ -289,7 +348,14 @@ async function softenAndSettle(slug, meta) {
     const live = await getArticle(meta.shopify_blog_id, meta.shopify_article_id);
     const body = readFileSync(getContentPath(slug), 'utf8');
     if (body && body !== (live.body_html || '')) {
+      const gateTarget = meta.shopify_handle || slug;
+      const editGate = mayEditLivePost(gateTarget, 'rewrite');
+      if (!editGate.allowed) {
+        console.log(`  ${slug}: ⏸ edit gate held the push — ${editGate.reason}. Page left LIVE and unchanged; flag kept.`);
+        return { outcome: 'edit-gate', target: gateTarget, reason: editGate.reason, until: editGate.until };
+      }
       await updateArticle(meta.shopify_blog_id, meta.shopify_article_id, { body_html: body });
+      recordMaterialEdit(gateTarget, 'rewrite', 'blocked-post-resolver');
       console.log(`  ${slug}: ✓ softening cleared the gate — pushed to Shopify.`);
     }
     replacePostMeta(slug, metaAfterSuccess(getPostMeta(slug) || meta, { at }));
@@ -322,9 +388,11 @@ async function main() {
   const rankBanner = efficiencyBanner(ranking);
   if (rankBanner) console.log(`${rankBanner}\n`);
 
-  const { kept: candidates, held, efficiency } = selectBlockedPostsWithHold(
-    collectEntries(), { limit, slug, hold, includeHeld, ranking },
+  const { kept: candidates, held, efficiency, editGated } = selectBlockedPostsWithHold(
+    collectEntries(), { limit, slug, hold, includeHeld, ranking, mayEdit: mayEditLivePost },
   );
+  const editGateHeld = [...editGated];
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
   console.log(`  ${candidates.length} blocked post(s)${apply ? '' : ' (DRY RUN)'}`);
   if (held.length) for (const line of renderHoldLines(held)) console.log(`  ${line}`);
   const rankLines = renderEfficiencyLines(ranking, efficiency);
@@ -332,9 +400,9 @@ async function main() {
 
   if (!apply) {
     for (const c of candidates) console.log(`    [${c.live ? 'live' : 'pre-publish'}] ${c.slug}`);
-    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
+    const body = renderResolverSummary({ dryRun: true, candidates, held, notes: [...rankLines, ...renderEditGateLines(editGateHeld), ...renderDisagreementLines(hold)] });
     console.log(`\n${body}`);
-    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
+    await notify({ subject: `Blocked Post Resolver: ${candidates.length} candidate(s)${holdSummaryFragment(held)}${editGateSummaryFragment(editGateHeld)} (dry run)`, body, status: 'info', category: 'pipeline' }).catch(() => {});
     return;
   }
 
@@ -348,6 +416,13 @@ async function main() {
       // The canonical repair loop. --push because the scheduled path applies
       // (Autonomy Principle); it still pushes ONLY a revision that PASSES.
       const code = runStep(`"${NODE}" scripts/remediate-live-post.js ${entry.slug} --push`);
+      if (code === EDIT_GATE_HELD_EXIT) {
+        // The edit gate refused at the write site (the verdict changed since
+        // selection). Not a failure, not a write-off: flag kept, asked again.
+        editGateHeld.push({ target: entry.meta?.shopify_handle || entry.slug, kind: 'rewrite', reason: 'held at the write site by the edit gate (see console)' });
+        console.log(`  [held] ${entry.slug}: edit gate — left live, flag kept.`);
+        continue;
+      }
       if (code === 0) {
         const at = new Date().toISOString();
         replacePostMeta(entry.slug, metaAfterSuccess(getPostMeta(entry.slug) || entry.meta, { at }));
@@ -356,23 +431,40 @@ async function main() {
         continue;
       }
       const settled = await softenAndSettle(entry.slug, entry.meta);
+      if (settled.outcome === 'edit-gate') { editGateHeld.push({ target: settled.target, kind: 'rewrite', reason: settled.reason, until: settled.until }); continue; }
       if (settled.outcome === 'resolved') resolved.push({ slug: entry.slug, softened: true });
       else exhausted.push({ slug: entry.slug, reasons: settled.reasons });
     } catch (err) {
+      // The article is GONE, not broken — a merge loser whose deletion was never
+      // recorded locally. Nothing here can repair a page that does not exist, and
+      // telling a human to go fix this agent sends them to the wrong place. The
+      // slug is named so the meta can be corrected (shopify_status: 'redirected').
+      if (isDeletedArticleError(err, entry.meta)) {
+        const reason = `article ${entry.meta.shopify_article_id} no longer exists on Shopify (404) — `
+          + 'likely merged away; record shopify_status: "redirected" on this post';
+        skipped.push({ slug: entry.slug, reason });
+        console.log(`  [skip] ${entry.slug}: ${reason}`);
+        continue;
+      }
       failed.push({ slug: entry.slug, reason: (err.message || String(err)).split('\n')[0] });
       console.error(`  [fail] ${entry.slug}: ${err.message}`);
     }
   }
 
-  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: [...rankLines, ...renderDisagreementLines(hold)] });
+  const body = renderResolverSummary({ resolved, exhausted, skipped, failed, dryRun: false, held, notes: [...rankLines, ...renderEditGateLines(editGateHeld), ...renderDisagreementLines(hold)] });
   console.log(`\n${body}`);
 
   await notify({
-    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed${holdSummaryFragment(held)}`,
+    subject: `Blocked Post Resolver: ${resolved.length} resolved, ${exhausted.length} written off, ${failed.length} failed${holdSummaryFragment(held)}${editGateSummaryFragment(editGateHeld)}`,
     body,
     // Deferred, per the digest convention in CLAUDE.md — never immediate. An
     // exhausted post is a note, not an outage: the page is still live.
-    status: failed.length ? 'error' : 'info',
+    // ALWAYS 'info'. A per-item failure is a FINDING this agent exists to report,
+    // not the agent breaking — the run above resolved posts successfully. Flipping
+    // the whole row to 'error' on one bad item put "3 resolved" in the digest's
+    // Failures block, which is how that block stops being read. Genuine breakage
+    // is the catch at the bottom of main(), which is still 'error'.
+    status: 'info',
     category: 'pipeline',
   }).catch(() => {});
 }

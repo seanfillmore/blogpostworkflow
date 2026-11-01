@@ -63,6 +63,13 @@ DAILY_POST_PERFORMANCE="30 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/post-per
 DAILY_PIPELINE_PRIORITIZER="0 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-prioritizer/index.js >> data/reports/scheduler/pipeline-prioritizer.log 2>&1"
 
 # Content pipeline (daily)
+#
+# NOTE — `agents/pr-target-finder` has NO cron line here and never has: it is
+# dispatched as step 8d INSIDE scheduler.js, which this entry runs. Its
+# `--enrich` budget (how many ranked PR targets get their byline and article
+# date fetched) is therefore changed in `scheduler.js` or in the agent's own
+# default, and reaches production on a `git pull`, NOT by re-running this
+# script. Do not add a second cron line for it — that would run it twice.
 DAILY_SCHEDULER="0 15 * * * cd \"$PROJECT_DIR\" && $NODE scheduler.js >> data/reports/scheduler/scheduler.log 2>&1"
 DAILY_PIPELINE_SCHEDULER="0 16 * * * cd \"$PROJECT_DIR\" && $NODE agents/pipeline-scheduler/index.js >> data/reports/scheduler/pipeline-scheduler.log 2>&1"
 DAILY_CALENDAR_RUNNER="0 10 * * * cd \"$PROJECT_DIR\" && $NODE agents/calendar-runner/index.js --run --all >> data/logs/calendar-runner.log 2>&1"
@@ -165,6 +172,96 @@ DAILY_THEME_CLAIMS_GATE="45 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-
 # `ps`.
 DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-scheduler-heartbeat.mjs >> data/reports/scheduler/scheduler-heartbeat.log 2>&1"
 
+# Amazon Account Health (daily, read-only). Reads the seller performance report
+# for every NA marketplace and puts open policy violations in the digest's
+# "Needs your decision" section; an at-risk account emails immediately. Needs
+# the SP-API "Selling Partner Insights" role; without it the digest row says the
+# check is OFF. 12:05 UTC: the report takes minutes to build and must land
+# before the 13:00 UTC daily-summary. No TZ= prefix: it schedules nothing here.
+DAILY_AMAZON_ACCOUNT_HEALTH="5 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-account-health/index.js >> data/reports/scheduler/amazon-account-health.log 2>&1"
+
+# Amazon review requests (daily). Sends Amazon's standard "Request a Review" email
+# for shipped orders aged 10-31 days that NOTHING ELSE has requested yet; the agency's
+# follow-up tool covers most orders around day 5-8, so this fills its gaps. Amazon's
+# eligibility check is re-read before every send, so it can never double-send.
+# 10:20 UTC is a free minute, and the digest row lands at 13:00 the same morning.
+# No TZ= prefix: it schedules nothing here.
+DAILY_AMAZON_REVIEW_REQUESTS="20 10 * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-review-requests/index.js --apply >> data/reports/scheduler/amazon-review-requests.log 2>&1"
+
+# Trybe creator review (daily). Screens each PENDING creator submission's
+# transcript through the commercial claim gate and sends a revision request
+# quoting any health claim; never approves or rejects. Also reports creator
+# sales and commission. 12:55 UTC: the free minute after the 12:50 heartbeat
+# (checked against the LIVE crontab 2026-09-22), 5 minutes before the 13:00
+# daily-summary so the row lands in the SAME morning's digest. A handful of GETs.
+# Creator outreach: emails Trybe creators from sean@realskincare.com (brief on ship,
+# nudges after delivery, thanks on approval) and answers their replies. Every
+# 30 minutes so a reply is answered quickly; scheduled mail only goes out
+# 16:00-24:00 UTC (see lib/creator-outreach.js). Off switch: config/creator-outreach.json.
+CREATOR_OUTREACH="*/30 * * * * cd \"$PROJECT_DIR\" && $NODE agents/creator-outreach/index.js --apply >> data/reports/scheduler/creator-outreach.log 2>&1"
+
+# Press outreach: replies, follow-ups and Sean-approved pitches (agents/press-outreach).
+# Offset to :17/:47: never shares an IMAP login minute with creator-outreach (:00/:30)
+# and avoids the hourly job at :05 on this memory-tight box.
+PRESS_OUTREACH="17,47 * * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --apply >> data/reports/scheduler/press-outreach.log 2>&1"
+
+# Press outreach drafting: turns prospects (pr-target-finder's pitch_targets and
+# the backlink gap) into pitch drafts that wait in the dashboard (#outreach) for
+# Sean's approval; it never sends. 14:20 UTC: after the :17 run has released the
+# shared lock, before the 16:00 send window, and clear of the 12:20-12:50 detectors.
+PRESS_OUTREACH_DRAFT="20 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --draft --apply >> data/reports/scheduler/press-outreach-draft.log 2>&1"
+
+# Press outreach earned-link check: weekly, looks for our links and mentions on
+# pages of engaged pitches and sends the funnel digest. Monday 14:25 UTC. The
+# 14:20 drafting run usually still HOLDS the shared lock (it may run to its
+# 15:30 cutoff), so the check fetches without the lock and then waits up to
+# 80 minutes for it to write the contact book. If it never gets the lock the
+# digest still goes out, marked "not written to the contact book this week".
+PRESS_OUTREACH_LINKS="25 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/press-outreach/index.js --check-links --apply >> data/reports/scheduler/press-outreach-links.log 2>&1"
+
+# Founder notes: Monday 15:35 UTC emails Sean 2-4 questions (Hushmail); the daily
+# 16:12 UTC run reads his reply, redacts private names and files each answer as a
+# note. UTC only, no TZ= prefix (it schedules nothing on this host).
+WEEKLY_FOUNDER_NOTES_SEND="35 15 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/founder-notes/index.js --send --apply >> data/reports/scheduler/founder-notes.log 2>&1"
+DAILY_FOUNDER_NOTES_INGEST="12 16 * * * cd \"$PROJECT_DIR\" && $NODE agents/founder-notes/index.js --ingest --apply >> data/reports/scheduler/founder-notes.log 2>&1"
+
+# Inbox sorter: files new mail in sean@realskincare.com's Hushmail Inbox into the
+# folders Sean already uses. Rules are learned from those folders; moves, never
+# deletes. 13:40 UTC = 6:40am PDT, before the working day.
+DAILY_INBOX_SORTER="40 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/inbox-sorter/index.js --apply >> data/reports/scheduler/inbox-sorter.log 2>&1"
+# Ad test monitor: checks each test in config/ad-tests.json against its stop
+# rules and reports in the digest; emails immediately the first time a rule is
+# hit. Reports only, never pauses. 12:10 UTC, ahead of the 13:00 digest.
+DAILY_AD_TEST_MONITOR="10 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/ad-test-monitor/index.js --notify >> data/reports/scheduler/ad-test-monitor.log 2>&1"
+# Pack listings: Shopify's Google channel refuses componentized bundles, so packs
+# (config/pack-listings.json) are written to our own Merchant Center data source.
+# Daily so price and stock follow the store. 11:50 UTC, ahead of the 13:00 digest.
+DAILY_PACK_LISTINGS="50 11 * * * cd \"$PROJECT_DIR\" && $NODE scripts/sync-pack-listings.mjs --apply >> data/reports/scheduler/pack-listings.log 2>&1"
+DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review/index.js --apply >> data/reports/scheduler/trybe-review.log 2>&1"
+# Creator review ask (one-off, EXPIRES 2026-11-15): sends the approved honest-review
+# email to the 4 creators whose samples were still in transit on 2026-10-24, each
+# 5 days after delivery. Messages live server-side in the gitignored
+# data/creator-outreach/pending/. After the expiry it sends nothing; remove the line.
+DAILY_CREATOR_REVIEW_ASK="15 17 * * * cd \"$PROJECT_DIR\" && $NODE scripts/creator-outreach-broadcast.mjs --id review-ask-2026-10 --messages data/creator-outreach/pending/review-ask-2026-10.json --only-delivered --delivered-days 5 --expires 2026-11-15 --apply >> data/reports/scheduler/creator-review-ask.log 2>&1"
+
+# Instagram Reels from approved Trybe creator videos (agents/ugc-reels). Three
+# posts a day: 16:20, 20:20 and 01:20 UTC (9:20 AM, 1:20 PM and 6:20 PM Pacific
+# during PDT; an hour earlier in PST). One Reel per run; each run also refreshes
+# insights for earlier posts. The Monday report puts the per-caption-style
+# results in the 13:00 UTC digest.
+DAILY_UGC_REELS="20 16,20,1 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --apply >> data/reports/scheduler/ugc-reels.log 2>&1"
+WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --report --notify >> data/reports/scheduler/ugc-reels.log 2>&1"
+
+# Social queue (agents/social-poster): APPROVED ad images from the dashboard's
+# Social tab, posted to Instagram AND the Facebook Page. Three a day since
+# 2026-10-24 (Sean: "three statics a day and rotate between the products"):
+# 18:20, 22:20 and 03:20 UTC, one new item per run, each between two Reels
+# (16:20, 20:20, 01:20). posts_per_day caps it at 3 per UTC day. A platform that failed is retried
+# alone on the next run. Must match cron_utc in config/social-queue.json (pinned by
+# tests/agents/social-poster.test.js). Replaced DAILY_IG_STATICS (agents/ig-statics)
+# on 2026-10-24, in the same minute; the old job is retired here AND live.
+DAILY_SOCIAL_POSTER="20 18,22,3 * * * cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -199,6 +296,26 @@ DAILY_SCHEDULER_HEARTBEAT="50 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/chec
 # gate, so the two cheap detectors do not share a slot; and ~2h40m before the
 # 15:00 UTC scheduler, whose link-repair step is the very republish this drift
 # endangers — reporting before it runs is the whole point.
+# Content-mirror RECONCILE — APPLIES, 11:45 UTC. The one scheduled writer here.
+#
+# The different-article tier is an OUTAGE, not a tidiness problem: agents/publisher
+# refuses to republish such a mirror, so every refresh, link repair, buy-box rebuild
+# and schema injection aimed at that post is silently refused. It regrows on its own
+# (0 on 2026-08-24 -> 28 by 2026-09-08, every one "both-moved"), so it is maintenance
+# on a timer rather than an investigation somebody remembers to open.
+#
+# It is scoped to that tier ALONE (--only-different-article, frozen in SCOPE_ARGS and
+# refused in combination with --all/--slug). The 0.25-0.75 warn band is deliberately
+# excluded: that is where an in-flight refresh-runner rewrite can live, and
+# overwriting one destroys a paid LLM call. The deepest real refresh measured 0.775;
+# the different-article ceiling is 0.25, a 3x margin, which is why this scope and only
+# this scope is safe unattended.
+#
+# 11:45 is 3h15m before the 15:00 scheduler (so refresh-runner is nowhere near) and
+# 35 min before the 12:20 detector (so the detector grades what this left behind).
+# UTC, like every job here — a TZ= prefix schedules nothing on this host.
+DAILY_CONTENT_MIRROR_RECONCILE="45 11 * * * cd \"$PROJECT_DIR\" && $NODE scripts/reconcile-content-mirrors-nightly.mjs >> data/reports/scheduler/content-mirror-reconcile.log 2>&1"
+
 DAILY_CONTENT_MIRROR_GATE="20 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-content-mirror-drift.mjs >> data/reports/scheduler/content-mirror-gate.log 2>&1"
 
 # Rejected-keywords drift — DETECT ONLY, 12:30 UTC.
@@ -316,8 +433,12 @@ WEEKLY_SEO_OPPORTUNITY="10 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-oppo
 # SEO impact / "what's working" — weekly Mon 14:30 UTC (after GA4/GSC/Shopify
 # collectors at 13:xx). Organic revenue by page/cluster; the feedback loop.
 WEEKLY_SEO_IMPACT="30 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/seo-impact/index.js >> data/reports/scheduler/seo-impact.log 2>&1"
-WEEKLY_META_ADS_COLLECTOR="0 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
-WEEKLY_META_ADS_ANALYZER="10 10 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
+# Meta Ad Library — Mon 03:00/03:10 UTC, an empty slot. Moved from 10:00/10:10 on
+# 2026-10-05: the collector had never worked (wrong token) so the analyzer never
+# ran; with data it makes up to MAX_PASS1_BRANDS LLM calls, and 10:10 overlapped
+# calendar-runner (10:00 daily). Two CLI processes at once is the OOM pattern.
+WEEKLY_META_ADS_COLLECTOR="0 3 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-collector/index.js >> data/logs/meta-ads-collector.log 2>&1"
+WEEKLY_META_ADS_ANALYZER="10 3 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/meta-ads-analyzer/index.js >> data/logs/meta-ads-analyzer.log 2>&1"
 # Competitor watcher (Monday 02:00 UTC — no TZ prefix on the live line, so this
 # is a fixed UTC time, not a fixed Pacific time. The agent's own header docstring
 # calls it "weekly Sun 7:00 PM PT", which is 02:00 UTC Monday only while PT is on
@@ -415,9 +536,26 @@ DAILY_GIVEAWAY_REPORT="45 8 * * * cd \"$PROJECT_DIR\" && NOTIFY_DEFERRED=1 $NODE
 # The script is deliberately KEPT: it is still correct under double_opt_in, which
 # is the documented rollback path. Re-add this line ONLY as part of that rollback.
 
-# Entry Period close: stop the nurture flow. Klaviyo has no flow end date, and
-# PATCH /flows accepts only status, so the boundary is enforced from outside.
-# Idempotent.
+# Pre-close reconcile: one extra reconcile-referrals run BEFORE entries close.
+#
+# The draw snapshot counts a confirmation only if its gv_confirmed_at stamp is at
+# or before entryClosesAt, and the reconciler stamps the time IT RUNS. The daily
+# run is 08:30 UTC and the snapshot is 08:05 UTC on Sep 15, so without this every
+# confirmation clicked after 01:30 PT on Sep 14 would enter the draw unconfirmed —
+# 1 entry instead of 3+, referral credit zeroed. 19 entrants were in exactly that
+# state at 19:44 PT on 2026-09-12. A run AFTER the close cannot fix it: it would
+# stamp those confirmations with a post-close time.
+#
+# 06:55 UTC = 23:55 PDT Sep 14, five minutes before the close; a normal run takes
+# about a minute. Clicks in the last five minutes are still missed, which is the
+# stated residual. The missing year field means it fires again in 2027, where it
+# is one more idempotent reconcile. No TZ= prefix — one schedules nothing here.
+GIVEAWAY_PRE_CLOSE_RECONCILE="55 6 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/reconcile-referrals.mjs --apply >> data/reports/scheduler/giveaway-reconcile.log 2>&1"
+
+# Entry Period close: stop the nurture and confirm flows, then freeze the draw
+# pool. Klaviyo has no flow end date, and PATCH /flows accepts only status, so
+# the boundary is enforced from outside. Idempotent, refuses to run before the
+# close, and never retakes an existing snapshot.
 #
 # TIMING, AND THE TRAP IT SPENT THREE DAYS IN:
 # Entries close 2026-09-14T23:59:59-07:00 (config/giveaway.json entryClosesAt),
@@ -501,6 +639,7 @@ $DAILY_PUBLISH_DRIFT
 # ── Performance engine (daily) ──
 $DAILY_PERFORMANCE_ENGINE
 # ── Drift detectors (daily, detect only — before the digest) ──
+$DAILY_CONTENT_MIRROR_RECONCILE
 $DAILY_CONTENT_MIRROR_GATE
 $DAILY_PDP_TEMPLATE_GATE
 $DAILY_REJECTED_KEYWORDS_GATE
@@ -509,6 +648,23 @@ $DAILY_VALUE_STACK_GATE
 $DAILY_POST_META_GATE
 $DAILY_THEME_CLAIMS_GATE
 $DAILY_SCHEDULER_HEARTBEAT
+$DAILY_AMAZON_ACCOUNT_HEALTH
+$DAILY_AMAZON_REVIEW_REQUESTS
+# ── Creator program (daily, before the digest) ──
+$DAILY_PACK_LISTINGS
+$DAILY_TRYBE_REVIEW
+$DAILY_CREATOR_REVIEW_ASK
+$DAILY_UGC_REELS
+$WEEKLY_UGC_REELS_REPORT
+$DAILY_SOCIAL_POSTER
+$CREATOR_OUTREACH
+$PRESS_OUTREACH
+$PRESS_OUTREACH_DRAFT
+$PRESS_OUTREACH_LINKS
+$WEEKLY_FOUNDER_NOTES_SEND
+$DAILY_FOUNDER_NOTES_INGEST
+$DAILY_INBOX_SORTER
+$DAILY_AD_TEST_MONITOR
 # ── Daily digest ──
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
@@ -539,6 +695,7 @@ $MONTHLY_PRIORITY_TUNER
 $DAILY_GIVEAWAY_RECONCILE
 $DAILY_GIVEAWAY_REFERRAL_AUDIT
 $DAILY_GIVEAWAY_REPORT
+$GIVEAWAY_PRE_CLOSE_RECONCILE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 $GIVEAWAY_PUBLISH_OFFER_PAGE
 "
@@ -566,6 +723,11 @@ echo "  11:30 UTC — indexing-fixer"
 echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
+echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
+echo "  16:20, 20:20, 01:20 UTC — ugc-reels (one Trybe creator video to Instagram per run; Mon 12:02 report)"
+echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
+echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
+echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
 echo "  13:00 UTC — clarity, shopify, gsc, ga4, google-ads collectors"
 echo "  13:00 UTC — daily summary digest"
 echo "  13:30 UTC — gsc-opportunity report"
@@ -578,10 +740,10 @@ echo "  16:00 UTC — pipeline-scheduler (brief drip)"
 echo ""
 echo "  WEEKLY (Monday)"
 echo "  02:00 UTC Mon — competitor-watcher (UTC, like every job here; PT hour shifts with DST)"
+echo "  03:00 UTC — meta-ads-collector"
+echo "  03:10 UTC — meta-ads-analyzer"
 echo "  07:30 UTC — insight-aggregator"
 echo "  08:00 UTC — keyword-research (DataForSEO)"
-echo "  10:00 UTC — meta-ads-collector"
-echo "  10:10 UTC — meta-ads-analyzer"
 echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  14:10 UTC — seo-opportunity-analyzer (rank winnable opportunities, stage bigger moves)"
@@ -607,6 +769,7 @@ echo "  SOAP GIVEAWAY (daily, UTC — see comments in this script for the TZ tra
 echo "  08:30 UTC — giveaway reconcile-referrals (confirmation/referral rungs)"
 echo "  08:40 UTC — giveaway referral audit (why a referral isn't paying; reports near-misses)"
 echo "  08:45 UTC — giveaway daily report (spend gates)"
+echo "  06:55 UTC 2026-09-15 — giveaway pre-close reconcile (stamps confirmations inside the Entry Period)"
 echo "  08:05 UTC 2026-09-15 — giveaway close-entry-period (~1h AFTER entries close; UTC clock, no TZ prefix)"
 echo ""
 echo "View with: crontab -l"

@@ -1,0 +1,86 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "vendor": {
+          "type": "text",
+          "settings": {
+            "text": "{{ product.vendor }}",
+            "text_style": "subtitle"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "rating": {
+          "type": "rating",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button"
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": true
+          }
+        },
+        "scent_notes": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "perfume",
+            "heading": "Scent notes",
+            "content": "<p><strong>Top:<\/strong> citrus, bergamot, mandarin.<br><strong>Heart:<\/strong> rose, jasmine, peony.<br><strong>Base:<\/strong> sandalwood, musk, amber.<\/p>"
+          }
+        },
+        "fragrance_family": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "plant",
+            "heading": "Fragrance family",
+            "content": "<p>Family (Floral \/ Woody \/ Oriental \/ Fresh), longevity, sillage, season, occasion.<\/p>"
+          }
+        },
+        "mood": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "heart",
+            "heading": "Mood & occasion",
+            "content": "<p>Describe the persona, when to wear, layering tips with complementary scents.<\/p>"
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "rating",
+        "price",
+        "variant_picker",
+        "buy_buttons",
+        "scent_notes",
+        "fragrance_family",
+        "mood",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true
+      }
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

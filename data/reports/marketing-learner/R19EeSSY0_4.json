@@ -1,0 +1,310 @@
+{
+  "tactics": [
+    {
+      "claim": "Connect an AI listing-image tool to your LLM (e.g. Claude) through its MCP connector and drive the whole catalogue from chat. Have it create a campaign per ASIN covering main images, secondary images and A+ content. Then issue one edit instruction (add a lifestyle image, make a holiday version, restyle a slot) that applies across every campaign at once. Queue the requests asynchronously instead of waiting for each one to finish.",
+      "mechanism": "The agent iterates over every product campaign, reads each product's existing references and applies the same instruction to all of them. One instruction replaces per-listing, per-image editing in the tool's UI. Catalogue-wide creative refreshes and themed variants become one chat turn plus review time instead of per-SKU sessions, and asynchronous queuing removes the waiting.",
+      "evidence": "Live demo on about ten Sunny Days Decor ASINs and product campaigns. Campaigns and edited variants were produced with 'no human intervention'. The vendor claims about an hour for a large catalogue. This is a vendor-sponsored sales pitch with a discount code.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "RSC has 12 SKUs and one operator who is also the designer and already works in Claude. One-instruction batch passes across all Amazon and Shopify galleries therefore save real hours and are runnable today. The leverage is smaller than for a catalogue of thousands of ASINs, but that is a catalogue-size fact, not a volume discount. Batch output still has to pass every existing per-image QA step (hallucination audit, proofreading, believability), so the real time saved is smaller than the vendor claims. The tool is a monthly subscription, which conflicts with the existing 'prefer pay-per-generation access' claim. The skill should record that trade-off and keep the portable lesson: 'run catalogue-wide image passes through an agent connector', not 'buy this tool'. Tool and MCP specifics are platform mechanics that decay fast."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-ai-product-imagery",
+        "action": "edit",
+        "description": "Add catalogue-wide batch image passes driven through an agent/MCP connector (one instruction applied per campaign, queued asynchronously). Note that per-image QA still applies, and record the subscription versus pay-per-generation trade-off. Flag it as fast-decay platform mechanics."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 0,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 11,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Before choosing a new image, view it in a shelf comparison: your current image beside the new candidates beside the competitors' images as they appear together.",
+      "mechanism": "A thumbnail wins or loses in the context of the result page. Judging a candidate alone hides whether it actually stands out from, or improves on, the competitor images beside it. The creator rejected a main-image candidate that looked fine alone but was 'not so much of an improvement' on the shelf.",
+      "evidence": "Demo of the tool's shelf-comparison view. One main image was judged no better than the current one, while the sizing and slot-2 images were clear improvements.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "The main image is already recorded as the highest-leverage asset, and RSC competes on crowded natural-deodorant search pages. A side-by-side shelf check before shipping is a cheap pre-screen the operator can run alone today, using a screenshot of the live search page plus the candidates. It complements but does not duplicate the Amazon Experiments A/B claim, which is a post-ship test. The tool feature is platform mechanics; the principle is durable."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-product-image-stack",
+        "action": "edit",
+        "description": "Add a pre-ship shelf-comparison check: place the current image, the candidates and the competitor thumbnails side by side from the live search page before picking a replacement."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 1,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Once a listing's core graphics are proven, generate seasonal variants of each one (fall, Christmas/holiday), keeping each image's content, claims and layout unchanged. Rotate them into the secondary slots, the Shopify gallery and hero, and Meta statics, and test them.",
+      "mechanism": "Seasonal context makes the listing feel current and relevant to the shopper's moment, especially Q4 gifting, and it is visibly different from what competitors show during the season. Only the scene changes, so the proven claim structure is preserved. Each slot also gets a ready second variant without new concepting.",
+      "evidence": "Fall-themed secondary images were generated across ten listings and called 'a big improvement' and ready to upload. There are demo outputs only and no performance data.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "Q4 gifting is real for soap, lip balm, lotion, cream and body-care gift sets, which are AOV plays. With the date at 2026-10-10, holiday variants of the set and lotion graphics are useful now. One person can produce them today with an image model and the existing reference photos. On Meta, a new season and new setting count as a genuinely distinct creative under the clustering rule, not a near-duplicate. The existing scarcity skill re-wraps promotions seasonally but not imagery. Constraint: the Amazon main image must stay compliant, so seasonal treatment belongs only in secondary slots, Shopify and Meta. Reading test results through Amazon Experiments is a separate, existing claim. Merit is moderate because seasonal theming is presentation, not offer, and the mechanism is asserted rather than shown."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-product-image-stack",
+        "action": "edit",
+        "description": "Add seasonal re-theming of proven gallery graphics, with claims and layout locked. Limit it to Amazon secondary slots, the Shopify gallery and hero, and Meta statics, and never the Amazon main image. Prioritise Q4 gift sets."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 2,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 10,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Test a lifestyle main image and a holiday/Christmas-themed main image on the Amazon listing in place of the standard product main image.",
+      "mechanism": "A distinctive scene stands out on a shelf where competitors all show the product on its own.",
+      "evidence": "Lifestyle and Christmas main images were generated for each ASIN. Assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Amazon requires the main image to show the product on a pure white background, so this risks listing suppression and conflicts with the existing compliance guardrail."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Amazon requires the main image to be the product on a pure white background, so a lifestyle or Christmas-scene main image risks suppression of the listing. That conflicts with the existing compliance guardrail in marketing-product-image-stack. The seasonal idea survives only in secondary slots and on Shopify, which the seasonal re-theming tactic captures.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 3,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Redo sizing and inclusions graphics as photorealistic scenes rather than bare dimension diagrams or solid-background illustrations. Show the product next to the object it is used with (e.g. the pump beside a fountain), and keep the dimensions and included items identical.",
+      "mechanism": "A real scene with a familiar object in frame lets the buyer judge scale and contents instantly, and locking the data preserves accuracy.",
+      "evidence": "A batch instruction was issued across ten campaigns, and the result was compared against one seller's current weak sizing graphic. Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is already covered by existing claims: lock the subject while changing the environment, and use a hand or familiar object as a scale reference."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This duplicates the existing ai-product-imagery claim 'change the environment or style around a subject while explicitly locking the subject'. The scale-reference lever is already recorded in two existing skills.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 4,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 13,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Produce two versions of the instructional/how-to slot at opposite information densities and test them. One is a step-by-step frame with one image of a person performing each numbered step. The other is a minimal ease frame with just a headline ('ready in 20 minutes') and one or two icons ('all tools included') that does not list the steps.",
+      "mechanism": "Some shoppers need to see the process to believe it is easy. Others are reassured faster by a single ease claim, and a dense graphic can itself signal effort. Having both lets you pick, or test, by what the slot must do: show the process clearly or remove the perceived effort barrier outright.",
+      "evidence": "Batch instruction across ten campaigns, with demo outputs. Assertion only.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "For RSC the 'how-to' is application (deodorant, paste, balm), not assembly, so the payoff is smaller. The numbered-steps graphic and the general 'make the effort feel smaller' principle already exist. What is new is the explicit low-density alternative frame for the same slot. A minimal 'one swipe, done' frame directly serves the ease vector, and the operator can make it today. Any test reads through the existing Amazon Experiments claim. Durable principle."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-product-image-stack",
+        "action": "edit",
+        "description": "Extend the instructional-slot guidance with a minimal low-density ease frame (headline plus one or two icons, e.g. 'one swipe, done') as an alternative to the numbered-steps frame, chosen by what the slot must do."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 5,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 14,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "When you have no edit idea for an image, ask the model for edit suggestions grouped into three buckets (layout and composition, scene and setting, product presentation). Pick the one you like, then build further on it.",
+      "mechanism": "A structured critique surfaces fixes you would not think of. The chosen suggestion seeds a chain of related ideas, as when 'add spark screen' became a single-feature safety graphic.",
+      "evidence": "Demo of the tool's 'AI expert suggestions'. The creator says his own edits in office hours are 'almost always one of the AI suggestions'.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This is a cheap way for a solo operator to break an idea block on a gallery image. Any LLM can reproduce it: upload the image and ask for suggestions in the three buckets. It is not an existing claim: the critique pass in ai-broll-generation is for scripts, and the near-miss correction claim assumes the defect is already known. Merit is modest. Platform-mechanics wrapper, durable practice."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-ai-product-imagery",
+        "action": "edit",
+        "description": "Add a structured three-bucket suggestion pass (layout/composition, scene/setting, product presentation) for when there is no edit idea, then chain edits from the chosen suggestion."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 6,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Turn a lifestyle image into a single-feature graphic by adding a headline naming the feature and staging the scene to show the risk the feature protects against (dry leaves around an open fire to sell the spark screen).",
+      "mechanism": "The scene makes the stakes visible, so the feature's value is understood without explanation.",
+      "evidence": "Live edit with two revision rounds. Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is already covered by the existing claims on staging the qualifying condition and encoding a claim in the visual."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This duplicates the existing product-image-stack claim to stage a scene that visually depicts the qualifying condition, and the claims about encoding a claim in the visual.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 7,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Keep an image's purpose fixed (e.g. 'steel construction') and regenerate it in several alternative visual treatments, such as in-use, a macro close-up of the material, and benefit framing. Then compare them against the original.",
+      "mechanism": "The same message can land better through a different visualisation. Varying the treatment while holding the purpose fixed tests the visual, not the claim.",
+      "evidence": "Demo of the 'different look' feature generating three treatments. Results not shown in the excerpt.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This is useful for ingredient and formula frames, e.g. a macro texture close-up versus in-use versus a benefit callout for the same claim. It is distinct from the six same-thread edit moves, which vary light, position, camera and location rather than treatment type. Runnable today by one person. Durable principle with a platform-mechanics wrapper."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-ai-product-imagery",
+        "action": "edit",
+        "description": "Add purpose-locked treatment variation: regenerate one claim frame as in-use, macro material close-up and benefit framing, then compare against the original."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 8,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "The magic happens in revisions: never ship the first output, run several rounds of edits.",
+      "mechanism": "Iteration refines a solid draft into a strong one.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is motivational framing; the concrete iteration practices already exist in the skill."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This is motivational framing with no new mechanism. The concrete iteration practices are already recorded in ai-product-imagery: the six edit moves, one-defect-per-prompt correction, and abandoning a chat after two failed corrections.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 9,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Add a lifestyle in-use image (the product in its real setting, such as people around the fire pit or someone in the hammock) to every listing's gallery.",
+      "mechanism": "Showing the product in its use context helps the buyer picture owning it, and it differs from competitors' white-background sets.",
+      "evidence": "Assertion only; demo outputs.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is already covered by the existing lifestyle-frame claims."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This is already covered by marketing-product-image-stack ('Cover each primary use context with its own lifestyle frame…') and the lifestyle-avatar claims.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 12,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "When a generated image gets a detail wrong, fix it with a single named correction ('in image one the feeder is tilted vertically, tilt it to be flat') rather than regenerating.",
+      "mechanism": "A scoped correction preserves everything else in the frame.",
+      "evidence": "Demo, assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is already recorded."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This is already recorded in marketing-ai-product-imagery (one-defect-per-prompt correction).",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 15,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Pick a brand with a strong aesthetic, possibly from another category (Solo Stove, Ring), and have the model restyle every image in your listing to match that brand's aesthetic.",
+      "mechanism": "Borrowing a proven premium visual language lifts how polished the listing looks without designing a style yourself.",
+      "evidence": "The creator says it 'works very well' in office hours. In the demo itself he was not impressed with Solo Stove's assets and did not wait for the result.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is covered by existing style-reference claims, conflicts with the fixed brand identity rule, and the demo undercut it."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "The mechanism is already covered by the style-reference and out-of-category recreation claims. Restyling a whole set to another brand's look also cuts against the existing 'fix a brand visual identity once' rule, and the demo's own evidence undercut it.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 16,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "If a high-volume listing's current images are weak, replacing them with even baseline AI-generated assets is an immediate improvement.",
+      "mechanism": "A product already selling about 100 units a month with poor graphics converts better with cleaner ones.",
+      "evidence": "Visual comparison with one seller's current listing; assertion only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is covered by existing claims."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This is covered by the existing main-image priority and AI-generated hero/lifestyle claims.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 17,
+          "label": "part 2 of 2"
+        }
+      ]
+    }
+  ]
+}

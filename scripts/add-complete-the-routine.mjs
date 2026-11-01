@@ -62,10 +62,11 @@ const PLAN = [
   {
     template: 'templates/product.landing-page-liquid-soap.json',
     pdp: 'organic-foaming-hand-soap',
-    product: 'coconut-hand-soap-4-pack',
+    // 4-pack retired 2026-10-08 for a buy-4-get-1-free 5-pack.
+    product: 'coconut-hand-soap-5-pack',
     heading: 'Stock up and save',
-    blurb: 'Four of the same foaming pump, at a lower price each.',
-    cta_label: 'View the 4-pack',
+    blurb: 'Five of the same foaming pump, with one of them free.',
+    cta_label: 'View the 5-pack',
   },
   {
     template: 'templates/product.landing-page-deodorant.json',

@@ -1,0 +1,188 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:06:42.539Z",
+    "last_crawled": "2026-10-14T23:03:58Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-cinnamon-toothpaste-benefits-brands-what-to-know",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2496,
+  "generated_at": "2026-03-11T04:41:31.295Z",
+  "brief_path": "/Users/seanfillmore/Code/Claude/data/briefs/cinnamon-toothpaste.json",
+  "tokens_used": {
+    "input": 8839,
+    "output": 6017
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563291750570,
+  "shopify_handle": "best-cinnamon-toothpaste-benefits-brands-what-to-know",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-cinnamon-toothpaste-benefits-brands-what-to-know",
+  "shopify_status": "published",
+  "uploaded_at": "2026-08-10T15:09:24.208Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/cinnamon-toothpaste.webp?v=1773274964",
+  "published_at": "2026-03-12T18:49:53.777Z",
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:13.055Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ],
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 40, 1091 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T04:03:32.201Z",
+  "performance_review": {},
+  "blocked_resolved_at": "2026-09-14T15:32:24.517Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-08-04T13:30:06.144Z",
+      "age_days": 144,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 300,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:32.483Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-04T13:30:06.257Z",
+      "age_days": 144,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 600,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 600 (0% of target). Under 25% threshold — refresh candidate.",
+      "superseded_at": "2026-09-21T15:42:32.483Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-08-04T13:30:06.382Z",
+      "age_days": 144,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 900,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 900 (0% of target). Under 50% threshold — consider merging, refreshing, or removing. [softened to REFRESH: \"toothpaste\" is a page-1 cluster (weight +2) — worth reinforcing, not removing.]",
+      "superseded_at": "2026-09-21T15:42:32.483Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:42:32.591Z",
+      "age_days": 192,
+      "impressions": 7951,
+      "clicks": 10,
+      "ctr": 0.0012577034335303735,
+      "position": 9.686454534020879,
+      "projection": 300,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 7951 impressions, 10 clicks over first 30 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:08.171Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:42:32.695Z",
+      "age_days": 192,
+      "impressions": 11770,
+      "clicks": 16,
+      "ctr": 0.0013593882752761257,
+      "position": 9.227442650807136,
+      "projection": 600,
+      "verdict": "REFRESH",
+      "reason": "16 clicks vs. projected 600 (3% of target). Under 25% threshold — refresh candidate.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:08.171Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:42:32.794Z",
+      "age_days": 192,
+      "impressions": 11787,
+      "clicks": 16,
+      "ctr": 0.001357427674556715,
+      "position": 9.226520743191651,
+      "projection": 900,
+      "verdict": "REFRESH",
+      "reason": "16 clicks vs. projected 900 (2% of target). Under 50% threshold — consider merging, refreshing, or removing. [softened to REFRESH: \"toothpaste\" is a page-1 cluster (weight +2) — worth reinforcing, not removing.]",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:08.171Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:59:08.274Z",
+      "age_days": 192,
+      "impressions": 7951,
+      "clicks": 10,
+      "ctr": 0.0012577034335303735,
+      "position": 9.686454534020879,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 7951 impressions, 10 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-23T13:30:05.392Z",
+      "superseded_by": "2026-09-22T15:06:15.536Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:59:08.380Z",
+      "age_days": 192,
+      "impressions": 11770,
+      "clicks": 16,
+      "ctr": 0.0013593882752761257,
+      "position": 9.227442650807136,
+      "projection": 51.8,
+      "verdict": "REFRESH",
+      "reason": "16 clicks vs 51.8 expected from 11770 impressions at position 9.2 (site blog CTR in the 7-10 band: 0.44%) — 31% of what peers earn from the same searches.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-23T13:30:05.392Z",
+      "superseded_by": "2026-09-22T15:06:15.536Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:59:08.506Z",
+      "age_days": 192,
+      "impressions": 11787,
+      "clicks": 16,
+      "ctr": 0.001357427674556715,
+      "position": 9.226520743191651,
+      "projection": 54.5,
+      "verdict": "REFRESH",
+      "reason": "16 clicks vs 54.5 expected from 11787 impressions at position 9.2 (site blog CTR in the 7-10 band: 0.46%) — 29% of what peers earn from the same searches.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-09-23T13:30:05.392Z",
+      "superseded_by": "2026-09-22T15:06:15.536Z"
+    }
+  ],
+  "last_refreshed_at": "2026-09-22T15:06:15.536Z",
+  "refreshed_at": "2026-10-17T15:07:57.028Z",
+  "last_material_edit": {
+    "at": "2026-10-17T15:07:57.031Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:48:22.836Z",
+    "reasons": [
+      "1 source claim(s) to review"
+    ]
+  }
+}

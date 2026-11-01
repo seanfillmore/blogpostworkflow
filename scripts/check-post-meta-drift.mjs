@@ -262,15 +262,31 @@ async function main(argv) {
   const status = leaks.length ? 'error' : verdict.status;
   const needsHuman = verdict.needsHuman || leaks.length > 0;
 
+  // LEAD WITH THE LEAK, NOT THE EXIT CODE. These are two independent arms and
+  // the reconcile arm says "exit 0 · In sync" for exactly the condition the leak
+  // arm is complaining about — so the old subject read
+  //   "exit 0 · 24 post(s) LEAKING server fields (needs a human)"
+  // above a body opening "In sync with origin/main", and a reader who trusts the
+  // first half never reaches the finding. The exit code is an implementation
+  // detail of the other arm; when there is a leak, the leak IS the headline.
   await notify({
-    subject: `Post-meta drift gate — exit ${code}`
-      + (leaks.length ? ` · ${leaks.length} post(s) LEAKING server fields` : '')
-      + (needsHuman ? ' (needs a human)' : ''),
+    subject: leaks.length
+      ? `Post-meta drift gate — ${leaks.length} post(s) LEAKING server fields into tracked meta.json (needs a human)`
+      : `Post-meta drift gate — exit ${code}${needsHuman ? ' (needs a human)' : ''}`,
     status,
     category: 'pipeline',
     body: [
-      verdict.headline,
-      '',
+      ...(leaks.length
+        ? [
+            `SERVER-OWNED FIELDS ARE IN THE GIT-TRACKED meta.json ON ${leaks.length} POST(S).`,
+            'Some writer bypassed writePostMeta/replacePostMeta. This is the deploy',
+            'collision the meta/state split was built to end — fix the writer, then run',
+            '  node scripts/split-post-meta.mjs --apply',
+            '',
+            `Separately, the git-comparison arm reports: ${verdict.headline}`,
+            '',
+          ]
+        : [verdict.headline, '']),
       freshness,
       '',
       'Detector only — nothing was written. Reconcile by hand with',

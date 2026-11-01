@@ -719,6 +719,10 @@
 
 .action-title { font-size: 13px; font-weight: 600; color: var(--text); flex: 1; }
 .action-age { font-size: 11px; color: var(--muted); font-weight: 500; }
+.action-group { margin-bottom: 10px; }
+.action-group > summary { cursor: pointer; font-weight: 600; font-size: 13px; padding: 6px 0; }
+.action-group ul { margin: 4px 0 8px 18px; padding: 0; font-size: 13px; }
+.action-group li { margin: 2px 0; }
 .action-reason { font-size: 12px; color: #6b7280; line-height: 1.5; margin-bottom: 10px; }
 .action-buttons { display: flex; gap: 8px; }
 

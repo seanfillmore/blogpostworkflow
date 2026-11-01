@@ -76,6 +76,39 @@ const CADENCE_LINE = {
   11151699: '<p>✓ Four bars, delivered every four months</p>',
 };
 
+/**
+ * The same lines as PLAIN TEXT, one per row, for pasting into Recurpay's Quill
+ * editor. Printing HTML here is what sent an operator to paste `<p>✓ …</p>`
+ * into a WYSIWYG on 2026-09-06.
+ */
+export function plainLines(sellingPlan, cadenceText) {
+  const save = saveLine(sellingPlan).replace(/<[^>]+>/g, '').replace(/^✓\s*/, '');
+  return [
+    save || null,
+    'Free shipping on any subscription order',
+    cadenceText,
+    'Pause, skip, or cancel anytime',
+    '30-day money-back guarantee',
+  ].filter(Boolean);
+}
+
+/**
+ * Does the description tell the truth about the CADENCE?
+ *
+ * Found live 2026-09-06: positions 2, 3 and 4 of plan 11152263 all read
+ * "You will receive an order every 1 Month" while delivering every 2, 3 and 4 —
+ * an operator pasting two new bullets carried position 1's cadence line with
+ * them. The DELIVERY POLICY was untouched, so the customer is billed correctly
+ * and simply told otherwise, at the moment they choose. Same claim-vs-reality
+ * shape as every other gate here, on the one surface none of them screen.
+ */
+export function cadenceMismatch(sellingPlan) {
+  const says = (sellingPlan?.description ?? '').match(/every\s+(\d+)\s*month/i)?.[1];
+  const delivers = sellingPlan?.delivery_policy?.frequency;
+  if (says == null || delivers == null) return null;
+  return String(says) === String(delivers) ? null : { says: Number(says), delivers: Number(delivers) };
+}
+
 /** The house ✓ block for one live selling plan, with ITS discount. */
 export function describe(sellingPlan, cadenceLine) {
   return saveLine(sellingPlan) + SHIPPING_LINE + cadenceLine + TAIL;
@@ -119,12 +152,31 @@ if (isDirectRun(import.meta.url)) {
         label: `plan ${p.id} pos${sp.position} — ${every} ("${sp.name}")`,
         // Paste-ready, and built from THIS plan's own discount — so a 5% plan can
         // never be handed 15% copy.
-        html: describe(sp, `<p>✓ Delivered every ${every}${Number(sp.billing_policy?.frequency) === 1 ? '' : 's'}</p>`),
+        // PLAIN TEXT, not HTML. Recurpay's description field is a QUILL rich-text
+      // editor — its stored value is `<ol><li><span class="ql-ui">…`. Pasting
+      // the HTML this script used to print would ship literal <p> tags to the
+      // storefront. Type these as list items and let the editor mark them up.
+      paste: plainLines(sp, `Delivered every ${every}${Number(sp.billing_policy?.frequency) === 1 ? '' : 's'}`),
+      saysEvery: (sp.description ?? '').match(/every\s+(\d+)\s*month/i)?.[1] ?? null,
+      deliversEvery: String(sp.delivery_policy?.frequency ?? ''),
       });
     }
   }
 
-  log(`${Object.keys(COPY).length} single-selling-plan plans are API-writable.`);
+  const cadenceWrong = [];
+for (const p of all) {
+  for (const sp of p.selling_plans ?? []) {
+    const m = cadenceMismatch(sp);
+    if (m) cadenceWrong.push(`plan ${p.id} pos${sp.position} ("${sp.name}") — DELIVERS every ${m.delivers} month, but the description SAYS every ${m.says}`);
+  }
+}
+if (cadenceWrong.length) {
+  log(`\n⚠ ${cadenceWrong.length} description(s) state the WRONG CADENCE (the delivery policy is correct; the copy is not):`);
+  for (const c of cadenceWrong) log(`  - ${c}`);
+  log(`  Fix in the Recurpay admin — this API cannot reach a multi-plan position.\n`);
+}
+
+log(`${Object.keys(COPY).length} single-selling-plan plans are API-writable.`);
   if (!APPLY) log('\nDRY RUN — re-run with --apply to write.\n');
 
   for (const [id, cadenceLine] of Object.entries(COPY)) {
@@ -182,7 +234,7 @@ if (isDirectRun(import.meta.url)) {
     log(`  position 1 and would overwrite a live cadence.`);
     log(`\n  Paste this into each position's Description in the Recurpay admin`);
     log(`  (each carries ITS OWN discount, read from the live plan):\n`);
-    for (const u of unreachable) log(`  ${u.label}\n    ${u.html}\n`);
+    for (const u of unreachable) log(`  ${u.label}\n${u.paste.map((l) => `      • ${l}`).join('\n')}\n`);
   }
 
 }

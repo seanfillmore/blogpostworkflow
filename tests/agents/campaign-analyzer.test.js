@@ -5,6 +5,7 @@ import {
   parseAnalyzerResponse,
   isClarification,
 } from '../../agents/campaign-analyzer/index.js';
+import { buildCvrRanges } from '../../agents/campaign-analyzer/lib/measured-cvr.js';
 
 // campaignFilePath
 assert.equal(
@@ -20,6 +21,13 @@ const context = {
   ga4Snaps: [],
   shopifySnaps: [],
   pastOutcomes: [],
+  // Since 2026-09-16 the prompt refuses to build without a MEASURED CVR (it used to
+  // fall back to hardcoded industry benchmarks). Measured behaviour is covered in
+  // campaign-analyzer-measured-cvr.test.js; this only needs a valid measurement.
+  measuredCvr: {
+    window: { start: '2026-08-20', end: '2026-09-15' },
+    ranges: buildCvrRanges({ segments: [{ segment: 'product', sessions: 441, orders: 4 }], commercial: { sessions: 567, orders: 4 }, totals: { sessions: 2664, orders: 14 } }),
+  },
 };
 const prompt = buildAnalyzerPrompt(context);
 assert.ok(prompt.includes('2026-03-19-lotion-search'), 'must list active slugs');

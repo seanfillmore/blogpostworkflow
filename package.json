@@ -113,7 +113,8 @@
     "ctr-program": "node agents/ctr-program/index.js",
     "ctr-audit": "node agents/ctr-program/index.js --audit --no-write",
     "hero-product": "node scripts/hero-product-repurchase.mjs",
-    "claim-audit": "node scripts/claim-vocabulary-audit.mjs"
+    "claim-audit": "node scripts/claim-vocabulary-audit.mjs",
+    "ad-batch": "node agents/ad-batch/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",
@@ -122,9 +123,13 @@
     "cheerio": "^1.2.0",
     "dotenv": "^17.3.1",
     "fast-xml-parser": "^4.5.1",
+    "imapflow": "^2.2.1",
+    "mailparser": "^3.9.33",
     "multer": "^2.1.1",
+    "nodemailer": "^10.0.13",
     "openai": "^4.104.0",
     "puppeteer": "^24.40.0",
+    "qrcode": "^1.5.4",
     "sharp": "^0.34.5",
     "stream-chain": "^3.6.1",
     "stream-json": "^2.1.0",

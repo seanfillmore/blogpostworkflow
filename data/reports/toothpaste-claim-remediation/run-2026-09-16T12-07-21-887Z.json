@@ -1,0 +1,38 @@
+{
+  "generated_at": "2026-09-16T12:07:23.325Z",
+  "applied": true,
+  "slug": "best-fluoride-free-toothpaste-2025",
+  "results": [
+    {
+      "id": "fluoride-free-faq-cavities",
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "fluoride-free-tip-remineralizing-agents",
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "fluoride-free-faq-cavities",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "fluoride-free-tip-remineralizing-agents",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

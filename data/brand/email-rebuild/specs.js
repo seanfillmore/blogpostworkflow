@@ -845,7 +845,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       {
         type: 'textlink',
         text: '2. Download the Coconut Skincare Field Guide →',
-        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/Coconut-Skincare-Field-Guide-v3.pdf?v=1786591634',
+        href: 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/Coconut-Skincare-Field-Guide-v4.pdf?v=1791330093',
       },
       {
         type: 'p',

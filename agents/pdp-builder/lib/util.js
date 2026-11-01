@@ -1,10 +1,11 @@
 // agents/pdp-builder/lib/util.js
 import { execSync } from 'node:child_process';
+import { LLM_MODELS } from '../../../config/llm-models.js';
 
 // PDP builder uses opus deliberately for premium copy quality. Every other agent
 // in the repo uses claude-sonnet-4-6; do not "harmonize" this without checking
 // pilot output quality (see docs/superpowers/specs/2026-05-02-pdp-builder-design.md).
-export const CLAUDE_MODEL = 'claude-opus-4-7';
+export const CLAUDE_MODEL = LLM_MODELS.flagship;
 
 // How many times to call Claude when parsing fails. Total attempts = 1 + retries
 // on parse failure only. Validation failures are real signals; only JSON parse

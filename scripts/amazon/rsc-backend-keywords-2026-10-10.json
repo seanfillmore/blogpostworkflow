@@ -1,0 +1,61 @@
+{
+  "captured_at": "2026-10-10",
+  "note": "Live generic_keyword values read via SP-API before the 2026-10-10 backend rewrite, and the approved AFTER values (operator: no whitening claims).",
+  "listings": {
+    "RSC-DE-CL-02": {
+      "asin": "B0B687583D",
+      "before": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating",
+      "after": "mens womens unisex travel mini armpit sensitive vegan sport teen desodorante sin aluminio mujer hombre"
+    },
+    "RSC-DE-WF-02": {
+      "asin": "B0B6873YQ7",
+      "before": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating",
+      "after": "mens womens unisex travel mini armpit sensitive vegan sport teen desodorante sin aluminio mujer hombre"
+    },
+    "RSC-DE-MC-02": {
+      "asin": "B0B686R9FZ",
+      "before": "deodorant coconut roll on ladies female oil essential scented male organic women men kids natural sensitive skin all aluminum free aluminium travel size boy girl vegan long lasting roller underarm healthy bulk best underarmed dry safe teen irritating",
+      "after": "mens womens unisex travel mini armpit sensitive vegan sport teen desodorante sin aluminio mujer hombre"
+    },
+    "RSC-TP-MI-08": {
+      "asin": "B0B6DYZF5H",
+      "before": "natural organic fluoride free sls free glycerin free baking soda myrrh peppermint spearmint mint vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily",
+      "after": "children toddler childrens vegan non toxic flavored spicy herbal plant based pasta dental de dientes sin fluor coco crema"
+    },
+    "RSC-TP-NA-08": {
+      "asin": "B0B6DHNCW3",
+      "before": "natural organic fluoride free sls free glycerin free baking soda myrrh peppermint spearmint mint cinnamon clove herbal vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily",
+      "after": "children toddler childrens vegan non toxic flavored spicy herbal plant based pasta dental de dientes sin fluor coco crema"
+    },
+    "RSC-TP-CI-08": {
+      "asin": "B0B6DQTL11",
+      "before": "natural organic fluoride free sls free glycerin free baking soda myrrh cinnamon clove spice herbal vegan non toxic kids adults gentle handmade gel no foam plant based coconut oil travel daily",
+      "after": "children toddler childrens vegan non toxic flavored spicy herbal plant based pasta dental de dientes sin fluor coco crema"
+    },
+    "RSC-LO-PU-08-stickerless": {
+      "asin": "B08GMCDMQ7",
+      "before": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten",
+      "after": "women womens men baby extremely very rough cracked hydrating moisturizing cream moisturizers lightweight vegan crema hidratante corporal locion para el cuerpo coco"
+    },
+    "RSC-LO-CB-08-FBA-stickerless": {
+      "asin": "B09QJFBPJ1",
+      "before": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten",
+      "after": "women womens men baby extremely very rough cracked hydrating moisturizing cream moisturizers vegan crema hidratante corporal locion para el cuerpo coco"
+    },
+    "RSC-LO-RP-08-stickerless": {
+      "asin": "B08GMB9F6F",
+      "before": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten",
+      "after": "women womens men baby extremely very rough cracked hydrating moisturizing cream moisturizers vegan crema hidratante corporal locion para el cuerpo coco"
+    },
+    "RSC-LO-LR-08-stickerless": {
+      "asin": "B08GM9CRMC",
+      "before": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten",
+      "after": "women womens men baby extremely very rough cracked hydrating moisturizing cream moisturizers vegan crema hidratante corporal locion para el cuerpo coco"
+    },
+    "RSC-LO-CL-08-FBA-stickerless": {
+      "asin": "B09QJF93J3",
+      "before": "organic paraben free lotion body sensitive skin scar hydrating dry no natural all moisturizing daily moisturizer oil coconut women mosturizer hand face kid for essential facial firming hydration jojoba cream gluten",
+      "after": "women womens men baby extremely very rough cracked hydrating moisturizing cream moisturizers vegan crema hidratante corporal locion para el cuerpo coco"
+    }
+  }
+}

@@ -12,7 +12,7 @@ import {
   normalizeUrl, isBranded, hasCleanAngle, aggregateQueries, positionBucket, ctrBaseline,
   logProbZeroClicks, isPhantom, detectPhantoms, findCandidatePage, joinAgainstIndex,
   rankGaps, binomialTailAtMost, estimateCeiling,
-  DDG_NEW_CUSTOMER_CVR, GOOGLE_ORGANIC_CVR,
+  DDG_NEW_CUSTOMER_CVR, GOOGLE_ORGANIC_CVR, DEFAULT_AOV,
 } from '../../lib/bing-keyword-gap.js';
 
 // ── fixtures ──────────────────────────────────────────────────────────────────
@@ -340,9 +340,9 @@ test('estimateCeiling is built from the DAILY feed, never the sampled query rows
   // Dollars must come off the UNROUNDED click figure — rounding at each step and then
   // multiplying is how a ceiling drifts. 21.538... not the displayed 21.5.
   const exact = (167 / 177) * 30.437 * 0.75;
-  assert.equal(c.monthlyRevenue, Math.round(exact * GOOGLE_ORGANIC_CVR * 50.46 * 100) / 100);
+  assert.equal(c.monthlyRevenue, Math.round(exact * GOOGLE_ORGANIC_CVR * DEFAULT_AOV * 100) / 100);
   // Annual is 12x the exact monthly, not 12x the DISPLAYED monthly — off by a cent here.
-  assert.equal(c.annualRevenue, Math.round(exact * GOOGLE_ORGANIC_CVR * 50.46 * 12 * 100) / 100);
+  assert.equal(c.annualRevenue, Math.round(exact * GOOGLE_ORGANIC_CVR * DEFAULT_AOV * 12 * 100) / 100);
   assert.notEqual(c.annualRevenue, Math.round(c.monthlyRevenue * 12 * 100) / 100);
   // Sanity: the sampled query impressions (1,402) must play no part in the dollars.
   assert.equal(c.totalClicks, SNAPSHOT.summary.clicks);

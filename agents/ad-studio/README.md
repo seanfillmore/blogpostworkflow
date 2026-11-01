@@ -30,7 +30,7 @@ node agents/ad-studio/index.js --product <handle> --formats <key1,key2,...> \
 |---|---|---|
 | `--product` | yes | Product handle — must exist in both `data/product-images/manifest.json` and `data/brand/product-catalog.json`, and its manifest entry must carry a `unitCount` (see below). |
 | `--variant` | no | Scent/variant name (e.g. `coconut-breeze`). Selects `data/product-images/<imageDir>/<variant>/` for reference photos and is folded into the product's label strings (see below). Omit for a single-variant product. |
-| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`, `fact-hook`, `spec-panel`, plus `giveaway-entry` while a giveaway is running — see below). **Required.** It used to be optional, and omitting it meant the whole rotation — eleven formats today, 66 renders ≈ $8.58 at the current defaults and 297 (≈$38.61) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
+| `--formats` | **yes** | Comma-separated format keys from `agents/ad-studio/formats.js` (`us-vs-them`, `ingredient-callout`, `manifesto`, `problem-aware`, `top-x-review`, `offer-focused`, `testimonial`, `stat-stack`, `state-contrast`, `fact-hook`, `spec-panel`, `in-use-handwash`, `shower-shelf`, `generic-villain`, plus `giveaway-entry` while a giveaway is running — see below). **Required.** It used to be optional, and omitting it meant the whole rotation — eleven formats today, 66 renders ≈ $8.58 at the current defaults and 297 (≈$38.61) at 3 variations across all 6 targets, from a flag nobody typed. An unknown key is rejected with the valid list. |
 | `--targets` | no | Which platform targets to render. `all`, `meta`, `demand-gen`, or `<platform>=<ratio>` (e.g. `meta=9:16`), comma-separated. Default **`meta`** — all three Meta ratios, see below. |
 | `--variations` | no | Variations per concept — each is one render per selected target. Default `1`, maximum `10`. |
 | `--max-renders` | no | Hard ceiling on render attempts for the whole run, retries included. Default `120` (≈$15.60). On reaching it the run stops rendering, still writes `run.json`, and lists every skipped artifact under `budget`. |
@@ -87,6 +87,7 @@ quietly produce a different structure:
 | `--variations` fixed at 1 | Each format contributes exactly one plate. |
 | Meta only | Demand Gen has no flexible-ad equivalent. |
 | one `--objective` for the whole ad | Until 2026-08-25 the objective reached the ad-level writer and not the plate writer, so a mid-giveaway `--objective sale` run shipped ONE manifest whose primary texts sold a product and whose three plates asked for a giveaway entry. Both gates passed every word — an incoherent ad is not an unsourced one. |
+| 3 plates, visually distinct | Meta treats near-identical creatives as ONE delivery entity, so plates sharing a fingerprint share a learning pool and a fatigue curve however different their copy is — three plates funding a pool that learns about two. A plate's look comes from its format's fixed `plateBrief`, so this is checked before any render: two formats are a duplicate only when they share a SETTING and a GROUND and their compositions score at or above 0.80. `--flexible` refuses; an ordinary `--formats` run only reports, into stdout and `run.json`. See `plate-distinctness.js` for the measurement. |
 | 2 primary texts, 2 headlines, all distinct | Two *phrasings* of one angle give the shared pool nothing to learn — that is the whole reason for writing two. Case-insensitive duplicates are rejected. |
 | ≤40 char headlines, ≤125 char primary texts | Meta truncates rather than wrapping, and a truncated headline is a different headline. |
 
@@ -185,7 +186,7 @@ the failure the structure exists to avoid.
    | `fact-hook` | one arresting figure dominating the upper half, caption beneath, product small in the lower right like a footnote | `productProminent: false` — the number is the hero and the label is deliberately unreadable, so the verify gate must not demand it back. `headline` carries the **figure itself**. The brief requires the figure be quoted from a named source, never invented, and repeats `problem-aware`'s ban on depicting a skin condition. Studio, not scene: a giant numeral needs a flat field, and a counter would put texture exactly where the largest type lands. |
    | `spec-panel` | restrained headline, a vertical list of plain factual rows down one half, product hero opposite with its label legible | `productProminent: true` — a transparency pitch whose own label cannot be read defeats itself. `zoneCapacity: { specRows: 5 }`. Every row must be a plain verifiable fact, never a benefit promise or a claim of effect; the most-aware reader has already decided and wants facts to act on. |
 
-2. **Copy** (`copy.js`, model: `claude-opus-4-8`) — exact per-zone strings plus a
+2. **Copy** (`copy.js`, model: `LLM_MODELS.flagship`, `claude-opus-5-5`) — exact per-zone strings plus a
    `claims` array. Every factual claim must name a `sourceId` (`pdp`, `catalog`,
    `brandKit`, `reviews`) and quote its evidence verbatim.
 3. **Health-claim gate** (`health-claims.js`, `assertNoHealthClaims`) — runs on every zone
@@ -227,7 +228,7 @@ the failure the structure exists to avoid.
    of those. A missing or invalid `unitCount` **aborts the run** rather than defaulting to
    1 — the same posture as empty `labelStrings`, and for the same reason: a silent default
    is how a wrong assumption ships without anyone deciding it.
-6. **Verify** (`verify.js`, model: `claude-sonnet-5`) — five checks, all required:
+6. **Verify** (`verify.js`, model: `LLM_MODELS.standard`, `claude-sonnet-5-5`) — five checks, all required:
 
    - **Per-string checks.** For each requested string, a *pointed* question — does this
      exact character sequence appear, yes or no, and what does that region actually
@@ -373,7 +374,7 @@ the failure the structure exists to avoid.
    into clean text and passed a corrupted ad. This is one vision call guarding a ~$0.13
    render that nobody else reads before it goes live; do not drop it back to save
    pennies on the cheapest call in the pipeline.
-6. **Layout critique** (`critique.js`, model: `claude-sonnet-5`) — a **second, separate**
+6. **Layout critique** (`critique.js`, model: `LLM_MODELS.standard`, `claude-sonnet-5-5`) — a **second, separate**
    vision call, run only on a frame that already passed stage 5, and only on **finished
    frames** (a plate carries no typeset copy, so neither check has an answerable question
    and the call is skipped rather than paid for). Split in two on purpose:

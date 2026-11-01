@@ -1,0 +1,62 @@
+{% if deals.size > 0 %}
+  {{ 'component-seasonal-deals.css' | asset_url | stylesheet_tag }}
+  <header-popover data-target="deal-drawer">
+    <button class="header__icon" popovertarget="deal-drawer">
+      {% render 'icon-guarantee', icon: 'price_tag' %}
+    </button>
+    <div id="deal-drawer" popover>
+      <div class="seasonal-deal__header">
+        <button class="popover-close-button header__icon seasonal-deal__close" popovertarget="deal-drawer">
+          <svg class="icon icon-close" aria-hidden="true" focusable="false">
+            <use href="#icon-close"></use>
+          </svg>
+        </button>
+        <div class="title h4">{{ heading }}</div>
+        <span class="seasonal-deal__border"></span>
+      </div>
+      <div class="seasonal-deal__content">
+        {%- capture sizes -%}(min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 130 | divided_by: 4 }}px, (min-width: 990px) calc((100vw - 10rem) / 4), (min-width: 750px) calc((100vw - 10rem) / 3), calc(100vw - 3rem){%- endcapture -%}
+        {% for deal in deals %}
+          {% assign deal_image = deal.settings.image %}
+          <div class="seasonal-deal__item banner banner--stacked {{ deal.settings.layout }} {{ deal.settings.text_box_position }}" {{ deal.shopify_attributes }}>
+            {% unless deal.settings.layout contains 'overlay' %}
+              <div class="text-group on-side {{ deal.settings.text_alignment }}" style="background-color:{{ deal.settings.background_color }};">
+                <h3 style="color:{{ deal.settings.heading_color }};">{{ deal.settings.heading }}</h3>
+                <h4 style="color:{{ deal.settings.subheading_color }};">{{ deal.settings.subheading }}</h4>
+                <div style="color:{{ deal.settings.description_color }}">{{ deal.settings.description }}</div>
+                <a href="{{ deal.settings.button_link }}" class="button button--secondary button--small">{{ deal.settings.button_label }}</a>
+              </div>
+            {% endunless %}
+            {% if deal_image %}
+              <div class="image-animate media media--{{ deal.settings.image_ratio }}" style="{% if deal.settings.image_ratio == 'adapt' %}--image-ratio-percent: {{ 1 | divided_by: deal_image.aspect_ratio | times: 100 }}%;{% endif %}{% if deal.settings.layout contains 'opacity' %}--color-overlay:{{ deal.settings.background_color }};--opacity-overlay:{{ deal.settings.colors_overlay_opacity | divided_by: 100.0 }}{% endif %}">
+                {%- assign alt = deal_image.alt | escape | split: '#' | first -%}
+                {{ deal_image | image_url: width: 1500 | image_tag:
+                  loading: 'lazy',
+                  class: 'motion-reduce',
+                  sizes: sizes,
+                  widths: '165, 360, 535, 750, 1100, 1500',
+                  alt: alt,
+                  is: 'lazy-image'
+                }}
+              </div>
+            {% else %}
+              <div class="media media--landscape">
+                {{ 'hero-apparel-2' | placeholder_svg_tag }}
+              </div>
+            {% endif %}
+            {% if deal.settings.layout contains 'overlay' %}
+              <div class="banner-text-overlay {{ deal.settings.text_box_position }}">
+                <div class="text-group {{ deal.settings.text_alignment }}">
+                  <h3 style="color:{{ deal.settings.heading_color }};">{{ deal.settings.heading }}</h3>
+                  <h4 style="color:{{ deal.settings.subheading_color }};">{{ deal.settings.subheading }}</h4>
+                  <div style="color:{{ deal.settings.description_color }}">{{ deal.settings.description }}</div>
+                  <a href="{{ deal.settings.button_link }}" class="button button--secondary button--small">{{ deal.settings.button_label }}</a>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </header-popover>
+{% endif %}

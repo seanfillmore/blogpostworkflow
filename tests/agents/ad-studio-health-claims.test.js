@@ -263,3 +263,12 @@ test('the live persona roster survives the widened vocabulary intact', async () 
     'the authored replacement angle must survive — it exists because of this very gate',
   );
 });
+
+test('2026-10-10: ads refuse drug properties and skin-structure claims, keep appearance language', () => {
+  assert.equal(hasHealthClaim('Naturally antibacterial coconut soap'), true);
+  assert.equal(hasHealthClaim('an anti-inflammatory balm'), true);
+  assert.equal(hasHealthClaim('erases wrinkles overnight'), true);
+  assert.equal(hasHealthClaim('kills bacteria that cause cavities'), true);
+  assert.equal(hasHealthClaim('reduces the appearance of fine lines'), false);
+  assert.equal(hasHealthClaim('kills odor fast'), false);
+});

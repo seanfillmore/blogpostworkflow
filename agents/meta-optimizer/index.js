@@ -23,6 +23,7 @@
  *   node agents/meta-optimizer/index.js --min-impr 200 # higher impression threshold
  *   node agents/meta-optimizer/index.js --max-ctr 0.03 # stricter CTR threshold
  *   node agents/meta-optimizer/index.js --limit 20                # max pages to process
+ *   node agents/meta-optimizer/index.js --pages h1,h2 --apply     # only these article handles (all gates still apply)
  *   node agents/meta-optimizer/index.js --include-held            # also rewrite $0-cluster queries
  *                                                                 # (held by lib/cluster-hold.js; the
  *                                                                 #  hold is applied BEFORE --limit)
@@ -34,9 +35,14 @@ import Anthropic from '../../lib/anthropic.js';
 import { writeFileSync, readFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getBlogs, getArticles, updateArticle } from '../../lib/shopify.js';
+import { getBlogs, getArticles, updateArticle, getMetafields, upsertMetafield } from '../../lib/shopify.js';
+import {
+  renderedSerp, unsupportedNumbers, TITLE_TAG, DESCRIPTION_TAG, stripEmDashes, isEchoedDescription, parsePagesArg,
+} from '../../lib/serp-copy.js';
 import { getPostMeta, getMetaPath, replacePostMeta } from '../../lib/posts.js';
 import { mayTestMetadata } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines, editGateSummaryFragment } from '../../lib/edit-gate-filter.js';
 import { upsertTrackerEntry, buildTrackerEntry } from './lib/ab-tracker.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
@@ -44,7 +50,11 @@ import { refreshStaleYears } from './lib/refresh-stale-years.js';
 import { loadIndex, lookupByKeyword, clusterMatesFor } from '../../lib/keyword-index/consumer.js';
 import { sortByValidation } from './lib/sort.js';
 import { assessDistinctness } from '../../lib/ctr-copy-distinctness.js';
-import { holdMetaCandidates, excludeHoldout, prioritiseTreatment } from './lib/hold.js';
+import {
+  holdMetaCandidates, excludeHoldout, prioritiseTreatment,
+  readWaveDesignated, designatedMissingFromPool, openTestHandles, excludeOpenTests,
+  excludeEditGated,
+} from './lib/hold.js';
 import {
   rankClusters, renderEfficiencyLines, efficiencyBanner,
 } from '../../lib/cluster-efficiency.js';
@@ -58,6 +68,7 @@ import {
   SEO_COPY_COMPLIANCE_RULE, renderGateSkipLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -100,6 +111,10 @@ const INCLUDE_HELD = args.includes(HOLD_FLAG);
 const minImpressions = parseFloat(getArg('--min-impr') ?? '100');
 const maxCTR = parseFloat(getArg('--max-ctr') ?? '0.05');
 const limitArg = parseInt(getArg('--limit') ?? '25', 10);
+// --pages a,b: restrict the run to these article handles (every gate, the
+// holdout and the open-test guard still apply). For an operator who wants
+// named pages treated now rather than wherever the ranking happens to put them.
+const ONLY_PAGES = getArg('--pages') ? parsePagesArg(getArg('--pages')) : null;
 
 // ── article lookup ────────────────────────────────────────────────────────────
 
@@ -148,7 +163,7 @@ async function rewriteMeta(currentTitle, currentMeta, keyword, position, impress
   const groundingBlock = groundingLines.length ? `\n${groundingLines.join('\n')}\n` : '';
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -186,7 +201,18 @@ No explanation, no markdown fences.`,
 
   const raw = message.content[0].text.trim()
     .replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '');
-  return JSON.parse(raw);
+  const parsed = JSON.parse(raw);
+  // Normalised before any gate sees it, so the gates judge what will be written.
+  return {
+    ...parsed,
+    title: stripEmDashes(parsed.title, { kind: 'title' }),
+    meta_description: stripEmDashes(parsed.meta_description, { kind: 'meta' }),
+  };
+}
+
+/** A markdown table cell: a `|` in copy (e.g. "Updated April 2026 | …") would split the column. */
+function cell(text) {
+  return String(text ?? '').replace(/\|/g, '\\|');
 }
 
 // ── refresh stale years ───────────────────────────────────────────────────────
@@ -244,6 +270,9 @@ async function runRefreshStaleYears({ apply }) {
           const fields = {};
           if (titleResult.changed) fields.title = titleResult.text;
           if (summaryResult.changed) fields.summary_html = summaryResult.text;
+          // edit-gate kind: repair — a deterministic year bump, no model call.
+          // Not gated: holding it would leave "2025" in a live title, which a
+          // gate is not allowed to do (see lib/post-edit-gate.js).
           await updateArticle(blog.id, article.id, fields);
           record.applied = true;
 
@@ -471,11 +500,44 @@ async function main() {
   // built the arm with lib/ctr-opportunity.js, which already ranks by
   // recoverable clicks x what the cluster earns using the same ordinals.
   // Sorting it by cluster a second time is what displaced it out of the cap.
-  const { ordered: waveOrdered, designated } = prioritiseTreatment(notHeldOut, {
+  // Pages with a RUNNING A/B test — never rewritten until meta-ab-checker
+  // concludes them (see excludeOpenTests). Read here because the reach step
+  // below skips them too.
+  let openHandles = new Set();
+  try {
+    const trackerPath = join(ROOT, 'data', 'reports', 'meta-ab', 'meta-ab-tracker.json');
+    if (existsSync(trackerPath)) openHandles = openTestHandles(JSON.parse(readFileSync(trackerPath, 'utf8')));
+  } catch { /* unreadable tracker: nothing withheld, same fail-open as the holdout */ }
+
+  // Reach every designated page. The synthesiser can only draw on the
+  // quick-win pool; a designated page outside it had no candidate at all.
+  // Fetch its own top query so it can be treated.
+  const pool = [...quickWinPages];
+  const unreachable = designatedMissingFromPool(readWaveDesignated(ROOT), pool, { skipHandles: openHandles });
+  for (const d of unreachable) {
+    try {
+      const [top] = await gsc.getPageKeywords(d.url, 1, 90);
+      if (top) {
+        pool.push({ keyword: top.keyword, url: d.url, position: top.position, impressions: top.impressions, clicks: top.clicks, ctr: top.ctr });
+        console.log(`  Wave page outside the quick-win pool, reached by its own top query: "${top.keyword}" → ${d.handle}`);
+      }
+    } catch (err) {
+      console.log(`  ⚠ Could not read top query for wave page ${d.handle}: ${err.message}`);
+    }
+  }
+
+  const { ordered: waveReady, designated } = prioritiseTreatment(notHeldOut, {
     root: ROOT,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
-    pool: quickWinPages,
+    pool,
   });
+  const { kept: waveOrdered, excluded: openExcluded } = excludeOpenTests(waveReady, {
+    openHandles,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  if (openExcluded.length) {
+    console.log(`  Open A/B tests: ${openExcluded.length} candidate(s) withheld until their test concludes (${[...new Set(openExcluded.map((e) => e.handle))].length} page(s))`);
+  }
   if (designated.length) {
     const synth = designated.filter((d) => d.synthesised).length;
     console.log(`  CTR-program wave: ${designated.length} candidate(s) prioritised as designated work`
@@ -486,7 +548,24 @@ async function main() {
     console.log('');
   }
 
-  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(waveOrdered, hold, {
+  // ── Live-article edit gate, BEFORE the cap ────────────────────────────────
+  // One material change per page, then measure 28 days (lib/post-edit-gate.js).
+  // A page frozen or still inside its measurement window is withheld here so it
+  // cannot eat one of the --limit slots; it is asked again next run.
+  const { kept: editGateKept, excluded: editGated } = excludeEditGated(waveOrdered, {
+    mayEdit: mayEditLivePost,
+    pageForKeyword: (kw) => kwToPage.get(kw) || null,
+  });
+  const editGateHeld = editGated.map((e) => ({ target: e.handle, kind: e.kind, reason: e.reason, until: e.until }));
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
+  if (editGateHeld.length) console.log('');
+
+  const pageFiltered = ONLY_PAGES
+    ? editGateKept.filter((c) => ONLY_PAGES.has(String(c.url || kwToPage.get(c.keyword) || '').split('/').pop()))
+    : editGateKept;
+  if (ONLY_PAGES) console.log(`  --pages: ${pageFiltered.length} candidate(s) on ${ONLY_PAGES.size} named page(s)`);
+
+  const { kept: eligibleCandidates, held, efficiency } = holdMetaCandidates(pageFiltered, hold, {
     includeHeld: INCLUDE_HELD,
     pageForKeyword: (kw) => kwToPage.get(kw) || null,
     ranking,
@@ -555,8 +634,18 @@ async function main() {
       console.log(`  [winner] "${keyword}": ${metaLock.slug} is a locked winner — metadata test allowed, body untouched`);
     }
 
-    const currentTitle = article.title || '';
-    const currentMeta = article.summary_html?.replace(/<[^>]+>/g, '').trim() || '';
+    // What the SERP actually renders — the title_tag / description_tag
+    // metafields, falling back to article.title and the body. Rewriting
+    // article.title / summary_html never reached it (lib/serp-copy.js).
+    let serp;
+    try {
+      serp = renderedSerp({ article, metafields: await getMetafields('articles', article.id) });
+    } catch (e) {
+      console.log(`  ⚠ "${keyword}": could not read SEO metafields (${e.message}) — skipped, page unchanged`);
+      continue;
+    }
+    const currentTitle = serp.title;
+    const currentMeta = serp.description;
 
     const indexEntry = lookupByKeyword(idx, keyword);
     const ground = buildPromptGrounding(indexEntry, clusterMatesFor(idx, indexEntry, { limit: 6 }));
@@ -629,9 +718,9 @@ async function main() {
       if (!distinct.ok) {
         const constraint = `The previous attempt was rejected as a cosmetic rewrite: ${distinct.reasons.join('; ')}. `
           + `Produce a materially DIFFERENT title, not a reordering or a synonym swap. It must introduce at least one `
-          + `concrete new element the current title lacks — a count ("7 Picks"), a year, a bracketed qualifier, a named `
-          + `audience ("for Sensitive Skin"), a timeframe, or an explicit exclusion ("Without SLS"). Keep the target `
-          + `keyword intact and keep it under 60 characters.`;
+          + `concrete new element the current title lacks — a count ONLY if the article really contains that many items, `
+          + `a year, a bracketed qualifier, a named audience ("for Sensitive Skin"), a timeframe, or an explicit exclusion `
+          + `("Without SLS"). Never invent a number. Keep the target keyword intact and keep it under 60 characters.`;
         const retry = await gateProposedCopy((c) =>
           rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground,
             [constraint, c].filter(Boolean).join(' ')));
@@ -658,6 +747,42 @@ async function main() {
         gateSkipped.push({
           keyword, pageUrl, violations: [], attempts: distinctAttempts,
           distinctness: distinct.reasons,
+          rejectedTitle: proposed.title || '', rejectedMeta: proposed.meta_description || '',
+        });
+        if (gateSkipped.length >= limitArg) {
+          console.log(`  Gate skips: ${gateSkipped.length} — at the skip budget, stopping.`);
+          break;
+        }
+        continue;
+      }
+
+      // ── number grounding ─────────────────────────────────────────────────
+      // A count in a title is a promise. On 2026-09-21 four live rewrites
+      // claimed "7 Picks" / "5 Recipes" on pages with no such list. One retry
+      // naming the unsupported numbers, then skip — same shape as the gates
+      // above and counted against the same skip budget.
+      let invented = unsupportedNumbers(`${proposed.title} ${proposed.meta_description}`, article.body_html);
+      let numberAttempts = 1;
+      if (invented.length) {
+        const constraint = `The previous attempt used the number(s) ${invented.join(', ')}, which the article does not contain. `
+          + 'Do not state any count, quantity or number the article does not literally contain.';
+        const retry = await gateProposedCopy((c) =>
+          rewriteMeta(currentTitle, currentMeta, keyword, position, impressions, ctr, ground, [constraint, c].filter(Boolean).join(' ')));
+        numberAttempts = 2;
+        if (retry.ok) {
+          const retryInvented = unsupportedNumbers(`${retry.proposed.title} ${retry.proposed.meta_description}`, article.body_html);
+          const retryDistinct = assessDistinctness({
+            originalTitle: currentTitle, proposedTitle: retry.proposed.title,
+            originalMeta: currentMeta, proposedMeta: retry.proposed.meta_description,
+          });
+          if (!retryInvented.length && retryDistinct.ok) { proposed = retry.proposed; distinct = retryDistinct; invented = []; }
+        }
+      }
+      if (invented.length) {
+        console.log('invented number');
+        console.log(`    ⊘ number grounding: ${invented.join(', ')} not in the article — skipped after ${numberAttempts} attempt(s), page unchanged`);
+        gateSkipped.push({
+          keyword, pageUrl, violations: [], attempts: numberAttempts, unsupportedNumbers: invented,
           rejectedTitle: proposed.title || '', rejectedMeta: proposed.meta_description || '',
         });
         if (gateSkipped.length >= limitArg) {
@@ -711,13 +836,24 @@ async function main() {
           console.warn(`    ! baseline page CTR unavailable (${e.message}) — falling back to keyword CTR`);
         }
 
+        // Re-ask at the write site: two candidates can land on one page, and
+        // the first write in this run starts that page's cooldown.
+        const editGate = mayEditLivePost(pageUrl, 'serp');
+        if (!editGate.allowed) {
+          console.log(`    ⏸ Edit gate: ${editGate.reason} — skipped`);
+          editGateHeld.push({ target: pageUrl, kind: 'serp', reason: editGate.reason, until: editGate.until });
+          continue;
+        }
         try {
-          await updateArticle(article.blogId, article.id, {
-            title: proposed.title,
-            summary_html: proposed.meta_description,
-          });
+          // The SERP fields, not article.title / summary_html — see
+          // lib/serp-copy.js. The on-page H1 and excerpt are left alone.
+          await upsertMetafield('articles', article.id, 'global', TITLE_TAG, proposed.title);
+          const echoed = isEchoedDescription(proposed.meta_description, currentMeta);
+          if (!echoed) await upsertMetafield('articles', article.id, 'global', DESCRIPTION_TAG, proposed.meta_description);
           result.applied = true;
-          console.log(`    ✓ Updated in Shopify`);
+          result.descriptionWritten = !echoed;
+          recordMaterialEdit(pageUrl, 'serp', 'meta-optimizer');
+          console.log(`    ✓ Updated in Shopify (title_tag${echoed ? '; description unchanged — proposal echoed the current one' : ' + description_tag'})`);
         } catch (e) {
           console.error(`    ✗ Shopify update failed: ${e.message}`);
         }
@@ -733,6 +869,9 @@ async function main() {
             pagePosition,
             pageImpressions,
             locked: metaLock.state === 'locked',
+            serpFields: true,
+            originalTitleTag: serp.titleTag,
+            originalDescriptionTag: serp.descriptionTag,
           }));
           try {
             mkdirSync(abTrackerDir, { recursive: true });
@@ -795,6 +934,14 @@ async function main() {
   // skip that is not written here reaches nobody. A skip is the gate working, so
   // it renders as a normal section on the deferred success path — never
   // `immediate: true`, never `status: 'error'`. It vanishes on a clean run.
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — held (page unchanged, asked again next run)');
+    lines.push('');
+    for (const l of editGateLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
+
   const skipLines = renderGateSkipLines(gateSkipped);
   if (skipLines.length) {
     lines.push('## Health-claim gate — skipped');
@@ -845,8 +992,8 @@ async function main() {
       lines.push('');
       lines.push('| | Before | After |');
       lines.push('|---|---|---|');
-      lines.push(`| **Title** | ${r.currentTitle} | ${r.proposedTitle} |`);
-      lines.push(`| **Meta** | ${r.currentMeta || '*(none)*'} | ${r.proposedMeta} |`);
+      lines.push(`| **Title** | ${cell(r.currentTitle)} | ${cell(r.proposedTitle)} |`);
+      lines.push(`| **Meta** | ${cell(r.currentMeta) || '*(none)*'} | ${cell(r.proposedMeta)} |`);
       lines.push('');
     }
 
@@ -875,14 +1022,15 @@ async function main() {
   // Returned so the caller can put the held count in the notify subject. A hold
   // is the policy working, so it stays on the normal deferred success path —
   // never `immediate: true`, never `status: 'error'`.
-  return { held, gateSkipped };
+  return { held, gateSkipped, editGateHeld };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   main()
     .then((outcome) => notifyLatestReport(
       `Meta Optimizer completed${holdSummaryFragment(outcome?.held || [])}` +
-        gateSkipSummaryFragment(outcome?.gateSkipped || []),
+        gateSkipSummaryFragment(outcome?.gateSkipped || []) +
+        editGateSummaryFragment(outcome?.editGateHeld || []),
       join(ROOT, 'data', 'reports', 'meta-optimizer'),
     ))
     .catch((err) => {

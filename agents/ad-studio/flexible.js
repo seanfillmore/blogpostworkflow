@@ -22,6 +22,8 @@
 // DEFAULT_OBJECTIVE is imported as well as re-exported below: `export ... from` creates no
 // local binding, and buildFlexibleCopyPrompt uses it as a parameter default.
 import { buildClaimRules, buildGiveawayBlock, DEFAULT_OBJECTIVE, giveawayIsCitable } from './copy.js';
+import { formatByKey } from './formats.js';
+import { findDuplicatePlates, duplicatePlateRefusal } from './plate-distinctness.js';
 
 /** The 3, the 2 and the 2. Named because "3" appears three times below and they are not the same 3. */
 export const PLATE_COUNT = 3;
@@ -73,6 +75,21 @@ export function assertFlexibleArgs({ formats, targets, variations }) {
       `Each of the ${PLATE_COUNT} formats contributes exactly one plate; more variations would be more ads, ` +
       `which is the split this mode exists to avoid.`
     );
+  }
+
+  // The plates must be three ADS, not one ad three times — the same rule this function
+  // already applies to the two primary texts and the two headlines, extended to the half
+  // of a 3-2-2 the scroller actually looks at. Meta treats near-identical creatives as one
+  // delivery entity, so a duplicated plate means the shared learning pool is funding three
+  // and learning about two. See agents/ad-studio/plate-distinctness.js for the measurement.
+  //
+  // UNRESOLVABLE KEYS ARE SKIPPED, deliberately: `selectFormats` raises the precise
+  // `unknown format: x` further down, and a distinctness check that shadowed it would
+  // answer a typo with a lecture about delivery entities.
+  const resolved = formats.map(f => (typeof f === 'string' ? formatByKey(f) : f)).filter(Boolean);
+  if (resolved.length === formats.length) {
+    const plates = findDuplicatePlates(resolved);
+    if (plates.duplicates.length) throw new Error(duplicatePlateRefusal(plates));
   }
 }
 

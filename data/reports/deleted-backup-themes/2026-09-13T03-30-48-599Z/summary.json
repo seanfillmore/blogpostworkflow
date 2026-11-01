@@ -1,0 +1,32 @@
+[
+  {
+    "id": "145536778410",
+    "name": "Real Skin Care — Rollback (8.3.2)",
+    "total": 434,
+    "identical_to_live": 169,
+    "archived": 265,
+    "absent_from_live": 58,
+    "size_mismatches": 89,
+    "KB": 9030
+  },
+  {
+    "id": "147480051882",
+    "name": "Real Skin Care — Previous (2026-09-01)",
+    "total": 480,
+    "identical_to_live": 414,
+    "archived": 66,
+    "absent_from_live": 40,
+    "size_mismatches": 11,
+    "KB": 3904
+  },
+  {
+    "id": "148432814250",
+    "name": "Real Skin Care — Previous (2026-09-01 b)",
+    "total": 481,
+    "identical_to_live": 427,
+    "archived": 54,
+    "absent_from_live": 40,
+    "size_mismatches": 11,
+    "KB": 3824
+  }
+]

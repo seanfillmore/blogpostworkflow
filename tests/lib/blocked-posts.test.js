@@ -52,6 +52,57 @@ test('a SCHEDULED post is never blocked in either mode (it goes live on its own)
   assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: sched, reportAgeDays: 1, now, includeLive: false }), null);
 });
 
+// ── retired posts are action-required to NOBODY ───────────────────────────────
+//
+// `best-soap-for-tattoos-safe-healing-guide` (article 564499841194) was retired
+// in PR #912 — unpublished, 301'd to …-safe-healing-2, stamped
+// `shopify_status: 'redirected'`. Its editor report still says Needs Work with
+// an ingredient-accuracy blocker, and because 'redirected' resolved to
+// 'unknown' it fell through both the scheduled skip and the published skip and
+// rendered as "⚠ ACTION REQUIRED — 1 POST HARD-BLOCKED" with Fix blockers /
+// Re-run editor / Kill article buttons aimed at a page no reader can reach.
+const RETIRED = {
+  shopify_status: 'redirected',
+  shopify_article_id: 564499841194,
+  published_at: pastPublish,
+  redirected_to: '/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2',
+};
+
+test('a RETIRED post is never blocked, in either audience', () => {
+  for (const includeLive of [true, false]) {
+    for (const status of ['redirected', 'unpublished', 'archived']) {
+      const meta = { ...RETIRED, shopify_status: status };
+      assert.equal(
+        classifyBlockedReport({ report: NEEDS_WORK, meta, reportAgeDays: 1, now, includeLive }),
+        null,
+        `${status} / includeLive:${includeLive}`,
+      );
+    }
+  }
+});
+
+test('retirement beats report freshness — age cannot resurrect a 301', () => {
+  // Rule 6's freshness window only ever applied to LIVE posts, so a retired post
+  // with a brand-new failing report used to be the loudest row on the card.
+  assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: RETIRED, reportAgeDays: 0, now, includeLive: true }), null);
+  assert.equal(classifyBlockedReport({ report: NEEDS_WORK, meta: RETIRED, reportAgeDays: 0, now, includeLive: false }), null);
+});
+
+// THE OTHER HALF, and the reason this change is narrow: the card still has a
+// job. Suppressing a genuinely blocked LIVE page would be a worse bug than the
+// one being fixed, because nothing else would report it.
+test('a PUBLISHED post with a real blocker is STILL action-required', () => {
+  const published = { shopify_status: 'published', shopify_article_id: 1, shopify_publish_at: pastPublish };
+  const r = classifyBlockedReport({ report: NEEDS_WORK, meta: published, reportAgeDays: 3, now, includeLive: true });
+  assert.ok(r, 'a live page failing the gate is exactly what this card is for');
+  assert.equal(r.live, true);
+  assert.match(r.blockerText, /beeswax/);
+  // …and a pre-publish post with no status at all still reaches the email.
+  const pre = classifyBlockedReport({ report: NEEDS_WORK, meta: {}, reportAgeDays: 3, now, includeLive: false });
+  assert.ok(pre);
+  assert.equal(pre.live, false);
+});
+
 test('a live post with a STALE report is suppressed even in dashboard mode', () => {
   const r = classifyBlockedReport({
     report: NEEDS_WORK, meta: legacyLive, reportAgeDays: LIVE_BLOCK_FRESHNESS_DAYS + 1, now, includeLive: true,

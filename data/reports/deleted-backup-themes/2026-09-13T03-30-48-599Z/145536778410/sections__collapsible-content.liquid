@@ -1,0 +1,431 @@
+{%- style -%}
+  #shopify-section-{{ section.id }} {
+    --section-padding-top: {{ section.settings.padding_top }}px;
+    --section-padding-bottom: {{ section.settings.padding_bottom }}px;
+    --color-highlight: {{ section.settings.colors_highlight.red }}, {{ section.settings.colors_highlight.green }}, {{ section.settings.colors_highlight.blue }};
+{%- endstyle -%}
+
+{{ 'section-product-details.css' | asset_url | stylesheet_tag }}
+
+<div class="section--padding{% if section.settings.show_divider %} section--divider{% endif %}">
+  <div class="page-width{% if section.settings.narrow %} page-width--inner{% endif %}">
+    <div class="title-wrapper{% if section.settings.heading == blank %} title-wrapper--no-heading{% endif %} {{ section.settings.heading_alignment }}">
+      <{{ section.settings.heading_tag }} class="title {{ section.settings.heading_size }}">
+        {%- render 'highlight-text', 
+          hl_input: section.settings.heading, 
+          hl_style: section.settings.highlight_style,
+          hl_enable: section.settings.enable_highlight,
+          hl_animateWrap: true -%}
+      </{{ section.settings.heading_tag }}>
+    </div>
+
+    {%- if section.blocks.size > 0 -%}
+      <div class="product-details">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+          {%- when 'collapsible_row' -%}
+            <accordion-tab class="accordion" {{ block.shopify_attributes }}>
+              <details {% if section.settings.open_first_collapsible_row and forloop.index0 == 0 %}open="open"{% endif %}>
+                <summary>
+                  <span class="summary__title">
+                    <p class="accordion__title h3">
+                      {%- if block.settings.heading != blank -%}
+                        {%- render 'highlight-text', 
+                          hl_input: block.settings.heading, 
+                          hl_style: block.settings.highlight_style,
+                          hl_enable: block.settings.enable_highlight,
+                          hl_animateWrap: true -%}
+                      {%- elsif block.settings.page != blank -%}
+                        {{ block.settings.page.title | escape }}
+                      {%- endif -%}
+                    </p>
+                  </span>
+                  <span class="icon icon-plus-alt"></span>
+                </summary>
+                <div class="accordion__content rte typeset">
+                  {%- render 'highlight-text', 
+                    hl_input: block.settings.row_content, 
+                    hl_style: block.settings.highlight_style,
+                    hl_enable: block.settings.enable_highlight,
+                    hl_animateWrap: true -%}
+                  {{ block.settings.page.content }}
+                </div>
+              </details>
+            </accordion-tab>
+          {%- endcase -%}
+        {%- endfor -%}
+        {%- comment -%}
+          PDP Builder cluster template support: append per-SKU FAQ items from
+          product.metafields.custom.faq_additional (JSON list of {question, answer}).
+          (Per docs/superpowers/specs/2026-05-02-pdp-builder-design.md Layer 2.)
+        {%- endcomment -%}
+        {%- if product.metafields.custom.faq_additional.value != blank -%}
+          {%- for item in product.metafields.custom.faq_additional.value -%}
+            <accordion-tab class="accordion">
+              <details>
+                <summary>
+                  <span class="summary__title">
+                    <p class="accordion__title h3">{{ item.question }}</p>
+                  </span>
+                  <span class="icon icon-plus-alt"></span>
+                </summary>
+                <div class="accordion__content rte typeset">
+                  {{ item.answer }}
+                </div>
+              </details>
+            </accordion-tab>
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+  </div>
+</div>
+{%- if section.settings.enable_faq_schema -%}
+  {%- assign question_blocks = section.blocks | where: 'type', 'collapsible_row' -%}
+  {%- if question_blocks.size > 0 -%}
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {%- for block in question_blocks -%}
+            {
+              "@type": "Question",
+              "name": {{ block.settings.heading | json }},
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": {{ block.settings.row_content | strip_html | json }}
+              }
+            }{% unless forloop.last %},{% endunless %}
+          {% endfor -%}
+        ]
+      }
+    </script>
+  {%- endif -%}
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "t:sections.collapsible_content.name",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "open_first_collapsible_row",
+      "default": false,
+      "label": "t:sections.collapsible_content.settings.open_first_collapsible_row.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "narrow",
+      "default": false,
+      "label": "t:sections.all.narrow.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_divider",
+      "default": false,
+      "label": "t:sections.all.show_divider.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.heading.label"
+    },
+    {
+      "type": "inline_richtext",
+      "id": "heading",
+      "default": "Collapsible content",
+      "label": "t:sections.all.heading.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_size.options__1.label"
+        },
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_size.options__2.label"
+        },
+        {
+          "value": "h0",
+          "label": "t:sections.all.heading_size.options__3.label"
+        }
+      ],
+      "default": "h1",
+      "label": "t:sections.all.heading_size.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_alignment",
+      "label": "t:sections.all.heading_alignment.label",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.all.heading_alignment.options__1.label"
+        },
+        {
+          "value": "center",
+          "label": "t:sections.all.heading_alignment.options__2.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.all.heading_alignment.options__3.label"
+        }
+      ],
+      "default": "center"
+    },
+    {
+      "type": "select",
+      "id": "heading_tag",
+      "options": [
+        {
+          "value": "h1",
+          "label": "t:sections.all.heading_tag.options__1.label"
+        },
+        {
+          "value": "h2",
+          "label": "t:sections.all.heading_tag.options__2.label"
+        },
+        {
+          "value": "h3",
+          "label": "t:sections.all.heading_tag.options__3.label"
+        },
+        {
+          "value": "h4",
+          "label": "t:sections.all.heading_tag.options__4.label"
+        },
+        {
+          "value": "h5",
+          "label": "t:sections.all.heading_tag.options__5.label"
+        },
+        {
+          "value": "h6",
+          "label": "t:sections.all.heading_tag.options__6.label"
+        },
+        {
+          "value": "div",
+          "label": "t:sections.all.heading_tag.options__7.label"
+        },
+        {
+          "value": "span",
+          "label": "t:sections.all.heading_tag.options__8.label"
+        },
+        {
+          "value": "p",
+          "label": "t:sections.all.heading_tag.options__9.label"
+        }
+      ],
+      "default": "h2",
+      "label": "t:sections.all.heading_tag.label",
+      "info": "t:sections.all.heading_tag.info"
+    },
+    {
+      "type": "header",
+      "content": "t:settings_schema.miscellaneous.name"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_faq_schema",
+      "label": "t:sections.collapsible_content.settings.enable_faq_schema.label",
+      "info": "t:sections.collapsible_content.settings.enable_faq_schema.info",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.colors.header.content"
+    },
+    {
+      "type": "color",
+      "id": "colors_highlight",
+      "label": "t:sections.all.colors.colors_highlight.label",
+      "default": "#ffb503"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.header.content"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "t:sections.all.padding.padding_top.unit",
+      "label": "t:sections.all.padding.padding_top.label",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "t:sections.all.padding.padding_bottom.unit",
+      "label": "t:sections.all.padding.padding_bottom.label",
+      "default": 36
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.highlight.header.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_highlight",
+      "label": "t:sections.all.highlight.enable.label",
+      "info": "t:sections.all.highlight.enable.info",
+      "default": false
+    },
+    {
+      "type": "select",
+      "id": "highlight_style",
+      "options": [
+        {
+          "value": "marker",
+          "label": "t:sections.all.highlight.style.options__1.label"
+        },
+        {
+          "value": "circle",
+          "label": "t:sections.all.highlight.style.options__2.label"
+        },
+        {
+          "value": "underline",
+          "label": "t:sections.all.highlight.style.options__3.label"
+        },
+        {
+          "value": "bold-underline",
+          "label": "t:sections.all.highlight.style.options__4.label"
+        },
+        {
+          "value": "modern-underline",
+          "label": "t:sections.all.highlight.style.options__5.label"
+        },
+        {
+          "value": "sketch-underline",
+          "label": "t:sections.all.highlight.style.options__6.label"
+        },
+        {
+          "value": "squiggle",
+          "label": "t:sections.all.highlight.style.options__7.label"
+        },
+        {
+          "value": "heavy-squiggle",
+          "label": "t:sections.all.highlight.style.options__8.label"
+        },
+        {
+          "value": "solid-color",
+          "label": "t:sections.all.highlight.style.options__9.label"
+        }
+      ],
+      "default": "marker",
+      "label": "t:sections.all.highlight.style.label"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collapsible_row",
+      "name": "t:sections.collapsible_content.blocks.collapsible_row.name",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "default": "Collapsible row",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.heading.label",
+          "info": "t:sections.collapsible_content.blocks.collapsible_row.settings.heading.info"
+        },
+        {
+          "type": "richtext",
+          "id": "row_content",
+          "default": "<p>Use collapsible tabs for more detailed information that will help customers make a purchasing decision.</p><p>Ex: Shipping and return policies, size guides, and other common questions.</p>",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.row_content.label"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "t:sections.collapsible_content.blocks.collapsible_row.settings.page.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.all.highlight.header.content"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_highlight",
+          "label": "t:sections.all.highlight.enable.label",
+          "info": "t:sections.all.highlight.enable.info",
+          "default": false
+        },
+        {
+          "type": "select",
+          "id": "highlight_style",
+          "options": [
+            {
+              "value": "marker",
+              "label": "t:sections.all.highlight.style.options__1.label"
+            },
+            {
+              "value": "circle",
+              "label": "t:sections.all.highlight.style.options__2.label"
+            },
+            {
+              "value": "underline",
+              "label": "t:sections.all.highlight.style.options__3.label"
+            },
+            {
+              "value": "bold-underline",
+              "label": "t:sections.all.highlight.style.options__4.label"
+            },
+            {
+              "value": "modern-underline",
+              "label": "t:sections.all.highlight.style.options__5.label"
+            },
+            {
+              "value": "sketch-underline",
+              "label": "t:sections.all.highlight.style.options__6.label"
+            },
+            {
+              "value": "squiggle",
+              "label": "t:sections.all.highlight.style.options__7.label"
+            },
+            {
+              "value": "heavy-squiggle",
+              "label": "t:sections.all.highlight.style.options__8.label"
+            },
+            {
+              "value": "solid-color",
+              "label": "t:sections.all.highlight.style.options__9.label"
+            }
+          ],
+          "default": "marker",
+          "label": "t:sections.all.highlight.style.label"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "t:sections.collapsible_content.presets.name",
+      "blocks": [
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        },
+        {
+          "type": "collapsible_row"
+        }
+      ]
+    }
+  ],
+  "disabled_on": {
+    "groups": ["header", "footer", "custom.overlay"]
+  }
+}
+{% endschema %}

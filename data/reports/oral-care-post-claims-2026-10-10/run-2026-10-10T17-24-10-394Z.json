@@ -1,0 +1,197 @@
+{
+  "generated_at": "2026-10-10T17:24:18.507Z",
+  "applied": true,
+  "slug": null,
+  "results": [
+    {
+      "id": "ff-what-it-is-gum-health",
+      "handle": "fluoride-free-toothpaste-what-it-is-best-options",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "all-natural-antimicrobial-support",
+      "handle": "best-all-natural-toothpaste-top-picks-for-a-clean-smile",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "avoid-natural-antibacterial",
+      "handle": "toothpaste-ingredients-to-avoid-for-a-cleaner-smile",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "sls-antimicrobial-stack",
+      "handle": "sodium-lauryl-sulfate-in-toothpaste-what-you-need-to-know",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "deodorant-eight-oils",
+      "handle": "the-healthiest-deodorant-what-to-look-for-top-picks",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "deodorant-antimicrobial-ingredients",
+      "handle": "the-healthiest-deodorant-what-to-look-for-top-picks",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "coconut-tp-active-ingredient",
+      "handle": "coconut-toothpaste-benefits-ingredients-what-to-look-for",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "vegan-antimicrobial-properties",
+      "handle": "vegan-toothpaste-what-it-is-how-to-choose-the-best",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "charcoal-ingredient-count",
+      "handle": "charcoal-toothpaste-does-it-work-is-it-safe",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "recipes-note-peppermint",
+      "handle": "can-you-use-coconut-oil-as-toothpaste-what-to-know",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "recipes-contains-all-oils",
+      "handle": "can-you-use-coconut-oil-as-toothpaste-what-to-know",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "can-you-use-coconut-oil-as-toothpaste-what-to-know",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "recipes-note-peppermint",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "recipes-contains-all-oils",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "no-fluoride-antimicrobial-benefits",
+      "handle": "no-fluoride-toothpaste-what-to-use-why-it-works",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "ff-benefits-plaque-reduction",
+      "handle": "fluoride-free-toothpaste-benefits-how-it-works-best-picks",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "pull-cta-two-minutes",
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "pull-complete-routine",
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "pull-faq-similar",
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "pull-cta-switch",
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "pull-cta-two-minutes",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-complete-routine",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-faq-similar",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-cta-switch",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "coconut-oil-pulling-discover-the-oral-health-benefits-and-how-to-incorporate-it-into-your-daily-routine",
+      "mirror": "content-refreshed.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "pull-cta-two-minutes",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-complete-routine",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-faq-similar",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "pull-cta-switch",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

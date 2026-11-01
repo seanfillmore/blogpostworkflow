@@ -1,0 +1,152 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:00:35.701Z",
+    "last_crawled": "2026-09-29T22:22:26Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/aluminum-free-antiperspirant-what-it-is-does-it-work-2",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2602,
+  "generated_at": "2026-04-17T10:33:48.442Z",
+  "brief_path": "/root/seo-claude/data/briefs/aluminum-free-antiperspirant-what-it-is-does-it-work.json",
+  "tokens_used": {
+    "input": 10883,
+    "output": 5685
+  },
+  "image_path": "data/posts/aluminum-free-antiperspirant-what-it-is-does-it-work/image.webp",
+  "image_prompt": "Lifestyle photography, a bright modern bathroom vanity counter with white quartz surface and white subway tile backsplash, a small white cylindrical rollerball deodorant bottle with a flat white snap-on cap positioned naturally beside a folded white hand towel, a small open ceramic dish of fine white baking soda powder with a wooden scoop resting beside it as a visual nod to aluminum-free formulas, soft warm morning light from a frosted window to the left casting clean even illumination across the counter, the composition immediately readable as a deodorant-focused scene with no aluminum antiperspirant stick or aerosol can in sight — only the natural alternative clearly on display, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-04-19T10:17:26.830Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563512180906,
+  "shopify_handle": "aluminum-free-antiperspirant-what-it-is-does-it-work-2",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/aluminum-free-antiperspirant-what-it-is-does-it-work-2",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_2e65bf82-543e-459e-8687-d351ecde4c79.webp?v=1792076443",
+  "uploaded_at": "2026-10-15T15:00:46.604Z",
+  "published_at": "2026-05-01T15:00:07.270Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-11T11:30:02.629Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-12T11:30:02.192Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-13T11:30:02.391Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-14T11:30:01.787Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-15T11:30:01.554Z",
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-05-16T11:30:03.024Z",
+      "notification_time": null,
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-05-17T11:30:02.385Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ],
+  "indexing_blocked": false,
+  "indexing_blocked_reason": null,
+  "indexing_blocked_at": "2026-05-21T11:30:01.837Z",
+  "performance_review": {},
+  "last_refreshed_at": "2026-08-25T15:09:10.420Z",
+  "rebuilt_at": "2026-08-03T15:29:00.981Z",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 10, 41 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T04:03:25.861Z",
+  "indexing_unblocked_at": "2026-08-04T11:30:01.980Z",
+  "refreshed_at": "2026-10-14T15:23:41.407Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:01.789Z",
+      "age_days": 85,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T14:19:01.665Z",
+      "superseded_by": "2026-08-25T15:09:10.420Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-07-25T17:14:01.898Z",
+      "age_days": 85,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T14:19:01.665Z",
+      "superseded_by": "2026-08-25T15:09:10.420Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-07-31T13:30:02.740Z",
+      "age_days": 90,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T14:19:01.665Z",
+      "superseded_by": "2026-08-25T15:09:10.420Z"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-25T13:30:04.333Z",
+      "age_days": 30,
+      "impressions": 126,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 7.404761904761905,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 126 impressions, 0 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-15T13:30:03.766Z",
+      "superseded_by": "2026-10-14T15:23:41.407Z"
+    }
+  ],
+  "last_material_edit": {
+    "at": "2026-10-14T15:23:41.408Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:41:11.212Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

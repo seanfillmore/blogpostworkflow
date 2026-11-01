@@ -32,19 +32,49 @@
  * prompt to regenerate from — the same reason `lib/queue-apply.js` refuses
  * rather than dismisses.
  *
- * **Articles carrying no `title_tag` are SKIPPED, not created.** 178 of 215
- * articles have none, so their rendered title comes from `article.title` — the
- * headline a reader sees on the page and in the blog listing, not just a SERP
- * string. Minting a `title_tag` for them is a different, larger decision
- * (it decouples two things that are currently one) and is left to a human.
- * That is why this sweep is smaller than the 92% figure implies, and saying so
- * is the point.
+ * ── --mint: THE 177 PAGES WITH NO `title_tag` AT ALL ──────────────────────────
+ *
+ * 176 articles and 1 page render their `<title>` straight from the resource's
+ * own title, because no `title_tag` metafield exists. They are 85% of the leak
+ * (rendered median 68, max 86) and the trim path cannot touch them — there is
+ * nothing to trim.
+ *
+ * `--mint` CREATES the metafield, set to the shortened form of the resource's
+ * own title. **This deliberately DECOUPLES two things that are currently one:**
+ * afterwards the SERP shows the shortened `title_tag` while the on-page `<h1>`
+ * and the blog listing keep the full `article.title`, untouched. That is the
+ * entire point — the headline a reader sees is not the string Google truncates,
+ * and they should not have to be the same. It is also why minting is opt-in
+ * rather than part of the default sweep.
+ *
+ * Reversible: the run record stores `before: null` for every minted field, so
+ * deleting those metafields restores the previous behaviour exactly.
+ *
+ * ── OVERRIDES: hand-authored titles for cases a shortener must not touch ──────
+ *
+ * A fixed, reviewed table, in the same shape as the health-claim remediation
+ * plans. It exists for input a trim cannot repair — a `title_tag` carrying raw
+ * HTML, or one whose mechanical trim ends on a dangling adjective. Each entry
+ * carries the operator-approved replacement and why. They are gated exactly
+ * like every other value.
  *
  * Usage:
- *   node scripts/remediate-long-titles.mjs                 # dry run, all surfaces
+ *   node scripts/remediate-long-titles.mjs                 # dry run, trims only
  *   node scripts/remediate-long-titles.mjs --list          # just show what is over
- *   node scripts/remediate-long-titles.mjs --apply         # write
+ *   node scripts/remediate-long-titles.mjs --apply         # write the trims
+ *   node scripts/remediate-long-titles.mjs --mint          # dry run incl. minting
+ *   node scripts/remediate-long-titles.mjs --mint --apply
  *   node scripts/remediate-long-titles.mjs --limit 10 --apply
+ *   node scripts/remediate-long-titles.mjs --mint --auto --apply   # what cron runs
+ *
+ * --auto is the unattended mode (scheduled Sundays after agents/tech-seo-steward).
+ * It adds two things a human used to do by hand: pages under a CTR experiment
+ * are left alone (lib/ctr-protected.js), and every mechanical trim is read by a
+ * model, which keeps it or rewrites a fragment ("Ivory Soap Alternatives: 6
+ * Gentle Natural") into a complete title. A rewrite must keep the title's
+ * ranking words, invent no number, fit the rendered limit and clear the health
+ * gate (lib/tech-seo-steward.js titleRewriteProblems); one that cannot is
+ * skipped and named, never written as a fragment. OVERRIDES still win.
  */
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -59,6 +89,14 @@ import {
 } from '../lib/seo-copy-length.js';
 import { checkSeoCopy } from '../lib/seo-copy-health-gate.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
+import { mayEditLivePost, recordMaterialEdit } from '../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines } from '../lib/edit-gate-filter.js';
+import { ctrProtectedHandles } from '../lib/ctr-protected.js';
+import { titleRewriteProblems } from '../lib/tech-seo-steward.js';
+import { notify } from '../lib/notify.js';
+import Anthropic from '../lib/anthropic.js';
+import { LLM_MODELS } from '../config/llm-models.js';
+import { readFileSync } from 'node:fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REPORT_DIR = join(ROOT, 'data', 'reports', 'long-title-remediation');
@@ -67,6 +105,8 @@ const MAX = LENGTH_LIMITS.title.max;
 const argv = process.argv.slice(2);
 const APPLY = argv.includes('--apply');
 const LIST_ONLY = argv.includes('--list');
+const MINT = argv.includes('--mint');
+const AUTO = argv.includes('--auto');
 const LIMIT = (() => {
   const i = argv.indexOf('--limit');
   return i === -1 ? Infinity : Number(argv[i + 1]) || Infinity;
@@ -74,11 +114,113 @@ const LIMIT = (() => {
 
 const len = (s) => [...String(s ?? '')].length;
 
+/**
+ * Hand-authored replacements, approved by the operator on 2026-09-07. A trim
+ * cannot produce either of these, which is exactly why they are here rather
+ * than in the shortener: the first input is corrupt (raw HTML in the title),
+ * the second trims to a dangling adjective ("…With Cleaner") that no general
+ * rule can detect. Keyed by handle; applied on any surface, gated like the rest.
+ */
+const OVERRIDES = {
+  'can-you-use-coconut-oil-as-toothpaste': {
+    title: 'Coconut Oil As A Toothpaste',
+    why: 'live title_tag held a raw HTML anchor truncated mid-URL; a trim only yields shorter garbage',
+  },
+  'best-boka-alternatives-2025': {
+    title: 'Boka Toothpaste Alternative',
+    why: 'mechanical trim ended on the dangling adjective "With Cleaner"',
+  },
+  // `best-body-lotion-for-eczema-natural-ingredients-that-help` USED to sit here,
+  // with a note calling it a draft that a compliant title would protect if it
+  // were ever published. **That note was wrong and the entry was doing nothing
+  // useful.** Re-checked 2026-09-20: the page had been PUBLISHED on 2026-09-07
+  // and was returning HTTP 200 in the sitemap with 160 rendered eczema mentions
+  // above a working Add to Cart — a cosmetic positioned FOR a disease, live,
+  // while this file described it as a safely-parked draft. It earned 0 clicks
+  // and 0 impressions in 90 days, so it was deleted and 301'd to
+  // /collections/non-toxic-body-lotion by operator decision that day, and the
+  // product-for-a-disease phrasings are in data/rejected-keywords.json.
+  //
+  // The lesson is the reason this comment exists at all: **an OVERRIDES entry
+  // asserting a page's publish state goes stale silently.** The entry cannot
+  // detect that its own premise has changed, and a reader (human or agent)
+  // trusts the comment instead of the site. If you add an entry that leans on
+  // live-ness, re-verify it rather than quoting this file.
+
+  // Added 2026-09-20 after the Ahrefs crawl of the same morning put "Title too
+  // long" back on the board. Both are MINT candidates whose mechanical trim
+  // lands on a dangling fragment, the same failure mode as
+  // 'best-boka-alternatives-2025' above. `tidyTail` cannot reach either: its
+  // case-sensitive list is lower-case by design (these titles are title case,
+  // so "They" and "Affordable" read as real words), and widening it to match
+  // capitalised words would start eating legitimate particles like "What to
+  // Look For". A reviewed override is the cheaper, safer instrument.
+  'coconut-oil-fatty-acids-what-they-are-why-they-matter': {
+    title: 'Coconut Oil Fatty Acids Explained',
+    why: 'mechanical trim ended on the dangling pronoun "What They"',
+  },
+  'cheap-lip-balms-best-natural-affordable-picks-for-soft-lips': {
+    title: 'Best Cheap Natural Lip Balms',
+    why: 'mechanical trim ended on the dangling adjective "Best Natural, Affordable"',
+  },
+
+  // Added 2026-11-01, operator-approved, after the Ahrefs crawl of 2026-10-31.
+  // Eight MINT candidates whose trim ends on a fragment ("6 Gentle Natural",
+  // "Why Gentler Flavor", "What It Does"). Every count is the article's own
+  // count from its full title, so no number here is unsupported by the body.
+  'ivory-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Ivory Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'dial-soap-alternatives-6-gentle-natural-soaps-that-still-clean': {
+    title: '6 Natural Dial Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Gentle Natural"',
+  },
+  'irish-spring-soap-alternative-6-natural-bar-soaps-that-work': {
+    title: '6 Natural Irish Spring Soap Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "6 Natural"',
+  },
+  'secret-deodorant-alternatives-8-natural-picks-that-actually-work': {
+    title: '8 Natural Secret Deodorant Alternatives',
+    why: 'mechanical trim ended on the dangling adjective "8 Natural"',
+  },
+  'mild-mint-toothpaste-why-gentler-flavor-wins': {
+    title: 'Mild Mint Toothpaste: Gentler Flavor Wins',
+    why: 'mechanical trim dropped the verb, leaving "Why Gentler Flavor"',
+  },
+  'coconut-oil-soap-benefits-what-it-does-for-your-skin': {
+    title: 'Coconut Oil Soap: Benefits for Your Skin',
+    why: 'mechanical trim ended on the incomplete clause "What It Does"',
+  },
+  'vegan-soap-what-it-is-benefits-what-to-look-for': {
+    title: 'Vegan Soap: Benefits & What to Look For',
+    why: 'mechanical trim left the awkward list "What It Is, Benefits"',
+  },
+  'unscented-lip-balm-how-to-choose-a-fragrance-free-natural-one': {
+    title: 'Unscented Lip Balm: How to Pick a Clean One',
+    why: 'mechanical trim ended on the objectless "How to Choose"',
+  },
+};
+
+/**
+ * "I could not read it" is NOT "it does not have one" — the same distinction
+ * `lib/post-lock.js` draws between its `unreadable` and `unlocked` states.
+ *
+ * This used to `catch { return null }`, and null means "no title_tag", which
+ * sends the surface down the MINT path — where `upsertMetafield` OVERWRITES.
+ * So one transient metafield read failure silently replaced a good, live SERP
+ * title with a mechanical trim of the resource's own title. Observed on
+ * 2026-09-20: two dry runs four minutes apart disagreed about
+ * `best-soap-for-new-tattoo`, which has carried the perfectly good title_tag
+ * "Best Soap for New Tattoo" throughout.
+ */
+export const UNREADABLE = Symbol('title_tag unreadable');
+
 async function seoTitleTag(resource, id) {
   try {
     const mf = await getMetafields(resource, id);
     return mf.find((m) => m.namespace === 'global' && m.key === 'title_tag')?.value ?? null;
-  } catch { return null; }
+  } catch { return UNREADABLE; }
 }
 
 /** Every live surface, with the field the storefront actually renders as page_title. */
@@ -103,6 +245,14 @@ async function collectCandidates() {
 
   for (const c of out) {
     c.titleTag = await seoTitleTag(c.resource, c.id);
+    // An unreadable title_tag makes this surface unjudgeable: we cannot know
+    // what the storefront renders, so we neither measure nor touch it.
+    if (c.titleTag === UNREADABLE) {
+      c.pageTitle = '';
+      c.rendered = '';
+      c.renderedLen = 0;
+      continue;
+    }
     // page_title is the title_tag when set, else the resource's own title.
     c.pageTitle = c.titleTag ?? c.fallback ?? '';
     c.rendered = renderTitle(c.pageTitle);
@@ -115,9 +265,19 @@ async function main() {
   console.log(`\n  Long-title remediation — ${APPLY ? 'APPLY' : 'DRY RUN'}  (limit ${MAX} rendered chars)\n`);
 
   const all = await collectCandidates();
-  const over = all.filter((c) => c.renderedLen > MAX);
+  // A surface whose title_tag could not be read is excluded from the sweep
+  // entirely and COUNTED — never silently folded in as "has no title_tag",
+  // which is the path that overwrites a good live title. A quiet skip is how a
+  // safety rule stops working, so it is printed even when the count is zero.
+  const unreadable = all.filter((c) => c.titleTag === UNREADABLE);
+  const readable = all.filter((c) => c.titleTag !== UNREADABLE);
+  const over = readable.filter((c) => c.renderedLen > MAX);
 
   console.log(`  surfaces scanned : ${all.length}`);
+  console.log(`  title_tag unreadable (excluded) : ${unreadable.length}`);
+  if (unreadable.length) {
+    for (const c of unreadable) console.log(`      ? ${c.kind} ${c.handle} — could not read title_tag; not measured, not touched`);
+  }
   console.log(`  over ${MAX} rendered : ${over.length}\n`);
 
   const writable = over.filter((c) => c.titleTag != null);
@@ -130,35 +290,90 @@ async function main() {
   // Trimming that produces shorter garbage, so it is refused and named. Only a
   // rewrite fixes it.
   const CORRUPT = /[<>]|https?:\/\//;
-  const corrupt = writable.filter((c) => CORRUPT.test(c.titleTag));
-  const trimmable = writable.filter((c) => !CORRUPT.test(c.titleTag));
+  const hasOverride = (c) => Object.hasOwn(OVERRIDES, c.handle);
+  const corrupt = writable.filter((c) => CORRUPT.test(c.titleTag) && !hasOverride(c));
+  const trimmable = writable.filter((c) => !CORRUPT.test(c.titleTag) || hasOverride(c));
+
+  // `--mint` brings in the pages with no title_tag at all, shortened from the
+  // resource's own title. Without it they are only reported.
+  const mintable = MINT ? skipped : [];
+
+  // AN OVERRIDE IS A WORDING DECISION, NOT A LENGTH FIX, so it is drawn from
+  // EVERY surface rather than from the over-limit set. `best-boka-alternatives-2025`
+  // is why: an earlier sweep had already trimmed it to a passing-but-awkward 56
+  // characters, so it was no longer "over" and the operator's replacement could
+  // never fire. Scoping overrides to the defect they happen to accompany is how
+  // a hand-authored decision silently stops being applied.
+  const considered = new Set([...trimmable, ...mintable].map((c) => c.handle));
+  const overrideOnly = all.filter((c) => hasOverride(c) && !considered.has(c.handle));
 
   const plan = [];
-  for (const c of trimmable) {
-    const proposed = shortenToRenderedLimit(c.titleTag);
-    if (!proposed || proposed === c.titleTag) continue;
+  const healthBlocked = [];
+  for (const c of [...trimmable, ...mintable, ...overrideOnly]) {
+    const source = c.titleTag ?? c.fallback ?? '';
+    const override = OVERRIDES[c.handle];
+    const proposed = override ? override.title : shortenToRenderedLimit(source);
+    if (!proposed || proposed === c.titleTag) continue; // already correct
 
+    // A LENGTH failure is a bug in the shortener — abort rather than write a
+    // partial sweep on top of broken arithmetic.
     const lenCheck = checkCopyLength({ title: proposed }, { title: 'title' });
-    const health = checkSeoCopy({ title: proposed });
     if (!lenCheck.ok) {
       console.error(`  ABORT — proposed title still over the limit for ${c.handle}: "${proposed}"`);
       process.exitCode = 1; return;
     }
+    // A HEALTH failure is a property of copy that is ALREADY LIVE, not a defect
+    // in this run: we are deriving from a title somebody else wrote. Refuse that
+    // one page and name it — aborting 176 good mints over one pre-existing claim
+    // would be the gate deciding the work is worthless, which is the mistake
+    // that destroyed three paid-for briefs on 2026-08-19.
+    const health = checkSeoCopy({ title: proposed });
     if (!health.ok) {
-      console.error(`  ABORT — proposed title trips the health gate for ${c.handle}: ${JSON.stringify(health.blocking)}`);
-      process.exitCode = 1; return;
+      healthBlocked.push({ kind: c.kind, handle: c.handle, proposed, blocking: health.blocking });
+      continue;
     }
-    plan.push({ ...c, proposed, proposedRendered: renderTitle(proposed) });
+    plan.push({
+      ...c, proposed, proposedRendered: renderTitle(proposed),
+      action: c.titleTag == null ? 'mint' : 'trim',
+      override: override ? override.why : undefined,
+    });
   }
 
-  console.log(`  REWRITABLE (have a title_tag) : ${plan.length}`);
-  console.log(`  CORRUPT (markup/URL in title_tag — refused, needs a rewrite) : ${corrupt.length}`);
-  console.log(`  SKIPPED (no title_tag — would have to CREATE one) : ${skipped.length}\n`);
+  // Live-article edit gate, BEFORE --limit: a new SERP title on a blog ARTICLE
+  // is a `serp` edit (lib/post-edit-gate.js) — refused on a frozen page or one
+  // inside the 28-day window of its last title/meta or body change. Products,
+  // collections and pages are not articles and are not asked.
+  const { kept: gatedPlan, held: editGateHeld } = partitionByEditGate(plan, {
+    kind: 'serp', mayEdit: mayEditLivePost, targetOf: (c) => (c.kind === 'article' ? c.handle : null),
+  });
+  plan.length = 0;
+  plan.push(...gatedPlan);
+
+  const auto = AUTO ? await autoReview(plan) : { ctrHeld: [], rewritten: [], unresolved: [] };
+  const editGateLines = renderEditGateLines(editGateHeld);
+  for (const l of editGateLines) console.log(`  ${l}`);
+  if (editGateLines.length) console.log('');
+
+  const trims = plan.filter((p) => p.action === 'trim');
+  const mints = plan.filter((p) => p.action === 'mint');
+  console.log(`  TRIM  (shorten an existing title_tag) : ${trims.length}`);
+  console.log(`  MINT  (create a title_tag)            : ${mints.length}${MINT ? '' : `   [--mint to enable; ${skipped.length} candidates]`}`);
+  console.log(`  OVERRIDE (hand-authored)              : ${plan.filter((p) => p.override).length}`);
+  console.log(`  CORRUPT (refused — needs a rewrite)   : ${corrupt.length}`);
+  console.log(`  HEALTH-BLOCKED (pre-existing claim)   : ${healthBlocked.length}\n`);
 
   for (const c of plan.slice(0, LIST_ONLY ? plan.length : 40)) {
     console.log(`  ${String(c.renderedLen).padStart(3)} → ${String(len(c.proposedRendered)).padStart(3)}  [${c.kind}] ${c.handle}`);
     console.log(`        was: ${c.rendered}`);
     console.log(`        now: ${c.proposedRendered}`);
+  }
+
+  if (healthBlocked.length) {
+    console.log(`\n  REFUSED — the existing title already carries a blocking health claim, so`);
+    console.log(`  this run will not copy it into a new field. Rewrite the page instead:`);
+    for (const h of healthBlocked) {
+      console.log(`    [${h.kind}] ${h.handle}\n        "${h.proposed}"  (${h.blocking.map((b) => b.match).join(', ')})`);
+    }
   }
 
   if (corrupt.length) {
@@ -186,10 +401,20 @@ async function main() {
     scanned: all.length,
     over: over.length,
     rewritable: plan.length,
+    mint_enabled: MINT,
     refused_corrupt: corrupt.map((c) => ({ kind: c.kind, handle: c.handle, title_tag: c.titleTag })),
+    refused_health: healthBlocked,
+    auto: AUTO ? auto : undefined,
+    edit_gate_held: editGateHeld.map((h) => ({ handle: h.target, kind: h.kind, reason: h.reason, until: h.until || null })),
+    // Excluded before measurement — see the UNREADABLE note above. Recorded so
+    // a run that quietly saw less of the site than it thought is legible later.
+    excluded_unreadable: unreadable.map((c) => ({ kind: c.kind, handle: c.handle })),
     skipped_no_title_tag: skipped.map((c) => ({ kind: c.kind, handle: c.handle, rendered: c.rendered, renderedLen: c.renderedLen })),
     changes: plan.map((c) => ({
       kind: c.kind, handle: c.handle, resource: c.resource, id: c.id,
+      action: c.action, override_reason: c.override,
+      // `before: null` marks a MINT — deleting that metafield restores the
+      // previous behaviour exactly.
       before: c.titleTag, after: c.proposed,
       before_rendered: c.rendered, after_rendered: c.proposedRendered,
       before_len: c.renderedLen, after_len: len(c.proposedRendered),
@@ -200,19 +425,79 @@ async function main() {
   console.log(`\n  Run record (includes every BEFORE value, so this is the backup): data/reports/long-title-remediation/${stamp}.json`);
 
   if (LIST_ONLY) { console.log('\n  --list: nothing written.\n'); return; }
-  if (!APPLY) { console.log(`\n  DRY RUN — re-run with --apply to write ${plan.length} title(s).\n`); return; }
+  if (!APPLY) { console.log(`\n  DRY RUN — re-run with --apply to write ${plan.length} title(s) (${trims.length} trim, ${mints.length} mint).\n`); return; }
 
   let written = 0;
   for (const c of plan.slice(0, LIMIT)) {
     try {
       await upsertMetafield(c.resource, c.id, 'global', 'title_tag', c.proposed);
+      if (c.kind === 'article') recordMaterialEdit(c.handle, 'serp', 'remediate-long-titles');
       written++;
-      console.log(`  ✓ ${c.handle}`);
+      console.log(`  ✓ ${c.action === 'mint' ? 'minted ' : 'trimmed'} ${c.handle}`);
     } catch (e) {
       console.error(`  ✗ ${c.handle}: ${e.message}`);
     }
   }
   console.log(`\n  Wrote ${written} title(s).\n`);
+  if (AUTO) {
+    const lines = [
+      `Titles written: ${written} (rendered over ${MAX}: ${over.length}; edit-gate held ${editGateHeld.length}; CTR experiment held ${auto.ctrHeld.length})`,
+      ...plan.slice(0, LIMIT).map((c) => `  ${c.handle}: ${c.proposed}${c.autoRewritten ? ' (rewritten by model)' : ''}`),
+      ...auto.unresolved.map((u) => `  skipped ${u.handle}: ${u.why}`),
+    ];
+    await notify({ subject: `Long titles: ${written} fixed`, body: lines.join('\n'), status: 'success', category: 'technical-seo' });
+  }
+}
+
+/**
+ * --auto review. Mutates `plan` in place: drops CTR-protected articles and
+ * unresolvable fragments, and replaces fragmentary trims with a model rewrite.
+ */
+async function autoReview(plan) {
+  const protectedHandles = ctrProtectedHandles(ROOT);
+  const ctrHeld = []; const rewritten = []; const unresolved = [];
+  const keep = [];
+  const env = {};
+  try {
+    for (const l of readFileSync(join(ROOT, '.env'), 'utf8').split('\n')) {
+      const i = l.indexOf('='); if (i > 0 && !l.trim().startsWith('#')) env[l.slice(0, i).trim()] = l.slice(i + 1).trim();
+    }
+  } catch { /* subscription transport needs no key */ }
+  const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
+
+  for (const c of plan) {
+    if (c.kind === 'article' && protectedHandles.has(c.handle)) { ctrHeld.push(c.handle); continue; }
+    if (c.override) { keep.push(c); continue; }
+    const source = c.titleTag ?? c.fallback ?? '';
+    const budget = MAX - [...renderTitle('x')].length + 1;
+    const prompt = [
+      'A page title on realskincare.com is too long for Google, so it was shortened mechanically. Decide whether the short version reads as a complete, natural title.',
+      `Full title: ${source}`,
+      `Shortened: ${c.proposed}`,
+      '',
+      'If the shortened version is a complete phrase a person would write, reply exactly: KEEP',
+      `Otherwise reply with ONE better title of at most ${budget} characters that keeps the main topic words (the part before any colon), uses only numbers from the full title, makes no health claims, and uses no em dashes. Reply with only the title.`,
+    ].join('\n');
+    let reply = '';
+    try {
+      const res = await client.messages.create({ model: LLM_MODELS.standard, max_tokens: 100, messages: [{ role: 'user', content: prompt }] });
+      if (res.stop_reason === 'max_tokens') throw new Error('reply truncated');
+      reply = (res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim().replace(/^["']|["']$/g, '');
+    } catch (e) { unresolved.push({ handle: c.handle, why: `model call failed: ${e.message}` }); continue; }
+    if (/^KEEP\b/i.test(reply)) { keep.push(c); continue; }
+    const problems = titleRewriteProblems(reply, source);
+    const health = checkSeoCopy({ title: reply });
+    if (!health.ok) problems.push(`health gate: ${health.blocking.map((b) => b.match).join(', ')}`);
+    if (problems.length) { unresolved.push({ handle: c.handle, why: `rewrite "${reply}" rejected: ${problems.join('; ')}` }); continue; }
+    rewritten.push({ handle: c.handle, from: c.proposed, to: reply });
+    keep.push({ ...c, proposed: reply, proposedRendered: renderTitle(reply), autoRewritten: true });
+  }
+  plan.length = 0;
+  plan.push(...keep);
+  for (const r of rewritten) console.log(`  AUTO rewrite ${r.handle}: "${r.from}" → "${r.to}"`);
+  for (const u of unresolved) console.log(`  AUTO skip ${u.handle}: ${u.why}`);
+  if (ctrHeld.length) console.log(`  AUTO held (CTR experiment): ${ctrHeld.join(', ')}`);
+  return { ctrHeld, rewritten, unresolved };
 }
 
 if (isDirectRun(import.meta.url)) {

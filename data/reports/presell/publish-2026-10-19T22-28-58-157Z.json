@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-19T22:28:58.157Z",
+  "apply": false,
+  "argv": [
+    "--live",
+    "--page"
+  ],
+  "head": "4e4638cf4f2d15dd153c1886f88fe61723b71182",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 18221
+      },
+      {
+        "key": "assets/presell.css",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 10245
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 4063
+      },
+      {
+        "key": "templates/page.presell-cream.json",
+        "before": null,
+        "verdict": "write",
+        "currentBytes": null,
+        "targetBytes": 8431
+      },
+      {
+        "key": "templates/product.landing-page-cream.json",
+        "before": "a1a6a181",
+        "verdict": "write",
+        "currentBytes": 74293,
+        "targetBytes": 74934
+      }
+    ]
+  },
+  "page": {
+    "before": null
+  }
+}

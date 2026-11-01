@@ -1,0 +1,77 @@
+{
+  "page": "Holiday gift guide listicle (pre-sell, November 2026)",
+  "handle": "clean-gift-guide",
+  "eyebrow": "Holiday gift guide 2026",
+  "headline": "{count} gifts for people who read the label",
+  "intro": "Every gift here is made with coconut oil and a short ingredient list you can read in one breath. Each pick links to its own page, where you choose the scent.",
+  "heroAlt": "Real Skin Care coconut body care gifts",
+  "picks": [
+    {
+      "handle": "gift-box",
+      "title": "The Gift Box",
+      "forWho": "For the friend who reads every label",
+      "body": "Four everyday basics, packed in our gift box: body lotion, lip balm, bar soap and deodorant. Choose a kit: Gentle is mostly unscented, Calm leans on lavender, and Fresh brings coconut, tangerine and tea tree.",
+      "button": "See the Gift Box"
+    },
+    {
+      "handle": "coconut-moisturizer-4-pack",
+      "title": "Four jars of body cream: keep one, give three",
+      "forWho": "For a few people at once",
+      "body": "Our Coconut Moisturizer starts from a 7-ingredient base and goes on thick enough for heels, hands and elbows, the spots that dry out first in winter. Four jars covers you and three people on your list.",
+      "button": "See the 4-pack"
+    },
+    {
+      "handle": "head-to-toe",
+      "title": "Head-to-Toe: one of everything",
+      "forWho": "For someone switching their whole routine",
+      "body": "Seven products in one order: body lotion, body cream, deodorant, toothpaste, bar soap, lip balm and foaming hand soap. Choose the Gentle kit or the Fresh kit.",
+      "button": "See Head-to-Toe"
+    },
+    {
+      "handle": "sensitive-skin-starter-set",
+      "title": "The Sensitive Skin Set",
+      "forWho": "For the person who skips anything scented",
+      "body": "Our Pure Unscented body cream and body lotion together. No essential oils and no added fragrance, just the base ingredients, so it suits sensitive skin.",
+      "button": "See the set"
+    },
+    {
+      "handle": "coconut-moisturizer",
+      "title": "One jar of body cream",
+      "forWho": "For a small gift that still feels generous",
+      "body": "A 4oz jar of Coconut Moisturizer in the scent of your choice. It goes on like butter and works in without a slick film, and used every night one jar lasts about a month.",
+      "button": "See the body cream"
+    },
+    {
+      "handle": "coconut-oil-lip-balm",
+      "title": "A lip balm four-pack for the stockings",
+      "forWho": "Stocking stuffer",
+      "body": "Four coconut oil lip balms in one pack. Pick a single flavor or the Variety Pack and split them across four stockings. Safe for kids, too.",
+      "button": "See the lip balm"
+    }
+  ],
+  "reviewsHeading": "What customers say",
+  "reviews": [
+    {
+      "quote": "I'm obsessed with all things Real Skin Care. This is THE moisturizer for Wisconsin winters for my whole family. It's long lasting and doesn't feel greasy. We use it all over and love it!",
+      "name": "Nicole H.",
+      "judgemeId": 759721043
+    },
+    {
+      "quote": "Incredibly soft. Doesn’t make you feel greasy or sticky after use. It makes you feel incredibly moisturized.",
+      "name": "Ella M.",
+      "judgemeId": 514327202
+    },
+    {
+      "quote": "The smell is perfect & it just glides onto the skin like butter! It doesnt leave a greasy residue like some other brands!",
+      "name": "Mellisa H.",
+      "judgemeId": 605921156
+    }
+  ],
+  "notesHeading": "Good to know",
+  "notes": [
+    "Orders over $45 ship free in the US.",
+    "Beeswax firms up in the cold. Warm a little cream between your fingers and it spreads easily.",
+    "Sold-out gifts drop off this list on their own, so everything you see here can ship."
+  ],
+  "closing": "Every order has our 30-day guarantee. If it isn't loved, email us within 30 days and we will refund you. Nothing needs to be sent back."
+}

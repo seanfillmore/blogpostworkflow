@@ -1,6 +1,6 @@
 import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { previewBody, formatBodyHtml, buildDigestHtml, log } from '../../agents/daily-summary/index.js';
@@ -18,7 +18,7 @@ test('buildDigestHtml: surfaces revenue + failures, drops the routine listing', 
     window: { start: '2026-06-21', end: '2026-07-18' },
     top_revenue: [{ revenue: 132, path: '/', conversions: 5, sessions: 45 }],
   };
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], seoImpact, null);
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], seoImpact, null);
 
   assert.ok(html.includes('Organic Revenue'), 'revenue block shown');
   assert.ok(html.includes('$157'), 'revenue number shown');
@@ -51,7 +51,7 @@ const CLUSTER_DIGEST = {
 };
 
 test('the digest prints what each category sold, not what landed on pages named after it', () => {
-  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('Sold by category'), 'the label says which question it answers');
   assert.ok(html.includes('$755.30'), 'all-channel product revenue shown');
   assert.ok(html.includes('$357.00'), 'organic product revenue shown');
@@ -64,48 +64,50 @@ test('a report written before product attribution still renders its old cluster 
       product_organic_revenue, product_revenue_all_channels, ...c
     }) => c),
   };
-  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, [], 'https://dash', [], legacy, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-08-22', [], [], [], null, null, null, null, 'https://dash', [], legacy, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('By cluster (entry-page organic)'), 'labelled as the entry-page view');
   assert.ok(html.includes('$313.49'));
   assert.ok(!html.includes('Sold by category'));
 });
 
-// buildDigestHtml takes 13 injected arguments but ALSO read five paths off disk
+// buildDigestHtml takes 12 injected arguments but ALSO read five paths off disk
 // under the repo root. That made it machine-dependent: this test passed on a laptop
 // with no data/reports and failed on the server, where those files exist — the same
 // inputs producing different HTML. dataRoot makes the last five inputs injectable
-// like the other thirteen, so both directions below are pinned on any machine.
+// like the other twelve, so both directions below are pinned on any machine.
 const emptyRoot = mkdtempSync(join(tmpdir(), 'digest-empty-'));
 
 test('buildDigestHtml: quiet day collapses to a single "nothing moved" line', () => {
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: emptyRoot });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: emptyRoot });
   assert.ok(html.includes('Nothing moved the needle'), 'quiet-day message shown');
   assert.ok(/1 task ran/.test(html), 'activity line still present');
 });
 
-// LLM spend was the last read escaping dataRoot: readUsage/listUsageDates resolve a
-// module-level USAGE_DIR, so the cost section rendered from the real repo no matter
-// what root was passed. On the server that section fires (spend is over the $20/wk
-// target), which kept the quiet-day assertion above failing there even after the
-// other seven reads were injectable.
-test('buildDigestHtml: LLM cost is read from the injected root, and only shows over budget', () => {
+// THE LLM COST BLOCK WAS REMOVED 2026-09-08, on the operator's instruction: the
+// fleet moved off per-token API billing onto the monthly subscription, so agent run
+// cost no longer constrains any decision. This test used to assert the block
+// RENDERED; it now asserts it does not, so the section cannot be reinstated without
+// somebody deliberately deleting this.
+//
+// Its last real appearance was also a false alarm, which is why nobody should miss
+// it: the 2026-09-07 digest warned "$34.03/wk ⚠️ over $20 target" when $11.54 of the
+// $17.19 day was ONE hand-run local script. A budget line that counts a human's
+// ad-hoc run against an unattended-fleet target cannot be read correctly.
+test('buildDigestHtml: the LLM cost block is gone, even with over-budget spend on disk', () => {
   const root = mkdtempSync(join(tmpdir(), 'digest-cost-'));
   const usage = join(root, 'data', 'reports', 'llm-usage');
   mkdirSync(usage, { recursive: true });
-  // Token fields are deliberately omitted. recordCost recomputes cost from tokens
-  // whenever any token field is present and only falls back to est_cost_usd when
-  // none are — so a record carrying both would price off the model table and make
-  // this fixture's total depend on pricing data that changes.
   const rec = (cost) => JSON.stringify({ ts: '2026-07-20T10:00:00Z', agent: 'spendy', model: 'claude-opus-5', est_cost_usd: cost });
-  // $30 in one day → a run-rate far above the $20/wk target.
+  // $30 in one day — a run-rate far above the old $20/wk target, so this fixture
+  // would have rendered the block under every previous version of the digest.
   writeFileSync(join(usage, '2026-07-20.jsonl'), [rec(30)].join('\n') + '\n');
 
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: root });
 
-  assert.ok(html.includes('LLM Cost'), 'over-budget spend from the injected root renders');
-  assert.ok(!html.includes('Nothing moved the needle'), 'over-budget spend is a needle-mover');
+  assert.ok(!html.includes('LLM Cost'), 'the cost block must not render');
+  assert.ok(!html.includes('over $20 target'), 'the budget verdict must not render');
 });
 
 // The counterpart. This is exactly the server's state — data/meta-tests holds 9
@@ -119,7 +121,7 @@ test('buildDigestHtml: an active A/B test makes the day non-quiet', () => {
   }));
 
   const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-07-20T22:00:00Z' }];
-  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, [], 'https://dash', [], null, null, { dataRoot: root });
+  const html = buildDigestHtml('2026-07-20', entries, [], [], null, null, null, null, 'https://dash', [], null, null, { dataRoot: root });
 
   assert.ok(html.includes('Meta A/B Tests'), 'the on-disk test renders its section');
   assert.ok(/1 active test\b/.test(html), 'the active count comes from disk');
@@ -233,4 +235,375 @@ test('log writes exactly one line per call', () => {
   log('Daily summary sent.', (l) => written.push(l));
   assert.equal(written.length, 1);
   assert.match(written[0], /^\[\d{4}-\d{2}-\d{2}T[\d:.]+Z\] Daily summary sent\.$/);
+});
+
+// ── the Optimization Queue is NOT a human's to-do list ───────────────────────
+//
+// The digest used to render every `status: 'pending'` item in
+// data/performance-queue/ as an indigo "N items ready for review" block headed
+// "Approve on the dashboard to push the updated content to Shopify".
+//
+// `agents/queue-autoapply` took that chore over: it runs daily with --apply as
+// scheduler step 4d and drains the queue unattended. The block was never
+// removed, and the cron clock guarantees it advertises work a robot finishes
+// two hours later — performance-engine FILLS the queue at 07:30 UTC,
+// daily-summary READS it at 13:00 UTC, queue-autoapply DRAINS it at 15:00 UTC.
+//
+// Measured on production 2026-09-18, the five rows that morning's email
+// presented as "ready for review" were: one phantom (best-sls-free-toothpaste-2025,
+// a post consolidated away whose Shopify article no longer exists, re-queued
+// nightly and dismissed the same afternoon), three sitting on the self-clearing
+// 30-day cooldown, and one genuinely parked item (gate_attempts: 3) that the
+// block gave no distinguishing treatment. Four of five were never a human's task.
+//
+// Sean, verbatim: "I don't want to see the optimization queue. That should be
+// handled automatically and should never surface as a manual task."
+//
+// This is a SOURCE SCAN rather than a render assertion because the strongest
+// guarantee available is that the digest no longer reads the queue at all —
+// `buildDigestHtml` does not take a perfQueue argument and `main()` does not
+// load one. A render test could only pin the shape of a call that cannot be
+// made. Same idiom as tests/lib/post-meta-readers-merged.test.js.
+test('the daily digest never reads or renders the optimization queue', () => {
+  const src = readFileSync(
+    join(import.meta.dirname, '..', '..', 'agents', 'daily-summary', 'index.js'),
+    'utf8',
+  );
+  // Strip comments: the explanatory note above the former block names these
+  // strings on purpose, and the rule documenting itself is not a regression.
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*)/.test(l))
+    .join('\n');
+
+  assert.ok(!/performance-queue/.test(code), 'must not read data/performance-queue/');
+  assert.ok(!/loadPerformanceQueue/.test(code), 'the loader must stay deleted');
+  assert.ok(!/Optimization Queue/.test(code), 'no Optimization Queue heading');
+  assert.ok(!/ready for review/.test(code), 'nothing advertised as awaiting review');
+  assert.ok(!/Approve on the dashboard/.test(code), 'no approve-on-the-dashboard instruction');
+  assert.ok(!/#optimize/.test(code), 'no deep link into the queue tab');
+});
+
+test('buildDigestHtml no longer accepts a performance queue', () => {
+  // Arity is the structural half of the guard above: re-adding the parameter
+  // is the first move anyone reinstating the block would make.
+  assert.equal(buildDigestHtml.length, 9, 'targetDate..dashboardUrl, then defaulted args');
+});
+
+test('a day whose only activity is a pending queue reads as a quiet day', () => {
+  // Regression guard on the send gate: `perfQueue.length` used to be one of the
+  // conditions that made a day count as "something happened". With the block
+  // gone, a queue-only day has nothing to show a human, so it must fall through
+  // to the quiet-day copy rather than emailing an empty shell.
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.match(html, /Nothing moved the needle yesterday/, 'quiet-day copy shown');
+});
+
+test('blocked posts still reach the human — dropping the queue block kept that arm', () => {
+  // decisionsBody was `queueSection + blockedSection`. Removing the queue half
+  // must not take the blocked-post half with it: a post hard-blocked in the
+  // editorial gate genuinely does need a person, and nothing else reports it.
+  const blocked = [{
+    slug: 'some-post',
+    title: 'A Hard-Blocked Post',
+    blockers: 'no_product_cta',
+    reportPath: 'data/posts/some-post/editor-report.md',
+  }];
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], blocked, null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.ok(html.includes('A Hard-Blocked Post'), 'blocked posts still surface');
+  assert.ok(html.includes('Action Required'), 'under its own Action Required heading');
+});
+
+// ── the A/B block must state the VERDICT, not who "wins" ─────────────────────
+//
+// Two defects, both visible in the 2026-09-18 email:
+//
+// 1. "3 active tests running" sat directly above FIVE rows that were
+//    recentConcluded — two different sets, no label between them, so the rows
+//    read as though they were the active tests.
+//
+// 2. Every concluded row rendered `Variant <winner> wins`, derived from
+//    `winner` alone. That collapses `flat` and `regressed` into one label,
+//    because decideOutcome sets winner='A' for both. Measured on the real
+//    production entries, EVERY concluded row was mislabelled:
+//
+//      fluoride-free-toothpaste   delta  0.0000  → "Variant A wins"
+//      mens-natural-soap          delta  0.0000  → "Variant A wins"
+//      natural-body-lotion        delta  0.0000  → "Variant A wins"
+//      sls-free-toothpaste        delta  0.0000  → "Variant A wins"
+//      unscented-lotion           delta +0.0009  → "Variant B wins" (GREEN)
+//      vegan-body-lotion          delta +0.0006  → "Variant B wins" (GREEN)
+//      best-non-toxic-body-lotion delta -0.0007  → "Variant A wins"
+//      coconut oil as deodorant   delta -0.0126  → "Variant A wins"
+//
+//    The last one is a REAL regression past the 0.5pp dead-band, rendered as a
+//    win. The two greens are noise inside the band, rendered as the rewrite
+//    working — which is exactly what `npm run ctr-audit` says is not true of
+//    any test on record.
+//
+// The dead-band is imported from lib/meta-ab-decision.js (classifyCtrDelta),
+// never re-declared here.
+const AB_ROOT_FIXTURES = [
+  // exactly zero — the four-of-five case
+  { slug: 'fluoride-free-toothpaste', status: 'concluded', winner: 'A', currentDelta: 0, concludedDate: '2026-08-09' },
+  // positive but inside the ±0.5pp noise floor
+  { slug: 'unscented-lotion', status: 'concluded', winner: 'B', currentDelta: 0.0009195065586043028, concludedDate: '2026-08-09' },
+  // a genuine regression, well past the band
+  { slug: 'coconut-oil-as-deodorant', status: 'concluded', winner: 'A', currentDelta: -0.0126, concludedDate: '2026-08-08' },
+  // an active test, to pin the active/concluded split
+  { slug: 'foaming-hand-soap', status: 'active', currentDelta: -0.002016848718497894 },
+];
+
+function abDigest() {
+  const root = mkdtempSync(join(tmpdir(), 'digest-ab-verdict-'));
+  mkdirSync(join(root, 'data', 'meta-tests'), { recursive: true });
+  for (const t of AB_ROOT_FIXTURES) {
+    writeFileSync(join(root, 'data', 'meta-tests', `${t.slug}.json`), JSON.stringify(t));
+  }
+  const entries = [{ subject: 'Rank Tracker completed', status: 'success', ts: '2026-09-17T22:00:00Z' }];
+  return buildDigestHtml(
+    '2026-09-17', entries, [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: root },
+  );
+}
+
+// Scoped to the A/B section: the digest's CSS legitimately carries a
+// `quick-wins` class for an unrelated block, so asserting over the whole
+// document would fail on a feature this change has nothing to do with.
+function abSection(html) {
+  const start = html.indexOf('Meta A/B Tests');
+  assert.ok(start > -1, 'the A/B section must render');
+  const end = html.indexOf('<div class="footer">', start);
+  return html.slice(start, end > -1 ? end : undefined);
+}
+
+test('the A/B block never calls a dead-band delta a win', () => {
+  const block = abSection(abDigest());
+  assert.ok(!/wins/i.test(block), 'the word "wins" must not appear in the A/B block');
+  assert.ok(!/Variant A/i.test(block), 'no bare "Variant A" verdict');
+  assert.ok(!/Variant B/i.test(block), 'no bare "Variant B" verdict');
+});
+
+test('a delta of exactly 0.00pp reads as no change', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('fluoride-free-toothpaste')) || html;
+  assert.match(row, /no change/i, 'a zero delta is no change, not a win');
+});
+
+test('a noise-level positive delta is not reported as an improvement', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('unscented-lotion')) || html;
+  assert.match(row, /no change/i, '+0.09pp is inside the ±0.5pp dead band');
+  assert.ok(!/improved/i.test(row), 'must not claim the rewrite improved anything');
+});
+
+test('a real regression is reported as a regression', () => {
+  const html = abDigest();
+  const row = html.split('\n').find((l) => l.includes('coconut-oil-as-deodorant')) || html;
+  assert.match(row, /regressed/i, '-1.26pp is past the dead band and must say so');
+});
+
+test('the active count is labelled separately from the concluded rows', () => {
+  const html = abDigest();
+  assert.match(html, /1 active test\b/, 'active count still shown');
+  assert.match(html, /concluded/i, 'the concluded rows carry their own label');
+  // The active test must not appear as a concluded row.
+  const concludedHalf = html.slice(html.search(/concluded/i));
+  assert.ok(!concludedHalf.includes('foaming-hand-soap'), 'an ACTIVE test is never listed as concluded');
+});
+
+test('the noise floor is stated so a reader can judge the deltas', () => {
+  const html = abDigest();
+  assert.match(html, /0\.5pp/, 'the dead-band width is named in the block');
+});
+
+// ── decisions the AUTOMATION has given up on ────────────────────────────────
+//
+// PR #907 removed the Optimization Queue block: the digest stopped reading
+// data/performance-queue/ because it was printing a to-do list of work
+// queue-autoapply finishes two hours later, every morning.
+//
+// This is the narrow case that survived. An item where the robot has
+// permanently abandoned the work is not routine — no run will ever clear it,
+// and before this it was indistinguishable in the report from an item merely
+// waiting out a 30-day cooldown.
+//
+// Sean: "That should surface as a decision that needs to be made by me."
+//
+// TWO PROPERTIES KEEP THIS FROM BECOMING THE OLD BLOCK AGAIN:
+//   1. It reads queue-autoapply's REPORT — what the robot says it gave up on —
+//      never the queue directory, which is the fleet's workspace.
+//   2. Only `needs_decision[]` renders. A cooldown, an over-cap item and an
+//      unresolvable product count are absent from that array by construction.
+//
+// The fixture is the real production item, 2026-09-18: one of four pending.
+const DECISION_ROOT = mkdtempSync(join(tmpdir(), 'digest-decisions-'));
+function withDecisions(needsDecision) {
+  const dir = join(DECISION_ROOT, String(Math.random()).slice(2));
+  mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+  writeFileSync(
+    join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+    JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: needsDecision }),
+  );
+  return dir;
+}
+
+const STUCK = [{
+  slug: 'seo-opp-best-organic-toothpaste-what-to-look-for-why-it-matters',
+  title: 'SEO opportunity: best organic toothpaste',
+  trigger: 'seo-opportunity',
+  created_at: '2026-08-10T14:10:08Z',
+  decision: 'editor-gate-exhausted',
+  reason: 'editor gate has failed 3 times — needs a human',
+  label: 'The editor gate failed 3 times — rewrite it, or write it off',
+  gate_attempts: 3,
+  last_gate_reason: 'the factual concerns blocker must be resolved: missing citations for USDA 95%/70% thresholds.',
+}];
+
+test('an item the automation gave up on reaches the human', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: withDecisions(STUCK) },
+  );
+  assert.ok(html.includes('SEO opportunity: best organic toothpaste'), 'the item is named');
+  assert.match(html, /rewrite it, or write it off/, 'the DECISION is stated, not just the item');
+  assert.match(html, /failed 3 times/i, 'why the automation stopped');
+  assert.ok(!/ready for review/i.test(html), 'never framed as a review queue');
+  assert.ok(!/Approve on the dashboard/i.test(html), 'never framed as an approval');
+});
+
+test('the block is silent when nothing is stuck', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: withDecisions([]) },
+  );
+  assert.ok(!/gave up|Needs your decision/i.test(html), 'no empty section');
+  assert.match(html, /Nothing moved the needle yesterday/, 'an empty queue is a quiet day');
+});
+
+test('a missing queue-autoapply report is silent, not an error', () => {
+  const html = buildDigestHtml(
+    '2026-09-17', [], [], [], null, null, null, null,
+    'https://dash', [], null, null, { dataRoot: emptyRoot },
+  );
+  assert.match(html, /Nothing moved the needle yesterday/);
+});
+
+test('the digest still never reads the performance queue directly', () => {
+  // The guard from PR #907, restated against this change: surfacing stuck items
+  // must come from the agent's report, never from the queue directory.
+  const src = readFileSync(
+    join(import.meta.dirname, '..', '..', 'agents', 'daily-summary', 'index.js'),
+    'utf8',
+  );
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split('\n')
+    .filter((l) => !/^\s*(\/\/|\*)/.test(l))
+    .join('\n');
+  assert.ok(!/performance-queue/.test(code), 'must not read data/performance-queue/');
+  assert.ok(!/ready for review/.test(code), 'the old framing must not return');
+});
+
+// ── the indexing-fixer is the SECOND producer of that block ─────────────────
+//
+// Its submission-count escalation is the same class of finding as an exhausted
+// editor gate: once a post crosses two DELIVERED Indexing API submissions the
+// fixer stamps indexing_blocked and never submits that URL again, so no further
+// run can change the verdict.
+//
+// It reached a cron log and nothing else. Measured on production 2026-09-19:
+// five posts, re-stamped every morning since 2026-08-30, named in no digest
+// ever — and a notify body alone would not have fixed it, because previewBody()
+// cuts an entry at eight lines and that run's body carried 14 [tier1] lines
+// before anything else.
+function withIndexingDecisions(needsDecision, queueDecisions = []) {
+  const dir = join(DECISION_ROOT, String(Math.random()).slice(2));
+  mkdirSync(join(dir, 'data', 'reports', 'indexing-fixer'), { recursive: true });
+  writeFileSync(
+    join(dir, 'data', 'reports', 'indexing-fixer', 'latest.json'),
+    JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: needsDecision }),
+  );
+  if (queueDecisions.length) {
+    mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+    writeFileSync(
+      join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+      JSON.stringify({ generated_at: new Date().toISOString(), needs_decision: queueDecisions }),
+    );
+  }
+  return dir;
+}
+
+const ESCALATED = [{
+  slug: 'healthiest-toothpaste',
+  title: 'The Healthiest Toothpaste',
+  trigger: 'indexing: crawled_not_indexed',
+  created_at: '2026-08-30T03:31:00Z',
+  decision: 'indexing-api-exhausted',
+  reason: '3 prior Indexing API submissions, still not indexed',
+  label: 'Google has ignored repeated Indexing API submissions — investigate the page, or accept it stays unindexed',
+  last_gate_reason: '3 Indexing API submissions were delivered to Google and the page is still not indexed. Nothing in this pipeline will submit it again.',
+}];
+
+const digestFor = (root) => buildDigestHtml(
+  '2026-09-19', [], [], [], null, null, null, null,
+  'https://dash', [], null, null, { dataRoot: root },
+);
+
+test('an indexing escalation reaches the human', () => {
+  const html = digestFor(withIndexingDecisions(ESCALATED));
+  assert.ok(html.includes('The Healthiest Toothpaste'), 'the page is named');
+  assert.match(html, /investigate the page, or accept it stays unindexed/, 'the DECISION is stated');
+  assert.match(html, /still not indexed/i, 'why the automation stopped');
+  assert.match(html, /Needs your decision/i);
+});
+
+test('both producers render through ONE section, not two', () => {
+  const html = digestFor(withIndexingDecisions(ESCALATED, STUCK));
+  assert.equal((html.match(/Needs your decision/g) || []).length, 1, 'one block, not a parallel one');
+  assert.match(html, /2 items the automation gave up on/);
+  assert.ok(html.includes('The Healthiest Toothpaste'));
+  assert.ok(html.includes('SEO opportunity: best organic toothpaste'));
+});
+
+test('an escalation still renders when the queue report is absent', () => {
+  // The two reports are independent; one missing must not hide the other.
+  const html = digestFor(withIndexingDecisions(ESCALATED));
+  assert.ok(html.includes('The Healthiest Toothpaste'));
+});
+
+test('an unreadable report hides neither the other producer nor the digest', () => {
+  const dir = withIndexingDecisions(ESCALATED);
+  mkdirSync(join(dir, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+  writeFileSync(join(dir, 'data', 'reports', 'queue-autoapply', 'latest.json'), '{ not json');
+  const html = digestFor(dir);
+  assert.ok(html.includes('The Healthiest Toothpaste'), 'a broken sibling report must not swallow this one');
+});
+
+test('an empty indexing escalation set is silent', () => {
+  const html = digestFor(withIndexingDecisions([]));
+  assert.ok(!/Needs your decision/i.test(html), 'no empty section');
+});
+
+test('a flop the subject counts as "to decide" is rendered in the body (2026-10-02 regression)', () => {
+  const pp = { reviews_today: 0, action_required: [
+    { slug: 'olive-oil-soap', title: 'Olive Oil Soap', milestone: 90, verdict: 'LOW_DEMAND', reason: '87 impressions', action: 'no-demand', action_label: 'Almost no searches or visits: merge or remove', automated: false },
+    { slug: 'locked-winner', title: 'Locked Winner', milestone: 90, verdict: 'REFRESH', action: 'locked', action_label: 'Locked winner', automated: true },
+  ] };
+  const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
+  assert.match(html, /Olive Oil Soap/);
+  assert.match(html, /1 need a decision, 1 handled automatically/);
+});
+
+test('flops that are all automated stay out of the body', () => {
+  const pp = { action_required: [{ slug: 'w', title: 'Locked Winner Only', milestone: 90, verdict: 'REFRESH', action: 'locked', automated: true }] };
+  const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
+  assert.doesNotMatch(html, /Locked Winner Only/);
 });

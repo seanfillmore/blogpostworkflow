@@ -33,6 +33,8 @@ import { occurrences, replaceAll } from '../../scripts/remediate-live-health-cla
 import { checkSeoCopy, findSeoCopyClaims, plainText } from '../../lib/seo-copy-health-gate.js';
 
 const ROOT = fileURLToPath(new URL('../..', import.meta.url));
+// Frozen copies of the articles the plan was written for: see tests/fixtures/remediation-mirrors/README.md.
+const FIXTURES = join(ROOT, 'tests', 'fixtures', 'remediation-mirrors');
 
 const fileEntries = () => PLAN.filter((e) => e.target.kind === 'file');
 const articleEntries = () => PLAN.filter((e) => e.target.kind === 'article');
@@ -244,7 +246,7 @@ test('advisory-tier vocabulary is never the reason for an edit', () => {
 
 test('every mirror target exists and is committed', () => {
   for (const e of fileEntries()) {
-    assert.ok(existsSync(join(ROOT, e.target.path)), `${e.id}: ${e.target.path} missing`);
+    assert.ok(existsSync(join(FIXTURES, e.target.path)), `${e.id}: ${e.target.path} missing`);
   }
 });
 
@@ -260,7 +262,7 @@ test('every mirror target exists and is committed', () => {
 // hazard: a compliance entry nobody can find and nobody can verify.
 test('every mirror carries EITHER the BEFORE or the AFTER, never a third value', () => {
   for (const e of fileEntries()) {
-    const html = readFileSync(join(ROOT, e.target.path), 'utf8');
+    const html = readFileSync(join(FIXTURES, e.target.path), 'utf8');
     assert.equal(
       occurrences(html, e.before) + occurrences(html, e.after),
       e.expectedOccurrences,
@@ -271,7 +273,7 @@ test('every mirror carries EITHER the BEFORE or the AFTER, never a third value',
 
 test('applying a mirror produces a file with the claim gone and nothing else moved', () => {
   for (const e of fileEntries()) {
-    const html = readFileSync(join(ROOT, e.target.path), 'utf8');
+    const html = readFileSync(join(FIXTURES, e.target.path), 'utf8');
     const pending = occurrences(html, e.before);
     const once = replaceAll(html, e.before, e.after);
     assert.equal(occurrences(once, e.before), 0, `${e.id}: BEFORE survived`);

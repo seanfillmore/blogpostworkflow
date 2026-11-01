@@ -1,0 +1,345 @@
+#!/usr/bin/env node
+// agents/ad-batch — one concept, 15-20 finished ad images.
+//
+// Sean writes the headlines; this tool only makes images. For each headline it picks
+// ~12 scenes from data/ad-batch/scenes.json (spread across families, least-recently
+// used first) plus a few generated fresh for that headline, renders each as a
+// finished 4:5 ad with the headline designed into the image (OpenAI gpt-image-2,
+// Gemini fallback), and checks every render letter by letter before keeping it.
+//
+// Usage:
+//   node agents/ad-batch/index.js <batch.json> [--dry-run] [--out <dir>]
+//                                 [--max-renders N] [--concurrency N] [--no-social]
+//                                 [--no-copy] [--rewrite-copy]
+//   node agents/ad-batch/index.js --copy-only "<batch dir>" [--rewrite-copy] [--landing <url>]
+//
+// Batch file:
+//   { "product": "coconut-moisturizer", "variant": "coconut-breeze",
+//     "count": 16, "form": null,
+//     "concepts": [ { "headline": "7 Simple Ingredients", "subhead": "vs 20+ in most lotions" } ],
+//     "scenes": [] }
+//
+// A set (2-3 products, one of each in every image):
+//   { "products": [ { "product": "coconut-lotion", "variant": "pure-unscented" },
+//                   { "product": "coconut-moisturizer", "variant": "pure-unscented" } ],
+//     "title": "Sensitive Skin Moisturizing Set", "concepts": [ ... ] }
+//
+// Optional "landing": a realskincare.com URL or path the ad sends people to (default: the
+// product page, or for a set the matching bundle in config/bundles.json).
+//
+// Output: Drive Real Skin Care/Creatives/01 Static Ads/<message>/<date> <product>/<NN headline>/
+// (falls back to ~/Desktop/Ad Batches/<date> <product>/ without that folder) — images, _rejected/,
+// _contact sheet.jpg, scenes.md — plus run.json for the batch. Nothing is published.
+// After rendering, meta-copy.md is written for the batch (agents/ad-batch/meta-copy.js):
+// 4 primary texts and 4 headlines, every claim sourced and gated, which the Social tab's
+// captions are grounded in. An existing meta-copy.md is never replaced without
+// --rewrite-copy; --no-copy skips the step; a copy failure never fails the batch.
+// --copy-only writes the copy for an existing batch folder from its run.json, rendering nothing.
+// At the end of a successful run the kept images are queued as PENDING items in the
+// dashboard's Social tab (scripts/social-queue-ingest.mjs); nothing posts until Sean
+// approves one. --no-social skips that; a failure there never fails the batch.
+// Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
+
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+import { GoogleGenAI } from '@google/genai';
+import Anthropic from '../../lib/anthropic.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
+import { isDirectRun } from '../../lib/is-direct-run.js';
+import { parseBatch, screenConcepts, resolveLineup } from './batch.js';
+import { selectLibraryScenes, customScenes, generateFreshScenes, LIBRARY_SHARE } from './scenes.js';
+import { buildPrompt } from './prompt.js';
+import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
+import { checkPrompt, parseCheck, decide } from './check.js';
+import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
+import {
+  DEFAULT_OUT_ROOT, messageFolder, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
+  ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
+} from './output.js';
+
+export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+export const DEFAULT_MAX_RENDERS = 120;
+export const DEFAULT_CONCURRENCY = 4;
+
+export function parseArgs(argv) {
+  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, social: true, copy: true, rewriteCopy: false, copyOnly: null, landing: null };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--dry-run') args.dryRun = true;
+    else if (a === '--no-social') args.social = false;
+    else if (a === '--no-copy') args.copy = false;
+    else if (a === '--rewrite-copy') args.rewriteCopy = true;
+    else if (a === '--copy-only') args.copyOnly = resolve(argv[++i] || '');
+    else if (a === '--landing') args.landing = argv[++i] || null;
+    else if (a === '--out') args.out = resolve(argv[++i]);
+    else if (a === '--max-renders') args.maxRenders = Number(argv[++i]);
+    else if (a === '--concurrency') args.concurrency = Number(argv[++i]);
+    else if (!a.startsWith('--') && !args.batchFile) args.batchFile = a;
+    else throw new Error(`ad-batch: unknown argument ${a}`);
+  }
+  if (args.copyOnly) {
+    if (args.batchFile) throw new Error('ad-batch: --copy-only takes a batch folder, not a batch file');
+    if (!args.copy) throw new Error('ad-batch: --copy-only and --no-copy contradict each other');
+    return args;
+  }
+  if (args.landing) throw new Error('ad-batch: --landing is for --copy-only; put "landing" in the batch file instead');
+  if (!args.batchFile) throw new Error('ad-batch: usage: node agents/ad-batch/index.js <batch.json> [--dry-run]');
+  if (!(args.maxRenders > 0)) throw new Error('ad-batch: --max-renders must be a positive number');
+  if (!(args.concurrency >= 1)) throw new Error('ad-batch: --concurrency must be at least 1');
+  return args;
+}
+
+function loadEnv() {
+  try {
+    return Object.fromEntries(readFileSync(join(ROOT, '.env'), 'utf8').split('\n')
+      .filter(l => l.includes('=') && !l.trim().startsWith('#'))
+      .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim().replace(/^["']|["']$/g, '')]; }));
+  } catch { return {}; }
+}
+
+/** Scenes for one concept: Sean's list if given, else library + fresh. */
+export async function planScenes({ batch, concept, product, library, usage, taken, anthropic }) {
+  if (batch.scenes.length) return { scenes: customScenes(batch.scenes, { typeStyle: batch.typeStyle }), degraded: null };
+  const style = batch.style || 'photo';
+  const nLib = Math.min(LIBRARY_SHARE, batch.count);
+  const lib = selectLibraryScenes({ library, category: product.category, n: nLib, usage, seed: concept.headline, exclude: taken, style });
+  const want = batch.count - lib.length;
+  const fresh = await generateFreshScenes({ anthropic, model: LLM_MODELS.standard, product, concept, chosen: lib, k: want, library, style });
+  let scenes = [...lib, ...fresh.scenes];
+  if (scenes.length < batch.count) {
+    // Planner short: top up from the library rather than ship a thin batch.
+    const more = selectLibraryScenes({ library, category: product.category, n: batch.count, usage, seed: concept.headline + '#topup', exclude: taken, style })
+      .filter(s => !scenes.some(x => x.id === s.id));
+    scenes = [...scenes, ...more.slice(0, batch.count - scenes.length)];
+  }
+  return { scenes, degraded: fresh.degraded };
+}
+
+async function refForCheck(path) {
+  return (await sharp(path).rotate().resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64');
+}
+
+async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style }) {
+  const img = (await sharp(imageBuf).resize(1200, 1200, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
+  const res = await anthropic.messages.create({
+    model: LLM_MODELS.standard,
+    max_tokens: 1500,
+    messages: [{ role: 'user', content: [
+      ...refsB64.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
+      { type: 'text', text: checkPrompt({ product, shown, style }) },
+    ] }],
+  });
+  return parseCheck((res.content || []).map(c => c.text || '').join(''));
+}
+
+async function pool(items, n, fn) {
+  const out = new Array(items.length);
+  let next = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
+    while (next < items.length) { const i = next++; out[i] = await fn(items[i], i); }
+  }));
+  return out;
+}
+
+/** Render one scene: up to two OpenAI tries, then Gemini; keep the first that passes. */
+export async function renderScene({ job, clients, budget, refCache, log }) {
+  const { product, concept, scene, form, style = 'photo' } = job;
+  const { prompt, refs, shown } = buildPrompt({ product, concept, scene, form, style });
+  const attempts = [];
+  let last = null;
+  for (const engine of ATTEMPTS) {
+    if (budget.used >= budget.max) { attempts.push({ engine, error: 'render budget exhausted' }); break; }
+    if (engine === 'gemini' && !clients.gemini) continue;
+    budget.used++;
+    let r;
+    try {
+      r = engine === 'openai'
+        ? await renderOpenAI({ apiKey: clients.openaiKey, prompt, refs })
+        : await renderGemini({ gemini: clients.gemini, prompt, refs });
+    } catch (err) {
+      attempts.push({ engine, error: err.message });
+      continue;
+    }
+    budget.costUsd += r.costUsd;
+    // A set is checked against one reference per product, in product order; a single
+    // product against its first reference.
+    const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
+    for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
+    let read = null;
+    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style }); }
+    catch (err) { log(`    check failed to run: ${err.message}`); }
+    const verdict = decide({ read, concept, product, shown });
+    attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });
+    last = { ...r, verdict };
+    if (verdict.ok) return { ok: true, model: r.model, buffer: r.buffer, reasons: [], notes: verdict.notes, attempts, shown, prompt };
+  }
+  return {
+    ok: false, model: last?.model || null, buffer: last?.buffer || null,
+    reasons: last ? last.verdict.reasons : attempts.map(a => a.error).filter(Boolean),
+    notes: last?.verdict.notes || [], attempts, shown, prompt,
+  };
+}
+
+/**
+ * Queue the batch's kept images in the Social tab. Never throws: the images are
+ * already on disk and a queue failure must not turn a paid batch into a failed run.
+ */
+export async function queueForSocial(batchDir, { log = console.log, ingest } = {}) {
+  const cmd = `node scripts/social-queue-ingest.mjs --batch "${batchDir}" --apply`;
+  try {
+    const run = ingest || (async (dir) => (await import('../../scripts/social-queue-ingest.mjs')).runIngest({ batchDir: dir, apply: true, log }));
+    log('\nQueueing the kept images for the Social tab...');
+    const s = await run(batchDir);
+    log(`Social queue: ${s.created.length} added, ${s.already.length} already queued${s.failed.length ? `, ${s.failed.length} FAILED (re-run: ${cmd})` : ''}.`);
+    return s;
+  } catch (err) {
+    log(`⚠ Could not queue this batch for the Social tab: ${err.message}\n  Re-run: ${cmd}`);
+    return null;
+  }
+}
+
+/** Write meta-copy.md for a batch folder and stamp the outcome into its run.json. Never throws. */
+export async function writeCopyForBatch(batchDir, record, { rewrite = false, log = console.log, deps } = {}) {
+  let outcome;
+  try {
+    outcome = await writeBatchMetaCopy({ batchDir, record, rewrite, deps, log });
+  } catch (err) {
+    outcome = { status: 'failed', reason: err.message };
+    log(`⚠ Meta copy step failed: ${err.message}`);
+  }
+  try {
+    const runPath = join(batchDir, 'run.json');
+    const run = existsSync(runPath) ? JSON.parse(readFileSync(runPath, 'utf8')) : record;
+    writeFileSync(runPath, JSON.stringify({ ...run, metaCopy: outcome }, null, 2));
+  } catch (err) { log(`⚠ could not record the meta copy outcome in run.json: ${err.message}`); }
+  return outcome;
+}
+
+/** --copy-only: the copy step alone, for an existing batch folder. No renders, no social. */
+export async function copyOnly(args, { log = console.log, deps } = {}) {
+  const runPath = join(args.copyOnly, 'run.json');
+  if (!existsSync(runPath)) throw new Error(`ad-batch: no run.json in ${args.copyOnly}`);
+  const run = JSON.parse(readFileSync(runPath, 'utf8'));
+  const record = args.landing ? { ...run, landing: args.landing } : run;
+  return writeCopyForBatch(args.copyOnly, record, { rewrite: args.rewriteCopy, log, deps });
+}
+
+export async function main(argv = process.argv.slice(2), { log = console.log, ingest, copyDeps } = {}) {
+  const args = parseArgs(argv);
+  const env = { ...loadEnv(), ...process.env };
+  if (args.copyOnly) {
+    const deps = copyDeps || await defaultMetaCopyDeps({ root: ROOT, anthropic: new Anthropic(), env });
+    return copyOnly(args, { log, deps });
+  }
+  const batch = parseBatch(JSON.parse(readFileSync(resolve(args.batchFile), 'utf8')));
+  const manifest = JSON.parse(readFileSync(join(ROOT, 'data/product-images/manifest.json'), 'utf8'));
+  const references = JSON.parse(readFileSync(join(ROOT, 'data/ad-batch/references.json'), 'utf8'));
+  const library = JSON.parse(readFileSync(join(ROOT, 'data/ad-batch/scenes.json'), 'utf8'));
+  const product = resolveLineup({ batch, manifest, references, imageRoot: join(ROOT, 'data/product-images') });
+
+  const { ok: concepts, skipped } = screenConcepts(batch.concepts);
+  for (const s of skipped) log(`⚠ skipped "${s.headline}": ${s.reasons.join('; ')}`);
+  if (!concepts.length) throw new Error('ad-batch: every concept failed the copy check; nothing to render');
+
+  if (!args.dryRun && !env.OPENAI_API_KEY) throw new Error('ad-batch: missing OPENAI_API_KEY in .env');
+  const anthropic = new Anthropic();
+  const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
+  const usage = loadUsage(args.out);
+  const taken = new Set();
+
+  log(`ad-batch: ${product.title}${product.variant ? ' / ' + product.variant : ''} · ${batch.style} · ${concepts.length} headline(s) × ${batch.count} scenes`);
+  const plans = [];
+  for (const concept of concepts) {
+    const { scenes, degraded } = await planScenes({ batch, concept, product, library, usage, taken, anthropic });
+    scenes.forEach(s => taken.add(s.id));
+    if (degraded) log(`  ⚠ "${concept.headline}": ${degraded}; topped up from the library`);
+    plans.push({ concept, scenes, degraded });
+  }
+
+  const totalRenders = plans.reduce((n, p) => n + p.scenes.length, 0);
+  if (args.dryRun) {
+    for (const p of plans) {
+      log(`\n"${p.concept.headline}"${p.concept.subhead ? ' / ' + p.concept.subhead : ''}${p.concept.cta ? ` [${p.concept.cta}]` : ''}`);
+      p.scenes.forEach((s, i) => log(`  ${String(i + 1).padStart(2)}. [${s.source}/${s.family}] ${s.id}: ${s.scene.slice(0, 90)}`));
+    }
+    log(`\nDry run: ${totalRenders} images planned (≥${totalRenders} renders, ≤${Math.min(totalRenders * ATTEMPTS.length, args.maxRenders)} with retries).`);
+    log('\nFirst prompt:\n' + buildPrompt({ product, concept: plans[0].concept, scene: plans[0].scenes[0], form: batch.form, style: batch.style }).prompt);
+    return { dryRun: true, plans };
+  }
+
+  const date = new Date().toLocaleDateString('en-CA'); // local YYYY-MM-DD: the folder is for Sean, not a log
+  // The creatives library files each batch under its message folder; an explicit
+  // --out (or the Desktop fallback) stays flat, as before.
+  const message = args.out === DEFAULT_OUT_ROOT && DEFAULT_OUT_ROOT.endsWith('01 Static Ads')
+    ? messageFolder({ message: batch.message, headlines: concepts.map(c => c.headline), productTitle: product.title })
+    : null;
+  if (message) log(`Filing under: ${message}`);
+  // A message that names no known folder falls through to the headline rules, by
+  // design (a typo must not invent a folder). Say so, or the batch is misfiled in
+  // silence: the 2026-10-27 Halloween cream set asked for "Halloween" and landed in
+  // "Soft, Hydrated Skin" because the product title matched "moistur".
+  if (message && batch.message && message.toLowerCase() !== String(batch.message).trim().toLowerCase()) {
+    log(`⚠ message "${batch.message}" is not a known folder (see MESSAGES in output.js); filed under "${message}" by the headline rules instead.`);
+  }
+  const batchDir = ensureDir(join(args.out, ...(message ? [message] : []), batchDirName({ date, product })));
+  const budget = { used: 0, max: args.maxRenders, costUsd: 0 };
+  const clients = { openaiKey: env.OPENAI_API_KEY, gemini, anthropic };
+  const refCache = new Map();
+  const record = {
+    generatedAt: new Date().toISOString(),
+    product: { handle: product.handle, variant: product.variant, title: product.title, items: product.items?.map(i => ({ handle: i.handle, variant: i.variant })) },
+    style: batch.style, landing: batch.landing, skipped, concepts: [],
+  };
+
+  for (const [ci, plan] of plans.entries()) {
+    const dir = ensureDir(join(batchDir, conceptDirName(ci, plan.concept)));
+    log(`\n▶ "${plan.concept.headline}" → ${dir}`);
+    const results = await pool(plan.scenes, args.concurrency, async (scene, i) => {
+      const r = await renderScene({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, clients, budget, refCache, log });
+      const name = imageName(i, scene);
+      if (r.buffer) {
+        const path = join(r.ok ? dir : ensureDir(join(dir, '_rejected')), name);
+        writeFileSync(path, r.buffer);
+        r.path = path;
+      }
+      log(`  ${r.ok ? '✅' : '❌'} ${name}${r.ok ? ` (${r.model})` : ` — ${r.reasons.join('; ')}`}`);
+      if (r.ok && scene.source === 'library') usage[scene.id] = new Date().toISOString();
+      return { ...r, scene, buffer: undefined };
+    });
+    const kept = results.filter(r => r.ok);
+    await writeContactSheet(dir, kept.map(r => ({ path: r.path, caption: `${r.scene.id}${r.notes.includes('hands in frame') ? ' ✋' : ''}` })));
+    writeFileSync(join(dir, 'scenes.md'), scenesMarkdown({ concept: plan.concept, results }));
+    record.concepts.push({
+      ...plan.concept, dir, degraded: plan.degraded, kept: kept.length, rejected: results.length - kept.length,
+      images: results.map(r => ({ scene: r.scene, ok: r.ok, model: r.model, file: r.path || null, reasons: r.reasons, notes: r.notes, attempts: r.attempts, shown: r.shown })),
+    });
+    log(`  ${kept.length}/${results.length} kept`);
+  }
+
+  saveUsage(args.out, usage);
+  record.renders = budget.used;
+  record.estimatedCostUsd = Math.round(budget.costUsd * 100) / 100;
+  const runPath = join(batchDir, 'run.json');
+  let prior = null;
+  if (existsSync(runPath)) { try { prior = JSON.parse(readFileSync(runPath, 'utf8')); } catch { prior = null; } }
+  writeFileSync(runPath, JSON.stringify(mergeRunRecord(prior, record), null, 2));
+  const kept = record.concepts.reduce((n, c) => n + c.kept, 0);
+  log(`\nDone: ${kept} images kept from ${budget.used} renders, est. $${record.estimatedCostUsd}. ${batchDir}`);
+  if (args.copy && kept > 0) {
+    let deps = copyDeps || null;
+    try { deps = deps || await defaultMetaCopyDeps({ root: ROOT, anthropic, env }); }
+    catch (err) { log(`⚠ Meta copy skipped, could not load its sources: ${err.message}`); }
+    record.metaCopy = deps
+      ? await writeCopyForBatch(batchDir, record, { rewrite: args.rewriteCopy, log, deps })
+      : { status: 'failed', reason: 'could not load the copy sources' };
+  }
+  if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });
+  return record;
+}
+
+if (isDirectRun(import.meta.url)) {
+  main().catch(err => { console.error(err.message); process.exit(1); });
+}

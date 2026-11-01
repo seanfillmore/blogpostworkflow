@@ -52,6 +52,7 @@ import {
   buildBreadcrumb,
 } from '../../lib/schema-builders.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -346,7 +347,7 @@ No markdown fences, no explanation outside the JSON.`;
 
   const message = await withRetry(
     () => client.messages.create({
-      model: 'claude-sonnet-4-6',
+      model: LLM_MODELS.standard,
       max_tokens: 4096,
       messages: [{ role: 'user', content: prompt }],
     }),

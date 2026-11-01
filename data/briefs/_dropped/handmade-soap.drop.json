@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "handmade-soap",
+  "keyword": "handmade soap",
+  "dropped_at": "2026-10-14T13:32:05.567Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-10-14T13-32-05-567Z-445196",
+  "reason": "post killed: low demand: 32 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "handmade-soap.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore handmade-soap",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

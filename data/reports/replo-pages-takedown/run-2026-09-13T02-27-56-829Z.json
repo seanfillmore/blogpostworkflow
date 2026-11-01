@@ -1,0 +1,55 @@
+{
+  "at": "2026-09-13T02:28:00.156Z",
+  "reason": "Operator 2026-09-12: \"Kill all the Replo pages\" / \"We are no longer using Replo\". No menu, body or theme links; 0 GSC clicks/impressions and 0 orders; body-lotion-ak had 57 GA4 sessions/90d (likely ad traffic), so every path 301s to the lotion PDP. Restore: pageUpdate isPublished true, then urlRedirectDelete.",
+  "target": "/products/coconut-lotion",
+  "results": [
+    {
+      "handle": "sales-page-v1",
+      "title": "5 Reason Landing v1",
+      "template": "replo.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91",
+      "wasPublished": true,
+      "unpublished": true,
+      "redirect": {
+        "id": "gid://shopify/UrlRedirect/461232079018",
+        "path": "/pages/sales-page-v1",
+        "target": "/products/coconut-lotion"
+      }
+    },
+    {
+      "handle": "5-reasons-health-conscious-people",
+      "title": "5 Reasons Health‑Conscious People",
+      "template": "replo.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91",
+      "wasPublished": true,
+      "unpublished": true,
+      "redirect": {
+        "id": "gid://shopify/UrlRedirect/461232111786",
+        "path": "/pages/5-reasons-health-conscious-people",
+        "target": "/products/coconut-lotion"
+      }
+    },
+    {
+      "handle": "lightweight-coconut-lotion",
+      "title": "Lightweight Coconut Lotion",
+      "template": "replo.0a3e8697-323d-4e20-a348-9e7ce6d58009",
+      "wasPublished": true,
+      "unpublished": true,
+      "redirect": {
+        "id": "gid://shopify/UrlRedirect/461232144554",
+        "path": "/pages/lightweight-coconut-lotion",
+        "target": "/products/coconut-lotion"
+      }
+    },
+    {
+      "handle": "body-lotion-ak",
+      "title": "Body Lotion - AK",
+      "template": "replo.c4df50a5-9548-4c2c-a740-703ce2552298",
+      "wasPublished": true,
+      "unpublished": true,
+      "redirect": {
+        "id": "gid://shopify/UrlRedirect/461232177322",
+        "path": "/pages/body-lotion-ak",
+        "target": "/products/coconut-lotion"
+      }
+    }
+  ]
+}

@@ -192,15 +192,41 @@ CAC target is $25. ✅ = ≥2× CAC (scalable on paid once tracking clears), �
 | **On-site cross-sell / cart** | All pump bundles, Bar Soap 4-Pack | — |
 | **Paid — held until tracking clears** | 90-Day Clean Swap, Coconut Reset, Head-to-Toe (the ✅ tier only) | **The single $30 lotion.** Every 🟡 and 🟠 bundle. |
 | **Amazon** | Nothing yet — see below | — |
-| **Any product-feed channel** (Google, Meta, Pinterest, TikTok, Buy Button) | ⚠️ **nothing — see below** | every componentized bundle |
+| **Any product-feed channel** (Google, Meta, Pinterest, TikTok, Buy Button) | ⚠️ **single-variant bundles only — see below** | every **multi-variant** componentized bundle |
 
 Two standing prohibitions, both already costing money:
 
 **Never send paid traffic to the single $30 lotion.** It produced 27 clicks and zero sales on generic lotion terms. It is an anchor SKU (3 × $30 + $28 = $118, which is what makes $99 read as an offer) and a reorder unit. `agents/shopping-calibrator` runs Sundays and auto-negates queries whose market clears below 60% of our price, which contains the bleeding but doesn't fix the destination.
 
-### ⚠️ Componentized bundles cannot enter *any* product-feed channel
+### ⚠️ *Multi-variant* componentized bundles cannot enter a product-feed channel
 
-Verified 2026-07-26. Publishing a componentized bundle is rejected outright by every channel that syncs a product feed — not just the two originally tested:
+**Corrected 2026-09-19 — this section previously said "componentized bundles cannot enter ANY product-feed channel", and that is measurably wrong at the edge. Being a bundle is not disqualifying; being a MULTI-VARIANT bundle is.**
+
+Shopify distinguishes a **fixed bundle** (one variant, one fixed component list) from a **variant-fixed bundle** (several variants, each with its own component list). Feed channels refuse the second class and accept the first — which is exactly what the error string names.
+
+**Measured 2026-09-19 by attempting all 12 live bundles against Facebook & Instagram**, one at a time:
+
+| | variants | result |
+|---|--:|---|
+| `sensitive-skin-starter-set` | **1** | ✅ **PASS** — live on the channel, and it reached the Meta catalog (34 → 35 items) within minutes |
+| the other 11 | 2–5 | ❌ all refused, identical `userError`, no variation |
+
+`head-to-toe` and `99-coconut-reset-digital` are both **2-variant** bundles and both were refused, so the line sits between 1 and 2 variants.
+
+**Three causes the data rules out:**
+- **Not component count.** `head-to-toe` carries 7 components per variant and fails; the passing product carries 2.
+- **Not the "variety — one of each" variant.** `coconut-hand-soap-2-pack` and `-4-pack` have no variety variant at all and still fail.
+- **Not componentization as such.** The passing product *is* componentized (`hasVariantsThatRequiresComponents: true`).
+
+Independent corroboration, no write required: `sensitive-skin-starter-set` has been published to **Google & YouTube since 2026-08-18**, predating this work — so a single-variant fixed bundle is accepted by a second feed channel too.
+
+A rejection is a **true no-op**: the Meta catalog count was identical before and after 11 failed attempts, and `resourcePublicationsV2` showed zero publication deltas across all 12 products. Probing is therefore cheap and safe.
+
+**`config/bundles.json`'s roster and `scripts/build-bundle.mjs`'s `PUBLICATIONS` list (Online Store + Shop only) remain correct for all 11 multi-variant bundles**, but would be needlessly restrictive for any future single-variant one.
+
+---
+
+Originally verified 2026-07-26. Publishing a **multi-variant** componentized bundle is rejected outright by every channel that syncs a product feed — not just the two originally tested:
 
 ```
 Channel Google & YouTube does not support variant-fixed bundles
@@ -210,9 +236,9 @@ Channel TikTok does not support bundle products
 Channel Buy Button does not support bundle products
 ```
 
-Publishing the Bar Soap 4-Pack found the last three. **Online Store and Shop are the only channels that accept a bundle** — assume any new channel will refuse until proven otherwise, and publish channels one at a time so one refusal doesn't abort the rest (`scripts/publish-bar-soap-4pack.mjs` does this).
+Publishing the Bar Soap 4-Pack found the last three. **For a multi-variant bundle, Online Store and Shop are the only channels that accept it** — assume any new channel will refuse until proven otherwise, and publish channels one at a time so one refusal doesn't abort the rest (`scripts/publish-bar-soap-4pack.mjs` does this).
 
-This is a Shopify platform limit on native (variant-fixed) bundles, not a settings problem. The 90-Day Reset shows as published to Google and Meta because it predates its componentization; do not read that as proof the restriction can be worked around.
+This is a Shopify platform limit on **variant-fixed** bundles, not a settings problem. The 90-Day Reset shows as published to Google and Meta because it predates its componentization; do not read that as proof the restriction can be worked around for a multi-variant bundle. (A **single-variant** bundle genuinely is accepted — see the 2026-09-19 correction above — but that is a different class, not a workaround.)
 
 **This changes how paid traffic reaches bundles.** They cannot be Shopping listings or catalog items. Paid to a bundle has to be Search, Performance Max with a page feed, or Meta traffic ads pointing at the product URL — never a product/catalog ad.
 

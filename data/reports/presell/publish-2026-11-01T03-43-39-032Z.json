@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-01T03:43:39.032Z",
+  "apply": true,
+  "argv": [
+    "--live",
+    "--target",
+    "water-cooler",
+    "--apply"
+  ],
+  "target": "water-cooler",
+  "head": "8ca9524378977e93daf9d61d016188ca15fd4930",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 27111,
+        "targetBytes": 27111
+      },
+      {
+        "key": "assets/presell.css",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 12954,
+        "targetBytes": 12954
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 14154,
+        "targetBytes": 14154
+      },
+      {
+        "key": "templates/page.presell-water-cooler.json",
+        "before": null,
+        "verdict": "refuse",
+        "currentBytes": 8936,
+        "targetBytes": 9129
+      }
+    ]
+  },
+  "error": "guard refused templates/page.presell-water-cooler.json: the theme copy is neither the expected before nor the new content. Nothing written."
+}

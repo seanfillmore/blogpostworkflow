@@ -20,6 +20,8 @@ import { readJsonOrNull, queueItemPath } from '../../lib/change-log/store.js';
 import { CHANGES_ROOT, getActiveWindow, logChangeEvent } from '../../lib/change-log.js';
 import { updateArticle, getBlogs, getArticles } from '../../lib/shopify.js';
 import { notify } from '../../lib/notify.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -36,6 +38,21 @@ const FIELD_TO_SHOPIFY = {
   internal_link_added: (after) => ({ body_html: after }),
   content_body: (after) => ({ body_html: after }),
   image: (after) => ({ image: { src: after } }),
+};
+
+/**
+ * Live-article edit-gate kind (lib/post-edit-gate.js) for a queued change_type.
+ * Title and description are `serp`; a body replacement is a `rewrite`; schema,
+ * an FAQ, an internal link or an image are additive (`enhance`).
+ */
+export const EDIT_KIND_FOR_CHANGE = {
+  title: 'serp',
+  meta_description: 'serp',
+  content_body: 'rewrite',
+  schema: 'enhance',
+  faq_added: 'enhance',
+  internal_link_added: 'enhance',
+  image: 'enhance',
 };
 
 async function buildArticleIndex() {
@@ -82,6 +99,7 @@ async function main() {
 
   let released = 0, dropped = 0, failed = 0;
   const failures = [];
+  const editGateHeld = [];
 
   for (const slug of slugs) {
     const active = getActiveWindow(slug);
@@ -119,8 +137,19 @@ async function main() {
         failed++;
         continue;
       }
+      // Live-article edit gate. A held item stays QUEUED (never unlinked or
+      // dropped): the gate decides timing, not worth. Later items for the same
+      // page are asked too, so one release per measurement window.
+      const editKind = EDIT_KIND_FOR_CHANGE[item.change_type] || 'rewrite';
+      const editGate = mayEditLivePost(slug, editKind);
+      if (!editGate.allowed) {
+        console.log(`    held — edit gate: ${editGate.reason}`);
+        editGateHeld.push({ target: slug, kind: editKind, reason: editGate.reason, until: editGate.until });
+        continue;
+      }
       try {
         await updateArticle(article.blogId, article.articleId, fieldFn(item.after));
+        recordMaterialEdit(slug, editKind, 'change-queue-processor');
         // Log a fresh event opening a new window
         await logChangeEvent({
           url: `/blogs/news/${slug}`, slug,
@@ -147,6 +176,7 @@ async function main() {
     lines.push('Failures:');
     for (const f of failures.slice(0, 10)) lines.push(`  ${f.slug}/${f.item}: ${f.error}`);
   }
+  lines.push(...renderEditGateLines(editGateHeld));
   if (!dryRun) await notify({ subject: 'Change Queue Processor ran', body: lines.join('\n') });
   console.log('\n' + lines.join('\n'));
 }

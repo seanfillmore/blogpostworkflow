@@ -16,10 +16,11 @@
  *
  * WHAT IT DELIBERATELY DOES NOT UNIFY, because it is not drift:
  *
- *   - The Recurpay widget. `recurpay-widget` (7 pages) and
- *     `recurpay-app-block-widget` (cream, lotion) are DIFFERENT app blocks
- *     from the same app, not one block under two ids. Collapsing them would
- *     change which subscription widget renders on lotion — 72% of revenue.
+ *   - The Recurpay widget. `recurpay-widget` and `recurpay-app-block-widget`
+ *     are DIFFERENT app blocks from the same app, not one block under two ids.
+ *     Lotion and cream carry neither since 2026-10-05, and their
+ *     `no-subscription` block suppresses the widget Recurpay's app EMBED still
+ *     injects for any product with a selling plan (subscribe pre-selected).
  *
  * `tab-shipping` IS unified, but by a FLAG rather than a majority vote. The
  * clause "and on every subscription order" is a CLAIM, and it is true on a
@@ -32,6 +33,11 @@
  * three LADDER pages because a multipack TIER carries the selling plan even
  * though the single unit does not, and false on lip-balm and liquid-soap,
  * where no tier has a plan at all.
+ *
+ * `retiredPlan: true` marks a page whose product still carries a selling plan
+ * ONLY so existing contracts keep renewing. It sells no new subscription
+ * (`no-subscription` suppresses the Recurpay embed widget), so the drift gate
+ * must not read the attached plan as a withheld claim.
  *
  * PER-TEMPLATE EXTRAS. A block may be core + page-specific additions, e.g.
  * lotion's `discount-callout` carries extra CSS for a testimonial section
@@ -69,50 +75,66 @@ export const serialize = (t) => `${JSON.stringify(t, null, 2).replace(/\//g, '\\
  */
 export const MANIFEST = {
   'product.landing-page-toothpaste.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 3-pack TIER; the single tube has no plan.
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-deodorant.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 4-pack TIER; the single bottle has no plan.
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-bar-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
-        // subscribable via the 4-pack TIER (the 12-pack has no plan).
-    subscribable: true,
+    // No new subscriptions anywhere since 2026-10-06 (Sean). The pack tier keeps its
+    // plan so existing contracts renew; `no-subscription` suppresses the embed widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-lotion.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'trust-line', 'tab-shipping'],
-    drop: [],
-        subscribable: true,
-    insertAfter: {},
+    shared: ['ymal-recommendations', 'discount-callout', 'trust-line', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-06. The single still
+    // carries a selling plan for existing subscribers, so `no-subscription`
+    // suppresses the widget the Recurpay app EMBED injects (subscribe
+    // pre-selected); retiredPlan stops the drift gate reading it as withheld.
+    subscribable: false,
+    retiredPlan: true,
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-cream.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
-    drop: [],
-        subscribable: true,
-    insertAfter: { 'trust-line': 'buy_buttons' },
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 5 ladder ("buy 4, get 1 free") since 2026-10-05; the 5-pack tier has
+    // no selling plan. The single unit still does (existing subscribers), so
+    // `no-subscription` suppresses the widget the Recurpay embed injects.
+    subscribable: false,
+    retiredPlan: true,
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-lip-balm.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'vqr-combo', 'tab-shipping'],
-    drop: [],
-        // NO tier on this page carries a selling plan.
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'payment-icons', 'pdp-layout'],
+    drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
+    // 1 / 3 ladder ("buy 2, get 1 free", three four-packs) since 2026-10-06.
+    // No tier carries a selling plan.
     subscribable: false,
-    insertAfter: { 'trust-line': 'buy_buttons' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   'product.landing-page-liquid-soap.json': {
-    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping'],
+    shared: ['ymal-recommendations', 'discount-callout', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: ['variant_picker', 'buy_buttons', 'sticky_cart', 'vqr-combo'],
     // PER-PRODUCT, not per-page — the only template that needs it. It serves
     // the foaming pump and its ladder tiers (pump, 2-pack, 4-pack), none of
@@ -120,25 +142,31 @@ export const MANIFEST = {
     // plan 11152263 (1/2/3/4-month) on 2026-09-05. A page-level flag would
     // either advertise subscription shipping on three products that cannot be
     // subscribed to, or withhold it from the one that can.
-    subscribable: ['foam-soap-refill-32oz'],
+    // Since 2026-10-06 nothing here sells a new subscription; the refill keeps
+    // its plan for existing contracts and `no-subscription` hides the widget.
+    subscribable: false,
+    retiredPlan: true,
     dropSections: ['complete-the-routine'],
-    insertAfter: { 'trust-line': 'quantity-ladder' },
+    insertAfter: { 'trust-line': 'quantity-ladder', 'no-subscription': 'trust-line', 'payment-icons': 'quantity-ladder', 'pdp-layout': 'tab-shipping' },
   },
   // The two landers already state the 30-day guarantee in their trust-row, so
   // they get no trust-line: a second copy under the button would be a
   // duplicate promise, not reinforcement.
   'product.landing-page-sensitive-skin-set-lander.json': {
-    shared: ['discount-callout', 'vqr-combo', 'tab-shipping'],
+    shared: ['discount-callout', 'vqr-combo', 'tab-shipping', 'no-subscription', 'payment-icons', 'pdp-layout'],
     drop: [],
-        subscribable: true,
-    insertAfter: {},
+    // No subscription at all since 2026-10-07: Recurpay plan 11150632 deleted
+    // (it covered only this set and had no live contract). `no-subscription`
+    // stays as a guard in case a plan is ever re-attached.
+    subscribable: false,
+    insertAfter: { 'no-subscription': 'buy_buttons', 'payment-icons': 'buy_buttons', 'pdp-layout': 'tab-shipping' },
   },
   'product.bundle-landing.json': {
-    shared: ['discount-callout', 'vqr-combo'],
+    shared: ['discount-callout', 'vqr-combo', 'payment-icons', 'pdp-layout'],
     drop: [],
         // no tab-shipping block, and none of its six bundles is subscribable.
     subscribable: false,
-    insertAfter: {},
+    insertAfter: { 'payment-icons': 'buy_buttons', 'pdp-layout': 'tabs' },
   },
 };
 
@@ -255,6 +283,8 @@ export function applyManifest(parsed, file, read) {
 
   for (const name of spec.shared) {
     const blk = main.blocks[name];
+    // A shared block this run is about to insert is unified by the insert itself.
+    if (!blk && name in spec.insertAfter) continue;
     if (!blk) throw new Error(`${file}: shared block "${name}" is not in the template`);
     const next = blockSource(name, file, read);
     const key = settingsKey(blk, next);
@@ -291,6 +321,16 @@ export function applyManifest(parsed, file, read) {
     delete parsed.sections[name];
     parsed.order = (parsed.order ?? []).filter((k) => k !== name);
     notes.push(`dropped redundant section ${name}`);
+  }
+
+  // Every info tab starts CLOSED (Sean, 2026-10-07: the ingredients tab was
+  // open by default, which made the column long before anyone asked).
+  for (const name of main.block_order) {
+    const blk = main.blocks[name];
+    if (blk?.type === 'collapsible_tab' && blk.settings?.keep_open) {
+      blk.settings.keep_open = false;
+      notes.push(`closed ${name}`);
+    }
   }
 
   for (const [name, after] of Object.entries(spec.insertAfter)) {

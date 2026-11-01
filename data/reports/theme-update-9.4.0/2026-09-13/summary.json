@@ -1,0 +1,951 @@
+{
+  "liveCount": 441,
+  "draftCount": 462,
+  "same": 326,
+  "onlyLive": [],
+  "onlyDraft": [
+    "assets/color-fan.js",
+    "assets/section-color-fan.css",
+    "assets/section-skin-quiz.css",
+    "assets/section-video-collection.css",
+    "assets/skin-quiz.js",
+    "assets/video-collection.js",
+    "sections/color-fan.liquid",
+    "sections/skin-quiz.liquid",
+    "sections/video-collection.liquid",
+    "snippets/product-badges.liquid",
+    "templates/page.about-modern.json",
+    "templates/page.contact-with-map.json",
+    "templates/page.faq.json",
+    "templates/page.plant-drop.json",
+    "templates/page.sidebar.json",
+    "templates/page.visit.json",
+    "templates/product.fragrance.json",
+    "templates/product.gift-card.json",
+    "templates/product.pre-order.json",
+    "templates/product.product-landing.json",
+    "templates/product.skincare.json"
+  ],
+  "differ": [
+    {
+      "key": "assets/base.css",
+      "kind": "text",
+      "liveBytes": 79906,
+      "draftBytes": 77434,
+      "linesOnlyInLive": 3901,
+      "linesOnlyInDraft": 3295
+    },
+    {
+      "key": "assets/component-card.css",
+      "kind": "text",
+      "liveBytes": 17329,
+      "draftBytes": 20633,
+      "linesOnlyInLive": 768,
+      "linesOnlyInDraft": 792
+    },
+    {
+      "key": "assets/component-cart-drawer.css",
+      "kind": "text",
+      "liveBytes": 21992,
+      "draftBytes": 22770,
+      "linesOnlyInLive": 991,
+      "linesOnlyInDraft": 733
+    },
+    {
+      "key": "assets/component-cart-recommendations.css",
+      "kind": "text",
+      "liveBytes": 4614,
+      "draftBytes": 6331,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 34
+    },
+    {
+      "key": "assets/component-content-slider.css",
+      "kind": "text",
+      "liveBytes": 7711,
+      "draftBytes": 8222,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 10
+    },
+    {
+      "key": "assets/component-menu-drawer.css",
+      "kind": "text",
+      "liveBytes": 17619,
+      "draftBytes": 17922,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 4
+    },
+    {
+      "key": "assets/component-menu-dropdown.css",
+      "kind": "text",
+      "liveBytes": 15758,
+      "draftBytes": 17720,
+      "linesOnlyInLive": 4,
+      "linesOnlyInDraft": 30
+    },
+    {
+      "key": "assets/component-quick-view.css",
+      "kind": "text",
+      "liveBytes": 10312,
+      "draftBytes": 10887,
+      "linesOnlyInLive": 10,
+      "linesOnlyInDraft": 13
+    },
+    {
+      "key": "assets/component-similar-products.css",
+      "kind": "text",
+      "liveBytes": 8102,
+      "draftBytes": 8282,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 3
+    },
+    {
+      "key": "assets/component-slider.css",
+      "kind": "text",
+      "liveBytes": 5861,
+      "draftBytes": 9808,
+      "linesOnlyInLive": 291,
+      "linesOnlyInDraft": 343
+    },
+    {
+      "key": "assets/global.js",
+      "kind": "text",
+      "liveBytes": 122210,
+      "draftBytes": 122616,
+      "linesOnlyInLive": 3779,
+      "linesOnlyInDraft": 3877
+    },
+    {
+      "key": "assets/menu-dropdown.js",
+      "kind": "text",
+      "liveBytes": 14424,
+      "draftBytes": 14989,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 10
+    },
+    {
+      "key": "assets/modules-basis.js",
+      "kind": "text",
+      "liveBytes": 4127,
+      "draftBytes": 4883,
+      "linesOnlyInLive": 13,
+      "linesOnlyInDraft": 24
+    },
+    {
+      "key": "assets/quick-view.js",
+      "kind": "text",
+      "liveBytes": 3185,
+      "draftBytes": 3290,
+      "linesOnlyInLive": 89,
+      "linesOnlyInDraft": 105
+    },
+    {
+      "key": "assets/section-collection-list.css",
+      "kind": "text",
+      "liveBytes": 2893,
+      "draftBytes": 3060,
+      "linesOnlyInLive": 3,
+      "linesOnlyInDraft": 4
+    },
+    {
+      "key": "assets/section-comparison-table.css",
+      "kind": "text",
+      "liveBytes": 18049,
+      "draftBytes": 18203,
+      "linesOnlyInLive": 4,
+      "linesOnlyInDraft": 6
+    },
+    {
+      "key": "assets/section-dual-scroll.css",
+      "kind": "text",
+      "liveBytes": 4917,
+      "draftBytes": 6123,
+      "linesOnlyInLive": 216,
+      "linesOnlyInDraft": 220
+    },
+    {
+      "key": "assets/section-featured-product.css",
+      "kind": "text",
+      "liveBytes": 2652,
+      "draftBytes": 3353,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 10
+    },
+    {
+      "key": "assets/section-guarantees.css",
+      "kind": "text",
+      "liveBytes": 2375,
+      "draftBytes": 2302,
+      "linesOnlyInLive": 121,
+      "linesOnlyInDraft": 99
+    },
+    {
+      "key": "assets/section-image-with-text-overlay.css",
+      "kind": "text",
+      "liveBytes": 3301,
+      "draftBytes": 3848,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 8
+    },
+    {
+      "key": "assets/section-image-with-text.css",
+      "kind": "text",
+      "liveBytes": 6267,
+      "draftBytes": 7195,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "assets/section-lookbook.css",
+      "kind": "text",
+      "liveBytes": 4106,
+      "draftBytes": 4214,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 2
+    },
+    {
+      "key": "assets/section-main-product.css",
+      "kind": "text",
+      "liveBytes": 44571,
+      "draftBytes": 45308,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 13
+    },
+    {
+      "key": "assets/section-multicolumn.css",
+      "kind": "text",
+      "liveBytes": 8169,
+      "draftBytes": 7982,
+      "linesOnlyInLive": 378,
+      "linesOnlyInDraft": 332
+    },
+    {
+      "key": "assets/section-reveal-banner.css",
+      "kind": "text",
+      "liveBytes": 8893,
+      "draftBytes": 9268,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 5
+    },
+    {
+      "key": "assets/section-rich-text.css",
+      "kind": "text",
+      "liveBytes": 5687,
+      "draftBytes": 6064,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 6
+    },
+    {
+      "key": "assets/section-tab-collage.css",
+      "kind": "text",
+      "liveBytes": 6013,
+      "draftBytes": 6752,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 11
+    },
+    {
+      "key": "assets/section-timeline.css",
+      "kind": "text",
+      "liveBytes": 7814,
+      "draftBytes": 7546,
+      "linesOnlyInLive": 5,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "assets/timeline-component.js",
+      "kind": "text",
+      "liveBytes": 11509,
+      "draftBytes": 10211,
+      "linesOnlyInLive": 98,
+      "linesOnlyInDraft": 61
+    },
+    {
+      "key": "config/settings_data.json",
+      "kind": "json-differs",
+      "liveBytes": 80006,
+      "draftBytes": 28871,
+      "linesOnlyInLive": 1468,
+      "linesOnlyInDraft": 90
+    },
+    {
+      "key": "config/settings_schema.json",
+      "kind": "json-differs",
+      "liveBytes": 38404,
+      "draftBytes": 42674,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 54
+    },
+    {
+      "key": "locales/cs.json",
+      "kind": "json-differs",
+      "liveBytes": 26515,
+      "draftBytes": 27019,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/cs.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 169292,
+      "draftBytes": 183082,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 219
+    },
+    {
+      "key": "locales/de.json",
+      "kind": "json-differs",
+      "liveBytes": 26651,
+      "draftBytes": 27186,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/de.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 172098,
+      "draftBytes": 186347,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 219
+    },
+    {
+      "key": "locales/en.default.json",
+      "kind": "json-differs",
+      "liveBytes": 24824,
+      "draftBytes": 25307,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/en.default.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 165087,
+      "draftBytes": 178785,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 215
+    },
+    {
+      "key": "locales/es.json",
+      "kind": "json-differs",
+      "liveBytes": 27224,
+      "draftBytes": 27737,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/es.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 175703,
+      "draftBytes": 190166,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 218
+    },
+    {
+      "key": "locales/fr.json",
+      "kind": "json-differs",
+      "liveBytes": 27419,
+      "draftBytes": 27947,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/fr.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 175106,
+      "draftBytes": 189544,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 221
+    },
+    {
+      "key": "locales/it.json",
+      "kind": "json-differs",
+      "liveBytes": 26962,
+      "draftBytes": 27483,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/it.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 176099,
+      "draftBytes": 190608,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 218
+    },
+    {
+      "key": "locales/ja.json",
+      "kind": "json-differs",
+      "liveBytes": 21177,
+      "draftBytes": 21575,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/ja.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 149019,
+      "draftBytes": 161084,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 218
+    },
+    {
+      "key": "locales/nb.json",
+      "kind": "json-differs",
+      "liveBytes": 25352,
+      "draftBytes": 25857,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/nb.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 168008,
+      "draftBytes": 181882,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 217
+    },
+    {
+      "key": "locales/pt-PT.json",
+      "kind": "json-differs",
+      "liveBytes": 26724,
+      "draftBytes": 27255,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/pt-PT.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 173436,
+      "draftBytes": 187632,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 220
+    },
+    {
+      "key": "locales/sv.json",
+      "kind": "json-differs",
+      "liveBytes": 25622,
+      "draftBytes": 26124,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/sv.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 167302,
+      "draftBytes": 181096,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 221
+    },
+    {
+      "key": "locales/vi.json",
+      "kind": "json-differs",
+      "liveBytes": 25741,
+      "draftBytes": 26228,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/vi.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 170027,
+      "draftBytes": 183745,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 217
+    },
+    {
+      "key": "locales/zh-CN.json",
+      "kind": "json-differs",
+      "liveBytes": 19753,
+      "draftBytes": 20120,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/zh-CN.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 142198,
+      "draftBytes": 153768,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 218
+    },
+    {
+      "key": "locales/zh-TW.json",
+      "kind": "json-differs",
+      "liveBytes": 19762,
+      "draftBytes": 20131,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 12
+    },
+    {
+      "key": "locales/zh-TW.schema.json",
+      "kind": "json-differs",
+      "liveBytes": 142117,
+      "draftBytes": 153686,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 220
+    },
+    {
+      "key": "sections/cart-recommendations.liquid",
+      "kind": "text",
+      "liveBytes": 11885,
+      "draftBytes": 12396,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 11
+    },
+    {
+      "key": "sections/collection-list.liquid",
+      "kind": "text",
+      "liveBytes": 15069,
+      "draftBytes": 17741,
+      "linesOnlyInLive": 5,
+      "linesOnlyInDraft": 59
+    },
+    {
+      "key": "sections/comparison-table.liquid",
+      "kind": "text",
+      "liveBytes": 193317,
+      "draftBytes": 194862,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 20
+    },
+    {
+      "key": "sections/dual-scroll.liquid",
+      "kind": "text",
+      "liveBytes": 21151,
+      "draftBytes": 22042,
+      "linesOnlyInLive": 631,
+      "linesOnlyInDraft": 641
+    },
+    {
+      "key": "sections/featured-blog.liquid",
+      "kind": "text",
+      "liveBytes": 14630,
+      "draftBytes": 17074,
+      "linesOnlyInLive": 5,
+      "linesOnlyInDraft": 53
+    },
+    {
+      "key": "sections/featured-collection.liquid",
+      "kind": "text",
+      "liveBytes": 19920,
+      "draftBytes": 21693,
+      "linesOnlyInLive": 563,
+      "linesOnlyInDraft": 598
+    },
+    {
+      "key": "sections/featured-product.liquid",
+      "kind": "text",
+      "liveBytes": 111278,
+      "draftBytes": 111301,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 1
+    },
+    {
+      "key": "sections/footer-group.json",
+      "kind": "json-equal",
+      "liveBytes": 1693,
+      "draftBytes": 1693,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "sections/gallery.liquid",
+      "kind": "text",
+      "liveBytes": 21026,
+      "draftBytes": 22841,
+      "linesOnlyInLive": 627,
+      "linesOnlyInDraft": 681
+    },
+    {
+      "key": "sections/guarantees.liquid",
+      "kind": "text",
+      "liveBytes": 27120,
+      "draftBytes": 29570,
+      "linesOnlyInLive": 741,
+      "linesOnlyInDraft": 765
+    },
+    {
+      "key": "sections/header-group.json",
+      "kind": "json-equal",
+      "liveBytes": 3557,
+      "draftBytes": 3557,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "sections/header.liquid",
+      "kind": "text",
+      "liveBytes": 89901,
+      "draftBytes": 94060,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 52
+    },
+    {
+      "key": "sections/main-account.liquid",
+      "kind": "text",
+      "liveBytes": 6520,
+      "draftBytes": 6564,
+      "linesOnlyInLive": 2,
+      "linesOnlyInDraft": 2
+    },
+    {
+      "key": "sections/main-addresses.liquid",
+      "kind": "text",
+      "liveBytes": 15019,
+      "draftBytes": 15063,
+      "linesOnlyInLive": 2,
+      "linesOnlyInDraft": 2
+    },
+    {
+      "key": "sections/main-article.liquid",
+      "kind": "text",
+      "liveBytes": 16865,
+      "draftBytes": 17306,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 9
+    },
+    {
+      "key": "sections/main-collection-subs.liquid",
+      "kind": "text",
+      "liveBytes": 8368,
+      "draftBytes": 8770,
+      "linesOnlyInLive": 262,
+      "linesOnlyInDraft": 277
+    },
+    {
+      "key": "sections/main-product-modal.liquid",
+      "kind": "text",
+      "liveBytes": 94984,
+      "draftBytes": 95007,
+      "linesOnlyInLive": 1,
+      "linesOnlyInDraft": 1
+    },
+    {
+      "key": "sections/main-product.liquid",
+      "kind": "text",
+      "liveBytes": 157473,
+      "draftBytes": 158160,
+      "linesOnlyInLive": 3401,
+      "linesOnlyInDraft": 3405
+    },
+    {
+      "key": "sections/mini-cart.liquid",
+      "kind": "text",
+      "liveBytes": 47067,
+      "draftBytes": 47486,
+      "linesOnlyInLive": 823,
+      "linesOnlyInDraft": 820
+    },
+    {
+      "key": "sections/multicolumn.liquid",
+      "kind": "text",
+      "liveBytes": 32562,
+      "draftBytes": 35246,
+      "linesOnlyInLive": 7,
+      "linesOnlyInDraft": 57
+    },
+    {
+      "key": "sections/overlay-group.json",
+      "kind": "json-equal",
+      "liveBytes": 6545,
+      "draftBytes": 6545,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "sections/product-recommendations.liquid",
+      "kind": "text",
+      "liveBytes": 14733,
+      "draftBytes": 15020,
+      "linesOnlyInLive": 442,
+      "linesOnlyInDraft": 459
+    },
+    {
+      "key": "sections/recently-viewed-products.liquid",
+      "kind": "text",
+      "liveBytes": 12930,
+      "draftBytes": 13283,
+      "linesOnlyInLive": 376,
+      "linesOnlyInDraft": 392
+    },
+    {
+      "key": "sections/rich-text.liquid",
+      "kind": "text",
+      "liveBytes": 30539,
+      "draftBytes": 31371,
+      "linesOnlyInLive": 825,
+      "linesOnlyInDraft": 832
+    },
+    {
+      "key": "sections/shop-the-look.liquid",
+      "kind": "text",
+      "liveBytes": 24143,
+      "draftBytes": 24200,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 1
+    },
+    {
+      "key": "sections/tabbed-featured-collections.liquid",
+      "kind": "text",
+      "liveBytes": 32332,
+      "draftBytes": 44133,
+      "linesOnlyInLive": 206,
+      "linesOnlyInDraft": 459
+    },
+    {
+      "key": "snippets/card-product.liquid",
+      "kind": "text",
+      "liveBytes": 30722,
+      "draftBytes": 31671,
+      "linesOnlyInLive": 586,
+      "linesOnlyInDraft": 586
+    },
+    {
+      "key": "snippets/css-variables.liquid",
+      "kind": "text",
+      "liveBytes": 12413,
+      "draftBytes": 14126,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 34
+    },
+    {
+      "key": "snippets/icon.liquid",
+      "kind": "text",
+      "liveBytes": 34912,
+      "draftBytes": 46182,
+      "linesOnlyInLive": 2,
+      "linesOnlyInDraft": 109
+    },
+    {
+      "key": "snippets/js-variables.liquid",
+      "kind": "text",
+      "liveBytes": 10322,
+      "draftBytes": 10351,
+      "linesOnlyInLive": 75,
+      "linesOnlyInDraft": 65
+    },
+    {
+      "key": "snippets/mega-showcase-card.liquid",
+      "kind": "text",
+      "liveBytes": 3804,
+      "draftBytes": 4048,
+      "linesOnlyInLive": 6,
+      "linesOnlyInDraft": 10
+    },
+    {
+      "key": "templates/404.json",
+      "kind": "json-equal",
+      "liveBytes": 120,
+      "draftBytes": 120,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/article.json",
+      "kind": "json-equal",
+      "liveBytes": 1267,
+      "draftBytes": 1267,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/blog.json",
+      "kind": "json-equal",
+      "liveBytes": 834,
+      "draftBytes": 834,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/cart.json",
+      "kind": "json-equal",
+      "liveBytes": 1851,
+      "draftBytes": 1851,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/collection.json",
+      "kind": "json-equal",
+      "liveBytes": 5341,
+      "draftBytes": 5341,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/index.json",
+      "kind": "json-equal",
+      "liveBytes": 26708,
+      "draftBytes": 26708,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/list-collections.json",
+      "kind": "json-equal",
+      "liveBytes": 505,
+      "draftBytes": 505,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.Forms - Wholesale Inquiry.json",
+      "kind": "json-equal",
+      "liveBytes": 2536,
+      "draftBytes": 2536,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.about.json",
+      "kind": "json-equal",
+      "liveBytes": 15637,
+      "draftBytes": 15637,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.contact.json",
+      "kind": "json-equal",
+      "liveBytes": 6031,
+      "draftBytes": 6031,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.giveaway-confirmed.json",
+      "kind": "json-equal",
+      "liveBytes": 130,
+      "draftBytes": 130,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.giveaway-entered.json",
+      "kind": "json-equal",
+      "liveBytes": 128,
+      "draftBytes": 128,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.giveaway-offer.json",
+      "kind": "json-equal",
+      "liveBytes": 126,
+      "draftBytes": 126,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.giveaway.json",
+      "kind": "json-equal",
+      "liveBytes": 126,
+      "draftBytes": 126,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.json",
+      "kind": "json-equal",
+      "liveBytes": 2006,
+      "draftBytes": 2006,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.landing-page-design.json",
+      "kind": "json-equal",
+      "liveBytes": 17610,
+      "draftBytes": 17610,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/page.veteran.json",
+      "kind": "json-equal",
+      "liveBytes": 3073,
+      "draftBytes": 3073,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/password.json",
+      "kind": "json-equal",
+      "liveBytes": 1838,
+      "draftBytes": 1838,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-bar-soap.json",
+      "kind": "json-equal",
+      "liveBytes": 55548,
+      "draftBytes": 55548,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "kind": "json-equal",
+      "liveBytes": 44446,
+      "draftBytes": 44446,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-deodorant.json",
+      "kind": "json-equal",
+      "liveBytes": 54472,
+      "draftBytes": 54472,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-lip-balm.json",
+      "kind": "json-equal",
+      "liveBytes": 39505,
+      "draftBytes": 39505,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-liquid-soap.json",
+      "kind": "json-equal",
+      "liveBytes": 58973,
+      "draftBytes": 58973,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-lotion.json",
+      "kind": "json-equal",
+      "liveBytes": 46524,
+      "draftBytes": 46524,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.landing-page-toothpaste.json",
+      "kind": "json-equal",
+      "liveBytes": 56939,
+      "draftBytes": 56939,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/product.modal.json",
+      "kind": "json-equal",
+      "liveBytes": 3325,
+      "draftBytes": 3325,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    },
+    {
+      "key": "templates/search.json",
+      "kind": "json-equal",
+      "liveBytes": 1850,
+      "draftBytes": 1850,
+      "linesOnlyInLive": 0,
+      "linesOnlyInDraft": 0
+    }
+  ]
+}

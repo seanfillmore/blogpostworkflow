@@ -1,0 +1,597 @@
+{
+ "_what": "Judge.me reviews to suppress (curated:spam + hidden:true), audit 2026-10-06. Sean approved groups 1 (duplicates), 3 (wrong product), 4 (AliExpress); he declined to hide the 5 disease/drug-claim testimonials (\"I will not hide reviews made by customers\"), so none are listed. No review rated 3 stars or below is listed: suppressing genuine negatives is review suppression under the FTC 2024 rule.",
+ "reviews": [
+  {
+   "id": 514327087,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Lee Powell",
+   "rating": 5,
+   "text": "I was looking for a lotion on the natural side and I found it. For personal reasons my family member cant have products with chemicals on it"
+  },
+  {
+   "id": 514327047,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Litzy Ruecker",
+   "rating": 5,
+   "text": "This lotion is wonderful! I hate it when it takes too long for a lotion to absorb, and this one is very quick. It smells wonderful and I lov"
+  },
+  {
+   "id": 514327156,
+   "why": "duplicate text under an invented name",
+   "product": "organic-foaming-hand-soap",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "This soap is nice. It has a nice pleasant scent and doesn?t irritate my skin."
+  },
+  {
+   "id": 514327053,
+   "why": "soap review on the lotion page, invented name",
+   "product": "coconut-lotion",
+   "name": "Bhanupriya Sur",
+   "rating": 5,
+   "text": "This soap is nice. It has a nice pleasant scent and doesn t irritate my skin."
+  },
+  {
+   "id": 514327062,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Natwar Nadkarni",
+   "rating": 5,
+   "text": "The lotion is scent free. Bought for a friend's birthday who can't have any products that are scented. She loves it!"
+  },
+  {
+   "id": 514327091,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Lucas Bednar",
+   "rating": 5,
+   "text": "I m always trying to find a good lotion to help my dry skin, especially my hands, they stay real dry and cracked and this has been helping w"
+  },
+  {
+   "id": 514327049,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Quentin Goodwin",
+   "rating": 5,
+   "text": "I was hoping for more of a coconut scent, but this is very lightly scented. The lotion itself goes on a bit oily, but soaks in well and my s"
+  },
+  {
+   "id": 514327080,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Raju Rama",
+   "rating": 5,
+   "text": "I've been using this lotion everyday and I'm completely in love with it. It really helps with the crepey skin on the underside of my arms. I"
+  },
+  {
+   "id": 514327038,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Shanny Altenwerth",
+   "rating": 5,
+   "text": "Great product. Natural ingredients rare find."
+  },
+  {
+   "id": 514327096,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Wale Mutiat",
+   "rating": 5,
+   "text": "This lotion is easy to apply and dries fast. Once dry it left a nice sheen on my skin. I didnt really notice much of a scent and I feel comf"
+  },
+  {
+   "id": 514327084,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Dolores Bugala",
+   "rating": 5,
+   "text": "I am always looking for great skin care products and this one did not let down. I had tried some at a friends house and was hooked. Great va"
+  },
+  {
+   "id": 514327067,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Aniya Schinner",
+   "rating": 5,
+   "text": "For the price this lotion is amazing! I wash dishes all day and this lotion keeps my hands moisturized all day! The lavender scent smells so"
+  },
+  {
+   "id": 514327046,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Kubura Habeeb",
+   "rating": 5,
+   "text": "This lotion is a bit on the greasy side when initially applied, but as I worked it into my skin it was wonderful! It healed the cracked skin"
+  },
+  {
+   "id": 514327093,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Naomie Mugisa",
+   "rating": 5,
+   "text": "Natural, moisturizing, just a hint of coconut scent. I will absolutely order this again!"
+  },
+  {
+   "id": 514327059,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Candice Gutmann",
+   "rating": 5,
+   "text": "This is a very basic albeit very good lotion. I love the scent and the fact that it absorbs so quickly. I am very happy with this. If you ar"
+  },
+  {
+   "id": 514327073,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Clifford Barigye",
+   "rating": 5,
+   "text": "I'm a Massage Therapist and I'm always looking for new lotions and creams to try out. I prefer anything with minimal, natural ingredients an"
+  },
+  {
+   "id": 514327052,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Jett Langosh",
+   "rating": 5,
+   "text": "This is a nice lotion, with a good smell--lavender and coconut dominates the scent. Excellent hand lotion to keep by my bathroom sink to use"
+  },
+  {
+   "id": 514327085,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Foster Ryan",
+   "rating": 5,
+   "text": "I absolutely love this lotion. It is pure natural ingredients that nourish and refresh the skin. With coconut oil, jojoba oil, grapefruit, r"
+  },
+  {
+   "id": 514327100,
+   "why": "duplicate text under an invented name",
+   "product": "coconut-lotion",
+   "name": "Kirti Lachman",
+   "rating": 5,
+   "text": "This real skin care lotion is definitely unscented. It is very gentle on the skin. I had no skin irritation. I actually added some essential"
+  },
+  {
+   "id": 514327029,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Nate",
+   "rating": 5,
+   "text": "I was looking for a lotion on the natural side and I found it. For personal reasons my family member cant have products with chemicals on it"
+  },
+  {
+   "id": 514327030,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Katie",
+   "rating": 5,
+   "text": "This lotion is wonderful! I hate it when it takes too long for a lotion to absorb, and this one is very quick. It smells wonderful and I lov"
+  },
+  {
+   "id": 372138966,
+   "why": "exact duplicate on the same page",
+   "product": "organic-foaming-hand-soap",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "This soap is nice. It has a nice pleasant scent and doesn t irritate my skin."
+  },
+  {
+   "id": 372138876,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-oil-toothpaste",
+   "name": "Anonymous",
+   "rating": 4,
+   "text": "I ve tried other alterative tooth pastes lately – mainly the dry tablets. I ve also seen charcoal based tooth pastes. However, I ve not seen"
+  },
+  {
+   "id": 514327033,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Kate B",
+   "rating": 5,
+   "text": "The lotion is scent free. Bought for a friend's birthday who can't have any products that are scented. She loves it!"
+  },
+  {
+   "id": 514327056,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Bridge78",
+   "rating": 5,
+   "text": "I'm always trying to find a good lotion to help my dry skin, especially my hands, they stay real dry and cracked and this has been helping w"
+  },
+  {
+   "id": 514327041,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Cyril",
+   "rating": 5,
+   "text": "I've been using this lotion everyday and I'm completely in love with it. It really helps with the crepey skin on the underside of my arms. I"
+  },
+  {
+   "id": 514327051,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "M&M",
+   "rating": 5,
+   "text": "This lotion is easy to apply and dries fast. Once dry it left a nice sheen on my skin. I didnt really notice much of a scent and I feel comf"
+  },
+  {
+   "id": 514327069,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Titilayo Ogunbanwo",
+   "rating": 5,
+   "text": "Moisturizing!!!"
+  },
+  {
+   "id": 514327060,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Christopher Dyer",
+   "rating": 5,
+   "text": "I am always looking for great skin care products and this one did not let down. I had tried some at a friends house and was hooked. Great va"
+  },
+  {
+   "id": 514327031,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "claudia",
+   "rating": 5,
+   "text": "For the price this lotion is amazing! I wash dishes all day and this lotion keeps my hands moisturized all day! The lavender scent smells so"
+  },
+  {
+   "id": 514327028,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Alina Gheta",
+   "rating": 5,
+   "text": "This lotion is a bit on the greasy side when initially applied, but as I worked it into my skin it was wonderful! It healed the cracked skin"
+  },
+  {
+   "id": 514327044,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Kim L",
+   "rating": 5,
+   "text": "This is a very basic albeit very good lotion. I love the scent and the fact that it absorbs so quickly. I am very happy with this. If you ar"
+  },
+  {
+   "id": 514327083,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "JustMyOpinion",
+   "rating": 5,
+   "text": "I'm a Massage Therapist and I'm always looking for new lotions and creams to try out. I prefer anything with minimal, natural ingredients an"
+  },
+  {
+   "id": 514327036,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "LeNoir",
+   "rating": 5,
+   "text": "This is a nice lotion, with a good smell--lavender and coconut dominates the scent. Excellent hand lotion to keep by my bathroom sink to use"
+  },
+  {
+   "id": 514327025,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "lisagat",
+   "rating": 5,
+   "text": "I absolutely love this lotion. It is pure natural ingredients that nourish and refresh the skin. With coconut oil, jojoba oil, grapefruit, r"
+  },
+  {
+   "id": 514327058,
+   "why": "exact duplicate on the same page",
+   "product": "coconut-lotion",
+   "name": "Kim",
+   "rating": 5,
+   "text": "This real skin care lotion is definitely unscented. It is very gentle on the skin. I had no skin irritation. I actually added some essential"
+  },
+  {
+   "id": 378409988,
+   "why": "body lotion review on the lip balm page",
+   "product": "coconut-oil-lip-balm",
+   "name": "Cyndiy",
+   "rating": 5,
+   "text": "The Body Lotion is truly amazing. My skin absorbed it quickly and left my skin feeling so smooth and silky. It has a light beige color to it"
+  },
+  {
+   "id": 369820122,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Very happy with seller. The order arrived in time well packed. Ingredient of good quality, at good price. The cream is fluid, moisturizing. "
+  },
+  {
+   "id": 369816567,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "I love this cosmetics, I dial on gifts, I like everything very much"
+  },
+  {
+   "id": 369816531,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "quality products, well sealed. The lip balm & lip gloss go on very smooth. Can't wait to try them. Only 1 lip gloss came unsealed & the box "
+  },
+  {
+   "id": 369814708,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "It's for a gift. Thank you!"
+  },
+  {
+   "id": 369812492,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "The coconut breeze cream is very useful, moisturizing and moisturizing."
+  },
+  {
+   "id": 369820125,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 4,
+   "text": "Thank you. It went well. The goods is according to the description"
+  },
+  {
+   "id": 369812498,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Both lip oil and lip gloss are very moisturizing and last for a long time. The lip gloss tube is a little bit small (rectangular case) but a"
+  },
+  {
+   "id": 369813986,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Work takes time, but it really works."
+  },
+  {
+   "id": 369814707,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Super smell, pleasantly felt on the lips, moisturizes. A bottle of good size, I'm already used to that everything is small, so I was pleasan"
+  },
+  {
+   "id": 369816551,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "It can moisturize lips without irritation. It has a good smell. The seller delivers the goods quickly. The parcel will arrive soon."
+  },
+  {
+   "id": 369816544,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Balms steep really liked the set 3 pieces, came quickly well moisturize and nourish what is necessary in winter, the smell does not have a s"
+  },
+  {
+   "id": 369810572,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "In good condition"
+  },
+  {
+   "id": 369813985,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Balm contains rose extract and many moisturizing components that nourish the skin of the lips, soothe and moisturizes them, giving a light a"
+  },
+  {
+   "id": 369813983,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Love this brandIts products suit me☺& Middot;. With pleasure I buy for myself and friends.Comes all very quickly and well packed. I'll take "
+  },
+  {
+   "id": 369814709,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "good item, took longer than expected to come tho."
+  },
+  {
+   "id": 369810569,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "This lotion is amazing - it's so moisturizing and easy to apply."
+  },
+  {
+   "id": 369810571,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "I noticed an immediate difference in my skin. It is moisturizing, hydrating and does make a huge difference. Five stars all the way"
+  },
+  {
+   "id": 369810568,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "The lotion worked great on my dry skin, made my skin soft and glowing."
+  },
+  {
+   "id": 369810565,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "My hands were in quite poor condition because of over-dry and crepey skin dark spots. After just a couple of weeks using this cream the impr"
+  },
+  {
+   "id": 369810566,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Does make my skin look brighter and healthier!! It was great for moisturizing and a lot of great qualities. I will continue and continue to "
+  },
+  {
+   "id": 369810564,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Excellent Product. Thank You."
+  },
+  {
+   "id": 369812493,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "awesome!! looks very interesting & smells wonderful!! it makes your lips so much more softer!! wow!! all came well packed & pretty fast deli"
+  },
+  {
+   "id": 369814706,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Feels nice on the lips and is moisturizing( I’ve used this for the past few days so that’s why it’s not 100% full)"
+  },
+  {
+   "id": 369812491,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "SO GOOD very accurate and moisturizing, I like that it leaves no sort of irritation on the lips."
+  },
+  {
+   "id": 369812495,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Very moist lip gloss. It smells like coconut too. Needed a lip gloss for school and this will be perfect. I love the smell of coconut. It's "
+  },
+  {
+   "id": 369813991,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Excellent nourishing and moisturizing lip balm, windy lips very quickly heals. Light gentle shade of this balm. Very beautiful packaging of "
+  },
+  {
+   "id": 369812494,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Very smooth my lips already feel softer than they did than before I had this product. The packaging is also very pretty and fits my aestheti"
+  },
+  {
+   "id": 369813989,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "My favorite balm. Very beautiful design, fit in any handbag. Saves lips from dryness and gives a gentle shade"
+  },
+  {
+   "id": 369813982,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Delivery is 14 days, the quality of the lip balm is simply chic, insanely pleasant smell, very soft balm, it gives the lips volume and prote"
+  },
+  {
+   "id": 369813988,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Light and refreshing balm. The color is gentle and beautiful packing. Thank you"
+  },
+  {
+   "id": 369812496,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Has a light coconut smell, very moisturizing, very good product."
+  },
+  {
+   "id": 369812497,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Very comfortable to apply on the mouth, recommended purchase."
+  },
+  {
+   "id": 369820123,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "I order the second time, the cream is good, I recommend. The only package was all crumpled."
+  },
+  {
+   "id": 369820124,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Cream, light, applied does not leave a greasy shine, use at any time of the year!!!"
+  },
+  {
+   "id": 369820126,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 4,
+   "text": "Very very fast delivery frankly I did not expect that now it's time to try to see"
+  },
+  {
+   "id": 369814098,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Received 18 days as usual super moisturizing soap for dry skin and super matting for oily skin, foam in your hands and apply on your face as"
+  },
+  {
+   "id": 369814099,
+   "why": "AliExpress import (another seller, deleted product)",
+   "product": "coconut-breeze",
+   "name": "Anonymous",
+   "rating": 5,
+   "text": "Great seller! Amazing product!"
+  }
+ ]
+}

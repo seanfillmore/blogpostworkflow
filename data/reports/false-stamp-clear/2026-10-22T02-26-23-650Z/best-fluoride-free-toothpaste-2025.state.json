@@ -1,0 +1,40 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:03:12.093Z",
+    "last_crawled": "2026-10-16T21:48:38Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-fluoride-free-toothpaste-2025",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562334367914,
+  "shopify_handle": "best-fluoride-free-toothpaste-2025",
+  "shopify_publish_at": "2025-06-27T11:00:02-06:00",
+  "legacy_synced_at": "2026-04-09T23:17:12.637Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 35, 2065 impressions. Default: meta-only.",
+  "legacy_locked": false,
+  "legacy_triaged_at": "2026-09-21T16:29:52.150Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "legacy_lock_cleared_at": "2026-09-21T16:29:52.150Z",
+  "legacy_lock_cleared_reason": "lock re-check: 2065 impressions/90d at position 34.7 (keep needs ≥200 and ≤20)",
+  "refreshed_at": "2026-10-10T15:09:18.324Z",
+  "last_material_edit": {
+    "at": "2026-10-10T15:09:18.325Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:43:47.613Z",
+    "reasons": [
+      "1 deterministic issue(s)",
+      "7 uncited statistical/health claim(s) (fact-check gate)",
+      "content blockers: factual concerns, ingredient accuracy, brand voice"
+    ]
+  }
+}

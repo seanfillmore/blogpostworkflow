@@ -35,12 +35,16 @@ import { execSync } from 'child_process';
 import { getBlogs, getArticles, getArticle, updateArticle } from '../../lib/shopify.js';
 import * as gsc from '../../lib/gsc.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
-import { getPostMeta, getRefreshedPath, ensurePostDir, resolvePostSlug, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { getPostMeta, getRefreshedPath, ensurePostDir, resolveArticleHandle, declaredHandles, declaresOtherArticle, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { founderNotesFor } from '../../lib/founder-notes-store.js';
 import { mayRewriteBody } from '../../lib/post-lock.js';
+import { mayEditLivePost, recordMaterialEdit } from '../../lib/post-edit-gate.js';
+import { partitionByEditGate, renderEditGateLines, gateTargetHandle } from '../../lib/edit-gate-filter.js';
 import { checkAnswerFirst } from '../../lib/answer-first.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { optimizationScopeTerms, isKeywordSelling } from '../../lib/selling-products.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'content-refresher');
@@ -167,7 +171,7 @@ async function buildArticleIndex() {
 
 // ── claude refresh ────────────────────────────────────────────────────────────
 
-async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = []) {
+async function refreshContent(article, keyword, position, impressions, relatedKeywords, slug = null, userConcerns = [], founderBlock = '') {
   const bodyText = article.body_html
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
@@ -205,7 +209,7 @@ async function refreshContent(article, keyword, position, impressions, relatedKe
   } catch { /* ignore */ }
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8192,
     messages: [{
       role: 'user',
@@ -284,7 +288,7 @@ IMPORTANT:
   const verdict = loadPerformanceVerdict(slug);
   if (!verdict) return '';
   return `\n\n---\n\nPOST-PERFORMANCE VERDICT (why this post is being refreshed):\nAt the ${verdict.milestone || 'latest'}-day review this post was flagged ${verdict.verdict}. ${verdict.reason || ''}\n\nTarget your rewrite directly at this cause. Do not do a generic refresh. If the verdict says the projected traffic wasn't hit, figure out why — weak intro, missing topical coverage, title mismatch, thin sections — and fix that specific problem. If the verdict says BLOCKED (zero impressions), the issue is probably intent mismatch or indexing; focus on making the opening paragraph unambiguously match the target keyword and add a clearer content structure.`;
-})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}`,
+})()}${FEEDBACK ? `\n\n---\n\nFOUNDER FEEDBACK FROM PRIOR REFRESH:\nThe founder reviewed a previous version of this refresh and gave the following feedback. Apply it precisely — this is authoritative and overrides general strategy.\n\n${FEEDBACK}` : ''}${founderBlock ? `\n\n---\n\n${founderBlock}` : ''}`,
     }],
   });
 
@@ -307,7 +311,7 @@ async function summarizeChanges(originalHtml, refreshedHtml, keyword) {
   const refreshedText = refreshedHtml.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
   const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: LLM_MODELS.fast,
     max_tokens: 512,
     messages: [{
       role: 'user',
@@ -341,11 +345,34 @@ Return only the bullet points, no preamble.`,
  * refresh that had in fact been generated, and the orphan directory — with no
  * content.html in it — went on to feed queue-autoapply's repair loop.
  *
- * `resolvePostSlug` is the canonical mapping and documents its own resolution
- * order; it is injected here so the wiring is testable without a filesystem.
+ * `resolveArticleHandle` is the canonical handle→post mapping (it does not trust
+ * a directory NAMED for the handle when that dir holds a different article); it
+ * is injected here so the wiring is testable without a filesystem.
  */
-export function writeTargetSlug(handle, resolve = resolvePostSlug) {
-  return resolve(handle) || handle;
+export function writeTargetSlug(handle, resolve = resolveArticleHandle, getMeta = getPostMeta) {
+  const resolved = resolve(handle);
+  if (resolved) return resolved;
+  // No post claims this article. Falling back to a dir named for the handle is
+  // right for a genuinely new article — and wrong when that dir already holds a
+  // DIFFERENT article (the `<handle>-2` collision). Refuse rather than write
+  // one article's refresh into another article's directory.
+  if (declaresOtherArticle(getMeta(handle), handle)) return null;
+  return handle;
+}
+
+/**
+ * Which Shopify article a `--slug` names. A post dir's DECLARED handle wins
+ * over its directory name: `organic-coconut-oil-types-uses-benefits-for-skin/`
+ * holds article `…-2`, and looking its name up as a handle refreshed the other
+ * article. Only a dir that declares nothing is looked up by its name.
+ */
+export function articleForSlugArg(slugArg, byHandle, getMeta = getPostMeta) {
+  const meta = getMeta(slugArg);
+  for (const h of declaredHandles(meta)) {
+    if (byHandle.get(h)) return byHandle.get(h);
+  }
+  if (declaresOtherArticle(meta, slugArg)) return null;
+  return byHandle.get(slugArg) || null;
 }
 
 async function main() {
@@ -359,6 +386,7 @@ async function main() {
 
   // Select targets
   let targets = [];
+  const editGateHeld = [];
 
   // Separate normal keywords from long-form queries (likely AI-generated or
   // conversational searches). Long queries contain real user concerns that
@@ -366,14 +394,8 @@ async function main() {
   const MAX_KEYWORD_LEN = 80;
 
   if (slugArg) {
-    // Single-post mode — try slug directly, then fall back to shopify_handle from meta
-    let article = byHandle.get(slugArg);
-    if (!article) {
-      const meta = getPostMeta(slugArg);
-      if (meta?.shopify_handle && meta.shopify_handle !== slugArg) {
-        article = byHandle.get(meta.shopify_handle);
-      }
-    }
+    // Single-post mode — the post's declared article first, its dir name second.
+    const article = articleForSlugArg(slugArg, byHandle);
     if (!article) {
       console.error(`Article not found in Shopify: ${slugArg}`);
       process.exit(1);
@@ -387,6 +409,9 @@ async function main() {
 
     targets = [{
       article,
+      // The caller named the post; write there. Re-deriving it from the
+      // article handle is how a refresh landed in another post's directory.
+      slug: getPostMeta(slugArg) ? slugArg : null,
       keyword: topKw?.keyword || slugArg.replace(/-/g, ' '),
       position: topKw?.position ?? gscData.position ?? 30,
       impressions: gscData.impressions ?? 0,
@@ -422,6 +447,17 @@ async function main() {
       }
     }
     console.log(`  ${candidates.length} candidates`);
+
+    // Live-article edit gate, BEFORE the --count cap: with --apply a refresh
+    // replaces a live body (`rewrite`, lib/post-edit-gate.js), so a frozen page
+    // or one inside its 28-day measurement window must not take a slot.
+    if (apply) {
+      const { kept, held } = partitionByEditGate(candidates, {
+        kind: 'rewrite', mayEdit: mayEditLivePost, targetOf: (c) => gateTargetHandle(c.url),
+      });
+      candidates = kept;
+      editGateHeld.push(...held);
+    }
 
     for (const candidate of candidates.slice(0, count)) {
       const handle = candidate.url.split('/').filter(Boolean).pop();
@@ -464,7 +500,11 @@ async function main() {
 
   for (let i = 0; i < targets.length; i++) {
     const { article, keyword, position, impressions, relatedKeywords, userConcerns = [] } = targets[i];
-    const slug = writeTargetSlug(article.handle);
+    const slug = targets[i].slug || writeTargetSlug(article.handle);
+    if (!slug) {
+      console.log(`    [skip] ${article.handle}: no local post owns this article, and data/posts/${article.handle}/ holds a different one — refusing to write into it.`);
+      continue;
+    }
 
     // Winner protection — a refresh rewrites the BODY, which is exactly what the
     // lock exists to prevent on a page that already ranks. See lib/post-lock.js
@@ -476,6 +516,18 @@ async function main() {
       continue;
     }
 
+    // Edit gate, alongside the lock (not instead of it). Only when this run
+    // will write a LIVE article: refresh-runner calls without --apply, having
+    // asked the gate itself. Asked before the paid generation.
+    if (apply && article.published_at) {
+      const editGate = mayEditLivePost(article.handle, 'rewrite');
+      if (!editGate.allowed) {
+        console.log(`    [held] ${slug}: edit gate — ${editGate.reason}`);
+        editGateHeld.push({ target: article.handle, kind: 'rewrite', reason: editGate.reason, until: editGate.until });
+        continue;
+      }
+    }
+
     console.log(`\n  [${i + 1}/${targets.length}] Refreshing "${article.title}"...`);
     process.stdout.write('    Generating refreshed content... ');
 
@@ -484,7 +536,8 @@ async function main() {
       const fullArticle = await getArticle(article.blogId, article.id);
       const originalHtml = fullArticle.body_html || '';
 
-      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns);
+      const founder = founderNotesFor({ keyword, slug });
+      const refreshedHtml = await refreshContent(fullArticle, keyword, position, impressions, relatedKeywords, slug, userConcerns, founder.block);
       console.log(`done (${refreshedHtml.split(' ').length} words)`);
 
       process.stdout.write('    Summarizing changes... ');
@@ -499,7 +552,7 @@ async function main() {
         process.stdout.write(`    Intro failed answer-first (${afCheck.reasons.join('; ')}) — repairing... `);
         try {
           const repairMsg = await client.messages.create({
-            model: 'claude-sonnet-4-6',
+            model: LLM_MODELS.standard,
             max_tokens: 300,
             messages: [{
               role: 'user',
@@ -579,9 +632,20 @@ ${afCheck.intro?.html || ''}`,
             published: wasPublished,
           });
           applied = true;
+          if (wasPublished) recordMaterialEdit(article.handle, 'rewrite', 'content-refresher');
           console.log('done');
         } catch (e) {
           console.error(`failed: ${e.message}`);
+        }
+      }
+
+      // Stamp which founder notes were offered to this refresh, on the post the
+      // refreshed content was written to. Failure is logged, never fatal.
+      {
+        try {
+          writePostMeta(slug, { founder_notes_offered: founder.ids });
+        } catch (err) {
+          console.warn(`    founder_notes_offered stamp failed (non-fatal): ${err.message}`);
         }
       }
 
@@ -634,6 +698,16 @@ ${afCheck.intro?.html || ''}`,
     }
     lines.push('');
     lines.push('---');
+    lines.push('');
+  }
+
+  // The digest body IS this report (notifyLatestReport). A hold is the policy
+  // working: named here, never status 'error'.
+  const editGateLines = renderEditGateLines(editGateHeld);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — held (page unchanged, asked again next run)');
+    lines.push('');
+    for (const l of editGateLines) { lines.push(`- ${l.trim()}`); console.log(`  ${l}`); }
     lines.push('');
   }
 

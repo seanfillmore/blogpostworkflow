@@ -57,8 +57,6 @@ description: Recruiting, pitching, paying and integrating partner businesses tha
 
 ## Use a three-tier payout ladder rather than one flat rate — 25% of allowable CAC for anyone who signs up, 50% once they activate (finish onboarding, do a launch, hit a post count), 100% once they sustain performance — so the blended payout lands well below your maximum CAC.
 
-**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
-
 **Why it works:** Tiering rewards the behaviour you actually want (activation and sustained selling) and, because most affiliates never reach the top tier, the blended cost per acquisition falls, improving LTGP:CAC and freeing money for contests and further recruiting.
 
 **Evidence offered:** Worked example: a 20/20/60 tier mix yields a $30 blended payout against a $40 maximum, moving the ratio from 3:1 to 4:1.
@@ -138,8 +136,6 @@ description: Recruiting, pitching, paying and integrating partner businesses tha
 *Source: Alex Hormozi — "$100M Leads" (book, (part 15 of 16))*
 
 ## Point some of your paid ads at recruiting affiliates and partners rather than only at customers, using the same targeting machinery to build an affiliate program.
-
-**Stage:** scale — parked until the scale phase opens. Recorded now so it is not re-derived later.
 
 **Why it works:** An affiliate acquired through paid ads becomes a permanent distribution node rather than a single purchase, so the same ad dollar buys recurring reach instead of one order.
 

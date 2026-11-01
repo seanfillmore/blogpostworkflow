@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-10-10T17:15:26.145Z",
+  "applied": false,
+  "slug": null,
+  "results": [
+    {
+      "id": "cta-mess-antibacterial",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "cta-best-of-both-xylitol",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "collection-paragraph-cavity-fighting",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "cta-easiest-cavity-fighting",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "faq-prevent-cavities-answer",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "final-thoughts-gum-health",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "cta-mess-antibacterial",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "cta-best-of-both-xylitol",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "collection-paragraph-cavity-fighting",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "cta-easiest-cavity-fighting",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "faq-prevent-cavities-answer",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "final-thoughts-gum-health",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

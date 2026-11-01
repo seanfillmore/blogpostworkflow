@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Stop the nurture flow at the Entry Period close.
+ * Close the Entry Period: stop the giveaway flows, then freeze the draw pool.
  *
  *   node scripts/giveaway/close-entry-period.mjs           # report only
- *   node scripts/giveaway/close-entry-period.mjs --apply   # set the flow to draft
+ *   node scripts/giveaway/close-entry-period.mjs --apply   # draft the flows, take the snapshot
  *
  * WHY THIS EXISTS: Klaviyo has no "flow end date".
  *
@@ -16,6 +16,10 @@
  * uploads that can no longer be credited to anything. A 30-day paid campaign
  * produces late entrants in bulk, so this is the common case, not an edge one.
  *
+ * The CONFIRM flow is stopped too (added 2026-09-12). It triggers on list-add and
+ * asks the entrant to click for +2 entries; after the close that is a promise the
+ * frozen pool never keeps.
+ *
  * Klaviyo cannot express this from inside the flow definition:
  *   - there is no end-date field on a flow
  *   - delays are relative, and cannot be pinned to an absolute date
@@ -27,64 +31,79 @@
  * it sending — including to profiles already partway through a delay. So the
  * boundary is enforced from outside, on a timer, rather than declared inside.
  *
- * Idempotent: re-running after the flow is already draft is a no-op, so the
- * cron line can stay installed indefinitely.
+ * The decisions live in lib/giveaway/entry-period.js: --apply is REFUSED before
+ * the close, each flow is handled independently (an already-draft flow no longer
+ * skips the snapshot, which the first version of this script did), and an
+ * existing snapshot is never retaken — the cron line has no year field and fires
+ * again every September 15.
  */
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { klaviyoRequest, updateFlowStatus } from '../../lib/klaviyo.js';
+import { planEntryPeriodClose } from '../../lib/giveaway/entry-period.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const config = JSON.parse(readFileSync(join(ROOT, 'config', 'giveaway.json'), 'utf8'));
 const apply = process.argv.includes('--apply');
+const SNAPSHOT = join(ROOT, 'data', 'giveaway', 'draw-snapshot.json');
 
-const flowId = config.nurtureFlowId;
-if (!flowId) {
-  console.error('config.nurtureFlowId is not set — nothing to close.');
+const flowIds = [config.nurtureFlowId, config.confirmFlowId].filter(Boolean);
+if (!flowIds.length) {
+  console.error('config has neither nurtureFlowId nor confirmFlowId — nothing to close.');
   process.exit(2);
 }
 
-const flow = await klaviyoRequest('GET', `/flows/${flowId}/`);
-const name = flow.data.attributes.name;
-const status = flow.data.attributes.status;
-console.log(`flow ${flowId} (${name}) is currently: ${status}`);
+const flows = [];
+for (const id of flowIds) {
+  const f = await klaviyoRequest('GET', `/flows/${id}/`);
+  flows.push({ id, name: f.data.attributes.name, status: f.data.attributes.status });
+  console.log(`flow ${id} (${f.data.attributes.name}) is currently: ${f.data.attributes.status}`);
+}
 
-if (status !== 'live') {
-  // Already stopped, or never went live. Either way there is nothing to do and
-  // this must not be treated as a failure — the cron line runs unconditionally.
-  console.log('Not live — nothing to do.');
-  process.exit(0);
+const snapshotExists = existsSync(SNAPSHOT);
+const plan = planEntryPeriodClose({
+  nowMs: Date.now(),
+  entryClosesAt: config.entryClosesAt,
+  flows,
+  apply,
+  snapshotExists,
+});
+
+if (plan.refused) {
+  console.error(plan.refused);
+  process.exit(1);
 }
 
 if (!apply) {
-  console.log('Dry run — pass --apply to set it to draft.');
+  console.log(`Dry run — would draft: ${plan.toDraft.join(', ') || 'nothing (no live flows)'}`);
+  console.log(snapshotExists ? 'Snapshot already exists — it would not be retaken.' : 'The snapshot would be taken.');
   process.exit(0);
 }
 
-await updateFlowStatus(flowId, 'draft');
-
-// Read it back. A success log is not evidence; the stored status is.
-const after = await klaviyoRequest('GET', `/flows/${flowId}/`);
-const now = after.data.attributes.status;
-console.log(`flow ${flowId} is now: ${now}`);
-if (now === 'live') {
-  console.error('FAILED — the flow is still live. Late entrants will receive post-draw email.');
-  process.exit(1);
+let failed = false;
+for (const id of plan.toDraft) {
+  await updateFlowStatus(id, 'draft');
+  // Read it back. A success log is not evidence; the stored status is.
+  const after = await klaviyoRequest('GET', `/flows/${id}/`);
+  const status = after.data.attributes.status;
+  console.log(`flow ${id} is now: ${status}`);
+  if (status === 'live') {
+    console.error(`FAILED — flow ${id} is still live. Entrants will receive post-close email.`);
+    failed = true;
+  }
 }
-console.log('Entry Period closed: the nurture flow will send nothing further.');
+if (!plan.toDraft.length) console.log('No live flows — nothing to draft.');
 
 // The pool must be frozen at the close of the Entry Period (§12), and this job
-// is the only thing that runs at that moment.
+// is the only thing that runs at that moment. It is taken even if a flow failed
+// to draft above: a drawing with no frozen pool is the one outcome that cannot
+// be recovered later, while a flow can be drafted by hand.
 //
 // SPAWNED, not imported: importing a script module RUNS it, and doing that here
 // would execute the snapshot as a side effect of merely reading this file — the
 // hazard documented across the fleet in reference_agents_run_on_import.
-//
-// A snapshot failure does not undo the flow close above (that already succeeded
-// and must not be reverted), but it does fail the job loudly, because a drawing
-// with no frozen pool is the one outcome that cannot be recovered later.
-if (apply) {
+if (plan.takeSnapshot) {
   const { spawnSync } = await import('node:child_process');
   const r = spawnSync(
     process.execPath,
@@ -93,6 +112,11 @@ if (apply) {
   );
   if (r.status !== 0) {
     console.error('SNAPSHOT FAILED — the drawing has no frozen pool. Run take-draw-snapshot.mjs by hand today.');
-    process.exitCode = 1;
+    failed = true;
   }
+} else {
+  console.log('Snapshot already exists — not retaken.');
 }
+
+if (failed) process.exitCode = 1;
+else console.log('Entry Period closed.');

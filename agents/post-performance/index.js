@@ -9,12 +9,12 @@
  * consumes.
  *
  * Verdicts:
- *   30d — indexed and getting any impressions/clicks? If all zero → BLOCKED
- *         (technical or intent mismatch worth investigating).
- *   60d — actual clicks vs. projected clicks (traffic_potential × 2 months).
- *         Under 25% of projection → REFRESH candidate.
- *   90d — final verdict. Under 50% of projection (traffic_potential × 3
- *         months) → DEMOTE candidate.
+ *   30d — any impressions/clicks at all? If all zero → BLOCKED (or NOT_INDEXED
+ *         when indexing-checker says the page is not indexed).
+ *   60d — clicks vs what the site's own blog pages earn from the same
+ *         impressions at the same rank (lib/peer-yield.js). Well below → REFRESH.
+ *   90d — same test, plus LOW_DEMAND when almost nobody searches for or reaches
+ *         the page (a merge-or-remove decision for a human).
  *
  * Outputs:
  *   data/reports/post-performance/<slug>-{30d,60d,90d}.md  — per-post review
@@ -35,20 +35,20 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { notify } from '../../lib/notify.js';
 
-import { listAllSlugs, getPostMeta, getMetaPath, POSTS_DIR, ROOT } from '../../lib/posts.js';
+import { listAllSlugs, getPostMeta, getMetaPath, writePostMeta, POSTS_DIR, ROOT } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
+import { flopAction, countByAction, FLOP_ACTIONS } from '../../lib/flop-candidates.js';
+import { judgeYield, peerCtrByBand } from '../../lib/peer-yield.js';
+import { CANONICAL_ORIGIN } from '../../lib/gsc-page-url.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const BRIEFS_DIR = join(ROOT, 'data', 'briefs');
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'post-performance');
 
 const MILESTONES = [30, 60, 90];
 const FORCE = process.argv.includes('--force');
 
-// Thresholds (fractions of projected traffic)
-const REFRESH_THRESHOLD_60D = 0.25;
-const DEMOTE_THRESHOLD_90D = 0.5;
 
 function ageInDays(iso) {
   if (!iso) return null;
@@ -57,15 +57,81 @@ function ageInDays(iso) {
   return Math.floor((Date.now() - then) / (24 * 60 * 60 * 1000));
 }
 
-function loadBriefTrafficPotential(slug) {
-  const path = join(BRIEFS_DIR, `${slug}.json`);
-  if (!existsSync(path)) return null;
-  try {
-    const brief = JSON.parse(readFileSync(path, 'utf8'));
-    const tp = brief.traffic_potential;
-    return typeof tp === 'number' ? tp : null;
-  } catch { return null; }
+/**
+ * When a post's review clock starts: the later of its publish date and its last
+ * BODY refresh.
+ *
+ * A 30/60/90-day verdict is a statement about a page. Once the body is replaced
+ * that page no longer exists, so the verdict cannot stay "Action Required" —
+ * and until 2026-09-21 it did, forever: `all-natural-lotion` was refreshed and
+ * republished on 2026-08-30 and still sat on the dashboard three weeks later
+ * with its July "0 clicks" verdict. `last_refreshed_at` is stamped by
+ * lib/queue-apply.js and refresh-runner; `refreshed_at` by legacy-rebuilder.
+ */
+export function reviewClockStart(meta) {
+  let best = null;
+  for (const iso of [meta?.published_at, meta?.last_refreshed_at, meta?.refreshed_at]) {
+    const t = iso ? new Date(iso).getTime() : NaN;
+    if (!Number.isNaN(t) && (best == null || t > best.t)) best = { iso, t };
+  }
+  return best ? best.iso : null;
 }
+
+/**
+ * Split a post's stored reviews into those still describing the current page
+ * and those made before the clock restarted. The superseded ones are kept as
+ * history, never deleted — "this page flopped, was refreshed, and…" is exactly
+ * what someone will want to read six weeks later.
+ */
+export function supersedeStaleReviews(reviews, clockStart) {
+  const start = clockStart ? new Date(clockStart).getTime() : NaN;
+  const current = {};
+  const superseded = [];
+  for (const [key, review] of Object.entries(reviews || {})) {
+    const at = review?.reviewed_at ? new Date(review.reviewed_at).getTime() : NaN;
+    if (review && review.gsc_basis !== GSC_BASIS) {
+      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: 'basis-change' });
+    } else if (!Number.isNaN(start) && !Number.isNaN(at) && at < start) {
+      superseded.push({ ...review, superseded_at: new Date().toISOString(), superseded_by: clockStart });
+    } else {
+      current[key] = review;
+    }
+  }
+  return { current, superseded };
+}
+
+/**
+ * The post's CURRENT verdict: the most recent milestone reviewed, and only if
+ * that one is not ON_TRACK. Every non-ON_TRACK milestone used to be listed, so
+ * one post filled up to three rows and a 30-day BLOCKED stayed listed after the
+ * same post's 60-day review had come back fine.
+ */
+export function currentFlop(reviews, milestones = MILESTONES) {
+  for (const m of [...milestones].sort((a, b) => b - a)) {
+    const r = reviews?.[`${m}d`];
+    if (r) return r.verdict !== 'ON_TRACK' ? { milestone: m, review: r } : null;
+  }
+  return null;
+}
+
+const HISTORY_CAP = 12;
+
+/**
+ * The basis a review was scored on. A review stamped with any other basis is
+ * superseded exactly as a pre-refresh one is, and the milestone re-measured.
+ *
+ *   (none)                     → queried `meta.shopify_url`, the myshopify host
+ *                                 for all 183 posts; an exact GSC page filter on
+ *                                 it matches nothing, so every review read 0/0
+ *                                 (lib/gsc-page-url.js).
+ *   canonical-host-2026-09-21  → real clicks, but judged against the brief's
+ *                                 traffic_potential (up to 144,000 clicks), a
+ *                                 target no page could meet.
+ *   peer-yield-2026-09-21      → judged against what the site's own pages earn
+ *                                 from the same demand at the same rank
+ *                                 (lib/peer-yield.js).
+ */
+export const GSC_BASIS = 'peer-yield-2026-09-21';
 
 function listPublishedPosts() {
   const posts = [];
@@ -146,83 +212,41 @@ function loadExternalContext() {
   return ctx;
 }
 
-const KNOWN_CLUSTERS_PP = ['deodorant', 'toothpaste', 'lotion', 'soap', 'lip balm', 'coconut oil', 'shampoo', 'conditioner', 'sunscreen', 'body wash', 'face cream', 'moisturizer', 'serum'];
-function clusterForPost(slug, keyword) {
-  const text = ((keyword || '') + ' ' + (slug || '')).toLowerCase();
-  for (const c of KNOWN_CLUSTERS_PP) {
-    if (text.includes(c)) return c;
-  }
-  return null;
-}
-
-function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, keyword, externalCtx }) {
+/**
+ * 30d: zero impressions → BLOCKED (or NOT_INDEXED when indexing-checker says so).
+ * 60d/90d: judged against the site's own peers on the page's own demand
+ * (lib/peer-yield.js) — REFRESH when it earns well below them; at 90d also
+ * LOW_DEMAND when almost nobody searches for or reaches it.
+ */
+export function evaluateMilestone({ milestone, age, metrics, slug, externalCtx, bandCtr }) {
   if (age < milestone) return null;
 
   const impressions = metrics?.impressions ?? 0;
   const clicks = metrics?.clicks ?? 0;
-
-  // Monthly traffic_potential -> per-milestone projection
-  const months = milestone / 30;
-  const projection = typeof trafficPotential === 'number'
-    ? Math.round(trafficPotential * months)
-    : null;
-
   let verdict = 'ON_TRACK';
   let reason = '';
+  let projection = null;
 
   if (milestone === 30) {
     if (impressions === 0 && clicks === 0) {
-      // Check whether the indexing-checker has already determined this is an
-      // indexing problem. If so, emit a more specific NOT_INDEXED verdict
-      // instead of the generic BLOCKED — different root cause, different fix.
-      // See docs/signal-manifest.md (indexing-checker → post-performance loop).
-      if (externalCtx && externalCtx.indexingStateBySlug && externalCtx.indexingStateBySlug[slug]) {
-        const idxState = externalCtx.indexingStateBySlug[slug];
-        if (idxState !== 'indexed') {
-          verdict = 'NOT_INDEXED';
-          reason = `Zero impressions and zero clicks after 30 days because the page is not indexed (state: ${idxState}). The indexing-checker flagged this; refreshing content will not help — fix indexing first.`;
-        } else {
-          verdict = 'BLOCKED';
-          reason = 'Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.';
-        }
+      // A NOT_INDEXED verdict is a different root cause with a different fix, so
+      // it is split out when indexing-checker has already said so.
+      const idxState = externalCtx?.indexingStateBySlug?.[slug];
+      if (idxState && idxState !== 'indexed') {
+        verdict = 'NOT_INDEXED';
+        reason = `Zero impressions and zero clicks after 30 days because the page is not indexed (state: ${idxState}). Refreshing content will not help — fix indexing first.`;
       } else {
         verdict = 'BLOCKED';
-        reason = 'Zero impressions and zero clicks after 30 days — likely not indexed, or targeting a query the page does not match. Investigate GSC coverage and intent.';
+        reason = 'Zero impressions and zero clicks after 30 days — nobody is searching for what this page targets, or it is not indexed.';
       }
     } else {
-      reason = `Indexed. ${impressions} impressions, ${clicks} clicks over first 30 days.`;
+      reason = `Indexed. ${impressions} impressions, ${clicks} clicks over the last 30 days.`;
     }
-  } else if (milestone === 60) {
-    if (projection != null && clicks < projection * REFRESH_THRESHOLD_60D) {
-      verdict = 'REFRESH';
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Under ${Math.round(REFRESH_THRESHOLD_60D * 100)}% threshold — refresh candidate.`;
-    } else if (projection == null) {
-      reason = `No traffic_potential in brief — cannot score. ${clicks} clicks, ${impressions} impressions over 60 days.`;
-    } else {
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). On track.`;
-    }
-  } else if (milestone === 90) {
-    if (projection != null && clicks < projection * DEMOTE_THRESHOLD_90D) {
-      verdict = 'DEMOTE';
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Under ${Math.round(DEMOTE_THRESHOLD_90D * 100)}% threshold — consider merging, refreshing, or removing.`;
-      // Context-aware softening: if a competitor just published in this cluster,
-      // an underperformance is probably external pressure, not content rot.
-      // Downgrade DEMOTE → REFRESH so the response is a rewrite, not a removal.
-      const cluster = externalCtx ? clusterForPost(slug, keyword) : null;
-      const competitorHits = cluster ? (externalCtx.competitorBoosts[cluster] || 0) : 0;
-      const clusterWeight = cluster ? (externalCtx.clusterWeights[cluster] || 0) : 0;
-      if (competitorHits > 0) {
-        verdict = 'REFRESH';
-        reason += ` [softened to REFRESH: ${competitorHits} new competitor post${competitorHits > 1 ? 's' : ''} in the "${cluster}" cluster — external ranking pressure suggests rewrite, not removal.]`;
-      } else if (clusterWeight >= 2) {
-        verdict = 'REFRESH';
-        reason += ` [softened to REFRESH: "${cluster}" is a page-1 cluster (weight +${clusterWeight}) — worth reinforcing, not removing.]`;
-      }
-    } else if (projection == null) {
-      reason = `No traffic_potential in brief — cannot score. ${clicks} clicks, ${impressions} impressions over 90 days.`;
-    } else {
-      reason = `${clicks} clicks vs. projected ${projection} (${Math.round((clicks / Math.max(projection, 1)) * 100)}% of target). Final verdict: on track.`;
-    }
+  } else {
+    const judged = judgeYield(metrics, bandCtr, { days: milestone, judgeLowDemand: milestone === 90 });
+    projection = judged.expected != null ? Math.round(judged.expected * 10) / 10 : null;
+    reason = judged.why;
+    if (judged.verdict === 'REFRESH' || judged.verdict === 'LOW_DEMAND') verdict = judged.verdict;
   }
 
   return {
@@ -236,7 +260,26 @@ function evaluateMilestone({ milestone, age, metrics, trafficPotential, slug, ke
     projection,
     verdict,
     reason,
+    gsc_basis: GSC_BASIS,
   };
+}
+
+/**
+ * The site's blog CTR per position band over the trailing window, from GSC's
+ * own page rows. Only the canonical www host — the host every per-page lookup
+ * now queries (lib/gsc-page-url.js) — so page and peers share one basis; GSC
+ * also returns tiny apex-domain duplicates that would otherwise be mixed in.
+ */
+async function loadPeerBandCtr(days) {
+  try {
+    const gsc = await import('../../lib/gsc.js');
+    const rows = (await gsc.getTopPages(5000, days))
+      .filter((r) => r.page.startsWith(`${CANONICAL_ORIGIN}/blogs/news/`));
+    return { bandCtr: peerCtrByBand(rows), pages: rows.length };
+  } catch (err) {
+    console.warn(`  [warn] peer CTR unavailable for ${days}d: ${err.message}`);
+    return null;
+  }
 }
 
 function writePerPostReview({ slug, title, url, review }) {
@@ -259,7 +302,7 @@ function writePerPostReview({ slug, title, url, review }) {
     `- Clicks: ${review.clicks}`,
     `- CTR: ${(review.ctr * 100).toFixed(2)}%`,
     `- Avg position: ${review.position != null ? review.position.toFixed(1) : 'n/a'}`,
-    review.projection != null ? `- Projected clicks (traffic_potential × ${review.milestone / 30}mo): ${review.projection}` : '',
+    review.projection != null ? `- Expected clicks (site peers, same demand and rank): ${review.projection}` : '',
     '',
   ].filter(Boolean);
   writeFileSync(path, lines.join('\n'));
@@ -277,7 +320,7 @@ function writeDailyRollup({ dateStr, reviews }) {
   }
   lines.push(`${reviews.length} review${reviews.length > 1 ? 's' : ''} generated today.`);
   lines.push('');
-  lines.push('| Slug | Milestone | Verdict | Clicks | Impressions | Projection |');
+  lines.push('| Slug | Milestone | Verdict | Clicks | Impressions | Expected |');
   lines.push('|------|-----------|---------|--------|-------------|------------|');
   for (const r of reviews) {
     lines.push(`| \`${r.slug}\` | ${r.review.milestone}d | ${r.review.verdict} | ${r.review.clicks} | ${r.review.impressions} | ${r.review.projection ?? '—'} |`);
@@ -314,17 +357,39 @@ async function main() {
   if (externalCtx.rankDrops.size) ctxNotes.push(`${externalCtx.rankDrops.size} recent rank drops`);
   if (ctxNotes.length) console.log(`  External context loaded: ${ctxNotes.join(', ')}`);
 
+  // Peer CTR per band for each judged window, fetched once. A window whose peer
+  // data cannot be read is skipped this run rather than judged on nothing.
+  const peerByDays = {};
+  for (const days of MILESTONES.filter((m) => m > 30)) {
+    const peer = await loadPeerBandCtr(days);
+    if (peer) {
+      peerByDays[days] = peer.bandCtr;
+      console.log(`  Peer CTR (${days}d, ${peer.pages} blog pages): ${Object.entries(peer.bandCtr).map(([b, c]) => `${b} ${(c * 100).toFixed(2)}%`).join(' · ')}`);
+    }
+  }
+
   const todayReviews = []; // reviews produced this run
   const allFlops = [];      // any outstanding flops across all posts
 
+  let supersededCount = 0;
   for (const { file, meta } of posts) {
-    const age = ageInDays(meta.published_at);
-    if (age == null || age < MILESTONES[0]) continue;
+    const clockStart = reviewClockStart(meta);
+    const { current: existing, superseded } = supersedeStaleReviews(meta.performance_review, clockStart);
+    let history = null;
+    if (superseded.length) {
+      history = [...(meta.performance_review_history || []), ...superseded].slice(-HISTORY_CAP);
+      supersededCount += superseded.length;
+      console.log(`  [reset] ${meta.slug}: ${superseded.length} earlier verdict(s) superseded (${[...new Set(superseded.map((r) => (r.superseded_by === 'basis-change' ? 'scored on an older basis' : 'body refreshed')))].join(', ')}).`);
+    }
 
-    const existing = meta.performance_review || {};
-    const trafficPotential = loadBriefTrafficPotential(meta.slug);
+    const age = ageInDays(clockStart);
+    if (age == null || age < MILESTONES[0]) {
+      if (history) writePostMeta(meta.slug, { performance_review: existing, performance_review_history: history });
+      continue;
+    }
+
     let metricsByDays = {};
-    let updated = false;
+    let updated = Boolean(history);
 
     for (const milestone of MILESTONES) {
       if (age < milestone) continue;
@@ -337,12 +402,13 @@ async function main() {
       }
       const metrics = metricsByDays[milestone];
       if (!metrics) continue; // GSC unavailable — skip this run
+      if (milestone > 30 && !peerByDays[milestone]) continue; // no peers — judge next run
 
       const review = evaluateMilestone({
-        milestone, age, metrics, trafficPotential,
+        milestone, age, metrics,
         slug: meta.slug,
-        keyword: meta.target_keyword,
         externalCtx,
+        bandCtr: peerByDays[milestone],
       });
       if (!review) continue;
 
@@ -362,23 +428,36 @@ async function main() {
 
     if (updated) {
       meta.performance_review = existing;
-      writeFileSync(file, JSON.stringify(meta, null, 2));
+      // MERGE through the chokepoint — never write the raw path back.
+      // `meta` here came from getPostMeta(), which returns meta.json AND
+      // state.json merged, so writing it back raw put every server-owned field
+      // (word_count, tokens_used, shopify_article_id, …) into the git-TRACKED
+      // meta.json. That is the deploy collision PR #737 split the files to end,
+      // and this agent re-created it on 24 posts in two days, once per 13:30 run.
+      writePostMeta(meta.slug, history
+        ? { performance_review: existing, performance_review_history: history }
+        : { performance_review: existing });
     }
 
-    // Collect any outstanding flops (BLOCKED/REFRESH/DEMOTE) for the digest.
-    for (const milestone of MILESTONES) {
-      const r = existing[`${milestone}d`];
-      if (r && r.verdict !== 'ON_TRACK') {
-        allFlops.push({
-          slug: meta.slug,
-          title: meta.title,
-          url: meta.shopify_url,
-          milestone,
-          verdict: r.verdict,
-          reason: r.reason,
-          reviewed_at: r.reviewed_at,
-        });
-      }
+    // One row per post: its CURRENT verdict (see currentFlop).
+    const flop = currentFlop(existing);
+    if (flop) {
+      allFlops.push({
+        slug: meta.slug,
+        title: meta.title,
+        url: meta.shopify_url,
+        milestone: flop.milestone,
+        verdict: flop.review.verdict,
+        reason: flop.review.reason,
+        reviewed_at: flop.review.reviewed_at,
+        clock_start: clockStart,
+      });
+      const row = allFlops[allFlops.length - 1];
+      row.action = flopAction(row, { mayRewriteBody });
+      // Carried on the row so the dashboard and digest render one vocabulary
+      // without a browser-side copy of it.
+      row.action_label = FLOP_ACTIONS[row.action].label;
+      row.automated = FLOP_ACTIONS[row.action].automated;
     }
   }
 
@@ -389,9 +468,12 @@ async function main() {
   writeFileSync(join(REPORTS_DIR, 'latest.json'), JSON.stringify({
     generated_at: new Date().toISOString(),
     reviews_today: todayReviews.length,
+    // What happens next to each flop — see FLOP_ACTIONS in lib/flop-candidates.js.
+    by_action: countByAction(allFlops),
     action_required: allFlops,
   }, null, 2));
 
+  if (supersededCount) console.log(`\n  ${supersededCount} verdict(s) superseded (older basis or body refresh).`);
   console.log(`\n  ${todayReviews.length} new review${todayReviews.length === 1 ? '' : 's'} this run, ${allFlops.length} outstanding flop${allFlops.length === 1 ? '' : 's'}.`);
 
   if (todayReviews.length > 0) {

@@ -133,6 +133,16 @@ test('nothing but the archive itself writes into the dropped directory', () => {
     'tests/lib/brief-archive.test.js',
     'tests/lib/briefs-dir-readers.test.js',
     'tests/scripts/triage-orphan-briefs-archive.test.js',
+    // The CALENDAR archive — data/calendar/_dropped/, a different directory
+    // holding different work. It follows the same convention on purpose (a
+    // directory with no `.json` suffix is invisible to a `.json`-filtered
+    // readdir) and it deliberately does NOT import this name from
+    // lib/brief-archive.js: renaming the briefs archive must not silently move
+    // the calendar one and orphan everything already archived there. It shares
+    // the pieces that are genuinely generic instead — allocateArchiveName,
+    // newRunId, DROP_RECORD_SUFFIX. It is the ONLY file in that feature that
+    // spells the name; its script and its tests import it.
+    'lib/calendar-item-archive.js',
   ]);
   const offenders = [];
   for (const file of sourceFiles()) {

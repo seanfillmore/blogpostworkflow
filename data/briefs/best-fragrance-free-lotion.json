@@ -1,0 +1,317 @@
+{
+  "target_keyword": "best fragrance free lotion",
+  "slug": "best-fragrance-free-lotion",
+  "search_intent": "commercial",
+  "content_type": "listicle",
+  "content_depth": "comprehensive",
+  "recommended_title": "Best Fragrance Free Lotion: Clean Picks for Sensitive Skin",
+  "meta_description": "Looking for the best fragrance free lotion? Discover clean, dermatologist-friendly picks—including Real Skin Care's pure unscented body lotion. Shop now.",
+  "target_word_count": 2400,
+  "content_angle": "A tightly curated, ingredient-transparent roundup anchored by Real Skin Care's own truly fragrance-free formula—covering the 'unscented vs. fragrance-free' distinction competitors gloss over and giving readers a clear framework for choosing by skin type, not just by brand name.",
+  "key_differentiators": [
+    "Opens with a direct, answer-first paragraph that immediately satisfies the query—designed to improve AI citation rates and featured-snippet eligibility",
+    "Clearly explains the 'unscented vs. fragrance-free' distinction with cited dermatological context, a nuance most competing roundups skip or understate",
+    "Positions Real Skin Care's Pure Unscented Body Lotion as the standout clean-beauty option with full ingredient transparency and a 'why it works' rationale—not just a product card",
+    "Provides a skin-type decision framework (dry, sensitive, eczema-prone, aging) so readers can self-qualify rather than reading a generic list",
+    "Includes a practical application tips section and FAQ that address real user questions surfaced in the Reddit SERP (position 1), capturing long-tail commercial and informational intent in one post"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open with a direct, answer-first sentence: something like 'The best fragrance free lotion hydrates without triggering reactions—and choosing the right one comes down to understanding what 'fragrance free' actually means on a label.' Immediately address why people search this query: sensitive skin, allergies, eczema, pregnancy, or preference for clean formulations. Briefly preview the list and the skin-type framework. Do NOT open with a rhetorical question. Keep it tight—the reader came for picks, not preamble. Mention that Real Skin Care's Pure Unscented Body Lotion is featured and why it earned its spot.",
+      "keywords_to_include": [
+        "best fragrance free lotion",
+        "fragrance free body lotion",
+        "unscented lotion",
+        "sensitive skin",
+        "fragrance free body moisturizer"
+      ]
+    },
+    {
+      "section": "H2: Fragrance-Free vs. Unscented: What the Labels Actually Mean",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "This is a critical trust-building section that competitors handle poorly. Explain clearly: 'fragrance-free' means no fragrance ingredients added (synthetic or masking); 'unscented' often means masking agents were used to neutralize odor—and those masking agents can still be allergens. Cite the FDA or American Academy of Dermatology (AAD) on fragrance as a leading cause of contact dermatitis. Note that terms like 'naturally scented' or 'lightly scented' do not qualify as fragrance-free. This section should answer the question many Reddit users and sensitive-skin sufferers ask. Flag to writer: verify AAD or FDA source URL is live before linking.",
+      "keywords_to_include": [
+        "fragrance free lotion",
+        "unscented lotion",
+        "hypoallergenic fragrance free lotion",
+        "fragrance-free body moisturizer"
+      ]
+    },
+    {
+      "section": "H2: What to Look For in a Truly Clean Fragrance-Free Lotion",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Briefly cover the ingredient criteria that define a genuinely clean fragrance-free lotion: (1) no synthetic fragrance or parfum on the label, (2) no essential oils used as fragrance (these are still allergens for many), (3) no masking agents, (4) free from parabens, phthalates, and sulfates, (5) key moisturizing actives present—such as glycerin, shea butter, aloe vera, or plant-based emollients. Mention that dermatologist-recommended formulas often prioritize these attributes. Do not name competitor brands. Position this as a buyer's checklist.",
+      "keywords_to_include": [
+        "fragrance free body lotion for sensitive skin",
+        "hypoallergenic fragrance free lotion",
+        "body lotion recommended by dermatologist",
+        "best body lotion for dry skin dermatologist-recommended",
+        "clean body lotion"
+      ]
+    },
+    {
+      "section": "H2: 1. Real Skin Care Pure Unscented Body Lotion — Best Overall Clean Pick",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Lead with Real Skin Care's own product as the top overall pick for readers who want a genuinely clean, fragrance-free formula. Cover: (1) what makes it truly fragrance-free—no synthetic fragrance, no essential oils, no masking agents; (2) key ingredients and what each does for skin (glycerin for humectancy, shea butter or plant emollients for barrier support—use actual product ingredient info); (3) who it's best for: sensitive skin, eczema-prone, pregnant women, anyone avoiding allergens; (4) texture, absorption, and feel; (5) clean-beauty positioning—no parabens, phthalates, or sulfates. Include a clear CTA linking to the product page. Tone should be confident and factual, not hyperbolic. Writer: pull accurate ingredient details from the live product page before writing.",
+      "keywords_to_include": [
+        "best fragrance free lotion",
+        "fragrance free body lotion for sensitive skin",
+        "fragrance free lotion for dry skin",
+        "unscented lotion",
+        "body lotion for dry skin"
+      ]
+    },
+    {
+      "section": "H2: 2. Best Fragrance-Free Lotion for Eczema-Prone Skin",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Describe the category/type of lotion that works best for eczema-prone skin—thicker cream texture, ceramide or colloidal oat inclusion, National Eczema Association accepted formulas. Do NOT name a competitor brand. Instead, describe what to look for: fragrance-free, dye-free, alcohol-free, with ceramides or oat-based soothing ingredients. Explain why eczema-prone skin is especially vulnerable to fragrance allergens. If Real Skin Care's product meets these criteria, note that here. Writer: if RSC does not have a dedicated eczema product, frame this as a 'what to look for' sub-section with ingredient guidance rather than a product recommendation, to avoid implying RSC sells something it does not.",
+      "keywords_to_include": [
+        "fragrance free body lotion for sensitive skin",
+        "fragrance-free body lotion for sensitive skin",
+        "best body lotion for dry skin",
+        "hypoallergenic fragrance free lotion"
+      ]
+    },
+    {
+      "section": "H2: 3. Best Fragrance-Free Lotion for Very Dry Skin",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Focus on what formulation properties serve very dry skin: occlusive ingredients (shea butter, plant oils), humectants (glycerin, aloe), and emollients in a rich but non-greasy texture. Describe when to apply (immediately post-shower on damp skin), and what to avoid (alcohol, witch hazel, fragrance). If RSC's lotion is suitable for very dry skin, make that connection clearly. Otherwise keep this as an ingredient-type guide. Do not name competitor brands.",
+      "keywords_to_include": [
+        "fragrance free lotion for dry skin",
+        "fragrance-free lotion for dry skin",
+        "body lotion for dry skin",
+        "best lotion for dry skin",
+        "fragrance free body lotion for dry skin"
+      ]
+    },
+    {
+      "section": "H2: 4. Best Fragrance-Free Hand Lotion",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Address the specific sub-query for fragrance-free hand lotion (2,400 monthly searches). Hands are washed more frequently, making them prone to dryness, and hand lotions need fast absorption without stickiness. Cover what differentiates a good hand lotion formula from body lotion—lighter emollient profile, quick-absorbing. Recommend ingredient types to look for. If RSC's unscented lotion can double as a hand lotion, say so and link to the product. Do not name competitor brands.",
+      "keywords_to_include": [
+        "fragrance free hand lotion",
+        "unscented lotion",
+        "fragrance free lotion"
+      ]
+    },
+    {
+      "section": "H2: 5. Best Fragrance-Free Lotion for Aging Skin",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Cover the ingredient needs of aging skin: deeper hydration, support for skin barrier function, ingredients like peptides, niacinamide, or plant-based antioxidants. Explain why fragrance-free is especially important for aging skin, which tends to be thinner and more reactive. Keep this category-level and ingredient-focused. Do not name competitor brands. If RSC's lotion addresses aging skin needs, connect it here.",
+      "keywords_to_include": [
+        "best body lotion for aging skin",
+        "fragrance free body moisturizer",
+        "body lotion recommended by dermatologist"
+      ]
+    },
+    {
+      "section": "H2: Who Should Use a Fragrance-Free Lotion?",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Briefly enumerate the audiences who benefit most: people with sensitive or reactive skin, eczema or psoriasis sufferers, pregnant or nursing women, people with fragrance allergies or multiple chemical sensitivity, those with tattoos (healing and long-term), babies and children, and anyone who simply prefers a clean, neutral product. Keep this scannable—a short paragraph or bulleted list. Link internally to the tattoo soap/healing blog post where relevant for the tattoo-skin audience.",
+      "keywords_to_include": [
+        "fragrance free body lotion for sensitive skin",
+        "fragrance free lotion",
+        "unscented lotion",
+        "hypoallergenic fragrance free lotion"
+      ]
+    },
+    {
+      "section": "H2: How to Apply Fragrance-Free Lotion for Maximum Hydration",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Give a concise, practical application guide: apply within 3 minutes of showering while skin is still slightly damp to lock in moisture; use enough product to cover fully without rubbing until fully dry; for very dry skin, layer a body oil underneath if needed. This section captures informational intent from users who want to know how to use their lotion effectively, increasing dwell time and relevance signals. Keep it brief—3 to 5 actionable tips.",
+      "keywords_to_include": [
+        "body lotion for dry skin",
+        "fragrance free body lotion",
+        "best body lotion"
+      ]
+    },
+    {
+      "section": "H2: Is Fragrance-Free Lotion as Hydrating as Scented Lotion?",
+      "type": "h2",
+      "word_count_target": 120,
+      "guidance": "Directly answer a common consumer concern: yes, fragrance-free lotions can be equally or more hydrating because the formula space used by fragrance ingredients is instead allocated to moisturizing actives. Fragrance itself provides zero skin benefit. Cite a dermatological source if available (AAD or similar). This answer-first format supports featured-snippet eligibility and AI citation. Keep it concise.",
+      "keywords_to_include": [
+        "fragrance free body lotion",
+        "best fragrance free lotion",
+        "fragrance-free body moisturizer"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions",
+      "type": "faq",
+      "word_count_target": 250,
+      "guidance": "Include 4–5 FAQ entries based on real user questions from the Reddit SERP and semantic keyword data. Suggested questions: (1) What is the difference between fragrance-free and unscented lotion? (Answer briefly—refer back to earlier section.) (2) Is fragrance-free lotion safe for babies? (3) Can I use fragrance-free lotion on a new tattoo? (Link to RSC tattoo soap/healing blog post.) (4) What makes a lotion hypoallergenic? (5) How do I know if my lotion is truly fragrance-free? Each answer should be 2–4 sentences, direct, and answer-first for featured-snippet and AI-answer optimization. Use FAQ schema.",
+      "keywords_to_include": [
+        "fragrance free lotion",
+        "fragrance free body lotion for sensitive skin",
+        "hypoallergenic fragrance free lotion",
+        "unscented lotion",
+        "fragrance-free body lotion for sensitive skin"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 120,
+      "guidance": "Summarize the key takeaway: fragrance-free lotion is the safest, cleanest choice for sensitive, reactive, or allergy-prone skin—and 'truly fragrance-free' requires checking the label carefully. Reinforce that Real Skin Care's Pure Unscented Body Lotion is formulated to meet the highest standard of clean, fragrance-free hydration. Include a clear, confident CTA linking to the product page. Optionally suggest readers explore related content (deodorant or toothpaste posts) using internal links. Do not introduce new claims in the conclusion.",
+      "keywords_to_include": [
+        "best fragrance free lotion",
+        "fragrance free body lotion",
+        "unscented lotion"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "best fragrance free lotion",
+    "fragrance free body lotion",
+    "fragrance free lotion",
+    "unscented lotion",
+    "fragrance free lotion for dry skin",
+    "fragrance-free lotion for dry skin",
+    "fragrance free body lotion for sensitive skin",
+    "fragrance-free body lotion for sensitive skin",
+    "fragrance free hand lotion",
+    "fragrance free body lotion for dry skin",
+    "fragrance-free body lotion for dry skin",
+    "body lotion for dry skin",
+    "best body lotion for dry skin",
+    "best lotion for dry skin",
+    "best body lotion",
+    "body lotion",
+    "fragrance-free body moisturizer",
+    "fragrance free body moisturizer",
+    "hypoallergenic fragrance free lotion",
+    "fragrance free hypoallergenic lotion",
+    "body lotion recommended by dermatologist",
+    "best body lotion for dry skin dermatologist-recommended",
+    "best body lotion for aging skin",
+    "body butter",
+    "plant-based body lotion",
+    "clean body lotion",
+    "sensitive skin lotion",
+    "non-irritating lotion",
+    "paraben-free lotion",
+    "sulfate-free lotion",
+    "truly fragrance-free",
+    "natural body moisturizer",
+    "moisturizing lotion for sensitive skin"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "best fragrance-free body lotion",
+      "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-body-lotion-2025",
+      "placement_guidance": "Link naturally from the introduction or the 'Best Overall' product section when referencing additional clean lotion picks or a deeper dive into fragrance-free formulas."
+    },
+    {
+      "anchor_text": "healing-safe soap for new tattoos",
+      "url": "https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2",
+      "placement_guidance": "Link from the 'Who Should Use Fragrance-Free Lotion' section and the FAQ answer about using fragrance-free lotion on tattoos."
+    },
+    {
+      "anchor_text": "best fragrance-free deodorant",
+      "url": "https://www.realskincare.com/blogs/news/best-fragrance-free-deodorant-that-actually-works",
+      "placement_guidance": "Link from the conclusion when suggesting readers explore other fragrance-free personal care products for a complete clean routine."
+    },
+    {
+      "anchor_text": "best aluminum-free deodorant",
+      "url": "https://www.realskincare.com/blogs/news/best-aluminum-free-deodorants-that-actually-work-2026",
+      "placement_guidance": "Link from the conclusion or a sidebar reference to clean personal care, positioned as a natural next step for readers building a fragrance-free routine."
+    },
+    {
+      "anchor_text": "best coconut-scented lotion",
+      "url": "https://www.realskincare.com/blogs/news/best-coconut-scented-lotion-natural-picks-for-soft-skin",
+      "placement_guidance": "Link from the 'Who Should Use Fragrance-Free Lotion' section or conclusion for readers who want scented options for non-sensitive skin—position as a contrast/alternative path."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Open with an answer-first statement grounded in dermatological consensus—not marketing language—to signal factual authority",
+    "Cite the American Academy of Dermatology (AAD) or FDA on fragrance as a contact allergen; verify the specific URL is live before linking",
+    "Include the brand's ingredient transparency as a trust signal: list actual key ingredients from the product page with a one-line explanation of each ingredient's function",
+    "Reference that Real Skin Care's formula is free from a defined list of harmful ingredients (parabens, phthalates, synthetic fragrance, sulfates) with verifiable label evidence",
+    "Use 'many people report' or 'dermatologists often recommend' framing for any claims that lack a directly citable clinical study—do not make absolute efficacy claims",
+    "Note in the FAQ or product section if the formula has been tested for skin compatibility or reviewed by a dermatologist, if that is verifiable",
+    "Acknowledge the Reddit SERP signal by grounding FAQ questions in real user concerns about fragrance-free lotion (sourced from the subreddit thread themes), demonstrating awareness of real consumer experience"
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "The following claims require outbound citations to authoritative sources before publication: (1) Fragrance as a leading cause of contact dermatitis—cite the American Academy of Dermatology (AAD) at aad.org or a peer-reviewed study; verify the specific URL is live. (2) The distinction between 'unscented' and 'fragrance-free' from a regulatory standpoint—cite FDA labeling guidance at fda.gov; verify URL. (3) Any claim about specific ingredients (e.g. glycerin as a humectant, ceramides for barrier repair)—cite a dermatology or cosmetic science source such as the Journal of the American Academy of Dermatology or a university/medical org. (4) Claims about eczema and fragrance sensitivity—cite the National Eczema Association (nationaleczema.org) or AAD. Do NOT make absolute efficacy claims such as 'this lotion cures eczema' or 'guaranteed to eliminate dryness'—soften to 'may help,' 'is formulated to,' or 'many users report.' Do not include any statistic without a live, verifiable source URL.",
+  "writer_notes": "Tone: warm, knowledgeable, and direct—like advice from a clean-beauty-literate friend who has done the ingredient research for you. Avoid hype language ('revolutionary,' 'game-changer,' 'miracle'). Do not use rhetorical questions to open sections. Every section should open with a direct, informative sentence. Brand voice is confident and ingredient-transparent—Real Skin Care earns trust through specificity, not superlatives. CRITICAL: Do not name any competitor brands anywhere in the post. Competitor pages are referenced in this brief for structural insight only. Do not build comparison tables featuring other brands' products. Do not repeat the patterns from underperforming posts in this cluster: the historical flops (all-natural-lotion, clean-body-lotion, organic-body-lotion, etc.) suggest that posts with vague, generic angles and no clear commercial hook failed to match search intent. This post must be clearly commercial-informational—it is a best-of roundup anchored by RSC's own product, not a generic educational essay. Before finalizing, confirm: (1) the RSC product page URL is live and correct; (2) all internal blog post URLs listed return 200 (do not add collection page URLs without verification); (3) all outbound citation URLs are live. The site already ranks at position 12 for this keyword with an existing post—this new post should be a distinct URL (slug: best-fragrance-free-lotion) and should not duplicate the existing 'best-unscented-lotion' post. Differentiate by leading with the listicle format and the skin-type decision framework rather than a pure educational guide. Section word counts in the outline total approximately 2,300 words—aim to land between 2,200 and 2,400 words in the final draft; do not pad. The January search volume peak (590) suggests this post may benefit from a light seasonal refresh or internal link push in Q4/early Q1.",
+  "search_volume": 480,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.reddit.com/r/FragranceFreeBeauty/comments/1parq4q/your_recommendations_for_fragrancefree_body/",
+      "title": "Your Recommendations For Fragrance-Free Body Lotions ...",
+      "domain": "www.reddit.com",
+      "description": "Would love to hear your thoughts! 🙏\n\nThank you!"
+    },
+    {
+      "position": 2,
+      "url": "https://www.allure.com/story/best-fragrance-free-body-lotions",
+      "title": "Our Top Fragrance-Free Body Lotion Is Only $20",
+      "domain": "www.allure.com",
+      "description": "Our Top Fragrance-Free Lotions · Best Overall: La Roche-Posay Lipikar AP+ Triple Repair Moisturizing Cream, $20 · Best for Eczema: Vanicream ..."
+    },
+    {
+      "position": 3,
+      "url": "https://www.realskincare.com/blogs/news/best-unscented-lotion-clean-fragrance-free-picks?srsltid=AfmBOoqnfiKc7QEyJOjHM0rFsMoNtsDArPL-yBCTiwnd5Y0WNzDm8yAo",
+      "title": "Best Unscented Lotion: Clean, Fragrance-Free Picks",
+      "domain": "www.realskincare.com",
+      "description": "Jun 30, 2026 — Meet Real Skin Care's Pure Unscented Body Lotion — a plant-based, truly fragrance-free body lotion made without synthetic fragrance, essential ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://evolutionofsmooth.com/products/fragrance-free-body-lotion?srsltid=AfmBOoqpPxGjekAM5QRQEOG1P06W0E_WJ1dNN-s99DczWjC5zSli_9m9",
+      "title": "Shea Better Fragrance-Free Body Lotion ...",
+      "domain": "evolutionofsmooth.com",
+      "description": "Our 24H Moisture Body Lotion is available in a Fragrance-Free formula! Protect extra-sensitive skin and feel soft and clean with our unscented lotion."
+    },
+    {
+      "position": 5,
+      "url": "https://www.consumerreports.org/health/lotions/body-lotions-without-harmful-chemicals-a9940433558/",
+      "title": "How to Choose a Body Lotion Without Harmful Chemicals",
+      "domain": "www.consumerreports.org",
+      "description": "Jan 30, 2026 — Dr. Bronner's, Ursa Major, and Weleda snagged three of our top spots. Avalon Organics Aloe Unscented Hand & Body Lotion. Fragrance Free ..."
+    },
+    {
+      "position": 6,
+      "url": "https://bluatlas.com/blogs/blog/what-you-need-to-know-about-fragrance-free-body-lotion?srsltid=AfmBOoroygxqZPV5RkudMFmBHeprr6NRIcB3YTj-qosuvPTXqaC0G75Q",
+      "title": "What You Need to Know about Fragrance-Free Body Lotion",
+      "domain": "bluatlas.com",
+      "description": "the best fragrance-free body lotion—Blu Atlas Body Lotion. moisturize dry, dull skin. is free from harsh chemicals like parabens, phthalates, and sulfates."
+    },
+    {
+      "position": 7,
+      "url": "https://www.amazon.com/Body-Lotions-Unscented-Moisturizers/s?keywords=Body+Lotions&rh=n%3A14024031%2Cp_n_g-101015897453111%3A204813926011&c=ts&ts_id=14024031",
+      "title": "Unscented / Body Lotions / Body Moisturizers",
+      "domain": "www.amazon.com",
+      "description": "Aveeno Daily Moisturizing Body Lotion for Normal to Dry Skin, Moisturizer with Soothing Prebiotic Oat, Non Greasy, Non Comedogenic, Fragrance Free Body ... Read more"
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "toothpaste",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 12331,
+    "avgH2": 14,
+    "targetWordCount": 3000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

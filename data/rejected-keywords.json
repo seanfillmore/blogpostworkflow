@@ -14,17 +14,20 @@
   {
     "keyword": "glass skin routine",
     "slug": "glass-skin-routine",
-    "rejected_at": "2026-04-16T21:07:14.265Z"
+    "rejected_at": "2026-04-16T21:07:14.265Z",
+    "source": "dashboard:ideas-reject"
   },
   {
     "keyword": "retinol vs tretinoin",
     "slug": "retinol-vs-tretinoin",
-    "rejected_at": "2026-04-16T21:07:24.909Z"
+    "rejected_at": "2026-04-16T21:07:24.909Z",
+    "source": "dashboard:ideas-reject"
   },
   {
     "keyword": "realskin",
     "slug": "realskin",
-    "rejected_at": "2026-04-16T21:07:26.963Z"
+    "rejected_at": "2026-04-16T21:07:26.963Z",
+    "source": "dashboard:ideas-reject"
   },
   {
     "keyword": "real skin care organic body lotion",
@@ -133,10 +136,10 @@
   },
   {
     "keyword": "sodium lauryl sulfate",
+    "matchType": "exact",
     "reason": "no product mapping",
     "rejected_at": "2026-08-02T15:25:24.180Z",
-    "source": "content-strategist:product-scope",
-    "matchType": "exact"
+    "source": "content-strategist:product-scope"
   },
   {
     "keyword": "beef tallow for skin",
@@ -249,5 +252,286 @@
     "reason": "Same intent as https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-2, which is already the top-ranked internal page for this query (GSC 90d to 2026-08-20). Consolidated into the best-soap-for-tattoos-refresh refresh on 2026-08-23 rather than drafted as a new post, one day after commit 55780323 unpublished + 301'd a near-duplicate on this exact intent. Re-open only if this query stops being served by that page.",
     "rejected_at": "2026-08-23T14:00:04.540Z",
     "source": "consolidate-tattoo-soap-calendar-2026-08-23"
+  },
+  {
+    "keyword": "is colgate sls free",
+    "reason": "no product mapping",
+    "rejected_at": "2026-09-11T15:34:52.582Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "desodorante roll on para hombre",
+    "reason": "no product mapping",
+    "rejected_at": "2026-09-18T15:38:30.603Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "lotion for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "cream for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "moisturizer for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "soap for eczema",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "eczema lotion",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "eczema cream",
+    "matchType": "broad",
+    "reason": "A cosmetic may not be positioned FOR a disease. The live page best-body-lotion-for-eczema-natural-ingredients-that-help carried 160 rendered eczema mentions above a working Add to Cart and earned 0 clicks / 0 impressions in 90d; deleted 2026-09-20 by operator decision and 301d to /collections/non-toxic-body-lotion. NOTE the standing ruling this deliberately does NOT contradict: eczema as a TOPIC is allowed (\"We shouldn't outright reject eczema as a topic... just limit the conversation to prevent it from talking about curing\"). Only the PRODUCT-FOR-A-DISEASE phrasings are blocked here, so editorial like \"Can I use unscented lotion if I have eczema?\" is untouched.",
+    "source": "ahrefs-audit-2026-09-20-eczema-page-removal"
+  },
+  {
+    "keyword": "how to get sweat smell out of clothes",
+    "reason": "no product mapping",
+    "rejected_at": "2026-09-21T15:38:08.643Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "organic coconut oil types uses benefits for skin",
+    "matchType": "exact",
+    "slug": "organic-coconut-oil-types-uses-benefits-for-skin",
+    "reason": "duplicate of organic-coconut-oil-types-uses-benefits-for-skin (same title); merged into original 2026-09-21",
+    "rejected_at": "2026-09-21T15:44:05.837Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "best natural deodorant for men",
+    "matchType": "exact",
+    "slug": "best-natural-deodorant-for-men",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+    "rejected_at": "2026-09-21T15:44:19.022Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "organic body lotion",
+    "matchType": "exact",
+    "slug": "organic-body-lotion",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+    "rejected_at": "2026-09-21T15:44:22.930Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "natural lip balm",
+    "matchType": "exact",
+    "slug": "natural-lip-balm",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+    "rejected_at": "2026-09-21T15:44:26.667Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "best natural deodorant for women",
+    "matchType": "exact",
+    "slug": "best-natural-deodorant-for-women",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+    "rejected_at": "2026-09-21T15:44:31.097Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "charcoal toothpaste does it work is it safe",
+    "matchType": "exact",
+    "slug": "charcoal-toothpaste-does-it-work-is-it-safe",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21); duplicate of original",
+    "rejected_at": "2026-09-21T16:00:23.648Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "dry brushing skin benefits technique what to expect",
+    "matchType": "exact",
+    "slug": "dry-brushing-skin-benefits-technique-what-to-expect",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21); duplicate of original",
+    "rejected_at": "2026-09-21T16:00:28.168Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "is coconut oil good for your hair benefits how to use it",
+    "matchType": "exact",
+    "slug": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:00:30.314Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "body scrub",
+    "matchType": "exact",
+    "slug": "body-scrub",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:00:35.210Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "healthiest toothpaste",
+    "matchType": "exact",
+    "slug": "healthiest-toothpaste",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:00:39.555Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "organic deodorant",
+    "matchType": "exact",
+    "slug": "organic-deodorant",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:00:44.032Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "plant based deodorant",
+    "matchType": "exact",
+    "slug": "plant-based-deodorant",
+    "reason": "no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:00:48.020Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "natural soap bar the clean skin guide you need",
+    "matchType": "exact",
+    "slug": "natural-soap-bar-the-clean-skin-guide-you-need",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); duplicate of original",
+    "rejected_at": "2026-09-21T16:31:07.545Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "unscented antibacterial soap what to look for why",
+    "matchType": "exact",
+    "slug": "unscented-antibacterial-soap-what-to-look-for-why",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); duplicate of original",
+    "rejected_at": "2026-09-21T16:31:12.568Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "toothpaste without sodium lauryl sulfate",
+    "matchType": "exact",
+    "slug": "toothpaste-without-sodium-lauryl-sulfate",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); consolidated into the SLS-free toothpaste winner",
+    "rejected_at": "2026-09-21T16:31:16.805Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "healthy deodorant",
+    "matchType": "exact",
+    "slug": "healthy-deodorant-what-it-is-and-why-it-matters",
+    "reason": "no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21)",
+    "rejected_at": "2026-09-21T16:31:21.134Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "natural lip balm recipe",
+    "matchType": "exact",
+    "slug": "natural-lip-balm-recipe",
+    "reason": "low demand (<200 impressions/90d, <=1 click); operator chose removal 2026-09-21",
+    "rejected_at": "2026-09-21T16:37:07.777Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "natural grooming products for men",
+    "reason": "no product mapping",
+    "rejected_at": "2026-10-02T15:36:09.707Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "olive oil soap",
+    "slug": "olive-oil-soap-benefits-uses-ingredients",
+    "reason": "LOW_DEMAND: 87 impressions, 1 click in 90 days; operator approved remove 2026-10-03",
+    "rejected_at": "2026-10-03T17:34:38.442Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "preservative free moisturizer",
+    "slug": "preservative-free-moisturizer",
+    "reason": "false premise: RSC moisturizers contain water and grapefruit seed extract, no preservative-free product to sell; ~70/mo",
+    "rejected_at": "2026-10-03T17:42:52.031Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "discover the best organic skincare products for 2024 at real skin care",
+    "matchType": "exact",
+    "reason": "Why are we writing an article about 2024?",
+    "rejected_at": "2026-10-05T04:40:24.253Z",
+    "source": "dashboard:reject-keyword"
+  },
+  {
+    "keyword": "best coconut body butter",
+    "slug": "best-coconut-body-butter",
+    "rejected_at": "2026-10-05T13:05:13.168Z",
+    "source": "dashboard:ideas-reject"
+  },
+  {
+    "keyword": "coconut toothpaste",
+    "slug": "coconut-toothpaste",
+    "rejected_at": "2026-10-05T13:05:24.533Z",
+    "source": "dashboard:ideas-reject"
+  },
+  {
+    "keyword": "sls-free toothpaste",
+    "slug": "sls-free-toothpaste",
+    "rejected_at": "2026-10-05T13:05:30.574Z",
+    "source": "dashboard:ideas-reject"
+  },
+  {
+    "keyword": "chapstick alternatives",
+    "reason": "no product mapping",
+    "rejected_at": "2026-10-09T15:14:28.493Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "why do armpits smell",
+    "reason": "no product mapping",
+    "rejected_at": "2026-10-11T15:14:01.318Z",
+    "source": "content-strategist:product-scope"
+  },
+  {
+    "keyword": "handmade soap",
+    "slug": "handmade-soap",
+    "reason": "low demand: 32 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+    "rejected_at": "2026-10-14T13:32:05.560Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "sustainable deodorant",
+    "slug": "sustainable-deodorant",
+    "reason": "low demand: 2 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+    "rejected_at": "2026-10-14T13:32:19.660Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "plant based toothpaste",
+    "slug": "plant-based-toothpaste",
+    "reason": "low demand: 70 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+    "rejected_at": "2026-10-14T13:32:22.827Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "aluminum free antiperspirant what it is does it work",
+    "slug": "aluminum-free-antiperspirant-what-it-is-does-it-work",
+    "reason": "duplicate of aluminum-free-antiperspirant-what-it-is-does-it-work; 301 to it",
+    "rejected_at": "2026-10-22T04:06:12.219Z",
+    "source": "post-kill"
+  },
+  {
+    "keyword": "coconut body oil",
+    "reason": "no product mapping",
+    "rejected_at": "2026-11-01T15:08:55.327Z",
+    "source": "content-strategist:product-scope"
   }
 ]

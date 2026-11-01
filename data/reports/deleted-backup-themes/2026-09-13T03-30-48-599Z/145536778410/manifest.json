@@ -1,0 +1,2129 @@
+{
+  "theme_id": "145536778410",
+  "name": "Real Skin Care — Rollback (8.3.2)",
+  "created_at": "2026-05-02T18:35:01-06:00",
+  "updated_at": "2026-07-24T17:45:19-06:00",
+  "total_assets": 434,
+  "archived": [
+    {
+      "key": "assets/base.css",
+      "size": 68701,
+      "archived_bytes": 68701,
+      "checksum": "11a237735a15839e2957bf84e0fd327a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/cart-drawer.js",
+      "size": 2033,
+      "archived_bytes": 2033,
+      "checksum": "6ed9b32c5781bed25d345b9220326959",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/cart-recommendations.js",
+      "size": 1101,
+      "archived_bytes": 1101,
+      "checksum": "e3020bd18c4576c26ecb560f87b21fbb",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/cart.js",
+      "size": 10629,
+      "archived_bytes": 10629,
+      "checksum": "c3f5b5fae52d615ed0282846b0e7464c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-article-card.css",
+      "size": 1605,
+      "archived_bytes": 1605,
+      "checksum": "e37c8c712f805e71e9d6075f50d6642a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-card.css",
+      "size": 14098,
+      "archived_bytes": 14098,
+      "checksum": "42380644d320a69e83ed08b2e084f458",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-cart-drawer.css",
+      "size": 19013,
+      "archived_bytes": 19013,
+      "checksum": "569c4e9edecfe3d5a64faef136e1283c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-cart-recommendations.css",
+      "size": 4402,
+      "archived_bytes": 4402,
+      "checksum": "3c7ee3f45cab1e9ff3d322c11c62a5fc",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-cart.css",
+      "size": 3294,
+      "archived_bytes": 3294,
+      "checksum": "c775a369451596b98ade4ab08bbfbecb",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-collection-hero.css",
+      "size": 2166,
+      "archived_bytes": 2166,
+      "checksum": "ff440e25dd4b9ca3a8956aaab294f86c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-collection-subs.css",
+      "size": 2410,
+      "archived_bytes": 2410,
+      "checksum": "35ebe511b08d9f84db5d268637f5b2a4",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-content-slider.css",
+      "size": 7701,
+      "archived_bytes": 7701,
+      "checksum": "3c3b51fab396bb231320788a25f9cbf1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-facet-sticky.css",
+      "size": 924,
+      "archived_bytes": 924,
+      "checksum": "8b65689b6c1e6bde7664aaf6852359a9",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-facets.css",
+      "size": 37835,
+      "archived_bytes": 37835,
+      "checksum": "0f146f3c96c61be73d77347d66e9ff2d",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-menu-drawer.css",
+      "size": 10247,
+      "archived_bytes": 10247,
+      "checksum": "8a2e6aba3759ee6fee22962ee6f48dbd",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-menu-dropdown.css",
+      "size": 8125,
+      "archived_bytes": 8125,
+      "checksum": "6c02db17868491b92419848f637ec79c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-newsletter.css",
+      "size": 1580,
+      "archived_bytes": 1580,
+      "checksum": "5c8cf31500275fb2848bd499409d6872",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-product-grid.css",
+      "size": 801,
+      "archived_bytes": 801,
+      "checksum": "b89cdafb5da43d44355a109eeb0ec961",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-quick-view.css",
+      "size": 9910,
+      "archived_bytes": 9910,
+      "checksum": "1045801189e9796aae536534726240e5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-search.css",
+      "size": 5283,
+      "archived_bytes": 5283,
+      "checksum": "48656dbfbc45ba3267a753335af8d003",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/component-slider.css",
+      "size": 5841,
+      "archived_bytes": 5841,
+      "checksum": "16b882fc088531e8e0a9a23d1deb2535",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/customer.css",
+      "size": 13258,
+      "archived_bytes": 13258,
+      "checksum": "b31bb9bd5a00651044c7fe69e26eaf11",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/facets.js",
+      "size": 17554,
+      "archived_bytes": 17554,
+      "checksum": "06de06d2dd8604ad658236237511690b",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/global.js",
+      "size": 104702,
+      "archived_bytes": 104702,
+      "checksum": "526760f2be9438be6c215f8011cabd0a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/gp-custom-font.css",
+      "size": 0,
+      "archived_bytes": 0,
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/gp-global.css",
+      "size": 56663,
+      "archived_bytes": 56663,
+      "checksum": "3cbaa3ac55823e280948e9a688483379",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/gp-style.css",
+      "size": 2662,
+      "archived_bytes": 2662,
+      "checksum": "aa5c84f4f03afa8b8be58ae8798cee84",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/menu-dropdown.js",
+      "size": 6715,
+      "archived_bytes": 6715,
+      "checksum": "6319e006c217f8c98a5b5ded0e757bdb",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/mobile-dock.js",
+      "size": 4719,
+      "archived_bytes": 4719,
+      "checksum": "3a78faf6c17d66b870ffd77236f6bbc0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/predictive-search.js",
+      "size": 9325,
+      "archived_bytes": 9325,
+      "checksum": "88aba890ad1703943ce49d817770c9ae",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/price-per-item.js",
+      "size": 4416,
+      "archived_bytes": 4416,
+      "checksum": "9354efcd9fd11f4467b05f4568002d07",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/product-form.js",
+      "size": 6746,
+      "archived_bytes": 6746,
+      "checksum": "eebd68f35ca918921a12f71089bd8e24",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/product-info.js",
+      "size": 18272,
+      "archived_bytes": 18272,
+      "checksum": "cde821ca3157bdccfe0c30d2d3b7c9f2",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/search-modal.js",
+      "size": 1975,
+      "archived_bytes": 1975,
+      "checksum": "63cf1ebbec79855feb21bc34574baf90",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-collection-list.css",
+      "size": 2868,
+      "archived_bytes": 2868,
+      "checksum": "bc404c964cb3be2d6feb53390d3613d6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-contact-form.css",
+      "size": 3283,
+      "archived_bytes": 3283,
+      "checksum": "8b12eea092f64a061abf71689e0936f1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-featured-blog.css",
+      "size": 1072,
+      "archived_bytes": 1072,
+      "checksum": "03323162d477d638a2fa20a4829d03fc",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-footer.css",
+      "size": 10505,
+      "archived_bytes": 10505,
+      "checksum": "10c44b561518604facd15e4bdb79f870",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-guarantees.css",
+      "size": 2355,
+      "archived_bytes": 2355,
+      "checksum": "c127ce1108fcd98eaa42d2dd82166c76",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-image-banner.css",
+      "size": 5337,
+      "archived_bytes": 5337,
+      "checksum": "bc086e9636d7264f3611d8d01f90e3a1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-image-with-text.css",
+      "size": 6005,
+      "archived_bytes": 6005,
+      "checksum": "82c34446bfbbb40644a424762f3d76bc",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-main-page-sidebar.css",
+      "size": 978,
+      "archived_bytes": 978,
+      "checksum": "e11b2780a29789d39bd8d2905c6552fb",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-main-product.css",
+      "size": 44354,
+      "archived_bytes": 44354,
+      "checksum": "498d6b8182caeb2c424fe6db9dd2438f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-mobile-dock.css",
+      "size": 1943,
+      "archived_bytes": 1943,
+      "checksum": "7e920c1da42630fb65636aee41f15799",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-multicolumn.css",
+      "size": 7874,
+      "archived_bytes": 7874,
+      "checksum": "bebd51dad25129de423b303767293e14",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-multicolumn.js",
+      "size": 3456,
+      "archived_bytes": 3456,
+      "checksum": "1738105787e17fbbaf990f1463e30d78",
+      "on_live": "differs",
+      "updated_at": "2026-07-22T19:49:00-06:00"
+    },
+    {
+      "key": "assets/section-popup.css",
+      "size": 14228,
+      "archived_bytes": 14228,
+      "checksum": "89950c30f3219a3609b75c2688083c14",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-product-details.css",
+      "size": 2578,
+      "archived_bytes": 2578,
+      "checksum": "267e6061c9eae1576e53a05adbe244a2",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-product-recommendations.css",
+      "size": 571,
+      "archived_bytes": 571,
+      "checksum": "2af3e64047431b4e6bd036455fe753d0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-recently-viewed-products.css",
+      "size": 602,
+      "archived_bytes": 602,
+      "checksum": "28645c1fb6a932230adc795a992d15b0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-rich-text.css",
+      "size": 2598,
+      "archived_bytes": 2598,
+      "checksum": "6106f996ebc8eb5c787ea4f90676fcf5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-scrolling-promotion.css",
+      "size": 2994,
+      "archived_bytes": 2994,
+      "checksum": "12e674f0f3bca9374cd25eeaa3b7e699",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-slideshow.css",
+      "size": 16475,
+      "archived_bytes": 16475,
+      "checksum": "8f1b43efa41a1c078349584d56a3b391",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/section-testimonials.css",
+      "size": 5719,
+      "archived_bytes": 5719,
+      "checksum": "b745e33ad5f844613b5414d8bdc4aec8",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/template-collection.css",
+      "size": 1363,
+      "archived_bytes": 1363,
+      "checksum": "6161c92fa7653c3a0f10c8bcfdaf2e6e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "assets/theme-editor.js",
+      "size": 2547,
+      "archived_bytes": 2547,
+      "checksum": "c85ef719f5e3fff68a33bdf7ad3b4799",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "config/settings_data.json",
+      "size": 48802,
+      "archived_bytes": 80372,
+      "checksum": "629ec8a319468727f801b5c33ef7bfe3",
+      "on_live": "differs",
+      "updated_at": "2026-05-09T13:53:17-06:00"
+    },
+    {
+      "key": "config/settings_schema.json",
+      "size": 32532,
+      "archived_bytes": 32539,
+      "checksum": "7ba8f8173aa25f07d83aad15267acea5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:11-06:00"
+    },
+    {
+      "key": "layout/password.liquid",
+      "size": 3773,
+      "archived_bytes": 3773,
+      "checksum": "3915647bf931efa8dc153c711e9f9384",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:02-06:00"
+    },
+    {
+      "key": "layout/theme.gem-layout-none.liquid",
+      "size": 4847,
+      "archived_bytes": 4847,
+      "checksum": "814e43cbdd5b87162ec9d60d5fc13eda",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "layout/theme.gempages.blank.liquid",
+      "size": 4191,
+      "archived_bytes": 4191,
+      "checksum": "6f29370b43734bbe2df198845b872048",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "layout/theme.gempages.footer.liquid",
+      "size": 6510,
+      "archived_bytes": 6510,
+      "checksum": "309777630d1758c32859b1417f26fbb4",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "layout/theme.gempages.header.liquid",
+      "size": 6511,
+      "archived_bytes": 6511,
+      "checksum": "ebe273c1b5e7e1cf3c314eb162a28e8c",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "layout/theme.liquid",
+      "size": 8988,
+      "archived_bytes": 8988,
+      "checksum": "3778a77c861ce7e7e9bedfad58ff3dd9",
+      "on_live": "differs",
+      "updated_at": "2026-07-24T15:43:12-06:00"
+    },
+    {
+      "key": "locales/cs.json",
+      "size": 23527,
+      "archived_bytes": 23179,
+      "checksum": "7c07fd28135ee865cdfecd88cfff1ee8",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/cs.schema.json",
+      "size": 151753,
+      "archived_bytes": 151751,
+      "checksum": "c598f7b57af70f1d079b95a17312d473",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/de.json",
+      "size": 22904,
+      "archived_bytes": 22559,
+      "checksum": "76a2acc23ddcf44419b22c3524de15b5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/de.schema.json",
+      "size": 151104,
+      "archived_bytes": 151108,
+      "checksum": "955ba115b8931a8661341a43247db137",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/en.default.json",
+      "size": 19936,
+      "archived_bytes": 19588,
+      "checksum": "ee9776a6124774f073433f0608c50586",
+      "on_live": "differs",
+      "updated_at": "2026-05-03T21:09:25-06:00"
+    },
+    {
+      "key": "locales/en.default.schema.json",
+      "size": 144311,
+      "archived_bytes": 144314,
+      "checksum": "5a7c979dfd1ab31bc764518faa179ec0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/es.json",
+      "size": 23385,
+      "archived_bytes": 23037,
+      "checksum": "8630e45e58c60b97c941636c674ef9fc",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/es.schema.json",
+      "size": 154320,
+      "archived_bytes": 154321,
+      "checksum": "2895386b36e8e60497c4503571486915",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/fr.json",
+      "size": 23651,
+      "archived_bytes": 23303,
+      "checksum": "006d01f3e38ae358b673361829d7548e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/fr.schema.json",
+      "size": 153910,
+      "archived_bytes": 153913,
+      "checksum": "2a58669b25c739bf9d69751ae7df178a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/it.json",
+      "size": 23068,
+      "archived_bytes": 22720,
+      "checksum": "3262e4b60d7045381c91fd3f328264f4",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/it.schema.json",
+      "size": 154232,
+      "archived_bytes": 154235,
+      "checksum": "2991554bb6797d5f2bbae66b2addce35",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/ja.json",
+      "size": 24822,
+      "archived_bytes": 24474,
+      "checksum": "dcc8328da5c63636ec6f51cfdae4b687",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/ja.schema.json",
+      "size": 160267,
+      "archived_bytes": 160271,
+      "checksum": "d53cb3f0d456320bf47cedeca44592a6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/nb.json",
+      "size": 21770,
+      "archived_bytes": 21422,
+      "checksum": "bb4e82800f08cae3fd7af53cdfdd8c1a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/nb.schema.json",
+      "size": 147771,
+      "archived_bytes": 147771,
+      "checksum": "ba823db9801432b83a284dd706f840ad",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/pt-PT.json",
+      "size": 23004,
+      "archived_bytes": 22656,
+      "checksum": "6732ac0832908533e3e2d77c909877a2",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "locales/pt-PT.schema.json",
+      "size": 153090,
+      "archived_bytes": 153093,
+      "checksum": "f05d8408f46a8a67a9d221e3a7e1f6a5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/sv.json",
+      "size": 22225,
+      "archived_bytes": 21877,
+      "checksum": "902d620d4720c1abe142b098cb7acf99",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/sv.schema.json",
+      "size": 147567,
+      "archived_bytes": 147570,
+      "checksum": "4739c4e8f3b8a99e60ae96751be0ef54",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/vi.json",
+      "size": 24569,
+      "archived_bytes": 24222,
+      "checksum": "9b91e15ca631e1fbd647f6c3ddcc361b",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/vi.schema.json",
+      "size": 160926,
+      "archived_bytes": 160929,
+      "checksum": "2dc769dbbd97a4a86f6d7f1b5089975f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/zh-CN.json",
+      "size": 20878,
+      "archived_bytes": 20530,
+      "checksum": "25d66d7523dfcc62bbe112e2bbb47b01",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/zh-CN.schema.json",
+      "size": 142631,
+      "archived_bytes": 142638,
+      "checksum": "3e17b07c3f0de87a645e4b69ad29f134",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/zh-TW.json",
+      "size": 20873,
+      "archived_bytes": 20526,
+      "checksum": "aabfd62cf4a8f391ae7ecde7f578a990",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "locales/zh-TW.schema.json",
+      "size": 142661,
+      "archived_bytes": 142666,
+      "checksum": "f3cd38b3de4329ae38b6e3b33883107f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/age-verifier.liquid",
+      "size": 16888,
+      "archived_bytes": 16888,
+      "checksum": "0cf17c853ba7891115225d0772d3f39e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/announcement-bar.liquid",
+      "size": 12439,
+      "archived_bytes": 12439,
+      "checksum": "6fb08719115052b6c0e974bc3028d1e3",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/bundle-products.liquid",
+      "size": 28906,
+      "archived_bytes": 28906,
+      "checksum": "222709d5c425914df9bdb309ebbc6237",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/cart-recommendations.liquid",
+      "size": 11499,
+      "archived_bytes": 11499,
+      "checksum": "3c0de7a7a4a41bafa337926da56f7eba",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/collage.liquid",
+      "size": 34463,
+      "archived_bytes": 34463,
+      "checksum": "ed8236763bd604f869092d650719e10a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/collapsible-content.liquid",
+      "size": 13867,
+      "archived_bytes": 13867,
+      "checksum": "f2e393fa2f235363e0b749a330409bb0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/collection-list.liquid",
+      "size": 15015,
+      "archived_bytes": 15015,
+      "checksum": "e9a0ec634779b25f329056d00b53efd7",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/contact-form.liquid",
+      "size": 18785,
+      "archived_bytes": 18785,
+      "checksum": "580035d830644777df66160ebd842308",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/content-slider.liquid",
+      "size": 38472,
+      "archived_bytes": 38472,
+      "checksum": "fa3a1c126ba9f33ad9b788b70f1d966c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/cookie-banner.liquid",
+      "size": 12714,
+      "archived_bytes": 12714,
+      "checksum": "963a2d7baf687d05df74fc28a9640a25",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/countdown-timer.liquid",
+      "size": 34717,
+      "archived_bytes": 34717,
+      "checksum": "2f516d332f9443a407e8aa6accf4ec2f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/featured-blog.liquid",
+      "size": 14600,
+      "archived_bytes": 14600,
+      "checksum": "7fddcb992e3cef2336775d989a3833ea",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/featured-collection.liquid",
+      "size": 15445,
+      "archived_bytes": 15445,
+      "checksum": "c52bbde82fd5b5d5c59f37e6f419046b",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/featured-product.liquid",
+      "size": 111090,
+      "archived_bytes": 111090,
+      "checksum": "062ab0054ea8994a272e859cedbc6ca0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/footer-group.json",
+      "size": 2052,
+      "archived_bytes": 1693,
+      "checksum": "464586e9fa17417edc987cebe1cf0859",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:06-06:00"
+    },
+    {
+      "key": "sections/footer.liquid",
+      "size": 37756,
+      "archived_bytes": 37756,
+      "checksum": "8bfe9b88d9ab40d8c0edd1089b9cf7a1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/gallery.liquid",
+      "size": 20166,
+      "archived_bytes": 20166,
+      "checksum": "edbd8cc42add3a9d009ddc58c087f14f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/guarantees.liquid",
+      "size": 26192,
+      "archived_bytes": 26192,
+      "checksum": "064ae865890529faa7f23d05a70561a0",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/header-group.json",
+      "size": 3916,
+      "archived_bytes": 3559,
+      "checksum": "ef0e22013e78c7a62edd33f280da3762",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:07-06:00"
+    },
+    {
+      "key": "sections/header.liquid",
+      "size": 62589,
+      "archived_bytes": 62589,
+      "checksum": "d7cc52d60d43a146cb962945e1d239f8",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/hero-landing-section.liquid",
+      "size": 17162,
+      "archived_bytes": 17162,
+      "checksum": "60868185760a8fca51fa9a0015574bfc",
+      "on_live": "differs",
+      "updated_at": "2026-05-09T13:53:14-06:00"
+    },
+    {
+      "key": "sections/image-banner.liquid",
+      "size": 36436,
+      "archived_bytes": 36436,
+      "checksum": "0d52b55e932ebf93f5fbe7932c9afd43",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/image-comparison.liquid",
+      "size": 19442,
+      "archived_bytes": 19442,
+      "checksum": "7ef29cf0dcd508d417e31c635b1e431f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/image-with-text-overlay.liquid",
+      "size": 36365,
+      "archived_bytes": 36365,
+      "checksum": "f7077e44210b8ce54d3ff5589d084306",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/image-with-text.liquid",
+      "size": 44072,
+      "archived_bytes": 44072,
+      "checksum": "8d7ffb21996d9eaaee46defa31ebe79a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/images-with-text.liquid",
+      "size": 28754,
+      "archived_bytes": 28754,
+      "checksum": "0051f6de8af07826a2853c2a8364d648",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/lookbook.liquid",
+      "size": 14284,
+      "archived_bytes": 14284,
+      "checksum": "13fce7b6d5a3fc3f41e40c1718d47e30",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-account.liquid",
+      "size": 6495,
+      "archived_bytes": 6495,
+      "checksum": "0fc49f8c5b602ca1faa09310aed305cb",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-addresses.liquid",
+      "size": 15018,
+      "archived_bytes": 15018,
+      "checksum": "fae1ba9e31da719b339cf523447e2bd1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-article.liquid",
+      "size": 22827,
+      "archived_bytes": 22827,
+      "checksum": "ef520ebaec82b9a710883054f84a93fa",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-blog.liquid",
+      "size": 8077,
+      "archived_bytes": 8077,
+      "checksum": "01928f1840439ba83672cd5b8ed9e7aa",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-cart-footer.liquid",
+      "size": 11490,
+      "archived_bytes": 11490,
+      "checksum": "23b986cabbb7da95a873855a07fa6632",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-collection-banner.liquid",
+      "size": 9825,
+      "archived_bytes": 9825,
+      "checksum": "6616c13d1103b8d3ed8f06451b267d88",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-collection-product-grid.liquid",
+      "size": 19753,
+      "archived_bytes": 19753,
+      "checksum": "f27007eba0b57c7c4b37a30a27c2801a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-collection-subs.liquid",
+      "size": 8328,
+      "archived_bytes": 8328,
+      "checksum": "bd2054d84c3cc1e80a9077867fb4250d",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-list-collections.liquid",
+      "size": 10765,
+      "archived_bytes": 10765,
+      "checksum": "5660838ff15184fcbcaf31e2c62860af",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-login.liquid",
+      "size": 5788,
+      "archived_bytes": 5788,
+      "checksum": "45215b97c1580c9e33e604ff4bcc063f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-order.liquid",
+      "size": 15238,
+      "archived_bytes": 15238,
+      "checksum": "9b755aa607cd1f654f56459f2d4a0aed",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-page-sidebar.liquid",
+      "size": 4446,
+      "archived_bytes": 4446,
+      "checksum": "f3d821bdc8447828e01b123dd4f61091",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-product-modal.liquid",
+      "size": 95067,
+      "archived_bytes": 95067,
+      "checksum": "e159e88bd54f97dec08651652a00cfdd",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/main-product.liquid",
+      "size": 154376,
+      "archived_bytes": 154376,
+      "checksum": "e024594f7707209ee6433b054067dfb8",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:45-06:00"
+    },
+    {
+      "key": "sections/main-search.liquid",
+      "size": 30392,
+      "archived_bytes": 30392,
+      "checksum": "49f483ffc3004fccae4c2372f49bbf24",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/map.liquid",
+      "size": 43135,
+      "archived_bytes": 43135,
+      "checksum": "82a51b496ef813c5e0082764031224d9",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/mini-cart.liquid",
+      "size": 42471,
+      "archived_bytes": 42471,
+      "checksum": "7d0ab6364eaa8902b13d4e81cc0863bf",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/mobile-dock.liquid",
+      "size": 10198,
+      "archived_bytes": 10198,
+      "checksum": "a41d555edd4dc476e26d9f4cb34a1296",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/multicolumn.liquid",
+      "size": 31656,
+      "archived_bytes": 31656,
+      "checksum": "d6660539c6e49b263f660123644813ba",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/option-table.liquid",
+      "size": 21549,
+      "archived_bytes": 21549,
+      "checksum": "5e87fcf0b48d93f3ade8bbe9f5d76a09",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/overlay-group.json",
+      "size": 6897,
+      "archived_bytes": 6545,
+      "checksum": "fb0284d37dc4a49722570a825a346d7e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:07-06:00"
+    },
+    {
+      "key": "sections/popup.liquid",
+      "size": 35690,
+      "archived_bytes": 35690,
+      "checksum": "e8be03ba2189100e8f34ea69548e277e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/product-details.liquid",
+      "size": 7693,
+      "archived_bytes": 7693,
+      "checksum": "c95b92aa333cb6f4d8626e0457f2c5c9",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/product-recommendations.liquid",
+      "size": 13925,
+      "archived_bytes": 13925,
+      "checksum": "7f8258e2a5c4656aaca78f6e11b9b1a6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/quotes.liquid",
+      "size": 13075,
+      "archived_bytes": 13075,
+      "checksum": "baac97773c3e5b2ad59d51e73bef1610",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/recently-viewed-products.liquid",
+      "size": 12184,
+      "archived_bytes": 12184,
+      "checksum": "1e45191c0d2916a8ee715b9b8ddfdc0c",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:05-06:00"
+    },
+    {
+      "key": "sections/reveal-banner.liquid",
+      "size": 41383,
+      "archived_bytes": 41383,
+      "checksum": "63a84fd19ea9b6813d94494c67b009a6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/rich-text.liquid",
+      "size": 23078,
+      "archived_bytes": 23078,
+      "checksum": "4e632f278febb7d4a6833e52f32f9a70",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/shipping-calculator.liquid",
+      "size": 6422,
+      "archived_bytes": 6422,
+      "checksum": "e37ceb01b3530e6cd35f75ace9906491",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/shop-the-look.liquid",
+      "size": 23173,
+      "archived_bytes": 23173,
+      "checksum": "c56a2c55fd7ca3dd2aca769dcf0b16ae",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/slideshow.liquid",
+      "size": 50669,
+      "archived_bytes": 50669,
+      "checksum": "8d7949325ebd65b8ad0728e21dd46b6a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/store-locator.liquid",
+      "size": 10287,
+      "archived_bytes": 10287,
+      "checksum": "39ffa2988ab2332f4c7ac994ed0e84ca",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/tab-collage.liquid",
+      "size": 59457,
+      "archived_bytes": 59457,
+      "checksum": "5ecad42858f08d4ea87c25584ec25b70",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/testimonials.liquid",
+      "size": 15824,
+      "archived_bytes": 15824,
+      "checksum": "6d61fe09e41bde1c987a84bbbf5cff8e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/video-hero.liquid",
+      "size": 30056,
+      "archived_bytes": 30056,
+      "checksum": "2bed95af090cb9986da47bd8bfe7f917",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "sections/video.liquid",
+      "size": 12214,
+      "archived_bytes": 12214,
+      "checksum": "758797eed34546508b03ce427993a294",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/breadcrumbs.liquid",
+      "size": 4123,
+      "archived_bytes": 4123,
+      "checksum": "780e5a637df1198166ae583cc001cfed",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/card-product.liquid",
+      "size": 24863,
+      "archived_bytes": 24863,
+      "checksum": "74ac5a1a178c9953b5d374e86ae54a5f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/css-variables.liquid",
+      "size": 7446,
+      "archived_bytes": 7446,
+      "checksum": "9e30f435c41a885ce81eaa1c5f4be728",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/desktop-menu.liquid",
+      "size": 10007,
+      "archived_bytes": 10007,
+      "checksum": "8ffdcd951ae2d7b9c2b6c74a960b845a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/facets-vertical-top.liquid",
+      "size": 28978,
+      "archived_bytes": 28978,
+      "checksum": "a98f660c9f24d6c17b7c0cf5199aa4a6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/facets-vertical.liquid",
+      "size": 20549,
+      "archived_bytes": 20549,
+      "checksum": "c978cd359f99a25838978f107f00bc62",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/facets.liquid",
+      "size": 51592,
+      "archived_bytes": 51592,
+      "checksum": "a0c7148b7799ecc2adcfee3778cf4e79",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/gp-head.liquid",
+      "size": 4083,
+      "archived_bytes": 4083,
+      "checksum": "cc3bfeb3b93d7c53c553fb681a53490c",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/gp-header-custom-code.liquid",
+      "size": 0,
+      "archived_bytes": 0,
+      "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/gp-rich-snippets.liquid",
+      "size": 5236,
+      "archived_bytes": 5236,
+      "checksum": "9d3e447219dad70c4252f54d42d4c6f4",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/header-drawer.liquid",
+      "size": 15182,
+      "archived_bytes": 15182,
+      "checksum": "bc2cce7bbbd346ad1e71559a2b45e9da",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/highlight-text.liquid",
+      "size": 1262,
+      "archived_bytes": 1262,
+      "checksum": "f85c03605f8568b983454e806c7f61fa",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/icon-accordion.liquid",
+      "size": 106577,
+      "archived_bytes": 106577,
+      "checksum": "d58f521fdb0b27eafaa6de34efcd4b27",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T22:10:40-06:00"
+    },
+    {
+      "key": "snippets/icon-guarantee.liquid",
+      "size": 52154,
+      "archived_bytes": 52154,
+      "checksum": "34c0f053dfeb0c0af9d64fa0f4b37e45",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/icon.liquid",
+      "size": 34892,
+      "archived_bytes": 34892,
+      "checksum": "eef54b96ab28aa49e630581867e4eed6",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/js-variables.liquid",
+      "size": 10071,
+      "archived_bytes": 10071,
+      "checksum": "76c6eb1c7d50712025aeb2bff007e841",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/mega-menu.liquid",
+      "size": 7000,
+      "archived_bytes": 7000,
+      "checksum": "a1f084a7350ccf5151bbe758953713a8",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/price.liquid",
+      "size": 8540,
+      "archived_bytes": 8540,
+      "checksum": "275c00580365df821aef02b8bf76300e",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/product-image.liquid",
+      "size": 10422,
+      "archived_bytes": 10422,
+      "checksum": "37342d54ae93c813c448d2560ee1c97f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/product-media.liquid",
+      "size": 4334,
+      "archived_bytes": 4334,
+      "checksum": "0699c19930d116e2f21e5ba8eacd4691",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/product-variant-options.liquid",
+      "size": 5884,
+      "archived_bytes": 5884,
+      "checksum": "1875b10e9f6234fb128c1e237f98857d",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/replo-head.liquid",
+      "size": 902,
+      "archived_bytes": 902,
+      "checksum": "98d4994f107be3822856b5543f3a5a1c",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.0.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "543fd357d862ac297f053dd14ba34288",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.1.liquid",
+      "size": 256016,
+      "archived_bytes": 256016,
+      "checksum": "e45229862634f623308da4f0fc910913",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.00d6760b-fed1-4b86-a9d3-2380b64564e2.2.liquid",
+      "size": 64089,
+      "archived_bytes": 64089,
+      "checksum": "058785fd93e5bdecb910dc78d4da61a5",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.0.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "2e62f2ae8972ba064b2a9c92fe4a5983",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.1.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "2cee6e6ecd8d701e0b55ee91bd74b5f0",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.2.liquid",
+      "size": 256022,
+      "archived_bytes": 256022,
+      "checksum": "4a11082a8a4a29aa8cf02d891e70b8dc",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.0a3e8697-323d-4e20-a348-9e7ce6d58009.3.liquid",
+      "size": 29358,
+      "archived_bytes": 29358,
+      "checksum": "7cddfaa873c9b09982fe3f88ff76460a",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.0.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "cd9111bc1ecaed654f57e4d898216f64",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.1.liquid",
+      "size": 59046,
+      "archived_bytes": 59046,
+      "checksum": "0316fd3cdbf9e7a5175fd5b6226c24ed",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.0.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "17c6b9b1ed2410cdf8be1ecdc9b571fe",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.1.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "81f7e29961ec2bf5d1f8efcfe86408c2",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c40ef49b-92b4-4808-aed2-474ef9e331c9.2.liquid",
+      "size": 184198,
+      "archived_bytes": 184198,
+      "checksum": "de0555b45374d70bcbdd687ee5e50569",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.0.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "06de6de8b7a237c1d20e4f6084d32835",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.1.liquid",
+      "size": 256000,
+      "archived_bytes": 256000,
+      "checksum": "2313e78e32793289768e7904e29e2eb7",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/reploChunk.c4df50a5-9548-4c2c-a740-703ce2552298.2.liquid",
+      "size": 211212,
+      "archived_bytes": 211212,
+      "checksum": "41d3c0c49892348944da4683e6eb2e48",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/search-modal.liquid",
+      "size": 4232,
+      "archived_bytes": 4232,
+      "checksum": "9e08068687f51dd79821f5f95b3791b2",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/seasonal-deals.liquid",
+      "size": 3972,
+      "archived_bytes": 3972,
+      "checksum": "ec486e22bf24311459ba987c0b9cde4b",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/share-button.liquid",
+      "size": 7178,
+      "archived_bytes": 7178,
+      "checksum": "5cec7ec4f510332768a12cbe1d70bb51",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/sibling-products.liquid",
+      "size": 6892,
+      "archived_bytes": 6892,
+      "checksum": "ecf03472673190fde6fe6386886c6ae1",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/slide-image.liquid",
+      "size": 1940,
+      "archived_bytes": 1940,
+      "checksum": "dc96bda95d904e7fa2424e70515abc68",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "snippets/slide-video.liquid",
+      "size": 1376,
+      "archived_bytes": 1376,
+      "checksum": "421735975ad02143492f50f0513cdc92",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/sub-collections.liquid",
+      "size": 1715,
+      "archived_bytes": 1715,
+      "checksum": "6b2dab5e177a1c624d49cdc82c34864d",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "snippets/swatch-custom.liquid",
+      "size": 3168,
+      "archived_bytes": 3168,
+      "checksum": "0c205baa33b1fe5390103a4013c86576",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "templates/404.json",
+      "size": 482,
+      "archived_bytes": 120,
+      "checksum": "0ff47dc4cb96490737abab68d2ab084f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/article.blog-post-template.json",
+      "size": 2490,
+      "archived_bytes": 2128,
+      "checksum": "5ba080bc6a3bcf3ce4282b0bb1a78266",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/article.json",
+      "size": 1630,
+      "archived_bytes": 1267,
+      "checksum": "98c5369f0a07060b9f0b32a32cb11392",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/blog.json",
+      "size": 1196,
+      "archived_bytes": 834,
+      "checksum": "bf36a71d88777eb79be2ea093fbd4bbe",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/cart.json",
+      "size": 2213,
+      "archived_bytes": 1851,
+      "checksum": "3576be475e29534aa2f460295c4acf19",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/collection.gem-1716757213-template.json",
+      "size": 4789,
+      "archived_bytes": 4430,
+      "checksum": "afb09d45259c407ea033d1b17ddf0cce",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/collection.gem-backup-default.json",
+      "size": 4789,
+      "archived_bytes": 4430,
+      "checksum": "afb09d45259c407ea033d1b17ddf0cce",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/collection.gp-template-bk-default.json",
+      "size": 4789,
+      "archived_bytes": 4430,
+      "checksum": "afb09d45259c407ea033d1b17ddf0cce",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/collection.json",
+      "size": 5699,
+      "archived_bytes": 5341,
+      "checksum": "f04324d4f0324adedf6e230e40ab31a8",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/customers/account.json",
+      "size": 486,
+      "archived_bytes": 124,
+      "checksum": "e86c1aa97ad94be877105e31e514f7db",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/customers/activate_account.json",
+      "size": 495,
+      "archived_bytes": 133,
+      "checksum": "3f745616012a4d78214b2ce83ec239b4",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/customers/addresses.json",
+      "size": 488,
+      "archived_bytes": 126,
+      "checksum": "f3fdac495193a8a8d3fa5b27c4ba2077",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/customers/login.json",
+      "size": 484,
+      "archived_bytes": 122,
+      "checksum": "815426fbafb1bbbce097d0bbfb1b0284",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/customers/order.json",
+      "size": 484,
+      "archived_bytes": 122,
+      "checksum": "ee7e76ff6bb393d6df282cce112e2401",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/customers/register.json",
+      "size": 487,
+      "archived_bytes": 125,
+      "checksum": "c726c81daec33fb4fa83350f1518b8ed",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/customers/reset_password.json",
+      "size": 493,
+      "archived_bytes": 131,
+      "checksum": "b92c745953aa08c06638f6cd0e646dca",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/gift_card.liquid",
+      "size": 6486,
+      "archived_bytes": 6486,
+      "checksum": "2821797d2f07d3c827ee8d8b9b563b48",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "templates/index.gem-1716757211-template.json",
+      "size": 34123,
+      "archived_bytes": 33863,
+      "checksum": "a7e1b3a887266e82f56b04e900cc124a",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/index.gem-backup-default.json",
+      "size": 34123,
+      "archived_bytes": 33863,
+      "checksum": "a7e1b3a887266e82f56b04e900cc124a",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/index.gp-template-bk-default.json",
+      "size": 34123,
+      "archived_bytes": 33863,
+      "checksum": "a7e1b3a887266e82f56b04e900cc124a",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/index.json",
+      "size": 18817,
+      "archived_bytes": 22541,
+      "checksum": "87a8e86c1cf1099ef5d216ea4412cb30",
+      "on_live": "differs",
+      "updated_at": "2026-05-09T13:53:16-06:00"
+    },
+    {
+      "key": "templates/list-collections.json",
+      "size": 867,
+      "archived_bytes": 505,
+      "checksum": "23c3843bd4ddd2fedfab7465a2456c03",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/llms.txt.liquid",
+      "size": 41025,
+      "archived_bytes": 41025,
+      "checksum": "8fd59046cfcd5fa54363d367c04b7880",
+      "on_live": "differs",
+      "updated_at": "2026-07-19T10:58:54-06:00"
+    },
+    {
+      "key": "templates/page.about-2.json",
+      "size": 570,
+      "archived_bytes": 208,
+      "checksum": "677c67437f44e68febcb22b918bcfea8",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/page.about-modern.json",
+      "size": 10539,
+      "archived_bytes": 10185,
+      "checksum": "c28be8345b5b8b4e0452c0dfaf802e45",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/page.about.json",
+      "size": 15984,
+      "archived_bytes": 15647,
+      "checksum": "0818ec330d5b4a5915b70dd2ab7ef7e5",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/page.contact-with-map.json",
+      "size": 6664,
+      "archived_bytes": 6311,
+      "checksum": "02fc3f31beefb70d7d6c8401cb4ed017",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/page.contact.json",
+      "size": 6385,
+      "archived_bytes": 6031,
+      "checksum": "49bc73e3aa527fc38727ec0cf44d2955",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:11-06:00"
+    },
+    {
+      "key": "templates/page.faq.json",
+      "size": 5569,
+      "archived_bytes": 5220,
+      "checksum": "e75c507e30ab82f0e95938f33c31dc87",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/page.Forms - Wholesale Inquiry.json",
+      "size": 1670,
+      "archived_bytes": 2536,
+      "checksum": "7049924f6c4e0729ae29bd42a9a024de",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/page.json",
+      "size": 2366,
+      "archived_bytes": 2006,
+      "checksum": "3b23886e70967fa3ed65ef8ceafc9bc9",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/page.landing-page-design.json",
+      "size": 17913,
+      "archived_bytes": 17630,
+      "checksum": "81c74cf727dae13481cf68808dcc24ec",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/page.plant-drop.json",
+      "size": 9777,
+      "archived_bytes": 9425,
+      "checksum": "eb5ff2b8a18f8fc310164ed756700d9f",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/page.replo.00d6760b-fed1-4b86-a9d3-2380b64564e2.liquid",
+      "size": 379,
+      "archived_bytes": 379,
+      "checksum": "6095b3ac748d05212941a6e53285cd13",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "templates/page.replo.0a3e8697-323d-4e20-a348-9e7ce6d58009.liquid",
+      "size": 444,
+      "archived_bytes": 444,
+      "checksum": "9d0f4eb8846c0dc629d8c93adb6ad04c",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "templates/page.replo.3f364fb1-8c18-4dd1-bbed-43d9ae5a0b91.liquid",
+      "size": 314,
+      "archived_bytes": 314,
+      "checksum": "475c3091d12d0c7e91a1f951f8e1e6ec",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:04-06:00"
+    },
+    {
+      "key": "templates/page.replo.c4df50a5-9548-4c2c-a740-703ce2552298.liquid",
+      "size": 379,
+      "archived_bytes": 379,
+      "checksum": "03ef34bf99b9f069e6845cd58aa1e735",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "templates/page.reverse-pdp.json",
+      "size": 570,
+      "archived_bytes": 208,
+      "checksum": "677c67437f44e68febcb22b918bcfea8",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:08-06:00"
+    },
+    {
+      "key": "templates/page.sidebar.json",
+      "size": 1486,
+      "archived_bytes": 1130,
+      "checksum": "b1729bc76627f10f19fba79cb1a5eafc",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/page.veteran.json",
+      "size": 3430,
+      "archived_bytes": 3073,
+      "checksum": "6ff3d8052a7c485de58e7ebb07d5c4a3",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/page.visit.json",
+      "size": 8953,
+      "archived_bytes": 8601,
+      "checksum": "e9b5ce0b37e69532e57cc539c3fa1984",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/password.json",
+      "size": 2198,
+      "archived_bytes": 1838,
+      "checksum": "a210df1e7441569f993671624161def4",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.card.liquid",
+      "size": 6209,
+      "archived_bytes": 6209,
+      "checksum": "37f3c155012e23aa583d31f93f1a775f",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "templates/product.default-product-lotion.json",
+      "size": 21334,
+      "archived_bytes": 21001,
+      "checksum": "cef98d16c9352420a07d56473d1864f2",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.gem-1716757212-template.json",
+      "size": 37483,
+      "archived_bytes": 37238,
+      "checksum": "9e507df0f825c9939faf37c6d242a2b5",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.gem-backup-default.json",
+      "size": 37483,
+      "archived_bytes": 37238,
+      "checksum": "9e507df0f825c9939faf37c6d242a2b5",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.gift-card.json",
+      "size": 5428,
+      "archived_bytes": 5068,
+      "checksum": "89fd9b24dc049d6394f755ba830aaae3",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.gp-template-bk-default.json",
+      "size": 37483,
+      "archived_bytes": 37238,
+      "checksum": "9e507df0f825c9939faf37c6d242a2b5",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.json",
+      "size": 38433,
+      "archived_bytes": 38192,
+      "checksum": "e6e0f460b79b09bcc59a4eb5a1dde12d",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-99-coconut-reset.json",
+      "size": 48953,
+      "archived_bytes": 48805,
+      "checksum": "efb089c7059e3b454fc87d25fd83eb1b",
+      "on_live": "absent",
+      "updated_at": "2026-07-23T19:37:44-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-bar-soap.json",
+      "size": 38918,
+      "archived_bytes": 38696,
+      "checksum": "d2ba37c7d65f0bdc8373c6c72e5099e0",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:46-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-body-cream.json",
+      "size": 35614,
+      "archived_bytes": 35357,
+      "checksum": "58d8da164283de733ac26c0127702613",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-body-lotion.json",
+      "size": 37807,
+      "archived_bytes": 37562,
+      "checksum": "73d80161ed0ee600d05abdceac4b1aec",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-cream.json",
+      "size": 39560,
+      "archived_bytes": 39341,
+      "checksum": "f61dcf30c993e46ae5b91d35943fa244",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:46-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-deodorant.json",
+      "size": 39082,
+      "archived_bytes": 38859,
+      "checksum": "5abb0bd145336328fb2031f0a5d99fcd",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:46-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-foaming-soap.json",
+      "size": 35590,
+      "archived_bytes": 35333,
+      "checksum": "13587fe0d715eb2037a3075ca6e9a27d",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:10-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-lip-balm.json",
+      "size": 39382,
+      "archived_bytes": 39162,
+      "checksum": "6d97fb6cd3d7b3015ec440563f7b03b0",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:46-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-liquid-soap.json",
+      "size": 39159,
+      "archived_bytes": 38938,
+      "checksum": "f6f4a52f9e2cfec498a18b7780b04cd3",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:46-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-lotion.json",
+      "size": 36100,
+      "archived_bytes": 43269,
+      "checksum": "e06ab92f05f74ef90878b175b5135031",
+      "on_live": "differs",
+      "updated_at": "2026-06-22T15:17:52-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-sensitive-skin-set-lander.json",
+      "size": 48306,
+      "archived_bytes": 47989,
+      "checksum": "28333d46701b80d88854d986fb29bc11",
+      "on_live": "differs",
+      "updated_at": "2026-05-09T14:00:16-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-sensitive-skin-set.json",
+      "size": 38980,
+      "archived_bytes": 38750,
+      "checksum": "76ea8d6435bfc2bafa14cedd38a17b43",
+      "on_live": "absent",
+      "updated_at": "2026-05-08T21:40:47-06:00"
+    },
+    {
+      "key": "templates/product.landing-page-toothpaste.json",
+      "size": 40958,
+      "archived_bytes": 40749,
+      "checksum": "e567a220b5a8937bbb5ffc502250df47",
+      "on_live": "differs",
+      "updated_at": "2026-05-08T21:40:47-06:00"
+    },
+    {
+      "key": "templates/product.modal.json",
+      "size": 3685,
+      "archived_bytes": 3325,
+      "checksum": "ff3c13e010a5a568a8344a576c41a0e4",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.pre-order.json",
+      "size": 11448,
+      "archived_bytes": 11101,
+      "checksum": "0cce55cc88c7bfee348985021a458408",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.product-landing.json",
+      "size": 19981,
+      "archived_bytes": 19643,
+      "checksum": "4e1d566d81d1fe8d78a27027345a9f6a",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    },
+    {
+      "key": "templates/product.replo.c40ef49b-92b4-4808-aed2-474ef9e331c9.liquid",
+      "size": 629,
+      "archived_bytes": 629,
+      "checksum": "48674268c1fee73a8ee1a000cff627d1",
+      "on_live": "absent",
+      "updated_at": "2026-05-02T18:35:03-06:00"
+    },
+    {
+      "key": "templates/search.json",
+      "size": 2212,
+      "archived_bytes": 1850,
+      "checksum": "d5c648c51f26c8903c063c2ca621a82a",
+      "on_live": "differs",
+      "updated_at": "2026-05-02T18:35:09-06:00"
+    }
+  ]
+}

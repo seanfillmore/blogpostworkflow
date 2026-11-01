@@ -266,7 +266,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Worked example: a $1,200/yr item sold for $900 stated as '25% off' vs '$300 off' vs '3 months free' vs 'one year for $900 ($1,200)', plus paired free-bonus/$1 examples. Assertion that they mean the same thing and should be tested; no data.
 
-**Fit here (8/10):** Bundle and multipack pricing is already the adopted AOV lever, and this makes the label on that bundle a free variable — 'save 25%' vs 'save $18' vs 'third stick free' vs '3 for $99, a $132 value'; 'lip balm free with your first refill' vs 'add the lip balm for $1'. The $1 variant even recovers some landed cost at a $50.46 AOV. Applies identically on Shopify bundle widgets, Amazon multipack ASINs and email subject lines, with no spend. Held at 8 only because at ~54 orders/month a clean A/B read is impossible — pick by judgment, favouring the free-portion framing per the source's own argument that 'free' beats an equivalent discount.
+**Fit here (9/10):** Bundle and multipack pricing is already the adopted AOV lever, and this makes the label on that bundle a free variable — 'save 25%' vs 'save $18' vs 'third stick free' vs '3 for $99, a $132 value'; 'lip balm free with your first refill' vs 'add the lip balm for $1'. The $1 variant even recovers some landed cost at a $50.46 AOV. Applies identically on Shopify bundle widgets, Amazon multipack ASINs and email subject lines, with no spend. Held at 8 only because at ~54 orders/month a clean A/B read is impossible — pick by judgment, favouring the free-portion framing per the source's own argument that 'free' beats an equivalent discount.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 4 of 11)*
 
@@ -296,7 +296,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Observation of where Mays introduces price across his spots (about halfway, never later than two thirds), plus a worked example of the Tool Bandit sequence (price, then second unit free, then a $10 bonus, then the totalled value). Observational, no split test.
 
-**Fit here (5/10):** Durable-principle class (offer presentation sequencing), age irrelevant, free, editorial. The literal instruction does not survive an ecommerce PDP — Shopify and Amazon both put the price above the fold by default, so it is never withheld — but the underlying claim translates cleanly: order the PDP sections, A+ blocks and email bodies so the multipack framing, the free-portion label, the stated reasons the price is what it is, the 30-day guarantee and the turkey-talk quantity argument all sit *after* the price, working on a number the buyer already holds. Held at 5 because it is a sequencing heuristic rather than a revenue mechanism, it interacts with the information-fatigue rule in marketing-conversion-friction-audit (order by decision-relevance, do not just stack), and at ~54 orders/month the ordering will be judged rather than measured.
+**Fit here (6/10):** Durable-principle class (offer presentation sequencing), age irrelevant, free, editorial. The literal instruction does not survive an ecommerce PDP — Shopify and Amazon both put the price above the fold by default, so it is never withheld — but the underlying claim translates cleanly: order the PDP sections, A+ blocks and email bodies so the multipack framing, the free-portion label, the stated reasons the price is what it is, the 30-day guarantee and the turkey-talk quantity argument all sit *after* the price, working on a number the buyer already holds. Held at 5 because it is a sequencing heuristic rather than a revenue mechanism, it interacts with the information-fatigue rule in marketing-conversion-friction-audit (order by decision-relevance, do not just stack), and at ~54 orders/month the ordering will be judged rather than measured.
 
 *Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 2 of 3)*
 
@@ -306,7 +306,7 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Assertion from practice with example package names and the airline analogy (First / Business / Economy); claims it boosts upsells-per-person. No conversion data.
 
-**Fit here (8/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. A named program is also one of the cheapest answers the double-the-price diagnostic above tends to produce. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on, or settle a two-name choice with the free poll/DM test above.
+**Fit here (9/10):** Extends the buy-X-get-Y multipack already adopted with a naming layer nothing else covers. A 12-SKU catalog at a $50.46 AOV is exactly the case where a named 'Natural Switch Starter' or 'Full Routine' is a single ask that lifts AOV and forward-buys months of a consumable, suppressing churn with no new traffic. A named program is also one of the cheapest answers the double-the-price diagnostic above tends to produce. Zero cost, solo-executable on Shopify bundle and collection pages today and as a multipack ASIN on Amazon. Held at 8 because naming adds no value by itself and at ~54 orders/month the effect will never be measurable — apply by judgment and move on, or settle a two-name choice with the free poll/DM test above.
 
 *Source: Alex Hormozi — "$100M Money Models" (book, part 5 of 11)*
 
@@ -357,13 +357,11 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 **Evidence offered:** Billy and Sully's cheap predictive TV test markets, Joseph Sugarman testing every ad in the Southwestern edition of the Wall Street Journal, and Schefren's own stated house-list-first sequence (test every new product to the house list, and only if it beats expectations go out to affiliates, PPC and SEO). Practitioner anecdotes, no figures.
 
-**Fit here (5/10):** Durable-principle class (test ordering), age irrelevant. Additive on a different axis from the rules already recorded: marketing-awareness-level-messaging's cheap-reversible-first rule orders copy angles (ad text before PDP rebuild), while this orders audiences — validate a new bundle, price or promotion by emailing the owned list before putting any of the $30/day Meta budget or an Amazon listing change behind it. Free, needs no attribution (redemption reads off a discount code), and it is the general form of the 'run the price escalation on Shopify first, not Amazon' rule above, since Amazon changes are slow to unwind on the larger ~$1,800/mo channel. Capped at 5 because it substantially overlaps those two rules, and because the source's stop-rule does not survive the scale-down: at a sub-1,000 subscriber list and ~54 orders/month, 'sales were disappointing, kill it' is a directional judgement on a handful of orders, so treat a flat list test as a reason not to fund it yet, never as proof the offer is dead.
+**Fit here (7/10):** Durable-principle class (test ordering), age irrelevant. Additive on a different axis from the rules already recorded: marketing-awareness-level-messaging's cheap-reversible-first rule orders copy angles (ad text before PDP rebuild), while this orders audiences — validate a new bundle, price or promotion by emailing the owned list before putting any of the $30/day Meta budget or an Amazon listing change behind it. Free, needs no attribution (redemption reads off a discount code), and it is the general form of the 'run the price escalation on Shopify first, not Amazon' rule above, since Amazon changes are slow to unwind on the larger ~$1,800/mo channel. Capped at 5 because it substantially overlaps those two rules, and because the source's stop-rule does not survive the scale-down: at a sub-1,000 subscriber list and ~54 orders/month, 'sales were disappointing, kill it' is a directional judgement on a handful of orders, so treat a flat list test as a reason not to fund it yet, never as proof the offer is dead.
 
 *Source: Rich Schefren — "Billy Mays Marketing Magic" (blog post, part 3 of 3)*
 
 ## Get adjacent non-competing businesses to contribute their products and services as bonuses in exchange for exposure to your customers, then negotiate group discounts and referral commissions so the bonuses become revenue streams.
-
-**Stage:** scale — parked until the scale phase opens.
 
 **Why it works:** Your customer list is the currency: partners get free access to pre-qualified buyers, you get high-value bonuses at zero cost, and referral commissions can turn the bonus stack into profit on top of the core sale.
 
@@ -375,8 +373,6 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 ## Run two or three of your best offer names in the ad campaign, quickly note the winner, then treat it as the control to test new names against.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** Name performance is unpredictable, so head-to-head testing rather than reasoning identifies the winner, and holding a control prevents you from replacing a proven name with a worse one.
 
 **Evidence offered:** Assertion, plus the admission 'I honestly have no idea why some names win and others do not.'
@@ -387,8 +383,6 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 ## Run a giveaway as a front-end attraction offer, then call every non-winner and give them a 'second place' consolation discount.
 
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** The giveaway lowers the cost of getting contact information because entering is free, and the consolation framing converts the losing majority by giving them a reason to feel they won something.
 
 **Evidence offered:** Anecdotal kitchen-remodel example; assertion only.
@@ -396,3 +390,28 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 **Fit here (7/10):** The original rejection is void — it leaned on the discredited 'traffic sits behind tracking → CRO → offer' sequence, and RSC is literally standing up a Meta campaign to drive entries to a soap giveaway right now. The structure is exactly right for this moment: a free entry buys the contact cheaply, and the consolation 'you placed second, here is your prize' framing converts the losing 99% by giving them a reason to feel they won rather than a naked discount — that framing is a genuine addition to what lifecycle email already covers. Note that the prize itself still has to clear the lead-magnet screens above (does it attract deodorant buyers, and does the problem it solves lead into the catalog), and the SKU behind the prize and the consolation offer should be the one whose first-time buyers repurchase most, per the cohort-repurchase rule above. The part that is genuinely blocked is the delivery channel as claimed: phoning every non-winner is sales labor a solo operator cannot do against a paid-fed entry pool. Trigger: support or sales help who can work an entrant list by phone; until then the consolation offer ships by email through the existing nurture escalation and this parked entry covers the phone version.
 
 *Source: Hormozi Highlights — "How to Make Better Offers and Lead Magnets" (7qY7gBMWOB4)*
+
+## Layer extremely cheap co-branded free gifts the customer uses every day — a whisk, a mug, a frother, a ~$0.50 sleep mask, an onboarding kit — into the first order, both to lift conversion and to put the brand in front of the customer and their household every time the item is used.
+
+**Why it works:** Stacked tangible extras raise the perceived value of the first purchase without cutting the headline price — adding good stuff rather than removing cost, as the savings-framing rule above prefers. A branded object that lives on the countertop or in the bathroom repeats brand exposure on every use, even reaching household members who never touch the product, and keeping unit cost to cents protects margin.
+
+**Evidence offered:** Everyday Dose and Bloom Nutrition anecdotes; the creator reports people recognising Bloom's whisks without having used the product, including a boyfriend who used the whisk for years without ever trying the greens. Anecdotal, no conversion or recall figures.
+
+**Fit here (6/10):** Durable offer and retention principle that one person can run today by sourcing a cents-cost co-branded object that sits exactly where the deodorant, soap or toothpaste is used — a travel pouch, a soap dish, a toothbrush cap. Additive to the tier-display rule above, which owns the spend threshold and strike-through but not what the gift should be: choose it for daily-use placement and brand recall, and cap its cost to cents. This is a different selection test from the 'give away something other people charge for' rule above — that one picks a lead magnet by its visible market price; this picks a first-order extra by where it lives and how often it is seen. Gate it on a skin-line or bundle order threshold so the $15–25 contribution orders fund it, which also does AOV work; never attach it to a lone $2–5 contribution order. Held at 6 because the upside is real but indirect — recall cannot be attributed at ~54 orders/month, so judge it on cost and placement, not measured lift.
+
+*Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*
+
+## Falsified
+
+Tried here and did not work. Do not reintroduce these.
+
+### Run a steep subscription intro offer — around 50% off the first cycle, e.g. $40 for month one on an $80 rebill — to drive trial into the subscription pool, then defend the second rebill through email and the habit formed in the first cycle.
+**Falsified 2026-11-01:** Not tested here: retired by operator decision. Subscriptions were removed from the store on purpose to raise AOV through multi-unit ladders (buy 3 get 1), so a subscription intro offer is not an available lever.
+
+**Why it works:** In consumables, trial is the bottleneck. A deep first-order price lowers the entry barrier and converts far more people into the subscription pool, and the business makes its money on the later full-price cycles — so the first order only has to acquire the customer, not profit on it. It is the subscription form of the front-end/back-end split above, at the discount depth the splinter rule above says actually changes behaviour.
+
+**Evidence offered:** Named brands (Gruns, Create Wellness, Instant Hydration, Mars Men, IM8) and the general subscription-brand playbook the creator plans to use; assertion, no figures.
+
+**Fit here (5/10):** Durable offer principle aimed at the conversion constraint, but held at 5 on business risk. It runs only on the skin line, where $15–25 contribution per order can absorb a first-order loss; it must never run on deodorant, soap, toothpaste or lip balm, whose $2–5 contribution makes every intro order negative. At an 18–22.5% repeat rate most deep-discount buyers will never reach a full-price refill, so the gate is arithmetic rather than judgement: the first-order loss has to be smaller than the measured second-order rate × contribution per full-price cycle — take that rate from the cohort-repurchase analysis above for skin-line first-time buyers, not from the category's reputation. It is a deliberate, bounded exception to the opening anti-discount rule rather than a contradiction of it: the discount buys a subscription start, not a one-off sale, and is only legitimate where the back end is shown to pay for it. Run it through the front-end margin gate above, validate it on the owned list first per the cheapest-audience rule above, and have the second-rebill defence emails (habit reminders, a usage timeline) written before the offer goes live.
+
+*Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*

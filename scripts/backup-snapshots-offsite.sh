@@ -15,7 +15,8 @@
 #   are the only surviving record and cannot be re-fetched. Everything else is one
 #   25 GB droplet whose disk filled once and silently killed cron for four days.
 #
-# TWO SETS, ONE UPLOAD PATH
+# SIX SETS, ONE UPLOAD PATH (the three newest, `creator-outreach`, `ugc-reels`
+# and `founder-notes`, are gitignored state documented at their blocks below)
 #   `snapshots`  — the tree above.
 #   `post-state` — data/posts/*/state.json, the server-owned half of the post
 #                  metadata split out of meta.json. It is GITIGNORED, so unlike
@@ -28,7 +29,17 @@
 #                  reliable. Backing it up is a PRECONDITION of that split, not a
 #                  follow-up to it.
 #
-#   The two sets are archived and pruned independently but share one upload,
+#   `press`      — data/press/contacts.json, the PR contact book (added
+#                  2026-09-21). GITIGNORED because this repository is PUBLIC and
+#                  the book holds named people's addresses, so — exactly like
+#                  state.json — this job is its only copy. It records who was
+#                  pitched, when, and what they said; losing it means re-doing
+#                  hours of verified contact research. Also archived when
+#                  present: data/press/drafts/ (the approval queue) and
+#                  data/press/outreach-state.json (press-outreach's send ledger).
+#                  Never data/press/backups/, which is local undo.
+#
+#   The sets are archived and pruned independently but share one upload,
 #   verify and prune path — a second copy of that logic is a second copy that
 #   drifts, and this is the one script whose output matters exactly when nobody
 #   is watching.
@@ -51,6 +62,11 @@ readonly SRC="$ROOT/data/snapshots"
 readonly KEEP_REMOTE=12          # ~3 months of weekly archives, ~72 MB total
 readonly PREFIX="snapshots"
 readonly STATE_PREFIX="post-state"   # data/posts/*/state.json — tiny; same retention
+readonly PRESS_PREFIX="press"        # data/press/contacts.json — the PR contact book
+readonly OUTREACH_PREFIX="creator-outreach"  # data/creator-outreach/state.json
+readonly REELS_PREFIX="ugc-reels"        # data/ugc-reels/ledger.json
+readonly FOUNDER_PREFIX="founder-notes"  # data/founder-notes/ (notes + question sets)
+readonly SERVER_STATE_PREFIX="server-state"  # cron-owned state untracked from git 2026-11-01
 
 DRY_RUN=0
 [[ "${1:-}" == "--dry-run" ]] && DRY_RUN=1 && echo "DRY RUN — will not upload or prune"
@@ -80,7 +96,7 @@ export RCLONE_CONFIG_SPACES_SECRET_ACCESS_KEY="$SPACES_SECRET"
 export RCLONE_CONFIG_SPACES_ENDPOINT="${SPACES_REGION}.digitaloceanspaces.com"
 export RCLONE_CONFIG_SPACES_ACL=private
 
-# ── one upload path, shared by both sets ─────────────────────────────────────
+# ── one upload path, shared by every set ─────────────────────────────────────
 # Verify the archive is readable, upload it, confirm it is actually listed and
 # byte-identical remotely, then prune that prefix to KEEP_REMOTE.
 #
@@ -160,4 +176,88 @@ else
   state_archive="$tmp/${STATE_PREFIX}-${stamp}.tar.gz"
   tar czf "$state_archive" -C "$ROOT" -T "$state_list"
   push_archive "$STATE_PREFIX" "$state_archive" "$state_count"
+fi
+
+# ── set 3: the PR contact book ───────────────────────────────────────────────
+# The book, plus data/press/drafts/ (the approval queue) and
+# data/press/outreach-state.json (press-outreach's send ledger) when present.
+# Gitignored because the repository is public. Skipped with a notice when the
+# book is absent — every box except the server legitimately has none, and failing
+# here would take the other two backups down with it.
+PRESS_BOOK="data/press/contacts.json"
+if [[ -f "$ROOT/$PRESS_BOOK" ]]; then
+  press_archive="$tmp/${PRESS_PREFIX}-${stamp}.tar.gz"
+  PRESS_PATHS=("$PRESS_BOOK")
+  [[ -d "$ROOT/data/press/drafts" ]] && PRESS_PATHS+=("data/press/drafts")
+  [[ -f "$ROOT/data/press/outreach-state.json" ]] && PRESS_PATHS+=("data/press/outreach-state.json")
+  tar czf "$press_archive" -C "$ROOT" "${PRESS_PATHS[@]}"
+  push_archive "$PRESS_PREFIX" "$press_archive" "${#PRESS_PATHS[@]}"
+else
+  echo "[$PRESS_PREFIX] no $PRESS_BOOK — nothing to back up."
+fi
+
+# ── set 4: creator-outreach state ────────────────────────────────────────────
+# The only record of which creator was sent which email (agents/creator-outreach).
+# Losing it means the agent refuses to send until restored, so it is backed up
+# like the press book: one gitignored file, skipped with a notice when absent.
+OUTREACH_STATE="data/creator-outreach/state.json"
+if [[ -f "$ROOT/$OUTREACH_STATE" ]]; then
+  outreach_archive="$tmp/${OUTREACH_PREFIX}-${stamp}.tar.gz"
+  tar czf "$outreach_archive" -C "$ROOT" "$OUTREACH_STATE"
+  push_archive "$OUTREACH_PREFIX" "$outreach_archive" 1
+else
+  echo "[$OUTREACH_PREFIX] no $OUTREACH_STATE — nothing to back up."
+fi
+
+# ── set 5: Instagram Reels ledger ────────────────────────────────────────────
+# The only record of which creator video was posted when, with which caption
+# and caption style, and what it earned (agents/ugc-reels). Losing it means the
+# agent reposts every video as new and the style experiment starts from zero.
+REELS_LEDGER="data/ugc-reels/ledger.json"
+if [[ -f "$ROOT/$REELS_LEDGER" ]]; then
+  reels_archive="$tmp/${REELS_PREFIX}-${stamp}.tar.gz"
+  reels_files=("$REELS_LEDGER")
+  [[ -f "$ROOT/data/ugc-reels/statics-ledger.json" ]] && reels_files+=("data/ugc-reels/statics-ledger.json")
+  # The Social queue (lib/social-queue.js): every approved image, its caption and
+  # what it posted where. Gitignored, so this is its only other copy.
+  [[ -d "$ROOT/data/social-queue" ]] && reels_files+=("data/social-queue")
+  tar czf "$reels_archive" -C "$ROOT" "${reels_files[@]}"
+  push_archive "$REELS_PREFIX" "$reels_archive" 1
+else
+  echo "[$REELS_PREFIX] no $REELS_LEDGER — nothing to back up."
+fi
+
+# ── set 6: founder notes ─────────────────────────────────────────────────────
+# Sean's private answers to the weekly questions (agents/founder-notes) and the
+# question sets that track what has been asked. Gitignored (public repository),
+# so this is their only copy. Skipped with a notice when the directory is
+# absent; that never aborts the other sets.
+FOUNDER_DIR="data/founder-notes"
+if [[ -d "$ROOT/$FOUNDER_DIR" ]]; then
+  founder_archive="$tmp/${FOUNDER_PREFIX}-${stamp}.tar.gz"
+  tar czf "$founder_archive" -C "$ROOT" "$FOUNDER_DIR"
+  push_archive "$FOUNDER_PREFIX" "$founder_archive" 1
+else
+  echo "[$FOUNDER_PREFIX] no $FOUNDER_DIR — nothing to back up."
+fi
+
+# ── set 7: server-owned state untracked from git on 2026-11-01 ──────────────
+# These used to be TRACKED, so git held a (stale) second copy. They were untracked
+# because cron rewrites them and they kept the server tree dirty; this set replaces
+# that redundancy. The change-log windows are the 28-day measurement record, the
+# A/B tracker is what lets meta-ab-checker evaluate and revert a live title, and the
+# performance queue and calendar are pending work. Each path is optional.
+SERVER_STATE_PATHS=()
+for p in data/changes/events data/changes/windows data/reports/meta-ab/meta-ab-tracker.json \
+         data/performance-queue data/calendar/calendar.json data/competitor-watcher \
+         data/context/feedback.md data/context/feedback-manifest.json \
+         data/context/writer-standing-rules.md data/context/writer-standing-rules-changelog.json; do
+  [[ -e "$ROOT/$p" ]] && SERVER_STATE_PATHS+=("$p")
+done
+if (( ${#SERVER_STATE_PATHS[@]} )); then
+  state2_archive="$tmp/${SERVER_STATE_PREFIX}-${stamp}.tar.gz"
+  tar czf "$state2_archive" -C "$ROOT" "${SERVER_STATE_PATHS[@]}"
+  push_archive "$SERVER_STATE_PREFIX" "$state2_archive" "${#SERVER_STATE_PATHS[@]}"
+else
+  echo "[$SERVER_STATE_PREFIX] none of the server-state paths exist — nothing to back up."
 fi

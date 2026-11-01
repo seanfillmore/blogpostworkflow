@@ -1,0 +1,189 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:15:28.439Z",
+    "last_crawled": "2026-10-08T08:54:16Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-organic-lip-balm-what-to-look-for-top-picks",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2794,
+  "generated_at": "2026-03-13T23:27:29.661Z",
+  "brief_path": "/root/seo-claude/data/briefs/organic-lip-balm.json",
+  "tokens_used": {
+    "input": 8799,
+    "output": 5712
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563309609130,
+  "shopify_handle": "best-organic-lip-balm-what-to-look-for-top-picks",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-organic-lip-balm-what-to-look-for-top-picks",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-03-24T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-lip-balm_1e3849b8-7009-452e-bc49-2f7d10420cae.webp?v=1773731069",
+  "uploaded_at": "2026-03-17T07:04:33.538Z",
+  "published_at": "2026-03-25T02:14:50.279Z",
+  "indexing_submissions": [
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-04-09T15:07:18.060Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ],
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 19, 609 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:41.601Z",
+  "performance_review": {},
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-08-04T13:30:08.087Z",
+      "age_days": 132,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 1000,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:46.278Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-04T13:30:08.250Z",
+      "age_days": 132,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 2000,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 2000 (0% of target). Under 25% threshold — refresh candidate.",
+      "superseded_at": "2026-09-21T15:42:46.278Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-08-04T13:30:08.377Z",
+      "age_days": 132,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": 3000,
+      "verdict": "DEMOTE",
+      "reason": "0 clicks vs. projected 3000 (0% of target). Under 50% threshold — consider merging, refreshing, or removing.",
+      "superseded_at": "2026-09-21T15:42:46.278Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:42:46.371Z",
+      "age_days": 180,
+      "impressions": 769,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 37.22886866059818,
+      "projection": 1000,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 769 impressions, 0 clicks over first 30 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:19.453Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:42:46.476Z",
+      "age_days": 180,
+      "impressions": 2110,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 39.89952606635071,
+      "projection": 2000,
+      "verdict": "REFRESH",
+      "reason": "0 clicks vs. projected 2000 (0% of target). Under 25% threshold — refresh candidate.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:19.453Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:42:46.585Z",
+      "age_days": 180,
+      "impressions": 2268,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 38.52777777777778,
+      "projection": 3000,
+      "verdict": "DEMOTE",
+      "reason": "0 clicks vs. projected 3000 (0% of target). Under 50% threshold — consider merging, refreshing, or removing.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:19.453Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:59:19.550Z",
+      "age_days": 180,
+      "impressions": 769,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 37.22886866059818,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 769 impressions, 0 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-10T13:30:04.288Z",
+      "superseded_by": "2026-10-09T15:06:20.196Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:59:19.654Z",
+      "age_days": 180,
+      "impressions": 2110,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 39.89952606635071,
+      "projection": 3.9,
+      "verdict": "ON_TRACK",
+      "reason": "expected 3.9 clicks from 2110 impressions at position 39.9 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-10T13:30:04.288Z",
+      "superseded_by": "2026-10-09T15:06:20.196Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-21T15:59:19.766Z",
+      "age_days": 180,
+      "impressions": 2268,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 38.52777777777778,
+      "projection": 4.9,
+      "verdict": "ON_TRACK",
+      "reason": "expected 4.9 clicks from 2268 impressions at position 38.5 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-10T13:30:04.288Z",
+      "superseded_by": "2026-10-09T15:06:20.196Z"
+    }
+  ],
+  "refreshed_at": "2026-10-09T15:06:20.196Z",
+  "last_material_edit": {
+    "at": "2026-10-09T15:06:20.197Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:52:01.442Z",
+    "reasons": [
+      "1 deterministic issue(s)",
+      "5 uncited statistical/health claim(s) (fact-check gate)",
+      "content blockers: factual concerns, ingredient accuracy, brand voice"
+    ]
+  }
+}

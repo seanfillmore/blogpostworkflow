@@ -97,3 +97,13 @@ test('summarizeRecords: empty input is safe', () => {
   assert.equal(s.totalCalls, 0);
   assert.deepEqual(s.byAgent, []);
 });
+
+test('priceFor: the 5.5 generation is priced on its own rates, older models keep the family rate', async () => {
+  const { priceFor } = await import('../../lib/llm-usage.js');
+  assert.equal(priceFor('claude-opus-5-5').input, 4);
+  assert.equal(priceFor('claude-sonnet-5-5').output, 10);
+  assert.equal(priceFor('claude-sonnet-5').input, 2);
+  assert.equal(priceFor('claude-opus-4-6').input, 5);
+  assert.equal(priceFor('claude-sonnet-4-6').input, 3);
+  assert.equal(priceFor('claude-haiku-4-5').input, 1);
+});

@@ -1,0 +1,148 @@
+{
+  "generated_at": "2026-09-13T01:35:32.244Z",
+  "applied": true,
+  "slug": "why-glycerin-free-toothpaste-matters",
+  "results": [
+    {
+      "id": "glycerin-cta-remineralization",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-benefit-remineralization",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-formula-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-list-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-list-cavities",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-faq-cavities",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-faq-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "glycerin-cta-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-benefit-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-formula-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "mirror": "content-refreshed.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "glycerin-cta-remineralization",
+          "action": "absent",
+          "count": 0
+        },
+        {
+          "id": "glycerin-benefit-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-formula-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "glycerin-description-tag",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "description_tag",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)",
+      "before_value": "Learn why many dentists recommend glycerin-free toothpaste. Discover the benefits for remineralization, sensitivity, and clean oral care—featuring Real Skin Care’s all-natural formula."
+    }
+  ]
+}

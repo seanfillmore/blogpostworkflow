@@ -1,0 +1,1452 @@
+[
+  {
+    "label": "home",
+    "strategy": "mobile",
+    "score": 52,
+    "metrics": {
+      "fcp": 2258.2729129127965,
+      "lcp": 4351.013096738994,
+      "tbt": 1162,
+      "cls": 0.05632896338848797,
+      "si": 7190.11061781356,
+      "tti": 29721.56413354229
+    },
+    "diagnostics": {
+      "mainThreadMs": 6058.8791999999985,
+      "bootupMs": 3219.3875999999973,
+      "unusedJsKib": 1518,
+      "unusedCssKib": 28
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/",
+        "scriptingMs": 74,
+        "totalMs": 954
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 448,
+        "totalMs": 600
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 49,
+        "totalMs": 489
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 189,
+        "totalMs": 352
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "scriptingMs": 93,
+        "totalMs": 255
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 158,
+        "totalMs": 234
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 180,
+        "totalMs": 225
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "scriptingMs": 177,
+        "totalMs": 221
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 92,
+        "totalMs": 194
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 171,
+        "totalMs": 184
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&im=1&hme=457",
+        "scriptingMs": 119,
+        "totalMs": 161
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 46,
+        "totalMs": 140
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "home",
+    "strategy": "desktop",
+    "score": 63,
+    "metrics": {
+      "fcp": 546.3057980593753,
+      "lcp": 821.0098802714858,
+      "tbt": 1247.499999999999,
+      "cls": 0.029937661179523192,
+      "si": 2834.4780636368487,
+      "tti": 6141.134570843926
+    },
+    "diagnostics": {
+      "mainThreadMs": 8980.014999999845,
+      "bootupMs": 3759.836999999995,
+      "unusedJsKib": 1504,
+      "unusedCssKib": 26
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/",
+        "scriptingMs": 99,
+        "totalMs": 2663
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 444,
+        "totalMs": 1207
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 80,
+        "totalMs": 699
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 332,
+        "totalMs": 556
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 307,
+        "totalMs": 458
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 236,
+        "totalMs": 248
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 155,
+        "totalMs": 231
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 174,
+        "totalMs": 223
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "scriptingMs": 148,
+        "totalMs": 180
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 88,
+        "totalMs": 174
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/storefront/assets/shop_events_listener-4e26a9ce.js",
+        "scriptingMs": 121,
+        "totalMs": 153
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&hme=457e0686",
+        "scriptingMs": 106,
+        "totalMs": 137
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 140,
+        "wastedKb": 100
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 94,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "collection",
+    "strategy": "mobile",
+    "score": 39,
+    "metrics": {
+      "fcp": 2756.5041120685705,
+      "lcp": 17616.151051043667,
+      "tbt": 1159.000000000011,
+      "cls": 0.008128200651998475,
+      "si": 8881.568946835589,
+      "tti": 30915.886872631076
+    },
+    "diagnostics": {
+      "mainThreadMs": 5585.030399999923,
+      "bootupMs": 3352.815599999999,
+      "unusedJsKib": 1494,
+      "unusedCssKib": 28
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+        "scriptingMs": 85,
+        "totalMs": 495
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 46,
+        "totalMs": 487
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 209,
+        "totalMs": 417
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 291,
+        "totalMs": 402
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&im=1&hme=457",
+        "scriptingMs": 92,
+        "totalMs": 258
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 144,
+        "totalMs": 225
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 155,
+        "totalMs": 197
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/app.2efb2fec.chunk.js",
+        "scriptingMs": 175,
+        "totalMs": 196
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 98,
+        "totalMs": 195
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 172,
+        "totalMs": 185
+      },
+      {
+        "url": "https://www.realskincare.com/web-pixels@449ac4ccw8cfe1344p8a6aeedamfa32ca01/app/web-pixel-1930559658@a3321ca85cf5aaf6b57",
+        "scriptingMs": 160,
+        "totalMs": 163
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "scriptingMs": 99,
+        "totalMs": 157
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "collection",
+    "strategy": "desktop",
+    "score": 46,
+    "metrics": {
+      "fcp": 640.936081548218,
+      "lcp": 3753.9927229073555,
+      "tbt": 794.7901949999977,
+      "cls": 0.002355366961510878,
+      "si": 3006.4047957326925,
+      "tti": 6410.090027099382
+    },
+    "diagnostics": {
+      "mainThreadMs": 4843.831999999972,
+      "bootupMs": 2754.359999999997,
+      "unusedJsKib": 1495,
+      "unusedCssKib": 28
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+        "scriptingMs": 70,
+        "totalMs": 459
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 34,
+        "totalMs": 455
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 257,
+        "totalMs": 360
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 192,
+        "totalMs": 341
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 119,
+        "totalMs": 191
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 144,
+        "totalMs": 183
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 80,
+        "totalMs": 162
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/app.2efb2fec.chunk.js",
+        "scriptingMs": 135,
+        "totalMs": 161
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "scriptingMs": 9,
+        "totalMs": 154
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "scriptingMs": 121,
+        "totalMs": 150
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69-beta/clarity.js",
+        "scriptingMs": 140,
+        "totalMs": 148
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "scriptingMs": 82,
+        "totalMs": 136
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 63
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "pdp-moisturizer",
+    "strategy": "mobile",
+    "score": 42,
+    "metrics": {
+      "fcp": 2644.049911886743,
+      "lcp": 20851.021880376553,
+      "tbt": 855.5,
+      "cls": 0.000594261605411903,
+      "si": 10368.852528251657,
+      "tti": 35214.52836097311
+    },
+    "diagnostics": {
+      "mainThreadMs": 7461.35399999994,
+      "bootupMs": 3454.493999999999,
+      "unusedJsKib": 1472,
+      "unusedCssKib": 37
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/products/coconut-moisturizer",
+        "scriptingMs": 88,
+        "totalMs": 1530
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 41,
+        "totalMs": 586
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 349,
+        "totalMs": 560
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/storefront/assets/shop_events_listener-4e26a9ce.js",
+        "scriptingMs": 243,
+        "totalMs": 366
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 151,
+        "totalMs": 281
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 220,
+        "totalMs": 279
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/app.2efb2fec.chunk.js",
+        "scriptingMs": 178,
+        "totalMs": 254
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 45,
+        "totalMs": 227
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 132,
+        "totalMs": 203
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&im=1&hme=457",
+        "scriptingMs": 135,
+        "totalMs": 197
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "scriptingMs": 11,
+        "totalMs": 188
+      },
+      {
+        "url": "https://cdn.shopify.com/extensions/01a090ba-56bd-7925-a3b8-a815d35f8f1c/judgeme-752/assets/loader.js",
+        "scriptingMs": 140,
+        "totalMs": 185
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 140,
+        "wastedKb": 100
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 96,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 59
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "pdp-moisturizer",
+    "strategy": "desktop",
+    "score": 41,
+    "metrics": {
+      "fcp": 642.4997319785301,
+      "lcp": 4324.213181708321,
+      "tbt": 973.0000000000018,
+      "cls": 0.008957810788803191,
+      "si": 3761.0472411961046,
+      "tti": 7252.446230849073
+    },
+    "diagnostics": {
+      "mainThreadMs": 7076.332999999966,
+      "bootupMs": 3532.2359999999967,
+      "unusedJsKib": 1467,
+      "unusedCssKib": 37
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/products/coconut-moisturizer",
+        "scriptingMs": 107,
+        "totalMs": 966
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 37,
+        "totalMs": 684
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 420,
+        "totalMs": 604
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 269,
+        "totalMs": 439
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/storefront/assets/shop_events_listener-4e26a9ce.js",
+        "scriptingMs": 294,
+        "totalMs": 413
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 155,
+        "totalMs": 283
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 165,
+        "totalMs": 247
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 177,
+        "totalMs": 197
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 53,
+        "totalMs": 195
+      },
+      {
+        "url": "https://cdn.shopify.com/extensions/01a090ba-56bd-7925-a3b8-a815d35f8f1c/judgeme-752/assets/loader.js",
+        "scriptingMs": 156,
+        "totalMs": 178
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/795.b2767b0d.chunk.js",
+        "scriptingMs": 136,
+        "totalMs": 167
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&hme=457e0686",
+        "scriptingMs": 124,
+        "totalMs": 152
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 132,
+        "wastedKb": 94
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZSN9Fym",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_Xrf9cpg",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 96,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 59
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "pdp-lotion",
+    "strategy": "mobile",
+    "score": 32,
+    "metrics": {
+      "fcp": 2878.947518604856,
+      "lcp": 23284.819116248167,
+      "tbt": 2446.0000000000036,
+      "cls": 0.002173012908341699,
+      "si": 12363.260933514724,
+      "tti": 36292.51840629864
+    },
+    "diagnostics": {
+      "mainThreadMs": 12575.048400000129,
+      "bootupMs": 6081.755999999992,
+      "unusedJsKib": 1485,
+      "unusedCssKib": 39
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/products/coconut-lotion",
+        "scriptingMs": 175,
+        "totalMs": 2460
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 56,
+        "totalMs": 1051
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 627,
+        "totalMs": 868
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/storefront/assets/shop_events_listener-4e26a9ce.js",
+        "scriptingMs": 539,
+        "totalMs": 761
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 275,
+        "totalMs": 516
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 82,
+        "totalMs": 494
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 382,
+        "totalMs": 480
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "scriptingMs": 130,
+        "totalMs": 402
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&im=1&hme=457",
+        "scriptingMs": 286,
+        "totalMs": 337
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 222,
+        "totalMs": 335
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/795.b2767b0d.chunk.js",
+        "scriptingMs": 220,
+        "totalMs": 332
+      },
+      {
+        "url": "https://cdn.shopify.com/extensions/01a090ba-56bd-7925-a3b8-a815d35f8f1c/judgeme-752/assets/loader.js",
+        "scriptingMs": 248,
+        "totalMs": 292
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 59
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "pdp-lotion",
+    "strategy": "desktop",
+    "score": 46,
+    "metrics": {
+      "fcp": 625.7651469363865,
+      "lcp": 5010.846254657211,
+      "tbt": 552.5,
+      "cls": 0.0007654709269998683,
+      "si": 3602.8324164299875,
+      "tti": 6239.608399090993
+    },
+    "diagnostics": {
+      "mainThreadMs": 6196.3160000000535,
+      "bootupMs": 3203.2410000000023,
+      "unusedJsKib": 1485,
+      "unusedCssKib": 39
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/products/coconut-lotion",
+        "scriptingMs": 129,
+        "totalMs": 826
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 579,
+        "totalMs": 821
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 50,
+        "totalMs": 652
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 199,
+        "totalMs": 332
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 200,
+        "totalMs": 237
+      },
+      {
+        "url": "https://cdn.zigpoll.com/static/js/app.2efb2fec.chunk.js",
+        "scriptingMs": 145,
+        "totalMs": 185
+      },
+      {
+        "url": "https://cdn.shopify.com/extensions/01a090ba-56bd-7925-a3b8-a815d35f8f1c/judgeme-752/assets/loader.js",
+        "scriptingMs": 155,
+        "totalMs": 176
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 108,
+        "totalMs": 159
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 35,
+        "totalMs": 150
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 138,
+        "totalMs": 144
+      },
+      {
+        "url": "https://static.klaviyo.com/onsite/js/1029.1d3e5d8340697.js?cb=2",
+        "scriptingMs": 31,
+        "totalMs": 139
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&hme=457e0686",
+        "scriptingMs": 118,
+        "totalMs": 134
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-single.dfcbb94af050a3a4.js",
+        "kb": 217,
+        "wastedKb": 162
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_X46gag10f7lym",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZTDo74ZzQYcXKY",
+        "kb": 154,
+        "wastedKb": 73
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 63
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 61
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 59
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-oneclickupsell-vendor.b945e8f438a465d3.js",
+        "kb": 76,
+        "wastedKb": 55
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "article",
+    "strategy": "mobile",
+    "score": 33,
+    "metrics": {
+      "fcp": 3585.010952486074,
+      "lcp": 16680.149964830147,
+      "tbt": 1705,
+      "cls": 0,
+      "si": 9107.299809722997,
+      "tti": 26769.57088548883
+    },
+    "diagnostics": {
+      "mainThreadMs": 7026.320399999947,
+      "bootupMs": 4411.256399999994,
+      "unusedJsKib": 1158,
+      "unusedCssKib": 28
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "Unattributable",
+        "scriptingMs": 79,
+        "totalMs": 675
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 475,
+        "totalMs": 668
+      },
+      {
+        "url": "https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-3",
+        "scriptingMs": 117,
+        "totalMs": 587
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 258,
+        "totalMs": 531
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 260,
+        "totalMs": 332
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 216,
+        "totalMs": 330
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-vendor.0b5cc459dd1b99bd.js",
+        "scriptingMs": 218,
+        "totalMs": 302
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&im=1&hme=457",
+        "scriptingMs": 211,
+        "totalMs": 279
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 156,
+        "totalMs": 272
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/storefront/assets/shop_events_listener-4e26a9ce.js",
+        "scriptingMs": 185,
+        "totalMs": 230
+      },
+      {
+        "url": "https://scripts.clarity.ms/0.8.69/clarity.js",
+        "scriptingMs": 199,
+        "totalMs": 216
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shop/t/52/assets/vendor-v4.js",
+        "scriptingMs": 61,
+        "totalMs": 187
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 62
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://static-na.payments-amazon.com/checkout.js",
+        "kb": 107,
+        "wastedKb": 53
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 43
+      }
+    ],
+    "lcpEl": null
+  },
+  {
+    "label": "article",
+    "strategy": "desktop",
+    "score": 45,
+    "metrics": {
+      "fcp": 581.9651993528269,
+      "lcp": 3823.5231131917553,
+      "tbt": 993.0769044466072,
+      "cls": 0.0001123147822334203,
+      "si": 2483.038252047758,
+      "tti": 5404.713627441581
+    },
+    "diagnostics": {
+      "mainThreadMs": 5239.436999999968,
+      "bootupMs": 3001.574999999997,
+      "unusedJsKib": 1160,
+      "unusedCssKib": 28
+    },
+    "thirdParty": [],
+    "bootup": [
+      {
+        "url": "https://www.realskincare.com/blogs/news/best-soap-for-tattoos-what-to-use-for-safe-healing-3",
+        "scriptingMs": 128,
+        "totalMs": 690
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/wpm/b449ac4ccw8cfe1344p8a6aeedamfa32ca01m.js",
+        "scriptingMs": 420,
+        "totalMs": 530
+      },
+      {
+        "url": "Unattributable",
+        "scriptingMs": 40,
+        "totalMs": 482
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "scriptingMs": 196,
+        "totalMs": 357
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "scriptingMs": 165,
+        "totalMs": 239
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "scriptingMs": 146,
+        "totalMs": 217
+      },
+      {
+        "url": "https://www.realskincare.com/cdn/shopifycloud/portable-wallets/latest/portable-wallets.en.js",
+        "scriptingMs": 163,
+        "totalMs": 207
+      },
+      {
+        "url": "https://connect.facebook.net/signals/config/1948396628850834?v=2.9.398&r=stable&domain=www.realskincare.com&hme=457e0686",
+        "scriptingMs": 142,
+        "totalMs": 179
+      },
+      {
+        "url": "https://static.klaviyo.com/onsite/js/vendors~Render~ClientStore~~~onsite-back-in-stock.d9f0a07ad7e39.js?cb=2",
+        "scriptingMs": 31,
+        "totalMs": 166
+      },
+      {
+        "url": "https://connect.facebook.net/en_US/fbevents.js",
+        "scriptingMs": 97,
+        "totalMs": 155
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "scriptingMs": 93,
+        "totalMs": 150
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "scriptingMs": 91,
+        "totalMs": 136
+      }
+    ],
+    "unusedJs": [
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=G-PYV4WG2QL8",
+        "kb": 190,
+        "wastedKb": 126
+      },
+      {
+        "url": "https://www.paypal.com/smart/buttons?fundingSource=paypal&style.label=paypal&style.layout=horizontal&style.color=gold&st",
+        "kb": 156,
+        "wastedKb": 111
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-M398J7WG",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.googletagmanager.com/gtag/js?id=GT-TBVN96Q",
+        "kb": 145,
+        "wastedKb": 110
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 104
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KeUa4kzuFMFhx4EadWDt7NDEN4EBPZZRcpg",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/uWPxA5RdPt_KYDfX5UiENjk0-wPDHXpoLWEEsRNAZZ_XXKY",
+        "kb": 154,
+        "wastedKb": 74
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 63
+      },
+      {
+        "url": "https://www.realskincare.com/0irt/",
+        "kb": 199,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://d1npnstlfekkfz.cloudfront.net/zipify-cart-drawer-app.cdccbc5fcf6fc316.js",
+        "kb": 116,
+        "wastedKb": 60
+      },
+      {
+        "url": "https://static-na.payments-amazon.com/checkout.js",
+        "kb": 107,
+        "wastedKb": 53
+      },
+      {
+        "url": "https://www.paypal.com/sdk/js?components=buttons&commit=false&currency=USD&locale=en_US&client-id=AbasDhzlU0HbpiStJiN1KR",
+        "kb": 97,
+        "wastedKb": 43
+      }
+    ],
+    "lcpEl": null
+  }
+]

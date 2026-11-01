@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "aluminum-free-antiperspirant-what-it-is-does-it-work",
+  "keyword": "aluminum free antiperspirant what it is does it work",
+  "dropped_at": "2026-10-22T04:06:12.231Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-10-22T04-06-12-231Z-702728",
+  "reason": "post killed: duplicate of aluminum-free-antiperspirant-what-it-is-does-it-work; 301 to it",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "aluminum-free-antiperspirant-what-it-is-does-it-work.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore aluminum-free-antiperspirant-what-it-is-does-it-work",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

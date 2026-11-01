@@ -1,0 +1,192 @@
+#!/usr/bin/env node
+/**
+ * Trybe Review — screens creator submissions for health claims and reports the
+ * creator program in the 5 AM digest.
+ *
+ * It also tracks the free samples Trybe sends (Shopify orders tagged
+ * `sample-request`) and names creators whose sample was delivered days ago with
+ * no content yet, plus samples nobody has shipped. See lib/trybe-samples.js.
+ * Reporting only: Trybe's API cannot message a creator.
+ *
+ * Every submission still waiting on a human also gets a VISUAL review: the
+ * image (or a video's thumbnail frame) is compared by a vision model against
+ * the live PDP's photographs and ingredient text, and the digest presents every
+ * one with a verdict, its issues and a ready-to-paste note. That review is
+ * presentation only; see lib/trybe-visual-review.js.
+ *
+ * Every pending Trybe submission's transcript goes through the same COMMERCIAL
+ * claim gate the fleet's product copy uses (lib/seo-copy-health-gate.js). A
+ * transcript that makes a claim the creator brief forbids gets a revision
+ * request quoting the line. Everything else is left PENDING for a human: this
+ * agent never approves and never rejects. See lib/trybe-review.js for why.
+ *
+ * Usage:
+ *   node agents/trybe-review/index.js            # dry run: decide, report, send nothing
+ *   node agents/trybe-review/index.js --apply    # send the revision requests (cron does this)
+ *   node agents/trybe-review/index.js --json     # print the plan as JSON, send nothing
+ *
+ * Cron: DAILY_TRYBE_REVIEW, 12:55 UTC (scripts/setup-cron.sh), so the row lands
+ * in the same morning's 13:00 UTC digest.
+ *
+ * Requires TRYBE_API_KEY in .env.
+ */
+
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { isDirectRun } from '../../lib/is-direct-run.js';
+import { notify } from '../../lib/notify.js';
+import { listSubmissions, listCreators, listCreatorPerformance, requestRevision } from '../../lib/trybe.js';
+import { planReview, summarizePerformance, renderDigest } from '../../lib/trybe-review.js';
+import { planSamplePriming, renderPrimingLines } from '../../lib/trybe-samples.js';
+import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
+import { createVisualReviewer } from '../../lib/trybe-visual-fetch.js';
+import { MAX_VISUAL_REVIEWS_PER_RUN, catalogueFacts } from '../../lib/trybe-visual-review.js';
+import Anthropic from '../../lib/anthropic.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+
+function loadEnv(root = ROOT) {
+  try {
+    const env = {};
+    for (const line of readFileSync(join(root, '.env'), 'utf8').split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      const idx = t.indexOf('=');
+      if (idx === -1) continue;
+      env[t.slice(0, idx).trim()] = t.slice(idx + 1).trim().replace(/^["']|["']$/g, '');
+    }
+    return env;
+  } catch { return {}; }
+}
+
+/**
+ * One run. Dependencies are injectable so the orchestration is testable
+ * without a network call or a digest write.
+ */
+export async function runReview({
+  apiKey,
+  apply = false,
+  fetchImpl = fetch,
+  send = requestRevision,
+  log = console.log,
+  loadSampleOrders = fetchSampleOrders,
+  reviewVisual = null,
+  maxVisual = MAX_VISUAL_REVIEWS_PER_RUN,
+  now = Date.now(),
+} = {}) {
+  const pending = await listSubmissions({ status: 'pending', apiKey, fetchImpl });
+  const plan = planReview(pending);
+
+  // Visual review of everything still waiting on a human, oldest first, before
+  // any write. Claim revisions are excluded: those leave the queue this run.
+  // A failure is recorded on the row and presented, never fatal to the run.
+  const visualOverCap = [];
+  if (reviewVisual) {
+    const waiting = [...plan.review, ...plan.unchecked]
+      .sort((a, b) => String(a.submission.created_at).localeCompare(String(b.submission.created_at)));
+    for (const [i, row] of waiting.entries()) {
+      if (i >= maxVisual) { visualOverCap.push(row); continue; }
+      try {
+        row.visual = await reviewVisual(row.submission);
+      } catch (err) {
+        row.visual = { error: err.message };
+      }
+      log(`  visual: ${row.submission.trybe_id || row.submission.id} → ${row.visual.verdict?.verdict || `error: ${row.visual.error}`}`);
+    }
+  }
+
+  const revised = [];
+  const raced = [];
+  const failed = [];
+  if (apply) {
+    for (const row of plan.revise) {
+      try {
+        await send(row.submission.id, row.comment, { apiKey, fetchImpl });
+        revised.push(row);
+        log(`  revision requested: ${row.submission.trybe_id || row.submission.id}`);
+      } catch (err) {
+        // Trybe answers 400 when the submission is no longer pending: somebody
+        // reviewed it between our read and our write. That is not a failure.
+        if (/HTTP 400/.test(err.message) && /pending/i.test(err.message)) raced.push(row);
+        else failed.push({ ...row, error: err.message });
+      }
+    }
+  }
+
+  // Performance is reporting only; losing it must not lose the review above.
+  let perf = null;
+  try {
+    perf = summarizePerformance(await listCreatorPerformance({ apiKey, fetchImpl }));
+  } catch (err) {
+    log(`  creator performance unavailable: ${err.message}`);
+  }
+
+  // Sample priming is reporting only too, for the same reason.
+  let priming = null;
+  try {
+    const [orders, allSubmissions, creators] = await Promise.all([
+      loadSampleOrders(),
+      listSubmissions({ apiKey, fetchImpl }),
+      listCreators({ apiKey, fetchImpl }),
+    ]);
+    priming = planSamplePriming({ orders, submissions: allSubmissions, creators, now });
+  } catch (err) {
+    log(`  sample tracking unavailable: ${err.message}`);
+  }
+
+  return { plan, revised, raced, failed, perf, priming, apply, visualEnabled: Boolean(reviewVisual), visualOverCap };
+}
+
+
+async function main() {
+  const args = process.argv.slice(2);
+  const apply = args.includes('--apply') && !args.includes('--json');
+  const env = loadEnv();
+  const apiKey = env.TRYBE_API_KEY || process.env.TRYBE_API_KEY;
+
+  console.log(`Trybe review${apply ? '' : ' (dry run)'}`);
+  const reviewVisual = createVisualReviewer({
+    client: new Anthropic({ apiKey: env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY }),
+    cacheDir: join(ROOT, 'data', 'reports', 'trybe-review', 'visual'),
+    // Imported lazily: lib/shopify.js throws at import time without OAuth
+    // credentials, and that must not stop the transcript review.
+    loadProducts: async () => (await import('../../lib/shopify.js')).getProducts(),
+    // Per-scent formulas and each product's container; the PDP carries neither.
+    catalogue: (() => {
+      try { return catalogueFacts(JSON.parse(readFileSync(join(ROOT, 'config', 'ingredients.json'), 'utf8'))); }
+      catch (err) { console.log(`  catalogue unavailable (${err.message}); ingredient counts judged from the PDP only`); return ''; }
+    })(),
+    log: console.log,
+  });
+  const run = await runReview({ apiKey, apply, reviewVisual });
+
+  if (args.includes('--json')) {
+    const slim = (rows) => rows.map((r) => ({ id: r.submission.id, creator: r.submission.creator?.name, action: r.action, reason: r.reason, blocking: r.blocking?.map((b) => b.match), comment: r.comment, visual: r.visual }));
+    console.log(JSON.stringify({ revise: slim(run.plan.revise), deferred: slim(run.plan.deferred), review: slim(run.plan.review), unchecked: slim(run.plan.unchecked), perf: run.perf, priming: run.priming }, null, 2));
+    return;
+  }
+
+  const digest = renderDigest(run);
+  const body = [digest.body, ...renderPrimingLines(run.priming)].join('\n');
+  const nudge = run.priming?.prime.length || 0;
+  const unshipped = run.priming?.unshipped.length || 0;
+  const subject = digest.subject
+    + (nudge ? ` · ${nudge} creator(s) to nudge` : '')
+    + (unshipped ? ` · ${unshipped} sample(s) unshipped` : '');
+  console.log(`\n${subject}\n\n${body}`);
+  // A claim found, or a failed revision request, is the agent doing its job:
+  // 'info', never 'error' (see CLAUDE.md on digest severity). Only a crash in
+  // main() below is an 'error'.
+  if (apply) await notify({ subject, body, status: 'info', category: 'creators' });
+}
+
+if (isDirectRun(import.meta.url)) {
+  main().catch(async (err) => {
+    console.error(err);
+    try {
+      await notify({ subject: 'Trybe review failed', body: String(err?.stack || err), status: 'error', category: 'creators' });
+    } catch { /* the console already has it */ }
+    process.exit(1);
+  });
+}

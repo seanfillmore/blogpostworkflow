@@ -30,6 +30,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { partitionSnapshotDays, exclusionLine } from '../../lib/bot-traffic.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -48,7 +49,13 @@ function main() {
   }
 
   const files = readdirSync(GA4_DIR).filter((f) => /^\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
-  const recent = files.slice(-WINDOW_DAYS);
+  // Revenue-weighted shares are safe from bot traffic by construction (bots buy
+  // nothing), but the `sess` fallback below is used "in case revenue is still
+  // thin" — and on 2026-09-14 a single bot wave was 96% desktop against a 57%
+  // normal median, which is exactly the shape that would tip that fallback.
+  const botSplit = partitionSnapshotDays(files, { dataset: 'ga4' });
+  const recent = botSplit.kept.slice(-WINDOW_DAYS);
+  console.log(`  ${exclusionLine(botSplit)}`);
   if (recent.length === 0) {
     console.error('  No GA4 snapshot files matched the window.');
     process.exit(1);

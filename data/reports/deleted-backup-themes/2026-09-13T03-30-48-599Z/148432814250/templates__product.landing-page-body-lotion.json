@@ -1,0 +1,896 @@
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "89424e9e-ae8c-402a-9483-1f35da6dd02e": {
+          "type": "custom_liquid",
+          "disabled": true,
+          "settings": {
+            "custom_liquid": "<div class=\"star-cont\" style=\"margin-bottom:8px;\">\n  <span style=\"color:#FFB503;\">&#9733;&#9733;&#9733;&#9733;&#9733;<\/span>\n  <span style=\"font-size:16px;\">2,000+ happy customers<\/span>\n<\/div>"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "judge_me_reviews_preview_badge_F4YDPz": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "disabled": true,
+          "settings": {
+            "price_size": "large",
+            "show_badges": true,
+            "sale_badge_basis": "auto"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": false,
+            "picker_type": "dropdown",
+            "swatch_source": "variant",
+            "swatch_type": "round",
+            "enable_swatch_unavailable_click": false,
+            "size_chart": ""
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": false,
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": false
+          }
+        },
+        "07b1ba21-9f9b-4878-bde0-91e0b54304f1": {
+          "type": "text",
+          "settings": {
+            "icon": "heart",
+            "text": "Handmade With Love in the USA",
+            "text_style": "body"
+          }
+        },
+        "27ecebf0-b2b2-4b6f-aa36-c1ea7dbe8f9b": {
+          "type": "text",
+          "settings": {
+            "icon": "star",
+            "text": "30 Day Money Back Guarantee",
+            "text_style": "body"
+          }
+        },
+        "8bdf12b4-ef3c-426f-8c12-e56911669378": {
+          "type": "text",
+          "settings": {
+            "icon": "leaf",
+            "text": "Certified Organic & Gluten Free",
+            "text_style": "body"
+          }
+        },
+        "265878f4-c49c-4bf5-95fd-988a5067390e": {
+          "type": "collapsible_description",
+          "settings": {
+            "icon": "none",
+            "heading": "Description",
+            "keep_open": false
+          }
+        },
+        "cbac5dac-bf06-4591-a401-09c69096496a": {
+          "type": "description",
+          "disabled": true,
+          "settings": {}
+        },
+        "4c755de5-532f-453a-99ce-5b7a845d8df0": {
+          "type": "separator",
+          "settings": {}
+        },
+        "sticky_cart": {
+          "type": "sticky_cart",
+          "settings": {
+            "show_quantity_selector": false
+          }
+        },
+        "9f1c5706-03b4-4175-bec0-1a0092f4b76a": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<quote-slider class=\"slider-mobile-gutter\">\n  <ul id=\"Slider-template--16074545103018__2fd62f35-8c31-40b2-88c9-05c79325fec0\" class=\"quote__list grid slider\"\n    role=\"list\">\n    <li id=\"Slide-template--16074545103018__2fd62f35-8c31-40b2-88c9-05c79325fec0-1\"\n      class=\"quote__item grid__item slider__slide\" aria-current=\"true\">\n      <blockquote class=\"quote__blockquote\" style=\"margin-top:11px;\">\n        <link\n          href=\"\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/t\/17\/assets\/component-rating.css?v=173409050425969898561676725914\"\n          rel=\"stylesheet\" type=\"text\/css\" media=\"all\">\n        <div class=\"rating\" role=\"img\" style=\"margin-bottom:4px;\">\n          <span aria-hidden=\"true\" class=\"rating-star\" style=\"--rating: 5;--rating-max: 5;--rating-decimal: 0;--font-size: 2.3;\"><\/span>\n        <\/div>\n        <div class=\"rte typeset2\" style=\"font-size:19px;\">\n          <p>Better than any moisturizer I’ve ever used. Simple ingredients and very affordable.<\/p>\n        <\/div>\n        <cite class=\"quote__author\" style=\"margin-top:8px;\">Nadine<\/cite>\n      <\/blockquote>\n    <\/li>\n  <\/ul>\n\n  <div class=\"slider-buttons no-js-hidden hidden\">\n    <div class=\"slider-counter caption\">\n      <span class=\"slider-counter--current\">1<\/span>\n      <span aria-hidden=\"true\"> \/ <\/span>\n      <span class=\"visually-hidden\">of<\/span>\n      <span class=\"slider-counter--total\">1<\/span>\n    <\/div>\n    <button type=\"button\" class=\"slider-button slider-button--prev\" name=\"previous\" aria-label=\"Slide left\">\n      <svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" aria-hidden=\"true\" focusable=\"false\" class=\"icon icon-arrow\" fill=\"none\"\n        viewBox=\"0 0 14 10\">\n        <path fill-rule=\"evenodd\" clip-rule=\"evenodd\"\n          d=\"M8.537.808a.5.5 0 01.817-.162l4 4a.5.5 0 010 .708l-4 4a.5.5 0 11-.708-.708L11.793 5.5H1a.5.5 0 010-1h10.793L8.646 1.354a.5.5 0 01-.109-.546z\"\n          fill=\"currentColor\"><\/path>\n      <\/svg>\n    <\/button>\n    <button type=\"button\" class=\"slider-button slider-button--next\" name=\"next\" aria-label=\"Slide right\">\n      <svg xmlns=\"http:\/\/www.w3.org\/2000\/svg\" aria-hidden=\"true\" focusable=\"false\" class=\"icon icon-arrow\" fill=\"none\"\n        viewBox=\"0 0 14 10\">\n        <path fill-rule=\"evenodd\" clip-rule=\"evenodd\"\n          d=\"M8.537.808a.5.5 0 01.817-.162l4 4a.5.5 0 010 .708l-4 4a.5.5 0 11-.708-.708L11.793 5.5H1a.5.5 0 010-1h10.793L8.646 1.354a.5.5 0 01-.109-.546z\"\n          fill=\"currentColor\"><\/path>\n      <\/svg>\n    <\/button>\n  <\/div>\n<\/quote-slider>"
+          }
+        }
+      },
+      "block_order": [
+        "89424e9e-ae8c-402a-9483-1f35da6dd02e",
+        "title",
+        "judge_me_reviews_preview_badge_F4YDPz",
+        "price",
+        "variant_picker",
+        "buy_buttons",
+        "07b1ba21-9f9b-4878-bde0-91e0b54304f1",
+        "27ecebf0-b2b2-4b6f-aa36-c1ea7dbe8f9b",
+        "8bdf12b4-ef3c-426f-8c12-e56911669378",
+        "265878f4-c49c-4bf5-95fd-988a5067390e",
+        "cbac5dac-bf06-4591-a401-09c69096496a",
+        "4c755de5-532f-453a-99ce-5b7a845d8df0",
+        "sticky_cart",
+        "9f1c5706-03b4-4175-bec0-1a0092f4b76a"
+      ],
+      "custom_css": [
+        ".select__select {font-size: medium; font-weight: bold;}",
+        ".product__tax.caption.rte {display: none;}",
+        ".recurpay__widget .recurpay__action button {border-radius: 20px;}"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_position": "left",
+        "media_size": "small",
+        "gallery_layout": "thumbnail_slider",
+        "image_ratio": "adapt_first",
+        "show_featured_media": false,
+        "show_thumbnails": true,
+        "hide_variants": true,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "mobile_image_ratio": "adapt_first",
+        "show_mobile_thumbnails": true,
+        "padding_top": 8,
+        "padding_bottom": 0
+      }
+    },
+    "guarantees": {
+      "type": "guarantees",
+      "blocks": {
+        "guarantee-0": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "leaf",
+            "icon_size": "small",
+            "custom_icon": "",
+            "title": "100% Organic",
+            "title_size": "h4",
+            "text": "<p>Certified organic & gluten free<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "guarantee-2": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "truck",
+            "icon_size": "small",
+            "custom_icon": "",
+            "title": "Fast Shipping",
+            "title_size": "h4",
+            "text": "<p>Within 2 business days<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "guarantee-1": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "star",
+            "icon_size": "small",
+            "custom_icon": "",
+            "title": "Easy Returns",
+            "title_size": "h4",
+            "text": "<p>30 day money back guarantee<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "guarantee-3": {
+          "type": "guarantee",
+          "settings": {
+            "icon": "map_pin",
+            "icon_size": "small",
+            "custom_icon": "",
+            "title": "US Product",
+            "title_size": "h4",
+            "text": "<p>Handmade with love in USA<\/p>",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "guarantee-0",
+        "guarantee-2",
+        "guarantee-1",
+        "guarantee-3"
+      ],
+      "settings": {
+        "layout": "default",
+        "column_alignment": "center",
+        "horizontal_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "columns_desktop": 4,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_tag": "h2",
+        "columns_mobile": "2",
+        "swipe_on_mobile": false,
+        "use_custom_colors": true,
+        "colors_icon": "#aedeac",
+        "colors_text": "#1a1b18",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 36,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "judgeme_section_review_widget_f881": {
+      "type": "apps",
+      "disabled": true,
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "471053ce-18f8-4b37-9949-a046aa616e71": {
+      "type": "rich-text",
+      "blocks": {
+        "template--16074545103018__471053ce-18f8-4b37-9949-a046aa616e71-16768486951cc34002-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "You might not know this, but...",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__471053ce-18f8-4b37-9949-a046aa616e71-16768486951cc34002-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>The cosmetics industry relies heavily on chemicals in their products, some of which are known to be harmful. Sadly, The FDA bans only 11 dangerous ones from a long list of more than 1,300.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__471053ce-18f8-4b37-9949-a046aa616e71-16768486951cc34002-0",
+        "template--16074545103018__471053ce-18f8-4b37-9949-a046aa616e71-16768486951cc34002-1"
+      ],
+      "disabled": true,
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "colors_highlight": "#bbff00",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "b3e85038-0f09-40f8-8876-689b1fa510fd": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__b3e85038-0f09-40f8-8876-689b1fa510fd-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "Get That Silky Feeling Back In Your Skin",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__b3e85038-0f09-40f8-8876-689b1fa510fd-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>As our skin gets older, it can become drier and less elastic. That's why we've created the Real Skin Care Organic Body Lotion, designed especially for aging skin. <\/p><p>Our lotion uses Organic Virgin Coconut Oil and Jojoba to deeply moisturize, making skin feel soft and full. Red Palm Oil is rich in antioxidants, helping to fight off skin-aging agents and giving a youthful look. <\/p><p>Best of all, we only use natural ingredients, ensuring that even sensitive skin is cared for without irritation. <\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__b3e85038-0f09-40f8-8876-689b1fa510fd-16768412087fb7436a-0",
+        "template--16074545103018__b3e85038-0f09-40f8-8876-689b1fa510fd-16768412087fb7436a-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/applying-lotion-425.jpg",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "top",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 8
+      }
+    },
+    "c778823a-b0e8-4faf-a265-1c80120082c4": {
+      "type": "logo-list",
+      "blocks": {
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-0": {
+          "type": "logo",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green01_e5659abe-faed-4c11-a752-b2de183d8052.png",
+            "link": ""
+          }
+        },
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-1": {
+          "type": "logo",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green02_8af923c4-e41f-4b94-b996-2a634fb8e6ce.png",
+            "link": ""
+          }
+        },
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-2": {
+          "type": "logo",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green03_43402034-0ca4-4e5a-a6e1-487aaddec931.png",
+            "link": ""
+          }
+        },
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-3": {
+          "type": "logo",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/green04_347aa046-31dd-4fbe-b707-c6c20f2436fe.png",
+            "link": ""
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-0",
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-1",
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-2",
+        "template--16074545103018__c778823a-b0e8-4faf-a265-1c80120082c4-16768415888ee04c67-3"
+      ],
+      "settings": {
+        "opacity": 100,
+        "show_divider": false,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "colors_highlight": "#ffb503",
+        "padding_top": 0,
+        "padding_bottom": 0,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "collapsible-content": {
+      "type": "collapsible-content",
+      "blocks": {
+        "question-0": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How should I use the body lotion?",
+            "row_content": "<p>Our body lotion is best used after showering or bathing, when your skin is still damp. Apply a small amount to your skin and massage in gently until fully absorbed. For best results, use daily.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "36e98137-3c8d-4daa-b444-25afc6015ab2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is it safe to use anywhere on my body?",
+            "row_content": "<p>Yes, our body lotion is safe to use on all areas of your body. It's made with natural, organic ingredients that are gentle and nourishing for your skin. However, avoid getting the lotion in your eyes, and discontinue use if you experience any irritation or discomfort.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question-2": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What kind of certifications do you have?",
+            "row_content": "<p>While we don't have any formal certifications, we're committed to using only the highest quality, all-natural and organic ingredients in our products. Each ingredient is independently certified for quality and to ensure it's free from harmful chemicals like glyphosate. We take the quality and safety of our products very seriously, and we're proud to offer you the best possible skin care experience.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "011d5801-c5f6-4979-9c43-f441e593d4c0": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How do you ship your products?",
+            "row_content": "<p>We ship our products via UPS and can ship anywhere in the United States. Once your order has been processed and shipped, you'll receive an email confirming shipment along with a tracking number so you can easily track your package. We take great care to ensure that your products are packaged securely and arrive in perfect condition. If you have any questions or concerns about your shipment, please don't hesitate to contact our customer service team at <a href=\"mailto:support@realskincare.com\" target=\"_blank\">support@realskincare.com<\/a>.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question-1": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How does the money back guarantee work?",
+            "row_content": "<p>We're confident that you'll love our products, but if for any reason you're not completely satisfied, we offer a 30-day money-back guarantee. Simply contact us within 30 days of purchase to arrange a refund.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "8dde83c2-9053-43c1-acba-e91752159a59": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Any product notice I should be aware of?",
+            "row_content": "<p>Our products are made with natural, organic ingredients, and may vary in color, texture, and scent from batch to batch. This is normal and does not affect the quality or effectiveness of the product. Also, be sure to store our products in a cool, dry place away from direct sunlight to ensure freshness and longevity.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "question-3": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Product specifications",
+            "row_content": "<p>Contains 8ft. oz (236ml). Ingredients: purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax,  grapefruit seed extract, and organic red palm oil.<\/p>",
+            "page": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "question-0",
+        "36e98137-3c8d-4daa-b444-25afc6015ab2",
+        "question-2",
+        "011d5801-c5f6-4979-9c43-f441e593d4c0",
+        "question-1",
+        "8dde83c2-9053-43c1-acba-e91752159a59",
+        "question-3"
+      ],
+      "settings": {
+        "open_first_collapsible_row": false,
+        "narrow": true,
+        "show_divider": false,
+        "heading": "FAQs",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "enable_faq_schema": false,
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 16,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "27d948a9-cbe2-4441-93d2-a04eab72890e": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__27d948a9-cbe2-4441-93d2-a04eab72890e-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "Pure Coconut Oil for Your Skin",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__27d948a9-cbe2-4441-93d2-a04eab72890e-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Unlike other cosmetic products, our body lotion's main ingredient is just pure organic coconut oil with absolutely ZERO harmful chemicals in it.<\/p><p>It is certified 100% organic and gluten free so you can be sure it will really keep your skin safe and healthy.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__27d948a9-cbe2-4441-93d2-a04eab72890e-16768412087fb7436a-0",
+        "template--16074545103018__27d948a9-cbe2-4441-93d2-a04eab72890e-16768412087fb7436a-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/1000.jpg",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "500px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 8
+      }
+    },
+    "2fd62f35-8c31-40b2-88c9-05c79325fec0": {
+      "type": "quotes",
+      "blocks": {
+        "template--16074545103018__2fd62f35-8c31-40b2-88c9-05c79325fec0-1676915443556d5895-0": {
+          "type": "quote",
+          "settings": {
+            "icon": "5",
+            "text": "<p>I absolutely love this lotion. It is pure natural ingredients that nourish and refresh the skin.<\/p>",
+            "author": "Kim",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__2fd62f35-8c31-40b2-88c9-05c79325fec0-1676915443556d5895-0"
+      ],
+      "settings": {
+        "show_divider": false,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_tag": "h2",
+        "colors_highlight": "#ffb503",
+        "padding_top": 4,
+        "padding_bottom": 4,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "8da38a00-bb11-40ac-bb38-56f92871a91f": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__8da38a00-bb11-40ac-bb38-56f92871a91f-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "Get That Silky Skin Feeling Back",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__8da38a00-bb11-40ac-bb38-56f92871a91f-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our body lotion contains premium organic coconut and jojoba oils, both of which are renown for their quick absorption and deep moisturizing effect for an optimal hydration of your skin.<\/p><p>This unique blend of organic oils can help reduce the appearance of fine lines and wrinkles, provide a soothing and calming effect while giving you that baby skin feeling everybody loves.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__8da38a00-bb11-40ac-bb38-56f92871a91f-16768412087fb7436a-0",
+        "template--16074545103018__8da38a00-bb11-40ac-bb38-56f92871a91f-16768412087fb7436a-1"
+      ],
+      "disabled": true,
+      "settings": {
+        "image": "shopify:\/\/shop_images\/download_10_1dea8739-b3aa-4b00-916e-216871fca14c.jpg",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "500px",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "adafea8d-0735-433a-95a1-9f4d5adfcc35": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__adafea8d-0735-433a-95a1-9f4d5adfcc35-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "For Normal, Dry... And Sensitive Skin",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__adafea8d-0735-433a-95a1-9f4d5adfcc35-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our body lotion is formulated without any harsh chemicals, parabens, preservatives or synthetic fragrances, giving you a gentle and natural alternative to chemical-laden lotions.<\/p><p>If you've been constantly suffering from irritation or allergic reactions due to sensitive skin, this lotion is what you've always been looking for.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__adafea8d-0735-433a-95a1-9f4d5adfcc35-16768412087fb7436a-0",
+        "template--16074545103018__adafea8d-0735-433a-95a1-9f4d5adfcc35-16768412087fb7436a-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/01.jpg",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 8
+      }
+    },
+    "b9167e6f-1e48-49cb-8706-3d66b64d1928": {
+      "type": "quotes",
+      "blocks": {
+        "template--16074545103018__b9167e6f-1e48-49cb-8706-3d66b64d1928-167684283558b6d971-0": {
+          "type": "quote",
+          "settings": {
+            "icon": "5",
+            "text": "<p>This lotion feels great and leaves my skin feeling soft and moisturized. I have sensitive skin and this doesn’t cause my skin to break out like other lotions I have used in the past. Will definitely buy this again…<\/p>",
+            "author": "David & Belinda",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__b9167e6f-1e48-49cb-8706-3d66b64d1928-167684283558b6d971-0"
+      ],
+      "settings": {
+        "show_divider": false,
+        "heading": "",
+        "heading_size": "h1",
+        "heading_tag": "h2",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 8,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    },
+    "25a55844-0c49-49f7-b81f-8095f09dd6f8": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__25a55844-0c49-49f7-b81f-8095f09dd6f8-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "One lotion for all your needs",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__25a55844-0c49-49f7-b81f-8095f09dd6f8-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Understanding the unique skin needs as we mature, our body lotion is crafted to offer comprehensive care. <\/p><p>You can confidently apply it everywhere - from your face to your hands and feet. Its gentle formulation ensures it's safe for all family members, even the little ones. <\/p><p>Incorporate our organic body lotion into your daily routine to provide your skin with the nourishment and hydration it deserves.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__25a55844-0c49-49f7-b81f-8095f09dd6f8-16768412087fb7436a-0",
+        "template--16074545103018__25a55844-0c49-49f7-b81f-8095f09dd6f8-16768412087fb7436a-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/love-hug-and-happy-old-couple.jpg",
+        "image_position": "center center",
+        "layout": "image_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 8
+      }
+    },
+    "a6987780-ec88-43d7-9f86-f3c3dff74fdd": {
+      "type": "image-with-text",
+      "blocks": {
+        "template--16074545103018__a6987780-ec88-43d7-9f86-f3c3dff74fdd-16768412087fb7436a-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "About Real Skin Care",
+            "heading_size": "h1",
+            "heading_tag": "h2",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "template--16074545103018__a6987780-ec88-43d7-9f86-f3c3dff74fdd-16768412087fb7436a-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Because we know how health and body conscious you are, at Real Skin Care, we have developed a whole range of organic coconut oil based products for your skin.<\/p><p>We like to source our ingredients from small family farms and batch distilleries from around the world to promote values of fair trade and sustainability.<\/p><p>All of our products are handmade with love in the United States.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false,
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "template--16074545103018__a6987780-ec88-43d7-9f86-f3c3dff74fdd-16768412087fb7436a-0",
+        "template--16074545103018__a6987780-ec88-43d7-9f86-f3c3dff74fdd-16768412087fb7436a-1"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/real-skin-care-organic-coconut-lotion_ce0c7e39-2730-42f6-ae65-acac04e42bf7.jpg",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": false,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "enable_video_looping": false,
+        "video_url": "",
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 8,
+        "padding_bottom": 20
+      }
+    },
+    "loox-product-reviews-app-section": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_review_widget_ttXh7p": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/review_widget\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "review_data": "sample_data",
+            "max_width": 1200
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_review_widget_ttXh7p"
+      ],
+      "settings": {
+        "include_margins": false,
+        "show_divider": false,
+        "padding_top": 12,
+        "padding_bottom": 36
+      }
+    },
+    "product-recommendations": {
+      "type": "product-recommendations",
+      "disabled": true,
+      "settings": {
+        "product_list_limit": 4,
+        "show_divider": false,
+        "heading": "You May Also Like",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "image_ratio": "portrait",
+        "image_position": "center center",
+        "enable_image_fill": true,
+        "show_secondary_image": true,
+        "show_vendor": true,
+        "show_rating": true,
+        "show_quick_buy": true,
+        "enable_quick_view": true,
+        "enable_color_swatches": true,
+        "enable_countdown": true,
+        "colors_highlight": "#ffb503",
+        "padding_top": 36,
+        "padding_bottom": 36,
+        "enable_highlight": false,
+        "highlight_style": "marker"
+      }
+    }
+  },
+  "order": [
+    "main",
+    "guarantees",
+    "judgeme_section_review_widget_f881",
+    "471053ce-18f8-4b37-9949-a046aa616e71",
+    "b3e85038-0f09-40f8-8876-689b1fa510fd",
+    "c778823a-b0e8-4faf-a265-1c80120082c4",
+    "collapsible-content",
+    "27d948a9-cbe2-4441-93d2-a04eab72890e",
+    "2fd62f35-8c31-40b2-88c9-05c79325fec0",
+    "8da38a00-bb11-40ac-bb38-56f92871a91f",
+    "adafea8d-0735-433a-95a1-9f4d5adfcc35",
+    "b9167e6f-1e48-49cb-8706-3d66b64d1928",
+    "25a55844-0c49-49f7-b81f-8095f09dd6f8",
+    "a6987780-ec88-43d7-9f86-f3c3dff74fdd",
+    "loox-product-reviews-app-section",
+    "product-recommendations"
+  ]
+}

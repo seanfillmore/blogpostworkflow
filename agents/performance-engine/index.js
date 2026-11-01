@@ -63,6 +63,16 @@ import {
   listAllSlugs, getPostMeta as getPostMetaLib, getContentPath, getRefreshedPath, POSTS_DIR,
 } from '../../lib/posts.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+// lib/live-articles.js is pure and safe to import at module scope.
+// lib/shopify.js is NOT — it reads .env and THROWS at import time without
+// credentials, and tests/agents/cluster-hold-wiring.test.js imports this file
+// for `holdCandidates`. So the Shopify read is a dynamic import inside main(),
+// which only ever runs on a direct run. Same reasoning that makes
+// lib/queue-apply.js take its Shopify functions by injection.
+import { fetchLiveArticleIds, isArticleLive } from '../../lib/live-articles.js';
+import { mayRewriteBody } from '../../lib/post-lock.js';
+import { refreshableFlops, renderFlopSkipLines } from '../../lib/flop-candidates.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes('--dry-run');
@@ -164,8 +174,14 @@ function mergeMoves(moves) {
 function pickFlops(blocked, hold, held, ctx) {
   const pp = readJsonSafe(join(REPORTS_DIR, 'post-performance', 'latest.json'));
   if (!pp) return [];
-  return heldAware((pp.action_required || [])
-    .filter(f => (f.verdict === 'REFRESH' || f.verdict === 'BLOCKED') && !blocked.has(f.slug)), hold, held, { ...ctx, cap: MAX_FLOPS })
+  // Refreshable-and-unlocked BEFORE the cap — see lib/flop-candidates.js. The
+  // rows it withholds are reported, not dropped.
+  const { kept, skipped } = refreshableFlops(
+    (pp.action_required || []).filter(f => !blocked.has(f.slug)),
+    { mayRewriteBody },
+  );
+  if (Array.isArray(ctx?.flopSkips)) ctx.flopSkips.push(...skipped);
+  return heldAware(kept, hold, held, { ...ctx, cap: MAX_FLOPS })
     .slice(0, MAX_FLOPS)
     .map(f => ({
       slug: f.slug,
@@ -175,10 +191,27 @@ function pickFlops(blocked, hold, held, ctx) {
     }));
 }
 
+/**
+ * A locked winner refuses a BODY rewrite, and every trigger this engine queues
+ * runs content-refresher, which is a body rewrite. So a locked post must never
+ * reach a picker's cap: it cannot succeed, a refusal writes no queue item, and
+ * the post comes back to take the same slot tomorrow. Measured 2026-09-21 on
+ * production: after the flop picker was fixed, the quick-win and meta pickers
+ * still spent 3 of 6 daily slots on locked winners (both tattoo-soap pages and
+ * toothpaste-without-sodium-lauryl-sulfate). Filtered BEFORE the cap, and
+ * counted into the digest rather than dropped silently.
+ */
+function unlocked(slug, ctx) {
+  const lock = mayRewriteBody(slug);
+  if (lock?.allowed) return true;
+  if (Array.isArray(ctx?.lockedSkips) && !ctx.lockedSkips.includes(slug)) ctx.lockedSkips.push(slug);
+  return false;
+}
+
 function pickQuickWins(blocked, hold, held, ctx) {
   const qw = readJsonSafe(join(REPORTS_DIR, 'quick-wins', 'latest.json'));
   if (!qw) return [];
-  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug)), hold, held, { ...ctx, cap: MAX_QUICK_WINS })
+  return heldAware((qw.top || []).filter(c => !blocked.has(c.slug) && unlocked(c.slug, ctx)), hold, held, { ...ctx, cap: MAX_QUICK_WINS })
     .slice(0, MAX_QUICK_WINS)
     .map(c => ({
       slug: c.slug,
@@ -214,11 +247,33 @@ function pickMetaRewrites(blocked, hold, held, ctx) {
       return tk && (q.keyword.toLowerCase().includes(tk) || tk.includes(q.keyword.toLowerCase()));
     });
     if (!match || blocked.has(match.slug)) continue;
+    // low-ctr-meta runs a full content refresh here, so the body lock applies.
+    if (!unlocked(match.slug, ctx)) continue;
     // Only pick posts that actually have HTML — no point refreshing a stub
     if (!existsSync(getContentPath(match.slug))) continue;
     // Skip posts that aren't on Shopify yet — the publish step would fail
     // because findPostMeta requires shopify_article_id to update the article.
     if (!match.shopify_article_id) continue;
+    // Skip posts whose live article is GONE. A consolidated-away post keeps its
+    // stale shopify_article_id in local meta, so the guard directly above lets
+    // it through; queue-autoapply then dismisses it at 15:07 and `activeSlugs()`
+    // — which deliberately treats `dismissed` as NOT active — lets this picker
+    // re-queue it at 07:31 the next morning. Measured on production, that ran
+    // every day from 2026-09-08 to 2026-09-18 on best-sls-free-toothpaste-2025
+    // (article 563289653418), paying for a content-refresher run and a Claude
+    // summary each time and putting a phantom row in the 5 AM digest.
+    //
+    // BEFORE the cap, per CLAUDE.md: filtering after the slice would let a dead
+    // article eat the single MAX_META slot and leave the run doing nothing.
+    //
+    // Fails open — a Shopify outage makes liveArticleIds null, which filters
+    // NOTHING rather than silently emptying the pick list.
+    if (!isArticleLive(ctx?.liveArticleIds, match.shopify_article_id)) {
+      if (Array.isArray(ctx?.deadArticles)) {
+        ctx.deadArticles.push({ slug: match.slug, articleId: String(match.shopify_article_id) });
+      }
+      continue;
+    }
     if (eligible.some((e) => e.slug === match.slug)) continue;
     eligible.push({
       slug: match.slug,
@@ -242,7 +297,7 @@ function pickLegacyFlops(blocked, hold, held, ctx) {
   const triage = readJsonSafe(join(REPORTS_DIR, 'legacy-triage', 'latest.json'));
   if (!triage) return [];
   return heldAware((triage.results || [])
-    .filter(r => r.bucket === 'flop' && !blocked.has(r.slug))
+    .filter(r => r.bucket === 'flop' && !blocked.has(r.slug) && unlocked(r.slug, ctx))
     .filter(r => {
       const existing = listQueueItems().find(i => i.slug === r.slug);
       return !existing || existing.status === 'dismissed';
@@ -278,7 +333,7 @@ function runRefresh(slug, feedback = null) {
 async function generateSummary({ slug, trigger, signal, originalHtml, refreshedHtml }) {
   const prompt = buildSummaryPrompt({ slug, trigger, signal, originalHtml, refreshedHtml });
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -354,7 +409,24 @@ async function main() {
   const rankBanner = efficiencyBanner(ranking);
   if (rankBanner) console.log(`${rankBanner}\n`);
   const moves = [];
-  const ctx = { ranking, moves };
+
+  // Which live articles still EXIST. One bulk read for the whole run, shared by
+  // the pickers so they cannot disagree, and threaded through ctx exactly like
+  // `ranking` — the pickers are sync, so this has to be resolved here.
+  // Degrades rather than blocking: null means "could not tell", nothing is
+  // filtered, and the run SAYS so instead of looking like a clean one.
+  const deadArticles = [];
+  const { getBlogs, getArticles } = await import('../../lib/shopify.js');
+  const liveArticleIds = await fetchLiveArticleIds({ getBlogs, getArticles });
+  if (liveArticleIds) {
+    console.log(`  Live Shopify articles: ${liveArticleIds.size}`);
+  } else {
+    console.log('  ⚠ Could not read live Shopify articles — NOT filtering dead ones this run.');
+  }
+
+  const flopSkips = [];
+  const lockedSkips = [];
+  const ctx = { ranking, moves, liveArticleIds, deadArticles, flopSkips, lockedSkips };
 
   const blocked = activeSlugs();
   const flops = pickFlops(blocked, hold, held, ctx);
@@ -374,6 +446,26 @@ async function main() {
   const rankLines = renderEfficiencyLines(ranking, mergeMoves(moves));
   for (const line of rankLines) console.log(`    ${line}`);
 
+  // A skipped dead article must be COUNTED and NAMED, never silently dropped —
+  // same rule as the $0-cluster hold. A filter nobody can see becomes a mystery
+  // six weeks later, and this one is meant to be rare: a non-empty list means a
+  // post's local meta still carries a shopify_article_id for an article that no
+  // longer exists, which is worth someone knowing about.
+  const deadLines = deadArticles.length
+    ? [`Skipped ${deadArticles.length} post${deadArticles.length === 1 ? '' : 's'} whose live Shopify article is GONE (stale shopify_article_id in local meta):`,
+      ...deadArticles.map((d) => `  - ${d.slug} (article ${d.articleId})`)]
+    : [];
+  for (const line of deadLines) console.log(`    ${line}`);
+  const flopSkipLines = renderFlopSkipLines(flopSkips);
+  if (lockedSkips.length) {
+    flopSkipLines.push(`Locked winners skipped by the quick-win/meta/legacy pickers (a body refresh would be refused): ${lockedSkips.join(', ')}.`);
+  }
+  for (const line of flopSkipLines) console.log(`    ${line}`);
+  deadLines.push(...flopSkipLines);
+  if (!liveArticleIds) {
+    deadLines.push('⚠ Could not read live Shopify articles this run — dead-article filtering was OFF.');
+  }
+
   if (candidates.length === 0 && feedbackCount === 0) {
     console.log('\n  Nothing to do.');
     // A run that did nothing BECAUSE everything was held must still say so.
@@ -382,7 +474,7 @@ async function main() {
     if (held.length) {
       await notify({
         subject: `Performance Engine: 0 items queued, ${held.length} held ($0 cluster)`,
-        body: [...renderHoldLines(held), ...rankLines, ...renderDisagreementLines(hold)].join('\n'),
+        body: [...renderHoldLines(held), ...rankLines, ...deadLines, ...renderDisagreementLines(hold)].join('\n'),
         status: 'info',
         category: 'pipeline',
       }).catch(() => {});
@@ -442,6 +534,7 @@ async function main() {
       queued.length === 0 ? 'No new items this run.' : queued.map(i => `[${i.trigger}] ${i.title}`).join('\n'),
       ...renderHoldLines(held),
       ...rankLines,
+      ...deadLines,
       ...renderDisagreementLines(hold),
     ].join('\n'),
     // A hold is the policy working, not an error — it stays 'info' and deferred.

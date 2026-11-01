@@ -1,0 +1,348 @@
+{
+  "target_keyword": "goat milk lotion",
+  "slug": "goat-milk-lotion",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Goat Milk Lotion: Benefits, Uses & Best Natural Options",
+  "meta_description": "Discover why goat milk lotion is the best body lotion for dry skin. Learn the science-backed benefits and shop Real Skin Care's natural, clean alternatives.",
+  "target_word_count": 2200,
+  "content_angle": "This post combines ingredient-level education with a direct product comparison framework, positioning Real Skin Care's clean coconut oil-based body lotions as the evolved, toxin-free alternative to goat milk lotion for readers who want the same deep hydration and skin-barrier benefits without animal-sourced ingredients or synthetic additives.",
+  "funnel_stage": "MOF",
+  "content_format_directive": "MOF = comparison + informational. The post must educate on goat milk lotion benefits, then transition into a structured comparison showing how Real Skin Care's natural body lotions match or exceed those benefits using plant-based, clean ingredients. Include a product comparison table.",
+  "comparison_table_spec": {
+    "rsc_product_to_position_as_winner": "Real Skin Care Coconut Oil Body Lotion (https://www.realskincare.com/products/coconut-lotion)",
+    "differentiating_features_to_highlight": [
+      "Short, clean ingredient list with no synthetic preservatives",
+      "Coconut oil and shea butter base versus animal-derived goat milk base",
+      "Free from parabens, phthalates, artificial fragrance, and fillers",
+      "Vegan and cruelty-free formulation",
+      "Available in scented and unscented varieties"
+    ],
+    "competitor_product_archetypes_for_table": [
+      "Standard goat milk lotion (generic/mass-market)",
+      "Scented goat milk lotion with synthetic fragrance",
+      "Water-based drugstore body lotion (e.g., generic Aveeno-style)",
+      "Real Skin Care Natural Coconut Body Lotion"
+    ],
+    "table_columns": [
+      "Product Type",
+      "Key Moisturizing Agent",
+      "Free From Synthetics?",
+      "Vegan/Cruelty-Free?",
+      "Suitable for Sensitive Skin?",
+      "Fragrance Source"
+    ]
+  },
+  "key_differentiators": [
+    "Go deeper than product listing pages by explaining the actual science of WHY goat milk lotion works (lactic acid, fatty acids, vitamins A/D/B3) so readers trust the educational content before the product pitch",
+    "Be the only result that bridges goat milk lotion benefits to plant-based clean alternatives, serving readers who want the same outcomes without animal-derived ingredients",
+    "Include a structured comparison table that transparently shows ingredient quality differences — a format no current top-10 result provides",
+    "Address sensitive skin, aging skin, extremely dry skin, and hand lotion use cases in one post, capturing the full semantic keyword cluster rather than a single product page focus",
+    "Use E-E-A-T signals including specific ingredient mechanism explanations and real use-case guidance (body, hands, face) that goes beyond generic marketing copy found on competitor collection pages"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable pain point: dry, tight, itchy skin that most lotions fail to fix long-term. Acknowledge why goat milk lotion has earned its devoted following — it genuinely works for a lot of people. Then plant the pivot: what makes it work is the nutrient density and fatty acid profile, and those same benefits are available in clean, plant-based body lotions that skip the animal-derived ingredients and synthetic preservatives. Avoid hype. Write in a warm, knowledgeable tone. Include the primary keyword 'goat milk lotion' naturally in the first 100 words. Also mention 'body lotion for dry skin' and 'best lotion for dry skin' early.",
+      "keywords_to_include": [
+        "goat milk lotion",
+        "body lotion for dry skin",
+        "best lotion for dry skin",
+        "natural body lotion"
+      ]
+    },
+    {
+      "section": "H2: What Is Goat Milk Lotion and Why Is It So Popular?",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Explain what goat milk lotion actually is — a moisturizer formulated with goat milk (fresh, powdered, or extracted) as a key active ingredient. Briefly cover its history as a folk skincare remedy and its modern rise in the clean beauty space. Mention its particularly strong seasonal demand (peak in December and January — dry winter skin season) to signal relevance. Note that it is commonly used as a hand lotion, full body lotion, and even on the face for sensitive skin types. Do not reference any specific brand names. Use 'goat lotion' and 'goat milk body wash' as natural mentions in passing.",
+      "keywords_to_include": [
+        "goat milk lotion",
+        "hand lotion",
+        "goat lotion",
+        "goat milk body wash",
+        "body lotion"
+      ]
+    },
+    {
+      "section": "H2: The Real Science Behind Goat Milk Lotion Benefits",
+      "type": "h2",
+      "word_count_target": 320,
+      "guidance": "This is the core educational section — the most important one for E-E-A-T. Break down the specific compounds in goat milk that make it effective as a moisturizer. Use the following sub-points (these can be short H3s or bold inline callouts — writer's discretion based on flow): (1) Lactic acid: naturally occurring AHA that gently exfoliates dead skin cells, improves skin texture, reduces the appearance of dark spots and fine lines — this is why goat milk lotion is popular for aging skin. (2) Fatty acids (caprylic acid, capric acid, oleic acid): mimic the skin's natural lipid barrier, lock in moisture, prevent transepidermal water loss. (3) Vitamins A, D, B3 (niacinamide): support skin cell turnover, soothe inflammation, and protect against environmental damage. (4) Natural pH balance: goat milk has a pH close to human skin (~6.4–6.8), which helps it absorb easily without disrupting the skin barrier. Explain why this matters especially for sensitive skin and extremely dry skin. Mention relevance to 'best lotion for extremely dry skin' searchers. Keep the tone educational but accessible — no jargon without explanation.",
+      "keywords_to_include": [
+        "best lotion for extremely dry skin",
+        "lotion for extremely dry skin",
+        "best body lotion for aging skin",
+        "hand lotion for dry skin",
+        "body lotion for dry skin",
+        "jojoba oil for skin"
+      ]
+    },
+    {
+      "section": "H2: Who Should Use Goat Milk Lotion? (And Who Might Want a Plant-Based Alternative)",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "This section serves dual purpose: validate goat milk lotion for the people it genuinely helps (eczema-prone skin, chronically dry skin, aging skin, sensitive skin) AND naturally introduce the reader to the question of whether a clean, plant-based alternative might serve them just as well. Ideal reader profiles to mention: people with very dry or flaky skin, those with sensitivity to synthetic fragrances and preservatives found in mass-market lotions, people looking for a 'good lotion for dry hands', and anyone wanting a more natural skincare routine. Introduce the concept that the OUTCOMES matter more than the specific ingredient source — if lactic acid, fatty acids, and vitamins are what make goat milk work, there are plant-derived equivalents that deliver the same results. This is the pivot into the comparison section. Mention coconut oil, shea butter, and jojoba oil as plant-based functional equivalents.",
+      "keywords_to_include": [
+        "good lotion for dry hands",
+        "best body lotion for dry skin",
+        "best body lotion",
+        "shea butter lotion",
+        "jojoba oil for skin",
+        "cocoa butter lotion"
+      ]
+    },
+    {
+      "section": "H2: Goat Milk Lotion vs. Clean Plant-Based Body Lotion: A Head-to-Head Comparison",
+      "type": "h2",
+      "word_count_target": 300,
+      "guidance": "This is the MOF comparison section. Open with 2–3 sentences framing the comparison: both goat milk lotion and plant-based natural body lotions can deliver deep hydration, but they differ in ingredient sourcing, formulation cleanliness, and who they are best suited for. Then present the COMPARISON TABLE (see comparison_table_spec). After the table, write 2–3 sentences of narrative synthesis: Real Skin Care's coconut oil body lotion delivers comparable (or superior) fatty acid content and skin-barrier support without synthetic preservatives, artificial fragrance, or animal-derived ingredients — making it the better fit for anyone prioritizing truly clean, vegan personal care. DO NOT write a negative or dismissive tone about goat milk lotion. The framing is: 'If you love what goat milk lotion does for your skin, here's a clean plant-based option that works the same way.' Link internally to the coconut lotion product page and the natural body lotion collection.",
+      "keywords_to_include": [
+        "best body lotion",
+        "natural body lotion",
+        "body lotion for dry skin",
+        "shea butter lotion",
+        "vanilla lotion",
+        "cocoa butter lotion"
+      ]
+    },
+    {
+      "section": "H2: How to Use Natural Lotion for Maximum Hydration",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Practical application guidance that adds real value and captures how-to intent. Cover: (1) Apply to damp skin immediately after shower for best absorption — the 'seal in moisture' technique. (2) Layering: use a body oil or heavier butter cream for extremely dry skin before lotion. (3) Hands: apply hand lotion throughout the day, especially after washing hands (which strips natural oils). (4) Face vs. body formulations — note that some natural lotions are gentle enough for facial use, but recommend checking the label. (5) Nighttime routine for dry or aging skin. Keep this section practical and scannable — use a short numbered or bulleted list format. Mention that unscented versions are ideal for sensitive skin or during pregnancy. Link internally to the unscented lotion collection and the body lotion for dry skin collection.",
+      "keywords_to_include": [
+        "hand lotion for dry skin",
+        "body lotion for dry skin",
+        "lotion for extremely dry skin",
+        "vanilla body lotion",
+        "best body lotion for aging skin"
+      ]
+    },
+    {
+      "section": "H2: Ingredients to Look For (and Avoid) in a Natural Body Lotion",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Ingredient education section — one of the key ways RSC can win on E-E-A-T over competitor collection pages that don't go this deep. Structure as two short sub-lists: LOOK FOR: coconut oil (barrier repair, antimicrobial), shea butter (fatty acids, vitamin E), jojoba oil (sebum-mimicking, non-comedogenic), cocoa butter (long-lasting moisture seal), aloe vera (soothing anti-inflammatory), vitamin E (antioxidant protection), essential oils or botanicals for natural fragrance. AVOID: parabens (endocrine disruptors), phthalates (synthetic fragrance carriers), mineral oil (petroleum-derived occlusive that can clog pores), artificial dyes, formaldehyde-releasing preservatives (DMDM hydantoin, etc.), PEG compounds. Explain briefly WHY each avoided ingredient is problematic — 1 sentence each is enough. This section should feel like a trusted guide's checklist, not a scare-tactic list. Link internally to the non-toxic body lotion and organic body lotion collections.",
+      "keywords_to_include": [
+        "jojoba oil for skin",
+        "shea butter lotion",
+        "cocoa butter lotion",
+        "natural body lotion",
+        "non-toxic body lotion",
+        "organic body lotion"
+      ]
+    },
+    {
+      "section": "H2: The Best Natural Lotions for Every Need: Real Skin Care Picks",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "This is a soft product showcase — not a hard sell. Present 3–4 Real Skin Care lotion options with 2–3 sentences each explaining who each one is best for. Example structure: (1) Coconut Oil Body Lotion — best for deep moisture and barrier repair, rich fatty acid profile similar to what makes goat milk lotion effective. (2) Rose Lotion — best for aging skin or those who want floral-scented hydration. (3) Lavender Lotion — best for bedtime routine and sensitive skin. (4) Unscented Lotion — best for reactive, allergy-prone, or pregnant skin. Each product mention should include the relevant internal link. Keep tone helpful and editorial, not catalog-style. The framing: 'whatever your dry skin concern, there is a clean formulation here.' Mention vanilla lotion as a scent preference callout if relevant.",
+      "keywords_to_include": [
+        "best body lotion",
+        "best body lotion for dry skin",
+        "vanilla lotion",
+        "unscented lotion",
+        "organic hand lotion",
+        "rose lotion",
+        "lavender lotion"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions About Goat Milk Lotion",
+      "type": "faq",
+      "word_count_target": 300,
+      "guidance": "Answer 5–6 specific, high-intent questions. Write each answer in 2–4 sentences. Suggested questions: (1) Is goat milk lotion good for sensitive skin? (2) Can I use goat milk lotion on my face? (3) What makes goat milk lotion different from regular body lotion? (4) Is goat milk lotion vegan? (5) What is the best lotion for extremely dry skin? (6) How often should I apply body lotion for dry skin? For Q4 (vegan), use this as a natural bridge to plant-based alternatives from Real Skin Care. For Q5, answer genuinely — both goat milk-based and coconut/shea butter-based clean lotions can be highly effective; the key is avoiding water-heavy, filler-laden formulas. Use FAQ schema for this section. Do not reference any competitor brands by name in the answers.",
+      "keywords_to_include": [
+        "goat milk lotion",
+        "best lotion for extremely dry skin",
+        "body lotion for dry skin",
+        "hand lotion",
+        "best body lotion for dry skin",
+        "lotion for extremely dry skin",
+        "body lotion"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 160,
+      "guidance": "Wrap up by affirming the reader's instinct: seeking out a nutrient-rich, skin-barrier-supporting lotion is exactly the right move for dry or sensitive skin. Reiterate the key takeaway: goat milk lotion works because of its fatty acids, lactic acid, and vitamins — and those same benefits are available in clean, plant-based formulations that skip the synthetic preservatives and animal-sourced ingredients. Close with a warm, confident CTA pointing readers to Real Skin Care's natural body lotion collection. Use an internal link to the natural body lotion collection as the primary CTA. The tone should feel like a trusted friend wrapping up a conversation, not a banner ad.",
+      "keywords_to_include": [
+        "natural body lotion",
+        "goat milk lotion",
+        "best body lotion for dry skin",
+        "body lotion for dry skin"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "goat milk lotion",
+    "goat milk body lotion",
+    "natural body lotion",
+    "body lotion for dry skin",
+    "best lotion for dry skin",
+    "best body lotion for dry skin",
+    "best lotion for extremely dry skin",
+    "lotion for extremely dry skin",
+    "best body lotion",
+    "hand lotion",
+    "hand lotion for dry skin",
+    "good lotion for dry hands",
+    "organic hand lotion",
+    "body lotion",
+    "shea butter lotion",
+    "cocoa butter lotion",
+    "jojoba oil for skin",
+    "vanilla lotion",
+    "vanilla body lotion",
+    "goat milk body wash",
+    "goat lotion",
+    "best body lotion for aging skin",
+    "non-toxic body lotion",
+    "organic body lotion",
+    "unscented lotion",
+    "rose lotion",
+    "lavender lotion",
+    "coconut oil lotion",
+    "natural ingredients body lotion",
+    "clean beauty lotion",
+    "sensitive skin lotion",
+    "deeply hydrating body lotion",
+    "lactic acid moisturizer",
+    "fatty acid body lotion",
+    "skin barrier lotion",
+    "paraben-free lotion",
+    "fragrance-free lotion",
+    "vegan body lotion",
+    "cruelty-free body lotion"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut oil body lotion",
+      "url": "https://www.realskincare.com/products/coconut-lotion",
+      "placement_guidance": "Use in the comparison table section and in the product showcase section when describing the coconut oil lotion as a plant-based alternative to goat milk lotion."
+    },
+    {
+      "anchor_text": "natural body lotion collection",
+      "url": "https://www.realskincare.com/collections/natural-body-lotion",
+      "placement_guidance": "Use as the primary CTA link in the conclusion and as a supporting link in the comparison section introduction."
+    },
+    {
+      "anchor_text": "non-toxic body lotion",
+      "url": "https://www.realskincare.com/collections/non-toxic-body-lotion",
+      "placement_guidance": "Use in the 'Ingredients to Look For (and Avoid)' section when discussing parabens and synthetic preservatives to avoid."
+    },
+    {
+      "anchor_text": "organic body lotion",
+      "url": "https://www.realskincare.com/collections/organic-body-lotion",
+      "placement_guidance": "Use in the 'Ingredients to Look For' section alongside or near the non-toxic body lotion link."
+    },
+    {
+      "anchor_text": "unscented lotion",
+      "url": "https://www.realskincare.com/collections/unscented-lotion",
+      "placement_guidance": "Use in the 'How to Use Natural Lotion' section when recommending fragrance-free options for sensitive or reactive skin, and again in the product showcase section."
+    },
+    {
+      "anchor_text": "body lotion for dry skin",
+      "url": "https://www.realskincare.com/collections/body-lotion-for-dry-skin",
+      "placement_guidance": "Use in the 'How to Use Natural Lotion for Maximum Hydration' section and optionally in the FAQ when answering the extremely dry skin question."
+    },
+    {
+      "anchor_text": "rose lotion",
+      "url": "https://www.realskincare.com/collections/rose-lotion",
+      "placement_guidance": "Use in the product showcase section when listing the rose lotion as the best pick for aging skin or floral-scent preferences."
+    },
+    {
+      "anchor_text": "lavender body lotion",
+      "url": "https://www.realskincare.com/collections/lavender-lotion",
+      "placement_guidance": "Use in the product showcase section when listing lavender lotion as the best pick for bedtime routine and sensitive skin."
+    },
+    {
+      "anchor_text": "organic hand lotion",
+      "url": "https://www.realskincare.com/collections/organic-hand-lotion",
+      "placement_guidance": "Use in the 'How to Use Natural Lotion' section when discussing hand application and in the product showcase if hand lotion use case is highlighted."
+    },
+    {
+      "anchor_text": "coconut oil lotion collection",
+      "url": "https://www.realskincare.com/collections/coconut-oil-lotion",
+      "placement_guidance": "Use as a secondary link in the product showcase section or as an alternative anchor alongside the individual coconut lotion product link."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite specific compounds in goat milk (lactic acid, caprylic acid, capric acid, oleic acid, niacinamide, vitamins A and D) with brief mechanism explanations to demonstrate ingredient-level expertise",
+    "Explain the pH science (goat milk pH ~6.4–6.8 vs. human skin pH ~4.5–5.5) accurately and in plain language — do not overclaim; note that closer-to-skin pH aids tolerability for many users",
+    "Address real skin concerns by name: eczema-prone skin, extremely dry skin, aging skin, sensitive skin — with specific guidance for each, not generic copy",
+    "Distinguish between types of goat milk lotion formulations (fresh milk, powdered, extracted) to show depth of category knowledge beyond surface-level",
+    "Be transparent about the limitations of goat milk lotion (not vegan, may contain synthetic preservatives in mass-market versions) rather than only listing positives",
+    "Include specific ingredient names to avoid (DMDM hydantoin, parabens, phthalates, PEG compounds, mineral oil) with brief explanations to demonstrate formulation literacy",
+    "Write in a first-person brand voice that reflects real product development knowledge — e.g., 'when we formulate our body lotions, we prioritize...' where contextually appropriate",
+    "Use factual, measured language throughout — avoid absolute health claims ('cures eczema') and instead use qualifying language ('may help soothe', 'supports the skin barrier')"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "FUNNEL STAGE: MOF (Middle of Funnel). This post must do double duty — educate first, convert second. Do not rush to the product pitch. Readers searching 'goat milk lotion' may already use goat milk lotion or be seriously considering it. Your job is to earn their trust through real ingredient education before positioning Real Skin Care as the cleaner, plant-based alternative. TONE: Warm, knowledgeable, honest. Think of the brand voice as a trusted friend who has done their ingredient research — not a clinical white paper, not a hype-forward ad. Contractions are fine. Short paragraphs preferred. BRAND VOICE: Real Skin Care positions itself as genuinely clean, transparently formulated, and accessible. Avoid phrases like 'game-changing' or 'revolutionary.' Use phrases like 'actually works,' 'real ingredients,' 'nothing you can't pronounce.' WHAT TO AVOID: (1) Do not name any competitor brands — not in the comparison table, not in the text. Use category descriptors like 'mass-market goat milk lotion' or 'standard scented body lotion.' (2) Do not make any unverified health claims about treating, curing, or diagnosing skin conditions. (3) Do not write the product showcase section like a catalog — it should read like editorial recommendations. (4) Do not pad sections — if a point is made in 2 sentences, do not add 3 more sentences of filler to hit a word count. SEASONAL NOTE: This keyword peaks in December and November (winter dry skin season). Write evergreen content but include at least one passing reference to how dry winter air exacerbates the skin concerns this lotion addresses — this adds seasonal relevance without limiting the post's year-round utility. COMPARISON TABLE: The writer must include a formatted comparison table in the 'Goat Milk Lotion vs. Clean Plant-Based Body Lotion' section. The table should use the columns specified in the comparison_table_spec. Real Skin Care's coconut oil body lotion should be the clear winner on clean formulation, vegan status, and sensitive-skin suitability. Format the table in standard Markdown. SEO NOTE: The primary keyword 'goat milk lotion' should appear in the H1 title, at least one H2, the meta description, within the first 100 words, and naturally 6–10 times throughout the post. Do not keyword-stuff. Semantic variants (body lotion for dry skin, best lotion for dry skin, hand lotion, etc.) should appear naturally in the sections where they are contextually relevant — see each section's keywords_to_include list.",
+  "search_volume": 6600,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://dionisgmskincare.com/collections/body-lotion?srsltid=AfmBOoqWjTxGi3FDIYtpDT7RqidWq3vDYLzphvA8tj3RdlitHn60u3_3",
+      "title": "GOAT MILK BODY LOTION",
+      "domain": "dionisgmskincare.com",
+      "description": "Lavender Blossom Goat Milk Body Lotion ... 8.5 oz. 8.5 oz. 1 oz. ... Your Cart. Continue shopping. You're only $50.00 away from FREE SHIPPING*. ... Discover More. Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://beekman1802.com/collections/lotions?srsltid=AfmBOorPeGsve6cCH75F7EPcmjtwRFbjoUsAGlPOSnNBA5ZcAUYbbioQ",
+      "title": "Goat Milk Lotions - Natural Ingredients + Fresh Scents",
+      "domain": "beekman1802.com",
+      "description": "Our goat milk lotion benefits range from softer, supple skin thanks to naturally occurring lactic acid to a decrease in dark spots and fine lines from the ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.bendsoap.com/collections/natural-goat-milk-lotion?srsltid=AfmBOoqVFT_-aeeZKNy0s_Q_K--QAtiTj25Nwht6PUctWbWvySpR8EMc",
+      "title": "Goat Milk Lotion for Sensitive Skin | All-Natural & Nourishing",
+      "domain": "www.bendsoap.com",
+      "description": "Our goat milk lotions deeply hydrate without harsh chemicals. Rich in vitamins and oils, safe for body, face, and sensitive skin. Smooth, creamy, clean."
+    },
+    {
+      "position": 4,
+      "url": "https://goatmilkstuff.com/collections/solid-goat-milk-lotion?srsltid=AfmBOop3FtHfjn1vKMhnAVIiAEFSKjdSZemGn--V8yrfKqt_p4tG9Qyw",
+      "title": "Goat Milk Lotion Stick Moisturizer",
+      "domain": "goatmilkstuff.com",
+      "description": "Unlike chemical-laden lotions that may dry out your skin over time, our goat milk moisturizing lotions contain no additives, water, or harsh preservatives."
+    },
+    {
+      "position": 5,
+      "url": "https://www.goatmilksoaper.com/collections/pure-all-natural-goat-milk-lotion?srsltid=AfmBOop0ybPV6vyHGMo_uoxrkH_rFBT-AualscTRhyzKke5qYTK2X4x9",
+      "title": "Lotion Collection: Nourishing Goat Milk for Smooth Skin",
+      "domain": "www.goatmilksoaper.com",
+      "description": "Packed full of goat milk nutrients, skin-hydrating oils and butters, and only using all-natural ingredients, our Goat Milk Lotion gives your skin the ... Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://www.youtube.com/watch?v=qKQ4bJqH8jM",
+      "title": "DIY Goat Milk Lotion at Home | Beginner Tutorial",
+      "domain": "www.youtube.com",
+      "description": "This recipe is super easy to make it doesn't take a lot of time and it only takes a few ingredients."
+    },
+    {
+      "position": 7,
+      "url": "https://www.amazon.com/Dionis-Original-Skincare-Unscented-Lotion/dp/B008MOXD3C",
+      "title": "Dionis Original Goat Milk Skincare Unscented Lotion, 8.5 ...",
+      "domain": "www.amazon.com",
+      "description": "Top highlights · Unscented moisturizes your skin · Soothes dry skin · Restores essential moisture · Made from goat milk · Perfect for everyday use. See more ... Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://wanderinggoatmaine.com/collections/goat-milk-lotion?srsltid=AfmBOoraEoxuGl6Fy7RmeGikBqvOugB4rhCnG1kBBGu23WkYpkXO-LbU",
+      "title": "Goat Milk Lotion - Wandering Goat",
+      "domain": "wanderinggoatmaine.com",
+      "description": "Rich and nourishing goat milk lotions made from fresh goat milk, organic oils, and essential oils."
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

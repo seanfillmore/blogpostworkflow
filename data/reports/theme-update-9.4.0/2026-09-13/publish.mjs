@@ -1,0 +1,12 @@
+import { getThemes, shopifyGraphQL } from '/Users/seanfillmore/Code/Claude/lib/shopify.js';
+const LIVE = 148439367850, DRAFT = 148782940330;
+const before = await getThemes();
+const live = before.find((t) => t.id === LIVE), draft = before.find((t) => t.id === DRAFT);
+if (live.role !== 'main' || live.updated_at !== '2026-09-13T11:09:25-06:00') throw new Error(`ABORT: live changed again (${live.role} ${live.updated_at})`);
+if (draft.role !== 'unpublished' || draft.processing) throw new Error('ABORT: draft not ready');
+console.log('publishing at', new Date().toISOString());
+const res = await shopifyGraphQL(`mutation($id: ID!) { themePublish(id: $id) { theme { id name role } userErrors { field message } } }`, { id: `gid://shopify/OnlineStoreTheme/${DRAFT}` });
+console.log(JSON.stringify(res));
+await new Promise((r) => setTimeout(r, 5000));
+const after = await getThemes();
+for (const t of after) console.log(t.id, t.role, t.name, t.updated_at);

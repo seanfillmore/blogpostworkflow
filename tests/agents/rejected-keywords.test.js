@@ -117,7 +117,10 @@ test('the live list carries no entry whose substring reach exceeds its intent', 
   const sls = live.find((r) => r.keyword === 'sodium lauryl sulfate');
   assert.ok(sls, 'fixture assumption: the entry is still on the list');
   assert.equal(sls.matchType, 'exact', 'narrowing this entry is what makes unification behaviourally inert');
-  assert.equal(isRejected('toothpaste without sodium lauryl sulfate', live), false, 'a locked winner must stay writable');
+  // The exact phrase "toothpaste without sodium lauryl sulfate" is itself rejected since
+  // 2026-09-21 (its post was killed and consolidated into the SLS winner), so the
+  // substring-reach check uses a longer phrase no entry names.
+  assert.equal(isRejected('best toothpaste without sodium lauryl sulfate', live), false, 'the SLS-free phrasings must stay writable');
   assert.equal(isRejected('sodium lauryl sulfate', live), true, 'the explainer topic it was rejected for stays blocked');
 });
 

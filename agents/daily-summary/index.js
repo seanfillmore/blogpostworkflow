@@ -27,9 +27,17 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
 import { execSync } from 'node:child_process';
+import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
+import { rowsInWindow, daysBetween } from '../../lib/digest-window.js';
+import { renderCreatorReviewSection, awaitingSubmissions } from '../../lib/digest-creator-review.js';
 import { checkFreshness, problems, newestSnapshotDate, newestReportDate } from '../../lib/snapshot-health.js';
 import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
-import { readUsage, summarizeRecords, listUsageDates } from '../../lib/llm-usage.js';
+// The A/B dead-band and its classifier come from the module that OWNS the
+// decision. Never re-declare 0.005 here — same single-source rule as
+// AWARENESS_LEVELS and HEALTH_CLAIM_PATTERNS.
+import { classifyCtrDelta, DEFAULT_REGRESS_THRESHOLD } from '../../lib/meta-ab-decision.js';
+// lib/llm-usage.js still meters every call; the digest just no longer renders a
+// dollar row from it. See the LLM cost block removal note below.
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -43,6 +51,7 @@ import {
   listAllSlugs, getPostMeta, getEditorReportPath, POSTS_DIR,
 } from '../../lib/posts.js';
 import { classifyBlockedReport } from '../../lib/blocked-posts.js';
+import { freezeFollowupsDue } from '../../lib/post-edit-gate.js';
 
 // Collector/snapshot agents — suppress their success entries from the digest
 const SILENT_ON_SUCCESS = new Set([
@@ -234,17 +243,34 @@ function loadCompetitorActivity() {
   try { return JSON.parse(readFileSync(path, 'utf8')); } catch { return null; }
 }
 
-function loadPerformanceQueue() {
-  const queueDir = join(ROOT, 'data', 'performance-queue');
-  if (!existsSync(queueDir)) return [];
-  try {
-    return readdirSync(queueDir)
-      .filter(f => f.endsWith('.json') && f !== 'indexing-submissions.json')
-      .map(f => { try { return JSON.parse(readFileSync(join(queueDir, f), 'utf8')); } catch { return null; } })
-      .filter(i => i && i.status === 'pending')
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-  } catch { return []; }
-}
+// The digest deliberately does NOT read data/performance-queue/.
+//
+// It used to: `loadPerformanceQueue()` returned every `status: 'pending'` item
+// and the digest rendered them as an indigo "N items ready for review" block
+// headed "Approve on the dashboard to push the updated content to Shopify".
+//
+// `agents/queue-autoapply` took that chore over — it runs daily with --apply as
+// scheduler step 4d and drains the queue unattended — but the block was never
+// removed, and the cron clock makes it a guaranteed false alarm:
+//
+//   07:30 UTC  performance-engine   FILLS the queue
+//   13:00 UTC  daily-summary        READ it and emailed it as a to-do list
+//   15:00 UTC  queue-autoapply      DRAINS it, no human involved
+//
+// So the email showed work a robot finished two hours later, every morning,
+// forever. Measured on production 2026-09-18, the five rows that day were one
+// phantom (a post consolidated away, re-queued nightly and dismissed the same
+// afternoon), three on the self-clearing 30-day cooldown, and one genuinely
+// parked item the block gave no distinguishing treatment.
+//
+// Sean, verbatim: "I don't want to see the optimization queue. That should be
+// handled automatically and should never surface as a manual task."
+//
+// What the queue DID is still reported: queue-autoapply fires its own deferred
+// notify() every run. An item automation can never clear (gate_attempts >= 3,
+// an unrecognised schema, a trigger outside AUTO_APPLY_TRIGGERS) is a gap in
+// the AUTOMATION and belongs in a health/ops row, not in a review queue —
+// see tests/agents/daily-summary.test.js, which pins that this block stays gone.
 
 /**
  * Build the HTML email body.
@@ -306,12 +332,12 @@ export function formatBodyHtml(text) {
 
 /**
  * `dataRoot` exists because this function reads five paths off disk in addition to
- * its thirteen injected arguments. That made its output machine-dependent: the same
+ * its twelve injected arguments. That made its output machine-dependent: the same
  * inputs produced a "quiet day" digest on a laptop with no data/reports and a full
  * one on the server, so a test asserting the quiet path passed locally and failed in
  * production. Defaulting to ROOT keeps every caller unchanged.
  */
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -547,21 +573,38 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     prioritizerSection = phtml;
   }
 
-  // Post performance flops — surfaced as Action Required (below blockers, above quick-wins)
+  // Post performance flops. One row per post, split by what happens NEXT
+  // (post-performance stamps `action`). Only the flops no agent handles are
+  // listed as cards, capped; the automated ones are a count. This section used
+  // to print every flop as an "Action Required" card — 159 of them on
+  // 2026-09-21, most either already queued for refresh, locked winners, or
+  // owned by indexing-fixer — which is how a section stops being read.
   let flopSection = '';
   const flops = (postPerformance && postPerformance.action_required) || [];
   if (flops.length > 0) {
-    const cards = flops.map((f) => `
+    const FLOP_CARDS_SHOWN = 10;
+    const manual = flops.filter((f) => f.automated !== true);
+    const auto = flops.filter((f) => f.automated === true);
+    const autoCounts = {};
+    for (const f of auto) {
+      const label = f.action_label || f.action;
+      autoCounts[label] = (autoCounts[label] || 0) + 1;
+    }
+    const autoLine = Object.entries(autoCounts).map(([label, n]) => `${esc(label)}: ${n}`).join(' &middot; ');
+    const cards = manual.slice(0, FLOP_CARDS_SHOWN).map((f) => `
       <div class="blocked-post">
         <div class="title">${esc(f.title || f.slug)} &mdash; ${esc(f.verdict)} (${f.milestone}d)</div>
-        <div class="blockers">${esc(f.reason || '')}</div>
+        <div class="blockers">${esc(f.action_label ? `${f.action_label}. ` : '')}${esc(f.reason || '')}</div>
         <div class="report-link">data/reports/post-performance/${esc(f.slug)}-${f.milestone}d.md</div>
       </div>`).join('');
+    const more = manual.length > FLOP_CARDS_SHOWN
+      ? `<p style="font-size:12px;color:#6b7280;margin:8px 0 0 0;">+${manual.length - FLOP_CARDS_SHOWN} more on the dashboard.</p>`
+      : '';
     flopSection = `
-      <div class="action-required">
-        <div class="section-title">&#9888;&#65039; Action Required &mdash; ${flops.length} underperforming post${flops.length > 1 ? 's' : ''}</div>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Posts that have failed a 30/60/90 day performance check. Investigate (BLOCKED), refresh (REFRESH), or retire (DEMOTE).</p>
-        ${cards}
+      <div class="${manual.length ? 'action-required' : 'section'}">
+        <div class="section-title">Underperforming posts &mdash; ${manual.length} need a decision, ${auto.length} handled automatically</div>
+        ${autoLine ? `<p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Handled automatically: ${autoLine}.</p>` : ''}
+        ${cards}${more}
       </div>`;
   }
 
@@ -612,30 +655,85 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       </div>`;
   }
 
-  // Optimization queue — items from the performance engine awaiting review
-  let queueSection = '';
-  if (perfQueue && perfQueue.length > 0) {
-    const rows = perfQueue.map(i => {
-      const triggerLabel = { 'flop-refresh': 'Refresh (flop)', 'quick-win': 'Quick win', 'low-ctr-meta': 'Meta rewrite' }[i.trigger] || i.trigger;
-      return `
-        <div style="background:white;border:1px solid #c7d2fe;border-radius:8px;padding:14px 16px;margin-bottom:12px;">
-          <div style="font-size:10px;font-weight:700;color:#4338ca;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;">${esc(triggerLabel)}</div>
-          <div style="font-size:14px;font-weight:700;color:#1f2937;margin-bottom:8px;">${esc(i.title)}</div>
-          <div style="font-size:12px;color:#374151;line-height:1.5;">
-            <p style="margin:4px 0;"><strong>What changed:</strong> ${esc(i.summary?.what_changed || '')}</p>
-            <p style="margin:4px 0;"><strong>Why:</strong> ${esc(i.summary?.why || '')}</p>
-            <p style="margin:4px 0;"><strong>Projected impact:</strong> ${esc(i.summary?.projected_impact || '')}</p>
-          </div>
-          <a href="${esc(dashboardUrl)}/#optimize" style="display:inline-block;margin-top:8px;padding:6px 12px;background:#6366f1;color:white;text-decoration:none;border-radius:6px;font-size:12px;font-weight:600;">Review on dashboard &rarr;</a>
-        </div>`;
-    }).join('');
-    queueSection = `
-      <div class="section" style="background:#eef2ff;border:1px solid #c7d2fe;">
-        <div class="section-title" style="color:#312e81;border-bottom-color:#c7d2fe;">&#9881;&#65039; Optimization Queue &mdash; ${perfQueue.length} item${perfQueue.length > 1 ? 's' : ''} ready for review</div>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">The performance engine ran overnight and refreshed these posts. Approve on the dashboard to push the updated content to Shopify.</p>
-        ${rows}
-      </div>`;
-  }
+  // (No optimization-queue section — see the note above loadPerformanceQueue's
+  // former home. queue-autoapply owns that work; the digest does not ask.)
+
+  // Work the AUTOMATION has permanently given up on.
+  //
+  // This is the narrow case that survived removing the Optimization Queue block,
+  // and the two properties below are what stop it becoming that block again:
+  //
+  //   1. It reads queue-autoapply's REPORT — what the robot says it abandoned —
+  //      never data/performance-queue/, which is the fleet's workspace. Reading
+  //      the queue is what produced a daily to-do list of work finished two
+  //      hours later.
+  //   2. Only `needs_decision[]` renders, and `decide()` puts an item there only
+  //      when NO automated run will ever clear it. A cooldown, an over-cap item
+  //      and an unresolvable product count are absent by construction.
+  //
+  // It states the DECISION, not the item: "rewrite it, or write it off" rather
+  // than "approve this". Measured on production 2026-09-18 this is one item of
+  // four pending, and it is silent when empty.
+  //
+  // SECOND PRODUCER, 2026-09-19: agents/indexing-fixer. Its submission-count
+  // escalation is the same class of finding — once a post crosses two delivered
+  // Indexing API submissions the fixer stamps it and never submits that URL
+  // again, so no further run can change the verdict. It had been reaching a cron
+  // log and nothing else: five posts re-stamped every morning since 2026-08-30,
+  // named in no digest, ever. Both reports carry the SAME `needs_decision[]` row
+  // shape on purpose, so this renderer stays one renderer.
+  //
+  // THIRD PRODUCER: agents/content-strategist. A topic an existing page already
+  // ranks for is WITHHELD rather than auto-proposed (lib/duplicate-flag.js), and
+  // "write it anyway, or drop the topic" is a call automation is not allowed to
+  // make — the flag is a measured heuristic with known false positives, which is
+  // why nothing upstream ever drops on it. Same row shape again, so this stays
+  // ONE renderer; a withheld topic that appeared nowhere would be the silent
+  // drop this whole path exists to prevent.
+  //
+  // FOURTH PRODUCER, 2026-10-13: agents/amazon-account-health. An open Amazon
+  // policy violation is a decision only a human can take (fix and appeal, or
+  // delete the listing), and the SP-API cannot submit an appeal. The Geranium
+  // deodorant sat removed for ten weeks, unseen, blocking Remote Fulfillment
+  // for Amazon.ca. Same row shape.
+  let decisionSection = '';
+  try {
+    const stuck = [
+      join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
+      join(dataRoot, 'data', 'reports', 'amazon-account-health', 'latest.json'),
+    ].flatMap((p) => {
+      if (!existsSync(p)) return [];
+      try {
+        const report = JSON.parse(readFileSync(p, 'utf8'));
+        return Array.isArray(report?.needs_decision) ? report.needs_decision : [];
+      } catch { return []; } // one unreadable report must not hide the other
+    });
+    if (stuck.length) {
+      const rows = stuck.map((d) => {
+        const age = d.created_at
+          ? Math.floor((Date.now() - new Date(d.created_at).getTime()) / 86400000)
+          : null;
+        const why = d.last_gate_reason
+          ? `<div style="font-size:12px;color:#6b7280;margin-top:6px;">${esc(previewBody(d.last_gate_reason, { maxLines: 2, maxChars: 200 }))}</div>`
+          : '';
+        return `
+            <div class="blocked-post">
+              <div class="title">${esc(d.title || d.slug || 'untitled')}</div>
+              <div class="blockers"><strong>${esc(d.label || d.reason || '')}</strong></div>
+              <div style="font-size:11px;color:#9ca3af;margin-top:4px;">${esc(d.trigger || '')}${age != null ? ` &middot; stuck ${age} day${age === 1 ? '' : 's'}` : ''}</div>
+              ${why}
+            </div>`;
+      }).join('');
+      decisionSection = `
+          <div class="action-required">
+            <div class="section-title">&#129300; Needs your decision &mdash; ${stuck.length} item${stuck.length > 1 ? 's' : ''} the automation gave up on</div>
+            <p style="font-size:12px;color:#6b7280;margin:0 0 12px 0;">Not a review queue &mdash; everything routine is applied automatically. These are the items no further run will ever clear.</p>
+            ${rows}
+          </div>`;
+    }
+  } catch { /* best-effort: a missing or unreadable report is silence, never an error */ }
 
   // Reviews section — surfaces new reviews from review-monitor
   let reviewSection = '';
@@ -770,10 +868,36 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
       if (active.length > 0) {
         abTestSection += `<p>${active.length} active test${active.length > 1 ? 's' : ''} running</p>`;
       }
+      if (recentConcluded.length > 0) {
+        // LABEL the two sets. The active count and these rows are different
+        // tests, and printing the count immediately above unlabelled rows read
+        // as though the rows WERE the active tests.
+        abTestSection += `<p style="font-size:12px;color:#6b7280;margin:12px 0 4px 0;">`
+          + `Recently concluded &mdash; a move under &plusmn;${(DEFAULT_REGRESS_THRESHOLD * 100).toFixed(1)}pp is inside the noise floor and counts as no change.`
+          + `</p>`;
+      }
       for (const t of recentConcluded) {
-        const delta = t.currentDelta != null ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp' : 'n/a';
-        const color = t.winner === 'B' ? '#10b981' : '#ef4444';
-        abTestSection += `<p><strong>${esc(t.slug)}</strong>: Variant ${t.winner} wins (<span style="color:${color}">${delta}</span>)</p>`;
+        // Prefer a STORED outcome; only classify when the record has none.
+        // The legacy tracker writes `outcome`; the newer data/meta-tests/*.json
+        // files carry only `winner` + `currentDelta`, and deriving a label from
+        // `winner` alone is what made a -1.26pp regression read as a win —
+        // decideOutcome sets winner='A' for BOTH `flat` and `regressed`.
+        const verdict = t.outcome || classifyCtrDelta(t.currentDelta);
+        const label = {
+          improved: 'improved',
+          flat: 'no change',
+          regressed: 'REGRESSED',
+          confounded: 'confounded &mdash; not concluded',
+          underpowered: 'underpowered &mdash; not concluded',
+        }[verdict] || 'not measured';
+        const color = verdict === 'improved' ? '#10b981'
+          : verdict === 'regressed' ? '#ef4444'
+            : '#6b7280';
+        const delta = t.currentDelta != null
+          ? (t.currentDelta >= 0 ? '+' : '') + (t.currentDelta * 100).toFixed(2) + 'pp'
+          : 'n/a';
+        abTestSection += `<p><strong>${esc(t.slug)}</strong>: `
+          + `<span style="color:${color}">${label}</span> (${delta})</p>`;
       }
       abTestSection += '</div>';
     }
@@ -789,30 +913,25 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     healthSection = `<div class="action-required"><div class="section-title">&#9888;&#65039; System Health — ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}</div>${rows}</div>`;
   }
 
-  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !queueSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
+  const nothingToReport = !healthSection && !seoImpactSection && !prioritizerSection && !decisionSection && !flopSection && !performanceSection && !gscSection && !competitorSection && !blockedSection && !quickWinSection && !pipelineSection && !imageSection && !adsSection && !seoSection && !otherSection && !reviewSection && !backlinksSection && !abTestSection && !blockedImagesSection;
 
   // LLM cost — passive spend monitoring (best-effort; never breaks the digest).
-  let costSection = '';
-  try {
-    // Injected like every other read in this function — otherwise the cost section
-    // resolves the real repo's usage dir and the digest stops being deterministic.
-    const usageDir = join(dataRoot, 'data', 'reports', 'llm-usage');
-    const dayRecs = readUsage(targetDate, usageDir);
-    if (dayRecs.length) {
-      const day = summarizeRecords(dayRecs);
-      const weekDates = listUsageDates(usageDir).slice(-7);
-      const week = summarizeRecords(weekDates.flatMap((d) => readUsage(d, usageDir)));
-      const runRate = weekDates.length ? (week.totalCost / weekDates.length) * 7 : 0;
-      const overBudget = runRate > 20;
-      const topAgents = day.byAgent.slice(0, 3).map((a) => `${esc(a.key)} $${a.cost.toFixed(2)}`).join(' &middot; ');
-      // Only a needle-mover when spend is over target; otherwise stays off the digest.
-      if (overBudget) costSection = `<div class="section"><div class="section-title">&#128176; LLM Cost</div>`
-        + `<p style="font-size:13px;margin:0 0 6px 0;"><strong>$${day.totalCost.toFixed(2)}</strong> on ${esc(targetDate)} &middot; ${day.totalCalls} calls</p>`
-        + `<p style="font-size:12px;color:${overBudget ? '#b91c1c' : '#6b7280'};margin:0 0 6px 0;">Last ${weekDates.length}d: <strong>$${week.totalCost.toFixed(2)}</strong> &middot; projected run-rate <strong>$${runRate.toFixed(2)}/wk</strong>${overBudget ? ' &#9888;&#65039; over $20 target' : ''}</p>`
-        + (topAgents ? `<p style="font-size:12px;color:#6b7280;margin:0;">Top: ${topAgents}</p>` : '')
-        + `</div>`;
-    }
-  } catch { /* cost section is best-effort */ }
+  // ── LLM cost block REMOVED 2026-09-08, on the operator's instruction ────────
+  // The fleet moved off per-token API billing onto the monthly subscription, so
+  // agent run cost is no longer a constraint on any decision and a dollar figure
+  // is no longer an argument for or against doing work. Sean, verbatim: "Remove
+  // this all together, it is no longer a concern now that we switched from the
+  // API to the monthly subscription."
+  //
+  // Its last appearance was also a false alarm, which is the shape to remember:
+  // it flagged "$34.03/wk ⚠️ over $20 target" when $11.54 of the $17.19 day was
+  // ONE hand-run local script, not fleet spend at all. A budget line that counts
+  // a human's ad-hoc run against an unattended-fleet target cannot be read.
+  //
+  // `lib/llm-usage.js` still METERS every call — that data is useful for volume
+  // and debugging and is untouched. What is gone is the digest's dollar row and
+  // the $20/wk budget verdict. Do not reinstate either without asking first.
+  const costSection = '';
 
   // ── Lean digest: only what moved the needle (revenue-first) ───────────────
   // Every agent still runs and its full output is on the dashboard. The digest
@@ -866,8 +985,17 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     }
   }
 
-  // Decisions awaiting you — pending optimization queue + posts blocked from publish.
-  const decisionsBody = `${queueSection}${blockedSection}`;
+  // Decisions awaiting you — posts blocked from publish. A hard-blocked post
+  // genuinely needs a person and nothing else reports it; the optimization
+  // queue used to share this slot and no longer does.
+  // A flop a human must decide (merge or remove a no-demand page) is a
+  // decision too, and the subject line already counts it ("1 flop to decide").
+  // The section was built but dropped from the layout in the revenue-first
+  // strip-down, so the subject promised a row the body never showed. Only
+  // rendered when something needs a person; the automated count alone stays off.
+  const flopNeedsDecision = flops.some((f) => f.automated !== true);
+  const creatorReviewSection = renderCreatorReviewSection(visible, esc);
+  const decisionsBody = `${creatorReviewSection}${decisionSection}${flopNeedsDecision ? flopSection : ''}${blockedSection}`;
 
   // Everything else ran; collapse to a single activity line (no listing).
   const errCount = entries.filter((e) => e.status === 'error').length;
@@ -884,7 +1012,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     decisionsBody,       // unrealized revenue awaiting a click
     verdictSection,      // did our changes work
     abTestSection,       // CTR bets concluded
-    costSection,         // only present when over budget
+    costSection,         // always '' — LLM cost block removed 2026-09-08
   ].filter(Boolean);
 
   return `<!DOCTYPE html>
@@ -976,6 +1104,19 @@ function checkSystemHealth() {
     });
   }
 
+  // Edit freezes that have ended and carry a deferred follow-up
+  // (scripts/post-edit-freeze.mjs --followup). The freeze held the page still
+  // so a change could be measured; the follow-up is the work that waited on it.
+  try {
+    const metas = listAllSlugs().map((s) => [s, getPostMeta(s)]);
+    for (const f of freezeFollowupsDue(metas)) {
+      issues.push({
+        title: `Edit freeze ended on "${f.slug}" (${f.until.slice(0, 10)}): follow-up due`,
+        detail: `${f.followup} Then lift it: \`node scripts/post-edit-freeze.mjs --handle ${f.slug} --clear --apply\`.`,
+      });
+    }
+  } catch { /* posts unreadable — the post-meta gate reports that separately */ }
+
   // Leftover git stashes — per the deploy hygiene rule the list should be empty
   // outside an active deploy. A non-empty list means a past `git stash pop` was
   // skipped and data updates are stranded.
@@ -993,6 +1134,15 @@ function checkSystemHealth() {
   return issues;
 }
 
+const LAST_SENT_PATH = () => join(DAILY_SUMMARY_DIR, 'last-sent.json');
+function readLastSent() {
+  try { return JSON.parse(readFileSync(LAST_SENT_PATH(), 'utf8')).until || null; } catch { return null; }
+}
+function writeLastSent(until) {
+  try { writeFileSync(LAST_SENT_PATH(), JSON.stringify({ until }, null, 2) + '\n'); }
+  catch (err) { log(`could not record the digest window end: ${err.message}`); }
+}
+
 async function main() {
   // Default to yesterday's date (runs at 5 AM, reporting on previous day)
   const dateArg = process.argv.indexOf('--date');
@@ -1007,11 +1157,45 @@ async function main() {
 
   const digestFile = join(DAILY_SUMMARY_DIR, `${targetDate}.jsonl`);
 
-  let entries = [];
-  if (existsSync(digestFile)) {
-    const lines = readFileSync(digestFile, 'utf8').trim().split('\n').filter(Boolean);
-    entries = lines.map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+  const readRows = (file) => (existsSync(file)
+    ? readFileSync(file, 'utf8').trim().split('\n').filter(Boolean)
+      .map(l => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)
+    : []);
+  // WHICH ROWS: everything written since the last digest was sent, up to now.
+  // Reading only the calendar day before meant anything written between midnight
+  // and the 13:00 UTC send (the 12:20-12:50 gates, trybe-review at 12:55) reached
+  // Sean a DAY late: on 2026-10-04 he got the previous morning's Trybe review,
+  // without the verdicts, while that morning's sat in a file nobody read yet.
+  // `--date` keeps the old whole-calendar-day view for inspecting a past day.
+  const nowIso = new Date().toISOString();
+  let entries;
+  let laterRows = [];
+  let windowUntil = null;
+  if (dateArg !== -1) {
+    entries = readRows(digestFile);
+    for (let d = new Date(`${targetDate}T00:00:00Z`); ;) {
+      d = new Date(d.getTime() + 86_400_000);
+      const day = d.toISOString().slice(0, 10);
+      if (day > nowIso.slice(0, 10)) break;
+      laterRows.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+  } else {
+    const since = readLastSent() || `${targetDate}T00:00:00.000Z`;
+    windowUntil = nowIso;
+    entries = [];
+    for (const day of daysBetween(since.slice(0, 10), nowIso.slice(0, 10))) {
+      entries.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+    }
+    entries = rowsInWindow(entries, { since, until: windowUntil });
+    log(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
   }
+
+  // A failure that a later run of the same agent has already recovered from is
+  // not news (Sean, 2026-10-04): drop it before anything counts or renders it.
+  // See lib/digest-recovery.js.
+  const { kept, recovered } = dropRecoveredFailures(entries, laterRows);
+  if (recovered.length) log(`Dropped ${recovered.length} failure(s) that later recovered: ${[...new Set(recovered.map(e => e.subject))].join('; ')}`);
+  entries = kept;
 
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
@@ -1028,10 +1212,13 @@ async function main() {
   const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
   const competitors = loadCompetitorActivity();
-  const perfQueue = loadPerformanceQueue();
 
-  // If nothing happened at all, still send a "quiet day" email
-  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length) && !perfQueue.length) {
+  // If nothing happened at all, still send a "quiet day" email.
+  // A pending performance-queue used to count as "something happened" here.
+  // It no longer does: queue-autoapply drains that queue two hours after this
+  // runs, so a queue-only day has nothing to show a human and must fall through
+  // to the quiet-day copy rather than emailing an empty shell.
+  if (!entries.length && !pipelineImages.length && !blockedPosts.length && !(quickWins?.top?.length) && !(postPerformance?.action_required?.length)) {
     log(`No activity for ${targetDate} — sending quiet day summary.`);
   } else {
     log(`Sending daily summary for ${targetDate}: ${entries.length} entries, ${pipelineImages.length} images, ${blockedPosts.length} blocked, ${quickWins?.top?.length || 0} quick-wins.`);
@@ -1054,14 +1241,18 @@ async function main() {
     }).catch(() => {});
   }
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, perfQueue, dashboardUrl, healthIssues, seoImpact, prioritizer);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer);
 
   const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
   const imageCount = pipelineImages.length;
   const parts = [];
   if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
-  const flopCount = postPerformance?.action_required?.length || 0;
-  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''}`);
+  // Only flops a human must decide count in the subject; the automated ones
+  // are the fleet working, not news.
+  const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
+  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
+  const toReview = awaitingSubmissions(entries).items.length;
+  if (toReview > 0) parts.push(`${toReview} creator submission${toReview > 1 ? 's' : ''} to review`);
   if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
   if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
   const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
@@ -1080,6 +1271,8 @@ async function main() {
     html,
   );
 
+  // Only a real send advances the window; a preview or a --date run never does.
+  if (windowUntil) writeLastSent(windowUntil);
   log('Daily summary sent.');
 }
 

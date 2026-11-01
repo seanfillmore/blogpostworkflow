@@ -389,3 +389,46 @@ test("validateNoFabricatedIngredients: contraction \"don't use X\" treats X as n
   });
   assert.equal(result.valid, true);
 });
+
+test('validateNoFabricatedIngredients: petrolatum family is forbidden EVEN WHEN NEGATED', () => {
+  // Operator ruling 2026-09-09 — "do not use those words". The negation carve-out is
+  // right for the rest of the blocklist and wrong for these three: unsourced, no
+  // regulatory backing for the implied harm, and 0 of 3,841 real customer search terms.
+  for (const text of [
+    'No mineral oil, no petrolatum, no synthetic fragrance.',
+    'Contains no dimethicone.',
+    'Beeswax breathes, unlike petrolatum.',
+    'Free of mineral oil.',
+  ]) {
+    const r = validateNoFabricatedIngredients({ text });
+    assert.equal(r.valid, false, `should refuse: ${text}`);
+  }
+});
+
+test('validateNoFabricatedIngredients: "petroleum jelly" keeps the negation carve-out (ruling 2026-09-11)', () => {
+  // The operator ruled "petroleum jelly" / "petroleum wax" are NOT covered — it is the
+  // word shoppers use. Negated it is an ordinary absence claim, exactly like "no parabens".
+  for (const text of [
+    'We use beeswax instead of petroleum jelly.',
+    'No petroleum jelly, no lanolin.',
+  ]) {
+    assert.equal(validateNoFabricatedIngredients({ text }).valid, true, `should allow: ${text}`);
+  }
+  // Asserted as an ingredient, it is still a fabrication — the blocklist entry stays.
+  assert.equal(
+    validateNoFabricatedIngredients({ text: 'Made with petroleum jelly and beeswax.' }).valid,
+    false,
+  );
+});
+
+test('validateNoFabricatedIngredients: the carve-out still holds for claims we genuinely make', () => {
+  // "fluoride-free" and "SLS-free" are searched, earned, and must keep working —
+  // widening the forbidden set to the whole blocklist would delete real claims.
+  for (const text of [
+    'Fluoride-free toothpaste with no SLS.',
+    'No glycerin, no sorbitol, no titanium dioxide.',
+    'Aluminum-free deodorant.',
+  ]) {
+    assert.equal(validateNoFabricatedIngredients({ text }).valid, true, `should allow: ${text}`);
+  }
+});

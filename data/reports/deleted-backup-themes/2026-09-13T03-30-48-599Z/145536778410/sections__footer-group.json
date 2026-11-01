@@ -1,0 +1,62 @@
+{
+  "name": "t:sections.footer-group.name",
+  "type": "footer",
+  "sections": {
+    "footer": {
+      "type": "footer",
+      "blocks": {
+        "6162a016-aa31-49f3-86b2-ead6a6bdc6ef": {
+          "type": "image",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/logo3_9d1f12eb-ae0c-4a10-8abd-685760314d9b.png",
+            "image_width": 50,
+            "alignment": "left",
+            "link": "",
+            "text": ""
+          }
+        },
+        "footer-0": {
+          "type": "link_list",
+          "settings": {
+            "heading": "Links",
+            "menu": "multi-main"
+          }
+        },
+        "footer-1": {
+          "type": "link_list",
+          "settings": {
+            "heading": "Legal",
+            "menu": "one-footer"
+          }
+        }
+      },
+      "block_order": [
+        "6162a016-aa31-49f3-86b2-ead6a6bdc6ef",
+        "footer-0",
+        "footer-1"
+      ],
+      "settings": {
+        "show_divider": true,
+        "newsletter_enable": false,
+        "newsletter_heading": "Subscribe the newsletter",
+        "newsletter_text": "<p>Subscribe to be notified on the latest news, deals and events.<\/p>",
+        "show_social": true,
+        "social_heading": "",
+        "enable_country_selector": false,
+        "enable_language_selector": false,
+        "payment_enable": true,
+        "show_policy": false,
+        "copyright_text": "All rights reserved.",
+        "colors_text": "#969696",
+        "colors_heading": "#ffffff",
+        "colors_link": "#969696",
+        "colors_border": "#969696",
+        "colors_background": "#212326",
+        "gradient_background": ""
+      }
+    }
+  },
+  "order": [
+    "footer"
+  ]
+}

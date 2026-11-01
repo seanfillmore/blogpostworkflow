@@ -60,23 +60,32 @@ import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
 import { getAllQueryPageRows } from '../../lib/gsc.js';
 import {
-  decideHeldMergeRedirect, findLoserClicks, shapeCannibalizationPage,
+  decideHeldMergeRedirect, decideLoserDisposition, findLoserClicks, shapeCannibalizationPage,
   urlPath, slugFromPath,
 } from './redirect-decision.js';
+import {
+  buildReachableIndex, filterReachableRows, reachabilityBanner,
+} from '../../lib/reachable-pages.js';
+import { capMergesPerWinner, mergeCapLines, MAX_MERGES_PER_WINNER } from '../../lib/merge-cap.js';
 import { notify, notifyLatestReport } from '../../lib/notify.js';
 import {
   getBlogs, getArticles, updateArticle,
-  getRedirects, createRedirect,
+  getAllRedirects, createRedirect,
   getCustomCollections, getSmartCollections,
 } from '../../lib/shopify.js';
 
-import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta } from '../../lib/posts.js';
+import { getContentPath, getMetaPath, ensurePostDir, ROOT, replacePostMeta, requirePostMeta, listAllSlugs, getPostMeta } from '../../lib/posts.js';
+import { mayEditLivePost, recordMaterialEdit, readEditFacts, decideEdit } from '../../lib/post-edit-gate.js';
+import { decideWinnerAction } from './winner-policy.js';
+import { renderEditGateLines } from '../../lib/edit-gate-filter.js';
+import { winnerPostSlug } from './post-dir.js';
 import { assertHtmlComplete } from '../../lib/html-output-guards.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import {
   loadClusterHold, holdDecision, renderHoldLines, dedupeHeld, holdBanner,
   renderDisagreementLines, HOLD_FLAG,
 } from '../../lib/cluster-hold.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REPORTS_DIR = join(ROOT, 'data', 'reports', 'cannibalization');
@@ -254,7 +263,7 @@ Return ONLY a JSON array, no other text:
 ]`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 8000,
     messages: [{ role: 'user', content: prompt }],
   });
@@ -334,7 +343,7 @@ Rules:
 - Output ONLY the merged HTML body content, nothing else`;
 
   const msg = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     // The winner's own body is the floor here — a merge is the winner plus
     // selected loser sections, so the ceiling must clear the input, not sit at a
     // fixed guess. The old flat 8000 was below the MEDIAN article's own token
@@ -382,6 +391,11 @@ async function loadLiveCollections() {
   }
 }
 
+/** The local post dir holding this article; the handle only when none does. See post-dir.js. */
+function postSlugFor(handle) {
+  return winnerPostSlug(handle, listAllSlugs().map((s) => [s, getPostMeta(s)]).filter(([, m]) => m));
+}
+
 async function applyResolutions(decisions, articleIndex, existingRedirects, groups) {
   const existingPaths = new Set(existingRedirects.map((r) => r.path));
   const results = [];
@@ -406,10 +420,27 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
   console.log(`  Live collections available for linking: ${liveCollections.length}`);
 
   const hold = loadClusterHold({ root: ROOT });
-  for (const line of holdBanner(hold)) console.log(`  ${line}`);
+  // holdBanner returns a STRING, not an array. `for...of` over it iterates
+  // CHARACTERS — this printed the $0-cluster gate's banner one letter per line,
+  // which is how a safety banner stops being read. Every other caller in the
+  // fleet does exactly this; this agent was the only one that did not.
+  const banner = holdBanner(hold);
+  if (banner) console.log(banner);
   const heldRecords = [];
+  const editGateHeld = [];
+  const winnerFactsThisRun = new Map();
 
-  for (const decision of decisions) {
+  // MERGE CAP — how many times may ONE page be rewritten in a single run?
+  //
+  // Measured 2026-09-09: 17 of 21 proposed merges targeted the SAME winner, the
+  // biggest page on the blog. Each CONSOLIDATE is a full Claude rewrite of that
+  // winner's body, applied sequentially, so merge N builds on merge N-1. The
+  // cap bounds that. It DEFERS rather than dismisses — detection is re-derived
+  // from live GSC every run, so a held-back merge simply re-proposes next time.
+  const { apply: capped, deferred: cappedOut, duplicates: dupPairs, perWinner } = capMergesPerWinner(decisions);
+  for (const line of mergeCapLines({ deferred: cappedOut, duplicates: dupPairs, perWinner })) console.log(`  ${line}`);
+
+  for (const decision of capped) {
     if (decision.confidence !== 'HIGH') continue;
 
     // Judge the cluster on the WINNER — that is the page a merge would rewrite.
@@ -463,8 +494,49 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
         continue;
       }
 
+      // WINNER POLICY (winner-policy.js, operator decision 2026-10-03): a
+      // frozen winner, or one inside the 28-day window of its last material
+      // change, holds the whole pair, redirect included; a locked winner is
+      // never merged into, its loser is redirected instead. Asked BEFORE
+      // consolidateContent so a held or downgraded merge spends nothing.
+      // Facts are read ONCE per winner per run, before any of this run's
+      // redirects stamp its clock: several losers folded into one winner in one
+      // run are ONE change to measure, not a queue of one loser per 28 days.
+      if (!winnerFactsThisRun.has(winnerHandle)) winnerFactsThisRun.set(winnerHandle, readEditFacts(winnerHandle));
+      const winnerCall = decideWinnerAction(loser.action, winnerFactsThisRun.get(winnerHandle), decideEdit);
+      if (winnerCall.action === 'HOLD') {
+        console.log(`\n    ⏸ Edit gate held "${loserHandle}" → "${winnerHandle}": ${winnerCall.reason}`);
+        editGateHeld.push({ target: winnerHandle, kind: loser.action === 'CONSOLIDATE' ? 'rewrite' : 'redirect', reason: winnerCall.reason, until: winnerCall.until });
+        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'skipped_edit_gate', reason: winnerCall.reason });
+        continue;
+      }
+      const action = winnerCall.action;
+      if (action !== loser.action) {
+        console.log(`\n    ↪ "${loserHandle}" → "${winnerHandle}": ${winnerCall.reason}`);
+        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'downgraded_to_redirect', reason: winnerCall.reason });
+      }
+
+      // Backstop: the gate itself must agree before any merge rewrites the winner.
+      if (action === 'CONSOLIDATE' && loserArticle) {
+        const gate = mayEditLivePost(winnerHandle, 'rewrite');
+        if (!gate.allowed) {
+          console.log(`\n    ⏸ Edit gate held merge "${loserHandle}" → "${winnerHandle}": ${gate.reason}`);
+          editGateHeld.push({ target: winnerHandle, kind: 'rewrite', reason: gate.reason, until: gate.until });
+          results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'skipped_edit_gate', reason: gate.reason });
+          continue;
+        }
+      }
+
       // CONSOLIDATE: merge content, run editor review, save to Shopify as draft
-      if (loser.action === 'CONSOLIDATE' && loserArticle) {
+      if (action === 'CONSOLIDATE' && loserArticle) {
+        // Key the local post by the directory that already holds this article,
+        // never by the handle alone — see post-dir.js for the shadow-dir bug.
+        const winnerSlug = postSlugFor(winnerHandle);
+        if (!winnerSlug) {
+          console.log(`\n    ⚠ data/posts/${winnerHandle}/ holds a different article — merge skipped rather than written into it.`);
+          results.push({ query: decision.query, loserPath, winnerPath, action: 'CONSOLIDATE', status: 'skipped_dir_collision' });
+          continue;
+        }
         try {
           process.stdout.write(`\n    Merging "${loserHandle}" → "${winnerHandle}"... `);
           const mergedHtml = await consolidateContent(winnerArticle, loserArticle, decision.query, articleIndex, liveCollections);
@@ -475,12 +547,12 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           // shopify_publish_at, legacy_*) — overwriting wholesale strips the
           // legacy/Shopify state and the dashboard then reads the post as
           // "Written" or "Draft" instead of "Published".
-          ensurePostDir(winnerHandle);
-          writeFileSync(getContentPath(winnerHandle), mergedHtml);
+          ensurePostDir(winnerSlug);
+          writeFileSync(getContentPath(winnerSlug), mergedHtml);
           let existingWinnerMeta = {};
-          try { existingWinnerMeta = requirePostMeta(winnerHandle); } catch { /* ok */ }
+          try { existingWinnerMeta = requirePostMeta(winnerSlug); } catch { /* ok */ }
           const { needs_rebuild: _dropWinner, ...winnerMetaRest } = existingWinnerMeta;
-          replacePostMeta(winnerHandle, {
+          replacePostMeta(winnerSlug, {
             ...winnerMetaRest,
             title: winnerArticle.title,
             target_keyword: decision.query,
@@ -492,9 +564,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let editorRan = false;
           let editorError = null;
           try {
-            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerHandle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
+            execSync(`"${process.execPath}" agents/editor/index.js data/posts/${winnerSlug}/content.html`, { cwd: ROOT, stdio: 'pipe' });
             editorRan = true;
-            console.log(`done → data/reports/editor/${winnerHandle}-editor-report.md`);
+            console.log(`done → data/reports/editor/${winnerSlug}-editor-report.md`);
           } catch (editorErr) {
             editorError = editorErr.stderr?.toString().trim().slice(0, 120) ?? editorErr.message;
             console.log(`editor warning (non-fatal): ${editorError}`);
@@ -506,7 +578,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
           let needsRebuild = null;
           if (editorRan) {
             try {
-              const meta = requirePostMeta(winnerHandle);
+              const meta = requirePostMeta(winnerSlug);
               needsRebuild = meta.needs_rebuild ?? null;
             } catch { /* missing/unreadable meta — treat as ambiguous, fall back to draft */ }
           }
@@ -523,6 +595,7 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
               body_html: mergedHtml,
               published: true,
             });
+            recordMaterialEdit(winnerHandle, 'rewrite', 'cannibalization-resolver');
             console.log('published');
           } else {
             consolidateHeld = true;
@@ -561,20 +634,49 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
       const { createRedirect: allowRedirect, reason: redirectDecisionReason } =
         decideHeldMergeRedirect({ consolidateHeld, loserClicks });
 
-      if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && allowRedirect) {
+      if ((action === 'REDIRECT' || action === 'CONSOLIDATE') && allowRedirect) {
         if (existingPaths.has(loserPath)) {
-          results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_exists' });
+          results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_exists' });
         } else {
           try {
             await createRedirect(loserPath, winnerPath);
             existingPaths.add(loserPath);
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_created', reason: redirectDecisionReason });
+            results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_created', reason: redirectDecisionReason });
+            // A loser's 301 changes what the winner's URL represents, so it
+            // starts the winner's measurement window like any material edit.
+            recordMaterialEdit(winnerHandle, 'rewrite', `cannibalization-resolver (${action === 'CONSOLIDATE' ? 'merge + ' : ''}loser ${slugFromPath(loserPath)} redirected in)`);
+
+            // A Shopify redirect only fires when the path does not already
+            // resolve. Leaving the loser PUBLISHED left every 301 this agent
+            // ever created inert, with both pages still competing — see
+            // decideLoserDisposition. Unpublish, never delete: reversible, and
+            // deletion is not required for a 301.
+            const disposition = decideLoserDisposition({ createRedirect: allowRedirect, reason: redirectDecisionReason });
+            if (disposition.unpublish) {
+              const loserArticle = articleIndex.get(slugFromPath(loserPath));
+              if (!loserArticle) {
+                results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'unpublish_skipped_no_article' });
+              } else {
+                try {
+                  // edit-gate kind: repair — unpublishing the LOSER so its 301 can
+                  // fire; no body, title or meta is changed.
+                  await updateArticle(loserArticle.blogId, loserArticle.articleId, { published: false });
+                  console.log(`    Unpublished loser "${slugFromPath(loserPath)}" — the redirect can now fire.`);
+                  results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'loser_unpublished', reason: disposition.reason });
+                } catch (e) {
+                  // The redirect exists and is inert. Say so loudly rather than
+                  // letting the run read as a completed consolidation.
+                  console.error(`    ⚠ Redirect created but loser "${slugFromPath(loserPath)}" is STILL LIVE (${e.message}) — the 301 will not fire until it is unpublished.`);
+                  results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'unpublish_error', error: e.message });
+                }
+              }
+            }
           } catch (e) {
-            results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_error', error: e.message });
+            results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_error', error: e.message });
           }
         }
-      } else if ((loser.action === 'REDIRECT' || loser.action === 'CONSOLIDATE') && consolidateHeld) {
-        results.push({ query: decision.query, loserPath, winnerPath, action: loser.action, status: 'redirect_skipped_held', reason: redirectDecisionReason });
+      } else if ((action === 'REDIRECT' || action === 'CONSOLIDATE') && consolidateHeld) {
+        results.push({ query: decision.query, loserPath, winnerPath, action: action, status: 'redirect_skipped_held', reason: redirectDecisionReason });
       }
     }
   }
@@ -585,6 +687,9 @@ async function applyResolutions(decisions, articleIndex, existingRedirects, grou
     for (const line of renderHoldLines(dedupeHeld(heldRecords))) console.log(`  ${line}`);
   }
   results.clusterHeld = heldRecords;
+
+  for (const line of renderEditGateLines(editGateHeld)) console.log(`  ${line}`);
+  results.editGateHeld = editGateHeld;
 
   return results;
 }
@@ -638,6 +743,17 @@ function buildReport(groups, decisions, results) {
 
   lines.push('');
 
+  // The digest body IS this report (notifyLatestReport), so a held merge has to
+  // be named here or it reaches nobody. A hold is the policy working: deferred,
+  // never status 'error'. Vanishes on a clean run.
+  const editGateLines = renderEditGateLines(results.editGateHeld || []);
+  if (editGateLines.length) {
+    lines.push('## Edit gate — merges held (winner untouched, no redirect, re-proposes next run)');
+    lines.push('');
+    for (const l of editGateLines) lines.push(`- ${l.trim()}`);
+    lines.push('');
+  }
+
   if (apply && results.length > 0) {
     lines.push('## Actions Taken');
     lines.push('');
@@ -646,10 +762,15 @@ function buildReport(groups, decisions, results) {
     for (const r of results) {
       const icon = {
         redirect_created: '✅↩️',
+        loser_unpublished: '✅🚫',
+        unpublish_error: '⚠️',
+        unpublish_skipped_no_article: '⚠️',
         published: '✅📤',
         draft_needs_review: '📝',
         draft_saved: '📝',
         redirect_exists: '⏭️',
+        downgraded_to_redirect: '↪️',
+        skipped_edit_gate: '⏸️',
         skipped_not_blog: '⏭️',
         winner_not_found: '⚠️',
         error: '❌',
@@ -799,18 +920,26 @@ async function publishPendingDrafts() {
     // Refresh local files from current Shopify draft so the editor evaluates the
     // actual content the user would see (the local data/posts/<slug>.html may be
     // stale from an earlier server run).
+    // Same shadow-dir rule as applyResolutions: the post dir that already holds
+    // this article, never a new one named for the handle.
+    const slug = postSlugFor(handle);
+    if (!slug) {
+      console.log(`    ⚠ data/posts/${handle}/ holds a different article — skipped rather than written into it.`);
+      summary.push({ winnerPath, status: 'dir_collision' });
+      continue;
+    }
     try {
-      ensurePostDir(handle);
-      writeFileSync(getContentPath(handle), article.body_html || '');
+      ensurePostDir(slug);
+      writeFileSync(getContentPath(slug), article.body_html || '');
 
       // Preserve any existing meta.json fields (e.g. shopify_article_id) and
       // ensure target_keyword + title are present so the editor can run.
       let existingMeta = {};
-      try { existingMeta = requirePostMeta(handle); } catch { /* ok */ }
+      try { existingMeta = requirePostMeta(slug); } catch { /* ok */ }
       // Drop any stale needs_rebuild flag from a previous run so the editor's
       // current verdict is the source of truth.
       const { needs_rebuild: _drop, ...metaRest } = existingMeta;
-      replacePostMeta(handle, {
+      replacePostMeta(slug, {
         ...metaRest,
         title: article.title,
         target_keyword: targetQueryByWinner.get(winnerPath) || metaRest.target_keyword || article.title,
@@ -826,7 +955,7 @@ async function publishPendingDrafts() {
     let editorRan = false;
     let editorError = null;
     try {
-      execSync(`"${process.execPath}" agents/editor/index.js data/posts/${handle}/content.html`, { cwd: ROOT, stdio: 'pipe' });
+      execSync(`"${process.execPath}" agents/editor/index.js data/posts/${slug}/content.html`, { cwd: ROOT, stdio: 'pipe' });
       editorRan = true;
       console.log('done');
     } catch (editorErr) {
@@ -837,7 +966,7 @@ async function publishPendingDrafts() {
     let needsRebuild = null;
     if (editorRan) {
       try {
-        const meta = requirePostMeta(handle);
+        const meta = requirePostMeta(slug);
         needsRebuild = meta.needs_rebuild ?? null;
       } catch { /* ignore */ }
     }
@@ -852,6 +981,9 @@ async function publishPendingDrafts() {
 
     process.stdout.write('    Publishing... ');
     try {
+      // edit-gate: not gated — this publishes a DRAFT (published_at is null,
+      // checked above), so there is no live ranked page to protect, and its
+      // body is the one already on Shopify.
       await updateArticle(article.blogId, article.articleId, { published: true });
       console.log('published ✅');
       summary.push({ winnerPath, status: 'published' });
@@ -911,8 +1043,43 @@ async function main() {
 
   // Fetch GSC data
   process.stdout.write('  Fetching GSC query+page data... ');
-  const queryPageRows = await getAllQueryPageRows(5000, days);
-  console.log(`${queryPageRows.length} rows`);
+  const rawQueryPageRows = await getAllQueryPageRows(5000, days);
+  console.log(`${rawQueryPageRows.length} rows`);
+
+  // REACHABILITY, BEFORE ANY CONFLICT IS FORMED.
+  //
+  // GSC reports impressions for a drafted or redirected URL for weeks after it
+  // stops being reachable, and this agent creates 301s and merges live article
+  // bodies off that data. Measured on production 2026-09-09, 7 of its 20 stored
+  // decisions named a WINNER that is a draft behind a redirect — 3 of them on
+  // lotion, 62% of store revenue — and a LIVE page with 26,860 impressions was
+  // marked REDIRECT in four decisions in favour of a dead one. Filtering here
+  // rather than after triage means the model never sees an unreachable URL and
+  // so cannot name one, and a group left with fewer than two reachable pages is
+  // not a conflict at all.
+  //
+  // Degrades rather than blocks: a failed fetch leaves the index null and every
+  // row passes, exactly as before this check existed.
+  process.stdout.write('  Checking reachability (drafts + redirects)... ');
+  let reachIndex = null;
+  try {
+    const [reachArticles, reachRedirects] = await Promise.all([
+      (async () => {
+        const out = [];
+        for (const blog of await getBlogs()) {
+          for (const a of await getArticles(blog.id)) out.push({ handle: a.handle, published_at: a.published_at });
+        }
+        return out;
+      })(),
+      getAllRedirects(),
+    ]);
+    reachIndex = buildReachableIndex({ articles: reachArticles, redirects: reachRedirects });
+    console.log(`${reachArticles.length} articles, ${reachRedirects.length} redirects`);
+  } catch (err) {
+    console.log(`FAILED (${err.message.split('\n')[0]}) — proceeding unfiltered`);
+  }
+  const { kept: queryPageRows, dropped: unreachable } = filterReachableRows(rawQueryPageRows, reachIndex);
+  console.log(reachabilityBanner({ index: reachIndex, dropped: unreachable }));
 
   // Detect blog-vs-blog cannibalization
   process.stdout.write('  Detecting blog-vs-blog cannibalization... ');
@@ -956,7 +1123,7 @@ async function main() {
     process.stdout.write('\n  Loading Shopify articles and redirects... ');
     const [articleIndex, existingRedirects] = await Promise.all([
       buildArticleIndex(),
-      getRedirects(),
+      getAllRedirects(),
     ]);
     console.log(`${articleIndex.size} articles, ${existingRedirects.length} existing redirects`);
 
@@ -978,7 +1145,9 @@ async function main() {
       // CONSOLIDATE pushes 'draft_needs_review'; 'draft_saved' is the legacy name.
       const drafts = results.filter((r) => r.status === 'draft_needs_review' || r.status === 'draft_saved').length;
       const held = results.filter((r) => r.status === 'draft_needs_review').length;
-      console.log(`\n  Done: ${published} merged+published, ${drafts} held for review (live winners untouched), ${redirectsCreated} redirects created`);
+      const downgraded = results.filter((r) => r.status === 'downgraded_to_redirect').length;
+      const gateHeld = results.filter((r) => r.status === 'skipped_edit_gate').length;
+      console.log(`\n  Done: ${published} merged+published, ${drafts} held for review (live winners untouched), ${redirectsCreated} redirects created, ${downgraded} merge(s) into locked winners redirected instead, ${gateHeld} pair(s) held by the edit gate`);
       if (held) console.log(`  ${held} merge(s) held — review data/posts/<winner>/content.html, then publish.`);
     }
   }

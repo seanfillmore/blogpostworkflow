@@ -1,0 +1,112 @@
+{
+  "name": "t:sections.header-group.name",
+  "type": "header",
+  "sections": {
+    "announcement-bar": {
+      "type": "announcement-bar",
+      "blocks": {
+        "announcement-bar-0": {
+          "type": "announcement",
+          "settings": {
+            "text": "Free Shipping on Orders Over $50",
+            "text_on_mobile": "",
+            "text_size": 18,
+            "link": "shopify:\/\/collections\/all-products",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "d2935cc2-f410-4c7c-93a9-022622d5ae52": {
+          "type": "announcement",
+          "settings": {
+            "text": "30-day Money Back Guarantee",
+            "text_on_mobile": "",
+            "text_size": 13,
+            "link": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        },
+        "238a09ec-8b49-432c-98e2-cac3195e6465": {
+          "type": "announcement",
+          "settings": {
+            "text": "Free Shipping For All New Customers - Use Code NEWCUSTOMER",
+            "text_on_mobile": "",
+            "text_size": 13,
+            "link": "",
+            "enable_highlight": false,
+            "highlight_style": "marker"
+          }
+        }
+      },
+      "block_order": [
+        "announcement-bar-0",
+        "d2935cc2-f410-4c7c-93a9-022622d5ae52",
+        "238a09ec-8b49-432c-98e2-cac3195e6465"
+      ],
+      "custom_css": [
+        "@media screen and (min-width: 750px) {.announcement-text {font-size: 22px; }}",
+        "@media screen and (max-width: 749px) {.announcement-text {font-size: 18px; }}"
+      ],
+      "settings": {
+        "only_homepage": false,
+        "layout": "carousel",
+        "mobile_layout": "carousel",
+        "autorotate": true,
+        "autorotate_speed": 5,
+        "show_navigation": true,
+        "direction": "left",
+        "speed": 1.9,
+        "colors_text": "#212326",
+        "colors_background": "#aedeac",
+        "gradient_background": "",
+        "colors_highlight": "#ffb503",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "header": {
+      "type": "header",
+      "custom_css": [],
+      "settings": {
+        "logo": "shopify:\/\/shop_images\/Logo_3c129581-8a9a-426f-9f94-8b5d96a43e16.png",
+        "logo_height": 50,
+        "mobile_logo_height": 44,
+        "logo_position": "top-center",
+        "menu": "product-menu",
+        "menu_mobile": "main-menu",
+        "enable_dropdown_menu": true,
+        "show_line_separator": true,
+        "uppercase_menu_items": true,
+        "cart_icon": "bag",
+        "icon_weight": "1.1",
+        "enable_country_selector": false,
+        "enable_language_selector": false,
+        "enable_sticky_header": false,
+        "show_sticky_header_scroll_up": false,
+        "enable_transparent_header": false,
+        "enable_transparent_header_collection": false,
+        "enable_transparent_header_custom": "",
+        "show_transparent_header_border": false,
+        "transparent_text_color": "#ffffff",
+        "enable_highlight": false,
+        "highlight_labels": "",
+        "highlight_style": "marker",
+        "enable_sidebar": false,
+        "sidebar_heading": "",
+        "mobile_logo_position": "center",
+        "colors_text": "#282828",
+        "colors_border": "#d2d5d9",
+        "colors_background": "#ffffff",
+        "gradient_background": "",
+        "colors_highlight": "#bbff00",
+        "padding_top": 12,
+        "padding_bottom": 12
+      }
+    }
+  },
+  "order": [
+    "announcement-bar",
+    "header"
+  ]
+}

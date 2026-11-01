@@ -82,6 +82,17 @@ function rawMetaTouches(text) {
     if (new RegExp(`readFileSync\\(\\s*${name}\\b`).test(text)) found.push(`read via \`${name}\``);
     if (new RegExp(`writeFileSync\\(\\s*${name}\\b`).test(text)) found.push(`write via \`${name}\``);
   }
+  // ⚠️ AND A SECOND ESCAPE ROUTE: an OBJECT PROPERTY, not a local.
+  // agents/post-performance did `posts.push({ file: getMetaPath(slug), meta })`
+  // and later `writeFileSync(file, JSON.stringify(meta, null, 2))` after
+  // destructuring — so the `const NAME = getMetaPath(` rule above never matched
+  // and the agent re-fattened the tracked meta.json on every 13:30 cron run.
+  // A property name is a binding just as much as a local is; follow the value
+  // wherever getMetaPath() is stored, not only into `const`.
+  for (const [, name] of text.matchAll(/([A-Za-z_$][\w$]*)\s*:\s*getMetaPath\(/g)) {
+    if (new RegExp(`readFileSync\\(\\s*${name}\\b`).test(text)) found.push(`read via property \`${name}\``);
+    if (new RegExp(`writeFileSync\\(\\s*${name}\\b`).test(text)) found.push(`write via property \`${name}\``);
+  }
   return [...new Set(found)];
 }
 
@@ -116,6 +127,24 @@ test('the guard cannot be defeated by renaming the variable', () => {
   // A file that only resolves the path (existsSync, logging) is NOT an offender —
   // the rule is about reading or writing the contents.
   assert.deepEqual(rawMetaTouches("const p = getMetaPath(s);\nif (existsSync(p)) console.log(p);"), []);
+});
+
+test('the guard cannot be defeated by stashing the path in an object property', () => {
+  // Pins agents/post-performance's exact shape, which leaked server-owned fields
+  // into the git-tracked meta.json on 24 posts before it was caught — by the
+  // 12:40 drift gate, not by this test, because the path never touched a `const`.
+  const shape = `
+    posts.push({ file: getMetaPath(slug), meta });
+    const { file, meta } = post;
+    writeFileSync(file, JSON.stringify(meta, null, 2));
+  `;
+  assert.deepEqual(rawMetaTouches(shape), ['write via property \`file\`']);
+
+  // Reading through a property is the same defect wearing the other sign.
+  assert.ok(rawMetaTouches("({ p: getMetaPath(s) });\nreadFileSync(p, 'utf8')").length);
+
+  // And resolving a path into a property without reading or writing it is still fine.
+  assert.deepEqual(rawMetaTouches("({ file: getMetaPath(s) });\nif (existsSync(file)) log(file);"), []);
 });
 
 test('the four exceptions each still exist, so the allowlist cannot rot', () => {

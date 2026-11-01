@@ -56,6 +56,14 @@ export function buildTrackerEntry(result, testedAt, ctx = {}) {
     validation_source: result.validation_source ?? null,
     // Recorded so a reverted or kept variant on a protected page is auditable.
     legacyLocked: ctx.locked === true,
+    // Which fields the rewrite wrote. `serpFields` entries changed the
+    // title_tag / description_tag metafields, which are what the SERP renders
+    // (lib/serp-copy.js); older entries changed article.title / summary_html,
+    // which did not reach it. The originals are the prior METAFIELD values —
+    // null means "no tag was set" and a revert deletes the tag.
+    serpFields: ctx.serpFields === true,
+    originalTitleTag: ctx.originalTitleTag ?? null,
+    originalDescriptionTag: ctx.originalDescriptionTag ?? null,
     testedAt,
   };
 }

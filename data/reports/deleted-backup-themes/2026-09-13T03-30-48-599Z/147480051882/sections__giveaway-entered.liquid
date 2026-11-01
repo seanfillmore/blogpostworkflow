@@ -1,0 +1,175 @@
+{%- comment -%}
+  Post-entry page: three required questions, then the entry-ladder widget.
+
+  Deliberately contains NO OFFER. The BOGO is released once, on draw day, as the
+  consolation prize for not winning (spec 7.1). A full-price store link stays
+  here so an entrant who wants to buy on day 3 is never blocked.
+
+  Q1 (household) gates the duration claim on the day-30 offer: a shared bar does
+  not last 25 days, so a family answer suppresses the months claim entirely.
+{%- endcomment -%}
+
+{%- liquid
+  assign endpoint = 'https://entries.realskincare.com/api/giveaway'
+  assign set_handle = 'sensitive-skin-starter-set'
+  assign set_image = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/frame-01-what-arrives.jpg?v=1785635169'
+-%}
+
+{{ 'giveaway.css' | asset_url | stylesheet_tag }}
+
+<section class="gv-entered" data-gv-entered>
+  {%- comment -%}
+    This used to read "You're in." — true (submitting earns the base entry) and precisely
+    the phrase that tells someone they are finished. Measured on day one of the paid
+    campaign: 11 people submitted, 3 clicked the confirmation link. 27%.
+
+    Confirming is worth +2 entries — triple the base entry — and it is what puts the
+    profile on the list at all, so an unconfirmed entrant receives no nurture email and
+    cannot be credited as anyone's referrer. So the headline now names the step that is
+    still outstanding, and the base entry is reassurance underneath rather than the
+    headline. Do not restore a headline that implies completion.
+  {%- endcomment -%}
+  <h1>One more step — check your email.</h1>
+  <p class="gv-lead">
+    We just sent a confirmation link. <strong>Click it and you get 2 bonus entries</strong> —
+    three times what entering just earned you. It can take a minute to arrive, and it
+    sometimes lands in spam or Promotions.
+  </p>
+  <p class="gv-lead-sub">Your entry is already counted. Confirming is what multiplies it.</p>
+
+  {%- comment -%}
+    Shown ONLY to someone who named a referrer, and only while they are still
+    unconfirmed — revealed by giveaway.js from the hasReferrer flag on
+    GET /api/giveaway/entries.
+
+    Why it exists: §5 pays the referrer +5 only once the friend they referred
+    CONFIRMS. Measured 2026-08-22, six of seven referral pairs in the system were
+    stuck at exactly this step. Everything else on this page argues from what the
+    reader gets; this is the one line that argues from what someone else loses.
+
+    It never names the friend. The endpoint returns a boolean precisely so that
+    this page cannot disclose one entrant's referrer to anyone who knows their
+    address.
+  {%- endcomment -%}
+  <p class="gv-referral-stake" data-gv-referral-stake hidden>
+    <strong>Your friend gets +5 entries too — but only after you click.</strong>
+    Right now they have nothing from referring you.
+  </p>
+
+  <form class="gv-survey" data-step="required">
+    <fieldset>
+      <legend>Who's the soap for?</legend>
+      <label><input type="radio" name="household" value="solo" required> Just me</label>
+      <label><input type="radio" name="household" value="couple"> Me and my partner</label>
+      <label><input type="radio" name="household" value="family"> My whole family</label>
+      <label><input type="radio" name="household" value="gift"> It's a gift</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>What's your #1 skin frustration?</legend>
+      <label><input type="radio" name="frustration" value="dry" required> Dry and flaky</label>
+      <label><input type="radio" name="frustration" value="reactive"> Itchy and reactive</label>
+      <label><input type="radio" name="frustration" value="fragrance"> Fragrance sets me off</label>
+      <label><input type="radio" name="frustration" value="ingredients"> Ingredient concerns</label>
+    </fieldset>
+
+    <fieldset>
+      <legend>What are you using now?</legend>
+      <label><input type="radio" name="currentBrand" value="cerave" required> CeraVe</label>
+      <label><input type="radio" name="currentBrand" value="cetaphil"> Cetaphil</label>
+      <label><input type="radio" name="currentBrand" value="dove"> Dove</label>
+      <label><input type="radio" name="currentBrand" value="natural_competitor"> Dr. Squatch or Native</label>
+      <label><input type="radio" name="currentBrand" value="natural_brand"> Another natural brand</label>
+      <label><input type="radio" name="currentBrand" value="whatever"> Whatever's on sale</label>
+    </fieldset>
+
+    <button type="submit">Save — and get 3 bonus entries</button>
+    <p class="gv-error" hidden role="alert"></p>
+  </form>
+
+  <div class="gv-ladder" data-gv-ladder hidden>
+    <h2>Your entries: <span data-gv-count>1</span></h2>
+    <ul>
+      <li data-rung="confirm">Confirm your email — <strong>+2</strong></li>
+      <li data-rung="survey">Answer 3 quick questions — <strong>+3</strong></li>
+      <li data-rung="referral">Each friend who enters, names you, and confirms their own entry — <strong>+5</strong> (up to 10)</li>
+      <li data-rung="instagram">Post and tag @realskincare_com — <strong>+3</strong></li>
+      <li data-rung="upload">Upload a photo — <strong>+10</strong></li>
+    </ul>
+
+    <form class="gv-bonus" data-gv-bonus>
+      <label for="gv-ig">Posted about us? Your Instagram handle <span>(+3)</span></label>
+      <input id="gv-ig" name="igHandle" type="text" placeholder="@yourhandle" autocomplete="off">
+
+      {%- comment -%}
+        "photo", not "photo or video": validateUpload in
+        agents/dashboard/routes/giveaway.js accepts jpg/jpeg/png/webp only, and
+        uploadImageToShopifyCDN is image-only. Promising video would take the
+        entrant's rights grant and then reject the file.
+      {%- endcomment -%}
+      <label for="gv-file">Upload a photo <span>(+10)</span></label>
+      <input id="gv-file" name="file" type="file" accept="image/jpeg,image/png,image/webp">
+
+      <label class="gv-rights">
+        <input type="checkbox" name="rightsGranted" value="1">
+        I'm happy for Real Skin Care to use my photo in its marketing.
+      </label>
+
+      <button type="submit">Claim my bonus entries</button>
+      <p class="gv-bonus-error" hidden role="alert"></p>
+      {%- comment -%}
+        role="status" not role="alert": a success confirmation should be
+        announced politely, without interrupting a screen reader mid-sentence.
+      {%- endcomment -%}
+      <p class="gv-bonus-ok" hidden role="status"></p>
+    </form>
+
+    <p class="gv-fine">Purchases do not earn entries.
+      <a href="/pages/giveaway-official-rules">Official rules</a>.</p>
+  </div>
+
+  {%- comment -%}
+    Shown only after the survey is saved — the moment of highest engagement, and
+    holding it back keeps the +3 rung as the single ask on arrival.
+
+    Full price, no code, no urgency. The BOGO is the day-30 consolation prize
+    (spec 7.1), and a discount shown beside a sweepstakes entry invites the
+    "buying improves my odds" reading the Official Rules explicitly deny. The
+    line under the button is not decoration — it is that denial, restated where
+    the buying decision actually happens.
+  {%- endcomment -%}
+  <aside class="gv-next" data-gv-next hidden>
+    <div class="gv-next-shot">
+      <img src="{{ set_image }}&width=600" alt="The Sensitive Skin Moisturizing Set" width="600" height="600" loading="lazy">
+    </div>
+    <div class="gv-next-copy">
+      <p class="gv-next-eyebrow">Don't want to wait for the draw?</p>
+      <h2>The Sensitive Skin Moisturizing Set</h2>
+      {%- comment -%}
+        The Set is the Body Lotion + Body Cream — "eight ingredients across two
+        products". It does NOT contain soap; the 36 bars are a separate prize
+        component. An earlier draft here said the Set included the soap, which
+        was simply false. Check the product description before editing this.
+      {%- endcomment -%}
+      <p class="gv-next-body">
+        Three of these ship with the prize, one a year. Two products, eight
+        ingredients, no fragrance — the body lotion and body cream that go
+        alongside the soap you just entered for.
+      </p>
+      <p class="gv-next-price">$46.80</p>
+      <a class="gv-next-cta" href="/products/{{ set_handle }}">See the Set</a>
+      <p class="gv-next-fine">Buying doesn't change your entries.</p>
+    </div>
+  </aside>
+</section>
+
+<script>window.RSC_GIVEAWAY_ENDPOINT = {{ endpoint | json }};</script>
+<script src="{{ 'giveaway.js' | asset_url }}" defer="defer"></script>
+
+{% schema %}
+{
+  "name": "Giveaway entered",
+  "settings": [],
+  "presets": [{ "name": "Giveaway entered" }]
+}
+{% endschema %}

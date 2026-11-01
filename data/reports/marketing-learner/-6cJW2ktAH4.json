@@ -1,0 +1,630 @@
+{
+  "tactics": [
+    {
+      "claim": "Choose a problem that hundreds of millions of people have, because only a small share of a market is in a buying window when you advertise, and a small market cannot scale no matter how well you execute.",
+      "mechanism": "If only ~500K people would ever consider the product, ~95% of them are not ready to buy at any given time, so ad reach runs out. A market of 20M+ leaves enough in-window buyers to scale.",
+      "evidence": "Founder anecdote: Grind Basketball ($2,000 rebounder) stalled on market size, while Yuka Health (GLP-1) reached $30M in 6 months in a huge market.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is a founder-stage choice of category. RSC already sells natural deodorant, body care, oral care and lip balm, which are all mass categories, so there is no market decision to make. The only translation is choosing which SKU leads paid acquisition, and existing offer-construction claims already cover that."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "This is a category-selection decision RSC has already made in mass categories. The SKU-lead translation is already covered by offer-construction claims.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 0,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use enemy marketing: make the enemy a person, a competitor, or an industry-wide behaviour or societal trend (e.g. the phone and social media dysregulating your nervous system).",
+      "mechanism": "A shared, clearly named antagonist gives the audience something to rally against and frames the product as the remedy.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is a durable positioning principle that is already recorded. RSC's natural-deodorant positioning (aluminium, synthetic fragrance) already uses a condition-as-enemy framing."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already recorded, and already in use in RSC's positioning.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 1,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Sell a routine-building, habit-forming product with recurring revenue, because returning customers, not new ones, fund the profit of an ecommerce business.",
+      "mechanism": "A daily-use consumable becomes synonymous with an existing habit (like water for electrolytes), so customers reorder without being re-acquired. Apparel has to keep launching collections to extract repeat revenue.",
+      "evidence": "Category examples (electrolyte brands, Gruns, Create Wellness, Ory Nutrition). Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "The principle is right for RSC: repeat customers are ~45-52% of revenue and every SKU is a daily-use consumable. However, the actionable part is already recorded."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "The actionable part is already recorded, and RSC's catalogue already consists of daily-use consumables.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 2,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Enter a category a leader has already educated by using a different delivery format (AG1 powder → Gruns gummy; Nell powders → a gummy), riding the consumer education the leader paid for.",
+      "mechanism": "The incumbent has already taught buyers which ingredients to expect benefits from, so a new format plus fresh storytelling differentiates without re-educating the market.",
+      "evidence": "AG1 → Gruns precedent; assertion about Nell.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is a durable positioning principle (find the differentiator in delivery format), but it is already in the skill set."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already in the skill set.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 3,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Name the brand or product with a slightly abstract word that clearly signals the dream state only this product owns (e.g. 'Steady' for nervous-system dysregulation).",
+      "mechanism": "An evocative outcome-word is memorable and attaches the desired after-state to the brand, borrowing Lexicon Branding's approach (Swiffer).",
+      "evidence": "Cites David Placek of Lexicon Branding on My First Million.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The brand is already named. The only translation is naming bundles or tiers, which is already covered."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "The brand is already named, and bundle and tier naming is already covered.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 4,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Under Meta's Andromeda update, creative is the targeting: hold one angle fixed and cross it with several distinct on-camera avatars (e.g. a 33-year-old high-performing woman and a 44-year-old suburban dad), so each avatar × angle pairing unlocks a different audience pocket.",
+      "mechanism": "Andromeda routes delivery from the content of the creative. The person on screen acts as a mirror the viewer recognises themselves in, so the same angle carried by a different avatar is matched to a different audience rather than being clustered with the first ad.",
+      "evidence": "Claims performance data from ~8,000 UGC ads shipped at Nibble; otherwise assertion.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "This is a current (2026) platform mechanic, so age does not discount it. It applies directly to the live $50/day creative-test campaign, which already mixes his own creative with Trybe creator UGC. The honest scale-down is one angle × two or three avatars: his own face, an existing Trybe creator, and an AI-built character from the ai-broll workflow. Each creative is tagged by avatar and angle so delivery breakdowns can be read. It tensions with the existing claims to differentiate on pain angle and to aim at the shared center of the market. The reconciliation is that avatar is a delivery-diversity lever on a single fixed angle, not a separate message per demographic. That makes it complementary to the existing claim that Meta clusters near-identical creatives."
+      },
+      "verdict": "adopt",
+      "stage": "traffic",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-creative-testing",
+        "action": "edit",
+        "description": "Add avatar × fixed-angle crossing as an Andromeda delivery-diversity lever. Test one angle with 2-3 avatars (founder, Trybe creator, AI character), tag each creative by avatar and angle, and read delivery breakdowns."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 5,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Multiply creative diversity with a fill-in worksheet tree: avatar → angle → 15-20 formats (statics, one-shots, narrative, guinea-pig, ungatekeeping UGC), producing 50-100 identity- and problem-specific ads per product.",
+      "mechanism": "Format is a third independent axis of diversity on top of avatar and angle. Each combination is a distinct creative Andromeda can match to a different audience, and the worksheet turns 'creative diversity' from an intimidating goal into a fillable process.",
+      "evidence": "Nibble agency experience (~8,000 UGC ads); assertion.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "This current 2026 Meta mechanic fits the live creative-test campaign, and the guinea-pig and ungatekeeping UGC formats are new to the skill set. The scale-down runnable today is one angle × two avatars × three or four self-filmed formats (one-shot, guinea-pig test, ungatekeeping, static), giving 6-8 ads. The full 50-100-ad tree comes later, once an angle clears the graduation bar and the scaling budget moves to $100/day. Merit is held at 5 because the source gives no mechanism for why breadth beats the existing 'cover distinct creative jobs rather than creative volume' claim."
+      },
+      "verdict": "adopt",
+      "stage": "traffic",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-creative-testing",
+        "action": "edit",
+        "description": "Add the avatar → angle → format worksheet tree, including the guinea-pig and ungatekeeping UGC formats. Start at 6-8 ads and expand to volume only after an angle graduates."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 6,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Find creators by demographic fit using creator platforms (Sideshift, Tribe, Yuka AI, Top Yappers) and by searching Meta's Partnerships creator portal directly for the target creator.",
+      "mechanism": "Searching by demographic lets you recruit a creator who matches each avatar in the creative tree instead of whoever is available.",
+      "evidence": "Assertion only (tool recommendations).",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "RSC already runs Trybe creator UGC, and avatar-matched creators feed the avatar × angle tactic. It requires a roster of creators appearing as themselves, so it is gated on team even though the search step is laptop work. It becomes worth doing once one avatar × angle pairing clears the graduation bar."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Add demographic-fit creator search (creator platforms and Meta Partnerships portal) to recruit creators matched to graduated avatars."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 7,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Pay creators a hybrid: a base fee for a batch (~$1,500 for 15 videos) plus an uncapped commission (~10%) on sales from their videos run in your Meta account, and accept very large payouts on winners because a hit's value includes untracked halo.",
+      "mechanism": "Incentive alignment: upside makes creators try harder. A winning ad also lifts sales attributed to other creatives, so capping the winner's pay underpays the real contribution.",
+      "evidence": "Agency experience with ~115,000 creators; assertion.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "This is a durable compensation principle. The hybrid structure sits between the existing pure-backend and monthly-retainer claims and restates neither. It needs other creators' time, so it is gated on team. It applies once creator content is graduating to scaling, and Meta partnership-ad attribution makes per-creator commission trackable."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Add a hybrid base-plus-uncapped-commission creator pay structure, tracked through Meta partnership-ad attribution."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 8,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Tier a creator's retainer by their trailing 30-day TikTok Shop GMV: under $10K gets $1,500-$3,000 for 15-30 videos; over $10K gets more upfront cash and a higher commission.",
+      "mechanism": "Past TikTok Shop GMV is a proxy for a creator's ability to sell, so pay scales with demonstrated selling power.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "The qualifying signal is TikTok Shop GMV. RSC sells on Shopify and Amazon and is not on TikTok Shop."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It depends on TikTok Shop GMV, and RSC does not sell on TikTok Shop.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 9,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Recruit creators at scale through a TikTok Shop outreach bot.",
+      "mechanism": "Automated outreach inside TikTok Shop builds a creator army quickly.",
+      "evidence": "Assertion only (explicitly not elaborated).",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is a TikTok Shop platform mechanic, and RSC is not on that platform."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It is a TikTok Shop mechanic, and RSC is not on the platform.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 10,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Do not hand creator negotiation and management to AI agents. The founder should personally run creator relationships, expecting missed briefs, late delivery and revision friction.",
+      "mechanism": "Creators rarely follow a brief from a message alone, are often late and resist revisions. Those failure points need human judgement and relationship, so automation breaks exactly where the work is.",
+      "evidence": "Claims experience across ~115,000 creators at Nibble.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This durable operating principle guards against a likely automation temptation. It only has force once there is a creator roster to manage, so it is gated on team. The existing skill covers briefs, QA and partnerships but not the 'founder owns the relationship, do not automate it' rule. Merit is modest because it is a caution rather than a growth lever."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Add the rule that the founder personally owns creator negotiation and relationships and does not automate them with AI agents."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 11,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use Motion to optimise the creative pipeline, tracking 3-second stop rate, winning angles and formats, competitor research, and an AI creative-strategist agent.",
+      "mechanism": "A dedicated creative analytics layer shows what Meta's native reporting does not surface.",
+      "evidence": "Paid sponsor read; assertion only.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This is a sponsored segment with a feature list and no mechanism. The metrics it sells are already built natively in an existing claim."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It is a sponsor read with no mechanism, and the metrics are already built natively.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 12,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Aim for 80-90% gross margin on any product you intend to scale digitally, because CAC and opex consume the rest.",
+      "mechanism": "Paid acquisition plus operating costs leave no room to profit on a lower-margin product.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is a durable pricing principle, imported as an unvetted supplement-category benchmark. RSC's route already encodes it: the skin line with $15-25 contribution funds paid, and low-margin SKUs are never cold-paid front ends."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It is already encoded in RSC's route, and the margin benchmark comes from an unvetted supplement category.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 13,
+          "label": "part 1 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Run a very steep subscription intro offer, e.g. $40 for month one on an $80 rebill (50% off the first order), to drive trial, then defend the second rebill through email and the habit formed in the first cycle.",
+      "mechanism": "In consumables, trial is the bottleneck. A deep first-order price lowers the entry barrier and converts far more people into the subscription pool. The business makes its money on later full-price cycles, so the front end only has to acquire the customer.",
+      "evidence": "Named brands (Gruns, Create Wellness, Instant Hydration, Mars Men, IM8) and the general subscription-brand playbook he plans to use; assertion.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "This durable offer principle fits the binding constraint, conversion rate. The offer/AOV gate is open, so it can run today on the skin line only, where $15-25 contribution can absorb a first-order loss. It must not run on deodorant, soap, toothpaste or lip balm, which carry $2-5 contribution and would make every order negative. Merit is held at 5 on business risk: an 18-22.5% repeat rate means most deep-discount buyers would never reach a full-price refill. It overlaps the existing claim to price the front end and back end against different objectives, and it conflicts with the 'a discount only moves the effort/sacrifice term' claim. It should therefore be read as a skin-line subscription trial lever, checked against the measured second-order rate."
+      },
+      "verdict": "adopt",
+      "stage": "offer-aov",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add a steep first-subscription-order discount as a skin-line-only trial lever, gated on margin and checked against measured second-order rate. Exclude the low-margin SKUs."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 14,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 17,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Layer extremely cheap co-branded free gifts that the customer uses every day (a whisk, a mug, a frother, a ~$0.50 sleep mask, an onboarding kit) into the first order, both to lift conversion and to put the brand in front of the customer and their household every time the item is used.",
+      "mechanism": "Stacked tangible extras raise the perceived value of the first purchase without cutting the headline price. A branded object that lives on the countertop or in the bathroom repeats brand exposure on every use, even reaching household members who never touch the product. Keeping unit cost to cents protects margin.",
+      "evidence": "Everyday Dose and Bloom Nutrition anecdotes. He reports people recognising Bloom's whisks without having used the product, including a boyfriend who used the whisk for years without trying the greens.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "This is a durable offer and retention principle that one person can run today by sourcing a cents-cost co-branded bathroom or routine object (travel pouch, soap dish, toothbrush cap) that sits where the deodorant, soap or toothpaste is used. To protect margin, gate the gift on a skin-line or bundle order threshold so the $15-25 contribution orders fund it, which also serves the AOV lift. Existing claims cover gift unlocks in general but not choosing the gift for daily-use brand recall or capping its cost. The upside is real but indirect, because recall is hard to attribute."
+      },
+      "verdict": "adopt",
+      "stage": "offer-aov",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-offer-construction",
+        "action": "edit",
+        "description": "Add cents-cost co-branded daily-use gifts chosen for in-home brand recall, gated on a skin-line or bundle order threshold."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 15,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 18,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use the unboxing package to set dated expectations (what to expect at day 30, day 60, day 90) and explicitly tell the customer not to quit before the milestone when benefits arrive.",
+      "mechanism": "Customers quit around the trough (e.g. day 45) when they have not yet felt results. A printed milestone timeline reframes the trough as expected and pre-commits them past the churn point, protecting the second rebill.",
+      "evidence": "Everyday Dose unboxing and onboarding package; assertion.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "This durable retention principle fits RSC well. One person can run it today with a printed insert plus a matching post-purchase email. Natural deodorant has a well-known adjustment period in which switchers quit, and repeat customers are ~45-52% of revenue. Existing claims put a timeline on the product page, ship a getting-started insert and name early wins. None of them puts a dated milestone schedule in the box aimed at the specific mid-cycle quit point."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-post-purchase-onboarding",
+        "action": "edit",
+        "description": "Add an in-box dated milestone timeline (day 30/60/90) targeting the deodorant adjustment-period quit point, mirrored in a post-purchase email."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 16,
+          "label": "part 1 of 2"
+        },
+        {
+          "candidateIndex": 19,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Partner with adjacent apps (calming and breathwork apps) to bundle a free first month of their membership with your product, so they gain a customer and you gain offer value.",
+      "mechanism": "Non-competing partners get access to your buyers, and the bundled membership raises perceived value at no cost to you.",
+      "evidence": "Assertion only. This is a plan he is exploring.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This is a durable offer principle a solo operator could pursue, but it is already recorded in offer-construction."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already recorded in offer-construction.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 20,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Judge a discovery or trial channel by the halo it produces on your other sales channels, especially Amazon, rather than by its own single-channel P&L. He expects ~30% Amazon lift from scaling a trial channel.",
+      "mechanism": "Customers acquired on one channel are not loyal to it. They rebuy wherever it is most convenient (Amazon, retail), so a channel judged only on its own attributed revenue looks worse than it is.",
+      "evidence": "His own buying behaviour, and the retail lift his previous brand saw after activating TikTok Shop.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Amazon is about two-thirds of RSC revenue (~$1,800 of ~$2,700/mo), so Meta spend aimed at Shopify likely spills into Amazon branded search, and judging Meta on Shopify attribution alone understates it. Existing measurement claims do not cover this. The runnable-today version is to log Meta spend dates against Amazon daily sales and branded-search sessions, using the 2026-08-27 → 2026-10-04 pause and relaunch as a natural before/after comparison. The 'run the trial channel at a loss' half is not adopted, because the low-margin SKUs cannot carry it."
+      },
+      "verdict": "adopt",
+      "stage": "tracking",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-paid-media-measurement",
+        "action": "edit",
+        "description": "Add cross-channel halo measurement: read Meta spend against Amazon daily sales and branded-search sessions, using the pause/relaunch window as a natural experiment."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 21,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Sample product to a large roster of creators (1,000–2,000), gather them in a founder-run Discord, and run a weekly call reviewing top formats, product USPs and why certain videos worked, to steer the whole roster toward performance.",
+      "mechanism": "Coaching many creators on what is working raises the average quality of a large volume of videos and increases the odds that one goes viral. More conversion then attracts more and better creators.",
+      "evidence": "His prior TikTok Shop experience and the $3.6M November at his previous brand. Otherwise assertion only.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "RSC already sources Trybe creator UGC, so creator activation is on the path. The new element is a standing founder-led coaching cadence for a creator group, which is not in existing claims. It requires a roster of other people's time, so it is gated on team, and it triggers once a creator or affiliate base is large enough for a weekly group review to steer output. The TikTok Shop specifics do not transfer."
+      },
+      "verdict": "adopt",
+      "stage": "team",
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-creator-content-sourcing",
+        "action": "edit",
+        "description": "Add a founder-led weekly creator coaching cadence (community plus review of top formats and USPs) once the roster is large enough."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 22,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Opt into every TikTok Shop platform-wide campaign (new arrivals, surge, priority) at whatever discount it requires, because the algorithm rewards participation with subsidised impressions.",
+      "mechanism": "TikTok subsidises views for products enrolled in its platform campaigns, so stacking all of them maximises algorithmic amplification.",
+      "evidence": "He says he learned this working directly with TikTok Shop.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is a fast-decaying TikTok Shop mechanic, and RSC is not on TikTok Shop. Enrolling in every price compression would also lose money on the low-margin catalogue."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It is a TikTok Shop platform mechanic, RSC is not on the platform, and it would be loss-making on low-margin SKUs.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 23,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Do not run Amazon ads at all. Treat Amazon as pure demand capture and fulfilment, and let off-Amazon virality push organic rank.",
+      "mechanism": "Most Amazon sales are demand already created elsewhere, so paying CAC there is paying for buyers you would get anyway.",
+      "evidence": "Assertion only. He admits non-branded benefit keywords are competitive.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This rests on a viral off-Amazon demand engine that RSC does not have. Amazon is RSC's largest channel, and its non-branded discovery comes from PPC, so cutting PPC wholesale would starve it. The narrow defensible version, not paying for terms already ranked #1 organically, is already covered."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It would starve RSC's largest channel of non-branded discovery. The narrow version is already covered.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 24,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Don't worry about price misalignment between channels. Display full price and give a platform-specific coupon, as Shark Ninja does at $200 on Amazon and $100 on TikTok Shop.",
+      "mechanism": "Channel-specific pricing drives trial where attention is cheapest without visibly undercutting the other channels.",
+      "evidence": "The Shark Ninja example. He says 'I might be totally wrong.'",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Amazon's fair-pricing enforcement can suppress the Buy Box when the same item is visibly cheaper elsewhere, and Amazon is RSC's largest channel. The creator himself hedges the claim."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It risks Amazon Buy Box suppression on RSC's largest revenue line, and the source hedges it.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 25,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Tag all incoming content, and dissect every outlier ad or organic post (hook, problem/solution, what made it go) into an internal lexicon. Use that lexicon to train Claude skills and AI UGC so winners can be reproduced.",
+      "mechanism": "A structured record of why winners worked shortens the time to the next good ad and makes those winners reproducible by AI.",
+      "evidence": "His previous brand produced ~1,000 ads/month in-house and did $3.6M in November.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This is a durable principle that RSC is effectively already doing through the skill fleet, and it is fully recorded."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already practised through the skill fleet and fully recorded.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 26,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Build the product image carousel infographic-style, naming the specific branded, clinically tested ingredient and its benefit rather than just the ingredient. Heatmaps show shoppers scroll the carousel far more than they read the description.",
+      "mechanism": "The carousel is where attention actually goes, so specific, sourced ingredient claims there do more selling than description copy.",
+      "evidence": "His observation from site heatmaps.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "This is a durable principle and relevant to RSC's PDP, but the gallery-order, ingredient-frame and specificity claims already cover it."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already covered by the existing gallery-order, ingredient-frame and specificity claims.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 27,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "CRO moves the needle less than you think. Traffic quality and acquisition language matter more, and CRO should wait until $5–10M revenue.",
+      "mechanism": "At small scale, on-site tweaks only unlock incremental profit. The core problems are product-market fit and messaging.",
+      "evidence": "Assertion, based on his CRO experience.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This directly contradicts RSC's measured operating reality, where the binding constraint is conversion rate and the sequencing spine puts CRO before traffic. It is also a priority stance rather than an actionable tactic."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It contradicts RSC's measured binding constraint (conversion rate), and it is a priority stance rather than a tactic.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 28,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Run organic content as brand thought leadership on an angle × audience × format matrix: reshare studies, give tips, use strong branded visual hooks, and post about five videos plus five carousels a week.",
+      "mechanism": "Becoming the go-to educational resource on the adjacent topic builds brand affinity that later converts.",
+      "evidence": "Assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "This is a durable principle, but the organic content program skill already covers cadence, audience rings, topic mix and carousels."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Already covered by the organic content program skill.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 29,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Pick one adjacent-science content pillar and break it into a series of standalone pieces: its discovery story, who discovered it, what it connects to, and three ways to influence it. Dramatise the historical origin with AI, for example Galen examining a patient in ancient Greece.",
+      "mechanism": "Few viewers know the origin story or the underlying biology. One pillar therefore yields many distinct, curiosity-driven, entertaining pieces, and a historical scene gives visual storytelling a talking head cannot.",
+      "evidence": "Assertion only. This is his planned vagus-nerve pillar.",
+      "rscFit": {
+        "score": 5,
+        "reasoning": "This is a durable content principle one person can run today on RSC's own social channels, with AI B-roll for the historical dramatisation. Possible pillars include the history of deodorant and antiperspirant, why aluminium salts block sweat, what causes underarm odour, how fluoride-free toothpaste works, and the origins of soap-making. Each would be decomposed into origin, discoverer, mechanism and 'three ways to…' pieces, then reused as Meta hooks and email topics. Existing claims do not cover single-pillar decomposition. The score is moderate because the creator frames it as zero-conversion brand marketing, so each piece should close on the standing lead-magnet CTA."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "rejectReason": null,
+      "targetSkill": {
+        "name": "marketing-organic-content-program",
+        "action": "edit",
+        "description": "Add single-pillar decomposition into a numbered series of standalone pieces (origin, discoverer, mechanism, three ways to…), with AI historical dramatisation, each closing on the lead-magnet CTA."
+      },
+      "mergedFrom": [
+        {
+          "candidateIndex": 30,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Build community around in-person experiences adjacent to the category (breathwork, cold plunge, sauna meetups, guided meditations), and use that community plus shelf-standout packaging and incremental-shopper proof to win retail buyers.",
+      "mechanism": "Shared intense experiences create real-life brand identification. Retail buyers want brands that bring new shoppers rather than duplicate a niche they already stock.",
+      "evidence": "Assertion only. This is his future plan.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "This targets a retail and wholesale expansion RSC has no plan for. The IRL ritual hook has no natural analogue for deodorant or soap, and the online community-access version is already recorded in post-purchase-onboarding."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "There is no retail plan, no natural IRL analogue for the category, and the online version is already recorded.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 31,
+          "label": "part 2 of 2"
+        }
+      ]
+    },
+    {
+      "claim": "Use an AI customer-support engine (Rich Panel) that handles tickets 24/7, escalates to humans, and upsells customers during support.",
+      "mechanism": "Automated support saves time and turns support conversations into sales.",
+      "evidence": "Sponsored read. Vendor claims only.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "This is a paid sponsor placement with no tested mechanism. At RSC's ticket volume, support is not a bottleneck, and personal support's retention value is already captured by the claim to cultivate top buyers by hand."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "It is a sponsor read, support is not a bottleneck at RSC's volume, and the retention value is already captured.",
+      "targetSkill": null,
+      "mergedFrom": [
+        {
+          "candidateIndex": 32,
+          "label": "part 2 of 2"
+        }
+      ]
+    }
+  ]
+}

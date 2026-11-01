@@ -37,6 +37,7 @@ import { fileURLToPath } from 'node:url';
 import {
   getCustomCollections,
   getSmartCollections,
+  getAllRedirects,
   updateCustomCollection,
   updateSmartCollection,
   upsertMetafield,
@@ -56,6 +57,7 @@ import {
   renderGateSkipLines, renderGateRefusalLines, gateSkipSummaryFragment,
 } from '../../lib/seo-copy-health-gate.js';
 import { SEO_COPY_LENGTH_RULE } from '../../lib/seo-copy-length.js';
+import { LLM_MODELS } from '../../config/llm-models.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
@@ -185,7 +187,28 @@ function findRelevantIngredients(ingredientsConfig, collectionHandle) {
 
 // -- candidate selection (shared with tests) ----------------------------------
 
-function selectCollectionCandidates(collections, gscResults, activeQueueSlugs, candidateLimit = 5) {
+/**
+ * LIVE-NESS IS THE FIRST QUESTION — this selector did not ask it, and three of the
+ * four collection bodies in the 2026-09-07 queue were for pages that CANNOT RANK.
+ *
+ * Measured live 2026-09-08: `organic-body-lotion`, `organic-lip-balm` and
+ * `unscented-lotion` are each `published_at: null` (a DRAFT) *and* carry a
+ * `/collections/<handle>` URL redirect — unreachable twice over. Only
+ * `foaming-hand-soap` was live. Yet all four had been generated (450-650 words of
+ * paid LLM output each), queued, and rendered in the 5 AM digest as revenue
+ * opportunities carrying explicit forecasts — "move from ~#35 to the #15-25 range",
+ * "CTR from near 0% to 1-3%". A draft behind a 301 can do none of that.
+ *
+ * The cost is not a corrupted page — publishing to an unreachable collection is
+ * inert — it is paid generation spent on nothing and, worse, phantom opportunities
+ * competing for the operator's attention in the one report they actually read.
+ *
+ * Same lesson CLAUDE.md already records for the long-titles sweep, on a different
+ * surface: check `published_at` AND the redirect table, never just that the object
+ * exists. GSC keeps reporting impressions for a redirected URL for a long time, so
+ * the impressions floor above cannot stand in for this.
+ */
+function selectCollectionCandidates(collections, gscResults, activeQueueSlugs, candidateLimit = 5, redirectedHandles = new Set()) {
   return collections
     .map((c) => {
       const gscEntry = gscResults.get(c.url);
@@ -193,6 +216,10 @@ function selectCollectionCandidates(collections, gscResults, activeQueueSlugs, c
       if (gscEntry.impressions < 500) return null;
       if (gscEntry.position <= 10 && gscEntry.ctr >= 0.005) return null; // already performing well
       if (activeQueueSlugs.has(c.handle)) return null;
+      // Unreachable: a draft, or a handle the storefront 301s away from. Either way
+      // no body written here is ever served, so generating one earns $0.
+      if (!c.published_at) return null;
+      if (redirectedHandles.has(c.handle)) return null;
       return { ...c, gsc: gscEntry };
     })
     .filter(Boolean)
@@ -231,7 +258,7 @@ async function generateCollectionContent(collection, topQueries, gscData, relate
     : `No GSC data yet for this page.`;
 
   const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: LLM_MODELS.standard,
     max_tokens: 4096,
     messages: [{
       role: 'user',
@@ -495,6 +522,7 @@ async function main() {
       title: c.title,
       handle: c.handle,
       body_html: c.body_html || '',
+      published_at: c.published_at || null,
       url: `${config.url}/collections/${c.handle}`,
       collectionType: 'custom',
     });
@@ -505,6 +533,7 @@ async function main() {
       title: c.title,
       handle: c.handle,
       body_html: c.body_html || '',
+      published_at: c.published_at || null,
       url: `${config.url}/collections/${c.handle}`,
       collectionType: 'smart',
     });
@@ -533,9 +562,25 @@ async function main() {
   }
   console.log(`${gscMap.size} pages with GSC data`);
 
-  // Select candidates
+  // Select candidates. The redirect table is fetched here rather than inside the
+  // selector so the selector stays pure and testable; a failed fetch degrades to
+  // "no handle is redirected", which only costs the redirect half of the
+  // reachability check — `published_at` still applies — and never blocks a run.
+  let redirectedHandles = new Set();
+  try {
+    const redirects = await getAllRedirects();
+    redirectedHandles = new Set(
+      redirects
+        .map((r) => /^\/collections\/([^/?#]+)$/.exec(r.path || '')?.[1])
+        .filter(Boolean),
+    );
+    console.log(`  ${redirectedHandles.size} collection handle(s) are redirected — not candidates`);
+  } catch (e) {
+    console.log(`  Redirect table unavailable (${e.message}) — checking published_at only`);
+  }
+
   const active = activeSlugs();
-  const rawCandidates = selectCollectionCandidates(filtered, gscMap, active, limit * 3);
+  const rawCandidates = selectCollectionCandidates(filtered, gscMap, active, limit * 3, redirectedHandles);
 
   const idx = loadIndex(ROOT);
   const competitors = loadCategoryCompetitors(ROOT);

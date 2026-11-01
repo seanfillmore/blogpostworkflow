@@ -1,0 +1,222 @@
+{
+  "sections": {
+    "image-banner": {
+      "type": "image-banner",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Contact us",
+            "heading_size": "h0",
+            "heading_tag": "h2"
+          }
+        },
+        "text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Questions, comments or inquiries? Just send us an email and we'll get back to you in no time.<\/p>",
+            "text_size": "typeset2",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "heading",
+        "text"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/03.jpg",
+        "image_position": "top center",
+        "text_box_position": "bottom-right",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "show_text_box": false,
+        "full_width": true,
+        "show_divider": false,
+        "image_behavior": "none",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "250px",
+        "stack_images_on_mobile": true,
+        "show_text_below": true,
+        "colors_button_label": "#1a1b18",
+        "colors_button_background": "#ffffff",
+        "colors_text": "#ffffff",
+        "colors_overlay": "#000000",
+        "colors_overlay_opacity": 28,
+        "padding_top": 0,
+        "padding_bottom": 8
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "disabled": true,
+      "settings": {
+        "narrow": false,
+        "padding_top": 60,
+        "padding_bottom": 72
+      }
+    },
+    "rich_text_7BYN7r": {
+      "type": "rich-text",
+      "blocks": {
+        "heading_pnKjt8": {
+          "type": "heading",
+          "settings": {
+            "heading": "We Love To Hear From You",
+            "heading_size": "h1",
+            "heading_tag": "h1"
+          }
+        }
+      },
+      "block_order": [
+        "heading_pnKjt8"
+      ],
+      "custom_css": [
+        "h1 {text-align: center;}"
+      ],
+      "name": "t:sections.rich-text.presets.name",
+      "settings": {
+        "text_alignment": "left",
+        "mobile_text_alignment": "left",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": false,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#ffffff",
+        "colors_highlight": "#bbff00",
+        "gradient_background": "",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "form": {
+      "type": "contact-form",
+      "blocks": {
+        "contact-0": {
+          "type": "contact",
+          "settings": {
+            "heading": "Information",
+            "text": "marketing@realskincare.com",
+            "link": "mailto:team@realskincare.com"
+          }
+        },
+        "contact-1": {
+          "type": "contact",
+          "settings": {
+            "heading": "Customer service",
+            "text": "support@realskincare.com",
+            "link": "mailto:support@realskincare.com"
+          }
+        },
+        "contact-2": {
+          "type": "contact",
+          "settings": {
+            "heading": "Sales",
+            "text": "support@realskincare.com",
+            "link": "mailto:team@realskincare.com"
+          }
+        },
+        "contact-3": {
+          "type": "contact",
+          "settings": {
+            "heading": "Press",
+            "text": "marketing@realskincare.com",
+            "link": "mailto:support@realskincare.com"
+          }
+        },
+        "media": {
+          "type": "media",
+          "settings": {
+            "heading": "Follow us"
+          }
+        }
+      },
+      "block_order": [
+        "contact-0",
+        "contact-1",
+        "contact-2",
+        "contact-3",
+        "media"
+      ],
+      "settings": {
+        "return_url": "",
+        "show_phone": true,
+        "show_divider": false,
+        "heading": "Get in touch",
+        "heading_size": "h2",
+        "heading_tag": "h2",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "map": {
+      "type": "map",
+      "blocks": {
+        "map-0": {
+          "type": "heading",
+          "settings": {
+            "heading": "Our Store",
+            "heading_size": "h2",
+            "heading_tag": "h2"
+          }
+        },
+        "map-1": {
+          "type": "text",
+          "settings": {
+            "text": "<p>620 King Street West<br\/>Toronto, ON M5V 1M7, Canada<\/p><p>Mon - Fri, 8:30am - 10:30pm<br\/>Saturday, 8:30am - 10:30pm<br\/>Sunday, 8:30am - 10:30pm<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "map-2": {
+          "type": "button",
+          "settings": {
+            "button_label": "Get directions",
+            "button_link": "",
+            "button_size": "small",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "map-0",
+        "map-1",
+        "map-2"
+      ],
+      "disabled": true,
+      "settings": {
+        "map_address": "620 King St W, Toronto, ON M5V 1M7, Canada",
+        "map_api_key": "",
+        "map_zoom": 14,
+        "map_style": "standard",
+        "image_position": "center center",
+        "text_box_position": "middle-left",
+        "text_alignment": "left",
+        "image_ratio": "550px",
+        "full_width": true,
+        "show_divider": false,
+        "mobile_text_box_position": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "400px",
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#1a1b18",
+        "colors_overlay": "#ffffff",
+        "gradient_overlay": "",
+        "colors_overlay_opacity": 100,
+        "padding_top": 36,
+        "padding_bottom": 0
+      }
+    }
+  },
+  "order": [
+    "image-banner",
+    "main",
+    "rich_text_7BYN7r",
+    "form",
+    "map"
+  ]
+}

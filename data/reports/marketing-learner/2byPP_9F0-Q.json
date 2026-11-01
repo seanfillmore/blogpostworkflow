@@ -1,0 +1,237 @@
+{
+  "sourceId": "2byPP_9F0-Q",
+  "creator": "Kallaway",
+  "title": "Give me 15 mins, and I'll make your hooks impossible to skip",
+  "summary": "A short-form video creator breaks down what a hook must accomplish (topic clarity plus on-target curiosity) and diagnoses four named reasons hooks fail: delay (the topic is introduced too late), confusion (the sentence is hard to parse), irrelevance (the viewer does not see themselves in it), and disinterest (no curiosity loop opened). Each failure gets a concrete fix — cut the fluff lines and move the topic sentence to second one, rewrite at a sixth-grade reading level in active voice, swap 'I/my' for 'you/your' and lead on a pain the viewer already has, and manufacture curiosity by setting up contrast between what the viewer currently believes and a faster/better/cheaper alternative (stated or implied). Also covers a clarity-rewrite LLM prompt, an ambiguity audit of the hook read in isolation, the structural claim that a hook is two to three lines rather than one, and his research method of extracting and tagging hooks from top-performing videos in a niche. Heavily interleaved with promotion of his paid hooks masterclass, his AI scriptwriting tool and his free community.",
+  "recencySignals": "References ChatGPT and Claude as the rewrite tools, his own sandcastle.ai scriptwriting product, Instagram Reels / TikTok / LinkedIn shorts / YouTube Shorts as the placements, a 22,000-member community, and a claimed 400-video hook database. Published 2025-07-03; no explicit years stated in the transcript.",
+  "tactics": [
+    {
+      "claim": "A hook has exactly one job — get the viewer to opt in — and it does that by delivering exactly two things: topic clarity (they know precisely what the video is about) and on-target curiosity (they believe it is for them and want what comes next).",
+      "mechanism": "Viewers make a continue/scroll decision in the first seconds. They can only decide in favour of staying if they know both what the content is about and that it is relevant to them; anything else in the hook is decoration that does not move the decision.",
+      "evidence": "Assertion from having 'studied literally thousands of videos'; creator cites a million followers and billions of views. No data shown.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "Organic short-form video is a live surface run by the solo operator himself, so a two-part pass/fail spec for the hook he writes and speaks is runnable today with a phone and a script. Durable-principle class (attention and retention psychology), so the 2025 date is irrelevant. Translates directly to RSC's own Reels/TikTok openings first, then to email subject lines and Meta primary text on the $30/day campaign."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when writing or auditing the opening of a short-form video (the spoken first line and the on-screen text hook), an ad, an email subject line or a social caption — covers the two things a hook must deliver to earn the opt-in, the named failure modes that stop it, and the line-level fixes for each."
+      }
+    },
+    {
+      "claim": "When a video underperforms, diagnose the hook against four named failure modes in order — delay, confusion, irrelevance, disinterest — instead of guessing at the whole video.",
+      "mechanism": "Each failure mode blocks a different half of the opt-in decision (clarity or curiosity) and has a different fix, so naming which one is broken stops you from rewriting the wrong thing — e.g. adding more suspense to a hook whose actual problem is that the topic arrives three lines late.",
+      "evidence": "Assertion only, presented as a taxonomy derived from studying thousands of videos.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "This is a cheap written debug checklist for content the solo operator already produces, and it complements the fleet's existing 'run down the production stack before retiring an angle' discipline by giving the hook link four specific, checkable defects. Runnable at 54 orders/month with zero spend; durable principle, no staleness risk."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when a short-form video, ad or email opening is not holding attention and you need to find out which part of the hook is broken — covers the four named hook failure modes (topic arrives too late, sentence is hard to parse, viewer does not see themselves in it, no curiosity opened) and the specific rewrite each one calls for."
+      }
+    },
+    {
+      "claim": "Fix 'delay' by cutting the fluff lines and moving the topic-introducing sentence to the very top, so the viewer knows the subject within the first one to two seconds ('speed to value').",
+      "mechanism": "Short-form retention is exponential decay with the steepest drop in the first two seconds. Every second the viewer spends without the context needed to decide, a large share of them bounce — so the topic sentence has to arrive before the cliff, not after two lines of setup.",
+      "evidence": "The retention decay curve is described but not shown; illustrated with a 13-line script where line three is the first mention of the topic. Assertion plus example.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "A concrete script-surgery move — reorder the lines, delete the first two — that the operator can apply to every video he already films and publishes himself. Nothing about it needs another person, spend or order volume. Durable principle about attention, so the 2025 date does not decay it; also transfers to the first line of Meta primary text and email preview copy."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when drafting or trimming the first line of a short-form video script, ad, or email — covers cutting the setup lines so the topic lands in the first one to two seconds, and how far into the piece the subject is allowed to arrive."
+      }
+    },
+    {
+      "claim": "Never open with a context-free suspense line ('this is one of the craziest things I've ever seen') — the loop must be opened on a named topic, because a viewer with zero context cannot decide to stay.",
+      "mechanism": "Curiosity without a subject gives the viewer nothing to evaluate against their own interests. Where such hooks appear to work, the retention is actually coming from the creator's face, emotion or on-screen text — the spoken words are contributing nothing, so the tactic is not reproducible for someone without that pull.",
+      "evidence": "Named bad example plus the claim that these hooks 'work way less often'; the attribution of TikTok's vague-hook success to face/emotion/text overlay is assertion only.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "This sharpens rather than duplicates the existing 'a hook must open a loop and leave it unresolved' claim by adding the missing constraint — the loop needs a stated subject. Directly applicable to the operator's own deodorant and oral-care videos, where he has no celebrity pull to carry a vague opener. Runnable today, durable principle."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when a hook is being written around suspense or a teased reveal — covers why a curiosity loop with no stated subject fails to earn the opt-in, and how to attach the loop to a named topic in the same breath."
+      }
+    },
+    {
+      "claim": "Fix 'confusion' by writing the hook at roughly a sixth-grade reading level — fewer and simpler words, and active rather than passive voice ('the dog jumped', not 'the jump of the dog').",
+      "mechanism": "A viewer who only absorbs half the words cannot assess whether the video is for them, so comprehension failure blocks the opt-in even when the topic is technically stated early. Raising the comprehension hit-rate raises the share of viewers who can make the decision at all.",
+      "evidence": "A deliberately mangled example hook rewritten into a clear one, side by side. Assertion plus demonstration.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "Copy craft the operator applies himself, first to the spoken and on-screen hooks of his own videos and then to Amazon bullets, PDP headlines and email subject lines. Not covered by the existing understatement claim, which is about adjective restraint rather than readability and voice. Durable principle; runnable at current volume with no spend."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when a hook or headline is technically correct but hard to parse — covers rewriting the spoken video opener, ad headline, or subject line at a sixth-grade reading level with active voice and the fewest words that cannot be misread."
+      }
+    },
+    {
+      "claim": "Run a written hook through an LLM with a specific clarity prompt — 'I've written a hook for a short form video about X; keep the meaning identical but rewrite it at a sixth grade reading level so the viewer cannot misunderstand it' — rather than editing it by feel.",
+      "mechanism": "The rewrite task is mechanical (simplify vocabulary and sentence order while holding meaning fixed), which is exactly what a language model does reliably, so it produces several clearer framings of the same idea in seconds.",
+      "evidence": "The prompt is given verbatim; no before/after performance data.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "A named, copy-pasteable prompt a solo operator can run on every hook he writes for his own videos, and equally on Meta primary text first lines and email subject lines. Zero cost, zero people, no volume requirement. The tool names are current-era (fast-decay class for platform mechanics, but this is a generic LLM prompt, not a platform feature, so it holds)."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when you have a drafted hook, headline or subject line and want clearer variants fast — covers the specific LLM rewrite prompt that holds the meaning fixed while lowering the reading level, and how to review what comes back."
+      }
+    },
+    {
+      "claim": "Before shipping, read the hook alone in isolation and ask whether there is more than one way it could be interpreted; if so, rewrite until only the intended reading survives.",
+      "mechanism": "The writer reads the hook with the rest of the script in his head, so ambiguity is invisible to him. Isolating the one or two sentences and hunting for alternative interpretations surfaces the readings a cold viewer might take, each of which is a chance they decide the video is not for them.",
+      "evidence": "Assertion only, offered as a 'clarity-proofing' tip.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "A named QA pass, not motivational framing — it has a specific input (the hook alone), a specific test (count the interpretations) and a specific action (rewrite to one). Runnable today by one person on his own video scripts, and identical in form to the audit passes the fleet already runs on generated imagery and LLM copy. Durable principle."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use as the final check before a hook ships — covers reading the opening line or two in isolation from the rest of the video script, ad, or email and rewriting until only one interpretation is possible."
+      }
+    },
+    {
+      "claim": "Frame the hook in second person ('if you've struggled with skin problems your whole life...') rather than first person ('I've struggled with skin problems my whole life'), because first person forces the viewer to decide whether they resemble you before they can decide the content is relevant.",
+      "mechanism": "A first-person problem statement inserts an identification step: the viewer asks 'do I have the same problems this person does?' and any mismatch (age, skin, look, lifestyle) discounts the incoming solution. Second-person framing removes that step — the relevance is asserted directly at the viewer.",
+      "evidence": "Paired good/bad example hooks; assertion about the viewer's internal question.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "Directly relevant to a founder-operator who films himself: his default is to narrate his own deodorant/oral-care story, and this names the specific cost of doing so in the hook position. It is not a duplicate of the four call-out types in marketing-conversion-copy-angles (which is about naming a group) and it deliberately narrows the existing 'write claims as personal experience, how I not how to' rule to the body rather than the hook — that tension is worth recording. Runnable today on the videos he already posts, plus Meta primary text and subject lines."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when writing the opening line of a founder-shot video, ad or email and deciding whose experience it describes — covers swapping first-person problem statements for second-person framing in the hook so the viewer never has to decide whether they resemble the speaker, and where the personal-experience voice belongs instead."
+      }
+    },
+    {
+      "claim": "Manufacture curiosity by building contrast into the hook — A is what the viewer already believes is the solution, B is your alternative that is faster, better or cheaper — and do it either as stated contrast (name both A and B explicitly) or implied contrast (name only B and let the known baseline stand in for A).",
+      "mechanism": "Setting a comparison against the viewer's current baseline re-agitates the pain that baseline failed to solve, which is what actually produces the urge to keep watching. The gap between the two is the curiosity; naming the alternative alone works when the audience already knows what the default is.",
+      "evidence": "Worked examples in a skincare category ('most people solve acne with Accutane, but I have an herbal remedy that does it three times faster' vs 'this herbal supplement is eight times more effective'). Assertion about the subconscious mechanism.",
+      "rscFit": {
+        "score": 8,
+        "reasoning": "This is the reusable engine for hook curiosity and RSC has a natural A in every category it sells: conventional aluminium antiperspirant, mainstream toothpaste, drugstore lip balm. It is not a duplicate of the existing 'open a loop' claim (which says what a loop is) nor of the awareness skill's compare-and-contrast mechanism claim (which governs mechanism copy on a page, not the opening line of a video). Durable principle; runnable today by one person, and the stated-vs-implied choice is a real decision he can make per SKU."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when a hook is clear and relevant but still not compelling — covers building the curiosity out of contrast between what the viewer currently believes solves their problem and your faster, better or cheaper alternative, and choosing between stating both sides explicitly or naming only yours and letting the baseline be implied."
+      }
+    },
+    {
+      "claim": "Treat a hook as two to three lines rather than one punchy line — topic clarity in the first sentence, then the contrast set up in the following one or two — and reuse the rare cases where both fit in a single line.",
+      "mechanism": "Clarity and curiosity are two separate jobs and rarely compress into one sentence, so budgeting two to three lines lets each job be done properly instead of sacrificing one for a snappier opener.",
+      "evidence": "Assertion, framed as how he writes hooks tactically.",
+      "rscFit": {
+        "score": 7,
+        "reasoning": "A structural rule for the script the operator writes himself before filming — it tells him how much of the opening to spend and in what order, which is a real decision on every video. Runnable at current scale with no dependencies. Durable principle; also gives a template for the first two lines of Meta primary text."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-copy-hooks-and-formats",
+        "action": "edit",
+        "description": "Use when structuring the opening of a short-form video script or ad — covers budgeting two to three lines for the hook with topic clarity in the first sentence and the contrast in the next one or two, and when a single line can carry both."
+      }
+    },
+    {
+      "claim": "Build your own hook swipe database: find the top-performing creators in your niche, pull their best videos, transcribe and tag each hook across format, strategy, visuals, on-screen text and audio, then generate new hooks by working from the patterns in the tagged set.",
+      "mechanism": "Hooks that already won attention in your category encode the patterns that work on that audience, so a tagged corpus turns hook writing from invention into recombination — you pull a proven pattern and fill it with your own topic.",
+      "evidence": "He claims to have built a 400-video tagged database this way and derived frameworks from it; the database and method are the paid product, so no worked example is shown.",
+      "rscFit": {
+        "score": 6,
+        "reasoning": "Runnable today in a scaled-down form: instead of 400 videos, the operator collects 20-30 top-performing natural deodorant / oral care / body care short-form videos, writes down the hook verbatim and tags format and angle in one sheet. One person, a phone and a spreadsheet — no editor, roster or spend needed. Scored mid rather than high because RSC's binding constraint is retention, not attention volume, and because marketing-competitor-messaging-teardown already covers the adjacent ad-library gap analysis, so this extends it to organic short-form rather than opening new ground."
+      },
+      "verdict": "adopt",
+      "stage": null,
+      "targetSkill": {
+        "name": "marketing-competitor-messaging-teardown",
+        "action": "edit",
+        "description": "Use when you need evidence rather than a guess about what opening to lead with — covers building a tagged swipe file of top-performing short-form video hooks from creators in the natural deodorant and body care niche alongside the competitor ad-library teardown, and recombining those patterns into your own hooks."
+      }
+    },
+    {
+      "claim": "Frame the hook around a pain point the viewer already has ('if you struggle with acne, try these three things') rather than a category topic or trend ('these are three common trends in skincare'), because a solved problem is a need-to-have and a topic is only a nice-to-have.",
+      "mechanism": "Both entertainment and education sell relief from a pain (boredom, or a specific problem). Agitating a pain the viewer already carries tees up a solution they need, which raises the perceived value of what comes after the hook.",
+      "evidence": "Paired example hooks contrasting a trends video with a pain-solving video. Assertion only.",
+      "rscFit": {
+        "score": 4,
+        "reasoning": "Sound and on-surface, but a reworded restatement of an existing recorded claim rather than new ground. Rejected as a duplicate, not on timing or capability — the operator should be applying it, via the skill that already holds it."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Duplicates marketing-awareness-level-messaging's claim 'Rank the candidate desires on urgency, staying power and scope, then check the winner is a pain felt today' — same mechanism (a pain felt today outpulls a nice-to-know topic), same instruction, different wording. It is also adjacent to that skill's 'Lead with a why-is-it-important hook' claim. Recording it again would degrade triggering between the two skills.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Open a curiosity loop in the hook — the viewer forms a question they cannot answer without more context, and the video keeps opening new loops as it answers old ones.",
+      "mechanism": "An unanswered question the viewer wants resolved is what physically keeps them from scrolling; chaining question-context-new-question sustains that state past the hook.",
+      "evidence": "Definition offered as the thing 'everybody talks about but nobody explains'; assertion only.",
+      "rscFit": {
+        "score": 3,
+        "reasoning": "Already held by the fleet in almost identical terms. Rejected as duplication, not for lack of applicability — the underlying idea is live and correct for RSC's own video hooks."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Duplicates marketing-copy-hooks-and-formats' existing claim 'A hook must open a loop and leave it unresolved — never open and close it in the same breath', plus 'Open a curiosity loop — show the setup, hide the payoff behind the click'. The only genuinely new material in this section is the contrast mechanism for generating the loop, which is adopted separately.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Instead of writing the hook yourself, put your topic into his AI scriptwriting tool (sandcastle.ai) and it will write a clear hook for you.",
+      "mechanism": "The tool encodes his hook frameworks, so it outputs clarity-compliant scripts without the writer needing the skill.",
+      "evidence": "None — a product plug for his own tool.",
+      "rscFit": {
+        "score": 2,
+        "reasoning": "No mechanism beyond 'use my product', and it restates the LLM clarity-rewrite tactic already adopted above with a paid subscription substituted for a free prompt. Nothing here for a $2,700/mo solo operator that the prompt does not already give."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Vendor plug with no stated mechanism, and duplicative of the adopted 'run the hook through an LLM with a clarity-rewrite prompt' tactic — the same output for no cost.",
+      "targetSkill": null
+    },
+    {
+      "claim": "Mastering hooks is the single biggest lever available for content performance — hooks are 'the 80 of the 80/20' — so invest in becoming god-tier at them (via his masterclass).",
+      "mechanism": "None given beyond the assertion that the hook determines whether anything else in the video is seen.",
+      "evidence": "Assertion, immediately followed by a pitch for the paid training.",
+      "rscFit": {
+        "score": 1,
+        "reasoning": "Motivational framing wrapped around a course pitch. There is no testable action, no threshold and no artifact — the specific, actionable content of the claim is already captured by the four failure modes and their fixes adopted above."
+      },
+      "verdict": "reject",
+      "stage": null,
+      "rejectReason": "Motivational framing with no stated mechanism and no testable action; it is a prioritisation assertion attached to an upsell, and everything actionable behind it is already adopted as the four hook failure modes and their named fixes.",
+      "targetSkill": null
+    }
+  ]
+}

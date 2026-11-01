@@ -48,8 +48,15 @@ test('RUM keeps error for NO BEACONS — that one is a real outage', () => {
   // The split is the point: an empty beacon stream means the storefront stopped
   // reporting and nothing else in the fleet would say so. Poor vitals on one
   // page/device pair is a reading.
-  assert.match(src, /!beacons\.length \? 'error'/, 'no beacons must still raise a failure');
-  assert.doesNotMatch(src, /failing\.length \|\| !beacons\.length \? 'error'/);
+  assert.match(src, /!received\.length \? 'error'/, 'no beacons must still raise a failure');
+  assert.doesNotMatch(src, /failing\.length \|\| !received\.length \? 'error'/);
+
+  // Added 2026-09-18 with the bot filter: the outage test reads what ARRIVED, and
+  // must never read the post-filter human count. A window whose every beacon was a
+  // machine means nobody visited — a reading — and keying 'error' on the filtered
+  // count would manufacture an outage row out of one quiet day.
+  assert.doesNotMatch(src, /!beacons\.length \? 'error'/,
+    'the outage test must not key on the bot-filtered count');
 });
 
 test('a flagged ad campaign is a finding, not a failure', () => {
@@ -63,4 +70,74 @@ test('a flagged ad campaign is a finding, not a failure', () => {
     "a dead-spend verdict is a reading for a human, not a report that the agent broke");
   assert.match(src, /const status = 'info'/);
   assert.match(src, /campaign\(s\) need attention/, 'the subject must still carry the count');
+});
+
+// ── Added 2026-09-08 ────────────────────────────────────────────────────────
+// Three more agents shared ONE shape: `status: failed.length ? 'error' : …`, so a
+// single bad item flipped a run that had otherwise SUCCEEDED into the Failures
+// block. The 2026-09-07 digest is the evidence — 7 failure rows, of which
+// "Blocked Post Resolver: 3 resolved, 0 written off, 1 failed" and
+// "Queue auto-apply: 1 applied, 0 dismissed" are both agents doing their job.
+//
+// The rule these restore is the one at the top of this file: `error` means a
+// human should go fix the AGENT. A per-item failure is a finding, named in the
+// body, that a human should READ. Genuine breakage in all three is the catch in
+// main(), which still sets 'error' and is asserted here so demoting the summary
+// row cannot silently demote the crash handler with it.
+
+test('a blocked-post-resolver item failure is a finding, not a failure', () => {
+  const src = read('agents/blocked-post-resolver/index.js');
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/,
+    '3 resolved and 1 failed is a working run, not a broken agent');
+  assert.match(src, /'Blocked Post Resolver failed'[\s\S]{0,160}status: 'error'/,
+    'the crash handler must keep error');
+});
+
+test('a queue-autoapply item failure is a finding, not a failure', () => {
+  const src = read('agents/queue-autoapply/index.js');
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/,
+    '1 applied and 1 failed is a working run');
+});
+
+test('a refresh-runner publish refusal is a finding, not a failure', () => {
+  const src = read('agents/refresh-runner/index.js');
+  // A refusal here is usually a GATE working — a divergent content mirror, or a
+  // failing editor gate. Reporting the publisher's correct refusal as a broken
+  // agent is precisely backwards.
+  assert.doesNotMatch(src, /status: failed\.length \? 'error'/);
+});
+
+// ── Added 2026-09-09 ────────────────────────────────────────────────────────
+// The 2026-09-08 digest carried "Content Remediator failed / Revision dropped 1
+// link — refusing to save: Shop Now" in the Failures block, twice. That is the
+// link-drop guard in lib/content-revision.js doing exactly its job: it had
+// already spent its one retry with the missing anchor named in the prompt, and a
+// second sample that still drops the CTA is refused so the live page is left as
+// it was. Filing a working guard as a broken agent is the same mistake as the
+// refresh-runner row above.
+//
+// Unlike the three demotions above, this one is inside the catch in main() — so
+// the split has to be made ON THE ERROR rather than by removing a ternary. The
+// dropped-link error is the only one carrying `.droppedLinks`; every other throw
+// is still breakage and still sets 'error'.
+
+test('a content-remediator link-drop refusal is a finding, not a failure', () => {
+  const src = read('agents/content-remediator/index.js');
+  assert.match(src, /guardRefusal[\s\S]{0,200}droppedLinks/,
+    'the refusal must be distinguished by the error the guard actually throws');
+  assert.match(src, /status: guardRefusal \? 'info' : 'error'/,
+    "a refused revision is 'info'; anything else is still 'error'");
+  assert.match(src, /would have dropped \$\{err\.droppedLinks\.length\} link\(s\)/,
+    'the subject must still name what was refused and how many');
+  assert.match(src, /process\.exit\(1\)/,
+    'exit 1 must survive: nothing was saved, so the caller must not re-gate as changed');
+});
+
+test('the link-drop error still carries the property that severity split reads', () => {
+  // The demotion above is only correct because validateRevision tags the error.
+  // If that property is ever renamed, the remediator silently reports every
+  // refusal as breakage again — which is the state this test exists to end.
+  const src = read('lib/content-revision.js');
+  assert.match(src, /err\.droppedLinks = dropped/,
+    'validateRevision must keep tagging the dropped-link error');
 });

@@ -1,0 +1,354 @@
+{
+  "target_keyword": "homemade soap",
+  "slug": "homemade-soap-recipes-how-to-make-natural-soap",
+  "search_intent": "informational",
+  "content_type": "how_to",
+  "content_depth": "comprehensive",
+  "recommended_title": "Homemade Soap: How to Make Natural Soap at Home",
+  "meta_description": "Learn how to make homemade soap with natural ingredients. Step-by-step cold process and melt-and-pour recipes for beginners — plus tips for silky, skin-loving bars.",
+  "target_word_count": 2400,
+  "content_angle": "A practical, beginner-friendly guide to making natural homemade soap that goes beyond basic recipes — covering method selection, oil choices, and how handmade soap compares to commercial bars on skin health — written from a clean-beauty brand perspective that readers can trust.",
+  "key_differentiators": [
+    "Covers both cold process and melt-and-pour methods so readers can self-select based on skill level and time — competitors tend to focus on only one method",
+    "Explains the role of each key oil (coconut oil, olive oil, castor oil) in skin feel and lather so readers understand the why, not just the what",
+    "Includes a dedicated section on natural add-ins (turmeric, goat milk, botanicals) with brief skin-benefit context, naturally capturing high-volume semantic keywords competitors miss",
+    "Addresses lye safety clearly and calmly, reducing the intimidation factor that causes beginners to abandon the process — without sensationalizing risk",
+    "Connects handmade natural soap to real skin outcomes (moisture retention, fewer harsh surfactants) and bridges naturally to Real Skin Care's ready-made coconut-oil-based alternatives for readers who prefer not to DIY"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open with a direct, answer-first statement: homemade soap is real soap made from oils, water, and lye — and yes, beginners can do it. Briefly acknowledge why people search this (control over ingredients, avoiding synthetic detergents, gift-making). Name the two methods covered (cold process, melt-and-pour) and signal that lye safety will be explained clearly. Mention that this guide suits complete beginners. Do NOT open with a vague lifestyle hook — lead with substance. Naturally drop 'soap making,' 'natural soap,' and 'handmade soap' in this section.",
+      "keywords_to_include": [
+        "homemade soap",
+        "soap making",
+        "natural soap",
+        "handmade soap"
+      ]
+    },
+    {
+      "section": "H2: What Is Homemade Soap (and How Is It Different from Commercial Bars)?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Explain saponification in plain language: oils + lye + water undergo a chemical reaction that produces soap and glycerin. True soap retains natural glycerin, which commercial bars often strip out and sell separately — this is a key skin-benefit differentiator worth stating clearly. Contrast with synthetic detergent bars (many mass-market bars are technically not soap at all). Note that 'all natural soap' and 'natural bar soap' mean the ingredients are plant-based and free of synthetic surfactants. Keep tone educational, not preachy. Cite an authoritative source (e.g., FDA's definition of soap vs. cosmetic/detergent) for the soap/detergent distinction claim.",
+      "keywords_to_include": [
+        "natural bar soap",
+        "all natural soap",
+        "soap ingredients",
+        "natural soap ingredients",
+        "handmade soap"
+      ]
+    },
+    {
+      "section": "H2: Cold Process vs. Melt-and-Pour — Which Method Is Right for You?",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Compare the two beginner-accessible methods side by side in prose (a small comparison table is welcome here — compare method TYPE, not brands). Cold process: full control over ingredients, requires handling lye, cure time 4–6 weeks, produces true soap with retained glycerin. Melt-and-pour: pre-made soap base, no lye handling, ready in hours, less control over base ingredients. Mention that melt-and-pour is a good entry point for absolute beginners or those making soap as gifts in December/holiday season. Link internally to the handcrafted soap explainer for readers who want more context on what makes artisan soap different. Do not recommend specific commercial soap bases by brand.",
+      "keywords_to_include": [
+        "soap making",
+        "homemade soap",
+        "natural handmade soap",
+        "handmade soap"
+      ]
+    },
+    {
+      "section": "H2: Homemade Soap Ingredients — What You Need and Why",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "Cover the core ingredient categories: (1) Base oils — coconut oil (lather, hardness), olive oil (moisture, castile-style soap), castor oil (bubbles), tallow or lard as traditional options. Note that an all-olive-oil bar is the basis of classic castile soap and organic castile soap. Briefly explain what castile soap is in 1–2 sentences to capture that semantic keyword naturally. (2) Lye — sodium hydroxide (NaOH) for bar soap, potassium hydroxide for liquid soap. Clarify that 'best lye for soap making' is 100% pure sodium hydroxide; note where to source food-grade or soap-grade lye safely. (3) Liquid — distilled water is standard; goat milk soap substitutes milk for water to add nourishing properties. (4) Optional add-ins: turmeric (brightening), botanicals, essential oils for fragrance, unscented options for sensitive skin. Keep descriptions factual. Cite a credible source for coconut oil's saponification properties (e.g., a university extension or peer-reviewed source). Link to the turmeric soap benefits blog post when mentioning turmeric as an add-in.",
+      "keywords_to_include": [
+        "soap ingredients",
+        "natural soap ingredients",
+        "castile soap",
+        "organic castile soap",
+        "castile soap ingredients",
+        "what is castile soap",
+        "goat milk soap",
+        "tallow soap",
+        "turmeric soap",
+        "unscented soap",
+        "lye soap ingredients",
+        "best lye for soap making",
+        "coconut oil bar soap"
+      ]
+    },
+    {
+      "section": "H2: Equipment You'll Need Before You Start",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Brief, practical list of equipment: digital kitchen scale (weight measurements are essential — volume is unreliable), stainless steel or heavy-duty plastic pitcher for lye solution, stick blender, silicone or wooden mold, safety gear (gloves, goggles, long sleeves). Note that dedicated soap equipment should not be reused for food. Keep this section tight — it is a setup checklist, not a shopping guide. Do not link to specific retailers.",
+      "keywords_to_include": [
+        "soap making",
+        "homemade soap"
+      ]
+    },
+    {
+      "section": "H2: Step 1 — Prepare Your Workspace and Safety Gear",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "First HowTo step. Instruct the reader to clear and protect the work surface, put on gloves and goggles before touching lye, ensure good ventilation (lye fumes are caustic when first mixed with water), and have a bowl of water or white vinegar nearby to neutralize any lye splashes on skin. Tone should be calm and confident — lye is manageable with basic precautions, not uniquely dangerous if you follow safety steps. Do not exaggerate danger or create fear. Cite a safety resource such as a university extension safety sheet or a government safety body for lye handling if one is available.",
+      "keywords_to_include": [
+        "homemade lye soap",
+        "homemade soap",
+        "soap making"
+      ]
+    },
+    {
+      "section": "H2: Step 2 — Weigh and Prepare Your Oils",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Second HowTo step. Emphasize that all ingredients must be weighed by mass on a digital scale, not measured by volume — this is a common beginner mistake. Provide a simple starter recipe (suggested proportions only, framed as a guide — recommend the writer use a well-known proportional recipe such as: ~40% coconut oil, ~40% olive oil, ~15% castor or sunflower oil, ~5% optional luxury oil). Instruct the writer to note that readers should run any recipe through a free lye calculator (generic term — do not name a specific tool brand) before making it to confirm lye amounts are correct. Melt solid oils gently, combine with liquid oils, allow to cool to approximately 90–110°F.",
+      "keywords_to_include": [
+        "coconut oil bar soap",
+        "soap ingredients",
+        "natural soap ingredients",
+        "soap making"
+      ]
+    },
+    {
+      "section": "H2: Step 3 — Make the Lye Solution",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Third HowTo step. Instruct: always add lye to water (never water to lye — this causes dangerous spattering). Use distilled water. The solution will heat up rapidly to 180–200°F — this is normal. Stir until fully dissolved. Allow lye solution to cool to approximately 90–110°F before combining with oils. If using goat milk soap method, briefly note that the milk replaces distilled water and requires extra care to prevent scorching (freeze milk first). Keep instructions precise and sequential.",
+      "keywords_to_include": [
+        "homemade lye soap",
+        "goat milk soap",
+        "soap making"
+      ]
+    },
+    {
+      "section": "H2: Step 4 — Combine Oils and Lye, Blend to Trace",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Fourth HowTo step. Explain 'trace' in plain language: the point at which the soap batter thickens to a pudding-like consistency and a drizzle on the surface leaves a visible trace before sinking. Use a stick blender in short bursts — do not run continuously. Light trace is ideal before adding fragrance or color add-ins (turmeric, botanicals). Medium trace is good for most pours. Describe what trace looks like visually so beginners can recognize it.",
+      "keywords_to_include": [
+        "turmeric soap",
+        "homemade soap",
+        "natural handmade soap"
+      ]
+    },
+    {
+      "section": "H2: Step 5 — Add Extras, Pour Into Molds, and Cure",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Fifth HowTo step. Cover: (1) Add-ins — stir in essential oils, turmeric, herbs, or goat milk powder at light trace. Note that turmeric adds a warm golden color and antioxidant properties; link to the turmeric soap benefits blog post again here if not already linked. (2) Pour into mold. Cover with cardboard or a towel to retain heat and go through gel phase (optional but produces glossy bars). (3) Unmold after 24–48 hours. (4) Cure time: cold process soap requires 4–6 weeks of curing on a rack with airflow — this is not optional; it allows saponification to complete fully and water to evaporate for a harder, milder bar. Melt-and-pour bars can be used within hours. Mention that cured homemade soap makes a popular holiday gift — relevant to the December peak season.",
+      "keywords_to_include": [
+        "turmeric soap",
+        "goat milk soap",
+        "natural handmade soap",
+        "homemade soap",
+        "soap making"
+      ]
+    },
+    {
+      "section": "H2: Natural Add-Ins and Variations to Try",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Cover popular natural customization options that map to high-volume semantic keywords: (1) Turmeric soap — brightening, antioxidant, gives warm color; link to turmeric soap benefits blog post. (2) Goat milk soap — creamy lather, nourishing lactic acid, good for dry or sensitive skin. (3) Tallow soap — traditional, stable bar, high in stearic acid for hardness; link to tallow soap blog post. (4) Castile-style soap — all or mostly olive oil, gentle, slow to lather but very mild; tie back to the castile soap definition introduced earlier. (5) Unscented soap — for sensitive skin or those with fragrance sensitivities, simply omit essential oils. Brief 1–2 sentence treatment for each variation. Do not make unsubstantiated skin-health claims; use 'may help,' 'is known for,' or 'many people find' framing unless a citation is provided.",
+      "keywords_to_include": [
+        "turmeric soap",
+        "goat milk soap",
+        "tallow soap",
+        "castile soap",
+        "unscented soap",
+        "natural soap",
+        "all natural soap"
+      ]
+    },
+    {
+      "section": "H2: When Homemade Isn't an Option — What to Look for in a Natural Soap",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Bridge section for readers who want the benefits of handmade, natural soap without the DIY process. Explain what to look for on a label: saponified oils (not synthetic detergents), no SLS or SLES, retained glycerin, short ingredient list, coconut oil or olive oil base. This is the natural internal link placement for Real Skin Care's coconut soap and organic foaming hand soap products. Position Real Skin Care as the ready-made version of what this guide helps readers create at home — same principles, formulated for convenience. Avoid aggressive sales language; keep tone helpful and informational. Link to the coconut soap product page and the organic foaming hand soap product page. Also link to the best moisturizing bar soap blog post for further reading.",
+      "keywords_to_include": [
+        "natural soap",
+        "natural bar soap",
+        "handmade soap",
+        "coconut hand soap",
+        "natural soap ingredients",
+        "all natural soap"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions About Homemade Soap",
+      "type": "faq",
+      "word_count_target": 200,
+      "guidance": "Address 4 concise FAQs that reflect real search behavior. Suggested questions: (1) Is homemade soap safe to use? — Yes, when fully cured and lye has fully saponified; the final bar contains no free lye. (2) How long does homemade soap last? — Cold process bars cured properly can last 1–2 years if kept dry between uses. (3) Can you make homemade soap without lye? — Not true soap via cold process; melt-and-pour uses a pre-saponified base so you do not handle lye directly. (4) What is the difference between homemade soap and castile soap? — Castile soap specifically refers to soap made primarily from olive oil; homemade soap is any soap you make at home and can use any oil base. Keep answers to 2–4 sentences each. These FAQs support FAQ schema markup and answer-first content principles for AI citation eligibility.",
+      "keywords_to_include": [
+        "homemade soap",
+        "castile soap",
+        "what is castile soap",
+        "soap making",
+        "homemade lye soap",
+        "natural soap"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 150,
+      "guidance": "Briefly recap the two methods and remind readers that the most important steps are accurate measurement, proper lye safety, and patience through the cure. Reinforce that homemade natural soap is genuinely achievable for beginners. End with a natural CTA: readers who want the benefits of real, natural soap without making it themselves can explore Real Skin Care's coconut oil-based bars and foaming soaps — link to the foaming hand soap collection page (verify this URL is live before publishing: https://www.realskincare.com/collections/foaming-hand-soap). Keep the CTA low-pressure and benefit-led, not promotional in tone.",
+      "keywords_to_include": [
+        "homemade soap",
+        "natural soap",
+        "handmade soap",
+        "soap making"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "soap making",
+    "handmade soap",
+    "natural soap",
+    "natural handmade soap",
+    "castile soap",
+    "organic castile soap",
+    "what is castile soap",
+    "castile soap ingredients",
+    "goat milk soap",
+    "turmeric soap",
+    "tallow soap",
+    "unscented soap",
+    "natural bar soap",
+    "all natural soap",
+    "soap ingredients",
+    "natural soap ingredients",
+    "lye soap ingredients",
+    "homemade lye soap",
+    "best lye for soap making",
+    "coconut oil bar soap",
+    "coconut hand soap",
+    "soap nuts",
+    "cold process soap",
+    "melt and pour soap",
+    "saponification",
+    "natural add-ins for soap",
+    "DIY soap",
+    "homemade soap recipe"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "turmeric soap benefits",
+      "url": "https://www.realskincare.com/blogs/news/turmeric-soap-benefits-uses-what-to-look-for",
+      "placement_guidance": "Link when first mentioning turmeric as a natural add-in in the ingredients section (H2: Homemade Soap Ingredients), and again in the add-ins variation section (H2: Natural Add-Ins and Variations to Try)."
+    },
+    {
+      "anchor_text": "what makes handcrafted soap different",
+      "url": "https://www.realskincare.com/blogs/news/handcrafted-soap-what-it-is-why-its-better",
+      "placement_guidance": "Link in the cold process vs. melt-and-pour section when directing readers who want deeper context on artisan soap methods and quality."
+    },
+    {
+      "anchor_text": "tallow soap benefits and natural alternatives",
+      "url": "https://www.realskincare.com/blogs/news/tallow-soap-benefits-ingredients-natural-alternatives",
+      "placement_guidance": "Link in the Natural Add-Ins section when covering tallow soap as a variation option."
+    },
+    {
+      "anchor_text": "Real Skin Care coconut soap",
+      "url": "https://www.realskincare.com/products/coconut-soap",
+      "placement_guidance": "Link in the bridge section (H2: When Homemade Isn't an Option) as an example of a natural coconut-oil-based soap alternative for readers who prefer not to DIY."
+    },
+    {
+      "anchor_text": "organic foaming hand soap",
+      "url": "https://www.realskincare.com/products/organic-foaming-hand-soap",
+      "placement_guidance": "Link in the bridge section alongside the coconut soap product, positioned as a ready-made natural alternative with a short ingredient list."
+    },
+    {
+      "anchor_text": "best moisturizing bar soap for soft skin",
+      "url": "https://www.realskincare.com/blogs/news/best-moisturizing-bar-soap-for-soft-hydrated-skin",
+      "placement_guidance": "Link in the bridge section (H2: When Homemade Isn't an Option) as a further reading recommendation for readers evaluating natural bar soap options."
+    },
+    {
+      "anchor_text": "foaming hand soap collection",
+      "url": "https://www.realskincare.com/collections/foaming-hand-soap",
+      "placement_guidance": "Link in the conclusion CTA. IMPORTANT: verify this URL returns a 200 response before publishing — do not include if the collection page is not live. If unavailable, substitute https://www.realskincare.com/products/organic-foaming-hand-soap."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Include a brief author byline or editor note indicating the content has been reviewed by someone with formulation or natural cosmetics experience",
+    "Cite the FDA's definition of soap vs. cosmetic/detergent to anchor the opening definitional claim with regulatory authority",
+    "Cite a university extension service or peer-reviewed source for saponification chemistry and oil properties — do not rely solely on DIY blogs",
+    "Use precise, measurable language throughout (temperatures in °F, weight in grams/ounces, cure times in weeks) — vague ranges undermine credibility",
+    "Acknowledge the limits of the guide: note that readers should always run recipes through a lye calculator before making them, and that the guide is educational, not a substitute for a full soap-making course",
+    "Link outbound to a credible lye safety resource (e.g., a government occupational safety body or university extension sheet) when covering lye handling steps",
+    "Use 'many soapmakers find' or 'traditionally used' framing for experiential claims rather than absolute statements — this is more honest and less legally exposed"
+  ],
+  "schema_type": "HowTo",
+  "citation_guidance": "The following claims require outbound citations to authoritative sources before publication: (1) The distinction between true soap (saponified oils retaining glycerin) and synthetic detergent bars — cite the FDA's 'Is It a Cosmetic, a Drug, or Both?' guidance page (fda.gov) for the regulatory definition of soap. Verify the specific URL is live before linking. (2) Lye (sodium hydroxide) safety and handling precautions — cite OSHA or a university extension safety data sheet; do not invent or paraphrase safety rules without a source. (3) Any specific skin benefit claims for add-ins (turmeric antioxidant properties, goat milk lactic acid content) — cite a peer-reviewed study or a credible dermatological source; if no strong citation is available, use softened language ('commonly used for,' 'traditionally associated with') and do not make efficacy claims. (4) Coconut oil saponification value and lather properties — a university extension cosmetic formulation resource or a peer-reviewed lipid chemistry source is appropriate. (5) Cure time claim (4–6 weeks) — this is widely cited in soap-making literature; source from a credible soap-making educational resource or chemistry explanation, not a commercial soap brand. Avoid absolute claims such as 'homemade soap is better for your skin than commercial soap' unless directly supported by a peer-reviewed citation — soften to 'may retain more glycerin' or 'avoids synthetic surfactants found in many commercial bars.'",
+  "writer_notes": "Tone: warm, knowledgeable, and practical — like advice from a friend who is also a formulator. Not preachy about 'clean beauty'; not alarmist about lye. The reader is curious and motivated but potentially intimidated — your job is to reduce intimidation, not add to it. Brand voice: Real Skin Care speaks plainly, uses ingredient-level specificity, and trusts readers to make informed choices. Avoid marketing speak ('revolutionary,' 'game-changing,' 'transform your skin'). Avoid absolute health claims that cannot be backed by a citation. Structure discipline: this is a HowTo post — the five steps (H2: Step 1 through Step 5) must be clearly sequential and action-oriented, written as direct instructions ('Weigh your oils,' 'Add lye to water,' not 'You should weigh your oils'). Historical flop patterns to avoid: multiple prior posts in this cluster have been blocked due to query intent mismatch — this post must stay tightly focused on the 'homemade soap' how-to intent. Do not drift into brand comparison content, 'best soap for tattoos,' antibacterial soap, or unrelated personal care topics. The content must match what someone typing 'homemade soap' actually wants: a recipe-and-method guide. Answer-first principle: the introduction must deliver a direct factual answer in the first 1–2 sentences — this supports AI citation eligibility per standing instructions. Do not open with a rhetorical question or a lifestyle anecdote. Seasonality note: December and November are peak months — the gift-giving angle (homemade soap as a holiday gift) can be woven naturally into the cure-time section and conclusion without dominating the piece. Word count discipline: target 2400 words total; section targets in the outline sum to this. Do not pad any section to hit a number — every sentence should earn its place. Do not reference or name any competitor soap brands anywhere in the post.",
+  "search_volume": 3600,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://lovelygreens.com/easy-soap-recipes-beginners/",
+      "title": "Easy Soap Recipes for Beginners",
+      "domain": "lovelygreens.com",
+      "description": "Jun 15, 2023 — Three easy soap recipes that are simple to make and use all-natural ingredients. Includes cold process recipes for floral soap, herbal soap, ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://food52.com/story/12919-how-to-make-soap-at-home-even-if-you-failed-chemistry",
+      "title": "How to Make Soap at Home (Even if You Failed Chemistry)",
+      "domain": "food52.com",
+      "description": "Apr 1, 2022 — Making soap is a creative DIY project. Here's how to make soap using a cold press method, with just 5 ingredients including lye, olive oil, ..."
+    },
+    {
+      "position": 3,
+      "url": "https://thenerdyfarmwife.com/how-to-create-custom-soaps-from-a-single-recipe/",
+      "title": "How to: Create Custom Soaps From A Single Recipe",
+      "domain": "thenerdyfarmwife.com",
+      "description": "Basic Soap Recipe · 12.5 oz (354 g) olive oil (44.64%) · 3.5 oz (99 g) sunflower or sweet almond oil (12.5%) · 8 oz (227 g) coconut oil (28.57%) · 4 oz (113 g) ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.lehmans.com/blogs/news/diy-how-to-make-cold-process-soap-step-by-step?srsltid=AfmBOopkxTaYvuAXMAMyPrgvX1MSTxSJ3DeBUCVKqHRlUp-Sts-U_ink",
+      "title": "DIY: How To Make Cold Process Soap, Step By Step",
+      "domain": "www.lehmans.com",
+      "description": "Ingredients : 3 pounds distilled water (does not need to be refrigerated) 473 grams sodium hydroxide (lye) 4 pounds olive oil 2 pounds 8 ounces coconut oil 1 ..."
+    },
+    {
+      "position": 5,
+      "url": "https://www.brambleberry.com/shop-by-product/kits/soap-making?srsltid=AfmBOor9k2t3KiEq6zhZN0hBrTmdyDZ-6QwBgOA94bGMwiojO9vVi5Oa",
+      "title": "Homemade Soap Making Kits",
+      "domain": "www.brambleberry.com",
+      "description": "Our DIY soap making kits include premium ingredients and step-by-step instructions for beginners and intermediate crafters."
+    },
+    {
+      "position": 6,
+      "url": "https://eccentricitiesbyjvg.com/craft-your-own-natural-soap-easy-recipes-without-lye-for-beginners/",
+      "title": "Craft Your Own Natural Soap: Easy Recipes Without Lye ...",
+      "domain": "eccentricitiesbyjvg.com",
+      "description": "Make skin-loving luxurious soaps with this soap DIY without lye. Melt and pour soap-making recipes without handling lye."
+    },
+    {
+      "position": 7,
+      "url": "https://diynatural.com/how-to-make-soap/",
+      "title": "How To Make Soap: Homemade Soap Recipe for Hand ...",
+      "domain": "diynatural.com",
+      "description": "Ingredients 2⁄3 cup unrefined coconut oil 2⁄3 cup olive oil ・ 2⁄3 cup almond oil ・ 1⁄4 cup lye ・ 3⁄4 cup cool water (distilled or purified)"
+    },
+    {
+      "position": 8,
+      "url": "https://www.soapmakingforum.com/threads/how-to-make-soap-soapmaking-guide-for-beginners.88204/",
+      "title": "How to Make Soap - Soapmaking Guide for Beginners",
+      "domain": "www.soapmakingforum.com",
+      "description": "Jul 8, 2022 — Just make sure you have 100% sodium hydroxide, lye, with no other ingredients. Each oil you use brings something different to the soap. Coconut ... Read more"
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "soap",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 2,
+    "medianWordCount": 19049.5,
+    "avgH2": 10,
+    "targetWordCount": 3000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

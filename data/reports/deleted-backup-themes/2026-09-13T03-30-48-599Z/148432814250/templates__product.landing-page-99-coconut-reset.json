@@ -1,0 +1,941 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-landing-section",
+      "blocks": {
+        "bullet-1": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>3 full-size Body Lotions + 1 Body Cream — a complete 90-day routine<\/p>"
+          }
+        },
+        "bullet-2": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>A complete $158 routine — lotions, cream &amp; expert guides — yours for $99<\/p>"
+          }
+        },
+        "bullet-3": {
+          "type": "bullet",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "check",
+            "text_rte": "<p>Cold-pressed coconut oil + organic jojoba — no fragrance, parabens, or mineral oil<\/p>"
+          }
+        },
+        "guarantee-1": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "truck",
+            "text": "Free shipping included"
+          }
+        },
+        "guarantee-2": {
+          "type": "guarantee",
+          "settings": {
+            "icon_source": "preset",
+            "icon_preset": "shield",
+            "text": "30-day no-questions-asked money-back guarantee"
+          }
+        }
+      },
+      "block_order": [
+        "bullet-1",
+        "bullet-2",
+        "bullet-3",
+        "guarantee-1",
+        "guarantee-2"
+      ],
+      "name": "Hero",
+      "settings": {
+        "heading_level": "h1",
+        "heading_rte": "<p>The 90-Day Coconut Skin Reset<\/p>",
+        "subheading_rte": "<p>The complete routine in one box — three daily lotions and an overnight cream — for skin that finally stays soft. Ninety days. Never run out.<\/p>",
+        "subheading_bg_opacity": 0,
+        "show_rating": true,
+        "rating_value": "4.9",
+        "rating_caption": "Rated 4.9 by Real Customers",
+        "cta_label": "Start My 90-Day Reset",
+        "cta_anchor": "#buy-box",
+        "bg_image_desktop": "shopify:\/\/shop_images\/hero-desktop.webp",
+        "bg_image_mobile": "shopify:\/\/shop_images\/solid-sage.webp",
+        "bg_color": "#eef3e8",
+        "overlay_color": "#000000",
+        "overlay_opacity": 0,
+        "flip_layout": false,
+        "text_align_center_mobile": false,
+        "content_max_width": 1240,
+        "padding_top": 64,
+        "padding_bottom": 64,
+        "height_mode": "auto",
+        "min_height_desktop": 600,
+        "compact_spacing": false,
+        "cta_full_width_mobile": true,
+        "cta_full_width_desktop": false,
+        "gap_sub_to_bullets": 16,
+        "gap_between_bullets": 10,
+        "bullets_center": false
+      }
+    },
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "buy-box-anchor": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<span id=\"buy-box\" style=\"display:block;\"><\/span>"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {
+            "title_size": "h2",
+            "show_price": false,
+            "price_size": "medium"
+          }
+        },
+        "price": {
+          "type": "price",
+          "settings": {
+            "price_size": "medium",
+            "show_badges": true
+          }
+        },
+        "benefit-1": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "3 full-size Body Lotions + 1 Body Cream — about a 90-day supply",
+            "text_style": "body"
+          }
+        },
+        "benefit-2": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "Two formulas, one routine — daily lotion + overnight cream",
+            "text_style": "body"
+          }
+        },
+        "benefit-3": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "Cold-pressed coconut oil + organic jojoba + beeswax barrier",
+            "text_style": "body"
+          }
+        },
+        "benefit-4": {
+          "type": "text",
+          "settings": {
+            "icon": "check_mark",
+            "text": "No synthetic fragrance, no petrolatum, no dimethicone, no lanolin",
+            "text_style": "body"
+          }
+        },
+        "discount-callout": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.product__text svg, .product__text svg path { color: #4a8b3c; fill: #4a8b3c; } .multicolumn-card strong { color: #FFB503; letter-spacing: 2px; font-size: 1.15em; } .product__tax { display: none !important; } shopify-payment-terms, .shopify-payment-terms, [data-shopify=\"payment-terms\"] { display: none !important; } .rich-text { position: relative; } .rich-text::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: rgb(var(--color-background)); z-index: -1; } [id*=\"hero-ingredient-cards\"] { background-color: #faf7f0; position: relative; } [id*=\"hero-ingredient-cards\"]::before { content: \"\"; position: absolute; top: 0; bottom: 0; left: calc(-50vw + 50%); right: calc(-50vw + 50%); background-color: #faf7f0; z-index: -1; } [id*=\"free-from\"] .rte ul, [id*=\"free-from\"] ul { list-style: none; padding: 0; margin: 0; } [id*=\"free-from\"] li { font-size: 17px; line-height: 1.35; padding: 1px 0; font-weight: 500; color: #1a1b18; } [id*=\"free-from\"] li::before { content: \"✗\"; color: #4a8b3c; margin-right: 10px; font-weight: 700; }<\/style>"
+          }
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "show_variant_labels": true,
+            "picker_type": "dropdown",
+            "swatch_type": "round",
+            "size_chart": ""
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_quantity_selector": false,
+            "show_dynamic_checkout": true
+          }
+        },
+        "sticky_cart": {
+          "type": "sticky_cart",
+          "settings": {
+            "show_quantity_selector": false
+          }
+        },
+        "tab-whats-inside": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "box",
+            "heading": "What's Inside",
+            "content": "<p><strong>3 full-size Body Lotions.<\/strong> Lotion is your daily driver — morning, after showers, after handwashing. You reach for it most, so you get three.<\/p><p><strong>1 full-size Body Cream.<\/strong> Your overnight repair layer for dry patches, hands, elbows, and knees. A little goes a long way, so one jar lasts the full window.<\/p><p><strong>2 digital guides (delivered to your inbox).<\/strong> The 90-Day Calm-Skin Routine &amp; Tracker and the Coconut Skincare Field Guide — so you actually stick with the reset.<\/p><p>Together that's about 90 days of daily use for one person: enough time for skin to actually turn a corner instead of starting over every few weeks.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": true
+          }
+        },
+        "tab-ingredients": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "check_mark",
+            "heading": "Ingredients",
+            "content": "<p><strong>Coconut Body Lotion:<\/strong> Purified spring water, organic virgin coconut oil, organic jojoba, plant-based emulsifying wax, organic grapefruit seed extract, organic red palm oil.<\/p><p><strong>Coconut Body Cream:<\/strong> Purified spring water, organic virgin coconut oil, plant-based emulsifying wax, palm stearic, grapefruit seed extract, organic beeswax, organic red palm oil.<\/p><p>Choose Pure Unscented for no added fragrance of any kind, or a lightly scented option at checkout.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "tab-howto": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "clipboard",
+            "heading": "How to Use",
+            "content": "<p><strong>Daily (lotion):<\/strong> Apply to clean, dry skin after a shower or whenever skin feels tight. Massage in fully — it should absorb within minutes without sticky residue.<\/p><p><strong>Overnight (cream):<\/strong> Warm a small amount between your fingers and apply to dry patches before bed. Best on elbows, knees, hands, and feet — areas that need more than a daytime lotion can give.<\/p><p>If either formula is firm in cold weather, warm a small amount between your palms first. Cold-pressed coconut oil firms below 76°F.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "tab-shipping": {
+          "type": "collapsible_tab",
+          "settings": {
+            "icon": "box",
+            "heading": "Shipping & Returns",
+            "content": "<p>Free shipping included on your 90-Day Reset. Standard delivery 2 business days within the US. Expedited shipping available at checkout. This is a one-time order — no subscription, no auto-billing.<\/p><p>Not loving your reset? Email us within 30 days of receipt for a full refund — you don't need to send the product back. See our <a href=\"\/policies\/shipping-policy\">Shipping Policy<\/a> and <a href=\"\/policies\/refund-policy\">Return Policy<\/a> for full details.<\/p>",
+            "page": "",
+            "custom_liquid": "",
+            "keep_open": false
+          }
+        },
+        "vqr-combo": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>\n.vqr-row{display:flex;gap:12px;align-items:flex-end;justify-content:flex-start;margin:14px 0}\n.vqr-col{display:flex;flex-direction:column}\n.vqr-col--variant{flex:0 0 32%;min-width:140px}\n.vqr-col--qty{flex:0 0 auto;width:130px}\n.vqr-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;margin:0 0 6px 0;font-weight:500;color:#1a1b18}\n.vqr-select{padding:11px 12px;border:1px solid #d3d3d3;border-radius:6px;background:#fff;font-size:14px;color:#1a1b18;height:42px}\n.vqr-stepper{display:flex;align-items:stretch;border:1px solid #d3d3d3;border-radius:6px;overflow:hidden;background:#fff;height:42px}\n.vqr-stepper button{background:#fff;border:none;padding:0 10px;font-size:18px;cursor:pointer;color:#1a1b18;line-height:1}\n.vqr-stepper button:hover{background:#f5f5f5}\n.vqr-stepper input{flex:1;text-align:center;border:none;padding:0 2px;font-size:14px;font-weight:500;-moz-appearance:textfield;min-width:0;background:#fff}\n.vqr-stepper input::-webkit-outer-spin-button,.vqr-stepper input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}\n.product-form__input--variant-picker,.product-form__input.variant-input-wrapper,variant-selects:not([data-vqr-skip]){display:none !important}\n<\/style>\n<div class=\"vqr-row\">\n  {%- if product.variants.size > 1 -%}\n  <div class=\"vqr-col vqr-col--variant\">\n    <label class=\"vqr-label\" for=\"vqr-variant-{{ product.id }}\">{{ product.options[0] | default: 'Scent' }}<\/label>\n    <select class=\"vqr-select\" id=\"vqr-variant-{{ product.id }}\" data-vqr-variant>\n      {%- for v in product.variants -%}\n        <option value=\"{{ v.id }}\"{% if v == product.selected_or_first_available_variant %} selected{% endif %}{% unless v.available %} disabled{% endunless %}>\n          {{- v.title }}{% unless v.available %} - Sold out{% endunless -%}\n        <\/option>\n      {%- endfor -%}\n    <\/select>\n  <\/div>\n  {%- endif -%}\n  <div class=\"vqr-col vqr-col--qty\">\n    <label class=\"vqr-label\" for=\"vqr-qty-{{ product.id }}\">Quantity<\/label>\n    <div class=\"vqr-stepper\">\n      <button type=\"button\" data-vqr-qty-minus aria-label=\"Decrease quantity\">&minus;<\/button>\n      <input id=\"vqr-qty-{{ product.id }}\" type=\"number\" name=\"quantity\" value=\"1\" min=\"1\" data-vqr-qty form=\"product-form-{{ section.id }}\">\n      <button type=\"button\" data-vqr-qty-plus aria-label=\"Increase quantity\">+<\/button>\n    <\/div>\n  <\/div>\n<\/div>\n<script>\n(function(){\n  \/\/ Bound once. Dawn replaces the product info container on every variant change, so the\n  \/\/ picker and stepper are new DOM nodes each time — listeners bound to the elements\n  \/\/ themselves die after the first switch. Inline scripts in replaced markup do not run,\n  \/\/ so nothing re-binds. Delegation on document is what makes this survive.\n  if(window.__vqrDelegated){ return; }\n  window.__vqrDelegated = true;\n\n  \/\/ variant id -> its option values. Covers multi-option bundles (Configuration + Scent),\n  \/\/ not just the first select.\n  var VQR_OPTION_VALUES = {\n    {%- for v in product.variants -%}\n    \"{{ v.id }}\": [{% for o in v.options %}{{ o | json }}{% unless forloop.last %},{% endunless %}{% endfor %}]{% unless forloop.last %},{% endunless %}\n    {%- endfor -%}\n  };\n\n  document.addEventListener('change', function(e){\n    var pick = e.target;\n    if(!pick || !pick.matches || !pick.matches('select[data-vqr-variant]')){ return; }\n    var opts = VQR_OPTION_VALUES[pick.value];\n    if(!opts){ return; }\n\n    var root = document.querySelector('variant-selects:not([data-vqr-skip])');\n    var selects = root ? root.querySelectorAll('select') : [];\n    if(selects.length){\n      \/\/ Assign the OPTION VALUE, never the variant id — an id matches no option, so the\n      \/\/ select silently empties and the gallery never updates.\n      for(var i = 0; i < selects.length; i++){\n        if(opts[i] != null){ selects[i].value = opts[i]; }\n      }\n      selects[selects.length - 1].dispatchEvent(new Event('change', { bubbles: true }));\n      return;\n    }\n    var radios = document.querySelectorAll('variant-radios input[type=\"radio\"]');\n    radios.forEach(function(r){\n      if(opts.indexOf(r.value) !== -1){ r.checked = true; r.dispatchEvent(new Event('change',{bubbles:true})); }\n    });\n  });\n\n  document.addEventListener('click', function(e){\n    var btn = e.target.closest && e.target.closest('[data-vqr-qty-minus], [data-vqr-qty-plus]');\n    if(!btn){ return; }\n    var wrap = btn.closest('.vqr-stepper') || btn.parentElement;\n    var qty = wrap && wrap.querySelector('input');\n    if(!qty){ return; }\n    var v = parseInt(qty.value, 10) || 1;\n    var next = btn.hasAttribute('data-vqr-qty-minus') ? Math.max(1, v - 1) : v + 1;\n    if(next !== v){ qty.value = next; qty.dispatchEvent(new Event('change',{bubbles:true})); }\n  });\n})();\n<\/script>"
+          }
+        },
+        "judgeme_preview_badge": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/preview_badge\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {}
+        },
+        "value-stack": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.crx-vs{border:1px solid #cbd8c0;background:#f4f8ee;border-radius:12px;padding:18px 20px 16px;margin:18px 0;}.crx-vs *{box-sizing:border-box;}.crx-vs__title{font-weight:700;font-size:15px;color:#1a1b18;margin:0 0 12px;letter-spacing:-0.01em;font-family:inherit;}.crx-vs__row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:8px 0;border-bottom:1px solid #e2ead9;}.crx-vs__row:last-of-type{border-bottom:0;}.crx-vs__label{font-size:14.5px;color:#33352f;line-height:1.35;font-family:inherit;}.crx-vs__label small{color:#7c8a72;font-size:12.5px;}.crx-vs__price{font-size:14.5px;font-weight:600;color:#1a1b18;white-space:nowrap;}.crx-vs__total{display:flex;justify-content:space-between;align-items:baseline;margin-top:12px;padding-top:12px;border-top:2px solid #cbd8c0;}.crx-vs__tl{font-weight:700;font-size:16px;color:#1a1b18;}.crx-vs__was{color:#9aa593;text-decoration:line-through;font-weight:500;margin-right:8px;font-size:15px;}.crx-vs__now{color:#4a8b3c;font-weight:700;font-size:17px;}.crx-vs__save{margin-top:12px;background:#4a8b3c;color:#fff;text-align:center;font-weight:700;font-size:14px;letter-spacing:0.3px;padding:9px 12px;border-radius:8px;}<\/style><div class=\"crx-vs\"><p class=\"crx-vs__title\">Everything in your 90-Day Reset<\/p><div class=\"crx-vs__row\"><span class=\"crx-vs__label\">3 Body Lotions + 1 Body Cream<\/span><span class=\"crx-vs__price\">$118<\/span><\/div><div class=\"crx-vs__row\"><span class=\"crx-vs__label\">90-Day Routine &amp; Tracker <small>(digital)<\/small><\/span><span class=\"crx-vs__price\">$19<\/span><\/div><div class=\"crx-vs__row\"><span class=\"crx-vs__label\">Coconut Skincare Field Guide <small>(digital)<\/small><\/span><span class=\"crx-vs__price\">$15<\/span><\/div><div class=\"crx-vs__row\"><span class=\"crx-vs__label\">Free shipping<\/span><span class=\"crx-vs__price\">$6<\/span><\/div><div class=\"crx-vs__total\"><span class=\"crx-vs__tl\">Total value<\/span><span><span class=\"crx-vs__was\">$158<\/span><span class=\"crx-vs__now\">$99 today<\/span><\/span><\/div><div class=\"crx-vs__save\">You save $59 today<\/div><\/div>"
+          }
+        },
+        "bundle-savings": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<div style=\"margin:8px 0 4px 0;font-size:1em;font-weight:700;color:#4a8b3c;line-height:1.35;\">$158 of product &amp; expert guides — yours today for $99<\/div><div style=\"font-size:0.85em;color:#6d7175;margin:4px 0 12px 0;line-height:1.45;\">That&rsquo;s <strong>$59 in savings<\/strong> for a full 90-day routine &mdash; about {{ product.price | divided_by: 90 | money }} a day.<\/div>"
+          }
+        },
+        "trust-row": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.lander-trust-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:18px 0 4px 0;border-top:1px solid #e5e5e5;margin-top:18px}.lander-trust-row__item{display:flex;gap:10px;align-items:center;justify-content:center;text-align:center}.lander-trust-row__icon{font-size:1.4em;line-height:1;flex-shrink:0}.lander-trust-row__title{font-weight:700;font-size:0.9em;line-height:1.3;color:#1a1b18}@media(max-width:600px){.lander-trust-row{grid-template-columns:1fr;gap:10px}}<\/style><div class=\"lander-trust-row\"><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">🛡️<\/span><div class=\"lander-trust-row__title\">30-Day Money-Back Guarantee<\/div><\/div><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">📦<\/span><div class=\"lander-trust-row__title\">Shipped in 2 Business Days<\/div><\/div><div class=\"lander-trust-row__item\"><span class=\"lander-trust-row__icon\">🌱<\/span><div class=\"lander-trust-row__title\">Certified Organic Ingredients<\/div><\/div><\/div>"
+          }
+        }
+      },
+      "block_order": [
+        "buy-box-anchor",
+        "judgeme_preview_badge",
+        "title",
+        "price",
+        "bundle-savings",
+        "benefit-1",
+        "benefit-2",
+        "benefit-3",
+        "benefit-4",
+        "variant_picker",
+        "vqr-combo",
+        "discount-callout",
+        "value-stack",
+        "buy_buttons",
+        "trust-row",
+        "tab-whats-inside",
+        "tab-ingredients",
+        "tab-howto",
+        "tab-shipping",
+        "sticky_cart"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "media_position": "left",
+        "media_size": "medium",
+        "gallery_layout": "thumbnail_slider",
+        "image_ratio": "adapt",
+        "show_thumbnails": true,
+        "hide_variants": false,
+        "enable_image_zoom": false,
+        "enable_video_looping": false,
+        "mobile_image_ratio": "adapt_first",
+        "show_mobile_thumbnails": true,
+        "padding_top": 20,
+        "padding_bottom": 24
+      }
+    },
+    "judgeme_section_review_widget_f881": {
+      "type": "apps",
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 12,
+        "padding_bottom": 12
+      }
+    },
+    "hook-rich-text": {
+      "type": "rich-text",
+      "blocks": {
+        "hook-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "One box. Ninety days. Skin that finally stays soft.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "hook-text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>The 90-Day Coconut Reset is our full routine in a single order — three Body Lotions for daily moisture and one Body Cream for overnight repair. Enough to get through the 90 days most skin needs to actually turn a corner, instead of starting over every few weeks.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "hook-heading",
+        "hook-text"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 12
+      }
+    },
+    "hero-ingredient-cards": {
+      "type": "multicolumn",
+      "blocks": {
+        "ingredient-card-1": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/why-1-lotion.webp",
+            "title": "Daytime: 3 Lotions",
+            "title_size": "medium",
+            "text": "<p>Your daily driver. You get three full-size bottles because lotion is what you reach for every morning and after every shower. Cold-pressed virgin coconut oil and organic jojoba sink in within minutes — no film under clothes.<\/p>",
+            "button_label": ""
+          }
+        },
+        "ingredient-card-2": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/why-2-cream.webp",
+            "title": "Overnight: 1 Cream",
+            "title_size": "medium",
+            "text": "<p>Your repair layer. Organic beeswax forms a breathable seal so the cream stays where you apply it and works while you sleep. A little goes a long way, so one jar covers the full 90 days on dry patches, hands, elbows, and knees.<\/p>",
+            "button_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "ingredient-card-1",
+        "ingredient-card-2"
+      ],
+      "settings": {
+        "image_ratio": "adapt",
+        "image_position": "top",
+        "text_alignment": "left",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 2,
+        "heading": "How the routine works.",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": false,
+        "padding_top": 12,
+        "padding_bottom": 36
+      }
+    },
+    "founder-block": {
+      "type": "image-with-text",
+      "blocks": {
+        "founder-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "From The Founder",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "founder-body": {
+          "type": "text",
+          "settings": {
+            "text": "<p>During our family's healthy-ingredients journey, the customer who came back to us most often was the one whose skin reacts to everything — fragrance, parabens, dimethicone, mineral oil. We built every formula from there.<\/p><p>The reason we put this reset together is simple: skin doesn't change in a week. It takes about 90 days of consistent, clean moisture to actually turn a corner. This box gives you exactly that — three lotions and a cream — so you never run out halfway through.<\/p><p>— Sean Fillmore<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        }
+      },
+      "block_order": [
+        "founder-heading",
+        "founder-body"
+      ],
+      "settings": {
+        "image": "shopify:\/\/shop_images\/founder-landscape.webp",
+        "image_position": "center center",
+        "layout": "text_first",
+        "text_box_position": "middle",
+        "text_alignment": "left",
+        "image_ratio": "adapt",
+        "enlarge_content": false,
+        "full_width": true,
+        "show_divider": false,
+        "mobile_layout": "image_first",
+        "mobile_text_alignment": "left",
+        "mobile_image_ratio": "auto",
+        "use_custom_colors": true,
+        "colors_button_label": "#ffffff",
+        "colors_button_background": "#1a1b18",
+        "colors_text": "#212326",
+        "colors_background": "#faf7f0",
+        "gradient_background": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "free-from-block": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.free-from-band{background:#eef3e8;padding:72px 0;text-align:center;margin-left:calc(-50vw + 50%);margin-right:calc(-50vw + 50%);width:100vw}.free-from-band__inner{max-width:1180px;margin:0 auto;padding:0 32px}.free-from-band__heading{font-size:clamp(2rem,4vw,3.25rem);line-height:1.05;font-weight:700;color:#1a1b18;margin:0 0 48px 0;letter-spacing:-0.01em}.free-from-band__list{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px 32px;list-style:none;padding:0;margin:0;max-width:1100px;margin-left:auto;margin-right:auto}.free-from-band__list li{display:flex;align-items:center;justify-content:flex-start;gap:14px;font-size:1.2rem;line-height:1.25;font-weight:600;color:#1a1b18;text-align:left}.free-from-band__list li::before{content:\"✗\";color:#4a8b3c;font-size:1.7em;font-weight:800;line-height:1;flex-shrink:0}@media(max-width:900px){.free-from-band__list{grid-template-columns:repeat(2,1fr);gap:18px 24px;max-width:520px}}@media(max-width:480px){.free-from-band__list{grid-template-columns:1fr;gap:14px;max-width:280px}.free-from-band{padding:48px 0}.free-from-band__heading{font-size:1.625rem;margin-bottom:32px}}<\/style><div class=\"free-from-band\"><div class=\"free-from-band__inner\"><h2 class=\"free-from-band__heading\">What's NOT in any bottle or jar<\/h2><ul class=\"free-from-band__list\"><li>Mineral oil<\/li><li>Petrolatum<\/li><li>Dimethicone<\/li><li>Lanolin<\/li><li>Parabens<\/li><li>Phenoxyethanol<\/li><li>Synthetic fragrance<\/li><li>SLS \/ sulfates<\/li><\/ul><\/div><\/div>",
+        "full_width": true,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "collapsible-content": {
+      "type": "collapsible-content",
+      "blocks": {
+        "faq-lasts": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How long will the 90-Day Reset last?",
+            "row_content": "<p>About 90 days of daily use for one person. Lotion is what you use most — morning, after showers, after handwashing — so you get three full-size bottles. The cream stretches much further because a little goes a long way, so one jar covers the whole window. If you're applying to a large area twice a day, it may run a little shorter; on the face and hands only, it often lasts longer.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-subscription": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Is this a subscription?",
+            "row_content": "<p>No. The 90-Day Reset is a one-time order — no auto-billing, no commitment. When you're ready to restock, you can reorder or start a subscribe-and-save plan then, but nothing recurring is set up by buying this box.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-results": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "How long until I see results?",
+            "row_content": "<p>Most customers feel the difference at first application — the lotion absorbs within minutes, the cream forms a soft barrier overnight. Real changes in dry-patch frequency or chronic reactivity typically take 2–3 weeks of consistent use, and skin usually keeps improving over the full 90 days. That's exactly why we sized this as a 90-day box instead of a single bottle.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-eczema": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Will this work if I have eczema, rosacea, or sensitive skin?",
+            "row_content": "<p>We can't make medical claims and don't sell our products as treatments. What we can tell you: we built these formulas around what reactive skin most often doesn't tolerate — synthetic fragrance, parabens, mineral oil, dimethicone, lanolin. Many of our customers with eczema, rosacea, or perioral dermatitis report fewer reactions on this routine than on conventional drugstore lotions. If you've reacted to multiple products before, the Pure Unscented option is the closest thing we offer to a clean-slate routine.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-patch-test": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Should I patch test first?",
+            "row_content": "<p>Yes — especially if you've reacted to multiple products in the past. Apply a small amount to the inside of your wrist or behind your ear and wait 24 hours. No redness, itching, or stinging means you're clear to use it elsewhere. The lotion absorbs faster, so it's the easier of the two to patch test first.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-react": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "What if my skin reacts to the reset?",
+            "row_content": "<p>Email us within 30 days. We'll refund you and you don't need to send anything back. We mean it — sensitive skin shouldn't have to gamble on a product that didn't work, and we'd rather know what triggered the reaction so we can keep refining what we make.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-scent": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Which scent should I choose?",
+            "row_content": "<p>Choose <strong>Pure Unscented<\/strong> if you have reactive skin or simply don't want any fragrance — it's our most sensitive-skin-friendly option, with no essential oils added. The lightly scented options use natural aromatics if you prefer a subtle coconut or botanical note. All scents share the same clean base formula.<\/p>",
+            "page": ""
+          }
+        },
+        "faq-when": {
+          "type": "collapsible_row",
+          "settings": {
+            "heading": "Lotion vs. cream — when do I use each?",
+            "row_content": "<p>Lotion in the morning and after showers — it absorbs in minutes and won't leave a residue under clothes. Cream at night, on dry patches, hands, feet, elbows, knees — anywhere skin needs more than a daytime lotion can give. The two work as a system: lotion for daily moisture, cream for repair.<\/p>",
+            "page": ""
+          }
+        }
+      },
+      "block_order": [
+        "faq-lasts",
+        "faq-subscription",
+        "faq-results",
+        "faq-eczema",
+        "faq-patch-test",
+        "faq-react",
+        "faq-scent",
+        "faq-when"
+      ],
+      "settings": {
+        "open_first_collapsible_row": false,
+        "narrow": true,
+        "show_divider": false,
+        "heading": "FAQs",
+        "heading_size": "h1",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "padding_top": 36,
+        "padding_bottom": 72
+      }
+    },
+    "loox-product-reviews-app-section": {
+      "type": "apps",
+      "settings": {
+        "include_margins": false,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "why-it-works": {
+      "type": "landing-health-image",
+      "blocks": {
+        "point-1": {
+          "type": "point",
+          "settings": {
+            "text": "Synthetic fragrance — the #1 self-reported irritant",
+            "icon_source": "built_in"
+          }
+        },
+        "point-2": {
+          "type": "point",
+          "settings": {
+            "text": "Petrolatum & mineral oil — occlusive but not breathable",
+            "icon_source": "built_in"
+          }
+        },
+        "point-3": {
+          "type": "point",
+          "settings": {
+            "text": "Parabens & phenoxyethanol — preservatives many sensitive-skin folks avoid",
+            "icon_source": "built_in"
+          }
+        },
+        "point-4": {
+          "type": "point",
+          "settings": {
+            "text": "Dimethicone & lanolin — common reactivity triggers",
+            "icon_source": "built_in"
+          }
+        }
+      },
+      "block_order": [
+        "point-1",
+        "point-2",
+        "point-3",
+        "point-4"
+      ],
+      "settings": {
+        "image_side": "right",
+        "h2_text": "Most lotions are built around what's cheap, not what your skin can tolerate.",
+        "h2_size": "h2--lg",
+        "h3_text": "If your skin reacts, here's usually what it's reacting to:",
+        "h3_size": "h3--md",
+        "image_1": "shopify:\/\/shop_images\/why-1-lotion.webp",
+        "image_1_alt": "Pure Unscented Body Lotion bottle",
+        "image_2": "shopify:\/\/shop_images\/why-2-cream.webp",
+        "image_2_alt": "Pure Unscented Body Cream jar",
+        "image_3": "shopify:\/\/shop_images\/why-3-set.webp",
+        "image_3_alt": "90-Day Coconut Reset components together",
+        "bg_color": "#faf7f0",
+        "icon_color": "#e5484d"
+      }
+    },
+    "stats-hero": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>#shopify-section-{{ section.id }}{background-color:#faf7f0}.stats-hero{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;color:#212326;padding:24px 0}.stats-hero__media{aspect-ratio:1\/1;background:#eef3e8;border-radius:12px;overflow:hidden}.stats-hero__media img{width:100%;height:100%;object-fit:cover;display:block}.stats-hero__copy h2{font-size:clamp(2rem,3.6vw,3.25rem);line-height:1.1;margin:0 0 36px 0;font-weight:700;letter-spacing:-0.01em}.stats-hero__stat{margin-bottom:32px}.stats-hero__num{display:block;font-size:clamp(3.5rem,7vw,6.5rem);color:#4a8b3c;line-height:0.95;font-weight:800;margin-bottom:10px;letter-spacing:-0.02em}.stats-hero__desc{font-size:1.25rem;line-height:1.4;margin:0;max-width:520px}.stats-hero__sup{font-size:0.6em;vertical-align:super;color:#4a8b3c;font-weight:700}.stats-hero__footnote{font-size:0.875rem;color:#6d7175;margin-top:32px;line-height:1.55;max-width:520px}@media(max-width:749px){.stats-hero{grid-template-columns:1fr;gap:24px;padding:8px 0}.stats-hero__copy h2{font-size:1.875rem;margin-bottom:24px}.stats-hero__num{font-size:3rem}.stats-hero__desc{font-size:1.05rem}.stats-hero__stat{margin-bottom:20px}}<\/style><div class=\"stats-hero\"><div class=\"stats-hero__copy\"><h2>Why 90 Days, Not One Bottle<\/h2><div class=\"stats-hero__stat\"><span class=\"stats-hero__num\">28<\/span><p class=\"stats-hero__desc\">days for skin to fully turn over — real change takes several cycles.<span class=\"stats-hero__sup\">1<\/span><\/p><\/div><div class=\"stats-hero__stat\"><span class=\"stats-hero__num\">#1<\/span><p class=\"stats-hero__desc\">reason routines fail: people run out and stop before skin catches up.<\/p><\/div><p class=\"stats-hero__footnote\"><span class=\"stats-hero__sup\">1<\/span> Skin's outer layer (the stratum corneum) renews on roughly a 28-day cycle; dermatologists commonly cite 6–12 weeks to judge a new routine.<\/p><\/div><div class=\"stats-hero__media\"><img src=\"https:\/\/cdn.shopify.com\/s\/files\/1\/0270\/1911\/6579\/files\/stats-hand-applying.webp?v=1778128505\" alt=\"Hand applying Pure Unscented Body Lotion to a forearm in soft daylight\" loading=\"lazy\" style=\"width:100%;height:100%;object-fit:cover;\"><\/div><\/div>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "stats-row": {
+      "type": "multicolumn",
+      "blocks": {
+        "stat-1": {
+          "type": "column",
+          "settings": {
+            "title": "9.4 \/ 10",
+            "title_size": "large",
+            "text": "<p>Customer rating<\/p>",
+            "button_label": ""
+          }
+        },
+        "stat-2": {
+          "type": "column",
+          "settings": {
+            "title": "90 Days",
+            "title_size": "large",
+            "text": "<p>One complete routine<\/p>",
+            "button_label": ""
+          }
+        },
+        "stat-3": {
+          "type": "column",
+          "settings": {
+            "title": "$158",
+            "title_size": "large",
+            "text": "<p>Value in every box<\/p>",
+            "button_label": ""
+          }
+        },
+        "stat-4": {
+          "type": "column",
+          "settings": {
+            "title": "None",
+            "title_size": "large",
+            "text": "<p>Synthetic fragrances<\/p>",
+            "button_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "stat-1",
+        "stat-2",
+        "stat-3",
+        "stat-4"
+      ],
+      "settings": {
+        "image_ratio": "adapt",
+        "image_position": "top",
+        "text_alignment": "center",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 4,
+        "heading": "Why People Commit To The Full Reset.",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "judgeme_carousel_cream": {
+      "type": "apps",
+      "blocks": {
+        "judge_me_reviews_cards_carousel_mXDirj": {
+          "type": "shopify:\/\/apps\/judge-me-reviews\/blocks\/cards_carousel\/61ccd3b1-a9f2-4160-9fe9-4fec8413e5d8",
+          "settings": {
+            "show_sample_reviews": false,
+            "reviews_selection": "current_product",
+            "products": [],
+            "star_rating": "4_to_5_star",
+            "show_review_media": true,
+            "display_order": "media_first",
+            "no_image_fallback": "review_text_only",
+            "max_reviews": 20,
+            "review_length": "medium",
+            "text_size": "medium",
+            "image_ratio": "1",
+            "reviews_shown": 4,
+            "show_reviewer_name": true,
+            "show_product_name": true,
+            "hide_arrows_mobile": true,
+            "arrows_position": "sides",
+            "max_width": 1100,
+            "corner_styling": "soft",
+            "header_text_color": "#000000",
+            "text_color": "#000000",
+            "card_color": "#F9F9F9",
+            "stars_color": "",
+            "arrows_color": "#000000",
+            "transition_speed": 5,
+            "header_text": "What customers are saying",
+            "show_average_rating": false
+          }
+        }
+      },
+      "block_order": [
+        "judge_me_reviews_cards_carousel_mXDirj"
+      ],
+      "settings": {
+        "include_margins": true,
+        "show_divider": false,
+        "padding_top": 12,
+        "padding_bottom": 36
+      }
+    },
+    "ugc-photos": {
+      "type": "multicolumn",
+      "blocks": {
+        "ugc-1": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/ugc-1-bathroom-counter.jpg",
+            "title": "Jessica V.",
+            "title_size": "small",
+            "text": "<p>\"I have horrible eczema and cracked feet. I've tried prescription lotions, steroids, everything over the counter. Nothing worked — until Real Skin Care. Apply morning and night and my skin stays hydrated all day.\"<\/p>",
+            "button_label": ""
+          }
+        },
+        "ugc-2": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/ugc-2-cream-in-hand.jpg",
+            "title": "Ariel M.",
+            "title_size": "small",
+            "text": "<p>\"As soon as you put it on it just absorbs. My hands are in water all day at my job and this locks moisture in better than any Bath &amp; Body Works product. Doesn't burn my cuts either.\"<\/p>",
+            "button_label": ""
+          }
+        },
+        "ugc-3": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/ugc-3-nightstand-tray.jpg",
+            "title": "Heather D.",
+            "title_size": "small",
+            "text": "<p>\"The cleanest lotion and cream we've found. Not greasy, really works — especially for chronic dry skin and eczema. So hard to find brands without a ton of chemicals.\"<\/p>",
+            "button_label": ""
+          }
+        },
+        "ugc-4": {
+          "type": "column",
+          "settings": {
+            "image": "shopify:\/\/shop_images\/ugc-4-unboxing.jpg",
+            "title": "Nicole H.",
+            "title_size": "small",
+            "text": "<p>\"Perfect moisturizer for my kids. Absorbs quickly, lasts all day. Doesn't irritate their skin further like other lotions do — I even use it on their faces.\"<\/p>",
+            "button_label": ""
+          }
+        }
+      },
+      "block_order": [
+        "ugc-1",
+        "ugc-2",
+        "ugc-3",
+        "ugc-4"
+      ],
+      "settings": {
+        "image_ratio": "square",
+        "image_position": "top",
+        "text_alignment": "center",
+        "show_divider": false,
+        "image_width": "full",
+        "columns_desktop": 4,
+        "heading": "Real Customers, Real Skin.",
+        "heading_size": "h2",
+        "heading_alignment": "center",
+        "heading_tag": "h2",
+        "columns_mobile": "1",
+        "swipe_on_mobile": true,
+        "padding_top": 12,
+        "padding_bottom": 36
+      }
+    },
+    "compare-table-styles": {
+      "type": "custom-liquid",
+      "settings": {
+        "custom_liquid": "<style>.compare-table__wrap{position:relative !important}.compare-table__wrap::before{content:\"\";position:absolute;top:0;bottom:0;left:27.27%;width:18.18%;background:#eef3e8;border:2px solid #a8d1a3;border-radius:12px;z-index:0;pointer-events:none}@media(max-width:991.98px){.compare-table__wrap::before{left:40%;width:30%}}.compare-table__row--header{background:transparent !important}.compare-table__cell--us::before{display:none !important}.compare-table__cell--us{background:transparent !important;border:0 !important;position:relative;z-index:1}.compare-table__cell--us > *{position:relative;z-index:2}.compare-table__row:not(.compare-table__row--header)::after{left:0;right:auto;width:27.27%;background:#e7e9ef;z-index:0}@media(max-width:991.98px){.compare-table__row:not(.compare-table__row--header)::after{width:40%}}[id*=\"final-cta-strip\"] .button--cta{border:1px solid #444 !important}[id*=\"stats-row\"] .multicolumn-card__title{font-size:clamp(2rem,4vw,3.25rem) !important;color:#4a8b3c !important;font-weight:800 !important;text-align:center !important;letter-spacing:-0.01em;line-height:1;margin-bottom:14px}[id*=\"stats-row\"] .multicolumn-card__title-wrapper{justify-content:center}<\/style>",
+        "full_width": false,
+        "show_divider": false,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "compare-table": {
+      "type": "landing-compare-table",
+      "blocks": {
+        "row-fragrance": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No synthetic fragrance<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Fragrance is the #1 self-reported skincare irritant. Pure Unscented means no perfume — and no masking fragrance.<\/p>"
+          }
+        },
+        "row-petrolatum": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No petrolatum or mineral oil<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Petrolatum seals skin without feeding it. We use organic beeswax instead — breathable barrier, real ingredient.<\/p>"
+          }
+        },
+        "row-dimethicone": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No dimethicone<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Silicones make creams feel slippery and absorb fast — a texture trick. We skip it.<\/p>"
+          }
+        },
+        "row-parabens": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>No parabens or phenoxyethanol<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Grapefruit seed extract is our natural preservative — it does the job without the synthetic preservatives many sensitive-skin folks avoid.<\/p>"
+          }
+        },
+        "row-coldpressed": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>Cold-pressed virgin coconut oil<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>We use cold-pressed virgin coconut oil for its lauric acid and antioxidants — refining or fractionating coconut oil strips most of that out.<\/p>"
+          }
+        },
+        "row-supply": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>Full 90-day supply in one box<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Most brands sell you a single bottle and hope you re-buy. We size the reset for the full window skin actually needs.<\/p>"
+          }
+        },
+        "row-usa": {
+          "type": "row",
+          "settings": {
+            "feature": "<p>Handmade in the USA<\/p>",
+            "us_has": true,
+            "others_has": false,
+            "why": "<p>Small-batch means we know every ingredient in every lot — the kind of traceability sensitive skin shouldn't have to guess at.<\/p>"
+          }
+        }
+      },
+      "block_order": [
+        "row-fragrance",
+        "row-petrolatum",
+        "row-dimethicone",
+        "row-parabens",
+        "row-coldpressed",
+        "row-supply",
+        "row-usa"
+      ],
+      "settings": {
+        "anchor_id": "compare",
+        "heading": "<p>90-Day Coconut Reset vs. The Drugstore Aisle<\/p>",
+        "subheading": "<p>How we compare to Cetaphil, Aveeno, and CeraVe — the three biggest sensitive-skin drugstore brands.<\/p>",
+        "us_image": "shopify:\/\/shop_images\/compare-thumb.png",
+        "us_image_alt": "90-Day Coconut Reset",
+        "content_max_width": 1190,
+        "padding_top": 48,
+        "padding_bottom": 48,
+        "text_color": "#212326",
+        "border_color": "#E7E9EF",
+        "divider_color": "#E7E9EF",
+        "header_bg_color": "#FFFFFF",
+        "us_bg_color": "#eef3e8",
+        "us_border_color": "#a8d1a3",
+        "aria_label": "90-Day Coconut Reset vs Cetaphil Aveeno CeraVe comparison"
+      }
+    },
+    "final-cta-strip": {
+      "type": "rich-text",
+      "blocks": {
+        "fc-heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Start your 90-day reset.",
+            "heading_size": "h1",
+            "heading_tag": "h2"
+          }
+        },
+        "fc-text": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Three lotions, one cream, two digital guides, and a 30-day money-back guarantee — everything you need to reset your skin, in one box. $158 value, $99 today.<\/p>",
+            "text_size": "typeset",
+            "secondary_color": false
+          }
+        },
+        "fc-button": {
+          "type": "button",
+          "settings": {
+            "button_label": "Start My 90-Day Reset",
+            "button_link": "#buy-box",
+            "button_style_secondary": false
+          }
+        }
+      },
+      "block_order": [
+        "fc-heading",
+        "fc-text",
+        "fc-button"
+      ],
+      "settings": {
+        "text_alignment": "center",
+        "mobile_text_alignment": "center",
+        "horizontal_content": false,
+        "narrow": false,
+        "show_divider": false,
+        "use_custom_colors": true,
+        "colors_button_label": "#1a1b18",
+        "colors_button_background": "#AEDEAC",
+        "colors_text": "#ffffff",
+        "colors_background": "#1a1b18",
+        "padding_top": 64,
+        "padding_bottom": 64
+      }
+    }
+  },
+  "order": [
+    "hero",
+    "hook-rich-text",
+    "hero-ingredient-cards",
+    "stats-row",
+    "why-it-works",
+    "stats-hero",
+    "main",
+    "judgeme_section_review_widget_f881",
+    "judgeme_carousel_cream",
+    "ugc-photos",
+    "compare-table-styles",
+    "compare-table",
+    "founder-block",
+    "free-from-block",
+    "final-cta-strip",
+    "collapsible-content",
+    "loox-product-reviews-app-section"
+  ]
+}

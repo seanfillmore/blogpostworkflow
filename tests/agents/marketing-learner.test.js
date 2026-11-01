@@ -5,11 +5,16 @@ import { join } from 'node:path';
 import {
   parsePublishedFlags,
   buildConstraintBlock,
+  GROWTH_INTENT_RULE,
+  assertPaidStatusFresh,
+  PAID_STATUS_AS_OF,
+  PAID_STATUS_MAX_AGE_DAYS,
   parseFrontmatter,
   scanSkillInventory,
   renderSkillMarkdown,
   validateSkillEdit,
 } from '../../lib/marketing-learner.js';
+import { AOV_TRAILING_90D } from '../../lib/business-baseline.js';
 
 const TODAY = '2026-07-27';
 
@@ -76,7 +81,11 @@ assert.throws(() => parsePublishedFlags(['a'], ['2026-07-28'], { today: TODAY })
 // ── constraint block ────────────────────────────────────────────────────────
 {
   const block = buildConstraintBlock();
-  assert.match(block, /50\.46/, 'carries the settled AOV, not the stale $19 figure');
+  // Asserted against the shared constant, never a literal: this assertion spelled
+  // `50.46` and so went stale in lockstep with the figure it was guarding, which is
+  // how a test stops being able to catch the thing it was written for.
+  assert.ok(block.includes(`$${AOV_TRAILING_90D.toFixed(2)}`),
+    'carries the measured AOV, not the stale $19 figure');
   assert.ok(!block.includes('$19'), 'must not cite the all-time AOV');
   assert.match(block, /retention/i, 'names retention as the binding constraint');
   assert.match(block, /solo operator/i, 'states the staffing constraint');
@@ -246,7 +255,7 @@ const VIDEO = {
   assert.match(p, /Retention Playbook/, 'includes the title');
   assert.match(p, /Some Operator/, 'includes the creator');
   assert.match(p, /2026-03-14/, 'includes the publish date');
-  assert.match(p, /50\.46/, 'embeds the constraint block');
+  assert.ok(p.includes(`$${AOV_TRAILING_90D.toFixed(2)}`), 'embeds the constraint block');
   assert.match(p, /sixty percent of the consumption cycle/, 'includes the transcript');
   assert.match(p, /recencySignals/, 'asks for the fallback recency field');
 }
@@ -2140,7 +2149,7 @@ Body.`,
   assert.ok(!/durable principle rather than platform mechanics/.test(video));
   assert.ok(/durable principle rather than platform mechanics/.test(file));
   for (const b of [video, file]) {
-    assert.ok(/\$50\.46/.test(b), 'AOV survives in both');
+    assert.ok(b.includes(`$${AOV_TRAILING_90D.toFixed(2)}`), 'AOV survives in both');
     assert.ok(/Platform mechanics/.test(b), 'decay table survives in both');
   }
 }
@@ -2723,3 +2732,63 @@ console.log('✓ marketing-learner required-stage tests pass');
 }
 
 console.log('✓ marketing-learner stream-deadline tests pass');
+
+// ── the constraint block's paid-spend status must be re-verified, not left to rot ──────
+{
+  // This block scores every tactic the fleet ingests, and it has gone stale silently
+  // before: it read "traffic gate OPEN ... $30/day" for nine days after spend was paused.
+  // Prose in a template cannot expire on its own, so this is what expires it.
+  assertPaidStatusFresh();
+
+  const block = buildConstraintBlock();
+  assert.match(block, /PAID SPEND IS CURRENTLY (LIVE|PAUSED)/,
+    'the block must state the current spend status outright');
+  assert.match(block, new RegExp(PAID_STATUS_AS_OF),
+    'the stated status must carry the date it was verified');
+
+  // The carve-out that stops this correction re-causing the 2026-08-16 failure, where six
+  // Meta tactics scored 4/10 because paid "was not a thing yet". A paused budget is not a
+  // closed gate: the account, pixel and creative exist, and restarting is one API call.
+  assert.match(block, /traffic gate is OPEN/,
+    'a paused budget must NOT be allowed to read as a closed traffic gate');
+  assert.match(block, /park THAT behind `scale`, never `traffic`/,
+    'the block must say which gate a spend-blocked tactic belongs behind');
+
+  const asOf = new Date(`${PAID_STATUS_AS_OF}T00:00:00Z`);
+  const justInside = new Date(asOf.getTime() + PAID_STATUS_MAX_AGE_DAYS * 86400000);
+  const wellPast = new Date(asOf.getTime() + (PAID_STATUS_MAX_AGE_DAYS + 30) * 86400000);
+  assert.doesNotThrow(() => assertPaidStatusFresh(justInside));
+  assert.throws(() => assertPaidStatusFresh(wellPast), /past the \d+-day limit/);
+}
+console.log('\u2713 marketing-learner paid-status freshness tests pass');
+
+// ── the block must lead with the GOAL, never let today's figures cap a score ───────────
+{
+  const block = buildConstraintBlock();
+
+  // Sean, 2026-08-25 and again 2026-09-08: current figures are a starting line, not a
+  // ceiling. 64 Fit rationales across 19 skills had been capping scores on volume/budget —
+  // forbidden by the stage rules' own words, and those scores reach the copy agent.
+  assert.ok(block.includes(GROWTH_INTENT_RULE),
+    'the growth-intent rule must be interpolated into the constraint block');
+  assert.match(block, /NEVER LOWER A SCORE BECAUSE OF CURRENT VOLUME, BUDGET OR MEASURABILITY/,
+    'the ban on volume-capping a score must be stated outright');
+  assert.match(block, /Timing is recorded in\s+exactly one place/,
+    'the block must say the stage marker is the ONLY place timing is recorded');
+
+  // The goal has to appear BEFORE the current figures, or it reads as a caveat on them.
+  assert.ok(block.indexOf('as large as possible') < block.indexOf('Shopify revenue'),
+    'the growth intent must lead, not trail the current-state numbers');
+
+  // ~54/month is Shopify PLUS Amazon; Shopify alone is ~16. Reasoning about the Shopify
+  // funnel on 54 overstates it ~3x, and 142 occurrences in the corpus did exactly that.
+  assert.match(block, /Shopify ~16 orders\/month/,
+    'the block must give the Shopify-only order figure');
+  assert.match(block, /~54\/month is Shopify PLUS Amazon/,
+    'and must say plainly what the combined figure is, so the two are not confused');
+
+  // $30/day may be used for arithmetic, never as a ceiling.
+  assert.match(block, /NOT a ceiling on ambition and\s+never a reason to discount a tactic/,
+    'the reference budget must be labelled as arithmetic, not a limit');
+}
+console.log('\u2713 marketing-learner growth-intent tests pass');
