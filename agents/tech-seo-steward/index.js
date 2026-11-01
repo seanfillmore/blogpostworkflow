@@ -303,6 +303,13 @@ async function resolveResourceId(path, inventory) {
   return null;
 }
 
+async function isHidden(res) {
+  try {
+    const mf = await getMetafields(res.resource, res.id);
+    return mf.some((m) => m.namespace === 'seo' && m.key === 'hidden' && String(m.value) === '1');
+  } catch { return false; }
+}
+
 async function sitemapPass({ crawl, inventory, client, report }) {
   const urls = await sitemapUrls();
   console.log(`  sitemap: ${urls.length} URLs`);
@@ -320,6 +327,9 @@ async function sitemapPass({ crawl, inventory, client, report }) {
     for (const p of pages.filter((x) => x.status === 200 && x.noindex)) {
       const res = await resolveResourceId(p.path, inventory);
       if (!res) { hidden.push({ path: p.path, why: 'noindex', error: 'resource not found' }); continue; }
+      // Shopify regenerates the sitemap on its own schedule, so a page hidden
+      // last week can still be listed. Already hidden is not a new fix.
+      if (await isHidden(res)) continue;
       if (APPLY) await upsertMetafield(res.resource, res.id, 'seo', 'hidden', 1, 'number_integer');
       hidden.push({ path: p.path, why: 'noindex but listed in sitemap' });
     }
@@ -333,7 +343,7 @@ async function sitemapPass({ crawl, inventory, client, report }) {
       try { impressions90d = (await getPagePerformance(ORIGIN + path, 90)).impressions; } catch { impressions90d = null; }
       if (!shouldHideOrphan({ resource: r.resource, inlinks: row['no._of_all_inlinks'] ?? 0, impressions90d })) continue;
       const res = inventory.byPath.get(path);
-      if (!res) continue;
+      if (!res || await isHidden(res)) continue;
       if (APPLY) await upsertMetafield(res.resource, res.id, 'seo', 'hidden', 1, 'number_integer');
       hidden.push({ path, why: 'orphan page, 0 search impressions in 90 days' });
     }

@@ -106,3 +106,9 @@ test('ctrProtectedHandles unions wave arms and open tests, fails open', () => {
   assert.deepEqual([...ctrProtectedHandles('/x', { read })].sort(), ['h1', 'open', 't1']);
   assert.equal(ctrProtectedHandles('/x', { read: () => { throw new Error('none'); } }).size, 0);
 });
+
+test('spelled-out counts are checked like digits', () => {
+  assert.match(descriptionProblems('Compare seven natural toothpaste alternatives with notes on flavor, price and which family each one suits best.', 'six alternatives').join(), /invents numbers: 7/);
+  assert.deepEqual(descriptionProblems('Our three-ingredient lip balm with coconut oil and beeswax keeps lips soft all day. See how it compares to plain oil.', 'three ingredients'), []);
+  assert.deepEqual(descriptionProblems('Find the one natural deodorant that keeps you fresh all day, with tips for switching and what to expect week by week.', ''), [], '"one" is not a count');
+});
