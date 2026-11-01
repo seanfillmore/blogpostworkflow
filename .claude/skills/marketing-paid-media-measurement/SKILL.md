@@ -81,8 +81,6 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Judge a discovery or trial channel by the halo it produces on your other sales channels — especially Amazon — rather than by its own single-channel P&L.
 
-**Stage:** tracking — parked until the tracking phase opens.
-
 **Why it works:** Customers acquired on one channel are not loyal to it. They rebuy wherever it is most convenient — Amazon, retail — so a channel judged only on its own attributed revenue looks worse than it is: part of what it bought shows up as sales on a surface its pixel never sees. The creator expects roughly 30% Amazon lift from scaling a trial channel.
 
 **Evidence offered:** His own buying behaviour, and the retail lift his previous brand saw after activating TikTok Shop. No controlled measurement; the ~30% figure is an expectation, not a result.

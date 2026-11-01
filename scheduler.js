@@ -558,7 +558,12 @@ if (new Date().getDate() === 1) {
   // tactic that already carries one, and validateSkillEdit still guards every write. The
   // failure mode is an over-parked tactic hidden from the projection, which `npm run
   // learn -- --staged` lists and one edit reverses.
-  runStep('marketing-regate', `"${NODE}" agents/marketing-learner/index.js --regate --apply`, { indent: '    ' });
+  //
+  // It runs through scripts/marketing-regate-pr.mjs, NEVER the agent directly. The skills are
+  // tracked files: run here, --apply edited them in the live checkout and nothing committed
+  // them, so on 2026-11-01 the next deploy's `git pull` aborted on 10 SKILL.md files. The
+  // wrapper re-gates in a throwaway worktree off origin/main and ships any change as a merged PR.
+  runStep('marketing-regate', `"${NODE}" scripts/marketing-regate-pr.mjs --apply`, { indent: '    ' });
 } else {
   log('  Monthly jobs: skipped (not 1st)');
 }

@@ -101,8 +101,6 @@ description: Use when sourcing customer proof and deciding which of it to show â
 
 ## Install Google Analytics and the Facebook pixel on the review survey pages and read the funnel drop-off report to optimize review-collection conversion.
 
-**Stage:** scale â€” parked until the scale phase opens.
-
 **Why it works:** Instrumenting the survey shows where respondents abandon, so the review request can be tuned like any other conversion path rather than guessed at.
 
 **Evidence offered:** Demoed as a settings field plus a screenshot of a funnel/drop-off analytics view. No example of an insight or an improvement.

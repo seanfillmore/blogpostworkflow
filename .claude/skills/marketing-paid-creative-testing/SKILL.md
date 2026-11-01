@@ -231,8 +231,6 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 
 ## Test 3-6 hook variations per creative test and take big swings rather than isolating a single word — ideally reformatting existing top performers across every hook pattern in one large test.
 
-**Stage:** scale — parked until the scale phase opens.
-
 **Why it works:** Larger variation between cells produces bigger performance separation than single-variable changes, so winners surface faster than clean A/B isolation would allow. A one-word change on a low-traffic account spends the entire budget proving nothing, because the effect size is smaller than the noise; swinging between genuinely different hook patterns makes the gap large enough to read.
 
 **Evidence offered:** Personal testing practice; says she has done the reformat-all-top-performers test repeatedly with great results. No numbers.
@@ -255,7 +253,7 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 
 ## Under Meta's Andromeda update the creative is the targeting — hold one angle fixed and cross it with several visibly different on-camera avatars (e.g. a 33-year-old high-performing woman and a 44-year-old suburban dad), so each avatar × angle pairing unlocks a different audience pocket.
 
-**Stage:** traffic — parked until the traffic phase opens.
+**Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
 
 **Why it works:** Andromeda routes delivery from the content of the creative rather than from audience settings. The person on screen acts as a mirror the viewer recognises themselves in, and the system learns who stops; so the same angle carried by a different avatar is matched to a different audience rather than being clustered with the first ad as a near-duplicate.
 
