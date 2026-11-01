@@ -1,6 +1,6 @@
 ---
 name: marketing-short-form-video-production
-description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, frame-by-frame shot breakdown of a reference mapped to script lines, staging and framing on the shoot, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, the sound-off and eyes-closed pre-publish test, cover-image composition and generation, and re-cutting an existing footage library into new ads.
+description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, frame-by-frame shot breakdown of a reference mapped to script lines, staging and framing on the shoot, phone-shot B-roll instead of stock footage, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, the sound-off and eyes-closed pre-publish test, cover-image composition and generation, and re-cutting an existing footage library into new ads.
 ---
 
 # Short Form Video Production
@@ -48,6 +48,16 @@ description: Shooting and editing your own short-form video by modelling a prove
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
 
 *Source: Sweat Equity — "Watch Me Speedrun a Brand from 0 to 100k Followers (in 90 Days)" (w6qpJ0eTB68)*
+
+## Never use stock footage in an ad — shoot every B-roll cut yourself on a phone, so the piece looks like someone is actually recording rather than like an advertisement.
+
+**Why it works:** Stock footage carries the polished, generic look of advertising, and viewers who recognise it get the 'ick' and scroll past before the message lands. Phone-shot organic B-roll matches the texture of everything else in the feed, so the ad stays native long enough to be watched.
+
+**Evidence offered:** Assertion; presented as one component of the winning green-screen format he describes.
+
+**Fit here (5/10):** Runnable today — filming his own product B-roll on a phone (application, texture, the pack on a real bathroom shelf) is within current capability and costs nothing. It fills a gap in this skill, which otherwise says nothing about where B-roll comes from. Image-side equivalents already exist elsewhere ('camera roll, not stock', and raw phone frames for low-price products), so the marginal value is moderate. It also sets the standard for the footage library below: the clips you re-cut into new ads should be your own phone footage, not stock fill.
+
+*Source: Brando Monetti — "I Studied Three $100M Brands. They're All Making This Creative Shift." (transcript, part 1 of 2)*
 
 ## For a shot that has to read as real, film the real action plainly yourself and apply the AI effect to that footage — then layer the AI clip above the original in the editor and cut at the exact frame the action happens, masking or keyframing so your real face stays visible and the effect triggers on the beat.
 
@@ -169,6 +179,6 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 **Evidence offered:** Creator's own client practice — years of retainer footage for a gym means new commercials are assembled from existing footage with a new AI voiceover and script, producing far more ads and better client results without proportionally more work; sample commercial played.
 
-**Fit here (8/10):** The highest-leverage item here for a solo operator: the ad fleet needs to cover distinct creative jobs and hold roughly 20% of slots for new angles, and the binding cost of that is production time, not spend. Reusing filmed product footage with new narration scripts turns one shoot into many angle tests, runnable today at $30/day with no second person.
+**Fit here (8/10):** The highest-leverage item here for a solo operator: the ad fleet needs to cover distinct creative jobs and hold roughly 20% of slots for new angles, and the binding cost of that is production time, not spend. Reusing filmed product footage with new narration scripts turns one shoot into many angle tests, runnable today at $30/day with no second person. Build the library from your own phone-shot B-roll, per the no-stock rule above, so every re-cut stays native to the feed.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
