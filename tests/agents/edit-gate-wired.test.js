@@ -42,6 +42,9 @@ const GATED = [
   { file: 'agents/schema-injector/index.js', kind: 'enhance', records: false },
   { file: 'agents/faq-rewriter/index.js', kind: 'rewrite', records: true },
   { file: 'scripts/remediate-long-titles.mjs', kind: 'serp', records: true },
+  // Asks `repair` before fixing a scheme-less href in a body, and `serp` (and
+  // records it) before writing a description_tag on an article.
+  { file: 'agents/tech-seo-steward/index.js', kind: 'serp', records: true },
   { file: 'agents/collection-linker/index.js', kind: 'enhance', records: false },
   { file: 'agents/cro-cta-injector/index.js', kind: 'enhance', records: false },
   { file: 'agents/change-queue-processor/index.js', kind: null, records: true, why: 'kind per change_type via EDIT_KIND_FOR_CHANGE' },

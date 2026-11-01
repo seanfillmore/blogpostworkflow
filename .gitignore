@@ -410,3 +410,4 @@ data/reports/google-ads-research/
 
 # Amazon review-request ledger (server-written; losing it is harmless)
 data/reports/amazon-review-requests/
+data/reports/tech-seo-steward/
