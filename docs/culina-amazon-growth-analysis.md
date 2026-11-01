@@ -2,6 +2,8 @@
 
 **Prepared 29 September 2026. Measurement window: 30 days to 28 September 2026.**
 
+> **Note (added 1 November 2026):** Culina was repriced on 27 October 2026. Every price, price step and margin figure below reflects the list prices **before** that repricing and is kept as the historical baseline. The product contents in `config/culina-cogs.json` are current.
+
 All account figures are first-party, pulled directly from the Amazon Selling Partner API and the Amazon Advertising API, joined against supplier cost of goods. Nothing in the account was changed to produce this analysis.
 
 ---
