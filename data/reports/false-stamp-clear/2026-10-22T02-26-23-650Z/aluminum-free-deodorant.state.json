@@ -1,0 +1,113 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:00:42.114Z",
+    "last_crawled": "2026-10-14T00:33:55Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/aluminum-free-deodorant-what-it-is-how-to-choose",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2084,
+  "generated_at": "2026-05-02T10:08:35.659Z",
+  "brief_path": "/root/seo-claude/data/briefs/aluminum-free-deodorant.json",
+  "tokens_used": {
+    "input": 11246,
+    "output": 5260
+  },
+  "image_path": "data/posts/aluminum-free-deodorant/image.webp",
+  "image_prompt": "Product photography, four small white cylindrical rollball deodorant bottles with flat white snap-on caps — representing the Geranium Flower, Calming Lavender, Mountain Cedarwood, and Wildcrafted Frankincense variants — arranged in a loose natural cluster at the center of the frame, with a small white ceramic bowl of fine white baking soda powder and a wooden scoop resting beside them, and a few dried lavender sprigs laid naturally across the surface, on a smooth pale brushed concrete surface with a soft blurred concrete wall behind, lit by clean bright diffused natural daylight from the left creating soft even shadows, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-05-02T10:09:06.641Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563571818666,
+  "shopify_handle": "aluminum-free-deodorant-what-it-is-how-to-choose",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/aluminum-free-deodorant-what-it-is-how-to-choose",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_33bd82a1-ccd6-4a10-855d-3d6e49dec401.webp?v=1779622400",
+  "uploaded_at": "2026-05-24T11:33:23.577Z",
+  "published_at": "2026-05-13T15:00:07.655Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-20T11:30:02.317Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-21T11:30:01.812Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-22T11:30:01.690Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-05-23T11:30:02.648Z",
+      "result": "ok"
+    }
+  ],
+  "last_refreshed_at": "2026-09-15T15:00:18.586Z",
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 11, 438 impressions. Default: meta-only.",
+  "legacy_triaged_at": "2026-08-04T04:03:25.984Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:02.013Z",
+      "age_days": 73,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T14:19:01.669Z",
+      "superseded_by": "2026-09-15T15:00:18.586Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-07-25T17:14:02.136Z",
+      "age_days": 73,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T14:19:01.669Z",
+      "superseded_by": "2026-09-15T15:00:18.586Z"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-08-12T13:30:03.324Z",
+      "age_days": 90,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T14:19:01.669Z",
+      "superseded_by": "2026-09-15T15:00:18.586Z"
+    }
+  ],
+  "refreshed_at": "2026-10-15T15:10:40.015Z",
+  "last_material_edit": {
+    "at": "2026-10-15T15:10:40.016Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:41:42.488Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

@@ -1,0 +1,346 @@
+{
+  "target_keyword": "hypoallergenic deodorant",
+  "slug": "hypoallergenic-deodorant",
+  "search_intent": "commercial",
+  "content_depth": "comprehensive",
+  "recommended_title": "Best Hypoallergenic Deodorant for Sensitive Skin (2026)",
+  "meta_description": "Struggling with irritation? Find the best hypoallergenic deodorant for sensitive skin — natural, aluminum-free formulas dermatologists recommend. Shop Real Skin Care.",
+  "target_word_count": 2300,
+  "content_angle": "Real Skin Care positions its coconut oil-based, minimal-ingredient natural deodorant as the definitive hypoallergenic choice by combining dermatologist-aligned ingredient education with a clear comparison of what common irritants to avoid — giving sensitive-skin shoppers both the 'why' and a direct path to purchase without the noise of mass-market roundups.",
+  "funnel_stage": "MOF",
+  "content_format_directive": "MOF = comparison + informational. The post must include a product comparison table positioning Real Skin Care's natural deodorant as the top pick, supported by ingredient education and a direct CTA. Do not write this as pure editorial; structure it to convert readers who are evaluating options.",
+  "comparison_table_spec": {
+    "rsc_product": "Real Skin Care Coconut Oil Deodorant (https://www.realskincare.com/products/coconut-oil-deodorant)",
+    "competitor_products_to_include": [
+      "A generic baking-soda-free aluminum-free gel deodorant (5-ingredient minimal formula)",
+      "A mass-market aluminum-free sensitive stick deodorant with fragrance",
+      "A clinical-strength antiperspirant with aluminum (for contrast — to show what to avoid)"
+    ],
+    "differentiating_features_to_highlight": [
+      "Ingredient count (fewer = less irritation risk)",
+      "Aluminum-free formulation",
+      "Baking soda-free (key for pH-sensitive skin)",
+      "No synthetic fragrance or parabens",
+      "Coconut oil base with natural antimicrobial properties",
+      "Vegan and non-toxic certification"
+    ],
+    "positioning_note": "RSC wins on ingredient simplicity, clean sourcing, and absence of the top 5 contact allergens found in conventional deodorants. Do not name competitor brands by name — use generic descriptors in the table."
+  },
+  "competitor_content_gap_notes": {
+    "primallypure_ranks": false,
+    "humblebrands_ranks": false,
+    "desertessence_ranks": false,
+    "gap_summary": "No clean-beauty direct competitors rank in the current top 10. The SERP is dominated by retail category pages (Target, Amazon, Walmart), a dermatology practice roundup, and a single product page. There is a clear gap for a brand-owned, educational MOF post that combines ingredient science with a shoppable recommendation. RSC should own the 'natural + hypoallergenic + ingredient education' angle that none of the current top 10 pages deliver."
+  },
+  "key_differentiators": [
+    "Provide a genuinely educational explanation of what 'hypoallergenic' means in the deodorant context — including what the FDA does and does not regulate about the term — which no current top-10 result does well",
+    "Include a scannable comparison table of deodorant formulas by irritant profile, positioning Real Skin Care's coconut oil deodorant as the cleanest option without naming competitor brands",
+    "Cover both men and women explicitly to capture the full semantic keyword set (best deodorant for men, best deodorant for women, men's deodorant for sensitive skin) in a single authoritative post",
+    "Explain the antiperspirant vs. deodorant distinction with a clear recommendation for sensitive skin, capturing that high-volume semantic cluster",
+    "Integrate natural ingredient education (coconut oil, magnesium, plant-based odor absorbers) to counter Desert Essence-style ingredient authority and establish RSC's expertise"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 150,
+      "guidance": "Open with the reader's pain point: skin that reacts to almost every deodorant — redness, rash, itching, burning. Validate that this is extremely common (contact dermatitis from deodorant ingredients affects millions). Introduce the concept of hypoallergenic deodorant as the solution. Tease that by the end of the post, the reader will know exactly what to look for, what to avoid, and which formula works best for sensitive skin. Do NOT open with a generic 'deodorant is important' statement. Funnel stage: MOF — reader is already aware of their problem and evaluating solutions.",
+      "keywords_to_include": [
+        "hypoallergenic deodorant",
+        "deodorant for sensitive skin",
+        "sensitive skin"
+      ]
+    },
+    {
+      "section": "H2: What Does 'Hypoallergenic Deodorant' Actually Mean?",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Explain that 'hypoallergenic' is a marketing term — not an FDA-regulated claim — meaning any brand can use it. This builds trust through transparency and is a genuine content gap in the SERP. Define what the term is intended to mean: a formula less likely to trigger an allergic or sensitivity reaction, typically because it omits common contact allergens. Mention that the real signal is the ingredient list, not the label claim. This section establishes RSC's authority and differentiates from retail pages that just list products.",
+      "keywords_to_include": [
+        "hypoallergenic deodorant",
+        "dermatologist recommended deodorant",
+        "best deodorant for sensitive skin"
+      ]
+    },
+    {
+      "section": "H2: Deodorant vs. Antiperspirant — What's the Difference for Sensitive Skin?",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Capture the high-volume 'antiperspirant vs deodorant' and 'deodorant vs antiperspirant' semantic keywords here. Explain the core difference: antiperspirants contain aluminum salts that physically block sweat glands (classified as OTC drugs by the FDA); deodorants neutralize odor without blocking sweat. For sensitive skin, explain why aluminum compounds are a leading irritant and why aluminum-free deodorants are the preferred choice for people prone to reactions. Note that sweating is a healthy biological function. This section should help readers self-select toward deodorant (not antiperspirant), which aligns with RSC's product line. Include a brief note on deodorant for hyperhidrosis: acknowledge that people with excessive sweating may need different guidance, but for most sensitive-skin users, a clean deodorant is sufficient.",
+      "keywords_to_include": [
+        "antiperspirant vs deodorant",
+        "deodorant vs antiperspirant",
+        "antiperspirant deodorant",
+        "aluminum free deodorant for women",
+        "best aluminum free deodorant",
+        "deodorant for hyperhidrosis"
+      ]
+    },
+    {
+      "section": "H2: The 5 Ingredients Most Likely to Irritate Sensitive Underarms",
+      "type": "h2",
+      "word_count_target": 280,
+      "guidance": "This is the core educational section — differentiated from all current top-10 results. List the five most common deodorant contact allergens with a brief explanation of each: (1) Aluminum compounds — linked to skin irritation and pore-blocking; (2) Synthetic fragrance — the #1 cause of contact dermatitis in personal care products; (3) Baking soda (sodium bicarbonate) — disrupts skin's natural pH and causes rash in many users despite being 'natural'; (4) Parabens — preservatives linked to skin sensitization; (5) Propylene glycol — a humectant that can trigger reactions in sensitive individuals. For each, explain what it does, why it's in most deodorants, and what to look for instead. This directly counters the ingredient-education angle that Desert Essence uses to win authority. End with a brief transition: 'So what should a hypoallergenic deodorant contain instead?'",
+      "keywords_to_include": [
+        "best deodorant for sensitive skin",
+        "deodorant for sensitive skin",
+        "natural deodorant",
+        "aluminum free deodorant for women",
+        "body odor deodorant"
+      ]
+    },
+    {
+      "section": "H2: What to Look for in a Natural Hypoallergenic Deodorant",
+      "type": "h2",
+      "word_count_target": 250,
+      "guidance": "Pivot to the positive — what does an effective, gentle deodorant actually contain? Cover: coconut oil (natural antimicrobial that fights odor-causing bacteria without synthetic ingredients), magnesium hydroxide (a gentler alternative to baking soda for pH neutralization), plant-based odor absorbers (arrowroot powder, kaolin clay), and minimal ingredient lists (fewer ingredients = fewer potential irritants). Explain why coconut oil is particularly well-suited for sensitive underarm skin: antimicrobial, moisturizing, and free from the top contact allergens. This section should naturally lead into the RSC product mention. Use language that is science-adjacent but accessible — avoid clinical jargon.",
+      "keywords_to_include": [
+        "best aluminum free deodorant",
+        "natural deodorant",
+        "dermatologist recommended deodorant",
+        "body odor deodorant",
+        "best deodorant for sensitive skin dermatologist recommended"
+      ]
+    },
+    {
+      "section": "H2: Best Hypoallergenic Deodorant Options — Compared by Formula",
+      "type": "h2",
+      "word_count_target": 350,
+      "guidance": "This is the MOF comparison section. Open with 2-3 sentences explaining that not all 'hypoallergenic' deodorants are created equal — the proof is in the ingredient list. Then present the comparison table (see comparison_table_spec). The table should have columns: Product Type, Aluminum-Free, Baking Soda-Free, Fragrance-Free, Ingredient Count, and Best For. Row 1: RSC Coconut Oil Deodorant — position as the winner across all columns. Row 2: A generic minimal-ingredient gel deodorant (5 ingredients) — note it is good for severely sensitive skin but limited in odor protection. Row 3: A mass-market aluminum-free sensitive stick with added fragrance — note it is widely available but synthetic fragrance is a common sensitizer. Row 4: A clinical-strength antiperspirant — include for contrast only, showing WHY it fails for sensitive skin (aluminum, high ingredient count). After the table, write 2-3 sentences confirming RSC's positioning. Include a direct CTA inline: 'Shop Real Skin Care's aluminum-free deodorant collection.' Do NOT name any brand by name in the table — use generic descriptors only.",
+      "keywords_to_include": [
+        "hypoallergenic deodorant",
+        "best deodorant for sensitive skin",
+        "aluminum free deodorant for women",
+        "best aluminum free deodorant",
+        "dermatologist recommended antiperspirant",
+        "best deodorant"
+      ]
+    },
+    {
+      "section": "H2: Hypoallergenic Deodorant for Men — What's Different?",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Capture the 'best deodorant for men,' 'men's deodorant for sensitive skin,' and 'antiperspirant deodorant for men' keyword cluster. Acknowledge that men often have thicker underarm skin but are not immune to deodorant reactions — in fact, men are less likely to recognize contact dermatitis and more likely to continue using an irritating product. Key differences to address: men's deodorants often contain stronger synthetic fragrances (a top irritant), and many men prefer stronger odor protection, which pushes them toward antiperspirants (higher aluminum = higher irritation risk). Recommend the same core criteria: aluminum-free, fragrance-free, minimal ingredients. Note that RSC's coconut oil deodorant is formulated for all skin types and works equally well for men. Link to the men's angle naturally without a hard gender binary.",
+      "keywords_to_include": [
+        "best deodorant for men",
+        "men's deodorant for sensitive skin",
+        "antiperspirant deodorant for men",
+        "men's best deodorant for sensitive skin dermatologist-recommended"
+      ]
+    },
+    {
+      "section": "H2: Hypoallergenic Deodorant for Women — Hormones, Shaving, and Sensitivity",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Capture 'best deodorant for women,' 'deodorant for women,' and 'aluminum free deodorant for women.' Cover three specific sensitivity triggers unique to women: (1) freshly shaved underarms — skin is more permeable and reactive immediately after shaving, making fragrance and alcohol especially irritating; (2) hormonal fluctuations — pH changes during menstrual cycle, pregnancy, and menopause can alter how skin reacts to deodorant ingredients; (3) bra friction — can exacerbate irritation from sensitizing ingredients. Recommend applying deodorant on non-freshly-shaved skin when possible and choosing fragrance-free, alcohol-free formulas. Position RSC's coconut oil deodorant as ideal for these scenarios due to its skin-conditioning base.",
+      "keywords_to_include": [
+        "best deodorant for women",
+        "deodorant for women",
+        "aluminum free deodorant for women",
+        "hypoallergenic deodorant",
+        "deodorant for sensitive skin"
+      ]
+    },
+    {
+      "section": "H2: How to Transition to a Natural Hypoallergenic Deodorant",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "Address the 'detox period' that many people experience when switching from conventional antiperspirant to natural deodorant — this is a real phenomenon and addressing it honestly builds trust. Explain that after years of aluminum-based antiperspirant use, sweat glands resume normal function and the underarm microbiome rebalances, which can temporarily increase odor and wetness for 2-4 weeks. Give 4 practical tips: (1) Apply deodorant to clean, dry underarms; (2) Reapply midday if needed during the transition; (3) Use a gentle, unscented soap for underarm cleansing; (4) Give the new formula at least 3-4 weeks before evaluating effectiveness. This section serves dual purpose: it answers a real question AND pre-handles the objection that natural deodorant 'doesn't work.'",
+      "keywords_to_include": [
+        "natural deodorant",
+        "best aluminum free deodorant",
+        "deodorant for sensitive skin",
+        "body odor deodorant"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions",
+      "type": "faq",
+      "word_count_target": 300,
+      "guidance": "Write 4-5 FAQ entries in Q&A format for FAQ schema markup. Suggested questions: (1) 'Is hypoallergenic deodorant the same as aluminum-free deodorant?' — Answer: Not necessarily; explain the distinction. Aluminum-free is one feature; hypoallergenic refers more broadly to low-irritant formulation. (2) 'Can I use natural deodorant if I have extremely sensitive skin or eczema?' — Answer: Yes, with caveats — look for baking soda-free, fragrance-free, minimal-ingredient formulas. Patch test first. (3) 'Does hypoallergenic deodorant actually work for odor control?' — Answer: Yes, if it contains effective antimicrobial or odor-neutralizing ingredients like coconut oil or magnesium. (4) 'What's the difference between deodorant and antiperspirant for sensitive skin?' — Brief summary referencing the earlier section. (5) 'Is natural deodorant safe for kids or teens?' — Answer: Yes, clean natural deodorants without aluminum or synthetic fragrance are appropriate — link to RSC kids deodorant collection.",
+      "keywords_to_include": [
+        "hypoallergenic deodorant",
+        "antiperspirant vs deodorant",
+        "best deodorant for sensitive skin",
+        "natural deodorant",
+        "aluminum free deodorant for women",
+        "dermatologist recommended deodorant"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 190,
+      "guidance": "Summarize the key takeaways in 3-4 sentences: hypoallergenic is a marketing term, not a regulated standard; real protection for sensitive skin comes from avoiding aluminum, synthetic fragrance, baking soda, and parabens; and the most effective natural deodorants rely on coconut oil, magnesium, and minimal ingredients. End with a direct, confident CTA that drives to the RSC deodorant collection and/or the coconut oil deodorant product page. Tone should be warm, empowering, and confident — not salesy. Example closing line: 'Your underarms deserve better than a long list of synthetic chemicals. Real Skin Care's coconut oil deodorant was made for skin exactly like yours.' Include two CTAs: one to the product page and one to the aluminum-free deodorant collection.",
+      "keywords_to_include": [
+        "hypoallergenic deodorant",
+        "natural deodorant",
+        "best deodorant for sensitive skin",
+        "aluminum free deodorant for women",
+        "best aluminum free deodorant"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "hypoallergenic deodorant",
+    "deodorant for sensitive skin",
+    "natural deodorant",
+    "aluminum free deodorant",
+    "aluminum free deodorant for women",
+    "best aluminum free deodorant",
+    "best deodorant for sensitive skin",
+    "best deodorant for sensitive skin dermatologist recommended",
+    "dermatologist recommended deodorant",
+    "dermatologist recommended antiperspirant",
+    "antiperspirant deodorant",
+    "antiperspirant vs deodorant",
+    "deodorant vs antiperspirant",
+    "best deodorant for men",
+    "best deodorant for women",
+    "men's deodorant for sensitive skin",
+    "men's best deodorant for sensitive skin dermatologist-recommended",
+    "antiperspirant deodorant for men",
+    "deodorant for women",
+    "deodorant for hyperhidrosis",
+    "body odor deodorant",
+    "fragrance free deodorant",
+    "baking soda free deodorant",
+    "paraben free deodorant",
+    "contact dermatitis deodorant",
+    "coconut oil deodorant",
+    "plant based deodorant",
+    "non toxic deodorant",
+    "vegan deodorant",
+    "clean deodorant",
+    "best deodorant",
+    "minimal ingredient deodorant",
+    "sensitive underarm care",
+    "natural odor protection",
+    "magnesium deodorant"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut oil deodorant",
+      "url": "https://www.realskincare.com/products/coconut-oil-deodorant",
+      "placement_guidance": "Link in the 'What to Look for in a Natural Hypoallergenic Deodorant' section when discussing coconut oil as a key ingredient, and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "aluminum-free deodorant collection",
+      "url": "https://www.realskincare.com/collections/aluminum-free-deodorant",
+      "placement_guidance": "Link in the comparison table section inline CTA and again in the conclusion. This is the primary conversion URL."
+    },
+    {
+      "anchor_text": "natural deodorant collection",
+      "url": "https://www.realskincare.com/collections/natural-deodorant",
+      "placement_guidance": "Link in the introduction or early in the post when first mentioning Real Skin Care's product line."
+    },
+    {
+      "anchor_text": "non-toxic deodorant",
+      "url": "https://www.realskincare.com/collections/non-toxic-deodorant",
+      "placement_guidance": "Link in the ingredients section when discussing avoiding synthetic and toxic ingredients."
+    },
+    {
+      "anchor_text": "vegan deodorant",
+      "url": "https://www.realskincare.com/collections/vegan-deodorant",
+      "placement_guidance": "Link naturally when listing the credentials of RSC's formula — vegan, non-toxic, clean."
+    },
+    {
+      "anchor_text": "natural deodorant for kids",
+      "url": "https://www.realskincare.com/collections/kids-deodorant",
+      "placement_guidance": "Link in the FAQ answer about whether natural deodorant is safe for kids or teens."
+    },
+    {
+      "anchor_text": "roll-on deodorant options",
+      "url": "https://www.realskincare.com/collections/roll-on-deodorant",
+      "placement_guidance": "Link in the comparison table section or the women's section when discussing application format preferences."
+    },
+    {
+      "anchor_text": "how probiotic deodorant works",
+      "url": "https://www.realskincare.com/blogs/news/probiotic-deodorant-what-it-is-how-it-works",
+      "placement_guidance": "Link in the 'What to Look for in a Natural Hypoallergenic Deodorant' section as a 'learn more' reference when discussing microbiome-friendly formulas."
+    },
+    {
+      "anchor_text": "plant-based deodorant guide",
+      "url": "https://www.realskincare.com/blogs/news/plant-based-deodorant-what-it-is-why-it-works",
+      "placement_guidance": "Link in the ingredients education section or the transition section as supporting reading."
+    },
+    {
+      "anchor_text": "sustainable deodorant guide",
+      "url": "https://www.realskincare.com/blogs/news/sustainable-deodorant-the-complete-guide-2026",
+      "placement_guidance": "Link in the conclusion or a sidebar callout for readers who want to explore further — positions RSC as a full clean-living resource."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Include a brief author bio or reviewer note at the top or bottom of the post indicating the content was reviewed by a licensed esthetician or dermatology professional (if available) — this directly counters the dermatology authority of the #1 ranking competitor",
+    "Cite the FDA's regulatory stance on the term 'hypoallergenic' (FDA has stated the term is not legally defined or regulated for cosmetics) with a link to the FDA source — factual citations build trust",
+    "Reference established dermatological research on the top contact allergens in deodorants (the European Contact Dermatitis Society's standard patch test series includes fragrance mix and baking soda reactions) without making medical claims",
+    "Be transparent about the deodorant 'detox period' — acknowledging a product limitation honestly signals trustworthiness over promotional content",
+    "Use first-person brand voice sparingly but authentically — e.g., 'At Real Skin Care, we formulate without the top 5 deodorant irritants' — to ground authority in the brand's actual formulation philosophy",
+    "Include real customer use-case language in the introduction or transition section (e.g., 'Many of our customers come to us after years of trying products that left their skin red and irritated') to demonstrate lived experience",
+    "Ensure all ingredient claims are accurate and verifiable — do not make drug claims (e.g., do not say coconut oil 'treats' eczema or 'kills bacteria' in a medical sense; use 'may help' and 'antimicrobial properties')"
+  ],
+  "schema_type": "FAQPage",
+  "writer_notes": "TONE & VOICE: Warm, knowledgeable, and empowering — like a trusted friend who happens to have expert-level skincare knowledge. Not clinical, not preachy, not overly salesy. The brand's voice is clean, honest, and rooted in ingredient integrity. Avoid filler phrases like 'In today's world' or 'More and more people are.' FUNNEL STAGE: This is a MOF (middle-of-funnel) post. The reader knows they have sensitive skin and is actively evaluating options. Write with that in mind — they don't need to be convinced deodorant matters; they need to be convinced this formula is the right one for them. BRAND POLICY REMINDER: Do NOT name any competitor deodorant brands anywhere in the post — not in the comparison table, not in passing, not in the FAQ. Use generic descriptors only (e.g., 'conventional antiperspirant,' 'mass-market aluminum-free stick,' 'gel formula with five ingredients'). COMPARISON TABLE: The writer must include the comparison table as specified. This is a non-negotiable MOF element. Use a simple HTML or markdown table with the columns specified in comparison_table_spec. KEYWORD USAGE: The primary keyword 'hypoallergenic deodorant' should appear in the H1, within the first 100 words, in at least two H2s, and in the meta description. Do not keyword-stuff — prioritize natural readability. SEASONALITY NOTE: Peak traffic months are January, February, March, and August. If the post is being published near January or March, consider adding a seasonal hook in the intro (e.g., 'With resolutions to clean up your routine' or 'As temperatures rise'). WHAT TO AVOID: Do not write this as a pure informational blog post — it must have conversion architecture (table, CTAs, internal links to product pages). Do not use the phrase 'hypoallergenic' without explaining what it does and does not mean — this is a key differentiator from all current top-10 results. Do not pad sections to hit word count — every paragraph must serve the reader or the conversion goal.",
+  "search_volume": 18100,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.usdermatologypartners.com/press-media/13-best-deodorants-for-sensitive-skin/",
+      "title": "13 Absolute Best Deodorants for Sensitive Skin That Work",
+      "domain": "www.usdermatologypartners.com",
+      "description": "Sep 19, 2025 — BEST OVERALL: Dove Advanced Care Sensitive Deodorant at Amazon ($10) ; BEST OVERALL, RUNNER-UP: Schmidt's Natural Deodorant at Amazon (See Price). Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.target.com/c/deodorant-antiperspirant-personal-care/hypoallergenic/-/N-jhde1Zynjyy",
+      "title": "Hypoallergenic : Deodorant & Antiperspirant",
+      "domain": "www.target.com",
+      "description": "These formulas are free from aluminum compounds, offering odor protection without blocking sweat glands. Instead, they utilize ingredients like baking soda, ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.allergyasthmatech.com/vanicream-aluminum-free-deodorant.html",
+      "title": "Vanicream Aluminum-Free Deodorant",
+      "domain": "www.allergyasthmatech.com",
+      "description": "Vanicream Aluminum-Free Deodorant is a unique gel deodorant that uses only five ingredients to fight underarm odor even before it starts. Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.reddit.com/r/hygiene/comments/1igtgjb/antiperspirant_hypoallergenic_gel_deodorant_for/",
+      "title": "anti-perspirant hypoallergenic gel deodorant for severely ...",
+      "domain": "www.reddit.com",
+      "description": "i have reactions to almost all deodorants. the only one that worked for me was almay hypoallergenic, worked for me for years yet i'm suddenly having an ..."
+    },
+    {
+      "position": 5,
+      "url": "https://www.amazon.com/hypoallergenic-deodorant/s?k=hypoallergenic+deodorant",
+      "title": "Hypoallergenic Deodorant",
+      "domain": "www.amazon.com",
+      "description": "Find hypoallergenic deodorants with clinical-strength protection for sensitive skin. Explore aluminum-free and dermatologist-tested options."
+    },
+    {
+      "position": 6,
+      "url": "https://www.dove.com/us/en/stories/tips-and-how-to/grooming-tips/deodorant-for-sensitive-skin.html",
+      "title": "6 DEODORANTS THAT WON'T IRRITATE SENSITIVE SKIN",
+      "domain": "www.dove.com",
+      "description": "Explore Dove Men+Care deodorants designed to minimize irritation that are hypoallergenic and aluminum-free for sensitive underarms."
+    },
+    {
+      "position": 7,
+      "url": "https://www.everydayhealth.com/skin-care/best-deodorants-for-sensitive-skin/",
+      "title": "These Dermatologist-Recommended Deodorants Are ...",
+      "domain": "www.everydayhealth.com",
+      "description": "Mar 4, 2025 — Vanicream Aluminum-Free Gel Deodorant is made from just five ingredients and is considered hypoallergenic, so it is unlikely to cause an ... Read more"
+    },
+    {
+      "position": 8,
+      "url": "https://www.walmart.com/c/kp/hypoallergenic-antiperspirant",
+      "title": "Hypoallergenic Antiperspirant",
+      "domain": "www.walmart.com",
+      "description": "NO SWEAT! Ultra Long Lasting Sweat and Body Odor Protection, 98% Natural Ingredients, Hypoallergenic & Clinically Tested, Alcohol-Free & Fabric Safe, ... Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

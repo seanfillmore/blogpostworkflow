@@ -1,0 +1,206 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:19:44.207Z",
+    "last_crawled": "2026-08-25T11:22:05Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients-2",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2585,
+  "generated_at": "2026-04-17T11:49:11.218Z",
+  "brief_path": "/root/seo-claude/data/briefs/what-is-castile-soap-uses-benefits-ingredients.json",
+  "tokens_used": {
+    "input": 10621,
+    "output": 5245
+  },
+  "image_path": "data/posts/what-is-castile-soap-uses-benefits-ingredients/image.webp",
+  "image_prompt": "Product photography, a clear glass bottle of unbranded castile liquid soap with a simple cork stopper rests on a pale brushed concrete surface, surrounded by a small glass dish of saponified organic virgin coconut oil, a halved fresh coconut, and a single unwrapped plain white round soap puck resting on a white ceramic soap dish, plain pale concrete wall softly out of focus behind, clean diffused studio light, even and bright, 45-degree overhead shot, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-04-19T10:47:27.240Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563512770730,
+  "shopify_handle": "what-is-castile-soap-uses-benefits-ingredients-2",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/what-is-castile-soap-uses-benefits-ingredients-2",
+  "shopify_status": "published",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_fe58f8f8-5696-4058-bbed-0b4c118068ed.webp?v=1784461090",
+  "uploaded_at": "2026-07-19T11:38:13.214Z",
+  "published_at": "2026-06-17T15:06:49.522Z",
+  "indexing_submissions": [
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-25T11:30:01.939Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-26T11:30:02.658Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-27T11:30:01.704Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-28T11:30:01.813Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-29T11:30:02.654Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-06-30T11:30:01.743Z",
+      "result": "ok"
+    },
+    {
+      "method": "sitemap_resubmit",
+      "submitted_at": "2026-07-01T11:30:02.809Z",
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-07-02T11:30:02.601Z",
+      "notification_time": null,
+      "result": "ok"
+    },
+    {
+      "method": "indexing_api",
+      "type": "URL_UPDATED",
+      "submitted_at": "2026-07-03T11:30:03.177Z",
+      "notification_time": null,
+      "result": "ok"
+    }
+  ],
+  "indexing_blocked": false,
+  "indexing_blocked_reason": null,
+  "indexing_blocked_at": "2026-07-18T11:30:02.485Z",
+  "last_refreshed_at": "2026-07-19T11:38:07.427Z",
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 13 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:45.630Z",
+  "indexing_unblocked_at": "2026-08-04T11:30:01.989Z",
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-25T17:14:20.801Z",
+      "age_days": 38,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:54.114Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-17T13:30:04.124Z",
+      "age_days": 60,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T15:42:54.114Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 90,
+      "reviewed_at": "2026-09-16T13:30:03.611Z",
+      "age_days": 90,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 90 days.",
+      "superseded_at": "2026-09-21T15:42:54.115Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:42:54.219Z",
+      "age_days": 64,
+      "impressions": 6,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 9,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 6 impressions, 0 clicks over first 30 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:27.465Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:42:54.322Z",
+      "age_days": 64,
+      "impressions": 52,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 16.576923076923077,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 52 impressions over 60 days.",
+      "gsc_basis": "canonical-host-2026-09-21",
+      "superseded_at": "2026-09-21T15:59:27.465Z",
+      "superseded_by": "basis-change"
+    },
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-09-21T15:59:27.574Z",
+      "age_days": 64,
+      "impressions": 6,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 9,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "Indexed. 6 impressions, 0 clicks over the last 30 days.",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-09T13:30:03.392Z",
+      "superseded_by": "2026-10-08T15:10:24.384Z"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-09-21T15:59:27.676Z",
+      "age_days": 64,
+      "impressions": 52,
+      "clicks": 0,
+      "ctr": 0,
+      "position": 16.576923076923077,
+      "projection": 0.2,
+      "verdict": "ON_TRACK",
+      "reason": "expected 0.2 clicks from 52 impressions at position 16.6 — too few to judge (need 5).",
+      "gsc_basis": "peer-yield-2026-09-21",
+      "superseded_at": "2026-10-09T13:30:03.392Z",
+      "superseded_by": "2026-10-08T15:10:24.384Z"
+    }
+  ],
+  "refreshed_at": "2026-10-08T15:10:24.384Z",
+  "last_material_edit": {
+    "at": "2026-10-08T15:10:24.384Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:53:27.988Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  }
+}

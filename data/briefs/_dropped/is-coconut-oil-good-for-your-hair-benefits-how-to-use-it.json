@@ -1,0 +1,348 @@
+{
+  "target_keyword": "is coconut oil good for your hair benefits how to use it",
+  "slug": "is-coconut-oil-good-for-your-hair-benefits-how-to-use-it",
+  "search_intent": "informational",
+  "recommended_title": "Is Coconut Oil Good for Your Hair? Benefits & How to Use It",
+  "meta_description": "Discover the real benefits of coconut oil for your hair — from deep conditioning to scalp health — plus exactly how to use it for best results. Read the full guide.",
+  "target_word_count": 2200,
+  "content_angle": "This post goes beyond surface-level benefits by grounding every claim in the science of lauric acid and protein loss prevention, while offering a practical, hair-type-specific usage guide that most competitors skip entirely — positioning Real Skin Care as the clean-ingredient authority on coconut oil hair care.",
+  "key_differentiators": [
+    "Every major ingredient claim (lauric acid penetration, protein loss reduction, antimicrobial scalp effects) is backed by a cited peer-reviewed source — competitors cite loosely or not at all",
+    "Includes a hair-type compatibility matrix (fine, coarse, curly, color-treated, low-porosity) so readers can immediately self-identify whether coconut oil is right for them — no competing post in the top 7 does this clearly",
+    "Provides multiple use-case tutorials (pre-wash treatment, overnight mask, scalp massage, frizz serum) with specific quantities and timing rather than vague instructions",
+    "Addresses the 'when coconut oil doesn't work' scenario (low-porosity hair, protein-sensitive hair) honestly, which builds trust and reduces bounce from frustrated readers",
+    "Ties the content naturally back to Real Skin Care's coconut oil product line and philosophy without feeling promotional — brand presence through expertise, not advertising"
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 180,
+      "guidance": "Open with a relatable hook — something like the reader standing in a grocery aisle or scrolling through hair care advice, overwhelmed by conflicting opinions on coconut oil. Acknowledge the confusion directly: some sources swear by it, others say it causes buildup or breakage. Promise the reader that this post will give them the honest, science-backed answer and a practical how-to guide tailored to their hair type. Do NOT open with a generic 'Coconut oil has been used for centuries' statement — that's what every competitor does. Instead, lead with the reader's problem. Naturally introduce the primary keyword 'is coconut oil good for your hair' in the first 100 words. Set the expectation that the answer depends on hair type and how it's used — this frames the nuance to come.",
+      "keywords_to_include": [
+        "is coconut oil good for your hair",
+        "coconut oil for hair benefits",
+        "coconut oil hair care routine"
+      ]
+    },
+    {
+      "section": "H2: What Makes Coconut Oil Different from Other Hair Oils?",
+      "type": "h2",
+      "word_count_target": 220,
+      "guidance": "Explain the science of why coconut oil is uniquely suited for hair compared to most other plant oils. The key differentiator is its high concentration of lauric acid (approximately 47–53% of its fatty acid composition), a medium-chain saturated fatty acid with a low molecular weight and straight linear structure that allows it to penetrate the hair shaft rather than just coat it. Cite the foundational 2003 study by Rele & Mohile published in the Journal of Cosmetic Science ('Effect of mineral oil, sunflower oil, and coconut oil on prevention of hair damage') — this is the most-cited peer-reviewed source on coconut oil and protein loss prevention. Writer must reference this study by publication name (Journal of Cosmetic Science) without over-explaining the methodology. Contrast briefly with heavier oils that only sit on the surface. Introduce the concept of protein loss prevention — coconut oil reduces the amount of protein the hair loses during washing, both before and after. Keep tone educational but accessible; avoid overly clinical language.",
+      "keywords_to_include": [
+        "virgin coconut oil hair benefits",
+        "coconut oil for damaged hair repair",
+        "coconut oil deep conditioning treatment"
+      ]
+    },
+    {
+      "section": "H2: The Key Benefits of Coconut Oil for Hair",
+      "type": "h2",
+      "word_count_target": 420,
+      "guidance": "This is the core benefits section. Cover each benefit with 2–4 sentences of substance — not just a bullet point and a one-liner. Use H3 subheadings for each benefit. Benefits to cover in order: (1) Reduces protein loss and strengthens hair — tie directly back to the Rele & Mohile citation; (2) Deep moisturization for dry hair — lauric acid penetrates the cortex rather than just coating the cuticle, making it more effective than surface-coating oils for truly dry hair; (3) Scalp health and antimicrobial properties — lauric acid has documented antimicrobial properties; reference Kabara et al. or a similar credible source on lauric acid and antimicrobial activity; connect to dandruff-prone or irritated scalp; (4) Frizz reduction and shine — coating the hair cuticle after treatment seals moisture in and smooths the cuticle surface; (5) Potential support for hair growth — be careful here; do NOT make direct hair growth claims without nuance. Frame as: coconut oil may support the conditions for healthier growth by reducing breakage and maintaining scalp health, not as a clinically proven hair growth treatment. Flag this distinction clearly in the copy. (6) Adds definition and manageability for curly hair types. Each H3 should naturally include at least one semantic keyword.",
+      "keywords_to_include": [
+        "coconut oil for hair growth",
+        "coconut oil for scalp health",
+        "coconut oil for dry hair",
+        "coconut oil for frizzy hair",
+        "does coconut oil help hair loss",
+        "coconut oil for hair thickness and volume"
+      ]
+    },
+    {
+      "section": "H3: Reduces Protein Loss and Strengthens Hair",
+      "type": "h3",
+      "word_count_target": 70,
+      "guidance": "Subsection under Key Benefits. Cite Rele & Mohile (2003). Explain that coconut oil applied before washing significantly reduces the amount of protein leached from hair during the wash process. Keep concise — this supports rather than restates the intro of the parent H2.",
+      "keywords_to_include": [
+        "coconut oil for damaged hair repair"
+      ]
+    },
+    {
+      "section": "H3: Deep Moisturization for Dry and Brittle Hair",
+      "type": "h3",
+      "word_count_target": 70,
+      "guidance": "Explain the penetration advantage of lauric acid for dry or brittle hair. Note that this benefit is most pronounced for high-porosity hair. Briefly preview the caveat that will come in the hair type section — that low-porosity hair may not respond as well.",
+      "keywords_to_include": [
+        "coconut oil for dry hair",
+        "coconut oil deep conditioning treatment"
+      ]
+    },
+    {
+      "section": "H3: Scalp Health and Antimicrobial Support",
+      "type": "h3",
+      "word_count_target": 70,
+      "guidance": "Discuss lauric acid's antimicrobial and antifungal properties and the potential connection to reducing dandruff and scalp irritation. Reference a credible source — Kabara JJ et al. (1972) 'Fatty acids and derivatives as antimicrobial agents' in Antimicrobial Agents and Chemotherapy is the canonical citation here. Frame this as supportive, not curative.",
+      "keywords_to_include": [
+        "coconut oil for scalp health"
+      ]
+    },
+    {
+      "section": "H3: Frizz Reduction and Surface Shine",
+      "type": "h3",
+      "word_count_target": 60,
+      "guidance": "Explain the cuticle-sealing mechanism. Post-wash application of a small amount smooths the hair cuticle and reflects light more evenly. Practical tip: a pea-sized amount on dry ends, not the roots.",
+      "keywords_to_include": [
+        "coconut oil for frizzy hair"
+      ]
+    },
+    {
+      "section": "H3: Potential to Support a Healthy Environment for Hair Growth",
+      "type": "h3",
+      "word_count_target": 80,
+      "guidance": "Be explicitly cautious here. State clearly that coconut oil is not a clinically proven hair growth treatment. Frame the benefit as: by reducing breakage, maintaining scalp hygiene, and supporting a healthy follicle environment, coconut oil may indirectly support the conditions that allow hair to grow to its full potential. Do not use language like 'grows hair faster' or 'stimulates follicles' without direct citation — none exists at the level of clinical certainty.",
+      "keywords_to_include": [
+        "coconut oil for hair growth",
+        "does coconut oil help hair loss"
+      ]
+    },
+    {
+      "section": "H2: Is Coconut Oil Right for Your Hair Type? (A Quick Guide)",
+      "type": "h2",
+      "word_count_target": 320,
+      "guidance": "This is the key differentiator section that most competitors skip. Present a hair-type compatibility breakdown. Format as a scannable subsection or mini-table with brief explanations for each hair type. Cover: (1) Fine hair — use sparingly, focus on ends only, risk of weighing hair down; (2) Thick or coarse hair — responds well, can handle more liberal application; (3) Curly or coily hair — great for sealing moisture post-wash, good for the LOC or LCO method; (4) Color-treated hair — generally safe as a pre-wash treatment; may help protect during the coloring process; (5) Low-porosity hair — this is the important caveat: the tightly closed cuticle of low-porosity hair makes it harder for oils to penetrate; coconut oil may sit on the surface and create buildup; suggest applying with heat (warm towel wrap) or switching to lighter oils; (6) Protein-sensitive hair — some hair that is already over-proteinized may feel stiff or dry after repeated coconut oil use; suggest a strand test first. End with a one-sentence affirmation that knowing your hair type is the key to getting results.",
+      "keywords_to_include": [
+        "is coconut oil good for hair",
+        "can coconut oil clog hair pores",
+        "coconut oil vs argan oil for hair"
+      ]
+    },
+    {
+      "section": "H2: How to Use Coconut Oil on Your Hair — 4 Methods",
+      "type": "h2",
+      "word_count_target": 480,
+      "guidance": "This is the practical how-to section and should be the most detailed section in the post. Use H3 subheadings for each method. Each method should include: what it does, who it's best for, step-by-step instructions (numbered), recommended quantity, and timing. The four methods are: (1) Pre-wash protein protection treatment — apply before shampooing to reduce protein loss; best for all hair types, especially damaged or color-treated hair; (2) Overnight deep conditioning mask — for dry, damaged, or coarse hair; apply generously from mid-lengths to ends, cap overnight, wash out in the morning; include a simple recipe that could incorporate other natural ingredients (e.g., a few drops of essential oil, honey); this satisfies 'coconut oil hair mask recipe' intent; (3) Scalp massage treatment — apply warm coconut oil to the scalp with fingertip (not nail) pressure; best for dry scalp, dandruff-prone scalp; leave for 30–60 minutes then shampoo out; (4) Post-wash frizz and shine serum — use a very small amount (pea-sized) on dry or damp ends only to seal cuticle and reduce frizz. For each method, include how long to leave it in and how often to use it. Explicitly address 'how long to leave coconut oil in hair' and 'how often to use coconut oil on hair' as direct in-text answers. Writer should use second-person ('you') throughout this section and keep instructions numbered and clear.",
+      "keywords_to_include": [
+        "how to use coconut oil on hair",
+        "best way to apply coconut oil to hair",
+        "coconut oil hair treatment",
+        "coconut oil hair mask recipe",
+        "how long to leave coconut oil in hair",
+        "how often to use coconut oil on hair",
+        "coconut oil deep conditioning treatment"
+      ]
+    },
+    {
+      "section": "H3: Method 1 — Pre-Wash Protein Protection Treatment",
+      "type": "h3",
+      "word_count_target": 100,
+      "guidance": "Step-by-step numbered instructions. Apply to dry hair 30–60 minutes before washing. Focus on mid-lengths and ends. Can apply to roots too if scalp is dry. Use a tablespoon for shoulder-length hair, adjust up or down. Shampoo out thoroughly — may need two shampoo passes. Best for all hair types including fine hair (use less). Tie back to protein loss reduction science.",
+      "keywords_to_include": [
+        "coconut oil hair treatment",
+        "how to use coconut oil on hair"
+      ]
+    },
+    {
+      "section": "H3: Method 2 — Overnight Deep Conditioning Hair Mask",
+      "type": "h3",
+      "word_count_target": 110,
+      "guidance": "Step-by-step numbered instructions. Slightly warm the coconut oil (solid at room temp — note this for readers unfamiliar). Apply generously from roots if scalp is dry, otherwise mid-lengths to ends. Cover with a shower cap or old t-shirt to protect pillowcase. Wash out thoroughly in the morning. Include a simple optional recipe addition: 1 tbsp coconut oil + 1 tsp raw honey for added humectant benefit. Recommended frequency: once per week for damaged or very dry hair. Best for: coarse, dry, damaged, or curly hair.",
+      "keywords_to_include": [
+        "coconut oil hair mask recipe",
+        "how long to leave coconut oil in hair",
+        "coconut oil for dry hair",
+        "coconut oil deep conditioning treatment"
+      ]
+    },
+    {
+      "section": "H3: Method 3 — Scalp Massage Treatment",
+      "type": "h3",
+      "word_count_target": 100,
+      "guidance": "Step-by-step numbered instructions. Warm a small amount (1–2 teaspoons) between palms. Part hair in sections. Use fingertip pads (not nails) to work oil into scalp using small circular motions. Leave on for 30–60 minutes (or overnight for intensive treatment). Shampoo thoroughly. Frequency: 1–2 times per week for dry or flaky scalp. Caution for oily scalp types — may worsen sebum overproduction; suggest patch testing first.",
+      "keywords_to_include": [
+        "coconut oil for scalp health",
+        "best way to apply coconut oil to hair"
+      ]
+    },
+    {
+      "section": "H3: Method 4 — Post-Wash Frizz and Shine Finishing Treatment",
+      "type": "h3",
+      "word_count_target": 90,
+      "guidance": "Emphasize the tiny quantity needed — a pea-sized amount max for most hair lengths. Rub between palms to melt, then smooth lightly over dry or damp ends and mid-lengths only. Never apply to roots using this method — will cause greasiness. Best for: thick, coarse, curly, or color-treated hair that needs frizz control. Not recommended for fine or low-porosity hair as a finishing product. Can be used daily as needed.",
+      "keywords_to_include": [
+        "coconut oil for frizzy hair",
+        "coconut oil hair care routine"
+      ]
+    },
+    {
+      "section": "H2: When Coconut Oil Might Not Work for Your Hair",
+      "type": "h2",
+      "word_count_target": 200,
+      "guidance": "This trust-building section is missing from most competitor posts. Honestly address the scenarios where coconut oil underperforms or can cause problems: (1) Low-porosity hair — the closed cuticle resists penetration; coconut oil may sit on the surface, causing buildup and a heavy, greasy feel; solution: apply with gentle heat or try a lighter oil alternative; (2) Protein-sensitive hair — hair that's already protein-overloaded (common in hair that has been over-treated with protein masks) may feel harder and more brittle with repeated coconut oil use; solution: do a strand test and limit frequency; (3) Oily scalp — applying to the scalp can exacerbate sebum overproduction for some people; (4) Fine hair — too much or too-frequent application will flatten and weigh down fine hair; solution: apply ends only, very sparingly. Address 'can coconut oil clog hair pores' — clarify that it can cause follicle congestion if used too heavily on the scalp, especially for those with naturally oily scalps. Framing should be empowering, not discouraging — 'it's about how and how much, not just whether.'",
+      "keywords_to_include": [
+        "can coconut oil clog hair pores",
+        "coconut oil vs argan oil for hair"
+      ]
+    },
+    {
+      "section": "H2: Choosing the Right Coconut Oil for Your Hair",
+      "type": "h2",
+      "word_count_target": 180,
+      "guidance": "Brief but important section. Explain the difference between virgin (unrefined) coconut oil and refined coconut oil for hair use. Virgin coconut oil retains more of its natural phytonutrients, antioxidants, and scent — it is the preferred choice for hair and scalp treatments. Refined coconut oil is processed at higher heat, which may strip some beneficial compounds. Fractionated coconut oil remains liquid at room temperature and is lighter — good for fine hair or as a finishing oil, though it has a different fatty acid profile. Recommend cold-pressed, organic virgin coconut oil as the gold standard. Naturally connect to Real Skin Care's coconut oil products here with a soft brand mention — do not be promotional; simply note that sourcing matters and that Real Skin Care uses organic cold-pressed coconut oil in its formulations.",
+      "keywords_to_include": [
+        "virgin coconut oil hair benefits",
+        "coconut oil hair care routine"
+      ]
+    },
+    {
+      "section": "H2: Frequently Asked Questions",
+      "type": "faq",
+      "word_count_target": 250,
+      "guidance": "Include 4–5 FAQ items written in a natural Q&A format. Each answer should be 2–4 sentences. These should directly answer high-intent queries that also appear as semantic keywords and are likely to appear as featured snippets or PAA boxes. Questions to include: (1) How often should you use coconut oil on your hair? — Answer: 1–2 times per week as a pre-wash or deep conditioning treatment is sufficient for most hair types; fine or low-porosity hair may benefit from less frequent use. (2) How long should you leave coconut oil in your hair? — Answer: For a standard treatment, 30–60 minutes is effective; for an intensive overnight mask, leaving it in 6–8 hours maximizes conditioning. (3) Is coconut oil or argan oil better for hair? — Answer: Both have distinct benefits; coconut oil penetrates the hair shaft and is better for deep conditioning and protein loss prevention; argan oil is lighter and better as a finishing oil, especially for fine or low-porosity hair that coconut oil can weigh down. Do NOT mention any specific product brands in this comparison. (4) Can coconut oil cause hair loss? — Answer: No evidence suggests coconut oil causes hair loss; however, product buildup on the scalp from overuse could potentially clog follicles and impede healthy hair growth — proper thorough washing after treatment is important. (5) Can you use coconut oil on color-treated hair? — Answer: Yes; used as a pre-wash treatment, coconut oil can help protect color-treated hair during the washing process without stripping color.",
+      "keywords_to_include": [
+        "how often to use coconut oil on hair",
+        "how long to leave coconut oil in hair",
+        "coconut oil vs argan oil for hair",
+        "does coconut oil help hair loss",
+        "coconut oil hair treatment"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 160,
+      "guidance": "Summarize the core message: coconut oil is genuinely beneficial for most hair types when used correctly — the key variables are hair type, application method, quantity, and frequency. Reinforce that the science behind lauric acid's penetration ability makes it uniquely effective compared to surface-coating oils. End with an empowering call to action: encourage the reader to try one of the methods outlined (suggest starting with the pre-wash treatment as the lowest-risk entry point), and naturally direct them to explore Real Skin Care's coconut oil products for a clean, organic formulation they can trust. Do not use a hard-sell tone. The CTA should feel like a natural extension of the educational journey, not an advertisement. Final sentence should invite them to explore other related content on the site (organic coconut oil uses, coconut oil for skin).",
+      "keywords_to_include": [
+        "coconut oil for hair benefits",
+        "is coconut oil good for hair",
+        "coconut oil hair care routine"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "coconut oil for hair benefits",
+    "is coconut oil good for hair",
+    "how to use coconut oil on hair",
+    "coconut oil hair treatment",
+    "coconut oil for dry hair",
+    "coconut oil for hair growth",
+    "coconut oil for scalp health",
+    "best way to apply coconut oil to hair",
+    "coconut oil hair mask recipe",
+    "how often to use coconut oil on hair",
+    "coconut oil vs argan oil for hair",
+    "does coconut oil help hair loss",
+    "coconut oil for frizzy hair",
+    "coconut oil for damaged hair repair",
+    "virgin coconut oil hair benefits",
+    "coconut oil deep conditioning treatment",
+    "how long to leave coconut oil in hair",
+    "coconut oil for hair thickness and volume",
+    "can coconut oil clog hair pores",
+    "coconut oil hair care routine",
+    "lauric acid hair benefits",
+    "natural oil for hair growth",
+    "pre-wash hair treatment",
+    "protein loss prevention hair",
+    "natural hair conditioner",
+    "organic coconut oil for hair",
+    "cold-pressed coconut oil hair",
+    "natural hair mask",
+    "hair cuticle repair",
+    "scalp massage oil",
+    "hair shaft penetration oil",
+    "low-porosity hair oil",
+    "curly hair coconut oil",
+    "fine hair oil treatment",
+    "coconut oil overnight hair mask",
+    "hair breakage prevention",
+    "natural ingredients for hair care",
+    "antimicrobial scalp oil",
+    "dandruff natural remedy",
+    "hair shine natural oil"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "organic coconut oil types and uses",
+      "url": "https://www.realskincare.com/blogs/news/organic-coconut-oil-types-uses-benefits-for-skin",
+      "placement_guidance": "Link in the 'Choosing the Right Coconut Oil for Your Hair' section when discussing the difference between virgin, refined, and fractionated coconut oil — natural transition to broader coconut oil education"
+    },
+    {
+      "anchor_text": "coconut oil for skin benefits and uses",
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-for-skin-ultimate-guide-to-benefits-and-potential-downsides",
+      "placement_guidance": "Link in the conclusion when inviting readers to explore other uses for coconut oil in their personal care routine"
+    },
+    {
+      "anchor_text": "coconut oil deodorant benefits",
+      "url": "https://www.realskincare.com/blogs/news/coconut-oil-deodorant-benefits-diy-recipes-what-to-know",
+      "placement_guidance": "Link as a soft mention in the conclusion or in a sidebar callout noting that coconut oil's benefits extend throughout the personal care routine — including natural deodorant formulations"
+    },
+    {
+      "anchor_text": "benefits of coconut oil in soap",
+      "url": "https://www.realskincare.com/blogs/news/coconut-soap-benefits-discover-the-wonders-of-coconut-oil-in-soap",
+      "placement_guidance": "Link in the conclusion or within the introduction as a way to introduce the brand's broader coconut oil expertise — positions Real Skin Care as a full coconut oil authority, not just a hair care resource"
+    },
+    {
+      "anchor_text": "tea tree oil for scalp and hair",
+      "url": "https://www.realskincare.com/blogs/news/11-benefits-of-incorporating-tea-tree-oil-into-your-everyday-life",
+      "placement_guidance": "Link in the scalp massage method section or the scalp health benefits H3, when mentioning that tea tree oil can be combined with coconut oil for an enhanced antimicrobial scalp treatment — creates a natural companion content connection"
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Cite Rele & Mohile (2003) 'Effect of mineral oil, sunflower oil, and coconut oil on prevention of hair damage' published in the Journal of Cosmetic Science — this is the primary peer-reviewed source for coconut oil's protein loss prevention claims and must be referenced by journal name in the post",
+    "Cite Kabara JJ et al. (1972) 'Fatty acids and derivatives as antimicrobial agents' in Antimicrobial Agents and Chemotherapy for the antimicrobial properties of lauric acid as they relate to scalp health",
+    "Include a brief author bio or reviewer note indicating the post was written or reviewed by someone with a background in cosmetic science, trichology, or natural formulation — even a one-line credential note adds trust",
+    "Demonstrate first-hand product expertise by grounding usage instructions in Real Skin Care's sourcing standards (cold-pressed, organic, virgin coconut oil) — this signals brand authenticity not found in generic content farm posts",
+    "Address the 'when it doesn't work' scenario honestly — this is a hallmark of genuine expertise and distinguishes the post from promotional content that only lists positives",
+    "Use specific quantities, temperatures, and timing in all how-to sections — vague instructions signal low expertise; precise practical guidance signals a writer with real hands-on knowledge",
+    "Add a 'last reviewed' or 'last updated' date to the published post to signal ongoing editorial maintenance — important for health and beauty content",
+    "Avoid any absolute claims around hair growth or hair loss treatment — hedging appropriately ('may support,' 'can help reduce') is both honest and protects the brand from misleading health claims"
+  ],
+  "schema_type": "HowTo",
+  "writer_notes": "TONE AND VOICE: Warm, knowledgeable, and direct — like a trusted friend who happens to know a lot about natural ingredients. Real Skin Care's brand voice is clean, honest, and education-first. Avoid overly clinical language but do not dumb down the science — the reader is curious and capable. Do not write in a listicle-only format; use full paragraphs to explain the 'why' behind every recommendation. FUNNEL STAGE: This is a TOP-OF-FUNNEL educational post. The primary job is to educate and build trust, not convert. Product mentions should feel natural and incidental, not promotional. The post should be valuable even to someone who never buys from Real Skin Care. CANNIBALIZATION NOTE: Two near-identical URLs exist in the internal link candidates (with and without the '-1' suffix) — these appear to be duplicate or test pages. Do NOT link to the '-1' variant of this post's own URL or the '-1' variant of the organic coconut oil post. Link only to canonical versions. Flag this to the SEO team for cleanup. WHAT TO AVOID: Do not use the phrase 'for centuries' or 'ancient remedy' in the opening — this is a cliché that every competitor uses. Do not make any claim that coconut oil treats, cures, or prevents any medical condition including hair loss, dandruff disease, or scalp disorders — use supportive, conditional language throughout. Do not name any competing personal care brands anywhere in the post. Do not use stock phrases like 'nature's miracle oil' or 'liquid gold.' CITATIONS: The writer must include the two specified peer-reviewed citations (Rele & Mohile 2003; Kabara et al. 1972) as in-text references and optionally as footnotes. These should be introduced naturally, not dropped in as raw citations. FORMAT: Use H2 and H3 headings as outlined. The methods section should use numbered steps. The FAQ section should use a Q&A format with bold questions. Aim for a Flesch reading ease score of 60–70 (conversational but substantive). Target 2,200 words as the baseline — do not pad, do not cut the science.",
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.reddit.com/r/beauty/comments/9xss9p/how_do_i_use_coconut_oil_on_my_hair/",
+      "title": "How do I use coconut oil on my hair? : r/beauty",
+      "domain": "www.reddit.com",
+      "description": "I saturate the roots fully first then glide the oil on the rest of the hair shaft to the ends. Never rub! I put a cap on for about 15 minutes ( ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://www.verywellhealth.com/coconut-oil-for-your-hair-4171883",
+      "title": "Coconut Oil for Hair: Benefits and How to Use It",
+      "domain": "www.verywellhealth.com",
+      "description": "Dec 18, 2025 — Coconut oil can improve damaged, brittle hair and a dry scalp. Here's how to use it as either a hair mask or a treatment."
+    },
+    {
+      "position": 3,
+      "url": "https://info.drbronner.com/all-one-blog/2017/10/coconut-oil-hair-scalp/",
+      "title": "Coconut Oil as a Hair & Scalp Treatment",
+      "domain": "info.drbronner.com",
+      "description": "Oct 11, 2017 — When applying the oil, use your fingertips (not nails) to firmly and slowly massage it into your scalp. Get ready for the most incredible nutty ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.johnfrieda.com/en-uk/blog/hair-products/coconut-oil/",
+      "title": "Coconut Oil and Haircare | Using Coconut Oil on your Hair",
+      "domain": "www.johnfrieda.com",
+      "description": "Aug 25, 2025 — When used correctly, coconut oil can improve the health and condition of your hair. Here's how this totally-tropical hair treat works to ..."
+    },
+    {
+      "position": 5,
+      "url": "https://www.healthline.com/nutrition/coconut-oil-and-hair",
+      "title": "Benefits of Using Coconut Oil in Your Hair",
+      "domain": "www.healthline.com",
+      "description": "Aug 24, 2021 — Coconut oil is an excellent moisturizing product for your hair. It can be used both before and after you wash your hair to help prevent damage. Read more"
+    },
+    {
+      "position": 6,
+      "url": "https://palmers.com/blogs/blog/nourish-your-curls-with-coconut-oil-for-hair-scalp",
+      "title": "Nourish Your Curls with Coconut Oil for Hair & Scalp",
+      "domain": "palmers.com",
+      "description": "Coconut oil is rich in fatty acids that penetrate the hair shaft, providing deep hydration and improving the overall texture of the hair, making coconut oil for ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://odelebeauty.com/blogs/the-rinse/is-coconut-oil-good-for-your-hair?srsltid=AfmBOop5FYnfrZ2o9SSJu1qe5ke6UfVcFqNNOJSqq24ghgkWdiOdXNkc",
+      "title": "Is Coconut Oil Right For Your Hair?",
+      "domain": "odelebeauty.com",
+      "description": "Nov 12, 2024 — Is coconut oil good for hair? · Moisturizes + conditions · Strengthens hair + prevents damage · Reduces frizz · Adds shine · Supports scalp health. Read more"
+    }
+  ],
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "unscented-antibacterial-soap-what-to-look-for-why",
+  "keyword": "unscented antibacterial soap what to look for why",
+  "dropped_at": "2026-09-21T16:31:12.583Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-31-12-583Z-2381354",
+  "reason": "post killed: no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d; winner lock released on re-check (operator rule 2026-09-21); duplicate of original",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "unscented-antibacterial-soap-what-to-look-for-why.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore unscented-antibacterial-soap-what-to-look-for-why",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

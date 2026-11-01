@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "plant-based-toothpaste",
+  "keyword": "plant based toothpaste",
+  "dropped_at": "2026-10-14T13:32:22.832Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-10-14T13-32-22-832Z-445310",
+  "reason": "post killed: low demand: 70 impressions, 0 clicks in 90 days (operator decision 2026-10-14)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "plant-based-toothpaste.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore plant-based-toothpaste",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

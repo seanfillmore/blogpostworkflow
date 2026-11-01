@@ -1,0 +1,399 @@
+{
+  "generated_at": "2026-09-13T01:35:16.886Z",
+  "applied": false,
+  "slug": null,
+  "results": [
+    {
+      "id": "glycerin-cta-remineralization",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-benefit-remineralization",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-formula-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-list-safe-for-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-list-cavities",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-faq-cavities",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "glycerin-faq-kids",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "glycerin-cta-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-benefit-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-formula-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "mirror": "content-refreshed.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "glycerin-cta-remineralization",
+          "action": "absent",
+          "count": 0
+        },
+        {
+          "id": "glycerin-benefit-remineralization",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-formula-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-list-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "glycerin-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "glycerin-description-tag",
+      "handle": "why-glycerin-free-toothpaste-matters",
+      "surface": "description_tag",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)",
+      "before_value": "Learn why many dentists recommend glycerin-free toothpaste. Discover the benefits for remineralization, sensitivity, and clean oral care—featuring Real Skin Care’s all-natural formula."
+    },
+    {
+      "id": "families-product-safe-if-swallowed",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "families-faq-toddlers",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "families-product-safe-if-swallowed",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "families-faq-toddlers",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "families-description-tag",
+      "handle": "best-natural-toothpaste-for-families-2025",
+      "surface": "description_tag",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)",
+      "before_value": "Discover the best natural toothpaste for families in 2025. Safe for kids and adults, Real Skin Care’s All Natural formula offers clean, effective oral care without harsh ingredients."
+    },
+    {
+      "id": "fluoride-free-faq-cavities",
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "fluoride-free-faq-kids",
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-fluoride-free-toothpaste-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "fluoride-free-faq-cavities",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "fluoride-free-faq-kids",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "seven-ingredients-cta-safe-for-kids",
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "seven-ingredients-baking-soda-remineralizing",
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "seven-ingredients-cta-safe-for-kids",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "seven-ingredients-baking-soda-remineralizing",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "7-ingredients-to-avoid-in-natural-toothpaste",
+      "mirror": "content-refreshed.html",
+      "changed": false,
+      "rows": [
+        {
+          "id": "seven-ingredients-cta-safe-for-kids",
+          "action": "absent",
+          "count": 0
+        },
+        {
+          "id": "seven-ingredients-baking-soda-remineralizing",
+          "action": "absent",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "id": "organic-baking-soda-remineralizing",
+      "handle": "best-organic-toothpaste-what-to-look-for-why-it-matters",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "sls-kids-faq-coconut-oil-safe",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 2 occurrence(s)"
+    },
+    {
+      "id": "sls-kids-faq-yes-prose",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "sls-kids-faq-yes-jsonld",
+      "handle": "best-sls-free-toothpaste-for-kids-safe-natural",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "whitening-faq-question-prose",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "whitening-faq-answer-prose",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "whitening-faq-question-jsonld",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "id": "whitening-faq-answer-jsonld",
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "discover-the-power-of-coconut-whitening-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "whitening-faq-question-prose",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "whitening-faq-answer-prose",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "whitening-faq-question-jsonld",
+          "action": "apply",
+          "count": 1
+        },
+        {
+          "id": "whitening-faq-answer-jsonld",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "id": "natural-2025-remineralizing-ingredients",
+      "handle": "best-natural-toothpaste-2025",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "best-natural-toothpaste-2025",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "natural-2025-remineralizing-ingredients",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    },
+    {
+      "handle": "best-natural-toothpaste-2025",
+      "mirror": "content-refreshed.html",
+      "changed": false,
+      "rows": [
+        {
+          "id": "natural-2025-remineralizing-ingredients",
+          "action": "absent",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "id": "coconut-oil-pros-gum-inflammation",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "apply",
+      "why": "replacing 1 occurrence(s)"
+    },
+    {
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "mirror": "content.html",
+      "changed": true,
+      "rows": [
+        {
+          "id": "coconut-oil-pros-gum-inflammation",
+          "action": "apply",
+          "count": 1
+        }
+      ]
+    }
+  ]
+}

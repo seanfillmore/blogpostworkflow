@@ -207,11 +207,12 @@ test('PINNED_MIRROR_SLUGS is EMPTY — the strict-literal pin was retired', () =
   assert.deepEqual([...PINNED_MIRROR_SLUGS], []);
 });
 
-test('every plan mirror carries EITHER its BEFORE or its AFTER — what makes unpinning safe', async () => {
-  // This is the property the pin used to buy by brute force. Asserted here
-  // across BOTH plans at once, because it is the reason a reconcile may now
-  // overwrite these files: whatever the mirror holds, the plan can still find
-  // itself in it, so no compliance entry goes unverifiable.
+test('no claim a remediation plan removed has come back into a live mirror', async () => {
+  // This used to assert each mirror held EITHER the plan's BEFORE or its AFTER. Both
+  // articles were since rewritten on the live site, so neither string survives and the
+  // old form could only fail (2026-11-01). The property that matters is narrower: the
+  // claim text each plan removed must not reappear in the mirror, which tracks live.
+  // The plans' own logic is tested against frozen fixtures in their test files.
   const plans = await Promise.all([
     import('../../scripts/remediate-ingredient-benefit-headings.js'),
     import('../../scripts/remediate-tea-tree-11-benefits-post.js'),
@@ -221,8 +222,7 @@ test('every plan mirror carries EITHER its BEFORE or its AFTER — what makes un
     for (const entry of mod.PLAN) {
       if (entry.target?.kind !== 'file') continue;
       const html = readFileSync(join(ROOT, entry.target.path), 'utf8');
-      const seen = occurrences(html, entry.before) + occurrences(html, entry.after);
-      assert.equal(seen, entry.expectedOccurrences, `${entry.id}: drifted to a third value`);
+      assert.equal(occurrences(html, entry.before), 0, `${entry.id}: the removed text is back in ${entry.target.path}`);
       checked += 1;
     }
   }

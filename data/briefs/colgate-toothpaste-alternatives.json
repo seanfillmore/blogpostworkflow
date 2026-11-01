@@ -1,0 +1,301 @@
+{
+  "target_keyword": "colgate toothpaste alternatives",
+  "slug": "colgate-toothpaste-alternatives",
+  "search_intent": "commercial",
+  "content_type": "listicle",
+  "content_depth": "standard",
+  "recommended_title": "7 Colgate Toothpaste Alternatives: Natural Options That Work",
+  "meta_description": "Explore 7 colgate toothpaste alternatives: natural, fluoride-free and SLS-free options explained by ingredient. Find your best fit and shop Real Skin Care.",
+  "target_word_count": 1550,
+  "content_angle": "Instead of ranking brands, this post sorts alternatives by the ingredient reason people switch (SLS, fluoride preference, artificial flavors, enamel support) and is candid about what the evidence does and doesn't support. It uses cited primary sources with evidence-strength labels, which most top roundups lack, and shows Real Skin Care's coconut oil formulas as the clean-ingredient answer.",
+  "key_differentiators": [
+    "Organize the list by switching reason or ingredient type (coconut oil, fluoride-free, SLS-free, hydroxyapatite, cinnamon, xylitol, simpler fluoride formulas) rather than by brand, and label each item 'Best for…' so the reader can self-select quickly.",
+    "Be honest about fluoride: state that fluoride has the strongest evidence for cavity prevention, and help readers with high cavity risk choose accordingly. This builds trust that thin, promotional roundups lack.",
+    "Give every health or ingredient claim 2-4 verifiable primary sources and an evidence-strength tag (strong, mixed or weak), e.g., SLS and canker sores = mixed, coconut oil and plaque = mixed/weak.",
+    "Show a visible 'Last reviewed' date (Oct 2026) and a short 'what we looked for' criteria box. Fresh, transparent, criteria-driven roundups are what AI engines and searchers cite, and many cited roundups are stale.",
+    "Include a 'How to switch' section covering the transition period and when to see a dentist, which top results don't address."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 110,
+      "guidance": "Open by acknowledging why people look for colgate toothpaste alternatives: ingredient concerns (SLS, artificial sweeteners and colors), a preference for fluoride-free or natural formulas, taste, or sensitivity. State the verdict up front: the best alternative depends on your reason for switching, and the post lays out 7 options by type. Include a one-line 'reviewed October 2026; not a substitute for dental advice' note. Mention that cavity-prone readers should talk to their dentist about fluoride before switching.",
+      "keywords_to_include": [
+        "colgate toothpaste alternatives",
+        "natural toothpaste",
+        "toothpaste brands"
+      ]
+    },
+    {
+      "section": "H2: What to Look for in a Toothpaste Alternative",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Short criteria box (bullets): fluoride status, foaming agent (SLS or not), sweetener/flavor source, abrasivity and enamel safety, and ADA Seal status (explain the Seal is voluntary and many natural pastes don't carry it, so it is not a safety verdict by itself). One sentence on each, with citations for the ADA Seal and fluoride points. Do not name competing brands.",
+      "keywords_to_include": [
+        "ada approved toothpaste",
+        "what is the best toothpaste",
+        "best toothpaste recommended by dentists",
+        "fluoride free toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 1. Coconut Oil Toothpaste",
+      "type": "h2",
+      "word_count_target": 150,
+      "guidance": "Best for: people who want a simple, plant-based daily paste. Explain what coconut oil contributes (mild cleansing and a creamy base) with the honest evidence: systematic reviews on oil pulling and plaque/gingivitis are mixed to weak, so don't claim it treats gum disease. Present Real Skin Care's coconut oil toothpaste as the featured option, describe its ingredients factually, and link to the product page. Avoid cure language.",
+      "keywords_to_include": [
+        "non toxic coconut toothpaste organic",
+        "natural toothpaste",
+        "coconut oil toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 2. Fluoride-Free Natural Toothpaste",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Best for: those who prefer to avoid fluoride. Say plainly that fluoride toothpaste has strong evidence for cavity prevention (cite Cochrane review and ADA/CDC) and that fluoride-free pastes lack that evidence base. Explain that these pastes suit lower-risk adults who maintain flossing, diet, and checkups. Name common non-fluoride ingredients (xylitol, baking soda, hydrated silica) generically. Link to the fluoride-free collection.",
+      "keywords_to_include": [
+        "fluoride free toothpaste",
+        "fluoride toothpaste for cavities",
+        "high fluoride toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 3. SLS-Free Toothpaste",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Best for: people prone to mouth irritation or canker sores. Explain SLS is a foaming agent. Evidence that it triggers recurrent aphthous ulcers is MIXED (small trials); label it that way and don't overclaim. Mention gentler alternatives to give foam or cleaning action in generic terms. Link to the SLS-free collection page.",
+      "keywords_to_include": [
+        "toothpaste without sls",
+        "sodium lauryl sulfate free toothpaste",
+        "toothpaste without sodium lauryl sulfate",
+        "sls free toothpaste list"
+      ]
+    },
+    {
+      "section": "H2: 4. Hydroxyapatite Toothpaste",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Best for: enamel-conscious readers wanting a fluoride-free remineralizing option. Summarize the emerging clinical evidence (reviews suggest promise, but trials are fewer and smaller than for fluoride; label as mixed/emerging). Be fair and don't claim it equals fluoride for cavity prevention.",
+      "keywords_to_include": [
+        "hydroxyapatite toothpaste reviews",
+        "enamel repair toothpaste",
+        "best toothpaste for gum disease"
+      ]
+    },
+    {
+      "section": "H2: 5. Cinnamon-Flavored Natural Toothpaste",
+      "type": "h2",
+      "word_count_target": 110,
+      "guidance": "Best for: people who miss a bold, spicy flavor without artificial flavors or dyes. Explain that cinnamon flavor is from natural oils; note cinnamon oil can irritate sensitive mouths for some people, so recommend patch-testing/stopping if irritation occurs. Link to the cinnamon toothpaste collection.",
+      "keywords_to_include": [
+        "toothpaste cinnamon",
+        "best toothpaste for bad breath",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: 6. Xylitol-Sweetened Toothpaste",
+      "type": "h2",
+      "word_count_target": 110,
+      "guidance": "Best for: those avoiding saccharin and artificial sweeteners. Explain xylitol as a natural sugar alcohol; evidence for caries reduction is low-to-mixed quality in the Cochrane review, so keep claims modest. Note xylitol is toxic to dogs, so keep tubes out of pet reach.",
+      "keywords_to_include": [
+        "tartar control toothpaste",
+        "gingivitis toothpaste",
+        "best toothpaste for gingivitis"
+      ]
+    },
+    {
+      "section": "H2: 7. Simpler-Ingredient Fluoride Toothpaste",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Best for: cavity-prone readers, those with a dentist recommendation, or anyone who wants to keep fluoride. State that if a dentist has recommended fluoride (including prescription-strength), follow that advice rather than switching to a fluoride-free paste. Suggest choosing the shortest ingredient list that still contains an effective fluoride level and the ADA Seal. Keep generic.",
+      "keywords_to_include": [
+        "fluoride toothpaste for cavities",
+        "prescription toothpaste",
+        "high fluoride toothpaste",
+        "ada approved toothpaste"
+      ]
+    },
+    {
+      "section": "H2: How to Switch Toothpastes Without Regret",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Practical tips: switch one variable at a time, give it 2-4 weeks, expect less foam with SLS-free pastes, and watch for sensitivity or irritation. Include a brief 'when to see a dentist' note (bleeding gums, persistent bad breath, sensitivity, cavities). Optionally note that homemade toothpaste (baking soda, etc.) can be too abrasive or lack tested safety, with a cautious tone, and cite a dental source.",
+      "keywords_to_include": [
+        "how to make natural toothpaste",
+        "best toothpaste for bad breath",
+        "whitening toothpaste"
+      ]
+    },
+    {
+      "section": "FAQ",
+      "type": "faq",
+      "word_count_target": 180,
+      "guidance": "4 concise Q&As (40-50 words each): Is fluoride-free toothpaste safe? Does SLS-free toothpaste work as well? Can natural toothpaste whiten teeth (modestly; no bleaching claims, cite a source)? Is coconut oil toothpaste good for gums? Answer directly, hedge appropriately, and cite where claims are health-related.",
+      "keywords_to_include": [
+        "fluoride free toothpaste",
+        "teeth whitening toothpaste",
+        "best teeth whitening toothpaste",
+        "toothpaste without glycerin"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 70,
+      "guidance": "Recap: pick the alternative that matches your reason for switching, and keep fluoride if you're cavity-prone. Close with a soft CTA to browse Real Skin Care's natural toothpaste collection and the coconut oil toothpaste.",
+      "keywords_to_include": [
+        "colgate toothpaste alternatives",
+        "natural toothpaste"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "natural toothpaste",
+    "fluoride free toothpaste",
+    "fluoride toothpaste for cavities",
+    "toothpaste brands",
+    "best teeth whitening toothpaste",
+    "teeth whitening toothpaste",
+    "tartar control toothpaste",
+    "prescription toothpaste",
+    "high fluoride toothpaste",
+    "best toothpaste for gum disease",
+    "enamel repair toothpaste",
+    "what is the best toothpaste",
+    "best toothpaste recommended by dentists",
+    "gingivitis toothpaste",
+    "best toothpaste for gingivitis",
+    "best toothpaste for bad breath",
+    "hydroxyapatite toothpaste reviews",
+    "ada approved toothpaste",
+    "non toxic coconut toothpaste organic",
+    "toothpaste without sls",
+    "toothpaste without glycerin",
+    "sodium lauryl sulfate free toothpaste",
+    "toothpaste without sodium lauryl sulfate",
+    "sls free toothpaste list",
+    "toothpaste cinnamon",
+    "how to make natural toothpaste",
+    "coconut oil toothpaste",
+    "xylitol toothpaste"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "coconut oil toothpaste",
+      "url": "https://www.realskincare.com/products/coconut-oil-toothpaste",
+      "placement_guidance": "In item 1 and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "natural toothpaste collection",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "In the intro or 'What to Look for' section and the conclusion."
+    },
+    {
+      "anchor_text": "fluoride-free toothpaste",
+      "url": "https://www.realskincare.com/collections/fluoride-free-toothpaste",
+      "placement_guidance": "In item 2."
+    },
+    {
+      "anchor_text": "SLS-free toothpaste",
+      "url": "https://www.realskincare.com/collections/sls-free-toothpaste",
+      "placement_guidance": "In item 3. Link to the collection, not the earlier SLS-free blog post, which has an indexing problem. Verify the collection page is indexed before publishing."
+    },
+    {
+      "anchor_text": "cinnamon toothpaste",
+      "url": "https://www.realskincare.com/collections/cinnamon-toothpaste",
+      "placement_guidance": "In item 5."
+    },
+    {
+      "anchor_text": "more toothpaste alternatives guides",
+      "url": "https://www.realskincare.com/blogs/news/best-crest-toothpaste-alternatives-7-natural-options-that-work",
+      "placement_guidance": "Optional 'related reading' line near the end, using neutral anchor text without brand names. Other sibling alternatives posts may be added the same way (max 1-2)."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Add a 'Last reviewed: October 2026' line and, if possible, a dentist or clinical reviewer byline/credit.",
+    "Cite 2-4 primary sources per health or ingredient claim, with evidence strength labeled strong, mixed or weak.",
+    "Show the criteria used to select each type, and state plainly that fluoride is the best-evidenced cavity-prevention ingredient.",
+    "Disclose that Real Skin Care sells some of the options featured, and keep claims modest.",
+    "Use first-hand brand detail (formulation choices, ingredient sourcing) only where the team can verify it."
+  ],
+  "schema_type": "Article",
+  "citation_guidance": "Cite authoritative outbound sources (.gov, .edu, medical organisations, peer-reviewed journals) with title, journal, year, and DOI/PubMed link for each health claim, and tag evidence strength. Suggested sources (writer must verify each link and DOI before publishing): (1) Fluoride and caries, STRONG: Walsh et al., 'Fluoride toothpastes of different concentrations for preventing dental caries', Cochrane Database Syst Rev, 2019 (CD007868); plus the ADA and CDC fluoride pages. (2) SLS and aphthous ulcers, MIXED: Herlofson & Barkvoll, Acta Odontol Scand, 1994, and any later trial/review found on PubMed. (3) Coconut oil pulling and plaque/gingivitis, MIXED/WEAK: Woolley et al., Heliyon, 2020, systematic review. (4) Hydroxyapatite, MIXED/EMERGING: Limeback, Enax & Meyer, Biomimetics, 2023, plus one independent review. (5) Xylitol, LOW/MIXED: Riley et al., Cochrane Database Syst Rev, 2015. (6) ADA Seal program page for what the Seal means. Avoid absolute claims such as 'toxic', 'chemical-free', 'detoxifies', 'cures', 'whitens naturally in days', 'equal to fluoride' or 'dentist-proven'. Do not cite competitor pages for health claims. Do not invent studies; if a source can't be verified, soften or remove the claim.",
+  "writer_notes": "Tone: warm, knowledgeable, plain-spoken and non-alarmist. Don't fear-monger about SLS, fluoride or any ingredient. Never name competitor brands anywhere in the body, headings, or alt text; the target keyword is the only exception, so use it only in the title, H1, intro, and conclusion, and refer to 'conventional mainstream toothpaste' elsewhere. No brand comparison tables or brand-specific sections. A small table of toothpaste TYPES (type, best for, fluoride?, evidence strength) is welcome. Keep items scannable (~100-150 words each) with a bolded 'Best for:' line. Use Real Skin Care as the featured option where it fits, without overclaiming. Add a brief medical disclaimer. Benchmark: top roundups use a short verdict, explicit ingredient criteria, 'best for' labels, and visible update dates, so mirror that structure while adding better sourcing. The previous SLS-free blog post is not indexed, so do not link to it; ask SEO ops to confirm this post's page is indexable (no noindex, in sitemap, internally linked) at publication. Target ~1550 words total.",
+  "search_volume": 0,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.reddit.com/r/BuyFromEU/comments/1j7e71r/a_wholesome_thank_you_united_states_what_can/",
+      "title": "A wholesome Thank you United States, what can replace ...",
+      "domain": "www.reddit.com",
+      "description": "A wholesome Thank You to the United States of America.\n\nA genuine thank you on behalf of so many Europeans.\n\nI thank you for making Europe unite. I thank ..."
+    },
+    {
+      "position": 2,
+      "url": "https://www.health.com/condition/oral-health/best-natural-toothpaste",
+      "title": "The 12 Best Natural Toothpastes of 2026 - HEALTH",
+      "domain": "www.health.com",
+      "description": "Aug 31, 2026 — Top Picks ; Best Overall: · Tom's of Maine Whole Care Natural Toothpaste with Fluoride at Amazon · $15 ; Best Budget: hello Mighty Multitasker ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.colgate.com/en-us/oral-health/selecting-dental-products/six-natural-ingredients-in-fluoride-free-toothpaste",
+      "title": "Six Natural Ingredients In Fluoride Free Toothpaste",
+      "domain": "www.colgate.com",
+      "description": "As you can see, there are several non-fluoride toothpaste ingredients, including papaya leaf, green tea, and baking soda. While these ingredients have been ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.allure.com/story/best-toothpastes",
+      "title": "6 Best Toothpastes to Keep Your Smile Healthy and Happy",
+      "domain": "www.allure.com",
+      "description": "Jan 18, 2026 — Best Overall: Colgate Optic White Toothpaste, $14 (4-Pack) · Best for Sensitivity: Sensodyne Extra Whitening Toothpaste, $25 (4-Pack) · Best for ... Read more"
+    },
+    {
+      "position": 5,
+      "url": "https://www.facebook.com/groups/514688291678063/posts/538560955957463/",
+      "title": "What are affordable gel toothpaste alternatives to Colgate?",
+      "domain": "www.facebook.com",
+      "description": "I was trying to find a GEL toothpaste in Tesco today that wasn’t Colgate 😩. I found one in Holland & Barrett but there must be a less expensive alternative ..."
+    },
+    {
+      "position": 6,
+      "url": "https://atlasdental.ca/toothpaste/",
+      "title": "How to Choose the Best Toothpaste for Your Dental Needs",
+      "domain": "atlasdental.ca",
+      "description": "Jun 12, 2025 — Best Value Toothpaste: Colgate Total Advanced Professional Clean Toothpaste ... Best Natural Toothpaste Alternative: Tom's of Maine Simply White ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.ethicalconsumer.org/health-beauty/shopping-guide/toothpaste",
+      "title": "Toothpaste",
+      "domain": "www.ethicalconsumer.org",
+      "description": "Sep 7, 2026 — A competitor though is Haleon, Sensodyne, as well as Aquafresh, Biotene, Corsodyl and Macleans. A few of the brands only sell fluoride-free ..."
+    },
+    {
+      "position": 8,
+      "url": "https://frankfortsmilesdental.com/blog/dental-health/what-is-the-best-toothpaste-to-use/",
+      "title": "What Is the Best Toothpaste to Use: Top 10 Options For You",
+      "domain": "frankfortsmilesdental.com",
+      "description": "Mar 27, 2025 — Many dentists recommend Sensodyne for those with sensitive teeth, while brands like Crest Pro-Health and Colgate Total consistently rank as top ... Read more"
+    }
+  ],
+  "index_validation": {
+    "validation_source": null,
+    "cluster": "toothpaste",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 1,
+    "medianWordCount": 1555,
+    "avgH2": 10,
+    "targetWordCount": 1600
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

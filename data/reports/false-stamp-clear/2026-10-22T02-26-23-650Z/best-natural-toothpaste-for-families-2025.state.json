@@ -1,0 +1,36 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:04:35.224Z",
+    "last_crawled": "2026-10-03T23:50:50Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-natural-toothpaste-for-families-2025",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562335973546,
+  "shopify_handle": "best-natural-toothpaste-for-families-2025",
+  "legacy_synced_at": "2026-04-09T23:17:12.638Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 16, 520 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:29.796Z",
+  "shopify_status": "published",
+  "shopify_status_verified_at": "2026-08-23T05:18:37.382Z",
+  "refreshed_at": "2026-10-12T15:21:20.182Z",
+  "last_material_edit": {
+    "at": "2026-10-12T15:21:20.184Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:46:09.044Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, brand voice"
+    ]
+  },
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-natural-toothpaste-for-families-2025",
+  "uploaded_at": "2026-10-13T15:00:52.955Z"
+}

@@ -1,0 +1,306 @@
+{
+  "target_keyword": "how to make natural toothpaste",
+  "slug": "how-to-make-natural-toothpaste",
+  "search_intent": "informational",
+  "content_type": "how_to",
+  "content_depth": "comprehensive",
+  "recommended_title": "How to Make Natural Toothpaste at Home: 3 Easy, Safe Recipes",
+  "meta_description": "Learn how to make natural toothpaste at home with 3 simple recipes, safety tips, and what to skip. Get step-by-step directions and a ready-made option.",
+  "target_word_count": 2000,
+  "content_angle": "The only top-ranking how-to that pairs clear step-by-step recipes with an honest, source-backed safety section: what DIY toothpaste can't do (fluoride, enamel protection), which popular ingredients are risky, and when a formulated natural toothpaste is the better choice. Competing pages are dentist-office posts that are thin, outdated (2015-2017), or cluttered, and a clinically cautious tone from a brand that makes natural toothpaste builds trust.",
+  "key_differentiators": [
+    "Lead with a short safety and expectations section (no fluoride, abrasiveness, no lasting whitening) backed by cited primary sources. Most competitors either skip it or bury it under 'Don'ts'.",
+    "Three tested recipes (baking soda and water; baking soda, salt and water; baking soda and coconut oil) with exact measurements, yield, shelf life, and a troubleshooting table, so the post is the clearest procedural result on the SERP.",
+    "Ingredient 'use vs. avoid' guidance with an evidence-strength label (strong/mixed/weak) for each claim. Address risky additions such as undiluted cinnamon or other essential oils, lemon juice, activated charcoal and excess salt or baking soda.",
+    "A fair 'homemade vs. ready-made' section covering SLS-free, glycerin-free and coconut-based options, with natural internal links to the product collection. This captures the commercial overlap without a competitor brand comparison.",
+    "Updated for the current year with a visible reviewed date, a materials/time/yield box, and HowTo schema. Rewrite the title and meta for a clearer promise, since the site is already at position ~3 with 1,370 impressions and 0 clicks."
+  ],
+  "outline": [
+    {
+      "section": "Introduction",
+      "type": "intro",
+      "word_count_target": 120,
+      "guidance": "Open with the direct answer: you can make natural toothpaste with 3-4 pantry ingredients in about 5 minutes. State plainly that homemade versions are a gentle cleaning paste, not a replacement for fluoride toothpaste. Include a quick-facts box: time (5 min), yield (about 2-4 weeks supply), difficulty (easy), cost. Add 'Reviewed on [date]'. Do not include a long backstory.",
+      "keywords_to_include": [
+        "how to make natural toothpaste",
+        "homemade toothpaste recipe",
+        "diy toothpaste recipe"
+      ]
+    },
+    {
+      "section": "H2: What Homemade Toothpaste Can (and Can't) Do",
+      "type": "h2",
+      "word_count_target": 210,
+      "guidance": "Set honest expectations. Cover: no fluoride (cite the Cochrane review on fluoride toothpaste and caries prevention, strong evidence); baking soda is a mild abrasive and has some plaque-removal evidence, but results vary (mixed); homemade pastes are not antibacterial or remineralizing without proven ingredients (weak/mixed). Advise talking to a dentist, especially for children, people with cavities, gum disease or sensitivity. Avoid absolute claims like 'cures cavities' or 'whitens teeth'.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "baking soda toothpaste recipe",
+        "toothpaste without sls"
+      ]
+    },
+    {
+      "section": "H2: Best Ingredients for Natural Toothpaste (and What to Avoid)",
+      "type": "h2",
+      "word_count_target": 240,
+      "guidance": "Short scannable list. Use: baking soda (mild abrasive), fine sea salt (small amounts), coconut oil (base/texture; note the evidence on oil pulling and plaque is limited/mixed), peppermint or spearmint oil (a few drops, diluted), optional xylitol or stevia for taste. Avoid: lemon or other acids (enamel erosion), activated charcoal (abrasiveness not well established, per the JADA 2017 literature review), undiluted or excessive cinnamon oil (can irritate oral tissue), hydrogen peroxide in strong amounts, too much salt or baking soda. Briefly note that glycerin-free and SLS-free formulas are easy to make at home because the recipes don't use them. Label each claim with evidence strength.",
+      "keywords_to_include": [
+        "toothpaste without glycerin",
+        "sodium lauryl sulfate free toothpaste",
+        "toothpaste cinnamon",
+        "non toxic coconut toothpaste organic"
+      ]
+    },
+    {
+      "section": "H2: Step 1 — Gather Your Ingredients and Tools",
+      "type": "h2",
+      "word_count_target": 110,
+      "guidance": "Give a simple checklist: small glass or stainless bowl, non-metal or clean spoon, small airtight glass jar, measuring spoons, and ingredient amounts. Note that coconut oil solidifies below ~76°F, so storage and consistency vary. Suggest a clean, dry spoon or spatula for each use to limit contamination.",
+      "keywords_to_include": [
+        "how to make toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Step 2 — Choose and Mix Your Base Recipe",
+      "type": "h2",
+      "word_count_target": 60,
+      "guidance": "One short lead-in explaining that these are three options by texture and preference. Give each recipe as a numbered mini-list with exact amounts, yield and storage. Also add the HowTo-friendly step wording.",
+      "keywords_to_include": [
+        "easy homemade toothpaste recipes",
+        "toothpaste recipe"
+      ]
+    },
+    {
+      "section": "H3: Recipe A — Baking Soda and Water (simplest)",
+      "type": "h3",
+      "word_count_target": 110,
+      "guidance": "Example: 2 tsp baking soda, 1/2 tsp water, stir to a paste, make fresh for single use. Mention it tastes salty or bitter. Explain this is the 'how to use baking soda as toothpaste' basic version. Keep the instructions to 3-4 lines.",
+      "keywords_to_include": [
+        "how to make toothpaste with baking soda",
+        "how to use baking soda as toothpaste",
+        "how to use baking soda for toothpaste"
+      ]
+    },
+    {
+      "section": "H3: Recipe B — Baking Soda, Salt and Peppermint",
+      "type": "h3",
+      "word_count_target": 110,
+      "guidance": "Example: 2 tsp baking soda, 1/4 tsp fine sea salt, 2-3 drops peppermint oil, water as needed. Note this is a fresh-use paste (small batch, discard leftovers within a few days). Warn against adding more salt for 'extra scrubbing'.",
+      "keywords_to_include": [
+        "baking soda toothpaste recipe",
+        "diy toothpaste recipe"
+      ]
+    },
+    {
+      "section": "H3: Recipe C — Coconut Oil Toothpaste (creamiest)",
+      "type": "h3",
+      "word_count_target": 150,
+      "guidance": "Example: 3 tbsp coconut oil, 3 tbsp baking soda, 5-10 drops peppermint oil, optional pinch of stevia. Mix into a smooth paste, store in a jar with a lid. Mention shelf life (about 2-4 weeks, discard if smell or appearance changes), scoop with a clean spoon, and note that it can clog drains, so wipe the sink or spit into the trash. Acknowledge the evidence for coconut oil is limited and that this is mainly a texture/base choice.",
+      "keywords_to_include": [
+        "homemade toothpaste recipe",
+        "coconut oil toothpaste",
+        "non toxic coconut toothpaste organic"
+      ]
+    },
+    {
+      "section": "H2: Step 3 — Flavor and Sweeten Safely",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Explain essential oil safety: use food-grade peppermint or spearmint, a few drops only, never swallow, keep away from young children and pets. Cinnamon is a common request: use a tiny amount of ground cinnamon rather than cinnamon essential oil, which can irritate. Note xylitol is toxic to dogs, so keep it out of reach. Link flavor to taste rather than any health claim.",
+      "keywords_to_include": [
+        "toothpaste cinnamon",
+        "natural toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Step 4 — Mix, Test the Texture and Adjust",
+      "type": "h2",
+      "word_count_target": 100,
+      "guidance": "Describe the target consistency (like thick frosting), how to fix a paste that is too dry (a few drops of water or a bit more oil) or too runny (a little more baking soda). Suggest a small taste test for irritation before first full use.",
+      "keywords_to_include": [
+        "how to make toothpaste"
+      ]
+    },
+    {
+      "section": "H2: Step 5 — Store and Use It Properly",
+      "type": "h2",
+      "word_count_target": 130,
+      "guidance": "Cover: airtight glass jar, cool and dry, clean spoon (no double dipping), label with date, use a pea-sized amount, brush gently for two minutes, and don't scrub hard. Add stop signs: stop use if gums burn, teeth feel sensitive or you notice irritation. Note that kids should not use DIY pastes without a dentist or pediatrician's okay. Link naturally to the kids SLS-free toothpaste post.",
+      "keywords_to_include": [
+        "toothpaste without sodium lauryl sulfate"
+      ]
+    },
+    {
+      "section": "H2: Common Mistakes and Troubleshooting",
+      "type": "h2",
+      "word_count_target": 140,
+      "guidance": "Use a compact table: problem, likely cause, fix. Examples: gritty or harsh feeling (too much baking soda or salt), too salty (reduce salt), separates or goes oily (coconut oil warmed), moldy or off smell (water contamination; discard), sensitive teeth (stop and see a dentist).",
+      "keywords_to_include": [
+        "homemade toothpaste recipe"
+      ]
+    },
+    {
+      "section": "H2: Homemade vs. Ready-Made Natural Toothpaste",
+      "type": "h2",
+      "word_count_target": 170,
+      "guidance": "Fair, helpful framing by approach (not brand): DIY is low-cost, simple and customizable, but has no fluoride, no tested stability or preservation, and no consistent abrasiveness testing. Formulated natural toothpastes can be SLS-free, glycerin-free and coconut-based with a proper formulation. Position Real Skin Care's natural toothpaste as the convenient, consistent option for people who want a clean ingredient list without the guesswork. Include one clear link to the collection. Do not make unsupported claims about fluoride content or efficacy: verify the product details on the page before stating them.",
+      "keywords_to_include": [
+        "sls free toothpaste list",
+        "toothpaste without sls",
+        "sodium lauryl sulfate free toothpaste",
+        "non toxic coconut toothpaste organic"
+      ]
+    },
+    {
+      "section": "H2: FAQ",
+      "type": "faq",
+      "word_count_target": 220,
+      "guidance": "5 short Q&As (about 40 words each), written as direct answers for snippets: Is homemade toothpaste safe? Can I use baking soda as toothpaste every day? Does homemade toothpaste have fluoride? How long does it last? Can I make it for kids? Optionally: Is coconut oil toothpaste effective? Be cautious with claims and cite sources where health is mentioned.",
+      "keywords_to_include": [
+        "how to use baking soda as toothpaste",
+        "homemade toothpaste recipe",
+        "how to make natural toothpaste"
+      ]
+    },
+    {
+      "section": "Conclusion",
+      "type": "conclusion",
+      "word_count_target": 80,
+      "guidance": "Summarize the 3 recipes and the key safety points in 2-3 sentences. End with a soft CTA to explore Real Skin Care's natural toothpaste collection. Include a gentle reminder to check with a dentist about fluoride and oral health needs.",
+      "keywords_to_include": [
+        "natural toothpaste",
+        "how to make natural toothpaste"
+      ]
+    }
+  ],
+  "semantic_keywords": [
+    "homemade toothpaste recipe",
+    "how to make toothpaste",
+    "toothpaste recipe",
+    "diy toothpaste recipe",
+    "easy homemade toothpaste recipes",
+    "baking soda toothpaste recipe",
+    "how to make toothpaste with baking soda",
+    "how to use baking soda as toothpaste",
+    "how to use baking soda for toothpaste",
+    "coconut oil toothpaste",
+    "non toxic coconut toothpaste organic",
+    "toothpaste without sls",
+    "sodium lauryl sulfate free toothpaste",
+    "toothpaste without sodium lauryl sulfate",
+    "toothpaste without glycerin",
+    "sls free toothpaste list",
+    "toothpaste cinnamon",
+    "natural toothpaste ingredients",
+    "fluoride-free toothpaste",
+    "DIY toothpaste safety"
+  ],
+  "internal_links": [
+    {
+      "anchor_text": "natural toothpaste collection",
+      "url": "https://www.realskincare.com/collections/natural-toothpaste",
+      "placement_guidance": "Primary commercial link in the 'Homemade vs. Ready-Made' section and again in the conclusion CTA."
+    },
+    {
+      "anchor_text": "best all-natural toothpaste picks",
+      "url": "https://www.realskincare.com/blogs/news/best-all-natural-toothpaste-top-picks-for-a-clean-smile",
+      "placement_guidance": "In the 'Homemade vs. Ready-Made' section, for readers who prefer not to DIY."
+    },
+    {
+      "anchor_text": "SLS-free toothpaste for kids",
+      "url": "https://www.realskincare.com/blogs/news/best-sls-free-toothpaste-for-kids-safe-natural",
+      "placement_guidance": "In Step 5 or FAQ, where the post advises against DIY pastes for children."
+    },
+    {
+      "anchor_text": "how to choose a healthy toothpaste",
+      "url": "https://www.realskincare.com/blogs/news/healthy-toothpaste-what-it-is-how-to-choose-the-best",
+      "placement_guidance": "In the safety/expectations section or the ingredients section, for readers who want to evaluate formulas."
+    },
+    {
+      "anchor_text": "natural alternatives to mainstream toothpaste",
+      "url": "https://www.realskincare.com/blogs/news/best-crest-toothpaste-alternatives-7-natural-options-that-work",
+      "placement_guidance": "In the 'Homemade vs. Ready-Made' section as a secondary link. Keep the anchor generic."
+    },
+    {
+      "anchor_text": "make a natural moisturizer at home",
+      "url": "https://www.realskincare.com/blogs/news/how-to-make-a-natural-moisturizer-at-home-easy-recipes",
+      "placement_guidance": "In the coconut oil recipe or conclusion as a light cross-link to another DIY post."
+    }
+  ],
+  "e_e_a_t_signals": [
+    "Add a visible 'Reviewed on [date]' line, and if possible, a dentist or dental hygienist review credit with credentials. Do not invent a reviewer.",
+    "Show first-hand testing: note that the recipes were mixed and tested for texture and shelf life, with photos of each step and the finished paste (only if actually done).",
+    "Cite primary sources for each health claim and label evidence strength (strong/mixed/weak).",
+    "State limitations plainly (no fluoride, no replacement for professional care) and tell readers when to see a dentist.",
+    "Include an author byline with relevant background and a short note on Real Skin Care's formulation experience."
+  ],
+  "schema_type": "HowTo",
+  "citation_guidance": "Every health, safety or efficacy claim needs an outbound link to an authoritative source (.gov, .edu, medical organization, peer-reviewed journal). Per standing instructions, give 2-4 verifiable primary sources (title, journal, year, DOI or PubMed link) and mark evidence strength. Suggested starting points the writer must verify and link directly (do not cite from memory, and do not publish a DOI that has not been checked): (1) Walsh T et al., 'Fluoride toothpastes of different concentrations for preventing dental caries', Cochrane Database of Systematic Reviews, 2019 (strong: fluoride toothpaste prevents caries). (2) Brooks JK, Bashirelahi N, Reynolds MA, 'Charcoal and charcoal-based dentifrices: a literature review', Journal of the American Dental Association, 2017 (weak/limited evidence on charcoal safety and efficacy). (3) Peedikayil FC et al., coconut oil and plaque-induced gingivitis study, Niger Med J, 2015 (weak/mixed: small study, limited evidence). (4) A peer-reviewed clinical study on baking soda dentifrices and plaque removal (mixed). Also cite the ADA or NIDCR for general brushing and fluoride guidance. Where the SLS and canker sore link is mentioned, label it mixed. Avoid absolute claims such as 'whitens teeth', 'remineralizes', 'kills bacteria', 'detoxifies' or 'safe for everyone'. Soften to 'may', 'some studies suggest', or remove the claim. If essential oil or xylitol safety is mentioned, cite a poison control or veterinary source for pets.",
+  "writer_notes": "Tone: friendly, clear and practical, not preachy and never fear-mongering. Write for a beginner at home. Target about 2,000 words (±10%). Keep the steps as true numbered H2s so HowTo schema maps cleanly, and put materials, time and yield up top. The post must be indexable: use a clean canonical URL, no noindex, include it in the XML sitemap, link to it from at least 2 existing posts, and request indexing in Search Console after publishing, since a previous cluster page (best-sls-free-toothpaste-2025) was never indexed. Do not target the off-intent queries in the keyword list (elephant toothpaste, devil toothpaste, toothpaste slime): they are science-experiment and craft searches and would dilute relevance. Do not mention competitor brands anywhere, and do not build brand comparison tables. When the standing feedback notes that AI engines cite third-party roundups, write short, quotable, well-sourced answers (definition, quick recipe, safety rule) that can be cited. Seasonality peaks in spring (April, Earth Day), so schedule publishing by early March and consider a light seasonal refresh.",
+  "search_volume": 320,
+  "serp_overview": [
+    {
+      "position": 1,
+      "url": "https://www.news-medical.net/health/(How-to)-Make-Your-Own-Toothpaste.aspx",
+      "title": "(How to) Make Your Own Toothpaste",
+      "domain": "www.news-medical.net",
+      "description": "Take one tablespoon baking soda · Add a tablespoon of natural salt · Add three drops of an essential oil · Add a few drops of water ... Read more"
+    },
+    {
+      "position": 2,
+      "url": "https://dentistinsanmarcosca.com/blog/homemade-toothpaste-recipes-earth-day",
+      "title": "Homemade Toothpaste Recipes for Earth Day",
+      "domain": "dentistinsanmarcosca.com",
+      "description": "Apr 22, 2015 — 6 tbsp coconut oil · 6 tbsp baking soda · 25 drops essential oil (whatever you prefer) · 1 tsp stevia (or more if you like it sweeter) ... Read more"
+    },
+    {
+      "position": 3,
+      "url": "https://www.signaturesmilesfamilydentistry.com/blog/3-diy-toothpaste-recipes/",
+      "title": "3 DIY Toothpaste Recipes",
+      "domain": "www.signaturesmilesfamilydentistry.com",
+      "description": "Nov 30, 2015 — Simple, One-Use Toothpaste · 1 tsp baking soda · 1 tsp sea salt · 1 drop essential oil (try rosemary!) · water as needed ... Read more"
+    },
+    {
+      "position": 4,
+      "url": "https://www.biomestores.com/blogs/diy-recipes/how-to-make-your-own-natural-toothpaste",
+      "title": "How To Make Your Own Natural Toothpaste - Biome",
+      "domain": "www.biomestores.com",
+      "description": "Sep 1, 2022 — Learn how to make your own natural toothpaste with bentonite clay, coconut oil and bi-carb soda. 5-6 drops of peppermint oil"
+    },
+    {
+      "position": 5,
+      "url": "https://www.youtube.com/watch?v=ZdOWl4BUvrc",
+      "title": "How To Make Your Own Natural Toothpaste / Simple Recipe ...",
+      "domain": "www.youtube.com",
+      "description": null
+    },
+    {
+      "position": 6,
+      "url": "https://falmouthdentalarts.com/2017/01/26/homemade-toothpaste/",
+      "title": "DIY Oral Care – Homemade Toothpaste",
+      "domain": "falmouthdentalarts.com",
+      "description": "Jan 26, 2017 — 5 parts calcium powder · 1 part diatomaceous earth (optional) · 2 parts baking soda · 3 parts xylitol powder · 3 to 5 parts coconut oil · Mint, ... Read more"
+    },
+    {
+      "position": 7,
+      "url": "https://www.healthline.com/health/homemade-toothpaste",
+      "title": "Homemade Toothpaste: Is It Effective and Should You Use It?",
+      "domain": "www.healthline.com",
+      "description": "Jul 22, 2019 — 1 tsp. salt · 2 tsp. baking soda · 1 tbsp. powdered orange peel · 2 tsp. dried sage · several drops of peppermint essential oil. Read more"
+    }
+  ],
+  "index_validation": {
+    "validation_source": "gsc_untapped",
+    "cluster": "toothpaste",
+    "amazon_purchases": null,
+    "conversion_share": null
+  },
+  "competitor_benchmark": {
+    "count": 3,
+    "medianWordCount": 1981,
+    "avgH2": 7.33,
+    "targetWordCount": 2000
+  },
+  "data_sources": {
+    "provider": "dataforseo"
+  }
+}

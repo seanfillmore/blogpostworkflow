@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "charcoal-toothpaste-does-it-work-is-it-safe",
+  "keyword": "charcoal toothpaste does it work is it safe",
+  "dropped_at": "2026-09-21T16:00:23.673Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-00-23-673Z-2378488",
+  "reason": "post killed: no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21); duplicate of original",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "charcoal-toothpaste-does-it-work-is-it-safe.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore charcoal-toothpaste-does-it-work-is-it-safe",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

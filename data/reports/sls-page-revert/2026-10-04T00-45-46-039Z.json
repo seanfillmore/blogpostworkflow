@@ -1,0 +1,36 @@
+{
+  "article_id": 563313508522,
+  "before": {
+    "title": "SLS Free Toothpaste for Sensitive Mouths",
+    "summary_html": "Canker sores, irritation, foam you don't need — SLS is why. See which SLS free toothpaste formulas actually work, and what to look for on the label.",
+    "title_tag": "SLS Free Toothpaste for Sensitive Mouths",
+    "description_tag": "Tired of SLS irritation? Real Skin Care's coconut oil toothpaste cleans gently with baking soda and natural ingredients, no harsh foaming agents.",
+    "body_sha256": "3fddcb34e2ed08a57aecfdfcde25f7a60503ed55a66e2a92cb7159e01b5f5396"
+  },
+  "target": {
+    "title": "SLS Free Toothpaste: Top Picks & What to Skip",
+    "description": "Looking for SLS free toothpaste? See which clean ingredients actually matter, which to avoid, and which formulas are worth making the switch to."
+  },
+  "open_ab": [
+    {
+      "keyword": "sls free toothpaste",
+      "pageUrl": "https://www.realskincare.com/blogs/news/toothpaste-without-sls-what-to-know-best-options",
+      "originalTitle": "SLS Free Toothpaste: Top Picks & What",
+      "proposedTitle": "SLS Free Toothpaste for Sensitive Mouths",
+      "originalMeta": "Clean Teeth, No SLS — Just Simple Ingredients Try Real Skin Care's Coconut Oil Toothpaste — a squeeze bottle formula made with coconut oil, baking soda, and nat",
+      "proposedMeta": "Tired of SLS irritation? Real Skin Care's coconut oil toothpaste cleans gently with baking soda and natural ingredients, no harsh foaming agents.",
+      "baselineCtr": 0.007315327731983355,
+      "baselinePageCtr": 0.007315249167176558,
+      "baselinePagePosition": 5.8388197702087155,
+      "baselinePageImpressions": 73545,
+      "baselineImpressions": 37729,
+      "baselinePosition": 6.84205783349678,
+      "validation_source": "gsc_ga4",
+      "legacyLocked": false,
+      "serpFields": true,
+      "originalTitleTag": "SLS Free Toothpaste: Top Picks & What",
+      "originalDescriptionTag": null,
+      "testedAt": "2026-09-21"
+    }
+  ]
+}

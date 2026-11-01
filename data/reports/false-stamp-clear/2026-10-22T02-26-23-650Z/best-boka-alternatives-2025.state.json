@@ -1,0 +1,41 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:02:08.304Z",
+    "last_crawled": "2026-10-19T03:12:48Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/best-boka-alternatives-2025",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 562322571434,
+  "shopify_handle": "best-boka-alternatives-2025",
+  "shopify_status": "published",
+  "legacy_synced_at": "2026-04-09T23:17:12.633Z",
+  "legacy_source": "sync-legacy-posts.js",
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 12, 2881 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:27.010Z",
+  "republished_at": "2026-08-22T22:07:54-06:00",
+  "republish_reason": "Silent draft drift — published_at was null live despite a real legacy publish_at, no redirect, no kill marker, still earning impressions. See scripts/republish-boka-alternatives-2026-08-22.mjs.",
+  "refreshed_at": "2026-10-10T15:08:28.510Z",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/best-boka-alternatives-2025",
+  "uploaded_at": "2026-10-11T15:03:04.828Z",
+  "indexing_blocked": false,
+  "indexing_blocked_reason": null,
+  "indexing_blocked_at": "2026-08-15T11:30:02.875Z",
+  "indexing_unblocked_at": "2026-08-16T11:30:01.817Z",
+  "last_material_edit": {
+    "at": "2026-10-10T15:08:28.512Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:42:20.410Z",
+    "reasons": [
+      "content blockers: ingredient accuracy, topical relevance, brand voice"
+    ]
+  }
+}

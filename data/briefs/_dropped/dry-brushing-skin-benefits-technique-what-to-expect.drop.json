@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "dry-brushing-skin-benefits-technique-what-to-expect",
+  "keyword": "dry brushing skin benefits technique what to expect",
+  "dropped_at": "2026-09-21T16:00:28.188Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-00-28-188Z-2378503",
+  "reason": "post killed: no views: <=1 search click, 0 search/AI visits, 0 orders in 90d (LOW_DEMAND, operator rule 2026-09-21); duplicate of original",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "dry-brushing-skin-benefits-technique-what-to-expect.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore dry-brushing-skin-benefits-technique-what-to-expect",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

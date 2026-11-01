@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-10-10T17:15:30.969Z",
+  "applied": false,
+  "slug": null,
+  "results": [
+    {
+      "id": "cta-mess-antibacterial",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "cta-best-of-both-xylitol",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "collection-paragraph-cavity-fighting",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "cta-easiest-cavity-fighting",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "faq-prevent-cavities-answer",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "id": "final-thoughts-gum-health",
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "surface": "body",
+      "action": "already-applied",
+      "why": "live already carries the AFTER text"
+    },
+    {
+      "handle": "can-you-use-coconut-oil-as-toothpaste",
+      "mirror": "content.html",
+      "changed": false,
+      "rows": [
+        {
+          "id": "cta-mess-antibacterial",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "cta-best-of-both-xylitol",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "collection-paragraph-cavity-fighting",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "cta-easiest-cavity-fighting",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "faq-prevent-cavities-answer",
+          "action": "already-applied",
+          "count": 0
+        },
+        {
+          "id": "final-thoughts-gum-health",
+          "action": "already-applied",
+          "count": 0
+        }
+      ]
+    }
+  ]
+}

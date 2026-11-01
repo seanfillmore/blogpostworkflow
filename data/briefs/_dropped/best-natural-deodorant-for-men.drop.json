@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "best-natural-deodorant-for-men",
+  "keyword": "best natural deodorant for men",
+  "dropped_at": "2026-09-21T15:44:19.041Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T15-44-19-041Z-2376892",
+  "reason": "post killed: no views: <=1 search click, <=1 search/AI visit, 0 orders in 90d (2026-09-21, operator rule)",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "best-natural-deodorant-for-men.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore best-natural-deodorant-for-men",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}

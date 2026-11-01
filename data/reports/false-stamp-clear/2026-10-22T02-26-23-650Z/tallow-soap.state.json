@@ -1,0 +1,86 @@
+{
+  "indexing_state": {
+    "state": "indexed",
+    "coverage": "Submitted and indexed",
+    "last_checked": "2026-10-21T11:17:42.548Z",
+    "last_crawled": "2026-10-19T14:20:58Z",
+    "google_canonical": "https://www.realskincare.com/blogs/news/tallow-soap-benefits-ingredients-natural-alternatives",
+    "canonical_mismatch": false,
+    "page_fetch_state": "SUCCESSFUL"
+  },
+  "word_count": 2200,
+  "generated_at": "2026-06-02T10:47:23.362Z",
+  "brief_path": "/root/seo-claude/data/briefs/tallow-soap.json",
+  "tokens_used": {
+    "input": 10336,
+    "output": 5551
+  },
+  "image_path": "data/posts/tallow-soap/image.webp",
+  "image_prompt": "Editorial photography, a rustic wooden soap-making workbench in a warm natural light kitchen or artisan workshop, centered in a wide landscape frame, with blocks of rendered tallow (white, waxy, solid fat) and a glass jar of saponified organic virgin coconut oil with a wooden spoon arranged as the primary ingredient props beside a simple unbranded round white soap puck resting in a white ceramic soap dish, a small stainless steel pot and a wooden stirring stick suggesting the soap-making process, the wooden surface worn and honest with a handmade craft feel, warm golden window light falling softly from the left across the scene, photorealistic, 35mm lens, shot on Canon R5, wide landscape crop filling the full frame edge to edge, no letterboxing, no borders.",
+  "image_generated_at": "2026-06-02T10:47:56.335Z",
+  "shopify_blog_id": 48998449187,
+  "shopify_blog_handle": "news",
+  "shopify_article_id": 563829440682,
+  "shopify_handle": "tallow-soap-benefits-ingredients-natural-alternatives",
+  "shopify_url": "https://realskincare-com.myshopify.com/blogs/news/tallow-soap-benefits-ingredients-natural-alternatives",
+  "shopify_status": "published",
+  "shopify_publish_at": "2026-06-25T15:00:00.000Z",
+  "shopify_image_url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/image_97243fca-6d90-4f42-a9b4-46d800d4f623.webp?v=1781054905",
+  "uploaded_at": "2026-06-10T01:28:29.294Z",
+  "published_at": "2026-06-26T15:00:10.442Z",
+  "performance_review": {},
+  "legacy_bucket": "rising",
+  "legacy_triage_reason": "Position 14, 360 impressions. Meta-only optimization candidate.",
+  "legacy_triaged_at": "2026-08-04T04:03:43.619Z",
+  "last_refreshed_at": "2026-09-21T15:06:14.304Z",
+  "refresh_writeoff": {
+    "reason": "publisher failed: Command failed: node agents/publisher/index.js \"/root/seo-claude/data/posts/tallow-soap/meta.json\"",
+    "mirror_fingerprint": "51f8fcd6c70eed65",
+    "written_off_at": "2026-09-21T15:06:18.942Z"
+  },
+  "performance_review_history": [
+    {
+      "milestone": 30,
+      "reviewed_at": "2026-07-27T13:30:03.966Z",
+      "age_days": 30,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "BLOCKED",
+      "reason": "Page IS indexed but has zero impressions and zero clicks after 30 days — query intent mismatch or content not matching any search query. Investigate GSC coverage.",
+      "superseded_at": "2026-09-21T15:42:50.672Z",
+      "superseded_by": "gsc-measurement-fix"
+    },
+    {
+      "milestone": 60,
+      "reviewed_at": "2026-08-26T13:30:03.464Z",
+      "age_days": 60,
+      "impressions": 0,
+      "clicks": 0,
+      "ctr": 0,
+      "position": null,
+      "projection": null,
+      "verdict": "ON_TRACK",
+      "reason": "No traffic_potential in brief — cannot score. 0 clicks, 0 impressions over 60 days.",
+      "superseded_at": "2026-09-21T15:42:50.672Z",
+      "superseded_by": "gsc-measurement-fix"
+    }
+  ],
+  "refreshed_at": "2026-10-07T15:20:29.896Z",
+  "last_material_edit": {
+    "at": "2026-10-07T15:20:29.897Z",
+    "kind": "rewrite",
+    "source": "legacy-rebuilder"
+  },
+  "needs_rebuild": {
+    "flagged_at": "2026-10-18T15:52:49.305Z",
+    "reasons": [
+      "2 internal link issue(s)",
+      "1 deterministic issue(s)",
+      "3 uncited statistical/health claim(s) (fact-check gate)",
+      "content blockers: factual concerns, ingredient accuracy, brand voice"
+    ]
+  }
+}

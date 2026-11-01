@@ -1,0 +1,15 @@
+{
+  "schema": "brief-drop/1",
+  "slug": "coconut-oil-toothpaste",
+  "keyword": "coconut oil toothpaste",
+  "dropped_at": "2026-09-21T16:37:03.618Z",
+  "dropped_by": "lib/post-kill.js",
+  "run_id": "2026-09-21T16-37-03-618Z-2382008",
+  "reason": "post killed: low demand (<200 impressions/90d, <=1 click); operator chose removal 2026-09-21",
+  "cluster": null,
+  "cluster_verdict": null,
+  "report": null,
+  "archived_file": "coconut-oil-toothpaste.json",
+  "restore": "node scripts/triage-orphan-briefs.mjs --restore coconut-oil-toothpaste",
+  "note": "This brief was MOVED here, not deleted. Restoring it puts it back in data/briefs/."
+}
