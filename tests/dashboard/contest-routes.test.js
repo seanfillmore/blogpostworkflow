@@ -244,6 +244,30 @@ test('submit with a real image stores the dish and returns an edit URL; temp fil
   assert.equal(JSON.stringify(own.res.json()).includes('editTokenHash'), false);
 });
 
+test('a browser-encoded submit (CRLF line breaks) at the 8,000-char cap is accepted and stored as LF', async () => {
+  const { routes, store } = setup();
+  let catId;
+  await store.update((s) => {
+    const a = addCategory(s, 'Mains');
+    catId = a.category.id;
+    return setSubmissionsOpen(a.state, true);
+  });
+  const lines = Array.from({ length: 60 }, (_, i) => `${i + 1}. Stir the pot and taste it again.`);
+  let recipe = lines.join('\n');
+  recipe += ' Done.'.repeat(Math.ceil((LIMITS.recipe - recipe.length) / 6)).slice(0, LIMITS.recipe - recipe.length);
+  assert.equal(recipe.length, LIMITS.recipe);
+  const png = await sharp({ create: { width: 40, height: 30, channels: 3, background: '#c33' } }).png().toBuffer();
+  const mp = multipart(
+    { categoryId: catId, name: 'Stew', cook: 'Bo', ingredients: 'beef\r\ncarrots', allergens: 'none', recipe: recipe.replace(/\n/g, '\r\n') },
+    { name: 'stew.png', type: 'image/png', data: png },
+  );
+  const { res } = await call(routes, { method: 'POST', url: '/api/contest/submit', ...mp });
+  assert.equal(res.statusCode, 200, res.body);
+  const dish = store.read().dishes[0];
+  assert.equal(dish.recipe, recipe);
+  assert.equal(dish.ingredients, 'beef\ncarrots');
+});
+
 test('submit without a photo is a 400', async () => {
   const { routes, store, uploadDir } = setup();
   let catId;

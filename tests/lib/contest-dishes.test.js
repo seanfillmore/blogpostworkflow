@@ -30,6 +30,24 @@ test('validateDishFields trims and returns a clean value', () => {
   assert.deepEqual(r.value.allergens, ['milk', 'citrus']);
 });
 
+test('validateDishFields stores browser CRLF line breaks as LF and counts the cap on LF text', () => {
+  // A browser submits every textarea line break as CRLF (WHATWG multipart encoding), while
+  // the textarea maxlength, the "N of 8000" counter and the recipe-import fitLines all count
+  // LF. A recipe the cook saw at "8,000 of 8,000" must not come back "8000 characters or fewer".
+  const { state, cat } = setup();
+  const lines = Array.from({ length: 100 }, (_, i) => `${i + 1}. ${'x'.repeat(76 - String(i + 1).length)}`);
+  const lf = lines.join('\n');
+  const recipe = lf + 'y'.repeat(LIMITS.recipe - lf.length); // exactly at the cap, 99 line breaks
+  assert.equal(recipe.length, LIMITS.recipe);
+  const r = validateDishFields(fields(cat, {
+    recipe: recipe.replace(/\n/g, '\r\n'), ingredients: 'beans\r\nbeef\rsalt',
+  }), state);
+  assert.equal(r.ok, true, r.error);
+  assert.equal(r.value.recipe, recipe);
+  assert.equal(r.value.ingredients, 'beans\nbeef\nsalt');
+  assert.match(validateDishFields(fields(cat, { recipe: `${recipe}x`.replace(/\n/g, '\r\n') }), state).error, /recipe/);
+});
+
 test('validateDishFields names the field that is wrong', () => {
   const { state, cat } = setup();
   const long = validateDishFields(fields(cat, { ingredients: 'x'.repeat(LIMITS.ingredients + 1) }), state);
