@@ -6,8 +6,6 @@ description: How a solo operator sources, screens, briefs, QAs and deploys on-ca
 # Creator Content Sourcing
 
 ## Activate creator content through Meta partnership ads because the delivery starts with the creator's own seed audience and expands from there, reaching net-new people your pixel keeps missing.
-**Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
-
 **Why it works:** A partnership ad is served first to the creator's engaged followers and then to lookalikes of them. That lets it escape the audience rut an account develops after years of optimizing against its own pixel. Meta's persona-based Andromeda targeting also rewards content that maps to new personas.
 
 **Evidence offered:** Assertion plus secondhand claims. A performance summit statement said creator content is the future of selling. Named brand interviews: Pacted and Caraway said small creators/UGC performed best on partnership ads, while Jones Road said bigger influencer and celebrity deals performed better for them. No spend, CPA or incrementality figures.
@@ -100,8 +98,6 @@ The additive part is narrow: motion and stability defects, plus the rule that a 
 *Source: Nick Theriot (@nicktheriot_) — "UGC beat structure, PDP layout, and 6-step ad copy (X posts)" (social post)*
 
 ## Pull the UGC testimonial videos from your top-performing Facebook ads and embed them on the product page as social proof.
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** Ad spend has already selected those clips for persuasiveness against cold traffic, so they are pre-validated proof assets. Reusing them on the PDP costs nothing extra and keeps the message continuous from ad to page for the person who just clicked.
 
 **Evidence offered:** Assertion only, embedded as element 14 of the PDP layout.
@@ -208,8 +204,6 @@ The additive part is narrow: motion and stability defects, plus the rule that a 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 4 of 6)*
 
 ## Track which specific video editors and which specific creators produced past winners, and route new scripts to those named people rather than rotating through whoever is available.
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** Execution quality is not evenly distributed across vendors. The same script routed through a strong editor or a strong on-camera creator produces a materially different asset. The person doing the execution is a variable you can select rather than a constant, so tracking who produced past winners and re-assigning them raises the hit rate without changing the script at all.
 
 **Evidence offered:** Assertion only, stated as advice to agency-side strategists ('fight to have those video editors be the ones'). No hit-rate comparison between vendors and no named example.
@@ -230,8 +224,6 @@ The additive part is narrow: motion and stability defects, plus the rule that a 
 *Source: Dara Denney — "How I Source, Brief & Manage Creators (My Exact System)" (_VtpfVeB2Kc)*
 
 ## Run creator relationships yourself as the founder — do not hand creator negotiation and management to AI agents — and plan for missed briefs, late delivery and revision friction as the normal case.
-**Stage:** team — parked until the team phase opens.
-
 **Why it works:** Creators rarely follow a brief from a message alone, are often late, and resist revisions. Those failure points need human judgement and a relationship to resolve, so automation breaks exactly where the work is.
 
 **Evidence offered:** Claimed experience across ~115,000 creators at Nibble. Assertion, no comparison against agent-managed outreach.

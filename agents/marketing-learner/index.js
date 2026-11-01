@@ -852,13 +852,12 @@ async function runRegate({ client, args }) {
     (failed ? ` ${failed} skill(s) refused — see above.` : ''));
   syncContextMirror();
 
-  // NOT SCHEDULED — verified against the live crontab and scripts/setup-cron.sh on
-  // 2026-09-07, and NEITHER carries any marketing-learner line at all. This comment used to
-  // read "runs unattended on the 1st", which was simply false, and it was believed: it is
-  // why `--regate` was described as an unattended monthly job that could un-park tactics
-  // on its own. Same class of error as `unmapped-query-promoter`'s header claiming it was
-  // deprecated while cron ran it daily, inverted — a header asserting a schedule that does
-  // not exist. Read `crontab -l`, never a comment.
+  // SCHEDULED monthly, on the 1st, through scripts/marketing-regate-pr.mjs (scheduler.js step 15),
+  // which runs this mode inside a throwaway worktree and ships the result as a merged PR. Never
+  // schedule `--regate --apply` against the live checkout: the skills are tracked files, and an
+  // uncommitted edit there aborted the deploy pull on 2026-11-01. (A 2026-09-07 comment here said
+  // "NOT SCHEDULED"; that was true then and stopped being true when step 15 was added. Read
+  // scheduler.js and `crontab -l`, never a comment.)
   //
   // It still notifies, because it is hand-run rarely and mutates every skill it touches: a
   // parked tactic disappears from the live projection, and an un-parked one appears in it,

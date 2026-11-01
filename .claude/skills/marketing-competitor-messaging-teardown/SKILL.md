@@ -192,8 +192,6 @@ Route each transplant at filmed short-form first — that is the cheapest place 
 
 ### Keep the cross-niche swipe file supplied with an ad-intelligence subscription.
 
-**Stage:** scale — parked until the scale phase opens.
-
 The manual version of cross-niche sourcing gets you the structures you happen to stumble across while browsing. An ad-intelligence subscription such as TrendTrack shows which ads are winning *right now* across every niche, and becomes the standing input to the hook swipe file: instead of remembering an interesting watch-brand hook from three weeks ago, you pull this week's outperformers from categories you have never sold in and tag them straight into the file.
 
 What it buys is repeatability rather than novelty — the cross-niche import stops being an occasional flash of curiosity and becomes a weekly supply line of currently-working structures.
