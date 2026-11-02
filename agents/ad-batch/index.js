@@ -54,6 +54,7 @@ import { buildPrompt } from './prompt.js';
 import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
 import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
+import { writeMasterSheet } from './master-sheet.js';
 import {
   DEFAULT_OUT_ROOT, messageFolder, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
   ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
@@ -227,7 +228,7 @@ export async function copyOnly(args, { log = console.log, deps } = {}) {
   return writeCopyForBatch(args.copyOnly, record, { rewrite: args.rewriteCopy, log, deps });
 }
 
-export async function main(argv = process.argv.slice(2), { log = console.log, ingest, copyDeps } = {}) {
+export async function main(argv = process.argv.slice(2), { log = console.log, ingest, copyDeps, masterSheet = writeMasterSheet } = {}) {
   const args = parseArgs(argv);
   const env = { ...loadEnv(), ...process.env };
   if (args.copyOnly) {
@@ -337,6 +338,15 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
       : { status: 'failed', reason: 'could not load the copy sources' };
   }
   if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });
+  // Refresh the library-wide sheet (01 Static Ads/_All Creatives.pdf) so a new batch
+  // is visible without clicking into its folders. Only when filing into the library,
+  // and never a reason to fail a paid run.
+  if (message && kept > 0) {
+    try {
+      const sheet = await masterSheet(args.out, { log });
+      if (sheet) log(`Master sheet: ${sheet.count} creatives → ${sheet.path}`);
+    } catch (err) { log(`⚠ master sheet not refreshed (${err.message}); run: node agents/ad-batch/master-sheet.js`); }
+  }
   return record;
 }
 
