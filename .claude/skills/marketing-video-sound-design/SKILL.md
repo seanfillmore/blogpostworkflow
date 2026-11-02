@@ -21,7 +21,7 @@ description: How to build the audio layer under generated, filmed and talking-he
 
 **Evidence offered:** Assertion plus the demonstrated final edit.
 
-**Fit here (5/10):** RSC already escalates founder yaps to 'graphic yaps': text, ingredient callouts and comparison graphics over the talking head. A standing event-to-sound mapping makes those sound-ready in minutes, and one person can apply it in CapCut or have Claude apply it. Runnable today. It is a modest craft lever, not a revenue driver on its own.
+**Fit here (5/10):** RSC has no founder video, but this applies to any creator UGC clip given text, ingredient callouts and comparison graphics over the talking head. A standing event-to-sound mapping makes those sound-ready in minutes, and one person can apply it in CapCut or have Claude apply it. Runnable today. It is a modest craft lever, not a revenue driver on its own.
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
@@ -31,7 +31,7 @@ description: How to build the audio layer under generated, filmed and talking-he
 
 **Evidence offered:** A single demonstration. The finished Arthur Brooks edit is played on screen, and the creator says the next run will take about half the time. No performance data.
 
-**Fit here (5/10):** The founder films and edits his own organic short-form, and a reference corpus is something one person can assemble at a laptop. He can save 15–20 top-performing videos in the formats he copies, such as founder yaps and natural-deodorant explainers. Feeding them to the editor keeps the sound pass consistent across every reel and every organic clip later run as paid creative. Merit is moderate because audio polish is a secondary lever next to hook and angle, and the only proof is one course-seller demo.
+**Fit here (5/10):** The operator edits RSC's organic short-form (creator UGC, no founder footage), and a reference corpus is something one person can assemble at a laptop. He can save 15–20 top-performing videos in the formats he copies, such as creator testimonials and natural-deodorant explainers. Feeding them to the editor keeps the sound pass consistent across every reel and every organic clip later run as paid creative. Merit is moderate because audio polish is a secondary lever next to hook and angle, and the only proof is one course-seller demo.
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 

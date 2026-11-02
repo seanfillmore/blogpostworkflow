@@ -55,7 +55,7 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 **Evidence offered:** Assertion, demonstrated through the creator's scene-by-scene planning of a four-career-patterns talking-head clip.
 
-**Fit here (6/10):** Translates directly to RSC's founder yaps and 'N reasons' paid video formats. For example, say 'reason two: no aluminium' on camera, then cut to a visual of what aluminium-free means. The operator can run it alone on today's footage. It complements the shot-per-line planning in the reference breakdown above: that tells you how many shots a line gets, and this tells you whether the line belongs on the face or on a cutaway. The timing sections below cover cut-to-word sync and clip trims, not this structural rule.
+**Fit here (6/10):** Translates directly to cutting Trybe creator UGC and 'N reasons' paid video formats (RSC has no founder video). For example, keep the creator on camera for 'reason two: no aluminium', then cut to a visual of what aluminium-free means. The operator can run it alone on the creator footage RSC already holds. It complements the shot-per-line planning in the reference breakdown above: that tells you how many shots a line gets, and this tells you whether the line belongs on the face or on a cutaway. The timing sections below cover cut-to-word sync and clip trims, not this structural rule.
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
@@ -147,7 +147,7 @@ description: Shooting and editing your own short-form video by modelling a prove
 
 **Evidence offered:** Assertion plus a breakdown of the reference creator's captions and the finished demo edit.
 
-**Fit here (6/10):** Organic short-form is a live surface the operator films and edits himself, and caption design is a pure editing decision he can apply today to every founder yap and Meta video ad in CapCut or Reels. Captions are also what the muted viewer in the sound-off test below is reading. No other section covers caption typography or emphasis placement. Not higher because it is a polish lever on retention, not a conversion lever, and the binding constraint is conversion rate. Check the serif-italic look against RSC's brand identity rather than copying it wholesale — the durable part is the two-weight hierarchy and key-word placement, not the specific typefaces.
+**Fit here (6/10):** Organic short-form is a live surface the operator edits himself, and caption design is a pure editing decision he can apply today to every creator UGC Reel and Meta video ad in CapCut or Reels. Captions are also what the muted viewer in the sound-off test below is reading. No other section covers caption typography or emphasis placement. Not higher because it is a polish lever on retention, not a conversion lever, and the binding constraint is conversion rate. Check the serif-italic look against RSC's brand identity rather than copying it wholesale — the durable part is the two-weight hierarchy and key-word placement, not the specific typefaces.
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
