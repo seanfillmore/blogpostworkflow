@@ -1,6 +1,6 @@
 ---
 name: marketing-short-form-video-production
-description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, frame-by-frame shot breakdown of a reference mapped to script lines, staging and framing on the shoot, phone-shot B-roll instead of stock footage, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, the closing product frame, the sound-off and eyes-closed pre-publish test, cover-image composition and generation, and re-cutting an existing footage library into new ads.
+description: Shooting and editing your own short-form video by modelling a proven reference — word-for-word scripting, the read-aloud rewrite pass before recording, teleprompter delivery, frame-by-frame shot breakdown of a reference mapped to script lines, staging and framing on the shoot, phone-shot B-roll instead of stock footage, hybrid real-footage-plus-AI effects, hook-first production, cut timing, assembly order, narration trimming, clip in/out points, shot order, when to sit on the speaker's face versus cut away by script function, on-screen caption typography and key-word emphasis, the closing product frame, the sound-off and eyes-closed pre-publish test, cover-image composition and generation, and re-cutting an existing footage library into new ads.
 ---
 
 # Short Form Video Production
@@ -48,6 +48,16 @@ description: Shooting and editing your own short-form video by modelling a prove
 *Source: Kallaway — "How to Use Claude To Grow From 0 to 100K Followers (Full Course)" (vwlK6MbdAto)*
 
 *Source: Sweat Equity — "Watch Me Speedrun a Brand from 0 to 100k Followers (in 90 Days)" (w6qpJ0eTB68)*
+
+## Decide whether each line sits on the speaker's face or on a cutaway by what that line is doing in the script — open on the face with captions, return to the face whenever a new item or point is announced, and cut to a visual while that item is being described.
+
+**Why it works:** The face builds connection, and returning to it signals that a new section has started. The visual then makes the description concrete. A predictable announce-then-show rhythm keeps the viewer oriented inside a list structure and makes every cutaway earn its place, so the edit stays balanced rather than visually exhausting.
+
+**Evidence offered:** Assertion, demonstrated through the creator's scene-by-scene planning of a four-career-patterns talking-head clip.
+
+**Fit here (6/10):** Translates directly to RSC's founder yaps and 'N reasons' paid video formats. For example, say 'reason two: no aluminium' on camera, then cut to a visual of what aluminium-free means. The operator can run it alone on today's footage. It complements the shot-per-line planning in the reference breakdown above: that tells you how many shots a line gets, and this tells you whether the line belongs on the face or on a cutaway. The timing sections below cover cut-to-word sync and clip trims, not this structural rule.
+
+*Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
 ## Never use stock footage in an ad — shoot every B-roll cut yourself on a phone, so the piece looks like someone is actually recording rather than like an advertisement.
 
@@ -130,6 +140,16 @@ description: Shooting and editing your own short-form video by modelling a prove
 **Fit here (7/10):** Runnable today and the most transferable idea in the editing section: it converts the high reject rate of AI generation (or of a phone take) from a cost into a selection step, which matters a lot when one person is paying per generation or shooting alone. Complements — rather than duplicates — the imagery rule to always pick the believable render over the beautiful one, because this is about choosing which seconds of a single clip are believable.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 4 of 6)*
+
+## Design on-screen captions with two fonts and a placement rule — keep each caption line to five words or fewer, pick out its most important words, set those large and bold in the centre, and tuck the remaining words smaller into the gaps above or below.
+
+**Why it works:** Emphasising the key words visually makes the viewer read the point rather than every word. The contrast between a plain sans font and an italic serif reads as premium, deliberate design rather than auto-captions. That raises perceived production value and holds attention.
+
+**Evidence offered:** Assertion plus a breakdown of the reference creator's captions and the finished demo edit.
+
+**Fit here (6/10):** Organic short-form is a live surface the operator films and edits himself, and caption design is a pure editing decision he can apply today to every founder yap and Meta video ad in CapCut or Reels. Captions are also what the muted viewer in the sound-off test below is reading. No other section covers caption typography or emphasis placement. Not higher because it is a polish lever on retention, not a conversion lever, and the binding constraint is conversion rate. Check the serif-italic look against RSC's brand identity rather than copying it wholesale — the durable part is the two-weight hierarchy and key-word placement, not the specific typefaces.
+
+*Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
 ## Close the ad on a deliberately chosen, well-framed clean product shot built from a reference photo of the real pack — scrub for the best-composed frame, cut away the clip's remaining motion, and extend that frame to hold under the final narration line.
 
