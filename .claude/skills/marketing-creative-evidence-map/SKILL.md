@@ -1,6 +1,6 @@
 ---
 name: marketing-creative-evidence-map
-description: Use when deciding what an ad, product page, or Amazon listing should actually claim and you want evidence instead of a guess — covers assembling a weighted customer-evidence corpus from reviews, churn-survey free text, support tickets and ad comments, your own live ads and landing pages, and competitor reviews and ads, then reading which source can and cannot answer which question before a line of copy is written.
+description: Use when deciding what an ad, product page, or Amazon listing should actually claim and you want evidence instead of a guess. Covers assembling a weighted customer-evidence corpus from reviews, churn-survey free text, support tickets and ad comments, your own live ads and landing pages, and competitor reviews and ads. Then covers reading which source can and cannot answer which question, and gap-reading the corpus in both directions before a line of copy is written: kill the claims customers never make, and build positioning around the themes customers keep repeating that the brand never says.
 ---
 
 # Creative Evidence Map
@@ -25,15 +25,27 @@ description: Use when deciding what an ad, product page, or Amazon listing shoul
 
 *Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
 
-## Audit your own claims against the evidence corpus by counting how often your core vocabulary appears in customer language, and stop making any claim that appears zero times.
+## Gap-read your own messaging against the evidence corpus in both directions. Stop making any claim that appears zero times in customer language. Find any theme customers repeat consistently that appears nowhere in your messaging, and rebuild positioning and ads around it.
 
-**Why it works:** The gap between what the brand asserts and what buyers say is what makes ads fail invisibly; if 400+ pieces of customer evidence never mention a feature, an ad built on that feature is filtering out the people most likely to buy and repurchase.
+**Why it works:** The gap between what the brand asserts and what buyers say is what makes ads fail invisibly, and the gap runs both ways.
 
-**Evidence offered:** Case: the brand's core vocabulary appeared zero times across 400+ pieces of evidence, five of nine live ads made a claim customers never made, and provenance, altitude, tasting notes, brewing qualifications and free shipping — the basis of most running ads — were never mentioned once.
+- **Claims customers never make (kill direction):** if 400+ pieces of customer evidence never mention a feature, an ad built on that feature is filtering out the people most likely to buy and repurchase.
+- **Themes the brand never says (build direction):** a theme that recurs in reviews but never in marketing is a desire buyers have already proven, and no message is competing for it. Building the message back from it makes ads sound like the buyer's own inner voice.
 
-**Fit here (8/10):** High-leverage and free for a 12-SKU catalog whose ads and PDPs likely lead on formulation and ingredient language. Runnable today against existing Shopify/Amazon reviews and support email; it produces a kill list for PDP copy, Amazon bullets, and the Meta primary text going into the giveaway campaign. Durable copy principle, no age or volume dependency.
+**Evidence offered:**
+
+- **Kill direction:** in one case the brand's core vocabulary appeared zero times across 400+ pieces of evidence. Five of nine live ads made a claim customers never made. Provenance, altitude, tasting notes, brewing qualifications and free shipping were the basis of most running ads, and none was mentioned once.
+- **Build direction:** Laundry Sauce spotted 'I used to hate doing laundry, now I love it' recurring in reviews and reframed its brand mission and messaging around 'loving laundry'. This was presented as a pattern also seen at Tube Science and Ultra. No numbers were given.
+
+**Fit here (8/10):** High-leverage and free for a 12-SKU catalog whose ads and PDPs likely lead on formulation and ingredient language. One person can run both directions today against existing Shopify/Amazon reviews and support email.
+
+- **Kill direction output:** a kill list for PDP copy, Amazon bullets, and the Meta primary text going into the giveaway campaign.
+- **Build direction output:** with an 18–22.5% repeat rate and repeat buyers carrying roughly 45–52% of revenue, the reviews likely hold reasons people come back that are missing from the PDP, Amazon bullets and Meta primary text.
+
+Both directions feed conversion rate, which is the binding constraint. Turn surfaced themes into self-filmed short-form hooks first, then into primary text, email subjects and Amazon bullets. This is a durable copy principle with no age or volume dependency.
 
 *Source: Professor Charley T — "Claude Has Officially Changed Facebook Ads Forever! (Tutorial)" (4-ApfzxGhYI)*
+*Source: Sweat Equity — "The Ad Creative Strategy That Takes Brands to $100M in Record Time" (QbCGvRnWC9Y)*
 
 ## Split objections that arrive bundled in survey free text into distinct ones — price and 'suitability / not for someone like me' are not the same objection and are not solved by the same ad — and check whether one source corroborates another before treating either as real.
 

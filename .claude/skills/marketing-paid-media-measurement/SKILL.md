@@ -173,6 +173,18 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
+## Set a brand-specific benchmark for creative return — attributed revenue per concept divided by the cost to produce it (for example 5x or 10x) — measure every creative source against it, cut the sources that fall below, and keep raising the bar.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Production cost differs widely by source — in-house, agencies, paid UGC creators — so judging sources on ad performance alone ignores what each concept cost to make. A per-concept, per-source return-on-production-cost number turns creative sourcing into a comparable ROI decision: weak sources get cut, production budget concentrates on the producers who beat the benchmark, and the bar can tighten over time because some sources already clear it comfortably.
+
+**Evidence offered:** Ultra spent 2–3 months running many agencies plus an internal team to find its benchmark, cut the agencies below it, and keeps the ones that beat it; some deliver well above it. Single-brand practice, no figures shown for the benchmark itself.
+
+**Fit here (6/10):** Durable-principle class. Nothing else in this skill measures creative production cost against the return each concept produces — the primary-metric split and the highest-spend-first triage above judge ads by what they earned, never by what they cost to make, and creative routing in marketing-paid-creative-testing is about attribution, not source economics. RSC has two sources today: self-produced creative and paid Trybe UGC. A readable per-source comparison needs enough attributed purchases per concept and per source, which ~16 Shopify orders/month does not yet supply — a volume gate, so it is parked behind scale at full merit. Trigger: the creative-test campaign graduating winners to the $100/day scaling campaign with enough purchases per source to separate signal from noise. Until then, log production cost per concept next to its results (the naming-convention tags used for offer/discount segmentation above are the natural place to carry the source label), so the benchmark can be computed the day volume arrives. When it is computed, judge it on the primary metrics recorded above, never on CTR or hook rate.
+
+*Source: Sweat Equity — "The Ad Creative Strategy That Takes Brands to $100M in Record Time" (QbCGvRnWC9Y)*
+
 ## Once AI collapses the cost of producing assets, buy an agency for the strategy layer — cross-account pattern data, not hands — at roughly $50k/mo revenue.
 
 **Stage:** team — parked until the team phase opens.

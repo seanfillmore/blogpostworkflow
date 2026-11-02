@@ -1,6 +1,6 @@
 ---
 name: marketing-agency-engagement
-description: Buying outside marketing help — hourly skill transfer, agency screening, engagement terms and exit conditions.
+description: Buying outside marketing help as hourly skill transfer — pay a practitioner to coach you over the shoulder while you run your own ad account, recording sessions until you no longer need them.
 ---
 
 # Agency Engagement
@@ -38,6 +38,10 @@ description: Buying outside marketing help — hourly skill transfer, agency scr
 **Fit here (6/10):** Durable vendor-screening principle, not usable until there is budget for a real agency — the team gate, same trigger as the engagement-terms tactic. Note the checklist scales down usefully to screening an hourly freelance media buyer, which is why it belongs alongside the unparked hourly-consult tactic.
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 13 of 16))*
+
+**Added criterion for creative production — buy the format, not the agency:** when the outside help is ad creative rather than media buying, prefer an agency that specialises in one specific format (street interviews; podcast-style ads with hired actors and built sets) over a generalist. A format specialist already runs an optimised production pipeline for that one format, so you are buying a proven format output rather than a general creative pitch. Evidence: the creator's own stated preference, naming Street Talk and Matrix Media as examples. Fit (5/10): durable principle class that fills a gap the ten-point screen lacks; carrying it out means paying an agency, so it sits behind the same team gate at full merit. Trigger: a messaging angle that has already won in his self-shot version and would scale in a format he cannot stage alone, such as street interviews or multi-actor podcast sets.
+
+*Source: Sweat Equity — "The Ad Creative Strategy That Takes Brands to $100M in Record Time" (QbCGvRnWC9Y)*
 
 ## Run the agency and your own in-house effort in parallel — paying both to do the same job — and compare your team's results to theirs each period until yours wins consistently, then cancel and redirect the retainer into scaling what you learned.
 
