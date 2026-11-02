@@ -77,7 +77,7 @@ Match every hand-off on copy, angle, awareness level, imagery, colours, the exac
 
 **Stage:** cro — parked until the cro phase opens.
 
-When reviews show a recurring use case (aluminium-free deodorant for gym sweat, lotion for winter hand-cracking), give that use case its own Meta ads and its own page. Put a short use-case block above the lotion or set offer, then the buy box. This is the congruency principle above applied per angle: one page per angle with education before the buy box, not a separate advertorial step. It keeps the first funnel to two elements: ad → one page.
+When reviews show a recurring use case (aluminium-free deodorant for post-gym odour, lotion for winter hand-cracking), give that use case its own Meta ads and its own page. Put a short use-case block above the lotion or set offer, then the buy box. This is the congruency principle above applied per angle: one page per angle with education before the buy box, not a separate advertorial step. It keeps the first funnel to two elements: ad → one page.
 
 **Why it works:** Before the buy box appears, the visitor gets more reasons to buy that are specific to the situation the ad promised. The page stays congruent with the angle instead of dropping a use-case-specific click onto a generic PDP. The host also claims, unverified, that educated buyers are stickier.
 
