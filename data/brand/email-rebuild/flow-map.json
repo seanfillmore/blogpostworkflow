@@ -176,5 +176,14 @@
       "VwZUZ9"
     ],
     "updatedAt": "2026-08-31T12:31:32.015Z"
+  },
+  "XW7wTj": {
+    "flowId": "V4U4Qn",
+    "flowName": "Post-Purchase Flow (RSC v2)",
+    "messageId": "UmfKSm",
+    "actionId": "112411010",
+    "servingTemplateId": "SgPVcL",
+    "stranded": [],
+    "updatedAt": "2026-11-02T12:42:51.519Z"
   }
 }

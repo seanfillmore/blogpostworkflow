@@ -619,9 +619,23 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
         type: 'p',
         html: 'If something is not right, reply to this email. We read every message, and most problems have a straightforward answer — the wrong amount, the wrong order of steps, or a transition period that has not finished yet.',
       },
+      // A second everyday use, so the habit outlives the reason they bought
+      // (marketing-post-purchase-onboarding, "Tie the sequence to the reason they bought").
+      // Every use below is one customers describe in Judge.me reviews (pulled 2026-11-02),
+      // not an invented occasion. Deodorant, toothpaste and foaming-only orders get nothing
+      // extra on purpose: deodorant has 8 reviews and its one second use (after an evening
+      // shower) is already in email 02, and toothpaste's only candidate is a single 3-star
+      // review. No fallback either: this is an extra section, so an empty one leaves no hole.
+      {
+        type: 'raw',
+        html: `${ITEMS_OPEN}{% if "Lotion" in items %}${para('<strong>One more place for your lotion.</strong> Customers keep a bottle by the kitchen or bathroom sink and use a little after washing their hands, which is when hands dry out fastest. One wrote: "I wash dishes all day and this lotion keeps my hands moisturized all day."')}{% endif %}
+{% if "Coconut Moisturizer" in items %}${para('<strong>One more place for your Coconut Moisturizer.</strong> It is thicker than a lotion, so customers save it for the roughest spots: a little on heels, knees and elbows before bed. A small amount goes a long way.')}{% endif %}
+{% if "Soap" in items %}${para('<strong>One more place for your soap.</strong> Customers keep a second one at the kitchen sink for washing up after cooking. If it is a bar, rest it on a dish or a folded washcloth so it dries between uses. A bar left sitting in water goes soft.')}{% endif %}
+{% if "Lip" in items %}${para('<strong>One more place for your lip balm.</strong> It comes as a four-pack so you can spread them out: one in your bag, one in a coat pocket, one at home. Customers reach for it most on windy and cold days.')}{% endif %}${ITEMS_CLOSE}`,
+      },
       {
         type: 'p',
-        html: 'If it is working and you know someone who has been let down by a "clean" brand before, send them to realskincare.com — <strong>NEWCUSTOMER</strong> gets them free shipping on their first order.',
+        html: 'If it is working and you know someone who has been let down by a "clean" brand before, send them to realskincare.com — <strong>SHIPFREE</strong> gets them free shipping on their first order.',
       },
       { type: 'cta', text: 'Send a friend our way', href: 'https://www.realskincare.com' },
       { type: 'signoff' },
