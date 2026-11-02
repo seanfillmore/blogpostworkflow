@@ -11,7 +11,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Creator demonstrates it on his own footage (real clip with an AI fire effect) and walks through a dog-trainer commercial where the interview is real and the training B-roll is generated; assertion otherwise.
 
-**Fit here (8/10):** The operator already films himself for social video with a phone. He cannot film sweat-through-a-shirt failures, a gym scene, a dentist chair, or an ingredient-sourcing shot — exactly the gap-list items this routes to AI while his real face and the real pack carry the trust. Durable production principle, not platform mechanics. Treat this as the frame around everything below: build the gap list first, then run the generation workflow only against it.
+**Fit here (8/10):** No founder footage exists yet; when he films himself on a phone for a concept, he cannot film an end-of-day odor moment, a gym scene, a dentist chair, or an ingredient-sourcing shot — exactly the gap-list items this routes to AI while his real face and the real pack carry the trust. Durable production principle, not platform mechanics. Treat this as the frame around everything below: build the gap list first, then run the generation workflow only against it.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 3 of 9)*
 
@@ -133,7 +133,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Worked example from the creator's own planned entrepreneurship video; assertion only on the retention effect.
 
-**Fit here (7/10):** He films himself talking to camera about aluminium-free deodorant, ingredients and why he formulated the line. Beat-marking above covers the literal visual beats and the critique pass catches the comprehension gaps; this adds the higher-leverage move of rendering the metaphor — 'it felt like my armpits were in a plastic bag', 'like scrubbing with gravel' — as the cutaway. Mark these on the same pass as the literal beats: one person, one phone, one image model.
+**Fit here (7/10):** When he films himself talking to camera about aluminium-free deodorant, ingredients and why he formulated the line (none filmed yet), this applies; it applies equally to creator UGC on the same topics. Beat-marking above covers the literal visual beats and the critique pass catches the comprehension gaps; this adds the higher-leverage move of rendering the metaphor — 'it felt like my armpits were in a plastic bag', 'like scrubbing with gravel' — as the cutaway. Mark these on the same pass as the literal beats: one person, one phone, one image model.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 4 of 9)*
 
@@ -243,7 +243,7 @@ description: Use when a talking-head short-form video or ad has no visual suppor
 
 **Evidence offered:** Side-by-side comparisons of original versus once- and twice-edited faces, with the creator estimating 100% → ~70% quality after one outfit edit; 'if we take this edited image and put it straight into our video model, we're much more likely to get that plastic AI look', and the restoration move called 'probably one of the easiest ways to dramatically improve the quality of your AI video'.
 
-**Fit here (7/10):** RSC's operator films and edits his own short-form and would use AI B-roll the same way, and he already needs a recurring non-founder character held consistent across frames, so any generated video hits exactly this degradation problem. The rule that clip quality is decided by the start frame is already recorded above, but compounding edit loss is the unnamed cause. It is a photo-editor layer operation one person does in minutes, free to apply today, and the principle survives tool churn.
+**Fit here (7/10):** RSC's operator edits its short-form (creator UGC and AI-generated video, no founder footage) and would use AI B-roll the same way, and he already needs a recurring non-founder character held consistent across frames, so any generated video hits exactly this degradation problem. The rule that clip quality is decided by the start frame is already recorded above, but compounding edit loss is the unnamed cause. It is a photo-editor layer operation one person does in minutes, free to apply today, and the principle survives tool churn.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 1 of 6)*
 
