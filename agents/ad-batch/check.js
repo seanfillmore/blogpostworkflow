@@ -136,6 +136,13 @@ export function decide({ read, concept, product, shown }) {
     if (at < 0) reasons.push(`${name} not rendered exactly (wanted "${text}", read "${lettering}")`);
     else leftover.splice(at, need.length);
   }
+  // Copy rendered twice (the headline set big AND again on a sticky note) is a broken
+  // layout, not "other text". Only multi-word copy counts, so a stray repeated word
+  // ("done") cannot fail a render.
+  for (const [name, text] of wanted) {
+    const need = text ? tokens(text) : [];
+    if (need.length >= 2 && findRun(leftover, need) >= 0) reasons.push(`${name} rendered more than once ("${text}")`);
+  }
   const extra = leftover.join(' ');
   // Claims are screened on the RAW lettering (minus Sean's own copy), because tokens()
   // drops symbols such as ★ that are the claim.
@@ -143,6 +150,12 @@ export function decide({ read, concept, product, shown }) {
   for (const t of wanted.map(([, text]) => text)) {
     if (t) raw = raw.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
   }
+  // Stars are an invented rating unless the copy itself carries them: a review card
+  // ("★★★★★" beside a real, quoted 5-star review) or a rating badge using the live
+  // PDP figure. Then the stars are part of the brief, not something the model added.
+  const STARS = /[★☆⭐]/g;
+  const declaredStars = wanted.some(([, text]) => text && /[★☆⭐]/.test(text));
+  if (declaredStars) raw = raw.replace(STARS, ' ');
   const symbolClaim = /[★☆⭐]/.test(raw);
   if (extra || symbolClaim) {
     const claims = inventedClaims(symbolClaim ? raw : extra);

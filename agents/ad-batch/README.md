@@ -37,6 +37,7 @@ npm run ad-batch -- --copy-only "<batch dir>" [--rewrite-copy] [--landing /pages
   { "headline": "Problem", "lines": ["Solution", "Labels you can't pronounce", "Only 7 ingredients"],
     "layout": "Vertical split screen. LEFT: \"Problem\" at the top, then rows with line icons ... RIGHT: \"Solution\", a dark card of green check-mark rows, an open palm holding the product." }
   ```
+- **Stars and repeats in a layout:** a `★★★★★` row is allowed only when the concept's own copy carries it (a real 5-star review card, or a rating badge quoting the live PDP figure); otherwise any star is an invented rating and fails. Under a `layout`, any multi-word piece of copy rendered twice fails the check, and the prompt places the headline where the layout says instead of as dominant lettering. Handwritten numerals read ambiguously ("1" as "I"), so spell them out on handwritten notes ("one squeeze").
 - **`concepts[].cta`**: optional. A short button line ("See real cream →") set in a pill under the headline. It is gated and checked letter by letter like the headline.
 
 Output goes to the RSC creatives library in Google Drive, `My Drive/Real Skin Care/Creatives/01 Static Ads/<message>/<date> <product>/<NN headline>/` (Sean, 2026-10-26). A batch stays one folder, filed under one message. On a machine without that Drive folder it falls back to `~/Desktop/Ad Batches/<date> <product>/`, flat, and `--out <dir>` (or `AD_BATCH_OUT`) is always flat. Each headline folder holds:

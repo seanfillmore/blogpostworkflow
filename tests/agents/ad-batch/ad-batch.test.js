@@ -525,3 +525,27 @@ test('layout verdict: a missing line fails; all lines present passes', () => {
   assert.equal(bad.ok, false);
   assert.match(bad.reasons.join(' '), /line 1 not rendered/);
 });
+
+test('stars: invented unless the copy declares them', () => {
+  const product = { title: 'Lotion', labelStrings: ['real SKIN CARE'], unitCount: 1 };
+  const read = (lettering) => ({ lettering, label_text: ['real SKIN CARE'], our_product_count: 1, matches_reference: 'MATCH' });
+  const plain = { headline: 'So soft.', subhead: null, cta: null };
+  assert.equal(_decide({ read: read(['So soft.', '★★★★★']), concept: plain, product, shown: 'packaged' }).ok, false);
+  const review = { ...plain, lines: ['★★★★★', 'Ella M.'] };
+  const r = _decide({ read: read(['So soft.', '★ ★ ★ ★ ★', 'Ella M.']), concept: review, product, shown: 'packaged' });
+  assert.equal(r.ok, true, r.reasons.join('; '));
+});
+
+test('copy rendered twice fails; layout prompt never asks for a dominant headline', () => {
+  const product = { title: 'Lotion', labelStrings: ['real SKIN CARE'], unitCount: 1, description: 'a bottle', refs: { packaged: ['/r.png'], unwrapped: [] } };
+  const read = (lettering) => ({ lettering, label_text: ['real SKIN CARE'], our_product_count: 1, matches_reference: 'MATCH' });
+  const c = { headline: 'After the shower:', subhead: null, cta: null, lines: ['towel off', 'done.'], layout: 'sticky note' };
+  const twice = _decide({ read: read(['After the shower:', 'towel off', 'done.', 'After the shower:', 'towel off', 'done.']), concept: c, product, shown: 'packaged' });
+  assert.equal(twice.ok, false);
+  assert.match(twice.reasons.join(' '), /headline rendered more than once/);
+  const once = _decide({ read: read(['After the shower:', 'towel off', 'done.']), concept: c, product, shown: 'packaged' });
+  assert.equal(once.ok, true, once.reasons.join('; '));
+  const { prompt } = _buildPrompt({ product, concept: c, scene: { scene: 's', typeStyle: 't' } });
+  assert.doesNotMatch(prompt, /dominant lettering/);
+  assert.match(prompt, /EXACTLY ONCE/);
+});

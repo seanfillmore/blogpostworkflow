@@ -50,10 +50,16 @@ It is NOT a rectangle, NOT pure white, and has NO stamp, engraving or text on it
 The printed label reads exactly: ${product.labelStrings.map(s => `"${s}"`).join(', ')}. Do not invent, alter, add or remove any label text or graphics.`;
 
   const animated = style === 'animated';
-  const lines = [`"${concept.headline}" is the headline: the dominant lettering, large.`];
+  // Under a LAYOUT the headline goes where the layout puts it (on a sticky note, in a
+  // review quote). "Dominant lettering, large" there made the model set the copy twice:
+  // once as a big headline and again where the layout asked (2026-11-03, 4 of 4).
+  const lines = [concept.layout
+    ? `"${concept.headline}" is the headline, placed and styled exactly where the LAYOUT says.`
+    : `"${concept.headline}" is the headline: the dominant lettering, large.`];
   if (concept.subhead) lines.push(`"${concept.subhead}" is the subhead: smaller, set directly beneath the headline.`);
   if (concept.cta) lines.push(`"${concept.cta}" sits in a small rounded pill-shaped button${concept.layout ? ', where the LAYOUT puts it' : ' beneath the headline'}, like a link button in a social post.`);
   const extra = concept.lines || [];
+  if (concept.layout) lines.push('Every piece of text below appears EXACTLY ONCE in the whole image. Never repeat any of it as a separate headline, list or caption.');
   if (extra.length) {
     lines.push('These further text blocks appear exactly once each, placed where the LAYOUT says, each on its own (a block may wrap onto two lines, but never merge two blocks into one):');
     for (const l of extra) lines.push(`- "${l}"`);
