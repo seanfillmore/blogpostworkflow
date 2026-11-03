@@ -143,6 +143,12 @@ export function decide({ read, concept, product, shown }) {
   for (const t of wanted.map(([, text]) => text)) {
     if (t) raw = raw.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
   }
+  // Stars are an invented rating unless the copy itself carries them: a review card
+  // ("★★★★★" beside a real, quoted 5-star review) or a rating badge using the live
+  // PDP figure. Then the stars are part of the brief, not something the model added.
+  const STARS = /[★☆⭐]/g;
+  const declaredStars = wanted.some(([, text]) => text && /[★☆⭐]/.test(text));
+  if (declaredStars) raw = raw.replace(STARS, ' ');
   const symbolClaim = /[★☆⭐]/.test(raw);
   if (extra || symbolClaim) {
     const claims = inventedClaims(symbolClaim ? raw : extra);

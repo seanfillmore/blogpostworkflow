@@ -525,3 +525,13 @@ test('layout verdict: a missing line fails; all lines present passes', () => {
   assert.equal(bad.ok, false);
   assert.match(bad.reasons.join(' '), /line 1 not rendered/);
 });
+
+test('stars: invented unless the copy declares them', () => {
+  const product = { title: 'Lotion', labelStrings: ['real SKIN CARE'], unitCount: 1 };
+  const read = (lettering) => ({ lettering, label_text: ['real SKIN CARE'], our_product_count: 1, matches_reference: 'MATCH' });
+  const plain = { headline: 'So soft.', subhead: null, cta: null };
+  assert.equal(_decide({ read: read(['So soft.', '★★★★★']), concept: plain, product, shown: 'packaged' }).ok, false);
+  const review = { ...plain, lines: ['★★★★★', 'Ella M.'] };
+  const r = _decide({ read: read(['So soft.', '★ ★ ★ ★ ★', 'Ella M.']), concept: review, product, shown: 'packaged' });
+  assert.equal(r.ok, true, r.reasons.join('; '));
+});
