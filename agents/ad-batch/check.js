@@ -136,6 +136,13 @@ export function decide({ read, concept, product, shown }) {
     if (at < 0) reasons.push(`${name} not rendered exactly (wanted "${text}", read "${lettering}")`);
     else leftover.splice(at, need.length);
   }
+  // Copy rendered twice (the headline set big AND again on a sticky note) is a broken
+  // layout, not "other text". Only multi-word copy counts, so a stray repeated word
+  // ("done") cannot fail a render.
+  for (const [name, text] of wanted) {
+    const need = text ? tokens(text) : [];
+    if (need.length >= 2 && findRun(leftover, need) >= 0) reasons.push(`${name} rendered more than once ("${text}")`);
+  }
   const extra = leftover.join(' ');
   // Claims are screened on the RAW lettering (minus Sean's own copy), because tokens()
   // drops symbols such as ★ that are the claim.
