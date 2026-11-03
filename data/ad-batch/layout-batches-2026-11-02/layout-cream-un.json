@@ -1,0 +1,50 @@
+{
+ "product": "coconut-moisturizer",
+ "variant": "pure-unscented",
+ "count": 1,
+ "message": "Short Ingredient List",
+ "concepts": [
+  {
+   "headline": "What I Ordered",
+   "lines": [
+    "What I Got",
+    "Only 7 ingredients",
+    "Organic virgin coconut oil",
+    "No added fragrance",
+    "Made in the USA",
+    "Pure Unscented body cream",
+    "30-day money-back guarantee"
+   ],
+   "layout": "Vertical split screen in pale sage green and warm off-white, with deep forest-green headings and accents. LEFT half (lighter tone): the heading \"What I Ordered\" at the top in big bold color type; below it a hand-drawn curved arrow pointing down at the product, which stands on the left half with a small swirl of its cream on the surface beside it; under the product the line \"Pure Unscented body cream\" in bold caps; at the very bottom, small, the line \"30-day money-back guarantee\". RIGHT half (slightly deeper tone): the heading \"What I Got\" at the top; under it four checklist rows, each a solid green circle with a white check mark followed by short bold all-caps text, in this order: \"Only 7 ingredients\", \"Organic virgin coconut oil\", \"No added fragrance\", \"Made in the USA\"; the lower right half is a smiling woman in her early 30s, natural makeup, hair pulled back, wrapped in a plain white bath towel, photographed from the chest up in soft studio light, looking happy, cropped by the bottom edge."
+  },
+  {
+   "headline": "Problem",
+   "lines": [
+    "Solution",
+    "Labels you can't pronounce",
+    "20+ ingredients in one bottle",
+    "Fragrance added to everything",
+    "Only 7 ingredients",
+    "Organic virgin coconut oil",
+    "No added fragrance",
+    "30-day money-back guarantee"
+   ],
+   "layout": "Vertical split screen. LEFT half is a light off-white panel: the heading \"Problem\" in big bold black caps at the top; below it three rows, each a pale tinted circle holding a simple thin-line icon (a long crumpled ingredient label, a tangle of chemistry flasks, a perfume spray bottle) followed by short bold text, in this order: \"Labels you can't pronounce\", \"20+ ingredients in one bottle\", \"Fragrance added to everything\". RIGHT half is a solid strong color panel (deep forest-green): the heading \"Solution\" in big bold white caps at the top; below it a dark charcoal rounded card holding four rows, each a solid green circle with a white check mark followed by white text, in this order: \"Only 7 ingredients\", \"Organic virgin coconut oil\", \"No added fragrance\", \"30-day money-back guarantee\"; at the bottom of the right half, an open palm holds the product up, label facing the camera."
+  },
+  {
+   "headline": "A simpler daily routine",
+   "lines": [
+    "@realskincare_com",
+    "Seven ingredients. No added fragrance. Pure Unscented body cream.",
+    "Only 7 ingredients",
+    "30-day money-back guarantee"
+   ],
+   "cta": "Shop Now \u2192",
+   "layout": "Three stacked bands. TOP 40%: a smiling woman in her early 30s, natural makeup, hair pulled back, wrapped in a plain white bath towel, photographed from the chest up in soft studio light, leaning her forearms on the top edge of the black band below as if peeking over a ledge, against a soft pale sage green and warm off-white, background with a faint repeating pattern of small line-drawn coconuts, leaves and water droplets. MIDDLE band: a black strip styled exactly like an Instagram post footer: outline heart, comment and send icons at left and a bookmark icon at right on one row, then the handle \"@realskincare_com\" in bold white, then the caption \"Seven ingredients. No added fragrance. Pure Unscented body cream.\" in regular white. BOTTOM 45%: a solid deep forest-green panel with the same faint pattern: the product sits on the left with a swirl of its cream beside it; on the right the headline in huge bold white all caps, then two small white lines \"Only 7 ingredients\" and \"30-day money-back guarantee\", then a white rounded pill button with dark text \"Shop Now \u2192\"."
+  }
+ ],
+ "scenes": [
+  "a clean, modern direct-to-consumer brand graphic ad with crisp studio product photography composited in"
+ ],
+ "typeStyle": "bold rounded geometric sans-serif (Poppins Black style) for headings and list rows, a clean regular sans-serif for small lines"
+}

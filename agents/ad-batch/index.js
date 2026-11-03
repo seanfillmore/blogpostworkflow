@@ -122,7 +122,7 @@ async function refForCheck(path) {
   return (await sharp(path).rotate().resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64');
 }
 
-async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style }) {
+async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style, layout = false }) {
   const img = (await sharp(imageBuf).resize(1200, 1200, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
   const res = await anthropic.messages.create({
     model: LLM_MODELS.standard,
@@ -130,7 +130,7 @@ async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style
     messages: [{ role: 'user', content: [
       ...refsB64.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
-      { type: 'text', text: checkPrompt({ product, shown, style }) },
+      { type: 'text', text: checkPrompt({ product, shown, style, layout }) },
     ] }],
   });
   return parseCheck((res.content || []).map(c => c.text || '').join(''));
@@ -170,7 +170,7 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
     for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
     let read = null;
-    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style }); }
+    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style, layout: !!concept.layout }); }
     catch (err) { log(`    check failed to run: ${err.message}`); }
     const verdict = decide({ read, concept, product, shown });
     attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });

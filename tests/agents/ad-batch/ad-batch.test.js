@@ -486,3 +486,42 @@ test('parseBatch keeps the message folder name, null when absent', () => {
   assert.equal(parseBatch({ product: 'coconut-moisturizer', message: ' Fall - Body Cream ', concepts: [{ headline: 'x' }] }).message, 'Fall - Body Cream');
   assert.equal(parseBatch({ product: 'coconut-moisturizer', concepts: [{ headline: 'x' }] }).message, null);
 });
+
+// --- multi-text layouts (2026-11-02) ---
+import { parseBatch as _parseBatch, screenConcepts as _screen } from '../../../agents/ad-batch/batch.js';
+import { buildPrompt as _buildPrompt } from '../../../agents/ad-batch/prompt.js';
+import { decide as _decide, checkPrompt as _checkPrompt } from '../../../agents/ad-batch/check.js';
+
+const LAYOUT_PRODUCT = { title: 'Coconut Moisturizer', description: 'a jar', labelStrings: ['real SKIN CARE', 'coconut breeze'], refs: { packaged: ['/r.png'], unwrapped: [] }, unitCount: 1 };
+const LAYOUT_CONCEPT = { headline: 'Problem. Solution.', subhead: null, cta: null, lines: ['Labels you cannot pronounce', '8 ingredients'], layout: 'split screen' };
+
+test('layout concept: lines and layout are parsed; non-array lines rejected', () => {
+  const b = _parseBatch({ product: 'x', concepts: [{ headline: 'H', lines: [' a ', '', 'b'], layout: ' split ' }] });
+  assert.deepEqual(b.concepts[0].lines, ['a', 'b']);
+  assert.equal(b.concepts[0].layout, 'split');
+  assert.throws(() => _parseBatch({ product: 'x', concepts: [{ headline: 'H', lines: 'a' }] }), /lines must be a list/);
+});
+
+test('layout concept: every line goes through the claim gate', () => {
+  const { skipped } = _screen([{ headline: 'H', lines: ['Heals eczema fast'] }]);
+  assert.equal(skipped.length, 1);
+  assert.match(skipped[0].reasons.join(' '), /line 1/);
+});
+
+test('layout prompt: names each line, uses the layout, allows icons', () => {
+  const { prompt } = _buildPrompt({ product: LAYOUT_PRODUCT, concept: LAYOUT_CONCEPT, scene: { scene: 's', typeStyle: 't' } });
+  assert.match(prompt, /LAYOUT \(a designed graphic ad, follow it closely\): split screen/);
+  assert.match(prompt, /- "Labels you cannot pronounce"/);
+  assert.match(prompt, /check-mark circles/);
+  assert.doesNotMatch(prompt, /top 25-30%/);
+  assert.match(_checkPrompt({ product: LAYOUT_PRODUCT, shown: 'packaged', layout: true }), /finish one column before/);
+});
+
+test('layout verdict: a missing line fails; all lines present passes', () => {
+  const read = (lettering) => ({ lettering, label_text: ['real SKIN CARE', 'coconut breeze'], our_product_count: 1, matches_reference: 'MATCH' });
+  const ok = _decide({ read: read(['Problem. Solution.', 'Labels you cannot pronounce', '8 ingredients']), concept: LAYOUT_CONCEPT, product: LAYOUT_PRODUCT, shown: 'packaged' });
+  assert.equal(ok.ok, true, ok.reasons.join('; '));
+  const bad = _decide({ read: read(['Problem. Solution.', '8 ingredients']), concept: LAYOUT_CONCEPT, product: LAYOUT_PRODUCT, shown: 'packaged' });
+  assert.equal(bad.ok, false);
+  assert.match(bad.reasons.join(' '), /line 1 not rendered/);
+});
