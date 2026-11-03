@@ -33,6 +33,8 @@ Show exactly ONE of each of the ${n} products, and no other unit of any of them.
 
 const PHOTO_PLACEMENT = 'The product is the hero: large, sharp, in the lower-center of the frame, about 45-55% of the frame height. Props never cover the label. Other generic objects in the scene are fine.';
 
+const LAYOUT_PLACEMENT = 'Place the product exactly where the LAYOUT below puts it: sharp, its label facing the camera and fully readable, about 30-45% of the frame height. Props, hands and graphics never cover the label. Other generic objects in the scene are fine.';
+
 const ANIMATED_PLACEMENT = 'The product is clearly visible and sharp, about 25-35% of the frame height, held up by a character or standing in the foreground, its label facing the camera and fully readable. Hands and props never cover the label. Other generic objects in the scene are fine.';
 
 const ANIMATED_RENDER = `ART STYLE: a polished, stylized 3D-animated feature-film look: expressive cartoon characters with big, readable emotions, soft cinematic lighting with a gentle rim light, a simple uncluttered backdrop. The characters act out the headline. OUR product is the one object NOT stylized: render it photo-real and exactly like the reference photo, so its label is crisp and readable. Any other product a character holds is generic and unbranded, or carries only a made-up parody name; never a real brand.`;
@@ -50,7 +52,13 @@ The printed label reads exactly: ${product.labelStrings.map(s => `"${s}"`).join(
   const animated = style === 'animated';
   const lines = [`"${concept.headline}" is the headline: the dominant lettering, large.`];
   if (concept.subhead) lines.push(`"${concept.subhead}" is the subhead: smaller, set directly beneath the headline.`);
-  if (concept.cta) lines.push(`"${concept.cta}" sits in a small rounded pill-shaped button beneath the headline, like a link button in a social post.`);
+  if (concept.cta) lines.push(`"${concept.cta}" sits in a small rounded pill-shaped button${concept.layout ? ', where the LAYOUT puts it' : ' beneath the headline'}, like a link button in a social post.`);
+  const extra = concept.lines || [];
+  if (extra.length) {
+    lines.push('These further text blocks appear exactly once each, placed where the LAYOUT says, each on its own (a block may wrap onto two lines, but never merge two blocks into one):');
+    for (const l of extra) lines.push(`- "${l}"`);
+  }
+  const layout = concept.layout;
 
   return {
     shown,
@@ -58,13 +66,16 @@ The printed label reads exactly: ${product.labelStrings.map(s => `"${s}"`).join(
     prompt: `Design a finished, scroll-stopping vertical social media ad (4:5) for Real Skin Care "${product.title}".
 
 ${isSet ? productBlock : `${productBlock}
-Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar. The jar is EITHER open (lid fully off and set aside, cream visible inside the rim) OR closed (lid screwed on, no cream visible anywhere). Never show cream on top of, around or coming through a lid that is on the jar.' : ''} ${animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}
+Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar. The jar is EITHER open (lid fully off and set aside, cream visible inside the rim) OR closed (lid screwed on, no cream visible anywhere). Never show cream on top of, around or coming through a lid that is on the jar.' : ''} ${layout ? LAYOUT_PLACEMENT : animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}
 
 SCENE / THEME: ${scene.scene}. ${animated ? ANIMATED_RENDER : 'Premium commercial photography, shallow depth of field, rich and believable.'}
 
-HEADLINE TYPOGRAPHY (designed into the image, in the top 25-30% of the frame, clear of the outer edges):
+${layout ? `LAYOUT (a designed graphic ad, follow it closely): ${layout}
+Simple flat graphic elements the layout names (check-mark circles, arrows, outline icons, social-app buttons) are allowed; they carry no words.
+
+TEXT (designed into the image, clear of the outer edges):` : 'HEADLINE TYPOGRAPHY (designed into the image, in the top 25-30% of the frame, clear of the outer edges):'}
 ${lines.join('\n')}
 Lettering style: ${scene.typeStyle}. You may break the headline across lines and mix the two typefaces for emphasis, as a designed lockup.
-Use EXACTLY these words with correct spelling, in this order. Never add, drop, change or reorder a word. No other text anywhere in the image: no badges, seals, logos, claims, captions, review stars, prices or icons, apart from the printed product label${animated ? ' and, only where the scene calls for one, a made-up parody name on a generic product a character holds' : ''}. Colors harmonize with the scene and stay highly legible.`,
+Use EXACTLY these words with correct spelling, in this order. Never add, drop, change or reorder a word. No other text anywhere in the image: no badges, seals, logos, claims, captions, review stars, prices${layout ? '' : ' or icons'}, apart from the printed product label${animated ? ' and, only where the scene calls for one, a made-up parody name on a generic product a character holds' : ''}. Colors harmonize with the scene and stay highly legible.`,
   };
 }

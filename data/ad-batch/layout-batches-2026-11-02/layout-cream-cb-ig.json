@@ -1,0 +1,23 @@
+{
+ "product": "coconut-moisturizer",
+ "variant": "coconut-breeze",
+ "count": 1,
+ "message": "Short Ingredient List",
+ "concepts": [
+  {
+   "headline": "A tropical daily routine",
+   "lines": [
+    "@realskincare_com",
+    "Eight ingredients. Scented with coconut oil extract. Coconut Breeze body cream.",
+    "Only 8 ingredients",
+    "30-day money-back guarantee"
+   ],
+   "cta": "Shop Now \u2192",
+   "layout": "Three stacked bands. TOP 40%: a smiling woman in her early 30s, natural makeup, hair pulled back, wrapped in a plain white bath towel, photographed from the chest up in soft studio light, leaning her forearms on the top edge of the black band below as if peeking over a ledge, against a soft warm sand beige and soft coconut cream, background with a faint repeating pattern of small line-drawn coconuts, leaves and water droplets. MIDDLE band: a black strip styled exactly like an Instagram post footer: outline heart, comment and send icons at left and a bookmark icon at right on one row, then the handle \"@realskincare_com\" in bold white, then the caption \"Eight ingredients. Scented with coconut oil extract. Coconut Breeze body cream.\" in regular white. BOTTOM 45%: a solid deep teal panel with the same faint pattern: the product sits on the left with a swirl of its cream beside it; on the right the headline in huge bold white all caps, then two small white lines \"Only 8 ingredients\" and \"30-day money-back guarantee\", then a white rounded pill button with dark text \"Shop Now \u2192\"."
+  }
+ ],
+ "scenes": [
+  "a clean, modern direct-to-consumer brand graphic ad with crisp studio product photography composited in"
+ ],
+ "typeStyle": "bold rounded geometric sans-serif (Poppins Black style) for headings and list rows, a clean regular sans-serif for small lines"
+}

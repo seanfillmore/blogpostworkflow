@@ -115,7 +115,14 @@ export function parseBatch(raw) {
       const subhead = typeof c.subhead === 'string' && c.subhead.trim() ? c.subhead.trim() : null;
       // A small button-style call to action ("See real cream →"), rendered and checked like the copy.
       const cta = typeof c.cta === 'string' && c.cta.trim() ? c.cta.trim() : null;
-      concepts.push({ headline, subhead, cta });
+      // A designed multi-text layout (2026-11-02, Coco & Luna split screens): `layout`
+      // describes the composition in words, `lines` is every other piece of text in it
+      // (column labels, checklist rows, a caption), each rendered and checked exactly.
+      const lines = Array.isArray(c.lines) ? c.lines.map(l => String(l || '').trim()).filter(Boolean) : [];
+      if (c.lines !== undefined && !Array.isArray(c.lines)) errors.push(`concepts[${i}].lines must be a list of strings`);
+      if (lines.length > 12) errors.push(`concepts[${i}] has ${lines.length} lines; at most 12 render reliably`);
+      const layout = typeof c.layout === 'string' && c.layout.trim() ? c.layout.trim() : null;
+      concepts.push({ headline, subhead, cta, ...(lines.length ? { lines } : {}), ...(layout ? { layout } : {}) });
     });
   }
   const scenes = Array.isArray(raw.scenes)
@@ -134,7 +141,9 @@ export function screenConcepts(concepts) {
   const ok = [];
   const skipped = [];
   for (const c of concepts) {
-    const r = checkSeoCopyFields({ headline: c.headline, subhead: c.subhead || '', cta: c.cta || '' }, { surface: COMMERCIAL_SURFACE });
+    const fields = { headline: c.headline, subhead: c.subhead || '', cta: c.cta || '' };
+    (c.lines || []).forEach((l, i) => { fields[`line ${i + 1}`] = l; });
+    const r = checkSeoCopyFields(fields, { surface: COMMERCIAL_SURFACE });
     if (r.ok) ok.push(c);
     else skipped.push({ ...c, reasons: r.blocking.map(b => `${b.field}: "${b.match}" (${b.why})`) });
   }

@@ -63,7 +63,7 @@ const PHYSICS_NOTE = ' Physically impossible packaging is a MISMATCH: product (c
 const isSet = (product) => Array.isArray(product?.items) && product.items.length > 1;
 
 /** The check for a SET: one reference image per product, then the ad; each product read on its own. */
-function setCheckPrompt(product, style) {
+function setCheckPrompt(product, style, layout = false) {
   const n = product.items.length;
   const refs = product.items.map((p, i) => `Image ${i + 1} is a REFERENCE photo of product ${i + 1}: ${p.title}.`).join('\n');
   return `${refs}
@@ -80,11 +80,15 @@ ${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many uni
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
 }
 
-Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
+Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''} Answer with the JSON only.`;
 }
 
-export function checkPrompt({ product, shown, style = 'photo' }) {
-  if (isSet(product)) return setCheckPrompt(product, style);
+// A multi-column layout read row by row interleaves two columns ("What I What I
+// Ordered Got"), which no in-order word check can survive. Ask for whole blocks.
+const BLOCKS_NOTE = ' Transcribe each separate text block (a heading, a list row, a caption, a button) as ONE entry, whole, even if it wraps; in a multi-column layout finish one column before starting the next.';
+
+export function checkPrompt({ product, shown, style = 'photo', layout = false }) {
+  if (isSet(product)) return setCheckPrompt(product, style, layout);
   const what = shown === 'unwrapped'
     ? 'a bare, unlabelled bar of soap like the one in the REFERENCE photo'
     : `the Real Skin Care product shown in the REFERENCE photo (${product.title})`;
@@ -102,7 +106,7 @@ Answer about Image 2 ONLY, as JSON, transcribing letter by letter exactly as ren
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
 }
 
-Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''} Answer with the JSON only.`;
+Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''} Answer with the JSON only.`;
 }
 
 export function parseCheck(text) {
@@ -123,7 +127,9 @@ export function decide({ read, concept, product, shown }) {
   const lettering = Array.isArray(read.lettering) ? read.lettering.join(' ') : String(read.lettering || '');
   const hay = tokens(lettering);
   let leftover = [...hay];
-  for (const [name, text] of [['headline', concept.headline], ['subhead', concept.subhead], ['cta', concept.cta]]) {
+  const wanted = [['headline', concept.headline], ['subhead', concept.subhead], ['cta', concept.cta],
+    ...(concept.lines || []).map((l, i) => [`line ${i + 1}`, l])];
+  for (const [name, text] of wanted) {
     if (!text) continue;
     const need = tokens(text);
     const at = findRun(leftover, need);
@@ -134,7 +140,7 @@ export function decide({ read, concept, product, shown }) {
   // Claims are screened on the RAW lettering (minus Sean's own copy), because tokens()
   // drops symbols such as ★ that are the claim.
   let raw = lettering;
-  for (const t of [concept.headline, concept.subhead, concept.cta]) {
+  for (const t of wanted.map(([, text]) => text)) {
     if (t) raw = raw.replace(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'ig'), ' ');
   }
   const symbolClaim = /[★☆⭐]/.test(raw);
