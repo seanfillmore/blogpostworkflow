@@ -97,8 +97,10 @@ const cartItems = `{% for item in event.extra.line_items %}
  * would ship broken images, and a missing image in an email cannot be fixed after send.
  * Where a real image is available it comes from the event payload instead.
  */
-const productRow = (name, price, why, href) => `<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;"><tr><td>
-<a href="${href}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;">${name} — ${price}</a>
+// `sep` exists so a spec can drop the em dash without re-rendering the twelve other
+// emails that share this helper (each re-render is a separate live push).
+const productRow = (name, price, why, href, sep = ' — ') => `<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 14px;border-top:1px solid #EDEDED;padding-top:14px;"><tr><td>
+<a href="${href}" style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;text-decoration:none;">${name}${sep}${price}</a>
 <div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:14px;line-height:21px;color:#000000;margin-top:2px;">${why}</div>
 </td></tr></table>`;
 
@@ -795,7 +797,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
     preheader: 'The one you were looking at, and what it is actually for.',
     blocks: [
       { type: 'h1', text: 'Still deciding?' },
-      { type: 'p', html: 'Hi {{ first_name|default:"there" }} — here it is again.' },
+      { type: 'p', html: 'Hi {{ first_name|default:"there" }}, here it is again.' },
       {
         type: 'raw',
         // The {% else %} branch is required: not every viewed product carries an image,
@@ -803,7 +805,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
         // at. The live template had this; a first pass at the rebuild dropped it.
         html: `{% if event.ImageURL %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
 <a href="{{ event.URL }}" style="text-decoration:none;"><img alt="{{ event.Name }}" src="{{ event.ImageURL }}" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"/></a>
-<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">{{ event.Name }} — \${{ event.Price }}</div>
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">{{ event.Name }} · \${{ event.Price }}</div>
 </td></tr></table>{% else %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
 <div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;">{{ event.Name|default:'the item you were looking at' }}</div>
 </td></tr></table>{% endif %}`,
@@ -825,17 +827,18 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       { type: 'p', html: 'No rush. If you are still deciding, these are the three people usually start with.' },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Deodorant', price('coconut-oil-deodorant'), 'Aluminium-free. Expect a 1–2 week adjustment off antiperspirant.', `${PDP}/coconut-oil-deodorant`),
+        html: productRow('Coconut Oil Deodorant', price('coconut-oil-deodorant'), 'Aluminum-free. Coming off antiperspirant, expect two to four weeks of adjustment.', `${PDP}/coconut-oil-deodorant`, ' · '),
       },
       {
         type: 'raw',
-        html: productRow('Sensitive Skin Set', price('sensitive-skin-starter-set'), 'The gentlest set, and cheaper than the pieces separately.', `${PDP}/sensitive-skin-starter-set`),
+        html: productRow('Sensitive Skin Set', price('sensitive-skin-starter-set'), 'The gentlest set, and cheaper than the pieces separately.', `${PDP}/sensitive-skin-starter-set`, ' · '),
       },
       {
         type: 'raw',
-        html: productRow('Coconut Oil Toothpaste', price('coconut-oil-toothpaste'), 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`),
+        html: productRow('Coconut Oil Toothpaste', price('coconut-oil-toothpaste'), 'Fluoride-free and SLS-free. Foams less, because foam was the SLS.', `${PDP}/coconut-oil-toothpaste`, ' · '),
       },
-      { type: 'cta', text: 'Shop best sellers', href: BEST },
+      // Straight to the destination: /collections/best-sellers 301s to all-products.
+      { type: 'cta', text: 'Shop best sellers', href: 'https://www.realskincare.com/collections/all-products' },
       { type: 'p', html: `Free shipping over $${SHIP}.` },
     ],
   },
