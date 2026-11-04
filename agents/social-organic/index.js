@@ -309,8 +309,16 @@ export async function runOnce({
   }
 
   const saved = [];
+  // IDs carry the time of the run AND are checked against every existing item:
+  // a second run on the same day once reused "organic-review-<day>-2-ella-m" and
+  // saveItem overwrote the first card, Sean's approval with it (2026-11-04).
+  const hhmm = new Date(now).toISOString().slice(11, 16).replace(':', '');
+  const taken = new Set(items.map((i) => i.id));
   for (const [n, m] of made.entries()) {
-    const id = `organic-${m.kind}-${day}-${n + 1}-${slugify(m.topic || m.review?.name || m.headline)}`.slice(0, 110).replace(/-+$/, '');
+    const base = `organic-${m.kind}-${day}-${hhmm}-${n + 1}-${slugify(m.topic || m.review?.name || m.headline)}`.slice(0, 104).replace(/-+$/, '');
+    let id = base;
+    for (let k = 2; taken.has(id); k++) id = `${base}-${k}`;
+    taken.add(id);
     const buffers = [];
     for (const html of m.htmls) {
       const r = await render(html);

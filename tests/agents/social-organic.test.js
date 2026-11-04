@@ -85,3 +85,16 @@ test('runOnce: a review implying a result on the body is passed over with the re
   assert.equal(saved.length, 1);
   assert.match(run.skipped[0].reason, /implies a change in her teeth/);
 });
+
+test('runOnce: a new draft never reuses an existing item id (a same-day rerun once overwrote an approved card)', async () => {
+  const saved = [];
+  const now = Date.parse('2026-11-04T18:04:00Z');
+  const first = await runOnce({ apply: true, onlyKind: 'review', client: client(), config: CONFIG, items: [], reviews: [REVIEW], products: { 'coconut-lotion': 'Body Lotion' }, facts: FACTS, ...deps(saved), now, log: () => {} });
+  const existing = [...saved];
+  const again = { ...REVIEW, id: 99 };
+  await runOnce({ apply: true, onlyKind: 'review', client: client(), config: { ...CONFIG, backlogPerKind: 2 }, items: existing, reviews: [again], products: { 'coconut-lotion': 'Body Lotion' }, facts: FACTS, ...deps(saved), now, log: () => {} });
+  assert.equal(first.saved.length, 1);
+  assert.equal(saved.length, 2);
+  assert.notEqual(saved[0].id, saved[1].id);
+  assert.match(saved[1].id, /-1804-1-amanda-k-2$/);
+});
