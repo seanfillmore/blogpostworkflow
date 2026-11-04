@@ -98,3 +98,25 @@ Held at 7 because it overlaps the splinter-and-upsell logic above and the card-o
 Held at 6 because **the price arithmetic does not transfer.** At a $50.46 AOV the proportional downsell is a $5–10 item — a lip balm, a travel size, a single stick when the multipack is declined — not a $30–40 add-on, and a consumable has no warranty analogue at all. It also lives only on the Shopify side, since Amazon controls that flow entirely on the larger ~$1,800/mo channel. At ~54 orders/month the take rate takes months to read, so build it and move on rather than treating it as a test.
 
 *Source: Intelligems — "IntelliJAMS EP 066: Building an AI Brain for Your Ecommerce Growth Experiments" (CdkhplYma9w)*
+
+## Replace the stock theme cart with a cart drawer that can carry offers, and use it to show a stacked spend-to-unlock ladder — free shipping first, then a bonus tier — as an 'add $X to unlock' prompt.
+
+**Stage:** offer-aov — parked until the offer-aov phase opens.
+
+**Why it works:** Stock theme carts are weak and cannot carry offers, so the cross-sells described above have nowhere to live at the cart stage. In the cart the buyer has already committed. A visible next-tier reward with the exact gap to reach it gives a concrete reason to add one more item. That raises AOV without a new page and before paid traffic is scaled.
+
+**Evidence offered:** Part of a client turnaround case: installing the Monster Cart drawer was one of the foundations credited with moving a brand from a loss to profit. Results were not isolated per tactic. The hosts openly favour Monster Cart, so vet the vendor recommendation for motive.
+
+**Fit here (6/10):** AOV lift is the second leg of RSC's engine, and conversion is its binding constraint. A cart drawer with an unlock ladder is a solo, one-afternoon install.
+
+The cart is where the free-shipping progress bar belongs. It is also where the $2–5 contribution retention SKUs (lip balm, soap) belong, as basket-builders rather than cold sells. That placement is consistent with the wrong-time diagnosis above, which puts 'more of the same' in the cart.
+
+What to offer in the cart is already covered by the cross-sell and A-or-B sections above. marketing-offer-construction has a threshold free gift. The additive piece here is narrow: a cart surface that can carry a stacked ladder at all.
+
+Before paying for an app, check whether RSC's current theme cart already supports a threshold bar and add-ons.
+
+Margin caution: prefer a free low-cost gift or skin-line sample as the unlock over a percentage tier. A percentage tier can erase margin on a basket of low-contribution SKUs.
+
+Shopify-only; Amazon has no cart surface you control.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*

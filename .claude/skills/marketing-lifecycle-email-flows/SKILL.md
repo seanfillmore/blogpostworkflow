@@ -33,6 +33,20 @@ Two cautions. **The 30% figure will not hold at this volume** — treat it as a 
 
 *Source: MyWifeQuitHerJob Ecommerce Channel — "Exactly How I'd Build an Online Store That Makes $1K/Day (Step-by-Step)" (bOXEtdZliH8)*
 
+## Run a browse-abandonment flow, separate from cart abandonment, that fires when a known subscriber views a product without adding it to cart — and make each email name the viewed SKU and answer its main objection, not discount it.
+
+**Stage:** cro — parked until the cro phase opens.
+
+**Why it works:** The ESP already knows which identified subscriber viewed which product — typically someone who clicked through from a campaign email. A product-specific follow-up catches that interest a step earlier in the funnel than cart abandonment does, before the shopper has declared intent by adding to cart.
+
+**Evidence offered:** Assertion only.
+
+**Fit here (6/10):** A durable lifecycle principle that works conversion, the binding constraint, by re-touching subscribers who have already shown interest — no ad spend, no new traffic, runnable in Klaviyo today. It sits outside the four-flow audit above, which is why it needs its own entry. **The account already runs a Browse Abandonment flow** (per the 2026-07-29 audit above), so, as with the cart flow, this is the standard to audit that flow against rather than a build instruction.
+
+The standard: each send names the specific SKU viewed and handles that SKU's main objection — the transition period, baking-soda irritation, or 'it quit by noon', whichever applies to the formula viewed — rather than offering a discount. The reflexive-discounting caution in the abandoned-cart section above applies with more force here: a browser has declared less intent than a cart abandoner, so a discount at this stage hands margin to people who have not yet been given a reason to believe. **Sequence it after cart abandonment** — that flow recovers higher-intent shoppers and should be tuned first. At ~21 Shopify orders/month, browse-flow attributed revenue will be a handful of orders; read it directionally.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Fix the first two emails after any opt-in: an immediate confirmation that names what they signed up for, who you are and what comes next; then a next-day email handing over your best-performing existing content on that subject.
 
 **Why it works:** The immediate email closes the loop the opt-in opened, so the subscriber does not feel stranded between signing up and hearing anything. The day-two email delivers real value with zero new production, because it reuses material that has already proven it holds attention on that topic — you are not guessing what a cold subscriber wants, you are re-serving what an audience already voted for.

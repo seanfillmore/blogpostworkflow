@@ -401,6 +401,39 @@ As a beginner, work levers 1–3 — charge more, sell more today, get them to b
 
 *Source: Sweat Equity — "Watch Me Build a $100M Brand Right In Front of Your Eyes" (-6cJW2ktAH4)*
 
+## Run the entry product at full price with no offer first, and layer an acquisition offer only when the best product's no-offer return is too weak — the source's trigger is around 2–2.5x ROAS; if full price already returns strongly (their example: 4.5x), skip the offer entirely.
+**Stage:** offer-aov — parked until the offer-aov phase opens.
+
+**Why it works:** A discount spends margin. If the product converts profitably at full price, an offer only gives margin away; offers are the lever for when the no-offer baseline is too weak on volume or CPA. Running the baseline first is what turns the offer into a deliberate response to a measured shortfall rather than a default — the paid-traffic form of the anti-discount framing rule above.
+
+**Evidence offered:** Anecdote: their own t-shirt brand reached 4.5 ROAS on day five at $100/day with zero offer. The 2–2.5x trigger is assertion only.
+
+**Fit here (6/10):** A durable offer-construction principle that fits this route, and it sequences cleanly with the live rules above: direct-to-PDP decides that the ad points at a product, the cohort-repurchase rule decides which product, and this decides whether that product needs an offer at all. The skin line carries $15–25 contribution, so it can be judged at full price first. Two corrections to the source. First, measure the trigger against breakeven-on-first-purchase CAC from the front-end margin gate above, not a bare ROAS multiple — a 2.5x on a $2–5 contribution SKU and a 2.5x on a skin-line order are different businesses. Second, a single week's ROAS at ~21 Shopify orders/month is directional only, so read it over a longer window before layering anything. Runnable as a written decision rule on the creative-test campaign once the stage opens.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
+## Default the email-capture popup to 15% off rather than 10%, and treat the popup offer as a foundation setting worth getting right early.
+**Stage:** offer-aov — parked until the offer-aov phase opens.
+
+**Why it works:** A 10% incentive is too small to move a first-time visitor to hand over an email and then buy; 15% clears the 'worth acting on' threshold and produces far more downstream revenue through the welcome flow. Because every captured subscriber passes through it, one change to the popup offer compounds across the whole list.
+
+**Evidence offered:** The creator's own test: about 3x more revenue from 15% than from 10%, with no sample size, margin or timeframe given. A separate anecdote: one consulting client added $5,000 in one day from an unnamed popup tweak.
+
+**Fit here (6/10):** The popup is a live capture surface, so this is a one-person settings edit and it feeds the pre-purchase nurture that retention depends on. The evidence is weak — a single unreported test from apparel. It sits in open tension with two live rules above: the splinter rule's claim that a 10–20% discount changes nothing, and the bare-quote rule's preference for a named, outcome-framed incentive over any percentage. Reconciliation: where the popup carries a percentage at all, 15% is the default depth, but test a named non-discount incentive (transition guide, sample) against it before assuming a discount is the right incentive. A deeper discount costs real contribution on the low-margin catalogue, so scope the code to skin-line or set purchases where $15–25 contribution absorbs it, never to a lone deodorant, soap, toothpaste or lip balm order.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
+## Set the free-shipping threshold so the buyer has to add about three average-priced items to reach it (the 'rule of three'), and test shipping cost first when add-to-cart is not turning into initiated checkout.
+**Stage:** offer-aov — parked until the offer-aov phase opens.
+
+**Why it works:** Amazon has trained shoppers to expect free shipping, so a shipping charge revealed at checkout kills initiated checkouts. A threshold placed a multi-item basket above the typical single-item price turns that expectation into a reason to add units, lifting AOV instead of giving shipping away on one-item orders.
+
+**Evidence offered:** Assertion only, presented as a standing rule the agency applies (example: $75 when the average item is $30).
+
+**Fit here (7/10):** Sits directly on the Offer/AOV leg. Shipping is what crushes deodorant, soap, toothpaste and lip balm to $2–5 contribution, so a roughly three-item threshold turns those SKUs into basket-builders on a skin-line anchor, and buyers who also shop the Amazon channel carry Prime expectations. Set the number from the store's own item prices, per-order shipping cost and order-value distribution (mean AOV $54.73, median far lower) rather than copying $75, and check add-to-cart → initiated-checkout drop-off first to confirm shipping is the leak. It is a sibling of the tier-display rule above: that one sets the spend threshold that unlocks a gift, this sets the one that unlocks free shipping — place the two thresholds deliberately so they ladder rather than collide. Runnable in Shopify settings once the stage opens.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Falsified
 
 Tried here and did not work. Do not reintroduce these.

@@ -67,6 +67,18 @@ description: Use when a Shopify product page, Amazon listing, or checkout gets v
 
 *Source: Ecommerce Alley — "How To Apply Alex Hormozi's $100M Offers To Ecommerce" (Nxddux6n2-c)*
 
+## Announce the free-shipping threshold in a sticky banner at the very top of every page — shoppers who do not know free shipping exists will not add to cart or start checkout.
+
+**Stage:** cro — parked until the cro phase opens.
+
+**Why it works:** Unknown shipping cost is a hidden price objection. Stating the threshold before the shopper reaches the cart removes the fear of a surprise charge and turns the threshold into a visible goal, so the same banner that removes friction also pulls cart value up toward the number.
+
+**Evidence offered:** Assertion only ('we say it all the time').
+
+**Fit here (7/10):** Conversion rate is the binding constraint, and this is a near-zero-cost CRO fix one person can install today; a threshold nobody sees cannot lift AOV. It is the concrete spec for the announcement bar that opens the module template above, which names an offer-and-shipping bar but not that it must be sticky, sit on *every* page rather than only the PDP, and state the actual threshold figure. Like the plainly stated return terms above, it confines its gain to the ~$875/mo Shopify side, since Amazon controls shipping display. Verify the banner on mobile so it does not push the PDP's above-the-fold proof — star rating, review count, the qualifying attribute — below the first screen.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Spell out returns, exchanges, and cancellation terms plainly on the product page — e.g. in a toggle — instead of making buyers hunt for them.
 
 **Why it works:** Unstated exit terms are assumed to be bad. Buyers silently price in the worst case, so making the process visible and simple removes an objection they will never voice.
