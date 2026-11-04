@@ -1,0 +1,17 @@
+{
+  "from_email": "support@realskincare.com",
+  "from_label": "Real Skin Care",
+  "reply_to_email": "support@realskincare.com",
+  "cc_email": null,
+  "bcc_email": null,
+  "subject_line": "Getting the most from your order",
+  "preview_text": "A few quick tips for what you just bought.",
+  "template_id": "VBhR7B",
+  "smart_sending_enabled": true,
+  "transactional": false,
+  "add_tracking_params": false,
+  "custom_tracking_params": null,
+  "additional_filters": null,
+  "name": "Post-Purchase — 02 How To Use It (dynamic)",
+  "id": "TNRXB8"
+}
