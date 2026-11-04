@@ -155,3 +155,46 @@ test('migration: 8 approved items in order; ledger posts carried over as Instagr
   assert.equal(again[0].action, 'fill-instagram');
   assert.equal(again[1].action, 'exists');
 });
+
+test('carousel items publish every slide, in order, on both platforms', async () => {
+  const { mkdtempSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { newItem, saveItem, approveItem } = await import('../../lib/social-queue.js');
+  const dir = mkdtempSync(join(tmpdir(), 'social-car-'));
+  const imgs = ['https://cdn.shopify.com/1.jpg', 'https://cdn.shopify.com/2.jpg', 'https://cdn.shopify.com/3.jpg'];
+  saveItem(dir, approveItem({ ...newItem({ id: 'organic-carousel-a', kind: 'carousel', image_url: imgs[0], images: imgs, caption: 'Useful. What do you think?\nLink in bio.\n#realskincare' }) }));
+  const got = {};
+  const fake = (p) => ({ recent: async () => [], publish: async (a) => { got[p] = a; return p === 'instagram' ? { media_id: 'm' } : { post_id: 'f' }; }, insights: async () => ({}) });
+  await runOnce({ apply: true, dir, clients: { instagram: fake('instagram'), facebook: fake('facebook') }, config: { postsPerDay: 1, platforms: ['instagram', 'facebook'], organicFirst: true }, log: () => {} });
+  assert.deepEqual(got.instagram.imageUrls, imgs);
+  assert.deepEqual(got.facebook.imageUrls, imgs);
+});
+
+test('publishCarousel and publishPagePhotos: children first, then one post naming them', async () => {
+  const { publishCarousel } = await import('../../lib/instagram-reels.js');
+  const { publishPagePhotos } = await import('../../lib/facebook-page.js');
+  const posts = [];
+  let n = 0;
+  const fetchImpl = async (url, init) => {
+    const u = new URL(url);
+    if (init.method === 'POST') {
+      const b = Object.fromEntries(new URLSearchParams(init.body));
+      delete b.access_token;
+      posts.push({ path: u.pathname.split('/').slice(2).join('/'), ...b });
+      if (u.pathname.endsWith('/media_publish')) return { ok: true, json: async () => ({ id: 'MEDIA' }) };
+      if (u.pathname.endsWith('/feed')) return { ok: true, json: async () => ({ id: 'PAGE_POST' }) };
+      return { ok: true, json: async () => ({ id: `c${++n}` }) };
+    }
+    return { ok: true, json: async () => ({ status_code: 'FINISHED', permalink: 'p', permalink_url: 'p' }) };
+  };
+  const r = await publishCarousel({ igUserId: 'ig', imageUrls: ['u1', 'u2'], caption: 'cap' }, { token: 't', fetchImpl, sleep: async () => {} });
+  assert.equal(r.mediaId, 'MEDIA');
+  assert.deepEqual(posts.slice(0, 3).map((p) => [p.is_carousel_item, p.media_type, p.children]), [['true', undefined, undefined], ['true', undefined, undefined], [undefined, 'CAROUSEL', 'c1,c2']]);
+  await assert.rejects(publishCarousel({ imageUrls: ['u1'], caption: 'c' }, { token: 't', fetchImpl }), /2 to 10/);
+  posts.length = 0;
+  const f = await publishPagePhotos({ pageId: 'pg', imageUrls: ['u1', 'u2'], caption: 'cap' }, { token: 't', fetchImpl });
+  assert.equal(f.postId, 'PAGE_POST');
+  assert.deepEqual(posts.map((p) => p.published), ['false', 'false', undefined]);
+  assert.equal(posts[2].attached_media, JSON.stringify([{ media_fbid: 'c4' }, { media_fbid: 'c5' }]));
+});

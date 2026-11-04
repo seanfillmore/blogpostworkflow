@@ -1,10 +1,17 @@
 {
   "_note": "agents/social-poster. posts_per_day caps how many approved items START posting per UTC day; a retry of a platform that failed never counts against it. cron_utc must match DAILY_SOCIAL_POSTER in scripts/setup-cron.sh (pinned by a test). Cron is UTC-only on the server. Three a week (Mon/Wed/Fri) since 2026-11-03: at three a day reach per post fell from ~20 to ~6.",
   "posts_per_day": 1,
-  "cron_utc": ["20 18 * * 1,3,5"],
+  "cron_utc": [
+    "20 18 * * 1,3,5"
+  ],
   "_repeatNote": "An approved item whose headline (case and punctuation ignored) already posted on any platform inside this many days waits; items with a new headline go first. At three a day the same headline went up as many as 6 times in a week.",
   "repeat_headline_days": 60,
-  "platforms": ["instagram", "facebook"],
+  "_organicNote": "organic_first: once any organic post (agents/social-organic: carousel, review card, relatable text post) has been approved, ad-batch images stop posting organically (Sean, 2026-11-04). Organic posts rotate by kind.",
+  "organic_first": true,
+  "platforms": [
+    "instagram",
+    "facebook"
+  ],
   "instagram_user_id": "17841428233225633",
   "facebook_page_id": "113847674946808"
 }

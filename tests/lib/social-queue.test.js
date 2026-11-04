@@ -218,3 +218,46 @@ test('planRun: two unposted items with one headline: only one is a candidate per
   assert.equal(plan.fresh.item.id, 'same-a');
   assert.equal(plan.heldRepeats, 1);
 });
+
+// ── organic posts (2026-11-04) ───────────────────────────────────────────────
+
+test('newItem: a carousel needs 2-10 Shopify images; kind defaults to ad', async () => {
+  const { newItem, itemImages, isOrganic } = await import('../../lib/social-queue.js');
+  const ad = newItem({ id: 'ad-one', image_url: 'https://cdn.shopify.com/a.jpg' });
+  assert.equal(ad.kind, 'ad');
+  assert.equal(isOrganic(ad), false);
+  assert.throws(() => newItem({ id: 'car-one', kind: 'carousel', image_url: 'https://cdn.shopify.com/a.jpg', images: ['https://cdn.shopify.com/a.jpg'] }), /2 to 10/);
+  const c = newItem({ id: 'car-two', kind: 'carousel', image_url: 'https://cdn.shopify.com/a.jpg', images: ['https://cdn.shopify.com/a.jpg', 'https://cdn.shopify.com/b.jpg'] });
+  assert.deepEqual(itemImages(c), ['https://cdn.shopify.com/a.jpg', 'https://cdn.shopify.com/b.jpg']);
+  assert.ok(isOrganic(c));
+});
+
+test('planRun organicFirst: ads keep posting until an organic post is approved, then stop', async () => {
+  const { planRun } = await import('../../lib/social-queue.js');
+  const now = Date.parse('2026-11-06T18:20:00Z');
+  const ad = approved('ad-item', '2026-10-01T00:00:00Z', { product: 'p1' });
+  const pendingOrganic = item('org-pend', { kind: 'review' });
+  assert.equal(planRun([ad, pendingOrganic], { now, organicFirst: true }).fresh.item.id, 'ad-item', 'nothing organic approved yet');
+  const org = approved('org-review', '2026-11-05T00:00:00Z', { kind: 'review' });
+  const plan = planRun([ad, org], { now, organicFirst: true });
+  assert.equal(plan.fresh.item.id, 'org-review');
+  assert.equal(plan.heldAds, 1);
+  const posted = { ...org, instagram: { posted_at: '2026-11-04T18:20:00Z', media_id: 'm' }, facebook: { posted_at: '2026-11-04T18:20:00Z', post_id: 'f' } };
+  const none = planRun([ad, posted], { now, organicFirst: true });
+  assert.equal(none.fresh, null, 'ads stay retired once organic has been approved');
+  assert.match(none.reason, /no longer post organically/);
+  assert.equal(planRun([ad, org], { now }).heldAds, 0, 'off unless configured');
+});
+
+test('nextInRotation: organic posts rotate by kind', async () => {
+  const { planRun } = await import('../../lib/social-queue.js');
+  const now = Date.parse('2026-11-06T18:20:00Z');
+  const posted = (id, kind, at) => approved(id, '2026-10-01T00:00:00Z', { kind, instagram: { posted_at: at, media_id: 'm' }, facebook: { posted_at: at, post_id: 'f' } });
+  const items = [
+    posted('car-done', 'carousel', '2026-11-04T18:20:00Z'),
+    posted('rev-done', 'review', '2026-11-02T18:20:00Z'),
+    approved('car-next', '2026-11-01T00:00:00Z', { kind: 'carousel' }),
+    approved('rev-next', '2026-11-03T00:00:00Z', { kind: 'review' }),
+  ];
+  assert.equal(planRun(items, { now }).fresh.item.id, 'rev-next', 'review posted longest ago goes next');
+});

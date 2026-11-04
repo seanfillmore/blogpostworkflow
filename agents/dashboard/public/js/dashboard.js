@@ -5005,12 +5005,23 @@ async function renderSocialTab() {
 
 function socialImgHtml(x) {
   var u = socialSafeUrl(x.image_url);
-  return u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer"><img class="social-img" loading="lazy" src="' + esc(u) + '" alt="' + esc(x.headline || x.id) + '"></a>' : '<div class="social-img"></div>';
+  var main = u ? '<a href="' + esc(u) + '" target="_blank" rel="noopener noreferrer"><img class="social-img" loading="lazy" src="' + esc(u) + '" alt="' + esc(x.headline || x.id) + '"></a>' : '<div class="social-img"></div>';
+  // A carousel shows every slide: the cover full size, the rest as a strip to click through.
+  if (x.kind !== 'carousel' || !Array.isArray(x.images) || x.images.length < 2) return main;
+  var strip = x.images.slice(1).map(function(img, i) {
+    var v = socialSafeUrl(img);
+    return v ? '<a href="' + esc(v) + '" target="_blank" rel="noopener noreferrer" title="Slide ' + (i + 2) + '"><img loading="lazy" src="' + esc(v) + '" alt="Slide ' + (i + 2) + '" style="width:44px;height:55px;object-fit:cover;border-radius:4px;border:1px solid var(--border)"></a>' : '';
+  }).join('');
+  return '<div style="display:flex;flex-direction:column;gap:6px">' + main + '<div style="display:flex;flex-wrap:wrap;gap:4px;max-width:200px">' + strip + '</div></div>';
 }
+
+var SOCIAL_KIND_LABEL = { carousel: 'carousel', review: 'review card', relatable: 'relatable post' };
 
 function socialMetaHtml(x) {
   return '<div class="social-meta">' +
-    (x.needs_human_review ? '<span class="social-badge warn" title="' + esc((x.review_notes || []).join('; ')) + '">check image</span>' : '') +
+    (SOCIAL_KIND_LABEL[x.kind] ? '<span class="social-badge">' + SOCIAL_KIND_LABEL[x.kind] + (x.kind === 'carousel' && x.images ? ', ' + x.images.length + ' slides' : '') + '</span>' : '') +
+    (x.needs_human_review ? '<span class="social-badge warn" title="' + esc((x.review_notes || []).join('; ')) + '">' + (x.kind === 'review' ? 'check review' : 'check image') + '</span>' : '') +
+    (x.topic ? '<span>answers &ldquo;' + esc(x.topic) + '&rdquo;</span>' : '') +
     (x.edited ? '<span class="social-badge">edited</span>' : '') +
     '<span>' + esc(x.id) + '</span>' +
     (x.batch ? '<span>' + esc(x.batch) + '</span>' : '') +
