@@ -1,5 +1,7 @@
 {
   "_note": "Approved Trybe videos that agents/ugc-reels must never post. Add an entry with the reason; removing one makes the video eligible again.",
+  "_editNote": "edit_videos: trim leading silence and burn a 2-7 word on-screen hook onto the first 3 s of each creator video before posting (lib/reel-edit.js, needs ffmpeg). Fails open to the raw video. Set false to post raw videos.",
+  "edit_videos": true,
   "excluded": [
     {
       "submission_id": "submission_37fbdc30-17a8-40e9-bc52-9d55c2ba0f1d",

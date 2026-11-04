@@ -18,8 +18,8 @@ const sub = (id, over = {}) => ({
 
 // Trybe's /submissions endpoint, paginated shape.
 const trybeFetch = (subs) => async () => { const b = JSON.stringify({ data: subs, has_more: false }); return { ok: true, status: 200, text: async () => b, json: async () => JSON.parse(b) }; };
-const client = (captions) => ({
-  messages: { create: async () => ({ content: [{ text: JSON.stringify({ caption: captions.shift() }) }] }) },
+const client = (captions, hook = 'Read the label first') => ({
+  messages: { create: async () => ({ content: [{ text: JSON.stringify({ caption: captions.shift(), hook }) }] }) },
 });
 const tmpLedger = () => join(mkdtempSync(join(tmpdir(), 'ugc-reels-')), 'ledger.json');
 
@@ -27,7 +27,7 @@ test('runOnce dry run: writes a caption and posts nothing', async () => {
   const ledgerPath = tmpLedger();
   let published = 0;
   const run = await runOnce({
-    apply: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
+    apply: false, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async () => { published++; },
@@ -41,7 +41,7 @@ test('runOnce dry run: writes a caption and posts nothing', async () => {
 test('runOnce --apply: publishes and records the post before returning', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
+    apply: true, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async () => ({ mediaId: 'm1', permalink: 'https://instagram.com/reel/x' }),
@@ -56,7 +56,7 @@ test('runOnce --apply: publishes and records the post before returning', async (
 test('runOnce: a caption that fails the gate twice skips to the next video', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
+    apply: true, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
     fetchImpl: trybeFetch([sub('a'), sub('b', { created_at: '2026-10-02T00:00:00Z' })]),
     client: client(['Heals your eczema fast', 'Cures eczema overnight', 'Soft skin, every morning. Link in bio.']),
     publish: async () => ({ mediaId: 'm2', permalink: null }),
@@ -70,7 +70,7 @@ test('runOnce: a caption that fails the gate twice skips to the next video', asy
 test('runOnce: an Instagram refusal is recorded as a failure, not a post', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [], maxCandidates: 1,
+    apply: true, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [], maxCandidates: 1,
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio.']),
     publish: async () => { throw new Error('instagram: container ERROR'); },
@@ -112,7 +112,7 @@ test('publishReel: create, wait for FINISHED, publish, read permalink', async ()
     return { ok: true, status: 200, json: async () => body };
   };
   const r = await publishReel({ videoUrl: 'https://cdn.example/a.mp4', caption: 'hi' }, { token: 't', fetchImpl, sleep: async () => {} });
-  assert.deepEqual(r, { containerId: 'c1', mediaId: 'm1', permalink: 'https://www.instagram.com/reel/abc/' });
+  assert.deepEqual(r, { containerId: 'c1', mediaId: 'm1', permalink: 'https://www.instagram.com/reel/abc/', collab: null });
   assert.equal(calls.filter((c) => c.endsWith('media_publish')).length, 1);
 });
 
@@ -137,7 +137,7 @@ test('runOnce: a due scheduled ad takes the slot, is recorded as an ad, and post
   const ledgerPath = tmpLedger();
   const urls = [];
   const opts = {
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: NOV9,
+    apply: true, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: NOV9,
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare', 'Soft skin again. Link in bio. #realskincare']),
     publish: async ({ videoUrl }) => { urls.push(videoUrl); return { mediaId: `m${urls.length}`, permalink: 'p' }; },
@@ -155,7 +155,7 @@ test('runOnce: a due scheduled ad takes the slot, is recorded as an ad, and post
 test('runOnce: a scheduled ad before its date is ignored', async () => {
   const ledgerPath = tmpLedger();
   const run = await runOnce({
-    apply: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: Date.parse('2026-11-08T01:20:00Z'),
+    apply: false, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: Date.parse('2026-11-08T01:20:00Z'),
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async () => { throw new Error('no'); },
@@ -167,7 +167,7 @@ test('runOnce: a scheduled caption that fails the claim gate is not posted and t
   const ledgerPath = tmpLedger();
   const bad = { ...AD, caption: 'Heals eczema overnight. Link in bio.' };
   const run = await runOnce({
-    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [bad], now: NOV9,
+    apply: true, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [bad], now: NOV9,
     fetchImpl: trybeFetch([sub('a')]),
     client: client(['Soft skin, every morning. Link in bio. #realskincare']),
     publish: async ({ videoUrl }) => { assert.notEqual(videoUrl, bad.video_url); return { mediaId: 'm1', permalink: 'p' }; },
@@ -175,4 +175,76 @@ test('runOnce: a scheduled caption that fails the claim gate is not posted and t
   assert.equal(run.posted.submission_id, 'a');
   assert.ok(run.scheduledNotes.some((n) => /caption failed/.test(n)));
   assert.equal(readLedger(ledgerPath).failures[0].submission_id, 'scheduled:ad-1');
+});
+
+// ── on-screen hook, video edit and collab invites (2026-11-03) ────────────────
+
+test('runOnce --apply: posts the EDITED video and invites the tagged creator as collaborator', async () => {
+  const ledgerPath = tmpLedger();
+  const seen = [];
+  const run = await runOnce({
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
+    fetchImpl: trybeFetch([sub('a')]),
+    socials: { 'kaci smith': { handle: 'kaci.makes' } },
+    client: client(['Soft skin, every morning. Link in bio. #realskincare'], 'Soft skin by morning'),
+    edit: async (a) => { seen.push(a); return { ok: true, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f', trimmed_s: 0.8, hook: 'Soft skin by morning' }; },
+    publish: async (args) => { seen.push(args); return { mediaId: 'm1', permalink: 'p', collab: null }; },
+  });
+  assert.equal(seen[0].videoUrl, 'https://cdn.example/a.mp4');
+  assert.equal(seen[0].hook, 'Soft skin by morning');
+  assert.equal(typeof seen[0].detectText, 'function', 'the text check is always wired');
+  assert.equal(seen[1].videoUrl, 'https://cdn.shopify.com/edited.mp4');
+  assert.deepEqual(seen[1].collaborators, ['kaci.makes']);
+  const post = readLedger(ledgerPath).posts[0];
+  assert.equal(post.hook, 'Soft skin by morning');
+  assert.deepEqual(post.edit, { ok: true, trimmed_s: 0.8, hook_drawn: true, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f' });
+  assert.ok(run.posted);
+});
+
+test('runOnce --apply: a failed edit posts the RAW video and records why', async () => {
+  const ledgerPath = tmpLedger();
+  let url = null;
+  await runOnce({
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [],
+    fetchImpl: trybeFetch([sub('a')]),
+    client: client(['Soft skin, every morning. Link in bio. #realskincare']),
+    edit: async () => ({ ok: false, error: 'ffmpeg not available' }),
+    publish: async ({ videoUrl }) => { url = videoUrl; return { mediaId: 'm1', permalink: 'p' }; },
+    log: () => {},
+  });
+  assert.equal(url, 'https://cdn.example/a.mp4');
+  assert.deepEqual(readLedger(ledgerPath).posts[0].edit, { ok: false, error: 'ffmpeg not available' });
+});
+
+test('runOnce: a hook that breaks the rules is rewritten, and a claim in it blocks like one in the caption', async () => {
+  const ledgerPath = tmpLedger();
+  const hooks = ['Heals eczema fast', 'Soft skin by morning'];
+  const c = { messages: { create: async () => ({ content: [{ text: JSON.stringify({ caption: 'Soft skin, every morning. Link in bio. #realskincare', hook: hooks.shift() }) }] }) } };
+  const run = await runOnce({ apply: false, editVideos: false, trybeKey: 'k', token: 't', ledgerPath, scheduled: [], fetchImpl: trybeFetch([sub('a')]), client: c });
+  assert.equal(run.posted.hook, 'Soft skin by morning');
+});
+
+test('publishReel: sends collaborators, and a refused invite retries once WITHOUT them', async () => {
+  const bodies = [];
+  let refuse = true;
+  const fetchImpl = async (url, init) => {
+    const u = new URL(url);
+    if (init.method === 'POST' && u.pathname.endsWith('/media')) {
+      const b = new URLSearchParams(init.body);
+      bodies.push(b.get('collaborators'));
+      if (b.get('collaborators') && refuse) return { ok: false, status: 400, json: async () => ({ error: { message: 'Invalid collaborator' } }) };
+      return { ok: true, status: 200, json: async () => ({ id: 'c1' }) };
+    }
+    if (u.pathname.endsWith('/c1')) return { ok: true, status: 200, json: async () => ({ status_code: 'FINISHED' }) };
+    if (u.pathname.endsWith('/media_publish')) return { ok: true, status: 200, json: async () => ({ id: 'm1' }) };
+    return { ok: true, status: 200, json: async () => ({ permalink: 'p' }) };
+  };
+  const r = await publishReel({ videoUrl: 'v', caption: 'c', collaborators: ['@Sarah.Fournier1996'] }, { token: 't', fetchImpl, sleep: async () => {} });
+  assert.deepEqual(bodies, ['["sarah.fournier1996"]', null]);
+  assert.equal(r.mediaId, 'm1');
+  assert.deepEqual(r.collab.invited, []);
+  assert.match(r.collab.refused, /Invalid collaborator/);
+  refuse = false; bodies.length = 0;
+  const ok = await publishReel({ videoUrl: 'v', caption: 'c', collaborators: ['sarah.fournier1996'] }, { token: 't', fetchImpl, sleep: async () => {} });
+  assert.deepEqual(ok.collab, { invited: ['sarah.fournier1996'] });
 });
