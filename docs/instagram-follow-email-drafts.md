@@ -174,3 +174,23 @@ block is added to that email, the rebuild is a natural moment to remove them too
 2. Approve the Shopify Shipping confirmation line (pasted in Shopify admin).
 3. Pick a subject line, and approve sending to Email List + Purchasers (~671).
 4. Keep or drop the $10 "Natural" DM line in the campaign.
+
+## 5. What shipped (2026-11-04, Sean-approved)
+
+- **Post-Purchase 01 Thank You** (action 112411003, message SDt8Hg): Instagram block added
+  above the sign-off; every em/en dash removed (heading, greeting, deodorant paragraph,
+  PS, unsubscribe line, preview text). Serving template UrT2dK -> **UfGCaQ**.
+- **Post-Purchase 02 How To Use It** (action 112411005, message TNRXB8): block added above
+  the sign-off, nothing else changed. Serving template VBhR7B -> **SQq2eN**.
+- Flow V4U4Qn and every action stayed live. Script: `scripts/klaviyo-add-instagram-block.mjs`;
+  pre-write backups in `/tmp/klaviyo-backups/2026-11-04-<message>.html` (+ `.message.json`).
+  Revert = repoint each action's `template_id` (and 01's `preview_text`) back to the backup.
+- Source parity: `data/brand/email-rebuild/specs.js` now carries the block and 01's copy
+  fixes (`lib/instagram-follow-block.js`). The shared renderer chrome (`lib/email-render.js`)
+  still writes `PS —` and "Unsubscribe here — no hard feelings.", so a future rebuild of 01
+  from source would bring those two dashes back; that file is shared by all 22 emails and
+  was deliberately left alone.
+- **Campaign** `01M6M19DY3PH7NE3SSRAVZC28Y` created as a **Draft** (no send job), subject 1,
+  audiences S6hKFq + UAPGjf, excluded UigAyc, Smart Sending on. Held until the "Natural" DM
+  auto-reply is live. Script: `scripts/klaviyo-create-instagram-campaign.mjs`.
+- Shipping confirmation: Shopify admin paste, see `docs/shopify-shipping-confirmation-instagram.md`.
