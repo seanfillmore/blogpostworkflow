@@ -121,6 +121,18 @@ description: Enumerate the four awareness channels available to a solo operator 
 
 *Source: Rich Schefren — "The Entrepreneurial Emergency" (special report, part 2 of 6)*
 
+## Score each workstream on resource cost and profit impact and do high-impact, low-resource work first (website, then email flows, then ads); spend the idle time ads create — and all remaining time once foundations are built — on slow-compounding organic social and audience building.
+
+**Stage:** traffic — parked until the traffic phase opens.
+
+**Why it works:** Ads front-load effort and then need near-zero upkeep, but traffic stops the moment spend stops (a faucet). Organic never gets cheaper to produce, but its impact compounds with audience size (a trench). Filling the review-wait and learning-phase windows with organic production builds an owned audience without starving the predictable paid channel.
+
+**Evidence offered:** The creators' own business grown on ads and email, plus clients adding about $20K/month from social once ads ran hands-off. Anecdotal, no attribution method given.
+
+**Fit here (5/10):** A useful rule for a solo operator budgeting his own hours, and it supplies something no live section here has: an explicit impact-versus-resource score for choosing between workstreams. RSC already posts organic daily, so the honest takeaway is not to defer organic until foundations are done but to schedule organic production into the windows when the Meta campaign is frozen for learning — which fits alongside the 100-day commitment and the 'content plus warm outreach' focus rule above. Capped at 5 because the website → email → ads ordering largely restates the existing Tracking → CRO → Offer/AOV gate, and the $20K/month social figure comes from clients at a scale this business is nowhere near.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Run the daily advertising action yourself only until it earns enough to pay someone else to do it — then make hiring that person the new lead-getting goal and repeat the same process.
 
 **Stage:** team — parked until the team phase opens.

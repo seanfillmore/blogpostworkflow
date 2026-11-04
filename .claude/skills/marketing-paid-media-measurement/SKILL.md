@@ -7,7 +7,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Do not buy a first-party attribution platform (Triple Whale, Northbeam) until you are running meaningful budgets across several channels — native platform reporting is enough for a single-channel advertiser.
 
-**Why it works:** Multi-touch attribution tools exist to reconcile conflicting numbers across independent channels (TV, podcast, influencer, Google, Meta). With one acquisition channel there is nothing to reconcile, so the tool adds subscription cost and dashboard maintenance without changing a single decision you would have made from the native numbers. They also do not unlock creative-level insight you cannot already read natively.
+**Why it works:** Multi-touch attribution tools exist to reconcile conflicting numbers across independent channels (TV, podcast, influencer, Google, Meta). With one acquisition channel there is nothing to reconcile. The tool adds subscription cost and dashboard maintenance without changing a single decision you would have made from the native numbers. It also does not unlock creative-level insight you cannot already read natively.
 
 **Evidence offered:** Practitioner position stated plainly, with the counter-case named: one client that does invest across multiple channels and therefore does use Triple Whale. Assertion, no cost or decision-quality comparison.
 
@@ -29,7 +29,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Split every metric into primary metrics you are allowed to optimize budget on (spend, purchases, cost per purchase, ROAS — or leads and cost per lead) and secondary 'storytelling' metrics (CPM, frequency, CTR, CPC, hook and hold rate) that may only explain why something worked — and never treat click-through rate as a performance verdict.
 
-**Why it works:** Only the conversion and cost-per-conversion metrics measure the outcome you are paying for; the rest are inputs that can move for reasons unrelated to revenue. Scaling on a secondary metric therefore funds ads that are cheap to deliver or easy to click rather than ads that sell. Under broad targeting a low CTR can mean the ad filtered correctly rather than failed. And the real explanation for why an ad worked usually sits in the creative — the message, the visual, the format — not anywhere in the numbers.
+**Why it works:** Only the conversion and cost-per-conversion metrics measure the outcome you are paying for. The rest are inputs that can move for reasons unrelated to revenue. Scaling on a secondary metric therefore funds ads that are cheap to deliver or easy to click rather than ads that sell. Under broad targeting a low CTR can mean the ad filtered correctly rather than failed. And the real explanation for why an ad worked usually sits in the creative — the message, the visual, the format — not anywhere in the numbers.
 
 **Evidence offered:** Practitioner assertion, illustrated on one live campaign where the winning ad had an unremarkable outbound CTR but a hook rate roughly double the account average. No controlled comparison.
 
@@ -37,7 +37,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
-**Refinement — define the lead unit as an *engaged* lead: contactable AND has shown interest.** When the primary metric is leads and cost per lead, the count must be people who opted in, replied, or entered — not impressions, reach, follower counts, page traffic, or raw contactable names. A contactable person who has taken no action has signalled nothing; a person who self-selected by acting is the only unit that predicts a later purchase. Count the wrong unit and you will optimize the account toward cheap non-buyers.
+**Refinement — define the lead unit as an *engaged* lead: contactable AND has shown interest.** When the primary metric is leads and cost per lead, the count must be people who opted in, replied, or entered — not impressions, reach, follower counts, page traffic, or raw contactable names. A contactable person who has taken no action has signalled nothing. A person who self-selected by acting is the only unit that predicts a later purchase. Count the wrong unit and you will optimize the account toward cheap non-buyers.
 
 **Evidence offered:** Assertion only, framed as the six-month definitional exercise that started the book.
 
@@ -45,7 +45,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 2 of 16))*
 
-**Refinement — read frequency as the audience-exhaustion alarm.** An average frequency above about 5 over the last seven days (or few weeks) means the creative is hitting the same people repeatedly rather than reaching new ones. Reach counts distinct people and impressions count total deliveries, so frequency is the ratio that reveals whether delivery has collapsed onto a small retargeting-sized pool; a rising figure inflates cost per purchase without adding new customers and signals the creative set is too narrow to open new audiences.
+**Refinement — read frequency as the audience-exhaustion alarm.** An average frequency above about 5 over the last seven days (or few weeks) means the creative is hitting the same people repeatedly rather than reaching new ones. Reach counts distinct people and impressions count total deliveries. Frequency is the ratio between them, so it reveals whether delivery has collapsed onto a small retargeting-sized pool. A rising figure inflates cost per purchase without adding new customers and signals the creative set is too narrow to open new audiences.
 
 **Evidence offered:** Assertion plus her stated personal threshold ('I get a little worried above five'), read off one live campaign that she says was reaching plenty of new people. No data linking a frequency threshold to CPA outcomes.
 
@@ -61,7 +61,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
 
-**Refinement — build hook rate and hold rate as custom metrics rather than trusting video average play time.** Hook rate is the percentage who watched the first three seconds; hold rate is the percentage who watched the first fifteen seconds (or the whole ad if shorter). Neither exists natively, so without building them you have no view of whether a video's opening earned attention or whether the body retained it. Average play time is distorted by ad length — long ads inflate it — whereas hook and hold are percentages of the same denominator, so they isolate whether the first seconds and the middle are doing their jobs and can be compared across the account. Read hold rate alongside average play time, not average play time alone.
+**Refinement — build hook rate and hold rate as custom metrics rather than trusting video average play time.** Hook rate is the percentage who watched the first three seconds. Hold rate is the percentage who watched the first fifteen seconds (or the whole ad if shorter). Neither exists natively, so without building them you have no view of whether a video's opening earned attention or whether the body retained it. Average play time is distorted by ad length — long ads inflate it. Hook and hold are percentages of the same denominator, so they isolate whether the first seconds and the middle are doing their jobs and can be compared across the account. Read hold rate alongside average play time, not average play time alone.
 
 **Evidence offered:** Formulas shown on screen; one live example where the winning ad's hook rate was roughly double the account average of ~30% and hold roughly double the 7–8% average. Single account, no controlled test. Explicitly acknowledged as unavailable for image ads.
 
@@ -71,7 +71,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Make monthly revenue from non-first-time buyers the success metric acquisition decisions are judged against, rather than campaign ROAS.
 
-**Why it works:** A high-ROAS ad can be profitably buying customers who never return, which looks like growth on the dashboard while the base stays flat. Returning-customer revenue is the only line in the business that compounds, so it is the honest scoreboard for acquisition: if that number rises month over month you have licence to keep raising spend, and if it does not, front-end efficiency is an illusion no matter how flattering the ROAS column looks.
+**Why it works:** A high-ROAS ad can be profitably buying customers who never return, which looks like growth on the dashboard while the base stays flat. Returning-customer revenue is the only line in the business that compounds, so it is the honest scoreboard for acquisition. If that number rises month over month you have licence to keep raising spend. If it does not, front-end efficiency is an illusion no matter how flattering the ROAS column looks.
 
 **Evidence offered:** Assertion, framed as 'the only definition of success any business operator should ever care about' and supported by the case brand's discovery that its highest-spend, best-ROAS SKU had the third-worst repeat rate.
 
@@ -81,7 +81,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Judge a discovery or trial channel by the halo it produces on your other sales channels — especially Amazon — rather than by its own single-channel P&L.
 
-**Why it works:** Customers acquired on one channel are not loyal to it. They rebuy wherever it is most convenient — Amazon, retail — so a channel judged only on its own attributed revenue looks worse than it is: part of what it bought shows up as sales on a surface its pixel never sees. The creator expects roughly 30% Amazon lift from scaling a trial channel.
+**Why it works:** Customers acquired on one channel are not loyal to it. They rebuy wherever it is most convenient — Amazon, retail. A channel judged only on its own attributed revenue therefore looks worse than it is: part of what it bought shows up as sales on a surface its pixel never sees. The creator expects roughly 30% Amazon lift from scaling a trial channel.
 
 **Evidence offered:** His own buying behaviour, and the retail lift his previous brand saw after activating TikTok Shop. No controlled measurement; the ~30% figure is an expectation, not a result.
 
@@ -91,7 +91,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 ## Measure paid efficiency as lifetime gross profit to total customer acquisition cost (LTGP:CAC) — revenue minus cost to deliver, over the customer's whole life, against every cost of getting them — and hold CAC to at most one third of LTGP.
 
-**Why it works:** Gross profit, not revenue, is the money actually available to buy customers and run the business, so a ratio built on revenue overstates headroom and licenses spend the business cannot fund. Counting *total* acquisition cost — not ad spend alone — stops the ratio flattering itself by hiding the other costs of getting a customer. A 3:1 floor leaves enough margin to cover overhead and to cash-flow the gap between paying for the customer and being paid back; the author's observed pattern is that businesses below that line stall and businesses above it take off.
+**Why it works:** Gross profit, not revenue, is the money actually available to buy customers and run the business. A ratio built on revenue overstates headroom and licenses spend the business cannot fund. Counting *total* acquisition cost — not ad spend alone — stops the ratio flattering itself by hiding the other costs of getting a customer. A 3:1 floor leaves enough margin to cover overhead and to cash-flow the gap between paying for the customer and being paid back. The author's observed pattern is that businesses below that line stall and businesses above it take off.
 
 **Evidence offered:** Pattern observed across the author's portfolio companies, explicitly flagged as 'a pattern I personally observed, not a rule', plus a worked example ($4,000 LTGP / $1,000 CAC = 4:1).
 
@@ -99,7 +99,7 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
-**Refinement — use CAC versus the category average to decide whether the ads or the monetization is the problem.** If your CAC sits well below roughly 3x the industry average, stop optimizing ads and go work on how much you make per customer; if it sits above, the ads are the problem. Acquisition costs between competitors in the same category converge far more than operators expect, because everyone bids in the same auction — so the variance between winners and losers lives in monetization. Cost can only ever fall toward zero, while revenue per customer has no ceiling.
+**Refinement — use CAC versus the category average to decide whether the ads or the monetization is the problem.** If your CAC sits well below roughly 3x the industry average, stop optimizing ads and go work on how much you make per customer. If it sits above, the ads are the problem. Acquisition costs between competitors in the same category converge far more than operators expect, because everyone bids in the same auction — so the variance between winners and losers lives in monetization. Cost can only ever fall toward zero, while revenue per customer has no ceiling.
 
 **Evidence offered:** Author's observation from talking to hundreds of entrepreneurs monthly; presented as a heuristic.
 
@@ -107,11 +107,23 @@ description: Use when setting up paid-media reporting, or reading what a running
 
 *Source: Alex Hormozi — "$100M Leads" (book, (part 9 of 16))*
 
+## Govern total paid spend as a percentage of total revenue — when that ratio is too high, pull ad spend back and install the conversion and retention foundations before scaling again, even if top-line revenue drops ('go slow to go fast').
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** Total ad spend divided by total revenue shows whether the whole business profits from its paid spend, which campaign-level ROAS hides. Cutting back to a sustainable ratio stops the bleed. The conversion and retention foundations then raise the revenue each ad dollar produces, so later scaling compounds profit instead of loss.
+
+**Evidence offered:** One client case: $200K/month at about a $20K loss with ad spend at 50% of revenue. They pulled back to $50K with $8K profit, then to $36K with about $10K profit at 30% spend, and project $80–100K on the rebuilt foundation. Single case, the later figure is a projection.
+
+**Fit here (7/10):** A whole-business spend-ratio governor the $1M plan needs, and distinct from what is already here. The LTGP:CAC ratio above is a per-customer ceiling built from averages. The returning-customer revenue line above is a trend that licenses spend increases. Break-even on first purchase is a day-one per-customer gate. This is the business-level total: every paid dollar against every revenue dollar, across Shopify and Amazon together. It is cheap to compute monthly now: RSC sits at roughly 67% ($60/day against about $2,700/mo). Read that number as the signal for which foundations to raise next — conversion rate, second-purchase flows, the returning-customer line — not as a cap that forces an immediate cut. Set RSC's own ceiling from contribution margin rather than copying the case's 30%, which came from a different margin structure. Parked behind scale because the governing decision — deliberately trading top-line revenue for profit to rebuild foundations — only makes sense once spend is large enough that the ratio, rather than the absolute budget, is the binding constraint. Trigger: Meta spend scaling past the test budget, at which point the monthly ratio becomes the gate any further increase has to clear alongside the LTGP:CAC ceiling and the returning-customer line.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Configure Ads Manager once to a fixed, minimal column set and sort ads highest to lowest by amount spent, so triage follows the dollars before you look at anything else.
 
 Column order: amount spent, purchases, cost per purchase and ROAS first; then frequency, reach, impressions and CPM; then unique outbound click-through rate and cost per link click; then hook rate, hold rate and video average play time; plus post shares. Use unique outbound CTR, never the generic click-through metric.
 
-**Why it works:** A small deliberate column set stops you drowning in metrics: the first four tell you what is working and the audience metrics tell you who you reached. Unique outbound CTR is the purest click metric because it excludes clicks that never land on the site (profile taps, expands), so it is the only click figure that reflects real landing-page arrivals. Sorting by spend puts the money-consuming ads first so triage follows the dollars — an underperforming ad eating most of the budget is the only thing worth turning off first, and a strong ad with negligible spend is not yet moving the account.
+**Why it works:** A small deliberate column set stops you drowning in metrics. The first four tell you what is working and the audience metrics tell you who you reached. Unique outbound CTR is the purest click metric because it excludes clicks that never land on the site (profile taps, expands), so it is the only click figure that reflects real landing-page arrivals. Sorting by spend puts the money-consuming ads first so triage follows the dollars. An underperforming ad eating most of the budget is the only thing worth turning off first, and a strong ad with negligible spend is not yet moving the account.
 
 **Evidence offered:** Live screen share of her own account with a real ASC campaign, including one campaign where a single ad held roughly 75% of an $11.5k spend; practitioner assertion about which metrics matter. No comparison against other setups, no performance data tying the column choice or sort order to outcomes.
 
@@ -119,7 +131,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 *Source: Dara Denney — "How to Analyze Facebook Ads Data the Right Way (The 2025 Guide)" (CCsty8R0UaA)*
 
-**Refinement — before you judge a format, pull offer and discount creative out of the bucket you are judging.** Offer ads sit near the top of essentially every account, so any comparison that leaves them inside the static bucket is rigged: an offer ad harvests demand that already exists and converts on price, meaning its cost per purchase reflects the discount, not the creative. Averaged into the category it inflates the whole bucket and produces a false read — you conclude statics are fine while every non-offer static is quietly failing, or you conclude video beats static when the honest comparison was never made. Tag offer/discount creative separately in the naming convention and score top- and middle-funnel statics on their own.
+**Refinement — before you judge a format, pull offer and discount creative out of the bucket you are judging.** Offer ads sit near the top of essentially every account, so any comparison that leaves them inside the static bucket is rigged. An offer ad harvests demand that already exists and converts on price, so its cost per purchase reflects the discount, not the creative. Averaged into the category it inflates the whole bucket and produces a false read — you conclude statics are fine while every non-offer static is quietly failing, or you conclude video beats static when the honest comparison was never made. Tag offer/discount creative separately in the naming convention and score top- and middle-funnel statics on their own.
 
 **Evidence offered:** Seb names the confound directly ('the difficulty with this question is statics includes offer ads, and of course in every account offer ads are gonna be close to the top; what we do is we intentionally don't do offer ads') as the reason his agency scores its work separately. Practitioner practice, no numbers.
 
@@ -129,7 +141,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 ## Before changing anything, ask 'can I spend more money and stay profitable right now?' — if yes, raise the budget and touch nothing else; if no, find the ad taking the most spend with the worst results and replace only that one, changing one variable.
 
-**Why it works:** Most instinctive responses to a performance dip — launching new ads, restructuring, testing something fresh — reintroduce the complexity that caused the decline. A single gating question stops the tinkering. And when action really is warranted, isolating the highest-spend worst-performing element and changing one variable makes the result attributable, whereas a rebuild teaches nothing because everything moved at once.
+**Why it works:** Most instinctive responses to a performance dip — launching new ads, restructuring, testing something fresh — reintroduce the complexity that caused the decline. A single gating question stops the tinkering. When action really is warranted, isolating the highest-spend worst-performing element and changing one variable makes the result attributable. A rebuild teaches nothing because everything moved at once.
 
 **Evidence offered:** Assertion, framed as a two-question diagnostic. No worked example from an account.
 
@@ -137,7 +149,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 *Source: Professor Charley T — "The Simple Facebook Ads Strategy Dominating in 2026" (4DutxlMzqgc)*
 
-**Refinement — the same restraint covers the funnel assets, not just the ad account.** When the ads and the funnel are already hitting target, change nothing: do not rewrite the headline, restructure the offer, build new advertorials, or test new ad formats. A working system is a configuration you cannot yet explain, so every change is an unattributed variable that can break it and the expected value of tinkering on a winner is negative. Restraint preserves the thing producing money until an external signal says it has stopped. The two-question triage above governs what you do inside Ads Manager; this extends it outward to the PDP, the offer structure and the mechanism copy.
+**Refinement — the same restraint covers the funnel assets, not just the ad account.** When the ads and the funnel are already hitting target, change nothing: do not rewrite the headline, restructure the offer, build new advertorials, or test new ad formats. A working system is a configuration you cannot yet explain. Every change is an unattributed variable that can break it, so the expected value of tinkering on a winner is negative. Restraint preserves the thing producing money until an external signal says it has stopped. The two-question triage above governs what you do inside Ads Manager; this extends it outward to the PDP, the offer structure and the mechanism copy.
 
 **Evidence offered:** One anecdote: a founder at $130k revenue in month three, $30 CAC, 2.5x ROAS, throttled only by inventory. No before/after, no counterfactual, no figures on what tinkering costs.
 
@@ -145,7 +157,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 *Source: Stefan Georgi — "Secret of the DTC Universe #9: Don't strangle your golden goose" (social post)*
 
-**Refinement — pre-commit, in writing, to the signals that end the do-nothing period.** Name them before the campaign runs a week: rising CAC, compressing margins, falling conversion rate, falling CTR alongside rising CPM and CPC. Advertising decays and the wall will come, so restraint without a defined exit condition becomes paralysis, and restraint without a defined trigger collapses back into tinkering on the first uncomfortable day. Naming the metrics that license testing in advance means the decision to act is made against a stated condition rather than against how the operator feels on a given Tuesday, and framing decay as expected entropy stops a normal decline being read as a crisis.
+**Refinement — pre-commit, in writing, to the signals that end the do-nothing period.** Name them before the campaign runs a week: rising CAC, compressing margins, falling conversion rate, falling CTR alongside rising CPM and CPC. Advertising decays and the wall will come. Restraint without a defined exit condition becomes paralysis, and restraint without a defined trigger collapses back into tinkering on the first uncomfortable day. Naming the metrics that license testing in advance means the decision to act is made against a stated condition rather than against how the operator feels on a given Tuesday. Framing decay as expected entropy stops a normal decline being read as a crisis.
 
 **Evidence offered:** Assertion only — a list of four possible walls, with 'advertising is entropy, nothing gold can stay' as the reasoning. No thresholds, no account data.
 
@@ -155,7 +167,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 ## Do not force budget toward the ads showing the best cost per purchase or ROAS while the algorithm concentrates spend elsewhere — that is Meta's documented breakdown effect, and throttling spend to the apparently cheaper ads usually makes them worse.
 
-**Why it works:** The headline efficiency of a low-spend ad reflects the small, cheapest slice of audience it happened to reach, not what it would do at scale. The algorithm has already estimated that pushing more budget through it would land on costlier inventory, so the attractive CPA is an artefact of tiny delivery rather than a property of the ad — and manually overriding the allocation surfaces that.
+**Why it works:** The headline efficiency of a low-spend ad reflects the small, cheapest slice of audience it happened to reach, not what it would do at scale. The algorithm has already estimated that pushing more budget through it would land on costlier inventory. The attractive CPA is therefore an artefact of tiny delivery rather than a property of the ad, and manually overriding the allocation surfaces that.
 
 **Evidence offered:** Attributed to Meta's own published explanation of the breakdown effect, plus her claim to have tested overriding it 'multiple times' with worse results. No figures from those tests.
 
@@ -165,7 +177,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 ## Pull the age, gender, and placement breakdowns on a winning creative — if it over-indexes on a demographic or a placement, build more creative aimed at that audience or formatted for that placement.
 
-**Why it works:** A creative does not perform uniformly across the audience it is served to; the breakdown reveals which slice is actually producing the result, which converts an unexplained winner into a stated audience or format hypothesis you can deliberately build the next asset against.
+**Why it works:** A creative does not perform uniformly across the audience it is served to. The breakdown reveals which slice is actually producing the result. That converts an unexplained winner into a stated audience or format hypothesis you can deliberately build the next asset against.
 
 **Evidence offered:** Assertion with hypothetical examples (a creative skewing 50+, Instagram versus Facebook, feed versus stories versus reels). No account data shown.
 
@@ -177,7 +189,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 **Stage:** scale — parked until the scale phase opens.
 
-**Why it works:** Production cost differs widely by source — in-house, agencies, paid UGC creators — so judging sources on ad performance alone ignores what each concept cost to make. A per-concept, per-source return-on-production-cost number turns creative sourcing into a comparable ROI decision: weak sources get cut, production budget concentrates on the producers who beat the benchmark, and the bar can tighten over time because some sources already clear it comfortably.
+**Why it works:** Production cost differs widely by source — in-house, agencies, paid UGC creators — so judging sources on ad performance alone ignores what each concept cost to make. A per-concept, per-source return-on-production-cost number turns creative sourcing into a comparable ROI decision. Weak sources get cut and production budget concentrates on the producers who beat the benchmark. The bar can tighten over time because some sources already clear it comfortably.
 
 **Evidence offered:** Ultra spent 2–3 months running many agencies plus an internal team to find its benchmark, cut the agencies below it, and keeps the ones that beat it; some deliver well above it. Single-brand practice, no figures shown for the benchmark itself.
 
@@ -189,7 +201,7 @@ Column order: amount spent, purchases, cost per purchase and ROAS first; then fr
 
 **Stage:** team — parked until the team phase opens.
 
-**Why it works:** A single brand can only learn from its own back end. An agency aggregates performance across hundreds of accounts and therefore knows which headlines, angles and formats travel, so the scarce good is strategic judgment rather than production labour. When production is effectively free, the judgment layer is the part worth outsourcing.
+**Why it works:** A single brand can only learn from its own back end. An agency aggregates performance across hundreds of accounts and therefore knows which headlines, angles and formats travel. The scarce good is strategic judgment rather than production labour. When production is effectively free, the judgment layer is the part worth outsourcing.
 
 **Evidence offered:** Assertion plus a closing call-to-book gated at $50k/mo revenue.
 

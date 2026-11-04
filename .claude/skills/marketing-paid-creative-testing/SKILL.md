@@ -259,6 +259,30 @@ description: Use when deciding what creative goes into a small-budget Meta campa
 
 *Source: Fedot (@FedotOff90) — "Native static ad formats that do not look like ads (X post)" (social post)*
 
+## Before layering offers or creative tests, run low-fidelity product testing on Meta across the most distinctive SKUs to find the single entry product to hammer.
+
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** You cannot build an offer or a creative programme until you know where traffic actually goes. A quick, cheap multi-product test surfaces the SKU that converts profitably with no help from offers or polished creative, and that SKU becomes the entry point every later test is built on.
+
+**Evidence offered:** Anecdote: the creators' own t-shirt brand at $100/day found a winner returning 4.5 ROAS by day five. The 'low fidelity campaign' and 'ad lab' method is sold as training and not specified.
+
+**Fit here (5/10):** A durable principle — pick the entry product with evidence before building creative around it — but the creator's selector, front-end ROAS, conflicts with marketing-offer-construction, which picks the entry product by first-time-buyer repeat rate. The reconciled version: test only SKIN-line entry SKUs (consistent with the live product-front note under the format-porting refinement above, which keeps deodorant, soap and lip balm off cold paid), screen first on front-end CPA against breakeven, and let repeat rate make the final call. Parked because a multi-SKU test splits the budget into product cells, which the live single-ad-set, single-flexible-ad structure above exists to prevent at $30/day. Trigger: enough daily budget to give each candidate SKU roughly 10+ purchases in its cell — about $100/day. When it opens, each SKU cell still uses creative built from a messaging brief and passed through the no-brand-context audit above, so a weak ad does not falsely kill a good product.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
+## Run low-fidelity Meta tests as an ordered dependency chain — product first, then offer, then creative, then message/USP — with each later test's creative carrying the earlier winners, and add the message layer only when the product needs education or a USP callout.
+
+**Stage:** traffic — parked until the traffic phase opens.
+
+**Why it works:** Each layer constrains the next. Creative built before the winning product and offer are known is testing the wrong thing, because a flat result cannot say whether the product, the offer or the creative failed. Cheap tests at about $3 per ad sort many options before real money is spent, and every later test inherits the proven layers beneath it. For products that require education, the differentiator decides the sale, so messaging becomes the variable to test; visual commodities like t-shirts need only creative testing.
+
+**Evidence offered:** Agency practice and a t-shirt worked example: designs as the creative, quirky overlay text, PDP description as primary text, product name as headline. No performance figures for the chain itself.
+
+**Fit here (6/10):** Natural deodorant and skin care are exactly the 'needs education / call out the USPs' case — aluminium-free and ingredient differentiation are the message layer, so this catalogue runs the full four-step chain, not the creative-only shortcut. The ordering fits the business's route: SKIN line (product), then the AOV offer, then creative, then message. What is additive is the *ordering*: the live messaging-brief rule above says how to build a message and the 3-2-2 flexible ad above says how to house creatives, but neither says that the message test comes last, after product, offer and creative are fixed, nor that each test's ads carry the prior winners so only one layer varies — the same one-variable-at-a-time readability the live creative-matrix refinement above relies on. The source context names it as runnable inside the existing $50/day creative-test campaign, but $3-per-ad cells across many options conflict with the live rules to judge one flexible ad as a single unit and never launch alongside a running ad (doom-cycle rule above), which is why it waits for the traffic phase. When it opens, each layer enters through a rebuild of the running flexible ad, the message layer draws its variants from the pain-angle pillars in the angle-not-audience refinement above, and the reserved exploration slot in the double 80/20 above is where a single layer's challenger goes in the meantime.
+
+*Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
 ## Under Meta's Andromeda update the creative is the targeting — hold one angle fixed and cross it with several visibly different on-camera avatars (e.g. a 33-year-old high-performing woman and a 44-year-old suburban dad), so each avatar × angle pairing unlocks a different audience pocket.
 
 **Stage:** team — parked until the team phase opens. Recorded now so it is not re-derived later.
