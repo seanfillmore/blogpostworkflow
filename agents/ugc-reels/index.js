@@ -42,7 +42,7 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listSubmissions } from '../../lib/trybe.js';
-import { publishReel, getReelInsights } from '../../lib/instagram-reels.js';
+import { publishReel, getReelInsights, getAccountGrowth } from '../../lib/instagram-reels.js';
 import { gateGeneratedCopy } from '../../lib/seo-copy-gate-loop.js';
 import { SEO_COPY_COMPLIANCE_RULE } from '../../lib/seo-copy-health-gate.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
@@ -377,6 +377,21 @@ export function renderEditComparison(ledger, now = Date.now()) {
   return ['Edited vs raw (hook = our on-screen hook; trim = silence trimmed only, the video had its own text):', row('hook', hooked), row('trim', trimmedOnly), row('raw', raw)].join('\n');
 }
 
+/**
+ * The account's week against the week before: is the page growing? Added
+ * 2026-11-04 when the 30-day read was 18 follows against 17 unfollows (net +1)
+ * on 3,589 reach, 98.6% of it non-followers and 87 profile views.
+ */
+export function renderGrowth(cur, prev) {
+  if (!cur) return 'Account growth: unavailable this week.';
+  const n = (v) => (v === null || v === undefined ? '?' : String(v));
+  const net = (w) => (w && w.follows !== null && w.unfollows !== null ? w.follows - w.unfollows : null);
+  const sign = (v) => (v === null ? '?' : v > 0 ? `+${v}` : String(v));
+  const pct = (a, b) => (a !== null && b ? `${((100 * a) / b).toFixed(1)}%` : '?');
+  const row = (label, w) => `${label.padEnd(10)} net ${sign(net(w)).padStart(4)} (${n(w?.follows)} follows, ${n(w?.unfollows)} unfollows) · profile views ${n(w?.profile_views)} · reach ${n(w?.reach)} (${pct(w?.reach_non_followers, w?.reach)} new people) · visit→follow ${pct(w?.follows, w?.profile_views)} · website clicks ${n(w?.website_clicks)}`;
+  return [`Account growth (followers now: ${n(cur.followers)}):`, row('this week', cur), row('last week', prev)].join('\n');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const env = loadEnv();
@@ -386,7 +401,15 @@ async function main() {
   if (args.includes('--report')) {
     const ledger = readLedger();
     const other = renderOtherReels(ledger);
-    const body = [`${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger), '', renderEditComparison(ledger), ...(other ? ['', other] : [])].join('\n');
+    const nowS = Math.floor(Date.now() / 1000);
+    const week = 7 * 86400;
+    let growth = 'Account growth: unavailable (no META_USER_ACCESS_TOKEN).';
+    if (token) {
+      const cur = await getAccountGrowth({ since: nowS - week, until: nowS }, { token });
+      const prev = await getAccountGrowth({ since: nowS - 2 * week, until: nowS - week }, { token });
+      growth = renderGrowth(cur, prev);
+    }
+    const body = [growth, '', `${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger), '', renderEditComparison(ledger), ...(other ? ['', other] : [])].join('\n');
     console.log(body);
     if (args.includes('--notify')) await notify({ subject: `Instagram Reels: what is working (${ledger.posts.length} posted)`, body, status: 'info', category: 'social' });
     return;

@@ -248,3 +248,26 @@ test('publishReel: sends collaborators, and a refused invite retries once WITHOU
   const ok = await publishReel({ videoUrl: 'v', caption: 'c', collaborators: ['sarah.fournier1996'] }, { token: 't', fetchImpl, sleep: async () => {} });
   assert.deepEqual(ok.collab, { invited: ['sarah.fournier1996'] });
 });
+
+test('getAccountGrowth reads follows/unfollows and reach by follow_type; renderGrowth compares two weeks', async () => {
+  const { getAccountGrowth } = await import('../../lib/instagram-reels.js');
+  const { renderGrowth } = await import('../../agents/ugc-reels/index.js');
+  const tv = (value, rows) => ({ data: [{ total_value: { value, breakdowns: rows ? [{ results: rows.map(([k, v]) => ({ dimension_values: [k], value: v })) }] : undefined } }] });
+  const fetchImpl = async (url) => {
+    const u = new URL(url);
+    const m = u.searchParams.get('metric');
+    const body = m === 'follows_and_unfollows' ? tv(undefined, [['FOLLOWER', 9], ['NON_FOLLOWER', 4]])
+      : m === 'reach' ? tv(1000, [['NON_FOLLOWER', 950], ['FOLLOWER', 50]])
+      : m === 'profile_views' ? tv(40) : m === 'website_clicks' ? { error: { message: 'nope' } } : { followers_count: 1077 };
+    return { ok: !body.error, status: body.error ? 400 : 200, json: async () => body };
+  };
+  const g = await getAccountGrowth({ since: 1, until: 2 }, { token: 't', fetchImpl });
+  assert.deepEqual(g, { follows: 9, unfollows: 4, profile_views: 40, website_clicks: null, reach: 1000, reach_non_followers: 950, reach_followers: 50, followers: 1077 });
+  const text = renderGrowth(g, { ...g, follows: 2, unfollows: 5 });
+  assert.match(text, /followers now: 1077/);
+  assert.match(text, /this week\s+net\s+\+5/);
+  assert.match(text, /last week\s+net\s+-3/);
+  assert.match(text, /95\.0% new people/);
+  assert.match(text, /visit→follow 22\.5%/);
+  assert.match(text, /website clicks \?/, 'a refused metric reads ?, never 0');
+});
