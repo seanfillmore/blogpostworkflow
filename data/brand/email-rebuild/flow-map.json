@@ -111,6 +111,17 @@
     ],
     "updatedAt": "2026-08-31T12:31:29.458Z"
   },
+  "UCfgDD": {
+    "flowId": "Vfgjgg",
+    "flowName": "Browse Abandonment (RSC v2)",
+    "messageId": "SPPp9a",
+    "actionId": "112416886",
+    "servingTemplateId": "UrNmAr",
+    "stranded": [
+      "UCfgDD"
+    ],
+    "updatedAt": "2026-11-04T22:53:56.384Z"
+  },
   "V8ajkd": {
     "flowId": "SajAVS",
     "flowName": "Giveaway — Entry & Nurture",
@@ -187,5 +198,16 @@
       "SgPVcL"
     ],
     "updatedAt": "2026-11-02T12:49:17.763Z"
+  },
+  "Y8tMjd": {
+    "flowId": "Vfgjgg",
+    "flowName": "Browse Abandonment (RSC v2)",
+    "messageId": "UxC2if",
+    "actionId": "112416888",
+    "servingTemplateId": "SpuH3L",
+    "stranded": [
+      "Y8tMjd"
+    ],
+    "updatedAt": "2026-11-04T22:54:04.021Z"
   }
 }

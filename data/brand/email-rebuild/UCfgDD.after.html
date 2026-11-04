@@ -34,10 +34,10 @@
 
 <tr><td style="background-color:#FFFFFF;border-radius:12px;padding:36px 32px;" class="px">
 <h1 class="h1" style="margin:0 0 12px;font-family:Cabin,'Trebuchet MS','Segoe UI',Tahoma,sans-serif;font-size:28px;line-height:34px;font-weight:700;color:#000000;">Still deciding?</h1>
-<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }} — here it is again.</p>
+<p style="margin:0 0 16px;font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;line-height:24px;color:#000000;">Hi {{ first_name|default:"there" }}, here it is again.</p>
 {% if event.ImageURL %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
 <a href="{{ event.URL }}" style="text-decoration:none;"><img alt="{{ event.Name }}" src="{{ event.ImageURL }}" style="display:block;width:100%;max-width:400px;height:auto;border:0;border-radius:8px;"/></a>
-<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">{{ event.Name }} — ${{ event.Price }}</div>
+<div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;margin-top:12px;">{{ event.Name }} · ${{ event.Price }}</div>
 </td></tr></table>{% else %}<table cellpadding="0" cellspacing="0" role="presentation" width="100%" style="margin:0 0 20px;"><tr><td align="center">
 <div style="font-family:Outfit,'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:16px;font-weight:600;color:#000000;">{{ event.Name|default:'the item you were looking at' }}</div>
 </td></tr></table>{% endif %}
