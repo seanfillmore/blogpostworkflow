@@ -115,3 +115,32 @@ export function readJsonBody(req, { maxBytes = DEFAULT_MAX_BYTES, destroyOnOverf
     req.on('error', reject);
   });
 }
+
+/**
+ * The raw request body as a Buffer, capped like readJsonBody. For the one caller
+ * that must see the exact bytes: the Meta webhook, whose X-Hub-Signature-256 is
+ * an HMAC over the raw body (re-serialising parsed JSON would not match). Kept
+ * here so this file stays the only place that reads a request stream.
+ */
+export function readRawBody(req, { maxBytes = DEFAULT_MAX_BYTES } = {}) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    let overflowed = false;
+    const chunks = [];
+    req.on('data', (chunk) => {
+      if (overflowed) return;
+      size += chunk.length;
+      if (size > maxBytes) {
+        overflowed = true;
+        const err = new Error('request body too large');
+        err.code = 'BODY_TOO_LARGE';
+        reject(err);
+        req.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => { if (!overflowed) resolve(Buffer.concat(chunks)); });
+    req.on('error', reject);
+  });
+}
