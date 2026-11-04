@@ -83,6 +83,11 @@ test('currentProducts maps press-facts product URLs to names', () => {
 test('templates escape text and carry the slide counter', () => {
   assert.match(carouselSlideHtml({ index: 1, total: 6, title: 'A <b>', body: 'x' }), /2\/6/);
   assert.match(carouselSlideHtml({ index: 1, total: 6, title: 'A <b>', body: 'x' }), /A &lt;b&gt;/);
-  assert.match(reviewCardHtml({ quote: '"hi"', name: 'Amanda K.', product: 'Body Lotion' }), /on Body Lotion/);
+  const card = reviewCardHtml({ quote: '"hi"', name: 'Amanda K.', product: 'Body Lotion', verified: true });
+  assert.match(card, /Verified buyer &middot; Body Lotion/);
+  assert.match(card, />AK</, 'initials avatar');
+  assert.match(reviewCardHtml({ quote: 'x', name: 'Jo' }), /Customer review/);
+  // A website review dressed as an Instagram comment would present something that never happened.
+  assert.doesNotMatch(card, /Reply|@[a-z]|likes?\b/i);
   assert.match(textPostHtml({ text: 'Winter hands' }), /@realskincare_com/);
 });

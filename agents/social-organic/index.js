@@ -251,7 +251,7 @@ export async function runOnce({
         }
         if (!q) { skipped.push({ kind, reason: 'no unused review passes the screens' }); continue; }
         if (!r.ok) { skipped.push({ kind, review: q.id, reason: r.problems.join('; ') }); continue; }
-        made.push({ kind, review: q, headline: `${q.name}: ${q.text.slice(0, 60)}`, caption: r.draft.caption, htmls: [reviewCardHtml({ quote: q.text, name: q.name, product: q.product_title || '' })] });
+        made.push({ kind, review: q, headline: `${q.name}: ${q.text.slice(0, 60)}`, caption: r.draft.caption, htmls: [reviewCardHtml({ quote: q.text, name: q.name, product: q.product_title || '', verified: q.verified })] });
       } else {
         const r = await draftWithRetry({
           client,
