@@ -1,7 +1,7 @@
 {
-  "_note": "agents/social-organic: drafts organic posts (carousel, review card, relatable text post) into the Social tab as PENDING. backlog_per_kind = how many unposted items of each kind to keep waiting; max_per_run caps one run. Sean, 2026-11-04: organic posts for engagement, not ads.",
-  "backlog_per_kind": 2,
-  "max_per_run": 3,
+  "_note": "agents/social-organic: drafts organic posts (carousel, review card, relatable text post) into the Social tab as PENDING. backlog_per_kind = how many unposted items of each kind to keep waiting; max_per_run caps one run. Sean, 2026-11-04: organic posts for engagement, not ads. Raised to 3 per kind / 6 per run the same day when the 71 queued ad images were retired: 9 waiting covers three weeks at three posts a week.",
+  "backlog_per_kind": 3,
+  "max_per_run": 6,
   "_seedNote": "Carousel topics used first, in order (Sean, 2026-11-04: start with deodorant switching and toothpaste ingredients). After these, topics come from Google question searches (GSC) and voice-of-customer objections. A topic is never reused.",
   "seed_topics": [
     "What actually happens when you switch from antiperspirant to an aluminum-free deodorant?",
