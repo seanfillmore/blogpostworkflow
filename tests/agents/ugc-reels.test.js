@@ -187,15 +187,17 @@ test('runOnce --apply: posts the EDITED video and invites the tagged creator as 
     fetchImpl: trybeFetch([sub('a')]),
     socials: { 'kaci smith': { handle: 'kaci.makes' } },
     client: client(['Soft skin, every morning. Link in bio. #realskincare'], 'Soft skin by morning'),
-    edit: async ({ videoUrl, hook }) => { seen.push({ videoUrl, hook }); return { ok: true, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f', trimmed_s: 0.8 }; },
+    edit: async (a) => { seen.push(a); return { ok: true, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f', trimmed_s: 0.8, hook: 'Soft skin by morning' }; },
     publish: async (args) => { seen.push(args); return { mediaId: 'm1', permalink: 'p', collab: null }; },
   });
-  assert.deepEqual(seen[0], { videoUrl: 'https://cdn.example/a.mp4', hook: 'Soft skin by morning' });
+  assert.equal(seen[0].videoUrl, 'https://cdn.example/a.mp4');
+  assert.equal(seen[0].hook, 'Soft skin by morning');
+  assert.equal(typeof seen[0].detectText, 'function', 'the text check is always wired');
   assert.equal(seen[1].videoUrl, 'https://cdn.shopify.com/edited.mp4');
   assert.deepEqual(seen[1].collaborators, ['kaci.makes']);
   const post = readLedger(ledgerPath).posts[0];
   assert.equal(post.hook, 'Soft skin by morning');
-  assert.deepEqual(post.edit, { ok: true, trimmed_s: 0.8, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f' });
+  assert.deepEqual(post.edit, { ok: true, trimmed_s: 0.8, hook_drawn: true, url: 'https://cdn.shopify.com/edited.mp4', file_id: 'gid://f' });
   assert.ok(run.posted);
 });
 

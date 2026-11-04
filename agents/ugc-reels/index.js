@@ -55,7 +55,7 @@ import {
   dueScheduled, renderOtherReels, SCHEDULED_ID_PREFIX,
 } from '../../lib/ugc-reels.js';
 import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
-import { editReel, hookFormatCheck } from '../../lib/reel-edit.js';
+import { editReel, hookFormatCheck, visionTextDetector } from '../../lib/reel-edit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
@@ -291,14 +291,14 @@ export async function runOnce({
     const tagged = declinedTag(socials, s.creator?.name) ? null : handleFor(socials, s.creator?.name);
     if (!apply) {
       // --edit-test: make and host the edited video, post nothing.
-      const tested = editTest && hook ? await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}-test`, alt: `Real Skin Care Reel test: ${productKey(s)}`, fetchImpl }) : null;
+      const tested = editTest && hook ? await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}-test`, alt: `Real Skin Care Reel test: ${productKey(s)}`, fetchImpl, detectText: visionTextDetector(client, LLM_MODELS.fast) }) : null;
       posted = { submission: s, cycle: next.cycle, style, why, body, hook, caption, tagged, dryRun: true, ...(tested ? { edit: tested } : {}) };
       break;
     }
     // The edit fails open: on any failure the raw Trybe video posts, as before.
     let edited = null;
     if (editVideos && hook) {
-      edited = await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}`, alt: `Real Skin Care Reel: ${productKey(s)}`, fetchImpl });
+      edited = await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}`, alt: `Real Skin Care Reel: ${productKey(s)}`, fetchImpl, detectText: visionTextDetector(client, LLM_MODELS.fast) });
       if (!edited.ok) log(`  edit failed, posting the raw video: ${edited.error}`);
     }
     try {
@@ -315,7 +315,7 @@ export async function runOnce({
         body,
         hook: hook || null,
         caption,
-        edit: edited ? (edited.ok ? { ok: true, trimmed_s: edited.trimmed_s, url: edited.url, file_id: edited.file_id } : { ok: false, error: edited.error }) : null,
+        edit: edited ? (edited.ok ? { ok: true, trimmed_s: edited.trimmed_s, hook_drawn: !!edited.hook, ...(edited.hook_skipped ? { hook_skipped: edited.hook_skipped } : {}), url: edited.url, file_id: edited.file_id } : { ok: false, error: edited.error }) : null,
         collab: r.collab || null,
         posted_at: new Date(now).toISOString(),
         media_id: r.mediaId,
@@ -345,7 +345,7 @@ export function renderRun(run) {
     lines.push(`${p.dryRun ? 'Would post' : 'Posted'}: ${p.product_key || productKey(p.submission)} by ${firstName(p.submission.creator?.name)} · cycle ${p.cycle} · style ${p.hook_style || p.style}`);
     if (p.permalink) lines.push(p.permalink);
     if (p.hook) lines.push(`On-screen hook: "${p.hook}"`);
-    if (p.edit) lines.push(p.edit.ok ? `Edited${p.edit.url && p.dryRun ? ` (${p.edit.url})` : ''}: hook burned in${p.edit.trimmed_s ? `, ${p.edit.trimmed_s}s of silence trimmed` : ''}` : `Not edited (posted the raw video): ${p.edit.error}`);
+    if (p.edit) lines.push(p.edit.ok ? `Edited${p.edit.url && p.dryRun ? ` (${p.edit.url})` : ''}: ${[(p.edit.hook || p.edit.hook_drawn) ? 'hook burned in' : `no hook (${p.edit.hook_skipped})`, p.edit.trimmed_s ? `${p.edit.trimmed_s}s of silence trimmed` : null].filter(Boolean).join(', ')}` : `Not edited (posted the raw video): ${p.edit.error}`);
     if (p.collab) lines.push(p.collab.invited?.length ? `Collab invite sent to @${p.collab.invited.join(', @')}` : `Collab invite refused, posted without it: ${p.collab.refused}`);
     lines.push('', p.caption, '');
   } else {
@@ -371,9 +371,10 @@ export function renderEditComparison(ledger, now = Date.now()) {
   const measured = ledger.posts.filter((p) => p.kind !== 'ad' && p.insights && Date.parse(p.insights_at) - Date.parse(p.posted_at) >= 48 * 3_600_000 && Date.parse(p.posted_at) <= now);
   const median = (xs) => { const v = xs.filter((x) => typeof x === 'number').sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; };
   const row = (label, ps) => `${label.padEnd(8)} n=${String(ps.length).padStart(3)}  median views ${median(ps.map((p) => p.insights.views)) ?? '-'}  median watch ${((median(ps.map((p) => p.insights.ig_reels_avg_watch_time)) ?? 0) / 1000).toFixed(1)}s  median likes ${median(ps.map((p) => p.insights.likes)) ?? '-'}`;
-  const edited = measured.filter((p) => p.edit?.ok);
+  const hooked = measured.filter((p) => p.edit?.ok && p.edit.hook_drawn !== false);
+  const trimmedOnly = measured.filter((p) => p.edit?.ok && p.edit.hook_drawn === false);
   const raw = measured.filter((p) => !p.edit?.ok);
-  return ['Edited (on-screen hook, silence trimmed) vs raw:', row('edited', edited), row('raw', raw)].join('\n');
+  return ['Edited vs raw (hook = our on-screen hook; trim = silence trimmed only, the video had its own text):', row('hook', hooked), row('trim', trimmedOnly), row('raw', raw)].join('\n');
 }
 
 async function main() {

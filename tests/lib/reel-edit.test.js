@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  hookFormatCheck, wrapHook, leadingSilence, trimSeconds, buildFilter, encodeArgs, editReel, findFont,
+  hookFormatCheck, wrapHook, parseTextCheck, leadingSilence, trimSeconds, buildFilter, encodeArgs, editReel, findFont,
   MAX_TRIM_S,
 } from '../../lib/reel-edit.js';
 
@@ -71,6 +71,7 @@ test('editReel end to end with real ffmpeg: trims the silent lead-in and burns t
   const r = await editReel({
     videoUrl: 'https://example/src.mp4', hook: 'Read the label on your lotion first', name: 'test',
     fetchImpl: async () => ({ ok: true, arrayBuffer: async () => readFileSync(src) }),
+    detectText: async () => ({ hasText: false }),
     upload: async (path) => { uploaded = path; const out = join(dir, 'uploaded.mp4'); writeFileSync(out, readFileSync(path)); return { id: 'gid://x', url: 'https://cdn/x.mp4' }; },
   });
   assert.equal(r.ok, true, r.error);
@@ -78,4 +79,62 @@ test('editReel end to end with real ffmpeg: trims the silent lead-in and burns t
   assert.ok(uploaded && existsSync(join(dir, 'uploaded.mp4')));
   const probe = spawnSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'stream=width,height', '-of', 'csv=p=0', join(dir, 'uploaded.mp4')]);
   assert.equal(String(probe.stdout).trim(), '720,1280');
+});
+
+test('parseTextCheck: only an explicit false means "no text"', () => {
+  assert.equal(parseTextCheck('{"overlay_text": false}'), false);
+  assert.equal(parseTextCheck('{"overlay_text": true}'), true);
+  assert.equal(parseTextCheck('I am not sure'), true);
+  assert.equal(parseTextCheck(''), true);
+});
+
+// A fake ffmpeg: silencedetect reports `lead` seconds of silence, frame grabs and
+// the encode write their output file, and every encode's -vf is recorded.
+const fakeFfmpeg = (lead, filters) => async (cmd, args) => {
+  if (args.includes('silencedetect=noise=-35dB:d=0.3')) return { code: 0, stderr: lead ? `silence_start: 0\nsilence_end: ${lead}` : '' };
+  const out = args[args.length - 1];
+  if (args.includes('-vf') && args.includes('libx264')) filters.push(args[args.indexOf('-vf') + 1]);
+  writeFileSync(out, 'x');
+  return { code: 0, stderr: '' };
+};
+const okFetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+
+test('editReel: creator text on screen means NO hook; the trim still applies', async () => {
+  const filters = [];
+  const r = await editReel({ videoUrl: 'v', hook: 'Soft skin today', font: '/f.ttf', fetchImpl: okFetch, runImpl: fakeFfmpeg(2, filters),
+    detectText: async (frames) => { assert.equal(frames.length, 3); return { hasText: true }; },
+    upload: async () => ({ id: 'g', url: 'https://cdn/x.mp4' }) });
+  assert.equal(r.ok, true);
+  assert.equal(r.hook, null);
+  assert.equal(r.hook_skipped, 'the video already has on-screen text');
+  assert.equal(r.trimmed_s, 1.85);
+  assert.ok(!/drawtext/.test(filters[0]));
+});
+
+test('editReel: creator text and nothing to trim means the raw video posts (no re-encode, no upload)', async () => {
+  const filters = [];
+  let uploads = 0;
+  const r = await editReel({ videoUrl: 'v', hook: 'Soft skin today', font: '/f.ttf', fetchImpl: okFetch, runImpl: fakeFfmpeg(0, filters),
+    detectText: async () => ({ hasText: true }), upload: async () => { uploads++; return { url: 'u' }; } });
+  assert.equal(r.ok, false);
+  assert.equal(r.unchanged, true);
+  assert.equal(filters.length, 0);
+  assert.equal(uploads, 0);
+});
+
+test('editReel: a failed text check counts as text, never as a clear frame', async () => {
+  const filters = [];
+  const r = await editReel({ videoUrl: 'v', hook: 'Soft skin today', font: '/f.ttf', fetchImpl: okFetch, runImpl: fakeFfmpeg(1, filters),
+    detectText: async () => ({ hasText: true, error: 'model timeout' }), upload: async () => ({ url: 'u' }) });
+  assert.match(r.hook_skipped, /text check failed \(model timeout\)/);
+  assert.ok(!/drawtext/.test(filters[0]));
+});
+
+test('editReel: no creator text means the hook is drawn', async () => {
+  const filters = [];
+  const r = await editReel({ videoUrl: 'v', hook: 'Soft skin today', font: '/f.ttf', fetchImpl: okFetch, runImpl: fakeFfmpeg(0, filters),
+    detectText: async () => ({ hasText: false }), upload: async () => ({ url: 'u' }) });
+  assert.equal(r.ok, true);
+  assert.equal(r.hook, 'Soft skin today');
+  assert.match(filters[0], /drawtext/);
 });
