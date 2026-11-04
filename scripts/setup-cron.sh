@@ -244,23 +244,25 @@ DAILY_TRYBE_REVIEW="55 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/trybe-review
 # data/creator-outreach/pending/. After the expiry it sends nothing; remove the line.
 DAILY_CREATOR_REVIEW_ASK="15 17 * * * cd \"$PROJECT_DIR\" && $NODE scripts/creator-outreach-broadcast.mjs --id review-ask-2026-10 --messages data/creator-outreach/pending/review-ask-2026-10.json --only-delivered --delivered-days 5 --expires 2026-11-15 --apply >> data/reports/scheduler/creator-review-ask.log 2>&1"
 
-# Instagram Reels from approved Trybe creator videos (agents/ugc-reels). Three
-# posts a day: 16:20, 20:20 and 01:20 UTC (9:20 AM, 1:20 PM and 6:20 PM Pacific
-# during PDT; an hour earlier in PST). One Reel per run; each run also refreshes
-# insights for earlier posts. The Monday report puts the per-caption-style
-# results in the 13:00 UTC digest.
-DAILY_UGC_REELS="20 16,20,1 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --apply >> data/reports/scheduler/ugc-reels.log 2>&1"
+# Instagram Reels from approved Trybe creator videos (agents/ugc-reels). ONE
+# post a day at 20:20 UTC (1:20 PM Pacific during PDT; an hour earlier in PST)
+# since 2026-11-03. It was three a day (16:20, 20:20, 01:20) and engagement fell
+# post by post; 20:20 had the best median views (120 vs 77-84). Each run also
+# refreshes insights for earlier posts. The Monday report puts the per-caption-
+# style results in the 13:00 UTC digest.
+DAILY_UGC_REELS="20 20 * * * cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --apply >> data/reports/scheduler/ugc-reels.log 2>&1"
 WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reels/index.js --report --notify >> data/reports/scheduler/ugc-reels.log 2>&1"
 
 # Social queue (agents/social-poster): APPROVED ad images from the dashboard's
-# Social tab, posted to Instagram AND the Facebook Page. Three a day since
-# 2026-10-24 (Sean: "three statics a day and rotate between the products"):
-# 18:20, 22:20 and 03:20 UTC, one new item per run, each between two Reels
-# (16:20, 20:20, 01:20). posts_per_day caps it at 3 per UTC day. A platform that failed is retried
-# alone on the next run. Must match cron_utc in config/social-queue.json (pinned by
-# tests/agents/social-poster.test.js). Replaced DAILY_IG_STATICS (agents/ig-statics)
-# on 2026-10-24, in the same minute; the old job is retired here AND live.
-DAILY_SOCIAL_POSTER="20 18,22,3 * * * cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
+# Social tab, posted to Instagram AND the Facebook Page. THREE A WEEK since
+# 2026-11-03 (Mon, Wed, Fri at 18:20 UTC; it was three a day from 2026-10-24 and
+# reach per post fell from ~20 to ~6). posts_per_day 1 caps each run at one new
+# item, and a headline already posted is not reposted for repeat_headline_days.
+# A platform that failed is retried alone on the next run. Must match cron_utc in
+# config/social-queue.json (pinned by tests/agents/social-poster.test.js).
+# Replaced DAILY_IG_STATICS (agents/ig-statics) on 2026-10-24; that job is retired
+# here AND live.
+DAILY_SOCIAL_POSTER="20 18 * * 1,3,5 cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
 
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
@@ -724,7 +726,8 @@ echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"
 echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
-echo "  16:20, 20:20, 01:20 UTC — ugc-reels (one Trybe creator video to Instagram per run; Mon 12:02 report)"
+echo "  20:20 UTC — ugc-reels (one Trybe creator video to Instagram a day; Mon 12:02 report)"
+echo "  18:20 UTC Mon/Wed/Fri — social-poster (one approved static to Instagram + Facebook)"
 echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
 echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
 echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"

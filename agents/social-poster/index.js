@@ -15,7 +15,8 @@
  *      owes the other (never counted against posts_per_day);
  *   4. FRESH: posts the next approved item that has posted nowhere, rotating
  *      between products (nextInRotation in lib/social-queue.js), unless
- *      posts_per_day items already started today (UTC);
+ *      posts_per_day items already started today (UTC). An item whose headline
+ *      already posted inside repeat_headline_days waits;
  *   5. records each platform's result on the item the moment it lands.
  * A platform that fails is retried next run, alone; after two failures it is
  * skipped for that item and reported.
@@ -25,7 +26,7 @@
  *   node agents/social-poster/index.js --apply      # post (cron)
  *   node agents/social-poster/index.js --report     # what posted, with insights
  *
- * Cron: DAILY_SOCIAL_POSTER (18:20, 22:20 and 03:20 UTC) in scripts/setup-cron.sh; config in
+ * Cron: DAILY_SOCIAL_POSTER (18:20 UTC Mon/Wed/Fri) in scripts/setup-cron.sh; config in
  * config/social-queue.json. Requires META_USER_ACCESS_TOKEN (system user: holds
  * instagram_content_publish and pages_manage_posts).
  */
@@ -64,6 +65,7 @@ export function readConfig(path = CONFIG_PATH) {
   const platforms = (c.platforms || PLATFORMS).filter((p) => PLATFORMS.includes(p));
   return {
     postsPerDay: Number.isInteger(c.posts_per_day) && c.posts_per_day >= 0 ? c.posts_per_day : 1,
+    repeatHeadlineDays: Number.isInteger(c.repeat_headline_days) && c.repeat_headline_days >= 0 ? c.repeat_headline_days : 0,
     platforms: platforms.length ? platforms : [...PLATFORMS],
     igUserId: c.instagram_user_id,
     pageId: c.facebook_page_id,
@@ -154,7 +156,7 @@ export async function runOnce({
 } = {}) {
   const insightsRead = apply ? await refreshInsights({ dir, clients, now, log }) : 0;
   const items = loadItems(dir);
-  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now });
+  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now, repeatHeadlineDays: config.repeatHeadlineDays || 0 });
   const posts = [];
   if (plan.retry || plan.fresh) {
     // Unreadable recent captions on a platform = do not post THERE this run: that
@@ -170,7 +172,7 @@ export async function runOnce({
   }
   const after = apply ? loadItems(dir) : items;
   const remaining = after.filter((i) => i.status === 'approved' && config.platforms.some((p) => !isPosted(i, p))).length;
-  return { apply, posts, skipped: plan.skipped, reason: plan.reason, remaining, insightsRead };
+  return { apply, posts, skipped: plan.skipped, reason: plan.reason, remaining, insightsRead, heldRepeats: plan.heldRepeats || 0 };
 }
 
 export function renderRun(run) {
@@ -186,6 +188,7 @@ export function renderRun(run) {
   if (!run.posts.length) lines.push(`Nothing posted: ${run.reason}`);
   else if (run.reason) lines.push(`No new item: ${run.reason}`);
   lines.push(`${run.remaining} approved item(s) still owe a post.`);
+  if (run.heldRepeats) lines.push(`${run.heldRepeats} approved item(s) wait because their headline posted recently.`);
   for (const s of run.skipped || []) lines.push(`  - skipped ${s.id}${s.platform ? ` on ${s.platform}` : ''}: ${s.reason}`);
   if (run.insightsRead) lines.push(`Insights refreshed for ${run.insightsRead} post(s).`);
   return lines.join('\n');

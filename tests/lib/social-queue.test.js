@@ -183,3 +183,38 @@ test('three runs in a day post three different products, then the cap stops a fo
 test('nextInRotation: nothing to choose is null', () => {
   assert.equal(nextInRotation([], []), null);
 });
+
+// ── repeat headlines (2026-11-03: the same headline went up as many as 6 times a week) ──
+
+test('planRun: an item whose headline posted inside repeat_headline_days waits; a new headline goes first', async () => {
+  const { planRun, headlineKey } = await import('../../lib/social-queue.js');
+  const now = Date.parse('2026-11-05T18:20:00Z');
+  const items = [
+    approved('sweater-a', '2026-10-20T00:00:00Z', { product: 'p1', headline: 'Sweater Weather Is Here', instagram: { posted_at: '2026-10-30T18:20:00Z', media_id: 'm' }, facebook: { posted_at: '2026-10-30T18:20:00Z', post_id: 'f' } }),
+    approved('sweater-b', '2026-10-21T00:00:00Z', { product: 'p2', headline: 'sweater weather, is here!' }),
+    approved('label-a', '2026-10-25T00:00:00Z', { product: 'p1', headline: 'Read your label' }),
+  ];
+  assert.equal(headlineKey(items[1]), 'sweater weather is here');
+  const plan = planRun(items, { now, repeatHeadlineDays: 60 });
+  assert.equal(plan.fresh.item.id, 'label-a');
+  assert.equal(plan.heldRepeats, 1);
+  // Window off: the older item goes by the normal rotation.
+  assert.equal(planRun(items, { now }).fresh.item.id, 'sweater-b');
+  // Only repeats left: nothing posts, and the reason says why.
+  const only = planRun(items.slice(0, 2), { now, repeatHeadlineDays: 60 });
+  assert.equal(only.fresh, null);
+  assert.match(only.reason, /repeats a headline/);
+  // Past the window it may post again.
+  assert.equal(planRun(items.slice(0, 2), { now: Date.parse('2027-01-15T00:00:00Z'), repeatHeadlineDays: 60 }).fresh.item.id, 'sweater-b');
+});
+
+test('planRun: two unposted items with one headline: only one is a candidate per run', async () => {
+  const { planRun } = await import('../../lib/social-queue.js');
+  const items = [
+    approved('same-a', '2026-10-20T00:00:00Z', { product: 'p1', headline: 'Same' }),
+    approved('same-b', '2026-10-21T00:00:00Z', { product: 'p2', headline: 'Same' }),
+  ];
+  const plan = planRun(items, { now: Date.parse('2026-11-05T18:20:00Z'), repeatHeadlineDays: 60 });
+  assert.equal(plan.fresh.item.id, 'same-a');
+  assert.equal(plan.heldRepeats, 1);
+});

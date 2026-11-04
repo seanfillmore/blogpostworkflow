@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * UGC Reels: posts approved Trybe creator videos to @realskincare_com as
- * Instagram Reels, three a day, and measures which caption styles work.
+ * Instagram Reels, one a day (three a day until 2026-11-03), and measures which
+ * caption styles work.
  *
  * Each --apply run (cron fires it three times a day):
  *   1. refreshes Instagram insights for earlier posts that are due a read;
@@ -10,7 +11,12 @@
  *   3. picks the caption STYLE in code (the experiment's controlled variable);
  *   4. writes the caption with the model, gated by the commercial claim gate plus
  *      format and recycle-distinctness checks (one retry, then skip the video);
- *   5. publishes the Reel and records it in data/ugc-reels/ledger.json.
+ *   5. edits the video (lib/reel-edit.js: trims leading silence, burns the
+ *      on-screen hook onto the first 3 s, hosts it on Shopify Files; on any
+ *      failure the raw video posts instead);
+ *   6. publishes the Reel, inviting the creator as a COLLABORATOR when we hold
+ *      their handle (a refused invite posts without it), and records it in
+ *      data/ugc-reels/ledger.json.
  * If the first candidate fails at step 4 or 5 it tries one more, then stops.
  *
  * Policy, rights and the experiment design are documented in lib/ugc-reels.js.
@@ -18,10 +24,12 @@
  * Usage:
  *   node agents/ugc-reels/index.js              # dry run: pick + write the caption, post nothing
  *   node agents/ugc-reels/index.js --apply      # post one Reel (cron)
+ *   node agents/ugc-reels/index.js --edit-test  # dry run that also makes + hosts the edited video, posts nothing
+ *   node agents/ugc-reels/index.js --apply --no-edit   # post the raw video
  *   node agents/ugc-reels/index.js --insights   # refresh insights only
  *   node agents/ugc-reels/index.js --report [--notify]   # what is working, per caption style
  *
- * Cron: DAILY_UGC_REELS x3 (16:20, 20:20, 01:20 UTC) and WEEKLY_UGC_REELS_REPORT
+ * Cron: DAILY_UGC_REELS (20:20 UTC daily) and WEEKLY_UGC_REELS_REPORT
  * (Mondays 12:15 UTC, ahead of the 13:00 digest). scripts/setup-cron.sh.
  *
  * Requires TRYBE_API_KEY and META_USER_ACCESS_TOKEN (the system-user token; it is
@@ -47,6 +55,7 @@ import {
   dueScheduled, renderOtherReels, SCHEDULED_ID_PREFIX,
 } from '../../lib/ugc-reels.js';
 import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
+import { editReel, hookFormatCheck } from '../../lib/reel-edit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
@@ -58,6 +67,15 @@ const CONFIG_PATH = join(ROOT, 'config', 'ugc-reels.json');
 export function loadExcluded(path = CONFIG_PATH) {
   if (!existsSync(path)) return [];
   return JSON.parse(readFileSync(path, 'utf8')).excluded || [];
+}
+
+/**
+ * Whether creator videos are trimmed and given an on-screen hook before posting
+ * (config `edit_videos`, default true). Same parse rule as the exclusions.
+ */
+export function loadEditVideos(path = CONFIG_PATH) {
+  if (!existsSync(path)) return true;
+  return JSON.parse(readFileSync(path, 'utf8')).edit_videos !== false;
 }
 
 /**
@@ -139,9 +157,10 @@ Rules:
 - Plain, warm, human voice. No em dashes or en dashes. No links. No prices, discounts or codes.
 - Only state facts that appear in a product's name or the transcript, and pin each fact to the product it belongs to (never say two products share a count only one of them names). Do not invent ingredients, results, review counts or awards.
 - Do not write a credit line; we add it.
+- Also write an ON-SCREEN HOOK: 2 to 7 words burned onto the first 3 seconds of the video, the line that stops someone scrolling. It must make sense with the sound off and say something specific to this video (what the product is, a surprise, a question the video answers). Plain words only: no emoji, hashtags, quotes or dashes, and no number the transcript or product names do not contain. It is not the caption's first line.
 - ${SEO_COPY_COMPLIANCE_RULE}
 ${previous.length ? `\nThis video has been posted before with these captions. Write something clearly different: a new opener and new wording.\n${previous.map((p) => `- (${p.hook_style}) ${String(p.body || p.caption).replace(/\n+/g, ' / ')}`).join('\n')}\n` : ''}${learnings ? `\n${learnings}\n` : ''}${constraint ? `\n${constraint}\n` : ''}
-Return JSON only: {"caption": "<the caption>"}`;
+Return JSON only: {"caption": "<the caption>", "hook": "<the on-screen hook>"}`;
 }
 
 /** Write a gated caption, or return { ok: false } with the reasons. */
@@ -157,9 +176,9 @@ export async function writeCaption({ client, submission, style, previous, ledger
     const text = (msg.content || []).map((b) => b.text || '').join('');
     return parseCaptionJson(text);
   }, {
-    extract: (r) => ({ caption: r?.caption }),
-    required: ['caption'],
-    extraChecks: [fmt],
+    extract: (r) => ({ caption: r?.caption, hook: r?.hook }),
+    required: ['caption', 'hook'],
+    extraChecks: [fmt, hookFormatCheck({ transcript: transcriptText(submission), products: submission.products || [] })],
   });
 }
 
@@ -190,6 +209,9 @@ export async function runOnce({
   client,
   fetchImpl = fetch,
   publish = publishReel,
+  edit = editReel,
+  editVideos = loadEditVideos(),
+  editTest = false,
   socials: socialsIn = null,
   excluded = loadExcluded(),
   scheduled = loadScheduled(),
@@ -264,14 +286,23 @@ export async function runOnce({
       continue;
     }
     const body = gate.proposed.caption.trim();
+    const hook = String(gate.proposed.hook || '').trim();
     const caption = composeCaption(body, s, socials);
     const tagged = declinedTag(socials, s.creator?.name) ? null : handleFor(socials, s.creator?.name);
     if (!apply) {
-      posted = { submission: s, cycle: next.cycle, style, why, body, caption, tagged, dryRun: true };
+      // --edit-test: make and host the edited video, post nothing.
+      const tested = editTest && hook ? await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}-test`, alt: `Real Skin Care Reel test: ${productKey(s)}`, fetchImpl }) : null;
+      posted = { submission: s, cycle: next.cycle, style, why, body, hook, caption, tagged, dryRun: true, ...(tested ? { edit: tested } : {}) };
       break;
     }
+    // The edit fails open: on any failure the raw Trybe video posts, as before.
+    let edited = null;
+    if (editVideos && hook) {
+      edited = await edit({ videoUrl: s.asset.url, hook, name: `ugc-${s.trybe_id || 'reel'}`, alt: `Real Skin Care Reel: ${productKey(s)}`, fetchImpl });
+      if (!edited.ok) log(`  edit failed, posting the raw video: ${edited.error}`);
+    }
     try {
-      const r = await publish({ videoUrl: s.asset.url, caption }, { token, fetchImpl });
+      const r = await publish({ videoUrl: edited?.ok ? edited.url : s.asset.url, caption, collaborators: tagged ? [tagged] : [] }, { token, fetchImpl });
       const entry = {
         submission_id: s.id,
         trybe_id: s.trybe_id || null,
@@ -282,7 +313,10 @@ export async function runOnce({
         hook_style: style,
         style_reason: why,
         body,
+        hook: hook || null,
         caption,
+        edit: edited ? (edited.ok ? { ok: true, trimmed_s: edited.trimmed_s, url: edited.url, file_id: edited.file_id } : { ok: false, error: edited.error }) : null,
+        collab: r.collab || null,
         posted_at: new Date(now).toISOString(),
         media_id: r.mediaId,
         permalink: r.permalink,
@@ -310,6 +344,9 @@ export function renderRun(run) {
   } else if (p) {
     lines.push(`${p.dryRun ? 'Would post' : 'Posted'}: ${p.product_key || productKey(p.submission)} by ${firstName(p.submission.creator?.name)} · cycle ${p.cycle} · style ${p.hook_style || p.style}`);
     if (p.permalink) lines.push(p.permalink);
+    if (p.hook) lines.push(`On-screen hook: "${p.hook}"`);
+    if (p.edit) lines.push(p.edit.ok ? `Edited${p.edit.url && p.dryRun ? ` (${p.edit.url})` : ''}: hook burned in${p.edit.trimmed_s ? `, ${p.edit.trimmed_s}s of silence trimmed` : ''}` : `Not edited (posted the raw video): ${p.edit.error}`);
+    if (p.collab) lines.push(p.collab.invited?.length ? `Collab invite sent to @${p.collab.invited.join(', @')}` : `Collab invite refused, posted without it: ${p.collab.refused}`);
     lines.push('', p.caption, '');
   } else {
     lines.push('Nothing posted this run.');
@@ -326,6 +363,19 @@ export function renderRun(run) {
   return lines.join('\n');
 }
 
+/**
+ * Edited (hook + trim) vs raw creator Reels, on posts with insights read 48 h+
+ * after posting. Watch time is the number the edit exists to move.
+ */
+export function renderEditComparison(ledger, now = Date.now()) {
+  const measured = ledger.posts.filter((p) => p.kind !== 'ad' && p.insights && Date.parse(p.insights_at) - Date.parse(p.posted_at) >= 48 * 3_600_000 && Date.parse(p.posted_at) <= now);
+  const median = (xs) => { const v = xs.filter((x) => typeof x === 'number').sort((a, b) => a - b); return v.length ? v[v.length >> 1] : null; };
+  const row = (label, ps) => `${label.padEnd(8)} n=${String(ps.length).padStart(3)}  median views ${median(ps.map((p) => p.insights.views)) ?? '-'}  median watch ${((median(ps.map((p) => p.insights.ig_reels_avg_watch_time)) ?? 0) / 1000).toFixed(1)}s  median likes ${median(ps.map((p) => p.insights.likes)) ?? '-'}`;
+  const edited = measured.filter((p) => p.edit?.ok);
+  const raw = measured.filter((p) => !p.edit?.ok);
+  return ['Edited (on-screen hook, silence trimmed) vs raw:', row('edited', edited), row('raw', raw)].join('\n');
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const env = loadEnv();
@@ -335,7 +385,7 @@ async function main() {
   if (args.includes('--report')) {
     const ledger = readLedger();
     const other = renderOtherReels(ledger);
-    const body = [`${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger), ...(other ? ['', other] : [])].join('\n');
+    const body = [`${ledger.posts.length} Reel(s) posted.`, '', renderStyleTable(ledger), '', renderEditComparison(ledger), ...(other ? ['', other] : [])].join('\n');
     console.log(body);
     if (args.includes('--notify')) await notify({ subject: `Instagram Reels: what is working (${ledger.posts.length} posted)`, body, status: 'info', category: 'social' });
     return;
@@ -350,11 +400,12 @@ async function main() {
     return;
   }
 
-  const apply = args.includes('--apply');
+  const editTest = args.includes('--edit-test');
+  const apply = args.includes('--apply') && !editTest;
   if (!trybeKey) throw new Error('TRYBE_API_KEY is not in .env');
   console.log(`UGC Reels${apply ? '' : ' (dry run)'}`);
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_API_KEY });
-  const run = await runOnce({ apply, trybeKey, token, client });
+  const run = await runOnce({ apply, trybeKey, token, client, editTest, ...(args.includes('--no-edit') ? { editVideos: false } : {}) });
   const body = renderRun(run);
   console.log(`\n${body}`);
   if (!apply) return;

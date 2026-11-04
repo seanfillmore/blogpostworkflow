@@ -118,7 +118,8 @@ test('insights refresh for both platforms once due', async () => {
 
 test('config: defaults, and the cron line matches cron_utc', () => {
   const cfg = readConfig();
-  assert.equal(cfg.postsPerDay, 3, 'three statics a day (Sean, 2026-10-24)');
+  assert.equal(cfg.postsPerDay, 1, 'one per run, three runs a week (Sean, 2026-11-03)');
+  assert.equal(cfg.repeatHeadlineDays, 60);
   assert.deepEqual(cfg.platforms, ['instagram', 'facebook']);
   assert.equal(cfg.pageId, '113847674946808');
   const raw = JSON.parse(readFileSync(new URL('../../config/social-queue.json', import.meta.url), 'utf8'));
@@ -129,6 +130,7 @@ test('config: defaults, and the cron line matches cron_utc', () => {
   // One new item per run, so the cron must fire once per daily post: fewer runs would
   // quietly post less than posts_per_day, more would be runs that can only no-op.
   assert.equal(raw.cron_utc[0].split(' ')[1].split(',').length, raw.posts_per_day, 'one cron run per daily post');
+  assert.equal(raw.cron_utc[0].split(' ')[4], '1,3,5', 'Mon/Wed/Fri: three statics a week');
   assert.ok(line.includes('agents/social-poster/index.js --apply'));
   assert.ok(cron.includes('\n$DAILY_SOCIAL_POSTER\n'), 'installed in the crontab body');
   assert.ok(!/ig-statics\/index\.js/.test(cron), 'the old agent is retired');
