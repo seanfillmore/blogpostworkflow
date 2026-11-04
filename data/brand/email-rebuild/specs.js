@@ -18,6 +18,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { INSTAGRAM_FOLLOW_BLOCK } from '../../../lib/instagram-follow-block.js';
 
 // Free-shipping threshold. brand-kit.json owns it — it moved from $50 to $45 on
 // 2026-07-31 and appears in six of these emails, so it is interpolated, never retyped.
@@ -540,10 +541,10 @@ export const specs = {
     format: 'plain',
     preheader: 'One thing to know before it arrives, especially for the deodorant.',
     blocks: [
-      { type: 'h1', text: 'Thank you — and one thing to expect' },
+      { type: 'h1', text: 'Thank you, and one thing to expect' },
       {
         type: 'p',
-        html: 'Hi {{ first_name|default:"there" }} — your order is being prepared and you will get tracking as soon as it ships.',
+        html: 'Hi {{ first_name|default:"there" }}, your order is being prepared and you will get tracking as soon as it ships.',
       },
       // The transition-period warning only belongs in front of someone who bought the
       // deodorant. A first pass sent it to everyone, so a lotion buyer was told about
@@ -551,13 +552,15 @@ export const specs = {
       {
         type: 'raw',
         html: `{% with items=event.Items|join:", " %}{% if "Deodorant" in items %}
-${para('One thing worth knowing now rather than in week two: switching off antiperspirant takes about <strong>1–2 weeks</strong>. You may notice more moisture at first — that is your sweat glands doing what they always did, no longer blocked by aluminium. It settles.')}
+${para('One thing worth knowing now rather than in week two: switching off antiperspirant takes about <strong>1 to 2 weeks</strong>. You may notice more moisture at first. That is your sweat glands doing what they always did, no longer blocked by aluminium. It settles.')}
 ${para('Most people who give up on natural deodorant quit inside that window, days before it would have worked. Do not judge it before day 14.')}
 {% else %}
 ${para('Everything is handmade in the USA from a short ingredient list, and the results come from using it consistently rather than heavily. Give it a couple of weeks.')}
 {% endif %}{% endwith %}`,
       },
       { type: 'p', html: 'I will send a short note on using what you bought, and then leave you alone.' },
+      // Instagram follow block, added live 2026-11-04 (scripts/klaviyo-add-instagram-block.mjs).
+      { type: 'raw', html: INSTAGRAM_FOLLOW_BLOCK },
       { type: 'signoff' },
       { type: 'ps', html: 'If anything arrives damaged or wrong, reply here and we will fix it. No form to fill in.' },
     ],
@@ -580,6 +583,8 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
           para('Everything starts with cold-pressed virgin coconut oil and a short ingredient list. The results come from using it consistently — give it a couple of weeks before you judge it.'),
         ),
       },
+      // Instagram follow block, added live 2026-11-04.
+      { type: 'raw', html: INSTAGRAM_FOLLOW_BLOCK },
       { type: 'signoff' },
       { type: 'ps', html: 'Consistency matters more than quantity with all of it. Two weeks of daily use tells you more than a heavy first application.' },
     ],

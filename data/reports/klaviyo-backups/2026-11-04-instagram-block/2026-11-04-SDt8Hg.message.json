@@ -1,0 +1,17 @@
+{
+  "from_email": "support@realskincare.com",
+  "from_label": "Real Skin Care",
+  "reply_to_email": "support@realskincare.com",
+  "cc_email": null,
+  "bcc_email": null,
+  "subject_line": "Thank you, {{ first_name|default:\"friend\" }} 🌿",
+  "preview_text": "Your order's on the way. Here's how to get the most from it.",
+  "template_id": "UfGCaQ",
+  "smart_sending_enabled": true,
+  "transactional": false,
+  "add_tracking_params": false,
+  "custom_tracking_params": null,
+  "additional_filters": null,
+  "name": "Post-Purchase — 01 Thank You",
+  "id": "SDt8Hg"
+}
