@@ -64,3 +64,24 @@ test('runOnce: a review that does not fit its product is passed over for the nex
   assert.equal(saved.length, 1);
   assert.match(run.skipped[0].reason, /does not fit/);
 });
+
+test('pickTopic: seeds go first in order; otherwise the model picks from the shortlist and the rest stay', async () => {
+  const { pickTopic } = await import('../../agents/social-organic/index.js');
+  const seedFirst = [{ topic: 'Seed', source: 'seed' }, { topic: 'q1', source: 'search' }];
+  assert.equal((await pickTopic({ client: null, topics: seedFirst })).topic, 'Seed');
+  const topics = [{ topic: 'how to clean body lotion', source: 'search' }, { topic: 'is sls free toothpaste better', source: 'search' }];
+  const c = { messages: { create: async () => ({ content: [{ text: '{"pick": 2}' }] }) } };
+  assert.equal((await pickTopic({ client: c, topics })).topic, 'is sls free toothpaste better');
+  assert.deepEqual(topics.map((t) => t.topic), ['how to clean body lotion'], 'the unpicked topic stays available');
+  const broken = { messages: { create: async () => { throw new Error('down'); } } };
+  assert.equal((await pickTopic({ client: broken, topics })).topic, 'how to clean body lotion', 'a model failure falls back to the first');
+});
+
+test('runOnce: a review implying a result on the body is passed over with the reason', async () => {
+  const saved = [];
+  const answers = [{ fits: false, why: 'implies a change in her teeth', caption: CAPTION }, { fits: true, caption: CAPTION }];
+  const second = { ...REVIEW, id: 9, reviewer_name: 'Cara Diaz' };
+  const run = await runOnce({ apply: true, onlyKind: 'review', client: client({ review: () => answers.shift() }), config: CONFIG, items: [], reviews: [REVIEW, second], products: { 'coconut-lotion': 'Body Lotion' }, facts: FACTS, ...deps(saved), log: () => {} });
+  assert.equal(saved.length, 1);
+  assert.match(run.skipped[0].reason, /implies a change in her teeth/);
+});
