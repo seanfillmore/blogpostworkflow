@@ -54,6 +54,7 @@ import pressOutreachRoutes from './routes/press-outreach.js';
 import socialQueueRoutes from './routes/social-queue.js';
 import rumRoutes from './routes/rum.js';
 import giveawayRoutes from './routes/giveaway.js';
+import metaWebhookRoutes, { WEBHOOK_PATH as META_WEBHOOK_PATH } from './routes/meta-webhook.js';
 import contestRoutes, { isPublicContestPath } from './routes/contest.js';
 
 const {
@@ -125,6 +126,7 @@ const ROUTES = [
   ...socialQueueRoutes,
   ...rumRoutes,
   ...giveawayRoutes,
+  ...metaWebhookRoutes,
   ...contestRoutes,
 ];
 
@@ -195,7 +197,7 @@ const server = http.createServer((req, res) => {
   // dashboard basic-auth, and those credentials must never appear in theme JS.
   // Abuse is bounded inside each route module: capped bodies, strict enum
   // validation, and no unbounded writes.
-  if (urlPath === '/api/rum' || urlPath.startsWith('/api/giveaway/') || isPublicContestPath(urlPath)) {
+  if (urlPath === '/api/rum' || urlPath.startsWith('/api/giveaway/') || urlPath === META_WEBHOOK_PATH || isPublicContestPath(urlPath)) {
     if (dispatch(ROUTES, req, res, ctx)) return;
   }
 
