@@ -221,6 +221,9 @@ if [[ -f "$ROOT/$REELS_LEDGER" ]]; then
   # The Social queue (lib/social-queue.js): every approved image, its caption and
   # what it posted where. Gitignored, so this is its only other copy.
   [[ -d "$ROOT/data/social-queue" ]] && reels_files+=("data/social-queue")
+  # Instagram DM agent (agents/instagram-dm): which account got which single-use
+  # code. Losing it would let someone ask again and receive a second code.
+  [[ -d "$ROOT/data/instagram-dm" ]] && reels_files+=("data/instagram-dm")
   tar czf "$reels_archive" -C "$ROOT" "${reels_files[@]}"
   push_archive "$REELS_PREFIX" "$reels_archive" 1
 else

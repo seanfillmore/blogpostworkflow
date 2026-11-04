@@ -271,6 +271,13 @@ DAILY_SOCIAL_POSTER="20 18 * * 1,3,5 cd \"$PROJECT_DIR\" && $NODE agents/social-
 # ahead of Monday's 18:20 posting slot, so there is a weekend to approve.
 WEEKLY_SOCIAL_ORGANIC="40 9 * * 6 cd \"$PROJECT_DIR\" && $NODE agents/social-organic/index.js --apply >> data/reports/scheduler/social-organic.log 2>&1"
 
+# Instagram DMs (agents/instagram-dm): every 10 minutes, answer the bio's "DM
+# 'Natural'" offer with a unique single-use $10 code (Instagram allows a reply only
+# within 24 h of the customer's message, so this has to run often), and at 12:58
+# UTC put the DMs waiting on Sean into the 13:00 digest.
+DAILY_INSTAGRAM_DM="3,13,23,33,43,53 * * * * cd \"$PROJECT_DIR\" && $NODE agents/instagram-dm/index.js --apply >> data/reports/scheduler/instagram-dm.log 2>&1"
+DAILY_INSTAGRAM_DM_DIGEST="58 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/instagram-dm/index.js --digest >> data/reports/scheduler/instagram-dm.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -667,6 +674,8 @@ $DAILY_UGC_REELS
 $WEEKLY_UGC_REELS_REPORT
 $DAILY_SOCIAL_POSTER
 $WEEKLY_SOCIAL_ORGANIC
+$DAILY_INSTAGRAM_DM
+$DAILY_INSTAGRAM_DM_DIGEST
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
@@ -737,6 +746,7 @@ echo "  12:55 UTC — trybe-review (creator claim screen; never approves or reje
 echo "  20:20 UTC — ugc-reels (one Trybe creator video to Instagram a day; Mon 12:02 report)"
 echo "  18:20 UTC Mon/Wed/Fri — social-poster (one approved static to Instagram + Facebook)"
 echo "  09:40 UTC Sat — social-organic (drafts organic posts into the Social tab as pending)"
+echo "  every 10 min — instagram-dm (auto-answers DM 'Natural' with a single-use code); 12:58 UTC digest of DMs waiting on Sean"
 echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
 echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
 echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
