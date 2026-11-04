@@ -271,3 +271,17 @@ test('getAccountGrowth reads follows/unfollows and reach by follow_type; renderG
   assert.match(text, /visit→follow 22\.5%/);
   assert.match(text, /website clicks \?/, 'a refused metric reads ?, never 0');
 });
+
+test('runOnce: a scheduled ad with a dark open posts the trimmed copy', async () => {
+  const ledgerPath = tmpLedger();
+  const urls = [];
+  const run = await runOnce({
+    apply: true, trybeKey: 'k', token: 't', ledgerPath, scheduled: [AD], now: NOV9,
+    fetchImpl: trybeFetch([sub('a')]), client: client(['x']),
+    trimOpen: async () => ({ ok: true, url: 'https://cdn.shopify.com/trimmed.mp4', trimmed_s: 0.2083 }),
+    publish: async ({ videoUrl }) => { urls.push(videoUrl); return { mediaId: 'm1', permalink: 'p' }; },
+  });
+  assert.deepEqual(urls, ['https://cdn.shopify.com/trimmed.mp4']);
+  assert.equal(readLedger(ledgerPath).posts[0].edit.dark_open, true);
+  assert.equal(run.posted.kind, 'ad');
+});

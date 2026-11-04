@@ -55,7 +55,7 @@ import {
   dueScheduled, renderOtherReels, SCHEDULED_ID_PREFIX,
 } from '../../lib/ugc-reels.js';
 import { checkSeoCopyFields } from '../../lib/seo-copy-health-gate.js';
-import { editReel, hookFormatCheck, visionTextDetector } from '../../lib/reel-edit.js';
+import { editReel, hookFormatCheck, visionTextDetector, trimDarkOpen } from '../../lib/reel-edit.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const LEDGER_PATH = join(ROOT, 'data', 'ugc-reels', 'ledger.json');
@@ -210,6 +210,7 @@ export async function runOnce({
   fetchImpl = fetch,
   publish = publishReel,
   edit = editReel,
+  trimOpen = trimDarkOpen,
   editVideos = loadEditVideos(),
   editTest = false,
   socials: socialsIn = null,
@@ -247,7 +248,14 @@ export async function runOnce({
       return { posted: { ...entry, dryRun: true }, attempts: [], skipped: [], eligibleCount: 0, insights, ledger, scheduledNotes };
     } else {
       try {
-        const r = await publish({ videoUrl: item.video_url, caption: item.caption }, { token, fetchImpl });
+        // A dark open (fade from black) is cut so the Reel never shows as a black square.
+        let videoUrl = item.video_url;
+        if (editVideos) {
+          const o = await trimOpen({ videoUrl, name: `ad-${item.id}`, alt: `Real Skin Care ad: ${item.product_key}`, fetchImpl });
+          if (o.ok) { videoUrl = o.url; entry.edit = { ok: true, trimmed_s: o.trimmed_s, url: o.url, dark_open: true }; }
+          else if (!o.unchanged) log(`  dark-open check failed, posting the original: ${o.error}`);
+        }
+        const r = await publish({ videoUrl, caption: item.caption }, { token, fetchImpl });
         Object.assign(entry, { posted_at: new Date(now).toISOString(), media_id: r.mediaId, permalink: r.permalink });
         ledger.posts.push(entry);
         writeLedger(ledger, ledgerPath);

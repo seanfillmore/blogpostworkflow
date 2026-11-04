@@ -14,11 +14,19 @@
   "_scheduledNote": "Our own ad videos agents/ugc-reels posts ONCE, on the first run on or after not_before (UTC), in place of that run's creator video. Caption is hand-written and must pass the commercial claim gate and the caption format rules (tests/config/ugc-reels-scheduled.test.js); the agent re-checks it. Ledger id is 'scheduled:<id>'. Reported under 'Ad Reels' in --report, never in the caption-style test.",
   "scheduled": [
     {
+      "id": "water-cooler-29s-v2",
+      "not_before": "2026-11-05T20:00:00Z",
+      "product_key": "Coconut Moisturizer (Water Cooler ad, 29s, reposted)",
+      "video_url": "https://cdn.shopify.com/videos/c/o/v/0ae7a43673b94de5a6ee6694f9dede6e.mp4",
+      "note": "Sean 2026-11-04: the 29s Water Cooler Reel (https://www.instagram.com/reel/DfN4ZOtjbVb/, posted 2026-11-01) showed as a black screen; the first 0.21 s faded in from black. This is the v4 original with that fade cut (Shopify file gid://shopify/Video/46327885824170). Same caption. Sean deletes the old Reel in the app once this one is live. Caption is the original with \"Shop at realskincare.com, link in bio.\" changed to \"Shop it at the link in our bio.\" (the caption rules refuse a bare domain).",
+      "caption": "\"Okay. What are you doing differently?\" 🥥\n\nCarol's answer: coconut cream, seven ingredients, every night.\n\nOur Coconut Moisturizer starts from a 7-ingredient base: organic virgin coconut oil, beeswax, red palm oil and a few more you can read in one breath. Pure Unscented is the base alone, with nothing added. It's thick enough for the spots that dry out first in winter, like hands, heels and elbows.\n\nTry it for 30 days. If you don't love it, email us and we'll refund you. No need to send it back.\n\nShop it at the link in our bio.\n\nMade with AI.\n\n#bodycream #coconutoil #winterskin #cleanskincare #shortingredientlist"
+    },
+    {
       "id": "water-cooler-15s",
-      "not_before": "2026-11-08T16:00:00Z",
+      "not_before": "2026-11-12T20:00:00Z",
       "product_key": "Coconut Moisturizer (Water Cooler ad, 15s)",
-      "video_url": "https://cdn.shopify.com/videos/c/o/v/54267aa794a641ff9f995ca55f001c20.mp4",
-      "note": "Sean 2026-11-01: post the 15s cutdown at least a week after the 29s cut (posted 2026-11-01, https://www.instagram.com/reel/DfN4ZOtjbVb/). Shopify file gid://shopify/Video/46288460382378.",
+      "video_url": "https://cdn.shopify.com/videos/c/o/v/30c9f27f05444686bccba8b40df16767.mp4",
+      "note": "Sean 2026-11-01: post the 15s cutdown at least a week after the 29s cut. Moved to 2026-11-12 on 2026-11-04 because the 29s cut is reposted 2026-11-05 (black open trimmed). This file is the 15s cut with its 0.21 s fade from black cut (Shopify file gid://shopify/Video/46327893590186); the original was 54267aa794a641ff9f995ca55f001c20.",
       "caption": "\"I need the name of that cream. Now.\"\n\nIt's our Coconut Moisturizer. It starts from a 7-ingredient base: organic virgin coconut oil, beeswax, red palm oil and a few more you can read in one breath. Pure Unscented is the base alone, with nothing added.\n\nRich enough for dry hands, heels and elbows this winter, and it comes with a 30-day money-back guarantee.\n\nLink in bio.\n\nMade with AI.\n\n#bodycream #coconutoil #winterskin #cleanskincare #shortingredientlist"
     }
   ]

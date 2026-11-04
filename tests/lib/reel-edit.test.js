@@ -138,3 +138,29 @@ test('editReel: no creator text means the hook is drawn', async () => {
   assert.equal(r.hook, 'Soft skin today');
   assert.match(filters[0], /drawtext/);
 });
+
+test('fadeTrimSeconds: cuts a fade from black to the first full-brightness frame, never a dark scene', async () => {
+  const { fadeTrimSeconds, parseOpen } = await import('../../lib/reel-edit.js');
+  // Measured on the Water Cooler ad, 24 fps (2026-11-04).
+  const water = [16, 36.3, 56.2, 76.2, 95.8, 113.6, 113.6, 113.7, 113.6, 113.8, 113.8, 113.8];
+  assert.equal(fadeTrimSeconds(water, 24), 0.2083);
+  assert.equal(fadeTrimSeconds([110, 111, 112, 113, 113], 30), 0, 'bright from frame one');
+  assert.equal(fadeTrimSeconds([20, 22, 21, 23, 22, 20], 30), 0, 'a dark scene is not a fade');
+  assert.equal(fadeTrimSeconds([16, ...Array(40).fill(17), 113, 113, 113, 113], 30), 0, 'longer than 1 s: not trimmed');
+  const o = parseOpen('Stream #0:0: Video: h264, yuv420p, 1080x1920, 24 fps, 24 tbr\n[Parsed_metadata_1] frame:0 lavfi.signalstats.YAVG=16\nlavfi.signalstats.YAVG=36.33\n');
+  assert.deepEqual(o, { yavgs: [16, 36.33], fps: 24 });
+});
+
+test('trimDarkOpen: trims and hosts a dark open; leaves a bright video alone', async () => {
+  const { trimDarkOpen } = await import('../../lib/reel-edit.js');
+  const okFetch = async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) });
+  const ff = (vals) => async (cmd, args) => {
+    if (args.includes('signalstats,metadata=print:key=lavfi.signalstats.YAVG')) return { code: 0, stderr: `Video: h264, 24 fps\n${vals.map((v) => `lavfi.signalstats.YAVG=${v}`).join('\n')}` };
+    writeFileSync(args[args.length - 1], 'x');
+    return { code: 0, stderr: '' };
+  };
+  const dark = await trimDarkOpen({ videoUrl: 'v', fetchImpl: okFetch, runImpl: ff([16, 36, 56, 76, 96, 113, 113, 113]), upload: async () => ({ url: 'https://cdn/x.mp4' }) });
+  assert.deepEqual(dark, { ok: true, url: 'https://cdn/x.mp4', trimmed_s: 0.2083 });
+  const bright = await trimDarkOpen({ videoUrl: 'v', fetchImpl: okFetch, runImpl: ff([113, 113, 113, 113, 113]), upload: async () => { throw new Error('must not upload'); } });
+  assert.deepEqual(bright, { ok: false, unchanged: true });
+});
