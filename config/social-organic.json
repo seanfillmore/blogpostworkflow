@@ -1,0 +1,19 @@
+{
+  "_note": "agents/social-organic: drafts organic posts (carousel, review card, relatable text post) into the Social tab as PENDING. backlog_per_kind = how many unposted items of each kind to keep waiting; max_per_run caps one run. Sean, 2026-11-04: organic posts for engagement, not ads.",
+  "backlog_per_kind": 2,
+  "max_per_run": 3,
+  "_seedNote": "Carousel topics used first, in order (Sean, 2026-11-04: start with deodorant switching and toothpaste ingredients). After these, topics come from Google question searches (GSC) and voice-of-customer objections. A topic is never reused.",
+  "seed_topics": [
+    "What actually happens when you switch from antiperspirant to an aluminum-free deodorant?",
+    "What is really in your toothpaste, and which ingredients can you skip?"
+  ],
+  "_factsNote": "Category facts a carousel may state, beyond config/press-facts.json. Each is general knowledge already stated on our live blog, or follows from our own ingredient lists. Numbers must appear here or in press-facts to be used. Add a fact only when it is true and you would say it on the blog.",
+  "category_facts": [
+    "Antiperspirants reduce sweat with aluminum compounds and are regulated as over-the-counter drugs; deodorants address odor and are cosmetics.",
+    "Real Skin Care's deodorant is aluminum-free and is a deodorant, never an antiperspirant.",
+    "When people switch from an antiperspirant to an aluminum-free deodorant, many notice an adjustment period of a few weeks while their underarms get used to the change.",
+    "Sodium lauryl sulfate (SLS) is the foaming agent in many toothpastes. Real Skin Care's toothpaste contains no SLS and no fluoride, so it foams less.",
+    "Real Skin Care's toothpaste is a gel made with organic virgin coconut oil and baking soda, flavored with mint, cinnamon or nothing at all.",
+    "Every Real Skin Care product is safe for kids."
+  ]
+}

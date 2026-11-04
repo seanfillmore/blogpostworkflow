@@ -36,10 +36,10 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
-import { publishImage, getImageInsights, recentCaptions } from '../../lib/instagram-reels.js';
-import { getPageToken, publishPagePhoto, recentPageMessages, getPagePostInsights } from '../../lib/facebook-page.js';
+import { publishImage, publishCarousel, getImageInsights, recentCaptions } from '../../lib/instagram-reels.js';
+import { getPageToken, publishPagePhoto, publishPagePhotos, recentPageMessages, getPagePostInsights } from '../../lib/facebook-page.js';
 import {
-  ITEMS_DIR, PLATFORMS, loadItems, updateItem, planRun, insightsDue, alreadyPosted, isPosted,
+  ITEMS_DIR, PLATFORMS, loadItems, updateItem, planRun, insightsDue, alreadyPosted, isPosted, itemImages, itemKind,
 } from '../../lib/social-queue.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -66,6 +66,7 @@ export function readConfig(path = CONFIG_PATH) {
   return {
     postsPerDay: Number.isInteger(c.posts_per_day) && c.posts_per_day >= 0 ? c.posts_per_day : 1,
     repeatHeadlineDays: Number.isInteger(c.repeat_headline_days) && c.repeat_headline_days >= 0 ? c.repeat_headline_days : 0,
+    organicFirst: c.organic_first === true,
     platforms: platforms.length ? platforms : [...PLATFORMS],
     igUserId: c.instagram_user_id,
     pageId: c.facebook_page_id,
@@ -79,15 +80,21 @@ export function liveClients({ userToken, igUserId, pageId, fetchImpl = fetch }) 
   return {
     instagram: {
       recent: () => recentCaptions({ igUserId }, { token: userToken, fetchImpl }),
-      publish: async ({ imageUrl, caption }) => {
-        const r = await publishImage({ igUserId, imageUrl, caption }, { token: userToken, fetchImpl });
+      publish: async ({ imageUrl, imageUrls, caption }) => {
+        const r = imageUrls?.length > 1
+          ? await publishCarousel({ igUserId, imageUrls, caption }, { token: userToken, fetchImpl })
+          : await publishImage({ igUserId, imageUrl, caption }, { token: userToken, fetchImpl });
         return { media_id: r.mediaId, permalink: r.permalink };
       },
       insights: (id) => getImageInsights(id, { token: userToken, fetchImpl }),
     },
     facebook: {
       recent: async () => recentPageMessages({ pageId }, { token: await page(), fetchImpl }),
-      publish: async ({ imageUrl, caption }) => {
+      publish: async ({ imageUrl, imageUrls, caption }) => {
+        if (imageUrls?.length > 1) {
+          const r = await publishPagePhotos({ pageId, imageUrls, caption }, { token: await page(), fetchImpl });
+          return { post_id: r.postId, photo_ids: r.photoIds, permalink: r.permalink };
+        }
         const r = await publishPagePhoto({ pageId, imageUrl, caption }, { token: await page(), fetchImpl });
         return { post_id: r.postId, photo_id: r.photoId, permalink: r.permalink };
       },
@@ -134,7 +141,7 @@ async function postItem({ dir, plan, clients, recent, apply, now, log }) {
     }
     if (!apply) { results.push({ platform, outcome: 'would-post' }); continue; }
     try {
-      const r = await clients[platform].publish({ imageUrl: item.image_url, caption: item.caption });
+      const r = await clients[platform].publish({ imageUrl: item.image_url, imageUrls: itemImages(item), caption: item.caption });
       updateItem(dir, item.id, (cur) => ({ ...cur, [platform]: { ...r, posted_at: new Date(now).toISOString() } }));
       results.push({ platform, outcome: 'posted', permalink: r.permalink || null });
     } catch (err) {
@@ -143,7 +150,7 @@ async function postItem({ dir, plan, clients, recent, apply, now, log }) {
       log(`  ${platform} publish failed for ${item.id}: ${err.message}`);
     }
   }
-  return { id: item.id, caption: item.caption, image_url: item.image_url, results };
+  return { id: item.id, kind: itemKind(item), caption: item.caption, image_url: item.image_url, results };
 }
 
 export async function runOnce({
@@ -156,7 +163,7 @@ export async function runOnce({
 } = {}) {
   const insightsRead = apply ? await refreshInsights({ dir, clients, now, log }) : 0;
   const items = loadItems(dir);
-  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now, repeatHeadlineDays: config.repeatHeadlineDays || 0 });
+  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now, repeatHeadlineDays: config.repeatHeadlineDays || 0, organicFirst: !!config.organicFirst });
   const posts = [];
   if (plan.retry || plan.fresh) {
     // Unreadable recent captions on a platform = do not post THERE this run: that
@@ -167,7 +174,8 @@ export async function runOnce({
     }
     for (const which of ['retry', 'fresh']) {
       if (!plan[which]) continue;
-      posts.push({ kind: which, ...(await postItem({ dir, plan: plan[which], clients, recent, apply, now, log })) });
+      const done = await postItem({ dir, plan: plan[which], clients, recent, apply, now, log });
+      posts.push({ ...done, itemKind: done.kind, kind: which });
     }
   }
   const after = apply ? loadItems(dir) : items;
@@ -178,7 +186,7 @@ export async function runOnce({
 export function renderRun(run) {
   const lines = [];
   for (const p of run.posts) {
-    lines.push(`${p.kind === 'retry' ? 'Finishing' : 'New'}: ${p.id}`);
+    lines.push(`${p.kind === 'retry' ? 'Finishing' : 'New'}: ${p.id}${p.itemKind && p.itemKind !== 'ad' ? ` (${p.itemKind})` : ''}`);
     for (const r of p.results) {
       const label = { 'would-post': 'would post', posted: 'posted', failed: 'FAILED', detected: 'already live there, not posted again', unchecked: 'not attempted' }[r.outcome];
       lines.push(`  ${r.platform}: ${label}${r.permalink ? ` ${r.permalink}` : ''}${r.error ? ` (${r.error})` : ''}`);

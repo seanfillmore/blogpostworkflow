@@ -264,6 +264,13 @@ WEEKLY_UGC_REELS_REPORT="2 12 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/ugc-reel
 # here AND live.
 DAILY_SOCIAL_POSTER="20 18 * * 1,3,5 cd \"$PROJECT_DIR\" && $NODE agents/social-poster/index.js --apply >> data/reports/scheduler/social-poster.log 2>&1"
 
+# Organic social drafts (agents/social-organic): carousels, review cards and
+# relatable text posts, drafted PENDING into the Social tab for Sean to approve
+# (Sean, 2026-11-04: statics for engagement, not ads). Saturdays 09:40 UTC: clear
+# of the 15:00 scheduler (it launches one headless Chrome on a 961 MB box) and
+# ahead of Monday's 18:20 posting slot, so there is a weekend to approve.
+WEEKLY_SOCIAL_ORGANIC="40 9 * * 6 cd \"$PROJECT_DIR\" && $NODE agents/social-organic/index.js --apply >> data/reports/scheduler/social-organic.log 2>&1"
+
 # Content-mirror drift gate (daily, DETECT ONLY) — does every local
 # data/posts/*/content.html still hold the article that is actually LIVE?
 #
@@ -659,6 +666,7 @@ $DAILY_CREATOR_REVIEW_ASK
 $DAILY_UGC_REELS
 $WEEKLY_UGC_REELS_REPORT
 $DAILY_SOCIAL_POSTER
+$WEEKLY_SOCIAL_ORGANIC
 $CREATOR_OUTREACH
 $PRESS_OUTREACH
 $PRESS_OUTREACH_DRAFT
@@ -728,6 +736,7 @@ echo "  12:50 UTC — scheduler heartbeat (detect only, never kills a run)"
 echo "  12:55 UTC — trybe-review (creator claim screen; never approves or rejects)"
 echo "  20:20 UTC — ugc-reels (one Trybe creator video to Instagram a day; Mon 12:02 report)"
 echo "  18:20 UTC Mon/Wed/Fri — social-poster (one approved static to Instagram + Facebook)"
+echo "  09:40 UTC Sat — social-organic (drafts organic posts into the Social tab as pending)"
 echo "  12:10 UTC — ad-test-monitor (paid test stop rules; reports, never pauses)"
 echo "  13:40 UTC — inbox-sorter (files new Hushmail mail into learned folders; never deletes)"
 echo "  every 30 min — creator-outreach (creator emails from Hushmail; replies anytime, scheduled 16-24 UTC)"
