@@ -53,7 +53,7 @@ description: Use when deciding what happens to the subscriber relationship rathe
 
 **Evidence offered:** Assertion only. The only rationale given is the cost of the email tool.
 
-**Fit here (5/10):** Durable list hygiene. It is directly relevant to the 1,447 giveaway leads that produced no buyers. Two adaptations matter:
+**Fit here (5/10):** Durable list hygiene. The giveaway list was already pruned on 2026-09-17 (unengaged profiles suppressed, not deleted), so this applies to what remains and to every signup after it. Two adaptations matter:
 
 - **Key inactivity on clicks, site visits and orders, not opens.** Apple MPP inflates opens.
 - **Never sunset past purchasers on email inactivity alone.** Route them to win-back instead. The nine-word probe above is a natural first touch for them.

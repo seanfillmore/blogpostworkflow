@@ -14,7 +14,7 @@ import {
   renderSkillMarkdown,
   validateSkillEdit,
 } from '../../lib/marketing-learner.js';
-import { AOV_TRAILING_90D } from '../../lib/business-baseline.js';
+import { AOV_TRAILING_90D, SHOPIFY_MONTHLY_ORDERS } from '../../lib/business-baseline.js';
 
 const TODAY = '2026-07-27';
 
@@ -2780,12 +2780,15 @@ console.log('\u2713 marketing-learner paid-status freshness tests pass');
   assert.ok(block.indexOf('as large as possible') < block.indexOf('Shopify revenue'),
     'the growth intent must lead, not trail the current-state numbers');
 
-  // ~54/month is Shopify PLUS Amazon; Shopify alone is ~16. Reasoning about the Shopify
-  // funnel on 54 overstates it ~3x, and 142 occurrences in the corpus did exactly that.
-  assert.match(block, /Shopify ~16 orders\/month/,
+  // Shopify alone, never Shopify plus Amazon: reasoning about the Shopify funnel on the
+  // combined figure overstated it ~3x, and 142 occurrences in the corpus did exactly that.
+  // Asserted against the constant, not a literal, so it cannot go stale in lockstep.
+  assert.ok(block.includes(`Shopify ~${SHOPIFY_MONTHLY_ORDERS} orders/month`),
     'the block must give the Shopify-only order figure');
-  assert.match(block, /~54\/month is Shopify PLUS Amazon/,
-    'and must say plainly what the combined figure is, so the two are not confused');
+  assert.match(block, /NOT Shopify volume/,
+    'and must say plainly that Amazon volume is not Shopify volume');
+  // "$30/day" outlived its budget by two months in five prompts. None may spell it now.
+  assert.ok(!block.includes('$30/day'), 'the block must not quote a retired budget');
 
   // $30/day may be used for arithmetic, never as a ceiling.
   assert.match(block, /NOT a ceiling on ambition and\s+never a reason to discount a tactic/,
