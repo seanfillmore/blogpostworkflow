@@ -43,13 +43,13 @@
     },
     "coconut-bar-soap-12-pack": {
       "title": "Coconut Bar Soap — 12-Pack",
-      "price": 88,
-      "priceLabel": "$88",
-      "priceVaries": false,
+      "price": 60,
+      "priceLabel": "$60",
+      "priceVaries": true,
       "compareAtPrice": 132,
       "compareAtLabel": "$132",
-      "savings": 44,
-      "savingsLabel": "$44",
+      "savings": 72,
+      "savingsLabel": "$72",
       "defaultVariantId": "49135322857642",
       "url": "https://www.realskincare.com/products/coconut-bar-soap-12-pack"
     },
@@ -83,13 +83,13 @@
     },
     "coconut-bar-soap-4-pack": {
       "title": "Coconut Bar Soap — 4-Pack",
-      "price": 39,
-      "priceLabel": "$39",
-      "priceVaries": false,
+      "price": 29,
+      "priceLabel": "$29",
+      "priceVaries": true,
       "compareAtPrice": 44,
       "compareAtLabel": "$44",
-      "savings": 5,
-      "savingsLabel": "$5",
+      "savings": 15,
+      "savingsLabel": "$15",
       "defaultVariantId": "48868611457194",
       "url": "https://www.realskincare.com/products/coconut-bar-soap-4-pack"
     },
@@ -117,17 +117,17 @@
       "defaultVariantId": "48941796982954",
       "url": "https://www.realskincare.com/products/coconut-toothpaste-3-pack"
     },
-    "hand-soap-set": {
-      "title": "Hand Soap Set",
-      "price": 44,
-      "priceLabel": "$44",
-      "priceVaries": true,
-      "compareAtPrice": 52,
-      "compareAtLabel": "$52",
-      "savings": 8,
-      "savingsLabel": "$8",
-      "defaultVariantId": "48939262640298",
-      "url": "https://www.realskincare.com/products/hand-soap-set"
+    "coconut-hand-soap-5-pack": {
+      "title": "Coconut Hand Soap — 5-Pack",
+      "price": 52,
+      "priceLabel": "$52",
+      "priceVaries": false,
+      "compareAtPrice": 65,
+      "compareAtLabel": "$65",
+      "savings": 13,
+      "savingsLabel": "$13",
+      "defaultVariantId": "67598917370026",
+      "url": "https://www.realskincare.com/products/coconut-hand-soap-5-pack"
     },
     "clean-swap": {
       "title": "The Clean Swap",

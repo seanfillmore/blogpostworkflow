@@ -14,6 +14,14 @@
 
   Prices and the rating are read live (all_products + Judge.me metafields);
   nothing numeric is baked into the copy.
+
+  CAROUSEL (Sean, 2026-11-04): when "Promo slide" is enabled the hero becomes a
+  two-slide carousel, the original slide first (it keeps the page's H1 and the
+  eager LCP image) and the promo slide second (H2, lazy image). Scroll-snap does
+  the sliding, so it swipes natively on phones; dots and arrows move it, it
+  advances every 7s, and it stops for good on the first touch, click, hover or
+  keyboard focus. No autoplay under prefers-reduced-motion. With the promo slide
+  off, the markup is the single hero exactly as before.
 {%- endcomment -%}
 
 {%- assign p = all_products[section.settings.product_handle] -%}
@@ -40,7 +48,13 @@
   A fixed-height full-bleed box had cropped the bottle cap at 1920px+.
 {%- endcomment -%}
 {%- assign hhs_ratio = section.settings.image_desktop.aspect_ratio | default: 2.357 -%}
-<section class="hhs" style="--hhs-ratio: {{ hhs_ratio }};" aria-label="{{ section.settings.heading | strip_html | escape }}">
+{%- assign promo_on = false -%}
+{%- if section.settings.promo_enabled and section.settings.promo_image_desktop != blank -%}{%- assign promo_on = true -%}{%- endif -%}
+{%- if promo_on -%}
+<div class="hhs-car" data-hhs-car style="--hhs-ratio: {{ hhs_ratio }};" role="region" aria-roledescription="carousel" aria-label="Featured">
+  <div class="hhs-car__track" data-hhs-track>
+{%- endif -%}
+<section class="hhs{% if promo_on %} hhs--slide{% endif %}" {% if promo_on %}aria-roledescription="slide" aria-label="1 of 2" {% endif %}style="--hhs-ratio: {{ hhs_ratio }};" aria-label="{{ section.settings.heading | strip_html | escape }}">
   <div class="hhs__media">
     {%- if section.settings.image_desktop -%}
       <picture>
@@ -91,6 +105,72 @@
   </div>
 </section>
 
+{%- if promo_on -%}
+  {%- assign pp = all_products[section.settings.promo_pack_handle] -%}
+  <section class="hhs hhs--slide hhs--promo" aria-roledescription="slide" aria-label="2 of 2">
+    <div class="hhs__media">
+      <picture>
+        {%- if section.settings.promo_image_mobile -%}
+          <source media="(max-width: 989px)" srcset="{{ section.settings.promo_image_mobile | image_url: width: 800 }} 800w, {{ section.settings.promo_image_mobile | image_url: width: 1200 }} 1200w" sizes="100vw">
+        {%- endif -%}
+        <img src="{{ section.settings.promo_image_desktop | image_url: width: 1920 }}"
+             srcset="{{ section.settings.promo_image_desktop | image_url: width: 1280 }} 1280w, {{ section.settings.promo_image_desktop | image_url: width: 1920 }} 1920w, {{ section.settings.promo_image_desktop | image_url: width: 2560 }} 2560w"
+             sizes="100vw" alt="{{ section.settings.promo_image_alt | escape }}"
+             width="{{ section.settings.promo_image_desktop.width }}" height="{{ section.settings.promo_image_desktop.height }}"
+             loading="lazy" class="hhs__img hhs__img--promo">
+      </picture>
+    </div>
+    <div class="hhs__inner">
+      <div class="hhs__col hhs__col--left hhs__col--promo">
+        <p class="hhs__kicker">{{ section.settings.promo_kicker }}</p>
+        <h2 class="hhs__h1 hhs__h1--promo">{{ section.settings.promo_heading }}</h2>
+        <p class="hhs__sub">{{ section.settings.promo_text }}</p>
+        <a class="hhs__cta button" href="{{ section.settings.promo_cta_url }}">{{ section.settings.promo_cta_label }}</a>
+        {%- if section.settings.promo_add_label != blank and section.settings.promo_add_url != blank -%}
+          <p class="hhs__offer"><a class="hhs__link" href="{{ section.settings.promo_add_url }}">{{ section.settings.promo_add_label }}</a></p>
+        {%- endif -%}
+        {%- if pp != blank and pp.available -%}
+          <p class="hhs__guarantee">{{ section.settings.promo_pack_label }}
+            {%- assign pv = pp.selected_or_first_available_variant -%}{%- assign pv_id = section.settings.promo_pack_variant | plus: 0 -%}{%- for v in pp.variants -%}{%- if v.id == pv_id -%}{%- assign pv = v -%}{%- endif -%}{%- endfor -%}<a class="hhs__link" href="{{ pp.url }}{% if section.settings.promo_pack_variant != blank %}?variant={{ section.settings.promo_pack_variant }}{% endif %}">{{ pv.price | money_without_trailing_zeros }}</a></p>
+        {%- endif -%}
+        {%- if section.settings.promo_fine != blank -%}<p class="hhs__fine">{{ section.settings.promo_fine }}</p>{%- endif -%}
+      </div>
+    </div>
+  </section>
+  </div>
+  <div class="hhs-car__nav">
+    <button type="button" class="hhs-car__arrow" data-hhs-prev aria-label="Previous slide">&#8249;</button>
+    <button type="button" class="hhs-car__dot" data-hhs-dot="0" aria-label="Show slide 1" aria-current="true"></button>
+    <button type="button" class="hhs-car__dot" data-hhs-dot="1" aria-label="Show slide 2"></button>
+    <button type="button" class="hhs-car__arrow" data-hhs-next aria-label="Next slide">&#8250;</button>
+  </div>
+</div>
+<script>
+(function () {
+  var car = document.currentScript.previousElementSibling;
+  if (!car || !car.hasAttribute('data-hhs-car')) return;
+  var track = car.querySelector('[data-hhs-track]');
+  var slides = track.children, dots = car.querySelectorAll('[data-hhs-dot]');
+  var cur = 0, timer = null;
+  // Slides differ in height on phones; size the track to the slide in view so no gap shows under a short one.
+  function fit() { track.style.height = slides[cur].offsetHeight + 'px'; }
+  function go(i) { cur = (i + slides.length) % slides.length; track.scrollTo({ left: slides[cur].offsetLeft, behavior: 'smooth' }); fit(); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  track.addEventListener('scroll', function () {
+    var i = Math.round(track.scrollLeft / track.clientWidth);
+    if (i !== cur && i >= 0 && i < slides.length) { cur = i; fit(); }
+    for (var d = 0; d < dots.length; d++) dots[d].setAttribute('aria-current', d === cur ? 'true' : 'false');
+  }, { passive: true });
+  for (var d = 0; d < dots.length; d++) dots[d].addEventListener('click', function (e) { stop(); go(+e.currentTarget.getAttribute('data-hhs-dot')); });
+  car.querySelector('[data-hhs-prev]').addEventListener('click', function () { stop(); go(cur - 1); });
+  car.querySelector('[data-hhs-next]').addEventListener('click', function () { stop(); go(cur + 1); });
+  ['pointerdown', 'mouseenter', 'focusin', 'touchstart', 'wheel'].forEach(function (ev) { car.addEventListener(ev, stop, { passive: true, once: true }); });
+  fit(); window.addEventListener('resize', fit); window.addEventListener('load', fit);
+  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) timer = setInterval(function () { go(cur + 1); }, 7000);
+})();
+</script>
+{%- endif -%}
+
 <style>
   .hhs{position:relative;background:#f4f2ee;overflow:hidden;color:#151515}
   .hhs__media,.hhs__media picture{display:block}
@@ -108,6 +188,19 @@
   .hhs__offer{margin:10px 0 0;font-size:14px;font-weight:700;color:#151515}
   .hhs__guarantee{display:flex;align-items:center;gap:6px;margin:8px 0 0;font-size:13px;color:#2f3133}
 
+  .hhs-car{position:relative;max-width:1920px;margin:0 auto}
+  .hhs-car__track{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;align-items:flex-start}
+  .hhs-car__track::-webkit-scrollbar{display:none}
+  .hhs--slide{flex:0 0 100%;scroll-snap-align:start;scroll-snap-stop:always}
+  .hhs-car__track{transition:height .3s ease;background:#f4f2ee}
+  .hhs-car__nav{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:2;display:flex;align-items:center;gap:10px;padding:5px 10px;border-radius:999px;background:rgba(250,249,246,.85)}
+  .hhs-car__dot{width:10px;height:10px;border-radius:50%;border:1px solid #151515;background:transparent;padding:0;cursor:pointer}
+  .hhs-car__dot[aria-current="true"]{background:#151515}
+  .hhs-car__arrow{border:0;background:transparent;font-size:26px;line-height:1;padding:0 8px;cursor:pointer;color:#151515}
+  .hhs__link{color:#151515;text-decoration:underline;font-weight:700}
+  .hhs__fine{margin:10px 0 0;font-size:12px;line-height:1.4;color:#5a5c5e}
+  .hhs--promo .hhs__kicker{display:block}
+
   @media screen and (min-width:990px){
     .hhs{max-width:1920px;margin:0 auto;height:max(460px,calc(min(100vw,1920px) / var(--hhs-ratio)))}
     .hhs__media{position:absolute;inset:0}
@@ -117,6 +210,7 @@
     .hhs__col{background:rgba(250,249,246,.82);backdrop-filter:blur(2px);border-radius:14px;padding:26px 28px;max-width:430px}
     .hhs__col--left{grid-column:1;justify-self:start}
     .hhs__col--right{grid-column:3;justify-self:end}
+    .hhs--slide{max-width:none}
   }
   @media screen and (max-width:989px){
     .hhs__media{height:clamp(300px,92vw,480px);overflow:hidden}
@@ -129,6 +223,10 @@
     .hhs__col--right{order:2}
     .hhs__kicker,.hhs__h2{display:none}
     .hhs__bullets{order:3;margin-top:20px}
+    .hhs--promo .hhs__col--promo{display:block}
+    .hhs--promo .hhs__h1--promo{font-size:26px}
+    .hhs__img--promo{object-position:50% 70%}
+    .hhs-car__nav{bottom:auto;left:auto;right:12px;transform:none;top:calc(clamp(300px,92vw,480px) - 44px)}
   }
 </style>
 
@@ -147,7 +245,23 @@
     { "type": "text", "id": "guarantee", "label": "Guarantee line", "default": "30-day money-back guarantee" },
     { "type": "image_picker", "id": "image_desktop", "label": "Image (desktop, wide 21:9)" },
     { "type": "image_picker", "id": "image_mobile", "label": "Image (mobile, 4:5)" },
-    { "type": "text", "id": "image_alt", "label": "Image alt text", "default": "Real Skin Care Pure Unscented body lotion on a bathroom vanity" }
+    { "type": "text", "id": "image_alt", "label": "Image alt text", "default": "Real Skin Care Pure Unscented body lotion on a bathroom vanity" },
+    { "type": "header", "content": "Promo slide (turns the hero into a carousel)" },
+    { "type": "checkbox", "id": "promo_enabled", "label": "Show promo slide", "default": false },
+    { "type": "text", "id": "promo_kicker", "label": "Promo kicker" },
+    { "type": "text", "id": "promo_heading", "label": "Promo headline (H2)" },
+    { "type": "text", "id": "promo_text", "label": "Promo text" },
+    { "type": "text", "id": "promo_cta_label", "label": "Promo button label" },
+    { "type": "text", "id": "promo_cta_url", "label": "Promo button link" },
+    { "type": "text", "id": "promo_add_label", "label": "Secondary link label" },
+    { "type": "text", "id": "promo_add_url", "label": "Secondary link URL" },
+    { "type": "text", "id": "promo_pack_handle", "label": "Pack handle (live price line)" },
+    { "type": "text", "id": "promo_pack_label", "label": "Pack line label" },
+    { "type": "text", "id": "promo_pack_variant", "label": "Pack variant id (link opens this variant)" },
+    { "type": "text", "id": "promo_fine", "label": "Promo fine print" },
+    { "type": "image_picker", "id": "promo_image_desktop", "label": "Promo image (desktop, wide 21:9)" },
+    { "type": "image_picker", "id": "promo_image_mobile", "label": "Promo image (mobile, 4:5)" },
+    { "type": "text", "id": "promo_image_alt", "label": "Promo image alt text" }
   ],
   "blocks": [
     { "type": "bullet", "name": "Result bullet", "settings": [ { "type": "text", "id": "text", "label": "Text" } ] }

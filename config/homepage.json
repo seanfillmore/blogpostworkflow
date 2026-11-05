@@ -18,7 +18,25 @@
       "Sinks in within minutes, without the greasy feel",
       "Gentle enough for sensitive skin and kids",
       "No fragrance, parabens or silicones"
-    ]
+    ],
+    "promo": {
+      "_why": "Sean 2026-11-04: ~1,500 surplus Pure Unscented bars (24-month shelf life). Automatic discount '2 free Pure Unscented bars on $60+' (scripts/unscented-bar-push.mjs); Pure Unscented 4-pack $29, 12-pack $60.",
+      "enabled": true,
+      "kicker": "Free gift with your order",
+      "heading": "2 free Pure Unscented bars on orders of $60+",
+      "text": "Our coconut oil hand and body soap, with nothing added for scent. Spend $60, add two bars, and they ring up at $0.",
+      "cta_label": "Shop all products",
+      "cta_url": "/collections/all-products",
+      "add_label": "Already at $60? Add your 2 free bars",
+      "add_url": "/cart/add?id=45828179951786&quantity=2",
+      "pack_handle": "coconut-bar-soap-4-pack",
+      "pack_variant": "48868611588266",
+      "pack_label": "Stocking up? The Pure Unscented 4-pack is now",
+      "fine": "Spend $60 or more on other products, then add 2 Pure Unscented bars. One gift per order, while supplies last.",
+      "image_desktop": "shopify://shop_images/home-hero-soap-desktop.webp",
+      "image_mobile": "shopify://shop_images/home-hero-soap-mobile.webp",
+      "image_alt": "Three Real Skin Care Pure Unscented coconut bar soaps on a bathroom vanity"
+    }
   },
   "grid": [
     {
