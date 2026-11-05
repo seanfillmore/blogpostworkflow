@@ -40,6 +40,7 @@ export function copyLines(cfg) {
   const pr = h.promo?.enabled ? h.promo : null;
   return [h.heading, h.kicker, h.product_heading, h.subheading, h.cta_label, h.guarantee, ...h.bullets,
     ...(pr ? [pr.kicker, pr.heading, pr.text, pr.cta_label, pr.add_label, pr.pack_label, pr.fine] : []),
+    ...(pr?.alt ? [pr.alt.kicker, pr.alt.heading, pr.alt.text, pr.alt.add_label, pr.alt.fine] : []),
     ...cfg.grid.flatMap((c) => [c.title, c.line]), cfg.reviews.heading, cfg.reviews.link_label,
     ...(cfg.set_offer ? [cfg.set_offer.kicker, cfg.set_offer.heading, cfg.set_offer.subheading, ...cfg.set_offer.bullets, cfg.set_offer.cta_label, cfg.set_offer.link_label, cfg.set_offer.guarantee] : []),
     ...(cfg.text_overrides ?? []).map((o) => o.value.replace(/<[^>]+>/g, ' ')),
@@ -381,6 +382,11 @@ export function promoSettings(pr) {
     promo_cta_label: pr.cta_label, promo_cta_url: pr.cta_url, promo_add_label: pr.add_label ?? '', promo_add_url: pr.add_url ?? '',
     promo_pack_handle: pr.pack_handle ?? '', promo_pack_variant: pr.pack_variant ?? '', promo_pack_label: pr.pack_label ?? '',
     promo_fine: pr.fine ?? '', promo_image_desktop: pr.image_desktop, promo_image_mobile: pr.image_mobile, promo_image_alt: pr.image_alt,
+    ...(pr.alt ? {
+      promo_alt_start: String(Date.parse(pr.alt.start) / 1000), promo_alt_end: String(Date.parse(pr.alt.end) / 1000),
+      promo_alt_kicker: pr.alt.kicker, promo_alt_heading: pr.alt.heading, promo_alt_text: pr.alt.text,
+      promo_alt_add_label: pr.alt.add_label, promo_alt_add_url: pr.alt.add_url, promo_alt_fine: pr.alt.fine,
+    } : {}),
   };
 }
 
