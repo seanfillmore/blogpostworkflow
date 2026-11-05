@@ -40,7 +40,7 @@ import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { GoogleGenAI } from '@google/genai';
 import { renderVariation } from '../agents/ad-studio/render.js';
-import { FRAME_BUILDERS } from '../lib/pdp-frame-prompts.js';
+import { FRAME_BUILDERS, sharedRequirements } from '../lib/pdp-frame-prompts.js';
 
 const ROOT = process.cwd();
 const OUT = join(ROOT, 'data', 'creatives', 'pdp-frames-batch2');
@@ -63,11 +63,13 @@ const PRODUCTS = {
     product: `THE PRODUCT — copy it exactly from the reference photograph, which shows this bar and nothing else.
 
 A ROUND white bar of soap, about 3.5 inches across and roughly half an inch thick, with a distinctive PLEATED / scalloped rim where the wrapping pressed it. It lies flat, face up. The printed face carries, top to bottom: the brand name "real" in large lowercase near-black text with "SKIN CARE" in small spaced capitals beneath it; a small circular THIN GREY OUTLINE badge reading "MADE WITH ORGANIC COCONUT OIL"; a photographic green leaf with water droplets on it; then "pure unscented" in bold lowercase and "hand & body soap" smaller beneath. Small print curves around the outer edge of the face. It is a solid bar — NOT a bottle, NOT a jar, NOT wrapped, and there is no cap, pump or applicator of any kind.`,
-    offer: { headline: '4 BARS FOR $39', price: '$9.75', sub: 'a bar when you buy four', checks: ['Save $5 against four singles', 'The 12-pack works out at $7.33 a bar'] },
+    // Re-priced 2026-11-04 (Sean: move surplus Pure Unscented). The frame is shared by all
+    // four scents, so it has to be true for each: "from $29" with the other scents' price stated.
+    offer: { headline: '4 BARS FROM $29', price: '$7.25', sub: 'a bar for the Pure Unscented 4-pack', checks: ['Other scents: 4 bars for $39', 'Pure Unscented 12-pack: $60, $5 a bar'] },
     proof: { quote: 'Bar soap lathers up very well. The unscented is an excellent choice for sensitive people.', who: 'Stephen', label: 'Verified purchase' },
     compare: { them: 'Conventional bar', rows: [['No SLS or SLES', 'SLS, SLES'], ['No rendered animal fat', 'Tallow'], ['No EDTA', 'EDTA'], ['No dyes', 'Synthetic dyes']] },
     sources: {
-      offer: 'Live catalogue 2026-09-10: coconut-soap $11.00; coconut-bar-soap-4-pack $39.00 (3 of 5 variants in stock); coconut-bar-soap-12-pack $88.00 (3 of 5 in stock). 39/4 = 9.75; 4x11 = 44, saving 5. 88/12 = 7.33.',
+      offer: 'Live catalogue 2026-11-04: coconut-bar-soap-4-pack 4x Pure Unscented $29.00, other single-scent variants $39.00; coconut-bar-soap-12-pack 12x Pure Unscented $60.00. 29/4 = 7.25; 60/12 = 5.00. (Was 2026-09-10: 4-pack $39, 12-pack $88.)',
       proof: 'Judge.me, coconut-soap, Stephen, 5 stars, verified-purchase, verbatim first two sentences. No review count shown — the product has 8 reviews and an unreconciled widget count, so no number is published.',
       compare: 'Rows taken verbatim from the live bar-soap-not-in-it.png frame. Comparison column is the generic category; no competitor named.',
     },

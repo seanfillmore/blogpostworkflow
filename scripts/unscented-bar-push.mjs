@@ -35,6 +35,17 @@ export const FREE_QTY = '2';
 export const BAR_PRODUCT_HANDLE = 'coconut-soap';
 export const BAR_VARIANT = 'gid://shopify/ProductVariant/45828179951786'; // Pure Unscented single
 export const TOOTHPASTE_DISCOUNT = 'gid://shopify/DiscountAutomaticNode/1597510942890';
+// Black Friday (Sean, 2026-11-04: "offer even more bars at a lower threshold"): 3 free bars
+// on $45+ (the free-shipping line), Fri Nov 27 00:00 PST to Mon Nov 30 23:59:59 PST. Same
+// qualifying set (the free bars never count). It does NOT stack with the standing $60
+// offer: tested 2026-11-04 with a 10-minute live copy, a $60 cart with 5 bars got 3 free,
+// because Shopify applies one buy-X-get-Y per item. During those days 3 bars at $45 simply
+// supersedes 2 at $60. It combines with product discounts so the toothpaste 15% still applies.
+export const BF = {
+  title: 'Black Friday: 3 free Pure Unscented bars on $45+',
+  min: '45.00', qty: '3',
+  startsAt: '2026-11-27T08:00:00Z', endsAt: '2026-12-01T07:59:59Z',
+};
 export const PRICE_CHANGES = [
   { handle: 'coconut-bar-soap-4-pack', variant: 'gid://shopify/ProductVariant/48868611588266', from: '39.00', to: '29.00' },
   { handle: 'coconut-bar-soap-12-pack', variant: 'gid://shopify/ProductVariant/49135322988714', from: '88.00', to: '60.00' },
@@ -88,6 +99,31 @@ async function main() {
     const out = r.discountAutomaticBxgyCreate;
     if (out.userErrors.length) throw new Error(JSON.stringify(out.userErrors));
     console.log(`1. created "${TITLE}" ${out.automaticDiscountNode.id}`);
+  }
+
+  // 1b. Black Friday BXGY, scheduled
+  const bfExisting = await shopifyGraphQL(`{ discountNodes(first: 5, query: "title:'${BF.title}'") { nodes { id } } }`);
+  if (bfExisting.discountNodes.nodes.length) {
+    console.log(`1b. "${BF.title}" already exists (${bfExisting.discountNodes.nodes[0].id}); not recreated`);
+  } else if (!APPLY) {
+    console.log(`1b. would create "${BF.title}": $${BF.min}+ -> ${BF.qty} free bars, ${BF.startsAt} to ${BF.endsAt}`);
+  } else {
+    const r = await shopifyGraphQL(`mutation($d: DiscountAutomaticBxgyInput!) {
+      discountAutomaticBxgyCreate(automaticBxgyDiscount: $d) {
+        automaticDiscountNode { id } userErrors { field message } } }`, {
+      d: {
+        title: BF.title, startsAt: BF.startsAt, endsAt: BF.endsAt, usesPerOrderLimit: '1',
+        combinesWith: { productDiscounts: true, shippingDiscounts: true, orderDiscounts: false },
+        customerBuys: { value: { amount: BF.min }, items: { products: items } },
+        customerGets: {
+          value: { discountOnQuantity: { quantity: BF.qty, effect: { percentage: 1.0 } } },
+          items: { products: { productVariantsToAdd: [BAR_VARIANT] } },
+        },
+      },
+    });
+    const out = r.discountAutomaticBxgyCreate;
+    if (out.userErrors.length) throw new Error(JSON.stringify(out.userErrors));
+    console.log(`1b. created "${BF.title}" ${out.automaticDiscountNode.id} (scheduled)`);
   }
 
   // 2. toothpaste stacking

@@ -107,6 +107,18 @@
 
 {%- if promo_on -%}
   {%- assign pp = all_products[section.settings.promo_pack_handle] -%}
+  {%- comment -%} A dated variant of the promo (Black Friday 2026) swaps in on its own
+      between promo_alt_start and promo_alt_end (unix seconds), then swaps back. {%- endcomment -%}
+  {%- assign pr_kicker = section.settings.promo_kicker -%}{%- assign pr_heading = section.settings.promo_heading -%}
+  {%- assign pr_text = section.settings.promo_text -%}{%- assign pr_add_label = section.settings.promo_add_label -%}
+  {%- assign pr_add_url = section.settings.promo_add_url -%}{%- assign pr_fine = section.settings.promo_fine -%}
+  {%- assign now_s = 'now' | date: '%s' | plus: 0 -%}
+  {%- assign alt_a = section.settings.promo_alt_start | plus: 0 -%}{%- assign alt_b = section.settings.promo_alt_end | plus: 0 -%}
+  {%- if alt_a > 0 and now_s >= alt_a and now_s <= alt_b -%}
+    {%- assign pr_kicker = section.settings.promo_alt_kicker -%}{%- assign pr_heading = section.settings.promo_alt_heading -%}
+    {%- assign pr_text = section.settings.promo_alt_text -%}{%- assign pr_add_label = section.settings.promo_alt_add_label -%}
+    {%- assign pr_add_url = section.settings.promo_alt_add_url -%}{%- assign pr_fine = section.settings.promo_alt_fine -%}
+  {%- endif -%}
   <section class="hhs hhs--slide hhs--promo" aria-roledescription="slide" aria-label="2 of 2">
     <div class="hhs__media">
       <picture>
@@ -122,18 +134,18 @@
     </div>
     <div class="hhs__inner">
       <div class="hhs__col hhs__col--left hhs__col--promo">
-        <p class="hhs__kicker">{{ section.settings.promo_kicker }}</p>
-        <h2 class="hhs__h1 hhs__h1--promo">{{ section.settings.promo_heading }}</h2>
-        <p class="hhs__sub">{{ section.settings.promo_text }}</p>
+        <p class="hhs__kicker">{{ pr_kicker }}</p>
+        <h2 class="hhs__h1 hhs__h1--promo">{{ pr_heading }}</h2>
+        <p class="hhs__sub">{{ pr_text }}</p>
         <a class="hhs__cta button" href="{{ section.settings.promo_cta_url }}">{{ section.settings.promo_cta_label }}</a>
-        {%- if section.settings.promo_add_label != blank and section.settings.promo_add_url != blank -%}
-          <p class="hhs__offer"><a class="hhs__link" href="{{ section.settings.promo_add_url }}">{{ section.settings.promo_add_label }}</a></p>
+        {%- if pr_add_label != blank and pr_add_url != blank -%}
+          <p class="hhs__offer"><a class="hhs__link" href="{{ pr_add_url }}">{{ pr_add_label }}</a></p>
         {%- endif -%}
         {%- if pp != blank and pp.available -%}
           <p class="hhs__guarantee">{{ section.settings.promo_pack_label }}
             {%- assign pv = pp.selected_or_first_available_variant -%}{%- assign pv_id = section.settings.promo_pack_variant | plus: 0 -%}{%- for v in pp.variants -%}{%- if v.id == pv_id -%}{%- assign pv = v -%}{%- endif -%}{%- endfor -%}<a class="hhs__link" href="{{ pp.url }}{% if section.settings.promo_pack_variant != blank %}?variant={{ section.settings.promo_pack_variant }}{% endif %}">{{ pv.price | money_without_trailing_zeros }}</a></p>
         {%- endif -%}
-        {%- if section.settings.promo_fine != blank -%}<p class="hhs__fine">{{ section.settings.promo_fine }}</p>{%- endif -%}
+        {%- if pr_fine != blank -%}<p class="hhs__fine">{{ pr_fine }}</p>{%- endif -%}
       </div>
     </div>
   </section>
@@ -246,7 +258,7 @@
     { "type": "image_picker", "id": "image_desktop", "label": "Image (desktop, wide 21:9)" },
     { "type": "image_picker", "id": "image_mobile", "label": "Image (mobile, 4:5)" },
     { "type": "text", "id": "image_alt", "label": "Image alt text", "default": "Real Skin Care Pure Unscented body lotion on a bathroom vanity" },
-    { "type": "header", "content": "Promo slide (turns the hero into a carousel)" },
+    { "type": "header", "content": "Promo slide (makes a carousel)" },
     { "type": "checkbox", "id": "promo_enabled", "label": "Show promo slide", "default": false },
     { "type": "text", "id": "promo_kicker", "label": "Promo kicker" },
     { "type": "text", "id": "promo_heading", "label": "Promo headline (H2)" },
@@ -261,7 +273,16 @@
     { "type": "text", "id": "promo_fine", "label": "Promo fine print" },
     { "type": "image_picker", "id": "promo_image_desktop", "label": "Promo image (desktop, wide 21:9)" },
     { "type": "image_picker", "id": "promo_image_mobile", "label": "Promo image (mobile, 4:5)" },
-    { "type": "text", "id": "promo_image_alt", "label": "Promo image alt text" }
+    { "type": "text", "id": "promo_image_alt", "label": "Promo image alt text" },
+    { "type": "header", "content": "Dated promo variant" },
+    { "type": "text", "id": "promo_alt_start", "label": "Start (unix seconds)" },
+    { "type": "text", "id": "promo_alt_end", "label": "End (unix seconds)" },
+    { "type": "text", "id": "promo_alt_kicker", "label": "Kicker" },
+    { "type": "text", "id": "promo_alt_heading", "label": "Headline (H2)" },
+    { "type": "text", "id": "promo_alt_text", "label": "Text" },
+    { "type": "text", "id": "promo_alt_add_label", "label": "Secondary link label" },
+    { "type": "text", "id": "promo_alt_add_url", "label": "Secondary link URL" },
+    { "type": "text", "id": "promo_alt_fine", "label": "Fine print" }
   ],
   "blocks": [
     { "type": "bullet", "name": "Result bullet", "settings": [ { "type": "text", "id": "text", "label": "Text" } ] }
