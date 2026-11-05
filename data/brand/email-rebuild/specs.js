@@ -43,7 +43,16 @@ const price = (handle) => {
   if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
   // priceLabel, not price — the raw number renders "$46.8" for a $46.80 product.
   if (!p.priceLabel) throw new Error(`${handle} has no priceLabel — regenerate the catalog`);
+  // The catalog price is the LOWEST variant. When variants differ (since 2026-11-04 the
+  // Pure Unscented bar packs are cheaper than the other scents), quoting it bare would
+  // put one scent's price on all of them. Use priceFrom() so the copy says "from".
+  if (p.priceVaries) throw new Error(`${handle}: variant prices differ; use priceFrom()`);
   return p.priceLabel;
+};
+const priceFrom = (handle) => {
+  const p = CATALOG[handle];
+  if (!p?.priceLabel) throw new Error(`no catalog price for ${handle} — run build-product-catalog.mjs`);
+  return p.priceVaries ? `from ${p.priceLabel}` : p.priceLabel;
 };
 // Bundle savings, for the multipack placements added 2026-08-30. THROWS rather than
 // degrading to no saving: a bundle whose whole argument is "cheaper per unit" and which
@@ -53,7 +62,8 @@ const savings = (handle) => {
   const p = CATALOG[handle];
   if (!p) throw new Error(`no catalog entry for ${handle} — run build-product-catalog.mjs`);
   if (!p.savingsLabel) throw new Error(`${handle} has no savingsLabel — is it actually discounted?`);
-  return p.savingsLabel;
+  // The largest saving across variants; "up to" when they differ, for the same reason as priceFrom().
+  return p.priceVaries ? `up to ${p.savingsLabel}` : p.savingsLabel;
 };
 const variant = (handle) => {
   const p = CATALOG[handle];
@@ -716,7 +726,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
           ['coconut-deodorant-4-pack', 'Deodorant 4-Pack', 'Deodorant'],
           ['coconut-toothpaste-3-pack', 'Toothpaste 3-Pack', 'Toothpaste'],
         ].map(([handle, label, key]) =>
-          `{% if "${key}" in items %}${secondaryButton(`${label} — ${price(handle)}, save ${savings(handle)}`, variant(handle))}{% endif %}`,
+          `{% if "${key}" in items %}${secondaryButton(`${label} — ${priceFrom(handle)}, save ${savings(handle)}`, variant(handle))}{% endif %}`,
         ).join('\n'),
       },
       { type: 'raw', html: ITEMS_CLOSE },
@@ -780,7 +790,7 @@ ${para('Everything is handmade in the USA from a short ingredient list, and the 
       },
       {
         type: 'raw',
-        html: productRow('Bar Soap 12-Pack', price('coconut-bar-soap-12-pack'), `Roughly a year of soap — save ${savings('coconut-bar-soap-12-pack')}.`, `${PDP}/coconut-bar-soap-12-pack`),
+        html: productRow('Bar Soap 12-Pack', priceFrom('coconut-bar-soap-12-pack'), `Roughly a year of soap — save ${savings('coconut-bar-soap-12-pack')}.`, `${PDP}/coconut-bar-soap-12-pack`),
       },
       { type: 'signoff' },
     ],

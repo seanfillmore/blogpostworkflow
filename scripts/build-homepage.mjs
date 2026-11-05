@@ -37,7 +37,9 @@ export function loadConfig() {
 /** Pure: every line a shopper reads, for the gate. */
 export function copyLines(cfg) {
   const h = cfg.hero;
+  const pr = h.promo?.enabled ? h.promo : null;
   return [h.heading, h.kicker, h.product_heading, h.subheading, h.cta_label, h.guarantee, ...h.bullets,
+    ...(pr ? [pr.kicker, pr.heading, pr.text, pr.cta_label, pr.add_label, pr.pack_label, pr.fine] : []),
     ...cfg.grid.flatMap((c) => [c.title, c.line]), cfg.reviews.heading, cfg.reviews.link_label,
     ...(cfg.set_offer ? [cfg.set_offer.kicker, cfg.set_offer.heading, cfg.set_offer.subheading, ...cfg.set_offer.bullets, cfg.set_offer.cta_label, cfg.set_offer.link_label, cfg.set_offer.guarantee] : []),
     ...(cfg.text_overrides ?? []).map((o) => o.value.replace(/<[^>]+>/g, ' ')),
@@ -371,6 +373,17 @@ export function renderSetOffer(o) {
 {%- endif -%}`;
 }
 
+/** Pure: the hero's promo-slide settings. Disabled (or absent) writes promo_enabled false and nothing else. */
+export function promoSettings(pr) {
+  if (!pr?.enabled) return { promo_enabled: false };
+  return {
+    promo_enabled: true, promo_kicker: pr.kicker, promo_heading: pr.heading, promo_text: pr.text,
+    promo_cta_label: pr.cta_label, promo_cta_url: pr.cta_url, promo_add_label: pr.add_label ?? '', promo_add_url: pr.add_url ?? '',
+    promo_pack_handle: pr.pack_handle ?? '', promo_pack_variant: pr.pack_variant ?? '', promo_pack_label: pr.pack_label ?? '',
+    promo_fine: pr.fine ?? '', promo_image_desktop: pr.image_desktop, promo_image_mobile: pr.image_mobile, promo_image_alt: pr.image_alt,
+  };
+}
+
 /** Pure: apply the three swaps to a parsed index.json. Returns notes; throws if an anchor is missing. */
 export function transform(parsed, cfg, roster) {
   const notes = [];
@@ -392,7 +405,8 @@ export function transform(parsed, cfg, roster) {
     blocks, block_order: Object.keys(blocks),
     settings: { heading: h.heading, kicker: h.kicker, product_heading: h.product_heading, subheading: h.subheading,
       product_handle: h.product_handle, pack_handle: h.pack_handle, pack_units: h.pack_units, cta_label: h.cta_label,
-      guarantee: h.guarantee, image_desktop: h.image_desktop, image_mobile: h.image_mobile, image_alt: h.image_alt },
+      guarantee: h.guarantee, image_desktop: h.image_desktop, image_mobile: h.image_mobile, image_alt: h.image_alt,
+      ...promoSettings(h.promo) },
   });
   if (parsed.order.includes('hero-overrides')) {
     parsed.order = parsed.order.filter((k) => k !== 'hero-overrides');

@@ -46,7 +46,22 @@
         "guarantee": "30-day money-back guarantee",
         "image_desktop": "shopify:\/\/shop_images\/home-hero-lotion-desktop.webp",
         "image_mobile": "shopify:\/\/shop_images\/home-hero-lotion-mobile.webp",
-        "image_alt": "Real Skin Care Pure Unscented body lotion on a bathroom vanity"
+        "image_alt": "Real Skin Care Pure Unscented body lotion on a bathroom vanity",
+        "promo_enabled": true,
+        "promo_kicker": "Free gift with your order",
+        "promo_heading": "2 free Pure Unscented bars on orders of $60+",
+        "promo_text": "Our coconut oil hand and body soap, with nothing added for scent. Spend $60, add two bars, and they ring up at $0.",
+        "promo_cta_label": "Shop all products",
+        "promo_cta_url": "\/collections\/all-products",
+        "promo_add_label": "Already at $60? Add your 2 free bars",
+        "promo_add_url": "\/cart\/add?id=45828179951786&quantity=2",
+        "promo_pack_handle": "coconut-bar-soap-4-pack",
+        "promo_pack_variant": "48868611588266",
+        "promo_pack_label": "Stocking up? The Pure Unscented 4-pack is now",
+        "promo_fine": "Spend $60 or more on other products, then add 2 Pure Unscented bars. One gift per order, while supplies last.",
+        "promo_image_desktop": "shopify:\/\/shop_images\/home-hero-soap-desktop.webp",
+        "promo_image_mobile": "shopify:\/\/shop_images\/home-hero-soap-mobile.webp",
+        "promo_image_alt": "Three Real Skin Care Pure Unscented coconut bar soaps on a bathroom vanity"
       }
     },
     "product-intro": {
