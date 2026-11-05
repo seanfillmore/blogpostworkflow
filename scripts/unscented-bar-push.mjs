@@ -41,9 +41,13 @@ export const TOOTHPASTE_DISCOUNT = 'gid://shopify/DiscountAutomaticNode/15975109
 // offer: tested 2026-11-04 with a 10-minute live copy, a $60 cart with 5 bars got 3 free,
 // because Shopify applies one buy-X-get-Y per item. During those days 3 bars at $45 simply
 // supersedes 2 at $60. It combines with product discounts so the toothpaste 15% still applies.
+// Changed 2026-11-05 (Sean: "Why not 3 free bars on any paid order? ... at least they are
+// paying shipping"): no dollar minimum, just one qualifying (non-bar) item in the cart. A cart
+// of only Pure Unscented singles still pays for them. Orders under $45 pay shipping.
 export const BF = {
-  title: 'Black Friday: 3 free Pure Unscented bars on $45+',
-  min: '45.00', qty: '3',
+  title: 'Black Friday: 3 free Pure Unscented bars with any order',
+  oldTitles: ['Black Friday: 3 free Pure Unscented bars on $45+'],
+  minQty: '1', qty: '3',
   startsAt: '2026-11-27T08:00:00Z', endsAt: '2026-12-01T07:59:59Z',
 };
 export const PRICE_CHANGES = [
@@ -101,12 +105,14 @@ async function main() {
     console.log(`1. created "${TITLE}" ${out.automaticDiscountNode.id}`);
   }
 
-  // 1b. Black Friday BXGY, scheduled
+  // 1b. Black Friday BXGY, scheduled. Shopify will not switch a BXGY from a dollar minimum
+  // to an item count in place, so an earlier version is DELETED after the new one exists
+  // (both are scheduled, not active, so nothing is ever without its discount).
   const bfExisting = await shopifyGraphQL(`{ discountNodes(first: 5, query: "title:'${BF.title}'") { nodes { id } } }`);
   if (bfExisting.discountNodes.nodes.length) {
     console.log(`1b. "${BF.title}" already exists (${bfExisting.discountNodes.nodes[0].id}); not recreated`);
   } else if (!APPLY) {
-    console.log(`1b. would create "${BF.title}": $${BF.min}+ -> ${BF.qty} free bars, ${BF.startsAt} to ${BF.endsAt}`);
+    console.log(`1b. would create "${BF.title}": any ${BF.minQty}+ qualifying item -> ${BF.qty} free bars, ${BF.startsAt} to ${BF.endsAt}`);
   } else {
     const r = await shopifyGraphQL(`mutation($d: DiscountAutomaticBxgyInput!) {
       discountAutomaticBxgyCreate(automaticBxgyDiscount: $d) {
@@ -114,7 +120,7 @@ async function main() {
       d: {
         title: BF.title, startsAt: BF.startsAt, endsAt: BF.endsAt, usesPerOrderLimit: '1',
         combinesWith: { productDiscounts: true, shippingDiscounts: true, orderDiscounts: false },
-        customerBuys: { value: { amount: BF.min }, items: { products: items } },
+        customerBuys: { value: { quantity: BF.minQty }, items: { products: items } },
         customerGets: {
           value: { discountOnQuantity: { quantity: BF.qty, effect: { percentage: 1.0 } } },
           items: { products: { productVariantsToAdd: [BAR_VARIANT] } },
@@ -124,6 +130,15 @@ async function main() {
     const out = r.discountAutomaticBxgyCreate;
     if (out.userErrors.length) throw new Error(JSON.stringify(out.userErrors));
     console.log(`1b. created "${BF.title}" ${out.automaticDiscountNode.id} (scheduled)`);
+  }
+  for (const old of BF.oldTitles) {
+    const o = await shopifyGraphQL(`{ discountNodes(first: 5, query: "title:'${old}'") { nodes { id } } }`);
+    for (const n of o.discountNodes.nodes) {
+      if (!APPLY) { console.log(`1b. would delete superseded ${n.id} "${old}"`); continue; }
+      const r = await shopifyGraphQL(`mutation($id: ID!) { discountAutomaticDelete(id: $id) { userErrors { message } } }`, { id: n.id });
+      if (r.discountAutomaticDelete.userErrors.length) throw new Error(JSON.stringify(r.discountAutomaticDelete.userErrors));
+      console.log(`1b. deleted superseded ${n.id} "${old}"`);
+    }
   }
 
   // 2. toothpaste stacking
