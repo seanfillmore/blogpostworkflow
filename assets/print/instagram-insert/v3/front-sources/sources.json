@@ -1,0 +1,15 @@
+{
+  "_note": "Tiles of the v3 front grid, in grid order (row by row). Source images are cached here because Graph API media URLs expire. focusY is the vertical crop position for the square crop (CSS background-position y).",
+  "tiles": [
+    { "file": "reel-creator-1.jpg", "kind": "creator reel still", "source": "Instagram Graph API thumbnail_url", "ig_media_id": "18187699453419038", "permalink": "https://www.instagram.com/reel/DfOHOP4gqRx/", "px": "640x1136", "focusY": 0.4 },
+    { "file": "carousel-switching-deodorant.jpg", "kind": "carousel cover", "source": "social-queue organic-carousel-2026-11-04-1-what-actually-happens-when-you-switch-fr (approved)", "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-carousel-2026-11-04-1-what-actually-happens-when-you-switch-fr-1.jpg?v=1793796239", "px": "1080x1350", "focusY": 0.5 },
+    { "file": "review-ella-m.jpg", "kind": "review card", "source": "social-queue organic-review-2026-11-04-2-ella-m (pending)", "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-review-2026-11-04-2-ella-m-1_824003f5-a247-4e65-95c3-d8295f1df87f.jpg?v=1793815513", "px": "1080x1350", "focusY": 0.5 },
+    { "file": "relatable-toothpaste-aisle.jpg", "kind": "relatable post", "source": "social-queue organic-relatable-2026-11-04-3-standing-in-the-toothpaste-aisle-reading (approved)", "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-relatable-2026-11-04-3-standing-in-the-toothpaste-aisle-reading-1.jpg?v=1793796268", "px": "1080x1350", "focusY": 0.4 },
+    { "file": "water-cooler-4.5s.png", "kind": "Water Cooler ad still", "source": "ffmpeg frame at 4.5 s (first subtitle-free frame with both toddlers) of https://cdn.shopify.com/videos/c/o/v/0ae7a43673b94de5a6ee6694f9dede6e.mp4", "px": "1080x1920", "focusY": 0.45 },
+    { "file": "reel-creator-2.jpg", "kind": "creator reel still", "source": "Instagram Graph API thumbnail_url", "ig_media_id": "18199424599387652", "permalink": "https://www.instagram.com/reel/DfQJq9hDASl/", "px": "640x1136", "focusY": 0.55 },
+    { "file": "review-laurel-e.jpg", "kind": "review card", "source": "social-queue organic-review-2026-11-04-3-laurel-e (pending)", "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-review-2026-11-04-3-laurel-e-1.jpg?v=1793815517", "px": "1080x1350", "focusY": 0.5 },
+    { "file": "reel-creator-3.jpg", "kind": "creator reel still", "source": "Instagram Graph API thumbnail_url", "ig_media_id": "18132918316837967", "permalink": "https://www.instagram.com/reel/DfLAFgGEU5A/", "px": "640x1136", "focusY": 0.55 },
+    { "file": "carousel-whats-in-your-toothpaste.jpg", "kind": "carousel cover", "source": "social-queue organic-carousel-2026-11-04-1-what-is-really-in-your-toothpaste-and-wh (pending)", "url": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/organic-carousel-2026-11-04-1-what-is-really-in-your-toothpaste-and-wh-1.jpg?v=1793815296", "px": "1080x1350", "focusY": 0.5 }
+  ],
+  "profile": { "file": "profile.jpg", "source": "Instagram Graph API profile_picture_url", "px": "320x320" }
+}

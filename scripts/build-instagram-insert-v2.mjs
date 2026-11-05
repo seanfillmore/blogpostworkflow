@@ -41,13 +41,13 @@ const TRIM_W = 3;
 const TRIM_H = 5;
 const BLEED = 0.05;
 const SAFE = 0.15;
-const PAGE_W = TRIM_W + 2 * BLEED;
-const PAGE_H = TRIM_H + 2 * BLEED;
-const PAD = BLEED + SAFE; // page edge to safe line
+export const PAGE_W = TRIM_W + 2 * BLEED;
+export const PAGE_H = TRIM_H + 2 * BLEED;
+export const PAD = BLEED + SAFE; // page edge to safe line
 const PRINT_DPI = 350;
 const PREVIEW_PX = 1200;
 const HANDLE = '@realskincare_com';
-const C = { black: '#000000', sand: '#EDE5D8', green: '#AEDEAC', white: '#FFFFFF', paper: '#FBF8F2' };
+export const C = { black: '#000000', sand: '#EDE5D8', green: '#AEDEAC', white: '#FFFFFF', paper: '#FBF8F2' };
 
 // All visible copy, by direction. The in-phone UI text in A is included too.
 export const COPY = Object.freeze({
@@ -107,16 +107,16 @@ const png = (p) => uri(p, 'image/png');
 const jpg = (p) => uri(p, 'image/jpeg');
 const cutout = (name) => png(join(CUTOUTS, `${name}.png`));
 
-async function qrSvg(light = C.white) {
+export async function qrSvg(light = C.white) {
   return QRCode.toString(IG_URL, { type: 'svg', errorCorrectionLevel: 'M', margin: 4, color: { dark: C.black, light } });
 }
 
-function caveatCss() {
+export function caveatCss() {
   const b64 = readFileSync(join(V2, 'fonts', 'caveat-latin.woff2')).toString('base64');
   return `@font-face{font-family:'Caveat';font-weight:400 700;font-style:normal;font-display:block;src:url(data:font/woff2;base64,${b64}) format('woff2');}`;
 }
 
-function page(body, extraCss = '') {
+export function page(body, extraCss = '') {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
 ${fontFaceCss()}
 ${caveatCss()}
@@ -275,7 +275,7 @@ body { background: ${C.sand}; }
 }
 
 // ---------- render + verify ----------
-async function renderSide(browser, html, { pdfPath, pngPath, expectQr }) {
+export async function renderSide(browser, html, { pdfPath, pngPath, expectQr }) {
   const pg = await browser.newPage();
   const cssW = PAGE_W * 96;
   const cssH = PAGE_H * 96;
