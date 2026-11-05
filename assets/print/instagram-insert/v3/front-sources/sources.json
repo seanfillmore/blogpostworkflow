@@ -44,11 +44,11 @@
     {
       "file": "reel-creator-2.jpg",
       "kind": "creator reel still",
-      "source": "frame at 3.4 s of the Reel video (Graph API media_url), replacing the cover thumbnail where her eyes were closed (Sean, 2026-11-05)",
+      "source": "frame 25 (0.83 s; the 0.8 s tile on the cut sheet) of the Reel video (Graph API media_url), chosen by Sean from a cut sheet on 2026-11-05; the cover frame had her eyes closed",
       "ig_media_id": "18199424599387652",
       "permalink": "https://www.instagram.com/reel/DfQJq9hDASl/",
       "px": "720x1280",
-      "focusY": 0.48
+      "focusY": 0.55
     },
     {
       "file": "review-laurel-e.jpg",
