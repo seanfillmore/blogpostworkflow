@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Instagram DMs: answers the bio's "DM 'Natural' for $10 off your first order"
- * with a unique single-use code, and lists every other DM waiting on Sean.
+ * Instagram DMs: answers the two DM offers (the bio's "DM 'Natural'" and the
+ * packing card's "DM us THANKS") with unique single-use codes, and lists every
+ * other DM waiting on Sean.
  * Policy lives in lib/instagram-dm.js.
  *
  * The codes belong to ONE Shopify code discount (created by --setup-discount):
@@ -15,7 +16,7 @@
  *   node agents/instagram-dm/index.js                    # dry run: what would be sent
  *   node agents/instagram-dm/index.js --apply            # send replies (cron, every 10 min)
  *   node agents/instagram-dm/index.js --digest           # DMs waiting on Sean, into the 5 AM digest (cron, daily)
- *   node agents/instagram-dm/index.js --setup-discount [--apply]   # create the discount + first 200 codes (once)
+ *   node agents/instagram-dm/index.js --setup-discount --offer <natural|thanks> [--apply]   # create an offer's discount + first 200 codes (once)
  *
  * State: data/instagram-dm/state.json (gitignored, server-owned): the discount
  * id, the unassigned pool, who got which code, and which messages were handled.
@@ -29,12 +30,11 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { getPageToken, listIgConversations, sendIgMessage } from '../../lib/facebook-page.js';
-import { planReplies, awaitingReply, replyText, genCodes, POOL_LOW } from '../../lib/instagram-dm.js';
+import { planReplies, awaitingReply, genCodes, normalizeState, OFFERS, POOL_LOW } from '../../lib/instagram-dm.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 export const STATE_PATH = join(ROOT, 'data', 'instagram-dm', 'state.json');
 const CONFIG_PATH = join(ROOT, 'config', 'instagram-dm.json');
-const NEVER_PURCHASED_SEGMENT = 'gid://shopify/Segment/365228064938'; // number_of_orders = 0 (scripts/flows/align-offers-2026-10-05.mjs)
 
 function loadEnv(root = ROOT) {
   try {
@@ -51,9 +51,8 @@ function loadEnv(root = ROOT) {
 }
 
 export function readState(path = STATE_PATH) {
-  if (!existsSync(path)) return { discount_id: null, pool: [], assigned: {}, handled: {}, sent: [] };
-  const s = JSON.parse(readFileSync(path, 'utf8'));
-  return { discount_id: s.discount_id || null, pool: s.pool || [], assigned: s.assigned || {}, handled: s.handled || {}, sent: s.sent || [] };
+  if (!existsSync(path)) return normalizeState({});
+  return normalizeState(JSON.parse(readFileSync(path, 'utf8')));
 }
 
 export function writeState(state, path = STATE_PATH) {
@@ -73,45 +72,39 @@ async function shopifyGql(query, variables) {
   return shopifyGraphQL(query, variables);
 }
 
-/** Add codes to the discount in Shopify, then (only then) to the local pool. */
-export async function addCodes(state, n, { gql = shopifyGql, log = console.log } = {}) {
-  const taken = new Set([...state.pool, ...Object.values(state.assigned).map((a) => a.code)]);
-  const codes = genCodes(n, Math.random, taken);
+/** Add codes to an offer's discount in Shopify, then (only then) to its local pool. */
+export async function addCodes(state, offer, n, { gql = shopifyGql, log = console.log } = {}) {
+  const o = state.offers[offer];
+  const taken = new Set([...o.pool, ...Object.values(o.assigned).map((a) => a.code)]);
+  const codes = genCodes(n, Math.random, taken, OFFERS[offer].prefix);
   for (let i = 0; i < codes.length; i += 100) {
     const chunk = codes.slice(i, i + 100);
-    const r = await gql('mutation($id:ID!,$codes:[DiscountRedeemCodeInput!]!){ discountRedeemCodeBulkAdd(discountId:$id,codes:$codes){ bulkCreation{ id } userErrors{ message } } }', { id: state.discount_id, codes: chunk.map((code) => ({ code })) });
+    const r = await gql('mutation($id:ID!,$codes:[DiscountRedeemCodeInput!]!){ discountRedeemCodeBulkAdd(discountId:$id,codes:$codes){ bulkCreation{ id } userErrors{ message } } }', { id: o.discount_id, codes: chunk.map((code) => ({ code })) });
     const errs = r?.discountRedeemCodeBulkAdd?.userErrors || [];
     if (errs.length) throw new Error(`discountRedeemCodeBulkAdd: ${errs.map((e) => e.message).join('; ')}`);
-    state.pool.push(...chunk);
+    o.pool.push(...chunk);
   }
-  log(`  added ${codes.length} codes (pool now ${state.pool.length})`);
+  log(`  ${offer}: added ${codes.length} codes (pool now ${o.pool.length})`);
 }
 
-export async function setupDiscount({ apply, gql = shopifyGql, log = console.log }) {
+export async function setupDiscount({ offer, apply, gql = shopifyGql, log = console.log }) {
+  if (!OFFERS[offer]) throw new Error(`unknown offer "${offer}" (${Object.keys(OFFERS).join(', ')})`);
   const state = readState();
-  if (state.discount_id) { log(`Discount already set up: ${state.discount_id} (${state.pool.length} unassigned codes).`); return state; }
-  const first = genCodes(1)[0];
-  const input = {
-    title: 'Instagram DM $10 off first order (unique, single use)',
-    code: first,
-    startsAt: new Date().toISOString(),
-    usageLimit: 1,
-    appliesOncePerCustomer: true,
-    customerSelection: { customerSegments: { add: [NEVER_PURCHASED_SEGMENT] } },
-    customerGets: { value: { discountAmount: { amount: '10.00', appliesOnEachItem: false } }, items: { all: true } },
-    combinesWith: { shippingDiscounts: true, orderDiscounts: false, productDiscounts: false },
-  };
-  log(`Would create: ${JSON.stringify(input)}`);
+  const o = state.offers[offer];
+  if (o.discount_id) { log(`${offer}: discount already set up: ${o.discount_id} (${o.pool.length} unassigned codes).`); return state; }
+  const first = genCodes(1, Math.random, new Set(), OFFERS[offer].prefix)[0];
+  const input = { title: OFFERS[offer].title, code: first, startsAt: new Date().toISOString(), ...OFFERS[offer].discount };
+  log(`${apply ? 'Creating' : 'Would create'}: ${JSON.stringify(input)}`);
   if (!apply) return state;
   const r = await gql('mutation($b:DiscountCodeBasicInput!){ discountCodeBasicCreate(basicCodeDiscount:$b){ codeDiscountNode{ id } userErrors{ field message } } }', { b: input });
   const errs = r?.discountCodeBasicCreate?.userErrors || [];
   if (errs.length) throw new Error(`discountCodeBasicCreate: ${JSON.stringify(errs)}`);
-  state.discount_id = r.discountCodeBasicCreate.codeDiscountNode.id;
-  state.pool = [first];
+  o.discount_id = r.discountCodeBasicCreate.codeDiscountNode.id;
+  o.pool = [first];
   writeState(state);
-  await addCodes(state, 199, { gql, log });
+  await addCodes(state, offer, 199, { gql, log });
   writeState(state);
-  log(`Created ${state.discount_id} with ${state.pool.length} codes.`);
+  log(`${offer}: created ${o.discount_id} with ${o.pool.length} codes.`);
   return state;
 }
 
@@ -126,13 +119,14 @@ export async function runOnce({ apply, conversations, state, send, now = Date.no
   for (const s of sends) {
     if (!apply) { done.push({ ...s, outcome: 'would-send' }); continue; }
     try {
-      await send({ recipientId: s.recipientId, text: replyText(s.code) });
+      await send({ recipientId: s.recipientId, text: OFFERS[s.offer].reply(s.code) });
+      const o = state.offers[s.offer];
       if (!s.reused) {
-        state.pool = state.pool.filter((c) => c !== s.code);
-        state.assigned[s.recipientId] = { code: s.code, at: new Date(now).toISOString(), username: s.username };
+        o.pool = o.pool.filter((c) => c !== s.code);
+        o.assigned[s.recipientId] = { code: s.code, at: new Date(now).toISOString(), username: s.username };
       }
       state.handled[s.messageId] = true;
-      state.sent.push({ at: new Date(now).toISOString(), username: s.username, code: s.code, reused: s.reused });
+      state.sent.push({ at: new Date(now).toISOString(), offer: s.offer, username: s.username, code: s.code, reused: s.reused });
       save(state);
       done.push({ ...s, outcome: 'sent' });
     } catch (err) {
@@ -146,7 +140,11 @@ export async function runOnce({ apply, conversations, state, send, now = Date.no
 async function main() {
   const args = process.argv.slice(2);
   const apply = args.includes('--apply');
-  if (args.includes('--setup-discount')) { await setupDiscount({ apply }); return; }
+  if (args.includes('--setup-discount')) {
+    const oi = args.indexOf('--offer');
+    await setupDiscount({ offer: oi >= 0 ? args[oi + 1] : 'natural', apply });
+    return;
+  }
   const config = readConfig();
   if (config.enabled === false) { console.log('instagram-dm is switched off (config/instagram-dm.json)'); return; }
   const env = loadEnv();
@@ -160,7 +158,7 @@ async function main() {
     const waiting = awaitingReply(conversations, state);
     const day = state.sent.filter((s) => Date.now() - Date.parse(s.at) < 86_400_000);
     const lines = [
-      `${day.length} "Natural" code(s) sent automatically in the last 24 h; ${state.pool.length} unused codes left.`,
+      ...Object.keys(OFFERS).map((k) => `${day.filter((d) => (d.offer || 'natural') === k).length} "${OFFERS[k].keyword.toUpperCase()}" code(s) sent automatically in the last 24 h; ${state.offers[k].pool.length} unused codes left.`),
       waiting.length ? `${waiting.length} DM conversation(s) waiting on you (newest first; Instagram allows a reply only within 24 h of their last message):` : 'No DMs waiting on you.',
       ...waiting.map((w) => `  @${w.username}, ${w.ageHours} h ago${w.canReply ? '' : ' (past the 24 h reply window)'}: ${w.preview}`),
     ];
@@ -169,18 +167,20 @@ async function main() {
     return;
   }
 
-  if (!state.discount_id) throw new Error('no discount set up: run --setup-discount --apply first');
-  if (apply && state.pool.length < POOL_LOW) await addCodes(state, 200).then(() => writeState(state));
+  if (!Object.values(state.offers).some((o) => o.discount_id)) throw new Error('no discount set up: run --setup-discount --offer <key> --apply first');
+  for (const [k, o] of Object.entries(state.offers)) {
+    if (apply && o.discount_id && o.pool.length < POOL_LOW) { await addCodes(state, k, 200); writeState(state); }
+  }
   const run = await runOnce({
     apply, conversations, state,
     send: ({ recipientId, text }) => sendIgMessage({ recipientId, text }, { token: pageToken }),
   });
-  for (const d of run.done) console.log(`${d.outcome}: @${d.username} ${d.code}${d.reused ? ' (same code as before)' : ''}${d.error ? ` (${d.error})` : ''}`);
+  for (const d of run.done) console.log(`${d.outcome}: ${d.offer} @${d.username} ${d.code}${d.reused ? ' (same code as before)' : ''}${d.error ? ` (${d.error})` : ''}`);
   for (const s of run.stale) console.log(`not answered: @${s.username} (${s.reason || 'older than 24 h; in the digest'})`);
-  if (!run.done.length && !run.stale.length) console.log('No new "Natural" requests.');
+  if (!run.done.length && !run.stale.length) console.log('No new offer requests.');
   const failed = run.done.filter((d) => d.outcome === 'failed');
   if (apply && failed.length) {
-    await notify({ subject: `Instagram DMs: ${failed.length} "Natural" code(s) failed to send`, body: failed.map((f) => `@${f.username}: ${f.error}`).join('\n'), status: 'info', category: 'social' });
+    await notify({ subject: `Instagram DMs: ${failed.length} offer code(s) failed to send`, body: failed.map((f) => `@${f.username}: ${f.error}`).join('\n'), status: 'info', category: 'social' });
   }
 }
 
