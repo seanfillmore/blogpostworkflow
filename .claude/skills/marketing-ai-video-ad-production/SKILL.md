@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-video-ad-production
-description: End-to-end production of scripted AI video ads: a reusable director skill that turns the script into a persistent per-cut shot list used as the single source of truth for all generations, plus a global style prefix for cross-shot consistency, standalone non-referential prompt rules, behaviour-based acting direction, geo-spatial blocking, shot-length and storyboard-depth defaults, coverage harvesting, spend tapering and credit-repair moves.
+description: End-to-end production of scripted AI video ads. Covers a reusable director skill that turns a locked, approved script into a persistent per-cut shot list, used as the single source of truth for all generations and never allowed to rewrite the copy. Also covers a global style prefix for cross-shot consistency, standalone non-referential prompt rules, behaviour-based acting direction, geo-spatial blocking, shot-length and storyboard-depth defaults, a still-frame demographic-fidelity gate before animation, choosing stylised over photoreal formats and matching the animation style to the gravity of the problem, coverage harvesting, spend tapering, credit-repair moves, and a strip-away test before shipping.
 ---
 
 # Ai Video Ad Production
@@ -19,7 +19,7 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 ## Write a single global 'Style Prefix' block — photorealism level, lighting doctrine, colour ratio, lens and shutter, skin detail, acting register, physics, continuity, frame rate, audio rules — and prepend it verbatim to every single shot prompt in the project, then reinforce it per shot with the specific lighting geometry of that frame.
 
-**Why it works:** A video model has no project-level memory, so the only way a sequence of separately generated clips shares one look is if the same look instruction is physically present in each prompt. Keeping it as one locked block means every prompt is copy-paste-ready standalone with no reassembly. The per-shot reinforcement — where the window is, what the haze is doing, which colour dominates — tells the model where to actually place the rim light rather than leaving it to chance.
+**Why it works:** A video model has no project-level memory, so the only way a sequence of separately generated clips shares one look is if the same look instruction is physically present in each prompt. Keeping it as one locked block means every prompt is copy-paste-ready standalone with no reassembly. The per-shot reinforcement — where the window is, what the haze is doing, which colour dominates — tells the model where to actually place the rim light rather than leaving it to chance. The prefix encodes whichever render style the project has chosen. If the ad is Pixar-style or claymation rather than photoreal (see the style-choice sections below), that style goes into the prefix and is locked the same way.
 
 **Evidence offered:** Assertion only — presented as the skill's law, with a full default prefix supplied.
 
@@ -67,15 +67,17 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 2 of 6)*
 
-## Feed the director the full script with wardrobe, setting, actions, feelings and reactions specified per scene — not a loose summary — because a generic brief produces generic output.
+## Feed the director the full script with wardrobe, setting, actions, feelings and reactions specified per scene — not a loose summary — because a generic brief produces generic output. Treat that approved script as locked: when the pipeline splits it into scenes and prompts, it must never rewrite the copy.
 
-**Why it works:** The shot list can only be as specific as the story it is derived from; if the model has to invent wardrobe, location and emotional beats it will default to averaged, interchangeable choices, and every downstream generation inherits that vagueness. 'Give Claude generic AI slop and you get generic AI slop.'
+**Why it works:** The shot list can only be as specific as the story it is derived from; if the model has to invent wardrobe, location and emotional beats it will default to averaged, interchangeable choices, and every downstream generation inherits that vagueness. 'Give Claude generic AI slop and you get generic AI slop.' The lock matters because the script often carries a proven message being re-rendered in a new format. Any wording the model 'improves' during scene breakdown silently turns a one-variable test (new visual style) into a two-variable one (new style plus new copy), and you can no longer tell which change moved the result. Instruct the director skill explicitly to carry dialogue and voiceover lines through verbatim, and diff the lines in the shot list against the approved script before generating.
 
-**Evidence offered:** Stated explicitly while uploading the script, with the script's level of detail enumerated; assertion only.
+**Evidence offered:** Stated explicitly while uploading the script, with the script's level of detail enumerated; assertion only. The locked-copy rule is also assertion only, stated as a rule of an AI-ads agency SOP.
 
-**Fit here (6/10):** Translates cleanly to RSC: the wardrobe, bathroom or gym setting and the emotional beat of a deodorant ad are exactly the details that decide whether a generated clip looks like his buyer's actual morning. Sits at 6 rather than higher because it is adjacent to existing claims about not briefing a model cold — the new material is specifically which fields the script must carry before shot-listing.
+**Fit here (6/10):** Translates cleanly to RSC: the wardrobe, bathroom or gym setting and the emotional beat of a deodorant ad are exactly the details that decide whether a generated clip looks like his buyer's actual morning. The lock is the guardrail that makes re-rendering a Trybe UGC winner's script in a new AI style a clean test, and it applies to any skill-driven pipeline he runs. It sits at 6 rather than higher because it is adjacent to existing claims about not briefing a model cold. The new material is which fields the script must carry before shot-listing, and that the copy is frozen once it does.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 2 of 6)*
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
 
 ## Use the LLM for concept breadth and for critique, but write the script yourself: brief it with the rough idea and the video's job, harvest and pick from the variations it returns, write your own version, then paste that draft back and ask for feedback that tightens it.
 
@@ -191,15 +193,37 @@ description: End-to-end production of scripted AI video ads: a reusable director
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 2 of 6)*
 
-## Build an AI video ad in five fixed stages in order — script outline, character generation, storyboard, video generation, edit — rather than prompting a video model straight from an idea.
+## Build an AI video ad in five fixed stages in order — script outline, character generation, storyboard, video generation, edit — rather than prompting a video model straight from an idea. Between storyboard and video generation, gate every character and frame against the strategic details in the brief before anything is animated.
 
-**Why it works:** Each stage's output is the next stage's input: the script decides how many characters exist, the characters become the reference images, every storyboard frame becomes the literal start frame of a clip, and the clips become the edit. Skipping a stage means regenerating everything downstream, because image-to-video inherits whatever the frame got wrong.
+**Why it works:** Each stage's output is the next stage's input: the script decides how many characters exist, the characters become the reference images, every storyboard frame becomes the literal start frame of a clip, and the clips become the edit. Skipping a stage means regenerating everything downstream, because image-to-video inherits whatever the frame got wrong. That inheritance is why the gate goes at the still-frame stage. Image models drift toward young, generic subjects, but the buyer's self-recognition depends on the on-screen subject matching their age and situation. A senior dog that must look senior, or a 60-year-old lead who renders as 35, decides whether the ad wins. Before animating, check each frame against the brief's named strategic details: age, skin condition, body type, setting and life situation. Regenerate any frame that misses. Catching the miss on a still costs one image; catching it after animation costs every clip built on that frame.
 
-**Evidence offered:** Demonstrated end to end on one ad; creator asserts the same style of ad took a company from $5M to $100M in a year, and that the whole piece cost under $30 to produce.
+**Evidence offered:** Demonstrated end to end on one ad; creator asserts the same style of ad took a company from $5M to $100M in a year, and that the whole piece cost under $30 to produce. The fidelity gate is backed by a second creator's own failed and corrected examples (the senior dog, the 60-year-old lead).
 
-**Fit here (7/10):** RSC publishes its own short-form video and runs Meta creative, and the operator does every craft role himself — this pipeline lets him produce a scripted, multi-character ad with no second person on camera and no shoot day, in a category (natural soap/deodorant) that is Dr. Squatch's own. The fixed order is the part that survives tool churn; the named tools are fast-decaying platform mechanics.
+**Fit here (7/10):** RSC publishes its own short-form video and runs Meta creative, and the operator does every craft role himself — this pipeline lets him produce a scripted, multi-character ad with no second person on camera and no shoot day, in a category (natural soap/deodorant) that is Dr. Squatch's own. The fixed order is the part that survives tool churn; the named tools are fast-decaying platform mechanics. The fidelity gate scores 6/10 on its own. RSC's body-cream buyers skew older than models' default subjects, so age and skin-condition fidelity in AI frames is a real risk the storyboard rules below do not otherwise name.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
+
+## Do not start with photoreal AI drama. Point first attempts at stylised formats — Pixar-style, claymation, songs — because realistic AI drama comes back with jarring cuts and robotic voices and needs heavy rework.
+
+**Why it works:** Current video models fail most visibly at realistic human acting and dialogue. Viewers forgive a stylised world, but they read photoreal flaws as fake, and that collapses belief in the claim. Stylised formats therefore ship with far less rework per dollar. When an ad does need photoreal dialogue, budget for the rework and lean on the coverage, repair and acting-direction rules in this skill.
+
+**Evidence offered:** The creator's realistic AI drama ad cost $239.59, versus about $20–30 for Pixar-style and Suno song ads, and needed about 45% rework.
+
+**Fit here (6/10):** RSC's Gemini Omni output includes dialogue scenes, so this tells the operator where to point first attempts. It is platform mechanics (fast decay) and reflects November 2026 model capability, so revisit it as models improve. Runnable today.
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
+
+## Choose the animation style to match the gravity of the problem the ad addresses. Pixar-style carries emotion for a serious problem; a health problem rendered in Lego reads as a joke.
+
+**Why it works:** The visual style sets the emotional register before a word lands. A style that undercuts the problem's seriousness makes the claim feel unserious and kills belief. Pick the style per angle, not per brand. Lock the chosen style into the Style Prefix so every shot carries the same register.
+
+**Evidence offered:** The creator's own pattern: Pixar is 'usually the style that works best for us' on serious problems.
+
+**Fit here (6/10):** RSC already runs AI-generated video (Gemini Omni), so picking a style is a live decision. Skin and odour problems span light (sweaty commute) to tender (eczema-prone dry skin), so the gravity-to-style match matters per angle. A durable principle, runnable today.
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
 
 ## Scale storyboard depth to the type of video — a talking-head piece needs almost none and leans on the script, a visual-heavy ad or narrative piece needs a full one — and do not start generating any video until the whole storyboard is settled.
 
@@ -284,3 +308,13 @@ description: End-to-end production of scripted AI video ads: a reusable director
 **Fit here (7/10):** A concrete acceptance test that stops a solo operator burning credits and hours re-rolling frames the edit will cover anyway. Complements the existing rule to reject clips for shaky-camera and auto-zoom defects by naming what is NOT worth rejecting for.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI ad creation lessons" (transcript, part 3 of 6)*
+
+## Before shipping, run a strip-away test on every AI ad: remove the animation and ask whether it is still a real ad. If a phone could have shot the hook, the AI version needs a reason to exist, because cute is not proof.
+
+**Why it works:** AI novelty can mask a weak message. Stripping the visual exposes whether the script carries a selling argument on its own. The phone test stops credits being spent where cheaper real footage would read as more credible. If the stripped script has no argument, fix the script. If a phone could shoot the hook, use real footage there and keep AI for what a phone cannot capture.
+
+**Evidence offered:** Assertion only.
+
+**Fit here (5/10):** Useful as a pre-ship gate, since RSC has abundant approved Trybe UGC that could carry many hooks a phone could shoot. It adds a ship/no-ship audit of the finished ad rather than a production rule. A durable principle, runnable today.
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
