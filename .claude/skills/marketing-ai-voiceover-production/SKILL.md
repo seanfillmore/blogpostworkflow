@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-voiceover-production
-description: Cast, clone and direct AI voices for narrated video — delivery direction, expressiveness settings, replacing a video model's native audio — and build the sound bed under it with stacked effects and generated music.
+description: Cast, clone and direct AI voices for narrated video — delivery direction, expressiveness settings, replacing a video model's native audio — build the sound bed under it with stacked effects and generated music, and produce sung AI song ads from an unrhymed direct-response script.
 ---
 
 # Ai Voiceover Production
@@ -77,7 +77,7 @@ description: Cast, clone and direct AI voices for narrated video — delivery di
 
 ## Generate the background music with an AI music tool, prompting its job rather than a genre vibe — 'no vocals, slow pulsing background track to serve as the backbone of the video, suspenseful' — and generate two options so you can pick the one that fits the dialogue.
 
-**Why it works:** Music raises the stakes and pushes a narrated video forward even when viewers do not consciously notice it, so a bed built for the specific narration outperforms a library track. Prompting the function — no vocals, pulsing, backbone — rather than a style keeps the bed from competing with the voiceover it sits under.
+**Why it works:** Music raises the stakes and pushes a narrated video forward even when viewers do not consciously notice it, so a bed built for the specific narration outperforms a library track. Prompting the function — no vocals, pulsing, backbone — rather than a style keeps the bed from competing with the voiceover it sits under. (When the music *is* the ad rather than the bed under a narrator, use the song-ad tactic below instead.)
 
 **Evidence offered:** Demonstrated: two Suno generations from a stated prompt, the second chosen after laying both against the voiceover; creator asserts music is 'doing a ton of work' in good faceless content.
 
@@ -94,3 +94,13 @@ description: Cast, clone and direct AI voices for narrated video — delivery di
 **Fit here (6/10):** Runnable today in a free editor by one person, and it compounds with the music-generation tactic above on the brand's own narrated short-form. Craft-level rather than strategic, which sets the ceiling.
 
 *Source: Anthony Gallo (ContentCreator.com) — "AI Creator Course: AI image and video workflow lessons" (transcript, part 6 of 9)*
+
+## Run AI song ads: write a normal direct-response script with no rhymes, let the music model (Suno) turn it into a song, open the first verse with the hook, and end the style prompt with 'vocals start immediately, no instrumental intro'.
+
+**Why it works:** A sung ad reads as entertainment and is sticky, while the unrhymed DR script keeps every selling point and claim intact. Forcing rhymes would bend the copy away from what sells. The opening rule exists because music models default to an instrumental lead-in and sing intros softly. Left alone, the model spends the first seconds of a feed placement, where the scroll decision is made, on nothing audible. Putting the hook at the top of verse one and closing the style prompt with the immediate-vocals instruction makes the selling line the first thing heard. This is the inverse of the background-bed tactic above: there the prompt says 'no vocals' so the music serves a narrator, here the vocal carries the ad.
+
+**Evidence offered:** One song ad for a new client went from $500 to over $12K spend in 3 days and passed the account's ROAS target within 5 days. Song ads are now the team's most-produced AI format. Generation costs about $24–29 per ad. The hook-first and no-instrumental-intro rules are the team's production rules from practice (assertion).
+
+**Fit here (7/10):** No other skill covers this format. It suits a low-ticket, everyday consumable (deodorant, lotion, lip balm), where a catchy sung benefit fits the category. At about $25–30 per ad it costs less than a day of RSC's ~$50/day test budget, and the operator can produce it alone today with existing Trybe UGC or AI visuals. Launching it in the account is a recommendation to David Parrotino. The evidence is a single vendor case, which keeps the score off the top of the range. The opening rule alone rates 6/10. It is a precise, cheap fix that decides whether a song ad survives its first two seconds in Reels and feed, where RSC posts daily. Both parts are platform-mechanics-adjacent and current as of November 2026. The soft-intro behaviour is a model quirk, so re-check it as Suno versions change.
+
+*Source: Bogdan (@Bogzabs96) — "How I'd start AI ads if I had zero today (Full 30-Day Playbook)" (social post)*
