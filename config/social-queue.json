@@ -6,12 +6,12 @@
   ],
   "_repeatNote": "An approved item whose headline (case and punctuation ignored) already posted on any platform inside this many days waits; items with a new headline go first. At three a day the same headline went up as many as 6 times in a week.",
   "repeat_headline_days": 60,
-  "_organicNote": "organic_first: once any organic post (agents/social-organic: carousel, review card, relatable text post) has been approved, ad-batch images stop posting organically (Sean, 2026-11-04). Organic posts rotate by kind.",
-  "organic_first": true,
   "platforms": [
     "instagram",
     "facebook"
   ],
   "instagram_user_id": "17841428233225633",
-  "facebook_page_id": "113847674946808"
+  "facebook_page_id": "113847674946808",
+  "_adsNote": "post_ad_images: false. Ad-batch images are ads, not organic posts, and never post to Instagram or Facebook from this queue (Sean, 2026-11-07: \"We should not be posting ad images to the social queue\"). ad-batch no longer queues them. Replaced organic_first (2026-11-04), which only held ads once an organic post had been approved.",
+  "post_ad_images": false
 }

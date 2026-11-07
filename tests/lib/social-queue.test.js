@@ -232,21 +232,25 @@ test('newItem: a carousel needs 2-10 Shopify images; kind defaults to ad', async
   assert.ok(isOrganic(c));
 });
 
-test('planRun organicFirst: ads keep posting until an organic post is approved, then stop', async () => {
+test('planRun postAds false: an approved ad image never posts, even with nothing organic approved', async () => {
   const { planRun } = await import('../../lib/social-queue.js');
-  const now = Date.parse('2026-11-06T18:20:00Z');
+  const now = Date.parse('2026-11-07T18:20:00Z');
   const ad = approved('ad-item', '2026-10-01T00:00:00Z', { product: 'p1' });
-  const pendingOrganic = item('org-pend', { kind: 'review' });
-  assert.equal(planRun([ad, pendingOrganic], { now, organicFirst: true }).fresh.item.id, 'ad-item', 'nothing organic approved yet');
+  const alone = planRun([ad, item('org-pend', { kind: 'review' })], { now, postAds: false });
+  assert.equal(alone.fresh, null);
+  assert.equal(alone.heldAds, 1);
+  assert.match(alone.reason, /ad images never post organically/);
+  // a half-posted ad is not finished on the other platform either
+  const half = { ...ad, instagram: { posted_at: '2026-11-01T18:20:00Z', media_id: 'm' } };
+  assert.equal(planRun([half], { now, postAds: false }).retry, null);
   const org = approved('org-review', '2026-11-05T00:00:00Z', { kind: 'review' });
-  const plan = planRun([ad, org], { now, organicFirst: true });
-  assert.equal(plan.fresh.item.id, 'org-review');
-  assert.equal(plan.heldAds, 1);
-  const posted = { ...org, instagram: { posted_at: '2026-11-04T18:20:00Z', media_id: 'm' }, facebook: { posted_at: '2026-11-04T18:20:00Z', post_id: 'f' } };
-  const none = planRun([ad, posted], { now, organicFirst: true });
-  assert.equal(none.fresh, null, 'ads stay retired once organic has been approved');
-  assert.match(none.reason, /no longer post organically/);
-  assert.equal(planRun([ad, org], { now }).heldAds, 0, 'off unless configured');
+  assert.equal(planRun([ad, org], { now, postAds: false }).fresh.item.id, 'org-review');
+  assert.equal(planRun([ad], { now }).fresh.item.id, 'ad-item', 'the library default still allows ads; the config turns them off');
+});
+
+test('config/social-queue.json turns ad images off', async () => {
+  const { readConfig } = await import('../../agents/social-poster/index.js');
+  assert.equal(readConfig().postAds, false);
 });
 
 test('nextInRotation: organic posts rotate by kind', async () => {
