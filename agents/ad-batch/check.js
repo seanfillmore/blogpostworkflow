@@ -14,6 +14,7 @@
 // What does NOT fail: other generic products or props, prop text, tiny volume/URL
 // print, garbled micro rim text.
 
+import { SAFE_ZONE_RATIOS } from '../ad-studio/critique.js';
 import { checkSeoCopyFields, COMMERCIAL_SURFACE } from '../../lib/seo-copy-health-gate.js';
 
 export function tokens(s) {
@@ -62,8 +63,18 @@ const PHYSICS_NOTE = ' Physically impossible packaging is a MISMATCH: product (c
 
 const isSet = (product) => Array.isArray(product?.items) && product.items.length > 1;
 
+// 9:16 only: where the text and the label sit, as fractions of the height, so code can
+// hold them out of the bands Meta draws its own UI over (SAFE_ZONE_RATIOS). The prompt
+// alone did not: the first live 9:16 renders put the headline at 11-13% from the top,
+// inside the 14% band, after being told to keep it clear.
+const ZONE_NOTE = (n) => ` Also report positions in Image ${n} as fractions of its HEIGHT measured from the top edge (0 = top edge, 1 = bottom edge), to two decimals: "text_top" = the top of the highest line of lettering that is not printed on a product, "text_bottom" = the bottom of the lowest such line, "label_bottom" = the bottom edge of the lowest product label.`;
+const ZONE_FIELDS = `,
+  "text_top": <fraction>,
+  "text_bottom": <fraction>,
+  "label_bottom": <fraction>`;
+
 /** The check for a SET: one reference image per product, then the ad; each product read on its own. */
-function setCheckPrompt(product, style, layout = false) {
+function setCheckPrompt(product, style, layout = false, vertical = false) {
   const n = product.items.length;
   const refs = product.items.map((p, i) => `Image ${i + 1} is a REFERENCE photo of product ${i + 1}: ${p.title}.`).join('\n');
   return `${refs}
@@ -77,18 +88,19 @@ Answer about Image ${n + 1} ONLY, as JSON, transcribing letter by letter exactly
 ${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many units of the product in Image ${i + 1} appear>, "label_text": ["every line printed on that product's label, as rendered; [] if not visible"], "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL", "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>" }`).join(',\n')}
   ],
   "hands_present": true | false,
-  "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
+  "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"${vertical ? ZONE_FIELDS : ''}
 }
 
-Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''} Answer with the JSON only.`;
+Give exactly ${n} entries in "products", in the order of the reference images. Count only units of OUR products; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text, small circular badges, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''}${vertical ? ZONE_NOTE(n + 1) : ''} Answer with the JSON only.`;
 }
 
 // A multi-column layout read row by row interleaves two columns ("What I What I
 // Ordered Got"), which no in-order word check can survive. Ask for whole blocks.
 const BLOCKS_NOTE = ' Transcribe each separate text block (a heading, a list row, a caption, a button) as ONE entry, whole, even if it wraps; in a multi-column layout finish one column before starting the next.';
 
-export function checkPrompt({ product, shown, style = 'photo', layout = false }) {
-  if (isSet(product)) return setCheckPrompt(product, style, layout);
+export function checkPrompt({ product, shown, style = 'photo', layout = false, ratio = '4:5' }) {
+  const vertical = ratio === '9:16';
+  if (isSet(product)) return setCheckPrompt(product, style, layout, vertical);
   const what = shown === 'unwrapped'
     ? 'a bare, unlabelled bar of soap like the one in the REFERENCE photo'
     : `the Real Skin Care product shown in the REFERENCE photo (${product.title})`;
@@ -103,10 +115,10 @@ Answer about Image 2 ONLY, as JSON, transcribing letter by letter exactly as ren
   "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL",
   "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>",
   "hands_present": true | false,
-  "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"
+  "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"${vertical ? ZONE_FIELDS : ''}
 }
 
-Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''} Answer with the JSON only.`;
+Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''}${vertical ? ZONE_NOTE(2) : ''} Answer with the JSON only.`;
 }
 
 export function parseCheck(text) {
@@ -119,7 +131,7 @@ export function parseCheck(text) {
  * Deterministic verdict from the transcription.
  * @returns {{ok:boolean, reasons:string[], notes:string[]}}
  */
-export function decide({ read, concept, product, shown }) {
+export function decide({ read, concept, product, shown, ratio = '4:5' }) {
   const reasons = [];
   const notes = [];
   if (!read) return { ok: false, reasons: ['vision check returned no readable answer'], notes };
@@ -194,5 +206,21 @@ export function decide({ read, concept, product, shown }) {
   }
   if (read.hand_defect && String(read.hand_defect).trim()) reasons.push(`malformed hand: ${read.hand_defect}`);
   if (read.hands_present) notes.push('hands in frame');
+  if (ratio === '9:16') safeZoneReasons(read, reasons, notes);
   return { ok: reasons.length === 0, reasons, notes };
+}
+
+/**
+ * 9:16 safe zone from the reported positions. A position the check did not give is a
+ * note, never a failure (same asymmetry as Ad Studio's normalizeZoneVerdict: a missed
+ * reading costs one unverified property, a misread one costs a paid re-render).
+ */
+export function safeZoneReasons(read, reasons, notes) {
+  const z = SAFE_ZONE_RATIOS['9:16'];
+  const top = Number(read.text_top), textBottom = Number(read.text_bottom), labelBottom = Number(read.label_bottom);
+  const has = (v) => Number.isFinite(v) && v >= 0 && v <= 1;
+  if (!has(top) || !has(textBottom) || !has(labelBottom)) notes.push('9:16 safe zone not measured');
+  if (has(top) && top < z.top) reasons.push(`text starts at ${Math.round(top * 100)}% from the top, inside the top ${Math.round(z.top * 100)}% Meta covers`);
+  if (has(textBottom) && textBottom > 1 - z.bottom) reasons.push(`text reaches ${Math.round(textBottom * 100)}% down, inside the bottom ${Math.round(z.bottom * 100)}% Meta covers`);
+  if (has(labelBottom) && labelBottom > 1 - z.bottom) reasons.push(`product label reaches ${Math.round(labelBottom * 100)}% down, inside the bottom ${Math.round(z.bottom * 100)}% Meta covers`);
 }

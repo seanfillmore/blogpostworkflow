@@ -13,6 +13,12 @@
 //                                 [--no-copy] [--rewrite-copy]
 //   node agents/ad-batch/index.js --copy-only "<batch dir>" [--rewrite-copy] [--landing <url>]
 //
+// Every kept 4:5 ad also gets a 9:16 version for Stories and Reels (Sean, 2026-11-07:
+// "we should be building both aspect ratios each time"): the 4:5 is extended to 9:16 by
+// filling bands above and below it (vertical.js), so its text stays clear of Meta's UI,
+// and checked like the 4:5 plus the 9:16 bands. It lands in <headline>/9x16/; only the
+// 4:5 is queued for the Social tab.
+//
 // Batch file:
 //   { "product": "coconut-moisturizer", "variant": "coconut-breeze",
 //     "count": 16, "form": null,
@@ -51,17 +57,19 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 import { parseBatch, screenConcepts, resolveLineup } from './batch.js';
 import { selectLibraryScenes, customScenes, generateFreshScenes, LIBRARY_SHARE } from './scenes.js';
 import { buildPrompt } from './prompt.js';
-import { renderOpenAI, renderGemini, ATTEMPTS } from './render.js';
+import { renderOpenAI, renderGemini, renderOpenAIOutpaint, renderGeminiOutpaint, ATTEMPTS } from './render.js';
+import { buildOutpaintInputs, OUTPAINT_PROMPT, GEMINI_OUTPAINT_PROMPT } from './vertical.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
 import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
 import { writeMasterSheet } from './master-sheet.js';
 import {
   DEFAULT_OUT_ROOT, messageFolder, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
-  ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord,
+  ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord, VERTICAL_DIR,
 } from './output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
-export const DEFAULT_MAX_RENDERS = 120;
+// Every kept 4:5 ad also gets a 9:16 version, so the cap covers both ratios.
+export const DEFAULT_MAX_RENDERS = 240;
 export const DEFAULT_CONCURRENCY = 4;
 
 export function parseArgs(argv) {
@@ -122,7 +130,7 @@ async function refForCheck(path) {
   return (await sharp(path).rotate().resize(1024, 1024, { fit: 'inside' }).jpeg({ quality: 85 }).toBuffer()).toString('base64');
 }
 
-async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style, layout = false }) {
+async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style, layout = false, ratio = '4:5' }) {
   const img = (await sharp(imageBuf).resize(1200, 1200, { fit: 'inside' }).jpeg({ quality: 88 }).toBuffer()).toString('base64');
   const res = await anthropic.messages.create({
     model: LLM_MODELS.standard,
@@ -130,7 +138,7 @@ async function visionCheck({ anthropic, refsB64, imageBuf, product, shown, style
     messages: [{ role: 'user', content: [
       ...refsB64.map(data => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } })),
       { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: img } },
-      { type: 'text', text: checkPrompt({ product, shown, style, layout }) },
+      { type: 'text', text: checkPrompt({ product, shown, style, layout, ratio }) },
     ] }],
   });
   return parseCheck((res.content || []).map(c => c.text || '').join(''));
@@ -145,10 +153,20 @@ async function pool(items, n, fn) {
   return out;
 }
 
-/** Render one scene: up to two OpenAI tries, then Gemini; keep the first that passes. */
+/**
+ * Render one scene: up to two OpenAI tries, then Gemini; keep the first that passes.
+ * job.fromImage (a kept 4:5 file) makes its 9:16 version instead: the 4:5 is placed on
+ * a 9:16 canvas and only the empty bands are generated (vertical.js). The check still
+ * compares every render against the real product photos only, plus the 9:16 bands.
+ */
 export async function renderScene({ job, clients, budget, refCache, log }) {
-  const { product, concept, scene, form, style = 'photo' } = job;
-  const { prompt, refs, shown } = buildPrompt({ product, concept, scene, form, style });
+  const { product, concept, scene, form, style = 'photo', fromImage = null } = job;
+  const ratio = fromImage ? '9:16' : '4:5';
+  const built = buildPrompt({ product, concept, scene, form, style });
+  const { shown } = built;
+  const refs = built.refs;
+  const prompt = fromImage ? OUTPAINT_PROMPT : built.prompt;
+  const outpaint = fromImage ? await buildOutpaintInputs(fromImage) : null;
   const attempts = [];
   let last = null;
   for (const engine of ATTEMPTS) {
@@ -157,9 +175,15 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     budget.used++;
     let r;
     try {
-      r = engine === 'openai'
-        ? await renderOpenAI({ apiKey: clients.openaiKey, prompt, refs })
-        : await renderGemini({ gemini: clients.gemini, prompt, refs });
+      if (outpaint) {
+        r = engine === 'openai'
+          ? await renderOpenAIOutpaint({ apiKey: clients.openaiKey, prompt, image: outpaint.canvas, mask: outpaint.mask })
+          : await renderGeminiOutpaint({ gemini: clients.gemini, prompt: GEMINI_OUTPAINT_PROMPT, image: outpaint.greyCanvas });
+      } else {
+        r = engine === 'openai'
+          ? await renderOpenAI({ apiKey: clients.openaiKey, prompt, refs })
+          : await renderGemini({ gemini: clients.gemini, prompt, refs });
+      }
     } catch (err) {
       attempts.push({ engine, error: err.message });
       continue;
@@ -170,9 +194,9 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
     for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
     let read = null;
-    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style, layout: !!concept.layout }); }
+    try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style, layout: !!concept.layout, ratio }); }
     catch (err) { log(`    check failed to run: ${err.message}`); }
-    const verdict = decide({ read, concept, product, shown });
+    const verdict = decide({ read, concept, product, shown, ratio });
     attempts.push({ engine: r.model, ok: verdict.ok, reasons: verdict.reasons });
     last = { ...r, verdict };
     if (verdict.ok) return { ok: true, model: r.model, buffer: r.buffer, reasons: [], notes: verdict.notes, attempts, shown, prompt };
@@ -182,6 +206,25 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     reasons: last ? last.verdict.reasons : attempts.map(a => a.error).filter(Boolean),
     notes: last?.verdict.notes || [], attempts, shown, prompt,
   };
+}
+
+/**
+ * The 9:16 version of one kept 4:5 ad, written to <headline>/9x16/ (or its _rejected/).
+ * Same retries, same check. A failure keeps the 4:5 ad and is recorded, never thrown:
+ * the 4:5 is already paid for and on disk.
+ */
+export async function renderVertical({ job, fromImage, dir, name, clients, budget, refCache, log }) {
+  let v;
+  try { v = await renderScene({ job: { ...job, fromImage }, clients, budget, refCache, log }); }
+  catch (err) { v = { ok: false, model: null, buffer: null, reasons: [err.message], attempts: [] }; }
+  let file = null;
+  if (v.buffer) {
+    const vdir = ensureDir(join(dir, VERTICAL_DIR, ...(v.ok ? [] : ['_rejected'])));
+    file = join(vdir, name);
+    writeFileSync(file, v.buffer);
+  }
+  log(`     ${v.ok ? '✅' : '❌'} 9:16 ${name}${v.ok ? '' : ` — ${v.reasons.join('; ')}`}`);
+  return { ok: v.ok, model: v.model, file, reasons: v.reasons, attempts: v.attempts };
 }
 
 /**
@@ -266,7 +309,7 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
       log(`\n"${p.concept.headline}"${p.concept.subhead ? ' / ' + p.concept.subhead : ''}${p.concept.cta ? ` [${p.concept.cta}]` : ''}`);
       p.scenes.forEach((s, i) => log(`  ${String(i + 1).padStart(2)}. [${s.source}/${s.family}] ${s.id}: ${s.scene.slice(0, 90)}`));
     }
-    log(`\nDry run: ${totalRenders} images planned (≥${totalRenders} renders, ≤${Math.min(totalRenders * ATTEMPTS.length, args.maxRenders)} with retries).`);
+    log(`\nDry run: ${totalRenders} ads planned, each at 4:5 and 9:16 (≥${totalRenders * 2} renders, ≤${Math.min(totalRenders * 2 * ATTEMPTS.length, args.maxRenders)} with retries).`);
     log('\nFirst prompt:\n' + buildPrompt({ product, concept: plans[0].concept, scene: plans[0].scenes[0], form: batch.form, style: batch.style }).prompt);
     return { dryRun: true, plans };
   }
@@ -308,16 +351,19 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
       }
       log(`  ${r.ok ? '✅' : '❌'} ${name}${r.ok ? ` (${r.model})` : ` — ${r.reasons.join('; ')}`}`);
       if (r.ok && scene.source === 'library') usage[scene.id] = new Date().toISOString();
-      return { ...r, scene, buffer: undefined };
+      const vertical = r.ok ? await renderVertical({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, fromImage: r.path, dir, name, clients, budget, refCache, log }) : null;
+      return { ...r, scene, buffer: undefined, vertical };
     });
     const kept = results.filter(r => r.ok);
     await writeContactSheet(dir, kept.map(r => ({ path: r.path, caption: `${r.scene.id}${r.notes.includes('hands in frame') ? ' ✋' : ''}` })));
+    const keptVertical = kept.filter(r => r.vertical?.ok);
+    if (keptVertical.length) await writeContactSheet(join(dir, VERTICAL_DIR), keptVertical.map(r => ({ path: r.vertical.file, caption: r.scene.id })), { aspect: 16 / 9 });
     writeFileSync(join(dir, 'scenes.md'), scenesMarkdown({ concept: plan.concept, results }));
     record.concepts.push({
       ...plan.concept, dir, degraded: plan.degraded, kept: kept.length, rejected: results.length - kept.length,
-      images: results.map(r => ({ scene: r.scene, ok: r.ok, model: r.model, file: r.path || null, reasons: r.reasons, notes: r.notes, attempts: r.attempts, shown: r.shown })),
+      images: results.map(r => ({ scene: r.scene, ok: r.ok, model: r.model, file: r.path || null, reasons: r.reasons, notes: r.notes, attempts: r.attempts, shown: r.shown, vertical: r.vertical })),
     });
-    log(`  ${kept.length}/${results.length} kept`);
+    log(`  ${kept.length}/${results.length} kept · 9:16 ${keptVertical.length}/${kept.length}`);
   }
 
   saveUsage(args.out, usage);

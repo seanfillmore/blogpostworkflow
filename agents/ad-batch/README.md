@@ -1,6 +1,6 @@
 # ad-batch
 
-One concept in, 15-20 finished 4:5 ad images out. You write the headlines. The tool varies the scene and designs the headline into each image, the way Everitt Moder's Trybe statics are built.
+One concept in, 15-20 finished ad images out, each at 4:5 (feed) and 9:16 (Stories and Reels). You write the headlines. The tool varies the scene and designs the headline into each image, the way Everitt Moder's Trybe statics are built.
 
 ```bash
 npm run ad-batch -- batch.json            # render
@@ -44,9 +44,12 @@ Output goes to the RSC creatives library in Google Drive, `My Drive/Real Skin Ca
 - passing images;
 - `_rejected/`, which holds failed images with the reason in `scenes.md`;
 - `_contact sheet.jpg`, where ✋ marks hands;
+- `9x16/`: the 9:16 versions, with their own contact sheet and `_rejected/`;
 - `scenes.md`;
 - the batch's `run.json`;
 - `meta-copy.md`: the Meta ad copy, 4 primary texts (each under 300 characters, at least one under 125) and 4 headlines (40 characters or fewer), the landing page, which copy goes with which folder, and the source of every claim.
+
+**9:16 versions (2026-11-07).** Every kept 4:5 ad also gets a 9:16 version in `<headline>/9x16/`, because Reels and Stories took 38% of 30-day spend while every static was 4:5. The 4:5 is not re-rendered: it is placed, centered, on a 1088x1936 canvas and the image model fills only the empty bands above and below it (`vertical.js`, a masked gpt-image-2 edit; Gemini gets grey bands to replace). Asked instead to recompose the ad for a tall frame, both models put the headline at 5-13% from the top every time, inside the 14% band Meta covers with the account name. Centering puts the whole 4:5 between 14.9% and 85.1% of the height. The check reads every 9:16 like a 4:5 and also measures where the text and label sit; any text in the top 14%, or text or label in the bottom 20% (Ad Studio's `SAFE_ZONE_RATIOS`), fails and retries. A failed 9:16 never costs the 4:5: it goes to `9x16/_rejected/` and is recorded in `run.json` under each image's `vertical`. About $0.17 per 9:16. Only the 4:5 is queued for the Social tab, and the master sheet skips `9x16/`. Upload both ratios to the same Meta ad (placement asset customization).
 
 **Master sheet.** `01 Static Ads/_All Creatives.pdf` shows every creative in the library on one scrollable PDF, a section per message folder, newest batch first, each thumbnail captioned with its file and folder. Every batch filed into the library refreshes it (a failure there never fails the batch). Rebuild by hand with `node agents/ad-batch/master-sheet.js [--root <dir>]`. `_rejected/` and `_`-prefixed files are left out.
 

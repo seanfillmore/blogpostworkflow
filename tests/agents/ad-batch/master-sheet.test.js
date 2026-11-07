@@ -24,7 +24,7 @@ const tree = build(ROOT, {
   'Soft, Hydrated Skin': {
     '2026-10-01 Cream': { '01 Old headline': { '01-a.png': 1, '_contact sheet.jpg': 1, 'scenes.md': 1 } },
     '2026-11-02 Cream': {
-      '01 New headline': { '02-b.png': 1, '01-a.png': 1, '_rejected': { '03-c.png': 1 } },
+      '01 New headline': { '02-b.png': 1, '01-a.png': 1, '_rejected': { '03-c.png': 1 }, '9x16': { '01-a.png': 1, '02-b.png': 1 } },
       'run.json': 1,
     },
   },

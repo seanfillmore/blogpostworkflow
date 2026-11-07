@@ -9,7 +9,7 @@
 // its path below the message folder. _rejected/ and anything starting with "_" (the
 // per-headline contact sheets, this PDF itself) are skipped; a message folder that
 // itself starts with "_" (`_New (to sort)`) is kept, because unsorted work is exactly
-// what needs to be seen.
+// what needs to be seen. The 9x16/ versions are skipped too: same ad, second ratio.
 //
 // Regenerated at the end of every ad-batch run into the library, and by hand with
 //   node agents/ad-batch/master-sheet.js [--root <dir>]
@@ -18,7 +18,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import sharp from 'sharp';
 import { isDirectRun } from '../../lib/is-direct-run.js';
-import { CREATIVES_STATIC_ROOT } from './output.js';
+import { CREATIVES_STATIC_ROOT, VERTICAL_DIR } from './output.js';
 
 export const MASTER_SHEET_NAME = '_All Creatives.pdf';
 const IMAGE_RE = /\.(png|jpe?g|webp)$/i;
@@ -37,7 +37,7 @@ export function collectCreatives(root, { list = readdirSync, isDir = (p) => stat
     const items = [];
     const walk = (dir) => {
       for (const name of list(dir)) {
-        if (name.startsWith('_') || name.startsWith('.')) continue;
+        if (name.startsWith('_') || name.startsWith('.') || name === VERTICAL_DIR) continue;
         const p = join(dir, name);
         if (isDir(p)) walk(p);
         else if (IMAGE_RE.test(name)) {
