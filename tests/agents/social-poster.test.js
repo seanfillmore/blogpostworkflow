@@ -198,3 +198,53 @@ test('publishCarousel and publishPagePhotos: children first, then one post namin
   assert.deepEqual(posts.map((p) => p.published), ['false', 'false', undefined]);
   assert.equal(posts[2].attached_media, JSON.stringify([{ media_fbid: 'c4' }, { media_fbid: 'c5' }]));
 });
+
+// 2026-11-06: Instagram refused slide 3 of 7 with "The media could not be fetched
+// from this URI" while the same Shopify URL served a JPEG to every other fetcher,
+// including Facebook a moment later. A slide Meta could not fetch is warmed and
+// retried; any other refusal still throws at once.
+test('publishCarousel retries a slide Meta could not fetch, and only that error', async () => {
+  const { publishCarousel, publishImage } = await import('../../lib/instagram-reels.js');
+  const FETCH_ERR = { error: { message: 'Only photo or video can be accepted as media type.', error_user_msg: 'The media could not be fetched from this URI: https://cdn.shopify.com/x-3.jpg' } };
+  const make = (failures, err = FETCH_ERR) => {
+    const seen = { warmed: [], creates: [], sleeps: [] };
+    let n = 0;
+    const fetchImpl = async (url, init) => {
+      const s = String(url);
+      if (s.startsWith('https://cdn.shopify.com/')) { seen.warmed.push(s); return { ok: true, arrayBuffer: async () => new ArrayBuffer(0) }; }
+      const u = new URL(s);
+      if (init.method === 'POST') {
+        const b = Object.fromEntries(new URLSearchParams(init.body));
+        if (u.pathname.endsWith('/media_publish')) return { ok: true, json: async () => ({ id: 'MEDIA' }) };
+        if (b.image_url) {
+          seen.creates.push(b.image_url);
+          if (b.image_url.endsWith('-3.jpg') && failures.left > 0) { failures.left--; return { ok: false, status: 400, json: async () => err }; }
+        }
+        return { ok: true, json: async () => ({ id: `c${++n}` }) };
+      }
+      return { ok: true, json: async () => ({ status_code: 'FINISHED', permalink: 'p' }) };
+    };
+    return { seen, opts: { token: 't', fetchImpl, sleep: async (ms) => { seen.sleeps.push(ms); } } };
+  };
+  const urls = [1, 2, 3].map((i) => `https://cdn.shopify.com/x-${i}.jpg`);
+
+  const a = make({ left: 1 });
+  const r = await publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, a.opts);
+  assert.equal(r.mediaId, 'MEDIA');
+  assert.deepEqual(a.seen.creates, [urls[0], urls[1], urls[2], urls[2]]);
+  assert.deepEqual(a.seen.warmed, urls.concat(urls[2]), 'every slide warmed up front, the failed one again before its retry');
+  assert.ok(a.seen.sleeps.some((ms) => ms >= 10_000), 'waits before retrying');
+
+  const b = make({ left: 99 });
+  await assert.rejects(publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, b.opts), /could not be fetched/);
+  assert.equal(b.seen.creates.filter((u) => u === urls[2]).length, 3, 'gives up after two retries');
+
+  const c = make({ left: 1 }, { error: { message: 'Invalid aspect ratio' } });
+  await assert.rejects(publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, c.opts), /aspect ratio/);
+  assert.equal(c.seen.creates.filter((u) => u === urls[2]).length, 1, 'no retry on any other refusal');
+
+  const d = make({ left: 1 });
+  const img = await publishImage({ igUserId: 'ig', imageUrl: urls[2], caption: 'c' }, d.opts);
+  assert.equal(img.mediaId, 'MEDIA');
+  assert.equal(d.seen.creates.length, 2, 'single images get the same retry');
+});
