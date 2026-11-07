@@ -464,15 +464,10 @@ test('a jar is open or closed, never cream through a closed lid (prompt and chec
   assert.match(checkPrompt({ product: CREAM, shown: 'packaged' }), /coming through a lid that is still on/);
 });
 
-test('queueForSocial never throws and prints the re-run command on failure', async () => {
-  const { queueForSocial } = await import('../../../agents/ad-batch/index.js');
-  const lines = [];
-  const r = await queueForSocial('/x/batch', { log: (l) => lines.push(l), ingest: async () => { throw new Error('dashboard down'); } });
-  assert.equal(r, null);
-  assert.ok(lines.some((l) => /dashboard down/.test(l) && /social-queue-ingest\.mjs --batch "\/x\/batch" --apply/.test(l)));
-  const ok = await queueForSocial('/x/batch', { log: () => {}, ingest: async () => ({ created: ['a'], already: [], failed: [] }) });
-  assert.deepEqual(ok.created, ['a']);
-  assert.equal(parseArgs(['b.json', '--no-social']).social, false);
+test('ad-batch queues nothing for the Social tab', () => {
+  const src = readFileSync(new URL('../../../agents/ad-batch/index.js', import.meta.url), 'utf8');
+  assert.doesNotMatch(src, /social-queue-ingest|runIngest|queueForSocial/);
+  assert.doesNotThrow(() => parseArgs(['b.json', '--no-social'])); // old commands still run
 });
 
 test('mergeRunRecord keeps an earlier batch in the same folder, replaces a re-rendered concept', () => {

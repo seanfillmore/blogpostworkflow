@@ -9,7 +9,7 @@
 //
 // Usage:
 //   node agents/ad-batch/index.js <batch.json> [--dry-run] [--out <dir>]
-//                                 [--max-renders N] [--concurrency N] [--no-social]
+//                                 [--max-renders N] [--concurrency N]
 //                                 [--no-copy] [--rewrite-copy]
 //   node agents/ad-batch/index.js --copy-only "<batch dir>" [--rewrite-copy] [--landing <url>]
 //
@@ -41,9 +41,8 @@
 // captions are grounded in. An existing meta-copy.md is never replaced without
 // --rewrite-copy; --no-copy skips the step; a copy failure never fails the batch.
 // --copy-only writes the copy for an existing batch folder from its run.json, rendering nothing.
-// At the end of a successful run the kept images are queued as PENDING items in the
-// dashboard's Social tab (scripts/social-queue-ingest.mjs); nothing posts until Sean
-// approves one. --no-social skips that; a failure there never fails the batch.
+// Nothing is queued for the Social tab: ad images are ads, not organic posts (Sean,
+// 2026-11-07: "We should not be posting ad images to the social queue").
 // Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -73,11 +72,11 @@ export const DEFAULT_MAX_RENDERS = 240;
 export const DEFAULT_CONCURRENCY = 4;
 
 export function parseArgs(argv) {
-  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, social: true, copy: true, rewriteCopy: false, copyOnly: null, landing: null };
+  const args = { batchFile: null, dryRun: false, out: DEFAULT_OUT_ROOT, maxRenders: DEFAULT_MAX_RENDERS, concurrency: DEFAULT_CONCURRENCY, copy: true, rewriteCopy: false, copyOnly: null, landing: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
-    else if (a === '--no-social') args.social = false;
+    else if (a === '--no-social') { /* accepted for old commands; nothing is queued any more */ }
     else if (a === '--no-copy') args.copy = false;
     else if (a === '--rewrite-copy') args.rewriteCopy = true;
     else if (a === '--copy-only') args.copyOnly = resolve(argv[++i] || '');
@@ -227,24 +226,6 @@ export async function renderVertical({ job, fromImage, dir, name, clients, budge
   return { ok: v.ok, model: v.model, file, reasons: v.reasons, attempts: v.attempts };
 }
 
-/**
- * Queue the batch's kept images in the Social tab. Never throws: the images are
- * already on disk and a queue failure must not turn a paid batch into a failed run.
- */
-export async function queueForSocial(batchDir, { log = console.log, ingest } = {}) {
-  const cmd = `node scripts/social-queue-ingest.mjs --batch "${batchDir}" --apply`;
-  try {
-    const run = ingest || (async (dir) => (await import('../../scripts/social-queue-ingest.mjs')).runIngest({ batchDir: dir, apply: true, log }));
-    log('\nQueueing the kept images for the Social tab...');
-    const s = await run(batchDir);
-    log(`Social queue: ${s.created.length} added, ${s.already.length} already queued${s.failed.length ? `, ${s.failed.length} FAILED (re-run: ${cmd})` : ''}.`);
-    return s;
-  } catch (err) {
-    log(`⚠ Could not queue this batch for the Social tab: ${err.message}\n  Re-run: ${cmd}`);
-    return null;
-  }
-}
-
 /** Write meta-copy.md for a batch folder and stamp the outcome into its run.json. Never throws. */
 export async function writeCopyForBatch(batchDir, record, { rewrite = false, log = console.log, deps } = {}) {
   let outcome;
@@ -271,7 +252,7 @@ export async function copyOnly(args, { log = console.log, deps } = {}) {
   return writeCopyForBatch(args.copyOnly, record, { rewrite: args.rewriteCopy, log, deps });
 }
 
-export async function main(argv = process.argv.slice(2), { log = console.log, ingest, copyDeps, masterSheet = writeMasterSheet } = {}) {
+export async function main(argv = process.argv.slice(2), { log = console.log, copyDeps, masterSheet = writeMasterSheet } = {}) {
   const args = parseArgs(argv);
   const env = { ...loadEnv(), ...process.env };
   if (args.copyOnly) {
@@ -383,7 +364,6 @@ export async function main(argv = process.argv.slice(2), { log = console.log, in
       ? await writeCopyForBatch(batchDir, record, { rewrite: args.rewriteCopy, log, deps })
       : { status: 'failed', reason: 'could not load the copy sources' };
   }
-  if (args.social && kept > 0) record.social = await queueForSocial(batchDir, { log, ingest });
   // Refresh the library-wide sheet (01 Static Ads/_All Creatives.pdf) so a new batch
   // is visible without clicking into its folders. Only when filing into the library,
   // and never a reason to fail a paid run.

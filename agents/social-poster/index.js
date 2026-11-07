@@ -66,7 +66,8 @@ export function readConfig(path = CONFIG_PATH) {
   return {
     postsPerDay: Number.isInteger(c.posts_per_day) && c.posts_per_day >= 0 ? c.posts_per_day : 1,
     repeatHeadlineDays: Number.isInteger(c.repeat_headline_days) && c.repeat_headline_days >= 0 ? c.repeat_headline_days : 0,
-    organicFirst: c.organic_first === true,
+    // Ad images post only if this is explicitly true; absent means false (Sean, 2026-11-07).
+    postAds: c.post_ad_images === true,
     platforms: platforms.length ? platforms : [...PLATFORMS],
     igUserId: c.instagram_user_id,
     pageId: c.facebook_page_id,
@@ -163,7 +164,7 @@ export async function runOnce({
 } = {}) {
   const insightsRead = apply ? await refreshInsights({ dir, clients, now, log }) : 0;
   const items = loadItems(dir);
-  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now, repeatHeadlineDays: config.repeatHeadlineDays || 0, organicFirst: !!config.organicFirst });
+  const plan = planRun(items, { postsPerDay: config.postsPerDay, platforms: config.platforms, now, repeatHeadlineDays: config.repeatHeadlineDays || 0, postAds: config.postAds === true });
   const posts = [];
   if (plan.retry || plan.fresh) {
     // Unreadable recent captions on a platform = do not post THERE this run: that

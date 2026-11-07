@@ -14,7 +14,7 @@ const CONFIG = { postsPerDay: 1, platforms: ['instagram', 'facebook'] };
 function queue(ids) {
   const dir = mkdtempSync(join(tmpdir(), 'social-poster-'));
   ids.forEach((id, i) => {
-    const it = newItem({ id, image_url: `https://cdn.shopify.com/s/files/${id}.jpg`, caption: `${id}: ${OK}` }, { now: NOW - 86_400_000 });
+    const it = newItem({ id, kind: 'review', image_url: `https://cdn.shopify.com/s/files/${id}.jpg`, caption: `${id}: ${OK}` }, { now: NOW - 86_400_000 });
     saveItem(dir, approveItem(it, { now: NOW - 86_400_000 + i * 1000 }));
   });
   return dir;
@@ -116,6 +116,15 @@ test('insights refresh for both platforms once due', async () => {
   assert.equal(a.facebook.insights.reactions, 1);
 });
 
+test('an approved ad image never posts under the default config', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'social-poster-ad-'));
+  saveItem(dir, approveItem(newItem({ id: 'ad-1', image_url: 'https://cdn.shopify.com/s/files/ad-1.jpg', caption: `ad-1: ${OK}` }, { now: NOW - 86_400_000 }), { now: NOW - 3_600_000 }));
+  const c = clients();
+  const run = await runOnce({ apply: true, dir, clients: c, config: CONFIG, now: NOW, log: quiet });
+  assert.equal(run.posts.length, 0);
+  assert.equal(c.calls.ig.length + c.calls.fb.length, 0);
+});
+
 test('config: defaults, and the cron line matches cron_utc', () => {
   const cfg = readConfig();
   assert.equal(cfg.postsPerDay, 1, 'one per run, three runs a week (Sean, 2026-11-03)');
@@ -166,7 +175,7 @@ test('carousel items publish every slide, in order, on both platforms', async ()
   saveItem(dir, approveItem({ ...newItem({ id: 'organic-carousel-a', kind: 'carousel', image_url: imgs[0], images: imgs, caption: 'Useful. What do you think?\nLink in bio.\n#realskincare' }) }));
   const got = {};
   const fake = (p) => ({ recent: async () => [], publish: async (a) => { got[p] = a; return p === 'instagram' ? { media_id: 'm' } : { post_id: 'f' }; }, insights: async () => ({}) });
-  await runOnce({ apply: true, dir, clients: { instagram: fake('instagram'), facebook: fake('facebook') }, config: { postsPerDay: 1, platforms: ['instagram', 'facebook'], organicFirst: true }, log: () => {} });
+  await runOnce({ apply: true, dir, clients: { instagram: fake('instagram'), facebook: fake('facebook') }, config: { postsPerDay: 1, platforms: ['instagram', 'facebook'], postAds: false }, log: () => {} });
   assert.deepEqual(got.instagram.imageUrls, imgs);
   assert.deepEqual(got.facebook.imageUrls, imgs);
 });
