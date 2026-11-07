@@ -1,0 +1,169 @@
+# How ecom brands are making 7 figs/mo with Google Search Ads (Full Guide)
+
+**Creator:** Jackson Blackledge (@blvckledge)  
+**Source:** social post — `how-ecom-brands-are-making-7-figs-mo-with-google-search-ads-full-guide`  
+**Published:** 2026-05-28  
+**Inferred era cues:** Published 2026-05-28. Screenshots dated Mar–May 2026 and Jul–Aug 2025. Mentions AI Max as the successor to DSA and the newly introduced 'AI Brief' feature. Example query 'top [product] 2025'. Search is framed against Shopping and PMax. Current platform mechanics, not stale.  
+
+An X article from an agency operator laying out a playbook for Google Search (text) ads for ecommerce. It covers four keyword-intent types (branded, transactional, comparison, informational) and which to run first. It then walks through Keyword Planner research and match-type rules, strict separation of branded and non-branded campaigns using brand negative lists, ad-group construction by shared intent, and responsive search ad copy elements and asset/extension minimums. Bidding gets a split treatment: manual CPC for branded, and a conversion-count ladder from Maximize Clicks to tROAS or tCPA for prospecting. The longest section argues for intent-matched 'Google-ads-specific' landing pages, which raise Quality Score and lower CPC (claimed drop from $6 to $1.73), and routes each intent type to a page format: homepage, collection, PDP, third-party comparison, us-vs-them, or advertorial/listicle. It closes with AI Max and its AI Brief guardrails, plus a weekly optimization loop.
+
+Found 15 tactics: 13 adopted, 2 rejected (12 of the adopted parked behind a stage gate).
+
+## Adopted
+
+### Classify every search keyword into one of four intent types (branded, transactional, comparison, informational) and launch branded plus transactional first, adding comparison and informational only once dedicated landing pages exist and spend is scaling. — 7/10 · parked until `scale`
+
+**Why it works:** Intent sets the match type, copy, landing page and bid. Branded and transactional searchers are ready to buy and convert on a standard PDP or collection page. Comparison and informational searchers are still researching, have cheaper CPCs and more volume, but bounce off a page that only asks them to buy.
+
+**Evidence:** Agency client screenshots: $118K search prospecting spend at 2.36 ROAS over 60 days; claims of 'six figures/month at 3x ROAS' on comparison traffic.
+
+**Fit:** This is a durable way to sort search demand, and it maps cleanly onto RSC. Branded queries ('real skin care deodorant') are a small, cheap capture. Transactional queries ('aluminum free deodorant', 'natural body cream') carry real volume. Comparison queries ('[competitor] alternative') and informational queries ('why does natural deodorant make me smell') round out the set. It also enforces the margin rule: transactional and comparison spend should point at the skin line ($15–25 contribution), while deodorant and soap queries are retention and AOV plays, never a cold paid front end. Google sits behind Meta per marketing-google-shopping-ai-campaigns ($30–40K/mo revenue trigger), so the tactic is parked behind scale at full merit. The trigger is Meta producing profitable sales and revenue approaching that threshold.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Research keywords in Google Keyword Planner by seeding the core product phrase, filtering to 30+ average monthly searches, and using Refine Keywords to surface recurring themes. Check competition, top-of-page bid ranges and the forecast tool before committing budget. — 6/10
+
+**Why it works:** Recurring themes across searches show where a dedicated ad group (and page) is warranted. Bid ranges and forecasts turn demand into a CPC and spend estimate before any money moves, which shows how much room the channel has.
+
+**Evidence:** Keyword Planner screenshot for 'compression knee sleeve' showing volumes, bid ranges and competition; otherwise process description.
+
+**Fit:** This has an honest scale-down that one person can run today with a free Google Ads account and no spend. Seed 'aluminum free deodorant', 'natural body lotion', 'fluoride free toothpaste', 'natural lip balm' and similar phrases, then pull volumes, CPC ranges and forecasts. That sizes the future Google opportunity per SKU line against the $15–25 skin-line contribution, so the $30–40K/mo trigger becomes a costed plan rather than a guess. The same pull feeds real search vocabulary into PDP copy, collection pages and Amazon backend terms. Building the ad groups themselves waits for the channel to open.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Keep branded and non-branded search in separate campaigns. Add a brand negative list to every prospecting campaign (brand name, misspellings, brand + product, domain, known product-line names), and check weekly for brand terms leaking into prospecting and non-brand terms leaking into branded. — 6/10 · parked until `scale`
+
+**Why it works:** Branded clicks convert cheaply and inflate a prospecting campaign's ROAS. That hides whether non-brand acquisition actually works and lets smart bidding chase easy brand traffic instead of new customers.
+
+**Evidence:** Assertion only ('non-negotiable').
+
+**Fit:** This is the measurement hygiene that keeps a future Google account honest, so that new-customer acquisition is judged on its own numbers. That matters because the prime directive is revenue, not attributed ROAS. It does not duplicate the Amazon de-duplication claim, which covers keyword+match-type overlap rather than brand isolation. It is parked behind scale until Google opens.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Build landing pages specifically around the keyword's intent, with the query in the headline and copy, matching visuals and awareness level, because tight keyword→ad→page match raises Quality Score and cuts CPC as well as lifting conversion rate. — 6/10 · parked until `scale`
+
+**Why it works:** Google prices the auction partly on landing-page relevance through Quality Score. A page that mirrors the query earns a higher score, which means a lower CPC at the same position, and that changes how much spend is profitable.
+
+**Evidence:** Home-goods client CPC $6 → $1.73 (screenshot: QS 7–8, avg CPC $1.87); DSA report at $0.25 avg CPC, 4.59 conv value/cost.
+
+**Fit:** Generic message match is already held in marketing-lead-capture-landing-pages (ad → entry → offer congruency). What is new is the Quality Score cost mechanism: on Google, page relevance lowers the price of traffic, not only conversion. That is worth recording because it changes the budget arithmetic. It is parked behind scale with the Google channel.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Route each query type to a page format by intent, and validate comparison traffic on the PDP before investing in a dedicated page.
+- Broad branded → homepage.
+- Branded category → collection page.
+- Branded product → PDP.
+- Transactional → PDP or collection page, or a comparison page in skeptical categories such as beauty.
+- Informational → advertorial, listicle or blog with a soft CTA.
+- Best-of → comparison page.
+- Competitor → comparison or us-vs-them page.
+- Head-to-head → us-vs-them page. — 6/10 · parked until `scale`
+
+**Why it works:** Research-stage visitors need education and comparison before a buy box. Pointing them at a spec-heavy PDP is why brands fail to scale past branded and transactional. Validating on the PDP first avoids building pages for demand that is not there.
+
+**Evidence:** Collage of example pages (Monos vs Samsonite, listicles, advertorials); claimed lower CPCs from comparison pages in supplements and beauty.
+
+**Fit:** Beauty and personal care is the skeptical category he names. A 'drugstore deodorant vs RSC' us-vs-them page and a problem-aware advertorial for the skin line are both real assets. Two cautions apply. A brand-owned page dressed as an independent '3rd-party' comparison must be clearly branded to stay honest. And marketing-ai-search-visibility notes that a self-ranked best-of guide can end up recommending competitors. The page-format routing for Google search is new and is parked behind scale with the channel.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Assign match types by keyword shape: exact for specific long-tail terms (~1–2K+ searches), phrase where the core term must be present, and broad only on 3–5+ word terms, never on branded terms, and only after conversion data and a strong negative list exist. — 5/10 · parked until `scale`
+
+**Why it works:** Broad match on short or branded terms sprays budget across loosely related queries and cannibalizes cheap brand traffic. Smart bidding needs conversion data to make broad match's expansion profitable.
+
+**Evidence:** Assertion only.
+
+**Fit:** This is current platform mechanics (2026 source, so no age penalty) and a sensible guardrail for a future Google account. It is less distinctive than the intent framework. It is parked behind scale because it only applies once a Google Search campaign is running.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Build ad groups so every keyword shares the same category and intent and the group has enough combined volume to produce readable data. Split product categories into their own campaigns only once each gets ~2–3 conversions per day. — 5/10 · parked until `scale`
+
+**Why it works:** Shared intent lets one headline set and one landing page fit every query in the group. Pooling low-volume terms accumulates enough data to optimize. A per-category campaign split below ~2–3 conversions per day starves each campaign.
+
+**Evidence:** Example: 'best creatine powder' and 'how does creatine work' must not share an ad group.
+
+**Fit:** This is sound structure. At RSC it implies one skin-line campaign at first, with deodorant and oral care grouped as retention or brand rather than split out. The 2–3 conversions per day per category is a stated milestone, roughly 60–90 Google conversions per month per category. It is parked behind scale.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Fill every available responsive-search-ad headline and description slot. Make sure the set contains USPs, the main keyword, the current offer, social proof and a clear CTA. Echo the exact query in headlines (written or via dynamic keyword insertion), and switch to education or credibility angles for comparison and informational ad groups. — 5/10 · parked until `scale`
+
+**Why it works:** The ad's job is to confirm the searcher found exactly what they typed. A mismatched headline loses the click before it happens. Research-stage searchers ignore transactional copy.
+
+**Evidence:** Example: 'creatine for women' vs a generic 'premium supplements for athletes' headline.
+
+**Fit:** The intent-confirmation principle is already held in marketing-amazon-ppc-management ('write ad creative for one specific search intent') and in awareness-level messaging. What is new is the Google RSA component spec: all slots filled plus the five required elements. Adopted narrowly as that spec, parked behind scale.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Load search ads with assets: business name and logo, 8–12 sitelinks, 10–12 callouts and structured snippets. Add image assets (critical on mobile), price assets to pre-qualify, and promotion assets when an offer is live, so the ad shows price, stock, rating, free delivery and returns. — 5/10 · parked until `scale`
+
+**Why it works:** Assets take up more of the results page and push competitors down. Each visible element is a reason for the right buyer to click and a reason for the wrong one not to, and showing the price filters out wasted clicks.
+
+**Evidence:** Annotated CurrentBody LED mask ad showing headline match, price, stock, 4.6 stars, 2,760 reviews, free delivery, 30-day returns.
+
+**Fit:** Price pre-qualification matters for a premium natural product competing with drugstore pricing. Callouts can carry the aluminum-free, ingredient and guarantee claims. This is platform mechanics (current) and is parked behind scale with the rest of the Google build.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Bid on branded search with manual CPC, setting exact-match max CPC 5–10% above the keyword's average and phrase-match 5–10% above the exact bids, rather than Target ROAS. — 5/10 · parked until `scale`
+
+**Why it works:** Automated strategies bid aggressively toward likely converters, and branded searchers all look like likely converters. As a result, tROAS can pay 5–10x more than needed for clicks you would mostly win cheaply anyway.
+
+**Evidence:** Assertion from agency practice ('manual CPC 90% of the time').
+
+**Fit:** This is a useful cost guardrail for a branded campaign. It is platform mechanics but from a 2026 source. RSC's branded search volume is small today, which is irrelevant to the score. It is parked behind scale with the Google channel opening.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Ladder prospecting bid strategy by conversion count. Use Maximize Clicks with a max-CPC cap under 15 conversions in 30 days, Target ROAS from 15+, or Target CPA from 30+. Set the first target 20% looser than the profitable target, then tighten gradually. — 5/10 · parked until `scale`
+
+**Why it works:** Smart bidding cannot model conversions it has not seen. A capped click strategy buys data cheaply until the threshold, and a loosened initial target gives the algorithm room to learn before it is squeezed.
+
+**Evidence:** Assertion only.
+
+**Fit:** The thresholds are a clear route rather than a wall. A new RSC skin-line search campaign starts in capped Maximize Clicks. 15 conversions in 30 days (~0.5/day) unlocks tROAS, and 30 unlocks tCPA. This is platform mechanics, current. It is parked behind scale with the channel.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+### Once a profitable search baseline exists, test AI Max. Constrain it with AI Brief messaging, matching and audience guidelines and with blocked headline terms so it does not go off-script. — 5/10 · parked until `scale`
+
+**Why it works:** AI Max reads the implied need behind conversational queries that never name the product and tailors the headline and landing page. AI Brief and term blocking keep the generated copy inside brand and compliance limits.
+
+**Evidence:** Agency reports 'solid' results since launch; pet-carrier example query.
+
+**Fit:** AI Max for conversational queries is already a claim in marketing-google-shopping-ai-campaigns, so only the guardrail layer is new. That layer is AI Brief messaging rules (e.g. never claim the product treats a skin condition, lead with ingredients for health-conscious buyers) plus blocked headline terms. It is relevant for a personal-care brand where generated claims carry compliance risk. Adopted as an edit, parked behind scale.
+
+**Target skill:** `marketing-google-shopping-ai-campaigns` (edit)
+
+### Read a low Quality Score as an alignment problem between keyword, ad and landing page. Flag ad groups with low CTR, high CPC or low conversion rate and diagnose which of those three links is broken before changing anything. — 5/10 · parked until `scale`
+
+**Why it works:** Each metric points at a different link. Low CTR points at the keyword-to-ad link, high CPC with low QS points at relevance, and low CVR points at the page. Diagnosing the link avoids rewriting the wrong asset.
+
+**Evidence:** Assertion only.
+
+**Fit:** The weekly search-terms negation half restates marketing-amazon-ppc-management's negation claims, so only the three-link diagnosis is adopted. It is the search equivalent of the existing PPC-vs-listing quadrant read. It is parked behind scale with the Google channel.
+
+**Target skill:** `marketing-google-search-ads` (create)
+
+## Rejected
+
+### Informational-intent search campaigns need strong SEO behind them (blog content, internal linking, supporting pages, technical SEO), or they get fewer impressions, fewer clicks and higher CPCs. — 2/10
+
+**Rejected because:** No stated mechanism. It asserts that organic SEO depth lowers paid CPC without explaining how, so it is not testable as framed.
+
+**Fit reasoning:** Paid auction cost is driven by bid, expected CTR, ad relevance and landing-page experience. The source offers no mechanism by which organic site depth changes ad impressions or CPC, and it conflates the two.
+
+### Search ads do scale for ecommerce because they meet buyers at every stage from category-unaware to brand-ready. — 1/10
+
+**Rejected because:** Motivational framing with no separate mechanism; its substance is already captured by the four-intent tactic above.
+
+**Fit reasoning:** This is motivational framing for the article. The actionable part is captured in the keyword-intent tactic.
+
+## Skills touched
+
+- `marketing-google-search-ads` (create)
+- `marketing-google-shopping-ai-campaigns` (edit)
