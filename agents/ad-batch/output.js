@@ -85,6 +85,13 @@ export function conceptDirName(i, concept) {
   return `${String(i + 1).padStart(2, '0')} ${slug(concept.headline, 50)}`;
 }
 
+/**
+ * Subfolder of a headline folder holding the 9:16 versions of its kept ads. Kept out of
+ * the master sheet (one ad, two ratios, would show twice) and out of the Social queue
+ * (which reads only the 4:5 file recorded per image in run.json).
+ */
+export const VERTICAL_DIR = '9x16';
+
 export function imageName(i, scene) {
   return `${String(i + 1).padStart(2, '0')}-${scene.id}.png`;
 }
@@ -107,10 +114,10 @@ export function ensureDir(d) {
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-/** Grid of the accepted images, 4 across, each captioned with its scene. */
-export async function writeContactSheet(dir, items, { cols = 4, w = 360 } = {}) {
+/** Grid of the accepted images, 4 across, each captioned with its scene. aspect = height / width. */
+export async function writeContactSheet(dir, items, { cols = 4, w = 360, aspect = 1.25 } = {}) {
   if (!items.length) return null;
-  const h = Math.round(w * 1.25);
+  const h = Math.round(w * aspect);
   const cap = 34;
   const rows = Math.ceil(items.length / cols);
   const tiles = await Promise.all(items.map(async (it, i) => {

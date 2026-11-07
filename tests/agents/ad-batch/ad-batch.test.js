@@ -9,9 +9,11 @@ import { parseBatch, screenConcepts, resolveProduct, resolveLineup, categoryFor,
 import { selectLibraryScenes, parseFreshScenes, customScenes, suitsCategory, generateFreshScenes } from '../../../agents/ad-batch/scenes.js';
 import { buildPrompt, productForm } from '../../../agents/ad-batch/prompt.js';
 import { tokens, findRun, decide, requiredLabelStrings, inventedClaims, parseCheck, checkPrompt } from '../../../agents/ad-batch/check.js';
-import { openAiCostUsd, ATTEMPTS } from '../../../agents/ad-batch/render.js';
+import { openAiCostUsd, ATTEMPTS, OPENAI_SIZES } from '../../../agents/ad-batch/render.js';
 import { slug, batchDirName, conceptDirName, imageName, scenesMarkdown, mergeRunRecord } from '../../../agents/ad-batch/output.js';
-import { parseArgs, planScenes, renderScene } from '../../../agents/ad-batch/index.js';
+import { parseArgs, planScenes, renderScene, renderVertical } from '../../../agents/ad-batch/index.js';
+import { placement, buildOutpaintInputs, OUTPAINT_PROMPT } from '../../../agents/ad-batch/vertical.js';
+import { SAFE_ZONE_RATIOS } from '../../../agents/ad-studio/critique.js';
 
 const library = JSON.parse(readFileSync(new URL('../../../data/ad-batch/scenes.json', import.meta.url)));
 // data/product-images/ is gitignored, so the manifest is a fixture here.
@@ -548,4 +550,93 @@ test('copy rendered twice fails; layout prompt never asks for a dominant headlin
   const { prompt } = _buildPrompt({ product, concept: c, scene: { scene: 's', typeStyle: 't' } });
   assert.doesNotMatch(prompt, /dominant lettering/);
   assert.match(prompt, /EXACTLY ONCE/);
+});
+
+// ── 9:16 versions (2026-11-07) ───────────────────────────────────────────────
+test('placement centers the 4:5 on the 9:16 canvas clear of Meta\'s top band', () => {
+  const p = placement();
+  assert.deepEqual([p.width, p.height, p.innerHeight], [1088, 1936, 1360]);
+  assert.equal(p.top, 288);
+  assert.ok(p.top / p.height > SAFE_ZONE_RATIOS['9:16'].top); // the whole 4:5 starts below the 14% band
+  // a label at 80% of the 4:5 lands above the bottom 20% band
+  assert.ok((p.top + 0.8 * p.innerHeight) / p.height < 1 - SAFE_ZONE_RATIOS['9:16'].bottom);
+});
+
+test('buildOutpaintInputs: transparent bands, opaque middle, mask keeps exactly the 4:5', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adbatch-op-'));
+  const feed = join(dir, 'feed.png');
+  await sharp({ create: { width: 1088, height: 1360, channels: 3, background: '#d00' } }).png().toFile(feed);
+  const { canvas, mask, greyCanvas, top } = await buildOutpaintInputs(feed);
+  const px = async (buf, y) => { const { data, info } = await sharp(buf).raw().toBuffer({ resolveWithObject: true }); const i = (y * info.width + 10) * info.channels; return [...data.slice(i, i + info.channels)]; };
+  assert.equal((await px(canvas, 10))[3], 0);          // top band transparent
+  assert.equal((await px(canvas, top + 10))[0], 221);  // 4:5 content
+  assert.equal((await px(mask, 10))[3], 0);            // fill here
+  assert.equal((await px(mask, top + 10))[3], 255);    // keep here
+  assert.equal((await px(mask, 1930))[3], 0);          // bottom band filled too
+  assert.deepEqual((await px(greyCanvas, 10)).slice(0, 3), [128, 128, 128]);
+  assert.match(OUTPAINT_PROMPT, /Fill ONLY those empty bands/);
+});
+
+test('renderScene 9:16 outpaints the kept 4:5 with a mask at the vertical size; the check sees only product refs', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adbatch-v-'));
+  const ref = join(dir, 'ref.png'); const feed = join(dir, 'feed.png');
+  await sharp({ create: { width: 64, height: 64, channels: 3, background: '#fff' } }).png().toFile(ref);
+  await sharp({ create: { width: 80, height: 100, channels: 3, background: '#eee' } }).png().toFile(feed);
+  const img = await sharp({ create: { width: 56, height: 100, channels: 3, background: '#ccc' } }).png().toBuffer();
+  const product = { ...CREAM, refs: { packaged: [ref], unwrapped: [] } };
+  let sent = null; let checkImages = 0;
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, opts) => { sent = opts.body; return { ok: true, json: async () => ({ data: [{ b64_json: img.toString('base64') }], usage: {} }) }; };
+  const anthropic = { messages: { create: async ({ messages }) => {
+    checkImages = messages[0].content.filter(c => c.type === 'image').length;
+    return { content: [{ text: JSON.stringify(goodRead) }] };
+  } } };
+  try {
+    const r = await renderScene({ job: { product, concept, scene: { id: 's', scene: 'beach', typeStyle: 't' }, fromImage: feed }, clients: { openaiKey: 'k', gemini: null, anthropic }, budget: { used: 0, max: 5, costUsd: 0 }, refCache: new Map(), log: () => {} });
+    assert.equal(r.ok, true);
+    assert.equal(sent.get('size'), OPENAI_SIZES['9:16']);
+    assert.equal(sent.getAll('image[]').length, 1); // the canvas only
+    assert.ok(sent.get('mask'));
+    assert.match(sent.get('prompt'), /Fill ONLY those empty bands/);
+    assert.equal(checkImages, 2); // one product reference + the render; the 4:5 is not a reference for the check
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('renderVertical records a failed 9:16 without throwing and files it under 9x16/_rejected', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'adbatch-vr-'));
+  const ref = join(dir, 'ref.png');
+  await sharp({ create: { width: 64, height: 64, channels: 3, background: '#fff' } }).png().toFile(ref);
+  const img = await sharp({ create: { width: 56, height: 100, channels: 3, background: '#ccc' } }).png().toBuffer();
+  const product = { ...CREAM, refs: { packaged: [ref], unwrapped: [] } };
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ data: [{ b64_json: img.toString('base64') }], usage: {} }) });
+  const bad = { ...goodRead, lettering: ['7 Simpel Ingredients', 'vs 20+ in most lotions'] };
+  const anthropic = { messages: { create: async () => ({ content: [{ text: JSON.stringify(bad) }] }) } };
+  try {
+    const v = await renderVertical({ job: { product, concept, scene: { id: 's', scene: 'beach', typeStyle: 't' } }, fromImage: ref, dir, name: '01-s.png', clients: { openaiKey: 'k', gemini: null, anthropic }, budget: { used: 0, max: 2, costUsd: 0 }, refCache: new Map(), log: () => {} });
+    assert.equal(v.ok, false);
+    assert.equal(v.file, join(dir, '9x16', '_rejected', '01-s.png'));
+    assert.ok(v.reasons.length);
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('decide 9:16 holds text and label out of the bands Meta covers; 4:5 ignores positions', () => {
+  const ok = { ...goodRead, text_top: 0.18, text_bottom: 0.4, label_bottom: 0.72 };
+  assert.equal(decide({ read: ok, concept, product: CREAM, ratio: '9:16' }).ok, true);
+  const high = decide({ read: { ...ok, text_top: 0.11 }, concept, product: CREAM, ratio: '9:16' });
+  assert.equal(high.ok, false);
+  assert.match(high.reasons.join(), /11% from the top, inside the top 14%/);
+  assert.match(decide({ read: { ...ok, label_bottom: 0.85 }, concept, product: CREAM, ratio: '9:16' }).reasons.join(), /label reaches 85%/);
+  assert.match(decide({ read: { ...ok, text_bottom: 0.9 }, concept, product: CREAM, ratio: '9:16' }).reasons.join(), /text reaches 90%/);
+  // the same out-of-band reading is fine on a feed ad, where nothing is drawn over the image
+  assert.equal(decide({ read: { ...ok, text_top: 0.05 }, concept, product: CREAM }).ok, true);
+  // a missing position is a note, not a failure
+  const unmeasured = decide({ read: goodRead, concept, product: CREAM, ratio: '9:16' });
+  assert.equal(unmeasured.ok, true);
+  assert.ok(unmeasured.notes.includes('9:16 safe zone not measured'));
+});
+
+test('checkPrompt asks for positions only on 9:16', () => {
+  assert.doesNotMatch(checkPrompt({ product: CREAM, shown: 'packaged' }), /text_top/);
+  assert.match(checkPrompt({ product: CREAM, shown: 'packaged', ratio: '9:16' }), /"text_top"[\s\S]*fractions of its HEIGHT/);
 });

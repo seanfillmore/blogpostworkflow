@@ -10,8 +10,11 @@ import { CREATIVE_MODELS } from '../../config/creative-models.js';
 
 export const OPENAI_IMAGE_MODEL = CREATIVE_MODELS.adBatch.imageGen;
 export const GEMINI_IMAGE_MODEL = CREATIVE_MODELS.adBatch.fallbackImageGen;
-// 4:5 at Meta's recommended feed size; gpt-image-2 accepts custom sizes in multiples of 16.
-export const OPENAI_SIZE = '1088x1360';
+// gpt-image-2 accepts custom sizes in multiples of 16. 4:5 is Meta's feed size; 9:16 is
+// Stories and Reels (2026-11-07: Reels and Stories took 38% of 30-day spend while every
+// static was 4:5, so every kept ad now also gets a 9:16 version).
+export const OPENAI_SIZES = { '4:5': '1088x1360', '9:16': '1088x1936' };
+export const OPENAI_SIZE = OPENAI_SIZES['4:5'];
 
 // USD per 1M image tokens. developers.openai.com/api/docs/pricing (read 2026-10-06)
 // lists gpt-image-2 at $4 in / $15 out under BATCH; the standard rate is assumed to be
@@ -56,6 +59,42 @@ export async function renderGemini({ gemini, prompt, refs, aspectRatio = '4:5' }
     model: GEMINI_IMAGE_MODEL,
     contents: [{ role: 'user', parts }],
     config: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: { imageSize: '2K', aspectRatio } },
+  });
+  const img = res?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+  if (!img) throw new Error('Gemini returned no image');
+  return { buffer: Buffer.from(img.inlineData.data, 'base64'), model: GEMINI_IMAGE_MODEL, costUsd: GEMINI_USD_PER_RENDER, usage: null };
+}
+
+/**
+ * Masked edit: fill the transparent parts of `image` (a PNG buffer) where `mask` is
+ * transparent, keeping the rest. Used to extend a kept 4:5 ad to 9:16 (vertical.js).
+ */
+export async function renderOpenAIOutpaint({ apiKey, prompt, image, mask, size = OPENAI_SIZES['9:16'], fetchImpl = fetch }) {
+  if (!apiKey) throw new Error('no OPENAI_API_KEY');
+  const fd = new FormData();
+  fd.append('model', OPENAI_IMAGE_MODEL);
+  fd.append('prompt', prompt);
+  fd.append('size', size);
+  fd.append('quality', 'high');
+  fd.append('image[]', new Blob([image], { type: 'image/png' }), 'canvas.png');
+  fd.append('mask', new Blob([mask], { type: 'image/png' }), 'mask.png');
+  const r = await fetchImpl('https://api.openai.com/v1/images/edits', {
+    method: 'POST', headers: { Authorization: `Bearer ${apiKey}` }, body: fd,
+  });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(`OpenAI ${r.status}: ${j?.error?.message || 'request failed'}`);
+  const b64 = j?.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI returned no image');
+  return { buffer: Buffer.from(b64, 'base64'), model: OPENAI_IMAGE_MODEL, costUsd: openAiCostUsd(j.usage), usage: j.usage || null };
+}
+
+/** Gemini takes no mask: it gets the canvas with flat grey bands and is told to replace them. */
+export async function renderGeminiOutpaint({ gemini, prompt, image }) {
+  if (!gemini) throw new Error('no GEMINI_API_KEY');
+  const res = await gemini.models.generateContent({
+    model: GEMINI_IMAGE_MODEL,
+    contents: [{ role: 'user', parts: [{ inlineData: { data: image.toString('base64'), mimeType: 'image/png' } }, { text: prompt }] }],
+    config: { responseModalities: ['IMAGE', 'TEXT'], imageConfig: { imageSize: '2K', aspectRatio: '9:16' } },
   });
   const img = res?.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
   if (!img) throw new Error('Gemini returned no image');
