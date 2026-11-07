@@ -7,7 +7,7 @@ description: Use when deciding whether to open Google Ads for an ecommerce catal
 
 ## Run the Google Ads campaign types eligible to serve inside AI Mode and AI Overview — Performance Max, AI Max and Shopping — because AI Max matches the long conversational queries no manual keyword list can enumerate, and because final URL expansion means your collection and comparison pages become part of the targeting and must carry strong descriptive copy.
 
-**Why it works:** Google is placing product ads inside the AI answer experience. AI Max reads query meaning plus behavioural signals rather than exact keywords. That lets it capture long-tail conversational searches that have no volume individually, and it dynamically rewrites headlines to fit the query context.
+**Why it works:** Google is placing product ads inside the AI answer experience. AI Max reads query meaning plus behavioural signals rather than exact keywords. That lets it capture long-tail conversational searches that have no volume individually, including queries that state a need without ever naming the product. It also dynamically rewrites headlines and picks the landing page to fit the query context.
 
 **Evidence offered:** The agency claims success running AI Max across a number of accounts and gives a pet-carrier query example sourced to Google. No figures are offered.
 
@@ -35,3 +35,14 @@ description: Use when deciding whether to open Google Ads for an ecommerce catal
 **When the gate opens:** Re-check PMax as the entry type against Google's current campaign types, AI Max in particular.
 
 *Source: Ecommerce Alley — "How We’d Scale to $100K/Month If We Started Over Today" (h2O0i1eHbkk)*
+
+## Once a profitable search baseline exists, test AI Max under guardrails: write an AI Brief with messaging, matching and audience guidelines, and block headline terms, so the generated headlines and landing-page choices stay inside brand and compliance limits.
+**Stage:** scale — parked until the scale phase opens.
+
+**Why it works:** AI Max's conversational matching and headline rewriting are covered in the campaign-type section above. This section adds only the control layer. AI Max writes its own copy, so without constraints it can make claims the brand would never approve. The AI Brief sets rules the generated copy must follow, and blocked terms stop specific words from ever appearing in headlines. Running it against an existing profitable search baseline means there is a control to compare it against.
+
+**Evidence offered:** The agency reports "solid" results since launch and reuses the pet-carrier query example. No figures are offered.
+
+**Fit here (5/10):** Only the guardrail layer is new. It matters for a personal-care brand, where a generated health claim is a compliance risk rather than just an off-brand line. Example AI Brief rules: never claim the product treats a skin condition; lead with ingredients for health-conscious buyers. Block treatment and cure language as headline terms. It is parked behind scale because it needs a profitable search baseline and the Google budget this business does not have yet.
+
+*Source: Jackson Blackledge (@blvckledge) — "How ecom brands are making 7 figs/mo with Google Search Ads (Full Guide)" (social post)*
