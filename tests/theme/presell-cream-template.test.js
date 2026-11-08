@@ -77,7 +77,7 @@ function expectedSection() {
     settings: {
       eyebrow: content.eyebrow,
       headline: content.headline,
-      ...(content.headlineVariants?.length ? { headline_variants: content.headlineVariants.map((v) => [v.key, v.headline, v.scent || ''].join(' | ')).join('\n') } : {}),
+      ...(content.headlineVariants?.length ? { headline_variants: content.headlineVariants.map((v) => [v.key, v.headline, v.scent || '', v.heroImage || '', v.buyImage || '', v.heroAlt || '', v.buyAlt || ''].join(' | ').replace(/( \| )+$/, '')).join('\n') } : {}),
       intro: content.intro,
       hero_image: media[content.hero.key].url,
       hero_alt: content.hero.alt,
@@ -479,6 +479,31 @@ test('headline swap script: a known ?v= swaps the h1 and names the scent; unknow
   assert.deepEqual(run(''), { headline: 'ORIGINAL', scent: undefined });
   assert.deepEqual(run('?v=nope'), { headline: 'ORIGINAL', scent: undefined });
   assert.deepEqual(run('?v=<script>'), { headline: 'ORIGINAL', scent: undefined });
+});
+
+test('image swap: the unscented variant shows the Pure Unscented photos; non-CDN URLs are ignored', () => {
+  const sec = readFileSync(new URL('../../theme/sections/presell-listicle.liquid', import.meta.url), 'utf8');
+  const h1 = sec.match(/<script>\s*\/\* Search-matched headline[\s\S]*?<\/script>/)[0].replace(/^<script>|<\/script>$/g, '');
+  const heroSwap = sec.match(/<script>\s*\/\* Swap the hero[\s\S]*?<\/script>/)[0].replace(/^<script>|<\/script>$/g, '');
+  const run = (setting, search) => {
+    const win = {};
+    const img = { srcset: 'OLD', src: 'OLD', alt: 'OLD' };
+    const doc = { querySelector: (q) => (q.includes('hero-img') ? img : { textContent: '' }) };
+    new Function('location', 'document', 'window', h1.replace('{{ section.settings.headline_variants | json }}', JSON.stringify(setting)))({ search }, doc, win);
+    new Function('document', 'window', heroSwap)(doc, win);
+    return { img, images: win.__presellImages };
+  };
+  const setting = template().sections.main.settings.headline_variants;
+  const u = content.headlineVariants.find((v) => v.key === 'unscented');
+  const r = run(setting, '?v=unscented');
+  assert.equal(r.img.src, u.heroImage + '&width=900');
+  assert.match(r.img.srcset, /presell-cream-hero-unscented\.jpg\?v=\d+&width=1200 1200w$/);
+  assert.equal(r.img.alt, u.heroAlt);
+  assert.equal(r.images.buy, u.buyImage);
+  assert.equal(run(setting, '?v=thick').img.src, 'OLD', 'a variant without photos keeps the default');
+  const evil = run('x | H | | https://evil.example/a.jpg | javascript:alert(1)', '?v=x');
+  assert.equal(evil.img.src, 'OLD');
+  assert.deepEqual(evil.images, { hero: '', buy: '', heroAlt: '', buyAlt: '' });
 });
 
 test('every schema setting label fits Shopify\'s 70-character limit', () => {

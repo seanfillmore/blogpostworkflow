@@ -215,6 +215,9 @@ test('headline variants: safe keys, real scents, gated copy, and 7 ingredients o
     assert.equal(checkSeoCopyFields({ headline: v.headline }).ok, true, v.key);
     assert.ok(!/antiperspirant|mineral oil|petrolatum/i.test(v.headline), v.key);
     if (v.scent) assert.ok(scents.has(v.scent), `unknown scent ${v.scent}`);
+    for (const k of ['heroImage', 'buyImage']) if (v[k]) assert.match(v[k], /^https:\/\/cdn\.shopify\.com\/[^|]+$/, `${v.key} ${k}`);
+    for (const k of ['heroAlt', 'buyAlt']) if (v[k]) { assert.ok(!v[k].includes('|')); assert.equal(checkSeoCopyFields({ alt: v[k] }).ok, true); }
+    if (v.scent === 'Pure Unscented') assert.ok(v.heroImage && v.buyImage && /unscented/i.test(v.heroAlt + v.buyAlt), 'a Pure Unscented variant must not show the Coconut Breeze photos');
     // "7 ingredients" without "base" is a total count: true for Pure Unscented only (Coconut Breeze has 8)
     if (/\b7 ingredients\b/i.test(v.headline) && !/7-ingredient base/i.test(v.headline)) assert.equal(v.scent, 'Pure Unscented', v.key);
   }
