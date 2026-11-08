@@ -45,14 +45,16 @@ const price = (handle) => {
   if (!p.priceLabel) throw new Error(`${handle} has no priceLabel — regenerate the catalog`);
   // The catalog price is the LOWEST variant. When variants differ (since 2026-11-04 the
   // Pure Unscented bar packs are cheaper than the other scents), quoting it bare would
-  // put one scent's price on all of them. Use priceFrom() so the copy says "from".
+  // put one scent's price on all of them. Use priceFrom() so the copy says "and up".
   if (p.priceVaries) throw new Error(`${handle}: variant prices differ; use priceFrom()`);
   return p.priceLabel;
 };
 const priceFrom = (handle) => {
   const p = CATALOG[handle];
   if (!p?.priceLabel) throw new Error(`no catalog price for ${handle} — run build-product-catalog.mjs`);
-  return p.priceVaries ? `from ${p.priceLabel}` : p.priceLabel;
+  // "$29 and up", never "from $29": lib/email-render.js reads "from $N" as a shipping
+  // threshold and refuses any N other than the real one (that broke every build 2026-11-04).
+  return p.priceVaries ? `${p.priceLabel} and up` : p.priceLabel;
 };
 // Bundle savings, for the multipack placements added 2026-08-30. THROWS rather than
 // degrading to no saving: a bundle whose whole argument is "cheaper per unit" and which
