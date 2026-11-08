@@ -44,12 +44,16 @@ export const TOOTHPASTE_DISCOUNT = 'gid://shopify/DiscountAutomaticNode/15975109
 // Changed 2026-11-05 (Sean: "Why not 3 free bars on any paid order? ... at least they are
 // paying shipping"): no dollar minimum, just one qualifying (non-bar) item in the cart. A cart
 // of only Pure Unscented singles still pays for them. Orders under $45 pay shipping.
+// 2026-11-07 (Sean: "Keep any order"): it no longer ends after Black Friday. It starts
+// Nov 27 and runs with no end date, and the $60 offer ends at that same instant
+// (SIXTY_ENDS_AT), so exactly one free-bar offer is ever live.
 export const BF = {
-  title: 'Black Friday: 3 free Pure Unscented bars with any order',
+  title: '3 free Pure Unscented bars with any order',
   oldTitles: ['Black Friday: 3 free Pure Unscented bars on $45+'],
   minQty: '1', qty: '3',
-  startsAt: '2026-11-27T08:00:00Z', endsAt: '2026-12-01T07:59:59Z',
+  startsAt: '2026-11-27T08:00:00Z', endsAt: null,
 };
+export const SIXTY_ENDS_AT = BF.startsAt;
 export const PRICE_CHANGES = [
   { handle: 'coconut-bar-soap-4-pack', variant: 'gid://shopify/ProductVariant/48868611588266', from: '39.00', to: '29.00' },
   { handle: 'coconut-bar-soap-12-pack', variant: 'gid://shopify/ProductVariant/49135322988714', from: '88.00', to: '60.00' },
@@ -91,6 +95,7 @@ async function main() {
       d: {
         title: TITLE,
         startsAt: new Date().toISOString(),
+        endsAt: SIXTY_ENDS_AT,
         usesPerOrderLimit: '1',
         combinesWith: { productDiscounts: true, shippingDiscounts: true, orderDiscounts: false },
         customerBuys: { value: { amount: MIN_SUBTOTAL }, items: { products: items } },

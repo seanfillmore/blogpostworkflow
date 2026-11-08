@@ -608,6 +608,12 @@ GIVEAWAY_CLOSE_ENTRY_PERIOD="5 8 15 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giv
 # harmless: it fires again in 2027 and does nothing. Never add --force here.
 GIVEAWAY_PUBLISH_OFFER_PAGE="30 19 16 9 * cd \"$PROJECT_DIR\" && $NODE scripts/giveaway/publish-offer-page.mjs --apply >> data/reports/scheduler/giveaway-offer-page.log 2>&1"
 
+# Switch the announcement bar's soap line to the any-order offer at the moment that
+# discount starts (2026-11-27T08:00Z = 00:00 PST). 08:10 UTC gives 10 minutes of margin.
+# The script refuses BEFORE the switch instant and does nothing after 2026-12-31, which is
+# what makes the missing year field harmless: it fires again in 2027 and exits.
+DATED_SOAP_ANNOUNCEMENT="10 8 27 11 * cd \"$PROJECT_DIR\" && $NODE scripts/soap-announcement-switch.mjs --apply >> data/reports/scheduler/soap-announcement.log 2>&1"
+
 # (A SECOND DAILY_GIVEAWAY_NUDGE definition lived here, identical to the one
 # above it and silently overriding it — two comment blocks, one job. Both were
 # removed together on 2026-08-24; see the retirement note above.)
@@ -717,6 +723,7 @@ $DAILY_GIVEAWAY_REPORT
 $GIVEAWAY_PRE_CLOSE_RECONCILE
 $GIVEAWAY_CLOSE_ENTRY_PERIOD
 $GIVEAWAY_PUBLISH_OFFER_PAGE
+$DATED_SOAP_ANNOUNCEMENT
 "
 
 echo "Installing cron jobs..."
