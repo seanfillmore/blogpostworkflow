@@ -37,15 +37,15 @@
       "image_mobile": "shopify://shop_images/home-hero-soap-mobile.webp",
       "image_alt": "Three Real Skin Care Pure Unscented coconut bar soaps on a bathroom vanity",
       "alt": {
-        "_why": "Black Friday 2026. Sean 2026-11-04: more bars at a lower threshold; 2026-11-05: 'Why not 3 free bars on any paid order?' Matches the scheduled discount 'Black Friday: 3 free Pure Unscented bars with any order' (2026-11-27T08:00Z to 2026-12-01T07:59:59Z). Swaps itself in and out by date.",
+        "_why": "From 2026-11-27 the standing offer is 3 free Pure Unscented bars with any order (Sean, 2026-11-05/07: 'Why not 3 free bars on any paid order?' then 'Keep any order'). Matches the discount '3 free Pure Unscented bars with any order' (starts 2026-11-27T08:00Z, no end). No Black Friday dates in this copy, because it stays up after Nov 30; the end is far future.",
         "start": "2026-11-27T08:00:00Z",
-        "end": "2026-12-01T07:59:59Z",
-        "kicker": "Black Friday, Nov 27 to 30",
+        "end": "2099-01-01T00:00:00Z",
+        "kicker": "Free gift with every order",
         "heading": "3 free Pure Unscented bars with any order",
         "text": "Our coconut oil hand and body soap, with nothing added for scent. Add three bars to any order and they ring up at $0. Orders over $45 ship free.",
         "add_label": "Something in your cart already? Add your 3 free bars",
         "add_url": "/cart/add?id=45828179951786&quantity=3",
-        "fine": "Through Monday, Nov 30. Add at least one other product, then 3 Pure Unscented bars. One gift per order, while supplies last."
+        "fine": "Add at least one other product, then 3 Pure Unscented bars. One gift per order, while supplies last."
       }
     }
   },
