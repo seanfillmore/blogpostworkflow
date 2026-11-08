@@ -77,7 +77,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { openSync, readSync, fstatSync, closeSync, existsSync } from 'node:fs';
+import { openSync, readSync, fstatSync, closeSync, existsSync, statfsSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -389,6 +389,28 @@ export function gatherFacts(now = Date.now()) {
   };
 }
 
+/**
+ * Disk check, added 2026-11-08 after the second disk-full outage (a Brand Analytics
+ * dump filled the 24 GB disk mid-download at 15:52 UTC and the rest of that day's
+ * pipeline failed silently). This runs at 12:50 UTC, before the 15:00 scheduler and
+ * the Sunday dump, so the warning lands while there is still room to act. 85% of 24 GB
+ * leaves ~3.6 GB, about one BA dump: the morning of the outage the disk sat at ~86%.
+ */
+export const DISK_WARN_FRACTION = 0.85;
+export function classifyDisk({ totalBytes, freeBytes }) {
+  const used = totalBytes > 0 ? 1 - freeBytes / totalBytes : 0;
+  const pct = Math.round(used * 100);
+  const gb = (freeBytes / 1024 ** 3).toFixed(1);
+  return used >= DISK_WARN_FRACTION
+    ? { status: 'error', headline: `Server disk ${pct}% full, ${gb} GB free`, used }
+    : { status: 'success', headline: `Server disk ${pct}% used, ${gb} GB free`, used };
+}
+
+export function readDisk(path = '/') {
+  const s = statfsSync(path);
+  return { totalBytes: s.blocks * s.bsize, freeBytes: s.bavail * s.bsize };
+}
+
 async function main(argv) {
   const facts = gatherFacts();
   const verdict = classifySchedulerHealth(facts);
@@ -416,6 +438,24 @@ async function main(argv) {
       ...verdict.detail.map((d) => `  ${d}`),
     ].join('\n'),
   });
+
+  // Disk: one quiet line in the cron log when healthy; a Failures-block row past 85%.
+  try {
+    const disk = classifyDisk(readDisk('/'));
+    console.log(`[disk] ${disk.headline}`);
+    if (disk.status === 'error') {
+      await notify({
+        subject: disk.headline,
+        status: 'error',
+        category: 'pipeline',
+        body: [
+          `${disk.headline}. A full disk stops every cron job silently (2026-06, 2026-11-08).`,
+          'Largest consumers are usually data/amazon-explore (Brand Analytics dumps) and data/rank-snapshots:',
+          '  ssh root@137.184.119.230 "df -h / && du -xh --max-depth=1 /root/seo-claude/data | sort -h | tail"',
+        ].join('\n'),
+      });
+    }
+  } catch (err) { console.log(`[disk] could not read: ${err.message}`); }
 
   // Always exit 0. This runs from cron, where a non-zero exit is invisible; the
   // digest row IS the report. Same contract as the other detectors in this slot.

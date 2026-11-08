@@ -319,3 +319,14 @@ test('it never escalates to email and never sets error on a routine state', () =
     assert.equal(classifySchedulerHealth(facts).status, 'success');
   }
 });
+
+test('classifyDisk: a Failures row at 85% full; quiet below', async () => {
+  const { classifyDisk, DISK_WARN_FRACTION } = await import('../../scripts/check-scheduler-heartbeat.mjs');
+  const GB = 1024 ** 3;
+  assert.equal(DISK_WARN_FRACTION, 0.85);
+  assert.equal(classifyDisk({ totalBytes: 24 * GB, freeBytes: 6.5 * GB }).status, 'success');
+  const morning = classifyDisk({ totalBytes: 24 * GB, freeBytes: 3.4 * GB }); // the 2026-11-08 morning
+  assert.equal(morning.status, 'error');
+  assert.match(morning.headline, /86% full, 3\.4 GB free/);
+  assert.equal(classifyDisk({ totalBytes: 24 * GB, freeBytes: 0 }).status, 'error');
+});
