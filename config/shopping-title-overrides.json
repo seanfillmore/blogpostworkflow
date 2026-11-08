@@ -1,0 +1,13 @@
+{
+  "_note": "Shopping-only title overrides (scripts/sync-shopping-title-overrides.mjs). Sean, 2026-11-08: the Shopify Google app titled the All Natural and Cinnamon Spice toothpastes 'Fresh Mint ...' from the product SEO title; fix in Merchant Center only, never by editing the SEO title of the organic page. Brand first, no dashes.",
+  "merchantId": "729030085",
+  "primaryDataSourceId": "10707222729",
+  "supplementalName": "RSC title overrides (API)",
+  "feedLabel": "US",
+  "contentLanguage": "en",
+  "overrides": [
+    { "offerId": "shopify_US_7644970975402_44179458162858", "title": "Real Skin Care Coconut Oil Toothpaste, Fresh Mint, Fluoride Free" },
+    { "offerId": "shopify_US_7644970975402_45828181131434", "title": "Real Skin Care Coconut Oil Toothpaste, All Natural, Fluoride Free" },
+    { "offerId": "shopify_US_7644970975402_45828181196970", "title": "Real Skin Care Coconut Oil Toothpaste, Cinnamon Spice, Fluoride Free" }
+  ]
+}
