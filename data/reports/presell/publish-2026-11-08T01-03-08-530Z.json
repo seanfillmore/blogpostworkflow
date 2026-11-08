@@ -1,0 +1,42 @@
+{
+  "at": "2026-11-08T01:03:08.530Z",
+  "apply": false,
+  "argv": [
+    "--live"
+  ],
+  "target": "coconut-cream",
+  "head": "f0e1ad0344805dc38c50d48d369e0d0748c2a2e7",
+  "theme": {
+    "themeId": "148782940330",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": "origin/main",
+        "verdict": "write",
+        "currentBytes": 27111,
+        "targetBytes": 28670
+      },
+      {
+        "key": "assets/presell.css",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 12954,
+        "targetBytes": 12954
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 14154,
+        "targetBytes": 14154
+      },
+      {
+        "key": "templates/page.presell-cream.json",
+        "before": "origin/main",
+        "verdict": "write",
+        "currentBytes": 9403,
+        "targetBytes": 9739
+      }
+    ]
+  }
+}

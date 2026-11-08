@@ -1,0 +1,44 @@
+{
+  "at": "2026-11-08T01:03:00.828Z",
+  "apply": false,
+  "argv": [
+    "--theme",
+    "188094054570"
+  ],
+  "target": "coconut-cream",
+  "head": "f0e1ad0344805dc38c50d48d369e0d0748c2a2e7",
+  "theme": {
+    "themeId": "188094054570",
+    "files": [
+      {
+        "key": "sections/presell-listicle.liquid",
+        "before": "origin/main",
+        "verdict": "refuse",
+        "currentBytes": 26664,
+        "targetBytes": 28670
+      },
+      {
+        "key": "assets/presell.css",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 12954,
+        "targetBytes": 12954
+      },
+      {
+        "key": "assets/presell-buy.js",
+        "before": "origin/main",
+        "verdict": "already",
+        "currentBytes": 14154,
+        "targetBytes": 14154
+      },
+      {
+        "key": "templates/page.presell-cream.json",
+        "before": "origin/main",
+        "verdict": "refuse",
+        "currentBytes": 9210,
+        "targetBytes": 9739
+      }
+    ]
+  },
+  "error": "guard refused sections/presell-listicle.liquid, templates/page.presell-cream.json: the theme copy is neither the expected before nor the new content. Nothing written."
+}

@@ -77,6 +77,7 @@ function expectedSection() {
     settings: {
       eyebrow: content.eyebrow,
       headline: content.headline,
+      ...(content.headlineVariants?.length ? { headline_variants: content.headlineVariants.map((v) => [v.key, v.headline, v.scent || ''].join(' | ')).join('\n') } : {}),
       intro: content.intro,
       hero_image: media[content.hero.key].url,
       hero_alt: content.hero.alt,
@@ -296,7 +297,8 @@ test('the build script reproduces the template byte for byte, with \\/ escaping'
 const MAX_VIDEO_LOOKAHEAD_PX = 150;
 
 function runInlineScript() {
-  const src = markup().match(/<script>([\s\S]*?)<\/script>/)[1];
+  // the lazy-video / sticky-CTA script, not the headline swap that sits after the h1
+  const src = [...markup().matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((x) => x.includes('Lazy video'));
   const listeners = {};
   const observers = [];
   const makeVideo = () => ({
@@ -447,4 +449,34 @@ test('media.json records dimensions for the buy-box and breeze images', () => {
   }
   assert.ok(media.breeze.width <= 1200);
   assert.match(media.breeze.signature, /submission_f21e1811-/);
+});
+
+test('search-matched headlines: built into the template and read only through an allowlisted ?v= key', () => {
+  const t = readFileSync(new URL('../../theme/templates/page.presell-cream.json', import.meta.url), 'utf8');
+  assert.match(t, /"headline_variants": "coconut \| 5 reasons/);
+  const sec = readFileSync(new URL('../../theme/sections/presell-listicle.liquid', import.meta.url), 'utf8');
+  assert.match(sec, /\[\?&\]v=\(\[a-z0-9-\]\{1,32\}\)/);
+  assert.match(sec, /textContent = f\[1\]/); // never innerHTML
+  assert.doesNotMatch(sec, /innerHTML\s*=\s*f\[/);
+  // the scent preselect runs before presell-buy.js (deferred) binds
+  assert.ok(sec.indexOf('window.__presellScent) {') < sec.indexOf("'presell-buy.js' | asset_url"));
+});
+
+test('headline swap script: a known ?v= swaps the h1 and names the scent; unknown or absent changes nothing', () => {
+  const sec = readFileSync(new URL('../../theme/sections/presell-listicle.liquid', import.meta.url), 'utf8');
+  const block = sec.match(/<script>\s*\/\* Search-matched headline[\s\S]*?<\/script>/)[0];
+  const setting = template().sections.main.settings.headline_variants;
+  const src = block.replace(/^<script>|<\/script>$/g, '').replace('{{ section.settings.headline_variants | json }}', JSON.stringify(setting));
+  const run = (search) => {
+    const h = { textContent: 'ORIGINAL' };
+    const win = {};
+    new Function('location', 'document', 'window', src)({ search }, { querySelector: () => h }, win);
+    return { headline: h.textContent, scent: win.__presellScent };
+  };
+  assert.deepEqual(run('?v=unscented&utm_source=google'), { headline: content.headlineVariants.find((v) => v.key === 'unscented').headline, scent: 'Pure Unscented' });
+  assert.equal(run('?utm_source=google&v=coconut').scent, 'Coconut Breeze');
+  assert.equal(run('?v=thick').scent, '');
+  assert.deepEqual(run(''), { headline: 'ORIGINAL', scent: undefined });
+  assert.deepEqual(run('?v=nope'), { headline: 'ORIGINAL', scent: undefined });
+  assert.deepEqual(run('?v=<script>'), { headline: 'ORIGINAL', scent: undefined });
 });
