@@ -140,8 +140,9 @@ async function run() {
     console.log(`${key}: gate ok, ${c.prices.length} prices live, html ${html.length} chars`);
     if (!APPLY) continue;
 
-    // Klaviyo allows only `contains` on name; match exactly in code.
-    const found = await k.klaviyoRequest('GET', `/campaigns/?filter=${encodeURIComponent(`and(equals(messages.channel,"email"),contains(name,"${c.label}"))`)}`);
+    // Klaviyo allows only `contains` on name; search on the name itself (the label is NOT
+    // part of it, which is how the first version created a duplicate draft), match exactly in code.
+    const found = await k.klaviyoRequest('GET', `/campaigns/?filter=${encodeURIComponent(`and(equals(messages.channel,"email"),contains(name,"${c.name.slice(0, 40).replace(/"/g, '')}"))`)}`);
     const existing = { data: found.data.filter((x) => x.attributes.name === c.name) };
     if (existing.data.length) { console.log(`  ${key}: draft already exists (${existing.data[0].id}); not recreated`); continue; }
     const tpl = await k.createTemplate({ name: `Campaign: ${c.name}`, html });
