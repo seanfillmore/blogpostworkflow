@@ -461,3 +461,22 @@ test('search-matched headlines: built into the template and read only through an
   // the scent preselect runs before presell-buy.js (deferred) binds
   assert.ok(sec.indexOf('window.__presellScent) {') < sec.indexOf("'presell-buy.js' | asset_url"));
 });
+
+test('headline swap script: a known ?v= swaps the h1 and names the scent; unknown or absent changes nothing', () => {
+  const sec = readFileSync(new URL('../../theme/sections/presell-listicle.liquid', import.meta.url), 'utf8');
+  const block = sec.match(/<script>\s*\/\* Search-matched headline[\s\S]*?<\/script>/)[0];
+  const setting = template().sections.main.settings.headline_variants;
+  const src = block.replace(/^<script>|<\/script>$/g, '').replace('{{ section.settings.headline_variants | json }}', JSON.stringify(setting));
+  const run = (search) => {
+    const h = { textContent: 'ORIGINAL' };
+    const win = {};
+    new Function('location', 'document', 'window', src)({ search }, { querySelector: () => h }, win);
+    return { headline: h.textContent, scent: win.__presellScent };
+  };
+  assert.deepEqual(run('?v=unscented&utm_source=google'), { headline: content.headlineVariants.find((v) => v.key === 'unscented').headline, scent: 'Pure Unscented' });
+  assert.equal(run('?utm_source=google&v=coconut').scent, 'Coconut Breeze');
+  assert.equal(run('?v=thick').scent, '');
+  assert.deepEqual(run(''), { headline: 'ORIGINAL', scent: undefined });
+  assert.deepEqual(run('?v=nope'), { headline: 'ORIGINAL', scent: undefined });
+  assert.deepEqual(run('?v=<script>'), { headline: 'ORIGINAL', scent: undefined });
+});
