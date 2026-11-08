@@ -480,3 +480,12 @@ test('headline swap script: a known ?v= swaps the h1 and names the scent; unknow
   assert.deepEqual(run('?v=nope'), { headline: 'ORIGINAL', scent: undefined });
   assert.deepEqual(run('?v=<script>'), { headline: 'ORIGINAL', scent: undefined });
 });
+
+test('every schema setting label fits Shopify\'s 70-character limit', () => {
+  // Shopify refuses the whole section on save past 70 (HTTP 422, 2026-11-08: the
+  // headline_variants label was 86 and the live publish was rejected).
+  const sec = readFileSync(new URL('../../theme/sections/presell-listicle.liquid', import.meta.url), 'utf8');
+  const schema = JSON.parse(sec.match(/{%\s*schema\s*%}([\s\S]*?){%\s*endschema\s*%}/)[1]);
+  const labels = [...(schema.settings || []), ...(schema.blocks || []).flatMap((b) => b.settings || [])].map((s) => s.label).filter(Boolean);
+  for (const l of labels) assert.ok(l.length <= 70, `label ${l.length} chars: ${l}`);
+});
