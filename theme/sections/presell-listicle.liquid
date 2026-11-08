@@ -98,8 +98,10 @@
     {%- if section.settings.headline_variants != blank -%}
     <script>
       /* Search-matched headline (Google Search ads, 2026-11-07): ?v=<key> picks a
-         line "key | headline | scent" from the section setting. Runs right after the
-         h1 so the swap happens before first paint; an unknown key changes nothing. */
+         line "key | headline | scent | hero url | buy-box url | hero alt | buy-box alt"
+         from the section setting (fields after the headline are optional). Runs right
+         after the h1 so the swap happens before first paint; an unknown key changes
+         nothing. Images are only ever swapped to cdn.shopify.com URLs. */
       (function () {
         var m = location.search.match(/[?&]v=([a-z0-9-]{1,32})(?:&|$)/);
         if (!m) return;
@@ -109,7 +111,9 @@
           if (f[0] !== m[1] || !f[1]) continue;
           var h = document.querySelector('[data-presell] .presell-headline');
           if (h) h.textContent = f[1];
+          var cdn = function (u) { return /^https:\/\/cdn\.shopify\.com\//.test(u || '') ? u : ''; };
           window.__presellScent = f[2] || '';
+          window.__presellImages = { hero: cdn(f[3]), buy: cdn(f[4]), heroAlt: f[5] || '', buyAlt: f[6] || '' };
           return;
         }
       })();
@@ -133,6 +137,21 @@
       width="941" height="1000"
       alt="{{ section.settings.hero_alt | escape }}"
       fetchpriority="high" loading="eager" decoding="async">
+    {%- if section.settings.headline_variants != blank -%}
+    <script>
+      /* Swap the hero for a search-matched variant's photo (same 941x1000 shape). */
+      (function () {
+        var v = window.__presellImages;
+        if (!v || !v.hero) return;
+        var img = document.querySelector('[data-presell] .presell-hero-img');
+        if (!img) return;
+        var u = v.hero + (v.hero.indexOf('?') < 0 ? '?' : '&');
+        img.srcset = u + 'width=600 600w, ' + u + 'width=900 900w, ' + u + 'width=1200 1200w';
+        img.src = u + 'width=900';
+        if (v.heroAlt) img.alt = v.heroAlt;
+      })();
+    </script>
+    {%- endif -%}
     <p class="presell-intro">{{ section.settings.intro | escape | replace: price_token, live_price }}</p>
   </header>
 
@@ -354,6 +373,14 @@
       for (var i = 0; i < opts.length; i++) {
         if (opts[i].getAttribute('data-scent') === window.__presellScent) { sel.value = opts[i].value; break; }
       }
+    }
+    var pv = window.__presellImages;
+    var buyImg = pv && pv.buy ? root.querySelector('.presell-buy-img') : null;
+    if (buyImg) {
+      var bu = pv.buy + (pv.buy.indexOf('?') < 0 ? '?' : '&');
+      buyImg.srcset = bu + 'width=350 350w, ' + bu + 'width=700 700w';
+      buyImg.src = bu + 'width=700';
+      if (pv.buyAlt) buyImg.alt = pv.buyAlt;
     }
 
     // Lazy video: nothing is observed until the visitor's FIRST SCROLL. Reason

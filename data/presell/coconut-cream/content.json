@@ -13,7 +13,7 @@
   },
   "eyebrow": "Winter skin",
   "headline": "5 reasons people are switching to a body cream with a 7-ingredient base this winter",
-  "_headlineVariantsNote": "Search-matched headlines for Google Search ads (2026-11-07). The ad's final URL carries ?v=<key>; the page swaps the headline and preselects the scent. Unknown keys change nothing. The unscented headline says 7 ingredients TOTAL, true only for Pure Unscented, so it always preselects Pure Unscented.",
+  "_headlineVariantsNote": "Search-matched headlines for Google Search ads (2026-11-07). The ad's final URL carries ?v=<key>; the page swaps the headline and preselects the scent. Unknown keys change nothing. The unscented headline says 7 ingredients TOTAL, true only for Pure Unscented, so it always preselects Pure Unscented. A variant may also carry heroImage/buyImage (cdn.shopify.com, same 941x1000 and 1080x1446 shapes as the defaults) with alts; the unscented one shows the Pure Unscented jar (Sean, 2026-11-08).",
   "headlineVariants": [
     {
       "key": "coconut",
@@ -23,7 +23,11 @@
     {
       "key": "unscented",
       "headline": "5 reasons people are switching to an unscented body cream with just 7 ingredients",
-      "scent": "Pure Unscented"
+      "scent": "Pure Unscented",
+      "heroImage": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-hero-unscented.jpg?v=1794108990",
+      "heroAlt": "Hands holding a jar of Real Skin Care Pure Unscented moisturizing body cream",
+      "buyImage": "https://cdn.shopify.com/s/files/1/0270/1911/6579/files/presell-cream-jar-unscented.jpg?v=1794108993",
+      "buyAlt": "Jar of Pure Unscented body cream on wood slices beside a plant"
     },
     {
       "key": "thick",

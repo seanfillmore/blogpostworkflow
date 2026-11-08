@@ -148,7 +148,7 @@ export function buildTemplate(content, media) {
         settings: {
           eyebrow: content.eyebrow,
           headline: content.headline,
-          ...(content.headlineVariants?.length ? { headline_variants: content.headlineVariants.map(v => [v.key, v.headline, v.scent || ''].join(' | ')).join('\n') } : {}),
+          ...(content.headlineVariants?.length ? { headline_variants: content.headlineVariants.map(v => [v.key, v.headline, v.scent || '', v.heroImage || '', v.buyImage || '', v.heroAlt || '', v.buyAlt || ''].join(' | ').replace(/( \| )+$/, '')).join('\n') } : {}),
           intro: content.intro,
           hero_image: hero.url,
           hero_alt: content.hero.alt,
