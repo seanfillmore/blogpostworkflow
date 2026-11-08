@@ -95,6 +95,26 @@
   <header class="presell-hero" data-presell-hero>
     <p class="presell-eyebrow">{{ section.settings.eyebrow | escape }}</p>
     <h1 class="presell-headline">{{ section.settings.headline | escape }}</h1>
+    {%- if section.settings.headline_variants != blank -%}
+    <script>
+      /* Search-matched headline (Google Search ads, 2026-11-07): ?v=<key> picks a
+         line "key | headline | scent" from the section setting. Runs right after the
+         h1 so the swap happens before first paint; an unknown key changes nothing. */
+      (function () {
+        var m = location.search.match(/[?&]v=([a-z0-9-]{1,32})(?:&|$)/);
+        if (!m) return;
+        var lines = {{ section.settings.headline_variants | json }}.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+          var f = lines[i].split('|').map(function (x) { return x.trim(); });
+          if (f[0] !== m[1] || !f[1]) continue;
+          var h = document.querySelector('[data-presell] .presell-headline');
+          if (h) h.textContent = f[1];
+          window.__presellScent = f[2] || '';
+          return;
+        }
+      })();
+    </script>
+    {%- endif -%}
     {%- if rating and rating_count > 0 -%}
       {%- assign rating_value = rating.rating | round: 1 -%}
       {%- assign rating_pct = rating.rating | times: 100.0 | divided_by: rating.scale_max -%}
@@ -326,6 +346,16 @@
     var root = document.querySelector('[data-presell]');
     if (!root) return;
 
+    // Preselect the scent a search-matched headline names (set by the script after
+    // the h1). Runs at parse, before presell-buy.js binds and reads the selection.
+    if (window.__presellScent) {
+      var sel = document.getElementById('presell-scent');
+      var opts = sel ? sel.options : [];
+      for (var i = 0; i < opts.length; i++) {
+        if (opts[i].getAttribute('data-scent') === window.__presellScent) { sel.value = opts[i].value; break; }
+      }
+    }
+
     // Lazy video: nothing is observed until the visitor's FIRST SCROLL. Reason
     // 1's video sits ~840-940px down a 390px phone, inside a 650-750px in-app
     // viewport plus any look-ahead, so an observer created on parse fires for it
@@ -387,6 +417,7 @@
     { "type": "header", "content": "Copy lives in data/presell content.json" },
     { "type": "text", "id": "eyebrow", "label": "Eyebrow" },
     { "type": "textarea", "id": "headline", "label": "Headline" },
+    { "type": "textarea", "id": "headline_variants", "label": "Search-matched headlines, one per line: key | headline | scent (picked by ?v=key)" },
     { "type": "textarea", "id": "intro", "label": "Intro" },
     { "type": "text", "id": "hero_image", "label": "Hero image URL (a still, never a video)" },
     { "type": "text", "id": "hero_alt", "label": "Hero image alt text" },

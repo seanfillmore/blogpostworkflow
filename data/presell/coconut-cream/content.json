@@ -13,6 +13,24 @@
   },
   "eyebrow": "Winter skin",
   "headline": "5 reasons people are switching to a body cream with a 7-ingredient base this winter",
+  "_headlineVariantsNote": "Search-matched headlines for Google Search ads (2026-11-07). The ad's final URL carries ?v=<key>; the page swaps the headline and preselects the scent. Unknown keys change nothing. The unscented headline says 7 ingredients TOTAL, true only for Pure Unscented, so it always preselects Pure Unscented.",
+  "headlineVariants": [
+    {
+      "key": "coconut",
+      "headline": "5 reasons people are switching to a coconut body cream with a 7-ingredient base",
+      "scent": "Coconut Breeze"
+    },
+    {
+      "key": "unscented",
+      "headline": "5 reasons people are switching to an unscented body cream with just 7 ingredients",
+      "scent": "Pure Unscented"
+    },
+    {
+      "key": "thick",
+      "headline": "5 reasons people are switching to a thick body cream for dry winter skin",
+      "scent": ""
+    }
+  ],
   "intro": "From Real Skin Care. A popular drugstore coconut lotion lists 34 ingredients on its label. Our Coconut Moisturizer starts from a 7-ingredient base you can read in one breath, and one 4oz jar is $28. Here is why people are making the switch.",
   "hero": {
     "kind": "image",

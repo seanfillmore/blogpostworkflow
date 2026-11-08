@@ -200,3 +200,22 @@ for (const page of ['coconut-cream', 'water-cooler']) {
     for (const s of [b.shipping, b.shippingMulti, b.shippingPack]) assert.doesNotMatch(s, /—/);
   });
 }
+
+// ── search-matched headlines (Google Search ads, 2026-11-07) ─────────────────
+test('headline variants: safe keys, real scents, gated copy, and 7 ingredients only on Pure Unscented', () => {
+  const c = load();
+  const cream = JSON.parse(readFileSync(new URL('../../config/ingredients.json', import.meta.url), 'utf8')).cream;
+  const scents = new Set(cream.variations.map((v) => v.name));
+  const keys = new Set();
+  assert.ok(c.headlineVariants.length >= 1);
+  for (const v of c.headlineVariants) {
+    assert.match(v.key, /^[a-z0-9-]{1,32}$/, v.key);
+    assert.ok(!keys.has(v.key), `duplicate key ${v.key}`); keys.add(v.key);
+    assert.ok(!v.headline.includes('|') && !/[–—]/.test(v.headline), `bad character in ${v.key}`);
+    assert.equal(checkSeoCopyFields({ headline: v.headline }).ok, true, v.key);
+    assert.ok(!/antiperspirant|mineral oil|petrolatum/i.test(v.headline), v.key);
+    if (v.scent) assert.ok(scents.has(v.scent), `unknown scent ${v.scent}`);
+    // "7 ingredients" without "base" is a total count: true for Pure Unscented only (Coconut Breeze has 8)
+    if (/\b7 ingredients\b/i.test(v.headline) && !/7-ingredient base/i.test(v.headline)) assert.equal(v.scent, 'Pure Unscented', v.key);
+  }
+});
