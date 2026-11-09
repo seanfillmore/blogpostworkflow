@@ -263,3 +263,24 @@ test('publishCarousel retries a slide Meta could not fetch, and only that error'
   assert.equal(img.mediaId, 'MEDIA');
   assert.equal(d.seen.creates.length, 2, 'single images get the same retry');
 });
+
+// 2026-11-09: from cdn.shopify.com Instagram refused 6 of 7 slides on the first
+// try; the same files through the storefront host were accepted 4 of 4 at once.
+test('Instagram fetches Shopify files through the storefront host', async () => {
+  const { storefrontImageUrl, publishImage } = await import('../../lib/instagram-reels.js');
+  const cdn = 'https://cdn.shopify.com/s/files/1/0270/1911/6579/files/slide-2.jpg?v=1793796242';
+  const shop = 'https://www.realskincare.com/cdn/shop/files/slide-2.jpg?v=1793796242';
+  assert.equal(storefrontImageUrl(cdn), shop);
+  assert.equal(storefrontImageUrl('https://example.com/a.jpg'), 'https://example.com/a.jpg', 'other hosts untouched');
+  const created = [];
+  const fetchImpl = async (url, init) => {
+    if (init?.method === 'POST') {
+      const b = Object.fromEntries(new URLSearchParams(init.body));
+      if (b.image_url) created.push(b.image_url);
+      return { ok: true, json: async () => ({ id: new URL(String(url)).pathname.endsWith('/media_publish') ? 'MEDIA' : 'c1' }) };
+    }
+    return { ok: true, arrayBuffer: async () => new ArrayBuffer(0), json: async () => ({ status_code: 'FINISHED', permalink: 'p' }) };
+  };
+  await publishImage({ igUserId: 'ig', imageUrl: cdn, caption: 'c' }, { token: 't', fetchImpl, sleep: async () => {} });
+  assert.deepEqual(created, [shop]);
+});
