@@ -213,7 +213,9 @@ test('publishCarousel and publishPagePhotos: children first, then one post namin
 // including Facebook a moment later. A slide Meta could not fetch is warmed and
 // retried; any other refusal still throws at once.
 test('publishCarousel retries a slide Meta could not fetch, and only that error', async () => {
-  const { publishCarousel, publishImage } = await import('../../lib/instagram-reels.js');
+  const { publishCarousel, publishImage, freshFetchUrl } = await import('../../lib/instagram-reels.js');
+  assert.equal(freshFetchUrl('https://cdn.shopify.com/a.jpg?v=9', 0), 'https://cdn.shopify.com/a.jpg?v=9', 'first try is the stored URL, untouched');
+  assert.equal(freshFetchUrl('https://cdn.shopify.com/a.jpg?v=9', 2), 'https://cdn.shopify.com/a.jpg?v=9&rsc_fetch=2');
   const FETCH_ERR = { error: { message: 'Only photo or video can be accepted as media type.', error_user_msg: 'The media could not be fetched from this URI: https://cdn.shopify.com/x-3.jpg' } };
   const make = (failures, err = FETCH_ERR) => {
     const seen = { warmed: [], creates: [], sleeps: [] };
@@ -227,7 +229,7 @@ test('publishCarousel retries a slide Meta could not fetch, and only that error'
         if (u.pathname.endsWith('/media_publish')) return { ok: true, json: async () => ({ id: 'MEDIA' }) };
         if (b.image_url) {
           seen.creates.push(b.image_url);
-          if (b.image_url.endsWith('-3.jpg') && failures.left > 0) { failures.left--; return { ok: false, status: 400, json: async () => err }; }
+          if (new URL(b.image_url).pathname.endsWith('-3.jpg') && failures.left > 0) { failures.left--; return { ok: false, status: 400, json: async () => err }; }
         }
         return { ok: true, json: async () => ({ id: `c${++n}` }) };
       }
@@ -240,17 +242,21 @@ test('publishCarousel retries a slide Meta could not fetch, and only that error'
   const a = make({ left: 1 });
   const r = await publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, a.opts);
   assert.equal(r.mediaId, 'MEDIA');
-  assert.deepEqual(a.seen.creates, [urls[0], urls[1], urls[2], urls[2]]);
-  assert.deepEqual(a.seen.warmed, urls.concat(urls[2]), 'every slide warmed up front, the failed one again before its retry');
+  // 2026-11-09: retrying the IDENTICAL URL failed three times in a row, so each
+  // retry asks for the same file under a fresh query string Meta has not seen.
+  assert.deepEqual(a.seen.creates, [urls[0], urls[1], urls[2], `${urls[2]}?rsc_fetch=1`]);
+  assert.deepEqual(a.seen.warmed, urls.concat(`${urls[2]}?rsc_fetch=1`), 'every slide warmed up front, the retry URL again before its retry');
   assert.ok(a.seen.sleeps.some((ms) => ms >= 10_000), 'waits before retrying');
 
   const b = make({ left: 99 });
   await assert.rejects(publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, b.opts), /could not be fetched/);
-  assert.equal(b.seen.creates.filter((u) => u === urls[2]).length, 3, 'gives up after two retries');
+  const tries = b.seen.creates.filter((u) => u.startsWith(urls[2]));
+  assert.equal(tries.length, 4, 'gives up after three retries');
+  assert.equal(new Set(tries).size, 4, 'every retry is a URL Meta has not tried before');
 
   const c = make({ left: 1 }, { error: { message: 'Invalid aspect ratio' } });
   await assert.rejects(publishCarousel({ igUserId: 'ig', imageUrls: urls, caption: 'c' }, c.opts), /aspect ratio/);
-  assert.equal(c.seen.creates.filter((u) => u === urls[2]).length, 1, 'no retry on any other refusal');
+  assert.equal(c.seen.creates.filter((u) => u.startsWith(urls[2])).length, 1, 'no retry on any other refusal');
 
   const d = make({ left: 1 });
   const img = await publishImage({ igUserId: 'ig', imageUrl: urls[2], caption: 'c' }, d.opts);
