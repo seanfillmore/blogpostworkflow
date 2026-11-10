@@ -654,3 +654,18 @@ test('batchDirName does not repeat a scent the title already names', () => {
   assert.equal(batchDirName({ date: 'D', product: { title: 'Pure Unscented lotion + 3 free bars', variant: 'pure-unscented' } }), 'D Pure Unscented lotion + 3 free bars');
   assert.equal(batchDirName({ date: 'D', product: { title: 'Coconut Moisturizer', variant: 'coconut-breeze' } }), 'D Coconut Moisturizer - coconut-breeze');
 });
+
+test('fidelity: a missing scent illustration, thin bars and fused units fail', () => {
+  const set = { items: [
+    { title: 'Lotion', labelStrings: ['real SKIN CARE'], showCount: 1, labelGraphic: 'leaf' },
+    { title: 'Soap', labelStrings: ['real SKIN CARE'], showCount: 3, labelGraphic: 'leaf', thicknessRatio: 0.4 }] };
+  const row = (o) => ({ count: 1, label_text: ['real SKIN CARE'], matches_reference: 'MATCH', label_graphic: 'green leaf', ...o });
+  const read = (a, b, extra = {}) => ({ lettering: ['H'], products: [{ product: 1, ...row(a) }, { product: 2, ...row({ count: 3, thickness_ratio: 0.4, ...b }) }], ...extra });
+  const go = (r) => _decide({ read: r, concept: { headline: 'H' }, product: set, shown: 'packaged' });
+  assert.equal(go(read({}, {})).ok, true, go(read({}, {})).reasons.join('; '));
+  assert.match(go(read({ label_graphic: 'none' }, {})).reasons.join(), /Lotion: label illustration should be a leaf/);
+  assert.match(go(read({}, { thickness_ratio: 0.2 })).reasons.join(), /Soap: units too thin/);
+  assert.match(go(read({}, {}, { physical_defect: true, physical_defect_reason: 'the three bars merge into each other' })).reasons.join(), /physical defect/);
+  assert.equal(go(read({}, { thickness_ratio: null })).ok, true, 'no side visible is not a failure');
+  assert.equal(go(read({}, {}, { physical_defect: false, physical_defect_reason: 'bars overlap but are separate' })).ok, true);
+});

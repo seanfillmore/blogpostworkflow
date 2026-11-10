@@ -195,6 +195,11 @@ export function resolveProduct({ handle, variant, manifest, references = {}, ima
     description: entry.productDescription || '',
     unwrappedDescription: entry.unwrapped?.productDescription || '',
     labelStrings: buildLabelStrings({ manifestEntry: entry, variant }),
+    // The label's central illustration for this scent ("leaf", "coconut") and, for the
+    // bar soap, its real thickness/diameter. Both are checked in code (2026-11-10: a
+    // lotion without its leaf and bars at half thickness passed the old check).
+    labelGraphic: entry.labelGraphics?.[variant] || null,
+    thicknessRatio: entry.thicknessRatio || null,
     refs: { packaged, unwrapped },
   };
 }
