@@ -66,13 +66,20 @@ The printed label reads exactly: ${product.labelStrings.map(s => `"${s}"`).join(
   }
   const layout = concept.layout;
 
+  // Shape-only references go AFTER the label references, so "reference photo N is
+  // product N" still holds for the labels.
+  const base = shown === 'unwrapped' ? product.refs.unwrapped : product.refs.packaged;
+  const shapes = shown === 'unwrapped' ? [] : (isSet
+    ? product.items.map((p, i) => (p.refs?.shape?.[0] ? { path: p.refs.shape[0], i } : null)).filter(Boolean)
+    : (product.refs.shape?.[0] ? [{ path: product.refs.shape[0], i: 0 }] : []));
+  const shapeNote = shapes.map((s, k) => `Reference photo ${base.length + k + 1} shows the REAL SHAPE AND THICKNESS of ${isSet ? `product ${s.i + 1}` : 'the product'} only. Match its depth and proportions exactly. Its labels are an older design and other scents: never copy them; take the label only from reference photo ${isSet ? s.i + 1 : 1}.`).join('\n');
   return {
     shown,
-    refs: shown === 'unwrapped' ? product.refs.unwrapped : product.refs.packaged,
+    refs: [...base, ...shapes.map(s => s.path)],
     prompt: `Design a finished, scroll-stopping vertical social media ad (4:5) for Real Skin Care "${product.title}".
 
 ${isSet ? productBlock : `${productBlock}
-Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar. The jar is EITHER open (lid fully off and set aside, cream visible inside the rim) OR closed (lid screwed on, no cream visible anywhere). Never show cream on top of, around or coming through a lid that is on the jar.' : ''} ${layout ? LAYOUT_PLACEMENT : animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}
+Show exactly ${count === 1 ? 'one' : count} of this product.${/\bjar\b/i.test(product.description) && shown === 'packaged' ? ' Where it suits the scene, the lid may sit off to the side so the rich product is visible in the open jar. The jar is EITHER open (lid fully off and set aside, cream visible inside the rim) OR closed (lid screwed on, no cream visible anywhere). Never show cream on top of, around or coming through a lid that is on the jar.' : ''} ${layout ? LAYOUT_PLACEMENT : animated ? ANIMATED_PLACEMENT : PHOTO_PLACEMENT}`}${shapeNote ? `\n${shapeNote}` : ''}
 
 SCENE / THEME: ${scene.scene}. ${animated ? ANIMATED_RENDER : 'Premium commercial photography, shallow depth of field, rich and believable.'}
 

@@ -85,8 +85,9 @@ Answer about Image ${n + 1} ONLY, as JSON, transcribing letter by letter exactly
 {
   "lettering": ["every line of text in the ad that is NOT printed on one of our products, in reading order"],
   "products": [
-${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many units of the product in Image ${i + 1} appear>, "label_text": ["every line printed on that product's label, as rendered; [] if not visible"], "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL", "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>" }`).join(',\n')}
+${product.items.map((p, i) => `    { "product": ${i + 1}, "count": <how many units of the product in Image ${i + 1} appear>, "label_text": ["every line printed on that product's label, as rendered; [] if not visible"], "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL", "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>", "label_graphic": "<the central illustration on its label in a few words, e.g. 'green leaf'; 'none' if there is none>"${p.thicknessRatio ? ', "thickness_ratio": <each unit\'s thickness divided by its diameter, from where its side is visible; null if no side is visible>' : ''} }`).join(',\n')}
   ],
+  "physical_defect": true | false, "physical_defect_reason": "<only if true: what is physically impossible or broken about OUR product units: units fused, melted or merging into one shape, warped or bent, floating or balanced impossibly, passing through another object. Units that merely touch, overlap or stand in front of one another are NOT a defect.>",
   "hands_present": true | false,
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"${vertical ? ZONE_FIELDS : ''}
 }
@@ -114,11 +115,27 @@ Answer about Image 2 ONLY, as JSON, transcribing letter by letter exactly as ren
   "our_product_count": <how many units of ${what} appear>,
   "matches_reference": "MATCH" | "MISMATCH" | "CANNOT_TELL",
   "mismatch_reason": "<if MISMATCH: what differs in shape, closure, color, label layout or graphics; else empty>",
+  "label_graphic": "<the central illustration printed on our product's label, in a few words, e.g. 'green leaf' or 'coconut halves'; 'none' if there is no illustration>",${product.thicknessRatio ? `
+  "thickness_ratio": <each unit's thickness divided by its diameter, estimated from where its side is visible; null if no side is visible>,` : ''}
+  "physical_defect": true | false, "physical_defect_reason": "<only if true: what is physically impossible or broken about OUR product units: units fused, melted or merging into one shape, warped or bent, floating or balanced impossibly, passing through another object. Units that merely touch, overlap or stand in front of one another are NOT a defect.>",
   "hands_present": true | false,
   "hand_defect": "<describe any clearly malformed hand (extra or missing fingers, fused or impossible anatomy); else empty>"${vertical ? ZONE_FIELDS : ''}
 }
 
 Count only units of OUR product; ignore other generic bottles, jars or props. "matches_reference" is about the physical product only: shape, closure, color, label LAYOUT and graphics. Lighting, gloss and angle differences are never a mismatch, and neither is tiny print (curved rim text around a label edge, addresses, fine print, volume figures), which nobody can read at ad size.${PHYSICS_NOTE}${style === 'animated' ? ANIMATED_NOTE : ''}${layout ? BLOCKS_NOTE : ''}${vertical ? ZONE_NOTE(2) : ''} Answer with the JSON only.`;
+}
+
+/** Code-side physical checks on one product's reading: its label illustration and thickness. */
+export function productFidelityReasons(item, row, name) {
+  const reasons = [];
+  if (item.labelGraphic && row && typeof row.label_graphic === 'string') {
+    if (!new RegExp(`\\b${item.labelGraphic}`, 'i').test(row.label_graphic)) reasons.push(`${name}: label illustration should be a ${item.labelGraphic} (read "${row.label_graphic}")`);
+  }
+  const t = Number(row?.thickness_ratio);
+  if (item.thicknessRatio && row?.thickness_ratio != null && Number.isFinite(t) && t < item.thicknessRatio * 0.7) {
+    reasons.push(`${name}: units too thin (thickness ${t.toFixed(2)} of diameter, real ${item.thicknessRatio})`);
+  }
+  return reasons;
 }
 
 export function parseCheck(text) {
@@ -189,6 +206,7 @@ export function decide({ read, concept, product, shown, ratio = '4:5' }) {
       const want = item.showCount || 1;
       if (Number.isFinite(c) && c !== want) reasons.push(`${name}: ${c} units, expected ${want}`);
       if (row.matches_reference === 'MISMATCH') reasons.push(`${name} does not match the photos: ${row.mismatch_reason || 'unspecified'}`);
+      reasons.push(...productFidelityReasons(item, row, name));
     });
   } else if (shown !== 'unwrapped') {
     const label = tokens((read.label_text || []).join(' '));
@@ -204,7 +222,9 @@ export function decide({ read, concept, product, shown, ratio = '4:5' }) {
     const want = product.unitCount || 1;
     if (Number.isFinite(n) && n !== want) reasons.push(`${n} units of our product, expected ${want}`);
     if (read.matches_reference === 'MISMATCH') reasons.push(`product does not match the photos: ${read.mismatch_reason || 'unspecified'}`);
+    if (shown !== 'unwrapped') reasons.push(...productFidelityReasons(product, read, 'product'));
   }
+  if (read.physical_defect === true) reasons.push(`physical defect: ${read.physical_defect_reason || 'unspecified'}`);
   if (read.hand_defect && String(read.hand_defect).trim()) reasons.push(`malformed hand: ${read.hand_defect}`);
   if (read.hands_present) notes.push('hands in frame');
   if (ratio === '9:16') safeZoneReasons(read, reasons, notes);
