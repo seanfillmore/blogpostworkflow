@@ -597,7 +597,7 @@ test('renderScene 9:16 outpaints the kept 4:5 with a mask at the vertical size; 
   } finally { globalThis.fetch = realFetch; }
 });
 
-test('renderVertical records a failed 9:16 without throwing and files it under 9x16/_rejected', async () => {
+test('renderVertical records a failed 9:16 without throwing and files it at its reject path', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'adbatch-vr-'));
   const ref = join(dir, 'ref.png');
   await sharp({ create: { width: 64, height: 64, channels: 3, background: '#fff' } }).png().toFile(ref);
@@ -608,9 +608,9 @@ test('renderVertical records a failed 9:16 without throwing and files it under 9
   const bad = { ...goodRead, lettering: ['7 Simpel Ingredients', 'vs 20+ in most lotions'] };
   const anthropic = { messages: { create: async () => ({ content: [{ text: JSON.stringify(bad) }] }) } };
   try {
-    const v = await renderVertical({ job: { product, concept, scene: { id: 's', scene: 'beach', typeStyle: 't' } }, fromImage: ref, dir, name: '01-s.png', clients: { openaiKey: 'k', gemini: null, anthropic }, budget: { used: 0, max: 2, costUsd: 0 }, refCache: new Map(), log: () => {} });
+    const v = await renderVertical({ job: { product, concept, scene: { id: 's', scene: 'beach', typeStyle: 't' } }, fromImage: ref, okPath: join(dir, '9x16', 'A - 01 H.png'), rejectPath: join(dir, '_rejected', '9x16-01-s.png'), clients: { openaiKey: 'k', gemini: null, anthropic }, budget: { used: 0, max: 2, costUsd: 0 }, refCache: new Map(), log: () => {} });
     assert.equal(v.ok, false);
-    assert.equal(v.file, join(dir, '9x16', '_rejected', '01-s.png'));
+    assert.equal(v.file, join(dir, '_rejected', '9x16-01-s.png'));
     assert.ok(v.reasons.length);
   } finally { globalThis.fetch = realFetch; }
 });
@@ -648,4 +648,9 @@ test('set item count: parsed, prompted and checked', () => {
   const read = (n) => ({ lettering: ['H'], products: [{ product: 1, count: 1, label_text: ['real SKIN CARE'], matches_reference: 'MATCH' }, { product: 2, count: n, label_text: ['real SKIN CARE'], matches_reference: 'MATCH' }] });
   assert.equal(_decide({ read: read(3), concept: { headline: 'H' }, product: set, shown: 'packaged' }).ok, true);
   assert.match(_decide({ read: read(1), concept: { headline: 'H' }, product: set, shown: 'packaged' }).reasons.join(' '), /1 units, expected 3/);
+});
+
+test('batchDirName does not repeat a scent the title already names', () => {
+  assert.equal(batchDirName({ date: 'D', product: { title: 'Pure Unscented lotion + 3 free bars', variant: 'pure-unscented' } }), 'D Pure Unscented lotion + 3 free bars');
+  assert.equal(batchDirName({ date: 'D', product: { title: 'Coconut Moisturizer', variant: 'coconut-breeze' } }), 'D Coconut Moisturizer - coconut-breeze');
 });
