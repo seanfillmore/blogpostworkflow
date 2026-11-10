@@ -78,7 +78,7 @@ function setCheckPrompt(product, style, layout = false, vertical = false) {
   const n = product.items.length;
   const refs = product.items.map((p, i) => `Image ${i + 1} is a REFERENCE photo of product ${i + 1}: ${p.title}.`).join('\n');
   return `${refs}
-Image ${n + 1} is an AD to check. It should show these ${n} products together, one of each.
+Image ${n + 1} is an AD to check. It should show these ${n} products together: ${product.items.map((p, i) => `${p.showCount || 1} of product ${i + 1}`).join(', ')}.
 
 Answer about Image ${n + 1} ONLY, as JSON, transcribing letter by letter exactly as rendered. Do NOT correct spelling, do NOT fill in words you cannot see.
 
@@ -186,7 +186,8 @@ export function decide({ read, concept, product, shown, ratio = '4:5' }) {
         if (findRun(label, tokens(s)) < 0) reasons.push(`${name}: label missing or misspelled "${s}" (read "${(row.label_text || []).join(' / ')}")`);
       }
       const c = Number(row.count);
-      if (Number.isFinite(c) && c !== 1) reasons.push(`${name}: ${c} units, expected 1`);
+      const want = item.showCount || 1;
+      if (Number.isFinite(c) && c !== want) reasons.push(`${name}: ${c} units, expected ${want}`);
       if (row.matches_reference === 'MISMATCH') reasons.push(`${name} does not match the photos: ${row.mismatch_reason || 'unspecified'}`);
     });
   } else if (shown !== 'unwrapped') {

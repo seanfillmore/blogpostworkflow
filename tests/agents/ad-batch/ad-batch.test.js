@@ -635,3 +635,17 @@ test('checkPrompt asks for positions only on 9:16', () => {
   assert.doesNotMatch(checkPrompt({ product: CREAM, shown: 'packaged' }), /text_top/);
   assert.match(checkPrompt({ product: CREAM, shown: 'packaged', ratio: '9:16' }), /"text_top"[\s\S]*fractions of its HEIGHT/);
 });
+
+test('set item count: parsed, prompted and checked', () => {
+  const b = _parseBatch({ products: [{ product: 'coconut-lotion', variant: 'pure-unscented' }, { product: 'coconut-soap', variant: 'pure-unscented', count: 3 }], concepts: [{ headline: 'H' }] });
+  assert.deepEqual(b.items[1], { product: 'coconut-soap', variant: 'pure-unscented', count: 3 });
+  assert.throws(() => _parseBatch({ products: [{ product: 'a' }, { product: 'b', count: 9 }], concepts: [{ headline: 'H' }] }), /count must be a whole number/);
+  const set = { items: [
+    { title: 'Lotion', description: 'bottle', labelStrings: ['real SKIN CARE'], showCount: 1, refs: { packaged: ['/a'] } },
+    { title: 'Soap', description: 'bar', labelStrings: ['real SKIN CARE'], showCount: 3, refs: { packaged: ['/b'] } }], refs: { packaged: ['/a', '/b'], unwrapped: [] } };
+  const { prompt } = _buildPrompt({ product: set, concept: { headline: 'H' }, scene: { scene: 's', typeStyle: 't' } });
+  assert.match(prompt, /Show exactly ONE of product 1; Show exactly 3 of product 2/);
+  const read = (n) => ({ lettering: ['H'], products: [{ product: 1, count: 1, label_text: ['real SKIN CARE'], matches_reference: 'MATCH' }, { product: 2, count: n, label_text: ['real SKIN CARE'], matches_reference: 'MATCH' }] });
+  assert.equal(_decide({ read: read(3), concept: { headline: 'H' }, product: set, shown: 'packaged' }).ok, true);
+  assert.match(_decide({ read: read(1), concept: { headline: 'H' }, product: set, shown: 'packaged' }).reasons.join(' '), /1 units, expected 3/);
+});

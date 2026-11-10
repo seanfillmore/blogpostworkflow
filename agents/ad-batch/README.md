@@ -5,6 +5,7 @@ One concept in, 15-20 finished ad images out, each at 4:5 (feed) and 9:16 (Stori
 ```bash
 npm run ad-batch -- batch.json            # render
 npm run ad-batch -- batch.json --dry-run  # plan the scenes, print the first prompt, render nothing
+npm run ad-batch -- batch.json --only "Headline A|Headline B"   # re-render just these, into their original NN folders
 npm run ad-batch -- --copy-only "<batch dir>" [--rewrite-copy] [--landing /pages/x]   # Meta copy only, no renders
 ```
 

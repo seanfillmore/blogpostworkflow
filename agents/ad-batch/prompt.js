@@ -22,13 +22,13 @@ export function productForm({ product, scene, form }) {
 /** The product block for a set: each product described on its own, one of each, side by side. */
 function setBlock(product) {
   const n = product.items.length;
-  const each = product.items.map((p, i) => `PRODUCT ${i + 1} (reference photo ${i + 1}; must match it exactly): ${p.description}
+  const each = product.items.map((p, i) => `PRODUCT ${i + 1} (reference photo ${i + 1}; must match it exactly${p.showCount > 1 ? `; show ${p.showCount} identical units of it` : ''}): ${p.description}
 Its printed label reads exactly: ${p.labelStrings.map(s => `"${s}"`).join(', ')}.`).join('\n\n');
   return `This ad shows a SET of ${n} different products together. Do not invent, alter, add or remove any label text or graphics on any of them.
 
 ${each}
 
-Show exactly ONE of each of the ${n} products, and no other unit of any of them. They stand together as a group, side by side or slightly overlapping, every label facing the camera and fully readable. Keep their real relative sizes: do not scale one product up or down to match another. Together they are the hero: large, sharp, in the lower-center of the frame, the tallest about 45-55% of the frame height. Props never cover a label. Other generic objects in the scene are fine.`;
+${product.items.some(p => p.showCount > 1) ? product.items.map((p, i) => `Show exactly ${p.showCount > 1 ? p.showCount : 'ONE'} of product ${i + 1}`).join('; ') : `Show exactly ONE of each of the ${n} products`}, and no other unit of any of them. They stand together as a group, side by side or slightly overlapping, every label facing the camera and fully readable. Keep their real relative sizes: do not scale one product up or down to match another. Together they are the hero: large, sharp, in the lower-center of the frame, the tallest about 45-55% of the frame height. Props never cover a label. Other generic objects in the scene are fine.`;
 }
 
 const PHOTO_PLACEMENT = 'The product is the hero: large, sharp, in the lower-center of the frame, about 45-55% of the frame height. Props never cover the label. Other generic objects in the scene are fine.';
