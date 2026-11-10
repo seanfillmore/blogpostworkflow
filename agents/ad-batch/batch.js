@@ -16,6 +16,9 @@ export const MIN_COUNT = 1;
 // is large enough to read at feed size, which is the check every render has to pass.
 export const MIN_SET_PRODUCTS = 2;
 export const MAX_SET_PRODUCTS = 3;
+// How many units of one set product an image may show (2026-11-09: "3 free bars with
+// any order" needs a lotion beside THREE bars).
+export const MAX_SET_UNITS = 6;
 export const MAX_COUNT = 20;
 export const DEFAULT_COUNT = 16;
 // How the ad is drawn. 'photo' is the original look (a commercial product photograph).
@@ -70,7 +73,11 @@ export function parseBatch(raw) {
       raw.products.forEach((p, i) => {
         const h = str(p?.product);
         if (!h) errors.push(`products[${i}] has no "product" handle`);
-        else items.push({ product: h, variant: str(p.variant) });
+        else {
+          const units = p.count == null ? 1 : Number(p.count);
+          if (!Number.isInteger(units) || units < 1 || units > MAX_SET_UNITS) errors.push(`products[${i}].count must be a whole number from 1 to ${MAX_SET_UNITS}`);
+          items.push({ product: h, variant: str(p.variant), ...(units > 1 ? { count: units } : {}) });
+        }
       });
       const seen = new Set(items.map(i => `${i.product}/${i.variant}`));
       if (seen.size !== items.length) errors.push('"products" lists the same product twice');
@@ -201,8 +208,8 @@ export function resolveProduct({ handle, variant, manifest, references = {}, ima
  * and the check. A set is never shown unwrapped.
  */
 export function resolveLineup({ batch, manifest, references = {}, imageRoot, fs = {} }) {
-  const items = batch.items.map(i => resolveProduct({ handle: i.product, variant: i.variant, manifest, references, imageRoot, fs }));
-  if (items.length === 1) return items[0];
+  const items = batch.items.map(i => ({ ...resolveProduct({ handle: i.product, variant: i.variant, manifest, references, imageRoot, fs }), showCount: i.count || 1 }));
+  if (items.length === 1) { const { showCount, ...one } = items[0]; return one; }
   const variants = [...new Set(items.map(i => i.variant))];
   const categories = [...new Set(items.map(i => i.category))];
   return {

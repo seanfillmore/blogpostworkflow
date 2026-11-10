@@ -43,7 +43,7 @@ export const MESSAGE_RULES = [
 // not "halloween", so only an explicit message can file them.
 export const MESSAGES = [...MESSAGE_RULES.map(([name]) => name), 'Product & Scent Spotlight',
   'Baby-Soft Skin (Baby Drama)', "This One's For You", 'Creator UGC Edits',
-  'Halloween - Body Cream', 'Fall - Body Cream', 'Holiday - Body Cream'];
+  'Halloween - Body Cream', 'Fall - Body Cream', 'Holiday - Body Cream', 'Black Friday - Free Bars'];
 export const UNSORTED_MESSAGE = '_New (to sort)';
 
 /**
