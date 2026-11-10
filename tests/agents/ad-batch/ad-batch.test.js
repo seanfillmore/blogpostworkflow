@@ -669,3 +669,13 @@ test('fidelity: a missing scent illustration, thin bars and fused units fail', (
   assert.equal(go(read({}, { thickness_ratio: null })).ok, true, 'no side visible is not a failure');
   assert.equal(go(read({}, {}, { physical_defect: false, physical_defect_reason: 'bars overlap but are separate' })).ok, true);
 });
+
+test('shape reference goes after the label references and never into the check', () => {
+  const set = { items: [
+    { title: 'Lotion', description: 'bottle', labelStrings: ['real SKIN CARE'], showCount: 1, refs: { packaged: ['/l.png'] } },
+    { title: 'Soap', description: 'bar', labelStrings: ['real SKIN CARE'], showCount: 3, refs: { packaged: ['/s.png'], shape: ['/side.jpg'] } }], refs: { packaged: ['/l.png', '/s.png'], unwrapped: [] } };
+  const { prompt, refs } = _buildPrompt({ product: set, concept: { headline: 'H' }, scene: { scene: 's', typeStyle: 't' } });
+  assert.deepEqual(refs, ['/l.png', '/s.png', '/side.jpg']);
+  assert.match(prompt, /Reference photo 3 shows the REAL SHAPE AND THICKNESS of product 2 only/);
+  assert.match(prompt, /take the label only from reference photo 2/);
+});

@@ -193,7 +193,8 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
     budget.costUsd += r.costUsd;
     // A set is checked against one reference per product, in product order; a single
     // product against its first reference.
-    const checkRefs = product.items?.length > 1 ? refs : [refs[0]];
+    // The check compares against the LABEL references only, never a shape reference.
+    const checkRefs = product.items?.length > 1 ? refs.slice(0, product.items.length) : [refs[0]];
     for (const ref of checkRefs) if (!refCache.has(ref)) refCache.set(ref, await refForCheck(ref));
     let read = null;
     try { read = await visionCheck({ anthropic: clients.anthropic, refsB64: checkRefs.map(ref => refCache.get(ref)), imageBuf: r.buffer, product, shown, style, layout: !!concept.layout, ratio }); }

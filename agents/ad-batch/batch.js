@@ -183,6 +183,10 @@ export function resolveProduct({ handle, variant, manifest, references = {}, ima
   if (!packaged.length) {
     throw new Error(`ad-batch: no reference photos for ${handle}${variant ? ' / ' + variant : ''} under ${join(imageRoot, entry.imageDir)}`);
   }
+  // A SHAPE reference (references.json "shape"): a real photo that shows the product's
+  // thickness, sent beside the label reference. The front-on label photo of the round
+  // bar soap carries no depth, so the model drew it at half its real thickness.
+  const shape = pick(forVariant.shape || anyVariant.shape);
   let unwrapped = pick(forVariant.unwrapped || anyVariant.unwrapped);
   if (!unwrapped.length && entry.unwrapped?.imageDir) unwrapped = firstImages(join(imageRoot, entry.unwrapped.imageDir), 3, fs);
 
@@ -200,7 +204,7 @@ export function resolveProduct({ handle, variant, manifest, references = {}, ima
     // lotion without its leaf and bars at half thickness passed the old check).
     labelGraphic: entry.labelGraphics?.[variant] || null,
     thicknessRatio: entry.thicknessRatio || null,
-    refs: { packaged, unwrapped },
+    refs: { packaged, unwrapped, shape },
   };
 }
 
