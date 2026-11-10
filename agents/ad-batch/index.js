@@ -45,8 +45,8 @@
 // 2026-11-07: "We should not be posting ad images to the social queue").
 // Design: docs/superpowers/specs/2026-10-06-ad-batch-design.md
 
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
+import { join, dirname, resolve, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { GoogleGenAI } from '@google/genai';
@@ -59,11 +59,11 @@ import { buildPrompt } from './prompt.js';
 import { renderOpenAI, renderGemini, renderOpenAIOutpaint, renderGeminiOutpaint, ATTEMPTS } from './render.js';
 import { buildOutpaintInputs, OUTPAINT_PROMPT, GEMINI_OUTPAINT_PROMPT } from './vertical.js';
 import { checkPrompt, parseCheck, decide } from './check.js';
-import { writeBatchMetaCopy, defaultMetaCopyDeps } from './meta-copy.js';
+import { writeBatchMetaCopy, defaultMetaCopyDeps, META_COPY_FILE } from './meta-copy.js';
 import { writeMasterSheet } from './master-sheet.js';
 import {
   DEFAULT_OUT_ROOT, messageFolder, batchDirName, conceptDirName, imageName, loadUsage, saveUsage,
-  ensureDir, writeContactSheet, scenesMarkdown, mergeRunRecord, VERTICAL_DIR,
+  ensureDir, scenesMarkdown, mergeRunRecord, VERTICAL_DIR, FEED_DIR, RECORDS_DIR, libraryImageName, adCopyName,
 } from './output.js';
 
 export const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -211,21 +211,21 @@ export async function renderScene({ job, clients, budget, refCache, log }) {
 }
 
 /**
- * The 9:16 version of one kept 4:5 ad, written to <headline>/9x16/ (or its _rejected/).
- * Same retries, same check. A failure keeps the 4:5 ad and is recorded, never thrown:
- * the 4:5 is already paid for and on disk.
+ * The 9:16 version of one kept 4:5 ad, written to okPath (the theme's 9x16/ folder) or,
+ * when it fails the check, to rejectPath. Same retries, same check. A failure keeps the
+ * 4:5 ad and is recorded, never thrown: the 4:5 is already paid for and on disk.
  */
-export async function renderVertical({ job, fromImage, dir, name, clients, budget, refCache, log }) {
+export async function renderVertical({ job, fromImage, okPath, rejectPath, clients, budget, refCache, log }) {
   let v;
   try { v = await renderScene({ job: { ...job, fromImage }, clients, budget, refCache, log }); }
   catch (err) { v = { ok: false, model: null, buffer: null, reasons: [err.message], attempts: [] }; }
   let file = null;
   if (v.buffer) {
-    const vdir = ensureDir(join(dir, VERTICAL_DIR, ...(v.ok ? [] : ['_rejected'])));
-    file = join(vdir, name);
+    file = v.ok ? okPath : rejectPath;
+    ensureDir(dirname(file));
     writeFileSync(file, v.buffer);
   }
-  log(`     ${v.ok ? '✅' : '❌'} 9:16 ${name}${v.ok ? '' : ` — ${v.reasons.join('; ')}`}`);
+  log(`     ${v.ok ? '✅' : '❌'} 9:16 ${basename(okPath)}${v.ok ? '' : ` — ${v.reasons.join('; ')}`}`);
   return { ok: v.ok, model: v.model, file, reasons: v.reasons, attempts: v.attempts };
 }
 
@@ -243,6 +243,14 @@ export async function writeCopyForBatch(batchDir, record, { rewrite = false, log
     const run = existsSync(runPath) ? JSON.parse(readFileSync(runPath, 'utf8')) : record;
     writeFileSync(runPath, JSON.stringify({ ...run, metaCopy: outcome }, null, 2));
   } catch (err) { log(`⚠ could not record the meta copy outcome in run.json: ${err.message}`); }
+  // In the library the records live in <theme>/_records/<batch>/; the copy is also put
+  // beside the theme's 4x5 and 9x16 folders, where whoever builds the ads will look.
+  try {
+    const src = join(batchDir, META_COPY_FILE);
+    if (basename(dirname(batchDir)) === RECORDS_DIR && existsSync(src)) {
+      copyFileSync(src, join(dirname(dirname(batchDir)), adCopyName(basename(batchDir))));
+    }
+  } catch (err) { log(`⚠ could not place the ad copy beside the images: ${err.message}`); }
   return outcome;
 }
 
@@ -312,7 +320,9 @@ export async function main(argv = process.argv.slice(2), { log = console.log, co
   if (message && batch.message && message.toLowerCase() !== String(batch.message).trim().toLowerCase()) {
     log(`⚠ message "${batch.message}" is not a known folder (see MESSAGES in output.js); filed under "${message}" by the headline rules instead.`);
   }
-  const batchDir = ensureDir(join(args.out, ...(message ? [message] : []), batchDirName({ date, product })));
+  const themeDir = join(args.out, ...(message ? [message] : []));
+  const batchName = batchDirName({ date, product });
+  const batchDir = ensureDir(join(themeDir, RECORDS_DIR, batchName));
   const budget = { used: 0, max: args.maxRenders, costUsd: 0 };
   const clients = { openaiKey: env.OPENAI_API_KEY, gemini, anthropic };
   const refCache = new Map();
@@ -333,20 +343,19 @@ export async function main(argv = process.argv.slice(2), { log = console.log, co
     const results = await pool(plan.scenes, args.concurrency, async (scene, i) => {
       const r = await renderScene({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, clients, budget, refCache, log });
       const name = imageName(i, scene);
+      const libName = libraryImageName({ batchName, conceptIndex: ci, concept: plan.concept, sceneIndex: i, sceneCount: plan.scenes.length });
       if (r.buffer) {
-        const path = join(r.ok ? dir : ensureDir(join(dir, '_rejected')), name);
+        const path = r.ok ? join(ensureDir(join(themeDir, FEED_DIR)), libName) : join(ensureDir(join(dir, '_rejected')), name);
         writeFileSync(path, r.buffer);
         r.path = path;
       }
       log(`  ${r.ok ? '✅' : '❌'} ${name}${r.ok ? ` (${r.model})` : ` — ${r.reasons.join('; ')}`}`);
       if (r.ok && scene.source === 'library') usage[scene.id] = new Date().toISOString();
-      const vertical = r.ok ? await renderVertical({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, fromImage: r.path, dir, name, clients, budget, refCache, log }) : null;
+      const vertical = r.ok ? await renderVertical({ job: { product, concept: plan.concept, scene, form: batch.form, style: batch.style }, fromImage: r.path, okPath: join(themeDir, VERTICAL_DIR, libName), rejectPath: join(dir, '_rejected', `9x16-${name}`), clients, budget, refCache, log }) : null;
       return { ...r, scene, buffer: undefined, vertical };
     });
     const kept = results.filter(r => r.ok);
-    await writeContactSheet(dir, kept.map(r => ({ path: r.path, caption: `${r.scene.id}${r.notes.includes('hands in frame') ? ' ✋' : ''}` })));
     const keptVertical = kept.filter(r => r.vertical?.ok);
-    if (keptVertical.length) await writeContactSheet(join(dir, VERTICAL_DIR), keptVertical.map(r => ({ path: r.vertical.file, caption: r.scene.id })), { aspect: 16 / 9 });
     writeFileSync(join(dir, 'scenes.md'), scenesMarkdown({ concept: plan.concept, results }));
     record.concepts.push({
       ...plan.concept, dir, degraded: plan.degraded, kept: kept.length, rejected: results.length - kept.length,

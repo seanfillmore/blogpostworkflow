@@ -78,7 +78,10 @@ export function shortTitle(title) {
 }
 
 export function batchDirName({ date, product }) {
-  return `${date} ${shortTitle(product.title)}${product.variant ? ' - ' + product.variant : ''}`;
+  const title = shortTitle(product.title);
+  // "Pure Unscented lotion + 3 free bars - pure-unscented" said the scent twice.
+  const named = product.variant && title.toLowerCase().includes(product.variant.replace(/-/g, ' ').toLowerCase());
+  return `${date} ${title}${product.variant && !named ? ' - ' + product.variant : ''}`;
 }
 
 export function conceptDirName(i, concept) {
@@ -86,11 +89,31 @@ export function conceptDirName(i, concept) {
 }
 
 /**
- * Subfolder of a headline folder holding the 9:16 versions of its kept ads. Kept out of
- * the master sheet (one ad, two ratios, would show twice) and out of the Social queue
- * (which reads only the 4:5 file recorded per image in run.json).
+ * Library layout (Sean, 2026-11-10: "one theme folder, and inside that 4:5 and 9:16 with
+ * all of the images open in each to scroll through"):
+ *
+ *   <theme>/4x5/<batch> - <NN headline>[ - n].png     every kept feed ad, flat
+ *   <theme>/9x16/<same name>                            its Stories/Reels version
+ *   <theme>/Ad copy - <batch>.md                        the Meta copy, for whoever builds the ads
+ *   <theme>/_records/<batch>/                           run.json, meta-copy.md, and per headline
+ *                                                       scenes.md and _rejected/
+ *
+ * "x", not ":", in the folder names: macOS shows a colon in a file name as a slash.
+ * The master sheet reads 4x5 only (one ad, two ratios, would show twice).
  */
+export const FEED_DIR = '4x5';
 export const VERTICAL_DIR = '9x16';
+export const RECORDS_DIR = '_records';
+export const OTHER_SIZES_DIR = 'Other sizes';
+
+/** The flat library file name of one kept ad: unique per batch, headline and scene. */
+export function libraryImageName({ batchName, conceptIndex, concept, sceneIndex, sceneCount }) {
+  return `${batchName} - ${conceptDirName(conceptIndex, concept)}${sceneCount > 1 ? ` - ${String(sceneIndex + 1).padStart(2, '0')}` : ''}.png`;
+}
+
+export function adCopyName(batchName) {
+  return `Ad copy - ${batchName}.md`;
+}
 
 export function imageName(i, scene) {
   return `${String(i + 1).padStart(2, '0')}-${scene.id}.png`;
