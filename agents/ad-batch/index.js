@@ -84,6 +84,9 @@ export function parseArgs(argv) {
     else if (a === '--out') args.out = resolve(argv[++i]);
     else if (a === '--max-renders') args.maxRenders = Number(argv[++i]);
     else if (a === '--concurrency') args.concurrency = Number(argv[++i]);
+    // Re-render only these headlines ("A|B"), keeping each one's place (and folder
+    // number) in the batch, so a retry lands in the same NN folder as the first run.
+    else if (a === '--only') args.only = String(argv[++i] || '').split('|').map(s => s.trim()).filter(Boolean);
     else if (!a.startsWith('--') && !args.batchFile) args.batchFile = a;
     else throw new Error(`ad-batch: unknown argument ${a}`);
   }
@@ -319,7 +322,12 @@ export async function main(argv = process.argv.slice(2), { log = console.log, co
     style: batch.style, landing: batch.landing, skipped, concepts: [],
   };
 
+  if (args.only) {
+    const unknown = args.only.filter(h => !plans.some(p => p.concept.headline === h));
+    if (unknown.length) throw new Error(`ad-batch: --only names no headline in this batch: ${unknown.join(', ')}`);
+  }
   for (const [ci, plan] of plans.entries()) {
+    if (args.only && !args.only.includes(plan.concept.headline)) continue;
     const dir = ensureDir(join(batchDir, conceptDirName(ci, plan.concept)));
     log(`\n▶ "${plan.concept.headline}" → ${dir}`);
     const results = await pool(plan.scenes, args.concurrency, async (scene, i) => {
