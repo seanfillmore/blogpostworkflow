@@ -50,3 +50,44 @@ test('empty diff', () => {
 test('binary numstat counts as zero lines', () => {
   assert.equal(checkFixDiff(withFile('-\t-\tagents/x/img.png')).ok, true);
 });
+
+const H = (a, b = a) => `diff --git a/${a} b/${b}\n`;
+test('renames are checked on old and new paths', () => {
+  const r1 = probs({ ...good, numstat: good.numstat + '\n0\t0\tlib/{post-lock.js => x.js}' });
+  assert.ok(r1.some((x) => x.includes('lib/post-lock.js')));
+  const r2 = probs({ ...good, numstat: good.numstat + '\n0\t0\tlib/a.js => data/b.js' });
+  assert.ok(r2.some((x) => x.includes('data/b.js')));
+  const r3 = probs({ ...good, patch: good.patch + H('lib/post-lock.js', 'lib/y.js') + 'similarity index 100%\n' });
+  assert.ok(r3.some((x) => x.includes('lib/post-lock.js')));
+  const r4 = probs({ ...good, patch: good.patch + H('lib/ok.js', 'config/y.js') });
+  assert.ok(r4.some((x) => x.includes('config/y.js')));
+});
+test('guard files are protected', () => {
+  for (const p of ['lib/fix-diff-rules.js', 'lib/fix-session.js', 'lib/fix-ship.js', 'lib/github-pr.js', 'lib/low-demand-removal.js',
+    'lib/recap-review.js', 'lib/recap-jobs.js', 'lib/recap-reviewer-state.js', 'lib/growth-recs.js', 'agents/recap-reviewer/index.js',
+    'scripts/deploy-server.sh', 'package.json', 'package-lock.json', '.github/workflows/a.yml', '.gitignore', '.gitattributes', '.nvmrc']) {
+    assert.ok(probs(withFile(`1\t0\t${p}`)).some((x) => x.includes(p)), p);
+  }
+  assert.equal(checkFixDiff(withFile('1\t0\tscheduler.js')).ok, true);
+});
+test('.env at any depth', () => {
+  assert.ok(probs(withFile('1\t0\tagents/x/.env.local')).length);
+});
+test('status regex variants', () => {
+  for (const l of ["+  status: failed.length ? 'error' : 'info',", '+  status: `error`,', "-  status = 'success';"]) {
+    assert.ok(probs({ ...good, patch: good.patch + l + '\n' }).some((x) => /status/.test(x)), l);
+  }
+  assert.equal(checkFixDiff({ ...good, patch: good.patch + "+  status: '200',\n" }).ok, true);
+});
+test('++ / -- content lines in hunks are not headers', () => {
+  const p = good.patch + H('tests/lib/a.test.js') + '--- a/tests/lib/a.test.js\n+++ b/tests/lib/a.test.js\n@@ -1 +1 @@\n--  assert.equal(1,1);\n';
+  assert.ok(probs({ ...good, patch: p }).some((x) => /assert/.test(x)));
+  const q = good.patch + H('lib/a.js') + '--- a/lib/a.js\n+++ b/lib/a.js\n@@ -1 +1 @@\n++  test.skip("x");\n';
+  assert.ok(probs({ ...good, patch: q }).some((x) => /skip/.test(x)));
+});
+test('only/xit/xtest in tests', () => {
+  const base = good.patch + H('tests/lib/a.test.js') + '--- a/tests/lib/a.test.js\n+++ b/tests/lib/a.test.js\n@@ -1 +1 @@\n';
+  for (const l of ['+test.only("x", f)', '+xit("x", f)', '+xtest("x", f)']) {
+    assert.ok(probs({ ...good, patch: base + l + '\n' }).some((x) => /only|xit/.test(x)), l);
+  }
+});

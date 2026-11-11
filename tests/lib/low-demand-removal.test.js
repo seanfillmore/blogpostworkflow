@@ -50,8 +50,44 @@ test('slug fallback when no url', () => {
 test('removalCandidates caps at 5 in order', () => {
   const flops = Array.from({ length: 7 }, (_, i) => ({ slug: `p${i}`, action: 'no-demand' }));
   flops.splice(1, 0, { slug: 'bad', action: 'auto-refresh' });
-  const { take, skipped } = removalCandidates(flops, ctx());
+  const { take, skipped } = removalCandidates(flops, { ...ctx(), lockStateFor: () => LOCK_UNLOCKED });
   assert.deepEqual(take.map((r) => r.slug), ['p0', 'p1', 'p2', 'p3', 'p4']);
   assert.deepEqual(skipped.map((s) => s.reason).filter((r) => r === 'cap'), ['cap', 'cap']);
   assert.equal(skipped.find((s) => s.slug === 'bad').reason !== 'cap', true);
+});
+
+test('missing context fails closed', () => {
+  for (const f of ['ctrHandles', 'converted', 'winners', 'redirectTargets']) {
+    const c = ctx(); delete c[f];
+    assert.equal(removalEligibility(row, c).reason, `missing context: ${f}`);
+  }
+  const c = ctx(); delete c.ordersOk;
+  assert.equal(removalEligibility(row, c).reason, 'missing context: ordersOk');
+  assert.equal(removalEligibility(row, { ...ctx(), lockState: undefined }).reason, 'missing context: lockState');
+  assert.equal(removalEligibility(row, { ...ctx(), lockState: 'bogus' }).ok, false);
+});
+
+test('removalCandidates refuses rows with no known lock state', () => {
+  const f = [{ slug: 'a', action: 'no-demand' }];
+  assert.equal(removalCandidates(f, ctx()).take.length, 0);
+  assert.equal(removalCandidates(f, { ...ctx(), lockStateFor: () => 'weird' }).take.length, 0);
+  assert.equal(removalCandidates(f, { ...ctx(), lockStateFor: () => { throw new Error('x'); } }).take.length, 0);
+  assert.equal(removalCandidates(f, { ...ctx(), lockStateFor: () => LOCK_NO_POST }).take.length, 1);
+});
+
+test('non-article urls and empty slugs refused', () => {
+  for (const r of [
+    { slug: 'x', url: 'https://www.realskincare.com/products/foo', action: 'no-demand' },
+    { slug: 'x', url: 'https://www.realskincare.com/blogs/news', action: 'no-demand' },
+    { slug: 'x', url: 'https://www.realskincare.com/blogs/other/foo', action: 'no-demand' },
+    { slug: '  ', action: 'no-demand' }, { action: 'no-demand' },
+  ]) assert.equal(removalEligibility(r, ctx()).reason, 'not a blog article');
+});
+
+test('path normalization on converted and redirect targets', () => {
+  const c = { ...ctx(), converted: new Set(['/Blogs/News/Foo/']) };
+  assert.equal(removalEligibility(row, c).ok, false);
+  const d = { ...ctx(), redirectTargets: new Set(['https://www.realskincare.com/blogs/news/foo?x=1']) };
+  assert.equal(removalEligibility(row, d).ok, false);
+  assert.equal(removalEligibility({ slug: 'f%6Fo', action: 'no-demand' }, { ...ctx(), winners: new Set(['foo']) }).ok, false);
 });
