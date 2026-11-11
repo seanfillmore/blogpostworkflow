@@ -26,12 +26,11 @@
  *   node agents/recap-reviewer/index.js --apply   # what cron runs
  *   node agents/recap-reviewer/index.js --now 2026-11-11T11:05:00Z   # dry run as of that time
  */
-import { buildReviewItems, itemKey, isReviewedProblem } from '../../lib/recap-review.js';
+import { buildReviewItems, itemKey, isReviewedProblem, recoveredBy } from '../../lib/recap-review.js';
 import {
   parseCrontab, isRerunnable, collectorFor, splitCommand, feedNameOf, RERUN_TIMEOUT_MS,
 } from '../../lib/recap-jobs.js';
 import { isPermanentSkip } from '../../lib/low-demand-removal.js';
-import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
 import { MAX_FIX_ATTEMPTS } from '../../lib/recap-reviewer-state.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -61,16 +60,6 @@ const WAITS = 'waits for next scheduled run';
 const minutesUTC = (d) => d.getUTCHours() * 60 + d.getUTCMinutes();
 const clip = (s, n = 1500) => { const t = String(s ?? '').trim(); return t.length > n ? `…${t.slice(-n)}` : t; };
 const outputTail = (r) => clip(`${r?.stderr || ''}\n${r?.stdout || ''}`, 600);
-
-/**
- * Did a later row prove `row` recovered? Same reporter, later, and neither an
- * error nor a warning: a warning row is only cleared by a clean run, never by
- * another warning (dropRecoveredFailures alone would accept one for an error).
- */
-function recoveredBy(row, later) {
-  const clean = (later || []).filter((r) => r?.status !== 'warning');
-  return dropRecoveredFailures([{ ...row, status: 'error' }], clean).recovered.length > 0;
-}
 
 export async function runReview(deps, { apply = false, now = () => new Date() } = {}) {
   const clock = typeof now === 'function' ? now : () => now;

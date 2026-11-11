@@ -782,18 +782,19 @@ test('reconcileWithReview: a resolved row that FAILED AGAIN after the review is 
   assert.equal(r.residual.length, 1);
 });
 
-test('reconcileWithReview: health rows the review resolved are dropped, the rest are residual', async () => {
-  const fixed = { title: 'Data feed "gsc" is stale', detail: 'old' };
+test('M1: a health issue the review resolved but the 13:00 check shows again renders as "broken again" and keeps its notify', async () => {
+  const again = { title: 'Data feed "gsc" is stale', detail: 'old' };
   const open = { title: '2 leftover git stashes on the server', detail: 'x' };
-  const [fixedItem] = (await import('../../lib/recap-review.js')).buildReviewItems({ healthIssues: [fixed] });
-  const review = makeReview({ resolved: [{ key: fixedItem.key, subject: fixed.title, action: 're-run collector', result: 'fresh' }] });
-  const r = await reconcileWithReview([], [fixed, open], review, { today: TODAY });
-  assert.deepEqual(r.visibleHealth, [open]);
-  assert.equal(r.residual.length, 1);
-  assert.equal(r.residual[0].subject, open.title);
-  // the error-status notify skips only what the review resolved
-  assert.deepEqual(healthIssuesToNotify([fixed, open], review), [open]);
-  assert.deepEqual(healthIssuesToNotify([fixed, open], null), [fixed, open], 'fallback keeps every alert');
+  const [againItem] = (await import('../../lib/recap-review.js')).buildReviewItems({ healthIssues: [again] });
+  const review = makeReview({ resolved: [{ key: againItem.key, subject: again.title, action: 're-run collector', result: 'fresh' }] });
+  const r = await reconcileWithReview([], [again, open], review, { today: TODAY });
+  // healthIssues are read fresh at 13:00: anything present IS broken now.
+  assert.deepEqual(r.visibleHealth, [again, open]);
+  assert.equal(r.residual.length, 2);
+  assert.match(r.residual.find((o) => o.subject === again.title).result, /broken again since the morning fix/);
+  assert.match(r.residual.find((o) => o.subject === open.title).result, /not resolved overnight/);
+  assert.deepEqual(healthIssuesToNotify([again, open], review), [again, open]);
+  assert.deepEqual(healthIssuesToNotify([again, open], null), [again, open], 'fallback keeps every alert');
 });
 
 function reviewedHtml(review, { entries = [], health = [] } = {}) {
@@ -919,4 +920,107 @@ test('reviewedSubject: all clear, fixed only, and every part', () => {
   assert.equal(reviewedSubject(TODAY, { fixed: 0, working: 0, forYou: 0 }), `Daily Recap — ${TODAY} (all clear)`);
   assert.equal(reviewedSubject(TODAY, { fixed: 3, working: 0, forYou: 0 }), `Daily Recap — ${TODAY} (3 fixed overnight)`);
   assert.equal(reviewedSubject(TODAY, { fixed: 3, working: 1, forYou: 1 }), `Daily Recap — ${TODAY} (3 fixed overnight, 1 still being worked on, 1 for you)`);
+});
+
+// ── final review fixes ──────────────────────────────────────────────────────
+
+import {
+  onlyYouRows, ONLY_YOU_SOURCES, lateFinishedOutcomes, markReviewEmailed,
+} from '../../agents/daily-summary/index.js';
+
+test('I4: warning rows are reconciled like errors: unhandled -> residual, a later warning is not recovery', async () => {
+  const warn = failRow({ status: 'warning', source: 'agents/content-strategist/index.js', category: 'content', subject: 'Calendar re-plan: 2 lost', ts: `${TODAY}T03:00:00Z` });
+  const r = await reconcileWithReview([warn], [], makeReview(), { today: TODAY });
+  assert.equal(r.residual.length, 1);
+  const lateWarn = { subject: 'Rank tracker: partial', status: 'warning', category: 'seo', source: 'agents/rank-tracker/index.js', body: 'ETIMEDOUT', ts: `${TODAY}T12:35:00Z` };
+  const r2 = await reconcileWithReview([lateWarn], [], makeReview(), {
+    today: TODAY, exec: async () => ({ code: 0 }), crontabText: '', deadline: Date.parse(`${TODAY}T13:30:00Z`), now: () => Date.parse(`${TODAY}T13:05:00Z`),
+    readRowsSince: async () => [{ ...lateWarn, ts: `${TODAY}T13:06:00Z` }],
+  });
+  assert.equal(r2.fixedNow.length, 0);
+  assert.equal(r2.residual.length, 1);
+});
+
+test('minor: daily-summary\'s own System health error row is never residual (its issues are already health rows)', async () => {
+  const own = failRow({ source: 'agents/daily-summary/index.js', category: 'ops', subject: '⚠️ System health: 1 issue', ts: `${TODAY}T03:00:00Z` });
+  const r = await reconcileWithReview([own], [], makeReview(), { today: TODAY });
+  assert.deepEqual(r.residual, []);
+});
+
+test('I4b: rows only Sean can act on are listed, newest per key, minus errors/warnings and keys the review already reports', () => {
+  assert.ok(ONLY_YOU_SOURCES.has('agents/instagram-dm/index.js'));
+  assert.ok(ONLY_YOU_SOURCES.has('agents/press-outreach/index.js'));
+  const dm1 = { subject: 'Instagram DMs: 2 waiting on you, 1 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@a\n@b', ts: `${TODAY}T08:00:00Z` };
+  const dm2 = { ...dm1, subject: 'Instagram DMs: 3 waiting on you, 1 code(s) sent', ts: `${TODAY}T09:00:00Z` };
+  const codes = { subject: 'Instagram DMs: 1 offer code(s) failed to send', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@x: boom', ts: `${TODAY}T08:30:00Z` };
+  const press = { subject: 'Press outreach: 2 replies escalated', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'x', ts: `${TODAY}T08:10:00Z` };
+  const human = { subject: 'Post-meta drift: 3 fields (needs a human)', status: 'info', category: 'ops', source: 'scripts/check-post-meta-drift.mjs', body: 'y', ts: `${TODAY}T08:20:00Z` };
+  const ordinary = { subject: 'Rank tracker: 40 queries', status: 'success', category: 'seo', source: 'agents/rank-tracker/index.js', ts: `${TODAY}T08:00:00Z` };
+  const err = { subject: 'Press outreach failed', status: 'error', category: 'press', source: 'agents/press-outreach/index.js', ts: `${TODAY}T08:40:00Z` };
+  const rows = onlyYouRows([dm1, dm2, codes, press, human, ordinary, err], makeReview());
+  const subjects = rows.map((r) => r.subject);
+  assert.ok(subjects.includes(dm2.subject) && !subjects.includes(dm1.subject), 'newest per key');
+  for (const want of [codes, press, human]) assert.ok(subjects.includes(want.subject), want.subject);
+  assert.ok(!subjects.includes(ordinary.subject));
+  assert.ok(!subjects.includes(err.subject), 'errors are the review\'s job');
+  const already = onlyYouRows([press], makeReview({ onlyYou: [{ key: itemKey(press) }] }));
+  assert.deepEqual(already, []);
+});
+
+test('I4b: those rows render under "One thing only you can do" and count in the subject', async () => {
+  const dm = { subject: 'Instagram DMs: 3 waiting on you, 1 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@a wants a code', ts: `${TODAY}T09:00:00Z` };
+  const html = reviewedHtml(makeReview(), { entries: [dm] });
+  const youAt = html.indexOf('One thing only you can do');
+  assert.ok(youAt > 0);
+  assert.ok(html.indexOf('3 waiting on you') > youAt);
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(makeReview(), { residual: [], fixedNow: [], onlyYouRows: [dm] }).forYou, 1);
+});
+
+test('I3b: lateFinishedOutcomes returns outcomes that finished after the report was emailed, or all if never emailed', () => {
+  const o = (key, at) => ({ key, subject: key, action: 'fix session', result: 'r', finished_at: at });
+  const prev = makeReview({
+    date: '2026-11-11', generated_at: '2026-11-11T11:05:00.000Z', emailed: true, emailed_at: '2026-11-11T13:01:00.000Z',
+    resolved: [o('early', '2026-11-11T11:30:00.000Z'), o('late-fix', '2026-11-11T14:10:00.000Z')],
+    unresolved: [o('late-revert', '2026-11-11T14:20:00.000Z'), { key: 'legacy', subject: 'no stamp' }],
+    onlyYou: [],
+  });
+  const late = lateFinishedOutcomes(prev);
+  assert.deepEqual(late.map((x) => [x.key, x.bucket]), [['late-fix', 'resolved'], ['late-revert', 'unresolved']]);
+  const never = lateFinishedOutcomes({ ...prev, emailed: false, emailed_at: undefined });
+  assert.deepEqual(never.map((x) => x.key), ['early', 'late-fix', 'late-revert']);
+  assert.deepEqual(lateFinishedOutcomes(null), []);
+  assert.deepEqual(lateFinishedOutcomes({ ...prev, apply: false }), []);
+});
+
+test('I3b: late outcomes render under Fixed overnight as "Finished after yesterday\'s email", and in the fallback too', () => {
+  const late = [{ key: 'k', subject: 'Editor failed', action: 'fix session', result: 'fixed, PR #9001 merged and deployed', bucket: 'resolved', finished_at: '2026-11-11T14:10:00.000Z' }];
+  const html = buildDigestHtml(TODAY, [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot, lateFinished: late }, makeReview());
+  const fixedAt = html.indexOf('Fixed overnight');
+  const lateAt = html.indexOf("Finished after yesterday's email");
+  assert.ok(fixedAt > 0 && lateAt > fixedAt, 'inside the Fixed overnight block');
+  assert.ok(html.indexOf('PR #9001 merged and deployed') > lateAt);
+  const fb = buildDigestHtml(TODAY, [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot, lateFinished: late }, null);
+  assert.ok(fb.includes("Finished after yesterday's email"));
+  assert.ok(fb.includes('PR #9001 merged and deployed'));
+});
+
+test('I3b: markReviewEmailed stamps emailed + emailed_at on latest.json and the dated copy, keeping every other field', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rr-emailed-'));
+  const report = makeReview({ emailed: false, resolved: [{ key: 'a' }] });
+  writeFileSync(join(dir, 'latest.json'), JSON.stringify(report));
+  writeFileSync(join(dir, `${TODAY}.json`), JSON.stringify(report));
+  markReviewEmailed({ dir, review: report, at: '2026-11-12T13:01:00.000Z' });
+  for (const f of ['latest.json', `${TODAY}.json`]) {
+    const j = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+    assert.equal(j.emailed, true, f);
+    assert.equal(j.emailed_at, '2026-11-12T13:01:00.000Z', f);
+    assert.deepEqual(j.resolved, [{ key: 'a' }], f);
+    assert.equal(j.residual, undefined, 'the reconcile fields are not written back');
+  }
+  // latest.json for a different run (the reviewer re-ran) is left alone
+  const dir2 = mkdtempSync(join(tmpdir(), 'rr-emailed-'));
+  writeFileSync(join(dir2, 'latest.json'), JSON.stringify({ ...report, generated_at: `${TODAY}T12:00:00.000Z` }));
+  markReviewEmailed({ dir: dir2, review: report, at: '2026-11-12T13:01:00.000Z' });
+  assert.equal(JSON.parse(readFileSync(join(dir2, 'latest.json'), 'utf8')).emailed, false);
 });

@@ -20,6 +20,11 @@
  * One thing only you can do. The recap waits up to 30 minutes for done.json
  * (--preview never waits). A missing, stale, crashed or dry-run review falls
  * back to the old email under FALLBACK_BANNER; it never reads as an all-clear.
+ * After a send that rendered the review, the report is stamped emailed_at; the
+ * next morning, any outcome in yesterday's report that finished after that
+ * (or all of them, if no email rendered it) shows as "Finished after
+ * yesterday's email". Info rows only Sean can act on (ONLY_YOU_SOURCES, or a
+ * subject saying it waits on a human) render under One thing only you can do.
  *
  * Usage:
  *   node agents/daily-summary/index.js
@@ -29,7 +34,7 @@
  *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync, renameSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
@@ -43,7 +48,9 @@ import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // decision. Never re-declare 0.005 here — same single-source rule as
 // AWARENESS_LEVELS and HEALTH_CLAIM_PATTERNS.
 import { classifyCtrDelta, DEFAULT_REGRESS_THRESHOLD } from '../../lib/meta-ab-decision.js';
-import { buildReviewItems, classifyFailure, itemKey } from '../../lib/recap-review.js';
+import {
+  buildReviewItems, classifyRows, itemKey, isReviewedProblem, recoveredBy,
+} from '../../lib/recap-review.js';
 import { parseCrontab, isRerunnable, splitCommand } from '../../lib/recap-jobs.js';
 import { isPermanentSkip } from '../../lib/low-demand-removal.js';
 import { loadState as loadReviewerState, REVIEWER_DIR } from '../../lib/recap-reviewer-state.js';
@@ -348,7 +355,7 @@ export function formatBodyHtml(text) {
  * one on the server, so a test asserting the quiet path passed locally and failed in
  * production. Defaulting to ROOT keeps every caller unchanged.
  */
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}, review = undefined) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT, lateFinished = [] } = {}, review = undefined) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -1025,9 +1032,10 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // on, and the one thing only Sean can do. The failure/decision/health blocks
   // are gone because the overnight reviewer either fixed each item (Fixed
   // overnight) or still owes it (Still being worked on). See renderReviewedRecap.
+  const lateBlock = renderLateFinished(lateFinished, esc);
   if (review) {
     return renderReviewedRecap({
-      review, targetDate, styles, esc, dashboardUrl, entries,
+      review, targetDate, styles, esc, dashboardUrl, entries, lateBlock,
       working: [seoImpactSection, rankMoversSection, verdictSection, abTestSection].filter(Boolean),
       creatorReviewSection,
     });
@@ -1043,7 +1051,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   return `<!DOCTYPE html>
 <html><head><style>${styles}</style></head><body>${banner}
   <h1>Daily Recap &mdash; What Moved</h1>
-  <div class="date">${targetDate}</div>
+  <div class="date">${targetDate}</div>${lateBlock ? `\n  <div class="section">${lateBlock}</div>` : ''}
   ${movers.length
     ? movers.join('\n  ')
     : '<div class="section"><p class="empty">Nothing moved the needle yesterday — revenue steady, no failures, no decisions waiting.</p></div>'}
@@ -1216,11 +1224,13 @@ export async function waitForReview({ deadlineMs = REVIEW_WAIT_MS, poll, sleep, 
 
 const healthKey = (h) => buildReviewItems({ healthIssues: [h] })[0].key;
 
-/** Health rows to raise as an error notify: all of them, minus what the review resolved. */
-export function healthIssuesToNotify(healthIssues = [], review = null) {
-  if (!review) return healthIssues;
-  const resolved = new Set((review.resolved || []).map((o) => o?.key));
-  return healthIssues.filter((h) => !resolved.has(healthKey(h)));
+/**
+ * Health rows to raise as an error notify: all of them. They are read fresh by
+ * checkSystemHealth() at 13:00, so a row present now IS broken now, even when
+ * the 11:05 review resolved it (it broke again since the morning fix).
+ */
+export function healthIssuesToNotify(healthIssues = []) {
+  return healthIssues;
 }
 
 /**
@@ -1258,8 +1268,9 @@ export async function reconcileWithReview(entries = [], healthIssues = [], revie
   };
   const snippet = (b) => previewBody(b, { maxLines: 2, maxChars: 200 });
 
-  // ── error rows
-  const errorRows = entries.filter((e) => e?.status === 'error');
+  // ── error and warning rows (the reviewer reviews both; daily-summary's own
+  // System health row is skipped: its issues are the health rows below)
+  const errorRows = entries.filter(isReviewedProblem);
   const visibleErrors = [];
   const groups = new Map();
   for (const row of errorRows) {
@@ -1282,7 +1293,7 @@ export async function reconcileWithReview(entries = [], healthIssues = [], revie
     }
     const tag = resolvedKeys.has(key) ? 'failed again after the overnight fix' : 'failed after the overnight review';
     const source = row.source || '';
-    const kind = classifyFailure(row, { priorDays: errorRows.filter((r) => r !== row && itemKey(r) === key) });
+    const kind = classifyRows(errorRows.filter((r) => itemKey(r) === key));
     if (kind !== 'transient' || !isRerunnable(source) || typeof exec !== 'function') {
       owe(key, 'failure', row.subject, 'none', `${tag}; ${TOMORROW}`, snippet(row.body));
       continue;
@@ -1304,7 +1315,7 @@ export async function reconcileWithReview(entries = [], healthIssues = [], revie
       run = { res: res || {}, later };
       reruns.set(command, run);
     }
-    const recovered = run.res.code === 0 && rows.every((r) => dropRecoveredFailures([r], run.later).recovered.length > 0);
+    const recovered = run.res.code === 0 && rows.every((r) => recoveredBy(r, run.later));
     if (recovered) {
       for (const r of rows) recoveredRows.add(r);
       fixedNow.push({ key, kind: 'failure', subject: row.subject || '', action: 're-run', result: `re-ran ${source} (recovered)`, evidence: command });
@@ -1318,11 +1329,12 @@ export async function reconcileWithReview(entries = [], healthIssues = [], revie
 
   // ── health rows
   const visibleHealth = [];
+  // checkSystemHealth() ran at 13:00: a row present now is broken now.
   for (const h of healthIssues) {
     const key = healthKey(h);
-    if (resolvedKeys.has(key)) continue;
     visibleHealth.push(h);
-    if (!reported.has(key)) owe(key, 'health', h.title, 'none', `not resolved overnight; ${TOMORROW}`, h.detail);
+    if (resolvedKeys.has(key)) owe(key, 'health', h.title, 'none', `broken again since the morning fix; ${TOMORROW}`, h.detail);
+    else if (!reported.has(key)) owe(key, 'health', h.title, 'none', `not resolved overnight; ${TOMORROW}`, h.detail);
   }
 
   // ── decisions, flops, blocked drafts: whatever the review did not account for
@@ -1352,16 +1364,97 @@ export function reviewedSubject(targetDate, { fixed = 0, working = 0, forYou = 0
 }
 
 /** The counts the subject line reports, from the review plus this morning's reconcile. */
-export function reviewedCounts(review, { residual = [], fixedNow = [] } = {}, creatorItems = 0) {
+export function reviewedCounts(review, { residual = [], fixedNow = [], onlyYouRows: you = [] } = {}, creatorItems = 0) {
   const resolved = (review?.resolved || []).filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept');
   return {
     fixed: resolved.length + fixedNow.length,
     working: (review?.unresolved || []).length + residual.length,
-    forYou: (review?.onlyYou || []).length + creatorItems,
+    forYou: (review?.onlyYou || []).length + you.length + creatorItems,
   };
 }
 
-function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, entries, working, creatorReviewSection }) {
+/**
+ * Agents whose ordinary (info) rows are work only Sean can do: DMs waiting on
+ * him, offer codes that failed to send, press replies escalated to him. The
+ * reviewed recap has no Failures or entries list, so without this they vanish.
+ */
+export const ONLY_YOU_SOURCES = Object.freeze(new Set([
+  'agents/instagram-dm/index.js',
+  'agents/press-outreach/index.js',
+]));
+const ONLY_YOU_SUBJECT = /waiting on you|needs a human|needs your/i;
+
+/**
+ * Rows for "One thing only you can do": from ONLY_YOU_SOURCES or saying they
+ * wait on a human, newest per itemKey and count-free subject. Errors and warnings are the reviewer's
+ * (they reach resolved/unresolved/onlyYou/residual), and a key the review
+ * already reports is not repeated.
+ */
+export function onlyYouRows(entries = [], review = {}) {
+  const taken = new Set(['resolved', 'unresolved', 'onlyYou', 'residual', 'fixedNow']
+    .flatMap((b) => (Array.isArray(review?.[b]) ? review[b] : []).map((o) => o?.key)));
+  const newest = new Map();
+  for (const r of entries) {
+    if (!r || r.status === 'error' || r.status === 'warning') continue;
+    if (!ONLY_YOU_SOURCES.has(r.source || '') && !ONLY_YOU_SUBJECT.test(r.subject || '')) continue;
+    if (taken.has(itemKey(r))) continue;
+    // itemKey alone is the subject STEM ("instagram dms"), which would merge
+    // "3 waiting on you" with "1 offer code(s) failed to send". Counts are
+    // dropped so the same ask with a new number still collapses to the newest.
+    const key = `${itemKey(r)}|${String(r.subject || '').replace(/\d+/g, '#').toLowerCase()}`;
+    const cur = newest.get(key);
+    if (!cur || String(r.ts || '') > String(cur.ts || '')) newest.set(key, r);
+  }
+  return [...newest.values()];
+}
+
+/**
+ * Outcomes in a reviewer report that finished after the email that rendered it
+ * (or all of them, when no email ever rendered it: the recap fell back while
+ * the fix session was still running). Shown the next morning.
+ */
+export function lateFinishedOutcomes(report) {
+  if (!report || typeof report !== 'object' || report.apply !== true) return [];
+  const emailedAt = report.emailed === true ? String(report.emailed_at || '') : '';
+  const out = [];
+  for (const bucket of ['resolved', 'unresolved', 'onlyYou']) {
+    for (const o of Array.isArray(report[bucket]) ? report[bucket] : []) {
+      const at = String(o?.finished_at || '');
+      if (!at || (emailedAt && at <= emailedAt)) continue;
+      out.push({ ...o, bucket });
+    }
+  }
+  return out;
+}
+
+const LATE_LABEL = { resolved: 'fixed', unresolved: 'still being worked on', onlyYou: 'only you can do this' };
+
+function renderLateFinished(late, esc) {
+  const list = Array.isArray(late) ? late : [];
+  if (!list.length) return '';
+  const e = (v) => esc(v == null ? '' : String(v));
+  return `<div class="section-title" style="margin-top:12px;">Finished after yesterday's email</div>${list.map((o) => `<div class="entry"><span class="entry-subject">${e(o.subject)}</span>${o.result ? ` &mdash; ${e(o.result)}` : ''} <span class="entry-time">(${e(LATE_LABEL[o.bucket] || o.bucket)})</span></div>`).join('')}`;
+}
+
+/**
+ * After a real send that rendered `review`: stamp emailed/emailed_at on its
+ * latest.json and dated copy, read fresh from disk so the 13:00 reconcile
+ * fields are never written back. A file from a different run is left alone.
+ */
+export function markReviewEmailed({ dir = REVIEWER_DIR, review, at = new Date().toISOString() }) {
+  for (const name of ['latest.json', `${review?.date}.json`]) {
+    const p = join(dir, name);
+    try {
+      const cur = JSON.parse(readFileSync(p, 'utf8'));
+      if (cur?.generated_at !== review?.generated_at) continue;
+      const tmp = `${p}.${process.pid}.tmp`;
+      writeFileSync(tmp, `${JSON.stringify({ ...cur, emailed: true, emailed_at: at }, null, 2)}\n`);
+      renameSync(tmp, p);
+    } catch { /* missing or unreadable: nothing to stamp */ }
+  }
+}
+
+function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, entries, working, creatorReviewSection, lateBlock = '' }) {
   const e = (v) => esc(v == null ? '' : String(v));
   const h2 = (t) => `<h2 style="font-size:17px;margin:20px 0 8px 0;color:#111827;">${t}</h2>`;
   const muted = (t) => `<p class="empty">${t}</p>`;
@@ -1383,7 +1476,7 @@ function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, en
     : kept.length <= FIXED_LINES_SHOWN
       ? kept.map((o) => `<div class="entry"><span class="entry-subject">Kept: ${keptLine(o)}</span></div>`).join('')
       : `<p class="empty" style="margin-top:8px;">Kept (${kept.length}): ${kept.slice(0, FIXED_LINES_SHOWN).map(keptLine).join('; ')}; and ${kept.length - FIXED_LINES_SHOWN} more</p>`;
-  const fixedSection = `<div class="section"><div class="section-title">&#128295; Fixed overnight</div>${fixed.length ? shown + more : muted('Nothing needed fixing overnight.')}${keptBlock}${earlier}</div>`;
+  const fixedSection = `<div class="section"><div class="section-title">&#128295; Fixed overnight</div>${fixed.length ? shown + more : muted('Nothing needed fixing overnight.')}${keptBlock}${earlier}${lateBlock}</div>`;
 
   // 2. How to grow
   const recs = list(review.growth?.recs);
@@ -1402,7 +1495,10 @@ function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, en
 
   // 4. One thing only you can do
   const onlyYou = list(review.onlyYou);
-  const youRows = onlyYou.length ? `<div class="section">${onlyYou.map((o) => line(o, o.since ? ` <span class="entry-time">(since ${e(o.since)})</span>` : '')).join('')}</div>` : '';
+  const asks = onlyYouRows(entries, review).map((r) => `<div class="entry"><span class="entry-subject">${e(r.subject)}</span>${r.body ? `<div class="blockers">${e(previewBody(r.body, { maxLines: 4, maxChars: 400 }))}</div>` : ''}</div>`);
+  const youRows = onlyYou.length || asks.length
+    ? `<div class="section">${onlyYou.map((o) => line(o, o.since ? ` <span class="entry-time">(since ${e(o.since)})</span>` : '')).join('')}${asks.join('')}</div>`
+    : '';
   const youSection = youRows || creatorReviewSection ? `${youRows}${creatorReviewSection || ''}` : '';
 
   return `<!DOCTYPE html>
@@ -1626,9 +1722,10 @@ async function main() {
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
   // System-health check — stale/missing data feeds and leftover stashes. Raised
-  // as an error row (it renders in the digest; it does not escalate), minus any
-  // issue the overnight reviewer resolved. The fallback keeps every alert.
-  const healthAlerts = healthIssuesToNotify(healthIssues, review || null);
+  // as an error row (it renders in the digest; it does not escalate). Every
+  // issue present at 13:00 is raised, including one the overnight reviewer
+  // fixed that has broken again since.
+  const healthAlerts = healthIssuesToNotify(healthIssues);
   if (healthAlerts.length) {
     log(`System health: ${healthAlerts.length} issue(s) — ${healthAlerts.map(i => i.title).join('; ')}`);
     await notify({
@@ -1639,12 +1736,21 @@ async function main() {
     }).catch(() => {});
   }
 
+  // Work the reviewer finished after yesterday's email (a fix session running
+  // past 13:00, or a day the recap fell back) is reported this morning.
+  let lateFinished = [];
+  if (dateArg === -1) {
+    const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    try { lateFinished = lateFinishedOutcomes(readReviewerFile(`${yesterday}.json`)); } catch { lateFinished = []; }
+    if (lateFinished.length) log(`${lateFinished.length} reviewer outcome(s) finished after yesterday's email.`);
+  }
+
   const reviewArg = review ? { ...review, residual: reconciled.residual, fixedNow: reconciled.fixedNow } : review;
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer, {}, reviewArg);
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer, { lateFinished }, reviewArg);
 
   let subject;
   if (review) {
-    subject = reviewedSubject(targetDate, reviewedCounts(review, reconciled, awaitingSubmissions(entries).items.length));
+    subject = reviewedSubject(targetDate, reviewedCounts(review, { ...reconciled, onlyYouRows: onlyYouRows(entries, reviewArg) }, awaitingSubmissions(entries).items.length));
   } else {
     const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
     const imageCount = pipelineImages.length;
@@ -1677,6 +1783,8 @@ async function main() {
 
   // Only a real send advances the window; a preview or a --date run never does.
   if (windowUntil) writeLastSent(windowUntil);
+  // Anything the reviewer finishes after this moment is shown tomorrow.
+  if (review) markReviewEmailed({ review });
   log('Daily summary sent.');
 }
 
