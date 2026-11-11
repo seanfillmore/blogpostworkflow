@@ -110,3 +110,15 @@ test('-0 normalised and unnamed campaigns listed', () => {
   const z = monthPnl({ ...base, financeEvents: {}, ads: null });
   for (const k of ['sales', 'fba', 'referral', 'promotions', 'refunds', 'cogs', 'contribution']) assert.ok(Object.is(z[k], 0), k);
 });
+
+test('campaign brand overrides: exact name, consulted first', () => {
+  const overrides = { 'SB - PC - Search Terms3 - Broad - EB': 'culina', 'SD - RM - VCPM - Body Lotions - B08GMCDMQ7 - EB': 'culina' };
+  assert.equal(assignCampaignBrand('SB - PC - Search Terms3 - Broad - EB', culinaAsins, rscAsins, overrides), 'culina');
+  assert.equal(assignCampaignBrand('SD - RM - VCPM - Body Lotions - B08GMCDMQ7 - EB', culinaAsins, rscAsins, overrides), 'culina');
+  assert.equal(assignCampaignBrand('sb - pc - search terms3 - broad - eb', culinaAsins, rscAsins, overrides), null, 'exact match only');
+  const p = monthPnl({ ...base, ads, campaignOverrides: { 'SB - PC - Search Terms3 - Broad - EB': 'culina' } });
+  const q = monthPnl({ ...base, ads });
+  assert.equal(p.adSpend.sb, q.adSpend.sb - 4);
+  assert.ok(!p.unassignedCampaigns.includes('SB - PC - Search Terms3 - Broad - EB'));
+  assert.ok(q.unassignedCampaigns.includes('SB - PC - Search Terms3 - Broad - EB'));
+});

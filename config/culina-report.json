@@ -10,5 +10,10 @@
   "goal_monthly": [75000, 100000],
   "goal_by": "2027-11",
   "launches": [],
+  "campaign_brand_overrides": {
+    "SB - PC - Search Terms3 - Broad - EB": "culina",
+    "SBV - PT - Defensive - All products - EB": "culina",
+    "SBV - Defensive - Branded ST - All products - EB": "culina"
+  },
   "seasonal_keywords": ["cast iron cleaner", "cast iron soap", "cast iron seasoning", "cast iron scrubber", "cast iron oil"]
 }

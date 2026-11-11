@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, writeFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { run, parseArgs, previousMonth, monthWindow, monthsBetween } from '../../agents/culina-report/index.js';
@@ -57,8 +57,8 @@ function daysBack(today, n) {
   return out;
 }
 
-function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail = false, adsFail = false, mail = [] } = {}) {
-  const calls = { finance: [], ads: [], seasonal: 0 };
+function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail = false, adsFail = false, adsRows = {}, seasonalFail = false, mail = [] } = {}) {
+  const calls = { finance: [], ads: [], seasonal: 0, fba: 0 };
   const today = now.slice(0, 10);
   const dates = daysBack(today, 400);
   const amazon = {
@@ -67,6 +67,7 @@ function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail =
     now: () => new Date(now),
     async request(method, path, params) {
       if (path === '/fba/inventory/v1/summaries') {
+        calls.fba++;
         const rows = [[A3, 'C-3PK', 'Culina Cast Iron Care Set 3 pack'], [AS, 'C-SOAP', 'Culina Cast Iron Soap'], [AR, 'R-LOT', 'Real Skin Care Lotion']]
           .map(([asin, sellerSku, productName]) => ({ asin, sellerSku, productName, inventoryDetails: { fulfillableQuantity: stock[asin] ?? 0 } }));
         return { payload: { inventorySummaries: rows } };
@@ -89,8 +90,8 @@ function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail =
       }
       throw new Error(`unexpected ${path}`);
     },
-    ads: { async run(cfg) { calls.ads.push(cfg); if (adsFail === true || adsFail === cfg.startDate) throw new Error('ads down'); return []; } },
-    async getSearchVolume() { calls.seasonal++; return [{ monthlySearches: [] }]; },
+    ads: { async run(cfg) { calls.ads.push(cfg); if (adsFail === true || adsFail === cfg.startDate) throw new Error('ads down'); return adsRows[cfg.name] || []; } },
+    async getSearchVolume() { calls.seasonal++; if (seasonalFail) throw new Error('ip not whitelisted'); return [{ monthlySearches: [] }]; },
   };
   const notes = [];
   return {
@@ -251,7 +252,98 @@ test('a corrupt alerts-state.json throws', async () => {
   assert.equal(mail.length, 0);
 });
 
-test('does not touch the real data directory', () => {
-  assert.ok(readdirSync(tmpdir()).length > 0);
-  assert.doesNotMatch(SRC, /writeFileSync\(\s*['"]data\//);
+// Every file a run writes lands under deps.dir; the real state directory is untouched.
+function listTree(root) {
+  const out = {};
+  if (!existsSync(root)) return out;
+  for (const e of readdirSync(root, { withFileTypes: true, recursive: true })) {
+    if (!e.isFile()) continue;
+    const p = join(e.parentPath ?? e.path, e.name);
+    out[p] = statSync(p).mtimeMs;
+  }
+  return out;
+}
+
+test('writes only under deps.dir, never the real data directory', async () => {
+  const real = join(process.cwd(), 'data', 'reports', 'culina-report');
+  const before = listTree(real);
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await run(['--monthly', '--month', '2026-10', '--apply'], deps);
+  await run(['--alerts', '--apply'], deps);
+  assert.deepEqual(listTree(real), before);
+  const written = Object.keys(listTree(dir)).map((p) => p.slice(dir.length + 1)).sort();
+  assert.deepEqual(written, ['ads/2026-09.json', 'ads/2026-10.json', 'alerts-state.json', 'forecasts/2026-11.json', 'inventory/2026-11-11.json',
+    'preview-alerts.html', 'preview-monthly.html', 'preview-monthly.json', 'seasonal.json']);
+});
+
+test('alerts --apply --to sends the test mail but does not write alert state', async () => {
+  const dir = tmp();
+  const { deps, mail } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await run(['--alerts', '--apply', '--to', 'me@example.com'], deps);
+  assert.equal(mail.length, 1);
+  assert.equal(mail[0].msg.to, 'me@example.com');
+  assert.ok(!existsSync(join(dir, 'alerts-state.json')));
+});
+
+test('forecast file: written when absent; kept by dry and --to runs; replaced by --apply', async () => {
+  const dir = tmp();
+  const path = join(dir, 'forecasts', '2026-11.json');
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await run(['--monthly', '--month', '2026-10'], deps);
+  assert.ok(existsSync(path));
+  writeFileSync(path, JSON.stringify({ month: '2026-11', byAsin: { X: { forecast: 1 } } }));
+  await run(['--monthly', '--month', '2026-10'], deps);
+  assert.equal(JSON.parse(readFileSync(path, 'utf8')).byAsin.X.forecast, 1, 'dry run keeps it');
+  await run(['--monthly', '--month', '2026-10', '--apply', '--to', 'me@example.com'], deps);
+  assert.equal(JSON.parse(readFileSync(path, 'utf8')).byAsin.X.forecast, 1, '--to run keeps it');
+  await run(['--monthly', '--month', '2026-10', '--apply'], deps);
+  assert.equal(JSON.parse(readFileSync(path, 'utf8')).byAsin.X, undefined, 'the real send replaces it');
+});
+
+test('campaign overrides from config reach the P&L', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 }, adsRows: { sbCampaigns: [{ campaignName: 'SB - PC - Search Terms3 - Broad - EB', cost: 40 }] } });
+  const plain = await run(['--monthly', '--month', '2026-10'], deps);
+  assert.deepEqual(plain.unassignedCampaigns, ['SB - PC - Search Terms3 - Broad - EB']);
+  const dir2 = tmp();
+  const o = makeDeps(dir2, { stock: { [A3]: 100 }, adsRows: { sbCampaigns: [{ campaignName: 'SB - PC - Search Terms3 - Broad - EB', cost: 40 }] } });
+  o.deps.config = { ...o.deps.config, campaign_brand_overrides: { 'SB - PC - Search Terms3 - Broad - EB': 'culina' } };
+  const r = await run(['--monthly', '--month', '2026-10'], o.deps);
+  assert.deepEqual(r.unassignedCampaigns, []);
+  assert.equal(r.pnl.find((l) => l.line === 'adSpend').curr, -40);
+});
+
+test('config ships the three campaign overrides', () => {
+  const cfg = JSON.parse(readFileSync('config/culina-report.json', 'utf8'));
+  assert.deepEqual(cfg.campaign_brand_overrides, {
+    'SB - PC - Search Terms3 - Broad - EB': 'culina',
+    'SBV - PT - Defensive - All products - EB': 'culina',
+    'SBV - Defensive - Branded ST - All products - EB': 'culina',
+  });
+});
+
+test('stale seasonal cache after a failed refresh is named in the notify body', async () => {
+  const dir = tmp();
+  writeFileSync(join(dir, 'seasonal.json'), JSON.stringify({ fetchedAt: '2026-08-01T00:00:00Z', monthlySearches: [] }));
+  const { deps, notes } = makeDeps(dir, { stock: { [A3]: 100 }, seasonalFail: true });
+  const r = await run(['--alerts'], deps);
+  assert.ok(!r.sourceErrors.includes('seasonal'));
+  assert.match(notes[0].body, /seasonal index from cache dated 2026-08-01, refresh failed/);
+});
+
+test('a corrupt ads cache throws', async () => {
+  const dir = tmp();
+  mkdirSync(join(dir, 'ads'), { recursive: true });
+  writeFileSync(join(dir, 'ads', '2026-10.json'), '{oops');
+  const { deps, mail } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await assert.rejects(run(['--monthly', '--month', '2026-10', '--apply'], deps), /ad spend cache/);
+  assert.equal(mail.length, 0);
+});
+
+test('FBA summaries are pulled once per run', async () => {
+  const dir = tmp();
+  const { deps, calls } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await run(['--alerts'], deps);
+  assert.equal(calls.fba, 1);
 });

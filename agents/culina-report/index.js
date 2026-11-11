@@ -17,11 +17,12 @@
  *
  * State, all gitignored under data/reports/culina-report/:
  *   inventory/YYYY-MM-DD.json  stock snapshot, written by every run (stockout days)
- *   forecasts/YYYY-MM.json     forecast for the calendar month the monthly run occurs in
+ *   forecasts/YYYY-MM.json     forecast for the calendar month the monthly run occurs in; written
+ *                              when absent, replaced only by --apply without --to
  *   seasonal.json              cached search-volume history (paid call, refreshed after 35 days)
  *   ads/YYYY-MM.json           a complete month's ad rows (Ads API keeps ~60 days, so the
  *                              month before the report month is read from here)
- *   alerts-state.json          last alert per item; written only by --alerts --apply
+ *   alerts-state.json          last alert per item; written only by --alerts --apply without --to
  * Unreadable state throws rather than resetting.
  *
  * Culina only (CLAUDE.md exception, requested by Sean 2026-11-11). No RSC products.
@@ -127,7 +128,7 @@ function loadSnapshots(dir) {
   return out;
 }
 
-async function loadSeasonal(deps, dir, now, sourceErrors) {
+async function loadSeasonal(deps, dir, now, sourceErrors, notes) {
   const path = join(dir, 'seasonal.json');
   let cached = null;
   try { cached = readJson(path, 'seasonal cache'); } catch { cached = null; } // a cache: refetch on corruption
@@ -137,6 +138,7 @@ async function loadSeasonal(deps, dir, now, sourceErrors) {
   if (error || !data) {
     if (cached?.monthlySearches) {
       deps.log(`culina-report: seasonal refresh failed (${error}); using the cache from ${cached.fetchedAt}`);
+      notes.push(`seasonal index from cache dated ${String(cached.fetchedAt).slice(0, 10)}, refresh failed`);
       return seasonalIndex(cached.monthlySearches);
     }
     sourceErrors.push('seasonal');
@@ -148,11 +150,27 @@ async function loadSeasonal(deps, dir, now, sourceErrors) {
 
 // ---- shared gathering -----------------------------------------------------
 
+/** Same deps, with FBA inventory summaries fetched once per run (listings and stock both read them). */
+function withFbaOnce(amazon) {
+  const memo = new Map();
+  return {
+    ...amazon,
+    request(method, path, params) {
+      if (path !== '/fba/inventory/v1/summaries') return amazon.request(method, path, params);
+      const key = JSON.stringify(params || {});
+      if (!memo.has(key)) memo.set(key, Promise.resolve(amazon.request(method, path, params)).catch((e) => { memo.delete(key); throw e; }));
+      return memo.get(key);
+    },
+  };
+}
+
 async function gather(deps, { extraDays = 0 } = {}) {
-  const { amazon, config, cogs, dir } = deps;
+  const { config, cogs, dir } = deps;
+  const amazon = withFbaOnce(deps.amazon);
   const now = deps.now();
   const today = ymd(now);
   const sourceErrors = [];
+  const notes = []; // run notes for the digest body
 
   const listings = await fetchListings(amazon);
   const culinaListings = listings.filter((l) => l.culina);
@@ -172,7 +190,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
 
   const daily = await fetchDailyUnits(amazon, culinaAsins, Math.max(PACE_WINDOW_DAYS, extraDays));
   const snapshots = loadSnapshots(dir);
-  const seasonal = await loadSeasonal(deps, dir, now, sourceErrors);
+  const seasonal = await loadSeasonal(deps, dir, now, sourceErrors, notes);
 
   const activeFrom = ymd(new Date(now.getTime() - ACTIVE_WINDOW_DAYS * DAY));
   const paceFrom = ymd(new Date(now.getTime() - PACE_WINDOW_DAYS * DAY));
@@ -198,7 +216,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
   const comps = componentPlan(items.filter((i) => i.asin), cogs, config, today)
     .map((c) => ({ ...c, coverDays: c.coverDays === null ? null : Math.round(c.coverDays) }));
 
-  return { now, today, listings, culinaAsins, stock, daily, seasonal, items, comps, sourceErrors };
+  return { now, today, listings, culinaAsins, stock, daily, seasonal, items, comps, sourceErrors, notes };
 }
 
 function recipients(deps, to) {
@@ -232,9 +250,12 @@ async function runMonthly(args, deps) {
   }
 
   // Save this run month's forecast for next month's comparison.
+  // Written once per month, and replaced only by the real send (--apply without --to),
+  // so a dry or test run cannot overwrite the forecast the next report is judged against.
   const runMonth = today.slice(0, 7);
   const runWin = monthWindow(runMonth);
-  writeJson(join(dir, 'forecasts', `${runMonth}.json`), {
+  const forecastPath = join(dir, 'forecasts', `${runMonth}.json`);
+  if (!existsSync(forecastPath) || (args.apply && !args.to)) writeJson(forecastPath, {
     month: runMonth, madeAt: deps.now().toISOString(),
     byAsin: Object.fromEntries(items.filter((i) => i.asin && i.pace !== null && i.pace !== undefined)
       .map((i) => [i.asin, { label: i.label, forecast: Math.round(forecastUnits(i.pace, runWin.startDate, runWin.days, seasonal)) }])),
@@ -281,7 +302,8 @@ async function runMonthly(args, deps) {
       if (isReportMonth && !sourceErrors.includes('ads')) sourceErrors.push('ads');
     }
     if (!financeEvents) return null;
-    return monthPnl({ financeEvents, culinaSkus, cogsTable: cogs, skuToAsin, culinaAsins: culinaSet, rscAsins, ads: ads.data });
+    return monthPnl({ financeEvents, culinaSkus, cogsTable: cogs, skuToAsin, culinaAsins: culinaSet, rscAsins, ads: ads.data,
+      campaignOverrides: config.campaign_brand_overrides || null });
   };
   const curr = await pnlFor(win, true);
   const before = await pnlFor(prev, false);
@@ -312,6 +334,7 @@ async function runMonthly(args, deps) {
     model.missingCogs.length ? `Missing COGS: ${model.missingCogs.join(', ')}` : null,
     model.unmappedStock.length ? `Unmapped AWD stock: ${model.unmappedStock.map((u) => u.sku).join(', ')}` : null,
     model.unassignedCampaigns.length ? `Unassigned campaigns: ${model.unassignedCampaigns.join(', ')}` : null,
+    ...g.notes,
   ].filter(Boolean);
   deps.log(summary.join('\n'));
   deps.log(`Preview: ${join(dir, 'preview-monthly.html')}`);
@@ -349,13 +372,14 @@ async function runAlerts(args, deps) {
       await send(deps, rendered, args.to);
       sent = true;
     }
-    writeJson(statePath, decision.nextState);
+    // A --to test send must not silence the real alert for a week.
+    if (!args.to) writeJson(statePath, decision.nextState);
   }
   const rcpt = recipients(deps, args.to);
   await deps.notify({
     subject: sent ? `Culina stock alert sent to ${rcpt.to}: ${decision.rows.length} item(s)`
       : decision.send ? `Culina stock alert: ${decision.rows.length} item(s) due (dry run, not sent)` : 'Culina stock check: nothing low',
-    body: lines.length ? lines.join('\n') : 'Every Culina item has at least the alert threshold of cover.',
+    body: [lines.length ? lines.join('\n') : 'Every Culina item has at least the alert threshold of cover.', ...g.notes].join('\n'),
     status: decision.send ? 'info' : 'success', category: 'amazon',
   });
   return { mode: 'alerts', sent, rows: decision.rows, sourceErrors: g.sourceErrors };
