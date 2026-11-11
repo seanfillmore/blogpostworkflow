@@ -71,7 +71,7 @@ function fakeDeps(over = {}) {
     shipFix: log('shipFix', { outcome: 'deployed', pr: { number: 9001, url: 'u' }, verify: 'rerun' }),
     removeDir: log('removeDir'),
     reapFixUser: log('reapFixUser'),
-    postArticleId: async () => null,
+    postArticleRef: async () => null,
     listFixCheckouts: async () => [],
     // growth
     gatherGrowthInputs: async () => ({ missing: [] }),
@@ -752,14 +752,14 @@ test('M3: a successful link repair adds no unresolved line', async () => {
 });
 
 test('I2: killPost never runs when the local post meta names a different Shopify article', async () => {
-  const deps = fakeDeps({ postArticleId: async () => 999 });
+  const deps = fakeDeps({ postArticleRef: async () => ({ articleId: 999, blogId: 22 }) });
   deps.inputs.postPerformance = { action_required: [flop('a')] };
   const r = await runReview(deps, { apply: true, now: MORNING });
   assert.equal(deps.calls.filter((c) => c[0] === 'killPost').length, 0);
   assert.equal(deps.calls.filter((c) => c[0] === 'writeBackup').length, 0);
   assert.equal(r.skipped[0].reason, 'article id mismatch');
 
-  const same = fakeDeps({ postArticleId: async () => '11' });
+  const same = fakeDeps({ postArticleRef: async () => ({ articleId: '11', blogId: 22 }) });
   same.inputs.postPerformance = { action_required: [flop('a')] };
   await runReview(same, { apply: true, now: MORNING });
   assert.equal(same.calls.filter((c) => c[0] === 'killPost').length, 1, 'matching id (string vs number) proceeds');
@@ -818,7 +818,7 @@ test('minor: real reapFixUser and listFixCheckouts exist in the production wirin
   const src = readFileSync('agents/recap-reviewer/real-deps.js', 'utf8');
   assert.match(src, /async reapFixUser\(\)[\s\S]{0,120}exec\('pkill', \['-u', 'recapfix'\]/);
   assert.match(src, /async listFixCheckouts\(\)/);
-  assert.match(src, /postArticleId: async \(slug\) => getPostMeta\(slug\)\?\.shopify_article_id/);
+  assert.match(src, /postArticleRef: async \(slug\) =>[\s\S]{0,200}shopify_article_id[\s\S]{0,80}shopify_blog_id/);
 });
 
 test('M4 + minor: CLAUDE.md states no dry re-run as recapfix, all of config/ forbidden, and every guarded file', async () => {
@@ -830,4 +830,50 @@ test('M4 + minor: CLAUDE.md states no dry re-run as recapfix, all of config/ for
   assert.ok(FORBIDDEN_PATHS.includes('config/'));
   assert.match(doc, /anything under `config\/` \(all of it, not only the facts files\)/);
   for (const f of [...GUARD_FILES, ...GUARD_PREFIXES]) assert.ok(doc.includes(`\`${f}\``), f);
+});
+
+// ── residual fixes ──────────────────────────────────────────────────────────
+
+test('I2 residual: no local article id and URL handle != slug -> "article identity unverified", killPost never runs', async () => {
+  const deps = fakeDeps({ postArticleRef: async () => null });
+  deps.inputs.postPerformance = { action_required: [flop('a', { url: 'https://x.myshopify.com/blogs/news/a-longer-handle' })] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'killPost' || c[0] === 'writeBackup').length, 0);
+  assert.equal(r.skipped[0].reason, 'article identity unverified');
+});
+
+test('I2 residual: an article id but no blog id and URL handle != slug -> "article identity unverified"', async () => {
+  const deps = fakeDeps({ postArticleRef: async () => ({ articleId: 11, blogId: null }) });
+  deps.inputs.postPerformance = { action_required: [flop('a', { url: 'https://x.myshopify.com/blogs/news/a-longer-handle' })] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'killPost').length, 0);
+  assert.equal(r.skipped[0].reason, 'article identity unverified');
+});
+
+test('I2 residual: no local ids but handle === slug proceeds (killPost looks up the same handle)', async () => {
+  for (const ref of [null, { articleId: 11, blogId: null }]) {
+    const deps = fakeDeps({ postArticleRef: async () => ref });
+    deps.inputs.postPerformance = { action_required: [flop('a')] };
+    await runReview(deps, { apply: true, now: MORNING });
+    assert.equal(deps.calls.filter((c) => c[0] === 'killPost').length, 1, JSON.stringify(ref));
+  }
+});
+
+test('I2 residual: "article identity unverified" is retryable, not kept', async () => {
+  const { isPermanentSkip } = await import('../../lib/low-demand-removal.js');
+  assert.equal(isPermanentSkip('article identity unverified'), false);
+  assert.equal(isPermanentSkip('article id mismatch'), false);
+});
+
+test('residual 3: a warning that classifies as code never claims the fix session', async () => {
+  const deps = fakeDeps();
+  deps.inputs.entries.push(
+    codeRow({ status: 'warning' }), // editor: not rerunnable
+    codeRow({ status: 'warning', source: RANK, category: 'seo', subject: 'Rank Tracker partial' }), // rerunnable
+  );
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'runFixSession' || c[0] === 'createFixCheckout').length, 0);
+  assert.equal(r.fixSession, null);
+  assert.equal(execsOf(deps, RANK).length, 1, 'the rerunnable warning is re-run');
+  assert.ok(r.unresolved.some((o) => o.subject === 'Editor failed' && /waits for next scheduled run/.test(o.result)));
 });

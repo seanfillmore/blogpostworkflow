@@ -9,8 +9,10 @@
  *   2. pick the target BY NUMBER from live pages in the same cluster (PDP, then
  *      collection, then sibling posts), one `fast` call, parseChoice;
  *   3. HEAD the target, expect 200;
- *   4. the local post meta's shopify_article_id, when present, must be the
- *      article found by handle, or the post is skipped ('article id mismatch');
+ *   4. killPost must resolve the same article: the local meta's
+ *      shopify_article_id, when present, must be the article found by handle
+ *      ('article id mismatch'); without both meta ids killPost looks up the
+ *      SLUG, so the URL handle must equal the slug ('article identity unverified');
  *      back up the article (body, title, tags, metafields);
  *   5. killPost(slug, { reason: 'low-demand', redirectTo }) — redirect BEFORE delete;
  *   6. verify the old URL 301s to the target.
@@ -116,12 +118,15 @@ export async function runRemovals({ rows, deps, apply, pastCutoff, today }) {
     if (article === undefined) { skip('Shopify article lookup failed'); continue; }
     // Nothing to remove: the article is already gone (a permanent "kept").
     if (!article) { skip('already gone from Shopify'); continue; }
-    // Eligibility and the backup used the article found by HANDLE, but killPost
-    // resolves the article from the local post meta by SLUG. If those disagree,
-    // killPost would delete a different article than the one checked and backed up.
-    let localId;
-    try { localId = await deps.postArticleId(row.slug); } catch (e) { skip(`local post meta unreadable: ${e.message}`); continue; }
-    if (localId != null && String(localId) !== String(article.id)) { skip('article id mismatch'); continue; }
+    // Eligibility and the backup used the article found by the URL's HANDLE, but
+    // killPost resolves by SLUG: from the local meta's shopify_article_id +
+    // shopify_blog_id when both exist, else findArticleByHandle(slug). Unless
+    // those provably name the same article, killPost could delete a different
+    // article than the one checked and backed up.
+    let ref;
+    try { ref = await deps.postArticleRef(row.slug); } catch (e) { skip(`local post meta unreadable: ${e.message}`); continue; }
+    if (ref?.articleId != null && String(ref.articleId) !== String(article.id)) { skip('article id mismatch'); continue; }
+    if ((ref?.articleId == null || ref?.blogId == null) && handle !== row.slug) { skip('article identity unverified'); continue; }
 
     const cluster = clusterForText(`${row.title || ''} ${handle.replace(/-/g, ' ')}`);
     if (!cluster) { skip('no same-cluster target (the post matches no product cluster)'); continue; }

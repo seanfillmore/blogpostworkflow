@@ -280,8 +280,11 @@ export async function realDeps() {
       if (statSync(p).size === 0) throw new Error('backup file is empty');
       return p;
     },
-    // killPost resolves the article from this id; removal.js checks it matches.
-    postArticleId: async (slug) => getPostMeta(slug)?.shopify_article_id ?? null,
+    // killPost resolves the article from these ids (both needed); removal.js checks they match.
+    postArticleRef: async (slug) => {
+      const m = getPostMeta(slug);
+      return m ? { articleId: m.shopify_article_id ?? null, blogId: m.shopify_blog_id ?? null } : null;
+    },
     async killPost(slug, opts) {
       const { killPost } = await import('../../lib/post-kill.js');
       return killPost(slug, opts);

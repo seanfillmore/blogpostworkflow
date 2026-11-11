@@ -1364,8 +1364,18 @@ export function reviewedSubject(targetDate, { fixed = 0, working = 0, forYou = 0
 }
 
 /** The counts the subject line reports, from the review plus this morning's reconcile. */
+/**
+ * The review's resolved outcomes minus any key the 13:00 reconcile put back in
+ * residual (a health issue or failure that broke again since the morning fix):
+ * such an item renders only as "still being worked on", never also as fixed.
+ */
+function stillResolved(review, residual = []) {
+  const back = new Set((Array.isArray(residual) ? residual : []).map((o) => o?.key));
+  return (Array.isArray(review?.resolved) ? review.resolved : []).filter((o) => !back.has(o?.key));
+}
+
 export function reviewedCounts(review, { residual = [], fixedNow = [], onlyYouRows: you = [] } = {}, creatorItems = 0) {
-  const resolved = (review?.resolved || []).filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept');
+  const resolved = stillResolved(review, residual).filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept');
   return {
     fixed: resolved.length + fixedNow.length,
     working: (review?.unresolved || []).length + residual.length,
@@ -1374,9 +1384,10 @@ export function reviewedCounts(review, { residual = [], fixedNow = [], onlyYouRo
 }
 
 /**
- * Agents whose ordinary (info) rows are work only Sean can do: DMs waiting on
- * him, offer codes that failed to send, press replies escalated to him. The
- * reviewed recap has no Failures or entries list, so without this they vanish.
+ * Agents whose info rows can be work only Sean can do (DMs waiting on him,
+ * offer codes that failed to send, press replies for him). Only rows that
+ * state the ask count (statesAnAsk); the reviewed recap has no entries list,
+ * so without this those asks would vanish.
  */
 export const ONLY_YOU_SOURCES = Object.freeze(new Set([
   'agents/instagram-dm/index.js',
@@ -1385,8 +1396,24 @@ export const ONLY_YOU_SOURCES = Object.freeze(new Set([
 const ONLY_YOU_SUBJECT = /waiting on you|needs a human|needs your/i;
 
 /**
- * Rows for "One thing only you can do": from ONLY_YOU_SOURCES or saying they
- * wait on a human, newest per itemKey and count-free subject. Errors and warnings are the reviewer's
+ * A row is an ask only when it SAYS so. A source on ONLY_YOU_SOURCES is not
+ * enough: instagram-dm writes "0 waiting on you, N code(s) sent" every run and
+ * press-outreach writes routine link/draft/follow-up summaries, and counting
+ * those would keep the subject from ever reading "all clear".
+ */
+function statesAnAsk(r) {
+  const subject = String(r.subject || '');
+  if (r.source === 'agents/instagram-dm/index.js') {
+    const m = subject.match(/(\d+)\s+waiting on you/i);
+    if (m) return Number(m[1]) > 0;
+    return /failed to send/i.test(subject);
+  }
+  return ONLY_YOU_SUBJECT.test(subject);
+}
+
+/**
+ * Rows for "One thing only you can do": rows that state an ask (statesAnAsk),
+ * newest per itemKey and count-free subject. Errors and warnings are the reviewer's
  * (they reach resolved/unresolved/onlyYou/residual), and a key the review
  * already reports is not repeated.
  */
@@ -1396,7 +1423,7 @@ export function onlyYouRows(entries = [], review = {}) {
   const newest = new Map();
   for (const r of entries) {
     if (!r || r.status === 'error' || r.status === 'warning') continue;
-    if (!ONLY_YOU_SOURCES.has(r.source || '') && !ONLY_YOU_SUBJECT.test(r.subject || '')) continue;
+    if (!statesAnAsk(r)) continue;
     if (taken.has(itemKey(r))) continue;
     // itemKey alone is the subject STEM ("instagram dms"), which would merge
     // "3 waiting on you" with "1 offer code(s) failed to send". Counts are
@@ -1462,7 +1489,7 @@ function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, en
   const list = (a) => (Array.isArray(a) ? a : []);
 
   // 1. What's working
-  const resolved = list(review.resolved);
+  const resolved = stillResolved(review, review.residual);
   const fixed = [...resolved.filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept'), ...list(review.fixedNow)];
   const closedEarlier = resolved.filter((o) => o?.action === 'closed earlier');
   const kept = resolved.filter((o) => o?.action === 'kept');

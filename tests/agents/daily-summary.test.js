@@ -953,7 +953,7 @@ test('I4b: rows only Sean can act on are listed, newest per key, minus errors/wa
   const dm1 = { subject: 'Instagram DMs: 2 waiting on you, 1 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@a\n@b', ts: `${TODAY}T08:00:00Z` };
   const dm2 = { ...dm1, subject: 'Instagram DMs: 3 waiting on you, 1 code(s) sent', ts: `${TODAY}T09:00:00Z` };
   const codes = { subject: 'Instagram DMs: 1 offer code(s) failed to send', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@x: boom', ts: `${TODAY}T08:30:00Z` };
-  const press = { subject: 'Press outreach: 2 replies escalated', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'x', ts: `${TODAY}T08:10:00Z` };
+  const press = { subject: 'Press outreach: 2 replies, 1 needs your reply', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'x', ts: `${TODAY}T08:10:00Z` };
   const human = { subject: 'Post-meta drift: 3 fields (needs a human)', status: 'info', category: 'ops', source: 'scripts/check-post-meta-drift.mjs', body: 'y', ts: `${TODAY}T08:20:00Z` };
   const ordinary = { subject: 'Rank tracker: 40 queries', status: 'success', category: 'seo', source: 'agents/rank-tracker/index.js', ts: `${TODAY}T08:00:00Z` };
   const err = { subject: 'Press outreach failed', status: 'error', category: 'press', source: 'agents/press-outreach/index.js', ts: `${TODAY}T08:40:00Z` };
@@ -1023,4 +1023,46 @@ test('I3b: markReviewEmailed stamps emailed + emailed_at on latest.json and the 
   writeFileSync(join(dir2, 'latest.json'), JSON.stringify({ ...report, generated_at: `${TODAY}T12:00:00.000Z` }));
   markReviewEmailed({ dir: dir2, review: report, at: '2026-11-12T13:01:00.000Z' });
   assert.equal(JSON.parse(readFileSync(join(dir2, 'latest.json'), 'utf8')).emailed, false);
+});
+
+// ── residual fixes ──────────────────────────────────────────────────────────
+
+test('residual 2: only rows that state an ask are "only you"; routine source rows are not', () => {
+  const dm = (n, ts = `${TODAY}T09:00:00Z`) => ({ subject: `Instagram DMs: ${n} waiting on you, 4 code(s) sent`, status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: 'b', ts });
+  const p = (subject) => ({ subject, status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'b', ts: `${TODAY}T09:00:00Z` });
+  const failed = { subject: 'Instagram DMs: 1 offer code(s) failed to send', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@x: boom', ts: `${TODAY}T08:30:00Z` };
+  const pick = (rows) => onlyYouRows(rows, makeReview()).map((r) => r.subject);
+  assert.deepEqual(pick([dm(0)]), [], '0 waiting is routine');
+  assert.deepEqual(pick([dm(2)]), [dm(2).subject]);
+  assert.deepEqual(pick([failed]), [failed.subject]);
+  assert.deepEqual(pick([p('Press links: 3 new links')]), []);
+  assert.deepEqual(pick([p('Press drafting skipped: lock held')]), []);
+  assert.deepEqual(pick([p('Press follow-ups: 4 redrafted')]), []);
+  assert.deepEqual(pick([p('Press outreach: 1 reply needs your reply')]), ['Press outreach: 1 reply needs your reply']);
+});
+
+test('residual 2: a day of routine DM and press rows reads "all clear" in the subject', async () => {
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  const rows = [
+    { subject: 'Instagram DMs: 0 waiting on you, 3 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', ts: `${TODAY}T09:00:00Z` },
+    { subject: 'Press links: 3 new links', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', ts: `${TODAY}T09:00:00Z` },
+  ];
+  const counts = reviewedCounts(makeReview(), { residual: [], fixedNow: [], onlyYouRows: onlyYouRows(rows, makeReview()) });
+  assert.equal(reviewedSubject(TODAY, counts), `Daily Recap — ${TODAY} (all clear)`);
+});
+
+test('residual 4: a health item resolved in the morning and present at 13:00 renders only in residual, not in Fixed overnight', async () => {
+  const again = { title: 'Data feed "gsc" is stale', detail: 'old' };
+  const [it] = (await import('../../lib/recap-review.js')).buildReviewItems({ healthIssues: [again] });
+  const review = makeReview({ resolved: [{ key: it.key, kind: 'health', subject: again.title, action: 're-run collector', result: 're-ran gsc-collector; the feed is fresh again' }] });
+  const rec = await reconcileWithReview([], [again], review, { today: TODAY });
+  const html = reviewedHtml({ ...review, residual: rec.residual, fixedNow: rec.fixedNow }, { health: [again] });
+  const fixedAt = html.indexOf('Fixed overnight');
+  const workingAt = html.indexOf('Still being worked on');
+  assert.ok(!html.includes('the feed is fresh again'), 'the morning "fixed" line is gone');
+  assert.ok(html.includes('Nothing needed fixing overnight.'));
+  assert.ok(html.indexOf('broken again since the morning fix') > workingAt && workingAt > fixedAt);
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(review, rec).fixed, 0);
+  assert.equal(reviewedCounts(review, rec).working, 1);
 });

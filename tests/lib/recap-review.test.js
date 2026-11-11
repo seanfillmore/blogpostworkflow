@@ -109,3 +109,10 @@ test('I4: warnings are reviewed problems; info, success and daily-summary rows a
   assert.equal(isReviewedProblem(row({ status: 'info' })), false);
   assert.equal(isReviewedProblem(row({ status: 'error', source: 'agents/daily-summary/index.js' })), false);
 });
+
+test('residual 3: a code-classified warning routes to rerun, an error to fix-session; an error row on the key wins', () => {
+  const w = row({ status: 'warning', body: 'TypeError: x' });
+  assert.equal(buildReviewItems({ errorRows: [w] })[0].route, 'rerun');
+  assert.equal(buildReviewItems({ errorRows: [row({ body: 'TypeError: x' })] })[0].route, 'fix-session');
+  assert.equal(buildReviewItems({ errorRows: [w, row({ body: 'TypeError: x', ts: '2026-11-10T05:00:00Z' })] })[0].route, 'fix-session');
+});
