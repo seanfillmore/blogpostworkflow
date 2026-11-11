@@ -64,7 +64,7 @@ test('unassigned, escaping, data notes', () => {
 test('projection states and highlights', () => {
   const { html } = renderMonthly(base());
   assert.match(html, /OUT OF STOCK/); assert.match(html, /no forecast/);
-  assert.match(html, /No shipment needed in 90 days/);
+  assert.match(html, /1 other item has nothing to ship in the next 45 days/); // Oil: no shipment needed, hidden
   assert.match(html, /#8a5a00/); // ship by within 14 days
   assert.match(html, /China, 45-day lead/);
 });
@@ -116,7 +116,7 @@ test('fix6: product and ship cells wrap', () => {
   const row = html.split('<tr').find((r) => r.includes('Cast Iron Soap 3 Pack'));
   const cells = row.split('<td').slice(1);
   assert.ok(!cells[0].includes('white-space:nowrap'));
-  assert.ok(!cells[6].includes('white-space:nowrap'));
+  assert.ok(!cells[7].includes('white-space:nowrap')); // Ship is the 8th cell after the ASIN column
 });
 test('fix7: alert escapes', () => {
   const r = renderAlert([{ label: 'A <b>&"x"', coverDays: 3, onHand: 1, reason: 'below_threshold' }]);
@@ -167,5 +167,68 @@ test('final-fix: goal text from config and the ordered-sales note', () => {
     assert.doesNotMatch(s, /November 2027/);
     assert.match(s, /ordered sales/);
     assert.match(s, /settlement/);
+  }
+});
+
+test('priority: ASIN on every product line, in HTML and text', () => {
+  const m = base();
+  m.projection[0].asin = 'B08BTQK5Z9'; m.projection[1].asin = 'B08BTVXLXN'; m.projection[2].asin = 'B0771WC1Q1';
+  const { html, text } = renderMonthly(m);
+  // Oil (B0771WC1Q1) needs no shipment, so the 45-day rule hides it.
+  for (const a of ['B08BTQK5Z9', 'B08BTVXLXN']) { assert.ok(html.includes(a), a); assert.ok(text.includes(a), a); }
+  assert.match(html, />ASIN</);
+});
+
+test('priority: out of stock first, then soonest ship date (lines with nothing to ship are hidden)', () => {
+  const m = base();
+  m.projection = [
+    { asin: 'A-NOFC', label: 'No forecast', onHand: 5, coverDays: null, shipBy: null, shipQty: null },
+    { asin: 'A-LATE', label: 'Ships later', onHand: 400, coverDays: 80, shipBy: '2026-12-20', shipQty: 100 },
+    { asin: 'A-NONE', label: 'Nothing needed', onHand: 900, coverDays: 300, shipBy: null, shipQty: 0 },
+    { asin: 'A-OOS2', label: 'Out two', onHand: 0, coverDays: 0, shipBy: '2026-11-10', shipQty: 50 },
+    { asin: 'A-SOON', label: 'Ships soon', onHand: 100, coverDays: 20, shipBy: '2026-11-10', shipQty: 300 },
+    { asin: 'A-OOS1', label: 'Out one', onHand: 0, coverDays: 0, shipBy: '2026-11-10', shipQty: 900 },
+  ].map((p) => ({ forecast30: 1, forecast60: 2, forecast90: 3, ...p }));
+  const { html, text } = renderMonthly(m);
+  const order = (s) => ['A-OOS1', 'A-OOS2', 'A-SOON', 'A-LATE'].map((a) => s.indexOf(a));
+  for (const s of [html, text]) {
+    const idx = order(s);
+    assert.ok(idx.every((v) => v >= 0), 'all present');
+    assert.deepEqual([...idx].sort((a, b) => a - b), idx, 'in priority order');
+  }
+});
+
+test('priority: an out-of-stock row is visibly marked across the whole row', () => {
+  const m = base();
+  m.projection = [{ asin: 'A-OOS', label: 'Gone', onHand: 0, coverDays: 0, forecast30: 1, forecast60: 2, forecast90: 3, shipBy: '2026-11-10', shipQty: 50 }];
+  const { html } = renderMonthly(m);
+  const at = html.indexOf('A-OOS');
+  const row = html.slice(html.lastIndexOf('<tr', at), html.indexOf('</tr>', at));
+  assert.match(row, /OUT OF STOCK/);
+  assert.ok((row.match(/background:#f7dfdc/gi) || []).length >= 7, 'every cell tinted');
+});
+
+test('45-day window: only lines that ship within 45 days of the report date (or are out of stock) are shown', () => {
+  const m = base();
+  m.reportDate = '2026-11-10';
+  m.projection = [
+    { asin: 'A-OOS', label: 'Gone', onHand: 0, coverDays: 0, shipBy: '2026-11-10', shipQty: 50 },
+    { asin: 'A-D45', label: 'Day 45', onHand: 300, coverDays: 100, shipBy: '2026-12-25', shipQty: 200 },
+    { asin: 'A-D46', label: 'Day 46', onHand: 300, coverDays: 101, shipBy: '2026-12-26', shipQty: 200 },
+    { asin: 'A-NONE', label: 'Nothing', onHand: 900, coverDays: 300, shipBy: null, shipQty: 0 },
+    { asin: 'A-NOFC', label: 'Unknown', onHand: 5, coverDays: null, shipBy: null, shipQty: null },
+    { asin: 'A-NEW', label: 'Launch', launch: true, onHand: 0, coverDays: null, shipBy: '2026-11-10', shipQty: 100 },
+  ].map((p) => ({ forecast30: 1, forecast60: 2, forecast90: 3, ...p }));
+  m.components = [
+    { name: 'Soon soap', shipQty: 100, sourced: false, needBy: '2026-11-20', orderBy: null, coverDays: 30 },
+    { name: 'Later oil', shipQty: 100, sourced: false, needBy: '2027-02-01', orderBy: null, coverDays: 120 },
+    { name: 'China part', shipQty: 100, sourced: true, needBy: '2027-01-10', orderBy: '2026-11-26', coverDays: 60 },
+    { name: 'Idle stick', shipQty: 0, sourced: false, needBy: null, orderBy: null, coverDays: 400 },
+  ];
+  const { html, text } = renderMonthly(m);
+  for (const s of [html, text]) {
+    for (const shown of ['A-OOS', 'A-D45', 'A-NEW', 'Soon soap', 'China part']) assert.ok(s.includes(shown), `${shown} shown`);
+    for (const hidden of ['A-D46', 'A-NONE', 'A-NOFC', 'Later oil', 'Idle stick']) assert.ok(!s.includes(hidden), `${hidden} hidden`);
+    assert.match(s, /3 other items have nothing to ship in the next 45 days/);
   }
 });

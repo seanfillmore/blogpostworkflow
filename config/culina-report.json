@@ -4,12 +4,15 @@
   "from": "sean@realskincare.com",
   "cover_target_days": [90, 120],
   "alert_below_days": 60,
+  "ship_window_days": 45,
   "lead_time_days": 14,
   "sourced_lead_time_days": 45,
   "sourced_components": ["chain mail scrubber", "brush", "plastic scrapers", "silicone pan handle cover"],
   "goal_monthly": [75000, 100000],
   "goal_by": "2027-11",
-  "launches": [],
+  "launches": [
+    { "asin": "B08K85JN7M", "name": "5-piece set", "initial_units": 100 }
+  ],
   "campaign_brand_overrides": {
     "SB - PC - Search Terms3 - Broad - EB": "culina",
     "SBV - PT - Defensive - All products - EB": "culina",
