@@ -56,12 +56,12 @@ test('createFixCheckout clones as recapfix in order, no .env, no /root', async (
   const cmds = [];
   const exec = async (cmd, args, opts) => { cmds.push([cmd, ...args, opts]); return { stdout: '', stderr: '', code: 0 }; };
   const p = await createFixCheckout('Abc/../X', { exec });
-  assert.equal(p, '/srv/recap-fix/fix-abc-----x');
+  assert.equal(p, '/srv/recap-fix/fix-abc----x');
   assert.equal(cmds.length, 5);
   for (const c of cmds) assert.deepEqual(c.slice(0, 4), ['runuser', '-u', 'recapfix', '--']);
   assert.deepEqual(cmds[0].slice(4, 8), ['git', 'clone', '--quiet', 'https://github.com/seanfillmore/blogpostworkflow.git']);
   assert.deepEqual(cmds[1].slice(4, 8), ['git', '-C', p, 'checkout']);
-  assert.ok(cmds[1].includes('fix/recap-abc-----x'));
+  assert.ok(cmds[1].includes('fix/recap-abc----x'));
   assert.ok(cmds[2].includes('user.name') && cmds[3].includes('user.email'));
   assert.deepEqual(cmds[4].slice(4, 8), ['npm', 'ci', '--no-audit', '--no-fund']);
   assert.equal(cmds[4].at(-1).cwd, p);
