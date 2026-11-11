@@ -413,6 +413,13 @@ DAILY_COPY_SURFACE_CLAIMS_GATE="35 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts
 # 13:00 digest, so all three land in the same morning's email. UTC, no TZ=.
 DAILY_VALUE_STACK_GATE="30 12 * * * cd \"$PROJECT_DIR\" && $NODE scripts/check-bundle-value-stack-drift.mjs >> data/reports/scheduler/value-stack-gate.log 2>&1"
 
+# Recap reviewer: works every failure/decision/flop the day's rows left open,
+# ships at most one code fix (as the unprivileged `recapfix` user), removes
+# low-demand posts behind a 301, and writes the report the 13:00 digest reads.
+# 11:05 UTC: free minute (11:00 indexing-checker, 11:30 indexing-fixer, 11:45
+# mirror reconcile); no merge after 13:45, nothing starts after 14:30. UTC, no TZ=.
+DAILY_RECAP_REVIEWER="5 11 * * * cd \"$PROJECT_DIR\" && $NODE agents/recap-reviewer/index.js --apply >> data/reports/scheduler/recap-reviewer.log 2>&1"
+
 # Daily digest (runs last — collects everything from the day)
 DAILY_SUMMARY="0 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1"
 
@@ -691,6 +698,7 @@ $DAILY_FOUNDER_NOTES_INGEST
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
 # ── Daily digest ──
+$DAILY_RECAP_REVIEWER
 $DAILY_SUMMARY
 # ── Weekly (Monday) ──
 $WEEKLY_INSIGHTS
@@ -745,6 +753,7 @@ echo "  07:30 PT  — campaign-monitor"
 echo "  07:30 UTC — performance-engine"
 echo "  10:00 UTC — calendar-runner (--run --all)"
 echo "  11:00 UTC — indexing-checker"
+echo "  11:05 UTC — recap reviewer (fixes the digest's open problems, removes low-demand posts, writes the report the digest reads)"
 echo "  11:30 UTC — indexing-fixer"
 echo "  12:20 UTC — content-mirror drift gate (detect only, never resyncs)"
 echo "  12:40 UTC — post-meta drift gate (detect only, never writes)"

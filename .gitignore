@@ -508,3 +508,9 @@ data/reports/prune-ad-studio.log
 data/reports/judgeme-dedupe/
 data/reports/judgeme-suppress/
 data/reports/giveaway-prune/
+
+# Recap reviewer (agents/recap-reviewer): server-written report/state, backups
+# of removed articles (live page content), and throwaway fix checkouts.
+data/reports/recap-reviewer/
+data/backups/removed-posts/
+.claude/worktrees/fix-*

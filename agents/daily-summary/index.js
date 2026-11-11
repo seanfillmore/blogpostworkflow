@@ -14,6 +14,18 @@
  *
  * Collector/snapshot successes are suppressed — only shown if they failed.
  *
+ * REVIEWED RECAP (2026-11-11). When agents/recap-reviewer has written today's
+ * --apply report and done.json, the email renders from it instead: What's
+ * working (incl. "Fixed overnight"), How to grow, Still being worked on, and
+ * One thing only you can do. The recap waits up to 30 minutes for done.json
+ * (--preview never waits). A missing, stale, crashed or dry-run review falls
+ * back to the old email under FALLBACK_BANNER; it never reads as an all-clear.
+ * After a send that rendered the review, the report is stamped emailed_at; the
+ * next morning, any outcome in yesterday's report that finished after that
+ * (or all of them, if no email rendered it) shows as "Finished after
+ * yesterday's email". Info rows only Sean can act on (ONLY_YOU_SOURCES, or a
+ * subject saying it waits on a human) render under One thing only you can do.
+ *
  * Usage:
  *   node agents/daily-summary/index.js
  *   node agents/daily-summary/index.js --date 2026-04-03  (specific date)
@@ -22,7 +34,7 @@
  *   0 13 * * * cd ~/seo-claude && node agents/daily-summary/index.js >> data/logs/daily-summary.log 2>&1
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, statSync, renameSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { sendHtmlEmail, notify } from '../../lib/notify.js';
@@ -36,6 +48,12 @@ import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // decision. Never re-declare 0.005 here — same single-source rule as
 // AWARENESS_LEVELS and HEALTH_CLAIM_PATTERNS.
 import { classifyCtrDelta, DEFAULT_REGRESS_THRESHOLD } from '../../lib/meta-ab-decision.js';
+import {
+  buildReviewItems, classifyRows, itemKey, isReviewedProblem, recoveredBy,
+} from '../../lib/recap-review.js';
+import { parseCrontab, isRerunnable, splitCommand } from '../../lib/recap-jobs.js';
+import { isPermanentSkip } from '../../lib/low-demand-removal.js';
+import { loadState as loadReviewerState, REVIEWER_DIR } from '../../lib/recap-reviewer-state.js';
 // lib/llm-usage.js still meters every call; the digest just no longer renders a
 // dollar row from it. See the LLM cost block removal note below.
 
@@ -139,7 +157,7 @@ function isSilentSuccess(entry) {
  *     reports its own outcome into this same digest. The dashboard still shows
  *     them (it passes includeLive: true) — visibility without a daily alarm.
  */
-function findBlockedPosts() {
+export function findBlockedPosts() {
   const blocked = [];
 
   for (const slug of listAllSlugs()) {
@@ -337,7 +355,7 @@ export function formatBodyHtml(text) {
  * one on the server, so a test asserting the quiet path passed locally and failed in
  * production. Defaulting to ROOT keeps every caller unchanged.
  */
-export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT } = {}) {
+export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues = [], seoImpact = null, prioritizer = null, { dataRoot = ROOT, lateFinished = [] } = {}, review = undefined) {
   const esc = s => (s || '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -698,12 +716,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // for Amazon.ca. Same row shape.
   let decisionSection = '';
   try {
-    const stuck = [
-      join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'amazon-account-health', 'latest.json'),
-    ].flatMap((p) => {
+    const stuck = NEEDS_DECISION_REPORTS.map((r) => join(dataRoot, ...r.path)).flatMap((p) => {
       if (!existsSync(p)) return [];
       try {
         const report = JSON.parse(readFileSync(p, 'utf8'));
@@ -1015,10 +1028,30 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
     costSection,         // always '' — LLM cost block removed 2026-09-08
   ].filter(Boolean);
 
+  // The reviewed recap: what is working, how to grow, what is still being worked
+  // on, and the one thing only Sean can do. The failure/decision/health blocks
+  // are gone because the overnight reviewer either fixed each item (Fixed
+  // overnight) or still owes it (Still being worked on). See renderReviewedRecap.
+  const lateBlock = renderLateFinished(lateFinished, esc);
+  if (review) {
+    return renderReviewedRecap({
+      review, targetDate, styles, esc, dashboardUrl, entries, lateBlock,
+      working: [seoImpactSection, rankMoversSection, verdictSection, abTestSection].filter(Boolean),
+      creatorReviewSection,
+    });
+  }
+
+  // review === null: the reviewer did not run (or crashed, or is stale, or only
+  // dry-ran). Today's email, unchanged, under a banner saying so, so it can never
+  // read as an all-clear. review === undefined (a --date run) is the plain email.
+  const banner = review === null
+    ? `<div class="fallback-banner" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px;font-weight:600;">${FALLBACK_BANNER}</div>`
+    : '';
+
   return `<!DOCTYPE html>
-<html><head><style>${styles}</style></head><body>
+<html><head><style>${styles}</style></head><body>${banner}
   <h1>Daily Recap &mdash; What Moved</h1>
-  <div class="date">${targetDate}</div>
+  <div class="date">${targetDate}</div>${lateBlock ? `\n  <div class="section">${lateBlock}</div>` : ''}
   ${movers.length
     ? movers.join('\n  ')
     : '<div class="section"><p class="empty">Nothing moved the needle yesterday — revenue steady, no failures, no decisions waiting.</p></div>'}
@@ -1032,7 +1065,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
  * digest. Catches the *silent* failure mode error-driven alerts miss — a cron
  * that stops firing produces no error, just quietly stale data.
  */
-function checkSystemHealth() {
+export function checkSystemHealth() {
   const today = new Date().toISOString().slice(0, 10);
 
   // Each feed is written daily, but several name their file by the DATA date,
@@ -1134,6 +1167,402 @@ function checkSystemHealth() {
   return issues;
 }
 
+
+// ── The reviewed recap ─────────────────────────────────────────────────────
+//
+// agents/recap-reviewer runs at 11:05 UTC and works every problem this digest
+// would otherwise hand Sean. Sean, verbatim: "I shouldn't see errors or anything
+// didn't work... I should see a summary of what is working and how we can grow
+// the business." So when a valid review exists the email renders from it.
+//
+// The anti-goal is HIDING a broken thing. Every failure the review did not
+// resolve still appears, as status, under "Still being worked on" (the review's
+// own `unresolved` plus the residual computed here), and a review that is
+// missing, stale, crashed or only a dry run is not a review: the old email is
+// sent under FALLBACK_BANNER, never an all-clear.
+
+export const FALLBACK_BANNER = 'The overnight reviewer did not run; this is the unreviewed recap.';
+export const REVIEW_WAIT_MS = 30 * 60_000;
+export const QUICK_RERUN_MAX_MS = 10 * 60_000;
+const QUICK_RERUN_MIN_MS = 60_000;
+const FIXED_LINES_SHOWN = 12;
+const TOMORROW = 'picked up tomorrow morning';
+
+/**
+ * Today's review, or null. Valid only when it is an --apply run, did not crash,
+ * was generated today (UTC) and the reviewer wrote today's done.json. A dry run
+ * writes dry-run.json, never latest.json, but `apply` is checked anyway.
+ * @param {{ today: string, read: (name: string) => object|null }} opts
+ */
+export function loadReview({ today, read }) {
+  const safe = (name) => { try { return read(name); } catch { return null; } };
+  const report = safe('latest.json');
+  if (!report || typeof report !== 'object') return null;
+  if (report.apply !== true || report.crashed === true) return null;
+  if (String(report.generated_at || '').slice(0, 10) !== today) return null;
+  const done = safe('done.json');
+  if (!done || done.date !== today || done.crashed === true) return null;
+  return report;
+}
+
+/**
+ * Poll for today's done.json for up to `deadlineMs`. Returns the absolute
+ * deadline so the quick pass can spend only what is left of the same budget.
+ */
+export async function waitForReview({ deadlineMs = REVIEW_WAIT_MS, poll, sleep, now = Date.now, intervalMs = 60_000 } = {}) {
+  const start = now();
+  const deadline = start + deadlineMs;
+  for (;;) {
+    let ready = false;
+    try { ready = !!(await poll()); } catch { ready = false; }
+    if (ready) return { ready: true, deadline, waitedMs: now() - start };
+    const left = deadline - now();
+    if (left <= 0) return { ready: false, deadline, waitedMs: now() - start };
+    await sleep(Math.min(intervalMs, left));
+  }
+}
+
+const healthKey = (h) => buildReviewItems({ healthIssues: [h] })[0].key;
+
+/**
+ * Health rows to raise as an error notify: all of them. They are read fresh by
+ * checkSystemHealth() at 13:00, so a row present now IS broken now, even when
+ * the 11:05 review resolved it (it broke again since the morning fix).
+ */
+export function healthIssuesToNotify(healthIssues = []) {
+  return healthIssues;
+}
+
+/**
+ * Reconcile the 13:00 inputs with the 11:05 review.
+ *
+ *   - error rows older than the review whose key it resolved are dropped;
+ *   - error rows newer than the review (the 12:15-12:58 gates) get a quick pass:
+ *     transient AND on the re-run allowlist -> re-run now, bounded by the wait
+ *     budget and 10 minutes, and counted fixed only when a later non-error row
+ *     from the same reporter proves it (dropRecoveredFailures semantics);
+ *   - everything the review neither resolved nor already reports goes to
+ *     `residual`, never dropped: "picked up tomorrow morning".
+ *
+ * A row newer than the review whose key the review RESOLVED failed again after
+ * the fix, so it is not dropped either.
+ */
+export async function reconcileWithReview(entries = [], healthIssues = [], review = {}, {
+  needsDecision = [], flops = [], blockedDrafts = [], exec = null, crontabText = '',
+  readRowsSince = null, deadline = null, now = Date.now, firstSeen = {},
+  today = new Date().toISOString().slice(0, 10),
+} = {}) {
+  const keysOf = (arr) => new Set((Array.isArray(arr) ? arr : []).map((o) => o?.key).filter(Boolean));
+  const resolvedKeys = keysOf(review?.resolved);
+  const reported = new Set([...keysOf(review?.unresolved), ...keysOf(review?.onlyYou)]);
+  const genAt = String(review?.generated_at || '');
+  const isLate = (r) => String(r?.ts || '') > genAt;
+
+  const residual = [];
+  const fixedNow = [];
+  const owed = new Set();
+  const owe = (key, kind, subject, action, result, evidence = '') => {
+    if (owed.has(key)) return;
+    owed.add(key);
+    residual.push({ key, kind, subject: subject || '', action, result, evidence: evidence || '', since: firstSeen?.[key] || today });
+  };
+  const snippet = (b) => previewBody(b, { maxLines: 2, maxChars: 200 });
+
+  // ── error and warning rows (the reviewer reviews both; daily-summary's own
+  // System health row is skipped: its issues are the health rows below)
+  const errorRows = entries.filter(isReviewedProblem);
+  const visibleErrors = [];
+  const groups = new Map();
+  for (const row of errorRows) {
+    const key = itemKey(row);
+    if (resolvedKeys.has(key) && !isLate(row)) continue; // the review fixed it
+    visibleErrors.push(row);
+    if (reported.has(key)) continue; // already "still being worked on"
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+
+  const jobs = parseCrontab(crontabText);
+  const reruns = new Map();
+  const recoveredRows = new Set();
+  for (const [key, rows] of groups) {
+    const row = [...rows].sort((a, b) => String(a.ts || '').localeCompare(String(b.ts || ''))).at(-1);
+    if (!rows.some(isLate)) {
+      owe(key, 'failure', row.subject, 'none', `the overnight review did not handle this; ${TOMORROW}`, snippet(row.body));
+      continue;
+    }
+    const tag = resolvedKeys.has(key) ? 'failed again after the overnight fix' : 'failed after the overnight review';
+    const source = row.source || '';
+    const kind = classifyRows(errorRows.filter((r) => itemKey(r) === key));
+    if (kind !== 'transient' || !isRerunnable(source) || typeof exec !== 'function') {
+      owe(key, 'failure', row.subject, 'none', `${tag}; ${TOMORROW}`, snippet(row.body));
+      continue;
+    }
+    const left = deadline == null ? QUICK_RERUN_MAX_MS : deadline - now();
+    if (left < QUICK_RERUN_MIN_MS) {
+      owe(key, 'failure', row.subject, 're-run', `${tag}; no time left to re-run it this morning; ${TOMORROW}`, snippet(row.body));
+      continue;
+    }
+    const command = jobs.get(source)?.command || `node ${source}`;
+    let run = reruns.get(command);
+    if (!run) {
+      const startedAt = new Date(now()).toISOString();
+      const [cmd, ...args] = splitCommand(command);
+      let res;
+      try { res = await exec(cmd, args, { timeout: Math.min(left, QUICK_RERUN_MAX_MS) }); } catch (e) { res = { code: 127, stderr: e.message }; }
+      let later = [];
+      if (typeof readRowsSince === 'function') { try { later = (await readRowsSince(startedAt)) || []; } catch { later = []; } }
+      run = { res: res || {}, later };
+      reruns.set(command, run);
+    }
+    const recovered = run.res.code === 0 && rows.every((r) => recoveredBy(r, run.later));
+    if (recovered) {
+      for (const r of rows) recoveredRows.add(r);
+      fixedNow.push({ key, kind: 'failure', subject: row.subject || '', action: 're-run', result: `re-ran ${source} (recovered)`, evidence: command });
+    } else {
+      const why = run.res.timedOut ? 're-run timed out'
+        : run.res.code !== 0 ? `re-run exited ${run.res.code}`
+          : 're-ran (exit 0) but it wrote no success row';
+      owe(key, 'failure', row.subject, 're-run', `${tag}; ${why}; ${TOMORROW}`, command);
+    }
+  }
+
+  // ── health rows
+  const visibleHealth = [];
+  // checkSystemHealth() ran at 13:00: a row present now is broken now.
+  for (const h of healthIssues) {
+    const key = healthKey(h);
+    visibleHealth.push(h);
+    if (resolvedKeys.has(key)) owe(key, 'health', h.title, 'none', `broken again since the morning fix; ${TOMORROW}`, h.detail);
+    else if (!reported.has(key)) owe(key, 'health', h.title, 'none', `not resolved overnight; ${TOMORROW}`, h.detail);
+  }
+
+  // ── decisions, flops, blocked drafts: whatever the review did not account for
+  const skippedWhy = new Map((review?.skipped || []).map((s) => [s?.slug, s?.reason]));
+  for (const it of buildReviewItems({ needsDecision, flops, blockedDrafts })) {
+    if (it.route === 'count-only' || resolvedKeys.has(it.key) || reported.has(it.key)) continue;
+    const reason = skippedWhy.get(it.row?.slug);
+    if (isPermanentSkip(reason)) continue; // kept by policy: handled, never homework
+    owe(it.key, it.kind, it.subject, 'none', reason ? `skipped overnight: ${reason}` : TOMORROW, it.detail);
+  }
+
+  return {
+    visibleErrors: visibleErrors.filter((r) => !recoveredRows.has(r)),
+    visibleHealth,
+    residual,
+    fixedNow,
+  };
+}
+
+/** `Daily Recap — <date> (<n> fixed overnight[, <m> still being worked on][, <k> for you])`. */
+export function reviewedSubject(targetDate, { fixed = 0, working = 0, forYou = 0 } = {}) {
+  const parts = [];
+  if (fixed || working || forYou) parts.push(`${fixed} fixed overnight`);
+  if (working) parts.push(`${working} still being worked on`);
+  if (forYou) parts.push(`${forYou} for you`);
+  return `Daily Recap — ${targetDate} (${parts.length ? parts.join(', ') : 'all clear'})`;
+}
+
+/** The counts the subject line reports, from the review plus this morning's reconcile. */
+/**
+ * The review's resolved outcomes minus any key the 13:00 reconcile put back in
+ * residual (a health issue or failure that broke again since the morning fix):
+ * such an item renders only as "still being worked on", never also as fixed.
+ */
+function stillResolved(review, residual = []) {
+  const back = new Set((Array.isArray(residual) ? residual : []).map((o) => o?.key));
+  return (Array.isArray(review?.resolved) ? review.resolved : []).filter((o) => !back.has(o?.key));
+}
+
+export function reviewedCounts(review, { residual = [], fixedNow = [], onlyYouRows: you = [] } = {}, creatorItems = 0) {
+  const resolved = stillResolved(review, residual).filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept');
+  return {
+    fixed: resolved.length + fixedNow.length,
+    working: (review?.unresolved || []).length + residual.length,
+    forYou: (review?.onlyYou || []).length + you.length + creatorItems,
+  };
+}
+
+/**
+ * Agents whose info rows can be work only Sean can do (DMs waiting on him,
+ * offer codes that failed to send, press replies for him). Only rows that
+ * state the ask count (statesAnAsk); the reviewed recap has no entries list,
+ * so without this those asks would vanish.
+ */
+export const ONLY_YOU_SOURCES = Object.freeze(new Set([
+  'agents/instagram-dm/index.js',
+  'agents/press-outreach/index.js',
+]));
+const ONLY_YOU_SUBJECT = /waiting on you|needs a human|needs your/i;
+
+/**
+ * A row is an ask only when it SAYS so. A source on ONLY_YOU_SOURCES is not
+ * enough: instagram-dm writes "0 waiting on you, N code(s) sent" every run and
+ * press-outreach writes routine link/draft/follow-up summaries, and counting
+ * those would keep the subject from ever reading "all clear".
+ */
+function statesAnAsk(r) {
+  const subject = String(r.subject || '');
+  if (r.source === 'agents/instagram-dm/index.js') {
+    const m = subject.match(/(\d+)\s+waiting on you/i);
+    if (m) return Number(m[1]) > 0;
+    return /failed to send/i.test(subject);
+  }
+  return ONLY_YOU_SUBJECT.test(subject);
+}
+
+/**
+ * Rows for "One thing only you can do": rows that state an ask (statesAnAsk),
+ * newest per itemKey and count-free subject. Errors and warnings are the reviewer's
+ * (they reach resolved/unresolved/onlyYou/residual), and a key the review
+ * already reports is not repeated.
+ */
+export function onlyYouRows(entries = [], review = {}) {
+  const taken = new Set(['resolved', 'unresolved', 'onlyYou', 'residual', 'fixedNow']
+    .flatMap((b) => (Array.isArray(review?.[b]) ? review[b] : []).map((o) => o?.key)));
+  const newest = new Map();
+  for (const r of entries) {
+    if (!r || r.status === 'error' || r.status === 'warning') continue;
+    if (!statesAnAsk(r)) continue;
+    if (taken.has(itemKey(r))) continue;
+    // itemKey alone is the subject STEM ("instagram dms"), which would merge
+    // "3 waiting on you" with "1 offer code(s) failed to send". Counts are
+    // dropped so the same ask with a new number still collapses to the newest.
+    const key = `${itemKey(r)}|${String(r.subject || '').replace(/\d+/g, '#').toLowerCase()}`;
+    const cur = newest.get(key);
+    if (!cur || String(r.ts || '') > String(cur.ts || '')) newest.set(key, r);
+  }
+  return [...newest.values()];
+}
+
+/**
+ * Outcomes in a reviewer report that finished after the email that rendered it
+ * (or all of them, when no email ever rendered it: the recap fell back while
+ * the fix session was still running). Shown the next morning.
+ */
+export function lateFinishedOutcomes(report) {
+  if (!report || typeof report !== 'object' || report.apply !== true) return [];
+  const emailedAt = report.emailed === true ? String(report.emailed_at || '') : '';
+  const out = [];
+  for (const bucket of ['resolved', 'unresolved', 'onlyYou']) {
+    for (const o of Array.isArray(report[bucket]) ? report[bucket] : []) {
+      const at = String(o?.finished_at || '');
+      if (!at || (emailedAt && at <= emailedAt)) continue;
+      out.push({ ...o, bucket });
+    }
+  }
+  return out;
+}
+
+const LATE_LABEL = { resolved: 'fixed', unresolved: 'still being worked on', onlyYou: 'only you can do this' };
+
+function renderLateFinished(late, esc) {
+  const list = Array.isArray(late) ? late : [];
+  if (!list.length) return '';
+  const e = (v) => esc(v == null ? '' : String(v));
+  return `<div class="section-title" style="margin-top:12px;">Finished after yesterday's email</div>${list.map((o) => `<div class="entry"><span class="entry-subject">${e(o.subject)}</span>${o.result ? ` &mdash; ${e(o.result)}` : ''} <span class="entry-time">(${e(LATE_LABEL[o.bucket] || o.bucket)})</span></div>`).join('')}`;
+}
+
+/**
+ * After a real send that rendered `review`: stamp emailed/emailed_at on its
+ * latest.json and dated copy, read fresh from disk so the 13:00 reconcile
+ * fields are never written back. A file from a different run is left alone.
+ */
+export function markReviewEmailed({ dir = REVIEWER_DIR, review, at = new Date().toISOString() }) {
+  for (const name of ['latest.json', `${review?.date}.json`]) {
+    const p = join(dir, name);
+    try {
+      const cur = JSON.parse(readFileSync(p, 'utf8'));
+      if (cur?.generated_at !== review?.generated_at) continue;
+      const tmp = `${p}.${process.pid}.tmp`;
+      writeFileSync(tmp, `${JSON.stringify({ ...cur, emailed: true, emailed_at: at }, null, 2)}\n`);
+      renameSync(tmp, p);
+    } catch { /* missing or unreadable: nothing to stamp */ }
+  }
+}
+
+function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, entries, working, creatorReviewSection, lateBlock = '' }) {
+  const e = (v) => esc(v == null ? '' : String(v));
+  const h2 = (t) => `<h2 style="font-size:17px;margin:20px 0 8px 0;color:#111827;">${t}</h2>`;
+  const muted = (t) => `<p class="empty">${t}</p>`;
+  const line = (o, extra = '') => `<div class="entry"><span class="entry-subject">${e(o.subject)}</span>${o.result ? ` &mdash; ${e(o.result)}` : ''}${extra}</div>`;
+  const list = (a) => (Array.isArray(a) ? a : []);
+
+  // 1. What's working
+  const resolved = stillResolved(review, review.residual);
+  const fixed = [...resolved.filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept'), ...list(review.fixedNow)];
+  const closedEarlier = resolved.filter((o) => o?.action === 'closed earlier');
+  const kept = resolved.filter((o) => o?.action === 'kept');
+  const shown = fixed.slice(0, FIXED_LINES_SHOWN).map((o) => line(o)).join('');
+  const more = fixed.length > FIXED_LINES_SHOWN ? `<div class="entry-time">and ${fixed.length - FIXED_LINES_SHOWN} more</div>` : '';
+  const earlier = closedEarlier.length
+    ? `<p class="empty" style="margin-top:8px;">Closed on earlier runs (${closedEarlier.length}): ${closedEarlier.slice(0, FIXED_LINES_SHOWN).map((o) => e(o.subject)).join('; ')}${closedEarlier.length > FIXED_LINES_SHOWN ? `; and ${closedEarlier.length - FIXED_LINES_SHOWN} more` : ''}</p>`
+    : '';
+  const keptLine = (o) => `${e(o.subject)}: ${e(String(o.result || '').replace(/^kept:\s*/, ''))}`;
+  const keptBlock = !kept.length ? ''
+    : kept.length <= FIXED_LINES_SHOWN
+      ? kept.map((o) => `<div class="entry"><span class="entry-subject">Kept: ${keptLine(o)}</span></div>`).join('')
+      : `<p class="empty" style="margin-top:8px;">Kept (${kept.length}): ${kept.slice(0, FIXED_LINES_SHOWN).map(keptLine).join('; ')}; and ${kept.length - FIXED_LINES_SHOWN} more</p>`;
+  const fixedSection = `<div class="section"><div class="section-title">&#128295; Fixed overnight</div>${fixed.length ? shown + more : muted('Nothing needed fixing overnight.')}${keptBlock}${earlier}${lateBlock}</div>`;
+
+  // 2. How to grow
+  const recs = list(review.growth?.recs);
+  const growBody = recs.length
+    ? recs.map((r) => `<div class="quick-win-row"><div class="qw-body"><div class="qw-title">${e(r.move)}</div>`
+      + `<div class="qw-meta">${e(r.evidence)}</div>`
+      + `<div class="qw-meta"><strong>$${e(r.dollars_low)}-$${e(r.dollars_high)} (directional)</strong> &middot; ${e(r.status)}</div></div></div>`).join('')
+    : muted(e(review.growth?.reason || 'No growth recommendations this run.'));
+  const growSection = `<div class="section quick-wins"><div class="section-title">&#127793; Recommendations</div>${growBody}</div>`;
+
+  // 3. Still being worked on
+  const working3 = [...list(review.unresolved), ...list(review.residual)];
+  const workingSection = working3.length
+    ? `<div class="section">${working3.map((o) => line(o, ` <span class="entry-time">(since ${e(o.since || targetDate)}${o.action && o.action !== 'none' ? `; tried: ${e(o.action)}` : ''})</span>`)).join('')}</div>`
+    : '';
+
+  // 4. One thing only you can do
+  const onlyYou = list(review.onlyYou);
+  const asks = onlyYouRows(entries, review).map((r) => `<div class="entry"><span class="entry-subject">${e(r.subject)}</span>${r.body ? `<div class="blockers">${e(previewBody(r.body, { maxLines: 4, maxChars: 400 }))}</div>` : ''}</div>`);
+  const youRows = onlyYou.length || asks.length
+    ? `<div class="section">${onlyYou.map((o) => line(o, o.since ? ` <span class="entry-time">(since ${e(o.since)})</span>` : '')).join('')}${asks.join('')}</div>`
+    : '';
+  const youSection = youRows || creatorReviewSection ? `${youRows}${creatorReviewSection || ''}` : '';
+
+  return `<!DOCTYPE html>
+<html><head><style>${styles}</style></head><body>
+  <h1>Daily Recap</h1>
+  <div class="date">${targetDate}</div>
+  ${h2("What's working")}
+  ${[fixedSection, ...working].join('\n  ')}
+  ${h2('How to grow')}
+  ${growSection}
+  ${workingSection ? `${h2('Still being worked on')}\n  ${workingSection}` : ''}
+  ${youSection ? `${h2('One thing only you can do')}\n  ${youSection}` : ''}
+  <div class="footer">${entries.length} task${entries.length !== 1 ? 's' : ''} ran &middot; <a href="${esc(dashboardUrl)}" style="color:#6b7280;">Full activity on dashboard &rarr;</a></div>
+</body></html>`;
+}
+
+function readReviewerFile(name) {
+  const p = join(REVIEWER_DIR, name);
+  if (!existsSync(p)) return null;
+  return JSON.parse(readFileSync(p, 'utf8'));
+}
+
+function readJsonlRows(file) {
+  if (!existsSync(file)) return [];
+  return readFileSync(file, 'utf8').trim().split('\n').filter(Boolean)
+    .map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean);
+}
+
+/** Digest rows written after `iso`, read fresh from the day files (for the quick pass). */
+function readRowsSince(iso) {
+  const rows = [];
+  for (const day of daysBetween(iso.slice(0, 10), new Date().toISOString().slice(0, 10))) {
+    rows.push(...readJsonlRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
+  }
+  return rows.filter((r) => String(r.ts || '') > iso);
+}
+
 const LAST_SENT_PATH = () => join(DAILY_SUMMARY_DIR, 'last-sent.json');
 function readLastSent() {
   try { return JSON.parse(readFileSync(LAST_SENT_PATH(), 'utf8')).until || null; } catch { return null; }
@@ -1143,14 +1572,43 @@ function writeLastSent(until) {
   catch (err) { log(`could not record the digest window end: ${err.message}`); }
 }
 
-async function main() {
-  // Default to yesterday's date (runs at 5 AM, reporting on previous day)
-  const dateArg = process.argv.indexOf('--date');
-  let targetDate;
-  if (dateArg !== -1 && process.argv[dateArg + 1]) {
-    targetDate = process.argv[dateArg + 1];
-  } else {
-    const yesterday = new Date();
+// The four reports whose `needs_decision[]` rows the recap renders, and the
+// entry script that wrote each. Rows carry no `source` of their own, so it is
+// stamped from the file they came from: the recap reviewer routes on it (an
+// amazon-account-health row is Sean's; a queue row is regenerated).
+export const NEEDS_DECISION_REPORTS = Object.freeze([
+  { path: ['data', 'reports', 'queue-autoapply', 'latest.json'], source: 'agents/queue-autoapply/index.js' },
+  { path: ['data', 'reports', 'indexing-fixer', 'latest.json'], source: 'agents/indexing-fixer/index.js' },
+  { path: ['data', 'reports', 'content-strategist', 'latest.json'], source: 'agents/content-strategist/index.js' },
+  { path: ['data', 'reports', 'amazon-account-health', 'latest.json'], source: 'agents/amazon-account-health/index.js' },
+]);
+
+export function stampDecisionRows(report, source) {
+  return (Array.isArray(report?.needs_decision) ? report.needs_decision : [])
+    .map((d) => ({ ...d, source: d?.source || source }));
+}
+
+function loadNeedsDecision(dataRoot = ROOT) {
+  return NEEDS_DECISION_REPORTS.flatMap((r) => {
+    const p = join(dataRoot, ...r.path);
+    if (!existsSync(p)) return [];
+    try { return stampDecisionRows(JSON.parse(readFileSync(p, 'utf8')), r.source); } catch { return []; }
+  });
+}
+
+/**
+ * Everything the recap reads, gathered ONCE so the recap reviewer
+ * (agents/recap-reviewer) and the recap work from the same item list rather
+ * than two copies that drift.
+ *
+ * @param {{ now?: Date, readLastSent?: () => string|null, date?: string|null, log?: Function }} [opts]
+ *   `date` is the old `--date` whole-calendar-day view; without it the window is
+ *   everything since the last real send, up to `now`.
+ */
+export function collectDigestInputs({ now = new Date(), readLastSent: lastSent = readLastSent, date = null, log: say = () => {} } = {}) {
+  let targetDate = date;
+  if (!targetDate) {
+    const yesterday = new Date(now.getTime());
     yesterday.setDate(yesterday.getDate() - 1);
     targetDate = yesterday.toISOString().slice(0, 10);
   }
@@ -1167,11 +1625,11 @@ async function main() {
   // Sean a DAY late: on 2026-10-04 he got the previous morning's Trybe review,
   // without the verdicts, while that morning's sat in a file nobody read yet.
   // `--date` keeps the old whole-calendar-day view for inspecting a past day.
-  const nowIso = new Date().toISOString();
+  const nowIso = now.toISOString();
   let entries;
-  let laterRows = [];
+  const laterRows = [];
   let windowUntil = null;
-  if (dateArg !== -1) {
+  if (date) {
     entries = readRows(digestFile);
     for (let d = new Date(`${targetDate}T00:00:00Z`); ;) {
       d = new Date(d.getTime() + 86_400_000);
@@ -1180,36 +1638,99 @@ async function main() {
       laterRows.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
     }
   } else {
-    const since = readLastSent() || `${targetDate}T00:00:00.000Z`;
+    const since = lastSent() || `${targetDate}T00:00:00.000Z`;
     windowUntil = nowIso;
     entries = [];
     for (const day of daysBetween(since.slice(0, 10), nowIso.slice(0, 10))) {
       entries.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
     }
     entries = rowsInWindow(entries, { since, until: windowUntil });
-    log(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
+    say(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
   }
 
   // A failure that a later run of the same agent has already recovered from is
   // not news (Sean, 2026-10-04): drop it before anything counts or renders it.
   // See lib/digest-recovery.js.
   const { kept, recovered } = dropRecoveredFailures(entries, laterRows);
+
+  return {
+    targetDate,
+    windowUntil,
+    entries: kept,
+    recovered,
+    laterRows,
+    // Posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
+    blockedPosts: findBlockedPosts(),
+    postPerformance: loadPostPerformance(),
+    // System-health check — stale/missing data feeds and leftover stashes.
+    healthIssues: checkSystemHealth(),
+    needsDecision: loadNeedsDecision(),
+  };
+}
+
+async function main() {
+  const preview = process.argv.includes('--preview');
+  // Default to yesterday's date (runs at 5 AM, reporting on previous day)
+  const dateArg = process.argv.indexOf('--date');
+  const today = new Date().toISOString().slice(0, 10);
+
+  // The overnight reviewer (agents/recap-reviewer, 11:05 UTC) should long be
+  // done by 13:00; if it is not, wait for today's done.json for up to 30
+  // minutes. --preview never waits, and a --date inspection of a past day is
+  // not reviewed at all.
+  let deadline = Date.now() + REVIEW_WAIT_MS;
+  if (dateArg === -1 && !preview) {
+    const w = await waitForReview({
+      poll: () => { try { return readReviewerFile('done.json')?.date === today; } catch { return false; } },
+      sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+    });
+    deadline = w.deadline;
+    log(w.ready ? `Recap reviewer done (waited ${Math.round(w.waitedMs / 1000)}s).` : 'Recap reviewer not done after 30 minutes; sending the unreviewed recap.');
+  }
+
+  const {
+    targetDate, windowUntil, entries, recovered, blockedPosts, postPerformance, healthIssues, needsDecision,
+  } = collectDigestInputs({
+    // `--date` with no value keeps the old behaviour: yesterday, whole-day view.
+    date: dateArg === -1 ? null
+      : (process.argv[dateArg + 1] || new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)),
+    log,
+  });
   if (recovered.length) log(`Dropped ${recovered.length} failure(s) that later recovered: ${[...new Set(recovered.map(e => e.subject))].join('; ')}`);
-  entries = kept;
+
+  // undefined = not applicable (--date); null = should have run and did not.
+  let review;
+  if (dateArg === -1) {
+    review = loadReview({ today, read: readReviewerFile });
+    if (!review) log('No valid review for today (missing, stale, crashed or dry run): falling back to the unreviewed recap.');
+  }
+
+  let reconciled = null;
+  if (review) {
+    let crontabText = '';
+    if (!preview) { try { crontabText = execSync('crontab -l', { encoding: 'utf8' }); } catch { crontabText = ''; } }
+    let firstSeen = {};
+    try { firstSeen = loadReviewerState().firstSeen || {}; } catch { firstSeen = {}; }
+    const { makeExec } = await import('../recap-reviewer/exec.js');
+    reconciled = await reconcileWithReview(entries, healthIssues, review, {
+      needsDecision,
+      flops: postPerformance?.action_required || [],
+      blockedDrafts: blockedPosts,
+      // --preview never re-runs anything: late rows read as residual.
+      exec: preview ? null : makeExec({ root: ROOT }),
+      crontabText, readRowsSince, deadline, firstSeen, today,
+    });
+    log(`Reviewed recap: ${review.resolved?.length || 0} resolved, ${reconciled.fixedNow.length} fixed now, ${(review.unresolved?.length || 0) + reconciled.residual.length} still being worked on, ${review.onlyYou?.length || 0} only-you.`);
+  }
 
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
-
-  // Find posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
-  const blockedPosts = findBlockedPosts();
 
   // Load latest quick-win targets from data/reports/quick-wins/latest.json
   const quickWins = loadQuickWinTargets();
   const seoImpact = loadSeoImpact();
   const prioritizer = loadPrioritizer();
 
-  // Load latest post-performance review output
-  const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
   const competitors = loadCompetitorActivity();
 
@@ -1227,52 +1748,70 @@ async function main() {
   const env = loadEnv();
   const dashboardUrl = process.env.DASHBOARD_URL || env.DASHBOARD_URL || 'http://137.184.119.230:4242';
 
-  // System-health check — stale/missing data feeds and leftover stashes. Fire an
-  // immediate error alert (errors bypass digest deferral) so a silent outage is
-  // noticed within a day, then also surface it in the digest itself.
-  const healthIssues = checkSystemHealth();
-  if (healthIssues.length) {
-    log(`System health: ${healthIssues.length} issue(s) — ${healthIssues.map(i => i.title).join('; ')}`);
+  // System-health check — stale/missing data feeds and leftover stashes. Raised
+  // as an error row (it renders in the digest; it does not escalate). Every
+  // issue present at 13:00 is raised, including one the overnight reviewer
+  // fixed that has broken again since.
+  const healthAlerts = healthIssuesToNotify(healthIssues);
+  if (healthAlerts.length) {
+    log(`System health: ${healthAlerts.length} issue(s) — ${healthAlerts.map(i => i.title).join('; ')}`);
     await notify({
-      subject: `⚠️ System health: ${healthIssues.length} issue${healthIssues.length > 1 ? 's' : ''}`,
-      body: healthIssues.map(i => `- ${i.title}\n  ${i.detail}`).join('\n\n'),
+      subject: `⚠️ System health: ${healthAlerts.length} issue${healthAlerts.length > 1 ? 's' : ''}`,
+      body: healthAlerts.map(i => `- ${i.title}\n  ${i.detail}`).join('\n\n'),
       status: 'error',
       category: 'ops',
     }).catch(() => {});
   }
 
-  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer);
+  // Work the reviewer finished after yesterday's email (a fix session running
+  // past 13:00, or a day the recap fell back) is reported this morning.
+  let lateFinished = [];
+  if (dateArg === -1) {
+    const yesterday = new Date(Date.parse(`${today}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+    try { lateFinished = lateFinishedOutcomes(readReviewerFile(`${yesterday}.json`)); } catch { lateFinished = []; }
+    if (lateFinished.length) log(`${lateFinished.length} reviewer outcome(s) finished after yesterday's email.`);
+  }
 
-  const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
-  const imageCount = pipelineImages.length;
-  const parts = [];
-  if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
-  // Only flops a human must decide count in the subject; the automated ones
-  // are the fleet working, not news.
-  const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
-  if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
-  const toReview = awaitingSubmissions(entries).items.length;
-  if (toReview > 0) parts.push(`${toReview} creator submission${toReview > 1 ? 's' : ''} to review`);
-  if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
-  if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
-  const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
+  const reviewArg = review ? { ...review, residual: reconciled.residual, fixedNow: reconciled.fixedNow } : review;
+  const html = buildDigestHtml(targetDate, entries, pipelineImages, blockedPosts, quickWins, postPerformance, gscOpps, competitors, dashboardUrl, healthIssues, seoImpact, prioritizer, { lateFinished }, reviewArg);
+
+  let subject;
+  if (review) {
+    subject = reviewedSubject(targetDate, reviewedCounts(review, { ...reconciled, onlyYouRows: onlyYouRows(entries, reviewArg) }, awaitingSubmissions(entries).items.length));
+  } else {
+    const visibleCount = entries.filter(e => !isSilentSuccess(e)).length;
+    const imageCount = pipelineImages.length;
+    const parts = [];
+    if (blockedPosts.length > 0) parts.push(`${blockedPosts.length} BLOCKED`);
+    // Only flops a human must decide count in the subject; the automated ones
+    // are the fleet working, not news.
+    const flopCount = (postPerformance?.action_required || []).filter((f) => f.automated !== true).length;
+    if (flopCount > 0) parts.push(`${flopCount} flop${flopCount > 1 ? 's' : ''} to decide`);
+    const toReview = awaitingSubmissions(entries).items.length;
+    if (toReview > 0) parts.push(`${toReview} creator submission${toReview > 1 ? 's' : ''} to review`);
+    if (visibleCount > 0) parts.push(`${visibleCount} update${visibleCount > 1 ? 's' : ''}`);
+    if (imageCount > 0) parts.push(`${imageCount} image${imageCount > 1 ? 's' : ''}`);
+    const subtitle = parts.length > 0 ? parts.join(', ') : 'all clear';
+    // An unreviewed recap must never read as an all-clear, subject included.
+    subject = `Daily Recap — ${targetDate} (${review === null ? `unreviewed: ${subtitle}` : subtitle})`;
+  }
 
   // --preview: write the rendered HTML to a file and skip sending. Lets us eyeball
   // the digest against real data without emailing.
-  if (process.argv.includes('--preview')) {
+  if (preview) {
     const outPath = join(ROOT, 'data', 'reports', 'daily-summary', `preview-${targetDate}.html`);
     writeFileSync(outPath, html);
     log(`Preview written (not sent): ${outPath}`);
+    log(`Subject: ${subject}`);
     return;
   }
 
-  await sendHtmlEmail(
-    `Daily Recap — ${targetDate} (${subtitle})`,
-    html,
-  );
+  await sendHtmlEmail(subject, html);
 
   // Only a real send advances the window; a preview or a --date run never does.
   if (windowUntil) writeLastSent(windowUntil);
+  // Anything the reviewer finishes after this moment is shown tomorrow.
+  if (review) markReviewEmailed({ review });
   log('Daily summary sent.');
 }
 

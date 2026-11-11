@@ -607,3 +607,462 @@ test('flops that are all automated stay out of the body', () => {
   const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
   assert.doesNotMatch(html, /Locked Winner Only/);
 });
+
+// ── collectDigestInputs: ONE item list for the recap and the recap reviewer ──
+
+test('collectDigestInputs returns the recap inputs, with needs_decision rows stamped by source', async () => {
+  const { collectDigestInputs, NEEDS_DECISION_REPORTS } = await import('../../agents/daily-summary/index.js');
+  const out = collectDigestInputs({ now: new Date('2026-11-11T11:05:00Z'), readLastSent: () => '2026-11-10T13:00:00.000Z' });
+  for (const k of ['entries', 'laterRows', 'healthIssues', 'postPerformance', 'blockedPosts', 'needsDecision']) {
+    assert.ok(k in out, k);
+  }
+  assert.ok(Array.isArray(out.entries) && Array.isArray(out.needsDecision));
+  for (const d of out.needsDecision) assert.match(d.source, /^agents\/[^/]+\/index\.js$/);
+  assert.deepEqual(NEEDS_DECISION_REPORTS.map((r) => r.source), [
+    'agents/queue-autoapply/index.js', 'agents/indexing-fixer/index.js',
+    'agents/content-strategist/index.js', 'agents/amazon-account-health/index.js',
+  ]);
+});
+
+test('stampDecisionRows stamps the report source and keeps an existing one', async () => {
+  const { stampDecisionRows } = await import('../../agents/daily-summary/index.js');
+  assert.deepEqual(
+    stampDecisionRows({ needs_decision: [{ slug: 'a' }, { slug: 'b', source: 'x' }] }, 'agents/q/index.js'),
+    [{ slug: 'a', source: 'agents/q/index.js' }, { slug: 'b', source: 'x' }],
+  );
+  assert.deepEqual(stampDecisionRows(null, 's'), []);
+});
+
+// ── The reviewed recap (Task 9): renders from the overnight reviewer's report ──
+//
+// Sean: "I shouldn't see errors or anything didn't work... I should see a
+// summary of what is working and how we can grow the business." The anti-goal
+// is HIDING a broken thing: every failure the review did not resolve must still
+// appear in "Still being worked on", and a missing, stale, crashed or dry-run
+// review falls back to the old recap with a banner, never an all-clear.
+
+import {
+  loadReview, waitForReview, reconcileWithReview, reviewedSubject, healthIssuesToNotify,
+  FALLBACK_BANNER,
+} from '../../agents/daily-summary/index.js';
+import { itemKey } from '../../lib/recap-review.js';
+
+const TODAY = '2026-11-12';
+const GEN = `${TODAY}T11:05:00.000Z`;
+const failRow = (o = {}) => ({ subject: 'Creator outreach failed', status: 'error', category: 'creators', source: 'agents/creator-outreach/index.js', body: 'boom', ts: `${TODAY}T08:00:00Z`, ...o });
+
+function makeReview(o = {}) {
+  return {
+    generated_at: GEN, date: TODAY, apply: true,
+    resolved: [], unresolved: [], onlyYou: [], counts: {}, skipped: [],
+    growth: { recs: [] , reason: 'not enough fresh data' },
+    ...o,
+  };
+}
+const reader = (files) => (name) => (name in files ? files[name] : null);
+
+test('loadReview: an apply report generated today with today\'s done.json is used', () => {
+  const r = makeReview();
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': r, 'done.json': { date: TODAY, generated_at: GEN, crashed: false } }) }), r);
+});
+
+test('loadReview: a dry run, a stale, a crashed or an unfinished review is never used', () => {
+  const done = { date: TODAY, generated_at: GEN, crashed: false };
+  // dry-run only: the reviewer wrote dry-run.json and no latest.json
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'dry-run.json': makeReview({ apply: false }), 'done.json': done }) }), null);
+  // a latest.json that is somehow a dry run
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': makeReview({ apply: false }), 'done.json': done }) }), null);
+  // stale: yesterday's report
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': makeReview({ generated_at: '2026-11-11T11:05:00.000Z' }), 'done.json': done }) }), null);
+  // crashed
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': makeReview({ crashed: true }), 'done.json': { ...done, crashed: true } }) }), null);
+  // missing done
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': makeReview() }) }), null);
+  // done from yesterday
+  assert.equal(loadReview({ today: TODAY, read: reader({ 'latest.json': makeReview(), 'done.json': { ...done, date: '2026-11-11' } }) }), null);
+  // a read that throws reads as absent, not as a crash of the recap
+  assert.equal(loadReview({ today: TODAY, read: () => { throw new Error('EACCES'); } }), null);
+});
+
+test('waitForReview: returns as soon as today\'s done.json appears', async () => {
+  let t = 0; let polls = 0;
+  const w = await waitForReview({ poll: async () => (++polls >= 3), sleep: async (ms) => { t += ms; }, now: () => t, intervalMs: 60_000 });
+  assert.equal(w.ready, true);
+  assert.equal(polls, 3);
+  assert.equal(t, 120_000);
+  assert.equal(w.deadline, 30 * 60_000);
+});
+
+test('waitForReview: gives up at the 30-minute deadline', async () => {
+  let t = 0;
+  const w = await waitForReview({ poll: async () => false, sleep: async (ms) => { t += ms; }, now: () => t, intervalMs: 7 * 60_000 });
+  assert.equal(w.ready, false);
+  assert.equal(t, 30 * 60_000, 'never sleeps past the deadline');
+});
+
+test('reconcileWithReview: a resolved key removes all of its rows', async () => {
+  const rows = [failRow({ ts: `${TODAY}T04:00:00Z` }), failRow({ ts: `${TODAY}T07:00:00Z` })];
+  const review = makeReview({ resolved: [{ key: itemKey(rows[0]), kind: 'failure', subject: 'Creator outreach failed', action: 're-run', result: 'recovered' }] });
+  const r = await reconcileWithReview(rows, [], review, { today: TODAY });
+  assert.deepEqual(r.visibleErrors, []);
+  assert.deepEqual(r.residual, []);
+});
+
+test('reconcileWithReview: a late non-rerunnable error row goes to residual, not dropped', async () => {
+  const late = failRow({ ts: `${TODAY}T12:40:00Z`, body: 'socket hang up' }); // transient, but outreach is NEVER_RERUN
+  let ran = 0;
+  const r = await reconcileWithReview([late], [], makeReview(), { today: TODAY, exec: async () => { ran += 1; return { code: 0 }; } });
+  assert.equal(ran, 0, 'outreach is never re-run');
+  assert.equal(r.residual.length, 1);
+  assert.equal(r.residual[0].key, itemKey(late));
+  assert.match(r.residual[0].result, /picked up tomorrow morning/);
+  assert.equal(r.visibleErrors.length, 1);
+});
+
+test('reconcileWithReview: an error the review never saw is still residual (nothing hides)', async () => {
+  const old = failRow({ source: 'agents/legacy-rebuilder/index.js', category: 'pipeline', subject: 'Legacy Rebuilder failed', ts: `${TODAY}T03:00:00Z` });
+  const r = await reconcileWithReview([old], [], makeReview(), { today: TODAY });
+  assert.equal(r.residual.length, 1);
+});
+
+test('reconcileWithReview: an error the review already reports as unresolved is not duplicated', async () => {
+  const row = failRow({ ts: `${TODAY}T03:00:00Z` });
+  const review = makeReview({ unresolved: [{ key: itemKey(row), kind: 'failure', subject: row.subject, action: 'none', result: 'x' }] });
+  const r = await reconcileWithReview([row, { ...row, ts: `${TODAY}T12:30:00Z` }], [], review, { today: TODAY });
+  assert.deepEqual(r.residual, []);
+});
+
+test('reconcileWithReview: late rows of one key are deduped into one item', async () => {
+  const a = failRow({ ts: `${TODAY}T12:30:00Z` });
+  const r = await reconcileWithReview([a, { ...a, ts: `${TODAY}T12:45:00Z` }], [], makeReview(), { today: TODAY });
+  assert.equal(r.residual.length, 1);
+});
+
+test('reconcileWithReview: a late transient rerunnable row is re-run and counts only when it recovers', async () => {
+  const late = { subject: 'Rank tracker failed', status: 'error', category: 'seo', source: 'agents/rank-tracker/index.js', body: 'ETIMEDOUT', ts: `${TODAY}T12:35:00Z` };
+  const calls = [];
+  const exec = async (cmd, args, opts) => { calls.push({ cmd, args, opts }); return { code: 0, stdout: '', stderr: '' }; };
+  let clock = Date.parse(`${TODAY}T13:05:00Z`);
+  const deadline = Date.parse(`${TODAY}T13:30:00Z`);
+  const recovered = await reconcileWithReview([late], [], makeReview(), {
+    today: TODAY, exec, crontabText: '0 6 * * * cd /root/seo-claude && /usr/bin/node agents/rank-tracker/index.js --apply >> data/logs/rank.log 2>&1',
+    deadline, now: () => clock,
+    readRowsSince: async () => [{ ...late, status: 'success', subject: 'Rank tracker: 40 queries', ts: `${TODAY}T13:06:00Z` }],
+  });
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].cmd, '/usr/bin/node');
+  assert.deepEqual(calls[0].args, ['agents/rank-tracker/index.js', '--apply']);
+  assert.ok(calls[0].opts.timeout <= 10 * 60_000, 'at most 10 minutes');
+  assert.ok(calls[0].opts.timeout <= deadline - clock, 'within the remaining wait budget');
+  assert.deepEqual(recovered.residual, []);
+  assert.equal(recovered.fixedNow.length, 1);
+  assert.deepEqual(recovered.visibleErrors, []);
+
+  // exit 0 but no success row: not recovered
+  const notYet = await reconcileWithReview([late], [], makeReview(), {
+    today: TODAY, exec, crontabText: '', deadline, now: () => clock, readRowsSince: async () => [],
+  });
+  assert.equal(notYet.residual.length, 1);
+  assert.equal(notYet.fixedNow.length, 0);
+
+  // no budget left: not run at all, residual
+  clock = deadline;
+  calls.length = 0;
+  const late2 = await reconcileWithReview([late], [], makeReview(), {
+    today: TODAY, exec, crontabText: '', deadline, now: () => clock, readRowsSince: async () => [],
+  });
+  assert.equal(calls.length, 0);
+  assert.match(late2.residual[0].result, /picked up tomorrow morning/);
+});
+
+test('reconcileWithReview: a resolved row that FAILED AGAIN after the review is not hidden', async () => {
+  const row = failRow({ ts: `${TODAY}T12:50:00Z` });
+  const review = makeReview({ resolved: [{ key: itemKey(row), subject: row.subject, action: 're-run', result: 'recovered' }] });
+  const r = await reconcileWithReview([row], [], review, { today: TODAY });
+  assert.equal(r.residual.length, 1);
+});
+
+test('M1: a health issue the review resolved but the 13:00 check shows again renders as "broken again" and keeps its notify', async () => {
+  const again = { title: 'Data feed "gsc" is stale', detail: 'old' };
+  const open = { title: '2 leftover git stashes on the server', detail: 'x' };
+  const [againItem] = (await import('../../lib/recap-review.js')).buildReviewItems({ healthIssues: [again] });
+  const review = makeReview({ resolved: [{ key: againItem.key, subject: again.title, action: 're-run collector', result: 'fresh' }] });
+  const r = await reconcileWithReview([], [again, open], review, { today: TODAY });
+  // healthIssues are read fresh at 13:00: anything present IS broken now.
+  assert.deepEqual(r.visibleHealth, [again, open]);
+  assert.equal(r.residual.length, 2);
+  assert.match(r.residual.find((o) => o.subject === again.title).result, /broken again since the morning fix/);
+  assert.match(r.residual.find((o) => o.subject === open.title).result, /not resolved overnight/);
+  assert.deepEqual(healthIssuesToNotify([again, open], review), [again, open]);
+  assert.deepEqual(healthIssuesToNotify([again, open], null), [again, open], 'fallback keeps every alert');
+});
+
+function reviewedHtml(review, { entries = [], health = [] } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'digest-reviewed-'));
+  mkdirSync(join(root, 'data', 'reports', 'queue-autoapply'), { recursive: true });
+  writeFileSync(join(root, 'data', 'reports', 'queue-autoapply', 'latest.json'),
+    JSON.stringify({ needs_decision: [{ title: 'Stuck item', label: 'rewrite or write off' }] }));
+  const pp = { action_required: [{ slug: 'flop-post', title: 'Flop post', verdict: 'LOW_DEMAND', milestone: 90, automated: false }] };
+  const blocked = [{ title: 'Blocked post', blockers: 'x', reportPath: 'p' }];
+  const errs = entries.length ? entries : [failRow()];
+  const healthIssues = health.length ? health : [{ title: 'Data feed "gsc" is stale', detail: 'old' }];
+  return buildDigestHtml(TODAY, errs, [], blocked, null, pp, null, null, 'https://dash', healthIssues, CLUSTER_DIGEST, null, { dataRoot: root }, review);
+}
+
+test('with a review, the email has only the four reviewed sections', () => {
+  const review = makeReview({
+    resolved: [
+      { key: 'a', kind: 'failure', subject: 'Creator outreach failed', action: 're-run', result: 're-ran creator-outreach (recovered)' },
+      { key: 'b', kind: 'flop', subject: 'Low demand post', action: 'remove', result: 'removed behind a 301' },
+    ],
+    unresolved: [{ key: 'c', kind: 'decision', subject: 'SEO opportunity: x', action: 'regenerate', result: 'retried once', since: '2026-11-10' }],
+    onlyYou: [{ key: 'd', kind: 'failure', subject: 'Amazon LWA token expired', action: 'none', result: 'only you can do this' }],
+    growth: { recs: [{ move: 'Add buy links to lotion posts', evidence: '1855.62 on 128 clicks', dollars_low: 70, dollars_high: 300, status: 'needs-decision' }] },
+  });
+  const html = reviewedHtml(review);
+  for (const gone of ['Failures', 'Needs your decision', 'Underperforming posts', 'Action Required', 'System Health', FALLBACK_BANNER]) {
+    assert.ok(!html.includes(gone), `${gone} does not render`);
+  }
+  for (const want of ["What's working", 'How to grow', 'Still being worked on', 'One thing only you can do',
+    'Creator outreach failed', 'Low demand post', 'SEO opportunity: x', 'since 2026-11-10', 'Amazon LWA token expired',
+    'Add buy links to lotion posts', '$70-$300 (directional)', 'needs-decision', 'Sold by category']) {
+    assert.ok(html.includes(want), `${want} renders`);
+  }
+});
+
+test('with a review, the residual and fixed-now items render too', () => {
+  const review = { ...makeReview(), residual: [{ key: 'r', subject: 'Late gate failed', action: 'none', result: 'picked up tomorrow morning', since: TODAY }], fixedNow: [{ key: 'f', subject: 'Rank tracker failed', result: 're-ran agents/rank-tracker/index.js (recovered)' }] };
+  const html = reviewedHtml(review);
+  assert.ok(html.includes('Late gate failed'));
+  assert.ok(html.includes('picked up tomorrow morning'));
+  assert.ok(html.includes('Rank tracker failed'));
+});
+
+test('Fixed overnight caps at 12 lines and puts earlier closures on a muted line', () => {
+  const resolved = Array.from({ length: 15 }, (_, i) => ({ key: `k${i}`, subject: `Fixed thing ${i}`, action: 're-run', result: 'ok' }));
+  resolved.push({ key: 'old', subject: 'Old decision', action: 'closed earlier', result: 'closed out on 2026-11-01' });
+  const html = reviewedHtml(makeReview({ resolved }));
+  assert.ok(html.includes('Fixed thing 11'));
+  assert.ok(!html.includes('Fixed thing 12'));
+  assert.ok(html.includes('and 3 more'));
+  assert.ok(html.includes('Closed on earlier runs'));
+  assert.ok(html.includes('Old decision'));
+});
+
+test('kept removals render under Fixed overnight, are not counted as fixed, and never reach residual', async () => {
+  const kept = { key: 'flop:a', kind: 'flop', subject: 'Old post', action: 'kept', result: 'kept: locked winner' };
+  const html = reviewedHtml(makeReview({ resolved: [kept] }));
+  assert.ok(html.includes('Kept: Old post: locked winner'));
+  assert.ok(!html.includes('Nothing needed fixing overnight.') || html.includes('Kept:'));
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(makeReview({ resolved: [kept] })).fixed, 0);
+  // An old report that only lists the permanent skip still never becomes homework.
+  const item = { slug: 'a', title: 'Old post', verdict: 'LOW_DEMAND', milestone: 90, action: 'no-demand' };
+  const r = await reconcileWithReview([], [], makeReview({ skipped: [{ slug: 'a', reason: 'locked winner' }] }), { flops: [item], today: TODAY });
+  assert.deepEqual(r.residual, []);
+  const r2 = await reconcileWithReview([], [], makeReview({ skipped: [{ slug: 'a', reason: 'target /x returned 404, not 200' }] }), { flops: [item], today: TODAY });
+  assert.equal(r2.residual.length, 1);
+  const many = Array.from({ length: 15 }, (_, i) => ({ ...kept, key: `k${i}`, subject: `P${i}` }));
+  assert.ok(reviewedHtml(makeReview({ resolved: many })).includes('Kept (15)'));
+});
+
+test('How to grow with no recs shows the reason, never an empty header', () => {
+  const html = reviewedHtml(makeReview({ growth: { recs: [], reason: 'growth inputs were stale' } }));
+  assert.ok(html.includes('How to grow'));
+  assert.ok(html.includes('growth inputs were stale'));
+});
+
+test('reviewer and LLM text is HTML-escaped', () => {
+  const html = reviewedHtml(makeReview({
+    resolved: [{ key: 'x', subject: '<script>alert(1)</script>', action: 're-run', result: 'ok' }],
+    growth: { recs: [{ move: '<b>move</b>', evidence: 'a & b', dollars_low: 1, dollars_high: 2, status: 'agent' }] },
+  }));
+  assert.ok(!html.includes('<script>alert(1)</script>'));
+  assert.ok(html.includes('&lt;script&gt;'));
+  assert.ok(html.includes('&lt;b&gt;move&lt;/b&gt;'));
+  assert.ok(html.includes('a &amp; b'));
+});
+
+test('creator submissions waiting on Sean move into "One thing only you can do"', () => {
+  const trybe = { subject: 'Trybe creators: 1 awaiting', status: 'info', source: 'agents/trybe-review/index.js', ts: `${TODAY}T12:55:00Z`,
+    body: 'Awaiting your response (1):\n  - Jane: lotion video\n      Visual: LOOKS READY. fine.' };
+  const html = reviewedHtml(makeReview(), { entries: [trybe] });
+  const youAt = html.indexOf('One thing only you can do');
+  assert.ok(youAt > 0);
+  assert.ok(html.indexOf('Creator submissions to review') > youAt);
+});
+
+test('without a review (null), the old email renders unchanged plus a first-line banner', () => {
+  const args = [TODAY, [failRow()], [], [{ title: 'Blocked post', blockers: 'x', reportPath: 'p' }], null, null, null, null, 'https://dash', [{ title: 'Data feed "gsc" is stale', detail: 'old' }], CLUSTER_DIGEST, null, { dataRoot: emptyRoot }];
+  const before = buildDigestHtml(...args);
+  const fallback = buildDigestHtml(...args, null);
+  assert.ok(fallback.includes(FALLBACK_BANNER));
+  assert.ok(fallback.indexOf(FALLBACK_BANNER) < fallback.indexOf('Daily Recap'), 'banner is the first line');
+  assert.ok(fallback.includes('Failures'));
+  assert.ok(fallback.includes('Action Required'));
+  const bannerAt = fallback.indexOf('<div class="fallback-banner"');
+  const bannerEnd = fallback.indexOf('</div>', bannerAt) + '</div>'.length;
+  assert.equal(fallback.slice(0, bannerAt) + fallback.slice(bannerEnd), before, 'byte-for-byte the old email plus the banner');
+});
+
+test('a yesterday or crashed review falls back to the old recap', () => {
+  for (const latest of [makeReview({ generated_at: '2026-11-11T11:05:00.000Z' }), makeReview({ crashed: true })]) {
+    const review = loadReview({ today: TODAY, read: reader({ 'latest.json': latest, 'done.json': { date: TODAY } }) });
+    assert.equal(review, null);
+    const html = reviewedHtml(review);
+    assert.ok(html.includes(FALLBACK_BANNER));
+    assert.ok(html.includes('Failures'));
+    assert.ok(!html.includes('How to grow'));
+  }
+});
+
+test('reviewedSubject: all clear, fixed only, and every part', () => {
+  assert.equal(reviewedSubject(TODAY, { fixed: 0, working: 0, forYou: 0 }), `Daily Recap — ${TODAY} (all clear)`);
+  assert.equal(reviewedSubject(TODAY, { fixed: 3, working: 0, forYou: 0 }), `Daily Recap — ${TODAY} (3 fixed overnight)`);
+  assert.equal(reviewedSubject(TODAY, { fixed: 3, working: 1, forYou: 1 }), `Daily Recap — ${TODAY} (3 fixed overnight, 1 still being worked on, 1 for you)`);
+});
+
+// ── final review fixes ──────────────────────────────────────────────────────
+
+import {
+  onlyYouRows, ONLY_YOU_SOURCES, lateFinishedOutcomes, markReviewEmailed,
+} from '../../agents/daily-summary/index.js';
+
+test('I4: warning rows are reconciled like errors: unhandled -> residual, a later warning is not recovery', async () => {
+  const warn = failRow({ status: 'warning', source: 'agents/content-strategist/index.js', category: 'content', subject: 'Calendar re-plan: 2 lost', ts: `${TODAY}T03:00:00Z` });
+  const r = await reconcileWithReview([warn], [], makeReview(), { today: TODAY });
+  assert.equal(r.residual.length, 1);
+  const lateWarn = { subject: 'Rank tracker: partial', status: 'warning', category: 'seo', source: 'agents/rank-tracker/index.js', body: 'ETIMEDOUT', ts: `${TODAY}T12:35:00Z` };
+  const r2 = await reconcileWithReview([lateWarn], [], makeReview(), {
+    today: TODAY, exec: async () => ({ code: 0 }), crontabText: '', deadline: Date.parse(`${TODAY}T13:30:00Z`), now: () => Date.parse(`${TODAY}T13:05:00Z`),
+    readRowsSince: async () => [{ ...lateWarn, ts: `${TODAY}T13:06:00Z` }],
+  });
+  assert.equal(r2.fixedNow.length, 0);
+  assert.equal(r2.residual.length, 1);
+});
+
+test('minor: daily-summary\'s own System health error row is never residual (its issues are already health rows)', async () => {
+  const own = failRow({ source: 'agents/daily-summary/index.js', category: 'ops', subject: '⚠️ System health: 1 issue', ts: `${TODAY}T03:00:00Z` });
+  const r = await reconcileWithReview([own], [], makeReview(), { today: TODAY });
+  assert.deepEqual(r.residual, []);
+});
+
+test('I4b: rows only Sean can act on are listed, newest per key, minus errors/warnings and keys the review already reports', () => {
+  assert.ok(ONLY_YOU_SOURCES.has('agents/instagram-dm/index.js'));
+  assert.ok(ONLY_YOU_SOURCES.has('agents/press-outreach/index.js'));
+  const dm1 = { subject: 'Instagram DMs: 2 waiting on you, 1 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@a\n@b', ts: `${TODAY}T08:00:00Z` };
+  const dm2 = { ...dm1, subject: 'Instagram DMs: 3 waiting on you, 1 code(s) sent', ts: `${TODAY}T09:00:00Z` };
+  const codes = { subject: 'Instagram DMs: 1 offer code(s) failed to send', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@x: boom', ts: `${TODAY}T08:30:00Z` };
+  const press = { subject: 'Press outreach: 2 replies, 1 needs your reply', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'x', ts: `${TODAY}T08:10:00Z` };
+  const human = { subject: 'Post-meta drift: 3 fields (needs a human)', status: 'info', category: 'ops', source: 'scripts/check-post-meta-drift.mjs', body: 'y', ts: `${TODAY}T08:20:00Z` };
+  const ordinary = { subject: 'Rank tracker: 40 queries', status: 'success', category: 'seo', source: 'agents/rank-tracker/index.js', ts: `${TODAY}T08:00:00Z` };
+  const err = { subject: 'Press outreach failed', status: 'error', category: 'press', source: 'agents/press-outreach/index.js', ts: `${TODAY}T08:40:00Z` };
+  const rows = onlyYouRows([dm1, dm2, codes, press, human, ordinary, err], makeReview());
+  const subjects = rows.map((r) => r.subject);
+  assert.ok(subjects.includes(dm2.subject) && !subjects.includes(dm1.subject), 'newest per key');
+  for (const want of [codes, press, human]) assert.ok(subjects.includes(want.subject), want.subject);
+  assert.ok(!subjects.includes(ordinary.subject));
+  assert.ok(!subjects.includes(err.subject), 'errors are the review\'s job');
+  const already = onlyYouRows([press], makeReview({ onlyYou: [{ key: itemKey(press) }] }));
+  assert.deepEqual(already, []);
+});
+
+test('I4b: those rows render under "One thing only you can do" and count in the subject', async () => {
+  const dm = { subject: 'Instagram DMs: 3 waiting on you, 1 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@a wants a code', ts: `${TODAY}T09:00:00Z` };
+  const html = reviewedHtml(makeReview(), { entries: [dm] });
+  const youAt = html.indexOf('One thing only you can do');
+  assert.ok(youAt > 0);
+  assert.ok(html.indexOf('3 waiting on you') > youAt);
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(makeReview(), { residual: [], fixedNow: [], onlyYouRows: [dm] }).forYou, 1);
+});
+
+test('I3b: lateFinishedOutcomes returns outcomes that finished after the report was emailed, or all if never emailed', () => {
+  const o = (key, at) => ({ key, subject: key, action: 'fix session', result: 'r', finished_at: at });
+  const prev = makeReview({
+    date: '2026-11-11', generated_at: '2026-11-11T11:05:00.000Z', emailed: true, emailed_at: '2026-11-11T13:01:00.000Z',
+    resolved: [o('early', '2026-11-11T11:30:00.000Z'), o('late-fix', '2026-11-11T14:10:00.000Z')],
+    unresolved: [o('late-revert', '2026-11-11T14:20:00.000Z'), { key: 'legacy', subject: 'no stamp' }],
+    onlyYou: [],
+  });
+  const late = lateFinishedOutcomes(prev);
+  assert.deepEqual(late.map((x) => [x.key, x.bucket]), [['late-fix', 'resolved'], ['late-revert', 'unresolved']]);
+  const never = lateFinishedOutcomes({ ...prev, emailed: false, emailed_at: undefined });
+  assert.deepEqual(never.map((x) => x.key), ['early', 'late-fix', 'late-revert']);
+  assert.deepEqual(lateFinishedOutcomes(null), []);
+  assert.deepEqual(lateFinishedOutcomes({ ...prev, apply: false }), []);
+});
+
+test('I3b: late outcomes render under Fixed overnight as "Finished after yesterday\'s email", and in the fallback too', () => {
+  const late = [{ key: 'k', subject: 'Editor failed', action: 'fix session', result: 'fixed, PR #9001 merged and deployed', bucket: 'resolved', finished_at: '2026-11-11T14:10:00.000Z' }];
+  const html = buildDigestHtml(TODAY, [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot, lateFinished: late }, makeReview());
+  const fixedAt = html.indexOf('Fixed overnight');
+  const lateAt = html.indexOf("Finished after yesterday's email");
+  assert.ok(fixedAt > 0 && lateAt > fixedAt, 'inside the Fixed overnight block');
+  assert.ok(html.indexOf('PR #9001 merged and deployed') > lateAt);
+  const fb = buildDigestHtml(TODAY, [], [], [], null, null, null, null, 'https://dash', [], CLUSTER_DIGEST, null, { dataRoot: emptyRoot, lateFinished: late }, null);
+  assert.ok(fb.includes("Finished after yesterday's email"));
+  assert.ok(fb.includes('PR #9001 merged and deployed'));
+});
+
+test('I3b: markReviewEmailed stamps emailed + emailed_at on latest.json and the dated copy, keeping every other field', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'rr-emailed-'));
+  const report = makeReview({ emailed: false, resolved: [{ key: 'a' }] });
+  writeFileSync(join(dir, 'latest.json'), JSON.stringify(report));
+  writeFileSync(join(dir, `${TODAY}.json`), JSON.stringify(report));
+  markReviewEmailed({ dir, review: report, at: '2026-11-12T13:01:00.000Z' });
+  for (const f of ['latest.json', `${TODAY}.json`]) {
+    const j = JSON.parse(readFileSync(join(dir, f), 'utf8'));
+    assert.equal(j.emailed, true, f);
+    assert.equal(j.emailed_at, '2026-11-12T13:01:00.000Z', f);
+    assert.deepEqual(j.resolved, [{ key: 'a' }], f);
+    assert.equal(j.residual, undefined, 'the reconcile fields are not written back');
+  }
+  // latest.json for a different run (the reviewer re-ran) is left alone
+  const dir2 = mkdtempSync(join(tmpdir(), 'rr-emailed-'));
+  writeFileSync(join(dir2, 'latest.json'), JSON.stringify({ ...report, generated_at: `${TODAY}T12:00:00.000Z` }));
+  markReviewEmailed({ dir: dir2, review: report, at: '2026-11-12T13:01:00.000Z' });
+  assert.equal(JSON.parse(readFileSync(join(dir2, 'latest.json'), 'utf8')).emailed, false);
+});
+
+// ── residual fixes ──────────────────────────────────────────────────────────
+
+test('residual 2: only rows that state an ask are "only you"; routine source rows are not', () => {
+  const dm = (n, ts = `${TODAY}T09:00:00Z`) => ({ subject: `Instagram DMs: ${n} waiting on you, 4 code(s) sent`, status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: 'b', ts });
+  const p = (subject) => ({ subject, status: 'info', category: 'press', source: 'agents/press-outreach/index.js', body: 'b', ts: `${TODAY}T09:00:00Z` });
+  const failed = { subject: 'Instagram DMs: 1 offer code(s) failed to send', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', body: '@x: boom', ts: `${TODAY}T08:30:00Z` };
+  const pick = (rows) => onlyYouRows(rows, makeReview()).map((r) => r.subject);
+  assert.deepEqual(pick([dm(0)]), [], '0 waiting is routine');
+  assert.deepEqual(pick([dm(2)]), [dm(2).subject]);
+  assert.deepEqual(pick([failed]), [failed.subject]);
+  assert.deepEqual(pick([p('Press links: 3 new links')]), []);
+  assert.deepEqual(pick([p('Press drafting skipped: lock held')]), []);
+  assert.deepEqual(pick([p('Press follow-ups: 4 redrafted')]), []);
+  assert.deepEqual(pick([p('Press outreach: 1 reply needs your reply')]), ['Press outreach: 1 reply needs your reply']);
+});
+
+test('residual 2: a day of routine DM and press rows reads "all clear" in the subject', async () => {
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  const rows = [
+    { subject: 'Instagram DMs: 0 waiting on you, 3 code(s) sent', status: 'info', category: 'social', source: 'agents/instagram-dm/index.js', ts: `${TODAY}T09:00:00Z` },
+    { subject: 'Press links: 3 new links', status: 'info', category: 'press', source: 'agents/press-outreach/index.js', ts: `${TODAY}T09:00:00Z` },
+  ];
+  const counts = reviewedCounts(makeReview(), { residual: [], fixedNow: [], onlyYouRows: onlyYouRows(rows, makeReview()) });
+  assert.equal(reviewedSubject(TODAY, counts), `Daily Recap — ${TODAY} (all clear)`);
+});
+
+test('residual 4: a health item resolved in the morning and present at 13:00 renders only in residual, not in Fixed overnight', async () => {
+  const again = { title: 'Data feed "gsc" is stale', detail: 'old' };
+  const [it] = (await import('../../lib/recap-review.js')).buildReviewItems({ healthIssues: [again] });
+  const review = makeReview({ resolved: [{ key: it.key, kind: 'health', subject: again.title, action: 're-run collector', result: 're-ran gsc-collector; the feed is fresh again' }] });
+  const rec = await reconcileWithReview([], [again], review, { today: TODAY });
+  const html = reviewedHtml({ ...review, residual: rec.residual, fixedNow: rec.fixedNow }, { health: [again] });
+  const fixedAt = html.indexOf('Fixed overnight');
+  const workingAt = html.indexOf('Still being worked on');
+  assert.ok(!html.includes('the feed is fresh again'), 'the morning "fixed" line is gone');
+  assert.ok(html.includes('Nothing needed fixing overnight.'));
+  assert.ok(html.indexOf('broken again since the morning fix') > workingAt && workingAt > fixedAt);
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(review, rec).fixed, 0);
+  assert.equal(reviewedCounts(review, rec).working, 1);
+});
