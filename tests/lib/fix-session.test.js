@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { createCleanWorktree, buildFixPrompt, runFixSession, parseVerdict } from '../../lib/fix-session.js';
+import { createFixCheckout, buildFixPrompt, runFixSession, parseVerdict } from '../../lib/fix-session.js';
 import { FORBIDDEN_PATHS, GATE_FILES, GUARD_FILES, GUARD_PREFIXES } from '../../lib/fix-diff-rules.js';
 
 function fakeSpawn({ stdout = '', code = 0, hang = false } = {}) {
@@ -10,8 +10,10 @@ function fakeSpawn({ stdout = '', code = 0, hang = false } = {}) {
     const child = new EventEmitter();
     child.stdout = new EventEmitter();
     child.stderr = new EventEmitter();
+    child.pid = 4242;
     child.kills = [];
-    child.kill = (sig) => { child.kills.push(sig); if (hang) setImmediate(() => child.emit('close', null)); return true; };
+    child.kill = () => true;
+    if (hang) impl.onKill = (sig) => { child.kills.push(sig); setImmediate(() => child.emit('close', null)); };
     calls.push({ bin, args, opts, child });
     if (!hang) setImmediate(() => { child.stdout.emit('data', stdout); child.emit('close', code); });
     return child;
@@ -25,8 +27,10 @@ const result = (text) => JSON.stringify({ result: text, is_error: false });
 test('argv is exactly the spec and cwd is the worktree', async () => {
   const spawnImpl = fakeSpawn({ stdout: result('VERDICT: fixed — done') });
   await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl, token: 't' });
-  const { args, opts } = spawnImpl.calls[0];
-  assert.deepEqual(args, ['-p', 'P', '--output-format', 'json', '--permission-mode', 'acceptEdits',
+  const { bin, args, opts } = spawnImpl.calls[0];
+  assert.equal(bin, 'runuser');
+  assert.equal(opts.detached, true);
+  assert.deepEqual(args, ['-u', 'recapfix', '--', '/usr/local/bin/claude', '-p', 'P', '--output-format', 'json', '--permission-mode', 'acceptEdits',
     '--allowedTools', 'Read,Edit,Write,Grep,Glob,Bash(node:*),Bash(npm test:*),Bash(git diff:*),Bash(git status:*),Bash(git add:*),Bash(git commit:*)']);
   assert.equal(opts.cwd, '/w');
 });
@@ -40,27 +44,41 @@ test('env carries no production credentials even when the parent has them', asyn
     const env = spawnImpl.calls[0].opts.env;
     assert.deepEqual(Object.keys(env).filter((k) => /ANTHROPIC_API_KEY|SHOPIFY|KLAVIYO|HUSHMAIL|RESEND/.test(k)), []);
     assert.equal(env.CLAUDE_CODE_OAUTH_TOKEN, 'tok');
-    assert.ok(env.HOME && env.PATH);
+    assert.equal(env.HOME, '/home/recapfix');
+    assert.equal(env.PATH, '/usr/local/bin:/usr/bin:/bin');
   } finally {
     for (const k of Object.keys(process.env)) if (!(k in saved)) delete process.env[k];
     Object.assign(process.env, saved);
   }
 });
 
-test('createCleanWorktree fetches, adds the worktree, links node_modules, never .env', async () => {
+test('createFixCheckout clones as recapfix in order, no .env, no /root', async () => {
   const cmds = [];
-  const exec = async (cmd, args) => { cmds.push([cmd, ...args]); return { stdout: '', stderr: '', code: 0 }; };
-  const p = await createCleanWorktree('abc', { exec, root: '/repo' });
-  assert.equal(p, '/repo/.claude/worktrees/fix-abc');
-  assert.deepEqual(cmds[0], ['git', 'fetch', 'origin']);
-  assert.deepEqual(cmds[1], ['git', 'worktree', 'add', '-b', 'fix/recap-abc', '/repo/.claude/worktrees/fix-abc', 'origin/main']);
-  assert.deepEqual(cmds[2], ['ln', '-s', '/repo/node_modules', '/repo/.claude/worktrees/fix-abc/node_modules']);
-  assert.ok(!JSON.stringify(cmds).includes('.env'));
+  const exec = async (cmd, args, opts) => { cmds.push([cmd, ...args, opts]); return { stdout: '', stderr: '', code: 0 }; };
+  const p = await createFixCheckout('Abc/../X', { exec });
+  assert.equal(p, '/srv/recap-fix/fix-abc-----x');
+  assert.equal(cmds.length, 5);
+  for (const c of cmds) assert.deepEqual(c.slice(0, 4), ['runuser', '-u', 'recapfix', '--']);
+  assert.deepEqual(cmds[0].slice(4, 8), ['git', 'clone', '--quiet', 'https://github.com/seanfillmore/blogpostworkflow.git']);
+  assert.deepEqual(cmds[1].slice(4, 8), ['git', '-C', p, 'checkout']);
+  assert.ok(cmds[1].includes('fix/recap-abc-----x'));
+  assert.ok(cmds[2].includes('user.name') && cmds[3].includes('user.email'));
+  assert.deepEqual(cmds[4].slice(4, 8), ['npm', 'ci', '--no-audit', '--no-fund']);
+  assert.equal(cmds[4].at(-1).cwd, p);
+  const flat = JSON.stringify(cmds);
+  assert.ok(!flat.includes('.env') && !flat.includes('/root'));
 });
 
-test('createCleanWorktree throws when a step fails', async () => {
+test('createFixCheckout rejects an empty name and caps length', async () => {
+  const exec = async () => ({ stdout: '', stderr: '', code: 0 });
+  await assert.rejects(() => createFixCheckout('', { exec }), /empty/);
+  const p = await createFixCheckout('a'.repeat(100), { exec });
+  assert.equal(p.length, '/srv/recap-fix/fix-'.length + 60);
+});
+
+test('createFixCheckout throws when a step fails', async () => {
   const exec = async () => ({ stdout: '', stderr: 'boom', code: 1 });
-  await assert.rejects(() => createCleanWorktree('x', { exec, root: '/r' }), /boom/);
+  await assert.rejects(() => createFixCheckout('x', { exec, root: '/r' }), /boom/);
 });
 
 test('prompt carries the rules verbatim', () => {
@@ -83,8 +101,16 @@ test('verdict parsing: em dash, hyphen, none', async () => {
 
 test('timeout kills the child and returns no-fix', async () => {
   const spawnImpl = fakeSpawn({ hang: true });
-  const r = await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl, token: 't', timeoutMs: 20, killGraceMs: 50 });
+  const sent = [];
+  const killGroup = (pid, sig) => { sent.push([pid, sig]); spawnImpl.onKill(sig); };
+  const r = await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl, token: 't', timeoutMs: 20, killGraceMs: 50, killGroup });
   assert.equal(r.verdict, 'no-fix');
   assert.equal(r.summary, 'timed out');
-  assert.equal(spawnImpl.calls[0].child.kills[0], 'SIGTERM');
+  assert.deepEqual(sent[0], [4242, 'SIGTERM']);
+});
+
+test('captured stdout keeps only the 2 MB tail', async () => {
+  const big = 'x'.repeat(3 * 1024 * 1024) + '\nVERDICT: fixed — tail kept';
+  const r = await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl: fakeSpawn({ stdout: big }), token: 't' });
+  assert.equal(r.summary, 'tail kept');
 });
