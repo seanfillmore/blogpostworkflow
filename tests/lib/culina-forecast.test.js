@@ -80,7 +80,8 @@ test('componentPlan', () => {
   ];
   const out = componentPlan(plans, cogs, config, '2026-11-11');
   const brush = out.find((c) => c.name === 'brush');
-  assert.deepEqual(brush, { name: 'brush', pace: 5, onHand: 150, coverDays: 30, shipQty: 70, sourced: true, orderBy: '2026-12-11' });
+  // B ships 2027-02-10, one day past today + 90, so only A's 50 count.
+  assert.deepEqual(brush, { name: 'brush', pace: 5, onHand: 150, coverDays: 30, shipQty: 50, sourced: true, needBy: '2027-01-25', orderBy: '2026-12-11' });
   const soap = out.find((c) => c.name === 'soap');
   assert.equal(soap.sourced, false);
   assert.throws(() => componentPlan(plans, cogs, config), /today/);
@@ -120,4 +121,26 @@ test('inferStockoutDates: positive snapshot breaks a zero run', () => {
   const daily = [5, 0, 0, 0, 0, 5].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
   assert.equal(inferStockoutDates(daily, {}).size, 4);
   assert.equal(inferStockoutDates(daily, { '2026-11-04': 7 }).size, 0);
+});
+
+test('final-fix: componentPlan counts only ship plans due within 90 days; needBy is the earliest of those', () => {
+  const cogs = { A: { contents: ['soap'] }, B: { contents: ['soap'] }, C: { contents: ['soap', 'brush'] }, D: { contents: ['brush'] } };
+  const plans = [
+    { asin: 'A', pace: 1, onHand: 10, shipBy: '2026-12-01', shipQty: 50 },
+    { asin: 'B', pace: 1, onHand: 10, shipBy: '2027-03-01', shipQty: 70 }, // beyond today + 90 (2027-02-09)
+    { asin: 'C', pace: 1, onHand: 10, shipBy: null, shipQty: 0 },
+    { asin: 'D', pace: 1, onHand: 10, shipBy: '2027-02-09', shipQty: 5 }, // exactly today + 90
+  ];
+  const out = componentPlan(plans, cogs, config, '2026-11-11');
+  const soap = out.find((c) => c.name === 'soap');
+  assert.equal(soap.shipQty, 50);
+  assert.equal(soap.needBy, '2026-12-01');
+  assert.equal(soap.onHand, 30);
+  const brush = out.find((c) => c.name === 'brush');
+  assert.equal(brush.shipQty, 5);
+  assert.equal(brush.needBy, '2027-02-09');
+  assert.equal(brush.orderBy, '2026-12-26');
+  const none = componentPlan([{ asin: 'B', pace: 1, onHand: 1, shipBy: '2027-06-01', shipQty: 9 }], cogs, config, '2026-11-11')[0];
+  assert.equal(none.shipQty, 0);
+  assert.equal(none.needBy, null);
 });

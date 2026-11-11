@@ -33,7 +33,7 @@ import { fileURLToPath } from 'node:url';
 import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { hushmailCredentials, sendMail } from '../../lib/hushmail.js';
-import { loadReportConfig } from '../../lib/culina-catalog.js';
+import { loadReportConfig, components } from '../../lib/culina-catalog.js';
 import {
   defaultDeps, fetchListings, fetchDailyUnits, fetchMonthlySales, fetchStock, fetchFinance, fetchAdSpend, fetchSeasonal,
 } from '../../lib/culina-data.js';
@@ -49,6 +49,7 @@ const SEASONAL_MAX_AGE_DAYS = 35;
 const ACTIVE_WINDOW_DAYS = 60;
 const PACE_WINDOW_DAYS = 120;
 const SALES_FROM = '2026-03';
+const FROM_NAME = 'Sean at Culina';
 
 // ---- pure helpers ---------------------------------------------------------
 
@@ -182,6 +183,10 @@ async function gather(deps, { extraDays = 0 } = {}) {
     const s = stock.byAsin[a];
     return s ? (s.fba || 0) + (s.awd || 0) + (s.inbound || 0) : 0;
   };
+  const splitOf = (a) => {
+    const s = stock.byAsin[a] || {};
+    return { fba: s.fba || 0, awd: s.awd || 0, inbound: s.inbound || 0 };
+  };
   // Today's snapshot (Culina only), overwriting a same-day file.
   writeJson(join(dir, 'inventory', `${today}.json`), {
     date: today,
@@ -202,7 +207,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
     const recent = rows.filter((r) => r.date >= paceFrom);
     const pace = dailyPace(recent, { stockoutDates: inferStockoutDates(recent, snapshots[asin] || {}) });
     const label = cogs?.[asin]?.name || titleOf[asin] || asin;
-    items.push({ key: asin, asin, label, pace, onHand, ...shipPlan({ pace, onHand, today, seasonal, config }) });
+    items.push({ key: asin, asin, label, pace, onHand, ...splitOf(asin), ...shipPlan({ pace, onHand, today, seasonal, config }) });
   }
   const known = new Set(items.map((i) => i.asin));
   for (const l of config.launches || []) {
@@ -210,11 +215,20 @@ async function gather(deps, { extraDays = 0 } = {}) {
     const pace = Number(l.start_monthly_units) > 0 ? Number(l.start_monthly_units) / 30 : null;
     const onHand = l.asin ? onHandOf(l.asin) : 0;
     items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.name || l.asin, launch: true, pace, onHand,
+      ...(l.asin ? splitOf(l.asin) : { fba: 0, awd: 0, inbound: 0 }),
       ...shipPlan({ pace, onHand, today, seasonal, config }) });
   }
 
+  // Component stock split: the same items componentPlan sums onHand over.
+  const compSplit = {};
+  for (const it of items.filter((i) => i.asin)) {
+    for (const name of components(it.asin, cogs)) {
+      const c = (compSplit[name] ||= { fba: 0, awd: 0, inbound: 0 });
+      c.fba += it.fba; c.awd += it.awd; c.inbound += it.inbound;
+    }
+  }
   const comps = componentPlan(items.filter((i) => i.asin), cogs, config, today)
-    .map((c) => ({ ...c, coverDays: c.coverDays === null ? null : Math.round(c.coverDays) }));
+    .map((c) => ({ ...c, ...(compSplit[c.name] || { fba: 0, awd: 0, inbound: 0 }), coverDays: c.coverDays === null ? null : Math.round(c.coverDays) }));
 
   return { now, today, listings, culinaAsins, stock, daily, seasonal, items, comps, sourceErrors, notes };
 }
@@ -224,7 +238,7 @@ function recipients(deps, to) {
 }
 
 async function send(deps, rendered, to) {
-  return deps.sendMail(deps.creds, { ...recipients(deps, to), subject: rendered.subject, text: rendered.text, html: rendered.html, agent: 'culina-report' },
+  return deps.sendMail(deps.creds, { ...recipients(deps, to), subject: rendered.subject, text: rendered.text, html: rendered.html, agent: 'culina-report', fromName: FROM_NAME },
     { via: 'resend', resendKey: deps.resendKey });
 }
 
@@ -314,7 +328,8 @@ async function runMonthly(args, deps) {
     projection: items.map(({ label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty }) =>
       ({ label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty })),
     components: comps, forecastVsActual, monthlySales, pnl,
-    goal: { lastMonth, target: config.goal_monthly, neededMonthlyGrowthPct },
+    goal: { lastMonth, target: config.goal_monthly, by: config.goal_by || '2027-11', neededMonthlyGrowthPct },
+    adsMissingMonths: adsMissing,
     sourceErrors, unassignedCampaigns: curr?.unassignedCampaigns || [], missingCogs: curr?.missingCogs || [],
     unmappedStock: stock.unmapped || [],
   };
@@ -357,10 +372,18 @@ async function runAlerts(args, deps) {
   const statePath = join(dir, 'alerts-state.json');
   const state = readJson(statePath, 'alerts-state.json') || {}; // read first: corrupt state stops the run before any work
   const g = await gather(deps);
-  const amazonItems = g.items.filter((i) => !i.launch).map((i) => ({ key: i.key, label: i.label, coverDays: i.coverDays, onHand: i.onHand }));
-  const compItems = g.comps.filter((c) => !c.sourced).map((c) => ({ key: `component:${c.name}`, label: `${c.name} (all products)`, coverDays: c.coverDays, onHand: c.onHand }));
+  const amazonItems = g.items.filter((i) => !i.launch).map((i) => ({
+    key: i.key, label: i.label, coverDays: i.coverDays, onHand: i.onHand,
+    fba: i.fba, awd: i.awd, inbound: i.inbound, shipQty: i.shipQty, shipBy: i.shipBy,
+  }));
+  const compItems = g.comps.filter((c) => !c.sourced).map((c) => ({
+    key: `component:${c.name}`, label: `${c.name} (all products)`, coverDays: c.coverDays, onHand: c.onHand,
+    fba: c.fba, awd: c.awd, inbound: c.inbound, shipQty: c.shipQty, needBy: c.needBy, component: true,
+  }));
   const decision = decideAlerts({ items: [...amazonItems, ...compItems], state, today: g.today, config });
-  const rendered = renderAlert(decision.rows);
+  const rendered = renderAlert(decision.rows, {
+    alertBelowDays: config.alert_below_days, leadDays: config.lead_time_days, sourcedLeadDays: config.sourced_lead_time_days,
+  });
   writeFileSync(join(dir, 'preview-alerts.html'), rendered.html);
 
   const lines = decision.rows.map((r) => `- ${r.label}: ${r.onHand} on hand, cover ${r.coverDays ?? 'none'} days (${r.reason})`);

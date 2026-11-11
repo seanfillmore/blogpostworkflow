@@ -347,3 +347,45 @@ test('FBA summaries are pulled once per run', async () => {
   await run(['--alerts'], deps);
   assert.equal(calls.fba, 1);
 });
+
+test('final-fix: mail goes out as Sean at Culina', async () => {
+  const dir = tmp();
+  const { deps, mail } = makeDeps(dir, { stock: { [A3]: 100 } });
+  await run(['--monthly', '--month', '2026-10', '--apply'], deps);
+  await run(['--alerts', '--apply'], deps);
+  assert.equal(mail.length, 2);
+  for (const m of mail) assert.equal(m.msg.fromName, 'Sean at Culina');
+});
+
+test('final-fix: alert rows carry the stock split, ship quantity and date; components carry needBy', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100, [AS]: 0 } });
+  const r = await run(['--alerts'], deps);
+  const row = r.rows.find((x) => x.key === A3);
+  assert.equal(row.fba, 100); assert.equal(row.awd, 0); assert.equal(row.inbound, 0);
+  assert.ok(row.shipQty > 0);
+  assert.equal(row.shipBy, '2026-11-11');
+  const soap = r.rows.find((x) => x.key === 'component:cleaning soap');
+  assert.equal(soap.fba, 100);
+  assert.ok(soap.shipQty > 0);
+  assert.equal(soap.needBy, '2026-11-11');
+});
+
+test('final-fix: missing month-before ads reach the model as a data note', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 }, adsFail: '2026-09-01' });
+  const r = await run(['--monthly', '--month', '2026-10'], deps);
+  assert.deepEqual(r.adsMissingMonths, ['2026-09']);
+  assert.match(readFileSync(join(dir, 'preview-monthly.html'), 'utf8'), /Ad spend for September 2026 is not available/);
+});
+
+test('final-fix: goal and alert threshold come from config', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 } });
+  deps.config = { ...deps.config, alert_below_days: 45, goal_by: '2028-03' };
+  const r = await run(['--monthly', '--month', '2026-10'], deps);
+  assert.equal(r.goal.by, '2028-03');
+  await run(['--alerts'], deps);
+  const html = readFileSync(join(dir, 'preview-alerts.html'), 'utf8');
+  assert.match(html, /below 45 days/);
+});

@@ -104,3 +104,14 @@ test('recover then drop again alerts as below_threshold', () => {
   const r = decideAlerts({ items: [it({ coverDays: 30 })], state: s, today: '2026-11-04', config });
   assert.equal(r.rows[0].reason, 'below_threshold');
 });
+
+test('final-fix: extra item fields pass through to rows untouched', () => {
+  const r = decideAlerts({ items: [it({ fba: 4, awd: 5, inbound: 1, shipQty: 300, shipBy: '2026-11-20', needBy: null })], state: {}, today, config });
+  assert.equal(r.rows[0].fba, 4);
+  assert.equal(r.rows[0].awd, 5);
+  assert.equal(r.rows[0].inbound, 1);
+  assert.equal(r.rows[0].shipQty, 300);
+  assert.equal(r.rows[0].shipBy, '2026-11-20');
+  assert.equal(r.rows[0].reason, 'below_threshold');
+  assert.equal(r.rows[0].key, 'a');
+});

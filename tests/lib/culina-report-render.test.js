@@ -122,3 +122,50 @@ test('fix7: alert escapes', () => {
   const r = renderAlert([{ label: 'A <b>&"x"', coverDays: 3, onHand: 1, reason: 'below_threshold' }]);
   assert.match(r.html, /A &lt;b&gt;&amp;&quot;x&quot;/); assert.ok(!r.html.includes('<b>&'));
 });
+
+test('final-fix: alert rows show the on-hand split and the quantity with its date', () => {
+  const r = renderAlert([
+    { label: 'Supreme Care Set', coverDays: 13, onHand: 181, fba: 100, awd: 60, inbound: 21, shipQty: 1732, shipBy: '2026-11-11', reason: 'below_threshold' },
+    { label: 'cleaning soap (all products)', coverDays: 33, onHand: 1018, fba: 800, awd: 200, inbound: 18, shipQty: 3173, needBy: '2026-11-11', component: true, reason: 'below_threshold' },
+  ], { alertBelowDays: 45 });
+  for (const s of [r.html, r.text]) {
+    assert.match(s, /FBA 100 \/ AWD 60 \/ inbound 21/);
+    assert.match(s, /1,732 units by 11 Nov 2026/);
+    assert.match(s, /make 3,173 by 11 Nov 2026/);
+    assert.match(s, /below 45 days/);
+    assert.doesNotMatch(s, /60 days/);
+    assert.doesNotMatch(s, /—/);
+  }
+});
+
+test('final-fix: made-in-house component shows make by date', () => {
+  const m = base();
+  m.components[1].needBy = '2026-11-25';
+  const { html, text } = renderMonthly(m);
+  assert.match(html, /make by 25 Nov 2026/);
+  assert.match(text, /make by 25 Nov 2026/);
+});
+
+test('final-fix: month-before ad data missing is a data note', () => {
+  const m = { ...base(), sourceErrors: [], adsMissingMonths: ['2026-09'] };
+  const { html, text } = renderMonthly(m);
+  for (const s of [html, text]) assert.match(s, /Ad spend for September 2026 is not available/);
+});
+
+test('final-fix: unknown actual renders n/a, not no forecast', () => {
+  const m = { ...base(), forecastVsActual: [{ label: 'Gone', forecast30: 40, actual: null }] };
+  const { html, text } = renderMonthly(m);
+  assert.match(text, /forecast 40, actual n\/a/);
+  assert.doesNotMatch(html.split('Forecast vs actual')[1].split('Monthly sales')[0], /no forecast/);
+});
+
+test('final-fix: goal text from config and the ordered-sales note', () => {
+  const m = { ...base(), goal: { lastMonth: 29900, target: [50000, 90000], by: '2028-03', neededMonthlyGrowthPct: 3.1 } };
+  const { html, text } = renderMonthly(m);
+  for (const s of [html, text]) {
+    assert.match(s, /reach \$50,000 by March 2028/);
+    assert.doesNotMatch(s, /November 2027/);
+    assert.match(s, /ordered sales/);
+    assert.match(s, /settlement/);
+  }
+});
