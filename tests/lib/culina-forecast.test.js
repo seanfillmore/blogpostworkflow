@@ -78,12 +78,46 @@ test('componentPlan', () => {
     { asin: 'A', pace: 2, onHand: 100, shipBy: '2027-01-25', shipQty: 50 },
     { asin: 'B', pace: 3, onHand: 50, shipBy: '2027-02-10', shipQty: 20 },
   ];
-  const out = componentPlan(plans, cogs, config);
+  const out = componentPlan(plans, cogs, config, '2026-11-11');
   const brush = out.find((c) => c.name === 'brush');
   assert.deepEqual(brush, { name: 'brush', pace: 5, onHand: 150, coverDays: 30, shipQty: 70, sourced: true, orderBy: '2026-12-11' });
   const soap = out.find((c) => c.name === 'soap');
   assert.equal(soap.sourced, false);
+  assert.throws(() => componentPlan(plans, cogs, config), /today/);
   assert.equal(soap.orderBy, null);
   const clamped = componentPlan(plans, cogs, config, '2026-12-20').find((c) => c.name === 'brush');
   assert.equal(clamped.orderBy, '2026-12-20');
+});
+
+test('shipPlan: never crosses within horizon gives null shipBy', () => {
+  const p = shipPlan({ pace: 0.05, onHand: 300, today: '2026-11-11', seasonal: flat, config });
+  assert.equal(p.shipBy, null);
+  assert.equal(p.shipQty, 0);
+});
+
+test('shipPlan: slow item is fast', () => {
+  const t = Date.now();
+  const p = shipPlan({ pace: 0.5, onHand: 1500, today: '2026-11-11', seasonal: flat, config });
+  assert.ok(Date.now() - t < 1000);
+  assert.equal(p.coverDays, 3000);
+});
+
+test('shipPlan: non-flat seasonal index', () => {
+  const s = { ...flat, 11: 2, 12: 3 };
+  const p = shipPlan({ pace: 10, onHand: 1500, today: '2026-10-01', seasonal: s, config });
+  assert.equal(p.coverDays, 81);
+  assert.equal(p.shipBy, '2026-10-01');
+  assert.equal(p.shipQty, 760);
+});
+
+test('shipPlan: zero on hand ships today', () => {
+  const p = shipPlan({ pace: 10, onHand: 0, today: '2026-11-11', seasonal: flat, config });
+  assert.equal(p.coverDays, 0);
+  assert.equal(p.shipBy, '2026-11-11');
+});
+
+test('inferStockoutDates: positive snapshot breaks a zero run', () => {
+  const daily = [5, 0, 0, 0, 0, 5].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
+  assert.equal(inferStockoutDates(daily, {}).size, 4);
+  assert.equal(inferStockoutDates(daily, { '2026-11-04': 7 }).size, 0);
 });
