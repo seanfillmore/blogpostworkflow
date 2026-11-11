@@ -134,7 +134,7 @@ test('finance paginates and concatenates arrays', async () => {
     { payload: { FinancialEvents: { ShipmentEventList: [1], ServiceFeeEventList: [9] }, NextToken: 't' } },
     { payload: { FinancialEvents: { ShipmentEventList: [2] } } },
   ];
-  const r = await fetchFinance(base(async (m, p, params) => { seen.push(params); return pages.shift(); }), 'a', 'b');
+  const r = await fetchFinance(base(async (m, p, params) => { seen.push(params); return pages.shift(); }), '2026-10-01T00:00:00Z', '2026-11-01T00:00:00Z');
   assert.deepEqual(r, { ShipmentEventList: [1, 2], ServiceFeeEventList: [9] });
   assert.deepEqual(seen[1], { NextToken: 't' });
   assert.equal(seen[0].MaxResultsPerPage, 100);
