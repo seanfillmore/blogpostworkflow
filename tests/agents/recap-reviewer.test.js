@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runReview, splitCommand, CUTOFF_UTC } from '../../agents/recap-reviewer/index.js';
+import { runReview, CUTOFF_UTC } from '../../agents/recap-reviewer/index.js';
+import { splitCommand } from '../../lib/recap-jobs.js';
 import { makeExec } from '../../agents/recap-reviewer/exec.js';
 import { emptyState } from '../../lib/recap-reviewer-state.js';
 
@@ -412,7 +413,25 @@ test('removal with no specific same-cluster page skips with "no same-cluster tar
   deps.inputs.postPerformance = { action_required: [flop('a')] };
   const r = await runReview(deps, { apply: true, now: MORNING });
   assert.equal(deps.calls.filter((c) => c[0] === 'askFast' || c[0] === 'killPost').length, 0);
-  assert.equal(r.skipped[0].reason, 'no same-cluster target');
+  assert.equal(r.skipped.length, 0, 'a permanent skip is not left as a skip');
+  const kept = r.resolved.find((o) => o.action === 'kept');
+  assert.ok(kept, 'reported as resolved with action kept');
+  assert.match(kept.result, /^kept: no same-cluster target/);
+  assert.equal(r.unresolved.length, 0);
+});
+
+test('removal: a retryable skip (unparseable pick) stays a skip and is not kept', async () => {
+  const deps = fakeDeps({ askFast: async () => 'no idea' });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.filter((o) => o.action === 'kept').length, 0);
+  assert.match(r.skipped[0].reason, /unparseable/);
+});
+
+test('growth with no recs and no reason gets a reason', async () => {
+  const deps = fakeDeps({ generateGrowthRecs: async () => ({ recs: [] }) });
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.growth.reason, 'no recommendation passed the checks');
 });
 
 test('removal: a redirect pointing somewhere other than the chosen target is unresolved', async () => {

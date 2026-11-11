@@ -848,6 +848,23 @@ test('Fixed overnight caps at 12 lines and puts earlier closures on a muted line
   assert.ok(html.includes('Old decision'));
 });
 
+test('kept removals render under Fixed overnight, are not counted as fixed, and never reach residual', async () => {
+  const kept = { key: 'flop:a', kind: 'flop', subject: 'Old post', action: 'kept', result: 'kept: locked winner' };
+  const html = reviewedHtml(makeReview({ resolved: [kept] }));
+  assert.ok(html.includes('Kept: Old post: locked winner'));
+  assert.ok(!html.includes('Nothing needed fixing overnight.') || html.includes('Kept:'));
+  const { reviewedCounts } = await import('../../agents/daily-summary/index.js');
+  assert.equal(reviewedCounts(makeReview({ resolved: [kept] })).fixed, 0);
+  // An old report that only lists the permanent skip still never becomes homework.
+  const item = { slug: 'a', title: 'Old post', verdict: 'LOW_DEMAND', milestone: 90, action: 'no-demand' };
+  const r = await reconcileWithReview([], [], makeReview({ skipped: [{ slug: 'a', reason: 'locked winner' }] }), { flops: [item], today: TODAY });
+  assert.deepEqual(r.residual, []);
+  const r2 = await reconcileWithReview([], [], makeReview({ skipped: [{ slug: 'a', reason: 'target /x returned 404, not 200' }] }), { flops: [item], today: TODAY });
+  assert.equal(r2.residual.length, 1);
+  const many = Array.from({ length: 15 }, (_, i) => ({ ...kept, key: `k${i}`, subject: `P${i}` }));
+  assert.ok(reviewedHtml(makeReview({ resolved: many })).includes('Kept (15)'));
+});
+
 test('How to grow with no recs shows the reason, never an empty header', () => {
   const html = reviewedHtml(makeReview({ growth: { recs: [], reason: 'growth inputs were stale' } }));
   assert.ok(html.includes('How to grow'));

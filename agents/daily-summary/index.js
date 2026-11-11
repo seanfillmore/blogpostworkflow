@@ -44,9 +44,9 @@ import { SEO_IMPACT_MAX_AGE_DAYS } from '../../lib/seo-impact-freshness.js';
 // AWARENESS_LEVELS and HEALTH_CLAIM_PATTERNS.
 import { classifyCtrDelta, DEFAULT_REGRESS_THRESHOLD } from '../../lib/meta-ab-decision.js';
 import { buildReviewItems, classifyFailure, itemKey } from '../../lib/recap-review.js';
-import { parseCrontab, isRerunnable } from '../../lib/recap-jobs.js';
+import { parseCrontab, isRerunnable, splitCommand } from '../../lib/recap-jobs.js';
+import { isPermanentSkip } from '../../lib/low-demand-removal.js';
 import { loadState as loadReviewerState, REVIEWER_DIR } from '../../lib/recap-reviewer-state.js';
-import { splitCommand } from '../recap-reviewer/index.js';
 // lib/llm-usage.js still meters every call; the digest just no longer renders a
 // dollar row from it. See the LLM cost block removal note below.
 
@@ -1330,6 +1330,7 @@ export async function reconcileWithReview(entries = [], healthIssues = [], revie
   for (const it of buildReviewItems({ needsDecision, flops, blockedDrafts })) {
     if (it.route === 'count-only' || resolvedKeys.has(it.key) || reported.has(it.key)) continue;
     const reason = skippedWhy.get(it.row?.slug);
+    if (isPermanentSkip(reason)) continue; // kept by policy: handled, never homework
     owe(it.key, it.kind, it.subject, 'none', reason ? `skipped overnight: ${reason}` : TOMORROW, it.detail);
   }
 
@@ -1352,7 +1353,7 @@ export function reviewedSubject(targetDate, { fixed = 0, working = 0, forYou = 0
 
 /** The counts the subject line reports, from the review plus this morning's reconcile. */
 export function reviewedCounts(review, { residual = [], fixedNow = [] } = {}, creatorItems = 0) {
-  const resolved = (review?.resolved || []).filter((o) => o?.action !== 'closed earlier');
+  const resolved = (review?.resolved || []).filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept');
   return {
     fixed: resolved.length + fixedNow.length,
     working: (review?.unresolved || []).length + residual.length,
@@ -1369,14 +1370,20 @@ function renderReviewedRecap({ review, targetDate, styles, esc, dashboardUrl, en
 
   // 1. What's working
   const resolved = list(review.resolved);
-  const fixed = [...resolved.filter((o) => o?.action !== 'closed earlier'), ...list(review.fixedNow)];
+  const fixed = [...resolved.filter((o) => o?.action !== 'closed earlier' && o?.action !== 'kept'), ...list(review.fixedNow)];
   const closedEarlier = resolved.filter((o) => o?.action === 'closed earlier');
+  const kept = resolved.filter((o) => o?.action === 'kept');
   const shown = fixed.slice(0, FIXED_LINES_SHOWN).map((o) => line(o)).join('');
   const more = fixed.length > FIXED_LINES_SHOWN ? `<div class="entry-time">and ${fixed.length - FIXED_LINES_SHOWN} more</div>` : '';
   const earlier = closedEarlier.length
     ? `<p class="empty" style="margin-top:8px;">Closed on earlier runs (${closedEarlier.length}): ${closedEarlier.slice(0, FIXED_LINES_SHOWN).map((o) => e(o.subject)).join('; ')}${closedEarlier.length > FIXED_LINES_SHOWN ? `; and ${closedEarlier.length - FIXED_LINES_SHOWN} more` : ''}</p>`
     : '';
-  const fixedSection = `<div class="section"><div class="section-title">&#128295; Fixed overnight</div>${fixed.length ? shown + more : muted('Nothing needed fixing overnight.')}${earlier}</div>`;
+  const keptLine = (o) => `${e(o.subject)}: ${e(String(o.result || '').replace(/^kept:\s*/, ''))}`;
+  const keptBlock = !kept.length ? ''
+    : kept.length <= FIXED_LINES_SHOWN
+      ? kept.map((o) => `<div class="entry"><span class="entry-subject">Kept: ${keptLine(o)}</span></div>`).join('')
+      : `<p class="empty" style="margin-top:8px;">Kept (${kept.length}): ${kept.slice(0, FIXED_LINES_SHOWN).map(keptLine).join('; ')}; and ${kept.length - FIXED_LINES_SHOWN} more</p>`;
+  const fixedSection = `<div class="section"><div class="section-title">&#128295; Fixed overnight</div>${fixed.length ? shown + more : muted('Nothing needed fixing overnight.')}${keptBlock}${earlier}</div>`;
 
   // 2. How to grow
   const recs = list(review.growth?.recs);

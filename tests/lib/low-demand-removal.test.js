@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { convertedPaths, cannibalizationWinners, removalEligibility, removalCandidates } from '../../lib/low-demand-removal.js';
+import { convertedPaths, cannibalizationWinners, removalEligibility, removalCandidates, isPermanentSkip } from '../../lib/low-demand-removal.js';
 import { LOCK_LOCKED, LOCK_UNREADABLE, LOCK_UNLOCKED, LOCK_NO_POST } from '../../lib/post-lock.js';
 
 const ctx = () => ({
@@ -90,4 +90,31 @@ test('path normalization on converted and redirect targets', () => {
   const d = { ...ctx(), redirectTargets: new Set(['https://www.realskincare.com/blogs/news/foo?x=1']) };
   assert.equal(removalEligibility(row, d).ok, false);
   assert.equal(removalEligibility({ slug: 'f%6Fo', action: 'no-demand' }, { ...ctx(), winners: new Set(['foo']) }).ok, false);
+});
+
+test('isPermanentSkip: permanent policy refusals are kept; everything else is retryable', () => {
+  for (const r of ['target of an existing redirect', 'cannibalization winner', 'locked winner', 'lock state unreadable',
+    'in a CTR experiment', 'has converted (order landed here)', 'no same-cluster target',
+    'no same-cluster target (the post matches no product cluster)', 'not a blog article']) {
+    assert.equal(isPermanentSkip(r), true, r);
+  }
+  for (const r of ['redirect pick unparseable', 'target /x returned 404, not 200', 'order history unreadable', 'cap',
+    'missing context: winners', 'something brand new', '', undefined, 'redirect pick failed: boom']) {
+    assert.equal(isPermanentSkip(r), false, String(r));
+  }
+});
+
+test('isPermanentSkip matches the exact reasons removalEligibility emits', () => {
+  const permanent = [
+    removalEligibility(row, { ...ctx(), lockState: LOCK_LOCKED }),
+    removalEligibility(row, { ...ctx(), lockState: LOCK_UNREADABLE }),
+    removalEligibility(row, { ...ctx(), ctrHandles: new Set(['foo']) }),
+    removalEligibility(row, { ...ctx(), converted: new Set(['/blogs/news/foo']) }),
+    removalEligibility(row, { ...ctx(), winners: new Set(['foo']) }),
+    removalEligibility(row, { ...ctx(), redirectTargets: new Set(['/blogs/news/foo']) }),
+    removalEligibility({ ...row, url: 'https://x/pages/foo' }, ctx()),
+  ];
+  for (const v of permanent) assert.equal(v.ok, false), assert.equal(isPermanentSkip(v.reason), true, v.reason);
+  assert.equal(isPermanentSkip(removalEligibility(row, { ...ctx(), ordersOk: false }).reason), false);
+  assert.equal(isPermanentSkip(removalEligibility(row, { ...ctx(), winners: undefined }).reason), false);
 });

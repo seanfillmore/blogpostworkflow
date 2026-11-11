@@ -27,7 +27,8 @@
  *   node agents/recap-reviewer/index.js --now 2026-11-11T11:05:00Z   # dry run as of that time
  */
 import { buildReviewItems, itemKey } from '../../lib/recap-review.js';
-import { parseCrontab, isRerunnable, collectorFor } from '../../lib/recap-jobs.js';
+import { parseCrontab, isRerunnable, collectorFor, splitCommand } from '../../lib/recap-jobs.js';
+import { isPermanentSkip } from '../../lib/low-demand-removal.js';
 import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
 import { MAX_FIX_ATTEMPTS } from '../../lib/recap-reviewer-state.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
@@ -48,17 +49,6 @@ const FIX_SESSION_MIN_MS = 15 * 60_000;
 const HEARTBEAT_SOURCE = 'scripts/check-scheduler-heartbeat.mjs';
 const DEFERRED = 'deferred to tomorrow';
 const WAITS = 'waits for next scheduled run';
-
-/**
- * `crontab` command text -> argv. Strips only shell redirects (`2>&1`, `>> log`,
- * `> log`) and quotes; an ordinary argument such as `--limit 5` is never touched.
- */
-export function splitCommand(command) {
-  const text = ` ${String(command || '')}`
-    .replace(/\s\d*>&\d+/g, ' ')
-    .replace(/\s\d*>>?\s*\S+/g, ' ');
-  return text.trim().split(/\s+/).filter(Boolean).map((p) => p.replace(/^["']|["']$/g, ''));
-}
 
 const minutesUTC = (d) => d.getUTCHours() * 60 + d.getUTCMinutes();
 const clip = (s, n = 1500) => { const t = String(s ?? '').trim(); return t.length > n ? `…${t.slice(-n)}` : t; };
@@ -249,7 +239,13 @@ async function review(deps, { apply, clock, today, report }) {
 
   const removeItems = byRoute('remove');
   const removal = await runRemovals({ rows: removeItems.map((i) => i.row), deps, apply, pastCutoff, today });
-  report.skipped.push(...removal.skipped);
+  // Permanent-policy refusals are handled ("kept"), not homework: a page that
+  // can never be removed must not sit in "still being worked on" every morning.
+  for (const sk of removal.skipped) {
+    const it = removeItems.find((i) => i.row?.slug === sk.slug);
+    if (it && isPermanentSkip(sk.reason)) resolved(it, 'kept', `kept: ${sk.reason}`, sk.reason);
+    else report.skipped.push(sk);
+  }
   if (removal.linkRepair) report.linkRepair = removal.linkRepair;
   for (const o of removal.outcomes) {
     const it = removeItems.find((i) => i.row === o.row);
@@ -289,7 +285,8 @@ async function review(deps, { apply, clock, today, report }) {
   if (pastCutoff()) report.growth = { recs: [], reason: DEFERRED };
   else {
     try {
-      report.growth = await deps.generateGrowthRecs(await deps.gatherGrowthInputs());
+      const g = await deps.generateGrowthRecs(await deps.gatherGrowthInputs());
+      report.growth = (g?.recs?.length || g?.reason) ? g : { ...(g || {}), recs: g?.recs || [], reason: 'no recommendation passed the checks' };
     } catch (e) {
       report.growth = { recs: [], reason: `growth step failed: ${e.message}` };
     }
