@@ -179,9 +179,10 @@ Account-level service fees (inbound transport, placement, AWD transport/processi
 - Produces: `renderMonthly(model) -> { subject, html, text }`, `renderAlert(rows) -> { subject, html, text }`.
 - `model = { month, projection: [{label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty}], components: [{name, shipQty, sourced, orderBy}], forecastVsActual: [...]|null, monthlySales: [{month, sales}], pnl: comparePnl rows, unassignedCampaigns, sourceErrors: string[], goal: {lastMonth, target: [75000,100000], neededMonthlyGrowthPct} }`
 
-Section order as in the spec: projection, forecast vs actual, monthly sales chart (HTML table bars, no SVG), P&L last month vs prior, goal progress. Inline CSS only (Gmail). Subject: `Culina monthly report: <Month YYYY>`; alert subject: `Culina stock alert: <n> item(s) low`.
+Section order as in the spec: projection, forecast vs actual, monthly sales chart (HTML table bars, no SVG), P&L last month vs prior, goal progress. Travis reads in **Hushmail webmail and Apple Mail on iPad**: inline CSS only, no remote images (Hushmail blocks them), no web fonts (system font stack), single column up to 680px wide with wide tables in a horizontally scrolling wrapper. Subject: `Culina monthly report: <Month YYYY>`; alert subject: `Culina stock alert: <n> item(s) low`.
 
 - [ ] **Step 1: Failing tests**: html contains the five section headings in order; no `<svg`; no `—` (em dash) and no `agency` in html or text; `forecastVsActual: null` renders "First report, no prior forecast"; `sourceErrors: ['ads']` renders "Ad spend not available" and the P&L ad line shows "n/a", not `$0`; unassigned campaigns listed by name; values HTML-escaped.
+Add to Step 1: html contains no `<img` with an `http` src and no `fonts.googleapis`.
 - [ ] **Step 2-4: Run FAIL, implement, run PASS.**
 - [ ] **Step 5: Commit** `feat(culina-report): monthly and alert email rendering`
 
@@ -214,4 +215,4 @@ Section order as in the spec: projection, forecast vs actual, monthly sales char
 - [ ] **Step 2:** Add `data/reports/culina-report/` to the `server-state` backup set.
 - [ ] **Step 3:** CLAUDE.md: a short paragraph under Architecture naming the agent, schedule, recipients, and that this is the second Culina exception (with PPC auditing). Update the out-of-scope memory to match.
 - [ ] **Step 4:** Run `npm test` — expected all pass, check the cancelled count is 0.
-- [ ] **Step 5:** Commit, push, `gh pr create`. After merge: deploy, run `scripts/setup-cron.sh` on the server, verify with the mirror diff in CLAUDE.md, then a dry `--monthly --month 2026-10` on the server before the first live run on 2026-12-10.
+- [ ] **Step 5:** Commit, push, `gh pr create`. After merge: deploy, run `scripts/setup-cron.sh` on the server, verify with the mirror diff in CLAUDE.md, then a dry `--monthly --month 2026-10` on the server before the first live run on 2026-12-10. Send one test copy of the October report to sean@realskincare.com only (a `--to` override for test sends) and check it in Hushmail webmail and in Mail on an iPad before the first live send.
