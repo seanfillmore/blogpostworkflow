@@ -214,9 +214,18 @@ async function gather(deps, { extraDays = 0 } = {}) {
     if (l.asin && known.has(l.asin)) continue;
     const pace = Number(l.start_monthly_units) > 0 ? Number(l.start_monthly_units) / 30 : null;
     const onHand = l.asin ? onHandOf(l.asin) : 0;
+    let plan = shipPlan({ pace, onHand, today, seasonal, config });
+    // A launch with no sales estimate but a first production run (`initial_units`):
+    // ship that run now, less anything already on Amazon. It switches to the normal
+    // forecast once it has sales in the active window (then it is a known item above).
+    const initial = Number(l.initial_units);
+    if (pace === null && initial > 0) {
+      const need = Math.max(0, initial - onHand);
+      plan = { ...plan, shipQty: need, shipBy: need > 0 ? today : null };
+    }
     items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.name || l.asin, launch: true, pace, onHand,
       ...(l.asin ? splitOf(l.asin) : { fba: 0, awd: 0, inbound: 0 }),
-      ...shipPlan({ pace, onHand, today, seasonal, config }) });
+      ...plan });
   }
 
   // Component stock split: the same items componentPlan sums onHand over.
@@ -324,9 +333,9 @@ async function runMonthly(args, deps) {
   const pnl = comparePnl(curr, before);
 
   const model = {
-    month, reportDate: today,
-    projection: items.map(({ label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty }) =>
-      ({ label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty })),
+    month, reportDate: today, shipWindowDays: config.ship_window_days,
+    projection: items.map(({ asin, label, launch, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty }) =>
+      ({ asin, label, launch: !!launch, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty })),
     components: comps, forecastVsActual, monthlySales, pnl,
     goal: { lastMonth, target: config.goal_monthly, by: config.goal_by || '2027-11', neededMonthlyGrowthPct },
     adsMissingMonths: adsMissing,

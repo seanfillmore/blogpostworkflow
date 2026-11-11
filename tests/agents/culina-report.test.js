@@ -43,7 +43,7 @@ const config = {
   to: 'travis@traviswales.com', cc: ['sean@realskincare.com'], from: 'sean@realskincare.com',
   cover_target_days: [90, 120], alert_below_days: 60, lead_time_days: 14, sourced_lead_time_days: 45,
   sourced_components: ['chain mail scrubber'], goal_monthly: [75000, 100000], goal_by: '2027-11',
-  launches: [{ name: 'Chainmail scrubber', start_monthly_units: 300 }, { name: 'Five piece' }],
+  launches: [{ name: 'Chainmail scrubber', start_monthly_units: 300 }, { name: 'Five piece' }, { name: 'First run', initial_units: 100 }],
   seasonal_keywords: ['cast iron soap'],
 };
 const cogs = {
@@ -201,6 +201,19 @@ test('projection includes launches and drops RSC', async () => {
   assert.equal(chain.forecast30, 300);
   const five = r.projection.find((p) => p.label === 'Five piece');
   assert.equal(five.shipQty, null);
+  // every product line carries its ASIN (null only for a launch configured without one)
+  assert.ok(r.projection.filter((p) => !p.launch).every((p) => typeof p.asin === 'string' && p.asin.length > 0));
+});
+
+test('a launch with initial_units ships that many now, is marked a launch, and is not out of stock', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100 } });
+  const r = await run(['--monthly', '--month', '2026-10'], deps);
+  const first = r.projection.find((p) => p.label === 'First run');
+  assert.equal(first.launch, true);
+  assert.equal(first.shipQty, 100);
+  assert.equal(first.shipBy, '2026-11-11');
+  assert.equal(first.forecast30, null);
 });
 
 test('seasonal is cached and refreshed only when older than 35 days', async () => {

@@ -103,7 +103,21 @@
         "conditioning stick"
       ],
       "component_count": 1
+    },
+    "B08K85JN7M": {
+      "cogs": 9.85,
+      "price": 39.99,
+      "name": "5-piece set",
+      "contents": [
+        "conditioning oil",
+        "cleaning soap",
+        "salt scrub",
+        "conditioning stick",
+        "chain mail scrubber"
+      ],
+      "component_count": 5
     }
   },
-  "_contents_note": "Component lists supplied by the operator 2026-09-30 and cross-checked against live Amazon catalog titles via SP-API. B0984W3SG3 INCLUDES the conditioning stick, confirmed by the operator 2026-09-30 (their first list omitted it; the live title and the carton both have it). COGS values are unchanged and were supplied separately on 2026-09-03, so no contribution or break-even figure in any report moves as a result of this correction."
+  "_contents_note": "Component lists supplied by the operator 2026-09-30 and cross-checked against live Amazon catalog titles via SP-API. B0984W3SG3 INCLUDES the conditioning stick, confirmed by the operator 2026-09-30 (their first list omitted it; the live title and the carton both have it). COGS values are unchanged and were supplied separately on 2026-09-03, so no contribution or break-even figure in any report moves as a result of this correction.",
+  "_5pack_note": "B08K85JN7M added 2026-11-11 for the 5-piece launch. Contents from its Amazon SKU (soap_oil_stick_salt_stainless: soap, oil, stick, salt scrub, stainless chainmail). COGS 9.85 is DERIVED from the operator's 2026-10-11 component sheet (6-piece 10.12 less the brush), not separately supplied; replace it when Sean confirms."
 }
