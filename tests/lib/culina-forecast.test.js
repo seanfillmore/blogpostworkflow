@@ -67,7 +67,7 @@ test('inferStockoutDates without snapshots: 3+ zero run, item sells', () => {
   const s = inferStockoutDates(daily, {});
   assert.deepEqual([...s].sort(), ['2026-11-03', '2026-11-04', '2026-11-05']);
   const slow = [1, 0, 0, 0, 0, 0, 0, 0].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
-  assert.equal(inferStockoutDates(slow, {}).size, 7); // mean over non-zero days is 1
+  assert.equal(inferStockoutDates(slow, {}).size, 0); // averages 1/8 a day: quiet days are normal, not stockouts
   const none = [0, 0, 0, 0].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
   assert.equal(inferStockoutDates(none, {}).size, 0);
 });
@@ -117,8 +117,22 @@ test('shipPlan: zero on hand ships today', () => {
   assert.equal(p.shipBy, '2026-11-11');
 });
 
+test('inferStockoutDates: a slow seller (about 1 unit a week) gets no inferred stockouts and a slow pace', () => {
+  // The 8-piece set's real shape: one sale every 7 days for 63 days. The first rule
+  // averaged only the selling days (always >= 1 for whole units), marked every quiet
+  // week a stockout, and forecast 33 units a month instead of about 4.
+  const daily = Array.from({ length: 63 }, (_, i) => ({
+    date: new Date(Date.UTC(2026, 8, 1 + i)).toISOString().slice(0, 10),
+    units: i % 7 === 0 ? 1 : 0,
+  }));
+  const s = inferStockoutDates(daily, {});
+  assert.equal(s.size, 0);
+  const pace = dailyPace(daily, { stockoutDates: s });
+  assert.ok(pace > 0.05 && pace < 0.3, `pace ${pace}`);
+});
+
 test('inferStockoutDates: positive snapshot breaks a zero run', () => {
-  const daily = [5, 0, 0, 0, 0, 5].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
+  const daily = [9, 0, 0, 0, 0, 9].map((u, i) => ({ date: `2026-11-0${i + 1}`, units: u }));
   assert.equal(inferStockoutDates(daily, {}).size, 4);
   assert.equal(inferStockoutDates(daily, { '2026-11-04': 7 }).size, 0);
 });
