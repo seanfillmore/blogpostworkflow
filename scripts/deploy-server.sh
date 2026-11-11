@@ -11,7 +11,11 @@
 #   5. 3-way reconcile against the snapshot, joined to pm2 restart with ';'
 #      because exit 2 there means "classify a field", not "stay on old code"
 #   6. restart, then require seo-dashboard online on two readings 5 s apart
-#      with restart_time unchanged (not crash-looping), within ~20 s
+#      with restart_time unchanged (not crash-looping). Up to 20 attempts of
+#      1 s, plus 5 s for each online first reading: at most ~120 s.
+#
+# If anything fails after step 3 discarded the meta.json edits, the snapshot
+# is re-applied before exiting, so the box's machine-written fields survive.
 #
 # Exit codes: 0 deployed; 3 the pull never happened (server HEAD unchanged);
 # 1 pulled but the server is not healthy (or HEAD is not origin/main).
@@ -19,8 +23,13 @@ set -u
 cd "$(dirname "$0")/.." || exit 3
 
 HEAD_BEFORE=$(git rev-parse HEAD)
+SNAP=""
+CHECKED_OUT=0
 fail() {
   echo "deploy: $1"
+  if [ "$CHECKED_OUT" -eq 1 ] && [ -n "$SNAP" ]; then
+    node scripts/reconcile-post-metas.mjs --against "$SNAP" --apply
+  fi
   if [ "$(git rev-parse HEAD)" = "$HEAD_BEFORE" ]; then exit 3; fi
   exit 1
 }
@@ -37,6 +46,7 @@ SNAP=$(node scripts/reconcile-post-metas.mjs --snapshot | sed -n "s/.*→ //p")
 [ -n "$SNAP" ] || fail "meta.json snapshot failed"
 echo "snapshot: $SNAP"
 
+CHECKED_OUT=1
 git checkout -- "data/posts/*/meta.json" \
   && git pull --no-rebase \
   && node scripts/reconcile-post-metas.mjs --against "$SNAP" --apply; pm2 restart seo-dashboard

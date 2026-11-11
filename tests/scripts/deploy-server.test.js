@@ -58,6 +58,13 @@ test('online needs two readings 5 s apart with the same restart_time', () => {
   assert.match(code, /"\$SECOND" = "\$FIRST"/);
 });
 
+test('a failure after the meta.json checkout re-applies the snapshot before exiting', () => {
+  const fail = code.slice(code.indexOf('fail() {'), code.indexOf('}', code.indexOf('fail() {')));
+  assert.match(fail, /"\$CHECKED_OUT" -eq 1/);
+  assert.match(fail, /reconcile-post-metas\.mjs --against "\$SNAP" --apply/);
+  assert.ok(code.indexOf('CHECKED_OUT=1') < code.indexOf('git checkout -- "data/posts'));
+});
+
 test('runs from the repo root, never over ssh', () => {
   assert.match(code, /cd "\$\(dirname "\$0"\)\/\.\."/);
   assert.doesNotMatch(code, /ssh /);

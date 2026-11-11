@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  shipFix, parseTestSummary, compareTestRuns, pastMergeCutoff, deployServer, pushAuthEnv, SAFE_GIT,
+  shipFix, parseTestSummary, compareTestRuns, pastMergeCutoff, deployServer, pushAuthEnv, SAFE_GIT, dirtyPaths,
 } from '../../lib/fix-ship.js';
 
 const WT = '/srv/recap-fix/fix-foo';
@@ -28,9 +28,9 @@ const session = { verdict: 'fixed', summary: 'guarded the undefined x' };
 
 /** u: = as recapfix (runuser), r: = as root. SAFE_GIT flags stripped for readability. */
 function label(cmd, args) {
-  if (cmd === '/usr/sbin/runuser') return `u:${args.slice(args.indexOf('--') + 1).join(' ')}`;
-  const a = args.join(' ').replace(`${SAFE_GIT.join(' ')} `, '');
-  return `r:${cmd} ${a}`;
+  const strip = (a) => a.join(' ').replace(`${SAFE_GIT.join(' ')} `, '');
+  if (cmd === '/usr/sbin/runuser') return `u:${strip(args.slice(args.indexOf('--') + 1))}`;
+  return `r:${cmd} ${strip(args)}`;
 }
 
 function fakeExec(over = {}) {
@@ -45,6 +45,9 @@ function fakeExec(over = {}) {
       if (l.includes(needle)) return res(r);
     }
     if (l.includes('checkout --detach origin/main')) { detached = true; return res(); }
+    if (l === `u:git -C ${WT} status --porcelain --untracked-files=all --ignored`) {
+      return res({ stdout: '!! node_modules/a/index.js\n!! node_modules/b/package.json\n' });
+    }
     if (l === `u:git -C ${WT} checkout fix/recap-foo`) { detached = false; return res(); }
     if (l === 'u:npm test') return res(detached ? (over['npm test baseline'] || { stdout: BASELINE, code: 1 }) : (over['npm test fix'] || { stdout: GREEN, code: 1 }));
     if (l === `u:git -C ${WT} rev-parse origin/main`) return res({ stdout: 'basesha\n' });
@@ -143,6 +146,27 @@ test('pushAuthEnv builds the extraheader from the token', () => {
 });
 
 // ---- refusals ----
+
+test('failing tests are keyed file::name when TAP gives a location, else name', () => {
+  const t = [
+    'not ok 1 - same name', '  ---', "  location: '/w/tests/a.test.js:3:1'", '  ...',
+    'not ok 2 - same name', '  ---', "  location: '/w/tests/b.test.js:9:5'", '  ...',
+    'not ok 3 - no location', '  ---', '  duration_ms: 1', '  ...',
+    '# pass 1', '# fail 3', '# cancelled 0',
+  ].join('\n');
+  assert.deepEqual(parseTestSummary(t).failing, ['/w/tests/a.test.js::same name', '/w/tests/b.test.js::same name', 'no location']);
+  // same name, different file, is a NEW failure
+  const baseline = ['not ok 1 - same name', '  ---', "  location: '/w/tests/a.test.js:3:1'", '  ...', '# pass 1', '# fail 1', '# cancelled 0'].join('\n');
+  const fix = ['not ok 1 - same name', '  ---', "  location: '/w/tests/b.test.js:3:1'", '  ...', '# pass 1', '# fail 1', '# cancelled 0'].join('\n');
+  const r = compareTestRuns(baseline, fix);
+  assert.equal(r.ok, false);
+  assert.ok(r.problems.includes('new failing test: /w/tests/b.test.js::same name'));
+});
+
+test('dirtyPaths allows only ignored node_modules/ entries', () => {
+  assert.deepEqual(dirtyPaths('!! node_modules/x.js\n'), []);
+  assert.deepEqual(dirtyPaths('?? lib/new.js\n!! node_modules/x.js\n M lib/a.js\n!! data/cache.json\n'), ['lib/new.js', 'lib/a.js', 'data/cache.json']);
+});
 
 test('a session verdict other than fixed is refused with its summary, nothing executed', async () => {
   const { args, exec, gh } = base();
@@ -245,6 +269,68 @@ test('a shipped tip that is not the tested commit is refused', async () => {
   assert.equal(r.outcome, 'refused');
   assert.ok(r.problems.some((p) => /not the tested commit/.test(p)));
   assert.ok(!exec.calls.some((c) => c.l.includes(' push ')));
+});
+
+test('an untracked file before the baseline is refused with its path, before any test runs', async () => {
+  const exec = fakeExec({ 'status --porcelain': { stdout: '?? lib/helper.js\n!! node_modules/x.js\n' } });
+  const { args, gh } = base({ exec });
+  const r = await shipFix(args);
+  assert.equal(r.outcome, 'refused');
+  assert.ok(r.problems.some((p) => /before the baseline: lib\/helper\.js/.test(p)), JSON.stringify(r.problems));
+  assert.ok(!exec.calls.some((c) => c.l === 'u:npm test'));
+  assert.equal(gh.calls.length, 0);
+});
+
+test('a file written by the fix tests is refused', async () => {
+  const base0 = fakeExec();
+  let statusCalls = 0;
+  const exec = async (c, a, o) => {
+    if (label(c, a).includes('status --porcelain')) {
+      statusCalls += 1;
+      base0.calls.push({ cmd: c, args: a, opts: o, l: label(c, a) });
+      return { stdout: statusCalls === 3 ? '?? tests/tmp-output.json\n' : '', stderr: '', code: 0 };
+    }
+    return base0(c, a, o);
+  };
+  exec.calls = base0.calls;
+  const { args } = base({ exec });
+  const r = await shipFix(args);
+  assert.equal(r.outcome, 'refused');
+  assert.ok(r.problems.some((p) => /after the fix tests: tests\/tmp-output\.json/.test(p)));
+  assert.ok(!exec.calls.some((c) => c.l.includes(' push ')));
+});
+
+test('the clean-tree check runs before the baseline, after it, and after the fix tests', async () => {
+  const { args, exec } = base();
+  await shipFix(args);
+  const ls = exec.calls.map((c) => c.l);
+  const st = ls.map((l, i) => (l.includes('status --porcelain') ? i : -1)).filter((i) => i >= 0);
+  const tests = ls.map((l, i) => (l === 'u:npm test' ? i : -1)).filter((i) => i >= 0);
+  assert.equal(st.length, 3);
+  assert.ok(st[0] < tests[0] && tests[0] < st[1] && st[1] < tests[1] && tests[1] < st[2]);
+});
+
+test('every recapfix git call disables hooks and fsmonitor', async () => {
+  const { args, exec } = base();
+  await shipFix(args);
+  const uGit = exec.calls.filter((c) => c.cmd === '/usr/sbin/runuser' && c.args[c.args.indexOf('--') + 1] === 'git');
+  assert.ok(uGit.length >= 8);
+  for (const c of uGit) {
+    const a = c.args.slice(c.args.indexOf('--') + 2);
+    assert.deepEqual(a.slice(0, 4), [...SAFE_GIT], c.l);
+  }
+});
+
+test('root ship-clone git ignores system and global config; only the push carries the token header', async () => {
+  const { args, exec } = base({ rerun: async () => ({ ok: false, output: 'x' }) });
+  await shipFix(args);
+  const ship = exec.calls.filter((c) => c.cmd === 'git' && (c.args.includes(SHIP) || c.args.includes('clone')));
+  assert.ok(ship.length > 5);
+  for (const c of ship) {
+    assert.equal(c.opts?.env?.GIT_CONFIG_NOSYSTEM, '1', c.l);
+    assert.equal(c.opts?.env?.GIT_CONFIG_GLOBAL, '/dev/null', c.l);
+    assert.equal(!!c.opts.env.GIT_CONFIG_VALUE_0, c.l.includes(' push '), c.l);
+  }
 });
 
 // ---- isolation ----
@@ -394,7 +480,7 @@ test('a deploy that never pulled: revert merged to main but NOT deployed → not
   const { args, gh } = base({ deploy: async () => { n += 1; return { ok: false, pulled: false, output: 'gate exit 2', headBefore: 'abc1234' }; } });
   const r = await shipFix(args);
   assert.equal(r.outcome, 'not-deployed');
-  assert.equal(r.message, 'deploy never landed; main has fix + revert; server unchanged at abc1234');
+  assert.equal(r.message, 'deploy never landed; main has fix + revert; HEAD unchanged at abc1234');
   assert.equal(gh.calls.filter(([k]) => k === 'merge').length, 2);
   assert.equal(n, 1);
 });
@@ -408,7 +494,7 @@ test('a revert that cannot be merged throws, stating the real production state',
 test('a never-pulled deploy whose revert fails says the server is unchanged', async () => {
   const exec = fakeExec({ 'revert -m 1': { code: 1, stderr: 'conflict' } });
   const { args } = base({ exec, deploy: async () => ({ ok: false, pulled: false, output: '', headBefore: 'abc1234' }) });
-  await assert.rejects(shipFix(args), /NOT reverted; the server is unchanged at abc1234/);
+  await assert.rejects(shipFix(args), /NOT reverted; server HEAD unchanged at abc1234/);
 });
 
 test('a revert whose deploy fails throws, saying main is reverted', async () => {
