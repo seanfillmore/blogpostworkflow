@@ -1,0 +1,33 @@
+{
+  "ShipmentEventList": [
+    { "AmazonOrderId": "111-0000000-0000001", "ShipmentItemList": [
+      { "SellerSKU": "CUL-FAKE-A", "QuantityShipped": 1,
+        "ItemChargeList": [ { "ChargeType": "Principal", "ChargeAmount": { "CurrencyAmount": 20 } }, { "ChargeType": "Tax", "ChargeAmount": { "CurrencyAmount": 1.5 } } ],
+        "ItemFeeList": [ { "FeeType": "FBAPerUnitFulfillmentFee", "FeeAmount": { "CurrencyAmount": -4 } }, { "FeeType": "Commission", "FeeAmount": { "CurrencyAmount": -3 } } ],
+        "PromotionList": [ { "PromotionAmount": { "CurrencyAmount": -2 } } ] } ] },
+    { "AmazonOrderId": "111-0000000-0000002", "ShipmentItemList": [
+      { "SellerSKU": "CUL-FAKE-A", "QuantityShipped": 1,
+        "ItemChargeList": [ { "ChargeType": "Principal", "ChargeAmount": { "CurrencyAmount": 20 } } ],
+        "ItemFeeList": [ { "FeeType": "FBAPerUnitFulfillmentFee", "FeeAmount": { "CurrencyAmount": -4 } }, { "FeeType": "Commission", "FeeAmount": { "CurrencyAmount": -3 } } ],
+        "PromotionList": [] } ] },
+    { "AmazonOrderId": "111-0000000-0000003", "ShipmentItemList": [
+      { "SellerSKU": "RSC-FAKE-B", "QuantityShipped": 1,
+        "ItemChargeList": [ { "ChargeType": "Principal", "ChargeAmount": { "CurrencyAmount": 15 } } ],
+        "ItemFeeList": [ { "FeeType": "Commission", "FeeAmount": { "CurrencyAmount": -2.25 } } ],
+        "PromotionList": [] } ] }
+  ],
+  "RefundEventList": [
+    { "AmazonOrderId": "111-0000000-0000002", "ShipmentItemAdjustmentList": [
+      { "SellerSKU": "CUL-FAKE-A", "ItemChargeAdjustmentList": [ { "ChargeType": "Principal", "ChargeAmount": { "CurrencyAmount": -20 } } ], "ItemFeeAdjustmentList": [] } ] }
+  ],
+  "ServiceFeeEventList": [
+    { "FeeDescription": "inbound", "FeeList": [ { "FeeType": "FBAInboundTransportationFee", "FeeAmount": { "CurrencyAmount": -100 } } ] },
+    { "FeeDescription": "storage", "FeeList": [ { "FeeType": "FBAStorageFee", "FeeAmount": { "CurrencyAmount": -30 } } ] },
+    { "FeeDescription": "coupon", "FeeList": [ { "FeeType": "CouponParticipationFee", "FeeAmount": { "CurrencyAmount": -0.6 } } ] },
+    { "FeeDescription": "subscription", "FeeList": [ { "FeeType": "Subscription", "FeeAmount": { "CurrencyAmount": -39.99 } } ] }
+  ],
+  "AdjustmentEventList": [
+    { "AdjustmentType": "WAREHOUSE_DAMAGE", "AdjustmentAmount": { "CurrencyAmount": 9 } },
+    { "AdjustmentType": "SOMETHING_ELSE", "AdjustmentAmount": { "CurrencyAmount": 50 } }
+  ]
+}

@@ -249,12 +249,14 @@ fi
 # because cron rewrites them and they kept the server tree dirty; this set replaces
 # that redundancy. The change-log windows are the 28-day measurement record, the
 # A/B tracker is what lets meta-ab-checker evaluate and revert a live title, and the
-# performance queue and calendar are pending work. Each path is optional.
+# performance queue and calendar are pending work. data/reports/culina-report holds the
+# Culina report's forecasts/ and ads/ snapshots, which cannot be regenerated. Each path is optional.
 SERVER_STATE_PATHS=()
 for p in data/changes/events data/changes/windows data/reports/meta-ab/meta-ab-tracker.json \
          data/performance-queue data/calendar/calendar.json data/competitor-watcher \
          data/context/feedback.md data/context/feedback-manifest.json \
-         data/context/writer-standing-rules.md data/context/writer-standing-rules-changelog.json; do
+         data/context/writer-standing-rules.md data/context/writer-standing-rules-changelog.json \
+         data/reports/culina-report; do
   [[ -e "$ROOT/$p" ]] && SERVER_STATE_PATHS+=("$p")
 done
 if (( ${#SERVER_STATE_PATHS[@]} )); then
