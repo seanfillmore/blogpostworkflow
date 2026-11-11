@@ -63,5 +63,99 @@ test('gatherGrowthInputs lists stale and missing sources', () => {
   assert.match(m.quick_wins, /stale/);
   assert.equal(m.seo_impact || m['seo-impact'], 'missing');
   assert.equal(m.ctr_program, 'missing');
-  assert.equal(m.commercial_cvr, 'not computed');
+  assert.match(m.commercial_cvr, /not computed/);
+});
+
+// ---- fix round 1 ----
+import { SHOPIFY_MONTHLY_REVENUE } from '../../lib/business-baseline.js';
+
+const today = () => new Date().toISOString().slice(0, 10);
+const daysAgo = (n) => new Date(Date.now() - n * 86_400_000).toISOString().slice(0, 10);
+const mkroot = () => mkdtempSync(join(tmpdir(), 'growth-'));
+const put = (root, rel, obj) => { mkdirSync(join(root, rel, '..'), { recursive: true }); writeFileSync(join(root, rel), JSON.stringify(obj)); };
+
+test('fresh seo-impact report yields a cluster efficiency ranking and not_converting', () => {
+  const root = mkroot();
+  put(root, 'data/reports/seo-impact/latest.json', {
+    generated_at: new Date().toISOString(),
+    clusters: [
+      { cluster: 'lotion', clicks: 106, pages: 39, entry_page_organic_revenue: 666.73 },
+      { cluster: 'toothpaste', clicks: 640, pages: 24, entry_page_organic_revenue: 18.99 },
+    ],
+    clusters_product_wide: [
+      { cluster: 'lotion', product_revenue_all_channels: 1757.1, entry_page_organic_revenue: 666.73 },
+      { cluster: 'toothpaste', product_revenue_all_channels: 71.5, entry_page_organic_revenue: 18.99 },
+    ],
+    cluster_product_meta: { wide_window: { days: 90 }, wide_orders_all_channels: 50 },
+    not_converting: [{ page: '/blogs/news/x', clicks: 40 }],
+    totals: { organic_revenue: 363.55 },
+  });
+  const i = gatherGrowthInputs(root);
+  assert.ok(i.cluster_efficiency, JSON.stringify(i.missing));
+  const rows = i.cluster_efficiency.ranking;
+  assert.equal(rows[0].cluster, 'lotion');
+  assert.equal(rows[0].rank, 1);
+  assert.equal(rows[1].clicks, 640);
+  assert.equal(rows[1].product_revenue, 71.5);
+  assert.equal(i.seo_impact.not_converting.length, 1);
+});
+
+test('unavailable ranking is listed in missing with a reason', () => {
+  const root = mkroot();
+  put(root, 'data/reports/seo-impact/latest.json', { generated_at: new Date().toISOString(), clusters: [], totals: {} });
+  const i = gatherGrowthInputs(root);
+  assert.equal(i.cluster_efficiency, undefined);
+  const m = i.missing.find((x) => x.source === 'cluster_efficiency');
+  assert.ok(m && m.reason);
+});
+
+test('number check ignores timestamps, dates and ids; applies to move', () => {
+  const inp = { seo_impact: { generated_at: '2026-11-10T05:06:07Z', id: 5099369750, resourceName: 'customers/5099369750/campaigns/24390990425' }, spend: 12.5, missing: [] };
+  const t = JSON.stringify(inp);
+  const p = (rec) => growthRecProblems({ ...good('x'), ...rec }, t, inp);
+  assert.ok(p({ evidence: 'It has 5 pages.' }).some((x) => /\b5\b/.test(x)));
+  assert.ok(p({ evidence: 'Seen in 2026.' }).some((x) => /2026/.test(x)));
+  assert.ok(p({ evidence: 'Cost 24390990425.' }).length);
+  assert.ok(p({ move: 'Fix the 7 worst pages', evidence: 'Spend was $12.50.' }).some((x) => /\b7\b/.test(x)));
+  assert.deepEqual(p({ evidence: 'Spend was $12.50.' }), []);
+});
+
+test('google ads: sums the last 7 days by date field and labels the window', () => {
+  const root = mkroot();
+  const day = (d, spend) => ({ date: d, spend, clicks: 10, conversions: 1, revenue: 20, campaigns: [{ name: 'A', spend }, { name: 'B', spend: 0.1 }] });
+  for (const [d, s] of [[today(), 3], [daysAgo(1), 2], [daysAgo(2), 1], [daysAgo(20), 99]]) put(root, `data/snapshots/google-ads/${d}.json`, day(d, s));
+  const g = gatherGrowthInputs(root).google_ads;
+  assert.equal(g.days, 3);
+  assert.equal(g.spend, 6);
+  assert.equal(g.clicks, 30);
+  assert.match(g.window, /^3 days ending /);
+  assert.equal(g.top_campaigns[0].name, 'A');
+});
+
+test('prompt states each input window', async () => {
+  const c = fake([good('A'), good('B')]);
+  await generateGrowthRecs({ inputs, client: c });
+  assert.match(c.calls[0].system, /window/i);
+});
+
+test('dollar ranges are capped at 10x monthly revenue and may not be negative', () => {
+  const t = JSON.stringify(inputs);
+  const big = { ...good('x'), dollars_high: SHOPIFY_MONTHLY_REVENUE * 10 + 1 };
+  assert.ok(growthRecProblems(big, t).length);
+  assert.ok(growthRecProblems({ ...good('x'), dollars_low: -1 }, t).length);
+  assert.deepEqual(growthRecProblems({ ...good('x'), dollars_high: SHOPIFY_MONTHLY_REVENUE * 10 }, t), []);
+});
+
+test('first-pass problems stay in dropped, flagged fixed_on_retry when the retry fixes them', async () => {
+  const bad = good('Rewrite title', 'It gets 9,999 impressions.');
+  const r = await generateGrowthRecs({ inputs, client: fake([bad, good('A'), good('B')], [good('Rewrite title'), good('A'), good('B')]) });
+  assert.equal(r.recs.length, 3);
+  assert.equal(r.dropped.length, 1);
+  assert.equal(r.dropped[0].fixed_on_retry, true);
+  assert.match(r.dropped[0].reason, /9,999/);
+});
+
+test('commercial cvr reason says why', () => {
+  const i = gatherGrowthInputs(mkroot());
+  assert.match(i.missing.find((x) => x.source === 'commercial_cvr').reason, /needs GA4 network read/);
 });
