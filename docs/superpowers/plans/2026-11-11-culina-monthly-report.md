@@ -105,10 +105,12 @@ test('no cc and no html keeps the old payload shape', async () => { /* body.cc =
   - `seasonalIndex(monthlySearches: {year, month, search_volume}[][]) -> Record<1..12, number>` (sum across keywords, divided by the 12-month mean; missing data → all 1)
   - `forecastUnits(pace, startDate, days, seasonal) -> number` (sum of pace × seasonal[month] per day)
   - `shipPlan({ pace, onHand, today, seasonal, config }) -> { coverDays, forecast30, forecast60, forecast90, shipBy: 'YYYY-MM-DD'|null, shipQty: number }`
+  - `inferStockoutDates(daily, snapshots: Record<date, number /*fba sellable*/>) -> Set<string>`: a date with a snapshot is a stockout when its FBA sellable is 0; dates with no snapshot are stockouts when they sit in a run of 3+ consecutive zero-unit days and the item's mean over non-zero days is at least 1 unit/day.
+  - `componentPlan(itemPlans: [{asin, pace, onHand, shipBy, shipQty}], cogsTable, config) -> [{ name, pace, onHand, coverDays, shipQty, sourced, orderBy: 'YYYY-MM-DD'|null }]`: pace, onHand and shipQty are summed over every item containing the component (one per unit); coverDays = onHand ÷ pace; for sourced components orderBy = earliest `shipBy` among items containing it minus `sourced_lead_time_days` (45), clamped to today; made-in-house components have orderBy null.
 
 `shipBy` is the day cover falls below 90 days minus 14; if that is before today, it is today. `shipQty` = 120 days of forecast demand minus the stock forecast to remain on the arrival day (`shipBy` + 14), floored at 0. `pace === null` → all forecast fields `null`, `shipBy` null.
 
-- [ ] **Step 1: Failing tests** with exact values: pace 10/day flat seasonal, onHand 600, today 2026-12-10 → `coverDays` 60, `shipBy` `'2026-12-10'` (90-day floor already crossed; clamp to today), `shipQty` 740 (1200 − the 460 left on arrival 2026-12-24). Pace 10, onHand 1500 → `coverDays` 150, `shipBy` `'2027-01-25'` (cover hits 90 on 2027-02-08, minus 14), `shipQty` 300 (1200 − the 900 left on arrival 2027-02-08). Seasonal index where December volume is double the mean → `forecast30` from 2026-12-01 is 600 for pace 10. `dailyPace` ignores days in `stockoutDates`. Empty history → `null`.
+- [ ] **Step 1: Failing tests** (also cover `inferStockoutDates` with and without snapshots, and `componentPlan`: two kits each containing `brush` with shipBy 2027-01-25 and 2027-02-10 → brush orderBy `'2026-12-11'`) with exact values: pace 10/day flat seasonal, onHand 600, today 2026-12-10 → `coverDays` 60, `shipBy` `'2026-12-10'` (90-day floor already crossed; clamp to today), `shipQty` 740 (1200 − the 460 left on arrival 2026-12-24). Pace 10, onHand 1500 → `coverDays` 150, `shipBy` `'2027-01-25'` (cover hits 90 on 2027-02-08, minus 14), `shipQty` 300 (1200 − the 900 left on arrival 2027-02-08). Seasonal index where December volume is double the mean → `forecast30` from 2026-12-01 is 600 for pace 10. `dailyPace` ignores days in `stockoutDates`. Empty history → `null`.
 - [ ] **Step 2: Run** — FAIL.
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** — PASS.
@@ -139,7 +141,8 @@ Rules: `onHand === 0` → `out_of_stock`, alerted on the day it first happens an
 **Interfaces:**
 - Produces:
   - `assignCampaignBrand(name, culinaAsins: Set, rscAsins: Set) -> 'culina'|'rsc'|null` (ASIN in name first, then product words: culina words `cast iron|scrub|soap|oil|seasoning|stick|3 pack|2 pack|conditioner`; rsc words `lotion|deodorant|toothpaste|lip balm|cream`)
-  - `monthPnl({ financeEvents, culinaSkus: Set, cogsTable, skuToAsin, ads: { sp, sb, sd } | null }) -> { sales, fba, referral, promotions, refunds, cogs, contribution, adSpend: {sp, sb, sd, total} | null, freight, storage, couponFees, reimbursements, net | null, unassignedCampaigns: string[], unitShare }`
+  - Ads rows are the raw Ads API report rows from Task 6: SP rows carry `campaignName`, `advertisedAsin`, `advertisedSku`, `cost`; SB/SD rows carry `campaignName`, `cost`. SP spend is Culina when `advertisedAsin` is a Culina ASIN.
+  - `monthPnl({ financeEvents, culinaSkus: Set, cogsTable, skuToAsin, culinaAsins: Set, rscAsins: Set, ads: { sp, sb, sd } | null }) -> { sales, fba, referral, promotions, refunds, cogs, contribution, adSpend: {sp, sb, sd, total} | null, freight, storage, couponFees, reimbursements, net | null, unassignedCampaigns: string[], unitShare }`
   - `comparePnl(curr, prev) -> rows [{ line, curr, prev, change }]`
 
 Account-level service fees (inbound transport, placement, AWD transport/processing/storage, FBA storage, coupon/deal fees) and reimbursement adjustments are multiplied by `unitShare` = Culina units shipped ÷ all units shipped in the same events. Fee-type mapping: freight = `FBAInboundTransportationFee`, `FBAInboundConvenienceFee`, `AmazonUpstreamStorageTransportationFee`, `AWDMcdTransportationFee`; storage = `FBAStorageFee`, `FBALongTermStorageFee`, `STARStorageFee`, `AmazonUpstreamProcessingFee`; coupon = `CouponParticipationFee`, `CouponPerformanceFee`, `DealParticipationFee`, `DealPerformanceFee`; reimbursements = `AdjustmentEventList` types `WAREHOUSE_DAMAGE`, `WAREHOUSE_LOST`, `REVERSAL_REIMBURSEMENT`, `MISSING_FROM_INBOUND`, `MISSING_FROM_INBOUND_CLAWBACK`, `COMPENSATED_CLAWBACK`, `FREE_REPLACEMENT_REFUND_ITEMS`. `ads === null` → `adSpend` and `net` null.
@@ -157,7 +160,7 @@ Account-level service fees (inbound transport, placement, AWD transport/processi
 **Interfaces:**
 - Consumes: SP-API `request`, Ads `runReport`, `getSearchVolume`.
 - Produces (each takes `deps` for injection; all return plain data):
-  - `fetchCulinaListings(deps) -> [{ asin, sku, title }]` from FBA summaries (`isCulinaTitle`)
+  - `fetchListings(deps) -> [{ asin, sku, title, culina: boolean }]` from FBA summaries, every SKU on the account, `culina` from `isCulinaTitle` (Task 5 needs the RSC ASINs too)
   - `fetchDailyUnits(deps, asins, days = 120) -> Record<asin, {date, units}[]>` (orderMetrics, `granularity: 'Day'`, `America/Los_Angeles`, one ASIN per call, 2.5 s between calls, retry 429 up to 5×)
   - `fetchMonthlySales(deps, asins, fromMonth = '2026-03') -> [{ month, sales, units }]`
   - `fetchStock(deps) -> Record<asin, { fba, awd, inbound }>` (FBA summaries with details + AWD inventory, by SKU → ASIN)
@@ -177,7 +180,7 @@ Account-level service fees (inbound transport, placement, AWD transport/processi
 
 **Interfaces:**
 - Produces: `renderMonthly(model) -> { subject, html, text }`, `renderAlert(rows) -> { subject, html, text }`.
-- `model = { month, projection: [{label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty}], components: [{name, shipQty, sourced, orderBy}], forecastVsActual: [...]|null, monthlySales: [{month, sales}], pnl: comparePnl rows, unassignedCampaigns, sourceErrors: string[], goal: {lastMonth, target: [75000,100000], neededMonthlyGrowthPct} }`
+- `model = { month, projection: [{label, onHand, coverDays, forecast30, forecast60, forecast90, shipBy, shipQty}], components: [{name, shipQty, sourced, orderBy}], forecastVsActual: [{label, forecast30, actual}]|null, monthlySales: [{month, sales}], pnl: comparePnl rows, unassignedCampaigns, sourceErrors: string[], goal: {lastMonth, target: [75000,100000], neededMonthlyGrowthPct} }`
 
 Section order as in the spec: projection, forecast vs actual, monthly sales chart (HTML table bars, no SVG), P&L last month vs prior, goal progress. Travis reads in **Hushmail webmail and Apple Mail on iPad**: inline CSS only, no remote images (Hushmail blocks them), no web fonts (system font stack), single column up to 680px wide with wide tables in a horizontally scrolling wrapper. Subject: `Culina monthly report: <Month YYYY>`; alert subject: `Culina stock alert: <n> item(s) low`.
 
@@ -195,7 +198,8 @@ Add to Step 1: html contains no `<img` with an `http` src and no `fonts.googleap
 
 **Interfaces:**
 - Consumes: Tasks 1-7.
-- CLI: `node agents/culina-report/index.js --monthly [--month YYYY-MM] [--apply]` and `--alerts [--apply]`. Without `--apply`: writes `data/reports/culina-report/preview-<mode>.html`, prints a summary, sends nothing.
+- CLI: `node agents/culina-report/index.js --monthly [--month YYYY-MM] [--apply] [--to <addr>]` and `--alerts [--apply] [--to <addr>]`. `--to` sends only to that address with no CC (for test sends).
+- Forecast vs actual: actual = units sold in the report month per ASIN (from Task 6 daily units), compared with `forecasts/<month>.json` saved by the previous monthly run. Without `--apply`: writes `data/reports/culina-report/preview-<mode>.html`, prints a summary, sends nothing.
 - State: `forecasts/YYYY-MM.json` (the 30-day forecast per ASIN made at the monthly run), `inventory/YYYY-MM-DD.json` (daily stock snapshot, written by `--alerts`, used for stockout days), `alerts-state.json`. Unreadable state throws rather than resetting.
 - `--monthly` default month = previous calendar month (UTC). Finance window = that month; ads window = that month (two windows if > 31 days is impossible, so one).
 - Ends with one deferred `notify({ category: 'amazon', status: 'success'|'info' })` row naming what was sent; `catch` → `status: 'error'`.
