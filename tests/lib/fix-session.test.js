@@ -116,3 +116,26 @@ test('captured stdout keeps only the 2 MB tail', async () => {
   const r = await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl: fakeSpawn({ stdout: big }), token: 't' });
   assert.equal(r.summary, 'tail kept');
 });
+
+test('I6: every createFixCheckout step passes cwd, the minimal recapfix env and a timeout', async () => {
+  const cmds = [];
+  const exec = async (cmd, args, opts) => { cmds.push({ args, opts }); return { stdout: '', stderr: '', code: 0 }; };
+  const p = await createFixCheckout('x', { exec, baseDir: '/srv/recap-fix' });
+  const env = { HOME: '/home/recapfix', PATH: '/usr/local/bin:/usr/bin:/bin' };
+  for (const c of cmds) {
+    assert.deepEqual(c.opts.env, env, c.args.join(' '));
+    assert.ok(Number.isFinite(c.opts.timeout) && c.opts.timeout > 0, c.args.join(' '));
+    assert.ok(c.opts.cwd, c.args.join(' '));
+  }
+  assert.equal(cmds[0].opts.cwd, '/srv/recap-fix', 'clone runs from baseDir, never /root/seo-claude');
+  assert.equal(cmds[0].opts.timeout, 10 * 60_000);
+  for (const c of cmds.slice(1)) assert.equal(c.opts.cwd, p);
+  assert.equal(cmds[2].opts.timeout, 60_000);
+  assert.equal(cmds[3].opts.timeout, 60_000);
+  assert.equal(cmds[4].opts.timeout, 10 * 60_000);
+});
+
+test('I6: a step that times out fails createFixCheckout and says so', async () => {
+  const exec = async () => ({ stdout: '', stderr: '', code: null, timedOut: true });
+  await assert.rejects(() => createFixCheckout('x', { exec }), /timed out/);
+});

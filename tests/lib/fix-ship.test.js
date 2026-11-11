@@ -17,6 +17,7 @@ const GOOD_PATCH = [
   'diff --git a/lib/foo.js b/lib/foo.js', '--- a/lib/foo.js', '+++ b/lib/foo.js', '@@ -1 +1 @@', '-const x = 1;', '+const x = 2;',
   'diff --git a/tests/lib/foo.test.js b/tests/lib/foo.test.js', '--- a/tests/lib/foo.test.js', '+++ b/tests/lib/foo.test.js', '@@ -0,0 +1 @@', "+test('x', () => {});",
 ].join('\n');
+const NPM_TEST = 'u:npm test -- --test-reporter=tap';
 const tap = (pass, fail, cancelled, failing = []) =>
   `TAP version 13\nok 1 - a\n${failing.map((n, i) => `not ok ${i + 2} - ${n}\n`).join('')}# tests ${pass + fail}\n# pass ${pass}\n# fail ${fail}\n# cancelled ${cancelled}\n`;
 const KNOWN = ['extractRecipe stays linear', 'publish target ships only the new template'];
@@ -49,7 +50,7 @@ function fakeExec(over = {}) {
       return res({ stdout: '!! node_modules/a/index.js\n!! node_modules/b/package.json\n' });
     }
     if (l === `u:git -C ${WT} checkout fix/recap-foo`) { detached = false; return res(); }
-    if (l === 'u:npm test') return res(detached ? (over['npm test baseline'] || { stdout: BASELINE, code: 1 }) : (over['npm test fix'] || { stdout: GREEN, code: 1 }));
+    if (l === NPM_TEST) return res(detached ? (over['npm test baseline'] || { stdout: BASELINE, code: 1 }) : (over['npm test fix'] || { stdout: GREEN, code: 1 }));
     if (l === `u:git -C ${WT} rev-parse origin/main`) return res({ stdout: 'basesha\n' });
     if (l === `u:git -C ${WT} rev-parse HEAD`) return res({ stdout: 'testedsha\n' });
     if (l === `r:git -C ${SHIP} rev-parse fix/recap-foo`) return res({ stdout: 'testedsha\n' });
@@ -190,11 +191,11 @@ test('baseline runs on detached origin/main before the rebase, then the branch i
   const ls = exec.calls.map((c) => c.l);
   const i = (s) => ls.indexOf(s);
   assert.ok(i(`u:git -C ${WT} fetch origin`) < i(`u:git -C ${WT} checkout --detach origin/main`));
-  assert.ok(i(`u:git -C ${WT} checkout --detach origin/main`) < i('u:npm test'));
-  assert.ok(i('u:npm test') < i(`u:git -C ${WT} checkout fix/recap-foo`));
+  assert.ok(i(`u:git -C ${WT} checkout --detach origin/main`) < i(NPM_TEST));
+  assert.ok(i(NPM_TEST) < i(`u:git -C ${WT} checkout fix/recap-foo`));
   assert.ok(i(`u:git -C ${WT} checkout fix/recap-foo`) < i(`u:git -C ${WT} rebase origin/main`));
-  assert.ok(i(`u:git -C ${WT} rebase origin/main`) < ls.lastIndexOf('u:npm test'));
-  assert.equal(ls.filter((l) => l === 'u:npm test').length, 2);
+  assert.ok(i(`u:git -C ${WT} rebase origin/main`) < ls.lastIndexOf(NPM_TEST));
+  assert.equal(ls.filter((l) => l === NPM_TEST).length, 2);
 });
 
 test('a cancelled test on the fix run is refused, nothing pushed', async () => {
@@ -221,7 +222,7 @@ test('npm test runs with a timeout, and a timeout is refused', async () => {
   const r = await shipFix({ ...args, testTimeoutMs: 1234 });
   assert.equal(r.outcome, 'refused');
   assert.ok(r.problems.some((p) => /timed out/.test(p)));
-  for (const c of exec.calls.filter((x) => x.l === 'u:npm test')) {
+  for (const c of exec.calls.filter((x) => x.l === NPM_TEST)) {
     assert.equal(c.opts.timeout, 1234);
     assert.equal(c.opts.cwd, WT);
     assert.deepEqual(c.opts.env, { HOME: '/home/recapfix', PATH: '/usr/local/bin:/usr/bin:/bin' });
@@ -277,7 +278,7 @@ test('an untracked file before the baseline is refused with its path, before any
   const r = await shipFix(args);
   assert.equal(r.outcome, 'refused');
   assert.ok(r.problems.some((p) => /before the baseline: lib\/helper\.js/.test(p)), JSON.stringify(r.problems));
-  assert.ok(!exec.calls.some((c) => c.l === 'u:npm test'));
+  assert.ok(!exec.calls.some((c) => c.l === NPM_TEST));
   assert.equal(gh.calls.length, 0);
 });
 
@@ -305,7 +306,7 @@ test('the clean-tree check runs before the baseline, after it, and after the fix
   await shipFix(args);
   const ls = exec.calls.map((c) => c.l);
   const st = ls.map((l, i) => (l.includes('status --porcelain') ? i : -1)).filter((i) => i >= 0);
-  const tests = ls.map((l, i) => (l === 'u:npm test' ? i : -1)).filter((i) => i >= 0);
+  const tests = ls.map((l, i) => (l === NPM_TEST ? i : -1)).filter((i) => i >= 0);
   assert.equal(st.length, 3);
   assert.ok(st[0] < tests[0] && tests[0] < st[1] && st[1] < tests[1] && tests[1] < st[2]);
 });
@@ -394,7 +395,7 @@ test('happy path: fetch, baseline, rebase, test, push, PR, merge, deploy, rerun 
   const steps = [
     seq.indexOf(`u:git -C ${WT} fetch origin`),
     seq.indexOf(`u:git -C ${WT} rebase origin/main`),
-    seq.lastIndexOf('u:npm test'),
+    seq.lastIndexOf(NPM_TEST),
     seq.findIndex((l) => l.includes(' push ')),
     seq.indexOf('PR'), seq.indexOf('MERGE'), seq.indexOf('DEPLOY'), seq.indexOf('RERUN'),
   ];
@@ -520,4 +521,53 @@ test('deployServer reads HEAD, runs the script in prodRoot, maps exit 3 to pulle
   assert.equal(never.ok, false); assert.equal(never.pulled, false);
   const unhealthy = await deployServer({ exec: mk(1), prodRoot: '/p' });
   assert.equal(unhealthy.ok, false); assert.equal(unhealthy.pulled, true);
+});
+
+// ---- final review fixes ----
+
+test('I7: npm test is run with the TAP reporter explicitly (Node >= 23 prints spec by default)', async () => {
+  const { args, exec } = base();
+  await shipFix(args);
+  const t = exec.calls.filter((c) => c.l === NPM_TEST);
+  assert.equal(t.length, 2);
+  for (const c of t) assert.deepEqual(c.args.slice(c.args.indexOf('--') + 1), ['npm', 'test', '--', '--test-reporter=tap']);
+});
+
+test('I6: every exec call in shipFix passes a timeout, on the happy path and the revert path', async () => {
+  for (const rerun of [async () => ({ ok: true, output: '' }), async () => ({ ok: false, output: 'x' })]) {
+    const { args, exec } = base({ rerun });
+    await shipFix(args);
+    assert.ok(exec.calls.length > 20);
+    for (const c of exec.calls) assert.ok(Number.isFinite(c.opts?.timeout) && c.opts.timeout > 0, c.l);
+    for (const c of exec.calls.filter((x) => /(^| )(fetch|push|clone) /.test(x.l))) assert.equal(c.opts.timeout, 5 * 60_000, c.l);
+  }
+});
+
+test('I6: a git fetch that times out is refused, stating it timed out', async () => {
+  const exec = fakeExec({ [`u:git -C ${WT} fetch origin`]: { code: null, timedOut: true } });
+  const { args } = base({ exec });
+  const r = await shipFix(args);
+  assert.equal(r.outcome, 'refused');
+  assert.match(r.problems[0], /git fetch failed.*timed out/);
+});
+
+test('minor: every recapfix process is reaped (as recapfix) after each test run', async () => {
+  const { args, exec } = base();
+  await shipFix(args);
+  const ls = exec.calls.map((c) => c.l);
+  const tests = ls.map((l, i) => (l === NPM_TEST ? i : -1)).filter((i) => i >= 0);
+  const reaps = ls.map((l, i) => (l === 'u:pkill -u recapfix' ? i : -1)).filter((i) => i >= 0);
+  assert.equal(reaps.length, 2);
+  assert.ok(tests[0] < reaps[0] && reaps[0] < tests[1] && tests[1] < reaps[1]);
+});
+
+test('I6: deployServer runs git with a 5-minute and the deploy script with a 15-minute timeout; a timeout is a failure', async () => {
+  const calls = [];
+  const exec = async (c, a, o) => { calls.push([c, a, o]); return c === 'git' ? { stdout: 'h1\n', code: 0 } : { stdout: '', stderr: '', code: null, timedOut: true }; };
+  const r = await deployServer({ exec, prodRoot: '/p' });
+  assert.equal(calls[0][2].timeout, 5 * 60_000);
+  assert.equal(calls[1][2].timeout, 15 * 60_000);
+  assert.equal(r.ok, false);
+  assert.equal(r.pulled, true, 'state unknown after a timeout: treat as pulled so the revert is deployed');
+  assert.match(r.output, /timed out after 15 minutes/);
 });
