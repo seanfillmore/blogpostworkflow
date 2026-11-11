@@ -820,3 +820,14 @@ test('minor: real reapFixUser and listFixCheckouts exist in the production wirin
   assert.match(src, /async listFixCheckouts\(\)/);
   assert.match(src, /postArticleId: async \(slug\) => getPostMeta\(slug\)\?\.shopify_article_id/);
 });
+
+test('M4 + minor: CLAUDE.md states no dry re-run as recapfix, all of config/ forbidden, and every guarded file', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { GUARD_FILES, GUARD_PREFIXES, FORBIDDEN_PATHS } = await import('../../lib/fix-diff-rules.js');
+  const doc = readFileSync('CLAUDE.md', 'utf8');
+  assert.ok(!doc.includes('(rebase, `npm test`, the dry re-run) runs as `recapfix`'));
+  assert.match(doc, /There is no dry re-run as `recapfix`/);
+  assert.ok(FORBIDDEN_PATHS.includes('config/'));
+  assert.match(doc, /anything under `config\/` \(all of it, not only the facts files\)/);
+  for (const f of [...GUARD_FILES, ...GUARD_PREFIXES]) assert.ok(doc.includes(`\`${f}\``), f);
+});
