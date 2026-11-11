@@ -607,3 +607,28 @@ test('flops that are all automated stay out of the body', () => {
   const html = buildDigestHtml('2026-10-02', [], [], [], null, pp, null, [], 'http://x');
   assert.doesNotMatch(html, /Locked Winner Only/);
 });
+
+// ── collectDigestInputs: ONE item list for the recap and the recap reviewer ──
+
+test('collectDigestInputs returns the recap inputs, with needs_decision rows stamped by source', async () => {
+  const { collectDigestInputs, NEEDS_DECISION_REPORTS } = await import('../../agents/daily-summary/index.js');
+  const out = collectDigestInputs({ now: new Date('2026-11-11T11:05:00Z'), readLastSent: () => '2026-11-10T13:00:00.000Z' });
+  for (const k of ['entries', 'laterRows', 'healthIssues', 'postPerformance', 'blockedPosts', 'needsDecision']) {
+    assert.ok(k in out, k);
+  }
+  assert.ok(Array.isArray(out.entries) && Array.isArray(out.needsDecision));
+  for (const d of out.needsDecision) assert.match(d.source, /^agents\/[^/]+\/index\.js$/);
+  assert.deepEqual(NEEDS_DECISION_REPORTS.map((r) => r.source), [
+    'agents/queue-autoapply/index.js', 'agents/indexing-fixer/index.js',
+    'agents/content-strategist/index.js', 'agents/amazon-account-health/index.js',
+  ]);
+});
+
+test('stampDecisionRows stamps the report source and keeps an existing one', async () => {
+  const { stampDecisionRows } = await import('../../agents/daily-summary/index.js');
+  assert.deepEqual(
+    stampDecisionRows({ needs_decision: [{ slug: 'a' }, { slug: 'b', source: 'x' }] }, 'agents/q/index.js'),
+    [{ slug: 'a', source: 'agents/q/index.js' }, { slug: 'b', source: 'x' }],
+  );
+  assert.deepEqual(stampDecisionRows(null, 's'), []);
+});

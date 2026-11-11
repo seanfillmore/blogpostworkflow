@@ -139,7 +139,7 @@ function isSilentSuccess(entry) {
  *     reports its own outcome into this same digest. The dashboard still shows
  *     them (it passes includeLive: true) — visibility without a daily alarm.
  */
-function findBlockedPosts() {
+export function findBlockedPosts() {
   const blocked = [];
 
   for (const slug of listAllSlugs()) {
@@ -698,12 +698,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
   // for Amazon.ca. Same row shape.
   let decisionSection = '';
   try {
-    const stuck = [
-      join(dataRoot, 'data', 'reports', 'queue-autoapply', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'indexing-fixer', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'content-strategist', 'latest.json'),
-      join(dataRoot, 'data', 'reports', 'amazon-account-health', 'latest.json'),
-    ].flatMap((p) => {
+    const stuck = NEEDS_DECISION_REPORTS.map((r) => join(dataRoot, ...r.path)).flatMap((p) => {
       if (!existsSync(p)) return [];
       try {
         const report = JSON.parse(readFileSync(p, 'utf8'));
@@ -1032,7 +1027,7 @@ export function buildDigestHtml(targetDate, entries, pipelineImages, blockedPost
  * digest. Catches the *silent* failure mode error-driven alerts miss — a cron
  * that stops firing produces no error, just quietly stale data.
  */
-function checkSystemHealth() {
+export function checkSystemHealth() {
   const today = new Date().toISOString().slice(0, 10);
 
   // Each feed is written daily, but several name their file by the DATA date,
@@ -1143,14 +1138,43 @@ function writeLastSent(until) {
   catch (err) { log(`could not record the digest window end: ${err.message}`); }
 }
 
-async function main() {
-  // Default to yesterday's date (runs at 5 AM, reporting on previous day)
-  const dateArg = process.argv.indexOf('--date');
-  let targetDate;
-  if (dateArg !== -1 && process.argv[dateArg + 1]) {
-    targetDate = process.argv[dateArg + 1];
-  } else {
-    const yesterday = new Date();
+// The four reports whose `needs_decision[]` rows the recap renders, and the
+// entry script that wrote each. Rows carry no `source` of their own, so it is
+// stamped from the file they came from: the recap reviewer routes on it (an
+// amazon-account-health row is Sean's; a queue row is regenerated).
+export const NEEDS_DECISION_REPORTS = Object.freeze([
+  { path: ['data', 'reports', 'queue-autoapply', 'latest.json'], source: 'agents/queue-autoapply/index.js' },
+  { path: ['data', 'reports', 'indexing-fixer', 'latest.json'], source: 'agents/indexing-fixer/index.js' },
+  { path: ['data', 'reports', 'content-strategist', 'latest.json'], source: 'agents/content-strategist/index.js' },
+  { path: ['data', 'reports', 'amazon-account-health', 'latest.json'], source: 'agents/amazon-account-health/index.js' },
+]);
+
+export function stampDecisionRows(report, source) {
+  return (Array.isArray(report?.needs_decision) ? report.needs_decision : [])
+    .map((d) => ({ ...d, source: d?.source || source }));
+}
+
+function loadNeedsDecision(dataRoot = ROOT) {
+  return NEEDS_DECISION_REPORTS.flatMap((r) => {
+    const p = join(dataRoot, ...r.path);
+    if (!existsSync(p)) return [];
+    try { return stampDecisionRows(JSON.parse(readFileSync(p, 'utf8')), r.source); } catch { return []; }
+  });
+}
+
+/**
+ * Everything the recap reads, gathered ONCE so the recap reviewer
+ * (agents/recap-reviewer) and the recap work from the same item list rather
+ * than two copies that drift.
+ *
+ * @param {{ now?: Date, readLastSent?: () => string|null, date?: string|null, log?: Function }} [opts]
+ *   `date` is the old `--date` whole-calendar-day view; without it the window is
+ *   everything since the last real send, up to `now`.
+ */
+export function collectDigestInputs({ now = new Date(), readLastSent: lastSent = readLastSent, date = null, log: say = () => {} } = {}) {
+  let targetDate = date;
+  if (!targetDate) {
+    const yesterday = new Date(now.getTime());
     yesterday.setDate(yesterday.getDate() - 1);
     targetDate = yesterday.toISOString().slice(0, 10);
   }
@@ -1167,11 +1191,11 @@ async function main() {
   // Sean a DAY late: on 2026-10-04 he got the previous morning's Trybe review,
   // without the verdicts, while that morning's sat in a file nobody read yet.
   // `--date` keeps the old whole-calendar-day view for inspecting a past day.
-  const nowIso = new Date().toISOString();
+  const nowIso = now.toISOString();
   let entries;
-  let laterRows = [];
+  const laterRows = [];
   let windowUntil = null;
-  if (dateArg !== -1) {
+  if (date) {
     entries = readRows(digestFile);
     for (let d = new Date(`${targetDate}T00:00:00Z`); ;) {
       d = new Date(d.getTime() + 86_400_000);
@@ -1180,36 +1204,57 @@ async function main() {
       laterRows.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
     }
   } else {
-    const since = readLastSent() || `${targetDate}T00:00:00.000Z`;
+    const since = lastSent() || `${targetDate}T00:00:00.000Z`;
     windowUntil = nowIso;
     entries = [];
     for (const day of daysBetween(since.slice(0, 10), nowIso.slice(0, 10))) {
       entries.push(...readRows(join(DAILY_SUMMARY_DIR, `${day}.jsonl`)));
     }
     entries = rowsInWindow(entries, { since, until: windowUntil });
-    log(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
+    say(`Digest window: ${since} → ${windowUntil} (${entries.length} rows)`);
   }
 
   // A failure that a later run of the same agent has already recovered from is
   // not news (Sean, 2026-10-04): drop it before anything counts or renders it.
   // See lib/digest-recovery.js.
   const { kept, recovered } = dropRecoveredFailures(entries, laterRows);
+
+  return {
+    targetDate,
+    windowUntil,
+    entries: kept,
+    recovered,
+    laterRows,
+    // Posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
+    blockedPosts: findBlockedPosts(),
+    postPerformance: loadPostPerformance(),
+    // System-health check — stale/missing data feeds and leftover stashes.
+    healthIssues: checkSystemHealth(),
+    needsDecision: loadNeedsDecision(),
+  };
+}
+
+async function main() {
+  // Default to yesterday's date (runs at 5 AM, reporting on previous day)
+  const dateArg = process.argv.indexOf('--date');
+  const {
+    targetDate, windowUntil, entries, recovered, blockedPosts, postPerformance, healthIssues,
+  } = collectDigestInputs({
+    // `--date` with no value keeps the old behaviour: yesterday, whole-day view.
+    date: dateArg === -1 ? null
+      : (process.argv[dateArg + 1] || new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)),
+    log,
+  });
   if (recovered.length) log(`Dropped ${recovered.length} failure(s) that later recovered: ${[...new Set(recovered.map(e => e.subject))].join('; ')}`);
-  entries = kept;
 
   // Find pipeline images generated on the target date
   const pipelineImages = findPipelineImages(targetDate);
-
-  // Find posts hard-blocked in the editorial gate (regardless of date — these are always surfaced until resolved)
-  const blockedPosts = findBlockedPosts();
 
   // Load latest quick-win targets from data/reports/quick-wins/latest.json
   const quickWins = loadQuickWinTargets();
   const seoImpact = loadSeoImpact();
   const prioritizer = loadPrioritizer();
 
-  // Load latest post-performance review output
-  const postPerformance = loadPostPerformance();
   const gscOpps = loadGscOpportunities();
   const competitors = loadCompetitorActivity();
 
@@ -1230,7 +1275,6 @@ async function main() {
   // System-health check — stale/missing data feeds and leftover stashes. Fire an
   // immediate error alert (errors bypass digest deferral) so a silent outage is
   // noticed within a day, then also surface it in the digest itself.
-  const healthIssues = checkSystemHealth();
   if (healthIssues.length) {
     log(`System health: ${healthIssues.length} issue(s) — ${healthIssues.map(i => i.title).join('; ')}`);
     await notify({
