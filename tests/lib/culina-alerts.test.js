@@ -71,3 +71,36 @@ test('does not mutate input state; multiple rows in one result', () => {
   assert.deepEqual(state, copy);
   assert.equal(r.rows.length, 2);
 });
+
+test('partial restock (out_of_stock -> below_threshold) does not alert; keeps lastAlertAt', () => {
+  const state = { a: { lastAlertAt: '2026-11-09', level: 'out_of_stock' } };
+  const r = decideAlerts({ items: [it({ onHand: 5, coverDays: 20 })], state, today, config });
+  assert.equal(r.send, false);
+  assert.deepEqual(r.nextState.a, { lastAlertAt: '2026-11-09', level: 'below_threshold' });
+  const old = { a: { lastAlertAt: '2026-11-04', level: 'out_of_stock' } };
+  const r2 = decideAlerts({ items: [it({ onHand: 5, coverDays: 20 })], state: old, today, config });
+  assert.equal(r2.rows[0].reason, 'reminder');
+});
+
+test('missing or unparseable lastAlertAt counts as due', () => {
+  for (const bad of [undefined, 'garbage']) {
+    const state = { a: { lastAlertAt: bad, level: 'below_threshold' } };
+    const r = decideAlerts({ items: [it()], state, today, config });
+    assert.equal(r.rows[0].reason, 'reminder');
+    assert.equal(r.nextState.a.lastAlertAt, today);
+  }
+});
+
+test('non-finite alert_below_days throws', () => {
+  for (const c of [{}, { alert_below_days: NaN }, { alert_below_days: '60' }, undefined]) {
+    assert.throws(() => decideAlerts({ items: [it()], state: {}, today, config: c }), /alert_below_days/);
+  }
+});
+
+test('recover then drop again alerts as below_threshold', () => {
+  let s = decideAlerts({ items: [it()], state: {}, today: '2026-11-01', config }).nextState;
+  s = decideAlerts({ items: [it({ coverDays: 80 })], state: s, today: '2026-11-03', config }).nextState;
+  assert.deepEqual(s, {});
+  const r = decideAlerts({ items: [it({ coverDays: 30 })], state: s, today: '2026-11-04', config });
+  assert.equal(r.rows[0].reason, 'below_threshold');
+});
