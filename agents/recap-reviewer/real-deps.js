@@ -84,7 +84,7 @@ export async function realDeps() {
   const shopify = () => import('../../lib/shopify.js');
 
   return {
-    reportPath: join(REVIEWER_DIR, 'latest.json'),
+    reportPath: (apply) => join(REVIEWER_DIR, apply ? 'latest.json' : 'dry-run.json'),
     exec,
     loadState: () => loadState(),
     saveState: (s) => saveState(s),
@@ -296,10 +296,11 @@ export async function realDeps() {
 
     // ── output
     async writeReport(report) {
+      // Apply runs only (runReview routes a dry run to writeDryRun).
       writeAtomic(join(REVIEWER_DIR, 'latest.json'), report);
-      // The dated copy is the audit trail of real reviews only.
-      if (report.apply) writeAtomic(join(REVIEWER_DIR, `${report.date}.json`), report);
+      writeAtomic(join(REVIEWER_DIR, `${report.date}.json`), report);
     },
+    writeDryRun: async (report) => writeAtomic(join(REVIEWER_DIR, 'dry-run.json'), report),
     writeDone: async (done) => writeAtomic(join(REVIEWER_DIR, 'done.json'), done),
   };
 }

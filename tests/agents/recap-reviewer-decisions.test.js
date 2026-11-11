@@ -121,3 +121,8 @@ test('an unknown producer or decision goes to only-you with its own label', () =
 test('a row with no slug is never acted on', () => {
   assert.equal(planDecision({ source: Q, decision: 'health-claim' }, { today: TODAY }).action, 'only-you');
 });
+
+test('a close-out record stored as {on, reason} is recognised as closed', () => {
+  const plan = planDecision({ source: DUP, slug: 't', decision: 'possible-duplicate' }, { today: TODAY, closedOn: '2026-11-01' });
+  assert.equal(plan.action, 'already-closed');
+});

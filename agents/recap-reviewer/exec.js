@@ -48,6 +48,11 @@ export function makeExec({ spawnImpl = spawn, root = ROOT, killGraceMs = 10_000 
         killTimer = setTimeout(() => { try { child.kill('SIGKILL'); } catch { /* gone */ } }, killGraceMs);
       }, timeout);
     }
+    // A grandchild can hold stdout open after the kill, so 'close' may never
+    // fire. After a timeout kill, 'exit' plus the grace is enough to resolve.
+    child.on('exit', () => {
+      if (timedOut) setTimeout(() => finish({ code: null, signal: 'SIGTERM', stdout, stderr, timedOut: true }), killGraceMs);
+    });
     child.on('error', (e) => finish({ code: 127, signal: null, stdout, stderr: `${stderr}${e.message}`, timedOut: false }));
     child.on('close', (code, signal) => finish({
       code: timedOut ? null : code, signal: signal || null, stdout, stderr, timedOut,

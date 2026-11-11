@@ -60,7 +60,7 @@ function fakeDeps(over = {}) {
     headStatus: log('headStatus', 200),
     articleBackup: log('articleBackup', (a) => ({ id: a.id, title: a.title, body_html: '<p>x</p>', tags: 'soap', metafields: [] })),
     writeBackup: log('writeBackup', '/backups/x.json'),
-    killPost: log('killPost', { shopify_deleted: true, redirect_created: { target: '/products/coconut-soap' } }),
+    killPost: log('killPost', (slug, o) => ({ shopify_deleted: true, redirect_created: { path: `/blogs/news/${slug}`, target: o.redirectTo, source: 'buy-box CTA' } })),
     checkRedirect: log('checkRedirect', { status: 301, location: 'https://www.realskincare.com/products/coconut-soap' }),
     // fix session
     logTail: async () => '',
@@ -73,6 +73,7 @@ function fakeDeps(over = {}) {
     generateGrowthRecs: log('generateGrowthRecs', { recs: [{ move: 'm' }], dropped: [] }),
     // output
     writeReport: log('writeReport'),
+    writeDryRun: log('writeDryRun'),
     writeDone: log('writeDone'),
     notify: log('notify'),
     ...over,
@@ -326,11 +327,12 @@ test('without apply: no side effects at all, the report is still written, done.j
   deps.inputs.needsDecision.push({ source: 'agents/queue-autoapply/index.js', slug: 's', decision: 'health-claim' });
   deps.inputs.blockedPosts.push({ slug: 'draft-x', title: 'Draft' });
   const r = await runReview(deps, { now: MORNING });
-  for (const n of ['exec', 'kill', 'killPost', 'createFixCheckout', 'runFixSession', 'shipFix', 'writeBackup',
+  for (const n of ['exec', 'kill', 'killPost', 'createFixCheckout', 'runFixSession', 'shipFix', 'writeBackup', 'writeReport',
     'archiveDraft', 'rearmQueueItem', 'dismissQueueItem', 'stampPostState', 'removeDir', 'writeDone', 'notify', 'saveState']) {
     assert.equal(deps.calls.filter((c) => c[0] === n).length, 0, n);
   }
-  assert.equal(deps.calls.filter((c) => c[0] === 'writeReport').length, 1);
+  assert.equal(deps.calls.filter((c) => c[0] === 'writeReport').length, 0, 'a dry run never touches latest.json');
+  assert.equal(deps.calls.filter((c) => c[0] === 'writeDryRun').length, 1);
   assert.equal(r.apply, false);
   assert.ok(r.unresolved.every((o) => /^dry run/.test(o.result) || o.result === 'waits for next scheduled run'));
 });
@@ -357,8 +359,9 @@ test('a crash still writes latest.json with crashed:true and notifies immediatel
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
-test('splitCommand drops a stray fd digit and quotes', () => {
-  assert.deepEqual(splitCommand('/usr/bin/node agents/x/index.js --apply 2'), ['/usr/bin/node', 'agents/x/index.js', '--apply']);
+test('splitCommand strips only redirects, never a trailing digit argument', () => {
+  assert.deepEqual(splitCommand('node agents/x/index.js --limit 5 >> data/logs/x.log 2>&1'), ['node', 'agents/x/index.js', '--limit', '5']);
+  assert.deepEqual(splitCommand('/usr/bin/node agents/x/index.js --limit 5'), ['/usr/bin/node', 'agents/x/index.js', '--limit', '5']);
   assert.deepEqual(splitCommand('node "agents/x/index.js"'), ['node', 'agents/x/index.js']);
 });
 
@@ -371,9 +374,13 @@ test('real exec honours opts.timeout and reports {code:null, timedOut:true}', as
 
 test('real exec passes an explicit env exactly, without process.env', async () => {
   process.env.RR_LEAK_CHECK = 'leak';
-  const exec = makeExec();
-  const r = await exec(process.execPath, ['-e', 'process.stdout.write(String(process.env.RR_LEAK_CHECK))'], { env: { PATH: process.env.PATH } });
-  delete process.env.RR_LEAK_CHECK;
+  let r;
+  try {
+    const exec = makeExec();
+    r = await exec(process.execPath, ['-e', 'process.stdout.write(String(process.env.RR_LEAK_CHECK))'], { env: { PATH: process.env.PATH } });
+  } finally {
+    delete process.env.RR_LEAK_CHECK;
+  }
   assert.equal(r.code, 0);
   assert.equal(r.stdout, 'undefined');
   assert.equal(r.timedOut, false);
@@ -384,4 +391,159 @@ test('a fix for a job with no command (not in crontab, not rerunnable) ships wit
   deps.inputs.entries.push(codeRow({ source: 'agents/blocked-post-resolver/index.js', subject: 'Blocked post resolver failed' }));
   await runReview(deps, { apply: true, now: MORNING });
   assert.equal(deps.calls.find((c) => c[0] === 'shipFix')[1].rerun, null);
+});
+
+
+// ── fix round 1 ─────────────────────────────────────────────────────────────
+
+test('removal never redirects to the "/" hub: a hub pick is skipped and killPost never runs', async () => {
+  // Two specific same-cluster pages: [0] product, [1] article. Index 2 is where
+  // buildChoiceList('blog') appends the "/" hub.
+  const deps = fakeDeps({ askFast: async () => '{"choice": 2}' });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'killPost').length, 0);
+  assert.equal(r.skipped.length, 1);
+  assert.ok(!deps.calls.some((c) => c[0] === 'askFast' && /\[\d+\] \/ —/.test(c[1])), 'the hub is not offered at all');
+});
+
+test('removal with no specific same-cluster page skips with "no same-cluster target"', async () => {
+  const deps = fakeDeps({ loadInventory: async () => ({ products: [], collections: [], articles: [{ path: '/blogs/news/toothpaste', title: 'Toothpaste guide' }] }) });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'askFast' || c[0] === 'killPost').length, 0);
+  assert.equal(r.skipped[0].reason, 'no same-cluster target');
+});
+
+test('removal: a redirect pointing somewhere other than the chosen target is unresolved', async () => {
+  const deps = fakeDeps({
+    killPost: async (slug) => ({ shopify_deleted: true, redirect_created: { path: `/blogs/news/${slug}`, target: '/collections/other', source: 'already existed' } }),
+  });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.length, 0);
+  assert.match(r.unresolved[0].evidence, /\/collections\/other/);
+});
+
+test('removal: the final target is re-checked for 200 after the delete', async () => {
+  let n = 0;
+  const deps = fakeDeps({ headStatus: async () => (n++ === 0 ? 200 : 404) });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.length, 0);
+  assert.match(r.unresolved[0].evidence, /404/);
+});
+
+test('orphaned-browser kills only Chrome processes past the run ceiling', async () => {
+  let n = 0;
+  const deps = fakeDeps({
+    heartbeat: async () => (n++ === 0
+      ? { verdict: { state: 'orphaned-browser' }, schedulerProcs: [], browserProcs: [{ pid: 7, ageSec: 99999 }, { pid: 8, ageSec: 60 }] }
+      : { verdict: { state: 'healthy' }, schedulerProcs: [], browserProcs: [] }),
+  });
+  await runReview(deps, { apply: true, now: MORNING });
+  assert.deepEqual(deps.calls.filter((c) => c[0] === 'kill').map((c) => c[1]), [7]);
+});
+
+test('apply writes latest.json (writeReport), never the dry-run file', async () => {
+  const deps = fakeDeps();
+  await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'writeReport').length, 1);
+  assert.equal(deps.calls.filter((c) => c[0] === 'writeDryRun').length, 0);
+});
+
+test('the fix session timeout is bounded by 14:30 UTC', async () => {
+  const early = fakeDeps();
+  early.inputs.entries.push(codeRow());
+  await runReview(early, { apply: true, now: MORNING });
+  assert.equal(early.calls.find((c) => c[0] === 'runFixSession')[1].timeoutMs, 45 * 60_000);
+
+  const late = fakeDeps();
+  late.inputs.entries.push(codeRow());
+  await runReview(late, { apply: true, now: AT('14:00') });
+  assert.equal(late.calls.find((c) => c[0] === 'runFixSession')[1].timeoutMs, 30 * 60_000);
+});
+
+test('no fix session starts with under 15 minutes to 14:30', async () => {
+  const deps = fakeDeps();
+  deps.inputs.entries.push(codeRow());
+  const r = await runReview(deps, { apply: true, now: AT('14:20') });
+  assert.equal(deps.calls.filter((c) => c[0] === 'createFixCheckout' || c[0] === 'runFixSession').length, 0);
+  assert.equal(r.fixSession.result, 'deferred to tomorrow');
+});
+
+test('state is saved after each unit, not only at the end', async () => {
+  const deps = fakeDeps();
+  await runReview(deps, { apply: true, now: MORNING });
+  assert.ok(deps.calls.filter((c) => c[0] === 'saveState').length >= 4);
+});
+
+test('refresh route: refresh-runner per demoted post, capped at 5, overflow deferred', async () => {
+  const deps = fakeDeps();
+  deps.inputs.postPerformance = { action_required: ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map((s) => flop(s, { action: 'demote' })) };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  const runs = execsOf(deps, 'agents/refresh-runner/index.js');
+  assert.equal(runs.length, 5);
+  assert.deepEqual(runs[0][2], ['agents/refresh-runner/index.js', 'a']);
+  assert.equal(r.resolved.filter((o) => o.action === 'refresh').length, 5);
+  assert.equal(r.unresolved.filter((o) => o.result === 'deferred to tomorrow').length, 2);
+});
+
+test('remediate-draft: first sight runs content-remediator once and records the day', async () => {
+  const deps = fakeDeps({ isBlocked: async () => true });
+  deps.inputs.blockedPosts.push({ slug: 'draft-x', title: 'Draft X' });
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  const runs = execsOf(deps, 'agents/content-remediator/index.js');
+  assert.equal(runs.length, 1);
+  assert.deepEqual(runs[0][2], ['agents/content-remediator/index.js', '--slug', 'draft-x']);
+  assert.match(r.unresolved[0].result, /archived tomorrow/);
+  assert.equal(deps.calls.filter((c) => c[0] === 'archiveDraft').length, 0);
+  assert.equal(deps.loadState().remediated['blocked-draft|draft-x'], '2026-11-11');
+});
+
+test('remediate-draft: a draft no longer blocked after remediation is resolved', async () => {
+  const deps = fakeDeps({ isBlocked: async () => false });
+  deps.inputs.blockedPosts.push({ slug: 'draft-x', title: 'Draft X' });
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved[0].action, 'remediate');
+});
+
+test('remediate-draft: still blocked the next morning -> archived (moved), no second remediation', async () => {
+  const deps = fakeDeps();
+  deps.inputs.blockedPosts.push({ slug: 'draft-x', title: 'Draft X' });
+  const s = emptyState();
+  s.remediated['blocked-draft|draft-x'] = '2026-11-10';
+  deps.setState(s);
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(execsOf(deps, 'agents/content-remediator/index.js').length, 0);
+  assert.deepEqual(deps.calls.filter((c) => c[0] === 'archiveDraft').map((c) => c[1]), ['draft-x']);
+  assert.equal(r.resolved[0].action, 'archive');
+});
+
+test('an item closed on an earlier run stays visible in resolved with its original reason', async () => {
+  const deps = fakeDeps();
+  deps.inputs.needsDecision.push({ source: 'agents/content-strategist/index.js', slug: 'topic', decision: 'possible-duplicate', title: 'topic' });
+  const s = emptyState();
+  s.closed['decision|agents/content-strategist/index.js|topic'] = { on: '2026-11-01', reason: 'left withheld: X' };
+  deps.setState(s);
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.length, 1);
+  assert.equal(r.resolved[0].action, 'closed earlier');
+  assert.match(r.resolved[0].result, /left withheld: X/);
+  assert.match(r.resolved[0].result, /2026-11-01/);
+});
+
+test('real exec resolves after a timeout kill even when "close" never fires', async () => {
+  const { EventEmitter } = await import('node:events');
+  const spawnImpl = () => {
+    const child = new EventEmitter();
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    child.kill = () => { setImmediate(() => child.emit('exit', null, 'SIGTERM')); return true; };
+    return child; // a grandchild holding stdio open: 'close' never comes
+  };
+  const exec = makeExec({ spawnImpl, killGraceMs: 50 });
+  const r = await exec('x', [], { timeout: 20 });
+  assert.equal(r.code, null);
+  assert.equal(r.timedOut, true);
 });

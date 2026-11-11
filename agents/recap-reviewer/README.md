@@ -20,20 +20,24 @@ into deduplicated items with one route each.
 
 | Unit | Route | Action |
 |---|---|---|
-| A | heartbeat | `scripts/check-scheduler-heartbeat.mjs --json`. Stuck: SIGTERM the stale scheduler only when its last log line is over 2 h old. Orphaned Chrome: SIGKILL it. Died: recorded, the next run starts fresh. |
+| A | heartbeat | `scripts/check-scheduler-heartbeat.mjs --json`. Stuck: SIGTERM the stale scheduler only when its last log line is over 2 h old. Orphaned Chrome older than the heartbeat's run ceiling (8 h): SIGKILL it. Died: recorded, the next run starts fresh. |
 | A | collector-rerun / rerun | Allowlisted jobs only (`lib/recap-jobs.js`), the crontab command (else `node <source>`), 20 min timeout, one run per command. Verified by a later success row from the same reporter, or by the health check for a feed. |
 | B | refresh | `node agents/refresh-runner/index.js <slug>` |
 | B | regenerate | `decisions.js`: one retry, then a close-out. Never deletes, never publishes. |
 | B | remediate-draft | `content-remediator --slug` once; still blocked on a later morning: move the post dir to `data/posts/_orphaned/` with a sidecar and the calendar item to `data/calendar/_dropped/`. |
-| B | remove | `removal.js`: up to 5 LOW_DEMAND posts, backup, by-number redirect pick, HEAD 200, `killPost`, verify the 301, then `fix-redirect-links --apply` once. |
+| B | remove | `removal.js`: up to 5 LOW_DEMAND posts, backup, by-number redirect pick among specific same-cluster pages (never `/`), HEAD 200, `killPost`, check its redirect record, verify the 301 and re-HEAD the target, then `fix-redirect-links --apply` once. |
 | C | fix-session | `fix.js`: one session per run (the item with the most rows, under 3 attempts), ship only on `fixed`. |
 | D | growth | `lib/growth-recs.js`, after Unit C has finished. |
 
 Nothing starts at or after 14:30 UTC; unstarted work is `deferred to tomorrow`.
+A fix session's timeout is `min(45 min, time left to 14:30)`, and none starts
+with under 15 minutes left. Refreshes are capped at 5 per run, removals at 5.
+State is saved after each of Units A, B and C.
 
 ## Output
 
-- `data/reports/recap-reviewer/latest.json` — `{ generated_at, date, apply, resolved, unresolved, onlyYou, counts, growth, fixSession, skipped, heartbeat?, crashed? }`. Written on dry runs too, marked `apply: false`.
+- `data/reports/recap-reviewer/latest.json` (+ `<date>.json`) — `{ generated_at, date, apply, resolved, unresolved, onlyYou, counts, growth, fixSession, skipped, heartbeat?, crashed? }`. Written only by `--apply`.
+- `data/reports/recap-reviewer/dry-run.json` — a dry run's report, same shape with `apply: false`. A dry run never touches `latest.json`, `done.json` or the dated copy.
 - `data/reports/recap-reviewer/done.json` — written only by `--apply`; the recap treats a review as real only when it exists for today.
 - `data/reports/recap-reviewer/state.json` — `lib/recap-reviewer-state.js`.
 - `data/backups/removed-posts/<slug>-<date>.json` — every removed article.

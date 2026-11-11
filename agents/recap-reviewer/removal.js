@@ -29,6 +29,7 @@ const pathOf = (u) => {
   try { s = decodeURIComponent(s); } catch { /* raw */ }
   return s.replace(/\/+$/, '').toLowerCase() || '/';
 };
+const isHome = (p) => pathOf(p) === '/';
 const textOf = (it) => `${it?.title || ''} ${String(it?.path || '').split('/').pop().replace(/-/g, ' ')}`;
 
 /** Live pages in `cluster`, ordered PDP -> collection -> sibling post, minus `exclude`. */
@@ -114,15 +115,18 @@ export async function runRemovals({ rows, deps, apply, pastCutoff, today }) {
     if (!article) { skip('no Shopify article with this handle'); continue; }
 
     const cluster = clusterForText(`${row.title || ''} ${handle.replace(/-/g, ' ')}`);
-    if (!cluster) { skip('post matches no product cluster, so no same-cluster target exists'); continue; }
-    const choices = buildChoiceList('blog', clusterInventory(inventory, cluster, leaving));
-    if (choices.length < 2) { skip(`no live page in the "${cluster}" cluster to redirect to`); continue; }
+    if (!cluster) { skip('no same-cluster target (the post matches no product cluster)'); continue; }
+    // buildChoiceList appends a hub; for 'blog' that is "/", and a retired post
+    // must never be sent to the homepage. Only specific same-cluster pages count.
+    const choices = buildChoiceList('blog', clusterInventory(inventory, cluster, leaving)).filter((c) => !isHome(c.path));
+    if (!choices.length) { skip('no same-cluster target'); continue; }
 
     let pick = null;
     try { pick = parseChoice(await deps.askFast(buildRemovalPrompt(row, handle, choices)), choices); } catch (e) {
       skip(`redirect pick failed: ${e.message}`); continue;
     }
     if (!pick) { skip('redirect pick unparseable'); continue; }
+    if (isHome(pick.path)) { skip('redirect pick was the homepage'); continue; }
 
     const status = await tryOr(() => deps.headStatus(pick.path), null);
     if (status !== 200) { skip(`target ${pick.path} returned ${status ?? 'no response'}, not 200`); continue; }
@@ -142,10 +146,20 @@ export async function runRemovals({ rows, deps, apply, pastCutoff, today }) {
       out(row, 'unresolved', 'killPost did not delete the article', (summary?.warnings || []).join('; ')); continue;
     }
     res.removed += 1;
+    const rc = summary.redirect_created;
+    if (!rc || pathOf(rc.path) !== pathOf(oldPath) || pathOf(rc.target) !== pathOf(pick.path)) {
+      out(row, 'unresolved', 'removed, but its redirect does not point at the chosen target',
+        `chose ${pick.path}; redirect ${rc ? `${rc.path || '(no path)'} -> ${rc.target} (${rc.source || 'created'})` : 'not recorded'}`);
+      continue;
+    }
     const chk = await tryOr(() => deps.checkRedirect(oldPath), null);
-    const ok = chk?.status === 301 && pathOf(chk.location) === pathOf(pick.path);
-    if (ok) out(row, 'resolved', `removed; ${oldPath} 301s to ${pick.path}`, pick.why);
-    else out(row, 'unresolved', 'removed, but the 301 did not verify', `expected 301 -> ${pick.path}, got ${chk?.status ?? 'no response'} ${chk?.location || ''}`.trim());
+    if (!(chk?.status === 301 && pathOf(chk.location) === pathOf(pick.path))) {
+      out(row, 'unresolved', 'removed, but the 301 did not verify', `expected 301 -> ${pick.path}, got ${chk?.status ?? 'no response'} ${chk?.location || ''}`.trim());
+      continue;
+    }
+    const final = await tryOr(() => deps.headStatus(pick.path), null);
+    if (final !== 200) { out(row, 'unresolved', 'removed, but the redirect target no longer answers 200', `${pick.path} returned ${final ?? 'no response'}`); continue; }
+    out(row, 'resolved', `removed; ${oldPath} 301s to ${pick.path}`, pick.why);
   }
 
   if (res.removed > 0) {

@@ -16,9 +16,9 @@
  *           Claude process is alive at a time on this 961 MB box
  *
  * Nothing new starts at or after 14:30 UTC; unstarted work reads "deferred to
- * tomorrow". Output: data/reports/recap-reviewer/latest.json (always, marked
- * `apply`), and done.json only on an --apply run, which is what tells the recap
- * a real review exists. Anything not verified as fixed is reported as
+ * tomorrow". Output: data/reports/recap-reviewer/latest.json, its dated copy and
+ * done.json on an --apply run; a dry run writes dry-run.json and nothing else,
+ * so it can never replace the morning's real report. Anything not verified as fixed is reported as
  * unresolved or only-you; nothing is dropped.
  *
  * Usage:
@@ -31,6 +31,7 @@ import { parseCrontab, isRerunnable, collectorFor } from '../../lib/recap-jobs.j
 import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
 import { MAX_FIX_ATTEMPTS } from '../../lib/recap-reviewer-state.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { MAX_RUN_MINUTES } from '../../scripts/check-scheduler-heartbeat.mjs';
 import { planDecision, executeDecision } from './decisions.js';
 import { runRemovals } from './removal.js';
 import { runFixUnit } from './fix.js';
@@ -39,16 +40,24 @@ export const CUTOFF_UTC = '14:30';
 const CUTOFF_MIN = 14 * 60 + 30;
 export const RERUN_TIMEOUT_MS = 20 * 60_000;
 const STUCK_LOG_AGE_MS = 2 * 3600_000;
-const MAX_RUN_SEC = 480 * 60; // scripts/check-scheduler-heartbeat.mjs MAX_RUN_MINUTES
+// The heartbeat's own ceiling: a scheduler or Chrome younger than this may belong to a live run.
+const MAX_RUN_SEC = MAX_RUN_MINUTES * 60;
+export const MAX_REFRESHES = 5;
+const FIX_SESSION_MAX_MS = 45 * 60_000;
+const FIX_SESSION_MIN_MS = 15 * 60_000;
 const HEARTBEAT_SOURCE = 'scripts/check-scheduler-heartbeat.mjs';
 const DEFERRED = 'deferred to tomorrow';
 const WAITS = 'waits for next scheduled run';
 
-/** `crontab` command text -> argv. Drops quotes and a trailing bare fd digit (`2>&1` split by parseCrontab). */
+/**
+ * `crontab` command text -> argv. Strips only shell redirects (`2>&1`, `>> log`,
+ * `> log`) and quotes; an ordinary argument such as `--limit 5` is never touched.
+ */
 export function splitCommand(command) {
-  const parts = String(command || '').trim().split(/\s+/).filter(Boolean).map((p) => p.replace(/^["']|["']$/g, ''));
-  while (parts.length > 1 && /^\d$/.test(parts[parts.length - 1])) parts.pop();
-  return parts;
+  const text = ` ${String(command || '')}`
+    .replace(/\s\d*>&\d+/g, ' ')
+    .replace(/\s\d*>>?\s*\S+/g, ' ');
+  return text.trim().split(/\s+/).filter(Boolean).map((p) => p.replace(/^["']|["']$/g, ''));
 }
 
 const minutesUTC = (d) => d.getUTCHours() * 60 + d.getUTCMinutes();
@@ -80,7 +89,9 @@ export async function runReview(deps, { apply = false, now = () => new Date() } 
     onlyYou: report.onlyYou.length, skipped: report.skipped.length,
   };
   report.finished_at = clock().toISOString();
-  await deps.writeReport(report);
+  // A dry run must never replace the morning's real report: it writes its own file.
+  if (apply) await deps.writeReport(report);
+  else await deps.writeDryRun(report);
   if (apply) {
     await deps.writeDone({ date: today, generated_at: report.finished_at, crashed: !!report.crashed });
     if (!report.crashed) {
@@ -112,6 +123,11 @@ async function review(deps, { apply, clock, today, report }) {
   const unresolved = put('unresolved');
   const onlyYou = put('onlyYou');
   const pastCutoff = () => minutesUTC(clock()) >= CUTOFF_MIN;
+  const msToCutoff = () => {
+    const d = clock();
+    return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 14, 30) - d.getTime();
+  };
+  const checkpoint = () => { if (apply) deps.saveState(state); };
   const dry = (it, action, what) => unresolved(it, action, `dry run: would ${what}`);
   const isHb = (it) => it.source === HEARTBEAT_SOURCE;
   const byRoute = (route) => items.filter((i) => i.route === route && !isHb(i));
@@ -163,11 +179,15 @@ async function review(deps, { apply, clock, today, report }) {
     }
   }
 
+  checkpoint();
+
   // ── Unit B ────────────────────────────────────────────────────────────────
+  let refreshes = 0;
   for (const it of byRoute('refresh')) {
     const slug = it.row?.slug;
     if (!slug) { unresolved(it, 'refresh', 'cannot refresh: the row names no post', ''); continue; }
-    if (pastCutoff()) { unresolved(it, 'refresh', DEFERRED); continue; }
+    if (pastCutoff() || refreshes >= MAX_REFRESHES) { unresolved(it, 'refresh', DEFERRED); continue; }
+    refreshes += 1;
     if (!apply) { dry(it, 'refresh', `refresh ${slug}`); continue; }
     const r = await deps.exec('node', ['agents/refresh-runner/index.js', slug], { timeout: RERUN_TIMEOUT_MS });
     if (r.code === 0) resolved(it, 'refresh', `refreshed ${slug}`);
@@ -175,9 +195,15 @@ async function review(deps, { apply, clock, today, report }) {
   }
 
   for (const it of byRoute('regenerate')) {
-    const plan = planDecision(it.row, { today, retriedOn: state.regenerated[it.key], closedOn: state.closed[it.key] });
+    const closed = state.closed[it.key];
+    const closedOn = closed && typeof closed === 'object' ? closed.on : closed;
+    const plan = planDecision(it.row, { today, retriedOn: state.regenerated[it.key], closedOn });
     if (plan.action === 'only-you') { onlyYou(it, 'none', plan.reason, it.detail); continue; }
-    if (plan.action === 'already-closed') { report.counts.closedEarlier = (report.counts.closedEarlier || 0) + 1; continue; }
+    if (plan.action === 'already-closed') {
+      report.counts.closedEarlier = (report.counts.closedEarlier || 0) + 1;
+      resolved(it, 'closed earlier', `closed out on ${closedOn}: ${closed?.reason || '(reason not recorded)'}`);
+      continue;
+    }
     if (plan.action === 'wait') { unresolved(it, 'regenerate', plan.reason); continue; }
     const action = plan.action === 'retry' ? 'regenerate' : 'close-out';
     if (pastCutoff()) { unresolved(it, action, DEFERRED); continue; }
@@ -190,7 +216,7 @@ async function review(deps, { apply, clock, today, report }) {
       if (plan.action === 'retry') {
         unresolved(it, action, `retried once (${plan.reason}); checked again tomorrow`, ev);
       } else {
-        state.closed[it.key] = today;
+        state.closed[it.key] = { on: today, reason: plan.reason };
         resolved(it, action, `closed out: ${plan.reason}`, ev);
       }
     } catch (e) {
@@ -230,6 +256,8 @@ async function review(deps, { apply, clock, today, report }) {
     (o.bucket === 'resolved' ? resolved : unresolved)(it, 'remove', o.result, o.evidence);
   }
 
+  checkpoint();
+
   // ── Unit C ────────────────────────────────────────────────────────────────
   const fixItems = byRoute('fix-session');
   const eligible = [];
@@ -241,17 +269,21 @@ async function review(deps, { apply, clock, today, report }) {
   const [pick, ...rest] = eligible;
   for (const it of rest) unresolved(it, 'fix session', 'queued: one fix session per morning', it.detail);
   if (pick) {
-    if (pastCutoff()) report.fixSession = unresolved(pick, 'fix session', DEFERRED);
+    // The session must end by 14:30 UTC, and one with under 15 minutes is not worth starting.
+    if (pastCutoff() || msToCutoff() < FIX_SESSION_MIN_MS) report.fixSession = unresolved(pick, 'fix session', DEFERRED);
     else if (!apply) report.fixSession = dry(pick, 'fix session', `start a fix session for ${pick.source || pick.subject}`);
     else {
       state.fixAttempts[pick.key] = (state.fixAttempts[pick.key] || 0) + 1;
       deps.saveState(state); // an attempt counts even if this process dies mid-session
       const command = pick.source ? commandFor(pick.source) : null;
-      const o = await runFixUnit({ item: pick, command, splitCommand, deps, today });
+      const timeoutMs = Math.min(FIX_SESSION_MAX_MS, msToCutoff());
+      const o = await runFixUnit({ item: pick, command, splitCommand, deps, today, timeoutMs });
       const bucket = o.bucket === 'resolved' ? resolved : o.bucket === 'onlyYou' ? onlyYou : unresolved;
       report.fixSession = bucket(pick, 'fix session', o.result, o.evidence);
     }
   }
+
+  checkpoint();
 
   // ── Unit D (after the fix session's child has exited) ───────────────────────
   if (pastCutoff()) report.growth = { recs: [], reason: DEFERRED };
@@ -304,7 +336,8 @@ async function heartbeatStep({ deps, apply, clock, pastCutoff, items, report, re
     killedScheduler = killPids.length > 0;
   }
   if (state === 'orphaned-browser' || killedScheduler) {
-    for (const p of hb.browserProcs || []) if (state === 'orphaned-browser' || p.ageSec > MAX_RUN_SEC) killPids.push(['chrome', p.pid, 'SIGKILL']);
+    // Only Chrome past the run ceiling: a young one may belong to a run in progress.
+    for (const p of hb.browserProcs || []) if (p.ageSec > MAX_RUN_SEC) killPids.push(['chrome', p.pid, 'SIGKILL']);
   }
   if (!killPids.length) { record(unresolved, 'heartbeat', `scheduler ${state}: no process to act on`, hb?.verdict?.headline || ''); return; }
   if (!apply) { record(unresolved, 'heartbeat', `dry run: would kill ${killPids.map(([w, p]) => `${w} pid ${p}`).join(', ')}`, ''); return; }
@@ -353,7 +386,7 @@ async function main() {
   if (fixed && Number.isNaN(fixed.getTime())) throw new Error('--now needs an ISO timestamp');
   const report = await runReview(deps, { apply, ...(fixed ? { now: () => fixed } : {}) });
   console.log(digestBody(report));
-  console.log(`\nReport: ${deps.reportPath}`);
+  console.log(`\nReport: ${deps.reportPath(apply)}`);
   if (report.crashed) process.exitCode = 1;
 }
 
@@ -367,7 +400,9 @@ if (isDirectRun(import.meta.url)) {
       const { REVIEWER_DIR } = await import('../../lib/recap-reviewer-state.js');
       mkdirSync(REVIEWER_DIR, { recursive: true });
       const now = new Date().toISOString();
-      writeFileSync(`${REVIEWER_DIR}/latest.json`, `${JSON.stringify({
+      // A dry run never touches latest.json, even when it crashes.
+      const file = process.argv.includes('--apply') ? 'latest.json' : 'dry-run.json';
+      writeFileSync(`${REVIEWER_DIR}/${file}`, `${JSON.stringify({
         generated_at: now, date: now.slice(0, 10), apply: process.argv.includes('--apply'), crashed: true,
         error: String(e?.stack || e).slice(0, 2000), resolved: [], unresolved: [], onlyYou: [], counts: {}, growth: null, fixSession: null, skipped: [],
       }, null, 2)}\n`);

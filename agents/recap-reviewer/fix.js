@@ -24,10 +24,10 @@ export function fixName(source, today) {
 }
 
 /**
- * @param {{item:object, command:string|null, splitCommand:Function, deps:object, today:string}} args
+ * @param {{item:object, command:string|null, splitCommand:Function, deps:object, today:string, timeoutMs?:number}} args
  * @returns {Promise<{bucket:'resolved'|'unresolved'|'onlyYou', result:string, evidence:string, cleanup:boolean}>}
  */
-export async function runFixUnit({ item, command, splitCommand, deps, today }) {
+export async function runFixUnit({ item, command, splitCommand, deps, today, timeoutMs }) {
   const source = item.source || '';
   let checkout;
   try {
@@ -43,10 +43,10 @@ export async function runFixUnit({ item, command, splitCommand, deps, today }) {
   };
 
   const logTail = await deps.logTail(source).catch(() => '');
-  const session = await deps.runFixSession({ worktree: checkout, prompt: buildFixPrompt({ item, logTail, command: command || '' }) });
+  const session = await deps.runFixSession({ worktree: checkout, prompt: buildFixPrompt({ item, logTail, command: command || '' }), ...(timeoutMs ? { timeoutMs } : {}) });
   const summary = session?.summary || '';
   if (summary === 'timed out') {
-    return { bucket: 'unresolved', result: 'fix session timed out after 45 minutes; checkout kept for tomorrow', evidence: checkout };
+    return { bucket: 'unresolved', result: 'fix session timed out; checkout kept for tomorrow', evidence: checkout };
   }
 
   let outcome;
