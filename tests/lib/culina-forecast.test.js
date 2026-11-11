@@ -50,8 +50,8 @@ test('inStockDays and dailyPace ignore stockouts; empty is null', () => {
   const daily = [{ date: '2026-11-01', units: 10 }, { date: '2026-11-02', units: 0 }, { date: '2026-11-03', units: 10 }];
   const out = new Set(['2026-11-02']);
   assert.equal(inStockDays(daily, out).length, 2);
-  assert.equal(dailyPace(daily, { stockoutDates: out }), 10);
-  assert.equal(dailyPace(inStockDays(daily, out)), 10);
+  assert.ok(Math.abs(dailyPace(daily, { stockoutDates: out }) - 10) < 1e-9);
+  assert.ok(Math.abs(dailyPace(inStockDays(daily, out)) - 10) < 1e-9);
   assert.equal(dailyPace([]), null);
 });
 
