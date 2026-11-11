@@ -26,12 +26,16 @@
  *   node agents/recap-reviewer/index.js --apply   # what cron runs
  *   node agents/recap-reviewer/index.js --now 2026-11-11T11:05:00Z   # dry run as of that time
  */
-import { buildReviewItems, itemKey } from '../../lib/recap-review.js';
-import { parseCrontab, isRerunnable, collectorFor, splitCommand } from '../../lib/recap-jobs.js';
+import { buildReviewItems, itemKey, isReviewedProblem } from '../../lib/recap-review.js';
+import {
+  parseCrontab, isRerunnable, collectorFor, splitCommand, feedNameOf, RERUN_TIMEOUT_MS,
+} from '../../lib/recap-jobs.js';
 import { isPermanentSkip } from '../../lib/low-demand-removal.js';
 import { dropRecoveredFailures } from '../../lib/digest-recovery.js';
 import { MAX_FIX_ATTEMPTS } from '../../lib/recap-reviewer-state.js';
 import { isDirectRun } from '../../lib/is-direct-run.js';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { MAX_RUN_MINUTES } from '../../scripts/check-scheduler-heartbeat.mjs';
 import { planDecision, executeDecision } from './decisions.js';
 import { runRemovals } from './removal.js';
@@ -39,7 +43,7 @@ import { runFixUnit } from './fix.js';
 
 export const CUTOFF_UTC = '14:30';
 const CUTOFF_MIN = 14 * 60 + 30;
-export const RERUN_TIMEOUT_MS = 20 * 60_000;
+export { RERUN_TIMEOUT_MS };
 const STUCK_LOG_AGE_MS = 2 * 3600_000;
 // The heartbeat's own ceiling: a scheduler or Chrome younger than this may belong to a live run.
 const MAX_RUN_SEC = MAX_RUN_MINUTES * 60;
@@ -47,12 +51,26 @@ export const MAX_REFRESHES = 5;
 const FIX_SESSION_MAX_MS = 45 * 60_000;
 const FIX_SESSION_MIN_MS = 15 * 60_000;
 const HEARTBEAT_SOURCE = 'scripts/check-scheduler-heartbeat.mjs';
+// The heartbeat script also reports a full disk; only its "Scheduler heartbeat" rows are heartbeat items.
+const HEARTBEAT_SUBJECT = /^Scheduler heartbeat/i;
+const FIX_CHECKOUT = /^\/srv\/recap-fix\/fix-[a-z0-9-]+(\.bundle)?$/;
+const STALE_CHECKOUT_MS = 2 * 86_400_000;
 const DEFERRED = 'deferred to tomorrow';
 const WAITS = 'waits for next scheduled run';
 
 const minutesUTC = (d) => d.getUTCHours() * 60 + d.getUTCMinutes();
 const clip = (s, n = 1500) => { const t = String(s ?? '').trim(); return t.length > n ? `…${t.slice(-n)}` : t; };
 const outputTail = (r) => clip(`${r?.stderr || ''}\n${r?.stdout || ''}`, 600);
+
+/**
+ * Did a later row prove `row` recovered? Same reporter, later, and neither an
+ * error nor a warning: a warning row is only cleared by a clean run, never by
+ * another warning (dropRecoveredFailures alone would accept one for an error).
+ */
+function recoveredBy(row, later) {
+  const clean = (later || []).filter((r) => r?.status !== 'warning');
+  return dropRecoveredFailures([{ ...row, status: 'error' }], clean).recovered.length > 0;
+}
 
 export async function runReview(deps, { apply = false, now = () => new Date() } = {}) {
   const clock = typeof now === 'function' ? now : () => now;
@@ -61,6 +79,9 @@ export async function runReview(deps, { apply = false, now = () => new Date() } 
   const report = {
     generated_at: started.toISOString(), date: today, apply,
     resolved: [], unresolved: [], onlyYou: [], counts: {}, growth: null, fixSession: null, skipped: [],
+    // daily-summary sets emailed/emailed_at after a send that rendered this
+    // report; anything finishing later is shown the next morning.
+    emailed: false,
   };
   try {
     await review(deps, { apply, clock, today, report });
@@ -94,7 +115,8 @@ export async function runReview(deps, { apply = false, now = () => new Date() } 
 async function review(deps, { apply, clock, today, report }) {
   const state = deps.loadState();
   const inputs = await deps.collectInputs();
-  const errorRows = (inputs.entries || []).filter((e) => e?.status === 'error');
+  // Errors AND warnings (spec): a warning that cannot be resolved is unresolved.
+  const errorRows = (inputs.entries || []).filter(isReviewedProblem);
   const flops = inputs.postPerformance?.action_required || [];
   const items = buildReviewItems({
     errorRows, healthIssues: inputs.healthIssues || [], needsDecision: inputs.needsDecision || [],
@@ -107,6 +129,7 @@ async function review(deps, { apply, clock, today, report }) {
   const outcome = (it, action, result, evidence = '') => ({
     key: it.key, kind: it.kind, subject: it.subject, action, result, evidence: clip(evidence),
     ...(state.firstSeen[it.key] ? { since: state.firstSeen[it.key] } : {}),
+    finished_at: clock().toISOString(),
   });
   const put = (bucket) => (it, action, result, evidence) => { const o = outcome(it, action, result, evidence); report[bucket].push(o); return o; };
   const resolved = put('resolved');
@@ -119,10 +142,13 @@ async function review(deps, { apply, clock, today, report }) {
   };
   const checkpoint = () => { if (apply) deps.saveState(state); };
   const dry = (it, action, what) => unresolved(it, action, `dry run: would ${what}`);
-  const isHb = (it) => it.source === HEARTBEAT_SOURCE;
-  const byRoute = (route) => items.filter((i) => i.route === route && !isHb(i));
+  const isHb = (it) => it.source === HEARTBEAT_SOURCE && HEARTBEAT_SUBJECT.test(it.subject);
+  // Anything else the heartbeat script reports (a full disk) needs a human to free space.
+  const isHbOther = (it) => it.source === HEARTBEAT_SOURCE && !isHb(it);
+  const byRoute = (route) => items.filter((i) => i.route === route && i.source !== HEARTBEAT_SOURCE);
 
   // Routes with no work to do.
+  for (const it of items.filter(isHbOther)) onlyYou(it, 'none', it.subject, it.detail);
   for (const it of byRoute('only-you')) onlyYou(it, 'none', 'only you can do this', it.detail);
   for (const it of byRoute('stash-residual')) unresolved(it, 'none', 'left for a human: stashes are never popped automatically', it.detail);
   report.counts.automated = byRoute('count-only').length;
@@ -159,12 +185,13 @@ async function review(deps, { apply, clock, today, report }) {
       continue;
     }
     if (collector) {
+      // By feed name: "missing" turning into "stale" is still broken.
       const titles = await deps.healthTitles().catch(() => null);
-      if (Array.isArray(titles) && !titles.includes(it.subject)) resolved(it, action, `re-ran ${source}; the feed is fresh again`, command);
+      const name = feedNameOf(it.subject);
+      if (Array.isArray(titles) && name && !titles.some((t) => feedNameOf(t) === name)) resolved(it, action, `re-ran ${source}; the feed is fresh again`, command);
       else unresolved(it, action, `re-ran ${source}, but the health check still flags it`, command);
     } else {
-      const { recovered } = dropRecoveredFailures([it.row], run.later);
-      if (recovered.length) resolved(it, action, `re-ran ${source} (recovered)`, command);
+      if (recoveredBy(it.row, run.later)) resolved(it, action, `re-ran ${source} (recovered)`, command);
       else unresolved(it, action, `re-ran ${source} (exit 0), but it wrote no success row`, command);
     }
   }
@@ -246,7 +273,14 @@ async function review(deps, { apply, clock, today, report }) {
     if (it && isPermanentSkip(sk.reason)) resolved(it, 'kept', `kept: ${sk.reason}`, sk.reason);
     else report.skipped.push(sk);
   }
-  if (removal.linkRepair) report.linkRepair = removal.linkRepair;
+  if (removal.linkRepair) {
+    report.linkRepair = removal.linkRepair;
+    const lr = removal.linkRepair;
+    if (lr.code !== 0) {
+      unresolved({ key: 'link-repair', kind: 'ops', subject: 'Link repair after removals' }, 'fix-redirect-links --apply',
+        'link repair after removals failed', lr.timedOut ? 'scripts/fix-redirect-links.mjs timed out' : `scripts/fix-redirect-links.mjs exited ${lr.code}`);
+    }
+  }
   for (const o of removal.outcomes) {
     const it = removeItems.find((i) => i.row === o.row);
     (o.bucket === 'resolved' ? resolved : unresolved)(it, 'remove', o.result, o.evidence);
@@ -255,6 +289,16 @@ async function review(deps, { apply, clock, today, report }) {
   checkpoint();
 
   // ── Unit C ────────────────────────────────────────────────────────────────
+  // A timed-out session's checkout is kept for inspection; after two days it goes.
+  if (apply && typeof deps.listFixCheckouts === 'function') {
+    try {
+      for (const c of await deps.listFixCheckouts()) {
+        if (!FIX_CHECKOUT.test(String(c?.path || '')) || !Number.isFinite(c?.mtimeMs)) continue;
+        if (clock().getTime() - c.mtimeMs <= STALE_CHECKOUT_MS) continue;
+        try { await deps.removeDir(c.path); } catch { /* best effort */ }
+      }
+    } catch { /* listing failed: nothing removed */ }
+  }
   const fixItems = byRoute('fix-session');
   const eligible = [];
   for (const it of fixItems) {
@@ -352,7 +396,26 @@ async function heartbeatStep({ deps, apply, clock, pastCutoff, items, report, re
 }
 
 export function summaryLine(r) {
-  return `${r.resolved.length} fixed, ${r.unresolved.length} still being worked on, ${r.onlyYou.length} only you can do, ${r.skipped.length} skipped`;
+  const kept = r.resolved.filter((o) => o?.action === 'kept').length;
+  return `${r.resolved.length - kept} fixed, ${kept} kept, ${r.unresolved.length} still being worked on, ${r.onlyYou.length} only you can do, ${r.skipped.length} skipped`;
+}
+
+/**
+ * A crash before runReview ran (wiring failed): write a crashed report AND,
+ * on an --apply run, today's done.json with crashed:true, so daily-summary
+ * falls back at once instead of waiting 30 minutes. A dry run touches only
+ * dry-run.json.
+ */
+export function writeCrashFiles({ dir, apply, error, now = new Date() }) {
+  const iso = now.toISOString();
+  const date = iso.slice(0, 10);
+  mkdirSync(dir, { recursive: true });
+  const write = (name, data) => writeFileSync(join(dir, name), `${JSON.stringify(data, null, 2)}\n`);
+  write(apply ? 'latest.json' : 'dry-run.json', {
+    generated_at: iso, date, apply: !!apply, crashed: true, emailed: false,
+    error: String(error?.stack || error).slice(0, 2000), resolved: [], unresolved: [], onlyYou: [], counts: {}, growth: null, fixSession: null, skipped: [],
+  });
+  if (apply) write('done.json', { date, generated_at: iso, crashed: true });
 }
 
 export function digestBody(r) {
@@ -393,16 +456,9 @@ if (isDirectRun(import.meta.url)) {
     // runReview writes its own crashed report; this covers a crash before it
     // ran (e.g. wiring failed), so the recap never reads yesterday's file.
     try {
-      const { writeFileSync, mkdirSync } = await import('node:fs');
       const { REVIEWER_DIR } = await import('../../lib/recap-reviewer-state.js');
-      mkdirSync(REVIEWER_DIR, { recursive: true });
-      const now = new Date().toISOString();
-      // A dry run never touches latest.json, even when it crashes.
-      const file = process.argv.includes('--apply') ? 'latest.json' : 'dry-run.json';
-      writeFileSync(`${REVIEWER_DIR}/${file}`, `${JSON.stringify({
-        generated_at: now, date: now.slice(0, 10), apply: process.argv.includes('--apply'), crashed: true,
-        error: String(e?.stack || e).slice(0, 2000), resolved: [], unresolved: [], onlyYou: [], counts: {}, growth: null, fixSession: null, skipped: [],
-      }, null, 2)}\n`);
+      // A dry run never touches latest.json or done.json, even when it crashes.
+      writeCrashFiles({ dir: REVIEWER_DIR, apply: process.argv.includes('--apply'), error: e });
     } catch { /* nothing writable */ }
     if (process.argv.includes('--apply')) {
       try {

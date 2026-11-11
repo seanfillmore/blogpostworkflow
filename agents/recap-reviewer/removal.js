@@ -9,7 +9,9 @@
  *   2. pick the target BY NUMBER from live pages in the same cluster (PDP, then
  *      collection, then sibling posts), one `fast` call, parseChoice;
  *   3. HEAD the target, expect 200;
- *   4. back up the article (body, title, tags, metafields);
+ *   4. the local post meta's shopify_article_id, when present, must be the
+ *      article found by handle, or the post is skipped ('article id mismatch');
+ *      back up the article (body, title, tags, metafields);
  *   5. killPost(slug, { reason: 'low-demand', redirectTo }) — redirect BEFORE delete;
  *   6. verify the old URL 301s to the target.
  * After every removal, scripts/fix-redirect-links.mjs --apply runs once.
@@ -112,7 +114,14 @@ export async function runRemovals({ rows, deps, apply, pastCutoff, today }) {
 
     const article = await tryOr(() => deps.findArticle(handle), undefined);
     if (article === undefined) { skip('Shopify article lookup failed'); continue; }
-    if (!article) { skip('no Shopify article with this handle'); continue; }
+    // Nothing to remove: the article is already gone (a permanent "kept").
+    if (!article) { skip('already gone from Shopify'); continue; }
+    // Eligibility and the backup used the article found by HANDLE, but killPost
+    // resolves the article from the local post meta by SLUG. If those disagree,
+    // killPost would delete a different article than the one checked and backed up.
+    let localId;
+    try { localId = await deps.postArticleId(row.slug); } catch (e) { skip(`local post meta unreadable: ${e.message}`); continue; }
+    if (localId != null && String(localId) !== String(article.id)) { skip('article id mismatch'); continue; }
 
     const cluster = clusterForText(`${row.title || ''} ${handle.replace(/-/g, ' ')}`);
     if (!cluster) { skip('no same-cluster target (the post matches no product cluster)'); continue; }

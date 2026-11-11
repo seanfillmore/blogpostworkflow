@@ -6,7 +6,7 @@
  * credentials, so they are imported lazily, only when a step needs them.
  */
 import {
-  readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync,
+  readFileSync, writeFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync, readdirSync,
 } from 'node:fs';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -76,6 +76,19 @@ async function fetchStatus(path, { method = 'HEAD' } = {}) {
   }
   return { status: null, location: '' };
 }
+
+/**
+ * Why a blocked draft must NOT be archived, or null. A post with a Shopify
+ * article id has (or had) a live page: moving its directory out of
+ * data/posts/ would orphan that page from every agent that maintains it.
+ */
+export function archiveRefusal(meta) {
+  if (meta?.shopify_article_id) return 'post has a Shopify article; refusing to archive it';
+  if (meta && isLiveOrScheduled(meta)) return 'post is live or scheduled; refusing to archive it';
+  return null;
+}
+
+const FIX_BASE = '/srv/recap-fix';
 
 export async function realDeps() {
   const exec = makeExec({ root: ROOT });
@@ -164,8 +177,8 @@ export async function realDeps() {
 
     // ── blocked drafts: move, never delete
     async archiveDraft(slug, reason) {
-      const meta = getPostMeta(slug);
-      if (meta && isLiveOrScheduled(meta)) throw new Error('post is live or scheduled; refusing to archive it');
+      const refusal = archiveRefusal(getPostMeta(slug));
+      if (refusal) throw new Error(refusal);
       const src = join(POSTS_DIR, slug);
       if (!existsSync(src)) throw new Error(`no post directory at data/posts/${slug}`);
       const arcRoot = join(POSTS_DIR, '_orphaned');
@@ -267,6 +280,8 @@ export async function realDeps() {
       if (statSync(p).size === 0) throw new Error('backup file is empty');
       return p;
     },
+    // killPost resolves the article from this id; removal.js checks it matches.
+    postArticleId: async (slug) => getPostMeta(slug)?.shopify_article_id ?? null,
     async killPost(slug, opts) {
       const { killPost } = await import('../../lib/post-kill.js');
       return killPost(slug, opts);
@@ -281,7 +296,18 @@ export async function realDeps() {
       if (!m) return '';
       return readTail(join(ROOT, m[1]), 128 * 1024).split('\n').slice(-200).join('\n');
     },
-    createFixCheckout: (name) => createFixCheckout(name, { exec }),
+    createFixCheckout: (name) => createFixCheckout(name, { exec, baseDir: FIX_BASE }),
+    // Kill every process the unprivileged fix user still has. Exit 1 = none left.
+    async reapFixUser() {
+      await exec('pkill', ['-u', 'recapfix'], { timeout: 60_000 });
+    },
+    async listFixCheckouts() {
+      if (!existsSync(FIX_BASE)) return [];
+      return readdirSync(FIX_BASE).filter((n) => n.startsWith('fix-')).map((n) => {
+        const path = `${FIX_BASE}/${n}`;
+        try { return { path, mtimeMs: statSync(path).mtimeMs }; } catch { return null; }
+      }).filter(Boolean);
+    },
     runFixSession: (args) => runFixSession(args),
     shipFix: (args) => shipFix({ ...args, exec, deploy: () => deployServer({ exec }), token: env.GITHUB_TOKEN }),
     async removeDir(path) {

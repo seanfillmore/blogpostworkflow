@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { itemKey, classifyFailure, buildReviewItems } from '../../lib/recap-review.js';
+import { itemKey, classifyFailure, buildReviewItems, classifyRows, isReviewedProblem } from '../../lib/recap-review.js';
 
 const row = (o) => ({ ts: '2026-11-10T04:00:00Z', subject: 'X failed', body: '', status: 'error', category: 'c', source: 'agents/x/index.js', ...o });
 
@@ -77,4 +77,35 @@ test('blocked drafts route to remediate-draft', () => {
   const [i] = buildReviewItems({ blockedDrafts: [{ slug: 'foo', reason: 'claims' }] });
   assert.equal(i.route, 'remediate-draft');
   assert.equal(i.kind, 'blocked-draft');
+});
+
+// ── final-review fixes ──────────────────────────────────────────────────────
+
+test('I5: "always" and "halfway" are not LWA; a capitalised LWA still is external', () => {
+  assert.equal(classifyFailure(row({ body: 'TypeError: we always fail halfway through' })), 'code');
+  assert.equal(classifyFailure(row({ body: 'ETIMEDOUT, always' })), 'transient');
+  assert.equal(classifyFailure(row({ body: 'LWA token exchange returned invalid_grant' })), 'external');
+  assert.equal(classifyFailure(row({ body: 'lwa' })), 'transient');
+});
+
+test('I5: a key is classified across ALL its rows, external > code > transient', () => {
+  const t = row({ body: 'ETIMEDOUT', ts: '2026-11-10T01:00:00Z' });
+  const c = row({ body: "TypeError: Cannot read properties of undefined", ts: '2026-11-10T02:00:00Z' });
+  const x = row({ body: '401 Unauthorized', ts: '2026-11-10T03:00:00Z' });
+  assert.equal(buildReviewItems({ errorRows: [t, c] })[0].route, 'fix-session');
+  assert.equal(buildReviewItems({ errorRows: [t, c, x] })[0].route, 'only-you');
+  assert.equal(buildReviewItems({ errorRows: [c, t] })[0].route, 'fix-session');
+  assert.equal(classifyRows([t]), 'transient');
+});
+
+test('minor: daily-summary\'s own System health row is never a review item', () => {
+  const items = buildReviewItems({ errorRows: [row({ source: 'agents/daily-summary/index.js', category: 'ops', subject: '⚠️ System health: 2 issues' })] });
+  assert.deepEqual(items, []);
+});
+
+test('I4: warnings are reviewed problems; info, success and daily-summary rows are not', () => {
+  assert.equal(isReviewedProblem(row({ status: 'warning' })), true);
+  assert.equal(isReviewedProblem(row({ status: 'error' })), true);
+  assert.equal(isReviewedProblem(row({ status: 'info' })), false);
+  assert.equal(isReviewedProblem(row({ status: 'error', source: 'agents/daily-summary/index.js' })), false);
 });

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseCrontab, isRerunnable, NEVER_RERUN, collectorFor } from '../../lib/recap-jobs.js';
+import { parseCrontab, isRerunnable, NEVER_RERUN, collectorFor, feedNameOf } from '../../lib/recap-jobs.js';
 
 const CRON = `# comment
 MAILTO=""
@@ -61,4 +61,16 @@ test('collectorFor unknown -> null', () => {
   assert.equal(collectorFor('Data feed "nope" is stale'), null);
   assert.equal(collectorFor('2 leftover git stashes on the server'), null);
   assert.equal(collectorFor(undefined), null);
+});
+
+test('M2: feedNameOf reads the feed name, ignoring the stale/missing wording', () => {
+  assert.equal(feedNameOf('Data feed "gsc" is stale (6 days old)'), 'gsc');
+  assert.equal(feedNameOf('Data feed "gsc" is missing'), 'gsc');
+  assert.equal(feedNameOf('Analysis report "seo-impact report" is 5 days old'), 'seo-impact report');
+  assert.equal(feedNameOf('2 leftover git stashes'), null);
+});
+
+test('C1: scheduler.js and daily-summary are never rerunnable', () => {
+  assert.equal(isRerunnable('scheduler.js'), false);
+  assert.equal(isRerunnable('agents/daily-summary/index.js'), false);
 });

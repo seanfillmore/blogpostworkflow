@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runReview, CUTOFF_UTC } from '../../agents/recap-reviewer/index.js';
+import { runReview, CUTOFF_UTC, summaryLine, writeCrashFiles } from '../../agents/recap-reviewer/index.js';
 import { splitCommand } from '../../lib/recap-jobs.js';
 import { makeExec } from '../../agents/recap-reviewer/exec.js';
 import { emptyState } from '../../lib/recap-reviewer-state.js';
+import { buildFixPrompt } from '../../lib/fix-session.js';
 
 const AT = (hhmm) => () => new Date(`2026-11-11T${hhmm}:00.000Z`);
 const MORNING = AT('11:05');
@@ -69,6 +70,9 @@ function fakeDeps(over = {}) {
     runFixSession: log('runFixSession', { exitCode: 0, verdict: 'fixed', summary: 'fixed the null check' }),
     shipFix: log('shipFix', { outcome: 'deployed', pr: { number: 9001, url: 'u' }, verify: 'rerun' }),
     removeDir: log('removeDir'),
+    reapFixUser: log('reapFixUser'),
+    postArticleId: async () => null,
+    listFixCheckouts: async () => [],
     // growth
     gatherGrowthInputs: async () => ({ missing: [] }),
     generateGrowthRecs: log('generateGrowthRecs', { recs: [{ move: 'm' }], dropped: [] }),
@@ -271,7 +275,7 @@ test('a fixed session ships, records attempts, cleans up, and runs growth only a
   assert.equal(deps.calls.filter((c) => c[0] === 'runFixSession').length, 1, 'one session per run');
   const ship = deps.calls.find((c) => c[0] === 'shipFix')[1];
   assert.equal(ship.item.source, 'agents/editor/index.js', 'the item with the most rows wins');
-  assert.equal(typeof ship.rerun, 'function', 'a job with a crontab line is re-run for real after deploy');
+  assert.equal(ship.rerun, null, 'editor writes live content: never re-run, verified by its next scheduled run');
   assert.equal(r.fixSession.action, 'fix session');
   assert.ok(r.resolved.some((o) => /#9001/.test(o.result)));
   const names = deps.names();
@@ -565,4 +569,254 @@ test('real exec resolves after a timeout kill even when "close" never fires', as
   const r = await exec('x', [], { timeout: 20 });
   assert.equal(r.code, null);
   assert.equal(r.timedOut, true);
+});
+
+// ── final review fixes ──────────────────────────────────────────────────────
+
+test('C1: a fix to scheduler.js or press-outreach (in crontab) ships with rerun = null; a rerunnable job gets a real re-run', async () => {
+  // daily-summary's only digest row is its System health row, which is never a
+  // review item, so it cannot reach a fix session; isRerunnable is pinned in recap-jobs.test.js.
+  const crontab = [
+    '0 15 * * * cd /root/seo-claude && /usr/bin/node scheduler.js >> data/logs/s.log 2>&1',
+    '17 * * * * cd /root/seo-claude && /usr/bin/node agents/press-outreach/index.js --apply >> data/logs/p.log 2>&1',
+    CRONTAB,
+  ].join('\n');
+  for (const source of ['scheduler.js', 'agents/press-outreach/index.js']) {
+    const deps = fakeDeps({ readCrontab: async () => crontab });
+    deps.inputs.entries.push(codeRow({ source, subject: `${source} failed` }));
+    await runReview(deps, { apply: true, now: MORNING });
+    assert.equal(deps.calls.find((c) => c[0] === 'shipFix')[1].rerun, null, source);
+  }
+  const deps = fakeDeps();
+  deps.inputs.entries.push(codeRow({ source: RANK, category: 'seo', subject: 'Rank Tracker failed' }));
+  await runReview(deps, { apply: true, now: MORNING });
+  const rerun = deps.calls.find((c) => c[0] === 'shipFix')[1].rerun;
+  assert.equal(typeof rerun, 'function');
+  await rerun();
+  const c = execsOf(deps, RANK).at(-1);
+  assert.equal(c[3].timeout, 20 * 60_000);
+});
+
+for (const [name, ship, status, re] of [
+  ['reverted', { outcome: 'reverted', pr: { number: 9001 }, revertPr: { number: 9002 }, problems: ['rerun failed'] }, 'info', /reverted by #9002/],
+  ['not-deployed', { outcome: 'not-deployed', pr: { number: 9001 }, revertPr: { number: 9002 }, problems: ['deploy failed'], message: 'deploy never landed; main has fix + revert; HEAD unchanged at abc123' }, 'info', /HEAD unchanged at abc123/],
+]) {
+  test(`I3a: a ${name} ship sends an immediate ${status} notify stating production`, async () => {
+    const deps = fakeDeps({ shipFix: async () => ship });
+    deps.inputs.entries.push(codeRow());
+    await runReview(deps, { apply: true, now: MORNING });
+    const n = deps.calls.filter((c) => c[0] === 'notify' && c[1].immediate === true);
+    assert.equal(n.length, 1);
+    assert.equal(n[0][1].status, status);
+    assert.match(`${n[0][1].subject}\n${n[0][1].body}`, re);
+  });
+}
+
+test('I3a: a shipFix throw sends an immediate error notify carrying the production state', async () => {
+  const deps = fakeDeps({ shipFix: async () => { throw new Error('recap fix #9001 (m) is merged to main and NOT reverted; the server has the fix deployed.'); } });
+  deps.inputs.entries.push(codeRow());
+  await runReview(deps, { apply: true, now: MORNING });
+  const n = deps.calls.filter((c) => c[0] === 'notify' && c[1].immediate === true);
+  assert.equal(n.length, 1);
+  assert.equal(n[0][1].status, 'error');
+  assert.match(n[0][1].body, /NOT reverted; the server has the fix deployed/);
+});
+
+test('I3a: a deployed fix sends no immediate notify', async () => {
+  const deps = fakeDeps();
+  deps.inputs.entries.push(codeRow());
+  await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'notify' && c[1].immediate === true).length, 0);
+});
+
+test('minor: every recapfix process is reaped after the fix session, whatever the verdict', async () => {
+  for (const verdict of ['fixed', 'gate', 'no-fix']) {
+    const deps = fakeDeps({ runFixSession: async () => ({ exitCode: 0, verdict, summary: verdict === 'no-fix' ? 'timed out' : 's' }) });
+    deps.inputs.entries.push(codeRow());
+    await runReview(deps, { apply: true, now: MORNING });
+    const names = deps.names();
+    assert.ok(names.includes('reapFixUser'), verdict);
+    assert.ok(names.indexOf('reapFixUser') > names.indexOf('runFixSession'), verdict);
+  }
+});
+
+test('minor: the fix prompt never calls the crontab command a dry run', () => {
+  const p = buildFixPrompt({ item: { subject: 's', source: 'agents/x/index.js' }, command: 'node agents/x/index.js --apply' });
+  assert.ok(!/\(dry\)/.test(p));
+  assert.match(p, /node agents\/x\/index\.js --apply/);
+});
+
+test('minor: fix.js and index.js share the one RERUN_TIMEOUT_MS from lib/recap-jobs.js', async () => {
+  const lib = await import('../../lib/recap-jobs.js');
+  const fix = await import('../../agents/recap-reviewer/fix.js');
+  const idx = await import('../../agents/recap-reviewer/index.js');
+  assert.equal(fix.RERUN_TIMEOUT_MS, lib.RERUN_TIMEOUT_MS);
+  assert.equal(idx.RERUN_TIMEOUT_MS, lib.RERUN_TIMEOUT_MS);
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['agents/recap-reviewer/fix.js', 'agents/recap-reviewer/index.js']) {
+    assert.ok(!/const RERUN_TIMEOUT_MS\s*=/.test(readFileSync(f, 'utf8')), f);
+  }
+});
+
+test('minor: a timed-out fix checkout older than 2 days is removed at the start of Unit C; a younger one is kept', async () => {
+  const now = Date.parse('2026-11-11T11:05:00Z');
+  const deps = fakeDeps({
+    listFixCheckouts: async () => [
+      { path: '/srv/recap-fix/fix-old-2026-11-08', mtimeMs: now - 3 * 86_400_000 },
+      { path: '/srv/recap-fix/fix-old-2026-11-08.bundle', mtimeMs: now - 3 * 86_400_000 },
+      { path: '/srv/recap-fix/fix-new-2026-11-10', mtimeMs: now - 86_400_000 },
+      { path: '/srv/other/fix-x', mtimeMs: 0 },
+      { path: '/srv/recap-fix/notafix', mtimeMs: 0 },
+    ],
+  });
+  await runReview(deps, { apply: true, now: MORNING });
+  const removed = deps.calls.filter((c) => c[0] === 'removeDir').map((c) => c[1]);
+  assert.deepEqual(removed, ['/srv/recap-fix/fix-old-2026-11-08', '/srv/recap-fix/fix-old-2026-11-08.bundle']);
+
+  const dry = fakeDeps({ listFixCheckouts: async () => [{ path: '/srv/recap-fix/fix-old', mtimeMs: 0 }] });
+  await runReview(dry, { now: MORNING });
+  assert.equal(dry.calls.filter((c) => c[0] === 'removeDir').length, 0);
+});
+
+const HB = 'scripts/check-scheduler-heartbeat.mjs';
+
+test('I1: a disk-full row from the heartbeat script goes to only-you with its text; it is not resolved by a healthy heartbeat', async () => {
+  const deps = fakeDeps();
+  deps.inputs.entries.push(
+    errRow({ source: HB, category: 'pipeline', subject: 'Server disk 91% full, 2.1 GB free', body: 'A full disk stops every cron job silently.' }),
+    errRow({ source: HB, category: 'pipeline', subject: 'Scheduler heartbeat — died', body: 'started, never completed' }),
+  );
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  const disk = r.onlyYou.find((o) => /disk/i.test(o.subject));
+  assert.ok(disk, JSON.stringify(r.onlyYou));
+  assert.match(disk.result, /Server disk 91% full/);
+  assert.match(disk.evidence, /full disk stops every cron job/);
+  assert.ok(!r.resolved.some((o) => /disk/i.test(o.subject)));
+  assert.ok(r.resolved.some((o) => /Scheduler heartbeat/.test(o.subject) && /healthy/.test(o.result)));
+  assert.equal(execsOf(deps, HB).length, 0, 'the disk row is never re-run');
+});
+
+test('I4a: a warning row is reviewed like an error: re-run and verified by a later success row', async () => {
+  const deps = fakeDeps({
+    readRowsSince: async () => [{ status: 'success', category: 'seo', source: RANK, subject: 'Rank Tracker: ok', ts: '2026-11-11T11:06:00.000Z' }],
+  });
+  deps.inputs.entries.push(errRow({ status: 'warning', body: 'request failed: ETIMEDOUT' }));
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(execsOf(deps, RANK).length, 1);
+  assert.equal(r.resolved.length, 1);
+});
+
+test('I4a: a warning that cannot be resolved is unresolved, never dropped; a later WARNING is not recovery', async () => {
+  const deps = fakeDeps({
+    readRowsSince: async () => [{ status: 'warning', category: 'seo', source: RANK, subject: 'Rank Tracker: still bad', ts: '2026-11-11T11:06:00.000Z' }],
+  });
+  deps.inputs.entries.push(
+    errRow({ status: 'warning', body: 'ETIMEDOUT' }),
+    errRow({ status: 'warning', source: OUTREACH, category: 'outreach', subject: 'Creator outreach: 1 held', body: 'socket hang up' }),
+  );
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.length, 0);
+  assert.equal(r.unresolved.length, 2);
+});
+
+test('M2: a collector re-run whose feed went from missing to stale is NOT resolved', async () => {
+  const deps = fakeDeps({ healthTitles: async () => ['Data feed "gsc" is stale (3 days old)'] });
+  deps.inputs.healthIssues.push({ title: 'Data feed "gsc" is missing', detail: 'no file' });
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.resolved.length, 0);
+  assert.match(r.unresolved[0].result, /still flags it/);
+
+  const ok = fakeDeps({ healthTitles: async () => ['Data feed "ga4" is stale'] });
+  ok.inputs.healthIssues.push({ title: 'Data feed "gsc" is missing', detail: 'no file' });
+  const r2 = await runReview(ok, { apply: true, now: MORNING });
+  assert.equal(r2.resolved.length, 1);
+});
+
+test('M3: a failed link repair after removals is unresolved "link repair after removals failed"', async () => {
+  const deps = fakeDeps({
+    exec: async (cmd, args, o) => { deps.calls.push(['exec', cmd, args, o]); return (args || []).includes('scripts/fix-redirect-links.mjs') ? { code: 1, stdout: '', stderr: 'boom' } : { code: 0, stdout: '', stderr: '' }; },
+  });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  const o = r.unresolved.find((x) => /link repair/.test(x.result));
+  assert.ok(o, JSON.stringify(r.unresolved));
+  assert.equal(o.result, 'link repair after removals failed');
+  assert.match(o.evidence, /exited 1/);
+});
+
+test('M3: a successful link repair adds no unresolved line', async () => {
+  const deps = fakeDeps();
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.ok(!r.unresolved.some((x) => /link repair/.test(x.result)));
+});
+
+test('I2: killPost never runs when the local post meta names a different Shopify article', async () => {
+  const deps = fakeDeps({ postArticleId: async () => 999 });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(deps.calls.filter((c) => c[0] === 'killPost').length, 0);
+  assert.equal(deps.calls.filter((c) => c[0] === 'writeBackup').length, 0);
+  assert.equal(r.skipped[0].reason, 'article id mismatch');
+
+  const same = fakeDeps({ postArticleId: async () => '11' });
+  same.inputs.postPerformance = { action_required: [flop('a')] };
+  await runReview(same, { apply: true, now: MORNING });
+  assert.equal(same.calls.filter((c) => c[0] === 'killPost').length, 1, 'matching id (string vs number) proceeds');
+});
+
+test('minor: a post with no Shopify article is kept as "already gone from Shopify"', async () => {
+  const deps = fakeDeps({ findArticle: async () => null });
+  deps.inputs.postPerformance = { action_required: [flop('a')] };
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.skipped.length, 0);
+  assert.equal(r.resolved[0].action, 'kept');
+  assert.match(r.resolved[0].result, /already gone from Shopify/);
+});
+
+test('I3b: every outcome carries finished_at and the report starts emailed:false', async () => {
+  const deps = fakeDeps();
+  deps.inputs.entries.push(errRow(), codeRow());
+  const r = await runReview(deps, { apply: true, now: MORNING });
+  assert.equal(r.emailed, false);
+  for (const o of [...r.resolved, ...r.unresolved, ...r.onlyYou]) assert.match(String(o.finished_at), /^2026-11-11T/);
+});
+
+test('minor: summaryLine counts kept separately from fixed', () => {
+  const line = summaryLine({ resolved: [{ action: 're-run' }, { action: 'kept' }, { action: 'kept' }], unresolved: [], onlyYou: [], skipped: [] });
+  assert.match(line, /^1 fixed, 2 kept,/);
+});
+
+test('minor: a crash before runReview writes latest.json AND done.json with crashed:true (apply only)', async () => {
+  const { mkdtempSync, readFileSync, existsSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const dir = mkdtempSync(join(tmpdir(), 'rr-crash-'));
+  writeCrashFiles({ dir, apply: true, error: new Error('wiring failed'), now: new Date('2026-11-11T11:05:00Z') });
+  const latest = JSON.parse(readFileSync(join(dir, 'latest.json'), 'utf8'));
+  const done = JSON.parse(readFileSync(join(dir, 'done.json'), 'utf8'));
+  assert.equal(latest.crashed, true);
+  assert.deepEqual(done, { date: '2026-11-11', generated_at: '2026-11-11T11:05:00.000Z', crashed: true });
+
+  const dry = mkdtempSync(join(tmpdir(), 'rr-crash-'));
+  writeCrashFiles({ dir: dry, apply: false, error: new Error('x'), now: new Date('2026-11-11T11:05:00Z') });
+  assert.ok(existsSync(join(dry, 'dry-run.json')));
+  assert.ok(!existsSync(join(dry, 'latest.json')));
+  assert.ok(!existsSync(join(dry, 'done.json')));
+});
+
+test('minor: archiveDraft refuses a post that has a Shopify article id', async () => {
+  const { archiveRefusal } = await import('../../agents/recap-reviewer/real-deps.js');
+  assert.match(archiveRefusal({ shopify_article_id: 123 }), /Shopify article/);
+  assert.match(archiveRefusal({ shopify_status: 'published' }), /live or scheduled/);
+  assert.equal(archiveRefusal({ slug: 'draft-x' }), null);
+  assert.equal(archiveRefusal(null), null);
+});
+
+test('minor: real reapFixUser and listFixCheckouts exist in the production wiring', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('agents/recap-reviewer/real-deps.js', 'utf8');
+  assert.match(src, /async reapFixUser\(\)[\s\S]{0,120}exec\('pkill', \['-u', 'recapfix'\]/);
+  assert.match(src, /async listFixCheckouts\(\)/);
+  assert.match(src, /postArticleId: async \(slug\) => getPostMeta\(slug\)\?\.shopify_article_id/);
 });
