@@ -46,6 +46,18 @@ test('checks pm2 jlist for seo-dashboard online, within 20 seconds, else exits 1
   assert.match(code, /exit 1/);
 });
 
+test('exit 3 when HEAD is unchanged (never pulled), exit 1 when pulled but unhealthy', () => {
+  assert.match(code, /HEAD_BEFORE=\$\(git rev-parse HEAD\)/);
+  assert.match(code, /= "\$HEAD_BEFORE" \]; then exit 3; fi/);
+  assert.match(code, /!= "\$HEAD_BEFORE" \] \|\| fail/);
+});
+
+test('online needs two readings 5 s apart with the same restart_time', () => {
+  assert.match(code, /restart_time/);
+  assert.match(code, /sleep 5/);
+  assert.match(code, /"\$SECOND" = "\$FIRST"/);
+});
+
 test('runs from the repo root, never over ssh', () => {
   assert.match(code, /cd "\$\(dirname "\$0"\)\/\.\."/);
   assert.doesNotMatch(code, /ssh /);
