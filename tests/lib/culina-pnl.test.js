@@ -62,3 +62,51 @@ test('comparePnl', () => {
   assert.deepEqual(sales, { line: 'sales', curr: 40, prev: 20, change: 20 });
   assert.ok(rows.find((r) => r.line === 'adSpend'));
 });
+
+test('RSC soap words vs Culina soap words', () => {
+  assert.equal(assignCampaignBrand('SB - Coconut Soap - Broad', culinaAsins, rscAsins), 'rsc');
+  assert.equal(assignCampaignBrand('SB - Hand Soaps - Exact', culinaAsins, rscAsins), 'rsc');
+  assert.equal(assignCampaignBrand('SB - Cast Iron Soap - Exact', culinaAsins, rscAsins), 'culina');
+  assert.equal(assignCampaignBrand('SB - Scrubs and Oils', culinaAsins, rscAsins), 'culina');
+});
+
+test('missingCogs lists Culina SKUs without a COGS figure', () => {
+  const p = monthPnl({ ...base, cogsTable: {}, ads: null });
+  assert.deepEqual(p.missingCogs, ['CUL-FAKE-A']);
+  assert.equal(p.cogs, 0);
+  const q = monthPnl({ ...base, skuToAsin: new Map(), ads: null });
+  assert.deepEqual(q.missingCogs, ['CUL-FAKE-A']);
+  assert.deepEqual(monthPnl({ ...base, ads: null }).missingCogs, []);
+});
+
+test('service fee with its own SKU/ASIN is charged to that brand fully', () => {
+  const ev = JSON.parse(JSON.stringify(events));
+  ev.ServiceFeeEventList = [
+    { SellerSKU: 'CUL-FAKE-A', FeeList: [{ FeeType: 'FBAStorageFee', FeeAmount: { CurrencyAmount: -10 } }] },
+    { SellerSKU: 'RSC-FAKE-B', FeeList: [{ FeeType: 'FBAStorageFee', FeeAmount: { CurrencyAmount: -50 } }] },
+    { ASIN: 'B0CULFAKE1', FeeList: [{ FeeType: 'FBAInboundTransportationFee', FeeAmount: { CurrencyAmount: -7 } }] },
+    { FeeList: [{ FeeType: 'FBAInboundTransportationFee', FeeAmount: { CurrencyAmount: -30 } }] },
+  ];
+  const p = monthPnl({ ...base, financeEvents: ev, ads: null });
+  assert.equal(p.storage, -10);
+  assert.equal(p.freight, -27); // -7 own + -30 * 2/3
+});
+
+test('no units shipped: unitShare and allocated lines are null', () => {
+  const ev = { ShipmentEventList: [], ServiceFeeEventList: events.ServiceFeeEventList, AdjustmentEventList: events.AdjustmentEventList };
+  const p = monthPnl({ ...base, financeEvents: ev, ads });
+  assert.equal(p.unitShare, null);
+  assert.equal(p.freight, null);
+  assert.equal(p.storage, null);
+  assert.equal(p.couponFees, null);
+  assert.equal(p.reimbursements, null);
+  assert.equal(p.net, null);
+});
+
+test('-0 normalised and unnamed campaigns listed', () => {
+  const p = monthPnl({ ...base, ads: { sp: [], sb: [{ cost: 1 }], sd: [] } });
+  assert.ok(Object.is(p.adSpend.sd, 0) && Object.is(p.adSpend.sp, 0));
+  assert.deepEqual(p.unassignedCampaigns, ['(unnamed)']);
+  const z = monthPnl({ ...base, financeEvents: {}, ads: null });
+  for (const k of ['sales', 'fba', 'referral', 'promotions', 'refunds', 'cogs', 'contribution']) assert.ok(Object.is(z[k], 0), k);
+});
