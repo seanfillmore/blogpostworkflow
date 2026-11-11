@@ -28,7 +28,7 @@ test('argv is exactly the spec and cwd is the worktree', async () => {
   const spawnImpl = fakeSpawn({ stdout: result('VERDICT: fixed — done') });
   await runFixSession({ worktree: '/w', prompt: 'P', spawnImpl, token: 't' });
   const { bin, args, opts } = spawnImpl.calls[0];
-  assert.equal(bin, 'runuser');
+  assert.equal(bin, '/usr/sbin/runuser');
   assert.equal(opts.detached, true);
   assert.deepEqual(args, ['-u', 'recapfix', '--', '/usr/local/bin/claude', '-p', 'P', '--output-format', 'json', '--permission-mode', 'acceptEdits',
     '--allowedTools', 'Read,Edit,Write,Grep,Glob,Bash(node:*),Bash(npm test:*),Bash(git diff:*),Bash(git status:*),Bash(git add:*),Bash(git commit:*)']);
@@ -58,7 +58,7 @@ test('createFixCheckout clones as recapfix in order, no .env, no /root', async (
   const p = await createFixCheckout('Abc/../X', { exec });
   assert.equal(p, '/srv/recap-fix/fix-abc----x');
   assert.equal(cmds.length, 5);
-  for (const c of cmds) assert.deepEqual(c.slice(0, 4), ['runuser', '-u', 'recapfix', '--']);
+  for (const c of cmds) assert.deepEqual(c.slice(0, 4), ['/usr/sbin/runuser', '-u', 'recapfix', '--']);
   assert.deepEqual(cmds[0].slice(4, 8), ['git', 'clone', '--quiet', 'https://github.com/seanfillmore/blogpostworkflow.git']);
   assert.deepEqual(cmds[1].slice(4, 8), ['git', '-C', p, 'checkout']);
   assert.ok(cmds[1].includes('fix/recap-abc----x'));
@@ -107,6 +107,8 @@ test('timeout kills the child and returns no-fix', async () => {
   assert.equal(r.verdict, 'no-fix');
   assert.equal(r.summary, 'timed out');
   assert.deepEqual(sent[0], [4242, 'SIGTERM']);
+  await new Promise((r) => setTimeout(r, 120));
+  assert.deepEqual(sent[1], [4242, 'SIGKILL']); // still armed after the child closed
 });
 
 test('captured stdout keeps only the 2 MB tail', async () => {
