@@ -18,7 +18,7 @@ const base = () => ({
   ],
   components: [
     { name: 'Chainmail', shipQty: 500, sourced: true, orderBy: '2026-12-01', coverDays: 40 },
-    { name: 'Soap base', shipQty: 300, sourced: false, orderBy: null, coverDays: 60 },
+    { name: 'Cleaning soap', shipQty: 300, sourced: false, orderBy: null, coverDays: 60 },
   ],
   forecastVsActual: [{ label: 'Oil', forecast30: 50, actual: 61 }],
   monthlySales: [{ month: '2026-09', sales: 31200 }, { month: '2026-10', sales: 29900 }],
@@ -82,4 +82,43 @@ test('alert', () => {
   const r = renderAlert([{ label: 'Soap', coverDays: 40, onHand: 50, reason: 'below_threshold' }, { label: 'Oil', coverDays: null, onHand: 0, reason: 'out_of_stock' }]);
   assert.equal(r.subject, 'Culina stock alert: 2 item(s) low');
   assert.match(r.html, /Soap/); assert.match(r.text, /Oil/);
+});
+
+test('fix1: no "raw material" wording; components heading', () => {
+  const { html, text } = renderMonthly(base());
+  assert.ok(!/raw material/i.test(html) && !/raw material/i.test(text));
+  assert.match(html, /Components to make or order/); assert.match(text, /Components to make or order/);
+});
+test('fix2: no negative zero', () => {
+  const m = base(); m.projection[0].onHand = -0; m.projection[0].forecast30 = -0.2;
+  const { html, text } = renderMonthly(m);
+  assert.ok(!/-0\b/.test(text)); assert.ok(!/>-0</.test(html));
+});
+test('fix3: shipQty without shipBy', () => {
+  const m = base(); m.projection[0].shipBy = null; m.projection[0].shipQty = 400;
+  const { html, text } = renderMonthly(m);
+  assert.match(html, /400 units needed/); assert.match(text, /400 units needed/);
+  assert.ok(!/units by (<|\s*$|\n)/m.test(html + text));
+});
+test('fix4: zero low target gives no Infinity or NaN', () => {
+  const m = base(); m.goal.target = [0, 100000];
+  const { html, text } = renderMonthly(m);
+  assert.ok(!/Infinity|NaN/.test(html + text));
+});
+test('fix5: net is n/a when ads are down even if given', () => {
+  const m = base(); m.pnl.find((r) => r.line === 'net').curr = 4000;
+  const { html, text } = renderMonthly(m);
+  const row = html.split('<tr').find((r) => r.includes('>Net<'));
+  assert.ok(!row.includes('$4,000')); assert.ok(!/Net: \$4,000/.test(text));
+});
+test('fix6: product and ship cells wrap', () => {
+  const { html } = renderMonthly(base());
+  const row = html.split('<tr').find((r) => r.includes('Cast Iron Soap 3 Pack'));
+  const cells = row.split('<td').slice(1);
+  assert.ok(!cells[0].includes('white-space:nowrap'));
+  assert.ok(!cells[6].includes('white-space:nowrap'));
+});
+test('fix7: alert escapes', () => {
+  const r = renderAlert([{ label: 'A <b>&"x"', coverDays: 3, onHand: 1, reason: 'below_threshold' }]);
+  assert.match(r.html, /A &lt;b&gt;&amp;&quot;x&quot;/); assert.ok(!r.html.includes('<b>&'));
 });
