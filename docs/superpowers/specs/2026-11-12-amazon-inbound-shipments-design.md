@@ -92,6 +92,13 @@ Quoted reply text is stripped first (`stripQuoted`).
 
 Sean is told immediately and decides. A resend after a "please resend" reply is the exception: it is expected, so it books. *My call:* a held duplicate costs one email to Sean, while a wrong guess books a second paid shipment.
 
+**Already booked by hand** (Sean, 2026-11-12: "Book the order in my inbox unless it detects the order has been placed already manually"). Before booking, look at FBA inbound plans and AWD inbound shipments created after the email arrived.
+- **Every pack's cases covered:** if their combined case counts per SKU cover every line of the email, the order is treated as already placed. Nothing is booked, and Sean gets a note.
+- **Partial overlap:** some of those SKUs appear, but not all cases are covered. The message is held for Sean.
+- **No overlap:** it books.
+
+This applies to every email, not only the backlog at rollout. The first run therefore handles the 2026-11-12 list by these rules.
+
 An unreadable state file **throws**. It never reads as "nothing processed yet", because that is how every past email would be booked again. This is the same rule `agents/ugc-reels` and `agents/instagram-dm` follow.
 
 ### 4. Split FBA / AWD

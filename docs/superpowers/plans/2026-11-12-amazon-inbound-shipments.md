@@ -204,6 +204,11 @@ Rules:
   - `duplicateCheck(state, { messageId, signature, text, receivedAt, windowDays, resendOf })` -> `{ hold: false } | { hold: true, reason }`.
     - It holds when a booked record within `windowDays` has the same `signature`, or when the text matches `/\b(sorry|correction|instead|actually)\b/i` and any record was booked in the window.
     - `resendOf` (the message we asked to resend) is never held.
+  - `manualBookingCheck(lines, laterShipments: [{ id, createdAt, casesBySku: { [sku]: number } }], receivedAt)` -> `{ verdict: 'placed' | 'partial' | 'none', covering: [ids] }`.
+    - Only shipments created at or after `receivedAt` count.
+    - `placed` when, for every line, the summed cases for that SKU ≥ the line's cases.
+    - `partial` when any SKU appears but not every line is covered.
+    - `none` otherwise.
   - `matchAwdShipment(pendingShares, awdShipments) -> [{ messageId, shipmentId }]`.
     - Exact SKU → case-count match, shipment created after the share's `handoffAt`.
     - Oldest share first; each shipment is used once.
@@ -228,6 +233,11 @@ Rules:
   - Two identical shares and one shipment give one match, to the oldest share.
   - A shipment created before `handoffAt` does not match.
   - Partial counts do not match.
+  - `manualBookingCheck` cases:
+    - Travis's four lines, with one later FBA plan holding 3-pack 9 cases and an AWD shipment holding the other three in full: `placed`.
+    - Only the 3-pack covered: `partial`.
+    - A matching shipment created BEFORE `receivedAt`: `none`.
+    - No shipments: `none`.
 - [ ] **Step 2:** Run `node --test tests/lib/amazon-inbound-state.test.js`. Expected: FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Re-run. Expected: PASS.
@@ -286,6 +296,7 @@ Flow:
   - `awdHandoff({ lines, shipFrom, reasons })`, for Sean
   - `awdReminder(...)`, for Sean
   - `heldNotice({ reason, text })`, for Sean
+  - `alreadyPlacedNotice({ covering })`, for Sean
   - `failureNotice({ messageId, step, planId, error })`, for Sean
 
 Content rules:
@@ -323,7 +334,11 @@ Content rules:
    - parse;
    - `none`: record `done`;
    - `invalid`: send `resendRequest` to Travis, record `invalid_replied`;
-   - otherwise run `duplicateCheck`. On a hold, send Sean `heldNotice` and record `held`. If not held, claim (persist `claimed`), split, run `bookFba` for the FBA lines, fetch labels, send `labelsReply` with the attachments, and record `labels_sent`.
+   - otherwise run `duplicateCheck`. On a hold, send Sean `heldNotice` and record `held`.
+   - Then run `manualBookingCheck`. Build `laterShipments` from FBA inbound plans (items per plan via `listInboundPlanItems`, cases = quantity ÷ units_per_case) and from AWD inbound shipments (`shipmentSkuQuantities` in CASES), both filtered to `createdAt >= receivedAt`.
+     - `placed`: send Sean `alreadyPlacedNotice`, record `done`.
+     - `partial`: send `heldNotice`, record `held`.
+   - If neither check holds it: claim (persist `claimed`), split, run `bookFba` for the FBA lines, fetch labels, send `labelsReply` with the attachments, and record `labels_sent`.
    - If there is an AWD share, also send Sean `awdHandoff` and set `awdShare.handoffAt`.
 4. **Resume.** Records in any intermediate step resume from it.
 5. **AWD.** Pending AWD shares: list AWD inbound shipments, run `matchAwdShipment`, fetch `getInboundShipmentLabels` (PDF), send `awdLabelsReply` in Travis's thread, and set `labelsSentAt`. Past `awd_reminder_days` with no match and no reminder, send `awdReminder`.
@@ -338,6 +353,7 @@ Content rules:
   - A second run with the same mail sends nothing and creates no plan.
   - An invalid email sends `resendRequest` and makes 0 SP-API calls.
   - A held duplicate makes 0 SP-API calls and sends 1 email to Sean only.
+  - An email already covered by a later manual plan books nothing and sends Sean one note.
   - `bookFba` throwing gives exactly one immediate notify and record `failed`.
   - An AWD share plus a matching AWD shipment on a later run sends `awdLabelsReply`.
   - `enabled: false` makes no calls.
@@ -352,6 +368,6 @@ Content rules:
 
 - [ ] **Step 1:** Run `node agents/amazon-inbound/index.js --dry-run --text "<Travis's four lines>"` on the Mac. Expected: 4 lines parsed, a split per SKU with reasons, quotes for every placement option, the cheapest total named, the draft plan cancelled. Fix any request-shape errors Amazon reports and re-run until it is clean.
 - [ ] **Step 2:** Open the PR with `gh pr create`, including the dry-run output in the body.
-- [ ] **Step 2b: Before the first `--apply` cron run,** decide what happens to Travis's emails that arrived before rollout, including the 2026-11-12 list. Either seed them into state as `done` (`--mark-done <messageId>`, added in Task 8 if needed), or let the first run book them. Sean decides.
+- [ ] **Step 2b:** Pre-rollout emails, including the 2026-11-12 list, follow the normal rules on the first `--apply` run: they book unless `manualBookingCheck` finds them already placed (Sean, 2026-11-12). Nothing to seed.
 - [ ] **Step 3 (after merge):** Deploy (`git pull`, per the CLAUDE.md deploy section), run `scripts/setup-cron.sh` on the server, and confirm with `crontab -l | grep amazon-inbound`.
 - [ ] **Step 4:** Run the server dry run once against the live inbox: `node agents/amazon-inbound/index.js --since 2026-11-12`. Expected: Travis's message found and parsed, nothing booked.
