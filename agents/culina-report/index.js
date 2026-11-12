@@ -12,8 +12,8 @@
  * --monthly (cron on the 10th) covers the previous calendar month (UTC) unless
  * --month is given: stock projection and ship plan, forecast vs actual, monthly
  * sales chart, P&L against the month before, and goal progress.
- * --alerts (cron daily) mails when an Amazon item or a made-in-house component
- * falls below config.alert_below_days of cover (lib/culina-alerts.js rules).
+ * --alerts (cron weekly, Mondays) mails every Amazon item (product ASINs only) that
+ * is below config.alert_below_days of cover (lib/culina-alerts.js rules).
  *
  * State, all gitignored under data/reports/culina-report/:
  *   inventory/YYYY-MM-DD.json  stock snapshot, written by every run (stockout days)
@@ -400,11 +400,10 @@ async function runAlerts(args, deps) {
     key: i.key, label: i.label, coverDays: i.coverDays, onHand: i.onHand,
     fba: i.fba, awd: i.awd, inbound: i.inbound, shipQty: i.shipQty, shipBy: i.shipBy,
   }));
-  const compItems = g.comps.filter((c) => !c.sourced).map((c) => ({
-    key: `component:${c.name}`, label: `${c.name} (all products)`, coverDays: c.coverDays, onHand: c.onHand,
-    fba: c.fba, awd: c.awd, inbound: c.inbound, shipQty: c.shipQty, needBy: c.needBy, component: true,
-  }));
-  const decision = decideAlerts({ items: [...amazonItems, ...compItems], state, today: g.today, config });
+  // Product (ASIN) rows only. Component rows ("salt scrub (all products)") confused the
+  // restock email (Sean, 2026-11-12); a single-item ASIN (Salt, Oil, Soap, Stick) still
+  // alerts as its own row. Components stay in the monthly report.
+  const decision = decideAlerts({ items: amazonItems, state, today: g.today, config });
   const rendered = renderAlert(decision.rows, {
     alertBelowDays: config.alert_below_days, leadDays: config.lead_time_days, sourcedLeadDays: config.sourced_lead_time_days,
   });
