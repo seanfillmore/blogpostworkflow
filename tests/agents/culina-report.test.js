@@ -413,6 +413,12 @@ test('itemLabel names sets by item count and leaves single items and the COGS ta
   assert.equal(itemLabel('B08KHGYYKQ', cogs), '6-pack');
   assert.equal(itemLabel('B0984W3SG3', cogs), '8-pack');
   assert.equal(itemLabel('B071SGF6GT', cogs), 'Cleaning Soap 8oz');
+  const config = JSON.parse(readFileSync(new URL('../../config/culina-report.json', import.meta.url), 'utf8'));
+  assert.equal(itemLabel('B071SGF6GT', cogs, null, config), 'Soap');
+  assert.equal(itemLabel('B0771WC1Q1', cogs, null, config), 'Oil');
+  assert.equal(itemLabel('B08BTVXLXN', cogs, null, config), 'Salt');
+  assert.equal(itemLabel('B08CQMQQ1K', cogs, null, config), 'Stick');
+  assert.equal(itemLabel('B08K85JN7M', cogs, null, config), '5-pack');
   assert.equal(itemLabel('B0UNKNOWN', cogs, 'Listing title'), 'Listing title');
   assert.equal(itemLabel('B0UNKNOWN', cogs), 'B0UNKNOWN');
   assert.equal(JSON.stringify(cogs), before);

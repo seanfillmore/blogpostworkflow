@@ -98,14 +98,17 @@ export function monthsBetween(from, to) {
 
 /**
  * Report name for an item. A set of 2+ items is named by its item count ("4-pack")
- * so production knows how many items go in each box (Sean, 2026-11-11). Single items
- * keep their config/culina-cogs.json name. Report-only: the COGS names are untouched.
+ * so production knows how many items go in each box (Sean, 2026-11-11). A single item
+ * takes its short name from config.single_item_names, keyed by its one component
+ * ("Salt", "Stick", "Oil", "Soap"), else its config/culina-cogs.json name.
+ * Report-only: the COGS names the PPC audit reads are untouched.
  */
-export function itemLabel(asin, cogs, fallback) {
+export function itemLabel(asin, cogs, fallback, config) {
   const entry = cogs?.[asin];
-  const n = Array.isArray(entry?.contents) ? entry.contents.length : 0;
-  if (n >= 2) return `${n}-pack`;
-  return entry?.name || fallback || asin;
+  const contents = Array.isArray(entry?.contents) ? entry.contents : [];
+  if (contents.length >= 2) return `${contents.length}-pack`;
+  const short = contents.length === 1 ? config?.single_item_names?.[String(contents[0]).trim().toLowerCase()] : null;
+  return short || entry?.name || fallback || asin;
 }
 
 const sumUnits = (rows, pred) => (rows || []).reduce((s, r) => (pred(r.date) ? s + (r.units || 0) : s), 0);
@@ -218,7 +221,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
     if (sumUnits(rows, (d) => d >= activeFrom) <= 0 && onHand <= 0) continue;
     const recent = rows.filter((r) => r.date >= paceFrom);
     const pace = dailyPace(recent, { stockoutDates: inferStockoutDates(recent, snapshots[asin] || {}) });
-    const label = itemLabel(asin, cogs, titleOf[asin]);
+    const label = itemLabel(asin, cogs, titleOf[asin], config);
     items.push({ key: asin, asin, label, pace, onHand, ...splitOf(asin), ...shipPlan({ pace, onHand, today, seasonal, config }) });
   }
   const known = new Set(items.map((i) => i.asin));
@@ -235,7 +238,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
       const need = Math.max(0, initial - onHand);
       plan = { ...plan, shipQty: need, shipBy: need > 0 ? today : null };
     }
-    items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.asin ? itemLabel(l.asin, cogs, l.name) : l.name, launch: true, pace, onHand,
+    items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.asin ? itemLabel(l.asin, cogs, l.name, config) : l.name, launch: true, pace, onHand,
       ...(l.asin ? splitOf(l.asin) : { fba: 0, awd: 0, inbound: 0 }),
       ...plan });
   }
@@ -280,7 +283,7 @@ async function runMonthly(args, deps) {
   if (saved) {
     const inMonth = (d) => d >= win.startDate && d <= win.endDate;
     forecastVsActual = Object.entries(saved.byAsin || {}).map(([asin, f]) => ({
-      label: cogs?.[asin] ? itemLabel(asin, cogs, f.label) : (f.label || asin), forecast30: f.forecast ?? null, actual: daily[asin] ? sumUnits(daily[asin], inMonth) : null,
+      label: cogs?.[asin] ? itemLabel(asin, cogs, f.label, config) : (f.label || asin), forecast30: f.forecast ?? null, actual: daily[asin] ? sumUnits(daily[asin], inMonth) : null,
     }));
   }
 

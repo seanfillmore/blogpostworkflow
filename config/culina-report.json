@@ -1,6 +1,7 @@
 {
   "to": "travis@traviswales.com",
   "cc": ["sean@realskincare.com"],
+  "single_item_names": { "salt scrub": "Salt", "conditioning stick": "Stick", "conditioning oil": "Oil", "cleaning soap": "Soap" },
   "from": "sean@realskincare.com",
   "cover_target_days": [90, 120],
   "alert_below_days": 60,
