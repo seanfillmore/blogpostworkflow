@@ -576,6 +576,12 @@ async function dryBook(ctx, record) {
     try {
       await bookFba({ record: draft, items: split.fbaItems, config: ctx.config, deps, persist: () => {} });
       const q = draft.quote;
+      const money = (n) => (n === null ? 'unquoted' : `$${n}`);
+      ctx.log('Placement options:');
+      for (const o of q.options || []) {
+        ctx.log(`  ${o.placementOptionId}: placement ${money(o.placementFee)}, ${o.shipments.length} shipment(s), lowest total ${money(o.total)}`);
+        for (const s of o.shipments) ctx.log(`    ${s.shipmentId}: parcel ${money(s.parcel)}, LTL ${s.ltl === null ? 'not offered' : `$${s.ltl}`}`);
+      }
       ctx.log(`Cheapest total: $${q.total} (placement $${q.placementFee}, packing $${q.packingFee}; ${q.picks.map((p) => `${p.shipmentId} ${p.mode} $${p.amount}`).join('; ')})`);
     } finally {
       if (draft.planId) {

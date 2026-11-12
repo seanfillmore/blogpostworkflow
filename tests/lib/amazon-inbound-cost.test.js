@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { palletize, chooseCheapest, feeAmount } from '../../lib/amazon-inbound-cost.js';
+import { palletize, chooseCheapest, feeAmount, summarizeOptions } from '../../lib/amazon-inbound-cost.js';
 
 const cfg = JSON.parse(readFileSync(new URL('../../config/amazon-inbound.json', import.meta.url), 'utf8'));
 const pallet = cfg.pallet;
@@ -112,4 +112,18 @@ test('feeAmount', () => {
   assert.equal(feeAmount(undefined), null);
   assert.equal(feeAmount({ code: 'USD' }), null);
   assert.equal(feeAmount({ amount: 12.5, code: 'USD' }), 12.5);
+});
+
+test('summarizeOptions: per placement, cheapest parcel and LTL per shipment and the placement total', () => {
+  const out = summarizeOptions([
+    { placementOptionId: 'A', placementFee: 10, shipments: [
+      { shipmentId: 's1', options: [{ mode: 'GROUND_SMALL_PARCEL', amount: 50 }, { mode: 'GROUND_SMALL_PARCEL', amount: 45 }, { mode: 'FREIGHT_LTL', amount: 30 }] },
+      { shipmentId: 's2', options: [{ mode: 'GROUND_SMALL_PARCEL', amount: 40.1 }] },
+    ] },
+    { placementOptionId: 'B', placementFee: null, shipments: [{ shipmentId: 's3', options: [{ mode: 'FREIGHT_LTL', amount: null }] }] },
+  ]);
+  assert.deepEqual(out, [
+    { placementOptionId: 'A', placementFee: 10, total: 80.1, shipments: [{ shipmentId: 's1', parcel: 45, ltl: 30 }, { shipmentId: 's2', parcel: 40.1, ltl: null }] },
+    { placementOptionId: 'B', placementFee: null, total: null, shipments: [{ shipmentId: 's3', parcel: null, ltl: null }] },
+  ]);
 });

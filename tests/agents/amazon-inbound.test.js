@@ -432,6 +432,8 @@ test('dry run with --text quotes, cancels the draft, sends nothing and writes no
   const out = logs.join('\n');
   assert.match(out, /Cheapest total: \$45/);
   assert.match(out, /6-pack: 10 case\(s\) to FBA, 0 to AWD/);
+  assert.match(out, /plA: placement \$5, 1 shipment\(s\), lowest total \$45/);
+  assert.match(out, /s1: parcel \$40, LTL not offered/);
 });
 
 test('setup-cron.sh runs the agent at :07/:22/:37/:52 with --apply and no TZ= prefix', () => {
