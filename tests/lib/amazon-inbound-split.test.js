@@ -49,3 +49,15 @@ test('readFbaBySku sums FBA inbound across pages, keys by sellerSku', async () =
   assert.equal(calls[0].details, 'true');
   assert.equal(calls[1].nextToken, 'n2');
 });
+
+test('pace 0 counts as no usable pace: all FBA', () => {
+  const [r] = splitCases({ ...base, lines: [line()], fbaBySku: {}, paceBySku: { S1: 0 } });
+  assert.equal(r.fbaCases, 10);
+  assert.equal(r.reason, 'no sales pace yet');
+});
+
+test('float noise above a whole case does not round up', () => {
+  const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 47.9999999999, inbound: 0 } }, paceBySku: { S1: 4 } });
+  assert.equal(r.fbaCases, 6);
+  assert.equal(r.awdCases, 4);
+});
