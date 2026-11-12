@@ -1,0 +1,774 @@
+#!/usr/bin/env node
+/**
+ * Culina Amazon inbound shipments: Travis emails a case list, FBA case labels go back to him.
+ *
+ *   node agents/amazon-inbound/index.js [--apply] [--dry-run] [--since YYYY-MM-DD] [--text "<message>"]
+ *
+ * Cron: every 15 minutes with --apply (scripts/setup-cron.sh EVERY_15_AMAZON_INBOUND, UTC).
+ *
+ * Per run, under a single-instance lock:
+ *   1. Resume every state record left mid-way (claimed .. confirmed, failed, or a booked
+ *      record whose AWD handoff never went out). A failed record resumes from failedAtStep.
+ *   2. AWD: pending AWD shares are matched to AWD inbound shipments Sean created in Seller
+ *      Central (the AWD API cannot book the partnered carrier); matched labels go to Travis in
+ *      his thread. Past awd_reminder_days with no match, Sean gets one reminder.
+ *   3. New mail from config.sender (every Hushmail folder, last 14 days or since --since; auto
+ *      replies ignored): parse -> none (done) | invalid (ask Travis to resend) | shipment ->
+ *      duplicate hold -> already-booked-by-hand check -> claim -> 30-day FBA/AWD split ->
+ *      bookFba (cheapest total) -> case labels to Travis, CC Sean, threaded -> AWD handoff to Sean.
+ *   4. One deferred digest row when anything happened.
+ *
+ * Never books the same email twice: a record is persisted as 'claimed' before the first create
+ * call, bookFba resumes from the stored step and adopts a plan already named for the message,
+ * and an unreadable state file throws (after one immediate notify) instead of reading as empty.
+ *
+ * Labels not ready right after confirmation (no confirmation id / box ids yet, or a 404 on a
+ * label or the bill of lading) are retried on the next run; after 6 misses Sean is told once.
+ * Any other error marks the record failed at the step reached, notifies Sean immediately once per
+ * (message, step), and the next run retries from that step.
+ *
+ * Dry by default: nothing is sent, no state is written, nothing is confirmed. A dry run quotes
+ * under a separate plan name and then cancels that draft plan (cancelDraft), printing the parse,
+ * the split and the cheapest total. --text treats the given text as a message received now.
+ *
+ * Off switch: config/amazon-inbound.json enabled: false. State: data/amazon-inbound/state.json
+ * (gitignored, offsite server-state backup). Culina only: SKUs come from config.skus.
+ */
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { isDirectRun } from '../../lib/is-direct-run.js';
+import { notify } from '../../lib/notify.js';
+import { hushmailCredentials, sendMail, fetchFromAllFolders } from '../../lib/hushmail.js';
+import { defaultDeps, fetchDailyUnits } from '../../lib/culina-data.js';
+import { dailyPace, inferStockoutDates, seasonalIndex } from '../../lib/culina-forecast.js';
+import { parseShipmentEmail, linesSignature } from '../../lib/amazon-inbound-parse.js';
+import { splitCases, readFbaBySku } from '../../lib/amazon-inbound-split.js';
+import { palletize } from '../../lib/amazon-inbound-cost.js';
+import {
+  loadState, saveState, planName, duplicateCheck, manualBookingCheck, matchAwdShipment,
+} from '../../lib/amazon-inbound-state.js';
+import { bookFba, fetchFbaLabels, cancelDraft } from '../../lib/amazon-inbound-fba.js';
+import {
+  labelsReply, awdLabelsReply, resendRequest, awdHandoff, awdReminder, heldNotice, alreadyPlacedNotice, failureNotice,
+} from '../../lib/amazon-inbound-email.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const STATE_DIR = join(ROOT, 'data', 'amazon-inbound');
+const DAY = 864e5;
+const MAX_AGE_DAYS = 14;
+const PACE_WINDOW_DAYS = 120;
+const LABEL_MISS_LIMIT = 6;
+const LOCK_STALE_MS = 3 * 3600e3;
+const PACE_MS = 1000;
+const V = '/inbound/fba/2024-03-20';
+const AWD = '/awd/2024-05-09';
+const AGENT = 'amazon-inbound';
+
+const BOOKING = new Set(['claimed', 'plan_created', 'packing_confirmed', 'quoted', 'confirmed']);
+const SKIP_PLAN_STATUS = new Set(['VOIDED', 'ERRORED']);
+const LABELS_NOT_READY = /no shipmentConfirmationId yet|box IDs not available yet|returned no DownloadURL|\(404\)/;
+
+// ---- args -----------------------------------------------------------------
+
+export function parseArgs(argv) {
+  const val = (flag) => {
+    const i = argv.indexOf(flag);
+    if (i === -1) return null;
+    const v = argv[i + 1];
+    if (v === undefined || v.startsWith('--')) throw new Error(`${flag} needs a value`);
+    return v;
+  };
+  const apply = argv.includes('--apply');
+  if (apply && argv.includes('--dry-run')) throw new Error('--apply and --dry-run cannot both be given');
+  const since = val('--since');
+  if (since !== null && !/^\d{4}-\d{2}-\d{2}$/.test(since)) throw new Error(`--since must be YYYY-MM-DD, got ${since}`);
+  const text = val('--text');
+  return { apply, since, text };
+}
+
+// ---- small helpers ----------------------------------------------------------
+
+const iso = (d) => new Date(d).toISOString();
+const short = (id) => String(id || '').replace(/^<|>$/g, '').slice(0, 24);
+const errText = (err) => String(err?.message || err);
+const pause = (ctx) => ctx.deps.sleep(PACE_MS);
+
+function acquireLock(path) {
+  mkdirSync(dirname(path), { recursive: true });
+  if (existsSync(path)) {
+    let pid = 0;
+    try { pid = Number(readFileSync(path, 'utf8').trim()); } catch { /* unreadable lock: treat by age */ }
+    const age = Date.now() - statSync(path).mtimeMs;
+    let alive = false;
+    if (pid > 0) { try { process.kill(pid, 0); alive = true; } catch (e) { alive = e.code === 'EPERM'; } }
+    if (alive && age < LOCK_STALE_MS) return false;
+  }
+  writeFileSync(path, String(process.pid));
+  return true;
+}
+
+function releaseLock(path) {
+  try { unlinkSync(path); } catch { /* already gone */ }
+}
+
+function loadSeasonal(path, notes) {
+  if (!path || !existsSync(path)) return seasonalIndex(null);
+  try {
+    return seasonalIndex(JSON.parse(readFileSync(path, 'utf8')).monthlySearches);
+  } catch (err) {
+    notes.push(`seasonal cache unreadable (${err.message}); flat seasonal index used`);
+    return seasonalIndex(null);
+  }
+}
+
+async function listPaged(ctx, path, key, params = {}) {
+  const out = [];
+  let token;
+  let first = true;
+  do {
+    if (!first) await pause(ctx);
+    first = false;
+    const res = await ctx.deps.request('GET', path, token ? { ...params, paginationToken: token } : params);
+    out.push(...(res?.[key] || []));
+    token = res?.pagination?.nextToken;
+  } while (token);
+  return out;
+}
+
+function skuTable(config) {
+  return Object.fromEntries(config.skus.map((s) => [s.sku, s]));
+}
+
+// ---- mail -------------------------------------------------------------------
+
+function threadHeaders(record) {
+  if (record.synthetic || !record.messageId) return {};
+  const refs = [...(record.references || []), record.messageId].filter(Boolean);
+  return { inReplyTo: record.messageId, references: [...new Set(refs)].join(' ') };
+}
+
+async function sendToTravis(ctx, record, msg, attachments) {
+  const { deps, config } = ctx;
+  return deps.sendMail(deps.creds, {
+    to: config.to, cc: config.cc, subject: msg.subject, text: msg.text, html: msg.html,
+    fromName: config.fromName, agent: AGENT, ...threadHeaders(record),
+    ...(attachments?.length ? { attachments } : {}),
+  }, { via: 'resend', resendKey: deps.resendKey });
+}
+
+async function sendToSean(ctx, msg) {
+  const { deps, config } = ctx;
+  return deps.sendMail(deps.creds, {
+    to: config.from, subject: msg.subject, text: msg.text, html: msg.html, fromName: config.fromName, agent: AGENT,
+  }, { via: 'resend', resendKey: deps.resendKey });
+}
+
+/** In a dry run nothing is sent; the message is printed instead. */
+async function deliver(ctx, who, record, msg, attachments) {
+  if (!ctx.apply) {
+    ctx.log(`[dry] would email ${who === 'travis' ? `Travis (CC ${ctx.config.cc.join(', ')})` : 'Sean'}: ${msg.subject}${attachments?.length ? ` with ${attachments.length} attachment(s)` : ''}\n${msg.text}\n`);
+    return { messageId: null };
+  }
+  return who === 'travis' ? sendToTravis(ctx, record, msg, attachments) : sendToSean(ctx, msg);
+}
+
+async function readMail(ctx) {
+  const { deps, config, args } = ctx;
+  const now = deps.now().getTime();
+  const since = args.since ? new Date(`${args.since}T00:00:00Z`) : new Date(now - MAX_AGE_DAYS * DAY);
+  const sender = config.sender.toLowerCase();
+  const rows = await deps.fetchMail(deps.creds, { senders: [config.sender], since });
+  const seen = new Set();
+  return rows
+    .filter((r) => r?.messageId && String(r.from || '').toLowerCase() === sender && !r.autoSubmitted)
+    .filter((r) => Date.parse(r.date) >= since.getTime())
+    .filter((r) => (seen.has(r.messageId) ? false : seen.add(r.messageId)))
+    .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+}
+
+function textRow(ctx, text) {
+  const id = `text-${createHash('sha256').update(text).digest('hex').slice(0, 12)}`;
+  return { messageId: id, date: iso(ctx.deps.now()), subject: 'Culina case list', inReplyTo: null, references: [], text, synthetic: true };
+}
+
+// ---- Amazon reads -------------------------------------------------------------
+
+/** FBA plans and AWD shipments created at or after `since`, as { id, createdAt, casesBySku }. */
+async function laterShipments(ctx, record) {
+  const since = Date.parse(record.receivedAt);
+  const own = new Set([...Object.keys(ctx.state.messages), record.messageId].map(planName));
+  const skus = skuTable(ctx.config);
+  const out = [];
+
+  const plans = [];
+  let token;
+  let first = true;
+  for (;;) {
+    if (!first) await pause(ctx);
+    first = false;
+    const res = await ctx.deps.request('GET', `${V}/inboundPlans`, {
+      pageSize: 30, sortBy: 'CREATION_TIME', sortOrder: 'DESC', ...(token ? { paginationToken: token } : {}),
+    });
+    let older = false;
+    for (const p of res?.inboundPlans || []) {
+      if (!(Date.parse(p.createdAt) >= since)) { older = true; continue; }
+      if (SKIP_PLAN_STATUS.has(p.status) || own.has(p.name)) continue;
+      plans.push(p);
+    }
+    token = res?.pagination?.nextToken;
+    if (older || !token) break;
+  }
+  for (const p of plans) {
+    await pause(ctx);
+    let items;
+    try {
+      items = await listPaged(ctx, `${V}/inboundPlans/${p.inboundPlanId}/items`, 'items');
+    } catch (err) {
+      // GetInboundPlan/listInboundPlanItems answer 400 for AWD-type plans; those are read from the AWD API below.
+      if (errText(err).includes('(400)')) { ctx.log(`skipping plan ${p.inboundPlanId}: ${errText(err).slice(0, 160)}`); continue; }
+      throw err;
+    }
+    const casesBySku = {};
+    for (const it of items) {
+      const cfg = skus[it.msku];
+      if (!cfg) continue;
+      casesBySku[it.msku] = (casesBySku[it.msku] || 0) + Math.round(it.quantity / cfg.units_per_case);
+    }
+    out.push({ id: p.inboundPlanId, createdAt: p.createdAt, casesBySku });
+  }
+
+  const claimed = claimedAwdIds(ctx.state);
+  for (const s of await awdShipmentsSince(ctx, since)) {
+    if (!claimed.has(s.shipmentId)) out.push(s);
+  }
+  return out;
+}
+
+function claimedAwdIds(state) {
+  return new Set(Object.values(state.messages).map((r) => r?.awdShare?.awdShipmentId).filter(Boolean));
+}
+
+/** AWD inbound shipments created at or after `since` (ms), with case counts per SKU (skuQuantities=SHOW). */
+async function awdShipmentsSince(ctx, since) {
+  const skus = skuTable(ctx.config);
+  const summaries = [];
+  let token;
+  let first = true;
+  for (;;) {
+    if (!first) await pause(ctx);
+    first = false;
+    const res = await ctx.deps.request('GET', `${AWD}/inboundShipments`, {
+      sortBy: 'CREATED_AT', sortOrder: 'DESCENDING', maxResults: 200, ...(token ? { nextToken: token } : {}),
+    });
+    let older = false;
+    for (const s of res?.shipments || []) {
+      if (!(Date.parse(s.createdAt) >= since)) { older = true; continue; }
+      if (s.shipmentStatus === 'CANCELLED') continue;
+      summaries.push(s);
+    }
+    token = res?.nextToken;
+    if (older || !token) break;
+  }
+  const out = [];
+  for (const s of summaries) {
+    await pause(ctx);
+    const d = await ctx.deps.request('GET', `${AWD}/inboundShipments/${s.shipmentId}`, { skuQuantities: 'SHOW' });
+    const casesBySku = {};
+    for (const q of d?.shipmentSkuQuantities || []) {
+      const e = q.expectedQuantity || {};
+      let cases = null;
+      if (e.unitOfMeasurement === 'CASES') cases = e.quantity;
+      else if (e.unitOfMeasurement === 'PRODUCT_UNITS' && skus[q.sku]) cases = e.quantity / skus[q.sku].units_per_case;
+      if (cases === null || !q.sku) continue;
+      casesBySku[q.sku] = (casesBySku[q.sku] || 0) + cases;
+    }
+    out.push({ id: s.shipmentId, shipmentId: s.shipmentId, createdAt: d?.createdAt || s.createdAt, casesBySku });
+  }
+  return out;
+}
+
+// ---- split ------------------------------------------------------------------
+
+async function computeSplit(ctx, lines) {
+  const { deps, config } = ctx;
+  for (const l of lines) {
+    if (String(l.sku).startsWith('amzn.gr.')) throw new Error(`refusing amzn.gr SKU ${l.sku}`);
+  }
+  const asins = [...new Set(lines.map((l) => l.asin))];
+  const daily = await fetchDailyUnits(deps, asins, PACE_WINDOW_DAYS);
+  const paceBySku = {};
+  for (const l of lines) {
+    const rows = daily[l.asin] || [];
+    paceBySku[l.sku] = dailyPace(rows, { stockoutDates: inferStockoutDates(rows, {}) });
+  }
+  const fbaBySku = await readFbaBySku(deps);
+  const seasonal = loadSeasonal(deps.seasonalPath, ctx.notes);
+  const today = iso(deps.now()).slice(0, 10);
+  const rows = splitCases({ lines, fbaBySku, paceBySku, today, seasonal, coverDays: config.fba_cover_days });
+
+  const skus = skuTable(config);
+  const fbaItems = [];
+  const awdLines = [];
+  for (const r of rows) {
+    const cfg = skus[r.sku];
+    if (!cfg) throw new Error(`SKU ${r.sku} is not in config/amazon-inbound.json`);
+    if (r.fbaCases > 0) {
+      fbaItems.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.fbaCases, unitsPerCase: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb });
+    }
+    if (r.awdCases > 0) {
+      awdLines.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.awdCases, units_per_case: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb });
+    }
+  }
+  const reasons = rows.map((r) => {
+    const now = r.coverDaysNow === null ? '' : ` (${Math.round(r.coverDaysNow)} days of FBA cover now)`;
+    return `${r.key}: ${r.reason}${now}`;
+  });
+  return { rows, fbaItems, awdLines, reasons };
+}
+
+function printSplit(ctx, split) {
+  ctx.log('Split:');
+  for (const r of split.rows) ctx.log(`  ${r.key}: ${r.fbaCases} case(s) to FBA, ${r.awdCases} to AWD (${r.reason})`);
+}
+
+// ---- per message ---------------------------------------------------------------
+
+function bookDeps(ctx, apply) {
+  const { deps } = ctx;
+  return {
+    request: deps.request, sleep: deps.sleep, now: deps.now, marketplaceId: deps.marketplaceId,
+    contactPhone: deps.contactPhone, download: deps.download, apply,
+  };
+}
+
+/** New (or failed-before-claim) message: decide none / invalid / held / placed / book. */
+async function triage(ctx, record) {
+  const { config, state } = ctx;
+  const parsed = parseShipmentEmail(record.text, config.skus);
+  if (!ctx.apply) ctx.log(`Message ${short(record.messageId)} (${record.receivedAt}): ${parsed.kind}`);
+
+  if (parsed.kind === 'none') {
+    record.step = 'done';
+    record.kind = 'none';
+    ctx.persist(record);
+    return;
+  }
+  if (parsed.kind === 'invalid') {
+    record.problems = parsed.problems;
+    const sent = await deliver(ctx, 'travis', record, resendRequest({ problems: parsed.problems }));
+    record.resendRequestId = sent.messageId;
+    record.step = 'invalid_replied';
+    ctx.persist(record);
+    ctx.event(`${short(record.messageId)}: could not read ${parsed.problems.length} line(s); asked Travis to resend`, 'info');
+    return;
+  }
+
+  record.lines = parsed.lines;
+  record.signature = linesSignature(parsed.lines);
+  if (!ctx.apply) for (const l of parsed.lines) ctx.log(`  ${l.key}: ${l.cases} cases, ${l.units} units (${l.sku})`);
+
+  const replyTo = new Set([record.inReplyTo, ...(record.references || [])].filter(Boolean));
+  const asked = Object.values(state.messages).find((r) => r.step === 'invalid_replied' && r.resendRequestId && replyTo.has(r.resendRequestId));
+  if (asked) record.resendOf = asked.messageId;
+
+  const dup = duplicateCheck(state, {
+    messageId: record.messageId, signature: record.signature, text: record.text, receivedAt: record.receivedAt,
+    windowDays: config.duplicate_window_days, resendOf: record.resendOf,
+  });
+  if (dup.hold) {
+    await hold(ctx, record, dup.reason);
+    return;
+  }
+
+  const manual = manualBookingCheck(record.lines, await laterShipments(ctx, record), record.receivedAt);
+  if (manual.verdict === 'placed') {
+    await deliver(ctx, 'sean', record, alreadyPlacedNotice({ covering: manual.covering, lines: record.lines }));
+    record.coveredBy = manual.covering;
+    record.step = 'done';
+    ctx.persist(record);
+    ctx.event(`${short(record.messageId)}: already booked by hand (${manual.covering.join(', ')}); nothing booked`, 'info');
+    return;
+  }
+  if (manual.verdict === 'partial') {
+    await hold(ctx, record, `some of these cases already appear on shipments created after the email (${manual.covering.join(', ')})`);
+    return;
+  }
+
+  record.step = 'claimed';
+  record.claimedAt = iso(ctx.deps.now());
+  ctx.persist(record); // claimed BEFORE the first create call
+}
+
+async function hold(ctx, record, reason) {
+  await deliver(ctx, 'sean', record, heldNotice({ reason, text: record.text }));
+  record.holdReason = reason;
+  record.step = 'held';
+  ctx.persist(record);
+  ctx.event(`${short(record.messageId)}: held for Sean (${reason})`, 'info');
+}
+
+function needsHandoff(record) {
+  return (record.step === 'labels_sent' || record.step === 'done') && record.awdLines?.length > 0 && !record.awdShare?.handoffAt;
+}
+
+/** Claimed record: split, book, labels, reply, AWD handoff. Each part is skipped once done. */
+async function advance(ctx, record) {
+  const { config } = ctx;
+  if (!record.split) {
+    const split = await computeSplit(ctx, record.lines);
+    record.split = split.rows;
+    record.fbaItems = split.fbaItems;
+    record.awdLines = split.awdLines;
+    record.splitReasons = split.reasons;
+    ctx.persist(record);
+  }
+
+  if (record.fbaItems.length) {
+    if (BOOKING.has(record.step) && record.step !== 'confirmed') {
+      await bookFba({ record, items: record.fbaItems, config, deps: bookDeps(ctx, true), persist: ctx.persist });
+    }
+    if (record.step === 'confirmed') {
+      const sent = await sendFbaLabels(ctx, record);
+      if (!sent) return;
+    }
+  } else if (record.step === 'claimed') {
+    record.step = 'done'; // every case goes to AWD; nothing to book through the FBA API
+    ctx.persist(record);
+  }
+
+  if (needsHandoff(record)) {
+    await deliver(ctx, 'sean', record, awdHandoff({ lines: record.awdLines, shipFrom: config.ship_from, reasons: record.splitReasons }));
+    record.awdShare = { ...(record.awdShare || {}), lines: record.awdLines, handoffAt: iso(ctx.deps.now()) };
+    ctx.persist(record);
+    ctx.event(`${short(record.messageId)}: AWD share handed to Sean (${record.awdLines.map((l) => `${l.cases} x ${l.key}`).join(', ')})`, 'info');
+  }
+}
+
+/** true when the reply went out; false when Amazon has not produced the labels yet (retry next run). */
+async function sendFbaLabels(ctx, record) {
+  let files;
+  try {
+    files = await fetchFbaLabels({ record, deps: bookDeps(ctx, true) });
+  } catch (err) {
+    if (!LABELS_NOT_READY.test(errText(err))) throw err;
+    record.labelMisses = (record.labelMisses || 0) + 1;
+    record.lastLabelMiss = errText(err);
+    ctx.persist(record);
+    ctx.log(`${short(record.messageId)}: labels not ready (${record.labelMisses}/${LABEL_MISS_LIMIT}): ${errText(err)}`);
+    if (record.labelMisses >= LABEL_MISS_LIMIT && !record.labelMissNotified) {
+      await notifyFailure(ctx, record, 'labels', `labels still not available after ${record.labelMisses} tries: ${errText(err)}`);
+      record.labelMissNotified = true;
+      ctx.persist(record);
+    }
+    return false;
+  }
+  const shipments = await describeShipments(ctx, record);
+  const msg = labelsReply({ record, shipments, awdLines: record.awdLines });
+  const sent = await deliver(ctx, 'travis', record, msg, files);
+  record.labelsReplyId = sent.messageId;
+  record.labelsSentAt = iso(ctx.deps.now());
+  record.step = 'labels_sent';
+  ctx.persist(record);
+  ctx.event(`${short(record.messageId)}: booked ${shipments.length} FBA shipment(s) (${shipments.map((s) => s.shipmentId).join(', ')}), total $${record.quote?.total ?? '?'}; labels sent to Travis`, 'success');
+  return true;
+}
+
+/** What labelsReply needs per shipment: confirmation id, destination, cases per pack, mode, carrier, pallets. */
+async function describeShipments(ctx, record) {
+  const { config, deps } = ctx;
+  const skus = skuTable(config);
+  const plan = `${V}/inboundPlans/${record.planId}`;
+  const out = [];
+  for (const pk of record.quote.picks) {
+    await pause(ctx);
+    const ship = await deps.request('GET', `${plan}/shipments/${pk.shipmentId}`);
+    const items = await listPaged(ctx, `${plan}/shipments/${pk.shipmentId}/items`, 'items');
+    const cases = items.map((i) => {
+      const cfg = skus[i.msku];
+      return { key: cfg?.key || i.msku, sku: i.msku, count: cfg ? Math.round(i.quantity / cfg.units_per_case) : i.quantity };
+    });
+    let carrier = null;
+    try {
+      const opts = await listPaged(ctx, `${plan}/transportationOptions`, 'transportationOptions', { shipmentId: pk.shipmentId });
+      carrier = opts.find((o) => o.transportationOptionId === pk.transportationOptionId)?.carrier?.name || null;
+    } catch (err) {
+      ctx.log(`carrier name for ${pk.shipmentId} unavailable: ${errText(err)}`);
+    }
+    let pallets = null;
+    if (pk.mode === 'FREIGHT_LTL') {
+      pallets = palletize(cases.filter((c) => skus[c.sku]).map((c) => ({
+        sku: c.sku, count: c.count, case_in: skus[c.sku].case_in, case_lb: skus[c.sku].case_lb,
+      })), config.pallet);
+    }
+    const d = ship?.destination || {};
+    const where = [d.address?.city, d.address?.stateOrProvinceCode].filter(Boolean).join(', ');
+    out.push({
+      shipmentId: ship?.shipmentConfirmationId || pk.shipmentId,
+      destination: [d.warehouseId, where && `(${where})`].filter(Boolean).join(' ') || 'Amazon',
+      cases, mode: pk.mode, carrier, pallets,
+    });
+  }
+  return out;
+}
+
+async function notifyFailure(ctx, record, step, error) {
+  const msg = failureNotice({ messageId: record.messageId, step, planId: record.planId, error });
+  await ctx.deps.notify({ subject: msg.subject, body: msg.text, status: 'error', category: 'amazon', immediate: true });
+}
+
+async function fail(ctx, record, err) {
+  const at = record.step || 'received';
+  ctx.errors.push({ messageId: record.messageId, step: at, error: errText(err) });
+  if (!ctx.apply) {
+    ctx.log(`${short(record.messageId)}: FAILED at ${at}: ${errText(err)}`);
+    return;
+  }
+  record.failedAtStep = at;
+  record.step = 'failed';
+  record.error = errText(err);
+  record.failedAt = iso(ctx.deps.now());
+  ctx.persist(record);
+  ctx.log(`${short(record.messageId)}: FAILED at ${at}: ${errText(err)}`);
+  if (record.failureNotifiedFor !== at) {
+    ctx.event(`${short(record.messageId)}: FAILED at ${at}: ${errText(err)} (Sean emailed)`, 'error');
+    await notifyFailure(ctx, record, at, errText(err));
+    record.failureNotifiedFor = at;
+    ctx.persist(record);
+  }
+}
+
+async function processRecord(ctx, record) {
+  try {
+    if (record.step === 'failed') {
+      record.step = record.failedAtStep === 'received' ? null : record.failedAtStep;
+    }
+    if (!record.step) await triage(ctx, record);
+    if (BOOKING.has(record.step) || needsHandoff(record)) await advance(ctx, record);
+  } catch (err) {
+    await fail(ctx, record, err);
+  }
+}
+
+async function dryBook(ctx, record) {
+  try {
+    await triage(ctx, record);
+    if (record.step !== 'claimed') return;
+    const split = await computeSplit(ctx, record.lines);
+    printSplit(ctx, split);
+    if (!split.fbaItems.length) { ctx.log('No FBA cases: everything would go to AWD (handoff to Sean).'); return; }
+    const draft = { messageId: `dry-${record.messageId}`, step: 'claimed' };
+    const deps = bookDeps(ctx, false);
+    try {
+      await bookFba({ record: draft, items: split.fbaItems, config: ctx.config, deps, persist: () => {} });
+      const q = draft.quote;
+      ctx.log(`Cheapest total: $${q.total} (placement $${q.placementFee}, packing $${q.packingFee}; ${q.picks.map((p) => `${p.shipmentId} ${p.mode} $${p.amount}`).join('; ')})`);
+    } finally {
+      if (draft.planId) {
+        await cancelDraft({ record: draft, deps });
+        ctx.log(`Draft plan ${draft.planId} cancelled (dry run).`);
+      }
+    }
+  } catch (err) {
+    await fail(ctx, record, err);
+  }
+}
+
+// ---- AWD ------------------------------------------------------------------------
+
+async function awdStep(ctx) {
+  const { state, config, deps } = ctx;
+  const pending = Object.values(state.messages).filter((r) => r?.awdShare?.handoffAt && !r.awdShare.labelsSentAt);
+  if (!pending.length) return;
+  const now = deps.now().getTime();
+
+  try {
+    const unmatched = pending.filter((r) => !r.awdShare.awdShipmentId);
+    if (unmatched.length) {
+      const since = Math.min(...unmatched.map((r) => Date.parse(r.awdShare.handoffAt)));
+      const claimed = claimedAwdIds(state);
+      const ships = (await awdShipmentsSince(ctx, since)).filter((s) => !claimed.has(s.shipmentId));
+      const shares = unmatched.map((r) => ({ messageId: r.messageId, handoffAt: r.awdShare.handoffAt, lines: r.awdShare.lines }));
+      for (const m of matchAwdShipment(shares, ships)) {
+        const r = state.messages[m.messageId];
+        r.awdShare.awdShipmentId = m.shipmentId;
+        r.awdShare.matchedAt = iso(now);
+        ctx.persist(r);
+        ctx.event(`${short(r.messageId)}: AWD shipment ${m.shipmentId} found`, 'info');
+      }
+    }
+    state.awdError = null;
+  } catch (err) {
+    await awdFailure(ctx, state, 'awd_list', err);
+  }
+
+  for (const r of pending) {
+    const share = r.awdShare;
+    if (share.awdShipmentId) {
+      try {
+        await pause(ctx);
+        const res = await deps.request('GET', `${AWD}/inboundShipments/${share.awdShipmentId}/labels`, { pageType: 'PLAIN_PAPER', formatType: 'PDF' });
+        if (res?.labelStatus === 'GENERATION_FAILED') throw new Error(`AWD label generation failed for ${share.awdShipmentId}`);
+        if (res?.labelStatus !== 'GENERATED' || !res.labelDownloadURL) {
+          ctx.log(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} not ready (${res?.labelStatus || 'no status'})`);
+          continue;
+        }
+        const pdf = await download(deps, res.labelDownloadURL, `AWD labels ${share.awdShipmentId}`);
+        const msg = awdLabelsReply({ awdShipmentId: share.awdShipmentId, lines: share.lines });
+        const sent = await sendToTravis(ctx, r, msg, [{ filename: `${share.awdShipmentId}-labels.pdf`, content: pdf }]);
+        share.labelsReplyId = sent.messageId;
+        share.labelsSentAt = iso(now);
+        ctx.persist(r);
+        ctx.event(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} sent to Travis`, 'success');
+      } catch (err) {
+        await awdFailure(ctx, share, 'awd_labels', err, r);
+      }
+    } else if (!share.remindedAt && now - Date.parse(share.handoffAt) >= config.awd_reminder_days * DAY) {
+      try {
+        const days = Math.floor((now - Date.parse(share.handoffAt)) / DAY);
+        await sendToSean(ctx, awdReminder({ days, lines: share.lines }));
+        share.remindedAt = iso(now);
+        ctx.persist(r);
+        ctx.event(`${short(r.messageId)}: AWD inbound still missing after ${days} days; reminded Sean`, 'info');
+      } catch (err) {
+        await awdFailure(ctx, share, 'awd_reminder', err, r);
+      }
+    }
+  }
+}
+
+/** One immediate notify per (holder, step, error); `holder` keeps the last notified key. */
+async function awdFailure(ctx, holder, step, err, record) {
+  const key = `${step}: ${errText(err)}`;
+  ctx.errors.push({ messageId: record?.messageId || null, step, error: errText(err) });
+  ctx.log(`${record ? short(record.messageId) : 'AWD'}: ${key}`);
+  if (holder.awdError === key) return;
+  holder.awdError = key;
+  ctx.event(`${record ? short(record.messageId) : 'AWD'}: ${key} (Sean emailed)`, 'error');
+  if (record) ctx.persist(record); else ctx.saveAll();
+  await notifyFailure(ctx, record || { messageId: 'AWD check', planId: null }, step, errText(err));
+}
+
+async function download(deps, url, what) {
+  if (deps.download) return deps.download(url);
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${what}: download failed (${res.status})`);
+  return Buffer.from(await res.arrayBuffer());
+}
+
+// ---- run ----------------------------------------------------------------------
+
+export async function run(argv, deps) {
+  const args = parseArgs(argv);
+  const config = deps.config;
+  const log = deps.log || console.log;
+  const summary = { apply: args.apply, events: [], errors: [], skipped: null };
+
+  if (config.enabled === false) {
+    log('amazon-inbound: disabled (config/amazon-inbound.json enabled: false); nothing done.');
+    return { ...summary, skipped: 'disabled' };
+  }
+  if (!deps.creds && (args.apply || !args.text)) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD not set');
+  if (args.apply && !deps.resendKey) throw new Error('cannot send: RESEND_API_KEY not set');
+
+  if (args.apply && !acquireLock(deps.lockPath)) {
+    log('amazon-inbound: another run holds the lock; nothing done.');
+    return { ...summary, skipped: 'locked' };
+  }
+  try {
+    let state;
+    try {
+      state = loadState(deps.statePath);
+    } catch (err) {
+      await deps.notify({ subject: 'Culina inbound: state file unreadable, nothing done', body: errText(err), status: 'error', category: 'amazon', immediate: true });
+      throw err;
+    }
+
+    const events = [];
+    let worst = 'success';
+    const rank = { success: 0, info: 1, error: 2 };
+    const ctx = {
+      args, deps, config, state, log, apply: args.apply, notes: [], errors: summary.errors,
+      persist(record) {
+        if (!args.apply) return;
+        state.messages[record.messageId] = record;
+        saveState(deps.statePath, state);
+      },
+      saveAll() { if (args.apply) saveState(deps.statePath, state); },
+      event(line, status = 'info') {
+        events.push(line);
+        if (rank[status] > rank[worst]) worst = status;
+        log(line);
+      },
+    };
+
+    // Mail is read first, so a mail outage stops the run before anything is spent or sent.
+    const rows = args.text ? [textRow(ctx, args.text)] : await readMail(ctx);
+
+    if (args.apply) {
+      for (const record of Object.values(state.messages)) {
+        if (record && (BOOKING.has(record.step) || record.step === 'failed' || needsHandoff(record))) {
+          await processRecord(ctx, record);
+        }
+      }
+      await awdStep(ctx);
+    }
+
+    for (const row of rows) {
+      if (state.messages[row.messageId]) continue;
+      const record = {
+        messageId: row.messageId, receivedAt: row.date, subject: row.subject || '', inReplyTo: row.inReplyTo || null,
+        references: row.references || [], text: row.text || '', synthetic: Boolean(row.synthetic), step: null,
+      };
+      if (args.apply) await processRecord(ctx, record);
+      else await dryBook(ctx, record);
+    }
+
+    if (args.apply && events.length) {
+      await deps.notify({
+        subject: `Culina inbound: ${events.length} update(s)`,
+        body: [...events, ...ctx.notes].join('\n'),
+        status: worst === 'error' ? 'info' : worst,
+        category: 'amazon',
+      });
+    }
+    if (!args.apply) log('Dry run: nothing sent, no state written, nothing confirmed.');
+    return { ...summary, events, notes: ctx.notes };
+  } finally {
+    if (args.apply) releaseLock(deps.lockPath);
+  }
+}
+
+async function realDeps() {
+  await import('dotenv/config');
+  const amazon = await defaultDeps();
+  return {
+    ...amazon,
+    config: JSON.parse(readFileSync(join(ROOT, 'config', 'amazon-inbound.json'), 'utf8')),
+    statePath: join(STATE_DIR, 'state.json'),
+    lockPath: join(STATE_DIR, '.lock'),
+    seasonalPath: join(ROOT, 'data', 'reports', 'culina-report', 'seasonal.json'),
+    contactPhone: process.env.AMAZON_INBOUND_CONTACT_PHONE || undefined,
+    creds: hushmailCredentials(process.env),
+    resendKey: process.env.RESEND_API_KEY,
+    fetchMail: fetchFromAllFolders,
+    sendMail,
+    notify,
+    log: console.log,
+  };
+}
+
+async function main() {
+  try {
+    await run(process.argv.slice(2), await realDeps());
+  } catch (e) {
+    console.error(e);
+    // Deferred: an unreadable state file already emailed Sean from run(); a mail or config
+    // failure here repeats every 15 minutes and must not email him every 15 minutes.
+    await notify({ subject: `Culina inbound run failed: ${e.message}`, body: String(e?.stack || e), status: 'error', category: 'amazon' }).catch(() => {});
+    process.exit(1);
+  }
+}
+
+if (isDirectRun(import.meta.url)) main();
