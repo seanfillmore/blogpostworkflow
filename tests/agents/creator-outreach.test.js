@@ -330,3 +330,89 @@ test('a thank-you that cannot be written fresh is held and retried at most once 
   await runOutreach(again.opts);
   assert.equal(calls, 2, 'no model calls on the second run the same day');
 });
+
+// ── Escalation relay (Sean, 2026-11-11) ─────────────────────────────────────────
+const ESC_AT = '2026-09-30T12:00:00Z'; // 54h before NOW
+const escalatedState = () => ({ creators: { 'lori@example.com': {
+  escalatedOpen: true, escalatedAt: ESC_AT, escalationSubject: 'Re: samples', escalationReasons: ['money'],
+  thread: { date: ESC_AT, from: 'Lori <lori@example.com>', text: 'What do you pay per video?' },
+  threadRefs: ['<lori1@x>'], sent: { welcome: '2026-09-27T00:00:00Z' }, lastInboundAt: ESC_AT,
+} } });
+
+test('an escalation unanswered past the wait emails Sean what they asked, once', async () => {
+  const state = escalatedState();
+  const h = harness({ state });
+  const r = await runOutreach({ ...h.opts, env: { HUSHMAIL_USER: 'sean@realskincare.com', HUSHMAIL_PASSWORD: 'x' }, readSelf: async () => [] });
+  assert.equal(r.relayRequests.length, 1);
+  const req = h.sent.find((m) => m.to === 'sean@realskincare.com');
+  assert.match(req.subject, /^\[CR-[0-9a-f]{8}\] Lori Yockim is waiting on you: Re: samples$/);
+  assert.match(req.text, /What do you pay per video\?/);
+  assert.equal(h.sent.filter((m) => m.to === 'lori@example.com').length, 0, 'nothing to the creator');
+  const again = harness({ state });
+  await runOutreach({ ...again.opts, readSelf: async () => [] });
+  assert.equal(again.sent.filter((m) => /\[CR-/.test(m.subject)).length, 0, 'not re-requested');
+});
+
+test('a fresh escalation is not relayed before the wait', async () => {
+  const state = escalatedState();
+  state.creators['lori@example.com'].escalatedAt = '2026-10-02T10:00:00Z';
+  const h = harness({ state });
+  const r = await runOutreach({ ...h.opts, readSelf: async () => [] });
+  assert.equal(r.relayRequests.length, 0);
+});
+
+test("Sean's reply to the request goes to the creator verbatim, in their thread, and closes the flag", async () => {
+  const state = escalatedState();
+  const first = harness({ state });
+  await runOutreach({ ...first.opts, readSelf: async () => [] });
+  const reqId = state.creators['lori@example.com'].relay.messageIds[0];
+  const seanReply = { messageId: '<sean-webmail-1@hushmail.com>', inReplyTo: reqId, references: [reqId], subject: 'Re: [CR-x] Lori', date: '2026-10-02T17:30:00Z',
+    fullText: 'Commission is set in Trybe, so you will see it there.\n\nOn Fri, Oct 2 Sean wrote:\n> Reply to this email' };
+  const h = harness({ state });
+  const r = await runOutreach({ ...h.opts, readSelf: async () => [seanReply] });
+  assert.equal(r.relayed.length, 1);
+  const out = h.sent.find((m) => m.to === 'lori@example.com');
+  assert.ok(out.text.startsWith('Commission is set in Trybe, so you will see it there.\n\nSean\nReal Skin Care\nrealskincare.com'), 'not gated, signed');
+  assert.match(out.text, /What do you pay per video\?/, 'quotes their message');
+  assert.equal(out.subject, 'Re: samples');
+  assert.equal(out.inReplyTo, '<lori1@x>');
+  const rec = state.creators['lori@example.com'];
+  assert.equal(rec.escalatedOpen, false);
+  assert.equal(rec.relay, undefined);
+  const again = harness({ state });
+  await runOutreach({ ...again.opts, readSelf: async () => [seanReply] });
+  assert.equal(again.sent.filter((m) => m.to === 'lori@example.com').length, 0, 'his reply is relayed once');
+});
+
+test('"skip" closes the flag and sends nothing to the creator', async () => {
+  const state = escalatedState();
+  await runOutreach({ ...harness({ state }).opts, readSelf: async () => [] });
+  const token = state.creators['lori@example.com'].relay.token;
+  const h = harness({ state });
+  const r = await runOutreach({ ...h.opts, readSelf: async () => [{ messageId: '<s@h>', subject: `Re: [CR-${token}] Lori`, date: '2026-10-02T17:30:00Z', fullText: 'skip' }] });
+  assert.equal(r.relayClosed.length, 1);
+  assert.equal(state.creators['lori@example.com'].escalatedOpen, false);
+  assert.equal(h.sent.filter((m) => m.to === 'lori@example.com' && /pay|Commission/.test(m.text)).length, 0);
+});
+
+test('answering the creator directly cancels the pending relay', async () => {
+  const state = escalatedState();
+  await runOutreach({ ...harness({ state }).opts, readSelf: async () => [] });
+  const reqId = state.creators['lori@example.com'].relay.messageIds[0];
+  const direct = { to: ['lori@example.com'], date: '2026-10-02T17:00:00Z', messageId: '<direct@hushmail.com>' };
+  const h = harness({ state, sentFolder: [direct] });
+  const late = { messageId: '<late@h>', inReplyTo: reqId, subject: 'Re', date: '2026-10-02T17:40:00Z', fullText: 'Actually also this' };
+  const r = await runOutreach({ ...h.opts, readSelf: async () => [late] });
+  assert.equal(r.resolved.length, 1);
+  assert.equal(r.relayed.length, 0, 'no double answer');
+  assert.equal(state.creators['lori@example.com'].relay, undefined);
+});
+
+test('a new escalation records what the relay request will quote', async () => {
+  const state = {};
+  const h = harness({ inbox: [inbound('What do you pay per video?')], state });
+  await runOutreach({ ...h.opts, readSelf: async () => [] });
+  const rec = state.creators['lori@example.com'];
+  assert.equal(rec.escalationSubject, 'Re: samples');
+  assert.ok(rec.escalationReasons.length);
+});

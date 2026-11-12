@@ -18,6 +18,12 @@
  * Cron: CREATOR_OUTREACH, every 30 minutes (scripts/setup-cron.sh). Replies go
  * out on any run; scheduled emails only inside the send window.
  *
+ * Escalations: a reply Sean must answer is flagged and nothing goes to the
+ * creator. If he has not answered within RELAY_AFTER_HOURS (36), the agent
+ * emails his own Hushmail address what they asked, tagged [CR-<token>]; his
+ * reply to that email is sent to the creator verbatim in their thread, and a
+ * reply of "skip" clears the flag. See lib/creator-relay.js.
+ *
  * Off switch: config/creator-outreach.json "enabled": false.
  * Requires HUSHMAIL_USER, HUSHMAIL_PASSWORD and TRYBE_API_KEY in .env.
  *
@@ -33,7 +39,10 @@ import { isDirectRun } from '../../lib/is-direct-run.js';
 import { notify } from '../../lib/notify.js';
 import { listSubmissions } from '../../lib/trybe.js';
 import { fetchSampleOrders } from '../../lib/trybe-sample-orders.js';
-import { hushmailCredentials, sendMail, fetchInboxFrom, fetchSentTo, isTransientNetworkError } from '../../lib/hushmail.js';
+import { hushmailCredentials, sendMail, fetchInboxFrom, fetchSentTo, fetchFromAllFolders, isTransientNetworkError } from '../../lib/hushmail.js';
+import {
+  RELAY_AFTER_HOURS, relayToken, relayDue, relayRequestEmail, recordRelayRequest, matchRelayReply, interpretRelayReply, closeEscalation,
+} from '../../lib/creator-relay.js';
 import {
   DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems,
   optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
@@ -132,6 +141,7 @@ export async function runOutreach({
   loadSubmissions = () => listSubmissions({ apiKey: env.TRYBE_API_KEY }),
   readInbox,
   readSent,
+  readSelf,
   send,
   draft = (c, msg) => draftWithModel(c, msg, env),
   writeThanks = (prompt) => writeThanksWithModel(prompt, env),
@@ -145,6 +155,9 @@ export async function runOutreach({
   const us = `Sean at Real Skin Care <${creds?.user || 'sean@realskincare.com'}>`;
   readInbox ||= (q) => fetchInboxFrom(creds, q);
   readSent ||= (q) => fetchSentTo(creds, q);
+  // Sean's replies to relay requests: mail from his own address, any folder.
+  readSelf ||= (q) => fetchFromAllFolders(creds, { senders: [creds.user], since: q.since });
+  const relayAfterHours = config.relayAfterHours ?? RELAY_AFTER_HOURS;
   send ||= (m) => sendMail(creds, m, { via: config.sendVia, resendKey: env.RESEND_API_KEY });
 
   const [orders, submissions] = await Promise.all([loadOrders(), loadSubmissions()]);
@@ -152,7 +165,7 @@ export async function runOutreach({
   const byEmail = new Map(roster.map((c) => [c.email, c]));
   state.processed ||= [];
   const done = new Set(state.processed);
-  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], heldThanks: [], handles: [], declinedTags: [], plan: null };
+  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], heldThanks: [], handles: [], declinedTags: [], relayRequests: [], relayed: [], relayClosed: [], plan: null };
 
   // Instagram handles we already hold (state.socials + the homepage list). A
   // failure to build the list means nobody is asked this run; see planScheduled.
@@ -177,8 +190,7 @@ export async function runOutreach({
       }
       const since = rec.escalatedAt || rec.lastInboundAt;
       if (rec.escalatedOpen && since && m.date > since) {
-        rec.escalatedOpen = false;
-        rec.escalationResolvedAt = m.date;
+        closeEscalation(rec, m.date);
         // The quoted thread we hold predates his reply; quoting it in a later
         // nudge would show a conversation with his answer missing.
         delete rec.thread;
@@ -187,6 +199,46 @@ export async function runOutreach({
     }
   }
   if (apply && result.resolved.length) saveState(state);
+
+  // ── 0b. Sean's answers to relay requests go to the creator, verbatim. ──
+  const pendingRelays = Object.entries(state.creators || {}).filter(([, r]) => r?.relay && r.escalatedOpen);
+  if (pendingRelays.length) {
+    const since = new Date(Math.min(...pendingRelays.map(([, r]) => Date.parse(r.relay.requestedAt) || now)));
+    const mine = (await readSelf({ since })).sort((a, b) => a.date.localeCompare(b.date));
+    for (const msg of mine) {
+      if (!msg.messageId || done.has(msg.messageId)) continue;
+      const email = matchRelayReply(msg, state.creators);
+      if (!email) continue;
+      const rec = state.creators[email];
+      const name = byEmail.get(email)?.name || email;
+      if (!rec.escalatedOpen) continue;
+      const verdict = interpretRelayReply(msg, SIGNATURE);
+      if (verdict.action === 'empty') continue;
+      if (verdict.action === 'close') {
+        result.relayClosed.push({ email, name });
+        if (apply) { closeEscalation(rec, msg.date); state.processed.push(msg.messageId); done.add(msg.messageId); saveState(state); }
+        continue;
+      }
+      const text = withQuotedThread(verdict.body, rec.thread);
+      const refs = rec.threadRefs || [];
+      const subject = replySubject(rec.escalationSubject || 'Real Skin Care');
+      result.relayed.push({ email, name, reply: verdict.body });
+      if (!apply) continue;
+      try {
+        const sent = await send({ to: email, subject, text, ...(refs.length ? { inReplyTo: refs[refs.length - 1], references: refs.join(' ') } : {}) });
+        rec.threadMessageId = sent.messageId;
+        rec.threadRefs = [...refs, sent.messageId].filter(Boolean).slice(-MAX_THREAD_REFS);
+        rec.thread = { date: new Date(now).toISOString(), from: us, text };
+        closeEscalation(rec, new Date(now).toISOString());
+        state.processed.push(msg.messageId);
+        done.add(msg.messageId);
+        saveState(state);
+      } catch (err) {
+        result.relayed.pop();
+        result.failed.push({ email, name, kind: 'relayed answer', error: err.message });
+      }
+    }
+  }
 
   // ── 1. Replies first: a creator waiting on an answer outranks a reminder. ──
   const inbox = await readInbox({ senders: [...byEmail.keys()], since: new Date(now - INBOX_LOOKBACK_DAYS * 86_400_000) });
@@ -266,6 +318,10 @@ export async function runOutreach({
     if (escalated) {
       rec.escalatedOpen = true;
       rec.escalatedAt = msg.date;
+      // What a relay request to Sean quotes, if he has not answered in time.
+      rec.escalationSubject = msg.subject || null;
+      rec.escalationReasons = escalated.reasons || [];
+      if (escalated.suggestion) rec.escalationSuggestion = escalated.suggestion; else delete rec.escalationSuggestion;
       result.escalations.push(escalated);
     }
     if (verdict.action !== 'ignore') rec.thread = { date: msg.date, from: senderLabel(msg.fromName || c.name, c.email), text: msg.fullText || msg.text };
@@ -303,6 +359,24 @@ export async function runOutreach({
       state.processed.push(msg.messageId);
       done.add(msg.messageId);
       saveState(state);
+    }
+  }
+
+  // ── 1b. Escalations Sean has not answered: email him what they asked. ──
+  for (const c of roster) {
+    const rec = state.creators?.[c.email];
+    if (!relayDue(rec, now, relayAfterHours)) continue;
+    const token = relayToken(c.email, rec.escalatedAt);
+    const mail = relayRequestEmail({ name: c.name, email: c.email, rec, token });
+    result.relayRequests.push({ email: c.email, name: c.name, since: rec.escalatedAt });
+    if (!apply) continue;
+    try {
+      const sent = await send({ to: creds?.user || 'sean@realskincare.com', subject: mail.subject, text: mail.text });
+      recordRelayRequest(rec, { token, at: new Date(now).toISOString(), messageId: sent.messageId });
+      saveState(state);
+    } catch (err) {
+      result.relayRequests.pop();
+      result.failed.push({ email: c.email, name: c.name, kind: 'relay request to Sean', error: err.message });
     }
   }
 
@@ -414,6 +488,15 @@ export function renderSummary(r, { apply }) {
     lines.push('Sent to Sean to answer (nothing was sent to the creator):');
     for (const x of r.escalations) lines.push(`  - ${who(x)}: ${x.reasons.join('; ')}`);
   }
+  if (r.relayRequests?.length) {
+    lines.push(`Emailed you what these creators asked (reply to that email and the agent sends your answer):`);
+    for (const x of r.relayRequests) lines.push(`  - ${who(x)}, waiting since ${String(x.since).slice(0, 10)}`);
+  }
+  if (r.relayed?.length) {
+    lines.push(`Your answers ${apply ? 'sent' : 'ready to send'}:`);
+    for (const x of r.relayed) lines.push(`  - ${who(x)}: "${x.reply.replace(/\n+/g, ' ').slice(0, 200)}"`);
+  }
+  if (r.relayClosed?.length) lines.push(`Closed on your "skip", nothing sent: ${r.relayClosed.map(who).join(', ')}`);
   if (r.resolved?.length) {
     lines.push('Sean replied, so the agent picked these creators back up:');
     for (const x of r.resolved) lines.push(`  - ${who(x)}`);
@@ -428,7 +511,7 @@ export function renderSummary(r, { apply }) {
     lines.push('Send FAILED (will retry next run):');
     for (const f of r.failed) lines.push(`  - ${who(f)}: ${f.error}`);
   }
-  const subject = `Creator outreach: ${r.scheduled.length} scheduled · ${r.replies.length} replied · ${r.escalations.length} escalated${r.handles?.length ? ` · ${r.handles.length} Instagram handle(s)` : ''}${r.failed.length ? ` · ${r.failed.length} FAILED` : ''}`;
+  const subject = `Creator outreach: ${r.scheduled.length} scheduled · ${r.replies.length} replied · ${r.escalations.length} escalated${r.relayed?.length ? ` · ${r.relayed.length} answer(s) relayed` : ''}${r.handles?.length ? ` · ${r.handles.length} Instagram handle(s)` : ''}${r.failed.length ? ` · ${r.failed.length} FAILED` : ''}`;
   return { subject, body: lines.filter((l, i) => i > 0 || l).join('\n') || 'Nothing to do.' };
 }
 
@@ -439,6 +522,7 @@ export function escalationEmail(c, msg, row) {
       `${c.name} <${c.email}> wrote:`, `Subject: ${msg.subject}`, '', msg.fullText || msg.text, '',
       `Why it came to you: ${row.reasons.join('; ')}`,
       'Nothing was sent to them. The agent will not reply to or remind this creator until you do.',
+      `If you have not answered in ${RELAY_AFTER_HOURS} hours, you will get an email at your Hushmail address with what they asked; reply to it and the agent sends your answer.`,
       ...(row.suggestion ? ['', 'The model\'s draft (NOT sent, for reference only):', row.suggestion] : []),
       '', 'Reply to them from Hushmail. Your reply is detected automatically (within 30 minutes) and the agent picks them back up.',
       'If they answer YOUR email, that answer comes to you too, not to the agent.',
@@ -475,7 +559,7 @@ async function main() {
     const email = args[args.indexOf('--resolve') + 1]?.toLowerCase();
     const state = readState();
     if (!state?.creators?.[email]) throw new Error(`no state for ${email}`);
-    state.creators[email].escalatedOpen = false;
+    closeEscalation(state.creators[email], new Date().toISOString());
     writeState(state);
     console.log(`cleared escalation for ${email}`);
     return;
@@ -510,7 +594,7 @@ async function main() {
     });
     const { subject, body } = renderSummary(run, { apply });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length || run.heldThanks.length;
+    const acted = run.relayRequests.length || run.relayed.length || run.relayClosed.length || run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length || run.heldThanks.length;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'creators' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
