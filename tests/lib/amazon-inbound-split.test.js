@@ -5,14 +5,13 @@ import { splitCases, readFbaBySku, expirationDate } from '../../lib/amazon-inbou
 const base = { today: '2026-11-12', seasonal: null, coverDays: 30 };
 const line = (cases = 10) => ({ key: 'k', sku: 'S1', cases, unitsPerCase: 12 });
 
-test('pace 4/day, 50 on hand: 6 FBA, 4 AWD', () => {
+test('a pack FBA needs goes to FBA WHOLE, never split (pace 4/day, 50 on hand)', () => {
   const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 50, inbound: 0 } }, paceBySku: { S1: 4 } });
   assert.equal(r.needUnits, 70);
-  assert.equal(r.fbaCases, 6);
-  assert.equal(r.awdCases, 4);
-  assert.equal(r.reason, '13 days of FBA cover, so 6 cases to FBA, 4 to AWD'); // 50 / 4 = 12.5 days now
+  assert.equal(r.fbaCases, 10);
+  assert.equal(r.awdCases, 0);
+  assert.equal(r.reason, '13 days of FBA cover (under 30), so all 10 cases to FBA'); // 50 / 4 = 12.5 days now
 });
-
 test('need <= 0 gives 0 FBA cases', () => {
   const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 100, inbound: 50 } }, paceBySku: { S1: 4 } });
   assert.equal(r.fbaCases, 0);
@@ -56,12 +55,19 @@ test('pace 0 counts as no usable pace: all FBA', () => {
   assert.equal(r.reason, 'no sales pace yet');
 });
 
-test('float noise above a whole case does not round up', () => {
-  const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 47.9999999999, inbound: 0 } }, paceBySku: { S1: 4 } });
-  assert.equal(r.fbaCases, 6);
-  assert.equal(r.awdCases, 4);
+test('FBA already covered: the whole pack goes to AWD', () => {
+  const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 100, inbound: 30 } }, paceBySku: { S1: 4 } });
+  assert.equal(r.fbaCases, 0);
+  assert.equal(r.awdCases, 10);
+  assert.equal(r.reason, '33 days of FBA cover (30+ covered), so all 10 cases to AWD');
 });
 
+test('no line is ever split between FBA and AWD', () => {
+  for (const have of [0, 30, 60, 90, 119, 120, 121, 200]) {
+    const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: have, inbound: 0 } }, paceBySku: { S1: 4 } });
+    assert.ok(r.fbaCases === 0 || r.awdCases === 0, `split at ${have}`);
+  }
+});
 test('expirationDate adds whole years in Amazon YYYY-MM-DD form; Feb 29 falls back to Feb 28', () => {
   assert.equal(expirationDate('2026-11-12', 3), '2029-11-12');
   assert.equal(expirationDate('2028-02-29', 3), '2031-02-28');
