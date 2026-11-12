@@ -59,3 +59,38 @@ test('the script never writes to Google Ads', () => {
   const src = readFileSync(new URL('../../scripts/cream-search-daily-report.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(src, /\bmutate\b/);
 });
+
+import { buildHtml, verdict, niceDate } from '../../scripts/cream-search-daily-report.mjs';
+
+const base = { today: '2026-11-15', yesterdayDate: '2026-11-14', status: 'ENABLED', budgetMicros: '30000000', terms: [], ordersAll: [], ordersYesterday: [] };
+
+test('verdict names what limited the campaign', () => {
+  assert.match(verdict({ total: { clicks: 150 }, yesterday: {} }), /read is due/);
+  assert.match(verdict({ total: {}, yesterday: { impressions: 0 } }), /No impressions/);
+  assert.match(verdict({ total: {}, yesterday: { impressions: 50, searchRankLostImpressionShare: 0.9, searchBudgetLostImpressionShare: 0 } }), /^Bid-limited: lost 90%/);
+  assert.match(verdict({ total: {}, yesterday: { impressions: 50, searchRankLostImpressionShare: 0.1, searchBudgetLostImpressionShare: 0.4 } }), /^Budget-limited: missed 40%/);
+});
+
+test('niceDate formats PT calendar dates without shifting them', () => {
+  assert.equal(niceDate('2026-11-14'), 'Sat, Nov 14');
+  assert.equal(niceDate('2026-11-08', false), 'Nov 8');
+});
+
+test('buildHtml: escapes search text, flags bids under top-of-page, lists unshown keywords', () => {
+  const html = buildHtml({
+    ...base,
+    total: { impressions: '100', clicks: '30', costMicros: '36000000' },
+    yesterday: { impressions: '40', clicks: '5', costMicros: '6000000' },
+    keywords: [
+      { adGroupCriterion: { keyword: { text: 'coconut moisturizer' }, effectiveCpcBidMicros: '1200000', positionEstimates: { topOfPageCpcMicros: '1660000' } }, metrics: { impressions: '5', clicks: '1' } },
+      { adGroupCriterion: { keyword: { text: 'winter body cream' }, effectiveCpcBidMicros: '950000' }, metrics: { impressions: '0', clicks: '0' } },
+    ],
+    terms: [{ searchTermView: { searchTerm: '<b>cream</b>' }, metrics: { impressions: '3', clicks: '1' } }],
+  });
+  assert.match(html, /&lt;b&gt;cream&lt;\/b&gt;/);
+  assert.doesNotMatch(html, /<b>cream<\/b>/);
+  assert.match(html, /color:#9a6700;">top \$1\.66/);
+  assert.match(html, /Not shown yet:<\/b> winter body cream/);
+  assert.match(html, /width:20%/); // 30 of 150 clicks
+  assert.match(html, /Cream Search · Sat, Nov 14/);
+});
