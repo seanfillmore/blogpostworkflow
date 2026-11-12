@@ -247,13 +247,13 @@ test('alerts dry run never writes alerts-state.json; --apply writes after sendin
   assert.equal(mail.length, 1);
 });
 
-test('alerts include made-in-house components, never sourced ones or launches', async () => {
+test('alerts list product ASINs only: no component rows, no launches', async () => {
   const dir = tmp();
   const { deps } = makeDeps(dir, { stock: { [A3]: 0, [AS]: 0 } });
   const r = await run(['--alerts'], deps);
   const keys = r.rows.map((x) => x.key);
   assert.ok(keys.includes(A3));
-  assert.ok(keys.includes('component:cleaning soap'));
+  assert.ok(!keys.some((k) => k.startsWith('component:')));
   assert.ok(!keys.some((k) => /launch|Chainmail|Five/i.test(k)));
 });
 
@@ -370,7 +370,7 @@ test('final-fix: mail goes out as Sean at Culina', async () => {
   for (const m of mail) assert.equal(m.msg.fromName, 'Sean at Culina');
 });
 
-test('final-fix: alert rows carry the stock split, ship quantity and date; components carry needBy', async () => {
+test('final-fix: alert rows carry the stock split, ship quantity and date', async () => {
   const dir = tmp();
   const { deps } = makeDeps(dir, { stock: { [A3]: 100, [AS]: 0 } });
   const r = await run(['--alerts'], deps);
@@ -378,10 +378,6 @@ test('final-fix: alert rows carry the stock split, ship quantity and date; compo
   assert.equal(row.fba, 100); assert.equal(row.awd, 0); assert.equal(row.inbound, 0);
   assert.ok(row.shipQty > 0);
   assert.equal(row.shipBy, '2026-11-11');
-  const soap = r.rows.find((x) => x.key === 'component:cleaning soap');
-  assert.equal(soap.fba, 100);
-  assert.ok(soap.shipQty > 0);
-  assert.equal(soap.needBy, '2026-11-11');
 });
 
 test('final-fix: missing month-before ads reach the model as a data note', async () => {

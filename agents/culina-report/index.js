@@ -400,11 +400,10 @@ async function runAlerts(args, deps) {
     key: i.key, label: i.label, coverDays: i.coverDays, onHand: i.onHand,
     fba: i.fba, awd: i.awd, inbound: i.inbound, shipQty: i.shipQty, shipBy: i.shipBy,
   }));
-  const compItems = g.comps.filter((c) => !c.sourced).map((c) => ({
-    key: `component:${c.name}`, label: `${c.name} (all products)`, coverDays: c.coverDays, onHand: c.onHand,
-    fba: c.fba, awd: c.awd, inbound: c.inbound, shipQty: c.shipQty, needBy: c.needBy, component: true,
-  }));
-  const decision = decideAlerts({ items: [...amazonItems, ...compItems], state, today: g.today, config });
+  // Product (ASIN) rows only. Component rows ("salt scrub (all products)") confused the
+  // restock email (Sean, 2026-11-12); a single-item ASIN (Salt, Oil, Soap, Stick) still
+  // alerts as its own row. Components stay in the monthly report.
+  const decision = decideAlerts({ items: amazonItems, state, today: g.today, config });
   const rendered = renderAlert(decision.rows, {
     alertBelowDays: config.alert_below_days, leadDays: config.lead_time_days, sourcedLeadDays: config.sourced_lead_time_days,
   });
