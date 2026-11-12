@@ -234,7 +234,7 @@ test('fetchFbaLabels: case labels per shipment, pallet labels and BOL for LTL', 
   assert.deepEqual(files.map((f) => f.filename), ['FBA-s1-case-labels.pdf', 'FBA-s1-pallet-labels.pdf', 'FBA-s1-bill-of-lading.pdf', 'FBA-s2-case-labels.pdf']);
   assert.ok(files.every((f) => Buffer.isBuffer(f.content)));
   const labels = amz.calls.filter((c) => c.path === '/fba/inbound/v0/shipments/FBA-s1/labels');
-  assert.deepEqual(labels[0].body, { PageType: 'PackageLabel_Letter_2', LabelType: 'UNIQUE', PackageLabelsToPrint: ['s1U1', 's1U2'] });
+  assert.deepEqual(labels[0].body, { PageType: 'PackageLabel_Thermal', LabelType: 'UNIQUE', PackageLabelsToPrint: ['s1U1', 's1U2'] });
   assert.equal(labels[1].body.LabelType, 'PALLET');
   assert.ok(labels[1].body.NumberOfPallets >= 1);
 });

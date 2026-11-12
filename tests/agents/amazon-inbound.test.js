@@ -159,8 +159,8 @@ test('the real four-line email books once and sends ONE reply To Travis, CC Sean
   assert.equal(amz.calls.filter((c) => /transportationOptions\/confirmation$/.test(c.path)).length, 1);
   assert.equal(sent.length, 1);
   const { msg, opts } = sent[0];
-  assert.equal(msg.to, 'travis@traviswales.com');
-  assert.deepEqual(msg.cc, [SEAN]);
+  assert.equal(msg.to, 'culinaoffice@gmail.com');
+  assert.deepEqual(msg.cc, ['travis@traviswales.com', SEAN]);
   assert.equal(msg.fromName, 'Sean at Culina');
   assert.equal(msg.inReplyTo, TRAVIS_ID);
   assert.equal(msg.references, `<older@mail.gmail.com> ${TRAVIS_ID}`);
@@ -215,7 +215,7 @@ test('an invalid email sends resendRequest to Travis and makes 0 SP-API calls', 
   await run(['--apply'], deps);
   assert.equal(amz.calls.length, 0);
   assert.equal(sent.length, 1);
-  assert.equal(sent[0].msg.to, 'travis@traviswales.com');
+  assert.equal(sent[0].msg.to, 'culinaoffice@gmail.com');
   assert.equal(sent[0].msg.inReplyTo, TRAVIS_ID);
   assert.ok(sent[0].msg.text.includes('4-pack (9 cases - 100 units)'));
   const rec = state().messages[TRAVIS_ID];
@@ -341,7 +341,7 @@ test('an AWD share is handed to Sean, and a matching AWD shipment on a later run
   const s = setup({ amazon });
   await run(['--apply'], s.deps);
   assert.equal(s.sent.length, 2);
-  assert.equal(s.sent[0].msg.to, 'travis@traviswales.com');
+  assert.equal(s.sent[0].msg.to, 'culinaoffice@gmail.com');
   assert.match(s.sent[0].msg.text, /AWD/);
   assert.equal(s.sent[1].msg.to, SEAN); // handoff
   assert.match(s.sent[1].msg.text, /Seller Central/);
@@ -360,8 +360,8 @@ test('an AWD share is handed to Sean, and a matching AWD shipment on a later run
   await run(['--apply'], s.deps);
   assert.equal(s.sent.length, 3);
   const reply = s.sent[2].msg;
-  assert.equal(reply.to, 'travis@traviswales.com');
-  assert.deepEqual(reply.cc, [SEAN]);
+  assert.equal(reply.to, 'culinaoffice@gmail.com');
+  assert.deepEqual(reply.cc, ['travis@traviswales.com', SEAN]);
   assert.equal(reply.inReplyTo, TRAVIS_ID);
   assert.match(reply.text, /STARAWD1/);
   assert.equal(reply.attachments[0].filename, 'STARAWD1-labels.pdf');
@@ -405,7 +405,7 @@ test('process_after: mail at or before the cutoff is never read; the next email 
 
   const next = setup({ config: { process_after: '2026-11-12T16:00:00Z' }, mail: [mailRow({ messageId: '<next@x>', date: '2026-11-12T16:05:00Z' })] });
   await run(['--apply'], next.deps);
-  assert.equal(next.sent.filter((m) => m.msg.to === 'travis@traviswales.com').length, 1);
+  assert.equal(next.sent.filter((m) => m.msg.to === 'culinaoffice@gmail.com').length, 1);
 
   const bad = setup({ config: { process_after: 'tomorrow' } });
   await assert.rejects(run(['--apply'], bad.deps), /process_after/);
@@ -667,7 +667,7 @@ test('Hushmail unreadable: a confirmed record still gets its labels; one digest 
   const out = await run(['--apply'], s.deps);
   assert.equal(s.state().messages[TRAVIS_ID].step, 'labels_sent');
   assert.equal(s.sent.length, 1);
-  assert.equal(s.sent[0].msg.to, 'travis@traviswales.com');
+  assert.equal(s.sent[0].msg.to, 'culinaoffice@gmail.com');
   assert.ok(s.sent[0].msg.attachments.length >= 1);
   assert.ok(out.errors.some((e) => e.step === 'read_mail'));
   const after1 = s.notes.slice(notesBefore);
