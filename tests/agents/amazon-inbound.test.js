@@ -434,7 +434,7 @@ test('mail filters: other senders, auto replies and old messages are ignored', a
   await run(['--apply'], deps);
   assert.equal(amz.calls.length + sent.length, 0);
   assert.equal(fetches[0].since.toISOString(), '2026-10-29T17:00:00.000Z');
-  assert.deepEqual(fetches[0].senders, ['travis@traviswales.com']);
+  assert.deepEqual(fetches[0].senders, ['travis@traviswales.com', 'culinaoffice@gmail.com']);
 });
 
 test('dry run with --text quotes, cancels the draft, sends nothing and writes no state', async () => {
@@ -719,7 +719,7 @@ test('AWD handoff carries the 2-pack expiration date the FBA booking would decla
   assert.match(handoff.msg.text, new RegExp(`2-pack, SKU ${two.sku}.*expiration date 2029-11-12`));
   assert.deepEqual(s.state().messages[TRAVIS_ID].awdShare.lines.map((l) => l.expiration), ['2029-11-12']);
   // and the split reason states the current FBA cover, once
-  assert.match(handoff.msg.text, /2-pack: 500 days of FBA cover, so 0 cases to FBA, 5 to AWD/);
+  assert.match(handoff.msg.text, /2-pack: 500 days of FBA cover \(30\+ covered\), so all 5 cases to AWD/);
   assert.ok(!/days of FBA cover now/.test(handoff.msg.text));
 });
 
@@ -733,4 +733,16 @@ test('parseEnvText keeps a value containing " #" whole (dotenv truncated the Hus
 test('realDeps reads credentials from the .env file, not dotenv alone', () => {
   const src = readFileSync('agents/amazon-inbound/index.js', 'utf8');
   assert.match(src, /hushmailCredentials\(\{ HUSHMAIL_USER: envOf\('HUSHMAIL_USER'\), HUSHMAIL_PASSWORD: envOf\('HUSHMAIL_PASSWORD'\) \}\)/);
+});
+
+test('a case list from the Culina office inbox books too; other senders are ignored', async () => {
+  const office = setup({ mail: [mailRow({ messageId: '<office@x>', from: 'culinaoffice@gmail.com' })] });
+  await run(['--apply'], office.deps);
+  assert.equal(office.sent.filter((m) => m.msg.to === 'culinaoffice@gmail.com').length, 1);
+  assert.deepEqual(office.fetches[0].senders, ['travis@traviswales.com', 'culinaoffice@gmail.com']);
+
+  const stranger = setup({ mail: [mailRow({ messageId: '<x@y>', from: 'someone@example.com' })] });
+  await run(['--apply'], stranger.deps);
+  assert.equal(stranger.sent.length, 0);
+  assert.equal(stranger.amz.created(), 0);
 });

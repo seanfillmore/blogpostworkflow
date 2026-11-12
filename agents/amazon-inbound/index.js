@@ -12,7 +12,7 @@
  *   2. AWD: pending AWD shares are matched to AWD inbound shipments Sean created in Seller
  *      Central (the AWD API cannot book the partnered carrier); matched labels go to Travis in
  *      his thread. Past awd_reminder_days with no match, Sean gets one reminder.
- *   3. New mail from config.sender (every Hushmail folder, last 14 days or since --since; auto
+ *   3. New mail from config.senders (every Hushmail folder, last 14 days or since --since; auto
  *      replies ignored): parse -> none (done) | invalid (ask Travis to resend) | shipment ->
  *      duplicate hold -> already-booked-by-hand check -> claim -> 30-day FBA/AWD split ->
  *      bookFba (cheapest total) -> case labels to Travis, CC Sean, threaded -> AWD handoff to Sean.
@@ -247,11 +247,13 @@ async function readMail(ctx) {
     if (!Number.isFinite(cutoff)) throw new Error(`config.process_after is not a date: ${config.process_after}`);
     if (cutoff + 1 > since.getTime()) since = new Date(cutoff + 1);
   }
-  const sender = config.sender.toLowerCase();
-  const rows = await deps.fetchMail(deps.creds, { senders: [config.sender], since });
+  // config.senders: every address a case list may come from (Travis, and the Culina office
+  // inbox since 2026-11-12). config.sender stays the LTL pickup contact.
+  const senders = (config.senders?.length ? config.senders : [config.sender]).map((a) => a.toLowerCase());
+  const rows = await deps.fetchMail(deps.creds, { senders, since });
   const seen = new Set();
   return rows
-    .filter((r) => r?.messageId && String(r.from || '').toLowerCase() === sender && !r.autoSubmitted)
+    .filter((r) => r?.messageId && senders.includes(String(r.from || '').toLowerCase()) && !r.autoSubmitted)
     .filter((r) => Date.parse(r.date) >= since.getTime())
     .filter((r) => (seen.has(r.messageId) ? false : seen.add(r.messageId)))
     .sort((a, b) => Date.parse(a.date) - Date.parse(b.date));

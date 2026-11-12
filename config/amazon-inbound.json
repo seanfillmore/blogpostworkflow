@@ -2,6 +2,7 @@
   "enabled": true,
   "process_after": "2026-11-12T21:35:00Z",
   "sender": "travis@traviswales.com",
+  "senders": ["travis@traviswales.com", "culinaoffice@gmail.com"],
   "to": "culinaoffice@gmail.com",
   "cc": ["travis@traviswales.com", "sean@realskincare.com"],
   "from": "sean@realskincare.com",
