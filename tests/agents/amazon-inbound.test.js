@@ -112,7 +112,7 @@ function setup({ mail = [mailRow()], amazon = {}, config = {}, now = NOW, dir = 
   const fetches = [];
   let t = Date.parse(now);
   const deps = {
-    config: { ...CONFIG, ...config },
+    config: { ...CONFIG, process_after: null, ...config },
     request: amz.request,
     marketplaceId: 'ATVPDKIKX0DER',
     sleep: async () => {},
@@ -393,6 +393,26 @@ test('enabled: false makes no calls', async () => {
   assert.equal(amz.calls.length, 0);
   assert.equal(sent.length + notes.length + fetches.length, 0);
   assert.ok(!existsSync(deps.statePath));
+});
+
+test('process_after: mail at or before the cutoff is never read; the next email books', async () => {
+  const old = setup({ config: { process_after: '2026-11-12T16:00:00Z' } });
+  const out = await run(['--apply'], old.deps);
+  assert.equal(SP(old.amz).length, 0);
+  assert.equal(old.sent.length, 0);
+  assert.equal(old.fetches[0].since.toISOString(), '2026-11-12T16:00:00.001Z');
+  assert.ok(out);
+
+  const next = setup({ config: { process_after: '2026-11-12T16:00:00Z' }, mail: [mailRow({ messageId: '<next@x>', date: '2026-11-12T16:05:00Z' })] });
+  await run(['--apply'], next.deps);
+  assert.equal(next.sent.filter((m) => m.msg.to === 'travis@traviswales.com').length, 1);
+
+  const bad = setup({ config: { process_after: 'tomorrow' } });
+  await assert.rejects(run(['--apply'], bad.deps), /process_after/);
+});
+
+test('the committed config sets a process_after cutoff', () => {
+  assert.ok(Number.isFinite(Date.parse(CONFIG.process_after)));
 });
 
 test('an unreadable state file notifies once, immediately, and throws before any call', async () => {

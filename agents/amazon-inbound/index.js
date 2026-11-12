@@ -239,7 +239,14 @@ async function deliver(ctx, who, record, msg, attachments) {
 async function readMail(ctx) {
   const { deps, config, args } = ctx;
   const now = deps.now().getTime();
-  const since = args.since ? new Date(`${args.since}T00:00:00Z`) : new Date(now - MAX_AGE_DAYS * DAY);
+  let since = args.since ? new Date(`${args.since}T00:00:00Z`) : new Date(now - MAX_AGE_DAYS * DAY);
+  // config.process_after: mail received at or before this instant is never read. Set at
+  // rollout (Sean, 2026-11-12: "do not create labels until the next email Travis sends").
+  if (config.process_after) {
+    const cutoff = Date.parse(config.process_after);
+    if (!Number.isFinite(cutoff)) throw new Error(`config.process_after is not a date: ${config.process_after}`);
+    if (cutoff + 1 > since.getTime()) since = new Date(cutoff + 1);
+  }
   const sender = config.sender.toLowerCase();
   const rows = await deps.fetchMail(deps.creds, { senders: [config.sender], since });
   const seen = new Set();
@@ -816,6 +823,9 @@ export async function run(argv, deps) {
   if (config.enabled === false) {
     log('amazon-inbound: disabled (config/amazon-inbound.json enabled: false); nothing done.');
     return { ...summary, skipped: 'disabled' };
+  }
+  if (config.process_after && !Number.isFinite(Date.parse(config.process_after))) {
+    throw new Error(`config.process_after is not a date: ${config.process_after}`);
   }
   if (!deps.creds && (args.apply || !args.text)) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD not set');
   if (args.apply && !deps.resendKey) throw new Error('cannot send: RESEND_API_KEY not set');
