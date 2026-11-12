@@ -10,7 +10,7 @@ test('pace 4/day, 50 on hand: 6 FBA, 4 AWD', () => {
   assert.equal(r.needUnits, 70);
   assert.equal(r.fbaCases, 6);
   assert.equal(r.awdCases, 4);
-  assert.equal(r.reason, '30 days of FBA cover, 6 cases to FBA, 4 to AWD');
+  assert.equal(r.reason, '13 days of FBA cover, so 6 cases to FBA, 4 to AWD'); // 50 / 4 = 12.5 days now
 });
 
 test('need <= 0 gives 0 FBA cases', () => {
