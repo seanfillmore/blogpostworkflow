@@ -135,7 +135,7 @@ test('happy path: confirmed with the cheapest total, LTL included when a phone i
   assert.deepEqual(gens.map((g) => g.body.placementOptionId), ['plA', 'plB']);
   assert.ok(idx(/transportationOptions$/) < idx(/placementOptions\/plA\/confirmation$/));
   const c1 = gens[0].body.shipmentTransportationConfigurations[0];
-  assert.equal(c1.readyToShipWindow.start, '2026-11-12T17:01Z');
+  assert.equal(c1.readyToShipWindow.start, '2026-11-12T17:16Z'); // 17:00:30 + 15 min, rounded up
   assert.deepEqual(c1.contactInformation, { name: 'Travis', email: 'travis@traviswales.com', phoneNumber: '5551234567' });
   assert.equal(c1.pallets[0].stackability, 'NON_STACKABLE');
   assert.equal(c1.pallets[0].dimensions.unitOfMeasurement, 'IN');
@@ -318,4 +318,16 @@ test('an expiration-dated item carries the same expiration on the plan item and 
   const boxes = named(amz.calls, /\/packingInformation$/)[0].body.packageGroupings[0].boxes;
   assert.deepEqual(boxes[0].items, [{ msku: ITEMS[0].sku, quantity: 20, labelOwner: 'SELLER', prepOwner: 'SELLER', expiration: '2029-11-12' }]);
   assert.equal('expiration' in boxes[1].items[0], false);
+});
+
+test('readyToShipWindow.start is taken per placement, just before its request, so a slow run never sends a past time', async () => {
+  const { amz, deps, rec, persist } = setup({ apply: false });
+  let t = Date.parse('2026-11-12T17:00:30Z');
+  deps.now = () => (t += 60000); // every read of the clock is a minute later
+  await bookFba({ record: rec, items: ITEMS, config, deps, persist });
+  const gens = named(amz.calls, /\/transportationOptions$/);
+  const starts = gens.map((g) => g.body.shipmentTransportationConfigurations[0].readyToShipWindow.start);
+  assert.notEqual(starts[0], starts[1]);
+  for (const s of starts) assert.match(s, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/);
+  assert.equal(rec.quote.readyToShip, starts[gens.findIndex((g) => g.body.placementOptionId === rec.quote.placementOptionId)]);
 });
