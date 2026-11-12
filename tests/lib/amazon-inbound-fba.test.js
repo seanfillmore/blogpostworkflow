@@ -300,3 +300,10 @@ test('fix: an LTL pick with no contact phone is refused before any confirm call'
   );
   assert.equal(amz.calls.filter((c) => CONFIRMS.test(c.path)).length, 0);
 });
+
+test('a record carrying planName creates (and adopts) a plan under that name', async () => {
+  const { amz, deps, persist } = setup({ apply: false });
+  const rec = { messageId: 'msg-1', step: 'claimed', planName: 'culina-dry-12345678' };
+  await bookFba({ record: rec, items: ITEMS, config, deps, persist });
+  assert.equal(named(amz.calls, /\/inboundPlans$/)[0].body.name, 'culina-dry-12345678');
+});

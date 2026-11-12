@@ -4,8 +4,10 @@ import { readFileSync, mkdtempSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { run, parseArgs } from '../../agents/amazon-inbound/index.js';
-import { planName } from '../../lib/amazon-inbound-state.js';
+import { run, parseArgs, acquireLock } from '../../agents/amazon-inbound/index.js';
+import { planName, dryPlanName } from '../../lib/amazon-inbound-state.js';
+import { spawnSync } from 'node:child_process';
+import { utimesSync } from 'node:fs';
 
 const SRC = readFileSync('agents/amazon-inbound/index.js', 'utf8');
 const CONFIG = JSON.parse(readFileSync('config/amazon-inbound.json', 'utf8'));
@@ -32,7 +34,7 @@ const CONFIRMS = /placementOptions\/[^/]+\/confirmation$|transportationOptions\/
  * cheapest partnered option is small parcel at $40. `manualPlans`, `awdShipments`, `sales`,
  * `inventory` and `labelsReady` shape the reads.
  */
-function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales = {}, inventory = [], failOn = null, labelsReady = true } = {}) {
+function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales = {}, inventory = [], failOn = null, labelsReady = true, awdLabelStatus = 'GENERATED' } = {}) {
   const calls = [];
   let op = 0;
   let created = 0;
@@ -88,7 +90,7 @@ function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales
       return { shipmentId: s.shipmentId, createdAt: s.createdAt, shipmentSkuQuantities: s.skuQuantities };
     }
     const awdLabels = path.match(new RegExp(`^${AWD}/inboundShipments/([^/]+)/labels$`));
-    if (method === 'GET' && awdLabels) return { labelStatus: 'GENERATED', labelDownloadURL: `https://dl.example/awd/${awdLabels[1]}` };
+    if (method === 'GET' && awdLabels) return awdLabelStatus === 'GENERATED' ? { labelStatus: 'GENERATED', labelDownloadURL: `https://dl.example/awd/${awdLabels[1]}` } : { labelStatus: awdLabelStatus };
     if (method === 'PUT' && path.endsWith('/cancellation')) return ok();
     return ok();
   };
@@ -418,15 +420,151 @@ test('dry run with --text quotes, cancels the draft, sends nothing and writes no
   assert.equal(amz.calls.filter((c) => c.method === 'PUT' && c.path === `${V}/inboundPlans/${PLAN}/cancellation`).length, 1);
   const create = amz.calls.find((c) => c.method === 'POST' && c.path === `${V}/inboundPlans`).params;
   const id = `text-${createHash('sha256').update(EMAIL).digest('hex').slice(0, 12)}`;
-  assert.equal(create.name, planName(`dry-${id}`)); // never the name a real booking of this message would adopt
+  assert.equal(create.name, dryPlanName(id)); // never the name a real booking of this message would adopt
+  assert.match(create.name, /^culina-dry-/);
   const out = logs.join('\n');
   assert.match(out, /Cheapest total: \$45/);
   assert.match(out, /6-pack: 10 case\(s\) to FBA, 0 to AWD/);
 });
 
-test('setup-cron.sh runs the agent every 15 minutes with --apply and no TZ= prefix', () => {
+test('setup-cron.sh runs the agent at :07/:22/:37/:52 with --apply and no TZ= prefix', () => {
   const cron = readFileSync('scripts/setup-cron.sh', 'utf8');
-  assert.match(cron, /EVERY_15_AMAZON_INBOUND="\*\/15 \* \* \* \* cd \\"\$PROJECT_DIR\\" && \$NODE agents\/amazon-inbound\/index\.js --apply >> data\/reports\/scheduler\/amazon-inbound\.log 2>&1"/);
+  assert.match(cron, /EVERY_15_AMAZON_INBOUND="7,22,37,52 \* \* \* \* cd \\"\$PROJECT_DIR\\" && \$NODE agents\/amazon-inbound\/index\.js --apply >> data\/reports\/scheduler\/amazon-inbound\.log 2>&1"/);
   assert.match(cron, /^\$EVERY_15_AMAZON_INBOUND$/m);
   assert.ok(!/TZ=/.test(cron.split('\n').filter((l) => l.includes('amazon-inbound')).join('\n')));
+});
+
+// ---- fix round 1 ------------------------------------------------------------------
+
+const AWD_DAYS = () => {
+  const days = [];
+  for (let i = 120; i >= 1; i--) days.push({ interval: new Date(Date.parse('2026-11-12T00:00:00Z') - i * 864e5).toISOString().slice(0, 10) + 'T00:00-08:00', unitCount: 2 });
+  return days;
+};
+const awdAmazon = (extra = {}) => {
+  const four = sku('4-pack');
+  return { sales: { [four.asin]: AWD_DAYS() }, inventory: [{ sellerSku: four.sku, asin: four.asin, inventoryDetails: { fulfillableQuantity: 1000 } }], ...extra };
+};
+
+test('an ACTIVE dry-run draft with the same SKUs is never read as a manual booking', async () => {
+  const manualPlans = [{ inboundPlanId: 'drydraft', name: dryPlanName(TRAVIS_ID), status: 'ACTIVE', createdAt: '2026-11-12T16:20:00Z' }];
+  const planItems = { drydraft: [['4-pack', 108], ['3-pack', 108], ['2-pack', 100], ['6-pack', 120]].map(([k, q]) => ({ msku: sku(k).sku, quantity: q })) };
+  const { amz, deps, state } = setup({ amazon: { manualPlans, planItems } });
+  await run(['--apply'], deps);
+  assert.equal(amz.calls.filter((c) => c.path === `${V}/inboundPlans/drydraft/items`).length, 0);
+  assert.equal(amz.created(), 1);
+  assert.equal(state().messages[TRAVIS_ID].step, 'labels_sent');
+});
+
+test('dry run: a failed cancelDraft prints LEFT ACTIVE and returns a non-zero exit code', async () => {
+  const failOn = (m, p) => m === 'PUT' && p.endsWith('/cancellation');
+  const { deps } = setup({ mail: [], amazon: { failOn } });
+  const logs = [];
+  deps.log = (l) => logs.push(String(l));
+  const out = await run(['--dry-run', '--text', EMAIL], deps);
+  assert.equal(out.exitCode, 1);
+  assert.deepEqual(out.leftActive, [PLAN]);
+  assert.match(logs.join('\n'), new RegExp(`DRAFT PLAN ${PLAN} \\(culina-dry-[0-9a-f]{8}\\) LEFT ACTIVE, cancel it in Seller Central`));
+});
+
+test('an AWD shipment that only partly matches the pending share emails Sean once per shipment', async () => {
+  const four = sku('4-pack');
+  const s = setup({ amazon: awdAmazon() });
+  await run(['--apply'], s.deps);
+  const sentBefore = s.sent.length;
+  s.advance(3600e3);
+  const later = new Date(Date.parse(NOW) + 1800e3).toISOString();
+  s.deps.request = fakeAmazon(awdAmazon({ awdShipments: [{ shipmentId: 'STARAWD2', createdAt: later, skuQuantities: [{ sku: four.sku, expectedQuantity: { quantity: 7, unitOfMeasurement: 'CASES' } }] }] })).request;
+  await run(['--apply'], s.deps);
+  await run(['--apply'], s.deps);
+  const partial = s.sent.slice(sentBefore);
+  assert.equal(partial.length, 1);
+  assert.equal(partial[0].msg.to, SEAN);
+  assert.match(partial[0].msg.subject, /STARAWD2 only partly matches/);
+  assert.match(partial[0].msg.text, /9 x 4-pack/);
+  assert.ok(!/[—–]/.test(partial[0].msg.text + partial[0].msg.subject));
+  const share = s.state().messages[TRAVIS_ID].awdShare;
+  assert.equal(share.awdShipmentId, undefined);
+  assert.deepEqual(share.partialNotified, ['STARAWD2']);
+});
+
+test('AWD labels stuck in GENERATING: Sean gets one failureNotice after 6 misses', async () => {
+  const four = sku('4-pack');
+  const s = setup({ amazon: awdAmazon() });
+  await run(['--apply'], s.deps);
+  s.advance(3600e3);
+  const later = new Date(Date.parse(NOW) + 1800e3).toISOString();
+  s.deps.request = fakeAmazon(awdAmazon({ awdLabelStatus: 'GENERATING', awdShipments: [{ shipmentId: 'STARAWD3', createdAt: later, skuQuantities: [{ sku: four.sku, expectedQuantity: { quantity: 9, unitOfMeasurement: 'CASES' } }] }] })).request;
+  for (let i = 0; i < 5; i++) await run(['--apply'], s.deps);
+  assert.equal(s.notes.filter((n) => n.immediate).length, 0);
+  for (let i = 0; i < 3; i++) await run(['--apply'], s.deps);
+  const imm = s.notes.filter((n) => n.immediate);
+  assert.equal(imm.length, 1);
+  assert.match(imm[0].body, /STARAWD3/);
+  assert.equal(s.state().messages[TRAVIS_ID].awdShare.labelMisses, 8);
+});
+
+test('a cleared AWD list error is persisted, and a label success clears share.awdError', async () => {
+  const four = sku('4-pack');
+  const s = setup({ amazon: awdAmazon() });
+  await run(['--apply'], s.deps);
+  s.advance(3600e3);
+  s.deps.request = fakeAmazon(awdAmazon({ failOn: (m, p) => p === `${AWD}/inboundShipments` })).request;
+  await run(['--apply'], s.deps);
+  assert.match(s.state().awdError, /awd_list/);
+  const later = new Date(Date.parse(NOW) + 1800e3).toISOString();
+  s.deps.request = fakeAmazon(awdAmazon({ awdShipments: [{ shipmentId: 'STARAWD4', createdAt: later, skuQuantities: [{ sku: four.sku, expectedQuantity: { quantity: 9, unitOfMeasurement: 'CASES' } }] }] })).request;
+  const st = s.state();
+  st.messages[TRAVIS_ID].awdShare.awdError = 'awd_labels: old';
+  writeFileSync(s.deps.statePath, JSON.stringify(st));
+  await run(['--apply'], s.deps);
+  const after = s.state();
+  assert.equal(after.awdError, null);
+  assert.equal(after.messages[TRAVIS_ID].awdShare.awdError, null);
+  assert.ok(after.messages[TRAVIS_ID].awdShare.labelsSentAt);
+});
+
+test('lock: a live pid is never taken over however old; a dead pid is', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'amz-lock-'));
+  const lock = join(dir, '.lock');
+  writeFileSync(lock, String(process.pid)); // alive
+  const old = new Date(Date.now() - 48 * 3600e3);
+  utimesSync(lock, old, old);
+  assert.equal(acquireLock(lock), false);
+  const dead = spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))']).stdout.toString();
+  writeFileSync(lock, dead); // that process has exited
+  assert.equal(acquireLock(lock), true);
+  assert.equal(readFileSync(lock, 'utf8'), String(process.pid));
+});
+
+test('run exits quietly (no calls) when a live run holds the lock', async () => {
+  const s = setup();
+  writeFileSync(s.deps.lockPath, String(process.ppid));
+  const out = await run(['--apply'], s.deps);
+  assert.equal(out.skipped, 'locked');
+  assert.equal(s.amz.calls.length + s.fetches.length + s.sent.length + s.notes.length, 0);
+});
+
+test('unreadable state: immediate notify at most once per 6 hours, throws every run', async () => {
+  const s = setup();
+  writeFileSync(s.deps.statePath, '{ not json');
+  await assert.rejects(run(['--apply'], s.deps), /unreadable/);
+  await assert.rejects(run(['--apply'], s.deps), /unreadable/);
+  assert.equal(s.notes.filter((n) => n.immediate).length, 1);
+  const marker = join(s.dir, '.unreadable-notified');
+  const old = new Date(Date.now() - 7 * 3600e3);
+  utimesSync(marker, old, old);
+  await assert.rejects(run(['--apply'], s.deps), /unreadable/);
+  assert.equal(s.notes.filter((n) => n.immediate).length, 2);
+});
+
+test('a none parse records done and adds one deferred info digest event naming the subject', async () => {
+  const { amz, deps, notes, state } = setup({ mail: [mailRow({ subject: 'Lunch Friday?', text: 'Want to grab lunch Friday?' })] });
+  await run(['--apply'], deps);
+  assert.equal(amz.calls.length, 0);
+  assert.equal(state().messages[TRAVIS_ID].step, 'done');
+  assert.equal(notes.length, 1);
+  assert.equal(notes[0].immediate, undefined);
+  assert.equal(notes[0].status, 'info');
+  assert.match(notes[0].body, /Lunch Friday\?/);
 });

@@ -47,11 +47,11 @@ import { parseShipmentEmail, linesSignature } from '../../lib/amazon-inbound-par
 import { splitCases, readFbaBySku } from '../../lib/amazon-inbound-split.js';
 import { palletize } from '../../lib/amazon-inbound-cost.js';
 import {
-  loadState, saveState, planName, duplicateCheck, manualBookingCheck, matchAwdShipment,
+  loadState, saveState, planName, dryPlanName, DRY_PLAN_PREFIX, duplicateCheck, manualBookingCheck, matchAwdShipment,
 } from '../../lib/amazon-inbound-state.js';
 import { bookFba, fetchFbaLabels, cancelDraft } from '../../lib/amazon-inbound-fba.js';
 import {
-  labelsReply, awdLabelsReply, resendRequest, awdHandoff, awdReminder, heldNotice, alreadyPlacedNotice, failureNotice,
+  labelsReply, awdLabelsReply, resendRequest, awdHandoff, awdReminder, heldNotice, alreadyPlacedNotice, failureNotice, esc,
 } from '../../lib/amazon-inbound-email.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -61,6 +61,7 @@ const MAX_AGE_DAYS = 14;
 const PACE_WINDOW_DAYS = 120;
 const LABEL_MISS_LIMIT = 6;
 const LOCK_STALE_MS = 3 * 3600e3;
+const UNREADABLE_NOTIFY_MS = 6 * 3600e3;
 const PACE_MS = 1000;
 const V = '/inbound/fba/2024-03-20';
 const AWD = '/awd/2024-05-09';
@@ -95,15 +96,23 @@ const short = (id) => String(id || '').replace(/^<|>$/g, '').slice(0, 24);
 const errText = (err) => String(err?.message || err);
 const pause = (ctx) => ctx.deps.sleep(PACE_MS);
 
-function acquireLock(path) {
+/**
+ * Single-instance lock. A lock whose pid is alive is NEVER taken over, however old: that run may
+ * be mid-booking. Only a dead pid's lock is taken over. A lock with no readable pid is taken over
+ * only once it is older than LOCK_STALE_MS.
+ */
+export function acquireLock(path) {
   mkdirSync(dirname(path), { recursive: true });
   if (existsSync(path)) {
     let pid = 0;
-    try { pid = Number(readFileSync(path, 'utf8').trim()); } catch { /* unreadable lock: treat by age */ }
-    const age = Date.now() - statSync(path).mtimeMs;
-    let alive = false;
-    if (pid > 0) { try { process.kill(pid, 0); alive = true; } catch (e) { alive = e.code === 'EPERM'; } }
-    if (alive && age < LOCK_STALE_MS) return false;
+    try { pid = Number(readFileSync(path, 'utf8').trim()); } catch { /* unreadable lock */ }
+    if (Number.isInteger(pid) && pid > 0) {
+      let alive = true;
+      try { process.kill(pid, 0); } catch (e) { alive = e.code === 'EPERM'; }
+      if (alive) return false;
+    } else if (Date.now() - statSync(path).mtimeMs < LOCK_STALE_MS) {
+      return false;
+    }
   }
   writeFileSync(path, String(process.pid));
   return true;
@@ -214,7 +223,7 @@ async function laterShipments(ctx, record) {
     let older = false;
     for (const p of res?.inboundPlans || []) {
       if (!(Date.parse(p.createdAt) >= since)) { older = true; continue; }
-      if (SKIP_PLAN_STATUS.has(p.status) || own.has(p.name)) continue;
+      if (SKIP_PLAN_STATUS.has(p.status) || own.has(p.name) || String(p.name || '').startsWith(DRY_PLAN_PREFIX)) continue;
       plans.push(p);
     }
     token = res?.pagination?.nextToken;
@@ -353,6 +362,7 @@ async function triage(ctx, record) {
     record.step = 'done';
     record.kind = 'none';
     ctx.persist(record);
+    ctx.event(`${short(record.messageId)}: email from Travis with no case list ("${record.subject || 'no subject'}"); nothing booked`, 'info');
     return;
   }
   if (parsed.kind === 'invalid') {
@@ -558,7 +568,8 @@ async function dryBook(ctx, record) {
     const split = await computeSplit(ctx, record.lines);
     printSplit(ctx, split);
     if (!split.fbaItems.length) { ctx.log('No FBA cases: everything would go to AWD (handoff to Sean).'); return; }
-    const draft = { messageId: `dry-${record.messageId}`, step: 'claimed' };
+    // A separate, recognisable name: never adopted by a real booking, never read as a manual one.
+    const draft = { messageId: `dry-${record.messageId}`, planName: dryPlanName(record.messageId), step: 'claimed' };
     const deps = bookDeps(ctx, false);
     try {
       await bookFba({ record: draft, items: split.fbaItems, config: ctx.config, deps, persist: () => {} });
@@ -566,8 +577,13 @@ async function dryBook(ctx, record) {
       ctx.log(`Cheapest total: $${q.total} (placement $${q.placementFee}, packing $${q.packingFee}; ${q.picks.map((p) => `${p.shipmentId} ${p.mode} $${p.amount}`).join('; ')})`);
     } finally {
       if (draft.planId) {
-        await cancelDraft({ record: draft, deps });
-        ctx.log(`Draft plan ${draft.planId} cancelled (dry run).`);
+        try {
+          await cancelDraft({ record: draft, deps });
+          ctx.log(`Draft plan ${draft.planId} cancelled (dry run).`);
+        } catch (err) {
+          ctx.leftActive.push(draft.planId);
+          ctx.log(`DRAFT PLAN ${draft.planId} (${draft.planName}) LEFT ACTIVE, cancel it in Seller Central: ${errText(err)}`);
+        }
       }
     }
   } catch (err) {
@@ -590,15 +606,18 @@ async function awdStep(ctx) {
       const claimed = claimedAwdIds(state);
       const ships = (await awdShipmentsSince(ctx, since)).filter((s) => !claimed.has(s.shipmentId));
       const shares = unmatched.map((r) => ({ messageId: r.messageId, handoffAt: r.awdShare.handoffAt, lines: r.awdShare.lines }));
-      for (const m of matchAwdShipment(shares, ships)) {
+      const matches = matchAwdShipment(shares, ships);
+      const used = new Set(matches.map((m) => m.shipmentId));
+      for (const m of matches) {
         const r = state.messages[m.messageId];
         r.awdShare.awdShipmentId = m.shipmentId;
         r.awdShare.matchedAt = iso(now);
         ctx.persist(r);
         ctx.event(`${short(r.messageId)}: AWD shipment ${m.shipmentId} found`, 'info');
       }
+      await reportPartialAwd(ctx, unmatched.filter((r) => !r.awdShare.awdShipmentId), ships.filter((s) => !used.has(s.shipmentId)));
     }
-    state.awdError = null;
+    if (state.awdError) { state.awdError = null; ctx.saveAll(); }
   } catch (err) {
     await awdFailure(ctx, state, 'awd_list', err);
   }
@@ -611,7 +630,15 @@ async function awdStep(ctx) {
         const res = await deps.request('GET', `${AWD}/inboundShipments/${share.awdShipmentId}/labels`, { pageType: 'PLAIN_PAPER', formatType: 'PDF' });
         if (res?.labelStatus === 'GENERATION_FAILED') throw new Error(`AWD label generation failed for ${share.awdShipmentId}`);
         if (res?.labelStatus !== 'GENERATED' || !res.labelDownloadURL) {
-          ctx.log(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} not ready (${res?.labelStatus || 'no status'})`);
+          share.labelMisses = (share.labelMisses || 0) + 1;
+          ctx.persist(r);
+          ctx.log(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} not ready (${res?.labelStatus || 'no status'}, ${share.labelMisses}/${LABEL_MISS_LIMIT})`);
+          if (share.labelMisses >= LABEL_MISS_LIMIT && !share.labelMissNotified) {
+            await notifyFailure(ctx, r, 'awd_labels', `AWD labels for ${share.awdShipmentId} still ${res?.labelStatus || 'not ready'} after ${share.labelMisses} tries`);
+            share.labelMissNotified = true;
+            ctx.persist(r);
+            ctx.event(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} not ready after ${share.labelMisses} tries (Sean emailed)`, 'error');
+          }
           continue;
         }
         const pdf = await download(deps, res.labelDownloadURL, `AWD labels ${share.awdShipmentId}`);
@@ -619,6 +646,7 @@ async function awdStep(ctx) {
         const sent = await sendToTravis(ctx, r, msg, [{ filename: `${share.awdShipmentId}-labels.pdf`, content: pdf }]);
         share.labelsReplyId = sent.messageId;
         share.labelsSentAt = iso(now);
+        share.awdError = null;
         ctx.persist(r);
         ctx.event(`${short(r.messageId)}: AWD labels for ${share.awdShipmentId} sent to Travis`, 'success');
       } catch (err) {
@@ -634,6 +662,37 @@ async function awdStep(ctx) {
       } catch (err) {
         await awdFailure(ctx, share, 'awd_reminder', err, r);
       }
+    }
+  }
+}
+
+/** Partly-matching AWD shipment: shares a SKU with a pending share, created after its handoff, not an exact match. */
+export function awdPartialNotice({ awdShipmentId, lines, casesBySku }) {
+  const want = (lines || []).map((l) => `${l.cases} x ${l.key} (${l.sku})`);
+  const got = Object.entries(casesBySku || {}).map(([k, n]) => `${n} x ${k}`);
+  const text = [
+    `AWD inbound ${awdShipmentId} shares packs with the AWD cases waiting from Travis's email, but the case counts do not match, so I did not use it and sent Travis no labels for it.`,
+    `Waiting for AWD: ${want.join(', ')}`,
+    `${awdShipmentId} holds: ${got.join(', ')}`,
+    'If it is the right shipment, fix the counts in Seller Central (or tell me what to do); otherwise create the AWD inbound with the counts above.',
+  ].join('\n\n');
+  const html = text.split('\n\n').map((p) => `<p>${esc(p)}</p>`).join('\n');
+  return { subject: `Culina: AWD inbound ${awdShipmentId} only partly matches`, text, html };
+}
+
+async function reportPartialAwd(ctx, records, ships) {
+  for (const r of records) {
+    const share = r.awdShare;
+    const want = new Set((share.lines || []).map((l) => l.sku));
+    for (const s of ships) {
+      if (!(Date.parse(s.createdAt) > Date.parse(share.handoffAt))) continue;
+      if (!Object.entries(s.casesBySku || {}).some(([k, n]) => want.has(k) && n > 0)) continue;
+      share.partialNotified ||= [];
+      if (share.partialNotified.includes(s.shipmentId)) continue;
+      await sendToSean(ctx, awdPartialNotice({ awdShipmentId: s.shipmentId, lines: share.lines, casesBySku: s.casesBySku }));
+      share.partialNotified.push(s.shipmentId);
+      ctx.persist(r);
+      ctx.event(`${short(r.messageId)}: AWD inbound ${s.shipmentId} only partly matches; told Sean`, 'info');
     }
   }
 }
@@ -673,7 +732,7 @@ export async function run(argv, deps) {
   if (args.apply && !deps.resendKey) throw new Error('cannot send: RESEND_API_KEY not set');
 
   if (args.apply && !acquireLock(deps.lockPath)) {
-    log('amazon-inbound: another run holds the lock; nothing done.');
+    log('amazon-inbound: another run (live pid) holds the lock; nothing done.');
     return { ...summary, skipped: 'locked' };
   }
   try {
@@ -681,7 +740,14 @@ export async function run(argv, deps) {
     try {
       state = loadState(deps.statePath);
     } catch (err) {
-      await deps.notify({ subject: 'Culina inbound: state file unreadable, nothing done', body: errText(err), status: 'error', category: 'amazon', immediate: true });
+      // At most one immediate email per 6 hours; the run still throws (and logs) every 15 minutes.
+      const marker = join(dirname(deps.statePath), '.unreadable-notified');
+      let recent = false;
+      try { recent = Date.now() - statSync(marker).mtimeMs < UNREADABLE_NOTIFY_MS; } catch { /* no marker */ }
+      if (!recent) {
+        await deps.notify({ subject: 'Culina inbound: state file unreadable, nothing done', body: errText(err), status: 'error', category: 'amazon', immediate: true });
+        try { writeFileSync(marker, new Date().toISOString()); } catch { /* best effort */ }
+      }
       throw err;
     }
 
@@ -689,7 +755,7 @@ export async function run(argv, deps) {
     let worst = 'success';
     const rank = { success: 0, info: 1, error: 2 };
     const ctx = {
-      args, deps, config, state, log, apply: args.apply, notes: [], errors: summary.errors,
+      args, deps, config, state, log, apply: args.apply, notes: [], errors: summary.errors, leftActive: [],
       persist(record) {
         if (!args.apply) return;
         state.messages[record.messageId] = record;
@@ -734,7 +800,8 @@ export async function run(argv, deps) {
       });
     }
     if (!args.apply) log('Dry run: nothing sent, no state written, nothing confirmed.');
-    return { ...summary, events, notes: ctx.notes };
+    const exitCode = ctx.leftActive.length ? 1 : 0;
+    return { ...summary, events, notes: ctx.notes, leftActive: ctx.leftActive, exitCode };
   } finally {
     if (args.apply) releaseLock(deps.lockPath);
   }
@@ -761,7 +828,8 @@ async function realDeps() {
 
 async function main() {
   try {
-    await run(process.argv.slice(2), await realDeps());
+    const out = await run(process.argv.slice(2), await realDeps());
+    if (out?.exitCode) process.exitCode = out.exitCode; // a dry-run draft left ACTIVE
   } catch (e) {
     console.error(e);
     // Deferred: an unreadable state file already emailed Sean from run(); a mail or config

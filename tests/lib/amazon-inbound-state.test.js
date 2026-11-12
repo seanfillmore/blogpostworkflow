@@ -92,3 +92,11 @@ test('matchAwdShipment: before handoff and partial counts do not match', () => {
   assert.deepEqual(matchAwdShipment(sh, [{ shipmentId: 's', createdAt: D('06'), casesBySku: { B: 2, C: 2 } }]), []);
   assert.deepEqual(matchAwdShipment(sh, [{ shipmentId: 's', createdAt: D('06'), casesBySku: { B: 2 } }]), []);
 });
+
+test('dryPlanName has a distinct prefix and never equals planName', async () => {
+  const { dryPlanName, DRY_PLAN_PREFIX } = await import('../../lib/amazon-inbound-state.js');
+  assert.match(dryPlanName('abc'), /^culina-dry-[0-9a-f]{8}$/);
+  assert.ok(dryPlanName('abc').startsWith(DRY_PLAN_PREFIX));
+  assert.ok(!planName('abc').startsWith(DRY_PLAN_PREFIX));
+  assert.ok(dryPlanName('abc').length <= 40);
+});
