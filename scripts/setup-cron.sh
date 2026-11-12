@@ -241,6 +241,14 @@ DAILY_INBOX_SORTER="40 13 * * * cd \"$PROJECT_DIR\" && $NODE agents/inbox-sorter
 # rules and reports in the digest; emails immediately the first time a rule is
 # hit. Reports only, never pauses. 12:10 UTC, ahead of the 13:00 digest.
 DAILY_AD_TEST_MONITOR="10 12 * * * cd \"$PROJECT_DIR\" && $NODE agents/ad-test-monitor/index.js --notify >> data/reports/scheduler/ad-test-monitor.log 2>&1"
+# Cream Search test daily report (Sean, 2026-11-11: "Report on this campaign
+# every day"). Emails yesterday + whole-test numbers for Google Ads campaign
+# 24439008645, progress to the 150-click read, per-keyword bids vs Google's
+# top-of-page estimates, and Shopify orders from the campaign link. Report
+# only. Goes quiet by itself once the campaign is paused with no spend; delete
+# this line when the test is over. 14:15 UTC = 6:15 AM PST, so "yesterday" is a
+# complete PT day; minute checked free against the live crontab.
+DAILY_CREAM_SEARCH_REPORT="15 14 * * * cd \"$PROJECT_DIR\" && $NODE scripts/cream-search-daily-report.mjs --send >> data/reports/scheduler/cream-search-report.log 2>&1"
 # Pack listings: Shopify's Google channel refuses componentized bundles, so packs
 # (config/pack-listings.json) are written to our own Merchant Center data source.
 # Daily so price and stock follow the store. 11:50 UTC, ahead of the 13:00 digest.
@@ -707,6 +715,7 @@ $WEEKLY_FOUNDER_NOTES_SEND
 $DAILY_FOUNDER_NOTES_INGEST
 $DAILY_INBOX_SORTER
 $DAILY_AD_TEST_MONITOR
+$DAILY_CREAM_SEARCH_REPORT
 # ── Daily digest ──
 $DAILY_RECAP_REVIEWER
 $DAILY_SUMMARY
