@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { splitCases, readFbaBySku } from '../../lib/amazon-inbound-split.js';
+import { splitCases, readFbaBySku, expirationDate } from '../../lib/amazon-inbound-split.js';
 
 const base = { today: '2026-11-12', seasonal: null, coverDays: 30 };
 const line = (cases = 10) => ({ key: 'k', sku: 'S1', cases, unitsPerCase: 12 });
@@ -60,4 +60,9 @@ test('float noise above a whole case does not round up', () => {
   const [r] = splitCases({ ...base, lines: [line()], fbaBySku: { S1: { fulfillable: 47.9999999999, inbound: 0 } }, paceBySku: { S1: 4 } });
   assert.equal(r.fbaCases, 6);
   assert.equal(r.awdCases, 4);
+});
+
+test('expirationDate adds whole years in Amazon YYYY-MM-DD form; Feb 29 falls back to Feb 28', () => {
+  assert.equal(expirationDate('2026-11-12', 3), '2029-11-12');
+  assert.equal(expirationDate('2028-02-29', 3), '2031-02-28');
 });

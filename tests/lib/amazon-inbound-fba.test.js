@@ -307,3 +307,15 @@ test('a record carrying planName creates (and adopts) a plan under that name', a
   await bookFba({ record: rec, items: ITEMS, config, deps, persist });
   assert.equal(named(amz.calls, /\/inboundPlans$/)[0].body.name, 'culina-dry-12345678');
 });
+
+test('an expiration-dated item carries the same expiration on the plan item and on its box items (FBA_INB_0180)', async () => {
+  const { amz, deps, rec, persist } = setup({ apply: false });
+  const dated = [{ ...ITEMS[0], expiration: '2029-11-12' }, ITEMS[1]];
+  await bookFba({ record: rec, items: dated, config, deps, persist });
+  const create = named(amz.calls, /\/inboundPlans$/)[0].body;
+  assert.deepEqual(create.items[0], { msku: ITEMS[0].sku, quantity: 80, labelOwner: 'SELLER', prepOwner: 'SELLER', expiration: '2029-11-12' });
+  assert.equal('expiration' in create.items[1], false);
+  const boxes = named(amz.calls, /\/packingInformation$/)[0].body.packageGroupings[0].boxes;
+  assert.deepEqual(boxes[0].items, [{ msku: ITEMS[0].sku, quantity: 20, labelOwner: 'SELLER', prepOwner: 'SELLER', expiration: '2029-11-12' }]);
+  assert.equal('expiration' in boxes[1].items[0], false);
+});

@@ -44,7 +44,7 @@ import { hushmailCredentials, sendMail, fetchFromAllFolders } from '../../lib/hu
 import { defaultDeps, fetchDailyUnits } from '../../lib/culina-data.js';
 import { dailyPace, inferStockoutDates, seasonalIndex } from '../../lib/culina-forecast.js';
 import { parseShipmentEmail, linesSignature } from '../../lib/amazon-inbound-parse.js';
-import { splitCases, readFbaBySku } from '../../lib/amazon-inbound-split.js';
+import { splitCases, readFbaBySku, expirationDate } from '../../lib/amazon-inbound-split.js';
 import { palletize } from '../../lib/amazon-inbound-cost.js';
 import {
   loadState, saveState, planName, dryPlanName, DRY_PLAN_PREFIX, duplicateCheck, manualBookingCheck, matchAwdShipment,
@@ -324,7 +324,9 @@ async function computeSplit(ctx, lines) {
     const cfg = skus[r.sku];
     if (!cfg) throw new Error(`SKU ${r.sku} is not in config/amazon-inbound.json`);
     if (r.fbaCases > 0) {
-      fbaItems.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.fbaCases, unitsPerCase: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb });
+      // Fixed here, once, and persisted with the record: plan items and box items must carry the same date.
+      const expiration = cfg.expiration_years ? { expiration: expirationDate(today, cfg.expiration_years) } : {};
+      fbaItems.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.fbaCases, unitsPerCase: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb, ...expiration });
     }
     if (r.awdCases > 0) {
       awdLines.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.awdCases, units_per_case: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb });

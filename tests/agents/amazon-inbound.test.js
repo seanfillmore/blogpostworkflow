@@ -178,6 +178,13 @@ test('the real four-line email books once and sends ONE reply To Travis, CC Sean
   assert.deepEqual(create.items.map((i) => [i.msku, i.quantity]).sort(), [
     [sku('2-pack').sku, 100], [sku('3-pack').sku, 108], [sku('4-pack').sku, 108], [sku('6-pack').sku, 120],
   ].sort());
+  // the 2-pack is expiration-dated on Amazon: plan date + config expiration_years; no other SKU carries one
+  const exp = Object.fromEntries(create.items.map((i) => [i.msku, i.expiration]));
+  const years = sku('2-pack').expiration_years;
+  assert.equal(years, 3);
+  const d = new Date(NOW);
+  assert.equal(exp[sku('2-pack').sku], `${d.getUTCFullYear() + years}${d.toISOString().slice(4, 10)}`);
+  for (const k of ['3-pack', '4-pack', '6-pack']) assert.equal(exp[sku(k).sku], undefined, k);
 
   const rec = state().messages[TRAVIS_ID];
   assert.equal(rec.step, 'labels_sent');

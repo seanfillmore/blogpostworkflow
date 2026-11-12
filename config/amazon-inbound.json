@@ -19,7 +19,7 @@
   },
   "pallet": { "length_in": 48, "width_in": 40, "max_height_in": 60, "deck_in": 5, "pallet_weight_lb": 40, "stackable": false },
   "skus": [
-    { "key": "2-pack", "aliases": ["2-pack", "2 pack", "two pack"], "sku": "BLI-029655_026708-028658-SET2_CLN_FBA", "asin": "B077LYR5SF", "units_per_case": 20, "case_in": { "l": 18, "w": 9, "h": 12 }, "case_lb": 27 },
+    { "key": "2-pack", "aliases": ["2-pack", "2 pack", "two pack"], "sku": "BLI-029655_026708-028658-SET2_CLN_FBA", "asin": "B077LYR5SF", "units_per_case": 20, "case_in": { "l": 18, "w": 9, "h": 12 }, "case_lb": 27, "expiration_years": 3 },
     { "key": "3-pack", "aliases": ["3-pack", "3 pack", "three pack"], "sku": "salt_Soap_conditioner", "asin": "B08BTQK5Z9", "units_per_case": 12, "case_in": { "l": 18, "w": 10, "h": 12 }, "case_lb": 26 },
     { "key": "4-pack", "aliases": ["4-pack", "4 pack", "four pack"], "sku": "soap_oil_stick_salt2", "asin": "B08K892JQG", "units_per_case": 12, "case_in": { "l": 18, "w": 10, "h": 12 }, "case_lb": 28 },
     { "key": "6-pack", "aliases": ["6-pack", "6 pack", "six pack"], "sku": "soap_oil_salt_stick_scrubber_brush", "asin": "B08KHGYYKQ", "units_per_case": 12, "case_in": { "l": 18, "w": 10, "h": 12 }, "case_lb": 31 }
