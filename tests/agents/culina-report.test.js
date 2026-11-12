@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, writeFileSync, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { run, parseArgs, previousMonth, monthWindow, monthsBetween } from '../../agents/culina-report/index.js';
+import { run, parseArgs, previousMonth, monthWindow, monthsBetween, itemLabel } from '../../agents/culina-report/index.js';
 
 const SRC = readFileSync('agents/culina-report/index.js', 'utf8');
 
@@ -187,7 +187,7 @@ test('forecast vs actual reads the file saved for the report month', async () =>
   writeFileSync(join(dir, 'forecasts', '2026-10.json'), JSON.stringify({ month: '2026-10', byAsin: { [A3]: { label: 'Supreme Care Set', forecast: 280 } } }));
   const { deps } = makeDeps(dir, { stock: { [A3]: 100 } });
   const r = await run(['--monthly', '--month', '2026-10'], deps);
-  assert.deepEqual(r.forecastVsActual, [{ label: 'Supreme Care Set', forecast30: 280, actual: 310 }]);
+  assert.deepEqual(r.forecastVsActual, [{ label: '3-pack', forecast30: 280, actual: 310 }]);
 });
 
 test('projection includes launches and drops RSC', async () => {
@@ -195,7 +195,7 @@ test('projection includes launches and drops RSC', async () => {
   const { deps } = makeDeps(dir, { stock: { [A3]: 100, [AR]: 500 } });
   const r = await run(['--monthly', '--month', '2026-10'], deps);
   const labels = r.projection.map((p) => p.label);
-  assert.ok(labels.includes('Supreme Care Set'));
+  assert.ok(labels.includes('3-pack'));
   assert.ok(!labels.some((l) => /Lotion/.test(l)));
   const chain = r.projection.find((p) => p.label === 'Chainmail scrubber');
   assert.equal(chain.forecast30, 300);
@@ -401,4 +401,19 @@ test('final-fix: goal and alert threshold come from config', async () => {
   await run(['--alerts'], deps);
   const html = readFileSync(join(dir, 'preview-alerts.html'), 'utf8');
   assert.match(html, /below 45 days/);
+});
+
+test('itemLabel names sets by item count and leaves single items and the COGS table alone', () => {
+  const cogs = JSON.parse(readFileSync(new URL('../../config/culina-cogs.json', import.meta.url), 'utf8')).cogs;
+  const before = JSON.stringify(cogs);
+  assert.equal(itemLabel('B077LYR5SF', cogs), '2-pack');
+  assert.equal(itemLabel('B08BTQK5Z9', cogs), '3-pack');
+  assert.equal(itemLabel('B08K892JQG', cogs), '4-pack');
+  assert.equal(itemLabel('B08K85JN7M', cogs), '5-pack');
+  assert.equal(itemLabel('B08KHGYYKQ', cogs), '6-pack');
+  assert.equal(itemLabel('B0984W3SG3', cogs), '8-pack');
+  assert.equal(itemLabel('B071SGF6GT', cogs), 'Cleaning Soap 8oz');
+  assert.equal(itemLabel('B0UNKNOWN', cogs, 'Listing title'), 'Listing title');
+  assert.equal(itemLabel('B0UNKNOWN', cogs), 'B0UNKNOWN');
+  assert.equal(JSON.stringify(cogs), before);
 });

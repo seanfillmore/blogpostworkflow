@@ -96,6 +96,18 @@ export function monthsBetween(from, to) {
   return n(to) - n(from);
 }
 
+/**
+ * Report name for an item. A set of 2+ items is named by its item count ("4-pack")
+ * so production knows how many items go in each box (Sean, 2026-11-11). Single items
+ * keep their config/culina-cogs.json name. Report-only: the COGS names are untouched.
+ */
+export function itemLabel(asin, cogs, fallback) {
+  const entry = cogs?.[asin];
+  const n = Array.isArray(entry?.contents) ? entry.contents.length : 0;
+  if (n >= 2) return `${n}-pack`;
+  return entry?.name || fallback || asin;
+}
+
 const sumUnits = (rows, pred) => (rows || []).reduce((s, r) => (pred(r.date) ? s + (r.units || 0) : s), 0);
 const round1 = (n) => Math.round(n * 10) / 10;
 
@@ -206,7 +218,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
     if (sumUnits(rows, (d) => d >= activeFrom) <= 0 && onHand <= 0) continue;
     const recent = rows.filter((r) => r.date >= paceFrom);
     const pace = dailyPace(recent, { stockoutDates: inferStockoutDates(recent, snapshots[asin] || {}) });
-    const label = cogs?.[asin]?.name || titleOf[asin] || asin;
+    const label = itemLabel(asin, cogs, titleOf[asin]);
     items.push({ key: asin, asin, label, pace, onHand, ...splitOf(asin), ...shipPlan({ pace, onHand, today, seasonal, config }) });
   }
   const known = new Set(items.map((i) => i.asin));
@@ -223,7 +235,7 @@ async function gather(deps, { extraDays = 0 } = {}) {
       const need = Math.max(0, initial - onHand);
       plan = { ...plan, shipQty: need, shipBy: need > 0 ? today : null };
     }
-    items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.name || l.asin, launch: true, pace, onHand,
+    items.push({ key: `launch:${l.asin || l.name}`, asin: l.asin || null, label: l.asin ? itemLabel(l.asin, cogs, l.name) : l.name, launch: true, pace, onHand,
       ...(l.asin ? splitOf(l.asin) : { fba: 0, awd: 0, inbound: 0 }),
       ...plan });
   }
@@ -268,7 +280,7 @@ async function runMonthly(args, deps) {
   if (saved) {
     const inMonth = (d) => d >= win.startDate && d <= win.endDate;
     forecastVsActual = Object.entries(saved.byAsin || {}).map(([asin, f]) => ({
-      label: f.label || asin, forecast30: f.forecast ?? null, actual: daily[asin] ? sumUnits(daily[asin], inMonth) : null,
+      label: cogs?.[asin] ? itemLabel(asin, cogs, f.label) : (f.label || asin), forecast30: f.forecast ?? null, actual: daily[asin] ? sumUnits(daily[asin], inMonth) : null,
     }));
   }
 
