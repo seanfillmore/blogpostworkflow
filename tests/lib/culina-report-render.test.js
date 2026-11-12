@@ -251,8 +251,9 @@ test('layout: one combined 30 / 60 / 90 forecast column; missing numbers show a 
     { asin: 'A2', label: 'New one', launch: true, onHand: 0, coverDays: null, forecast30: null, forecast60: null, forecast90: null, shipBy: '2026-11-10', shipQty: 100 },
   ];
   const { html } = renderMonthly(m);
-  assert.match(html, />Forecast 30 \/ 60 \/ 90 days</);
-  assert.match(html, /99 \/ 217 \/ 338/);
+  assert.match(html, /text-align:center;[^>]*>30 \/ 60 \/ 90<\/th>/); // header: no "Forecast" or "days", centered
+  assert.ok(!/Forecast 30/.test(html));
+  assert.match(html, /text-align:center;[^>]*>99 \/ 217 \/ 338<\/td>/); // cells centered
   const at = html.indexOf('New one');
   const row = html.slice(html.lastIndexOf('<tr', at), html.indexOf('</tr>', at));
   assert.ok(!row.includes('no forecast'), 'no repeated "no forecast" text');
