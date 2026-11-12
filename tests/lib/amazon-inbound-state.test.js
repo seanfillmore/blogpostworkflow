@@ -46,11 +46,21 @@ test('correction wording after a booking is held', () => {
   assert.equal(duplicateCheck({ messages: {} }, { messageId: 'm2', signature: 'S2:6', text: 'sorry', receivedAt: D('11'), windowDays: 7 }).hold, false);
 });
 
-test('resendOf is never held; held/invalid records are not bookings', () => {
-  const r = duplicateCheck(booked, { messageId: 'm1', signature: 'S1:3', text: 'sorry', receivedAt: D('11'), windowDays: 7, resendOf: 'm1' });
+test('a reply to our resend request (resendOf set) is never held, even with correction words', () => {
+  const r = duplicateCheck(booked, { messageId: 'm3', signature: 'S1:3', text: 'sorry, here it is again', receivedAt: D('11'), windowDays: 7, resendOf: 'm1' });
   assert.equal(r.hold, false);
+});
+
+test('held/invalid records are not bookings', () => {
   const st = { messages: { h: { messageId: 'h', step: 'held', signature: 'S1:3', receivedAt: D('10') }, i: { messageId: 'i', step: 'invalid_replied', signature: 'S1:3', receivedAt: D('10') } } };
   assert.equal(duplicateCheck(st, { messageId: 'x', signature: 'S1:3', text: 'sorry', receivedAt: D('11'), windowDays: 7 }).hold, false);
+});
+
+test('unreadable dates fail closed', () => {
+  const base = { messageId: 'm2', signature: 'Z', text: 'ship it', windowDays: 7 };
+  assert.deepEqual(duplicateCheck(booked, { ...base, receivedAt: 'garbage' }), { hold: true, reason: 'unreadable date' });
+  const bad = { messages: { m1: { messageId: 'm1', step: 'done', signature: 'S1:3', receivedAt: 'nope' } } };
+  assert.deepEqual(duplicateCheck(bad, { ...base, receivedAt: D('11') }), { hold: true, reason: 'unreadable date' });
 });
 
 const lines = [{ sku: 'A3', cases: 9 }, { sku: 'B', cases: 2 }, { sku: 'C', cases: 3 }, { sku: 'D', cases: 1 }];
