@@ -924,8 +924,29 @@ export async function run(argv, deps) {
   }
 }
 
+/**
+ * `.env` text to an object, the way agents/press-outreach reads it: everything after
+ * the first `=` is the value, outer quotes stripped. dotenv cuts an unquoted value at
+ * " #", which silently truncated HUSHMAIL_PASSWORD to 6 characters (IMAP:
+ * "Invalid password", 2026-11-12).
+ */
+export function parseEnvText(text) {
+  const env = {};
+  for (const line of String(text).split('\n')) {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) continue;
+    const i = t.indexOf('=');
+    if (i === -1) continue;
+    env[t.slice(0, i).trim()] = t.slice(i + 1).trim().replace(/^["']|["']$/g, '');
+  }
+  return env;
+}
+
 async function realDeps() {
   await import('dotenv/config');
+  let fileEnv = {};
+  try { fileEnv = parseEnvText(readFileSync(join(ROOT, '.env'), 'utf8')); } catch { fileEnv = {}; }
+  const envOf = (k) => fileEnv[k] || process.env[k];
   const amazon = await defaultDeps();
   return {
     ...amazon,
@@ -933,9 +954,9 @@ async function realDeps() {
     statePath: join(STATE_DIR, 'state.json'),
     lockPath: join(STATE_DIR, '.lock'),
     seasonalPath: join(ROOT, 'data', 'reports', 'culina-report', 'seasonal.json'),
-    contactPhone: process.env.AMAZON_INBOUND_CONTACT_PHONE || undefined,
-    creds: hushmailCredentials(process.env),
-    resendKey: process.env.RESEND_API_KEY,
+    contactPhone: envOf('AMAZON_INBOUND_CONTACT_PHONE') || undefined,
+    creds: hushmailCredentials({ HUSHMAIL_USER: envOf('HUSHMAIL_USER'), HUSHMAIL_PASSWORD: envOf('HUSHMAIL_PASSWORD') }),
+    resendKey: envOf('RESEND_API_KEY'),
     fetchMail: fetchFromAllFolders,
     sendMail,
     notify,

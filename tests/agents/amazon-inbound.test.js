@@ -4,7 +4,7 @@ import { readFileSync, mkdtempSync, writeFileSync, existsSync, mkdirSync } from 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { run, parseArgs, acquireLock } from '../../agents/amazon-inbound/index.js';
+import { run, parseArgs, acquireLock, parseEnvText } from '../../agents/amazon-inbound/index.js';
 import { planName, dryPlanName } from '../../lib/amazon-inbound-state.js';
 import { spawnSync } from 'node:child_process';
 import { utimesSync } from 'node:fs';
@@ -721,4 +721,16 @@ test('AWD handoff carries the 2-pack expiration date the FBA booking would decla
   // and the split reason states the current FBA cover, once
   assert.match(handoff.msg.text, /2-pack: 500 days of FBA cover, so 0 cases to FBA, 5 to AWD/);
   assert.ok(!/days of FBA cover now/.test(handoff.msg.text));
+});
+
+test('parseEnvText keeps a value containing " #" whole (dotenv truncated the Hushmail password)', () => {
+  const env = parseEnvText('# comment\nHUSHMAIL_PASSWORD=abc123 #x9 CODE\nQUOTED="a b"\nNOEQ\n');
+  assert.equal(env.HUSHMAIL_PASSWORD, 'abc123 #x9 CODE');
+  assert.equal(env.QUOTED, 'a b');
+  assert.ok(!('NOEQ' in env));
+});
+
+test('realDeps reads credentials from the .env file, not dotenv alone', () => {
+  const src = readFileSync('agents/amazon-inbound/index.js', 'utf8');
+  assert.match(src, /hushmailCredentials\(\{ HUSHMAIL_USER: envOf\('HUSHMAIL_USER'\), HUSHMAIL_PASSWORD: envOf\('HUSHMAIL_PASSWORD'\) \}\)/);
 });
