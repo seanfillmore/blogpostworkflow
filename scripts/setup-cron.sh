@@ -191,10 +191,10 @@ DAILY_AMAZON_REVIEW_REQUESTS="20 10 * * * cd \"$PROJECT_DIR\" && $NODE agents/am
 # inventory projection and P&L for the month just closed. 14:30 is taken on Mondays by
 # seo-impact, so it sits five minutes later. UTC only; a TZ= prefix schedules nothing here.
 MONTHLY_CULINA_REPORT="35 14 10 * * cd \"$PROJECT_DIR\" && $NODE agents/culina-report/index.js --monthly --apply >> data/reports/scheduler/culina-report.log 2>&1"
-# Culina stock alerts: daily 14:40 UTC. Emails when an item first drops below 60 days of
-# cover, a weekly reminder while it stays low, and at once on out-of-stock; at most one
-# email a day (state in data/reports/culina-report/alerts-state.json).
-DAILY_CULINA_STOCK_ALERTS="40 14 * * * cd \"$PROJECT_DIR\" && $NODE agents/culina-report/index.js --alerts --apply >> data/reports/scheduler/culina-report.log 2>&1"
+# Culina stock alerts: WEEKLY, Mondays 14:40 UTC (Sean, 2026-11-12: weekly, not daily).
+# Lists every product ASIN below 60 days of cover; on a 7-day cadence each one is always
+# due for its reminder (state in data/reports/culina-report/alerts-state.json).
+WEEKLY_CULINA_STOCK_ALERTS="40 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/culina-report/index.js --alerts --apply >> data/reports/scheduler/culina-report.log 2>&1"
 
 # Trybe creator review (daily). Screens each PENDING creator submission's
 # transcript through the commercial claim gate and sends a revision request
@@ -696,7 +696,7 @@ $DAILY_SCHEDULER_HEARTBEAT
 $DAILY_AMAZON_ACCOUNT_HEALTH
 $DAILY_AMAZON_REVIEW_REQUESTS
 $MONTHLY_CULINA_REPORT
-$DAILY_CULINA_STOCK_ALERTS
+$WEEKLY_CULINA_STOCK_ALERTS
 # ── Creator program (daily, before the digest) ──
 $DAILY_PACK_LISTINGS
 $DAILY_TRYBE_REVIEW
@@ -804,7 +804,7 @@ echo "  08:00 UTC — keyword-research (DataForSEO)"
 echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  14:35 UTC on the 10th - culina-report (monthly inventory + P&L email to Travis)"
-echo "  14:40 UTC - culina stock alerts (below 60 days of cover: first drop, weekly while low, at once on out-of-stock)"
+echo "  14:40 UTC Mon - culina stock alerts (weekly: every product below 60 days of cover)"
 echo "  14:10 UTC — seo-opportunity-analyzer (rank winnable opportunities, stage bigger moves)"
 echo "  14:50 UTC — meta-ab-checker (conclude tests, auto-revert losers)"
 echo "  14:55 UTC — ctr-program (plan the wave + holdout; read-only, no Shopify writes)"

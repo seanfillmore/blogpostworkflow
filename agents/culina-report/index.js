@@ -12,8 +12,8 @@
  * --monthly (cron on the 10th) covers the previous calendar month (UTC) unless
  * --month is given: stock projection and ship plan, forecast vs actual, monthly
  * sales chart, P&L against the month before, and goal progress.
- * --alerts (cron daily) mails when an Amazon item or a made-in-house component
- * falls below config.alert_below_days of cover (lib/culina-alerts.js rules).
+ * --alerts (cron weekly, Mondays) mails every Amazon item (product ASINs only) that
+ * is below config.alert_below_days of cover (lib/culina-alerts.js rules).
  *
  * State, all gitignored under data/reports/culina-report/:
  *   inventory/YYYY-MM-DD.json  stock snapshot, written by every run (stockout days)
