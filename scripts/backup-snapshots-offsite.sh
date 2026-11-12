@@ -256,7 +256,7 @@ for p in data/changes/events data/changes/windows data/reports/meta-ab/meta-ab-t
          data/performance-queue data/calendar/calendar.json data/competitor-watcher \
          data/context/feedback.md data/context/feedback-manifest.json \
          data/context/writer-standing-rules.md data/context/writer-standing-rules-changelog.json \
-         data/reports/culina-report; do
+         data/reports/culina-report data/amazon-inbound; do
   [[ -e "$ROOT/$p" ]] && SERVER_STATE_PATHS+=("$p")
 done
 if (( ${#SERVER_STATE_PATHS[@]} )); then

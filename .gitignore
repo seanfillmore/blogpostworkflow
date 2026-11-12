@@ -515,3 +515,6 @@ data/reports/giveaway-prune/
 data/reports/recap-reviewer/
 data/backups/removed-posts/
 .claude/worktrees/fix-*
+
+# Amazon inbound shipments: server-written state (offsite backup: server-state set)
+data/amazon-inbound/
