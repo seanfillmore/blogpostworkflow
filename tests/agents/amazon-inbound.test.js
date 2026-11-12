@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, mkdtempSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, mkdtempSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -34,7 +34,7 @@ const CONFIRMS = /placementOptions\/[^/]+\/confirmation$|transportationOptions\/
  * cheapest partnered option is small parcel at $40. `manualPlans`, `awdShipments`, `sales`,
  * `inventory` and `labelsReady` shape the reads.
  */
-function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales = {}, inventory = [], failOn = null, labelsReady = true, awdLabelStatus = 'GENERATED' } = {}) {
+function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales = {}, inventory = [], failOn = null, labelsReady = true, awdLabelStatus = 'GENERATED', ltl = false } = {}) {
   const calls = [];
   let op = 0;
   let created = 0;
@@ -74,6 +74,7 @@ function fakeAmazon({ manualPlans = [], planItems = {}, awdShipments = [], sales
       return { transportationOptions: [
         { transportationOptionId: 't1', shipmentId: 's1', shippingMode: 'GROUND_SMALL_PARCEL', shippingSolution: 'AMAZON_PARTNERED_CARRIER', carrier: { name: 'UPS' }, preconditions: [], quote: { cost: usd(40) } },
         { transportationOptionId: 't2', shipmentId: 's1', shippingMode: 'GROUND_SMALL_PARCEL', shippingSolution: 'AMAZON_PARTNERED_CARRIER', carrier: { name: 'UPS' }, preconditions: [], quote: { cost: usd(70) } },
+        ...(ltl ? [{ transportationOptionId: 't3', shipmentId: 's1', shippingMode: 'FREIGHT_LTL', shippingSolution: 'AMAZON_PARTNERED_CARRIER', carrier: { name: 'XPO' }, preconditions: [], quote: { cost: usd(30) } }] : []),
       ] };
     }
     if (method === 'GET' && path === `${p}/shipments/s1`) {
@@ -126,6 +127,7 @@ function setup({ mail = [mailRow()], amazon = {}, config = {}, now = NOW, dir = 
     log: () => {},
     statePath: join(dir, 'state.json'),
     lockPath: join(dir, '.lock'),
+    procRoot: join(dir, 'no-proc'), // absent: pid-alive fallback, as on macOS
     seasonalPath: join(dir, 'no-seasonal.json'),
   };
   return { amz, deps, sent, notes, fetches, dir, state: () => JSON.parse(readFileSync(deps.statePath, 'utf8')), advance: (ms) => { t += ms; } };
@@ -169,7 +171,7 @@ test('the real four-line email books once and sends ONE reply To Travis, CC Sean
     assert.match(a.filename, /\.pdf$/);
     assert.ok(Buffer.isBuffer(a.content));
   }
-  for (const s of ['FBA19ABCDEF', 'ONT8', '4-pack', '3-pack', '2-pack', '6-pack', 'UPS']) assert.ok(msg.text.includes(s), s);
+  for (const s of ['FBA19ABCDEF', 'ONT8', '4-pack', '3-pack', '2-pack', '6-pack', 'UPS', 'Drop the boxes at any UPS location or schedule a UPS pickup']) assert.ok(msg.text.includes(s), s);
   assert.ok(!/[—–]/.test(msg.text + msg.subject));
 
   // no sales history -> every case to FBA, sized from the config table
@@ -533,17 +535,70 @@ test('a cleared AWD list error is persisted, and a label success clears share.aw
   assert.ok(after.messages[TRAVIS_ID].awdShare.labelsSentAt);
 });
 
-test('lock: a live pid is never taken over however old; a dead pid is', () => {
+/** A fake /proc with one pid whose cmdline is `cmd`. */
+function fakeProc(dir, pid, cmd) {
+  const root = join(dir, 'proc');
+  mkdirSync(join(root, String(pid)), { recursive: true });
+  writeFileSync(join(root, String(pid), 'cmdline'), cmd.split(' ').join('\0'));
+  return root;
+}
+const lockJson = (pid, ageMs) => JSON.stringify({ pid, startedAt: new Date(Date.now() - ageMs).toISOString() });
+
+test('lock: created as { pid, startedAt }; a live pid (no /proc) is never taken over however old; a dead pid is', () => {
   const dir = mkdtempSync(join(tmpdir(), 'amz-lock-'));
   const lock = join(dir, '.lock');
-  writeFileSync(lock, String(process.pid)); // alive
-  const old = new Date(Date.now() - 48 * 3600e3);
-  utimesSync(lock, old, old);
-  assert.equal(acquireLock(lock), false);
+  const noProc = { procRoot: join(dir, 'no-proc') };
+  assert.deepEqual(acquireLock(lock, noProc), { acquired: true });
+  const held = JSON.parse(readFileSync(lock, 'utf8'));
+  assert.equal(held.pid, process.pid);
+  assert.ok(Number.isFinite(Date.parse(held.startedAt)));
+  writeFileSync(lock, lockJson(process.pid, 48 * 3600e3)); // alive
+  assert.equal(acquireLock(lock, noProc).acquired, false);
   const dead = spawnSync(process.execPath, ['-e', 'process.stdout.write(String(process.pid))']).stdout.toString();
-  writeFileSync(lock, dead); // that process has exited
-  assert.equal(acquireLock(lock), true);
-  assert.equal(readFileSync(lock, 'utf8'), String(process.pid));
+  writeFileSync(lock, dead); // old bare-pid format; that process has exited
+  assert.equal(acquireLock(lock, noProc).acquired, true);
+  assert.equal(JSON.parse(readFileSync(lock, 'utf8')).pid, process.pid);
+});
+
+test('lock: a pid reused by another process (its /proc cmdline is not this agent) is taken over', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'amz-lock-'));
+  const lock = join(dir, '.lock');
+  const procRoot = fakeProc(dir, process.pid, '/usr/sbin/sshd -D'); // alive, but not us
+  writeFileSync(lock, lockJson(process.pid, 60e3));
+  assert.equal(acquireLock(lock, { procRoot }).acquired, true);
+  // and a pid with no /proc entry at all is dead
+  writeFileSync(lock, lockJson(999999, 60e3));
+  assert.equal(acquireLock(lock, { procRoot }).acquired, true);
+});
+
+test('lock: a live agent run held over 2 hours is not taken over; Sean is emailed once per 6 hours', async () => {
+  const s = setup();
+  s.deps.procRoot = fakeProc(s.dir, process.pid, '/usr/bin/node agents/amazon-inbound/index.js --apply');
+  writeFileSync(s.deps.lockPath, lockJson(process.pid, 3 * 3600e3));
+  const out = await run(['--apply'], s.deps);
+  assert.equal(out.skipped, 'locked');
+  await run(['--apply'], s.deps);
+  const imm = s.notes.filter((n) => n.immediate);
+  assert.equal(imm.length, 1);
+  assert.equal(imm[0].status, 'error');
+  assert.match(imm[0].subject, /over 2 hours/);
+  assert.match(imm[0].body, new RegExp(`pid ${process.pid}`));
+  assert.equal(s.amz.calls.length + s.fetches.length + s.sent.length, 0);
+  assert.equal(JSON.parse(readFileSync(s.deps.lockPath, 'utf8')).pid, process.pid); // untouched
+  const marker = join(s.dir, '.lock-stuck-notified');
+  const old = new Date(Date.now() - 7 * 3600e3);
+  utimesSync(marker, old, old);
+  await run(['--apply'], s.deps);
+  assert.equal(s.notes.filter((n) => n.immediate).length, 2);
+});
+
+test('lock: a live agent run under 2 hours is skipped quietly', async () => {
+  const s = setup();
+  s.deps.procRoot = fakeProc(s.dir, process.pid, '/usr/bin/node agents/amazon-inbound/index.js --apply');
+  writeFileSync(s.deps.lockPath, lockJson(process.pid, 30 * 60e3));
+  const out = await run(['--apply'], s.deps);
+  assert.equal(out.skipped, 'locked');
+  assert.equal(s.amz.calls.length + s.fetches.length + s.sent.length + s.notes.length, 0);
 });
 
 test('run exits quietly (no calls) when a live run holds the lock', async () => {
@@ -576,4 +631,74 @@ test('a none parse records done and adds one deferred info digest event naming t
   assert.equal(notes[0].immediate, undefined);
   assert.equal(notes[0].status, 'info');
   assert.match(notes[0].body, /Lunch Friday\?/);
+});
+
+// ---- final review fixes -------------------------------------------------------------
+
+test('Hushmail unreadable: a confirmed record still gets its labels; one digest row a day; Sean emailed once past an hour', async () => {
+  const s = setup({ amazon: { labelsReady: false } });
+  await run(['--apply'], s.deps);
+  assert.equal(s.state().messages[TRAVIS_ID].step, 'confirmed');
+  const notesBefore = s.notes.length;
+
+  s.deps.fetchMail = async () => { throw new Error('IMAP login failed: connection refused'); };
+  s.deps.request = fakeAmazon({ labelsReady: true }).request;
+  s.advance(15 * 60e3);
+  const out = await run(['--apply'], s.deps);
+  assert.equal(s.state().messages[TRAVIS_ID].step, 'labels_sent');
+  assert.equal(s.sent.length, 1);
+  assert.equal(s.sent[0].msg.to, 'travis@traviswales.com');
+  assert.ok(s.sent[0].msg.attachments.length >= 1);
+  assert.ok(out.errors.some((e) => e.step === 'read_mail'));
+  const after1 = s.notes.slice(notesBefore);
+  assert.equal(after1.filter((n) => n.immediate).length, 0); // not yet an hour
+  assert.equal(after1.length, 1); // the run's digest row
+  assert.match(after1[0].body, /Hushmail unreadable/);
+
+  // 15 minutes later, still down: no new digest row, no email
+  s.advance(15 * 60e3);
+  await run(['--apply'], s.deps);
+  assert.equal(s.notes.length, notesBefore + 1);
+
+  // past an hour: one immediate email, then not again on the next run
+  s.advance(50 * 60e3);
+  await run(['--apply'], s.deps);
+  await run(['--apply'], s.deps);
+  const imm = s.notes.filter((n) => n.immediate);
+  assert.equal(imm.length, 1);
+  assert.match(imm[0].subject, /Hushmail unreadable for over an hour/);
+  assert.equal(s.notes.length, notesBefore + 2);
+
+  // mail back: the outage is cleared
+  s.deps.fetchMail = async () => [];
+  await run(['--apply'], s.deps);
+  assert.equal(s.state().mailError, null);
+});
+
+test('LTL labels email names pallets by pack, never by raw MSKU', async () => {
+  const s = setup({ amazon: { ltl: true } });
+  s.deps.contactPhone = '5550000000';
+  await run(['--apply'], s.deps);
+  const msg = s.sent[0].msg;
+  assert.match(msg.text, /freight \(LTL\)/);
+  const pallets = msg.text.split('\n').filter((l) => /^- Pallet \d/.test(l));
+  assert.ok(pallets.length >= 1);
+  for (const l of pallets) {
+    for (const k of CONFIG.skus) assert.ok(!l.includes(k.sku), `${l} carries ${k.sku}`);
+    assert.match(l, /\d+ x \d-pack/);
+  }
+});
+
+test('AWD handoff carries the 2-pack expiration date the FBA booking would declare (ship date + 3 years)', async () => {
+  const two = sku('2-pack');
+  const days = AWD_DAYS();
+  const s = setup({ amazon: { sales: { [two.asin]: days }, inventory: [{ sellerSku: two.sku, asin: two.asin, inventoryDetails: { fulfillableQuantity: 1000 } }] } });
+  await run(['--apply'], s.deps);
+  const handoff = s.sent.find((x) => x.msg.to === SEAN);
+  assert.ok(handoff);
+  assert.match(handoff.msg.text, new RegExp(`2-pack, SKU ${two.sku}.*expiration date 2029-11-12`));
+  assert.deepEqual(s.state().messages[TRAVIS_ID].awdShare.lines.map((l) => l.expiration), ['2029-11-12']);
+  // and the split reason states the current FBA cover, once
+  assert.match(handoff.msg.text, /2-pack: 500 days of FBA cover, so 0 cases to FBA, 5 to AWD/);
+  assert.ok(!/days of FBA cover now/.test(handoff.msg.text));
 });

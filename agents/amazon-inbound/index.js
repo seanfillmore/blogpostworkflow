@@ -18,6 +18,10 @@
  *      bookFba (cheapest total) -> case labels to Travis, CC Sean, threaded -> AWD handoff to Sean.
  *   4. One deferred digest row when anything happened.
  *
+ * A Hushmail outage does not stop steps 1 and 2: booked shipments still get their labels. It adds
+ * one digest row per day and emails Sean once it has lasted over an hour (then at most every 6 h).
+ * A lock held by a live run for over 2 hours is never taken over; Sean is emailed at most every 6 h.
+ *
  * Never books the same email twice: a record is persisted as 'claimed' before the first create
  * call, bookFba resumes from the stored step and adopts a plan already named for the message,
  * and an unreadable state file throws (after one immediate notify) instead of reading as empty.
@@ -34,7 +38,7 @@
  * Off switch: config/amazon-inbound.json enabled: false. State: data/amazon-inbound/state.json
  * (gitignored, offsite server-state backup). Culina only: SKUs come from config.skus.
  */
-import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync, statSync, openSync, writeSync, closeSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,7 +65,9 @@ const MAX_AGE_DAYS = 14;
 const PACE_WINDOW_DAYS = 120;
 const LABEL_MISS_LIMIT = 6;
 const LOCK_STALE_MS = 3 * 3600e3;
+const LOCK_STUCK_MS = 2 * 3600e3;
 const UNREADABLE_NOTIFY_MS = 6 * 3600e3;
+const MAIL_OUTAGE_NOTIFY_MS = 3600e3;
 const PACE_MS = 1000;
 const V = '/inbound/fba/2024-03-20';
 const AWD = '/awd/2024-05-09';
@@ -97,24 +103,71 @@ const errText = (err) => String(err?.message || err);
 const pause = (ctx) => ctx.deps.sleep(PACE_MS);
 
 /**
- * Single-instance lock. A lock whose pid is alive is NEVER taken over, however old: that run may
- * be mid-booking. Only a dead pid's lock is taken over. A lock with no readable pid is taken over
- * only once it is older than LOCK_STALE_MS.
+ * Single-instance lock: a file holding { pid, startedAt }, created atomically (open 'wx').
+ *
+ * An existing lock is LIVE only when its pid is running THIS agent: /proc/<pid>/cmdline must
+ * contain "amazon-inbound" (a pid reused by another process after a crash or reboot does not
+ * count). Where /proc does not exist (macOS), a running pid counts as live. A live lock is never
+ * taken over, however old: that run may be mid-booking. A dead or foreign pid's lock is taken
+ * over. A lock with no readable pid is taken over only once it is older than LOCK_STALE_MS.
+ *
+ * Returns { acquired: true } or { acquired: false, pid, ageMs }.
  */
-export function acquireLock(path) {
+export function acquireLock(path, { procRoot = '/proc', nowMs = Date.now() } = {}) {
   mkdirSync(dirname(path), { recursive: true });
-  if (existsSync(path)) {
-    let pid = 0;
-    try { pid = Number(readFileSync(path, 'utf8').trim()); } catch { /* unreadable lock */ }
-    if (Number.isInteger(pid) && pid > 0) {
-      let alive = true;
-      try { process.kill(pid, 0); } catch (e) { alive = e.code === 'EPERM'; }
-      if (alive) return false;
-    } else if (Date.now() - statSync(path).mtimeMs < LOCK_STALE_MS) {
-      return false;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const fd = openSync(path, 'wx');
+      try { writeSync(fd, JSON.stringify({ pid: process.pid, startedAt: new Date(nowMs).toISOString() })); } finally { closeSync(fd); }
+      return { acquired: true };
+    } catch (err) {
+      if (err.code !== 'EEXIST') throw err;
     }
+    const holder = readLock(path, nowMs);
+    if (holder.gone) continue;
+    if (holder.pid && pidRunsAgent(holder.pid, procRoot)) return { acquired: false, pid: holder.pid, ageMs: holder.ageMs };
+    if (!holder.pid && holder.ageMs < LOCK_STALE_MS) return { acquired: false, pid: null, ageMs: holder.ageMs };
+    try { unlinkSync(path); } catch { /* another run removed it first */ }
   }
-  writeFileSync(path, String(process.pid));
+  return { acquired: false, pid: null, ageMs: 0 }; // lost the race to another run
+}
+
+/** { pid, ageMs } from a lock file (gone: true if it vanished); accepts the old bare-pid format. pid 0 when unreadable. */
+function readLock(path, nowMs) {
+  if (!existsSync(path)) return { gone: true, pid: 0, ageMs: 0 };
+  let raw = '';
+  let mtimeMs = nowMs;
+  try { mtimeMs = statSync(path).mtimeMs; } catch { return { gone: true, pid: 0, ageMs: 0 }; }
+  try { raw = readFileSync(path, 'utf8').trim(); } catch { /* unreadable: no pid */ }
+  let pid = 0;
+  let started = mtimeMs;
+  try {
+    const j = JSON.parse(raw);
+    if (j && typeof j === 'object') {
+      pid = Number(j.pid);
+      if (Number.isFinite(Date.parse(j.startedAt))) started = Date.parse(j.startedAt);
+    } else {
+      pid = Number(j);
+    }
+  } catch { pid = Number(raw); }
+  if (!Number.isInteger(pid) || pid <= 0) pid = 0;
+  return { pid, ageMs: nowMs - started };
+}
+
+function pidRunsAgent(pid, procRoot) {
+  if (existsSync(procRoot)) {
+    try { return readFileSync(join(procRoot, String(pid), 'cmdline'), 'utf8').includes(AGENT); } catch { return false; }
+  }
+  try { process.kill(pid, 0); return true; } catch (e) { return e.code === 'EPERM'; }
+}
+
+/** At most one immediate notify per UNREADABLE_NOTIFY_MS, tracked by a marker file's mtime. */
+async function throttledNotify(deps, marker, msg) {
+  let recent = false;
+  try { recent = Date.now() - statSync(marker).mtimeMs < UNREADABLE_NOTIFY_MS; } catch { /* no marker */ }
+  if (recent) return false;
+  await deps.notify({ ...msg, status: 'error', category: 'amazon', immediate: true });
+  try { writeFileSync(marker, new Date().toISOString()); } catch { /* best effort */ }
   return true;
 }
 
@@ -329,13 +382,12 @@ async function computeSplit(ctx, lines) {
       fbaItems.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.fbaCases, unitsPerCase: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb, ...expiration });
     }
     if (r.awdCases > 0) {
-      awdLines.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.awdCases, units_per_case: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb });
+      // Same rule as the FBA items, so Sean enters the same date in Seller Central.
+      const expiration = cfg.expiration_years ? { expiration: expirationDate(today, cfg.expiration_years) } : {};
+      awdLines.push({ key: cfg.key, sku: cfg.sku, asin: cfg.asin, cases: r.awdCases, units_per_case: cfg.units_per_case, case_in: cfg.case_in, case_lb: cfg.case_lb, ...expiration });
     }
   }
-  const reasons = rows.map((r) => {
-    const now = r.coverDaysNow === null ? '' : ` (${Math.round(r.coverDaysNow)} days of FBA cover now)`;
-    return `${r.key}: ${r.reason}${now}`;
-  });
+  const reasons = rows.map((r) => `${r.key}: ${r.reason}`);
   return { rows, fbaItems, awdLines, reasons };
 }
 
@@ -512,7 +564,7 @@ async function describeShipments(ctx, record) {
     if (pk.mode === 'FREIGHT_LTL') {
       pallets = palletize(cases.filter((c) => skus[c.sku]).map((c) => ({
         sku: c.sku, count: c.count, case_in: skus[c.sku].case_in, case_lb: skus[c.sku].case_lb,
-      })), config.pallet);
+      })), config.pallet).map((p) => ({ ...p, cases: p.cases.map((c) => ({ ...c, key: skus[c.sku].key })) }));
     }
     const d = ship?.destination || {};
     const where = [d.address?.city, d.address?.stateOrProvinceCode].filter(Boolean).join(', ');
@@ -726,6 +778,35 @@ async function download(deps, url, what) {
 
 // ---- run ----------------------------------------------------------------------
 
+/**
+ * Mail unreadable on an --apply run. Recorded in state.mailError { since, digestDay, notifiedAt }:
+ * one digest row per UTC day, and one immediate email once the outage passes MAIL_OUTAGE_NOTIFY_MS,
+ * repeated at most every UNREADABLE_NOTIFY_MS while it lasts. Cleared by the next good read.
+ */
+async function mailOutage(ctx, err) {
+  const { state, deps } = ctx;
+  const now = deps.now().getTime();
+  const e = (state.mailError ||= { since: iso(now) });
+  e.error = errText(err);
+  ctx.errors.push({ messageId: null, step: 'read_mail', error: e.error });
+  ctx.log(`amazon-inbound: mail unreadable since ${e.since}; resuming booked work without new mail: ${e.error}`);
+  const day = iso(now).slice(0, 10);
+  if (e.digestDay !== day) {
+    e.digestDay = day;
+    ctx.event(`Hushmail unreadable (since ${e.since}): ${e.error}. Booked shipments still advanced; new emails wait.`, 'error');
+  }
+  const down = now - Date.parse(e.since);
+  if (down > MAIL_OUTAGE_NOTIFY_MS && !(e.notifiedAt && now - Date.parse(e.notifiedAt) < UNREADABLE_NOTIFY_MS)) {
+    await deps.notify({
+      subject: 'Culina inbound: Hushmail unreadable for over an hour',
+      body: `Travis's emails cannot be read since ${e.since} (${Math.round(down / 60000)} min). Shipments already booked still get their labels; new case lists wait until mail is readable.\n\n${e.error}`,
+      status: 'error', category: 'amazon', immediate: true,
+    });
+    e.notifiedAt = iso(now);
+  }
+  ctx.saveAll();
+}
+
 export async function run(argv, deps) {
   const args = parseArgs(argv);
   const config = deps.config;
@@ -739,9 +820,20 @@ export async function run(argv, deps) {
   if (!deps.creds && (args.apply || !args.text)) throw new Error('HUSHMAIL_USER / HUSHMAIL_PASSWORD not set');
   if (args.apply && !deps.resendKey) throw new Error('cannot send: RESEND_API_KEY not set');
 
-  if (args.apply && !acquireLock(deps.lockPath)) {
-    log('amazon-inbound: another run (live pid) holds the lock; nothing done.');
-    return { ...summary, skipped: 'locked' };
+  if (args.apply) {
+    const lock = acquireLock(deps.lockPath, { procRoot: deps.procRoot });
+    if (!lock.acquired) {
+      const mins = Math.round(lock.ageMs / 60000);
+      log(`amazon-inbound: another run (pid ${lock.pid || 'unknown'}, ${mins} min old) holds the lock; nothing done.`);
+      if (lock.pid && lock.ageMs > LOCK_STUCK_MS) {
+        // Never taken over (it may be mid-booking); Sean is told at most once per 6 hours.
+        await throttledNotify(deps, join(dirname(deps.lockPath), '.lock-stuck-notified'), {
+          subject: 'Culina inbound: a run has held the lock for over 2 hours',
+          body: `Run pid ${lock.pid} has held ${deps.lockPath} for ${mins} minutes, so no inbound emails are being processed. It is still running and was not stopped. If it is hung, stop that process; the next run takes over.`,
+        });
+      }
+      return { ...summary, skipped: 'locked' };
+    }
   }
   try {
     let state;
@@ -749,13 +841,9 @@ export async function run(argv, deps) {
       state = loadState(deps.statePath);
     } catch (err) {
       // At most one immediate email per 6 hours; the run still throws (and logs) every 15 minutes.
-      const marker = join(dirname(deps.statePath), '.unreadable-notified');
-      let recent = false;
-      try { recent = Date.now() - statSync(marker).mtimeMs < UNREADABLE_NOTIFY_MS; } catch { /* no marker */ }
-      if (!recent) {
-        await deps.notify({ subject: 'Culina inbound: state file unreadable, nothing done', body: errText(err), status: 'error', category: 'amazon', immediate: true });
-        try { writeFileSync(marker, new Date().toISOString()); } catch { /* best effort */ }
-      }
+      await throttledNotify(deps, join(dirname(deps.statePath), '.unreadable-notified'), {
+        subject: 'Culina inbound: state file unreadable, nothing done', body: errText(err),
+      });
       throw err;
     }
 
@@ -777,8 +865,19 @@ export async function run(argv, deps) {
       },
     };
 
-    // Mail is read first, so a mail outage stops the run before anything is spent or sent.
-    const rows = args.text ? [textRow(ctx, args.text)] : await readMail(ctx);
+    // A mail outage must not strand bookings already made: on --apply the resume loop and the AWD
+    // step still run with no new mail. A dry run (by hand) just fails.
+    let rows = [];
+    if (args.text) rows = [textRow(ctx, args.text)];
+    else if (!args.apply) rows = await readMail(ctx);
+    else {
+      try {
+        rows = await readMail(ctx);
+        if (state.mailError) { state.mailError = null; ctx.saveAll(); }
+      } catch (err) {
+        await mailOutage(ctx, err);
+      }
+    }
 
     if (args.apply) {
       for (const record of Object.values(state.messages)) {
