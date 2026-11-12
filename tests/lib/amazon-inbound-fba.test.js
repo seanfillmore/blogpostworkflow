@@ -20,7 +20,7 @@ const ITEMS = [item('2-pack'), item('3-pack')];
  * A scripted fake Amazon. Records every call; returns canned responses.
  * placements: [{ id, fees, discounts, shipments: { shipId: [ {id, mode, amount, solution?} ] } }]
  */
-function fakeAmazon({ placements, existingPlans = [], opStatus = 'SUCCESS', ltlOffered = true, failFirst429 = false, acceptedPlacement = null, selectedTransport = {} } = {}) {
+function fakeAmazon({ placements, planStatus = 'ACTIVE', existingPlans = [], opStatus = 'SUCCESS', ltlOffered = true, failFirst429 = false, acceptedPlacement = null, selectedTransport = {} } = {}) {
   const calls = [];
   let accepted = acceptedPlacement;
   let op = 0;
@@ -39,6 +39,7 @@ function fakeAmazon({ placements, existingPlans = [], opStatus = 'SUCCESS', ltlO
     if (method === 'GET' && path === `${V}/inboundPlans`) return { inboundPlans: existingPlans };
     if (method === 'POST' && path === `${V}/inboundPlans`) return { inboundPlanId: PLAN, ...ok() };
     const p = `${V}/inboundPlans/${PLAN}`;
+    if (method === 'GET' && path === p) return { inboundPlanId: PLAN, name: 'x', status: planStatus };
     if (method === 'GET' && path === `${p}/packingOptions`) {
       return { packingOptions: [{ packingOptionId: 'pk1', status: 'OFFERED', fees: [], discounts: [], packingGroups: ['pg1'], supportedConfigurations: [], supportedShippingConfigurations: [] }] };
     }
@@ -330,4 +331,22 @@ test('readyToShipWindow.start is taken per placement, just before its request, s
   assert.notEqual(starts[0], starts[1]);
   for (const s of starts) assert.match(s, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/);
   assert.equal(rec.quote.readyToShip, starts[gens.findIndex((g) => g.body.placementOptionId === rec.quote.placementOptionId)]);
+});
+
+for (const status of ['ERRORED', 'VOIDED']) {
+  test(`a recorded plan that is ${status} throws naming the plan and the state.json fix, and calls nothing else`, async () => {
+    const { amz, deps, rec, persist } = setup({ record: { planId: PLAN, step: 'packing_confirmed' }, planStatus: status });
+    await assert.rejects(
+      bookFba({ record: rec, items: ITEMS, config, deps, persist }),
+      (err) => err.message.includes(PLAN) && err.message.includes(status) && err.message.includes('remove planId') && err.message.includes('data/amazon-inbound/state.json'),
+    );
+    assert.deepEqual(amz.calls.map((c) => `${c.method} ${c.path}`), [`GET ${V}/inboundPlans/${PLAN}`]);
+  });
+}
+
+test('a recorded ACTIVE plan resumes normally after the status read', async () => {
+  const { amz, deps, rec, persist } = setup({ record: { planId: PLAN, step: 'plan_created' } });
+  const out = await bookFba({ record: rec, items: ITEMS, config, deps, persist });
+  assert.equal(out.step, 'confirmed');
+  assert.equal(amz.calls[0].path, `${V}/inboundPlans/${PLAN}`);
 });

@@ -127,3 +127,20 @@ test('summarizeOptions: per placement, cheapest parcel and LTL per shipment and 
     { placementOptionId: 'B', placementFee: null, total: null, shipments: [{ shipmentId: 's3', parcel: null, ltl: null }] },
   ]);
 });
+
+test('feeAmount: an empty or blank amount string is unquoted (null), never $0', () => {
+  assert.equal(feeAmount({ amount: '', code: 'USD' }), null);
+  assert.equal(feeAmount({ amount: '  ', code: 'USD' }), null);
+  assert.equal(feeAmount({ amount: '0', code: 'USD' }), 0);
+  assert.equal(feeAmount({ amount: '12.50', code: 'USD' }), 12.5);
+});
+
+test('chooseCheapest: a candidate with zero shipments never wins', () => {
+  const r = chooseCheapest([
+    { placementOptionId: 'empty', placementFee: 0, shipments: [] },
+    { placementOptionId: 'nolist', placementFee: 0 },
+    { placementOptionId: 'real', placementFee: 5, shipments: [{ shipmentId: 's1', options: [{ transportationOptionId: 't', mode: 'GROUND_SMALL_PARCEL', amount: 40 }] }] },
+  ]);
+  assert.equal(r.placementOptionId, 'real');
+  assert.equal(chooseCheapest([{ placementOptionId: 'empty', placementFee: 0, shipments: [] }]), null);
+});
