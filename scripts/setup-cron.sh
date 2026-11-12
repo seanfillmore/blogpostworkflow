@@ -195,6 +195,13 @@ MONTHLY_CULINA_REPORT="35 14 10 * * cd \"$PROJECT_DIR\" && $NODE agents/culina-r
 # Lists every product ASIN below 60 days of cover; on a 7-day cadence each one is always
 # due for its reminder (state in data/reports/culina-report/alerts-state.json).
 WEEKLY_CULINA_STOCK_ALERTS="40 14 * * 1 cd \"$PROJECT_DIR\" && $NODE agents/culina-report/index.js --alerts --apply >> data/reports/scheduler/culina-report.log 2>&1"
+# Culina inbound shipments (agents/amazon-inbound): every 15 minutes at :07/:22/:37/:52, so its
+# IMAP login never shares a minute with creator-outreach (:00/:30) or press-outreach (:17/:47). Reads Travis's case-list
+# emails (every Hushmail folder, read-only), books the FBA share at the lowest total cost and
+# emails him the case labels in his thread, CC Sean; the AWD share goes to Sean for Seller
+# Central. State in data/amazon-inbound/state.json. Off switch: config/amazon-inbound.json
+# enabled: false. UTC only; a TZ= prefix schedules nothing here.
+EVERY_15_AMAZON_INBOUND="7,22,37,52 * * * * cd \"$PROJECT_DIR\" && $NODE agents/amazon-inbound/index.js --apply >> data/reports/scheduler/amazon-inbound.log 2>&1"
 
 # Trybe creator review (daily). Screens each PENDING creator submission's
 # transcript through the commercial claim gate and sends a revision request
@@ -697,6 +704,7 @@ $DAILY_AMAZON_ACCOUNT_HEALTH
 $DAILY_AMAZON_REVIEW_REQUESTS
 $MONTHLY_CULINA_REPORT
 $WEEKLY_CULINA_STOCK_ALERTS
+$EVERY_15_AMAZON_INBOUND
 # ── Creator program (daily, before the digest) ──
 $DAILY_PACK_LISTINGS
 $DAILY_TRYBE_REVIEW
@@ -805,6 +813,7 @@ echo "  14:45 UTC — cro-analyzer"
 echo "  14:30 UTC — seo-impact (what's working / organic revenue)"
 echo "  14:35 UTC on the 10th - culina-report (monthly inventory + P&L email to Travis)"
 echo "  14:40 UTC Mon - culina stock alerts (weekly: every product below 60 days of cover)"
+echo "  :07/:22/:37/:52 every hour - amazon-inbound (Travis case list email -> FBA booked, case labels back to him; AWD to Sean)"
 echo "  14:10 UTC — seo-opportunity-analyzer (rank winnable opportunities, stage bigger moves)"
 echo "  14:50 UTC — meta-ab-checker (conclude tests, auto-revert losers)"
 echo "  14:55 UTC — ctr-program (plan the wave + holdout; read-only, no Shopify writes)"
