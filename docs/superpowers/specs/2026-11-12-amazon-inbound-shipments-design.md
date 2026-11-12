@@ -175,7 +175,7 @@ Sean, 2026-11-12: **"Yes, CMS can handle pallets."** Both partnered small parcel
 
 *My calls, all in `config/amazon-inbound.json`:*
 - **Pallet build:** standard 48 × 40 in pallets, cases stacked to at most 60 in total height including the pallet, declared non-stackable. Pallet count and weight per shipment are computed from the case table. A pallet's own weight defaults to 40 lb.
-- **Pickup contact:** Travis, travis@traviswales.com, with the CMS phone from the ship-from (866-223-8199).
+- **Pickup contact:** Travis, travis@traviswales.com, with his own phone number (Sean, 2026-11-12). The number is read from `AMAZON_INBOUND_CONTACT_PHONE` in `.env` on both machines and never committed, because this repo is public. If it is missing, LTL is not quoted and small parcel still runs.
 - **Travis is told how to build what was declared.** When LTL wins, the reply states how many pallets per shipment and which cases go on each. It attaches pallet labels and the bill of lading as well as the case labels, so what arrives matches what Amazon was told.
 
 ## Left to the builder
