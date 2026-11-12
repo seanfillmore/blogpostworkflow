@@ -61,3 +61,16 @@ test('linesSignature is order-independent', () => {
   assert.equal(linesSignature(a), linesSignature([...a].reverse()));
   assert.match(linesSignature(a), /soap_oil_stick_salt2:9/);
 });
+
+test('a repeated pack with different quantities is invalid', () => {
+  const r = parse('3-pack (9 cases - 108 units)\n3-pack (1 case - 12 units)');
+  assert.equal(r.kind, 'invalid');
+  assert.equal(r.lines.length, 0);
+  assert.match(r.problems[0].reason, /duplicate pack "3-pack"/);
+});
+
+test('two identical pack lines are invalid', () => {
+  const r = parse('3-pack (9 cases - 108 units)\n3 pack (9 cases - 108 units)');
+  assert.equal(r.kind, 'invalid');
+  assert.match(r.problems[0].reason, /duplicate pack "3-pack"/);
+});
