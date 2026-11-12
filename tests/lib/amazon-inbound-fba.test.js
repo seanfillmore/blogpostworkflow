@@ -20,9 +20,9 @@ const ITEMS = [item('2-pack'), item('3-pack')];
  * A scripted fake Amazon. Records every call; returns canned responses.
  * placements: [{ id, fees, discounts, shipments: { shipId: [ {id, mode, amount, solution?} ] } }]
  */
-function fakeAmazon({ placements, existingPlans = [], opStatus = 'SUCCESS', ltlOffered = true, failFirst429 = false } = {}) {
+function fakeAmazon({ placements, existingPlans = [], opStatus = 'SUCCESS', ltlOffered = true, failFirst429 = false, acceptedPlacement = null, selectedTransport = {} } = {}) {
   const calls = [];
-  let accepted = null;
+  let accepted = acceptedPlacement;
   let op = 0;
   let threw429 = false;
   const transport = {};
@@ -73,7 +73,7 @@ function fakeAmazon({ placements, existingPlans = [], opStatus = 'SUCCESS', ltlO
     const confirmPl = path.match(/\/placementOptions\/([^/]+)\/confirmation$/);
     if (method === 'POST' && confirmPl) { accepted = confirmPl[1]; return ok(); }
     const shipment = path.match(/\/shipments\/([^/]+)$/);
-    if (method === 'GET' && shipment) return { shipmentId: shipment[1], shipmentConfirmationId: `FBA-${shipment[1]}` };
+    if (method === 'GET' && shipment) return { shipmentId: shipment[1], shipmentConfirmationId: `FBA-${shipment[1]}`, ...(selectedTransport[shipment[1]] ? { selectedTransportationOptionId: selectedTransport[shipment[1]] } : {}) };
     const boxes = path.match(/\/shipments\/([^/]+)\/boxes$/);
     if (method === 'GET' && boxes) return { boxes: [{ packageId: 'a', boxId: `${boxes[1]}U1` }, { packageId: 'b', boxId: `${boxes[1]}U2` }] };
     if (method === 'GET' && path.startsWith('/fba/inbound/v0/')) return { payload: { DownloadURL: `https://dl/${path}?${body?.LabelType || 'bol'}` } };
@@ -245,4 +245,58 @@ test('netIncentives subtracts discounts whatever their sign; unquoted is null', 
   assert.equal(netIncentives([], []), 0);
   assert.equal(netIncentives(undefined, []), null);
   assert.equal(netIncentives([{ value: { amount: 1, code: 'EUR' } }], []), null);
+});
+
+test('fix: crash after confirmTransportationOptions: Amazon already shows transport, so no confirm call and step confirmed', async () => {
+  const quote = { placementOptionId: 'plA', placementAccepted: true, placementFee: 10, packingFee: 0, total: 80,
+    picks: [{ shipmentId: 's1', transportationOptionId: 'tA1l', mode: 'FREIGHT_LTL', amount: 30, preconditions: [], pallets: 1 },
+      { shipmentId: 's2', transportationOptionId: 'tA2p', mode: 'GROUND_SMALL_PARCEL', amount: 40, preconditions: [] }] };
+  const { amz, deps, rec, steps, persist } = setup({
+    record: { planId: PLAN, step: 'quoted', quote },
+    acceptedPlacement: 'plA',
+    selectedTransport: { s1: 'tA1l', s2: 'tA2p' },
+  });
+  const out = await bookFba({ record: rec, items: ITEMS, config, deps, persist });
+  assert.equal(out.step, 'confirmed');
+  assert.deepEqual(steps, ['confirmed']);
+  assert.equal(amz.calls.filter((c) => CONFIRMS.test(c.path)).length, 0);
+  assert.equal(named(amz.calls, /\/transportationOptions$/).length, 0);
+  assert.equal(named(amz.calls, /\/placementOptions$/).length, 0);
+  assert.deepEqual(out.shipmentIds, ['s1', 's2']);
+  assert.equal(out.quote.picks[0].pallets, 1);
+  const files = await fetchFbaLabels({ record: out, deps });
+  assert.equal(files.length, 4);
+});
+
+test('fix: a record already holding transport on some shipments only throws for a human, no confirm', async () => {
+  const { amz, deps, rec, persist } = setup({ record: { planId: PLAN, step: 'quoted' }, acceptedPlacement: 'plA', selectedTransport: { s1: 'tA1l' } });
+  await assert.rejects(bookFba({ record: rec, items: ITEMS, config, deps, persist }), /1 of 2 shipments/);
+  assert.equal(amz.calls.filter((c) => CONFIRMS.test(c.path)).length, 0);
+});
+
+for (const step of ['confirmed', 'labels_sent', 'done']) {
+  test(`fix: step ${step} is terminal: zero calls, record untouched`, async () => {
+    const { amz, deps, steps, persist } = setup();
+    const rec = { messageId: 'm', step, planId: PLAN, updatedAt: 'x' };
+    const before = JSON.stringify(rec);
+    const out = await bookFba({ record: rec, items: ITEMS, config, deps, persist });
+    assert.equal(amz.calls.length, 0);
+    assert.equal(steps.length, 0);
+    assert.equal(JSON.stringify(out), before);
+  });
+}
+
+test('fix: an LTL pick with no contact phone is refused before any confirm call', async () => {
+  // The quote step already drops LTL without a phone; this guard is the confirm-side backstop.
+  // Simulate the phone being present when quoting and missing when confirming.
+  const placements = [{ id: 'plA', fees: [fee(10)], shipments: { s1: [{ id: 'tA1l', mode: 'FREIGHT_LTL', amount: 30 }] } }];
+  const amz = fakeAmazon({ placements });
+  let reads = 0;
+  const deps = { request: amz.request, sleep: async () => {}, now: () => Date.now(), apply: true, marketplaceId: 'M',
+    get contactPhone() { return reads++ === 0 ? '5551234567' : undefined; } };
+  await assert.rejects(
+    bookFba({ record: { messageId: 'm', step: 'claimed' }, items: ITEMS, config, deps, persist: () => {} }),
+    /LTL.*AMAZON_INBOUND_CONTACT_PHONE/,
+  );
+  assert.equal(amz.calls.filter((c) => CONFIRMS.test(c.path)).length, 0);
 });
