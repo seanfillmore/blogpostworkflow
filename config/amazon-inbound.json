@@ -17,7 +17,7 @@
     "countryCode": "US",
     "phoneNumber": "8662238199"
   },
-  "pallet": { "length_in": 48, "width_in": 40, "max_height_in": 60, "pallet_weight_lb": 40, "stackable": false },
+  "pallet": { "length_in": 48, "width_in": 40, "max_height_in": 60, "deck_in": 5, "pallet_weight_lb": 40, "stackable": false },
   "skus": [
     { "key": "2-pack", "aliases": ["2-pack", "2 pack", "two pack"], "sku": "BLI-029655_026708-028658-SET2_CLN_FBA", "asin": "B077LYR5SF", "units_per_case": 20, "case_in": { "l": 18, "w": 9, "h": 12 }, "case_lb": 27 },
     { "key": "3-pack", "aliases": ["3-pack", "3 pack", "three pack"], "sku": "salt_Soap_conditioner", "asin": "B08BTQK5Z9", "units_per_case": 12, "case_in": { "l": 18, "w": 10, "h": 12 }, "case_lb": 26 },
