@@ -1,6 +1,6 @@
 ---
 name: marketing-ai-motion-graphics-editing
-description: Agentic LLM workflow for AI-built motion graphics. Covers editing talking-head footage from a scene-type menu with a shared brand palette, training an edit-style skill, planning the edit by hand, and having Claude build and render the edit in code (Remotion). Also covers code-rendered 3D explainers (Three.js, rendered headlessly and captured frame by frame), the scene-by-scene prompt spec with camera fly-throughs, a self-verification pass, and dated model routing. Use it for RSC mechanism explainers on Reels, PDP and Amazon.
+description: Agentic LLM workflow for AI-built motion graphics. Covers editing talking-head footage from a scene-type menu with a shared brand palette, training an edit-style skill, choosing from curated named-style libraries and proven promo templates, planning the edit by hand, and having Claude build and render the edit in code (Remotion). Also covers code-rendered 3D explainers (Three.js, rendered headlessly and captured frame by frame), Blender via MCP for high-fidelity 3D and exploded views, the scene-by-scene prompt spec with camera fly-throughs, post-processing with narration-synced glow, programmatic beat-synced timing (Librosa), a self-verification pass, and dated model routing. Use it for RSC mechanism explainers and launch promos on Reels, PDP and Amazon.
 ---
 
 # Ai Motion Graphics Editing
@@ -32,9 +32,29 @@ description: Agentic LLM workflow for AI-built motion graphics. Covers editing t
 
 **Evidence offered:** Assertion plus the comparison of a slop edit against his trained-skill output, and the 225 extracted animations.
 
-**Fit here (6/10):** The operator already runs Claude skills. RSC has no founder footage, so the style is built from competitor references plus the best-performing Trybe creator Reels (the per-style Reel report shows which). Codifying that house edit style turns every future edit into a repeatable build rather than a manual one. This is a solo laptop task. Existing claims cover modelling one reference video by hand and a hook/script corpus. Neither covers training a visual edit-style skill from a categorised scene board. The fast-decay tool-mechanics class applies to the Claude/Remotion specifics, but the source is current.
+**Fit here (6/10):** The operator already runs Claude skills. RSC has no founder footage, so the style is built from competitor references plus the best-performing Trybe creator Reels (the per-style Reel report shows which). Codifying that house edit style turns every future edit into a repeatable build rather than a manual one. This is a solo laptop task. Existing claims cover modelling one reference video by hand and a hook/script corpus. Neither covers training a visual edit-style skill from a categorised scene board. The fast-decay tool-mechanics class applies to the Claude/Remotion specifics, but the source is current. For standalone explainers where no house edit style exists yet, the curated named-style library below is the faster route to a non-default look.
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
+
+## Give Claude a curated library of named visual styles (isometric explainer, paper cut, ink wash, retro terminal, etc.) and have it render the motion graphic in one chosen style, or ask it to pick one, instead of letting it produce its default look.
+
+**Why it works:** A pre-written style recipe constrains palette, texture, layering and lighting to a coherent, human-designed look. That removes the generic 'AI slop' default and makes a mechanism explainer read as premium and intentional.
+
+**Evidence offered:** The creator's own rendered examples: an isometric phone-to-cell-tower explainer, a paper-cut title sequence, an ink-wash opener and a terminal scene. He asserts he tested about 100 repos.
+
+**Fit here (6/10):** RSC posts Reels every day, and this skill already targets mechanism explainers for Reels, PDP and Amazon. An isometric 'how aluminium-free deodorant works under the arm' or an ink-wash 'where shea butter comes from' clip is a direct translation. The on-screen hook goes first, then the PDP gallery and Amazon video slot. One person can run it with Claude today. Prefer the styles closest to RSC's natural, believable register (paper cut, ink wash, isometric) over glossy tech looks, and override the recipe's palette with RSC's hex codes: the library supplies texture, layering and lighting, while the brand palette stays fixed. This complements the edit-style training above, which codifies his own edit logic over footage; it does not duplicate it. Not higher because style choice is a polish layer, not a conversion lever, and the binding constraint is conversion rate.
+
+*Source: Matt Penny | Applied AI — "10 GitHub Repos to 10x Your AI Motion Graphics" (aD9X6Lc3dVk)*
+
+## Have the model select from human-made, proven templates and assets (pre-built UI elements, a library of about 124 product-launch promo formats) rather than generate visuals and structure from scratch.
+
+**Why it works:** The creative judgement is already embedded in templates that worked elsewhere, so the AI's job shrinks to selection and assembly. Selection is where it is reliable; invention is where it drifts into low-quality output. This is the same principle as the human-selected scene plan below: keep the model choosing from good options rather than inventing.
+
+**Evidence offered:** Assertion, plus examples of sleek UI-element motion graphics and the shotcraft template library choosing a format per brief.
+
+**Fit here (6/10):** This is a durable-principle-class tactic that directly serves RSC's own launch moments: a new scent, a bundle, or a seasonal set announced on daily Reels, then in Meta statics/video recommended to David and in email. He can paste a template repo into Claude and pick a launch format alone today. It is distinct from the other claims here, which cover his own style library and a scene-type menu, not importing third-party proven promo structures. Anti-fabrication still applies: the template must not carry invented scarcity or claims, and the self-verification pass below checks for them.
+
+*Source: Matt Penny | Applied AI — "10 GitHub Repos to 10x Your AI Motion Graphics" (aD9X6Lc3dVk)*
 
 ## Do not let the model plan the edit itself. Have it return a planning document with the script beside the clip and, for each segment, scene designs recommended from the style library. Choose and annotate the scene for every line yourself, balancing variety and flow. Then paste that plan back as the build instruction.
 
@@ -51,7 +71,7 @@ description: Agentic LLM workflow for AI-built motion graphics. Covers editing t
 - pulls the matching references from the style library;
 - writes an asset list;
 - fetches the assets and fonts itself;
-- builds each scene in code (Remotion) and renders a draft;
+- builds each scene in code (Remotion) and renders a draft, timing cuts and element entrances to the beat grid when the cut runs on music (see the beat-sync section below);
 - runs the self-verification pass (see below) on the draft;
 - asks you for anything it cannot find.
 The operator spends about 15 minutes planning the edit and reviewing passes, instead of hand-editing or hiring an editor.
@@ -70,7 +90,7 @@ Cost was a $100/month Claude plan. It is one demo from a course seller, with no 
 
 *Source: Joseph | Video Editing — "How to Edit VIRAL Talking Head Videos Using ONLY Claude! (New Minimal Style)" (g9xoKm5DEeU)*
 
-## Build standalone 3D motion graphics as code: have Claude write a Three.js scene, render it headlessly in a browser, and capture it frame by frame (screenshots at 60fps) into video. Use this instead of paying an AI video model or a motion designer. It is the 3D counterpart to the Remotion edit above. Remotion handles cutaways over filmed footage. Three.js handles self-contained 3D explainer clips, which can stand alone or drop in as a beat inside an edit.
+## Build standalone 3D motion graphics as code: have Claude write a Three.js scene, render it headlessly in a browser, and capture it frame by frame (screenshots at 60fps) into video. Use this instead of paying an AI video model or a motion designer. It is the 3D counterpart to the Remotion edit above. Remotion handles cutaways over filmed footage. Three.js handles self-contained 3D explainer clips, which can stand alone or drop in as a beat inside an edit. When a clip needs photoreal materials, lighting or an exploded product view, step up to Blender via MCP (next section).
 
 **Why it works:** A browser renders a 3D code scene the way a high-end website does, and screenshotting it at 60fps turns it into frames. Generation costs only text tokens: about 37K tokens, or roughly 5 cents on a subscription, for a 15-second clip. Every revision is a cheap code edit. A video model charges per second (about $1.50 per 15 seconds) and charges again for each change.
 
@@ -83,6 +103,16 @@ The first surface is Reels: a 3D ingredient breakdown or a 'how your deodorant w
 One person with a Claude subscription runs this end to end today, at near-zero marginal cost. The score is not higher because RSC's brand register is natural and believable. The glossy glassmorphic and metallic look in the demos must be restyled toward the brand palette, or it will read as an ad. The paid-creative skill also treats 'attractive' as a failure mode in native formats. Any depicted mechanism must stay inside what the formula substantiates.
 
 *Source: Matt Penny | Applied AI — "Claude + Three.js = Premium 3D Motion Graphics" (CCUSpJkAfgU)*
+
+## Connect Claude to Blender through its MCP server so it can build full 3D scenes with materials, shaders, lighting and camera moves, including exploded views of a product's constituent parts and physical-process explainers.
+
+**Why it works:** Blender is a professional CGI tool. Via MCP the model can do anything a human operator can, which yields far higher material and lighting fidelity than hand-coded Three.js geometry, for the cost of a prompt and about an hour of render time. Three.js stays the cheap, fast-revision default; Blender is the route when material realism matters.
+
+**Evidence offered:** One-shot examples: a population-as-buildings comparison, a solar-panel electricity explainer and an exploded headphones view. The creator says each would have cost thousands a few years ago.
+
+**Fit here (5/10):** Blender is free and the operator drives it alone through Claude, so this is runnable today. The RSC translation is a 3D 'what's inside the stick' or 'how the balm layers onto skin' explainer for Reels first, then the PDP gallery and Amazon video. The existing ai-broll skill already covers ingredient deconstruction/reassembly via image-to-video models. What is new here is the Blender route for geometric and material fidelity on a physical-mechanism explainer. Any depicted mechanism must pass the verification loop below for claims the formula can substantiate. Moderate score because 12 simple SKUs give fewer mechanism-heavy stories than gadgets, and the tooling is platform-mechanics-class and will date.
+
+*Source: Matt Penny | Applied AI — "10 GitHub Repos to 10x Your AI Motion Graphics" (aD9X6Lc3dVk)*
 
 ## Use a 3D animated demonstration to explain a concept that is hard to grasp in words. Seeing the process work is better for understanding than reading about it, so treat the animation as an explainer, not decoration.
 
@@ -100,9 +130,10 @@ It is close to, but not a restatement of, two existing claims. The copy-credibil
 - say what happens in each scene and when, with specific timings;
 - name Three.js as the framework;
 - call for shaders where appropriate;
-- name the visual treatment;
+- name the visual treatment, either RSC's own palette and texture or one named style from the curated style library above, recoloured to the brand palette;
 - direct the camera to fly through one continuous 3D space between elements;
-- animate the elements within each scene, rather than having things simply appear.
+- animate the elements within each scene, rather than having things simply appear;
+- call for the post-processing stack and narration-synced glow (next section), and beat-locked timings where the clip runs on music.
 
 An RSC example scene list:
 - 0-2s: spoken hook plus on-screen text;
@@ -120,7 +151,27 @@ The visual-treatment line names RSC's own palette and texture (hex codes, natura
 
 *Source: Matt Penny | Applied AI — "Claude + Three.js = Premium 3D Motion Graphics" (CCUSpJkAfgU)*
 
-## Have the model run a verification loop over its own render before shipping. It checks for overlapping elements, text that is too small at phone size, and other layout mistakes. For RSC, extend the checklist so the loop also flags any on-pack or product claim the formula cannot substantiate. Apply the loop to both Three.js explainers and Remotion edits.
+## Run every code-rendered frame through a post-processing filter stack (glow, depth-of-field blur, film grain, lens colouring, glitch), and use glow to highlight the specific element being talked about at that moment.
+
+**Why it works:** Post-processing adds the lighting and lens character flat motion graphics lack. Selectively glowing the element named in the narration directs the eye exactly where the voiceover is, which makes the explainer easier to follow and feel premium.
+
+**Evidence offered:** Examples, including a sodium-atom explainer where electrons glow as they are discussed; otherwise assertion.
+
+**Fit here (5/10):** This is a craft upgrade he can apply alone to the Three.js and Remotion explainers this skill already builds for daily Reels. For example, glow on the shea butter or baking-soda-free callout at the moment it is named. Its value is in tightening voice-to-visual sync, which the other claims here do not specify for code renders. Keep grain and lens colouring subtle and glitch rare, so the result stays in RSC's natural register. It is incremental polish rather than a conversion lever, hence the mid score.
+
+*Source: Matt Penny | Applied AI — "10 GitHub Repos to 10x Your AI Motion Graphics" (aD9X6Lc3dVk)*
+
+## Detect the music's beat programmatically (Librosa) and time every on-screen change in the motion graphic to land on a beat.
+
+**Why it works:** Viewers read audio-visual sync as production quality. Product-launch videos feel premium largely because every appearance and transition hits the beat, and beat detection makes that exact without hand-scrubbing. A code-rendered edit (Remotion or Three.js) can consume the beat timestamp list directly as its timing grid.
+
+**Evidence offered:** A demo clip, plus the observation that software launch videos do this.
+
+**Fit here (6/10):** RSC's daily Reels often run on music or trending audio, and code-rendered edits can consume a beat timestamp list directly, so one person can run this today. It is distinct from existing claims: the organic program's 10-shot beat edit is manual cutting, and the AI-video-ad skill's 'move to the beat' prompts a video model. Neither covers programmatic beat grids driving cut and element timing. It applies to launch Reels first (pairing naturally with the proven launch templates above), then to the Meta video cut he recommends to David.
+
+*Source: Matt Penny | Applied AI — "10 GitHub Repos to 10x Your AI Motion Graphics" (aD9X6Lc3dVk)*
+
+## Have the model run a verification loop over its own render before shipping. It checks for overlapping elements, text that is too small at phone size, and other layout mistakes. For RSC, extend the checklist so the loop also flags any on-pack or product claim the formula cannot substantiate, and any invented scarcity or claim carried in from a template. Apply the loop to Three.js explainers, Blender renders and Remotion edits.
 
 **Why it works:** Code-rendered graphics fail in predictable layout ways, such as collisions and illegible type at phone size. A self-check pass catches these before a human has to, which keeps quality high without manual frame-by-frame review.
 
