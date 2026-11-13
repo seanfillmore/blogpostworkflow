@@ -11,7 +11,7 @@
       "evidence": "The creator's own rendered examples (isometric phone-to-cell-tower explainer, paper-cut title sequence, ink-wash opener, terminal scene); assertion that he tested ~100 repos.",
       "rscFit": {
         "score": 6,
-        "reasoning": "RSC posts Reels every day, and the existing motion-graphics skill already targets mechanism explainers for Reels, PDP and Amazon. An isometric 'how aluminium-free deodorant works under the arm' or an ink-wash 'where shea butter comes from' clip is a direct translation. The on-screen hook goes first, then the PDP gallery and Amazon video slot. One person can run it with Claude today. The existing skill trains the model on his own edit style; it does not cover importing a ready-made multi-style library, so this is an edit, not a duplicate. Not higher because style choice is a polish layer, not a conversion lever, and the binding constraint is conversion rate."
+        "reasoning": "RSC posts Reels every day, and the existing motion-graphics skill already targets mechanism explainers for Reels, PDP and Amazon. An isometric 'how aluminium-free deodorant works under the arm' or an ink-wash 'where coconut oil comes from' clip is a direct translation. The on-screen hook goes first, then the PDP gallery and Amazon video slot. One person can run it with Claude today. The existing skill trains the model on his own edit style; it does not cover importing a ready-made multi-style library, so this is an edit, not a duplicate. Not higher because style choice is a polish layer, not a conversion lever, and the binding constraint is conversion rate."
       },
       "verdict": "adopt",
       "stage": null,
@@ -62,7 +62,7 @@
       "evidence": "Examples, including a sodium-atom explainer where electrons glow as they are discussed; assertion.",
       "rscFit": {
         "score": 5,
-        "reasoning": "This is a craft upgrade he can apply alone to the Three.js and Remotion explainers the existing skill already builds for daily Reels. For example, glow on the shea butter or baking-soda-free callout at the moment it is named. Its value is in tightening voice-to-visual sync, which existing claims do not specify for code renders. It is incremental polish rather than a conversion lever, hence mid score."
+        "reasoning": "This is a craft upgrade he can apply alone to the Three.js and Remotion explainers the existing skill already builds for daily Reels. For example, glow on the coconut oil or aluminium-free callout at the moment it is named. Its value is in tightening voice-to-visual sync, which existing claims do not specify for code renders. It is incremental polish rather than a conversion lever, hence mid score."
       },
       "verdict": "adopt",
       "stage": null,
