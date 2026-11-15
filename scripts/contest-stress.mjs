@@ -84,6 +84,7 @@ const ALLERGEN_RULES = [
   ['soy', /\b(soy sauce|tofu|edamame|miso|hoisin)\b/],
   ['sesame', /\b(sesame|tahini)\b/],
   ['citrus', /\b(lemons?|limes?|oranges?|grapefruit|clementines?|tangerines?)\b/],
+  ['avocado-oil', /\bavocado oil\b/],
 ];
 // Words that contain an allergen keyword without containing the allergen.
 const ALLERGEN_FALSE_FRIENDS = /\b(peanut butter|butternut|coconut milk|coconut cream|cream of tartar|eggplant|apple butter|almond extract)\b/g;
