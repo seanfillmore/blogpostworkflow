@@ -7,7 +7,8 @@ const FETCH_TIMEOUT_MS = 8_000;
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALLERGEN_LABELS = {
   milk: 'Milk', eggs: 'Eggs', fish: 'Fish', shellfish: 'Shellfish', 'tree-nuts': 'Tree nuts',
-  peanuts: 'Peanuts', wheat: 'Wheat', soy: 'Soy', sesame: 'Sesame', citrus: 'Citrus', none: 'None of these',
+  peanuts: 'Peanuts', wheat: 'Wheat', soy: 'Soy', sesame: 'Sesame', citrus: 'Citrus',
+  'avocado-oil': 'Avocado oil', none: 'None of these',
 };
 
 // ---- voter id: localStorage, mirrored to a cookie ---------------------------
