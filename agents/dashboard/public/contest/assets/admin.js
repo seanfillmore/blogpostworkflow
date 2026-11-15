@@ -781,39 +781,71 @@ function renderShare(fromPoll) {
   }, { fromPoll });
 }
 
-const CARD_CSS = `
+const PRINT_CSS = `
   @page { size: letter; margin: 0; }
   * { box-sizing: border-box; }
   html, body { margin: 0; background: #fff; color: #1f2a22; font-family: "Atkinson Hyperlegible", system-ui, sans-serif; }
-  .tools { padding: 16px; font-size: 16px; display: flex; gap: 12px; align-items: center; }
+  .tools { padding: 16px; font-size: 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
   .tools button { font: 700 16px system-ui, sans-serif; padding: 10px 18px; border-radius: 999px; border: 2px solid #2b4c9b; background: #2b4c9b; color: #fff; cursor: pointer; }
-  .sheet { width: 8.5in; height: 11in; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; margin: 0 auto; }
-  .card { border: 1px dashed #9aa59c; display: flex; flex-direction: column; align-items: center; text-align: center; overflow: hidden; }
-  .band { width: 100%; height: 0.32in; flex: none; background-color: #fff;
+  .sheet { width: 8.5in; height: 11in; display: grid; grid-template-columns: 1fr 1fr; margin: 0 auto; break-after: page; overflow: hidden; }
+  .sheet:last-child { break-after: auto; }
+  .sheet.six { grid-template-rows: repeat(3, 1fr); }
+  .sheet.four { grid-template-rows: repeat(2, 1fr); }
+  .card { border: 1px dashed #9aa59c; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+  .band { width: 100%; flex: none; background-color: #fff;
     background-image: linear-gradient(90deg, rgba(43,76,155,.55) 50%, transparent 50%), linear-gradient(rgba(43,76,155,.55) 50%, transparent 50%);
-    background-size: 0.32in 0.32in; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .inner { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0.25in 0.3in; gap: 0.12in; }
-  .title { font: 800 22pt/1.1 "Bricolage Grotesque", system-ui, sans-serif; margin: 0; overflow-wrap: anywhere; }
-  .ask { font: 700 15pt/1.25 system-ui, sans-serif; margin: 0; }
-  .qr { width: 2.6in; height: 2.6in; }
-  .url { font: 700 11.5pt/1.2 ui-monospace, Menlo, monospace; margin: 0; overflow-wrap: anywhere; }
+    background-size: 0.25in 0.25in; height: 0.25in; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* table card: 6 per page */
+  .table-card .inner { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0.12in 0.25in; gap: 0.06in; min-height: 0; }
+  .table-card .title { font: 800 15pt/1.1 "Bricolage Grotesque", system-ui, sans-serif; margin: 0; overflow-wrap: anywhere; }
+  .table-card .ask { font: 700 12pt/1.2 system-ui, sans-serif; margin: 0; }
+  .table-card .qr { width: 1.95in; height: 1.95in; }
+  .table-card .url { font: 700 9.5pt/1.2 ui-monospace, Menlo, monospace; margin: 0; overflow-wrap: anywhere; }
+
+  /* dish card: 4 per page */
+  .dish-card .inner { flex: 1; display: flex; flex-direction: column; padding: 0.16in 0.28in 0.18in; gap: 0.07in; min-height: 0; }
+  .dish-card .cat { align-self: flex-start; font: 700 9.5pt/1 system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #1f3a7a; background: #e6ecf8; border-radius: 999px; padding: 4px 10px; }
+  .dish-card .inner > * { flex: none; }
+  /* The photo is the only part that gives up space, so text never gets squeezed out. */
+  .dish-card .inner > .photo { width: 100%; height: auto; flex: 0 1 2.3in; min-height: 1.2in; object-fit: cover; border-radius: 10px; display: block; background: #f5f7f2; }
+  .dish-card .photo-empty { display: flex; align-items: center; justify-content: center; color: #4a564d; font-size: 12pt; border: 1.5px dashed #c9d1c8; }
+  .dish-card .name { font: 800 17pt/1.12 "Bricolage Grotesque", system-ui, sans-serif; margin: 0.02in 0 0; overflow-wrap: anywhere;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .dish-card .cook { font-size: 11pt; color: #4a564d; margin: 0; }
+  .dish-card .pills { display: flex; flex-wrap: wrap; gap: 4px; margin: 0; padding: 0; list-style: none; }
+  .dish-card .pill { font: 700 9.5pt/1 system-ui, sans-serif; padding: 4px 9px; border-radius: 999px; background: #fdf5d3; border: 1.5px solid #d8b93d; color: #4d3d00; }
+  .dish-card .pill.none { background: #e3f2e8; border-color: #8fc3a2; color: #17452b; }
+  .dish-card .pills-label { font: 700 8.5pt/1 system-ui, sans-serif; color: #4a564d; text-transform: uppercase; letter-spacing: .05em; margin: 0.02in 0 0; }
+  .dish-card .vote { margin-top: auto; display: flex; align-items: center; gap: 0.12in; border-top: 1px solid #c9d1c8; padding-top: 0.08in; }
+  .dish-card .vote img { width: 0.8in; height: 0.8in; flex: none; }
+  .dish-card .vote p { margin: 0; font: 700 11pt/1.25 system-ui, sans-serif; }
+  .dish-card .vote small { display: block; font: 700 8.5pt/1.3 ui-monospace, Menlo, monospace; color: #4a564d; margin-top: 2px; }
+  .dish-card .note { font-size: 7.5pt; color: #4a564d; margin: 0.03in 0 0; }
+
   @media screen { body { background: #e9ece8; } .sheet { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.2); margin-bottom: 24px; } }
   @media print { .tools { display: none; } }
 `;
 
-function printCards() {
-  const w = window.open('', 'contest-table-cards');
+/** Open a print window, let `build(d, mk)` return the sheets, then print once every image has loaded. */
+function openPrintWindow(name, title, hint, build) {
+  const w = window.open('', name);
   if (!w) {
     flash('error', 'The browser blocked the print window. Allow pop-ups for this page and try again.');
     return;
   }
   const d = w.document;
   d.open();
-  d.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Table cards</title></head><body></body></html>');
+  d.write('<!doctype html><html lang="en"><head><meta charset="utf-8"><title></title></head><body></body></html>');
   d.close();
+  d.title = title;
+  const fonts = d.createElement('link');
+  fonts.rel = 'stylesheet';
+  fonts.href = 'https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap';
   const style = d.createElement('style');
-  style.textContent = CARD_CSS;
-  d.head.append(style);
+  style.textContent = PRINT_CSS;
+  d.head.append(fonts, style);
   const mk = (tag, cls, text) => {
     const n = d.createElement(tag);
     if (cls) n.className = cls;
@@ -824,24 +856,94 @@ function printCards() {
   const printBtn = mk('button', null, 'Print');
   printBtn.type = 'button';
   printBtn.addEventListener('click', () => w.print());
-  tools.append(printBtn, mk('span', null, 'Letter paper, 4 cards per page. Cut along the dashed lines.'));
-  const sheet = mk('div', 'sheet');
-  const voteUrl = `${PUBLIC_BASE}/contest/vote`;
-  const imgs = [];
-  for (let i = 0; i < 4; i += 1) {
-    const card = mk('div', 'card');
-    const inner = mk('div', 'inner');
-    const img = mk('img', 'qr');
-    img.alt = `QR code for ${voteUrl}`;
-    img.src = `${location.origin}/contest/qr.svg`;
-    imgs.push(img);
-    inner.append(mk('p', 'title', state.title), mk('p', 'ask', 'Scan to vote for your favorite dishes'), img, mk('p', 'url', voteUrl.replace(/^https:\/\//, '')));
-    card.append(mk('div', 'band'), inner);
-    sheet.append(card);
-  }
-  d.body.append(tools, sheet);
-  Promise.all(imgs.map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r; }))))
+  tools.append(printBtn, mk('span', null, hint));
+  const sheets = build(d, mk);
+  d.body.append(tools, ...sheets);
+  const imgs = [...d.images];
+  const fontsReady = d.fonts ? d.fonts.ready.catch(() => null) : null;
+  Promise.all([fontsReady, ...imgs.map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r; })))])
     .then(() => { w.focus(); w.print(); });
+}
+
+const VOTE_URL = `${PUBLIC_BASE}/contest/vote`;
+
+function qrImg(mk) {
+  const img = mk('img', 'qr');
+  img.alt = `QR code for ${VOTE_URL}`;
+  img.src = `${location.origin}/contest/qr.svg`;
+  return img;
+}
+
+function printCards() {
+  openPrintWindow('contest-table-cards', 'Table cards', 'Letter paper, 6 cards per page. Cut along the dashed lines and put one on each table.', (d, mk) => {
+    const sheet = mk('div', 'sheet six');
+    for (let i = 0; i < 6; i += 1) {
+      const card = mk('div', 'card table-card');
+      const inner = mk('div', 'inner');
+      inner.append(mk('p', 'title', state.title), mk('p', 'ask', 'Scan to vote for your favorite dishes'), qrImg(mk), mk('p', 'url', VOTE_URL.replace(/^https:\/\//, '')));
+      card.append(mk('div', 'band'), inner);
+      sheet.append(card);
+    }
+    return [sheet];
+  });
+}
+
+function printDishCards() {
+  const order = new Map(state.categories.map((c, i) => [c.id, i]));
+  const dishes = state.dishes
+    .filter((d) => d.status === 'approved')
+    .map((d, i) => ({ d, i }))
+    .sort((a, b) => ((order.get(a.d.categoryId) ?? 99) - (order.get(b.d.categoryId) ?? 99)) || a.i - b.i)
+    .map((x) => x.d);
+  if (!dishes.length) {
+    flash('error', 'There are no approved dishes to print yet.');
+    return;
+  }
+  const waiting = state.dishes.length - dishes.length;
+  const hint = `Letter paper, 4 cards per page, ${plural(dishes.length, 'dish', 'dishes')}.`
+    + (waiting ? ` ${plural(waiting, 'dish', 'dishes')} still waiting for approval ${waiting === 1 ? 'is' : 'are'} not included.` : '')
+    + ' Cut along the dashed lines.';
+  openPrintWindow('contest-dish-cards', 'Dish cards', hint, (d, mk) => {
+    const sheets = [];
+    let sheet = null;
+    dishes.forEach((dish, i) => {
+      if (i % 4 === 0) {
+        sheet = mk('div', 'sheet four');
+        sheets.push(sheet);
+      }
+      const card = mk('div', 'card dish-card');
+      const inner = mk('div', 'inner');
+      inner.append(mk('span', 'cat', catName(dish.categoryId)));
+      const src = photoUrl(dish);
+      if (src) {
+        const img = mk('img', 'photo');
+        img.alt = dish.name;
+        img.src = `${location.origin}${src}`;
+        inner.append(img);
+      } else {
+        inner.append(mk('div', 'photo photo-empty', 'No photo'));
+      }
+      inner.append(mk('p', 'name', dish.name), mk('p', 'cook', `by ${dish.cook}`));
+      inner.append(mk('p', 'pills-label', 'Allergens'));
+      const pills = mk('ul', 'pills');
+      for (const a of dish.allergens || []) {
+        const label = a === 'none' ? 'No listed allergens' : ((allergenLabels && allergenLabels[a]) || a);
+        pills.append(mk('li', a === 'none' ? 'pill none' : 'pill', label));
+      }
+      inner.append(pills);
+      const vote = mk('div', 'vote');
+      const txt = mk('p', null, 'Like it? Scan to vote');
+      txt.append(mk('small', null, VOTE_URL.replace(/^https:\/\//, '')));
+      vote.append(qrImg(mk), txt);
+      inner.append(vote, mk('p', 'note', 'Allergens are listed by the cook and not checked by the organizers.'));
+      card.append(mk('div', 'band'), inner);
+      sheet.append(card);
+    });
+    // Pad the last sheet with blank cells so the cut grid stays the same size.
+    const rem = dishes.length % 4;
+    if (rem) for (let k = rem; k < 4; k += 1) sheet.append(mk('div', 'card'));
+    return sheets;
+  });
 }
 
 // ---- reset ------------------------------------------------------------------
@@ -898,6 +1000,7 @@ $('f-photo').addEventListener('change', () => {
   setPreview(previewUrl || (editing ? photoUrl(editing) : null));
 });
 $('print-btn').addEventListener('click', printCards);
+$('print-dishes-btn').addEventListener('click', printDishCards);
 $('reset-btn').addEventListener('click', resetContest);
 
 async function loadAllergenLabels() {
