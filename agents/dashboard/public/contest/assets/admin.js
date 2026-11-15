@@ -824,16 +824,33 @@ const PRINT_CSS = `
   .dish-card .vote small { display: block; font: 700 8.5pt/1.3 ui-monospace, Menlo, monospace; color: #4a564d; margin-top: 2px; }
   .dish-card .note { font-size: 7.5pt; color: #4a564d; margin: 0.03in 0 0; }
 
+  .picker { display: block; max-width: 8.5in; margin: 0 auto; }
+  .picker-top { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .picker button.quiet { background: #fff; color: #2b4c9b; padding: 8px 14px; font-size: 14px; }
+  .picker button:disabled { opacity: .45; cursor: not-allowed; }
+  .picker-summary { font-weight: 700; }
+  .picker-note { color: #4a564d; font-size: 14px; margin: 10px 0; }
+  .picker-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .picker-group { border: 1.5px solid #c9d1c8; border-radius: 12px; background: #fff; padding: 8px 12px; margin: 0; }
+  .picker-group legend { font-weight: 800; padding: 0 6px; }
+  .picker-row { display: flex; gap: 8px; align-items: center; padding: 6px 0; cursor: pointer; font-size: 15px; }
+  .picker-row input { width: 20px; height: 20px; flex: none; }
+  .picker-name { font-weight: 700; }
+  .picker-cook { color: #4a564d; font-size: 13px; flex: 1; }
+  .picker-tag { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 2px 8px; flex: none; }
+  .picker-tag.new { background: #e3f2e8; color: #17452b; }
+  .picker-tag.changed { background: #fdf5d3; color: #4d3d00; }
+  .picker-tag.printed { background: #eceeec; color: #4a564d; }
   @media screen { body { background: #e9ece8; } .sheet { background: #fff; box-shadow: 0 4px 20px rgba(0,0,0,.2); margin-bottom: 24px; } }
   @media print { .tools { display: none; } }
 `;
 
-/** Open a print window, let `build(d, mk)` return the sheets, then print once every image has loaded. */
-function openPrintWindow(name, title, hint, build) {
+/** Open an empty print window with the print stylesheet. Returns null when pop-ups are blocked. */
+function printShell(name, title) {
   const w = window.open('', name);
   if (!w) {
     flash('error', 'The browser blocked the print window. Allow pop-ups for this page and try again.');
-    return;
+    return null;
   }
   const d = w.document;
   d.open();
@@ -852,17 +869,27 @@ function openPrintWindow(name, title, hint, build) {
     if (text != null) n.textContent = text;
     return n;
   };
+  return { w, d, mk };
+}
+
+/** Resolve once the window's fonts and every image have loaded (or failed). */
+function whenLoaded(d) {
+  const fontsReady = d.fonts ? d.fonts.ready.catch(() => null) : null;
+  return Promise.all([fontsReady, ...[...d.images].map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r; })))]);
+}
+
+/** Open a print window, let `build(d, mk)` return the sheets, then print once everything has loaded. */
+function openPrintWindow(name, title, hint, build) {
+  const shell = printShell(name, title);
+  if (!shell) return;
+  const { w, d, mk } = shell;
   const tools = mk('div', 'tools');
   const printBtn = mk('button', null, 'Print');
   printBtn.type = 'button';
   printBtn.addEventListener('click', () => w.print());
   tools.append(printBtn, mk('span', null, hint));
-  const sheets = build(d, mk);
-  d.body.append(tools, ...sheets);
-  const imgs = [...d.images];
-  const fontsReady = d.fonts ? d.fonts.ready.catch(() => null) : null;
-  Promise.all([fontsReady, ...imgs.map((img) => (img.complete ? null : new Promise((r) => { img.onload = r; img.onerror = r; })))])
-    .then(() => { w.focus(); w.print(); });
+  d.body.append(tools, ...build(d, mk));
+  whenLoaded(d).then(() => { w.focus(); w.print(); });
 }
 
 const VOTE_URL = `${PUBLIC_BASE}/contest/vote`;
@@ -888,6 +915,67 @@ function printCards() {
   });
 }
 
+// Which dish cards this browser has already printed, keyed by dish id. The value is a
+// fingerprint of everything on the card, so a dish edited after printing counts as new.
+const PRINTED_KEY = 'contest-dish-cards-printed';
+
+function cardFingerprint(dish) {
+  return JSON.stringify([dish.name, dish.cook, dish.categoryId, dish.allergens || [], dish.photoVersion || 0]);
+}
+
+function readPrinted() {
+  try {
+    const v = JSON.parse(localStorage.getItem(PRINTED_KEY) || '{}');
+    return v && typeof v === 'object' ? v : {};
+  } catch { return {}; }
+}
+
+function writePrinted(map) {
+  try { localStorage.setItem(PRINTED_KEY, JSON.stringify(map)); } catch { /* storage blocked: nothing remembered */ }
+}
+
+function dishCardSheets(dishes, mk) {
+  const sheets = [];
+  let sheet = null;
+  dishes.forEach((dish, i) => {
+    if (i % 4 === 0) {
+      sheet = mk('div', 'sheet four');
+      sheets.push(sheet);
+    }
+    const card = mk('div', 'card dish-card');
+    const inner = mk('div', 'inner');
+    inner.append(mk('span', 'cat', catName(dish.categoryId)));
+    const src = photoUrl(dish);
+    if (src) {
+      const img = mk('img', 'photo');
+      img.alt = dish.name;
+      img.src = `${location.origin}${src}`;
+      inner.append(img);
+    } else {
+      inner.append(mk('div', 'photo photo-empty', 'No photo'));
+    }
+    inner.append(mk('p', 'name', dish.name), mk('p', 'cook', `by ${dish.cook}`));
+    inner.append(mk('p', 'pills-label', 'Allergens'));
+    const pills = mk('ul', 'pills');
+    for (const a of dish.allergens || []) {
+      const label = a === 'none' ? 'No listed allergens' : ((allergenLabels && allergenLabels[a]) || a);
+      pills.append(mk('li', a === 'none' ? 'pill none' : 'pill', label));
+    }
+    inner.append(pills);
+    const vote = mk('div', 'vote');
+    const txt = mk('p', null, 'Like it? Scan to vote');
+    txt.append(mk('small', null, VOTE_URL.replace(/^https:\/\//, '')));
+    vote.append(qrImg(mk), txt);
+    inner.append(vote, mk('p', 'note', 'Allergens are listed by the cook and not checked by the organizers.'));
+    card.append(mk('div', 'band'), inner);
+    sheet.append(card);
+  });
+  // Pad the last sheet with blank cells so the cut grid stays the same size.
+  const rem = dishes.length % 4;
+  if (rem) for (let k = rem; k < 4; k += 1) sheet.append(mk('div', 'card'));
+  return sheets;
+}
+
 function printDishCards() {
   const order = new Map(state.categories.map((c, i) => [c.id, i]));
   const dishes = state.dishes
@@ -899,51 +987,96 @@ function printDishCards() {
     flash('error', 'There are no approved dishes to print yet.');
     return;
   }
-  const waiting = state.dishes.length - dishes.length;
-  const hint = `Letter paper, 4 cards per page, ${plural(dishes.length, 'dish', 'dishes')}.`
-    + (waiting ? ` ${plural(waiting, 'dish', 'dishes')} still waiting for approval ${waiting === 1 ? 'is' : 'are'} not included.` : '')
-    + ' Cut along the dashed lines.';
-  openPrintWindow('contest-dish-cards', 'Dish cards', hint, (d, mk) => {
-    const sheets = [];
-    let sheet = null;
-    dishes.forEach((dish, i) => {
-      if (i % 4 === 0) {
-        sheet = mk('div', 'sheet four');
-        sheets.push(sheet);
-      }
-      const card = mk('div', 'card dish-card');
-      const inner = mk('div', 'inner');
-      inner.append(mk('span', 'cat', catName(dish.categoryId)));
-      const src = photoUrl(dish);
-      if (src) {
-        const img = mk('img', 'photo');
-        img.alt = dish.name;
-        img.src = `${location.origin}${src}`;
-        inner.append(img);
-      } else {
-        inner.append(mk('div', 'photo photo-empty', 'No photo'));
-      }
-      inner.append(mk('p', 'name', dish.name), mk('p', 'cook', `by ${dish.cook}`));
-      inner.append(mk('p', 'pills-label', 'Allergens'));
-      const pills = mk('ul', 'pills');
-      for (const a of dish.allergens || []) {
-        const label = a === 'none' ? 'No listed allergens' : ((allergenLabels && allergenLabels[a]) || a);
-        pills.append(mk('li', a === 'none' ? 'pill none' : 'pill', label));
-      }
-      inner.append(pills);
-      const vote = mk('div', 'vote');
-      const txt = mk('p', null, 'Like it? Scan to vote');
-      txt.append(mk('small', null, VOTE_URL.replace(/^https:\/\//, '')));
-      vote.append(qrImg(mk), txt);
-      inner.append(vote, mk('p', 'note', 'Allergens are listed by the cook and not checked by the organizers.'));
-      card.append(mk('div', 'band'), inner);
-      sheet.append(card);
+  const shell = printShell('contest-dish-cards', 'Dish cards');
+  if (!shell) return;
+  const { w, d, mk } = shell;
+
+  const printed = readPrinted();
+  const statusOf = (dish) => {
+    if (!(dish.id in printed)) return 'new';
+    return printed[dish.id] === cardFingerprint(dish) ? 'printed' : 'changed';
+  };
+  const selected = new Set(dishes.filter((dish) => statusOf(dish) !== 'printed').map((dish) => dish.id));
+
+  const tools = mk('div', 'tools picker');
+  const top = mk('div', 'picker-top');
+  const printBtn = mk('button', null, 'Print');
+  printBtn.type = 'button';
+  const summary = mk('span', 'picker-summary');
+  const quick = (label, pick) => {
+    const btn = mk('button', 'quiet', label);
+    btn.type = 'button';
+    btn.addEventListener('click', () => {
+      selected.clear();
+      for (const dish of dishes) if (pick(dish)) selected.add(dish.id);
+      syncChecks();
+      render();
     });
-    // Pad the last sheet with blank cells so the cut grid stays the same size.
-    const rem = dishes.length % 4;
-    if (rem) for (let k = rem; k < 4; k += 1) sheet.append(mk('div', 'card'));
-    return sheets;
+    return btn;
+  };
+  top.append(printBtn, summary, quick('Only new or changed', (x) => statusOf(x) !== 'printed'), quick('All', () => true), quick('None', () => false));
+
+  const waiting = state.dishes.length - dishes.length;
+  const note = mk('p', 'picker-note', 'Tick the dishes to print. Dishes this browser already printed start unticked; a dish edited since then shows "changed" and starts ticked.'
+    + (waiting ? ` ${plural(waiting, 'dish', 'dishes')} still waiting for approval ${waiting === 1 ? 'is' : 'are'} not listed.` : ''));
+
+  const list = mk('div', 'picker-list');
+  const checks = new Map();
+  for (const cat of state.categories) {
+    const inCat = dishes.filter((x) => x.categoryId === cat.id);
+    if (!inCat.length) continue;
+    const group = mk('fieldset', 'picker-group');
+    group.append(mk('legend', null, cat.name));
+    for (const dish of inCat) {
+      const label = mk('label', 'picker-row');
+      const box = mk('input');
+      box.type = 'checkbox';
+      box.addEventListener('change', () => {
+        if (box.checked) selected.add(dish.id); else selected.delete(dish.id);
+        render();
+      });
+      checks.set(dish.id, box);
+      const st = statusOf(dish);
+      label.append(box, mk('span', 'picker-name', `${dish.name}`), mk('span', 'picker-cook', `by ${dish.cook}`),
+        mk('span', `picker-tag ${st}`, st === 'printed' ? 'printed' : st === 'changed' ? 'changed' : 'new'));
+      group.append(label);
+    }
+    list.append(group);
+  }
+  function syncChecks() { for (const [id, box] of checks) box.checked = selected.has(id); }
+
+  tools.append(top, note, list);
+  const preview = mk('div', 'preview');
+  d.body.append(tools, preview);
+
+  function render() {
+    const chosen = dishes.filter((x) => selected.has(x.id));
+    const pages = Math.ceil(chosen.length / 4);
+    summary.textContent = chosen.length
+      ? `${plural(chosen.length, 'card', 'cards')} on ${plural(pages, 'page', 'pages')} (letter, 4 per page, cut along the dashed lines)`
+      : 'Nothing ticked';
+    printBtn.disabled = !chosen.length;
+    preview.replaceChildren(...dishCardSheets(chosen, mk));
+  }
+
+  printBtn.addEventListener('click', async () => {
+    const chosen = dishes.filter((x) => selected.has(x.id));
+    if (!chosen.length) return;
+    await whenLoaded(d);
+    w.focus();
+    w.print();
+    // The print dialog gives no signal for "cancelled", so ask before remembering.
+    if (w.confirm(`Did the ${plural(chosen.length, 'card', 'cards')} print? OK marks ${chosen.length === 1 ? 'it' : 'them'} as printed so ${chosen.length === 1 ? 'it starts' : 'they start'} unticked next time.`)) {
+      const map = readPrinted();
+      for (const dish of chosen) map[dish.id] = cardFingerprint(dish);
+      writePrinted(map);
+      w.close();
+    }
   });
+
+  syncChecks();
+  render();
+  w.focus();
 }
 
 // ---- reset ------------------------------------------------------------------
