@@ -934,6 +934,34 @@ function writePrinted(map) {
   try { localStorage.setItem(PRINTED_KEY, JSON.stringify(map)); } catch { /* storage blocked: nothing remembered */ }
 }
 
+// Chrome stores WebP photos uncompressed when it prints to PDF (28 cards came out at
+// 67 MB from 4.5 MB of photos), but passes JPEG through as-is. So each photo is
+// re-encoded to JPEG once, at the stored size, before the cards are built.
+const printPhotos = new Map();   // dishId -> JPEG data URL for the current photo version
+const printPhotoVersion = new Map();
+const PRINT_JPEG_QUALITY = 0.85;
+
+async function jpegFor(dish) {
+  const src = photoUrl(dish);
+  if (!src) return;
+  if (printPhotoVersion.get(dish.id) === dish.photoVersion && printPhotos.has(dish.id)) return;
+  try {
+    const res = await fetch(src);
+    if (!res.ok) return;
+    const bmp = await createImageBitmap(await res.blob());
+    const canvas = document.createElement('canvas');
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0);
+    bmp.close?.();
+    printPhotos.set(dish.id, canvas.toDataURL('image/jpeg', PRINT_JPEG_QUALITY));
+    printPhotoVersion.set(dish.id, dish.photoVersion);
+  } catch { /* fall back to the WebP: a bigger PDF, but the card still prints */ }
+}
+
 function dishCardSheets(dishes, mk) {
   const sheets = [];
   let sheet = null;
@@ -949,7 +977,7 @@ function dishCardSheets(dishes, mk) {
     if (src) {
       const img = mk('img', 'photo');
       img.alt = dish.name;
-      img.src = `${location.origin}${src}`;
+      img.src = printPhotos.get(dish.id) || `${location.origin}${src}`;
       inner.append(img);
     } else {
       inner.append(mk('div', 'photo photo-empty', 'No photo'));
@@ -991,6 +1019,7 @@ function printDishCards() {
   if (!shell) return;
   const { w, d, mk } = shell;
 
+  let photosReady = false;
   const printed = readPrinted();
   const statusOf = (dish) => {
     if (!(dish.id in printed)) return 'new';
@@ -1055,7 +1084,8 @@ function printDishCards() {
     summary.textContent = chosen.length
       ? `${plural(chosen.length, 'card', 'cards')} on ${plural(pages, 'page', 'pages')} (letter, 4 per page, cut along the dashed lines)`
       : 'Nothing ticked';
-    printBtn.disabled = !chosen.length;
+    printBtn.disabled = !chosen.length || !photosReady;
+    if (!photosReady) summary.textContent = 'Preparing photos for printing…';
     preview.replaceChildren(...dishCardSheets(chosen, mk));
   }
 
@@ -1077,6 +1107,7 @@ function printDishCards() {
   syncChecks();
   render();
   w.focus();
+  Promise.all(dishes.map(jpegFor)).then(() => { photosReady = true; render(); });
 }
 
 // ---- reset ------------------------------------------------------------------
