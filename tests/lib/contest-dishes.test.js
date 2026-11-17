@@ -228,3 +228,32 @@ test('category and dish edits are refused once the reveal has started (409)', ()
     throwsStatus(() => reorderCategories(s, [cat.id]), 409);
   }
 });
+
+test('recipe link: kept on the dish and shown publicly, even when no recipe text was imported', () => {
+  const { state, cat } = setup();
+  const url = 'https://example.com/grandmas-stuffing';
+  const sub = submitDish(state, T0, fields(cat, { recipe: '', recipeUrl: `  ${url}  ` }));
+  assert.equal(sub.dish.recipeUrl, url);
+  const pub = publicView(approveDish(sub.state, sub.dish.id), T0);
+  assert.equal(pub.dishes[0].recipeUrl, url);
+});
+
+test('recipe link: blank clears it, an edit without the field keeps it, non-web links are refused', () => {
+  const { state, cat } = setup();
+  const sub = submitDish(state, T0, fields(cat, { recipeUrl: 'https://example.com/r' }));
+  const untouched = updateOwnDish(sub.state, T0, sub.editToken, fields(cat, { name: 'Chili 2' }));
+  assert.equal(untouched.dish.recipeUrl, 'https://example.com/r', 'an older form that omits the field keeps the link');
+  const cleared = updateOwnDish(sub.state, T0, sub.editToken, fields(cat, { recipeUrl: '' }));
+  assert.equal(cleared.dish.recipeUrl, '');
+  for (const bad of ['javascript:alert(1)', 'not a link', 'ftp://example.com/x', `https://e.com/${'x'.repeat(LIMITS.recipeUrl)}`]) {
+    const r = validateDishFields(fields(cat, { recipeUrl: bad }), state);
+    assert.equal(r.ok, false, bad);
+    assert.match(r.error, /recipe link/);
+  }
+});
+
+test('recipe link: a dish without one reads as an empty string in the public view', () => {
+  const { state, cat } = setup();
+  const sub = submitDish(state, T0, fields(cat));
+  assert.equal(publicView(approveDish(sub.state, sub.dish.id), T0).dishes[0].recipeUrl, '');
+});

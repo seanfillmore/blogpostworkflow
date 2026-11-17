@@ -430,6 +430,15 @@ function reviewCard(dish) {
   body.append(el('h4', null, 'Allergens (from the cook)'), badgesFor(dish));
   body.append(el('h4', null, 'Ingredients'), el('p', 'prose', dish.ingredients));
   body.append(el('h4', null, 'Recipe'), el('p', 'prose', dish.recipe || 'No recipe given.'));
+  if (dish.recipeUrl) {
+    const a = el('a', null, dish.recipeUrl);
+    a.href = dish.recipeUrl;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    const p = el('p', 'prose');
+    p.append(a);
+    body.append(el('h4', null, 'Recipe link'), p);
+  }
   const actions = el('div', 'review-actions');
   actions.append(button(dish.status === 'pending' ? 'Approve' : 'Looks good', 'btn-go', () => act('dish-approve', { id: dish.id }, `Approved "${dish.name}".`), { 'data-action': 'approve' }));
   actions.append(button('Edit', 'btn-quiet btn-sm', () => openDishForm(dish)));
@@ -638,6 +647,7 @@ function openDishForm(dish) {
   $('f-name').value = dish ? dish.name : '';
   $('f-ingredients').value = dish ? dish.ingredients : '';
   $('f-recipe').value = dish ? dish.recipe || '' : '';
+  $('f-recipe-url').value = dish ? dish.recipeUrl || '' : '';
   const sel = $('f-category');
   sel.replaceChildren();
   if (!dish) {
@@ -678,6 +688,8 @@ async function saveDish(e) {
   fd.append('name', $('f-name').value);
   fd.append('ingredients', $('f-ingredients').value);
   fd.append('recipe', $('f-recipe').value);
+  const link = $('f-recipe-url').value.trim();
+  fd.append('recipeUrl', link && !/^[a-z][a-z0-9+.-]*:/i.test(link) ? `https://${link}` : link);
   fd.append('allergens', JSON.stringify(allergens));
   if (chosenFile) fd.append('photo', chosenFile);
   const save = $('dish-save');
@@ -742,6 +754,7 @@ const SHARE = [
   { label: 'Voting page (diners)', path: '/contest/vote' },
   { label: 'Enter a dish (cooks)', path: '/contest/enter' },
   { label: 'TV screen', path: '/contest/tv' },
+  { label: 'All the recipes (share with everyone)', path: '/contest/recipes' },
 ];
 
 async function copyText(text, input) {

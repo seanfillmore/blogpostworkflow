@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>The recipes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/contest/assets/contest.css">
+<style>
+  /* Recipes page only. Tokens and badges come from contest.css. */
+  .recipes-wrap { max-width: 760px; }
+  .btn-sm { min-height: 44px; padding: 8px 16px; font-size: 16px; }
+  .recipe-tools { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 4px 0 8px; }
+  .recipe-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 0; }
+  .recipe-nav a { font-weight: 700; text-decoration: none; color: var(--blueberry-dark); background: var(--blueberry-tint);
+    border-radius: 999px; padding: 8px 14px; }
+  .recipe-cat { scroll-margin-top: 12px; }
+  .recipe {
+    background: var(--paper); border: 2px solid var(--line); border-radius: var(--r-lg);
+    box-shadow: var(--shadow-card); overflow: hidden; margin: 0 0 22px;
+  }
+  .recipe img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #e4e9e2; }
+  .recipe-body { padding: 16px 18px 20px; }
+  .recipe-body h3 { font-family: var(--font-head); font-size: 26px; line-height: 1.15; margin: 0; overflow-wrap: anywhere; }
+  .recipe-cook { color: var(--ink-soft); margin: 4px 0 0; }
+  .recipe-body h4 { font-family: var(--font-head); font-size: 19px; margin: 18px 0 6px; }
+  .recipe-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font-weight: 700;
+    color: var(--blueberry); overflow-wrap: anywhere; }
+  .recipe-none { color: var(--ink-soft); font-style: italic; margin: 0; }
+  @media print {
+    .tablecloth, .recipe-tools, .recipe-nav { display: none; }
+    body { background: #fff; font-size: 12pt; }
+    .recipe { box-shadow: none; break-inside: avoid-page; border-width: 1px; }
+    .recipe img { aspect-ratio: 21 / 9; }
+    .recipe-link::after { content: " (" attr(href) ")"; font-weight: 400; color: var(--ink-soft); }
+  }
+</style>
+</head>
+<body>
+<div class="tablecloth" aria-hidden="true"></div>
+<header class="page-head">
+  <h1 id="title">The recipes</h1>
+  <p id="lede">Every dish from the contest, with the cook's ingredients and recipe.</p>
+  <nav class="recipe-nav" id="recipe-nav" aria-label="Categories"></nav>
+</header>
+<main class="wrap recipes-wrap">
+  <div class="recipe-tools">
+    <button class="btn btn-sm btn-quiet" type="button" id="print-btn">Print or save as PDF</button>
+  </div>
+  <p id="loading" class="small">Loading the recipes…</p>
+  <div id="error" class="notice notice-error" hidden role="alert"></div>
+  <div id="recipes"></div>
+  <p class="disclaimer">Recipes and allergen information are entered by each cook and are not checked by the organizers.</p>
+</main>
+<script type="module" src="/contest/assets/recipes.js"></script>
+</body>
+</html>
