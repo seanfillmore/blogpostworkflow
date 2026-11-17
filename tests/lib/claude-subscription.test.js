@@ -16,6 +16,7 @@ const {
   createViaSubscription,
   subscriptionStream,
   SubscriptionUnsupportedError,
+  unwrapJsonReply,
 } = await import('../../lib/claude-subscription.js');
 
 const MODEL = 'claude-haiku-4-5-20251001';
@@ -220,4 +221,46 @@ test('a model that cannot disable thinking gets headroom on top of the answer bu
     assert.equal(thinksRegardless(m), false, m);
     assert.equal(buildCliRequest({ model: m, max_tokens: 512, messages: [{ role: 'user', content: 'x' }] }).env.CLAUDE_CODE_MAX_OUTPUT_TOKENS, '512', `${m} keeps its exact cap`);
   }
+});
+
+// ── structured output (2026-11-01: voice-of-customer + demand-miner both failed) ─────
+
+const SCHEMA = { type: 'object', properties: { questions: { type: 'array' } }, required: ['questions'] };
+
+test('buildCliRequest: an output_config json_schema becomes a system instruction carrying the schema', () => {
+  const req = buildCliRequest({
+    model: MODEL, max_tokens: 100, system: 'SYS',
+    output_config: { effort: 'high', format: { type: 'json_schema', schema: SCHEMA } },
+    messages: [{ role: 'user', content: 'classify' }],
+  });
+  assert.ok(req.system.startsWith('SYS\n\n'), 'the caller system prompt is kept first');
+  assert.match(req.system, /no code fences/);
+  assert.ok(req.system.includes(JSON.stringify(SCHEMA)));
+  // with no caller system prompt it still carries the instruction
+  const bare = buildCliRequest({ model: MODEL, output_config: { format: { type: 'json_schema', schema: SCHEMA } }, messages: [{ role: 'user', content: 'x' }] });
+  assert.match(bare.system, /^OUTPUT FORMAT/);
+  // and a request without a schema is untouched
+  assert.equal(buildCliRequest({ model: MODEL, system: 'SYS', messages: [{ role: 'user', content: 'x' }] }).system, 'SYS');
+});
+
+test('unwrapJsonReply: strips one surrounding fence, leaves everything else for the caller to judge', () => {
+  assert.equal(unwrapJsonReply('```json\n{"a":1}\n```'), '{"a":1}');
+  assert.equal(unwrapJsonReply('  ```\n[1,2]\n```  '), '[1,2]');
+  assert.equal(unwrapJsonReply('{"a":1}'), '{"a":1}');
+  const prose = '# Real Skin Care report\n\nSome text';
+  assert.equal(unwrapJsonReply(prose), prose, 'not JSON and not fenced: returned unchanged so the caller parse fails loudly');
+});
+
+test('createViaSubscription: a schema request has its fenced reply unwrapped; a plain request does not', async () => {
+  const fenced = '```json\n{"questions":[]}\n```';
+  const withSchema = await createViaSubscription(
+    { model: MODEL, max_tokens: 50, output_config: { format: { type: 'json_schema', schema: SCHEMA } }, messages: [{ role: 'user', content: 'x' }] },
+    {}, { spawnImpl: fakeSpawn({ stdout: lines(assistant(fenced), result()) }) },
+  );
+  assert.deepEqual(JSON.parse(withSchema.content[0].text), { questions: [] });
+  const plain = await createViaSubscription(
+    { model: MODEL, max_tokens: 50, messages: [{ role: 'user', content: 'x' }] },
+    {}, { spawnImpl: fakeSpawn({ stdout: lines(assistant(fenced), result()) }) },
+  );
+  assert.equal(plain.content[0].text, fenced);
 });
