@@ -122,7 +122,7 @@ async function seedOpen(store) {
 const filesIn = (d) => fs.readdirSync(d);
 
 test('isPublicContestPath: public exactly for the listed paths, never for admin', () => {
-  for (const p of ['/contest/vote', '/contest/enter', '/contest/tv', '/contest/qr.svg',
+  for (const p of ['/contest/vote', '/contest/enter', '/contest/tv', '/contest/recipes', '/contest/qr.svg',
     '/contest/assets/app.js', '/contest/photos/x.webp', '/api/contest/public', '/api/contest/vote',
     '/api/contest/my-ballot', '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission',
     '/api/contest/recipe-import']) {

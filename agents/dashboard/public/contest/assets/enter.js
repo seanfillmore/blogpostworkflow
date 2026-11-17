@@ -172,6 +172,7 @@ function fill(dish) {
   $('name').value = dish.name || '';
   $('ingredients').value = dish.ingredients || '';
   $('recipe').value = dish.recipe || '';
+  $('recipe-url').value = dish.recipeUrl || '';
   for (const box of form.querySelectorAll('input[name="allergens"]')) {
     box.checked = (dish.allergens || []).includes(box.value);
   }
@@ -194,6 +195,10 @@ function checkForm() {
   need('categoryId', 'Please choose a category.');
   if (!editToken && !chosenFile) problems.push('Please add a photo of your dish.');
   need('ingredients', 'Please list the ingredients.');
+  const link = normaliseLink($('recipe-url').value);
+  const badLink = Boolean(link) && !isWebLink(link);
+  mark('recipe-url', badLink);
+  if (badLink) problems.push("The recipe link doesn't look like a web address. Fix it, or clear the box.");
   if (!form.querySelector('input[name="allergens"]:checked')) {
     problems.push('Please tick the allergens your dish contains, or "None of these".');
   }
@@ -238,6 +243,8 @@ form.addEventListener('submit', async (e) => {
 
   const data = new FormData();
   for (const id of ['cook', 'name', 'categoryId', 'ingredients', 'recipe']) data.append(id, $(id).value);
+  // The link is saved with the dish whether or not "Get recipe" found a recipe card, so it can be shared.
+  data.append('recipeUrl', normaliseLink($('recipe-url').value));
   for (const box of form.querySelectorAll('input[name="allergens"]:checked')) data.append('allergens', box.value);
   if (chosenFile) data.append('photo', chosenFile);
 
@@ -295,6 +302,13 @@ const MSG_OPEN_FAILED = "We couldn't open that page. Check the link, or type you
 let importing = false;
 let statusTimer = null;
 
+function isWebLink(value) {
+  try {
+    const u = new URL(value);
+    return u.protocol === 'https:' || u.protocol === 'http:';
+  } catch { return false; }
+}
+
 function normaliseLink(value) {
   const v = value.trim();
   if (!v) return '';
@@ -318,9 +332,11 @@ function setWorking(on) {
   }, 1500);
 }
 
-function importFail(text) {
+const KEEP_LINK_NOTE = "We'll still save this link with your dish, so people can find the full recipe.";
+
+function importFail(text, keepLink = false) {
   show($('import-ok'), false);
-  $('import-fail-text').textContent = text;
+  $('import-fail-text').textContent = keepLink ? `${text} ${KEEP_LINK_NOTE}` : text;
   show($('import-fail'));
   $('import-fail').focus({ preventScroll: true });
   $('import-fail').scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -398,9 +414,11 @@ async function runImport() {
   setWorking(false);
 
   if (status === 200 && body && body.ok && body.recipe) return applyRecipe(body.recipe, url);
-  if (status === -1) return importFail(MSG_TIMEOUT);
+  // The page was a real link that just had no readable recipe: keep it (unless it was not a web link).
+  const keep = isWebLink(url) && !(body && (body.code === 'bad_url' || body.code === 'blocked_url'));
+  if (status === -1) return importFail(MSG_TIMEOUT, keep);
   if (status === 0) return importFail('We could not reach the contest. Check your internet connection and try again.');
-  return importFail(body && body.error ? String(body.error) : MSG_OPEN_FAILED);
+  return importFail(body && body.error ? String(body.error) : MSG_OPEN_FAILED, keep && status !== 429 && status !== 409);
 }
 
 $('import-btn').addEventListener('click', runImport);

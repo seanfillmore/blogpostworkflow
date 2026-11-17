@@ -28,7 +28,7 @@ import {
 } from '../../../lib/contest.js';
 
 const PUBLIC_EXACT = new Set([
-  '/contest/vote', '/contest/enter', '/contest/tv', '/contest/qr.svg',
+  '/contest/vote', '/contest/enter', '/contest/tv', '/contest/recipes', '/contest/qr.svg',
   '/api/contest/public', '/api/contest/vote', '/api/contest/my-ballot',
   '/api/contest/submission-form', '/api/contest/submit', '/api/contest/submission',
   '/api/contest/recipe-import',
@@ -167,6 +167,8 @@ function dishFields(body) {
     cook: str(body.cook),
     ingredients: str(body.ingredients),
     recipe: str(body.recipe),
+    // Only when the form sent it, so an older page cannot wipe a saved link by omission.
+    ...(body.recipeUrl !== undefined ? { recipeUrl: str(body.recipeUrl) } : {}),
     allergens: parseAllergens(body),
   };
 }
@@ -179,6 +181,7 @@ function ownDishView(dish, state, now) {
     cook: dish.cook,
     ingredients: dish.ingredients,
     recipe: dish.recipe,
+    recipeUrl: dish.recipeUrl || '',
     allergens: [...dish.allergens],
     status: dish.status,
     photoUrl: photoUrl(dish),
@@ -348,6 +351,7 @@ export function createContestRoutes({
     page('/contest/vote', 'vote.html'),
     page('/contest/enter', 'enter.html'),
     page('/contest/tv', 'tv.html'),
+    page('/contest/recipes', 'recipes.html'),
     {
       method: 'GET',
       match: (url) => pathOf(url).startsWith('/contest/assets/'),

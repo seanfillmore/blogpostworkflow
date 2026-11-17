@@ -285,6 +285,10 @@
       <label for="f-recipe">Recipe <span class="small">(optional)</span></label>
       <textarea class="input" id="f-recipe" maxlength="8000"></textarea>
     </div>
+    <div class="field">
+      <label for="f-recipe-url">Recipe link <span class="small">(optional, shown on the recipes page)</span></label>
+      <input class="input" id="f-recipe-url" type="url" inputmode="url" placeholder="https://" autocapitalize="off" spellcheck="false" maxlength="2000">
+    </div>
     <div class="notice notice-error" id="dish-error" role="alert" hidden></div>
     <button class="btn btn-big btn-block" type="submit" id="dish-save">Save dish</button>
   </form>
