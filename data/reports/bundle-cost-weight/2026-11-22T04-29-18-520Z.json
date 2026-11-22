@@ -1,0 +1,24 @@
+[
+  {
+    "bundle": "coconut-lotion-2-pack",
+    "variant": "2x Pure Unscented",
+    "inventoryItemId": "gid://shopify/InventoryItem/69986619261098",
+    "curCost": null,
+    "curOz": 0,
+    "newCost": 12.3,
+    "newOz": 24,
+    "missing": [],
+    "changed": true
+  },
+  {
+    "bundle": "coconut-lotion-2-pack",
+    "variant": "2x Coconut Breeze",
+    "inventoryItemId": "gid://shopify/InventoryItem/69986619293866",
+    "curCost": null,
+    "curOz": 0,
+    "newCost": 13.72,
+    "newOz": 24,
+    "missing": [],
+    "changed": true
+  }
+]
