@@ -4,7 +4,7 @@ import {
   normalizeLandingPath, segmentOf, aggregateCvr, assertGa4WindowClean,
   sessionExclusion, orderExclusion, isSweepstakesReferrer, isGiveawayPath,
   GA4_HOLE_END, GIVEAWAY_PATHS, EXCLUSION_REASONS, US_GA4_COUNTRY, US_COUNTRY_CODES,
-  heroOffers, wilsonInterval,
+  heroOffers, wilsonInterval, unengagedDirectDesktopSessions, splitSessionRow,
 } from '../../lib/commercial-cvr.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -305,7 +305,7 @@ test('rung ORDER: a non-US giveaway session is attributed to non-us, never count
     sessionExclusion({ country: 'Singapore', source: 'contestgirl.com', page: '/pages/free-soap-giveaway' }),
     'non-us',
   );
-  assert.deepEqual(EXCLUSION_REASONS, ['non-us', 'no-source', 'sweepstakes-referrer', 'giveaway-lander']);
+  assert.deepEqual(EXCLUSION_REASONS, ['non-us', 'no-source', 'unengaged-direct-desktop', 'sweepstakes-referrer', 'giveaway-lander']);
 });
 
 test('the sweepstakes rule does not fire on bare `contest` or `prize`', () => {
@@ -448,7 +448,7 @@ test('the ladder arithmetic: segmenting moves commercial from 0.40% to 1.04% on 
   assert.equal(out.rawTotals.orders, 17);
   assert.deepEqual(
     out.excluded.map((e) => [e.reason, e.sessions]),
-    [['non-us', 2975], ['no-source', 4382], ['sweepstakes-referrer', 2471], ['giveaway-lander', 4246]],
+    [['non-us', 2975], ['no-source', 4382], ['unengaged-direct-desktop', 0], ['sweepstakes-referrer', 2471], ['giveaway-lander', 4246]],
   );
   assert.equal(out.totals.sessions, 2935);
   assert.equal(out.totals.orders, 15);
@@ -554,4 +554,50 @@ test('wilsonInterval on the measured clean commercial pool brackets the point es
   const w = wilsonInterval(4, 567);
   assert.ok(w.lower < w.point && w.point < w.upper);
   assert.ok(w.lower > 0.002 && w.upper < 0.02, JSON.stringify(w));
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// The unengaged-direct-desktop rung: the 2026-11-16/17 data-center sweep.
+// ─────────────────────────────────────────────────────────────────────────────
+
+test('unengaged direct desktop: only the UNENGAGED part of a direct desktop row is removed', () => {
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', device: 'desktop', sessions: 900, engagedSessions: 40 }), 860);
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', device: 'Desktop', sessions: 10, engagedSessions: 10 }), 0);
+});
+
+test('unengaged direct desktop: mobile, other sources and missing data are KEPT (unknown means keep)', () => {
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', device: 'mobile', sessions: 50, engagedSessions: 5 }), 0);
+  assert.equal(unengagedDirectDesktopSessions({ source: 'google', device: 'desktop', sessions: 50, engagedSessions: 5 }), 0);
+  assert.equal(unengagedDirectDesktopSessions({ source: 'facebook', device: 'desktop', sessions: 50, engagedSessions: 5 }), 0);
+  // A caller that does not carry device or engagement (every pre-2026-11-21 row).
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', sessions: 50 }), 0);
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', device: 'desktop', sessions: 50, engagedSessions: null }), 0);
+  // Never negative, never more than the row.
+  assert.equal(unengagedDirectDesktopSessions({ source: '(direct)', device: 'desktop', sessions: 5, engagedSessions: 9 }), 0);
+});
+
+test('splitSessionRow: a row-level rung wins over the partial rung, so a row is counted once', () => {
+  const sg = splitSessionRow({ page: '/products/x', source: '(direct)', device: 'desktop', country: 'Singapore', sessions: 100, engagedSessions: 2 });
+  assert.deepEqual(sg, { reason: 'non-us', excludedSessions: 100, keptSessions: 0 });
+  const us = splitSessionRow({ page: '/products/x', source: '(direct)', device: 'desktop', country: 'United States', sessions: 100, engagedSessions: 12 });
+  assert.deepEqual(us, { reason: 'unengaged-direct-desktop', excludedSessions: 88, keptSessions: 12 });
+});
+
+test('aggregateCvr: the sweep leaves the denominator and the ladder still sums to the raw total', () => {
+  // Shape of the measured 2026-11-14 -> 11-20 week, scaled down.
+  const ga4Rows = [
+    { page: '/products/coconut-moisturizer', source: '(direct)', device: 'desktop', country: 'United States', sessions: 900, engagedSessions: 60 },
+    { page: '/products/coconut-moisturizer', source: 'facebook', device: 'mobile', country: 'United States', sessions: 300, engagedSessions: 120 },
+    { page: '/products/coconut-moisturizer', source: '(direct)', device: 'mobile', country: 'United States', sessions: 20, engagedSessions: 8 },
+  ];
+  const orderRows = [{ landingPath: '/products/coconut-moisturizer', total: 37, countsAsRevenue: true, country: 'US' }];
+  const agg = aggregateCvr({ ga4Rows, orderRows });
+  const rung = agg.excluded.find((e) => e.reason === 'unengaged-direct-desktop');
+  assert.equal(rung.sessions, 840);
+  assert.equal(rung.orders, 0);
+  assert.equal(agg.commercial.sessions, 60 + 300 + 20);
+  assert.equal(agg.commercial.orders, 1);
+  const excludedSum = agg.excluded.reduce((n, e) => n + e.sessions, 0);
+  assert.equal(agg.rawTotals.sessions, agg.totals.sessions + excludedSum);
+  assert.equal(agg.rawTotals.sessions, 1220);
 });

@@ -53,7 +53,7 @@
  * Pure: computeScoreboard({ ga4Rows, orderRows }), scoreboardWindow(...) — tested.
  */
 import {
-  aggregateCvr, assertGa4WindowClean, orderExclusion, segmentOf, sessionExclusion,
+  aggregateCvr, assertGa4WindowClean, orderExclusion, segmentOf, splitSessionRow,
   GA4_HOLE_END,
 } from '../lib/commercial-cvr.js';
 import { isDirectRun } from '../lib/is-direct-run.js';
@@ -194,9 +194,10 @@ export function computeScoreboard({ ga4Rows = [], orderRows = [] } = {}) {
   }]));
   for (const r of ga4Rows) {
     if (segmentOf(r?.page) === null) continue;
-    if (sessionExclusion({ country: r?.country, source: r?.source, page: r?.page })) continue;
+    const { keptSessions } = splitSessionRow(r);
+    if (keptSessions <= 0) continue;
     const f = families.get(channelFamilyOfGa4(r?.channel));
-    f.sessions += Number(r?.sessions) || 0;
+    f.sessions += keptSessions;
     if (r?.channel) f.ga4Channels.add(r.channel);
   }
   for (const r of revenueRows) {
@@ -277,6 +278,7 @@ const RUNG_LABELS = {
   'unusable-landing-page': 'landing page GA4 truncated past recognition',
   'non-us': 'non-US (cannot buy — US shipping only)',
   'no-source': 'US, sessionSource (not set) — bot signature',
+  'unengaged-direct-desktop': 'US direct desktop, never engaged — crawler sweep',
   'sweepstakes-referrer': 'US sweepstakes-aggregator referrers',
   'giveaway-lander': 'US giveaway funnel, other sources',
 };

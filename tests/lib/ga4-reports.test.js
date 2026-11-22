@@ -75,19 +75,19 @@ test('fetchLandingPagesByChannel orders and limits by sessions, not by modelled 
 test('fetchLandingPageSegments asks for country alongside landing page and source', async () => {
   const { fetchLandingPageSegments } = await import('../../lib/ga4.js');
   stubGA4((body) => (dimNames(body).includes('country')
-    ? [row(['/products/lotion', 'Organic Search', 'google', 'United States'], [400, 3])]
+    ? [row(['/products/lotion', 'Organic Search', 'google', 'United States', 'desktop'], [400, 3, 250])]
     : []));
 
   const rows = await fetchLandingPageSegments('2026-08-17', '2026-09-13');
   const body = reports.at(-1);
 
-  assert.deepEqual(dimNames(body), ['landingPage', 'sessionDefaultChannelGroup', 'sessionSource', 'country']);
+  assert.deepEqual(dimNames(body), ['landingPage', 'sessionDefaultChannelGroup', 'sessionSource', 'country', 'deviceCategory']);
   // `sessions` stays FIRST: the orderBy and every consumer's `sessions` read depend on it.
-  assert.deepEqual(body.metrics, [{ name: 'sessions' }, { name: 'ecommercePurchases' }]);
+  assert.deepEqual(body.metrics, [{ name: 'sessions' }, { name: 'ecommercePurchases' }, { name: 'engagedSessions' }]);
   assert.equal(body.orderBys[0].metric.metricName, 'sessions');
   assert.deepEqual(rows, [{
     page: '/products/lotion', channel: 'Organic Search', source: 'google',
-    country: 'United States', sessions: 400, purchases: 3,
+    country: 'United States', sessions: 400, purchases: 3, device: 'desktop', engagedSessions: 250,
   }]);
 });
 

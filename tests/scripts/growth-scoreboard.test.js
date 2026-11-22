@@ -93,7 +93,7 @@ test('clean CVR divides by unexcluded sessions only; raw divides by every sessio
   assert.equal(s.cvr.clean, 2 / 400);
   const rungs = Object.fromEntries(s.ladder.rungs.map((r) => [r.reason, r.sessions]));
   assert.deepEqual(rungs, {
-    'unusable-landing-page': 0, 'non-us': 300, 'no-source': 200, 'sweepstakes-referrer': 50, 'giveaway-lander': 50,
+    'unusable-landing-page': 0, 'non-us': 300, 'no-source': 200, 'unengaged-direct-desktop': 0, 'sweepstakes-referrer': 50, 'giveaway-lander': 50,
   });
 });
 
