@@ -1558,6 +1558,62 @@
       ]
     },
     {
+      "handle": "coconut-lotion-2-pack",
+      "title": "Coconut Body Lotion — 2-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-lotion",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "The free-shipping rung, added with the cream's 2-jar tier (Sean, 2026-11-21: \"Do the same thing for the lotion page\"). One $30 bottle is $15 short of free shipping; two of the three orders that landed on the lotion PDP in the 90 days to 2026-11-20 already held two lotions. Two bottles for $56 ($28 each) clears $45 on its own. Priced below 2 x $30 because the ladder refuses a tier at or above buying singly. Watch WHICH rung it takes from: converting singles is the point, taking share from the 4-pack costs money. Reached only from the lotion PDP, noindexed via ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "2x Pure Unscented",
+            "2x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "2x Pure Unscented"
+          },
+          "price": 56,
+          "compareAtPrice": 60,
+          "contents": "2 × Body Lotion — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Pure Unscented",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "2x Coconut Breeze"
+          },
+          "price": 56,
+          "compareAtPrice": 60,
+          "contents": "2 × Body Lotion — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-lotion",
+              "variant": "Coconut Breeze",
+              "qty": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
       "handle": "coconut-lotion-4-pack",
       "title": "Coconut Body Lotion — 4-Pack",
       "status": "live",
@@ -2002,12 +2058,14 @@
       "base": "coconut-lotion",
       "tiers": [
         "coconut-lotion",
+        "coconut-lotion-2-pack",
         "coconut-lotion-4-pack"
       ],
       "default": "coconut-lotion-4-pack",
       "template": "product.landing-page-lotion.json",
       "block_id": "quantity-ladder",
       "unit_noun": "bottle",
+      "unit_oz": 8,
       "review": {
         "judgeme_id": 759720336,
         "name": "Nicole H.",
