@@ -405,3 +405,8 @@ test('block names free shipping only on a multi-unit tier that clears the minimu
   assert.match(body, /units > 1 and p\.price >= ladder_free_ship_cents and base_unit_price < ladder_free_ship_cents/);
   assert.match(body, /\{%- if ships_free -%\}<span class="qty-ladder__ship-note">Free shipping<\/span>/);
 });
+
+test('preamble declares the unit size only when the ladder sets unit_oz', () => {
+  assert.match(renderLadderPreamble(TIERS, { ...LADDER, unit_oz: 4 }), /assign ladder_unit_oz = 4 -%}/);
+  assert.doesNotMatch(renderLadderPreamble(TIERS, LADDER), /ladder_unit_oz/);
+});

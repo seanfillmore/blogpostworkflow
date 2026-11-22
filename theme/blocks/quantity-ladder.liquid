@@ -135,6 +135,16 @@
           {%- if units > 1 -%}
             <span class="qty-ladder__unit">{{ per_unit | money }}/{% if ladder_unit_noun == 'unit' %}each{% else %}{{ ladder_unit_noun }}{% endif %}</span>
           {%- endif -%}
+          {%- comment -%}
+            Price per ounce, from the live price, when the ladder declares a unit
+            size (roster `unit_oz`). Buyers raise jar size on their own, and
+            per-ounce is the comparison shoppers make against bigger tubs.
+          {%- endcomment -%}
+          {%- assign unit_oz = ladder_unit_oz | default: 0 | plus: 0 -%}
+          {%- if unit_oz > 0 -%}
+            {%- assign oz_total = unit_oz | times: units -%}
+            <span class="qty-ladder__unit">{{ p.price | divided_by: oz_total | money }}/oz</span>
+          {%- endif -%}
         </span>
       </label>
     {%- endfor -%}

@@ -2046,6 +2046,7 @@
       "template": "product.landing-page-cream.json",
       "block_id": "quantity-ladder",
       "unit_noun": "jar",
+      "unit_oz": 4,
       "review": {
         "judgeme_id": 514327202,
         "name": "Ella M.",
