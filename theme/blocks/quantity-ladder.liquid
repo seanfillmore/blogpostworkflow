@@ -109,6 +109,15 @@
           {%- elsif save_pct > 0 -%}
             {%- assign offer = 'Save ' | append: save_pct | append: '%' -%}
           {%- endif -%}
+          {%- comment -%}
+            Free shipping is named only on a tier that clears the minimum when a
+            single unit does not, so it marks the step that changes the cart.
+          {%- endcomment -%}
+          {%- assign ships_free = false -%}
+          {%- assign ladder_free_ship_cents = ladder_free_ship_usd | default: 0 | times: 100 -%}
+          {%- if ladder_free_ship_cents > 0 and units > 1 and p.price >= ladder_free_ship_cents and base_unit_price < ladder_free_ship_cents -%}
+            {%- assign ships_free = true -%}
+          {%- endif -%}
           {%- if supply != blank or offer != '' -%}
             <span class="qty-ladder__sub">
               {%- if supply != blank -%}{{ supply }}{%- endif -%}
@@ -116,6 +125,7 @@
               {%- if offer != '' -%}<strong>{{ offer }}</strong>{%- endif -%}
             </span>
           {%- endif -%}
+          {%- if ships_free -%}<span class="qty-ladder__ship-note">Free shipping</span>{%- endif -%}
         </span>
         <span class="qty-ladder__pricing">
           <span class="qty-ladder__price-line">
@@ -245,6 +255,7 @@
     padding:3px 8px;font-size:.72em;font-weight:700;letter-spacing:.02em}
   .qty-ladder__sub{font-size:.85em;color:#6d7175}
   .qty-ladder__sub strong{color:#111;font-weight:700;white-space:nowrap}
+  .qty-ladder__ship-note{display:block;font-size:.85em;color:#111;font-weight:700}
   .qty-ladder__pricing{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right}
   .qty-ladder__price-line{white-space:nowrap}
   .qty-ladder__compare{color:#8a8d91;font-size:.85em;margin-right:4px}
@@ -329,6 +340,22 @@
     if (typeof title !== 'string') return title;
     if (/^Variety\s*[—-]\s*.+/i.test(title)) return 'Variety';
     return title.replace(/^\d+x\s+/i, '');
+  }
+
+  // Ads link to ?variant=<scent id>. Map that id to the scent label so the
+  // ladder opens on it. Unknown, missing or sold-out ids return null and leave
+  // the default scent untouched. (Moved here from the cream template's hand
+  // edit, PR 4e4638cf, so a ladder refresh cannot drop it.)
+  function scentFromVariantParam(search) {
+    var id = new URLSearchParams(search).get('variant');
+    if (!id) return null;
+    for (var tier in data) {
+      var vs = data[tier].variants || [];
+      for (var i = 0; i < vs.length; i++) {
+        if (String(vs[i].id) === id) return vs[i].available ? ladderOptionLabel(vs[i].title) : null;
+      }
+    }
+    return null;
   }
 
   function currentTier() {
@@ -503,6 +530,7 @@
     }
   }
 
+  chosenOption = scentFromVariantParam(window.location.search);
   renderOptions();
 })();
 </script>
