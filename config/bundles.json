@@ -1670,6 +1670,62 @@
       ]
     },
     {
+      "handle": "coconut-moisturizer-2-pack",
+      "title": "Coconut Moisturizer — 2-Pack",
+      "status": "live",
+      "templateSuffix": null,
+      "packaging": 0,
+      "tags": [
+        "bundle",
+        "body-cream",
+        "ladder-tier",
+        "value-set"
+      ],
+      "collections": [],
+      "story": "The free-shipping rung (Sean, 2026-11-21: \"The 2-jar option is a no-brainer\"). One $28 jar leaves the cart $17 short of free shipping and the only cart suggestion ($13 soap) still falls $4 short: 9 of 10 orders that landed on the cream PDP 2026-10-24 to 11-20 paid shipping. Two jars for $52 ($26 each) clears $45 on its own. Priced below 2 x $28 because the ladder refuses a tier at or above buying singly. Watch WHICH rung it takes from: converting singles is the point, taking share from the 4-pack costs money. Reached only from the cream PDP, noindexed via ladder-tier.",
+      "options": [
+        {
+          "name": "Scent",
+          "values": [
+            "2x Pure Unscented",
+            "2x Coconut Breeze"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "options": {
+            "Scent": "2x Pure Unscented"
+          },
+          "price": 52,
+          "compareAtPrice": 56,
+          "contents": "2 × Coconut Moisturizer, 4oz — Pure Unscented (no essential oils at all)",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Pure Unscented",
+              "qty": 2
+            }
+          ]
+        },
+        {
+          "options": {
+            "Scent": "2x Coconut Breeze"
+          },
+          "price": 52,
+          "compareAtPrice": 56,
+          "contents": "2 × Coconut Moisturizer, 4oz — Coconut Breeze",
+          "components": [
+            {
+              "product": "coconut-moisturizer",
+              "variant": "Coconut Breeze",
+              "qty": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
       "handle": "coconut-moisturizer-4-pack",
       "title": "Coconut Moisturizer — 4-Pack",
       "status": "live",
@@ -1983,9 +2039,10 @@
       "base": "coconut-moisturizer",
       "tiers": [
         "coconut-moisturizer",
+        "coconut-moisturizer-2-pack",
         "coconut-moisturizer-4-pack"
       ],
-      "default": "coconut-moisturizer-4-pack",
+      "default": "coconut-moisturizer",
       "template": "product.landing-page-cream.json",
       "block_id": "quantity-ladder",
       "unit_noun": "jar",

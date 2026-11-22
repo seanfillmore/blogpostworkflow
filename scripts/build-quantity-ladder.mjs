@@ -61,7 +61,24 @@ export function renderLadderPreamble(tiers, ladder) {
     // tier of a ladder is the base product in a bigger box, so the rate is the
     // base's. supplyLabel throws rather than print a claim the box can't meet.
     `{%- assign ladder_supply = "${tiers.map((t) => supplyLabel(ladder.base, t.units) ?? '').join('|')}" | split: "|" -%}`,
+    // The free-shipping minimum from the one place it lives (brand-kit.json),
+    // in whole DOLLARS (the block body converts to cents): it is store policy, not a
+    // product price, and keeping it as dollars keeps the no-baked-price guard
+    // strict. A tier that clears it while a single unit does not says so: on
+    // the cream PDP, 9 of 10 orders 2026-10-24 to 11-20 paid shipping.
+    `{%- assign ladder_free_ship_usd = ${freeShippingDollars()} -%}`,
   ].join('\n');
+}
+
+/** brand-kit.json free_shipping_threshold in whole dollars; 0 (line never shown) when unreadable. */
+export function freeShippingDollars() {
+  try {
+    const kit = JSON.parse(readFileSync(join(ROOT, 'data', 'brand', 'brand-kit.json'), 'utf8'));
+    const usd = Number(kit.free_shipping_threshold);
+    return Number.isInteger(usd) && usd > 0 ? usd : 0;
+  } catch {
+    return 0;
+  }
 }
 
 const escapeHtml = (t) => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');

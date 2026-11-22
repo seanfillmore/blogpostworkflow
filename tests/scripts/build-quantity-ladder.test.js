@@ -389,3 +389,19 @@ test('the review is its own escaped block, never inside the ladder', async () =>
   assert.equal(renderReviewBlock({ base: 'x' }), '');
   assert.doesNotMatch(renderBlock(TIERS, LADDER), /review/i);
 });
+
+test('preamble carries the free-shipping minimum from brand-kit.json', async () => {
+  const { freeShippingDollars } = await import('../../scripts/build-quantity-ladder.mjs');
+  const { readFileSync } = await import('node:fs');
+  const kit = JSON.parse(readFileSync(new URL('../../data/brand/brand-kit.json', import.meta.url), 'utf8'));
+  assert.equal(freeShippingDollars(), kit.free_shipping_threshold);
+  const out = renderLadderPreamble(TIERS, LADDER);
+  assert.match(out, new RegExp(`assign ladder_free_ship_usd = ${freeShippingDollars()} -%}`));
+});
+
+test('block names free shipping only on a multi-unit tier that clears the minimum when a single does not', async () => {
+  const { readFileSync } = await import('node:fs');
+  const body = readFileSync(new URL('../../theme/blocks/quantity-ladder.liquid', import.meta.url), 'utf8');
+  assert.match(body, /units > 1 and p\.price >= ladder_free_ship_cents and base_unit_price < ladder_free_ship_cents/);
+  assert.match(body, /\{%- if ships_free -%\}<span class="qty-ladder__ship-note">Free shipping<\/span>/);
+});
