@@ -67,6 +67,9 @@ export function renderLadderPreamble(tiers, ladder) {
     // strict. A tier that clears it while a single unit does not says so: on
     // the cream PDP, 9 of 10 orders 2026-10-24 to 11-20 paid shipping.
     `{%- assign ladder_free_ship_usd = ${freeShippingDollars()} -%}`,
+    // Ounces in ONE base unit (roster ladder `unit_oz`), so the block can print
+    // a live price per ounce. Omitted when the ladder does not declare one.
+    ...(Number(ladder.unit_oz) > 0 ? [`{%- assign ladder_unit_oz = ${Number(ladder.unit_oz)} -%}`] : []),
   ].join('\n');
 }
 
