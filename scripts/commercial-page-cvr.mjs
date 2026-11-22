@@ -80,6 +80,7 @@ const pct = (n) => (n === null ? 'n/a' : (n * 100).toFixed(2) + '%');
 const EXCLUSION_LABELS = {
   'non-us': 'non-US (cannot buy — US shipping only)',
   'no-source': 'US, sessionSource (not set) — bot signature',
+  'unengaged-direct-desktop': 'US direct desktop, never engaged — crawler sweep',
   'sweepstakes-referrer': 'US sweepstakes-aggregator referrers',
   // The whole funnel — lander, entered, confirmed, rules — not just the lander.
   'giveaway-lander': 'US giveaway funnel, other sources',
