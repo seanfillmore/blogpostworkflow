@@ -160,15 +160,89 @@ test('a reported reaction goes to Sean only: the creator receives nothing', asyn
   assert.deepEqual(r.escalations[0].reasons, ['a skin reaction or health concern']);
 });
 
-test('while a creator waits on Sean, every new message goes to Sean and the model is never asked', async () => {
+test('while a creator waits on Sean, a new question goes to Sean and is never answered by the agent', async () => {
+  let ctx = null;
+  const state = { creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-02T16:00:00Z' } } };
+  const h = harness({ inbox: [inbound('Also, can I film the soap too?')], state,
+    draft: async (c, m, x) => { ctx = x; return { action: 'reply', reply: 'Yes please!\nSean', reason: '' }; } });
+  const r = await runOutreach(h.opts);
+  assert.equal(ctx.seanHandling, true, 'the model is told it is only deciding, not replying');
+  assert.equal(h.sent.length, 0, 'even a clean draft is not sent in Sean\'s conversation');
+  assert.equal(r.escalations[0].reasons[0], 'a new message while this creator is waiting on you');
+  assert.equal(r.escalations[0].suggestion, 'Yes please!\nSean');
+  assert.equal(state.creators['lori@example.com'].escalatedAt, '2026-10-02T17:00:00Z', 'the clock moves to her newest message');
+});
+
+// 2026-11-23, production: Shelly was flagged six times and Angie once for
+// messages like these. An acknowledgement needs no answer from anyone.
+test('while a creator waits on Sean, an acknowledgement is not a new flag and does not move the clock', async () => {
+  const state = { creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-02T16:00:00Z' } } };
+  const h = harness({ inbox: [inbound('I uploaded the caption version just now.')], state,
+    draft: async () => ({ action: 'none', reply: '', reason: '' }) });
+  const r = await runOutreach(h.opts);
+  assert.equal(r.escalations.length, 0);
+  assert.equal(h.escalations.length, 0, 'no immediate email to Sean');
+  assert.equal(r.acknowledged.length, 1);
+  assert.equal(h.sent.length, 0);
+  assert.equal(state.creators['lori@example.com'].escalatedAt, '2026-10-02T16:00:00Z');
+  assert.equal(state.creators['lori@example.com'].escalatedOpen, true, 'the earlier question is still Sean\'s to answer');
+});
+
+test('a keyword topic in Sean\'s conversation goes to Sean without asking the model', async () => {
   let asked = false;
   const state = { creators: { 'lori@example.com': { escalatedOpen: true, escalatedAt: '2026-10-02T16:00:00Z' } } };
-  const h = harness({ inbox: [inbound('Also, it arrived today, thanks!')], state, draft: async () => { asked = true; } });
+  const h = harness({ inbox: [inbound('Thanks! Also what is the commission rate?')], state, draft: async () => { asked = true; } });
   const r = await runOutreach(h.opts);
   assert.equal(asked, false);
-  assert.equal(h.sent.length, 0);
-  assert.equal(r.escalations[0].reasons[0], 'a new message while this creator is waiting on you');
-  assert.equal(state.creators['lori@example.com'].escalatedAt, '2026-10-02T17:00:00Z', 'the clock moves to her newest message');
+  assert.deepEqual(r.escalations[0].reasons, ['a new message while this creator is waiting on you', 'money or terms']);
+});
+
+test('if the model fails in Sean\'s conversation, the message goes to Sean (fail safe)', async () => {
+  const state = { creators: { 'lori@example.com': { seanMessageIds: ['<sean@hush>'] } } };
+  const msg = { ...inbound('Sounds good!'), inReplyTo: '<sean@hush>', references: ['<sean@hush>'] };
+  const h = harness({ inbox: [msg], state, draft: async () => { throw new Error('cli down'); } });
+  const r = await runOutreach(h.opts);
+  assert.equal(r.escalations.length, 1);
+  assert.match(r.escalations[0].reasons.join('; '), /could not read the message: cli down/);
+});
+
+test('an ordinary thank-you gets no reply and no flag, and reminders are not paused by a flag', async () => {
+  const state = {};
+  const h = harness({ inbox: [inbound('Thanks so much! I\'ll be in touch as soon as it arrives.')], state,
+    draft: async () => ({ action: 'none', reply: '', reason: '' }) });
+  const r = await runOutreach(h.opts);
+  assert.equal(r.replies.length, 0);
+  assert.equal(r.escalations.length, 0);
+  assert.equal(r.acknowledged.length, 1);
+  assert.equal(h.sent.length, 0, 'no reply, and the recent message holds the welcome for a few days as usual');
+  const rec = state.creators['lori@example.com'];
+  assert.ok(!rec.escalatedOpen);
+  assert.ok(state.processed.includes('<m1@x>'), 'processed once, never re-read');
+  assert.match(renderSummary(r, { apply: true }).body, /No answer needed/);
+});
+
+test('the model sees the thread the creator is answering', async () => {
+  let ctx = null;
+  const state = { creators: { 'lori@example.com': { thread: { date: '2026-10-01T00:00:00Z', from: 'Sean', text: 'Could you add captions?' } } } };
+  const h = harness({ inbox: [inbound('Yes, I can do that.')], state,
+    draft: async (c, m, x) => { ctx = x; return { action: 'none', reply: '', reason: '' }; } });
+  await runOutreach(h.opts);
+  assert.equal(ctx.prior.text, 'Could you add captions?');
+  assert.equal(ctx.seanHandling, false);
+});
+
+test('a handle the regex missed is recorded only when it appears in the creator\'s own words', async () => {
+  const state = {};
+  const h = harness({ inbox: [inbound('Yes, I would love to be tagged. My handle is:[ chocolatina5744 ]')], state,
+    draft: async () => ({ action: 'none', reply: '', reason: '', handle: 'chocolatina5744' }) });
+  const r = await runOutreach(h.opts);
+  assert.deepEqual(r.handles.map((x) => x.handle), ['chocolatina5744']);
+  assert.equal(r.escalations.length, 0);
+
+  const bad = harness({ inbox: [inbound('Yes, tag me!')], state: {},
+    draft: async () => ({ action: 'none', reply: '', reason: '', handle: 'invented_handle' }) });
+  const r2 = await runOutreach(bad.opts);
+  assert.equal(r2.handles.length, 0, 'a handle not in her words is never recorded');
 });
 
 test('Sean replying from Hushmail clears the flag; an older Sent message does not', async () => {
@@ -189,15 +263,23 @@ test('Sean replying from Hushmail clears the flag; an older Sent message does no
   assert.match(renderSummary(r, { apply: true }).body, /Sean replied, so the agent picked these creators back up/);
 });
 
-test('a creator answering SEAN\'s own email goes back to Sean, not the model', async () => {
-  let asked = false;
+test('a creator answering SEAN\'s own email is never answered by the agent; a real question goes to Sean', async () => {
   const state = { creators: { 'lori@example.com': { seanMessageIds: ['<sean@hush>'] } } };
-  const msg = { ...inbound('Oh that is great to know, thanks!'), inReplyTo: '<sean@hush>', references: ['<sean@hush>'] };
-  const h = harness({ inbox: [msg], state, draft: async () => { asked = true; } });
+  const msg = { ...inbound('Is the Black Friday offer in addition to my Trybe videos?'), inReplyTo: '<sean@hush>', references: ['<sean@hush>'] };
+  const h = harness({ inbox: [msg], state, draft: async () => ({ action: 'escalate', reply: '', reason: 'asks about the offer terms' }) });
   const r = await runOutreach(h.opts);
-  assert.equal(asked, false);
   assert.equal(h.sent.length, 0);
-  assert.equal(r.escalations[0].reasons[0], 'a reply to your own email');
+  assert.deepEqual(r.escalations[0].reasons, ['a reply to your own email', 'asks about the offer terms']);
+});
+
+test('a "sounds good" to SEAN\'s own email is not flagged', async () => {
+  const state = { creators: { 'lori@example.com': { seanMessageIds: ['<sean@hush>'] } } };
+  const msg = { ...inbound('Sounds good, Sean! I only have a couple of samples, but I will talk them up.'), inReplyTo: '<sean@hush>', references: ['<sean@hush>'] };
+  const h = harness({ inbox: [msg], state, draft: async () => ({ action: 'none', reply: '', reason: '' }) });
+  const r = await runOutreach(h.opts);
+  assert.equal(h.sent.length, 0);
+  assert.equal(r.escalations.length, 0);
+  assert.ok(!state.creators['lori@example.com'].escalatedOpen);
 });
 
 test('a heart on Sean\'s email is still just a heart', async () => {
