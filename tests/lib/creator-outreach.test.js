@@ -113,7 +113,8 @@ test('a drafted reply may not promise money or product, claim a cure, or use an 
 });
 
 test('model output parsing is strict about the action', () => {
-  assert.deepEqual(parseDraft('```json\n{"action":"reply","reply":"Hi","escalate_reason":""}\n```'), { action: 'reply', reply: 'Hi', reason: '' });
+  assert.deepEqual(parseDraft('```json\n{"action":"reply","reply":"Hi","escalate_reason":""}\n```'), { action: 'reply', reply: 'Hi', reason: '', handle: '' });
+  assert.equal(parseDraft('{"action":"none","reply":""}').action, 'none');
   assert.throws(() => parseDraft('{"action":"approve"}'));
   assert.throws(() => parseDraft('not json'));
 });
@@ -244,4 +245,28 @@ test('a recently-emailed creator with nothing due is NOT listed as held', () => 
 test('opted-out creators are never listed as held', () => {
   const st = { creators: { 'lori@example.com': { optedOut: true } } };
   assert.deepEqual(planScheduled(roster([order()]), st, { now: NOW }).suppressed, []);
+});
+
+test('earlierInThread uses what the creator quoted, else the thread we hold, and is bounded', async () => {
+  const { earlierInThread, MAX_CONTEXT_CHARS, replyPrompt } = await import('../../lib/creator-outreach.js');
+  const msg = { text: 'Yes, I can do that.', fullText: 'Yes, I can do that.\nShelly\n\nOn Sun, Sean wrote:\n> Could you add captions?' };
+  assert.match(earlierInThread(msg), /Could you add captions\?/);
+  assert.doesNotMatch(earlierInThread(msg), /^Yes, I can do that/);
+  assert.equal(earlierInThread({ text: 'ok', fullText: 'ok' }, { from: 'Sean', text: 'Want captions?' }), 'Sean wrote:\nWant captions?');
+  assert.equal(earlierInThread({ text: 'ok', fullText: 'ok' }), '');
+  assert.ok(earlierInThread({ text: 'ok', fullText: `ok\n${'x'.repeat(9000)}` }).length <= MAX_CONTEXT_CHARS + 20);
+  const c = { firstName: 'Lori', orders: [], submissions: [], missing: [] };
+  assert.match(replyPrompt(c, msg), /EARLIER IN THE THREAD:\n[\s\S]*Could you add captions/);
+  assert.match(replyPrompt(c, msg, { seanHandling: true }), /SEAN IS HANDLING THIS CONVERSATION PERSONALLY/);
+  assert.doesNotMatch(replyPrompt(c, msg), /SEAN IS HANDLING/);
+});
+
+test('confirmedModelHandle accepts only a valid handle present in the creator\'s words', async () => {
+  const { confirmedModelHandle } = await import('../../lib/creator-outreach.js');
+  assert.equal(confirmedModelHandle('chocolatina5744', 'My Instagram handle is:[ chocolatina5744 ]'), 'chocolatina5744');
+  assert.equal(confirmedModelHandle('@Kaci.UGC', 'my ugc page is @kaci.ugc.'), 'kaci.ugc');
+  assert.equal(confirmedModelHandle('someone_else', 'tag me please'), null);
+  assert.equal(confirmedModelHandle('realskincare_com', 'I follow realskincare_com'), null);
+  assert.equal(confirmedModelHandle('bad handle!', 'bad handle!'), null);
+  assert.equal(confirmedModelHandle('', 'x'), null);
 });

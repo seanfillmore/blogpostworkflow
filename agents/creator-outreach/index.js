@@ -18,6 +18,12 @@
  * Cron: CREATOR_OUTREACH, every 30 minutes (scripts/setup-cron.sh). Replies go
  * out on any run; scheduled emails only inside the send window.
  *
+ * Replies: the model reads each message against the thread it answers and
+ * decides reply / no answer needed / escalate. A thank-you, "sounds good" or
+ * "I uploaded it" gets nothing and raises no flag, including in a conversation
+ * Sean is handling himself (there the agent never replies; it only decides
+ * whether the message needs him).
+ *
  * Escalations: a reply Sean must answer is flagged and nothing goes to the
  * creator. If he has not answered within RELAY_AFTER_HOURS (36), the agent
  * emails his own Hushmail address what they asked, tagged [CR-<token>]; his
@@ -45,7 +51,7 @@ import {
 } from '../../lib/creator-relay.js';
 import {
   DEFAULT_CONFIG, buildRoster, planScheduled, classifyInbound, replyProblems,
-  optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE,
+  optOutReply, REPLY_SYSTEM, replyPrompt, parseDraft, replySubject, creatorState, SIGNATURE, confirmedModelHandle,
   withQuotedThread, senderLabel, composeThanks, thanksHistory, reelsForCreator, THANKS_SYSTEM, THANKS_SUBJECT,
 } from '../../lib/creator-outreach.js';
 import { LLM_MODELS } from '../../config/llm-models.js';
@@ -101,14 +107,14 @@ function touch(state, email) {
 }
 
 /** Default reply drafter: one model call through the fleet's metered client. */
-async function draftWithModel(c, msg, env) {
+async function draftWithModel(c, msg, env, ctx = {}) {
   const { default: Anthropic } = await import('../../lib/anthropic.js');
   const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });
   const res = await client.messages.create({
     model: REPLY_MODEL,
     max_tokens: 700,
     system: REPLY_SYSTEM,
-    messages: [{ role: 'user', content: replyPrompt(c, msg) }],
+    messages: [{ role: 'user', content: replyPrompt(c, msg, ctx) }],
   });
   if (res.stop_reason === 'max_tokens') throw new Error('reply draft truncated at max_tokens');
   return parseDraft((res.content || []).filter((b) => b.type === 'text').map((b) => b.text).join(''));
@@ -143,7 +149,7 @@ export async function runOutreach({
   readSent,
   readSelf,
   send,
-  draft = (c, msg) => draftWithModel(c, msg, env),
+  draft = (c, msg, ctx) => draftWithModel(c, msg, env, ctx),
   writeThanks = (prompt) => writeThanksWithModel(prompt, env),
   // The Reels ledger is server-only; missing means no Reel can be mentioned.
   loadReels = () => (existsSync(REELS_LEDGER_PATH) ? JSON.parse(readFileSync(REELS_LEDGER_PATH, 'utf8')) : null),
@@ -165,7 +171,7 @@ export async function runOutreach({
   const byEmail = new Map(roster.map((c) => [c.email, c]));
   state.processed ||= [];
   const done = new Set(state.processed);
-  const result = { replies: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], heldThanks: [], handles: [], declinedTags: [], relayRequests: [], relayed: [], relayClosed: [], plan: null };
+  const result = { replies: [], acknowledged: [], escalations: [], resolved: [], optOuts: [], ignored: [], scheduled: [], failed: [], heldThanks: [], handles: [], declinedTags: [], relayRequests: [], relayed: [], relayClosed: [], plan: null };
 
   // Instagram handles we already hold (state.socials + the homepage list). A
   // failure to build the list means nobody is asked this run; see planScheduled.
@@ -281,11 +287,34 @@ export async function runOutreach({
     const toSean = (msg.inReplyTo && (rec.seanMessageIds || []).includes(msg.inReplyTo))
       || (msg.references || []).some((id) => (rec.seanMessageIds || []).includes(id));
     // A real message (not a reaction or an autoresponder) from a creator whose
-    // conversation is with Sean goes to Sean, whatever it says.
+    // conversation is with Sean is never answered by the agent. Whether it goes
+    // to Sean depends on what it says: a "sounds good" or "I uploaded it" needs
+    // no answer from anyone (2026-11-23: both open flags were exactly that).
     const withSean = verdict.action !== 'ignore' && (rec.escalatedOpen || toSean);
+    const seanReason = rec.escalatedOpen ? 'a new message while this creator is waiting on you' : 'a reply to your own email';
+
+    // Ask the model what the message needs, with the thread it answers.
+    const ask = async (seanHandling) => {
+      try {
+        const d = await draft(c, msg, { prior: rec.thread || null, seanHandling });
+        const handle = d.handle && !c.instagram && !rec.declinedTag ? confirmedModelHandle(d.handle, msg.text) : null;
+        if (handle) {
+          recordHandle(state.socials, { name: c.name, email: c.email, handle, at: msg.date });
+          socials = mergeSocials({ registry: state.socials, homepage, submissions });
+          c.instagram = handle;
+          result.handles.push({ email: c.email, name: c.name, handle });
+        }
+        return d;
+      } catch (err) {
+        return { action: 'escalate', reply: '', reason: `could not read the message: ${err.message}` };
+      }
+    };
 
     if (withSean) {
-      escalated = { ...row, reasons: [rec.escalatedOpen ? 'a new message while this creator is waiting on you' : 'a reply to your own email', ...(verdict.reasons || [])], suggestion: null };
+      // Keyword topics and opt-outs in Sean's thread are his to handle, unread by the model.
+      const d = verdict.action === 'draft' ? await ask(true) : null;
+      if (d?.action === 'none') result.acknowledged.push({ ...row, note: 'Sean\'s conversation; nothing to answer' });
+      else escalated = { ...row, reasons: [seanReason, ...(verdict.reasons || []), ...(d?.reason ? [d.reason] : [])], suggestion: d?.reply || null };
     } else if (verdict.action === 'ignore') {
       result.ignored.push({ ...row, reason: verdict.reason });
     } else if (verdict.action === 'opt-out') {
@@ -295,19 +324,20 @@ export async function runOutreach({
     } else {
       let reasons = verdict.reasons || [];
       let suggestion = null;
+      let acknowledged = false;
       if (verdict.action === 'draft') {
-        try {
-          const d = await draft(c, msg);
-          if (d.action === 'reply') {
-            const problems = replyProblems(d.reply);
-            if (problems.length) { reasons = [`draft refused: ${problems.join('; ')}`]; suggestion = d.reply; }
-            else outgoing = d.reply;
-          } else reasons = [d.reason || 'the model could not answer from the facts it has'];
-        } catch (err) {
-          reasons = [`could not draft a reply: ${err.message}`];
-        }
+        const d = await ask(false);
+        if (d.action === 'none') acknowledged = true;
+        else if (d.action === 'reply') {
+          const problems = replyProblems(d.reply);
+          if (problems.length) { reasons = [`draft refused: ${problems.join('; ')}`]; suggestion = d.reply; }
+          else outgoing = d.reply;
+        } else reasons = [d.reason || 'the model could not answer from the facts it has'];
       }
-      if (!outgoing) {
+      if (acknowledged) {
+        // Nothing to answer: no reply, no flag, reminders carry on as normal.
+        result.acknowledged.push(row);
+      } else if (!outgoing) {
         // Flagged: nothing goes to the creator. Sean writes the answer.
         escalated = { ...row, reasons, suggestion };
       } else {
@@ -484,6 +514,10 @@ export function renderSummary(r, { apply }) {
     lines.push('Replied automatically:');
     for (const x of r.replies) lines.push(`  - ${who(x)} asked: "${x.said.slice(0, 160)}"\n    we said: "${x.reply.replace(/\n+/g, ' ').slice(0, 300)}"`);
   }
+  if (r.acknowledged?.length) {
+    lines.push('No answer needed (nothing sent, nothing flagged):');
+    for (const x of r.acknowledged) lines.push(`  - ${who(x)}: "${x.said.replace(/\s+/g, ' ').slice(0, 160)}"`);
+  }
   if (r.escalations.length) {
     lines.push('Sent to Sean to answer (nothing was sent to the creator):');
     for (const x of r.escalations) lines.push(`  - ${who(x)}: ${x.reasons.join('; ')}`);
@@ -594,7 +628,7 @@ async function main() {
     });
     const { subject, body } = renderSummary(run, { apply });
     console.log(`\n${subject}\n\n${body}`);
-    const acted = run.relayRequests.length || run.relayed.length || run.relayClosed.length || run.scheduled.length || run.replies.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length || run.heldThanks.length;
+    const acted = run.relayRequests.length || run.relayed.length || run.relayClosed.length || run.scheduled.length || run.replies.length || run.acknowledged.length || run.escalations.length || run.optOuts.length || run.failed.length || run.handles.length || run.declinedTags.length || run.heldThanks.length;
     if (apply && acted) await notify({ subject, body, status: 'info', category: 'creators' });
   } finally {
     if (apply) try { unlinkSync(LOCK_PATH); } catch { /* already gone */ }
