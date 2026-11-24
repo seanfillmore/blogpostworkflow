@@ -22,6 +22,8 @@
  *   seasonal.json              cached search-volume history (paid call, refreshed after 35 days)
  *   ads/YYYY-MM.json           a complete month's ad rows (Ads API keeps ~60 days, so the
  *                              month before the report month is read from here)
+ *   reviews/YYYY-MM.json       Amazon review topics for the run month (same write rule as forecasts),
+ *                              read by next month's report to mark new complaint quotes
  *   alerts-state.json          last alert per item; written only by --alerts --apply without --to
  * Unreadable state throws rather than resetting.
  *
@@ -35,12 +37,13 @@ import { notify } from '../../lib/notify.js';
 import { hushmailCredentials, sendMail } from '../../lib/hushmail.js';
 import { loadReportConfig, components } from '../../lib/culina-catalog.js';
 import {
-  defaultDeps, fetchListings, fetchDailyUnits, fetchMonthlySales, fetchStock, fetchFinance, fetchAdSpend, fetchSeasonal,
+  defaultDeps, fetchListings, fetchDailyUnits, fetchMonthlySales, fetchStock, fetchFinance, fetchAdSpend, fetchSeasonal, fetchReviewTopics,
 } from '../../lib/culina-data.js';
 import { dailyPace, seasonalIndex, forecastUnits, shipPlan, inferStockoutDates, componentPlan } from '../../lib/culina-forecast.js';
 import { decideAlerts } from '../../lib/culina-alerts.js';
 import { monthPnl, comparePnl } from '../../lib/culina-pnl.js';
 import { renderMonthly, renderAlert } from '../../lib/culina-report-render.js';
+import { summarizeReviews } from '../../lib/culina-reviews.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const STATE_DIR = join(ROOT, 'data', 'reports', 'culina-report');
@@ -299,6 +302,22 @@ async function runMonthly(args, deps) {
       .map((i) => [i.asin, { label: i.label, forecast: Math.round(forecastUnits(i.pace, runWin.startDate, runWin.days, seasonal)) }])),
   });
 
+  // Customer review topics (SP-API Customer Feedback). Saved per run month like the
+  // forecast, so next month's report can mark complaint quotes that are new.
+  const reviewsPath = join(dir, 'reviews', `${runMonth}.json`);
+  const prevReviews = readJson(join(dir, 'reviews', `${addMonths(runMonth, -1)}.json`), 'reviews file');
+  let reviews = null;
+  try {
+    const raw = await fetchReviewTopics(amazon, culinaAsins);
+    const labelOf = (a) => itemLabel(a, cogs, listings.find((l) => l.asin === a)?.title, config);
+    reviews = { ...summarizeReviews(raw, labelOf, prevReviews?.summary || null), hasPrevious: !!prevReviews };
+    if (culinaAsins.length && reviews.asinsFailed.length === culinaAsins.length) { reviews = null; sourceErrors.push('reviews'); }
+    else if (!existsSync(reviewsPath) || (args.apply && !args.to)) writeJson(reviewsPath, { month: runMonth, madeAt: deps.now().toISOString(), raw, summary: reviews });
+  } catch (e) {
+    sourceErrors.push('reviews');
+    g.notes.push(`Review topics failed: ${e.message}`);
+  }
+
   const monthlySales = (await fetchMonthlySales(amazon, culinaAsins, SALES_FROM)).filter((m) => m.month <= month);
   const lastMonth = Math.round((monthlySales.find((m) => m.month === month)?.sales || 0) * 100) / 100;
   const nMonths = monthsBetween(month, config.goal_by || '2027-11');
@@ -355,7 +374,7 @@ async function runMonthly(args, deps) {
     goal: { lastMonth, target: config.goal_monthly, by: config.goal_by || '2027-11', neededMonthlyGrowthPct },
     adsMissingMonths: adsMissing,
     sourceErrors, unassignedCampaigns: curr?.unassignedCampaigns || [], missingCogs: curr?.missingCogs || [],
-    unmappedStock: stock.unmapped || [],
+    unmappedStock: stock.unmapped || [], reviews,
   };
   const rendered = renderMonthly(model);
   writeJson(join(dir, 'preview-monthly.json'), model);
@@ -373,6 +392,7 @@ async function runMonthly(args, deps) {
     model.missingCogs.length ? `Missing COGS: ${model.missingCogs.join(', ')}` : null,
     model.unmappedStock.length ? `Unmapped AWD stock: ${model.unmappedStock.map((u) => u.sku).join(', ')}` : null,
     model.unassignedCampaigns.length ? `Unassigned campaigns: ${model.unassignedCampaigns.join(', ')}` : null,
+    reviews ? `Review complaints: ${reviews.complaints.length}${reviews.repeated.length ? ` · on 2+ listings: ${reviews.repeated.map((x) => x.topic).join(', ')}` : ''}` : null,
     ...g.notes,
   ].filter(Boolean);
   deps.log(summary.join('\n'));
