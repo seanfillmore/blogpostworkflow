@@ -57,7 +57,7 @@ function daysBack(today, n) {
   return out;
 }
 
-function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail = false, adsFail = false, adsRows = {}, seasonalFail = false, mail = [] } = {}) {
+function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail = false, adsFail = false, adsRows = {}, seasonalFail = false, reviewsFail = false, mail = [] } = {}) {
   const calls = { finance: [], ads: [], seasonal: 0, fba: 0 };
   const today = now.slice(0, 10);
   const dates = daysBack(today, 400);
@@ -73,6 +73,12 @@ function makeDeps(dir, { now = '2026-11-11T15:00:00Z', stock = {}, financeFail =
         return { payload: { inventorySummaries: rows } };
       }
       if (path === '/awd/2024-05-09/inventory') return { inventory: [] };
+      if (path.startsWith('/customerFeedback/')) {
+        calls.reviews = (calls.reviews || 0) + 1;
+        if (reviewsFail) throw new Error('SP-API GET x failed (403): denied');
+        return { dateRange: { startDate: '2026-05-06T00:00:00Z', endDate: '2026-11-06T00:00:00Z' },
+          topics: { negativeTopics: [{ topic: 'Leak-Proof', asinMetrics: { numberOfMentions: 1 }, reviewSnippets: ['leaked in the box'] }], positiveTopics: [] } };
+      }
       if (path === '/sales/v1/orderMetrics') {
         const perDay = params.asin === A3 ? 10 : 2;
         if (params.granularity === 'Day') {
@@ -287,7 +293,7 @@ test('writes only under deps.dir, never the real data directory', async () => {
   assert.deepEqual(listTree(real), before);
   const written = Object.keys(listTree(dir)).map((p) => p.slice(dir.length + 1)).sort();
   assert.deepEqual(written, ['ads/2026-09.json', 'ads/2026-10.json', 'alerts-state.json', 'forecasts/2026-11.json', 'inventory/2026-11-11.json',
-    'preview-alerts.html', 'preview-monthly.html', 'preview-monthly.json', 'seasonal.json']);
+    'preview-alerts.html', 'preview-monthly.html', 'preview-monthly.json', 'reviews/2026-11.json', 'seasonal.json']);
 });
 
 test('alerts --apply --to sends the test mail but does not write alert state', async () => {
@@ -418,4 +424,24 @@ test('itemLabel names sets by item count and leaves single items and the COGS ta
   assert.equal(itemLabel('B0UNKNOWN', cogs, 'Listing title'), 'Listing title');
   assert.equal(itemLabel('B0UNKNOWN', cogs), 'B0UNKNOWN');
   assert.equal(JSON.stringify(cogs), before);
+});
+
+test('monthly report carries review topics, saves them, and flags a complaint on 2+ listings', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100, [AS]: 5000 } });
+  const r = await run(['--monthly', '--month', '2026-10'], deps);
+  assert.equal(r.reviews.complaints.length, 2);
+  assert.deepEqual(r.reviews.repeated.map((x) => x.topic), ['Leak-Proof']);
+  assert.ok(existsSync(join(dir, 'reviews', '2026-11.json')));
+  assert.match(readFileSync(join(dir, 'preview-monthly.html'), 'utf8'), /What customers say/);
+  assert.ok(!r.sourceErrors.includes('reviews'));
+});
+
+test('review topics failing on every ASIN is a data note, never a crash', async () => {
+  const dir = tmp();
+  const { deps } = makeDeps(dir, { stock: { [A3]: 100, [AS]: 5000 }, reviewsFail: true });
+  const r = await run(['--monthly', '--month', '2026-10'], deps);
+  assert.equal(r.reviews, null);
+  assert.ok(r.sourceErrors.includes('reviews'));
+  assert.match(readFileSync(join(dir, 'preview-monthly.html'), 'utf8'), /review topics were not available/);
 });
