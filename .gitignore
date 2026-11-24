@@ -518,3 +518,7 @@ data/backups/removed-posts/
 
 # Amazon inbound shipments: server-written state (offsite backup: server-state set)
 data/amazon-inbound/
+
+# Amazon customer review pulls (Seller Central -> Brands -> Customer Reviews).
+# PRIVATE: this repo is public and these hold reviewers' names and words.
+data/amazon-reviews/
